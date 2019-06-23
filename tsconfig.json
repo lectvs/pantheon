@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "lib": [
+            "dom",
+            "es2015",
+            "scripthost"
+        ],
+        "module": "amd",
+        "sourceMap": false,
+        "strict": false,
+        "outFile": "bin/js/game.js",
+        "downlevelIteration": true
+    }
+}

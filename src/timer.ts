@@ -1,0 +1,36 @@
+class Timer {
+    duration: number;
+    speed: number;
+    time: number;
+
+    callback: () => any;
+    repeat: boolean;
+
+    done: boolean;
+
+    constructor(duration: number, callback: () => any, repeat: boolean = false) {
+        this.duration = duration;
+        this.speed = 1;
+        this.time = 0;
+        this.done = false;
+        this.callback = callback;
+        this.repeat = repeat;
+    }
+
+    update(delta: number) {
+        if (!this.done) {
+            this.time += delta;
+
+            while (this.time >= this.duration) {
+                if (this.callback) this.callback();
+                this.time -= this.duration;
+                this.done = !this.repeat;
+            }
+        }
+    }
+
+    reset() {
+        this.time = 0;
+        this.done = false;
+    }
+}

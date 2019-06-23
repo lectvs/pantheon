@@ -1,2 +1,1 @@
-# pixijs
-PixiJS Engine
+# pixi.js game engine

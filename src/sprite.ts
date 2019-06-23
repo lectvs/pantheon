@@ -1,0 +1,126 @@
+/// <reference path="./physicsWorldObject.ts" />
+
+namespace Sprite {
+    export type Config = PhysicsWorldObject.Config & {
+        texture?: string;
+        graphics?: PIXI.Graphics;
+        renderTexture?: { width: number, height: number };
+        graphicOffset?: Pt;
+        animations?: Animation.Config[];
+    }
+}
+
+class Sprite extends PhysicsWorldObject {
+    private displayObject: PIXI.Sprite | PIXI.Graphics | PIXIRenderTextureSprite;
+    spriteType: Sprite.Type;
+
+    protected animationManager: AnimationManager;
+
+    flipX: boolean;
+    flipY: boolean;
+
+    graphicOffsetX: number;
+    graphicOffsetY: number;
+
+    constructor(config: Sprite.Config, defaults: Sprite.Config = {}) {
+        config = O.withDefaults(config, defaults);
+        super(config);
+
+        if (config.texture) {
+            this.setTexture(config.texture);
+        } else if (config.graphics) {
+            this.setGraphics(config.graphics);
+        } else if (config.renderTexture) {
+            this.setRenderTextureDimensions(config.renderTexture.width, config.renderTexture.height);
+        } else {
+            console.debug("SpriteConfig must have texture, graphics, or renderTexture specified:", config);
+            this.setGraphics(new PIXI.Graphics());  // Continue gracefully
+        }
+
+        if (config.bounds === undefined) {
+            this.bounds = this.getDisplayObjectLocalBounds();
+        }
+
+        this.animationManager = new AnimationManager(this);
+
+        if (config.animations) {
+            for (let animation of config.animations) {
+                this.animationManager.addAnimation(animation.name, animation.frames);
+            }
+        }
+
+        this.flipX = false;
+        this.flipY = false;
+
+        this.graphicOffsetX = config.graphicOffset ? config.graphicOffset.x : 0;
+        this.graphicOffsetY = config.graphicOffset ? config.graphicOffset.y : 0;
+    }
+
+    update(delta: number, world?: World) {
+        super.update(delta, world);
+        this.animationManager.update(delta);
+    }
+
+    render(renderer: PIXI.Renderer, renderTexture?: PIXI.RenderTexture) {
+        this.setDisplayObjectProperties();
+
+        renderer.render(this.displayObject, renderTexture, false);
+        super.render(renderer, renderTexture);
+    }
+
+    getDisplayObjectLocalBounds() {
+        return this.displayObject.getLocalBounds();
+    }
+
+    getDisplayObjectWorldBounds() {
+        let local = this.getDisplayObjectLocalBounds();
+        return new Rectangle(local.x + this.displayObject.x, local.y + this.displayObject.y, local.width, local.height);
+    }
+
+    playAnimation(name: string, startFrame: number = 0, force: boolean = false) {
+        this.animationManager.playAnimation(name, startFrame, force);
+    }
+
+    setDisplayObjectProperties() {
+        this.displayObject.x = this.x + this.graphicOffsetX;
+        this.displayObject.y = this.y + this.graphicOffsetY;
+        this.displayObject.scale.x = this.flipX ? -1 : 1;
+        this.displayObject.scale.y = this.flipY ? -1 : 1;
+    }
+
+    setGraphics(graphics: PIXI.Graphics) {
+        this.displayObject = graphics;
+        this.spriteType = Sprite.Type.GRAPHICS;
+    }
+
+    setRenderTextureDimensions(width: number, height: number) {
+        if (this.spriteType === Sprite.Type.RENDERTEXTURE) {
+            let renderTexture = <PIXIRenderTextureSprite>this.displayObject;
+            if (renderTexture.width !== width || renderTexture.height !== height) {
+                renderTexture.resize(width, height);
+            }
+        } else {
+            this.displayObject = new PIXIRenderTextureSprite(width, height);
+            this.spriteType = Sprite.Type.RENDERTEXTURE;
+        }
+    }
+
+    setTexture(key: string) {
+        if (this.spriteType === Sprite.Type.SPRITE) {
+            let sprite = <PIXI.Sprite>this.displayObject;
+            let texture = AssetCache.getTexture(key);
+            if (sprite.texture !== texture) {
+                sprite.texture = texture;
+            }
+        } else {
+            this.displayObject = new PIXI.Sprite(AssetCache.getTexture(key));
+            this.spriteType = Sprite.Type.SPRITE;
+        }
+    }
+}
+
+namespace Sprite {
+    export enum Type {
+        SPRITE, GRAPHICS, RENDERTEXTURE,
+    }
+}
