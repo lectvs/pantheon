@@ -5,7 +5,8 @@ namespace Sprite {
         texture?: string;
         graphics?: PIXI.Graphics;
         renderTexture?: { width: number, height: number };
-        graphicOffset?: Pt;
+        offset?: Pt;
+        angle?: number;
         animations?: Animation.Config[];
     }
 }
@@ -18,9 +19,8 @@ class Sprite extends PhysicsWorldObject {
 
     flipX: boolean;
     flipY: boolean;
-
-    graphicOffsetX: number;
-    graphicOffsetY: number;
+    offset: Pt;
+    angle: number;
 
     constructor(config: Sprite.Config, defaults: Sprite.Config = {}) {
         config = O.withDefaults(config, defaults);
@@ -33,7 +33,7 @@ class Sprite extends PhysicsWorldObject {
         } else if (config.renderTexture) {
             this.setRenderTextureDimensions(config.renderTexture.width, config.renderTexture.height);
         } else {
-            console.debug("SpriteConfig must have texture, graphics, or renderTexture specified:", config);
+            debug("SpriteConfig must have texture, graphics, or renderTexture specified:", config);
             this.setGraphics(new PIXI.Graphics());  // Continue gracefully
         }
 
@@ -52,20 +52,24 @@ class Sprite extends PhysicsWorldObject {
         this.flipX = false;
         this.flipY = false;
 
-        this.graphicOffsetX = config.graphicOffset ? config.graphicOffset.x : 0;
-        this.graphicOffsetY = config.graphicOffset ? config.graphicOffset.y : 0;
+        this.offset = config.offset || { x: 0, y: 0 };
+        this.angle = O.getOrDefault(config.angle, 0);
     }
 
-    update(delta: number, world?: World) {
-        super.update(delta, world);
-        this.animationManager.update(delta);
+    update(options: UpdateOptions) {
+        super.update(options);
+        this.animationManager.update(options.delta);
     }
 
-    render(renderer: PIXI.Renderer, renderTexture?: PIXI.RenderTexture) {
+    render(options: RenderOptions) {
         this.setDisplayObjectProperties();
 
-        renderer.render(this.displayObject, renderTexture, false);
-        super.render(renderer, renderTexture);
+        options.renderer.render(this.displayObject, options.renderTexture, false, options.matrix);
+        super.render(options);
+    }
+
+    getCurrentAnimationName() {
+        return this.animationManager.getCurrentAnimationName();
     }
 
     getDisplayObjectLocalBounds() {
@@ -82,10 +86,11 @@ class Sprite extends PhysicsWorldObject {
     }
 
     setDisplayObjectProperties() {
-        this.displayObject.x = this.x + this.graphicOffsetX;
-        this.displayObject.y = this.y + this.graphicOffsetY;
+        this.displayObject.x = this.x + this.offset.x;
+        this.displayObject.y = this.y + this.offset.y;
         this.displayObject.scale.x = this.flipX ? -1 : 1;
         this.displayObject.scale.y = this.flipY ? -1 : 1;
+        this.displayObject.angle = this.angle;
     }
 
     setGraphics(graphics: PIXI.Graphics) {

@@ -28,65 +28,98 @@ namespace World {
 }
 
 class World extends WorldObject {
+    width: number;
+    height: number;
     worldObjects: WorldObject[];
 
     physicsGroups: Dict<World.PhysicsGroup>;
     collisionOrder: World.CollisionConfig[];
-
+    worldObjectsByName: Dict<WorldObject>;
     layers: World.Layer[];
 
+    private camera: Camera;
+    private scriptManager: ScriptManager;
     private renderTexture: PIXIRenderTextureSprite;
+
+    get renderingDirectly() { return !this.renderTexture; }
 
     constructor(config: World.Config, defaults: World.Config = {}) {
         config = O.withDefaults(config, defaults);
         super(config);
 
+        this.width = O.getOrDefault(config.width, Main.width);
+        this.height = O.getOrDefault(config.width, Main.height);
         this.worldObjects = [];
 
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
         this.collisionOrder = O.getOrDefault(config.collisionOrder, []);
-
+        this.worldObjectsByName = {};
         this.layers = this.createLayers(config.layers);
 
+        this.camera = new Camera(this.width, this.height);
+        this.scriptManager = new ScriptManager();
+
         if (!config.renderDirectly) {
-            this.renderTexture = new PIXIRenderTextureSprite(O.getOrDefault(config.width, Main.width), O.getOrDefault(config.height, Main.height));
+            this.renderTexture = new PIXIRenderTextureSprite(this.width, this.height);
         }
     }
 
-    update(delta: number, world?: World) {
-        super.update(delta, world);
+    update(options: UpdateOptions) {
+        this.updateControllers();
+        super.update(options);
+
+        let thisOptions = O.withOverrides(options, {
+            world: this,
+        });
+
+        this.scriptManager.update(thisOptions);
+
         for (let worldObject of this.worldObjects) {
-            worldObject.update(delta, this);
+            worldObject.update(thisOptions);
         }
 
         this.handleCollisions();
+
+        this.camera.update(thisOptions);
     }
 
-    render(renderer: PIXI.Renderer, renderTexture?: PIXI.RenderTexture) {
+    render(options: RenderOptions) {
         if (this.renderingDirectly) {
-            this.renderWorld(renderer, renderTexture);
+            this.renderWorld(options);
         } else {
-            this.renderTexture.clear(renderer);
-            this.renderWorld(renderer, this.renderTexture.renderTexture);
-            renderer.render(this.renderTexture, renderTexture, false);
+            this.renderTexture.clear(options.renderer);
+            this.renderWorld(O.withOverrides(options, {
+                renderTexture: this.renderTexture.renderTexture,
+            }));
+            options.renderer.render(this.renderTexture, options.renderTexture, false, options.matrix);
         }
-        super.render(renderer, renderTexture);
+        super.render(options);
     }
 
-    renderWorld(renderer: PIXI.Renderer, renderTexture: PIXI.RenderTexture) {
+    renderWorld(options: RenderOptions) {
+        let cameraMatrix = this.camera.rendererMatrix;
+        options.matrix.translate(cameraMatrix.tx, cameraMatrix.ty);
         for (let layer of this.layers) {
             layer.sort();
             for (let worldObject of layer.worldObjects) {
                 if (worldObject.visible) {
-                    worldObject.render(renderer, renderTexture);
+                    worldObject.render(options);
                 }
             }
         }
+        options.matrix.translate(-cameraMatrix.tx, -cameraMatrix.ty);
     }
     
     addWorldObject(obj: WorldObject) {
         this.worldObjects.push(obj);
         this.setLayer(obj, World.DEFAULT_LAYER);
+    }
+
+    getWorldObjectByName(name: string) {
+        if (!this.worldObjectsByName[name]) {
+            debug(`No object with name '${name}' exists in world`, this);
+        }
+        return this.worldObjectsByName[name];
     }
 
     handleCollisions() {
@@ -101,6 +134,14 @@ class World extends WorldObject {
                         transferMomentum: collision.transferMomentum,
                     });
                 }
+            }
+        }
+    }
+
+    removeName(obj: WorldObject) {
+        for (let name in this.worldObjectsByName) {
+            if (this.worldObjectsByName[name] === obj) {
+                delete this.worldObjectsByName[name];
             }
         }
     }
@@ -123,8 +164,17 @@ class World extends WorldObject {
         A.removeAll(this.worldObjects, obj);
     }
 
-    get renderingDirectly() {
-        return !this.renderTexture;
+    runScript(script: Script | Script.Function) {
+        return this.scriptManager.runScript(script);
+    }
+
+    setName(obj: WorldObject, name: string) {
+        if (this.worldObjectsByName[name] && this.worldObjectsByName[name] !== obj) {
+            debug(`Cannot name object '${name}' as that name aleady exists in world`, this);
+            return;
+        }
+        this.removeName(obj);
+        this.worldObjectsByName[name] = obj;
     }
 
     setLayer(obj: WorldObject, name: string = World.DEFAULT_LAYER) {
@@ -137,7 +187,7 @@ class World extends WorldObject {
             }
         }
 
-        debug(`Layer '${name}' does not exist in the world.`);
+        debug(`Layer '${name}' does not exist in world`, this);
     }
 
     setPhysicsGroup(obj: PhysicsWorldObject, name: string) {
@@ -145,7 +195,7 @@ class World extends WorldObject {
 
         let physicsGroup = this.physicsGroups[name];
         if (!physicsGroup) {
-            debug(`PhysicsGroup '${name}' does not exist in the world.`);
+            debug(`PhysicsGroup '${name}' does not exist in world`, this);
             return;
         }
 
@@ -179,6 +229,17 @@ class World extends WorldObject {
             result[name] = new World.PhysicsGroup(name, physicsGroups[name]);
         }
         return result;
+    }
+
+    private updateControllers() {
+        let inControl = Main.theater.inControl.map(name => this.worldObjectsByName[name]);
+        for (let worldObject of this.worldObjects) {
+            if (_.contains(inControl, worldObject)) {
+                worldObject.updateController();
+            } else {
+                worldObject.resetController();
+            }
+        }
     }
 
     static DEFAULT_LAYER: string = 'default';

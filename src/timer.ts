@@ -8,7 +8,12 @@ class Timer {
 
     done: boolean;
 
-    constructor(duration: number, callback: () => any, repeat: boolean = false) {
+    get progress() {
+        if (this.repeat) return 0;
+        return this.time / this.duration;
+    }
+
+    constructor(duration: number, callback?: () => any, repeat: boolean = false) {
         this.duration = duration;
         this.speed = 1;
         this.time = 0;

@@ -14,10 +14,11 @@ class DialogBox extends Sprite {
     textArea: Rect;
     advanceKey: string;
 
-    spriteTextOffset: number;
+    done: boolean;
 
     private spriteText: SpriteText;
     private spriteTextMask: PIXI.Graphics;
+    private spriteTextOffset: number;
     private characterTimer: Timer;
 
     constructor(config: DialogBox.Config) {
@@ -27,32 +28,37 @@ class DialogBox extends Sprite {
         this.textArea = config.textArea;
         this.advanceKey = config.advanceKey;
 
-        this.spriteTextOffset = 0;
+        this.done = true;
 
         this.spriteText = new SpriteText({
             font: config.spriteTextFont,
         });
         this.spriteTextMask = Mask.newRectangleMask(this.getTextAreaWorldRect());
         this.spriteText.mask = this.spriteTextMask;
+        this.spriteTextOffset = 0;
 
         this.characterTimer = new Timer(0.05, () => this.advanceCharacter(), true);
     }
 
-    update(delta: number, world?: World) {
-        super.update(delta, world);
-        this.characterTimer.update(delta);
+    update(options: UpdateOptions) {
+        super.update(options);
+        this.characterTimer.update(options.delta);
+
+        if (this.done) {
+            this.visible = false;
+        }
 
         if (Input.justDown(this.advanceKey)) {
             this.advanceDialog();
         }
     }
 
-    render(renderer: PIXI.Renderer, renderTexture?: PIXI.RenderTexture) {
-        super.render(renderer, renderTexture);
+    render(options: RenderOptions) {
+        super.render(options);
 
         this.setSpriteTextProperties();
         this.drawMask();
-        this.spriteText.render(renderer, renderTexture);
+        this.spriteText.render(options);
     }
 
     advanceDialog() {
@@ -79,7 +85,7 @@ class DialogBox extends Sprite {
     }
 
     completeDialog() {
-        this.visible = false;
+        this.done = true;
     }
 
     completePage() {
@@ -112,6 +118,7 @@ class DialogBox extends Sprite {
         this.spriteText.clear();
         this.spriteTextOffset = 0;
         this.visible = true;
+        this.done = false;
 
         this.charQueue = SpriteTextConverter.textToCharListWithWordWrap(dialogText, this.spriteText.font, this.textArea.width);
         this.characterTimer.reset();

@@ -1,22 +1,26 @@
 /// <reference path="./sprite.ts" />
 
-class Player extends Sprite {
+class HumanCharacter extends Sprite {
     speed: number = 60;
 
     private direction: Direction2D;
 
     constructor(config: Sprite.Config) {
-        super(config, {
-            texture: 'milo_sprites_0',
-            bounds: { x: -5, y: -2, width: 10, height: 2 },
-        });
+        super(config);
+
+        this.controllerSchema = {
+            left: () => Input.isDown('left'),
+            right: () => Input.isDown('right'),
+            up: () => Input.isDown('up'),
+            down: () => Input.isDown('down'),
+        };
 
         this.direction = Direction2D.LEFT;
     }
 
-    update(delta: number, world: World) {
-        let haxis = (Input.isDown('right') ? 1 : 0) - (Input.isDown('left') ? 1 : 0);
-        let vaxis = (Input.isDown('down') ? 1 : 0) - (Input.isDown('up') ? 1 : 0);
+    update(options: UpdateOptions) {
+        let haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
+        let vaxis = (this.controller.down ? 1 : 0) - (this.controller.up ? 1 : 0);
 
         if (haxis < 0) {
             this.vx = -this.speed;
@@ -44,7 +48,7 @@ class Player extends Sprite {
             this.vy = 0;
         }
 
-        super.update(delta, world);
+        super.update(options);
 
         // Handle animation.
         let anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'run';

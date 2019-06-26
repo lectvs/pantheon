@@ -21,12 +21,12 @@ class Script {
         return !this.paused && !this.done;
     }
 
-    update(delta: number, world?: World) {
+    update(options: UpdateOptions) {
         if (!this.running) return;
 
         S.global = {
-            delta: delta,
-            world: world,
+            delta: options.delta,
+            world: options.world,
             script: this,
         };
 

@@ -60,10 +60,17 @@ class Main {
 
             Input.update();
 
-            this.theater.update(this.delta);
+            this.theater.update({
+                delta: this.delta,
+                world: null,
+            });
 
             this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
-            this.theater.render(this.renderer);
+            this.theater.render({
+                renderer: this.renderer,
+                renderTexture: undefined,
+                matrix: PIXI.Matrix.IDENTITY,
+            });
         });
     }
 }

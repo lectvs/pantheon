@@ -14,6 +14,9 @@ abstract class WorldObject {
     lastx: number;
     lasty: number;
 
+    protected controller: Controller;
+    protected controllerSchema: Controller.Schema;
+
     get mask(): Mask { return undefined; }
     set mask(value: Mask) { }
 
@@ -25,14 +28,29 @@ abstract class WorldObject {
 
         this.lastx = this.x;
         this.lasty = this.y;
+
+        this.controller = {};
+        this.controllerSchema = {};
     }
 
-    update(delta: number, world?: World) {
+    update(options: UpdateOptions) {
         this.lastx = this.x;
         this.lasty = this.y;
     }
 
-    render(renderer: PIXI.Renderer, renderTexture?: PIXI.RenderTexture) {
+    render(opitons: RenderOptions) {
 
+    }
+
+    resetController() {
+        for (let key in this.controller) {
+            this.controller[key] = false;
+        }
+    }
+
+    updateController() {
+        for (let key in this.controllerSchema) {
+            this.controller[key] = this.controllerSchema[key]();
+        }
     }
 }

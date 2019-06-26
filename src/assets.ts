@@ -18,14 +18,6 @@ namespace Assets {
         'milo_sprites': {
             anchor: { x: 0.5, y: 1 },
             frames: Preload.spritesheet({ prefix: 'milo_sprites_', frameWidth: 32, frameHeight: 36, numFramesX: 8, numFramesY: 4 }),
-            // frames: {
-            //     'milo_sprites_idle_0': {
-            //         rect: { x: 0, y: 0, width: 32, height: 36 },
-            //     },
-            //     'milo_sprites_idle_1': {
-            //         rect: { x: 32, y: 0, width: 32, height: 36 },
-            //     },
-            // }
         },
 
         'milo_demon_sprites': {
@@ -33,7 +25,8 @@ namespace Assets {
         },
 
         'angie_sprites': {
-
+            anchor: { x: 0.5, y: 1 },
+            frames: Preload.spritesheet({ prefix: 'angie_sprites_', frameWidth: 32, frameHeight: 36, numFramesX: 8, numFramesY: 4 }),
         },
 
         'props': {

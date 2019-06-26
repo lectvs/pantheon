@@ -39,27 +39,31 @@ namespace Stages{
                 texture: 'room_bg',
                 layer: 'bg',
             },
-            { // Back wall graphic
+            {
+                name: 'backwall',
                 constructor: Sprite,
                 texture: 'room_backwall',
                 x: 64, y: 0,
                 layer: 'bg',
             },
-            { // Bed
+            {
+                name: 'bed',
                 constructor: Sprite,
                 texture: 'bed',
-                x: 84, y: 143,
+                x: 84, y: 158,
                 layer: 'main',
                 physicsGroup: 'props',
                 bounds: { x: -18, y: -20, width: 36, height: 20 },
             },
-            { // Chair
+            {
+                name: 'chair',
                 constructor: Sprite,
                 texture: 'chair',
                 x: 172, y: 134,
                 layer: 'main',
             },
-            { // Desk
+            {
+                name: 'desk',
                 constructor: Sprite,
                 texture: 'desk',
                 x: 172, y: 158,
@@ -67,19 +71,21 @@ namespace Stages{
                 physicsGroup: 'props',
                 bounds: { x: -18, y: -23, width: 36, height: 23 },
             },
-            { // Door
+            {
+                name: 'door',
                 constructor: Sprite,
                 texture: 'door_closed',
                 x: 84, y: 80,
                 layer: 'main',
-                graphicOffset: { x: 0, y: -36 },
+                offset: { x: 0, y: -36 },
             },
-            { // Window
+            {
+                name: 'window',
                 constructor: Sprite,
                 texture: 'window',
                 x: 156, y: 80,
                 layer: 'main',
-                graphicOffset: { x: 0, y: -7 },
+                offset: { x: 0, y: -7 },
                 physicsGroup: 'props',
                 bounds: { x: -22, y: -3, width: 43, height: 3 },
             },

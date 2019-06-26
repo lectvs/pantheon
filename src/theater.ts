@@ -11,12 +11,14 @@ namespace Theater {
 class Theater extends World {
     scenes: Dict<Scene>;
 
+    cutsceneManager: CutsceneManager;
+    inControl: string[];
+
     currentSceneName: string;
     currentWorld: World;
     dialogBox: DialogBox;
 
-    scriptManager: ScriptManager;
-    cutsceneManager: CutsceneManager;
+    get isCutscenePlaying() { return this.cutsceneManager.isCutscenePlaying; }
     
     constructor(config: Theater.Config) {
         super({
@@ -26,24 +28,27 @@ class Theater extends World {
             ],
         });
         this.scenes = config.scenes;
+
+        this.cutsceneManager = new CutsceneManager();
+        this.inControl = [];
+
         this.loadDialogBox(config.dialogBox);
         this.loadScene(config.sceneToLoad);
-
-        this.scriptManager = new ScriptManager();
-        this.cutsceneManager = new CutsceneManager();
     }
 
-    update(delta: number, world?: World) {
-        this.scriptManager.update(delta, this.currentWorld);
-        this.cutsceneManager.update(delta, this.currentWorld);
-        super.update(delta, world);
+    update(options: UpdateOptions) {
+        let currentWorldOptions = O.withOverrides(options, {
+            world: this.currentWorld,
+        });
+        this.cutsceneManager.update(currentWorldOptions);
+        if (!this.isCutscenePlaying && _.isEmpty(this.inControl)) {
+            this.inControl = this.getCurrentScene().defaultControl;
+        }
+        super.update(options);
     }
 
-    loadDialogBox(config: DialogBox.Config) {
-        this.dialogBox = new DialogBox(config);
-        this.dialogBox.visible = false;
-        this.addWorldObject(this.dialogBox);
-        this.setLayer(this.dialogBox, 'dialog');
+    getCurrentScene() {
+        return this.scenes[this.currentSceneName];
     }
 
     loadScene(name: string) {
@@ -58,15 +63,36 @@ class Theater extends World {
             this.removeWorldObject(this.currentWorld);
         }
 
+        this.cutsceneManager.reset();
+
         // Create new stuff
         this.currentSceneName = name;
         this.currentWorld = Theater.createWorldFromScene(scene);
         this.addWorldObject(this.currentWorld);
         this.setLayer(this.currentWorld, 'main');
+
+        // Start scene's entry point
+        if (scene.entry) {
+            this.playCutsceneByName(scene.entry);
+        }
     }
 
-    runScript(script: Script | Script.Function) {
-        this.scriptManager.runScript(script);
+    playCutsceneByName(name: string) {
+        let scene = this.getCurrentScene();
+        let cutscene = scene.cutscenes[name];
+        if (!cutscene) {
+            debug(`Cutscene '${name}' does not exist in scene:`, scene);
+            return;
+        }
+        this.inControl = [];
+        this.cutsceneManager.playCutscene(cutscene, this.currentWorld);
+    }
+
+    private loadDialogBox(config: DialogBox.Config) {
+        this.dialogBox = new DialogBox(config);
+        this.dialogBox.visible = false;
+        this.addWorldObject(this.dialogBox);
+        this.setLayer(this.dialogBox, 'dialog');
     }
     
     static addWorldObjectFromStageConfig(world: World, worldObject: SomeStageConfig) {
@@ -81,6 +107,11 @@ class Theater extends World {
             _.defaults(config, {
                 layer: World.DEFAULT_LAYER,
             });
+
+            if (config.name) {
+                world.setName(obj, config.name);
+            }
+
             world.setLayer(obj, config.layer);
         }
 

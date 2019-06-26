@@ -5,6 +5,19 @@ class ScriptManager {
         this.activeScripts = [];
     }
 
+    update(options: UpdateOptions) {
+        for (let i = this.activeScripts.length-1; i >= 0; i--) {
+            this.activeScripts[i].update(options);
+            if (this.activeScripts[i].done) {
+                this.activeScripts.splice(i, 1);
+            }
+        }
+    }
+    
+    reset() {
+        this.activeScripts = [];
+    }
+
     runScript(script: Script | Script.Function) {
         if (script instanceof Script) {
             if (script.done) return;
@@ -15,12 +28,4 @@ class ScriptManager {
         return script;
     }
 
-    update(delta: number, currentWorld: World) {
-        for (let i = this.activeScripts.length-1; i >= 0; i--) {
-            this.activeScripts[i].update(delta, currentWorld);
-            if (this.activeScripts[i].done) {
-                this.activeScripts.splice(i, 1);
-            }
-        }
-    }
 }

@@ -1,8 +1,7 @@
 
 class Draw {
     private static graphics: PIXI.Graphics = new PIXI.Graphics();
-    private static _renderer: PIXI.Renderer;
-    private static _renderTexture: PIXI.RenderTexture;
+    private static _options: RenderOptions;
     private static _fillColor: number = 0x000000;
     private static _fillAlpha: number = 1;
     
@@ -25,9 +24,8 @@ class Draw {
         return this.fillColor(0x000000, 0);
     }
 
-    static renderer(renderer: PIXI.Renderer, renderTexture?: PIXI.RenderTexture) {
-        this._renderer = renderer;
-        this._renderTexture = renderTexture;
+    static options(options: RenderOptions) {
+        this._options = options;
         return this;
     }
 
@@ -43,7 +41,7 @@ class Draw {
     }
 
     private static render() {
-        this._renderer.render(this.graphics, this._renderTexture, false);
+        this._options.renderer.render(this.graphics, this._options.renderTexture, false, this._options.matrix);
     }
 
     static ALIGNMENT_INNER: number = 0;

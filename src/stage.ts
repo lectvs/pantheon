@@ -9,6 +9,7 @@ type Schema = {
 
 namespace WorldObject {
     export type StageConfig = Config & {
+        name?: string;
         constructor?: any;
         layer?: string;
     }

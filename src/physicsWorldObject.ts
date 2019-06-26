@@ -49,20 +49,20 @@ abstract class PhysicsWorldObject extends WorldObject {
         this.preMovementY = this.y;
     }
 
-    update(delta: number, world?: World) {
-        super.update(delta, world);
+    update(options: UpdateOptions) {
+        super.update(options);
         if (this.simulating) {
-            this.simulate(delta, world);
+            this.simulate(options.delta, options.world);
         }
     }
 
-    render(renderer: PIXI.Renderer, renderTexture?: PIXI.RenderTexture) {
+    render(options: RenderOptions) {
         if (DEBUG_ALL_PHYSICS_BOUNDS || this.debugBounds) {
             let worldBounds = this.getWorldBounds();
-            Draw.renderer(renderer, renderTexture).lineStyle(1, 0x00FF00).noFill()
+            Draw.options(options).lineStyle(1, 0x00FF00).noFill()
                 .drawRectangle(worldBounds.x, worldBounds.y, worldBounds.width, worldBounds.height);
         }
-        super.render(renderer, renderTexture);
+        super.render(options);
     }
 
     applyGravity(delta: number) {
