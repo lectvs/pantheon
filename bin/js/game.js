@@ -70,6 +70,50 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 var A;
 (function (A) {
+    function clone(array) {
+        if (_.isEmpty(array))
+            return [];
+        return Array.from(array);
+    }
+    A.clone = clone;
+    function clone2D(array) {
+        if (_.isEmpty(array))
+            return [];
+        return array.map(function (line) { return clone(line); });
+    }
+    A.clone2D = clone2D;
+    function filledArray(n, fillWith) {
+        var result = [];
+        for (var i = 0; i < n; i++) {
+            result.push(fillWith);
+        }
+        return result;
+    }
+    A.filledArray = filledArray;
+    function filledArray2D(n, m, fillWith) {
+        var result = [];
+        for (var i = 0; i < n; i++) {
+            var line = [];
+            for (var j = 0; j < m; j++) {
+                line.push(fillWith);
+            }
+            result.push(line);
+        }
+        return result;
+    }
+    A.filledArray2D = filledArray2D;
+    function get2DArrayDimensions(array) {
+        if (_.isEmpty(array))
+            return { width: 0, height: 0 };
+        return { width: M.max(array, function (line) { return _.isEmpty(line) ? 0 : line.length; }), height: array.length };
+    }
+    A.get2DArrayDimensions = get2DArrayDimensions;
+    function map2D(array, fn) {
+        if (_.isEmpty(array))
+            return [];
+        return array.map(function (line) { return _.isEmpty(line) ? [] : line.map(fn); });
+    }
+    A.map2D = map2D;
     function removeAll(array, obj) {
         if (!array)
             return 0;
@@ -150,7 +194,7 @@ var WorldObject = /** @class */ (function () {
         this.lastx = this.x;
         this.lasty = this.y;
     };
-    WorldObject.prototype.render = function (opitons) {
+    WorldObject.prototype.render = function (options) {
     };
     WorldObject.prototype.resetController = function () {
         for (var key in this.controller) {
@@ -277,6 +321,8 @@ var Sprite = /** @class */ (function (_super) {
         _this.flipY = false;
         _this.offset = config.offset || { x: 0, y: 0 };
         _this.angle = O.getOrDefault(config.angle, 0);
+        _this.tint = O.getOrDefault(config.tint, 0xFFFFFF);
+        _this.alpha = O.getOrDefault(config.alpha, 1);
         return _this;
     }
     Sprite.prototype.update = function (options) {
@@ -309,6 +355,8 @@ var Sprite = /** @class */ (function (_super) {
         this.displayObject.scale.x = this.flipX ? -1 : 1;
         this.displayObject.scale.y = this.flipY ? -1 : 1;
         this.displayObject.angle = this.angle;
+        this.displayObject.tint = this.tint;
+        this.displayObject.alpha = this.alpha;
     };
     Sprite.prototype.setGraphics = function (graphics) {
         this.displayObject = graphics;
@@ -564,7 +612,14 @@ var AssetCache = /** @class */ (function () {
         }
         return this.textures[key];
     };
+    AssetCache.getTilemap = function (key) {
+        if (!this.tilemaps[key]) {
+            debug("Tilemap '" + key + "' does not exist.");
+        }
+        return this.tilemaps[key];
+    };
     AssetCache.textures = {};
+    AssetCache.tilemaps = {};
     AssetCache.DEFAULT_ANCHOR = { x: 0, y: 0 };
     return AssetCache;
 }());
@@ -578,12 +633,22 @@ var Preload = /** @class */ (function () {
                 this.preloadTexture(key, options.textures[key]);
             }
         }
+        if (options.pyxelTilemaps) {
+            for (var key in options.pyxelTilemaps) {
+                this.preloadPyxelTilemap(key, options.pyxelTilemaps[key]);
+            }
+        }
         PIXI.Loader.shared.load(function () { return _this.load(options); });
     };
     Preload.load = function (options) {
         if (options.textures) {
             for (var key in options.textures) {
                 this.loadTexture(key, options.textures[key]);
+            }
+        }
+        if (options.pyxelTilemaps) {
+            for (var key in options.pyxelTilemaps) {
+                this.loadPyxelTilemap(key, options.pyxelTilemaps[key]);
             }
         }
         if (options.onLoad) {
@@ -606,39 +671,75 @@ var Preload = /** @class */ (function () {
             mainTexture.defaultAnchor = new Point(anchor.x, anchor.y);
         }
         AssetCache.textures[key] = mainTexture;
+        var frames = {};
+        if (texture.spritesheet) {
+            var numFramesX = Math.floor(baseTexture.width / texture.spritesheet.frameWidth);
+            var numFramesY = Math.floor(baseTexture.height / texture.spritesheet.frameHeight);
+            for (var y = 0; y < numFramesY; y++) {
+                for (var x = 0; x < numFramesX; x++) {
+                    var frameKeyPrefix = O.getOrDefault(texture.spritesheet.prefix, key + "_");
+                    var frameKey = "" + frameKeyPrefix + (x + y * numFramesX);
+                    frames[frameKey] = {
+                        rect: {
+                            x: x * texture.spritesheet.frameWidth,
+                            y: y * texture.spritesheet.frameHeight,
+                            width: texture.spritesheet.frameWidth,
+                            height: texture.spritesheet.frameHeight
+                        },
+                        anchor: texture.spritesheet.anchor,
+                    };
+                }
+            }
+        }
         if (texture.frames) {
             for (var frame in texture.frames) {
-                var frameTexture = new PIXI.Texture(baseTexture);
-                var rect_1 = texture.frames[frame].rect || texture.rect;
-                var anchor_1 = texture.frames[frame].anchor || texture.anchor;
-                if (rect_1) {
-                    frameTexture.frame = new Rectangle(rect_1.x, rect_1.y, rect_1.width, rect_1.height);
-                }
-                if (anchor_1) {
-                    frameTexture.defaultAnchor = new Point(anchor_1.x, anchor_1.y);
-                }
-                AssetCache.textures[frame] = frameTexture;
+                frames[frame] = texture.frames[frame];
             }
+        }
+        for (var frame in frames) {
+            var frameTexture = new PIXI.Texture(baseTexture);
+            var rect_1 = frames[frame].rect || texture.rect;
+            var anchor_1 = frames[frame].anchor || texture.defaultAnchor;
+            if (rect_1) {
+                frameTexture.frame = new Rectangle(rect_1.x, rect_1.y, rect_1.width, rect_1.height);
+            }
+            if (anchor_1) {
+                frameTexture.defaultAnchor = new Point(anchor_1.x, anchor_1.y);
+            }
+            AssetCache.textures[frame] = frameTexture;
         }
     };
-    return Preload;
-}());
-(function (Preload) {
-    function spritesheet(config) {
-        var result = {};
-        for (var x = 0; x < config.numFramesX; x++) {
-            for (var y = 0; y < config.numFramesY; y++) {
-                var name_2 = "" + config.prefix + (x + y * config.numFramesX);
-                var frame = {
-                    rect: { x: x * config.frameWidth, y: y * config.frameHeight, width: config.frameWidth, height: config.frameHeight },
-                };
-                result[name_2] = frame;
+    Preload.preloadPyxelTilemap = function (key, tilemap) {
+        var url = tilemap.url || "assets/" + key + ".json";
+        PIXI.Loader.shared.add(key + this.TILEMAP_KEY_SUFFIX, url);
+    };
+    Preload.loadPyxelTilemap = function (key, tilemap) {
+        var e_2, _a;
+        var tilemapJson = PIXI.Loader.shared.resources[key + this.TILEMAP_KEY_SUFFIX].data;
+        var tilemapForCache = A.filledArray2D(tilemapJson.tileshigh, tilemapJson.tileswide);
+        try {
+            for (var _b = __values(tilemapJson.layers[0].tiles), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var tile = _c.value;
+                if (tile.tile >= 0) {
+                    var prefix = O.getOrDefault(tilemap.tilesetPrefix, key + "_");
+                    tilemapForCache[tile.y][tile.x] = {
+                        texture: "" + prefix + tile.tile,
+                    };
+                }
             }
         }
-        return result;
-    }
-    Preload.spritesheet = spritesheet;
-})(Preload || (Preload = {}));
+        catch (e_2_1) { e_2 = { error: e_2_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_2) throw e_2.error; }
+        }
+        AssetCache.tilemaps[key] = tilemapForCache;
+    };
+    Preload.TILEMAP_KEY_SUFFIX = '_tilemap_';
+    return Preload;
+}());
 /// <reference path="./preload.ts" />
 var Assets;
 (function (Assets) {
@@ -655,16 +756,16 @@ var Assets;
             rect: { x: 0, y: 0, width: 128, height: 80 },
         },
         'milo_sprites': {
-            anchor: { x: 0.5, y: 1 },
-            frames: Preload.spritesheet({ prefix: 'milo_sprites_', frameWidth: 32, frameHeight: 36, numFramesX: 8, numFramesY: 4 }),
+            defaultAnchor: { x: 0.5, y: 1 },
+            spritesheet: { frameWidth: 32, frameHeight: 36 },
         },
         'milo_demon_sprites': {},
         'angie_sprites': {
-            anchor: { x: 0.5, y: 1 },
-            frames: Preload.spritesheet({ prefix: 'angie_sprites_', frameWidth: 32, frameHeight: 36, numFramesX: 8, numFramesY: 4 }),
+            defaultAnchor: { x: 0.5, y: 1 },
+            spritesheet: { frameWidth: 32, frameHeight: 36 },
         },
         'props': {
-            anchor: { x: 0.5, y: 1 },
+            defaultAnchor: { x: 0.5, y: 1 },
             frames: {
                 'bed': {
                     rect: { x: 2, y: 2, width: 36, height: 27 },
@@ -688,9 +789,19 @@ var Assets;
                 },
             }
         },
+        'testtiles': {
+            spritesheet: { frameWidth: 16, frameHeight: 16 },
+        },
+        'tilestest': {
+            spritesheet: { frameWidth: 16, frameHeight: 16 },
+        },
+        'mainworld': {
+            url: 'assets/tilemap/mainworld.png',
+            spritesheet: { frameWidth: 16, frameHeight: 16 },
+        },
         // Portraits
         'portraits/milo': {
-            anchor: { x: 0.5, y: 0.5 },
+            defaultAnchor: { x: 0.5, y: 0.5 },
             frames: {
                 'milo/happy': {
                     rect: { x: 0, y: 0, width: 74, height: 54 },
@@ -701,7 +812,12 @@ var Assets;
         'deluxe16': {
             rect: { x: 0, y: 0, width: 8, height: 15 },
             anchor: { x: 0, y: 0 },
-        }
+        },
+    };
+    Assets.pyxelTilemaps = {
+        'mainworld': {
+            url: 'assets/tilemap/mainworld.json',
+        },
     };
     var fonts = /** @class */ (function () {
         function fonts() {
@@ -743,6 +859,12 @@ var S;
         };
     }
     S.doOverTime = doOverTime;
+    function finishImmediately(scriptFunction, maxIters) {
+        if (maxIters === void 0) { maxIters = Script.FINISH_IMMEDIATELY_MAX_ITERS; }
+        var script = new Script(scriptFunction);
+        script.finishImmediately(maxIters);
+    }
+    S.finishImmediately = finishImmediately;
     function printNumber(upTo) {
         return {
             generator: function () {
@@ -806,12 +928,15 @@ var Camera = /** @class */ (function () {
         this.height = height;
         this.setModeFocus(width / 2, height / 2);
         this.setMovementSnap();
+        this.shakeIntensity = 0;
+        this._shakeX = 0;
+        this._shakeY = 0;
         this.matrix = new PIXI.Matrix(1, 0, 0, 1, this.x, this.y);
     }
     Object.defineProperty(Camera.prototype, "rendererMatrix", {
         get: function () {
-            this.matrix.tx = -(this.x - this.width / 2);
-            this.matrix.ty = -(this.y - this.height / 2);
+            this.matrix.tx = -(this.x + this._shakeX - this.width / 2);
+            this.matrix.ty = -(this.y + this._shakeY - this.height / 2);
             return this.matrix;
         },
         enumerable: true,
@@ -819,10 +944,23 @@ var Camera = /** @class */ (function () {
     });
     Camera.prototype.update = function (options) {
         if (this.mode.type === 'follow') {
-            this.moveTowardsPoint(this.mode.target.x + this.mode.offset.x, this.mode.target.y + this.mode.offset.y, options);
+            var target = this.mode.target;
+            if (_.isString(target)) {
+                target = options.world.getWorldObjectByName(target);
+            }
+            this.moveTowardsPoint(target.x + this.mode.offset.x, target.y + this.mode.offset.y, options);
         }
         else if (this.mode.type === 'focus') {
             this.moveTowardsPoint(this.mode.point.x, this.mode.point.y, options);
+        }
+        if (this.shakeIntensity > 0) {
+            var pt = Random.inCircle(this.shakeIntensity);
+            this._shakeX = pt.x;
+            this._shakeY = pt.y;
+        }
+        else {
+            this._shakeX = 0;
+            this._shakeY = 0;
         }
     };
     Camera.prototype.moveTowardsPoint = function (x, y, options) {
@@ -866,139 +1004,51 @@ var Camera = /** @class */ (function () {
 }());
 var Cutscene;
 (function (Cutscene) {
-    function runScriptGenerator(generator) {
+    function toScript(generator, skipCutsceneScriptKey) {
         return {
             generator: function () {
-                var iterator, result;
+                var iterator, result, script;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
                             iterator = generator();
                             _a.label = 1;
                         case 1:
-                            if (!true) return [3 /*break*/, 6];
+                            if (!true) return [3 /*break*/, 8];
                             result = iterator.next();
-                            if (!result.value) return [3 /*break*/, 3];
-                            return [5 /*yield**/, __values(S.runScript(result.value))];
+                            if (!result.value) return [3 /*break*/, 5];
+                            script = S.global.world.runScript(result.value);
+                            if (DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS) {
+                                script.finishImmediately();
+                            }
+                            _a.label = 2;
                         case 2:
-                            _a.sent();
-                            return [3 /*break*/, 5];
-                        case 3:
-                            if (!!result.done) return [3 /*break*/, 5];
+                            if (!!script.done) return [3 /*break*/, 4];
+                            if (DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS || Input.justDown(skipCutsceneScriptKey)) {
+                                script.finishImmediately();
+                            }
                             return [4 /*yield*/];
-                        case 4:
+                        case 3:
                             _a.sent();
-                            _a.label = 5;
+                            return [3 /*break*/, 2];
+                        case 4: return [3 /*break*/, 7];
                         case 5:
+                            if (!!result.done) return [3 /*break*/, 7];
+                            return [4 /*yield*/];
+                        case 6:
+                            _a.sent();
+                            _a.label = 7;
+                        case 7:
                             if (result.done)
-                                return [3 /*break*/, 6];
+                                return [3 /*break*/, 8];
                             return [3 /*break*/, 1];
-                        case 6: return [2 /*return*/];
+                        case 8: return [2 /*return*/];
                     }
                 });
             }
         };
     }
-    Cutscene.runScriptGenerator = runScriptGenerator;
-    function toScript(scriptText) {
-        var env = {};
-        var generator = function () {
-            var e_2, _a, lines, lines_1, lines_1_1, line, firstPart, scriptFunction, script_1, error_1, e_2_1;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        lines = scriptText.split(/[\n;]+/);
-                        _b.label = 1;
-                    case 1:
-                        _b.trys.push([1, 13, 14, 15]);
-                        lines_1 = __values(lines), lines_1_1 = lines_1.next();
-                        _b.label = 2;
-                    case 2:
-                        if (!!lines_1_1.done) return [3 /*break*/, 12];
-                        line = lines_1_1.value;
-                        _b.label = 3;
-                    case 3:
-                        _b.trys.push([3, 10, , 11]);
-                        line = line.trim();
-                        line = resolveThis(line).trim();
-                        line = resolveRunScript(line).trim();
-                        line = resolveActorDefinition(line).trim();
-                        if (!(S.splitOnWhitespace(line)[0] === YIELD_KEYWORD)) return [3 /*break*/, 5];
-                        return [4 /*yield*/];
-                    case 4:
-                        _b.sent();
-                        return [3 /*break*/, 11];
-                    case 5:
-                        if (!(line.indexOf('(') >= 0)) return [3 /*break*/, 9];
-                        firstPart = line.split('(')[0].trim();
-                        if (!S[firstPart]) return [3 /*break*/, 9];
-                        scriptFunction = eval("S." + line);
-                        if (!scriptFunction) return [3 /*break*/, 9];
-                        script_1 = S.global.world.runScript(scriptFunction);
-                        _b.label = 6;
-                    case 6:
-                        if (!!script_1.done) return [3 /*break*/, 8];
-                        return [4 /*yield*/];
-                    case 7:
-                        _b.sent();
-                        return [3 /*break*/, 6];
-                    case 8: return [3 /*break*/, 11];
-                    case 9:
-                        // Else, evaluate it as Javascript.
-                        eval(line);
-                        return [3 /*break*/, 11];
-                    case 10:
-                        error_1 = _b.sent();
-                        debug("Cannot parse script line '" + line + "':", error_1);
-                        return [2 /*return*/];
-                    case 11:
-                        lines_1_1 = lines_1.next();
-                        return [3 /*break*/, 2];
-                    case 12: return [3 /*break*/, 15];
-                    case 13:
-                        e_2_1 = _b.sent();
-                        e_2 = { error: e_2_1 };
-                        return [3 /*break*/, 15];
-                    case 14:
-                        try {
-                            if (lines_1_1 && !lines_1_1.done && (_a = lines_1.return)) _a.call(lines_1);
-                        }
-                        finally { if (e_2) throw e_2.error; }
-                        return [7 /*endfinally*/];
-                    case 15: return [2 /*return*/];
-                }
-            });
-        };
-        return {
-            generator: generator.bind(env)
-        };
-    }
     Cutscene.toScript = toScript;
-    function resolveActorDefinition(line) {
-        if (!line.startsWith(ACTOR_INDICATOR)) {
-            return line;
-        }
-        var name = line.substr(1).trim();
-        return "this." + name + " = S.global.world.getWorldObjectByName(\"" + name + "\")";
-    }
-    function resolveRunScript(line) {
-        var parts = line.split(RUN_SCRIPT_INDICATOR);
-        if (parts.length < 2) {
-            return line;
-        }
-        var _a = __read(parts), actor = _a[0], rest = _a.slice(1);
-        var script = rest.join(RUN_SCRIPT_INDICATOR);
-        var scriptParts = script.split('(');
-        scriptParts[1] = actor.trim() + "," + scriptParts[1];
-        return scriptParts.join('(');
-    }
-    function resolveThis(line) {
-        return S.replaceAll(line, THIS_INDICATOR, 'this.');
-    }
-    var THIS_INDICATOR = '$';
-    var RUN_SCRIPT_INDICATOR = '->';
-    var ACTOR_INDICATOR = '@';
-    var YIELD_KEYWORD = 'yield';
 })(Cutscene || (Cutscene = {}));
 var CutsceneManager = /** @class */ (function () {
     function CutsceneManager() {
@@ -1022,12 +1072,12 @@ var CutsceneManager = /** @class */ (function () {
             Main.theater.inControl = this.current.cutscene.afterwardsGiveControlTo;
         }
     };
-    CutsceneManager.prototype.playCutscene = function (cutscene, world) {
+    CutsceneManager.prototype.playCutscene = function (cutscene, world, skipCutsceneScriptKey) {
         if (this.current) {
             debug("Cannot play cutscene:", cutscene, "because a cutscene is already playing:", this.current.cutscene);
             return;
         }
-        var script = world.runScript(Cutscene.runScriptGenerator(cutscene.script));
+        var script = world.runScript(Cutscene.toScript(cutscene.script, skipCutsceneScriptKey));
         this.current = { cutscene: cutscene, script: script };
     };
     CutsceneManager.prototype.reset = function () {
@@ -1064,22 +1114,65 @@ var S;
         };
     }
     S.dialog = dialog;
+    function fadeSlides(duration, removeAllButLast) {
+        if (removeAllButLast === void 0) { removeAllButLast = 1; }
+        return {
+            generator: function () {
+                var slideAlphas, timer, i;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            Main.theater.clearSlides(removeAllButLast);
+                            if (_.isEmpty(Main.theater.slides))
+                                return [2 /*return*/];
+                            slideAlphas = Main.theater.slides.map(function (slide) { return slide.alpha; });
+                            timer = new Timer(duration);
+                            _a.label = 1;
+                        case 1:
+                            if (!!timer.done) return [3 /*break*/, 3];
+                            for (i = 0; i < Main.theater.slides.length; i++) {
+                                Main.theater.slides[i].alpha = slideAlphas[i] * (1 - timer.progress);
+                            }
+                            timer.update(S.global.delta);
+                            return [4 /*yield*/];
+                        case 2:
+                            _a.sent();
+                            return [3 /*break*/, 1];
+                        case 3: return [2 /*return*/];
+                    }
+                });
+            },
+            endState: function () {
+                Main.theater.clearSlides();
+            }
+        };
+    }
+    S.fadeSlides = fadeSlides;
+    function fadeOut(duration, tint) {
+        if (tint === void 0) { tint = 0x000000; }
+        var graphics = new PIXI.Graphics();
+        graphics.beginFill(tint, 1);
+        graphics.drawRect(0, 0, Main.width, Main.height);
+        graphics.endFill();
+        return showSlide({ x: 0, y: 0, graphics: graphics, timeToLoad: duration, fadeIn: true });
+    }
+    S.fadeOut = fadeOut;
     function jump(sprite, peakDelta, time, landOnGround) {
         if (landOnGround === void 0) { landOnGround = false; }
         var start = sprite.offset.y;
         var groundDelta = landOnGround ? -start : 0;
         return {
             generator: function () {
-                var t;
+                var timer;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            t = new Timer(time);
+                            timer = new Timer(time);
                             _a.label = 1;
                         case 1:
-                            if (!!t.done) return [3 /*break*/, 3];
-                            sprite.offset.y = M.jumpParabola(start, -peakDelta, groundDelta, t.progress);
-                            t.update(S.global.delta);
+                            if (!!timer.done) return [3 /*break*/, 3];
+                            sprite.offset.y = M.jumpParabola(start, -peakDelta, groundDelta, timer.progress);
+                            timer.update(S.global.delta);
                             return [4 /*yield*/];
                         case 2:
                             _a.sent();
@@ -1104,9 +1197,10 @@ var S;
                     switch (_a.label) {
                         case 0:
                             sprite.playAnimation(animationName, startFrame, force);
+                            if (!waitForCompletion) return [3 /*break*/, 3];
                             _a.label = 1;
                         case 1:
-                            if (!(waitForCompletion && sprite.getCurrentAnimationName() == animationName)) return [3 /*break*/, 3];
+                            if (!(sprite.getCurrentAnimationName() === animationName)) return [3 /*break*/, 3];
                             return [4 /*yield*/];
                         case 2:
                             _a.sent();
@@ -1118,9 +1212,69 @@ var S;
         };
     }
     S.playAnimation = playAnimation;
+    function shake(intensity, time) {
+        return {
+            generator: function () {
+                var timer;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            S.global.world.camera.shakeIntensity = intensity;
+                            timer = new Timer(time);
+                            _a.label = 1;
+                        case 1:
+                            if (!!timer.done) return [3 /*break*/, 3];
+                            timer.update(S.global.delta);
+                            return [4 /*yield*/];
+                        case 2:
+                            _a.sent();
+                            return [3 /*break*/, 1];
+                        case 3: return [2 /*return*/];
+                    }
+                });
+            },
+            endState: function () {
+                S.global.world.camera.shakeIntensity = 0;
+            }
+        };
+    }
+    S.shake = shake;
+    function showSlide(config, waitForCompletion) {
+        if (waitForCompletion === void 0) { waitForCompletion = true; }
+        var slide;
+        return {
+            generator: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            slide = Main.theater.addSlideByConfig(config);
+                            if (!waitForCompletion) return [3 /*break*/, 3];
+                            _a.label = 1;
+                        case 1:
+                            if (!!slide.fullyLoaded) return [3 /*break*/, 3];
+                            return [4 /*yield*/];
+                        case 2:
+                            _a.sent();
+                            return [3 /*break*/, 1];
+                        case 3: return [2 /*return*/];
+                    }
+                });
+            },
+            endState: function () {
+                if (!slide) {
+                    slide = Main.theater.addSlideByConfig(config);
+                }
+                slide.finishLoading();
+            }
+        };
+    }
+    S.showSlide = showSlide;
 })(S || (S = {}));
-var DEBUG = true;
+//var DEBUG: boolean = true;
 var DEBUG_ALL_PHYSICS_BOUNDS = false;
+var DEBUG_MOVE_CAMERA_WITH_ARROWS = false;
+var DEBUG_SHOW_MOUSE_POSITION = true;
+var DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = false;
 var debug = console.info;
 // function debug(message?: any, ...optionalParams: any[]) {
 //     if (DEBUG) {
@@ -1440,9 +1594,9 @@ var Input = /** @class */ (function () {
         this.keyCodesByName = _.clone(keyCodesByName);
         this.isDownByKeyCode = {};
         this.keysByKeycode = {};
-        for (var name_3 in keyCodesByName) {
+        for (var name_2 in keyCodesByName) {
             try {
-                for (var _c = __values(keyCodesByName[name_3]), _d = _c.next(); !_d.done; _d = _c.next()) {
+                for (var _c = __values(keyCodesByName[name_2]), _d = _c.next(); !_d.done; _d = _c.next()) {
                     var keyCode = _d.value;
                     this.isDownByKeyCode[keyCode] = false;
                     this.keysByKeycode[keyCode] = this.keysByKeycode[keyCode] || new Input.Key();
@@ -1484,8 +1638,8 @@ var Input = /** @class */ (function () {
         this._globalMouseX = Main.renderer.plugins.interaction.mouse.global.x;
         this._globalMouseY = Main.renderer.plugins.interaction.mouse.global.y;
         if (this.isMouseOnCanvas) {
-            this._mouseX = this._globalMouseX;
-            this._mouseY = this._globalMouseY;
+            this._mouseX = Math.floor(this._globalMouseX);
+            this._mouseY = Math.floor(this._globalMouseY);
         }
     };
     Input.isDown = function (key) {
@@ -1625,6 +1779,7 @@ function load() {
     PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
     Preload.preload({
         textures: Assets.textures,
+        pyxelTilemaps: Assets.pyxelTilemaps,
         onLoad: function () { return Main.start(); },
     });
 }
@@ -1657,12 +1812,13 @@ var Main = /** @class */ (function () {
             'up': ['ArrowUp'],
             'down': ['ArrowDown'],
             'advanceDialog': ['MouseLeft'],
+            'skipCutsceneScript': ['Escape'],
         });
         window.addEventListener("keydown", function (event) { return Input.handleKeyDownEvent(event); }, false);
         window.addEventListener("keyup", function (event) { return Input.handleKeyUpEvent(event); }, false);
         window.addEventListener("mousedown", function (event) { return Input.handleMouseDownEvent(event); }, false);
         window.addEventListener("mouseup", function (event) { return Input.handleMouseUpEvent(event); }, false);
-        window.addEventListener("contextmenu", function (event) { return event.preventDefault(); }, false);
+        //window.addEventListener("contextmenu", event => event.preventDefault(), false);
         this.theater = new Theater({
             scenes: scenes,
             sceneToLoad: 'main',
@@ -1672,8 +1828,14 @@ var Main = /** @class */ (function () {
                 spriteTextFont: Assets.fonts.DELUXE16,
                 textArea: { x: -122, y: -27, width: 244, height: 54 },
                 advanceKey: 'advanceDialog',
-            }
+            },
+            skipCutsceneScriptKey: 'skipCutsceneScript',
         });
+        var renderOptions = {
+            renderer: this.renderer,
+            renderTexture: undefined,
+            matrix: PIXI.Matrix.IDENTITY,
+        };
         PIXI.Ticker.shared.add(function (frameDelta) {
             _this.delta = frameDelta / 60;
             Input.update();
@@ -1681,12 +1843,9 @@ var Main = /** @class */ (function () {
                 delta: _this.delta,
                 world: null,
             });
+            renderOptions.matrix.identity();
             _this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true); // Clear the renderer
-            _this.theater.render({
-                renderer: _this.renderer,
-                renderTexture: undefined,
-                matrix: PIXI.Matrix.IDENTITY,
-            });
+            _this.theater.render(renderOptions);
         });
     };
     return Main;
@@ -1964,30 +2123,12 @@ var PIXIRenderTextureSprite = /** @class */ (function (_super) {
     };
     return PIXIRenderTextureSprite;
 }(PIXI.Sprite));
-var script = function () {
-    var doStuff;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                doStuff = 4;
-                return [4 /*yield*/];
-            case 1:
-                _a.sent();
-                return [5 /*yield**/, __values(S.runScript(S.dialog("Hi!")))];
-            case 2:
-                _a.sent();
-                return [4 /*yield*/, S.dialog("Hi!")];
-            case 3:
-                _a.sent();
-                return [2 /*return*/];
-        }
-    });
-};
 var Stages;
 (function (Stages) {
     Stages.MILOS_ROOM = {
         layers: [
             { name: 'bg' },
+            { name: 'room' },
             { name: 'main', sortKey: 'y', },
             { name: 'fg' },
         ],
@@ -2010,11 +2151,11 @@ var Stages;
                 bounds: { x: 192, y: 64, width: 16, height: 112 },
                 physicsGroup: 'walls',
             },
-            {
-                constructor: PhysicsWorldObject,
-                bounds: { x: 64, y: 64, width: 128, height: 16 },
-                physicsGroup: 'walls',
-            },
+            // { // Top Wall
+            //     constructor: PhysicsWorldObject,
+            //     bounds: { x: 64, y: 64, width: 128, height: 16 },
+            //     physicsGroup: 'walls',
+            // },
             {
                 constructor: PhysicsWorldObject,
                 bounds: { x: 64, y: 160, width: 128, height: 16 },
@@ -2023,14 +2164,14 @@ var Stages;
             {
                 constructor: Sprite,
                 texture: 'room_bg',
-                layer: 'bg',
+                layer: 'room',
             },
             {
                 name: 'backwall',
                 constructor: Sprite,
                 texture: 'room_backwall',
                 x: 64, y: 0,
-                layer: 'bg',
+                layer: 'room',
             },
             {
                 name: 'bed',
@@ -2078,75 +2219,141 @@ var Stages;
         ]
     };
 })(Stages || (Stages = {}));
+var Tilemap = /** @class */ (function (_super) {
+    __extends(Tilemap, _super);
+    function Tilemap(config) {
+        var _this = _super.call(this, config) || this;
+        _this.tilemap = A.clone2D(AssetCache.getTilemap(config.tilemap));
+        var tilemapDimens = A.get2DArrayDimensions(_this.tilemap);
+        _this.tileWidth = config.tileWidth;
+        _this.tileHeight = config.tileHeight;
+        _this.numTilesX = tilemapDimens.width;
+        _this.numTilesY = tilemapDimens.height;
+        _this.renderTexture = new PIXIRenderTextureSprite(_this.numTilesX * _this.tileWidth, _this.numTilesY * _this.tileHeight);
+        _this.tileSprite = new PIXI.Sprite();
+        _this.dirty = true;
+        return _this;
+    }
+    Tilemap.prototype.render = function (options) {
+        if (this.dirty) {
+            this.drawRenderTexture(options.renderer);
+            this.dirty = false;
+        }
+        this.renderTexture.x = this.x;
+        this.renderTexture.y = this.y;
+        options.renderer.render(this.renderTexture, options.renderTexture, false, options.matrix);
+        _super.prototype.render.call(this, options);
+    };
+    Tilemap.prototype.drawRenderTexture = function (renderer) {
+        this.renderTexture.clear(renderer);
+        for (var y = 0; y < this.tilemap.length; y++) {
+            for (var x = 0; x < this.tilemap[y].length; x++) {
+                if (!this.tilemap[y][x])
+                    continue;
+                var tile = this.tilemap[y][x];
+                this.tileSprite.texture = AssetCache.getTexture(tile.texture);
+                this.tileSprite.x = x * this.tileWidth;
+                this.tileSprite.y = y * this.tileHeight;
+                renderer.render(this.tileSprite, this.renderTexture.renderTexture, false);
+            }
+        }
+    };
+    return Tilemap;
+}(WorldObject));
 /// <reference path="./animations.ts" />
 /// <reference path="./stages.ts" />
-var scenes = {
-    'main': {
-        stage: Stages.MILOS_ROOM,
-        defaultControl: ['angie'],
-        schema: {
-            worldObjects: [
-                Actors.ANGIE,
-            ]
-        },
-        entry: 'room_intro',
-        cutscenes: {
-            'room_intro': {
-                script: function () {
-                    var angie, i;
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                angie = S.global.world.getWorldObjectByName('angie');
-                                angie.x = 98;
-                                angie.y = 160;
-                                angie.offset.y = -19;
-                                angie.flipX = true;
-                                angie.angle = -90;
-                                return [4 /*yield*/, S.wait(1)];
-                            case 1:
-                                _a.sent();
-                                angie.angle = 0;
-                                angie.x -= 12;
-                                return [4 /*yield*/, S.jump(angie, 8, 0.5, true)];
-                            case 2:
-                                _a.sent();
-                                i = 0;
-                                _a.label = 3;
-                            case 3:
-                                if (!(i < 1000)) return [3 /*break*/, 6];
-                                debug(i);
-                                return [4 /*yield*/];
-                            case 4:
-                                _a.sent();
-                                _a.label = 5;
-                            case 5:
-                                i++;
-                                return [3 /*break*/, 3];
-                            case 6: return [2 /*return*/];
-                        }
-                    });
+/// <reference path="./tilemap.ts" />
+var S;
+(function (S) {
+    S.scenes = {
+        'main': {
+            stage: Stages.MILOS_ROOM,
+            cameraMode: { type: 'follow', target: 'angie', offset: { x: 0, y: -18 } },
+            defaultControl: ['angie'],
+            schema: {
+                worldObjects: [
+                    Actors.ANGIE,
+                    {
+                        name: 'tilemap',
+                        constructor: Tilemap,
+                        x: -720, y: -1888,
+                        layer: 'bg',
+                        tileWidth: 16,
+                        tileHeight: 16,
+                        tilemap: 'mainworld',
+                    }
+                ]
+            },
+            entry: 'room_intro',
+            cutscenes: {
+                'room_intro': {
+                    script: function () {
+                        var angie;
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0:
+                                    DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = true;
+                                    S.finishImmediately(S.fadeOut(1));
+                                    angie = S.global.getSprite('angie');
+                                    angie.x = 98;
+                                    angie.y = 160;
+                                    angie.offset.y = -19;
+                                    angie.flipX = true;
+                                    angie.angle = -90;
+                                    return [4 /*yield*/, S.fadeSlides(2)];
+                                case 1:
+                                    _a.sent();
+                                    return [4 /*yield*/, S.wait(3)];
+                                case 2:
+                                    _a.sent();
+                                    return [4 /*yield*/, S.shake(1, 2)];
+                                case 3:
+                                    _a.sent();
+                                    return [4 /*yield*/, S.wait(3)];
+                                case 4:
+                                    _a.sent();
+                                    return [4 /*yield*/, S.dialog("I felt that one.")];
+                                case 5:
+                                    _a.sent();
+                                    return [4 /*yield*/, S.wait(1)];
+                                case 6:
+                                    _a.sent();
+                                    return [4 /*yield*/, S.shake(1, 2)];
+                                case 7:
+                                    _a.sent();
+                                    return [4 /*yield*/, S.wait(2)];
+                                case 8:
+                                    _a.sent();
+                                    return [4 /*yield*/, S.dialog("What's that boy up to?")];
+                                case 9:
+                                    _a.sent();
+                                    return [4 /*yield*/, S.dialog("I'd better check outside.")];
+                                case 10:
+                                    _a.sent();
+                                    return [4 /*yield*/, S.wait(0.2)];
+                                case 11:
+                                    _a.sent();
+                                    DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = false;
+                                    angie.angle = 0;
+                                    angie.x -= 12;
+                                    return [4 /*yield*/, S.jump(angie, 8, 0.5, true)];
+                                case 12:
+                                    _a.sent();
+                                    return [2 /*return*/];
+                            }
+                        });
+                    }
                 }
-                // script: ` @angie;
-                //     $angie.x = 98; $angie.y = 160;
-                //     $angie.offset.y = -19;
-                //     $angie.flipX = true;
-                //     $angie.angle = -90;
-                //     wait(1);
-                //     $angie.angle = 0;
-                //     $angie.x -= 12;
-                //     $angie -> jump(8, 0.5, true);
-                //     $i = 0;
-                //     while ($i < 1000) { debug($i) || $i++ }
-                // `
             }
-        },
-    }
-};
+        }
+    };
+})(S || (S = {}));
+var scenes = S.scenes;
 var Script = /** @class */ (function () {
     function Script(scriptFunction) {
         this.generator = scriptFunction.generator();
         this.endState = scriptFunction.endState;
+        this.skippable = O.getOrDefault(scriptFunction.skippable, true);
     }
     Object.defineProperty(Script.prototype, "running", {
         get: function () {
@@ -2158,11 +2365,9 @@ var Script = /** @class */ (function () {
     Script.prototype.update = function (options) {
         if (!this.running)
             return;
-        S.global = {
-            delta: options.delta,
-            world: options.world,
-            script: this,
-        };
+        S.global.delta = options.delta;
+        S.global.world = options.world;
+        S.global.script = this;
         var result = this.generator.next();
         if (result.done) {
             if (this.endState)
@@ -2170,10 +2375,27 @@ var Script = /** @class */ (function () {
             this.done = true;
         }
     };
+    Script.prototype.finishImmediately = function (maxIters) {
+        if (maxIters === void 0) { maxIters = Script.FINISH_IMMEDIATELY_MAX_ITERS; }
+        var result = this.generator.next();
+        for (var i = 0; i < maxIters && !result.done; i++) {
+            result = this.generator.next();
+        }
+        if (this.endState)
+            this.endState();
+        this.done = true;
+    };
+    Script.FINISH_IMMEDIATELY_MAX_ITERS = 1000000;
     return Script;
 }());
 var S;
 (function (S) {
+    S.global = {
+        delta: undefined,
+        world: undefined,
+        script: undefined,
+        getSprite: function (name) { return S.global.world.getWorldObjectByName(name); },
+    };
 })(S || (S = {}));
 var ScriptManager = /** @class */ (function () {
     function ScriptManager() {
@@ -2203,6 +2425,38 @@ var ScriptManager = /** @class */ (function () {
     };
     return ScriptManager;
 }());
+var Slide = /** @class */ (function (_super) {
+    __extends(Slide, _super);
+    function Slide(config) {
+        var _this = _super.call(this, config, {
+            x: Main.width / 2,
+            y: Main.height / 2,
+        }) || this;
+        _this.timer = new Timer(O.getOrDefault(config.timeToLoad, 0));
+        if (config.fadeIn) {
+            _this.targetAlpha = _this.alpha;
+            _this.alpha = 0;
+        }
+        _this.fullyLoaded = false;
+        return _this;
+    }
+    Slide.prototype.update = function (options) {
+        _super.prototype.update.call(this, options);
+        if (this.fullyLoaded)
+            return;
+        this.timer.update(options.delta);
+        if (this.targetAlpha !== undefined) {
+            this.alpha = this.targetAlpha * this.timer.progress;
+        }
+        if (this.timer.done) {
+            this.fullyLoaded = true;
+        }
+    };
+    Slide.prototype.finishLoading = function () {
+        this.timer.finish();
+    };
+    return Slide;
+}(Sprite));
 var SpriteText = /** @class */ (function (_super) {
     __extends(SpriteText, _super);
     function SpriteText(config) {
@@ -2451,7 +2705,7 @@ var SpriteTextConverter = /** @class */ (function () {
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
-        if (lastChar.right > maxWidth) {
+        if (maxWidth > 0 && lastChar.right > maxWidth) {
             var diffx = word[0].x;
             var diffy = word[0].y - SpriteText.getHeightOfCharList(result);
             try {
@@ -2498,6 +2752,7 @@ var World = /** @class */ (function (_super) {
         if (!config.renderDirectly) {
             _this.renderTexture = new PIXIRenderTextureSprite(_this.width, _this.height);
         }
+        _this.debugMoveCameraWithArrows = false;
         return _this;
     }
     Object.defineProperty(World.prototype, "renderingDirectly", {
@@ -2528,6 +2783,16 @@ var World = /** @class */ (function (_super) {
         }
         this.handleCollisions();
         this.camera.update(thisOptions);
+        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this.debugMoveCameraWithArrows) {
+            if (Input.isDown('left'))
+                (this.camera.x -= 1) && this.camera.setModeFocus(this.camera.x, this.camera.y);
+            if (Input.isDown('right'))
+                (this.camera.x += 1) && this.camera.setModeFocus(this.camera.x, this.camera.y);
+            if (Input.isDown('up'))
+                (this.camera.y -= 1) && this.camera.setModeFocus(this.camera.x, this.camera.y);
+            if (Input.isDown('down'))
+                (this.camera.y += 1) && this.camera.setModeFocus(this.camera.x, this.camera.y);
+        }
     };
     World.prototype.render = function (options) {
         if (this.renderingDirectly) {
@@ -2579,6 +2844,7 @@ var World = /** @class */ (function (_super) {
     World.prototype.addWorldObject = function (obj) {
         this.worldObjects.push(obj);
         this.setLayer(obj, World.DEFAULT_LAYER);
+        return obj;
     };
     World.prototype.getWorldObjectByName = function (name) {
         if (!this.worldObjectsByName[name]) {
@@ -2634,9 +2900,9 @@ var World = /** @class */ (function (_super) {
         }
     };
     World.prototype.removeName = function (obj) {
-        for (var name_4 in this.worldObjectsByName) {
-            if (this.worldObjectsByName[name_4] === obj) {
-                delete this.worldObjectsByName[name_4];
+        for (var name_3 in this.worldObjectsByName) {
+            if (this.worldObjectsByName[name_3] === obj) {
+                delete this.worldObjectsByName[name_3];
             }
         }
     };
@@ -2657,8 +2923,8 @@ var World = /** @class */ (function (_super) {
         }
     };
     World.prototype.removeFromAllPhysicsGroups = function (obj) {
-        for (var name_5 in this.physicsGroups) {
-            A.removeAll(this.physicsGroups[name_5].worldObjects, obj);
+        for (var name_4 in this.physicsGroups) {
+            A.removeAll(this.physicsGroups[name_4].worldObjects, obj);
         }
     };
     World.prototype.removeWorldObject = function (obj) {
@@ -2736,11 +3002,11 @@ var World = /** @class */ (function (_super) {
         if (_.isEmpty(physicsGroups))
             return {};
         var result = {};
-        for (var name_6 in physicsGroups) {
-            _.defaults(physicsGroups[name_6], {
+        for (var name_5 in physicsGroups) {
+            _.defaults(physicsGroups[name_5], {
                 collidesWith: [],
             });
-            result[name_6] = new World.PhysicsGroup(name_6, physicsGroups[name_6]);
+            result[name_5] = new World.PhysicsGroup(name_5, physicsGroups[name_5]);
         }
         return result;
     };
@@ -2803,17 +3069,29 @@ var Theater = /** @class */ (function (_super) {
     function Theater(config) {
         var _this = _super.call(this, {
             layers: [
-                { name: 'main' },
-                { name: 'dialog' },
+                { name: Theater.LAYER_WORLD },
+                { name: Theater.LAYER_SLIDES },
+                { name: Theater.LAYER_DIALOG },
             ],
         }) || this;
+        _this.debugMousePosition = new SpriteText({ font: Assets.fonts.DELUXE16, x: 0, y: 0 });
         _this.scenes = config.scenes;
         _this.cutsceneManager = new CutsceneManager();
         _this.inControl = [];
+        _this.skipCutsceneScriptKey = config.skipCutsceneScriptKey;
         _this.loadDialogBox(config.dialogBox);
+        _this.slides = [];
         _this.loadScene(config.sceneToLoad);
+        if (DEBUG_SHOW_MOUSE_POSITION) {
+            _this.debugMousePosition = _this.addWorldObject(new SpriteText({ x: 0, y: 0, font: Assets.fonts.DELUXE16 }));
+        }
         return _this;
     }
+    Object.defineProperty(Theater.prototype, "currentScene", {
+        get: function () { return this.scenes[this.currentSceneName]; },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(Theater.prototype, "isCutscenePlaying", {
         get: function () { return this.cutsceneManager.isCutscenePlaying; },
         enumerable: true,
@@ -2825,12 +3103,27 @@ var Theater = /** @class */ (function (_super) {
         });
         this.cutsceneManager.update(currentWorldOptions);
         if (!this.isCutscenePlaying && _.isEmpty(this.inControl)) {
-            this.inControl = this.getCurrentScene().defaultControl;
+            this.inControl = this.currentScene.defaultControl;
         }
         _super.prototype.update.call(this, options);
+        if (DEBUG_SHOW_MOUSE_POSITION) {
+            this.debugMousePosition.setText(S.padLeft(Input.mouseX.toString(), 3) + " " + S.padLeft(Input.mouseY.toString(), 3));
+        }
     };
-    Theater.prototype.getCurrentScene = function () {
-        return this.scenes[this.currentSceneName];
+    Theater.prototype.addSlideByConfig = function (config) {
+        var slide = new Slide(config);
+        this.addWorldObject(slide);
+        this.setLayer(slide, Theater.LAYER_SLIDES);
+        this.slides.push(slide);
+        return slide;
+    };
+    Theater.prototype.clearSlides = function (exceptLast) {
+        if (exceptLast === void 0) { exceptLast = 0; }
+        var deleteCount = this.slides.length - exceptLast;
+        for (var i = 0; i < deleteCount; i++) {
+            this.removeWorldObject(this.slides[i]);
+        }
+        this.slides.splice(0, deleteCount);
     };
     Theater.prototype.loadScene = function (name) {
         var scene = this.scenes[name];
@@ -2846,32 +3139,32 @@ var Theater = /** @class */ (function (_super) {
         // Create new stuff
         this.currentSceneName = name;
         this.currentWorld = Theater.createWorldFromScene(scene);
+        this.currentWorld.debugMoveCameraWithArrows = DEBUG_MOVE_CAMERA_WITH_ARROWS;
         this.addWorldObject(this.currentWorld);
-        this.setLayer(this.currentWorld, 'main');
+        this.setLayer(this.currentWorld, Theater.LAYER_WORLD);
         // Start scene's entry point
         if (scene.entry) {
             this.playCutsceneByName(scene.entry);
         }
     };
     Theater.prototype.playCutsceneByName = function (name) {
-        var scene = this.getCurrentScene();
-        var cutscene = scene.cutscenes[name];
+        var cutscene = this.currentScene.cutscenes[name];
         if (!cutscene) {
-            debug("Cutscene '" + name + "' does not exist in scene:", scene);
+            debug("Cutscene '" + name + "' does not exist in scene:", this.currentScene);
             return;
         }
         this.inControl = [];
-        this.cutsceneManager.playCutscene(cutscene, this.currentWorld);
+        this.cutsceneManager.playCutscene(cutscene, this.currentWorld, this.skipCutsceneScriptKey);
     };
     Theater.prototype.loadDialogBox = function (config) {
         this.dialogBox = new DialogBox(config);
         this.dialogBox.visible = false;
         this.addWorldObject(this.dialogBox);
-        this.setLayer(this.dialogBox, 'dialog');
+        this.setLayer(this.dialogBox, Theater.LAYER_DIALOG);
     };
     Theater.addWorldObjectFromStageConfig = function (world, worldObject) {
         if (!worldObject.constructor)
-            return;
+            return null;
         var obj = new worldObject.constructor(worldObject);
         world.addWorldObject(obj);
         var config = worldObject;
@@ -2888,6 +3181,7 @@ var Theater = /** @class */ (function (_super) {
             if (config.physicsGroup)
                 world.setPhysicsGroup(obj, config.physicsGroup);
         }
+        return obj;
     };
     Theater.createWorldFromScene = function (scene) {
         var e_18, _a, e_19, _b;
@@ -2924,8 +3218,13 @@ var Theater = /** @class */ (function (_super) {
                 finally { if (e_19) throw e_19.error; }
             }
         }
+        world.camera.mode = scene.cameraMode || Theater.DEFAULT_CAMERA_MODE;
         return world;
     };
+    Theater.LAYER_WORLD = 'world';
+    Theater.LAYER_SLIDES = 'slides';
+    Theater.LAYER_DIALOG = 'dialog';
+    Theater.DEFAULT_CAMERA_MODE = { type: 'focus', point: { x: Main.width / 2, y: Main.height / 2 } };
     return Theater;
 }(World));
 var Timer = /** @class */ (function () {
@@ -2934,15 +3233,17 @@ var Timer = /** @class */ (function () {
         this.duration = duration;
         this.speed = 1;
         this.time = 0;
-        this.done = false;
         this.callback = callback;
         this.repeat = repeat;
     }
+    Object.defineProperty(Timer.prototype, "done", {
+        get: function () { return !this.repeat && this.progress >= 1; },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(Timer.prototype, "progress", {
         get: function () {
-            if (this.repeat)
-                return 0;
-            return this.time / this.duration;
+            return Math.min(this.time / this.duration, 1);
         },
         enumerable: true,
         configurable: true
@@ -2950,17 +3251,22 @@ var Timer = /** @class */ (function () {
     Timer.prototype.update = function (delta) {
         if (!this.done) {
             this.time += delta;
-            while (this.time >= this.duration) {
+            if (this.time >= this.duration) {
                 if (this.callback)
                     this.callback();
-                this.time -= this.duration;
-                this.done = !this.repeat;
+                if (this.repeat) {
+                    while (this.time >= this.duration) {
+                        this.time -= this.duration;
+                    }
+                }
             }
         }
     };
+    Timer.prototype.finish = function () {
+        this.time = this.duration;
+    };
     Timer.prototype.reset = function () {
         this.time = 0;
-        this.done = false;
     };
     return Timer;
 }());
@@ -3053,8 +3359,84 @@ var O;
     }
     O.withOverrides = withOverrides;
 })(O || (O = {}));
+var RandomNumberGenerator = /** @class */ (function () {
+    function RandomNumberGenerator(seed) {
+        this.seed(seed);
+    }
+    Object.defineProperty(RandomNumberGenerator.prototype, "value", {
+        /**
+         * Random float between 0 and 1.
+         */
+        get: function () {
+            return this.generate();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    /**
+     * Random float between {min} and {max}.
+     * @param min Default: 0
+     * @param max Default: 1
+     */
+    RandomNumberGenerator.prototype.float = function (min, max) {
+        if (min === void 0) { min = 0; }
+        if (max === void 0) { max = 1; }
+        return min + (max - min) * this.value;
+    };
+    /**
+     * Random int between {min} and {max}, inclusive.
+     */
+    RandomNumberGenerator.prototype.int = function (min, max) {
+        return Math.floor(this.float(min, max + 1));
+    };
+    /**
+     * Random point on a unit circle.
+     * @param radius Default: 1
+     */
+    RandomNumberGenerator.prototype.onCircle = function (radius) {
+        if (radius === void 0) { radius = 1; }
+        var angle = this.float(0, 2 * Math.PI);
+        return { x: radius * Math.cos(angle), y: radius * Math.sin(angle) };
+    };
+    /**
+     * Random point uniformly in a unit circle.
+     * @param radius Default: 1
+     */
+    RandomNumberGenerator.prototype.inCircle = function (radius) {
+        if (radius === void 0) { radius = 1; }
+        var angle = this.float(0, 2 * Math.PI);
+        var r = radius * Math.sqrt(this.value);
+        return { x: r * Math.cos(angle), y: r * Math.sin(angle) };
+    };
+    /**
+     * Sets the seed of the random number generator.
+     * @param seed
+     */
+    RandomNumberGenerator.prototype.seed = function (seed) {
+        // @ts-ignore
+        this.generate = new Math.seedrandom(seed);
+    };
+    return RandomNumberGenerator;
+}());
+var Random = new RandomNumberGenerator();
 var S;
 (function (S) {
+    function padLeft(text, minLength, padString) {
+        if (padString === void 0) { padString = ' '; }
+        while (text.length < minLength) {
+            text = padString + text;
+        }
+        return text;
+    }
+    S.padLeft = padLeft;
+    function padRight(text, minLength, padString) {
+        if (padString === void 0) { padString = ' '; }
+        while (text.length < minLength) {
+            text = text + padString;
+        }
+        return text;
+    }
+    S.padRight = padRight;
     function replaceAll(str, replace, wiith) {
         if (!str)
             return "";

@@ -1,7 +1,7 @@
 /// <reference path="./preload.ts" />
 
 namespace Assets {
-    export const textures: {[key: string]: Preload.Texture} = {
+    export const textures: Dict<Preload.Texture> = {
         'none': {},
         'blank': {},
         'debug': {},
@@ -16,8 +16,8 @@ namespace Assets {
         },
 
         'milo_sprites': {
-            anchor: { x: 0.5, y: 1 },
-            frames: Preload.spritesheet({ prefix: 'milo_sprites_', frameWidth: 32, frameHeight: 36, numFramesX: 8, numFramesY: 4 }),
+            defaultAnchor: { x: 0.5, y: 1 },
+            spritesheet: { frameWidth: 32, frameHeight: 36 },
         },
 
         'milo_demon_sprites': {
@@ -25,12 +25,12 @@ namespace Assets {
         },
 
         'angie_sprites': {
-            anchor: { x: 0.5, y: 1 },
-            frames: Preload.spritesheet({ prefix: 'angie_sprites_', frameWidth: 32, frameHeight: 36, numFramesX: 8, numFramesY: 4 }),
+            defaultAnchor: { x: 0.5, y: 1 },
+            spritesheet: { frameWidth: 32, frameHeight: 36 },
         },
 
         'props': {
-            anchor: { x: 0.5, y: 1 },
+            defaultAnchor: { x: 0.5, y: 1 },
             frames: {
                 'bed': {
                     rect: { x: 2, y: 2, width: 36, height: 27 },
@@ -55,9 +55,22 @@ namespace Assets {
             }
         },
 
+        'testtiles': {
+            spritesheet: { frameWidth: 16, frameHeight: 16 },
+        },
+
+        'tilestest': {
+            spritesheet: { frameWidth: 16, frameHeight: 16 },
+        },
+
+        'mainworld': {
+            url: 'assets/tilemap/mainworld.png',
+            spritesheet: { frameWidth: 16, frameHeight: 16 },
+        },
+
         // Portraits
         'portraits/milo': {
-            anchor: { x: 0.5, y: 0.5 },
+            defaultAnchor: { x: 0.5, y: 0.5 },
             frames: {
                 'milo/happy': {
                     rect: { x: 0, y: 0, width: 74, height: 54 },
@@ -69,7 +82,13 @@ namespace Assets {
         'deluxe16': {
             rect: { x: 0, y: 0, width: 8, height: 15 },
             anchor: { x: 0, y: 0 },
-        }
+        },
+    }
+
+    export const pyxelTilemaps: Dict<Preload.PyxelTilemap> = {
+        'mainworld': {
+            url: 'assets/tilemap/mainworld.json',
+        },
     }
 
     export class fonts {

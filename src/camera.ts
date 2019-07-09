@@ -3,7 +3,7 @@ namespace Camera {
 
     export type FollowMode = {
         type: 'follow';
-        target: WorldObject;
+        target: string | WorldObject;
         offset: Pt;
     }
 
@@ -35,10 +35,14 @@ class Camera {
     mode: Camera.Mode;
     movement: Camera.Movement;
 
+    shakeIntensity: number;
+    private _shakeX: number;
+    private _shakeY: number;
+
     private matrix: PIXI.Matrix;
     get rendererMatrix() {
-        this.matrix.tx = -(this.x - this.width/2);
-        this.matrix.ty = -(this.y - this.height/2);
+        this.matrix.tx = -(this.x + this._shakeX - this.width/2);
+        this.matrix.ty = -(this.y + this._shakeY - this.height/2);
         return this.matrix;
     }
 
@@ -51,14 +55,31 @@ class Camera {
         this.setModeFocus(width/2, height/2);
         this.setMovementSnap();
 
+        this.shakeIntensity = 0;
+        this._shakeX = 0;
+        this._shakeY = 0;
+
         this.matrix = new PIXI.Matrix(1, 0, 0, 1, this.x, this.y);
     }
 
     update(options: UpdateOptions) {
         if (this.mode.type === 'follow') {
-            this.moveTowardsPoint(this.mode.target.x + this.mode.offset.x, this.mode.target.y + this.mode.offset.y, options);
+            let target = this.mode.target;
+            if (_.isString(target)) {
+                target = options.world.getWorldObjectByName(target);
+            }
+            this.moveTowardsPoint(target.x + this.mode.offset.x, target.y + this.mode.offset.y, options);
         } else if (this.mode.type === 'focus') {
             this.moveTowardsPoint(this.mode.point.x, this.mode.point.y, options);
+        }
+
+        if (this.shakeIntensity > 0) {
+            let pt = Random.inCircle(this.shakeIntensity);
+            this._shakeX = pt.x;
+            this._shakeY = pt.y;
+        } else {
+            this._shakeX = 0;
+            this._shakeY = 0;
         }
     }
 

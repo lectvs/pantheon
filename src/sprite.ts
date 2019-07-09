@@ -8,6 +8,8 @@ namespace Sprite {
         offset?: Pt;
         angle?: number;
         animations?: Animation.Config[];
+        tint?: number;
+        alpha?: number;
     }
 }
 
@@ -21,6 +23,9 @@ class Sprite extends PhysicsWorldObject {
     flipY: boolean;
     offset: Pt;
     angle: number;
+
+    tint: number;
+    alpha: number;
 
     constructor(config: Sprite.Config, defaults: Sprite.Config = {}) {
         config = O.withDefaults(config, defaults);
@@ -54,6 +59,9 @@ class Sprite extends PhysicsWorldObject {
 
         this.offset = config.offset || { x: 0, y: 0 };
         this.angle = O.getOrDefault(config.angle, 0);
+
+        this.tint = O.getOrDefault(config.tint, 0xFFFFFF);
+        this.alpha = O.getOrDefault(config.alpha, 1);
     }
 
     update(options: UpdateOptions) {
@@ -91,6 +99,8 @@ class Sprite extends PhysicsWorldObject {
         this.displayObject.scale.x = this.flipX ? -1 : 1;
         this.displayObject.scale.y = this.flipY ? -1 : 1;
         this.displayObject.angle = this.angle;
+        this.displayObject.tint = this.tint;
+        this.displayObject.alpha = this.alpha;
     }
 
     setGraphics(graphics: PIXI.Graphics) {

@@ -37,9 +37,11 @@ class World extends WorldObject {
     worldObjectsByName: Dict<WorldObject>;
     layers: World.Layer[];
 
-    private camera: Camera;
+    camera: Camera;
     private scriptManager: ScriptManager;
     private renderTexture: PIXIRenderTextureSprite;
+
+    debugMoveCameraWithArrows: boolean;
 
     get renderingDirectly() { return !this.renderTexture; }
 
@@ -62,6 +64,8 @@ class World extends WorldObject {
         if (!config.renderDirectly) {
             this.renderTexture = new PIXIRenderTextureSprite(this.width, this.height);
         }
+
+        this.debugMoveCameraWithArrows = false;
     }
 
     update(options: UpdateOptions) {
@@ -81,6 +85,12 @@ class World extends WorldObject {
         this.handleCollisions();
 
         this.camera.update(thisOptions);
+        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this.debugMoveCameraWithArrows) {
+            if (Input.isDown('left'))  (this.camera.x -= 1) && this.camera.setModeFocus(this.camera.x, this.camera.y);
+            if (Input.isDown('right')) (this.camera.x += 1) && this.camera.setModeFocus(this.camera.x, this.camera.y);
+            if (Input.isDown('up'))    (this.camera.y -= 1) && this.camera.setModeFocus(this.camera.x, this.camera.y);
+            if (Input.isDown('down'))  (this.camera.y += 1) && this.camera.setModeFocus(this.camera.x, this.camera.y);
+        }
     }
 
     render(options: RenderOptions) {
@@ -110,9 +120,10 @@ class World extends WorldObject {
         options.matrix.translate(-cameraMatrix.tx, -cameraMatrix.ty);
     }
     
-    addWorldObject(obj: WorldObject) {
+    addWorldObject<T extends WorldObject>(obj: T) {
         this.worldObjects.push(obj);
         this.setLayer(obj, World.DEFAULT_LAYER);
+        return obj;
     }
 
     getWorldObjectByName(name: string) {

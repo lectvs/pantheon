@@ -5,6 +5,7 @@ function load() {
 
     Preload.preload({
         textures: Assets.textures,
+        pyxelTilemaps: Assets.pyxelTilemaps,
         onLoad: () => Main.start(),
     })
 }
@@ -30,18 +31,19 @@ class Main {
         document.body.appendChild(this.renderer.view);
 
         Input.setKeys({
-            'left':             ['ArrowLeft'],
-            'right':            ['ArrowRight'],
-            'up':               ['ArrowUp'],
-            'down':             ['ArrowDown'],
-            'advanceDialog':    ['MouseLeft'],
+            'left':                 ['ArrowLeft'],
+            'right':                ['ArrowRight'],
+            'up':                   ['ArrowUp'],
+            'down':                 ['ArrowDown'],
+            'advanceDialog':        ['MouseLeft'],
+            'skipCutsceneScript':   ['Escape'],
         });
 
         window.addEventListener("keydown", event => Input.handleKeyDownEvent(event), false);
         window.addEventListener("keyup", event => Input.handleKeyUpEvent(event), false);
         window.addEventListener("mousedown", event => Input.handleMouseDownEvent(event), false);
         window.addEventListener("mouseup", event => Input.handleMouseUpEvent(event), false);
-        window.addEventListener("contextmenu", event => event.preventDefault(), false);
+        //window.addEventListener("contextmenu", event => event.preventDefault(), false);
 
         this.theater = new Theater({
             scenes: scenes,
@@ -52,10 +54,17 @@ class Main {
                 spriteTextFont: Assets.fonts.DELUXE16,
                 textArea: { x: -122, y: -27, width: 244, height: 54 },
                 advanceKey: 'advanceDialog',
-            }
+            },
+            skipCutsceneScriptKey: 'skipCutsceneScript',
         });
 
-        PIXI.Ticker.shared.add((frameDelta) => {
+        let renderOptions: RenderOptions = {
+            renderer: this.renderer,
+            renderTexture: undefined,
+            matrix: PIXI.Matrix.IDENTITY,
+        };
+
+        PIXI.Ticker.shared.add(frameDelta => {
             this.delta = frameDelta/60;
 
             Input.update();
@@ -65,12 +74,10 @@ class Main {
                 world: null,
             });
 
+            renderOptions.matrix.identity();
+
             this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
-            this.theater.render({
-                renderer: this.renderer,
-                renderTexture: undefined,
-                matrix: PIXI.Matrix.IDENTITY,
-            });
+            this.theater.render(renderOptions);
         });
     }
 }

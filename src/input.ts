@@ -40,8 +40,8 @@ class Input {
         this._globalMouseX = Main.renderer.plugins.interaction.mouse.global.x;
         this._globalMouseY = Main.renderer.plugins.interaction.mouse.global.y;
         if (this.isMouseOnCanvas) {
-            this._mouseX = this._globalMouseX;
-            this._mouseY = this._globalMouseY;
+            this._mouseX = Math.floor(this._globalMouseX);
+            this._mouseY = Math.floor(this._globalMouseY);
         }
     }
 

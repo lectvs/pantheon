@@ -1,5 +1,5 @@
-type AllStageConfig  = WorldObject.StageConfig & World.StageConfig & PhysicsWorldObject.StageConfig & Sprite.StageConfig & SpriteText.StageConfig;
-type SomeStageConfig = WorldObject.StageConfig | World.StageConfig | PhysicsWorldObject.StageConfig | Sprite.StageConfig | SpriteText.StageConfig;
+type AllStageConfig  = WorldObject.StageConfig & World.StageConfig & PhysicsWorldObject.StageConfig & Sprite.StageConfig & SpriteText.StageConfig & Tilemap.StageConfig;
+type SomeStageConfig = WorldObject.StageConfig | World.StageConfig | PhysicsWorldObject.StageConfig | Sprite.StageConfig | SpriteText.StageConfig | Tilemap.StageConfig;
 
 type Stage = World.Config & Schema;
 
@@ -35,6 +35,12 @@ namespace Sprite {
 
 namespace SpriteText {
     export type StageConfig = SpriteText.Config & WorldObject.StageConfig & {
+
+    }
+}
+
+namespace Tilemap {
+    export type StageConfig = Tilemap.Config & WorldObject.StageConfig & {
 
     }
 }

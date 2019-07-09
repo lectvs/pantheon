@@ -80,7 +80,7 @@ class SpriteTextConverter {
         if (_.isEmpty(word)) return;
 
         let lastChar = _.last(word);
-        if (lastChar.right > maxWidth) {
+        if (maxWidth > 0 && lastChar.right > maxWidth) {
             let diffx = word[0].x;
             let diffy = word[0].y - SpriteText.getHeightOfCharList(result);
             for (let char of word) {

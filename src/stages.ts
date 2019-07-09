@@ -2,6 +2,7 @@ namespace Stages{
     export const MILOS_ROOM: Stage = {
         layers: [
             { name: 'bg' },
+            { name: 'room' },
             { name: 'main', sortKey: 'y', },
             { name: 'fg' },
         ],
@@ -24,11 +25,11 @@ namespace Stages{
                 bounds: { x: 192, y: 64, width: 16, height: 112 },
                 physicsGroup: 'walls',
             },
-            { // Top Wall
-                constructor: PhysicsWorldObject,
-                bounds: { x: 64, y: 64, width: 128, height: 16 },
-                physicsGroup: 'walls',
-            },
+            // { // Top Wall
+            //     constructor: PhysicsWorldObject,
+            //     bounds: { x: 64, y: 64, width: 128, height: 16 },
+            //     physicsGroup: 'walls',
+            // },
             { // Bottom Wall
                 constructor: PhysicsWorldObject,
                 bounds: { x: 64, y: 160, width: 128, height: 16 },
@@ -37,14 +38,14 @@ namespace Stages{
             { // Background
                 constructor: Sprite,
                 texture: 'room_bg',
-                layer: 'bg',
+                layer: 'room',
             },
             {
                 name: 'backwall',
                 constructor: Sprite,
                 texture: 'room_backwall',
                 x: 64, y: 0,
-                layer: 'bg',
+                layer: 'room',
             },
             {
                 name: 'bed',

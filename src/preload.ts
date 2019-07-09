@@ -1,19 +1,51 @@
 namespace Preload {
     export type Options = {
-        textures?: {[key: string]: Preload.Texture};
+        textures?: Dict<Preload.Texture>;
+        pyxelTilemaps?: Dict<Preload.PyxelTilemap>;
         onLoad?: Function;
     }
 
     export type Texture = {
         url?: string;
-        frames?: {
-            [key: string]: TextureFrame;
-        }
+        defaultAnchor?: Pt;
+        spritesheet?: TextureSpritesheet;
+        frames?: Dict<TextureFrame>;
     } & TextureFrame;
 
     export type TextureFrame = {
         rect?: Rect;
         anchor?: Pt;
+    }
+
+    export type TextureSpritesheet = {
+        frameWidth: number;
+        frameHeight: number;
+        prefix?: string;
+        anchor?: Pt;
+    }
+
+    export type PyxelTilemap = {
+        url?: string;
+        tilesetPrefix?: string;
+    }
+
+    export type PyxelTilemapJson = {
+        tilewidth: number;
+        tileheight: number;
+        tileswide: number;
+        tileshigh: number;
+        layers: {
+            number: number;
+            name: string;
+            tiles: {
+                x: number;
+                y: number;
+                index: number;
+                tile: number;
+                flipX: boolean;
+                rot: number;
+            }[];
+        }[];
     }
 }
 
@@ -25,6 +57,12 @@ class Preload {
             }
         }
 
+        if (options.pyxelTilemaps) {
+            for (let key in options.pyxelTilemaps) {
+                this.preloadPyxelTilemap(key, options.pyxelTilemaps[key]);
+            }
+        }
+
         PIXI.Loader.shared.load(() => this.load(options));
     }
 
@@ -32,6 +70,12 @@ class Preload {
         if (options.textures) {
             for (let key in options.textures) {
                 this.loadTexture(key, options.textures[key]);
+            }
+        }
+
+        if (options.pyxelTilemaps) {
+            for (let key in options.pyxelTilemaps) {
+                this.loadPyxelTilemap(key, options.pyxelTilemaps[key]);
             }
         }
 
@@ -59,43 +103,68 @@ class Preload {
         }
         AssetCache.textures[key] = mainTexture;
 
+        let frames: Dict<Preload.TextureFrame> = {};
+
+        if (texture.spritesheet) {
+            let numFramesX = Math.floor(baseTexture.width / texture.spritesheet.frameWidth);
+            let numFramesY = Math.floor(baseTexture.height / texture.spritesheet.frameHeight);
+
+            for (let y = 0; y < numFramesY; y++) {
+                for (let x = 0; x < numFramesX; x++) {
+                    let frameKeyPrefix = O.getOrDefault(texture.spritesheet.prefix, `${key}_`);
+                    let frameKey = `${frameKeyPrefix}${x + y*numFramesX}`;
+                    frames[frameKey] = {
+                        rect: {
+                            x: x*texture.spritesheet.frameWidth,
+                            y: y*texture.spritesheet.frameHeight,
+                            width: texture.spritesheet.frameWidth,
+                            height: texture.spritesheet.frameHeight
+                        },
+                        anchor: texture.spritesheet.anchor,
+                    };
+                }
+            }
+        }
+
         if (texture.frames) {
             for (let frame in texture.frames) {
-                let frameTexture: PIXI.Texture = new PIXI.Texture(baseTexture);
-                let rect = texture.frames[frame].rect || texture.rect;
-                let anchor = texture.frames[frame].anchor || texture.anchor;
-                if (rect) {
-                    frameTexture.frame = new Rectangle(rect.x, rect.y, rect.width, rect.height);
-                }
-                if (anchor) {
-                    frameTexture.defaultAnchor = new Point(anchor.x, anchor.y);
-                }
-                AssetCache.textures[frame] = frameTexture;
+                frames[frame] = texture.frames[frame];
             }
         }
-    }
-}
 
-namespace Preload {
-    export type SpritesheetConfig = {
-        prefix: string;
-        frameWidth: number;
-        frameHeight: number;
-        numFramesX: number;
-        numFramesY: number;
+        for (let frame in frames) {
+            let frameTexture: PIXI.Texture = new PIXI.Texture(baseTexture);
+            let rect = frames[frame].rect || texture.rect;
+            let anchor = frames[frame].anchor || texture.defaultAnchor;
+            if (rect) {
+                frameTexture.frame = new Rectangle(rect.x, rect.y, rect.width, rect.height);
+            }
+            if (anchor) {
+                frameTexture.defaultAnchor = new Point(anchor.x, anchor.y);
+            }
+            AssetCache.textures[frame] = frameTexture;
+        }
     }
 
-    export function spritesheet(config: SpritesheetConfig) {
-        let result: {[name: string]: Preload.TextureFrame} = {};
-        for (let x = 0; x < config.numFramesX; x++) {
-            for (let y = 0; y < config.numFramesY; y++) {
-                let name = `${config.prefix}${x + y*config.numFramesX}`;
-                let frame: Preload.TextureFrame = {
-                    rect: { x: x*config.frameWidth, y: y*config.frameHeight, width: config.frameWidth, height: config.frameHeight },
+    static preloadPyxelTilemap(key: string, tilemap: Preload.PyxelTilemap) {
+        let url = tilemap.url || `assets/${key}.json`;
+        PIXI.Loader.shared.add(key + this.TILEMAP_KEY_SUFFIX, url);
+    }
+
+    static loadPyxelTilemap(key: string, tilemap: Preload.PyxelTilemap) {
+        let tilemapJson: Preload.PyxelTilemapJson = PIXI.Loader.shared.resources[key + this.TILEMAP_KEY_SUFFIX].data;
+
+        let tilemapForCache: Tilemap.Tilemap = A.filledArray2D(tilemapJson.tileshigh, tilemapJson.tileswide);
+        for (let tile of tilemapJson.layers[0].tiles) {
+            if (tile.tile >= 0) {
+                let prefix = O.getOrDefault(tilemap.tilesetPrefix, `${key}_`);
+                tilemapForCache[tile.y][tile.x] = {
+                    texture: `${prefix}${tile.tile}`,
                 };
-                result[name] = frame;
             }
         }
-        return result;
+        AssetCache.tilemaps[key] = tilemapForCache;
     }
+
+    private static TILEMAP_KEY_SUFFIX = '_tilemap_';
 }

@@ -22,13 +22,13 @@ class CutsceneManager {
         }
     }
 
-    playCutscene(cutscene: Cutscene, world: World) {
+    playCutscene(cutscene: Cutscene, world: World, skipCutsceneScriptKey: string) {
         if (this.current) {
             debug("Cannot play cutscene:", cutscene, "because a cutscene is already playing:", this.current.cutscene);
             return;
         }
 
-        let script = world.runScript(Cutscene.runScriptGenerator(cutscene.script));
+        let script = world.runScript(Cutscene.toScript(cutscene.script, skipCutsceneScriptKey));
         this.current = { cutscene, script };
     }
 

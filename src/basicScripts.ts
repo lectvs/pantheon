@@ -12,6 +12,11 @@ namespace S {
         }
     }
 
+    export function finishImmediately(scriptFunction: Script.Function, maxIters: number = Script.FINISH_IMMEDIATELY_MAX_ITERS) {
+        let script = new Script(scriptFunction);
+        script.finishImmediately(maxIters);
+    }
+
     export function printNumber(upTo: number): Script.Function {
         return {
             generator: function*() {

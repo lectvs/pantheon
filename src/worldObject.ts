@@ -38,7 +38,7 @@ abstract class WorldObject {
         this.lasty = this.y;
     }
 
-    render(opitons: RenderOptions) {
+    render(options: RenderOptions) {
 
     }
 
