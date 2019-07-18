@@ -12,7 +12,7 @@ namespace Assets {
 
         'room_bg': {},
         'room_backwall': {
-            rect: { x: 0, y: 0, width: 128, height: 80 },
+            spritesheet: { frameWidth: 16, frameHeight: 16, anchor: { x: 0.5, y: 0.5 } },
         },
 
         'milo_sprites': {
@@ -52,6 +52,14 @@ namespace Assets {
                 'desk': {
                     rect: { x: 16, y: 40, width: 36, height: 34 },
                 },
+                'archway': {
+                    rect: { x: 174, y: 2, width: 80, height: 119 },
+                    anchor: { x: 1, y: 0 },
+                },
+                'archway_front': {
+                    rect: { x: 174, y: 2, width: 40, height: 119 },
+                    anchor: { x: 1, y: 1 },
+                },
             }
         },
 
@@ -85,9 +93,19 @@ namespace Assets {
         },
     }
 
+    export const tilesets: Dict<Tilemap.Tileset> = {
+        'mainworld': {
+            tiles: Preload.allTilesWithPrefix('mainworld_'),
+            tileWidth: 16,
+            tileHeight: 16,
+            collisionIndices: [ -1, 9, 10, 11 ],
+        }
+    }
+
     export const pyxelTilemaps: Dict<Preload.PyxelTilemap> = {
         'mainworld': {
             url: 'assets/tilemap/mainworld.json',
+            tileset: tilesets.mainworld,
         },
     }
 

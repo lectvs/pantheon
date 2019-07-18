@@ -56,4 +56,10 @@ class HumanCharacter extends Sprite {
 
         this.playAnimation(`${anim_state}_${anim_dir}`);
     }
+
+    onCollide(other: PhysicsWorldObject) {
+        if (other instanceof Warp) {
+            Main.theater.loadScene(other.scene, other.transition);
+        }
+    }
 }

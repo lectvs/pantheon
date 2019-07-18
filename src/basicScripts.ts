@@ -1,4 +1,22 @@
 namespace S {
+    export function chain(...scriptFunctions: Script.Function[]) {
+        let i = 0;
+        return {
+            generator: function*() {
+                while (i < scriptFunctions.length) {
+                    yield* runScript(scriptFunctions[i]);
+                    i++;
+                }
+            },
+            endState: () => {
+                while (i < scriptFunctions.length) {
+                    if (scriptFunctions[i].endState) scriptFunctions[i].endState();
+                    i++;
+                }
+            }
+        }
+    }
+
     export function doOverTime(time: number, func: (t: number) => any): Script.Function {
         return {
             generator: function*() {
@@ -15,25 +33,6 @@ namespace S {
     export function finishImmediately(scriptFunction: Script.Function, maxIters: number = Script.FINISH_IMMEDIATELY_MAX_ITERS) {
         let script = new Script(scriptFunction);
         script.finishImmediately(maxIters);
-    }
-
-    export function printNumber(upTo: number): Script.Function {
-        return {
-            generator: function*() {
-                let i = 1;
-
-                let t = new Timer(1, () => {
-                    debug(i);
-                    i++;
-                }, true);
-
-                while (i <= upTo) {
-                    t.update(S.global.delta);
-                    yield;
-                }
-            },
-            endState: () => debug("Done!"),
-        }
     }
 
     export function runScript(scriptFunction: Script.Function): IterableIterator<any> {

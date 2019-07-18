@@ -9,11 +9,15 @@ namespace World {
         renderDirectly?: boolean;
         width?: number;
         height?: number;
+
+        backgroundColor?: number;
+        backgroundAlpha?: number;
     }
 
     export type CollisionConfig = {
         move: string | string[];
         from: string | string[];
+        callback?: Physics.Collision.Callback;
         transferMomentum?: boolean;
     }
 
@@ -37,6 +41,9 @@ class World extends WorldObject {
     worldObjectsByName: Dict<WorldObject>;
     layers: World.Layer[];
 
+    backgroundColor: number;
+    backgroundAlpha: number;
+
     camera: Camera;
     private scriptManager: ScriptManager;
     private renderTexture: PIXIRenderTextureSprite;
@@ -57,6 +64,9 @@ class World extends WorldObject {
         this.collisionOrder = O.getOrDefault(config.collisionOrder, []);
         this.worldObjectsByName = {};
         this.layers = this.createLayers(config.layers);
+
+        this.backgroundColor = O.getOrDefault(config.backgroundColor, Main.backgroundColor);
+        this.backgroundAlpha = O.getOrDefault(config.backgroundAlpha, 1);
 
         this.camera = new Camera(this.width, this.height);
         this.scriptManager = new ScriptManager();
@@ -79,10 +89,18 @@ class World extends WorldObject {
         this.scriptManager.update(thisOptions);
 
         for (let worldObject of this.worldObjects) {
-            worldObject.update(thisOptions);
+            if (worldObject.active) worldObject.preUpdate(thisOptions);
+        }
+
+        for (let worldObject of this.worldObjects) {
+            if (worldObject.active) worldObject.update(thisOptions);
         }
 
         this.handleCollisions();
+
+        for (let worldObject of this.worldObjects) {
+            if (worldObject.active) worldObject.postUpdate(thisOptions);
+        }
 
         this.camera.update(thisOptions);
         if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this.debugMoveCameraWithArrows) {
@@ -107,23 +125,85 @@ class World extends WorldObject {
     }
 
     renderWorld(options: RenderOptions) {
+        let oldtx = options.matrix.tx;
+        let oldty = options.matrix.ty;
         let cameraMatrix = this.camera.rendererMatrix;
         options.matrix.translate(cameraMatrix.tx, cameraMatrix.ty);
+        options.matrix.tx = Math.floor(options.matrix.tx);
+        options.matrix.ty = Math.floor(options.matrix.ty);
+
+        // Render background color.
+        Draw.options({ renderer: options.renderer, renderTexture: options.renderTexture, matrix: PIXI.Matrix.IDENTITY })
+            .fillColor(this.backgroundColor, this.backgroundAlpha).noStroke()
+            .drawRectangle(0, 0, this.width, this.height);
+
         for (let layer of this.layers) {
             layer.sort();
             for (let worldObject of layer.worldObjects) {
                 if (worldObject.visible) {
+                    worldObject.preRender(options);
                     worldObject.render(options);
+                    worldObject.postRender(options);
                 }
             }
         }
-        options.matrix.translate(-cameraMatrix.tx, -cameraMatrix.ty);
+        options.matrix.translate(oldtx - options.matrix.tx, oldty - options.matrix.ty);
     }
     
-    addWorldObject<T extends WorldObject>(obj: T) {
+    addWorldObject<T extends WorldObject>(obj: T, options?: { name?: string, layer?: string, physicsGroup?: string }) {
+        if (!obj) return obj;
         this.worldObjects.push(obj);
-        this.setLayer(obj, World.DEFAULT_LAYER);
+
+        if (!options) options = {};
+
+        if (options.name) {
+            this.setName(obj, options.name);
+        }
+
+        if (options.layer) {
+            this.setLayer(obj, options.layer);
+        } else {
+            this.setLayer(obj, World.DEFAULT_LAYER);
+        }
+
+        if (options.physicsGroup && obj instanceof PhysicsWorldObject) {
+            this.setPhysicsGroup(obj, options.physicsGroup);
+        }
+        
+        obj.onAdd(this);
         return obj;
+    }
+
+    getLayer(obj: string | WorldObject) {
+        if (_.isString(obj)) obj = this.getWorldObjectByName(obj);
+        for (let layer of this.layers) {
+            if (_.contains(layer.worldObjects, obj)) return layer.name;
+        }
+        return undefined;
+    }
+
+    getName(obj: string | WorldObject) {
+        if (_.isString(obj)) return obj;
+        for (let name in this.worldObjectsByName) {
+            if (this.worldObjectsByName[name] === obj) return name;
+        }
+        return undefined;
+    }
+
+    getPhysicsGroup(obj: string | WorldObject) {
+        if (_.isString(obj)) obj = this.getWorldObjectByName(obj);
+        for (let name in this.physicsGroups) {
+            if (_.contains(this.physicsGroups[name].worldObjects, obj)) return name;
+        }
+        return undefined;
+    }
+
+    getWorldMouseX() {
+        return Input.mouseX + Math.floor(this.camera.x - this.camera.width/2);
+    }
+
+    getWorldMouseY() {
+        return Input.mouseY + Math.floor(this.camera.y - this.camera.height/2);
     }
 
     getWorldObjectByName(name: string) {
@@ -142,6 +222,7 @@ class World extends WorldObject {
                 let group = this.physicsGroups[moveGroup].worldObjects;
                 for (let obj of group) {
                     Physics.collide(obj, fromObjects, {
+                        callback: collision.callback,
                         transferMomentum: collision.transferMomentum,
                     });
                 }
@@ -173,6 +254,7 @@ class World extends WorldObject {
         this.removeFromAllLayers(obj);
         this.removeFromAllPhysicsGroups(obj);
         A.removeAll(this.worldObjects, obj);
+        obj.onRemove(this);
     }
 
     runScript(script: Script | Script.Function) {
@@ -211,6 +293,16 @@ class World extends WorldObject {
         }
 
         physicsGroup.worldObjects.push(obj);
+    }
+
+    takeSnapshot(renderer: PIXI.Renderer) {
+        let renderTextureSprite = new PIXIRenderTextureSprite(this.camera.width, this.camera.height);
+        this.render({
+            renderer: renderer,
+            renderTexture: renderTextureSprite.renderTexture,
+            matrix: PIXI.Matrix.IDENTITY.clone(),
+        });
+        return renderTextureSprite;
     }
 
     private createLayers(layers: World.LayerConfig[]) {

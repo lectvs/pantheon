@@ -4,7 +4,7 @@ namespace Sprite {
     export type Config = PhysicsWorldObject.Config & {
         texture?: string;
         graphics?: PIXI.Graphics;
-        renderTexture?: { width: number, height: number };
+        renderTexture?: PIXIRenderTextureSprite | { width: number, height: number };
         offset?: Pt;
         angle?: number;
         animations?: Animation.Config[];
@@ -36,7 +36,11 @@ class Sprite extends PhysicsWorldObject {
         } else if (config.graphics) {
             this.setGraphics(config.graphics);
         } else if (config.renderTexture) {
-            this.setRenderTextureDimensions(config.renderTexture.width, config.renderTexture.height);
+            if (config.renderTexture instanceof PIXIRenderTextureSprite) {
+                this.setRenderTexture(config.renderTexture);
+            } else {
+                this.setRenderTextureDimensions(config.renderTexture.width, config.renderTexture.height);
+            }
         } else {
             debug("SpriteConfig must have texture, graphics, or renderTexture specified:", config);
             this.setGraphics(new PIXI.Graphics());  // Continue gracefully
@@ -106,6 +110,11 @@ class Sprite extends PhysicsWorldObject {
     setGraphics(graphics: PIXI.Graphics) {
         this.displayObject = graphics;
         this.spriteType = Sprite.Type.GRAPHICS;
+    }
+
+    setRenderTexture(renderTexture: PIXIRenderTextureSprite) {
+        this.displayObject = renderTexture;
+        this.spriteType = Sprite.Type.RENDERTEXTURE;
     }
 
     setRenderTextureDimensions(width: number, height: number) {

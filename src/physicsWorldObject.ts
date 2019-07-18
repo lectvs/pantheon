@@ -15,7 +15,7 @@ namespace PhysicsWorldObject {
     }
 }
 
-abstract class PhysicsWorldObject extends WorldObject {
+class PhysicsWorldObject extends WorldObject {
     vx: number;
     vy: number;
     mass: number;
@@ -63,6 +63,10 @@ abstract class PhysicsWorldObject extends WorldObject {
                 .drawRectangle(worldBounds.x, worldBounds.y, worldBounds.width, worldBounds.height);
         }
         super.render(options);
+    }
+
+    onCollide(other: PhysicsWorldObject) {
+        
     }
 
     applyGravity(delta: number) {

@@ -63,6 +63,7 @@ class Physics {
         if (_.isEmpty(from)) return;
 
         _.defaults(options, {
+            callback: false,
             transferMomentum: true,
             maxIters: Physics.MAX_ITERS,
         });
@@ -82,6 +83,14 @@ class Physics {
                 let d = Physics.separate(collision);
                 if (d !== 0 && options.transferMomentum) {
                     Physics.transferMomentum(collision);
+                }
+                if (options.callback) {
+                    if (_.isFunction(options.callback)) {
+                        options.callback(collision.move, collision.from);
+                    } else {
+                        collision.move.onCollide(collision.from);
+                        collision.from.onCollide(collision.move);
+                    }
                 }
             }
 
@@ -223,6 +232,7 @@ namespace Physics {
     export const MAX_ITERS = 10;
 
     export type CollideOptions = {
+        callback?: Collision.Callback,
         transferMomentum?: boolean;
         maxIters?: number;
     }
@@ -247,6 +257,7 @@ namespace Physics {
     }
 
     export namespace Collision {
+        export type Callback = boolean | ((move: PhysicsWorldObject, from: PhysicsWorldObject) => any);
         export enum Direction {
             LEFT, RIGHT, UP, DOWN
         }

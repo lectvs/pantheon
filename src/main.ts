@@ -13,6 +13,8 @@ function load() {
 class Main {
     static renderer: PIXI.Renderer;
     static theater: Theater;
+
+    static backgroundColor: number;
     
     static delta: number;
 
@@ -22,11 +24,13 @@ class Main {
     static start() {
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
+        this.backgroundColor = 0x061639;
+
         this.renderer = PIXI.autoDetectRenderer({
             width: this.width,
             height: this.height,
             resolution: 4,
-            backgroundColor: 0x061639,
+            backgroundColor: this.backgroundColor,
         });
         document.body.appendChild(this.renderer.view);
 
@@ -37,6 +41,16 @@ class Main {
             'down':                 ['ArrowDown'],
             'advanceDialog':        ['MouseLeft'],
             'skipCutsceneScript':   ['Escape'],
+            '1':                    ['1'],
+            '2':                    ['2'],
+            '3':                    ['3'],
+            '4':                    ['4'],
+            '5':                    ['5'],
+            '6':                    ['6'],
+            '7':                    ['7'],
+            '8':                    ['8'],
+            '9':                    ['9'],
+            '0':                    ['0'],
         });
 
         window.addEventListener("keydown", event => Input.handleKeyDownEvent(event), false);

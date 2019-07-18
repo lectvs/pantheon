@@ -1,18 +1,19 @@
 class PIXIRenderTextureSprite extends PIXI.Sprite {
-    renderTexture: PIXI.RenderTexture;
+    _renderTexture: PIXI.RenderTexture;
+    get renderTexture() { return this._renderTexture; }
 
     constructor(width: number, height: number) {
         let renderTexture = PIXI.RenderTexture.create({ width, height });
         super(renderTexture);
         
-        this.renderTexture = renderTexture;
+        this._renderTexture = renderTexture;
     }
 
     clear(renderer: PIXI.Renderer) {
-        renderer.render(Utils.NOOP_DISPLAYOBJECT, this.renderTexture, true);
+        renderer.render(Utils.NOOP_DISPLAYOBJECT, this._renderTexture, true);
     }
     
     resize(width: number, height: number) {
-        this.renderTexture.resize(width, height);
+        this._renderTexture.resize(width, height);
     }
 }

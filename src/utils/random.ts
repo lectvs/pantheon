@@ -13,12 +13,45 @@ class RandomNumberGenerator {
     }
 
     /**
+     * Random boolean, true or false.
+     * @param trueChance Default: 0.5
+     */
+    boolean(trueChance: number = 0.5) {
+        return this.value < trueChance;
+    }
+
+    /**
      * Random float between {min} and {max}.
      * @param min Default: 0
      * @param max Default: 1
      */
     float(min: number = 0, max: number = 1) {
         return min + (max - min) * this.value;
+    }
+
+    /**
+     * Random element from array, uniformly.
+     */
+    element<T>(array: T[]) {
+        if (_.isEmpty(array)) return undefined;
+        return array[this.index(array)];
+    }
+
+    /**
+     * Random point uniformly in a unit circle.
+     * @param radius Default: 1
+     */
+    inCircle(radius: number = 1): Pt {
+        let angle = this.float(0, 2*Math.PI);
+        let r = radius * Math.sqrt(this.value);
+        return { x: r*Math.cos(angle), y: r*Math.sin(angle) };
+    }
+
+    /**
+     * Random int from {0} to {array.length - 1}.
+     */
+    index(array: any[]) {
+        return this.int(0, array.length-1);
     }
 
     /**
@@ -38,13 +71,10 @@ class RandomNumberGenerator {
     }
 
     /**
-     * Random point uniformly in a unit circle.
-     * @param radius Default: 1
+     * Random sign, -1 or +1.
      */
-    inCircle(radius: number = 1): Pt {
-        let angle = this.float(0, 2*Math.PI);
-        let r = radius * Math.sqrt(this.value);
-        return { x: r*Math.cos(angle), y: r*Math.sin(angle) };
+    sign() {
+        return this.value < 0.5 ? -1 : 1;
     }
 
     /**

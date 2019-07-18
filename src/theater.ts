@@ -1,3 +1,4 @@
+/// <reference path="./transition.ts"/>
 /// <reference path="./world.ts"/>
 
 namespace Theater {
@@ -31,6 +32,7 @@ class Theater extends World {
         super({
             layers: [
                 { name: Theater.LAYER_WORLD },
+                { name: Theater.LAYER_TRANSITION },
                 { name: Theater.LAYER_SLIDES },
                 { name: Theater.LAYER_DIALOG },
             ],
@@ -62,7 +64,7 @@ class Theater extends World {
         super.update(options);
 
         if (DEBUG_SHOW_MOUSE_POSITION) {
-            this.debugMousePosition.setText(`${S.padLeft(Input.mouseX.toString(), 3)} ${S.padLeft(Input.mouseY.toString(), 3)}`);
+            this.debugMousePosition.setText(`${S.padLeft(this.currentWorld.getWorldMouseX().toString(), 3)} ${S.padLeft(this.currentWorld.getWorldMouseY().toString(), 3)}`);
         }
     }
 
@@ -82,7 +84,12 @@ class Theater extends World {
         this.slides.splice(0, deleteCount);
     }
 
-    loadScene(name: string) {
+    loadScene(name: string, transition?: Transition) {
+        if (transition) {
+            this.loadSceneWithTransition(name, transition);
+            return;
+        }
+
         let scene = this.scenes[name];
         if (!scene) {
             debug(`Scene '${name}' does not exist in world.`);
@@ -109,6 +116,36 @@ class Theater extends World {
         }
     }
 
+    private loadSceneWithTransition(name: string, transition: Transition) {
+        if (!this.currentWorld) {
+            this.loadScene(name);
+            return;
+        }
+
+        let oldSnapshot = this.currentWorld.takeSnapshot(Main.renderer);
+        this.loadScene(name);
+        let newSnapshot = this.currentWorld.takeSnapshot(Main.renderer);
+
+        this.currentWorld.active = false;
+        this.currentWorld.visible = false;
+
+        let transitionObj = new Transition.Obj(oldSnapshot, newSnapshot, transition);
+        this.addWorldObject(transitionObj, { layer: Theater.LAYER_TRANSITION });
+
+        this.runScript({
+            generator: function* () {
+                while (!transitionObj.done) {
+                    yield;
+                }
+            },
+            endState: () => {
+                this.removeWorldObject(transitionObj);
+                this.currentWorld.active = true;
+                this.currentWorld.visible = true;
+            }
+        });
+    }
+
     playCutsceneByName(name: string) {
         let cutscene = this.currentScene.cutscenes[name];
         if (!cutscene) {
@@ -129,33 +166,24 @@ class Theater extends World {
     static addWorldObjectFromStageConfig(world: World, worldObject: SomeStageConfig) {
         if (!worldObject.constructor) return null;
 
-        let obj = new worldObject.constructor(worldObject);
-        world.addWorldObject(obj);
-
         let config = <AllStageConfig> worldObject;
+        _.defaults(config, {
+            layer: World.DEFAULT_LAYER,
+        });
 
-        if (obj instanceof WorldObject) {
-            _.defaults(config, {
-                layer: World.DEFAULT_LAYER,
-            });
-
-            if (config.name) {
-                world.setName(obj, config.name);
-            }
-
-            world.setLayer(obj, config.layer);
-        }
-
-        if (obj instanceof PhysicsWorldObject) {
-            if (config.physicsGroup) world.setPhysicsGroup(obj, config.physicsGroup);
-        }
+        let obj: WorldObject = new worldObject.constructor(worldObject);
+        world.addWorldObject(obj, {
+            name: config.name,
+            layer: config.layer,
+            physicsGroup: config.physicsGroup,
+        });
 
         return obj;
     }
 
     static createWorldFromScene(scene: Scene) {
         let world = new World(scene.stage, {
-            renderDirectly: true,
+            //renderDirectly: true,
         });
 
         if (scene.stage.worldObjects) {
@@ -176,6 +204,7 @@ class Theater extends World {
     }
 
     static LAYER_WORLD = 'world';
+    static LAYER_TRANSITION = 'transition';
     static LAYER_SLIDES = 'slides';
     static LAYER_DIALOG = 'dialog';
 

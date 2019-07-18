@@ -1,6 +1,5 @@
 /// <reference path="./animations.ts" />
 /// <reference path="./stages.ts" />
-/// <reference path="./tilemap.ts" />
 
 namespace S { export const scenes: Dict<Scene> = {
 
@@ -13,15 +12,6 @@ namespace S { export const scenes: Dict<Scene> = {
     schema: {
         worldObjects: [
             Actors.ANGIE,
-            {
-                name: 'tilemap',
-                constructor: Tilemap,
-                x: -720, y: -1888,
-                layer: 'bg',
-                tileWidth: 16,
-                tileHeight: 16,
-                tilemap: 'mainworld',
-            }
         ]
     },
     entry: 'room_intro',
@@ -49,13 +39,48 @@ namespace S { export const scenes: Dict<Scene> = {
                 yield dialog("I'd better check outside.");
                 yield wait(0.2);
 
-                DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = false;
-
                 angie.angle = 0;
                 angie.x -= 12;
                 yield jump(angie, 8, 0.5, true);
+                DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = false;
+                angie.x = -291;
+                angie.y = -413;
             }
         }
+    }
+},
+
+'empty': {
+    stage: {
+        layers: [
+            { name: 'bg' },
+            { name: 'main' },
+        ],
+        physicsGroups: {
+            'player': {},
+        },
+    },
+    defaultControl: ['angie'],
+    schema: {
+        worldObjects: [
+            Actors.ANGIE,
+            {
+                name: 'room',
+                constructor: Sprite,
+                x: -256, y: -192,
+                texture: 'room_bg',
+                layer: 'bg',
+            },
+            {
+                name: 'backwall',
+                constructor: BackWall,
+                x: 64, y: 0,
+                layer: 'bg',
+            },
+        ]
+    },
+    cutscenes: {
+
     }
 }
 

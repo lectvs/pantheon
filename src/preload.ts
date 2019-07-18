@@ -26,7 +26,7 @@ namespace Preload {
 
     export type PyxelTilemap = {
         url?: string;
-        tilesetPrefix?: string;
+        tileset: Tilemap.Tileset;
     }
 
     export type PyxelTilemapJson = {
@@ -156,15 +156,22 @@ class Preload {
 
         let tilemapForCache: Tilemap.Tilemap = A.filledArray2D(tilemapJson.tileshigh, tilemapJson.tileswide);
         for (let tile of tilemapJson.layers[0].tiles) {
-            if (tile.tile >= 0) {
-                let prefix = O.getOrDefault(tilemap.tilesetPrefix, `${key}_`);
-                tilemapForCache[tile.y][tile.x] = {
-                    texture: `${prefix}${tile.tile}`,
-                };
-            }
+            tilemapForCache[tile.y][tile.x] = {
+                index: Math.max(tile.tile, -1),
+            };
         }
         AssetCache.tilemaps[key] = tilemapForCache;
     }
 
     private static TILEMAP_KEY_SUFFIX = '_tilemap_';
+}
+
+namespace Preload {
+    export function allTilesWithPrefix(prefix: string, count: number = 100) {
+        let result: string[] = [];
+        for (let i = 0; i < count; i++) {
+            result.push(`${prefix}${i}`);
+        }
+        return result;
+    }
 }
