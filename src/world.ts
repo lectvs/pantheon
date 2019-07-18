@@ -78,31 +78,31 @@ class World extends WorldObject {
         this.debugMoveCameraWithArrows = false;
     }
 
-    update(options: UpdateOptions) {
+    update() {
         this.updateControllers();
-        super.update(options);
+        super.update();
 
-        let thisOptions = O.withOverrides(options, {
-            world: this,
-        });
-
-        this.scriptManager.update(thisOptions);
+        global.pushWorld(this);
+        this.scriptManager.update();
+        
 
         for (let worldObject of this.worldObjects) {
-            if (worldObject.active) worldObject.preUpdate(thisOptions);
+            if (worldObject.active) worldObject.preUpdate();
         }
 
         for (let worldObject of this.worldObjects) {
-            if (worldObject.active) worldObject.update(thisOptions);
+            if (worldObject.active) worldObject.update();
         }
 
         this.handleCollisions();
 
         for (let worldObject of this.worldObjects) {
-            if (worldObject.active) worldObject.postUpdate(thisOptions);
+            if (worldObject.active) worldObject.postUpdate();
         }
 
-        this.camera.update(thisOptions);
+        this.camera.update();
+        global.popWorld();
+
         if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this.debugMoveCameraWithArrows) {
             if (Input.isDown('left'))  (this.camera.x -= 1) && this.camera.setModeFocus(this.camera.x, this.camera.y);
             if (Input.isDown('right')) (this.camera.x += 1) && this.camera.setModeFocus(this.camera.x, this.camera.y);
@@ -111,43 +111,44 @@ class World extends WorldObject {
         }
     }
 
-    render(options: RenderOptions) {
+    render() {
         if (this.renderingDirectly) {
-            this.renderWorld(options);
+            this.renderWorld();
         } else {
-            this.renderTexture.clear(options.renderer);
-            this.renderWorld(O.withOverrides(options, {
-                renderTexture: this.renderTexture.renderTexture,
-            }));
-            options.renderer.render(this.renderTexture, options.renderTexture, false, options.matrix);
+            this.renderTexture.clear(global.renderer);
+            global.pushRenderTexture(this.renderTexture.renderTexture);
+            this.renderWorld();
+            global.popRenderTexture();
+            global.renderer.render(this.renderTexture, global.renderTexture, false, global.matrix);
         }
-        super.render(options);
+        super.render();
     }
 
-    renderWorld(options: RenderOptions) {
-        let oldtx = options.matrix.tx;
-        let oldty = options.matrix.ty;
+    renderWorld() {
+        let oldtx = global.matrix.tx;
+        let oldty = global.matrix.ty;
         let cameraMatrix = this.camera.rendererMatrix;
-        options.matrix.translate(cameraMatrix.tx, cameraMatrix.ty);
-        options.matrix.tx = Math.floor(options.matrix.tx);
-        options.matrix.ty = Math.floor(options.matrix.ty);
+        global.matrix.translate(cameraMatrix.tx, cameraMatrix.ty);
+        global.matrix.tx = Math.floor(global.matrix.tx);
+        global.matrix.ty = Math.floor(global.matrix.ty);
 
         // Render background color.
-        Draw.options({ renderer: options.renderer, renderTexture: options.renderTexture, matrix: PIXI.Matrix.IDENTITY })
-            .fillColor(this.backgroundColor, this.backgroundAlpha).noStroke()
+        global.pushMatrix(PIXI.Matrix.IDENTITY);
+        Draw.noStroke().fillColor(this.backgroundColor, this.backgroundAlpha)
             .drawRectangle(0, 0, this.width, this.height);
+        global.popMatrix();
 
         for (let layer of this.layers) {
             layer.sort();
             for (let worldObject of layer.worldObjects) {
                 if (worldObject.visible) {
-                    worldObject.preRender(options);
-                    worldObject.render(options);
-                    worldObject.postRender(options);
+                    worldObject.preRender();
+                    worldObject.render();
+                    worldObject.postRender();
                 }
             }
         }
-        options.matrix.translate(oldtx - options.matrix.tx, oldty - options.matrix.ty);
+        global.matrix.translate(oldtx - global.matrix.tx, oldty - global.matrix.ty);
     }
     
     addWorldObject<T extends WorldObject>(obj: T, options?: { name?: string, layer?: string, physicsGroup?: string }) {
@@ -170,7 +171,9 @@ class World extends WorldObject {
             this.setPhysicsGroup(obj, options.physicsGroup);
         }
         
-        obj.onAdd(this);
+        global.pushWorld(this);
+        obj.onAdd();
+        global.popWorld();
         return obj;
     }
 
@@ -254,7 +257,9 @@ class World extends WorldObject {
         this.removeFromAllLayers(obj);
         this.removeFromAllPhysicsGroups(obj);
         A.removeAll(this.worldObjects, obj);
-        obj.onRemove(this);
+        global.pushWorld(this);
+        obj.onRemove();
+        global.popWorld();
     }
 
     runScript(script: Script | Script.Function) {
@@ -295,13 +300,13 @@ class World extends WorldObject {
         physicsGroup.worldObjects.push(obj);
     }
 
-    takeSnapshot(renderer: PIXI.Renderer) {
+    takeSnapshot() {
         let renderTextureSprite = new PIXIRenderTextureSprite(this.camera.width, this.camera.height);
-        this.render({
-            renderer: renderer,
-            renderTexture: renderTextureSprite.renderTexture,
-            matrix: PIXI.Matrix.IDENTITY.clone(),
-        });
+        global.pushRenderTexture(renderTextureSprite.renderTexture);
+        global.pushMatrix(PIXI.Matrix.IDENTITY);
+        this.render();
+        global.popRenderTexture();
+        global.popMatrix();
         return renderTextureSprite;
     }
 

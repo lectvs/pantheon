@@ -7,7 +7,7 @@ class CutsceneManager {
         this.current = null;
     }
 
-    update(options: UpdateOptions) {
+    update() {
         if (this.current) {
             if (this.current.script.done) {
                 this.giveControl();

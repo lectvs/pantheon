@@ -5,9 +5,9 @@ class ScriptManager {
         this.activeScripts = [];
     }
 
-    update(options: UpdateOptions) {
+    update() {
         for (let i = this.activeScripts.length-1; i >= 0; i--) {
-            this.activeScripts[i].update(options);
+            this.activeScripts[i].update();
             if (this.activeScripts[i].done) {
                 this.activeScripts.splice(i, 1);
             }

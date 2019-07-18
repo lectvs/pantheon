@@ -53,15 +53,16 @@ class Theater extends World {
         }
     }
 
-    update(options: UpdateOptions) {
-        let currentWorldOptions = O.withOverrides(options, {
-            world: this.currentWorld,
-        });
-        this.cutsceneManager.update(currentWorldOptions);
+    update() {
+        global.pushWorld(this.currentWorld);
+        this.cutsceneManager.update();
+        global.popWorld();
+
         if (!this.isCutscenePlaying && _.isEmpty(this.inControl)) {
             this.inControl = this.currentScene.defaultControl;
         }
-        super.update(options);
+
+        super.update();
 
         if (DEBUG_SHOW_MOUSE_POSITION) {
             this.debugMousePosition.setText(`${S.padLeft(this.currentWorld.getWorldMouseX().toString(), 3)} ${S.padLeft(this.currentWorld.getWorldMouseY().toString(), 3)}`);
@@ -122,9 +123,9 @@ class Theater extends World {
             return;
         }
 
-        let oldSnapshot = this.currentWorld.takeSnapshot(Main.renderer);
+        let oldSnapshot = this.currentWorld.takeSnapshot();
         this.loadScene(name);
-        let newSnapshot = this.currentWorld.takeSnapshot(Main.renderer);
+        let newSnapshot = this.currentWorld.takeSnapshot();
 
         this.currentWorld.active = false;
         this.currentWorld.visible = false;

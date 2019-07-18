@@ -18,7 +18,7 @@ class HumanCharacter extends Sprite {
         this.direction = Direction2D.LEFT;
     }
 
-    update(options: UpdateOptions) {
+    update() {
         let haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
         let vaxis = (this.controller.down ? 1 : 0) - (this.controller.up ? 1 : 0);
 
@@ -48,7 +48,7 @@ class HumanCharacter extends Sprite {
             this.vy = 0;
         }
 
-        super.update(options);
+        super.update();
 
         // Handle animation.
         let anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'run';

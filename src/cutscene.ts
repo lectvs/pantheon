@@ -13,7 +13,7 @@ namespace Cutscene {
                 while (true) {
                     let result = iterator.next();
                     if (result.value) {
-                        let script = S.global.world.runScript(result.value);
+                        let script = global.world.runScript(result.value);
                         if (DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS) {
                             script.finishImmediately();
                         }

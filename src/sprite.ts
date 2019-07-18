@@ -68,16 +68,16 @@ class Sprite extends PhysicsWorldObject {
         this.alpha = O.getOrDefault(config.alpha, 1);
     }
 
-    update(options: UpdateOptions) {
-        super.update(options);
-        this.animationManager.update(options.delta);
+    update() {
+        super.update();
+        this.animationManager.update();
     }
 
-    render(options: RenderOptions) {
+    render() {
         this.setDisplayObjectProperties();
 
-        options.renderer.render(this.displayObject, options.renderTexture, false, options.matrix);
-        super.render(options);
+        global.renderer.render(this.displayObject, global.renderTexture, false, global.matrix);
+        super.render();
     }
 
     getCurrentAnimationName() {

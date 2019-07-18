@@ -52,16 +52,16 @@ class Tilemap extends WorldObject {
         this.dirty = true;
     }
 
-    onAdd(world: World) {
+    onAdd() {
         for (let box of this.collisionBoxes) {
-            world.addWorldObject(box, {
+            global.world.addWorldObject(box, {
                 physicsGroup: this.collisionPhysicsGroup
             });
         }
     }
 
-    postUpdate(options: UpdateOptions) {
-        super.postUpdate(options);
+    postUpdate() {
+        super.postUpdate();
         if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
             for (let box of this.collisionBoxes) {
                 box.x = this.x;
@@ -70,17 +70,17 @@ class Tilemap extends WorldObject {
         }
     }
 
-    render(options: RenderOptions) {
+    render() {
         if (this.dirty) {
-            this.drawRenderTexture(options.renderer);
+            this.drawRenderTexture();
             this.dirty = false;
         }
         
         this.renderTexture.x = this.x;
         this.renderTexture.y = this.y;
-        options.renderer.render(this.renderTexture, options.renderTexture, false, options.matrix);
+        global.renderer.render(this.renderTexture, global.renderTexture, false, global.matrix);
 
-        super.render(options);
+        super.render();
     }
 
     createCollisionBoxes(debugBounds: boolean = false) {
@@ -95,8 +95,8 @@ class Tilemap extends WorldObject {
         }
     }
 
-    drawRenderTexture(renderer: PIXI.Renderer) {
-        this.renderTexture.clear(renderer);
+    drawRenderTexture() {
+        this.renderTexture.clear(global.renderer);
         for (let y = 0; y < this.tilemap.length; y++) {
             for (let x = 0; x < this.tilemap[y].length; x++) {
                 if (!this.tilemap[y][x] || this.tilemap[y][x].index < 0) continue;
@@ -105,14 +105,14 @@ class Tilemap extends WorldObject {
                 this.tileSprite.texture = AssetCache.getTexture(textureKey);
                 this.tileSprite.x = x * this.tileset.tileWidth;
                 this.tileSprite.y = y * this.tileset.tileHeight;
-                renderer.render(this.tileSprite, this.renderTexture.renderTexture, false);
+                global.renderer.render(this.tileSprite, this.renderTexture.renderTexture, false);
             }
         }
     }
 
-    onRemove(world: World) {
+    onRemove() {
         for (let box of this.collisionBoxes) {
-            world.removeWorldObject(box);
+            global.world.removeWorldObject(box);
         }
     }
 }

@@ -45,31 +45,31 @@ class WorldObject {
         this.preRenderStoredY = this.y;
     }
 
-    preUpdate(options: UpdateOptions) {
+    preUpdate() {
         this.lastx = this.x;
         this.lasty = this.y;
     }
 
-    update(options: UpdateOptions) {
+    update() {
         
     }
 
-    postUpdate(options: UpdateOptions) {
+    postUpdate() {
         
     }
 
-    preRender(options: RenderOptions) {
+    preRender() {
         this.preRenderStoredX = this.x;
         this.preRenderStoredY = this.y;
         this.x = Math.floor(this.x);
         this.y = Math.floor(this.y);
     }
 
-    render(options: RenderOptions) {
+    render() {
 
     }
 
-    postRender(options: RenderOptions) {
+    postRender() {
         this.x = this.preRenderStoredX;
         this.y = this.preRenderStoredY;
     }
@@ -86,11 +86,11 @@ class WorldObject {
         }
     }
 
-    onAdd(world: World) {
+    onAdd() {
 
     }
 
-    onRemove(world: World) {
+    onRemove() {
         
     }
 }

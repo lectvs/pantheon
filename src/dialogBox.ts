@@ -40,9 +40,9 @@ class DialogBox extends Sprite {
         this.characterTimer = new Timer(0.05, () => this.advanceCharacter(), true);
     }
 
-    update(options: UpdateOptions) {
-        super.update(options);
-        this.characterTimer.update(options.delta);
+    update() {
+        super.update();
+        this.characterTimer.update();
 
         if (this.done) {
             this.visible = false;
@@ -53,12 +53,12 @@ class DialogBox extends Sprite {
         }
     }
 
-    render(options: RenderOptions) {
-        super.render(options);
+    render() {
+        super.render();
 
         this.setSpriteTextProperties();
         this.drawMask();
-        this.spriteText.render(options);
+        this.spriteText.render();
     }
 
     advanceDialog() {

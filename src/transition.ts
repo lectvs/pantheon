@@ -52,14 +52,14 @@ namespace Transition {
             }
         }
 
-        update(options: UpdateOptions) {
-            super.update(options);
+        update() {
+            super.update();
         }
 
-        render(options: RenderOptions) {
-            super.render(options);
-            this.newSprite.render(options);
-            this.oldSprite.render(options);
+        render() {
+            super.render();
+            this.newSprite.render();
+            this.oldSprite.render();
         }
     }
 }

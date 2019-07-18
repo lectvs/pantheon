@@ -23,7 +23,7 @@ namespace S {
                 let t = new Timer(time);
                 while (!t.done) {
                     func(t.progress);
-                    t.update(S.global.delta);
+                    t.update();
                     yield;
                 }
             }, endState: () => func(1),
@@ -37,7 +37,7 @@ namespace S {
 
     export function runScript(scriptFunction: Script.Function): IterableIterator<any> {
         return function*() {
-            let script = S.global.world.runScript(scriptFunction);
+            let script = global.world.runScript(scriptFunction);
             while (!script.done) {
                 yield;
             }

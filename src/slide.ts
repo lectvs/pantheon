@@ -14,8 +14,8 @@ class Slide extends Sprite {
 
     constructor(config: Slide.Config) {
         super(config, {
-            x: Main.width / 2,
-            y: Main.height / 2,
+            x: Main.width/2,
+            y: Main.height/2,
         });
         this.timer = new Timer(O.getOrDefault(config.timeToLoad, 0));
 
@@ -27,11 +27,11 @@ class Slide extends Sprite {
         this.fullyLoaded = false;
     }
 
-    update(options: UpdateOptions) {
-        super.update(options);
+    update() {
+        super.update();
         if (this.fullyLoaded) return;
         
-        this.timer.update(options.delta);
+        this.timer.update();
         if (this.targetAlpha !== undefined) {
             this.alpha = this.targetAlpha * this.timer.progress;
         }

@@ -72,26 +72,23 @@ class Main {
             skipCutsceneScriptKey: 'skipCutsceneScript',
         });
 
-        let renderOptions: RenderOptions = {
-            renderer: this.renderer,
-            renderTexture: undefined,
-            matrix: PIXI.Matrix.IDENTITY,
-        };
+        global.clearStacks();
+        global.pushRenderer(this.renderer);
+        global.pushRenderTexture(undefined);
+        global.pushMatrix(PIXI.Matrix.IDENTITY);
 
         PIXI.Ticker.shared.add(frameDelta => {
             this.delta = frameDelta/60;
 
             Input.update();
 
-            this.theater.update({
-                delta: this.delta,
-                world: null,
-            });
+            global.pushWorld(null);
+            global.pushDelta(this.delta);
 
-            renderOptions.matrix.identity();
+            this.theater.update();
 
             this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
-            this.theater.render(renderOptions);
+            this.theater.render();
         });
     }
 }

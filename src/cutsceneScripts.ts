@@ -26,7 +26,7 @@ namespace S {
                     for (let i = 0; i < Main.theater.slides.length; i++) {
                         Main.theater.slides[i].alpha = slideAlphas[i] * (1 - timer.progress);
                     }
-                    timer.update(S.global.delta);
+                    timer.update();
                     yield;
                 }
             },
@@ -52,7 +52,7 @@ namespace S {
                 let timer = new Timer(time);
                 while (!timer.done) {
                     sprite.offset.y = M.jumpParabola(start, -peakDelta, groundDelta, timer.progress);
-                    timer.update(S.global.delta);
+                    timer.update();
                     yield;
                 }
             },
@@ -78,15 +78,15 @@ namespace S {
     export function shake(intensity: number, time: number) {
         return {
             generator: function*() {
-                S.global.world.camera.shakeIntensity = intensity;
+                global.world.camera.shakeIntensity = intensity;
                 let timer = new Timer(time);
                 while (!timer.done) {
-                    timer.update(S.global.delta);
+                    timer.update();
                     yield;
                 }
             },
             endState: () => {
-                S.global.world.camera.shakeIntensity = 0;
+                global.world.camera.shakeIntensity = 0;
             }
         }
     }

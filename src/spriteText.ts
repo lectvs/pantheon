@@ -39,17 +39,17 @@ class SpriteText extends WorldObject {
         this.fontSprite = new PIXI.Sprite(AssetCache.getTexture(this.font.texture).clone());
     }
 
-    update(options: UpdateOptions) {
-        super.update(options);
+    update() {
+        super.update();
     }
 
-    render(options: RenderOptions) {
+    render() {
         for (let char of this.chars) {
             this.setFontSpriteToCharacter(char);
             this.setStyle(char.style);
-            options.renderer.render(this.fontSprite, options.renderTexture, false, options.matrix);
+            global.renderer.render(this.fontSprite, global.renderTexture, false, global.matrix);
         }
-        super.render(options);
+        super.render();
     }
 
     clear() {

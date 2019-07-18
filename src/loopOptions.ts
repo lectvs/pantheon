@@ -1,10 +1,10 @@
-type UpdateOptions = {
-    delta: number;
-    world: World;
-}
+// type UpdateOptions = {
+//     delta: number;
+//     world: World;
+// }
 
-type RenderOptions = {
-    renderer: PIXI.Renderer;
-    renderTexture: PIXI.RenderTexture;
-    matrix: PIXI.Matrix;
-}
+// type RenderOptions = {
+//     renderer: PIXI.Renderer;
+//     renderTexture: PIXI.RenderTexture;
+//     matrix: PIXI.Matrix;
+// }

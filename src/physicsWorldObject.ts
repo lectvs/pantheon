@@ -49,24 +49,24 @@ class PhysicsWorldObject extends WorldObject {
         this.preMovementY = this.y;
     }
 
-    update(options: UpdateOptions) {
-        super.update(options);
+    update() {
+        super.update();
         if (this.simulating) {
-            this.simulate(options.delta, options.world);
+            this.simulate(global.delta, global.world);
         }
     }
 
-    render(options: RenderOptions) {
+    render() {
         if (DEBUG_ALL_PHYSICS_BOUNDS || this.debugBounds) {
             let worldBounds = this.getWorldBounds();
-            Draw.options(options).lineStyle(1, 0x00FF00).noFill()
+            Draw.lineStyle(1, 0x00FF00).noFill()
                 .drawRectangle(worldBounds.x, worldBounds.y, worldBounds.width, worldBounds.height);
         }
-        super.render(options);
+        super.render();
     }
 
     onCollide(other: PhysicsWorldObject) {
-        
+
     }
 
     applyGravity(delta: number) {

@@ -62,15 +62,15 @@ class Camera {
         this.matrix = new PIXI.Matrix(1, 0, 0, 1, this.x, this.y);
     }
 
-    update(options: UpdateOptions) {
+    update() {
         if (this.mode.type === 'follow') {
             let target = this.mode.target;
             if (_.isString(target)) {
-                target = options.world.getWorldObjectByName(target);
+                target = global.world.getWorldObjectByName(target);
             }
-            this.moveTowardsPoint(target.x + this.mode.offset.x, target.y + this.mode.offset.y, options);
+            this.moveTowardsPoint(target.x + this.mode.offset.x, target.y + this.mode.offset.y);
         } else if (this.mode.type === 'focus') {
-            this.moveTowardsPoint(this.mode.point.x, this.mode.point.y, options);
+            this.moveTowardsPoint(this.mode.point.x, this.mode.point.y);
         }
 
         if (this.shakeIntensity > 0) {
@@ -83,7 +83,7 @@ class Camera {
         }
     }
 
-    moveTowardsPoint(x: number, y: number, options: UpdateOptions) {
+    moveTowardsPoint(x: number, y: number) {
         if (this.movement.type === 'snap') {
             this.x = x;
             this.y = y;

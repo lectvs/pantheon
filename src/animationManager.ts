@@ -13,9 +13,9 @@ class AnimationManager {
         this.currentFrameTime = 0;
     }
 
-    update(delta: number) {
+    update() {
         if (this.currentFrame) {
-            this.currentFrameTime += delta;
+            this.currentFrameTime += global.delta;
 
             if (this.currentFrameTime >= this.currentFrame.duration) {
                 this.currentFrameTime -= this.currentFrame.duration;

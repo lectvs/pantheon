@@ -8,30 +8,30 @@ class BackWall extends PhysicsWorldObject {
         this.createTiles();
     }
 
-    update(options: UpdateOptions) {
-        super.update(options);
+    update() {
+        super.update();
 
         if (Input.justDown('1')) {
-            for (let i = 0; i < 10; i++) this.crumble(options.world);
+            for (let i = 0; i < 10; i++) this.crumble();
         }
     }
 
-    render(options: RenderOptions) {
+    render() {
         for (let tile of this.tiles) {
-            tile.render(options);
+            tile.render();
         }
-        super.render(options);
+        super.render();
     }
 
-    crumble(world: World) {
+    crumble() {
         for (let i = 0; i < 4; i++) {
             if (!_.isEmpty(this.tiles)) {
-                this.destroyTile(Random.index(this.tiles), world);
+                this.destroyTile(Random.index(this.tiles));
             }
         }
 
         if (_.isEmpty(this.tiles)) {
-            world.removeWorldObject(this);
+            global.world.removeWorldObject(this);
         }
     }
 
@@ -53,7 +53,7 @@ class BackWall extends PhysicsWorldObject {
         }
     }
 
-    destroyTile(index: number, world: World) {
+    destroyTile(index: number) {
         let [tile] = this.tiles.splice(index, 1);
 
         let gravity = 200;
@@ -63,12 +63,12 @@ class BackWall extends PhysicsWorldObject {
         tile.vx = velocity.x;
         tile.vy = velocity.y;
 
-        world.addWorldObject(tile, { layer: world.getLayer(this) });
-        world.runScript(S.doOverTime(1, t => {
-            tile.vy += gravity * S.global.delta;
-            tile.angle += angularSpeed * S.global.delta;
+        global.world.addWorldObject(tile, { layer: global.world.getLayer(this) });
+        global.world.runScript(S.doOverTime(1, t => {
+            tile.vy += gravity * global.delta;
+            tile.angle += angularSpeed * global.delta;
             if (t === 1) {
-                world.removeWorldObject(tile);
+                global.world.removeWorldObject(tile);
             }
         }));
     }
