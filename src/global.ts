@@ -48,4 +48,6 @@ class global {
     private static scriptStack: Script[] = [];
     static pushScript(script: Script) { this.scriptStack.push(script); }
     static popScript() { return this.scriptStack.pop(); }
+
+    static theater: Theater;
 }

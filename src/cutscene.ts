@@ -1,7 +1,7 @@
 type Cutscene = {
+    type: 'cutscene';
     script : () => IterableIterator<Script.Function>;
-    condition?: () => boolean;
-    afterwardsGiveControlTo?: string[];
+    after?: string;
 }
 
 namespace Cutscene {

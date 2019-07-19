@@ -3,21 +3,23 @@
 
 namespace Theater {
     export type Config = {
-        scenes: Dict<Scene>;
-        sceneToLoad: string;
+        stages: Dict<Stage>;
+        stageToLoad: string;
+        storyboard: Storyboard;
+        storyboardEntry: string;
         dialogBox: DialogBox.Config;
         skipCutsceneScriptKey: string;
     }
 }
 
 class Theater extends World {
-    scenes: Dict<Scene>;
+    stages: Dict<Stage>;
+    storyboard: Storyboard;
 
     cutsceneManager: CutsceneManager;
-    inControl: string[];
     skipCutsceneScriptKey: string;
 
-    currentSceneName: string;
+    currentStageName: string;
     currentWorld: World;
 
     dialogBox: DialogBox;
@@ -25,7 +27,7 @@ class Theater extends World {
 
     private debugMousePosition = new SpriteText({ font: Assets.fonts.DELUXE16, x: 0, y: 0 });
 
-    get currentScene() { return this.scenes[this.currentSceneName]; }
+    get currentStage() { return this.stages[this.currentStageName]; }
     get isCutscenePlaying() { return this.cutsceneManager.isCutscenePlaying; }
     
     constructor(config: Theater.Config) {
@@ -37,16 +39,20 @@ class Theater extends World {
                 { name: Theater.LAYER_DIALOG },
             ],
         });
-        this.scenes = config.scenes;
+
+        this.stages = config.stages;
+        this.storyboard = config.storyboard;
 
         this.cutsceneManager = new CutsceneManager();
-        this.inControl = [];
         this.skipCutsceneScriptKey = config.skipCutsceneScriptKey;
 
         this.loadDialogBox(config.dialogBox);
         this.slides = [];
 
-        this.loadScene(config.sceneToLoad);
+        this.loadStage(config.stageToLoad);
+
+        // Start storyboard entry point
+        this.startStoryboardComponentByName(config.storyboardEntry);
 
         if (DEBUG_SHOW_MOUSE_POSITION) {
             this.debugMousePosition = this.addWorldObject(new SpriteText({ x: 0, y: 0, font: Assets.fonts.DELUXE16 }));
@@ -54,14 +60,7 @@ class Theater extends World {
     }
 
     update() {
-        global.pushWorld(this.currentWorld);
         this.cutsceneManager.update();
-        global.popWorld();
-
-        if (!this.isCutscenePlaying && _.isEmpty(this.inControl)) {
-            this.inControl = this.currentScene.defaultControl;
-        }
-
         super.update();
 
         if (DEBUG_SHOW_MOUSE_POSITION) {
@@ -85,15 +84,15 @@ class Theater extends World {
         this.slides.splice(0, deleteCount);
     }
 
-    loadScene(name: string, transition?: Transition) {
+    loadStage(name: string, transition?: Transition) {
         if (transition) {
-            this.loadSceneWithTransition(name, transition);
+            this.loadStageWithTransition(name, transition);
             return;
         }
 
-        let scene = this.scenes[name];
-        if (!scene) {
-            debug(`Scene '${name}' does not exist in world.`);
+        let stage = this.stages[name];
+        if (!stage) {
+            debug(`Stage '${name}' does not exist in world.`);
             return;
         }
 
@@ -105,26 +104,21 @@ class Theater extends World {
         this.cutsceneManager.reset();
 
         // Create new stuff
-        this.currentSceneName = name;
-        this.currentWorld = Theater.createWorldFromScene(scene);
+        this.currentStageName = name;
+        this.currentWorld = Theater.createWorldFromStage(stage);
         this.currentWorld.debugMoveCameraWithArrows = DEBUG_MOVE_CAMERA_WITH_ARROWS;
         this.addWorldObject(this.currentWorld);
         this.setLayer(this.currentWorld, Theater.LAYER_WORLD);
-
-        // Start scene's entry point
-        if (scene.entry) {
-            this.playCutsceneByName(scene.entry);
-        }
     }
 
-    private loadSceneWithTransition(name: string, transition: Transition) {
+    private loadStageWithTransition(name: string, transition: Transition) {
         if (!this.currentWorld) {
-            this.loadScene(name);
+            this.loadStage(name);
             return;
         }
 
         let oldSnapshot = this.currentWorld.takeSnapshot();
-        this.loadScene(name);
+        this.loadStage(name);
         let newSnapshot = this.currentWorld.takeSnapshot();
 
         this.currentWorld.active = false;
@@ -147,14 +141,20 @@ class Theater extends World {
         });
     }
 
-    playCutsceneByName(name: string) {
-        let cutscene = this.currentScene.cutscenes[name];
-        if (!cutscene) {
-            debug(`Cutscene '${name}' does not exist in scene:`, this.currentScene);
+    startStoryboardComponentByName(name: string) {
+        let component = this.storyboard[name];
+        if (!component) {
+            debug(`Component '${name}' does not exist in storyboard:`, this.storyboard);
             return;
         }
-        this.inControl = [];
-        this.cutsceneManager.playCutscene(cutscene, this.currentWorld, this.skipCutsceneScriptKey);
+
+        if (component.type === 'cutscene') {
+            this.cutsceneManager.playCutscene(component, this.currentWorld, this.skipCutsceneScriptKey);
+        } else if (component.type === 'gameplay') {
+            global.pushWorld(this.currentWorld);
+            component.start();
+            global.popWorld();
+        }
     }
 
     private loadDialogBox(config: DialogBox.Config) {
@@ -182,24 +182,16 @@ class Theater extends World {
         return obj;
     }
 
-    static createWorldFromScene(scene: Scene) {
-        let world = new World(scene.stage, {
+    static createWorldFromStage(stage: Stage) {
+        let world = new World(stage, {
             //renderDirectly: true,
         });
 
-        if (scene.stage.worldObjects) {
-            for (let worldObject of scene.stage.worldObjects) {
+        if (stage.worldObjects) {
+            for (let worldObject of stage.worldObjects) {
                 this.addWorldObjectFromStageConfig(world, worldObject);
             }
         }
-
-        if (scene.schema.worldObjects) {
-            for (let worldObject of scene.schema.worldObjects) {
-                this.addWorldObjectFromStageConfig(world, worldObject);
-            }
-        }
-
-        world.camera.mode = scene.cameraMode || Theater.DEFAULT_CAMERA_MODE;
 
         return world;
     }

@@ -94,7 +94,7 @@ class Camera {
         }
     }
 
-    setModeFollow(target: WorldObject, offsetX?: number, offsetY?: number) {
+    setModeFollow(target: string | WorldObject, offsetX?: number, offsetY?: number) {
         this.mode = {
             type: 'follow',
             target: target,

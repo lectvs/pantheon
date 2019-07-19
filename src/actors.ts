@@ -18,6 +18,7 @@ namespace Actors {
             Animations.fromTextureList({ name: 'flop',      texturePrefix: 'angie_sprites_', textures: [4, 5, 6, 7], frameRate: 16, nextFrameRef: 'flop_lay/0', forceRequired: true }),
             Animations.fromTextureList({ name: 'flop_lay',  texturePrefix: 'angie_sprites_', textures: [4], frameRate: 1, count: -1, forceRequired: true }),
         ],
+        controllable: true,
         
         physicsGroup: 'player',
         bounds: { x: -5, y: -2, width: 10, height: 2 },

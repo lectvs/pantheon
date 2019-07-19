@@ -183,6 +183,7 @@ var WorldObject = /** @class */ (function () {
         this.data = _.clone(O.getOrDefault(config.data, {}));
         this.lastx = this.x;
         this.lasty = this.y;
+        this.controllable = O.getOrDefault(config.controllable, false);
         this.controller = {};
         this.controllerSchema = {};
         this.preRenderStoredX = this.x;
@@ -197,6 +198,7 @@ var WorldObject = /** @class */ (function () {
     WorldObject.prototype.preUpdate = function () {
         this.lastx = this.x;
         this.lasty = this.y;
+        this.updateController();
     };
     WorldObject.prototype.update = function () {
     };
@@ -214,14 +216,16 @@ var WorldObject = /** @class */ (function () {
         this.x = this.preRenderStoredX;
         this.y = this.preRenderStoredY;
     };
-    WorldObject.prototype.resetController = function () {
-        for (var key in this.controller) {
-            this.controller[key] = false;
-        }
-    };
     WorldObject.prototype.updateController = function () {
-        for (var key in this.controllerSchema) {
-            this.controller[key] = this.controllerSchema[key]();
+        if (this.controllable) {
+            for (var key in this.controllerSchema) {
+                this.controller[key] = this.controllerSchema[key]();
+            }
+        }
+        else {
+            for (var key in this.controller) {
+                this.controller[key] = false;
+            }
         }
     };
     WorldObject.prototype.onAdd = function () {
@@ -488,7 +492,7 @@ var HumanCharacter = /** @class */ (function (_super) {
     };
     HumanCharacter.prototype.onCollide = function (other) {
         if (other instanceof Warp) {
-            Main.theater.loadScene(other.scene, other.transition);
+            Main.theater.loadStage(other.stage, other.transition);
         }
     };
     return HumanCharacter;
@@ -513,6 +517,7 @@ var Actors;
             Animations.fromTextureList({ name: 'flop', texturePrefix: 'angie_sprites_', textures: [4, 5, 6, 7], frameRate: 16, nextFrameRef: 'flop_lay/0', forceRequired: true }),
             Animations.fromTextureList({ name: 'flop_lay', texturePrefix: 'angie_sprites_', textures: [4], frameRate: 1, count: -1, forceRequired: true }),
         ],
+        controllable: true,
         physicsGroup: 'player',
         bounds: { x: -5, y: -2, width: 10, height: 2 },
     };
@@ -1206,14 +1211,12 @@ var CutsceneManager = /** @class */ (function () {
     CutsceneManager.prototype.update = function () {
         if (this.current) {
             if (this.current.script.done) {
-                this.giveControl();
+                var completedCutscene = this.current.cutscene;
                 this.current = null;
+                if (completedCutscene.after) {
+                    global.theater.startStoryboardComponentByName(completedCutscene.after);
+                }
             }
-        }
-    };
-    CutsceneManager.prototype.giveControl = function () {
-        if (this.current.cutscene.afterwardsGiveControlTo) {
-            Main.theater.inControl = this.current.cutscene.afterwardsGiveControlTo;
         }
     };
     CutsceneManager.prototype.playCutscene = function (cutscene, world, skipCutsceneScriptKey) {
@@ -1991,15 +1994,6 @@ var Input = /** @class */ (function () {
     }());
     Input.Key = Key;
 })(Input || (Input = {}));
-// type UpdateOptions = {
-//     delta: number;
-//     world: World;
-// }
-// type RenderOptions = {
-//     renderer: PIXI.Renderer;
-//     renderTexture: PIXI.RenderTexture;
-//     matrix: PIXI.Matrix;
-// }
 /// <reference path="./preload.ts" />
 function load() {
     PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
@@ -2057,8 +2051,10 @@ var Main = /** @class */ (function () {
         window.addEventListener("mouseup", function (event) { return Input.handleMouseUpEvent(event); }, false);
         //window.addEventListener("contextmenu", event => event.preventDefault(), false);
         this.theater = new Theater({
-            scenes: scenes,
-            sceneToLoad: 'main',
+            stages: stages,
+            stageToLoad: 'room',
+            storyboard: storyboard,
+            storyboardEntry: 'room_intro',
             dialogBox: {
                 x: Main.width / 2, y: Main.height - 32,
                 texture: 'dialogbox',
@@ -2068,6 +2064,7 @@ var Main = /** @class */ (function () {
             },
             skipCutsceneScriptKey: 'skipCutsceneScript',
         });
+        global.theater = this.theater;
         global.clearStacks();
         global.pushRenderer(this.renderer);
         global.pushRenderTexture(undefined);
@@ -2372,506 +2369,6 @@ var PIXIRenderTextureSprite = /** @class */ (function (_super) {
     };
     return PIXIRenderTextureSprite;
 }(PIXI.Sprite));
-var Transition;
-(function (Transition) {
-    Transition.INSTANT = { type: 'instant' };
-    function FADE(preTime, time, postTime) {
-        return {
-            type: 'fade', preTime: preTime, time: time, postTime: postTime
-        };
-    }
-    Transition.FADE = FADE;
-    var Obj = /** @class */ (function (_super) {
-        __extends(Obj, _super);
-        function Obj(oldSnapshot, newSnapshot, transition) {
-            var _this = _super.call(this, {}) || this;
-            _this.oldSprite = new Sprite({ renderTexture: oldSnapshot });
-            _this.newSprite = new Sprite({ renderTexture: newSnapshot });
-            _this.done = false;
-            if (transition.type === 'instant') {
-                _this.done = true;
-            }
-            else if (transition.type === 'fade') {
-                _this.oldSprite.alpha = 1;
-                _this.newSprite.alpha = 0;
-                Main.theater.runScript({
-                    generator: S.chain(S.wait(transition.preTime), S.doOverTime(transition.time, function (t) {
-                        _this.oldSprite.alpha = 1 - t;
-                        _this.newSprite.alpha = t;
-                    }), S.wait(transition.postTime)).generator,
-                    endState: function () { return (_this.done = true); },
-                });
-                // Main.theater.runScript({
-                //     generator: S.doOverTime(transition.time, t => {
-                //         this.oldSprite.alpha = 1 - t;
-                //     }).generator,
-                //     endState: () => (this.done = true),
-                // });
-            }
-            return _this;
-        }
-        Obj.prototype.update = function () {
-            _super.prototype.update.call(this);
-        };
-        Obj.prototype.render = function () {
-            _super.prototype.render.call(this);
-            this.newSprite.render();
-            this.oldSprite.render();
-        };
-        return Obj;
-    }(WorldObject));
-    Transition.Obj = Obj;
-})(Transition || (Transition = {}));
-var Tilemap = /** @class */ (function (_super) {
-    __extends(Tilemap, _super);
-    function Tilemap(config) {
-        var _this = _super.call(this, config) || this;
-        _this.tilemap = A.clone2D(AssetCache.getTilemap(config.tilemap));
-        _this.tileset = config.tileset;
-        _this.collisionPhysicsGroup = config.collisionPhysicsGroup;
-        var tilemapDimens = A.get2DArrayDimensions(_this.tilemap);
-        _this.numTilesX = tilemapDimens.width;
-        _this.numTilesY = tilemapDimens.height;
-        _this.renderTexture = new PIXIRenderTextureSprite(_this.numTilesX * _this.tileset.tileWidth, _this.numTilesY * _this.tileset.tileHeight);
-        _this.createCollisionBoxes(O.getOrDefault(config.collisionDebugBounds, false));
-        _this.tileSprite = new PIXI.Sprite();
-        _this.dirty = true;
-        return _this;
-    }
-    Tilemap.prototype.onAdd = function () {
-        var e_7, _a;
-        try {
-            for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var box = _c.value;
-                global.world.addWorldObject(box, {
-                    physicsGroup: this.collisionPhysicsGroup
-                });
-            }
-        }
-        catch (e_7_1) { e_7 = { error: e_7_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_7) throw e_7.error; }
-        }
-    };
-    Tilemap.prototype.postUpdate = function () {
-        var e_8, _a;
-        _super.prototype.postUpdate.call(this);
-        if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
-            try {
-                for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
-                    var box = _c.value;
-                    box.x = this.x;
-                    box.y = this.y;
-                }
-            }
-            catch (e_8_1) { e_8 = { error: e_8_1 }; }
-            finally {
-                try {
-                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-                }
-                finally { if (e_8) throw e_8.error; }
-            }
-        }
-    };
-    Tilemap.prototype.render = function () {
-        if (this.dirty) {
-            this.drawRenderTexture();
-            this.dirty = false;
-        }
-        this.renderTexture.x = this.x;
-        this.renderTexture.y = this.y;
-        global.renderer.render(this.renderTexture, global.renderTexture, false, global.matrix);
-        _super.prototype.render.call(this);
-    };
-    Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        if (debugBounds === void 0) { debugBounds = false; }
-        var e_9, _a;
-        this.collisionBoxes = [];
-        var collisionRects = Tilemap.getCollisionRects(this.tilemap, this.tileset);
-        Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
-        Tilemap.optimizeCollisionRects(collisionRects, Tilemap.OPTIMIZE_ALL);
-        try {
-            for (var collisionRects_1 = __values(collisionRects), collisionRects_1_1 = collisionRects_1.next(); !collisionRects_1_1.done; collisionRects_1_1 = collisionRects_1.next()) {
-                var rect = collisionRects_1_1.value;
-                var box = new PhysicsWorldObject({ x: this.x, y: this.y, bounds: rect });
-                box.debugBounds = debugBounds;
-                this.collisionBoxes.push(box);
-            }
-        }
-        catch (e_9_1) { e_9 = { error: e_9_1 }; }
-        finally {
-            try {
-                if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
-            }
-            finally { if (e_9) throw e_9.error; }
-        }
-    };
-    Tilemap.prototype.drawRenderTexture = function () {
-        this.renderTexture.clear(global.renderer);
-        for (var y = 0; y < this.tilemap.length; y++) {
-            for (var x = 0; x < this.tilemap[y].length; x++) {
-                if (!this.tilemap[y][x] || this.tilemap[y][x].index < 0)
-                    continue;
-                var tile = this.tilemap[y][x];
-                var textureKey = this.tileset.tiles[tile.index];
-                this.tileSprite.texture = AssetCache.getTexture(textureKey);
-                this.tileSprite.x = x * this.tileset.tileWidth;
-                this.tileSprite.y = y * this.tileset.tileHeight;
-                global.renderer.render(this.tileSprite, this.renderTexture.renderTexture, false);
-            }
-        }
-    };
-    Tilemap.prototype.onRemove = function () {
-        var e_10, _a;
-        try {
-            for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var box = _c.value;
-                global.world.removeWorldObject(box);
-            }
-        }
-        catch (e_10_1) { e_10 = { error: e_10_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_10) throw e_10.error; }
-        }
-    };
-    return Tilemap;
-}(WorldObject));
-(function (Tilemap) {
-    function getCollisionRects(tilemap, tileset) {
-        if (_.isEmpty(tileset.collisionIndices))
-            return [];
-        var result = [];
-        for (var y = 0; y < tilemap.length; y++) {
-            for (var x = 0; x < tilemap[y].length; x++) {
-                var tile = tilemap[y][x];
-                if (_.contains(tileset.collisionIndices, tile.index)) {
-                    var rect = {
-                        x: x * tileset.tileWidth,
-                        y: y * tileset.tileHeight,
-                        width: tileset.tileWidth,
-                        height: tileset.tileHeight
-                    };
-                    result.push(rect);
-                }
-            }
-        }
-        return result;
-    }
-    Tilemap.getCollisionRects = getCollisionRects;
-    function optimizeCollisionRects(rects, all) {
-        if (all === void 0) { all = !Tilemap.OPTIMIZE_ALL; }
-        var i = 0;
-        while (i < rects.length) {
-            var j = i + 1;
-            while (j < rects.length) {
-                var combined = combineRects(rects[j], rects[i]);
-                if (combined) {
-                    rects.splice(j, 1);
-                }
-                else if (all) {
-                    j++;
-                }
-                else {
-                    break;
-                }
-            }
-            i++;
-        }
-    }
-    Tilemap.optimizeCollisionRects = optimizeCollisionRects;
-    Tilemap.OPTIMIZE_ALL = true;
-    function combineRects(rect, into) {
-        if (G.rectContains(into, rect))
-            return true;
-        if (G.rectContains(rect, into)) {
-            into.x = rect.x;
-            into.y = rect.y;
-            into.width = rect.width;
-            into.height = rect.height;
-            return true;
-        }
-        if (rect.x == into.x && rect.width == into.width) {
-            if (rect.y <= into.y + into.height && rect.y + rect.height >= into.y) {
-                var newY = Math.min(rect.y, into.y);
-                var newH = Math.max(rect.y + rect.height, into.y + into.height) - newY;
-                into.y = newY;
-                into.height = newH;
-                return true;
-            }
-        }
-        if (rect.y == into.y && rect.height == into.height) {
-            if (rect.x <= into.x + into.width && rect.x + rect.width >= into.x) {
-                var newX = Math.min(rect.x, into.x);
-                var newW = Math.max(rect.x + rect.width, into.x + into.width) - newX;
-                into.x = newX;
-                into.width = newW;
-                return true;
-            }
-        }
-        return false;
-    }
-})(Tilemap || (Tilemap = {}));
-var Warp = /** @class */ (function (_super) {
-    __extends(Warp, _super);
-    function Warp(config) {
-        var _this = _super.call(this, config) || this;
-        _this.scene = O.getOrDefault(config.data.scene, "");
-        _this.transition = O.getOrDefault(config.data.transition, Transition.INSTANT);
-        return _this;
-    }
-    return Warp;
-}(PhysicsWorldObject));
-/// <reference path="./backWall.ts" />
-/// <reference path="./transition.ts" />
-/// <reference path="./tilemap.ts" />
-/// <reference path="./warp.ts" />
-var Stages;
-(function (Stages) {
-    Stages.MILOS_ROOM = {
-        layers: [
-            { name: 'bg' },
-            { name: 'room' },
-            { name: 'main', sortKey: 'y' },
-            { name: 'fg' },
-        ],
-        physicsGroups: {
-            'player': {},
-            'props': {},
-            'walls': {},
-        },
-        collisionOrder: [
-            { move: 'player', from: ['props', 'walls'], callback: true },
-        ],
-        worldObjects: [
-            // ROOM //
-            {
-                constructor: PhysicsWorldObject,
-                bounds: { x: 48, y: -128, width: 16, height: 304 },
-                physicsGroup: 'walls',
-            },
-            {
-                constructor: PhysicsWorldObject,
-                bounds: { x: 192, y: -128, width: 16, height: 304 },
-                physicsGroup: 'walls',
-            },
-            {
-                constructor: PhysicsWorldObject,
-                bounds: { x: 64, y: 160, width: 128, height: 16 },
-                physicsGroup: 'walls',
-            },
-            {
-                constructor: Sprite,
-                texture: 'room_bg',
-                x: -256, y: -192,
-                layer: 'room',
-            },
-            {
-                name: 'backwall',
-                constructor: BackWall,
-                x: 64, y: 0,
-                layer: 'room',
-                physicsGroup: 'walls',
-            },
-            {
-                name: 'bed',
-                constructor: Sprite,
-                texture: 'bed',
-                x: 84, y: 158,
-                layer: 'main',
-                physicsGroup: 'props',
-                bounds: { x: -18, y: -20, width: 36, height: 20 },
-            },
-            {
-                name: 'chair',
-                constructor: Sprite,
-                texture: 'chair',
-                x: 172, y: 134,
-                layer: 'main',
-            },
-            {
-                name: 'desk',
-                constructor: Sprite,
-                texture: 'desk',
-                x: 172, y: 158,
-                layer: 'main',
-                physicsGroup: 'props',
-                bounds: { x: -18, y: -23, width: 36, height: 23 },
-            },
-            {
-                name: 'door',
-                constructor: Sprite,
-                texture: 'door_closed',
-                x: 84, y: 80,
-                layer: 'main',
-                offset: { x: 0, y: -36 },
-            },
-            {
-                name: 'window',
-                constructor: Sprite,
-                texture: 'window',
-                x: 156, y: 80,
-                layer: 'main',
-                offset: { x: 0, y: -7 },
-                physicsGroup: 'props',
-                bounds: { x: -22, y: -3, width: 43, height: 3 },
-            },
-            // WORLD //
-            {
-                name: 'tilemap',
-                constructor: Tilemap,
-                x: -720, y: -768,
-                layer: 'bg',
-                tileset: Assets.tilesets.mainworld,
-                tilemap: 'mainworld',
-                collisionPhysicsGroup: 'walls',
-            },
-            {
-                constructor: Sprite,
-                texture: 'archway',
-                x: -311, y: -512,
-                layer: 'main',
-                physicsGroup: 'props',
-                bounds: { x: -57, y: 64, width: 57, height: 16 },
-            },
-            {
-                constructor: Sprite,
-                texture: 'archway_front',
-                x: -351, y: -393,
-                layer: 'main',
-                physicsGroup: 'props',
-                bounds: { x: -49, y: -7, width: 49, height: 16 },
-            },
-            {
-                name: 'warp',
-                constructor: Warp,
-                physicsGroup: 'props',
-                bounds: { x: -400, y: -448, width: 32, height: 48 },
-                data: {
-                    scene: 'empty',
-                    transition: Transition.FADE(0.5, 1, 0.5),
-                }
-            },
-        ]
-    };
-})(Stages || (Stages = {}));
-/// <reference path="./animations.ts" />
-/// <reference path="./stages.ts" />
-var S;
-(function (S) {
-    S.scenes = {
-        'main': {
-            stage: Stages.MILOS_ROOM,
-            cameraMode: { type: 'follow', target: 'angie', offset: { x: 0, y: -18 } },
-            defaultControl: ['angie'],
-            schema: {
-                worldObjects: [
-                    Actors.ANGIE,
-                ]
-            },
-            entry: 'room_intro',
-            cutscenes: {
-                'room_intro': {
-                    script: function () {
-                        var angie;
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = true;
-                                    S.finishImmediately(S.fadeOut(1));
-                                    angie = global.getSprite('angie');
-                                    angie.x = 98;
-                                    angie.y = 160;
-                                    angie.offset.y = -19;
-                                    angie.flipX = true;
-                                    angie.angle = -90;
-                                    return [4 /*yield*/, S.fadeSlides(2)];
-                                case 1:
-                                    _a.sent();
-                                    return [4 /*yield*/, S.wait(3)];
-                                case 2:
-                                    _a.sent();
-                                    return [4 /*yield*/, S.shake(1, 2)];
-                                case 3:
-                                    _a.sent();
-                                    return [4 /*yield*/, S.wait(3)];
-                                case 4:
-                                    _a.sent();
-                                    return [4 /*yield*/, S.dialog("I felt that one.")];
-                                case 5:
-                                    _a.sent();
-                                    return [4 /*yield*/, S.wait(1)];
-                                case 6:
-                                    _a.sent();
-                                    return [4 /*yield*/, S.shake(1, 2)];
-                                case 7:
-                                    _a.sent();
-                                    return [4 /*yield*/, S.wait(2)];
-                                case 8:
-                                    _a.sent();
-                                    return [4 /*yield*/, S.dialog("What's that boy up to?")];
-                                case 9:
-                                    _a.sent();
-                                    return [4 /*yield*/, S.dialog("I'd better check outside.")];
-                                case 10:
-                                    _a.sent();
-                                    return [4 /*yield*/, S.wait(0.2)];
-                                case 11:
-                                    _a.sent();
-                                    angie.angle = 0;
-                                    angie.x -= 12;
-                                    return [4 /*yield*/, S.jump(angie, 8, 0.5, true)];
-                                case 12:
-                                    _a.sent();
-                                    DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = false;
-                                    angie.x = -291;
-                                    angie.y = -413;
-                                    return [2 /*return*/];
-                            }
-                        });
-                    }
-                }
-            }
-        },
-        'empty': {
-            stage: {
-                layers: [
-                    { name: 'bg' },
-                    { name: 'main' },
-                ],
-                physicsGroups: {
-                    'player': {},
-                },
-            },
-            defaultControl: ['angie'],
-            schema: {
-                worldObjects: [
-                    Actors.ANGIE,
-                    {
-                        name: 'room',
-                        constructor: Sprite,
-                        x: -256, y: -192,
-                        texture: 'room_bg',
-                        layer: 'bg',
-                    },
-                    {
-                        name: 'backwall',
-                        constructor: BackWall,
-                        x: 64, y: 0,
-                        layer: 'bg',
-                    },
-                ]
-            },
-            cutscenes: {}
-        }
-    };
-})(S || (S = {}));
-var scenes = S.scenes;
 var Script = /** @class */ (function () {
     function Script(scriptFunction) {
         this.generator = scriptFunction.generator();
@@ -2987,7 +2484,7 @@ var SpriteText = /** @class */ (function (_super) {
         _super.prototype.update.call(this);
     };
     SpriteText.prototype.render = function () {
-        var e_11, _a;
+        var e_7, _a;
         try {
             for (var _b = __values(this.chars), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var char = _c.value;
@@ -2996,12 +2493,12 @@ var SpriteText = /** @class */ (function (_super) {
                 global.renderer.render(this.fontSprite, global.renderTexture, false, global.matrix);
             }
         }
-        catch (e_11_1) { e_11 = { error: e_11_1 }; }
+        catch (e_7_1) { e_7 = { error: e_7_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_11) throw e_11.error; }
+            finally { if (e_7) throw e_7.error; }
         }
         _super.prototype.render.call(this);
     };
@@ -3214,7 +2711,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_12, _a;
+        var e_8, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -3228,12 +2725,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_12_1) { e_12 = { error: e_12_1 }; }
+            catch (e_8_1) { e_8 = { error: e_8_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_12) throw e_12.error; }
+                finally { if (e_8) throw e_8.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -3245,6 +2742,495 @@ var SpriteTextConverter = /** @class */ (function () {
     };
     return SpriteTextConverter;
 }());
+var Transition;
+(function (Transition) {
+    Transition.INSTANT = { type: 'instant' };
+    function FADE(preTime, time, postTime) {
+        return {
+            type: 'fade', preTime: preTime, time: time, postTime: postTime
+        };
+    }
+    Transition.FADE = FADE;
+    var Obj = /** @class */ (function (_super) {
+        __extends(Obj, _super);
+        function Obj(oldSnapshot, newSnapshot, transition) {
+            var _this = _super.call(this, {}) || this;
+            _this.oldSprite = new Sprite({ renderTexture: oldSnapshot });
+            _this.newSprite = new Sprite({ renderTexture: newSnapshot });
+            _this.done = false;
+            if (transition.type === 'instant') {
+                _this.done = true;
+            }
+            else if (transition.type === 'fade') {
+                _this.oldSprite.alpha = 1;
+                _this.newSprite.alpha = 0;
+                Main.theater.runScript({
+                    generator: S.chain(S.wait(transition.preTime), S.doOverTime(transition.time, function (t) {
+                        _this.oldSprite.alpha = 1 - t;
+                        _this.newSprite.alpha = t;
+                    }), S.wait(transition.postTime)).generator,
+                    endState: function () { return (_this.done = true); },
+                });
+                // Main.theater.runScript({
+                //     generator: S.doOverTime(transition.time, t => {
+                //         this.oldSprite.alpha = 1 - t;
+                //     }).generator,
+                //     endState: () => (this.done = true),
+                // });
+            }
+            return _this;
+        }
+        Obj.prototype.update = function () {
+            _super.prototype.update.call(this);
+        };
+        Obj.prototype.render = function () {
+            _super.prototype.render.call(this);
+            this.newSprite.render();
+            this.oldSprite.render();
+        };
+        return Obj;
+    }(WorldObject));
+    Transition.Obj = Obj;
+})(Transition || (Transition = {}));
+var Tilemap = /** @class */ (function (_super) {
+    __extends(Tilemap, _super);
+    function Tilemap(config) {
+        var _this = _super.call(this, config) || this;
+        _this.tilemap = A.clone2D(AssetCache.getTilemap(config.tilemap));
+        _this.tileset = config.tileset;
+        _this.collisionPhysicsGroup = config.collisionPhysicsGroup;
+        var tilemapDimens = A.get2DArrayDimensions(_this.tilemap);
+        _this.numTilesX = tilemapDimens.width;
+        _this.numTilesY = tilemapDimens.height;
+        _this.renderTexture = new PIXIRenderTextureSprite(_this.numTilesX * _this.tileset.tileWidth, _this.numTilesY * _this.tileset.tileHeight);
+        _this.createCollisionBoxes(O.getOrDefault(config.collisionDebugBounds, false));
+        _this.tileSprite = new PIXI.Sprite();
+        _this.dirty = true;
+        return _this;
+    }
+    Tilemap.prototype.onAdd = function () {
+        var e_9, _a;
+        try {
+            for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var box = _c.value;
+                global.world.addWorldObject(box, {
+                    physicsGroup: this.collisionPhysicsGroup
+                });
+            }
+        }
+        catch (e_9_1) { e_9 = { error: e_9_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_9) throw e_9.error; }
+        }
+    };
+    Tilemap.prototype.postUpdate = function () {
+        var e_10, _a;
+        _super.prototype.postUpdate.call(this);
+        if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
+            try {
+                for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var box = _c.value;
+                    box.x = this.x;
+                    box.y = this.y;
+                }
+            }
+            catch (e_10_1) { e_10 = { error: e_10_1 }; }
+            finally {
+                try {
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                }
+                finally { if (e_10) throw e_10.error; }
+            }
+        }
+    };
+    Tilemap.prototype.render = function () {
+        if (this.dirty) {
+            this.drawRenderTexture();
+            this.dirty = false;
+        }
+        this.renderTexture.x = this.x;
+        this.renderTexture.y = this.y;
+        global.renderer.render(this.renderTexture, global.renderTexture, false, global.matrix);
+        _super.prototype.render.call(this);
+    };
+    Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
+        if (debugBounds === void 0) { debugBounds = false; }
+        var e_11, _a;
+        this.collisionBoxes = [];
+        var collisionRects = Tilemap.getCollisionRects(this.tilemap, this.tileset);
+        Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
+        Tilemap.optimizeCollisionRects(collisionRects, Tilemap.OPTIMIZE_ALL);
+        try {
+            for (var collisionRects_1 = __values(collisionRects), collisionRects_1_1 = collisionRects_1.next(); !collisionRects_1_1.done; collisionRects_1_1 = collisionRects_1.next()) {
+                var rect = collisionRects_1_1.value;
+                var box = new PhysicsWorldObject({ x: this.x, y: this.y, bounds: rect });
+                box.debugBounds = debugBounds;
+                this.collisionBoxes.push(box);
+            }
+        }
+        catch (e_11_1) { e_11 = { error: e_11_1 }; }
+        finally {
+            try {
+                if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
+            }
+            finally { if (e_11) throw e_11.error; }
+        }
+    };
+    Tilemap.prototype.drawRenderTexture = function () {
+        this.renderTexture.clear(global.renderer);
+        for (var y = 0; y < this.tilemap.length; y++) {
+            for (var x = 0; x < this.tilemap[y].length; x++) {
+                if (!this.tilemap[y][x] || this.tilemap[y][x].index < 0)
+                    continue;
+                var tile = this.tilemap[y][x];
+                var textureKey = this.tileset.tiles[tile.index];
+                this.tileSprite.texture = AssetCache.getTexture(textureKey);
+                this.tileSprite.x = x * this.tileset.tileWidth;
+                this.tileSprite.y = y * this.tileset.tileHeight;
+                global.renderer.render(this.tileSprite, this.renderTexture.renderTexture, false);
+            }
+        }
+    };
+    Tilemap.prototype.onRemove = function () {
+        var e_12, _a;
+        try {
+            for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var box = _c.value;
+                global.world.removeWorldObject(box);
+            }
+        }
+        catch (e_12_1) { e_12 = { error: e_12_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_12) throw e_12.error; }
+        }
+    };
+    return Tilemap;
+}(WorldObject));
+(function (Tilemap) {
+    function getCollisionRects(tilemap, tileset) {
+        if (_.isEmpty(tileset.collisionIndices))
+            return [];
+        var result = [];
+        for (var y = 0; y < tilemap.length; y++) {
+            for (var x = 0; x < tilemap[y].length; x++) {
+                var tile = tilemap[y][x];
+                if (_.contains(tileset.collisionIndices, tile.index)) {
+                    var rect = {
+                        x: x * tileset.tileWidth,
+                        y: y * tileset.tileHeight,
+                        width: tileset.tileWidth,
+                        height: tileset.tileHeight
+                    };
+                    result.push(rect);
+                }
+            }
+        }
+        return result;
+    }
+    Tilemap.getCollisionRects = getCollisionRects;
+    function optimizeCollisionRects(rects, all) {
+        if (all === void 0) { all = !Tilemap.OPTIMIZE_ALL; }
+        var i = 0;
+        while (i < rects.length) {
+            var j = i + 1;
+            while (j < rects.length) {
+                var combined = combineRects(rects[j], rects[i]);
+                if (combined) {
+                    rects.splice(j, 1);
+                }
+                else if (all) {
+                    j++;
+                }
+                else {
+                    break;
+                }
+            }
+            i++;
+        }
+    }
+    Tilemap.optimizeCollisionRects = optimizeCollisionRects;
+    Tilemap.OPTIMIZE_ALL = true;
+    function combineRects(rect, into) {
+        if (G.rectContains(into, rect))
+            return true;
+        if (G.rectContains(rect, into)) {
+            into.x = rect.x;
+            into.y = rect.y;
+            into.width = rect.width;
+            into.height = rect.height;
+            return true;
+        }
+        if (rect.x == into.x && rect.width == into.width) {
+            if (rect.y <= into.y + into.height && rect.y + rect.height >= into.y) {
+                var newY = Math.min(rect.y, into.y);
+                var newH = Math.max(rect.y + rect.height, into.y + into.height) - newY;
+                into.y = newY;
+                into.height = newH;
+                return true;
+            }
+        }
+        if (rect.y == into.y && rect.height == into.height) {
+            if (rect.x <= into.x + into.width && rect.x + rect.width >= into.x) {
+                var newX = Math.min(rect.x, into.x);
+                var newW = Math.max(rect.x + rect.width, into.x + into.width) - newX;
+                into.x = newX;
+                into.width = newW;
+                return true;
+            }
+        }
+        return false;
+    }
+})(Tilemap || (Tilemap = {}));
+var Warp = /** @class */ (function (_super) {
+    __extends(Warp, _super);
+    function Warp(config) {
+        var _this = _super.call(this, config) || this;
+        _this.stage = config.data.stage;
+        _this.transition = O.getOrDefault(config.data.transition, Transition.INSTANT);
+        return _this;
+    }
+    return Warp;
+}(PhysicsWorldObject));
+/// <reference path="./backWall.ts" />
+/// <reference path="./transition.ts" />
+/// <reference path="./tilemap.ts" />
+/// <reference path="./warp.ts" />
+var stages = {
+    'room': {
+        layers: [
+            { name: 'bg' },
+            { name: 'room' },
+            { name: 'main', sortKey: 'y' },
+            { name: 'fg' },
+        ],
+        physicsGroups: {
+            'player': {},
+            'props': {},
+            'walls': {},
+        },
+        collisionOrder: [
+            { move: 'player', from: ['props', 'walls'], callback: true },
+        ],
+        worldObjects: [
+            // ROOM //
+            {
+                constructor: PhysicsWorldObject,
+                bounds: { x: 48, y: -128, width: 16, height: 304 },
+                physicsGroup: 'walls',
+            },
+            {
+                constructor: PhysicsWorldObject,
+                bounds: { x: 192, y: -128, width: 16, height: 304 },
+                physicsGroup: 'walls',
+            },
+            {
+                constructor: PhysicsWorldObject,
+                bounds: { x: 64, y: 160, width: 128, height: 16 },
+                physicsGroup: 'walls',
+            },
+            {
+                constructor: Sprite,
+                texture: 'room_bg',
+                x: -256, y: -192,
+                layer: 'room',
+            },
+            {
+                name: 'backwall',
+                constructor: BackWall,
+                x: 64, y: 0,
+                layer: 'room',
+                physicsGroup: 'walls',
+            },
+            {
+                name: 'bed',
+                constructor: Sprite,
+                texture: 'bed',
+                x: 84, y: 158,
+                layer: 'main',
+                physicsGroup: 'props',
+                bounds: { x: -18, y: -20, width: 36, height: 20 },
+            },
+            {
+                name: 'chair',
+                constructor: Sprite,
+                texture: 'chair',
+                x: 172, y: 134,
+                layer: 'main',
+            },
+            {
+                name: 'desk',
+                constructor: Sprite,
+                texture: 'desk',
+                x: 172, y: 158,
+                layer: 'main',
+                physicsGroup: 'props',
+                bounds: { x: -18, y: -23, width: 36, height: 23 },
+            },
+            {
+                name: 'door',
+                constructor: Sprite,
+                texture: 'door_closed',
+                x: 84, y: 80,
+                layer: 'main',
+                offset: { x: 0, y: -36 },
+            },
+            {
+                name: 'window',
+                constructor: Sprite,
+                texture: 'window',
+                x: 156, y: 80,
+                layer: 'main',
+                offset: { x: 0, y: -7 },
+                physicsGroup: 'props',
+                bounds: { x: -22, y: -3, width: 43, height: 3 },
+            },
+            // WORLD //
+            {
+                name: 'tilemap',
+                constructor: Tilemap,
+                x: -720, y: -768,
+                layer: 'bg',
+                tileset: Assets.tilesets.mainworld,
+                tilemap: 'mainworld',
+                collisionPhysicsGroup: 'walls',
+            },
+            {
+                constructor: Sprite,
+                texture: 'archway',
+                x: -311, y: -512,
+                layer: 'main',
+                physicsGroup: 'props',
+                bounds: { x: -57, y: 64, width: 57, height: 16 },
+            },
+            {
+                constructor: Sprite,
+                texture: 'archway_front',
+                x: -351, y: -393,
+                layer: 'main',
+                physicsGroup: 'props',
+                bounds: { x: -49, y: -7, width: 49, height: 16 },
+            },
+            {
+                name: 'warp',
+                constructor: Warp,
+                physicsGroup: 'props',
+                bounds: { x: -400, y: -448, width: 32, height: 48 },
+                data: {
+                    stage: 'empty',
+                    transition: Transition.FADE(0.5, 1, 0.5),
+                }
+            },
+            // Actors
+            Actors.ANGIE,
+        ]
+    },
+    'empty': {
+        layers: [
+            { name: 'bg' },
+            { name: 'main' },
+        ],
+        physicsGroups: {
+            'player': {},
+        },
+        worldObjects: [
+            Actors.ANGIE,
+            {
+                name: 'room',
+                constructor: Sprite,
+                x: -256, y: -192,
+                texture: 'room_bg',
+                layer: 'bg',
+            },
+            {
+                name: 'backwall',
+                constructor: BackWall,
+                x: 64, y: 0,
+                layer: 'bg',
+            },
+        ]
+    }
+};
+var S;
+(function (S) {
+    S.storyboard = {
+        'room_intro': {
+            type: 'cutscene',
+            script: function () {
+                var angie;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = true;
+                            S.finishImmediately(S.fadeOut(1));
+                            angie = global.getSprite('angie');
+                            angie.x = 98;
+                            angie.y = 160;
+                            angie.offset.y = -19;
+                            angie.flipX = true;
+                            angie.angle = -90;
+                            return [4 /*yield*/, S.fadeSlides(2)];
+                        case 1:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(3)];
+                        case 2:
+                            _a.sent();
+                            return [4 /*yield*/, S.shake(1, 2)];
+                        case 3:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(3)];
+                        case 4:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("I felt that one.")];
+                        case 5:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(1)];
+                        case 6:
+                            _a.sent();
+                            return [4 /*yield*/, S.shake(1, 2)];
+                        case 7:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(2)];
+                        case 8:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("What's that boy up to?")];
+                        case 9:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("I'd better check outside.")];
+                        case 10:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(0.2)];
+                        case 11:
+                            _a.sent();
+                            angie.angle = 0;
+                            angie.x -= 12;
+                            return [4 /*yield*/, S.jump(angie, 8, 0.5, true)];
+                        case 12:
+                            _a.sent();
+                            DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = false;
+                            angie.x = -291;
+                            angie.y = -413;
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            after: 'test'
+        },
+        'test': {
+            type: 'gameplay',
+            start: function () {
+                global.world.camera.setModeFollow('angie', 0, -18);
+                global.getSprite('angie').controllable = true;
+            }
+        },
+    };
+})(S || (S = {}));
+var storyboard = S.storyboard;
 /// <reference path="./worldObject.ts" />
 var World = /** @class */ (function (_super) {
     __extends(World, _super);
@@ -3277,7 +3263,6 @@ var World = /** @class */ (function (_super) {
     });
     World.prototype.update = function () {
         var e_13, _a, e_14, _b, e_15, _c;
-        this.updateControllers();
         _super.prototype.update.call(this);
         global.pushWorld(this);
         this.scriptManager.update();
@@ -3639,29 +3624,6 @@ var World = /** @class */ (function (_super) {
         }
         return result;
     };
-    World.prototype.updateControllers = function () {
-        var _this = this;
-        var e_25, _a;
-        var inControl = Main.theater.inControl.map(function (name) { return _this.worldObjectsByName[name]; });
-        try {
-            for (var _b = __values(this.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var worldObject = _c.value;
-                if (_.contains(inControl, worldObject)) {
-                    worldObject.updateController();
-                }
-                else {
-                    worldObject.resetController();
-                }
-            }
-        }
-        catch (e_25_1) { e_25 = { error: e_25_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_25) throw e_25.error; }
-        }
-    };
     World.DEFAULT_LAYER = 'default';
     return World;
 }(WorldObject));
@@ -3706,20 +3668,22 @@ var Theater = /** @class */ (function (_super) {
             ],
         }) || this;
         _this.debugMousePosition = new SpriteText({ font: Assets.fonts.DELUXE16, x: 0, y: 0 });
-        _this.scenes = config.scenes;
+        _this.stages = config.stages;
+        _this.storyboard = config.storyboard;
         _this.cutsceneManager = new CutsceneManager();
-        _this.inControl = [];
         _this.skipCutsceneScriptKey = config.skipCutsceneScriptKey;
         _this.loadDialogBox(config.dialogBox);
         _this.slides = [];
-        _this.loadScene(config.sceneToLoad);
+        _this.loadStage(config.stageToLoad);
+        // Start storyboard entry point
+        _this.startStoryboardComponentByName(config.storyboardEntry);
         if (DEBUG_SHOW_MOUSE_POSITION) {
             _this.debugMousePosition = _this.addWorldObject(new SpriteText({ x: 0, y: 0, font: Assets.fonts.DELUXE16 }));
         }
         return _this;
     }
-    Object.defineProperty(Theater.prototype, "currentScene", {
-        get: function () { return this.scenes[this.currentSceneName]; },
+    Object.defineProperty(Theater.prototype, "currentStage", {
+        get: function () { return this.stages[this.currentStageName]; },
         enumerable: true,
         configurable: true
     });
@@ -3729,12 +3693,7 @@ var Theater = /** @class */ (function (_super) {
         configurable: true
     });
     Theater.prototype.update = function () {
-        global.pushWorld(this.currentWorld);
         this.cutsceneManager.update();
-        global.popWorld();
-        if (!this.isCutscenePlaying && _.isEmpty(this.inControl)) {
-            this.inControl = this.currentScene.defaultControl;
-        }
         _super.prototype.update.call(this);
         if (DEBUG_SHOW_MOUSE_POSITION) {
             this.debugMousePosition.setText(S.padLeft(this.currentWorld.getWorldMouseX().toString(), 3) + " " + S.padLeft(this.currentWorld.getWorldMouseY().toString(), 3));
@@ -3755,14 +3714,14 @@ var Theater = /** @class */ (function (_super) {
         }
         this.slides.splice(0, deleteCount);
     };
-    Theater.prototype.loadScene = function (name, transition) {
+    Theater.prototype.loadStage = function (name, transition) {
         if (transition) {
-            this.loadSceneWithTransition(name, transition);
+            this.loadStageWithTransition(name, transition);
             return;
         }
-        var scene = this.scenes[name];
-        if (!scene) {
-            debug("Scene '" + name + "' does not exist in world.");
+        var stage = this.stages[name];
+        if (!stage) {
+            debug("Stage '" + name + "' does not exist in world.");
             return;
         }
         // Remove old stuff
@@ -3771,24 +3730,20 @@ var Theater = /** @class */ (function (_super) {
         }
         this.cutsceneManager.reset();
         // Create new stuff
-        this.currentSceneName = name;
-        this.currentWorld = Theater.createWorldFromScene(scene);
+        this.currentStageName = name;
+        this.currentWorld = Theater.createWorldFromStage(stage);
         this.currentWorld.debugMoveCameraWithArrows = DEBUG_MOVE_CAMERA_WITH_ARROWS;
         this.addWorldObject(this.currentWorld);
         this.setLayer(this.currentWorld, Theater.LAYER_WORLD);
-        // Start scene's entry point
-        if (scene.entry) {
-            this.playCutsceneByName(scene.entry);
-        }
     };
-    Theater.prototype.loadSceneWithTransition = function (name, transition) {
+    Theater.prototype.loadStageWithTransition = function (name, transition) {
         var _this = this;
         if (!this.currentWorld) {
-            this.loadScene(name);
+            this.loadStage(name);
             return;
         }
         var oldSnapshot = this.currentWorld.takeSnapshot();
-        this.loadScene(name);
+        this.loadStage(name);
         var newSnapshot = this.currentWorld.takeSnapshot();
         this.currentWorld.active = false;
         this.currentWorld.visible = false;
@@ -3815,14 +3770,20 @@ var Theater = /** @class */ (function (_super) {
             }
         });
     };
-    Theater.prototype.playCutsceneByName = function (name) {
-        var cutscene = this.currentScene.cutscenes[name];
-        if (!cutscene) {
-            debug("Cutscene '" + name + "' does not exist in scene:", this.currentScene);
+    Theater.prototype.startStoryboardComponentByName = function (name) {
+        var component = this.storyboard[name];
+        if (!component) {
+            debug("Component '" + name + "' does not exist in storyboard:", this.storyboard);
             return;
         }
-        this.inControl = [];
-        this.cutsceneManager.playCutscene(cutscene, this.currentWorld, this.skipCutsceneScriptKey);
+        if (component.type === 'cutscene') {
+            this.cutsceneManager.playCutscene(component, this.currentWorld, this.skipCutsceneScriptKey);
+        }
+        else if (component.type === 'gameplay') {
+            global.pushWorld(this.currentWorld);
+            component.start();
+            global.popWorld();
+        }
     };
     Theater.prototype.loadDialogBox = function (config) {
         this.dialogBox = new DialogBox(config);
@@ -3845,42 +3806,26 @@ var Theater = /** @class */ (function (_super) {
         });
         return obj;
     };
-    Theater.createWorldFromScene = function (scene) {
-        var e_26, _a, e_27, _b;
-        var world = new World(scene.stage, {
+    Theater.createWorldFromStage = function (stage) {
+        var e_25, _a;
+        var world = new World(stage, {
         //renderDirectly: true,
         });
-        if (scene.stage.worldObjects) {
+        if (stage.worldObjects) {
             try {
-                for (var _c = __values(scene.stage.worldObjects), _d = _c.next(); !_d.done; _d = _c.next()) {
-                    var worldObject = _d.value;
+                for (var _b = __values(stage.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var worldObject = _c.value;
                     this.addWorldObjectFromStageConfig(world, worldObject);
                 }
             }
-            catch (e_26_1) { e_26 = { error: e_26_1 }; }
+            catch (e_25_1) { e_25 = { error: e_25_1 }; }
             finally {
                 try {
-                    if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_26) throw e_26.error; }
+                finally { if (e_25) throw e_25.error; }
             }
         }
-        if (scene.schema.worldObjects) {
-            try {
-                for (var _e = __values(scene.schema.worldObjects), _f = _e.next(); !_f.done; _f = _e.next()) {
-                    var worldObject = _f.value;
-                    this.addWorldObjectFromStageConfig(world, worldObject);
-                }
-            }
-            catch (e_27_1) { e_27 = { error: e_27_1 }; }
-            finally {
-                try {
-                    if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
-                }
-                finally { if (e_27) throw e_27.error; }
-            }
-        }
-        world.camera.mode = scene.cameraMode || Theater.DEFAULT_CAMERA_MODE;
         return world;
     };
     Theater.LAYER_WORLD = 'world';

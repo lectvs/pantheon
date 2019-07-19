@@ -3,8 +3,9 @@
 /// <reference path="./tilemap.ts" />
 /// <reference path="./warp.ts" />
 
-namespace Stages{
-    export const MILOS_ROOM: Stage = {
+const stages: Dict<Stage> = {
+
+    'room': {
         layers: [
             { name: 'bg' },
             { name: 'room' },
@@ -125,10 +126,39 @@ namespace Stages{
                 physicsGroup: 'props',
                 bounds: { x: -400, y: -448, width: 32, height: 48 },
                 data: {
-                    scene: 'empty',
+                    stage: 'empty',
                     transition: Transition.FADE(0.5, 1, 0.5),
                 }
             },
+            // Actors
+            Actors.ANGIE,
+        ]
+    },
+
+    'empty': {
+        layers: [
+            { name: 'bg' },
+            { name: 'main' },
+        ],
+        physicsGroups: {
+            'player': {},
+        },
+        worldObjects: [
+            Actors.ANGIE,
+            {
+                name: 'room',
+                constructor: Sprite,
+                x: -256, y: -192,
+                texture: 'room_bg',
+                layer: 'bg',
+            },
+            {
+                name: 'backwall',
+                constructor: BackWall,
+                x: 64, y: 0,
+                layer: 'bg',
+            },
         ]
     }
+
 }

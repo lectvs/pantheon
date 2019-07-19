@@ -60,8 +60,10 @@ class Main {
         //window.addEventListener("contextmenu", event => event.preventDefault(), false);
 
         this.theater = new Theater({
-            scenes: scenes,
-            sceneToLoad: 'main',
+            stages: stages,
+            stageToLoad: 'room',
+            storyboard: storyboard,
+            storyboardEntry: 'room_intro',
             dialogBox: {
                 x: Main.width/2, y: Main.height - 32,
                 texture: 'dialogbox',
@@ -72,6 +74,7 @@ class Main {
             skipCutsceneScriptKey: 'skipCutsceneScript',
         });
 
+        global.theater = this.theater;
         global.clearStacks();
         global.pushRenderer(this.renderer);
         global.pushRenderTexture(undefined);

@@ -79,7 +79,6 @@ class World extends WorldObject {
     }
 
     update() {
-        this.updateControllers();
         super.update();
 
         global.pushWorld(this);
@@ -337,17 +336,6 @@ class World extends WorldObject {
             result[name] = new World.PhysicsGroup(name, physicsGroups[name]);
         }
         return result;
-    }
-
-    private updateControllers() {
-        let inControl = Main.theater.inControl.map(name => this.worldObjectsByName[name]);
-        for (let worldObject of this.worldObjects) {
-            if (_.contains(inControl, worldObject)) {
-                worldObject.updateController();
-            } else {
-                worldObject.resetController();
-            }
-        }
     }
 
     static DEFAULT_LAYER: string = 'default';

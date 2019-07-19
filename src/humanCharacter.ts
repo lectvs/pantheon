@@ -59,7 +59,7 @@ class HumanCharacter extends Sprite {
 
     onCollide(other: PhysicsWorldObject) {
         if (other instanceof Warp) {
-            Main.theater.loadScene(other.scene, other.transition);
+            Main.theater.loadStage(other.stage, other.transition);
         }
     }
 }

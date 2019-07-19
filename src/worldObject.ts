@@ -5,6 +5,7 @@ namespace WorldObject {
         visible?: boolean;
         active?: boolean;
         data?: any;
+        controllable?: boolean;
     }
 }
 
@@ -18,6 +19,7 @@ class WorldObject {
     lastx: number;
     lasty: number;
 
+    controllable: boolean;
     protected controller: Controller;
     protected controllerSchema: Controller.Schema;
 
@@ -38,6 +40,7 @@ class WorldObject {
         this.lastx = this.x;
         this.lasty = this.y;
 
+        this.controllable = O.getOrDefault(config.controllable, false);
         this.controller = {};
         this.controllerSchema = {};
 
@@ -48,6 +51,7 @@ class WorldObject {
     preUpdate() {
         this.lastx = this.x;
         this.lasty = this.y;
+        this.updateController();
     }
 
     update() {
@@ -74,16 +78,17 @@ class WorldObject {
         this.y = this.preRenderStoredY;
     }
 
-    resetController() {
-        for (let key in this.controller) {
-            this.controller[key] = false;
-        }
-    }
-
     updateController() {
-        for (let key in this.controllerSchema) {
-            this.controller[key] = this.controllerSchema[key]();
+        if (this.controllable) {
+            for (let key in this.controllerSchema) {
+                this.controller[key] = this.controllerSchema[key]();
+            }
+        } else {
+            for (let key in this.controller) {
+                this.controller[key] = false;
+            }
         }
+        
     }
 
     onAdd() {

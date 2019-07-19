@@ -10,15 +10,13 @@ class CutsceneManager {
     update() {
         if (this.current) {
             if (this.current.script.done) {
-                this.giveControl();
+                let completedCutscene = this.current.cutscene;
                 this.current = null;
-            }
-        }
-    }
 
-    giveControl() {
-        if (this.current.cutscene.afterwardsGiveControlTo) {
-            Main.theater.inControl = this.current.cutscene.afterwardsGiveControlTo;
+                if (completedCutscene.after) {
+                    global.theater.startStoryboardComponentByName(completedCutscene.after);
+                }
+            }
         }
     }
 
