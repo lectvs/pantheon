@@ -8,7 +8,7 @@ class global {
         this.scriptStack = [];
     }
 
-    static getSprite(name: string) {
+    static getSprite(name: string): Sprite | any {
         let obj = this.world.getWorldObjectByName(name);
         if (!(obj instanceof Sprite)) {
             debug(`Getting sprite '${name}' from world which is not a sprite!`, this.world);

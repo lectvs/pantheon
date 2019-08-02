@@ -2,13 +2,13 @@ namespace S {
     export function dialog(text: string): Script.Function {
         return {
             generator: function*() {
-                Main.theater.dialogBox.showDialog(text);
-                while (!Main.theater.dialogBox.done) {
+                global.theater.dialogBox.showDialog(text);
+                while (!global.theater.dialogBox.done) {
                     yield;
                 }
             },
             endState: () => {
-                Main.theater.dialogBox.done = true;
+                global.theater.dialogBox.done = true;
             }
         }
     }
@@ -16,22 +16,22 @@ namespace S {
     export function fadeSlides(duration: number, removeAllButLast: number = 1): Script.Function {
         return {
             generator: function*() {
-                Main.theater.clearSlides(removeAllButLast);
-                if (_.isEmpty(Main.theater.slides)) return;
+                global.theater.clearSlides(removeAllButLast);
+                if (_.isEmpty(global.theater.slides)) return;
 
-                let slideAlphas = Main.theater.slides.map(slide => slide.alpha);
+                let slideAlphas = global.theater.slides.map(slide => slide.alpha);
 
                 let timer = new Timer(duration);
                 while (!timer.done) {
-                    for (let i = 0; i < Main.theater.slides.length; i++) {
-                        Main.theater.slides[i].alpha = slideAlphas[i] * (1 - timer.progress);
+                    for (let i = 0; i < global.theater.slides.length; i++) {
+                        global.theater.slides[i].alpha = slideAlphas[i] * (1 - timer.progress);
                     }
                     timer.update();
                     yield;
                 }
             },
             endState: () => {
-                Main.theater.clearSlides();
+                global.theater.clearSlides();
             }
         }
     }
@@ -95,7 +95,7 @@ namespace S {
         let slide: Slide;
         return {
             generator: function*() {
-                slide = Main.theater.addSlideByConfig(config);
+                slide = global.theater.addSlideByConfig(config);
                 if (waitForCompletion) {
                     while (!slide.fullyLoaded) {
                         yield;
@@ -104,7 +104,7 @@ namespace S {
             },
             endState: () => {
                 if (!slide) {
-                    slide = Main.theater.addSlideByConfig(config);
+                    slide = global.theater.addSlideByConfig(config);
                 }
                 slide.finishLoading();
             }

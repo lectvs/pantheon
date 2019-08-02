@@ -1,6 +1,18 @@
 
 namespace S { export const storyboard: Storyboard = {
 
+    'main': {
+        type: 'code',
+        func: () => {
+            Party.addMemberToWorld(party.angie, global.world);
+            party.angie.active = true;
+
+            Party.addMemberToWorld(party.milo, global.world);
+            party.milo.active = true;
+        },
+        after: 'room_intro'
+    },
+
     'room_intro': {
         type: 'cutscene',
         script: function*() {
@@ -40,6 +52,7 @@ namespace S { export const storyboard: Storyboard = {
         start: () => {
             global.world.camera.setModeFollow('angie', 0, -18);
             global.getSprite('angie').controllable = true;
+            global.getSprite('milo').follow('angie');
         }
     },
 

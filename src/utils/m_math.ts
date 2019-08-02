@@ -19,6 +19,16 @@ namespace M {
         return result;
     }
 
+    export function distance(p1: Pt, p2: Pt) {
+        return Math.sqrt(distanceSq(p1, p2));
+    }
+
+    export function distanceSq(p1: Pt, p2: Pt) {
+        let dx = p2.x - p1.x;
+        let dy = p2.y - p1.y;
+        return dx*dx + dy*dy;
+    }
+
     /* Calculates the height of a parabola that starts at startHeight, increases to startHeight + peakDelta, then falls to startHeight + groundDelta.
     0 <= t <= 1 is the percent completion of the jump. */
     export function jumpParabola(startHeight: number, peakDelta: number, groundDelta: number, t: number) {

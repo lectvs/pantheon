@@ -20,7 +20,7 @@ class WorldObject {
     lasty: number;
 
     controllable: boolean;
-    protected controller: Controller;
+    controller: Controller;
     protected controllerSchema: Controller.Schema;
 
     private preRenderStoredX: number;
@@ -65,8 +65,8 @@ class WorldObject {
     preRender() {
         this.preRenderStoredX = this.x;
         this.preRenderStoredY = this.y;
-        this.x = Math.floor(this.x);
-        this.y = Math.floor(this.y);
+        this.x = Math.floor(this.x - global.world.camera.x) + global.world.camera.x;
+        this.y = Math.floor(this.y - global.world.camera.y) + global.world.camera.y;
     }
 
     render() {

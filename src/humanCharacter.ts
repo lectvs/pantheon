@@ -4,6 +4,7 @@ class HumanCharacter extends Sprite {
     speed: number = 60;
 
     private direction: Direction2D;
+    private _follow: Follow;
 
     constructor(config: Sprite.Config) {
         super(config);
@@ -19,6 +20,8 @@ class HumanCharacter extends Sprite {
     }
 
     update() {
+        this.updateFollow();
+
         let haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
         let vaxis = (this.controller.down ? 1 : 0) - (this.controller.up ? 1 : 0);
 
@@ -57,9 +60,17 @@ class HumanCharacter extends Sprite {
         this.playAnimation(`${anim_state}_${anim_dir}`);
     }
 
+    follow(thing: Follow.Target, maxDistance: number = 16) {
+        this._follow = new Follow(thing, maxDistance);
+    }
+
     onCollide(other: PhysicsWorldObject) {
         if (other instanceof Warp) {
-            Main.theater.loadStage(other.stage, other.transition);
+            other.warp();
         }
+    }
+
+    updateFollow() {
+        if (this._follow) this._follow.update(this);
     }
 }

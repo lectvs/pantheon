@@ -1,8 +1,4 @@
-type Cutscene = {
-    type: 'cutscene';
-    script : () => IterableIterator<Script.Function>;
-    after?: string;
-}
+type Cutscene = Storyboard.Component.Cutscene;
 
 namespace Cutscene {
     export function toScript(generator: () => IterableIterator<Script.Function>, skipCutsceneScriptKey: string): Script.Function {

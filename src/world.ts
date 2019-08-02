@@ -128,8 +128,6 @@ class World extends WorldObject {
         let oldty = global.matrix.ty;
         let cameraMatrix = this.camera.rendererMatrix;
         global.matrix.translate(cameraMatrix.tx, cameraMatrix.ty);
-        global.matrix.tx = Math.floor(global.matrix.tx);
-        global.matrix.ty = Math.floor(global.matrix.ty);
 
         // Render background color.
         global.pushMatrix(PIXI.Matrix.IDENTITY);
@@ -137,6 +135,7 @@ class World extends WorldObject {
             .drawRectangle(0, 0, this.width, this.height);
         global.popMatrix();
 
+        global.pushWorld(this);
         for (let layer of this.layers) {
             layer.sort();
             for (let worldObject of layer.worldObjects) {
@@ -147,6 +146,8 @@ class World extends WorldObject {
                 }
             }
         }
+        global.popWorld();
+
         global.matrix.translate(oldtx - global.matrix.tx, oldty - global.matrix.ty);
     }
     

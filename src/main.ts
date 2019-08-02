@@ -61,9 +61,10 @@ class Main {
 
         this.theater = new Theater({
             stages: stages,
-            stageToLoad: 'room',
+            stageToLoad: 'main_with_backwall',
             storyboard: storyboard,
-            storyboardEntry: 'room_intro',
+            storyboardEntry: 'main',
+            party: party,
             dialogBox: {
                 x: Main.width/2, y: Main.height - 32,
                 texture: 'dialogbox',

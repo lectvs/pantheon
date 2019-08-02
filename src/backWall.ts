@@ -8,19 +8,18 @@ class BackWall extends PhysicsWorldObject {
         this.createTiles();
     }
 
+    onAdd() {
+        for (let tile of this.tiles) {
+            global.world.addWorldObject(tile, { layer: global.world.getLayer(this) });
+        }
+    }
+
     update() {
         super.update();
 
         if (Input.justDown('1')) {
             for (let i = 0; i < 10; i++) this.crumble();
         }
-    }
-
-    render() {
-        for (let tile of this.tiles) {
-            tile.render();
-        }
-        super.render();
     }
 
     crumble() {
@@ -63,7 +62,6 @@ class BackWall extends PhysicsWorldObject {
         tile.vx = velocity.x;
         tile.vy = velocity.y;
 
-        global.world.addWorldObject(tile, { layer: global.world.getLayer(this) });
         global.world.runScript(S.doOverTime(1, t => {
             tile.vy += gravity * global.delta;
             tile.angle += angularSpeed * global.delta;

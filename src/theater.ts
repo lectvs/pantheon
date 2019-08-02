@@ -7,6 +7,7 @@ namespace Theater {
         stageToLoad: string;
         storyboard: Storyboard;
         storyboardEntry: string;
+        party: Party;
         dialogBox: DialogBox.Config;
         skipCutsceneScriptKey: string;
     }
@@ -15,12 +16,14 @@ namespace Theater {
 class Theater extends World {
     stages: Dict<Stage>;
     storyboard: Storyboard;
+    party: Party;
 
     cutsceneManager: CutsceneManager;
     skipCutsceneScriptKey: string;
 
     currentStageName: string;
     currentWorld: World;
+    currentStoryboardComponentName: string;
 
     dialogBox: DialogBox;
     slides: Slide[];
@@ -42,6 +45,9 @@ class Theater extends World {
 
         this.stages = config.stages;
         this.storyboard = config.storyboard;
+
+        this.party = config.party;
+        this.loadParty();
 
         this.cutsceneManager = new CutsceneManager();
         this.skipCutsceneScriptKey = config.skipCutsceneScriptKey;
@@ -84,13 +90,13 @@ class Theater extends World {
         this.slides.splice(0, deleteCount);
     }
 
-    loadStage(name: string, transition?: Transition) {
+    loadStage(name: string, transition?: Transition, entryPoint?: Stage.EntryPoint) {
         if (transition) {
-            this.loadStageWithTransition(name, transition);
+            this.loadStageWithTransition(name, transition, entryPoint);
             return;
         }
 
-        let stage = this.stages[name];
+        let stage = Stage.resolveStageConfig(this.stages[name]);
         if (!stage) {
             debug(`Stage '${name}' does not exist in world.`);
             return;
@@ -105,20 +111,25 @@ class Theater extends World {
 
         // Create new stuff
         this.currentStageName = name;
-        this.currentWorld = Theater.createWorldFromStage(stage);
+        this.setNewWorldFromStage(stage, entryPoint);
         this.currentWorld.debugMoveCameraWithArrows = DEBUG_MOVE_CAMERA_WITH_ARROWS;
         this.addWorldObject(this.currentWorld);
         this.setLayer(this.currentWorld, Theater.LAYER_WORLD);
+
+        if (this.currentStoryboardComponentName) {
+            this.startStoryboardComponentByName(this.currentStoryboardComponentName);
+        }
     }
 
-    private loadStageWithTransition(name: string, transition: Transition) {
+    private loadStageWithTransition(name: string, transition: Transition, entryPoint?: Stage.EntryPoint) {
         if (!this.currentWorld) {
-            this.loadStage(name);
+            this.loadStage(name, undefined, entryPoint);
             return;
         }
 
         let oldSnapshot = this.currentWorld.takeSnapshot();
-        this.loadStage(name);
+        this.loadStage(name, undefined, entryPoint);
+        this.currentWorld.update();
         let newSnapshot = this.currentWorld.takeSnapshot();
 
         this.currentWorld.active = false;
@@ -154,7 +165,44 @@ class Theater extends World {
             global.pushWorld(this.currentWorld);
             component.start();
             global.popWorld();
+        } else if (component.type === 'code') {
+            global.pushWorld(this.currentWorld);
+            component.func();
+            global.popWorld();
+            if (component.after) {
+                return this.startStoryboardComponentByName(component.after);
+            }
         }
+
+        this.currentStoryboardComponentName = name;
+    }
+
+    private setNewWorldFromStage(stage: Stage, entryPoint: Stage.EntryPoint = Theater.DEFAULT_ENTRY_POINT) {
+        let world = new World(stage, {
+            renderDirectly: true,
+        });
+
+        if (stage.worldObjects) {
+            for (let worldObject of stage.worldObjects) {
+                this.addWorldObjectFromStageConfig(world, worldObject);
+            }
+        }
+
+        // Resolve entry point.
+        if (_.isString(entryPoint)) {
+            entryPoint = Stage.getEntryPoint(stage, entryPoint);
+        }
+        for (let member of this.getActivePartyMembers()) {
+            let memberObj = Party.addMemberToWorld(member, world);
+            memberObj.x = entryPoint.x;
+            memberObj.y = entryPoint.y;
+        }
+
+        this.currentWorld = world;
+    }
+
+    private getActivePartyMembers() {
+        return Party.getActiveMembers(this.party);
     }
 
     private loadDialogBox(config: DialogBox.Config) {
@@ -163,8 +211,13 @@ class Theater extends World {
         this.addWorldObject(this.dialogBox);
         this.setLayer(this.dialogBox, Theater.LAYER_DIALOG);
     }
+
+    private loadParty() {
+        Party.load(this.party);
+    }
     
-    static addWorldObjectFromStageConfig(world: World, worldObject: SomeStageConfig) {
+    private addWorldObjectFromStageConfig(world: World, worldObject: SomeStageConfig) {
+        worldObject = Stage.resolveWorldObjectConfig(worldObject);
         if (!worldObject.constructor) return null;
 
         let config = <AllStageConfig> worldObject;
@@ -182,24 +235,11 @@ class Theater extends World {
         return obj;
     }
 
-    static createWorldFromStage(stage: Stage) {
-        let world = new World(stage, {
-            //renderDirectly: true,
-        });
-
-        if (stage.worldObjects) {
-            for (let worldObject of stage.worldObjects) {
-                this.addWorldObjectFromStageConfig(world, worldObject);
-            }
-        }
-
-        return world;
-    }
-
     static LAYER_WORLD = 'world';
     static LAYER_TRANSITION = 'transition';
     static LAYER_SLIDES = 'slides';
     static LAYER_DIALOG = 'dialog';
 
     static DEFAULT_CAMERA_MODE: Camera.Mode = { type: 'focus', point: { x: Main.width/2, y: Main.height/2 } };
+    static DEFAULT_ENTRY_POINT: Pt = { x: Main.width/2, y: Main.height/2 };
 }

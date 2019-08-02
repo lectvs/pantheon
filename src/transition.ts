@@ -32,7 +32,7 @@ namespace Transition {
             } else if (transition.type === 'fade') {
                 this.oldSprite.alpha = 1;
                 this.newSprite.alpha = 0;
-                Main.theater.runScript({
+                global.theater.runScript({
                     generator: S.chain(
                         S.wait(transition.preTime),
                         S.doOverTime(transition.time, t => {
@@ -42,13 +42,7 @@ namespace Transition {
                         S.wait(transition.postTime),
                     ).generator,
                     endState: () => (this.done = true),
-                })
-                // Main.theater.runScript({
-                //     generator: S.doOverTime(transition.time, t => {
-                //         this.oldSprite.alpha = 1 - t;
-                //     }).generator,
-                //     endState: () => (this.done = true),
-                // });
+                });
             }
         }
 

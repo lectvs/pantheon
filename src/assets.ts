@@ -63,6 +63,10 @@ namespace Assets {
             }
         },
 
+        'follower': {
+            anchor: { x: 0.5, y: 0.5 }
+        },
+
         'testtiles': {
             spritesheet: { frameWidth: 16, frameHeight: 16 },
         },
