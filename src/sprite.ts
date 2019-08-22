@@ -27,6 +27,8 @@ class Sprite extends PhysicsWorldObject {
     tint: number;
     alpha: number;
 
+    effects: Effects;
+
     constructor(config: Sprite.Config, defaults: Sprite.Config = {}) {
         config = O.withDefaults(config, defaults);
         super(config);
@@ -66,6 +68,8 @@ class Sprite extends PhysicsWorldObject {
 
         this.tint = O.getOrDefault(config.tint, 0xFFFFFF);
         this.alpha = O.getOrDefault(config.alpha, 1);
+
+        this.effects = Effects.empty();
     }
 
     update() {
@@ -76,8 +80,34 @@ class Sprite extends PhysicsWorldObject {
     render() {
         this.setDisplayObjectProperties();
 
+        this.pushEffects();
         global.renderer.render(this.displayObject, global.renderTexture, false, global.matrix);
+        this.popEffects();
+
         super.render();
+    }
+
+    pushEffects() {
+        if (this.effects.silhouette.enabled) {
+            if (this.spriteType === Sprite.Type.SPRITE) {
+                let filter = new PIXI.filters.ColorMatrixFilter();
+                this.displayObject.filters = [filter];
+                this.displayObject.filterArea = new PIXI.Rectangle(-global.matrix.tx, -global.matrix.ty, global.renderer.width, global.renderer.height);
+                //filter.matrix = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0];
+                filter.matrix = [0, 0, 0, 0, 1,
+                                 0, 0, 0, 0, 1,
+                                 0, 0, 0, 0, 0,
+                                 0, 0, 0, 1, 0];
+            }
+        }
+    }
+
+    popEffects() {
+        if (this.effects.silhouette.enabled) {
+            if (this.spriteType === Sprite.Type.SPRITE) {
+                this.displayObject.filters = null;
+            }
+        }
     }
 
     getCurrentAnimationName() {

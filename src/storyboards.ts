@@ -34,15 +34,18 @@ namespace S { export const storyboard: Storyboard = {
             yield shake(1, 2);
             yield wait(2);
             yield dialog("What's that boy up to?");
-            yield dialog("I'd better check outside.");
+            yield dialogp('notnone', "I'd better check outside.");
+            yield dialogp('none', "I'd better check outside.");
+            yield dialogp('notnone', "I'd better check outside.");
             yield wait(0.2);
 
             angie.angle = 0;
             angie.x -= 12;
             yield jump(angie, 8, 0.5, true);
             DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = false;
-            angie.x = -291;
-            angie.y = -413;
+            
+            // angie.x = -291;
+            // angie.y = -413;
         },
         after: 'test'
     },
@@ -50,6 +53,7 @@ namespace S { export const storyboard: Storyboard = {
     'test': {
         type: 'gameplay',
         start: () => {
+            //global.world.camera.setModeFocus(Main.width/2, Main.height/2);
             global.world.camera.setModeFollow('angie', 0, -18);
             global.getSprite('angie').controllable = true;
             global.getSprite('milo').follow('angie');

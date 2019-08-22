@@ -4,30 +4,40 @@ namespace DialogBox {
     export type Config = Sprite.Config & {
         texture: string;
         spriteTextFont: SpriteText.Font;
-        textArea: Rect;
+        textAreaFull: Rect;
+        textAreaPortrait: Rect;
+        portraitPosition: Pt;
         advanceKey: string;
     }
 }
 
 class DialogBox extends Sprite {
     charQueue: SpriteText.Character[];
-    textArea: Rect;
+    textAreaFull: Rect;
+    textAreaPortrait: Rect;
+    portraitPosition: Pt;
     advanceKey: string;
 
+    textArea: Rect;
     done: boolean;
 
     private spriteText: SpriteText;
     private spriteTextMask: PIXI.Graphics;
     private spriteTextOffset: number;
+    private portraitSprite: Sprite;
     private characterTimer: Timer;
 
     constructor(config: DialogBox.Config) {
         super(config);
 
         this.charQueue = [];
-        this.textArea = config.textArea;
+        
+        this.textAreaFull = config.textAreaFull;
+        this.portraitPosition = config.portraitPosition;
+        this.textAreaPortrait = config.textAreaPortrait;
         this.advanceKey = config.advanceKey;
 
+        this.textArea = this.textAreaFull;
         this.done = true;
 
         this.spriteText = new SpriteText({
@@ -36,6 +46,8 @@ class DialogBox extends Sprite {
         this.spriteTextMask = Mask.newRectangleMask(this.getTextAreaWorldRect());
         this.spriteText.mask = this.spriteTextMask;
         this.spriteTextOffset = 0;
+
+        this.portraitSprite = new Sprite({ texture: "milo/happy" });
 
         this.characterTimer = new Timer(0.05, () => this.advanceCharacter(), true);
     }
@@ -56,8 +68,14 @@ class DialogBox extends Sprite {
     render() {
         super.render();
 
-        this.setSpriteTextProperties();
         this.drawMask();
+
+        if (this.portraitSprite.visible) {
+            this.setPortraitSpriteProperties();
+            this.portraitSprite.render();
+        }
+
+        this.setSpriteTextProperties();
         this.spriteText.render();
     }
 
@@ -99,6 +117,13 @@ class DialogBox extends Sprite {
         Mask.drawRectangleMask(this.spriteTextMask, this.getTextAreaWorldRect());
     }
 
+    getPortraitWorldPosition(): Pt {
+        return {
+            x: this.x + this.portraitPosition.x,
+            y: this.y + this.portraitPosition.y,
+        };
+    }
+
     getTextAreaWorldRect(): Rect {
         return {
             x: this.x + this.textArea.x,
@@ -106,6 +131,11 @@ class DialogBox extends Sprite {
             width: this.textArea.width,
             height: this.textArea.height,
         };
+    }
+
+    setPortraitSpriteProperties() {
+        this.portraitSprite.x = this.x + this.portraitPosition.x;
+        this.portraitSprite.y = this.y + this.portraitPosition.y;
     }
 
     setSpriteTextProperties() {
@@ -126,5 +156,16 @@ class DialogBox extends Sprite {
         this.advanceCharacter(); // Advance character once to start the dialog with one displayed character.
     }
 
+    showPortrait(portrait: string) {
+        if (!portrait || portrait === DialogBox.NONE_PORTRAIT) {
+            this.portraitSprite.visible = false;
+            this.textArea = this.textAreaFull;
+        } else {
+            this.portraitSprite.visible = true;
+            this.textArea = this.textAreaPortrait;
+        }
+    }
+
     static MAX_COMPLETE_PAGE_ITERS: number = 10000;
+    static NONE_PORTRAIT: string = 'none';
 }

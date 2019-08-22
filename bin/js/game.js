@@ -356,6 +356,7 @@ var Sprite = /** @class */ (function (_super) {
         _this.angle = O.getOrDefault(config.angle, 0);
         _this.tint = O.getOrDefault(config.tint, 0xFFFFFF);
         _this.alpha = O.getOrDefault(config.alpha, 1);
+        _this.effects = Effects.empty();
         return _this;
     }
     Sprite.prototype.update = function () {
@@ -364,8 +365,31 @@ var Sprite = /** @class */ (function (_super) {
     };
     Sprite.prototype.render = function () {
         this.setDisplayObjectProperties();
+        this.pushEffects();
         global.renderer.render(this.displayObject, global.renderTexture, false, global.matrix);
+        this.popEffects();
         _super.prototype.render.call(this);
+    };
+    Sprite.prototype.pushEffects = function () {
+        if (this.effects.silhouette.enabled) {
+            if (this.spriteType === Sprite.Type.SPRITE) {
+                var filter = new PIXI.filters.ColorMatrixFilter();
+                this.displayObject.filters = [filter];
+                this.displayObject.filterArea = new PIXI.Rectangle(-global.matrix.tx, -global.matrix.ty, global.renderer.width, global.renderer.height);
+                //filter.matrix = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0];
+                filter.matrix = [0, 0, 0, 0, 1,
+                    0, 0, 0, 0, 1,
+                    0, 0, 0, 0, 0,
+                    0, 0, 0, 1, 0];
+            }
+        }
+    };
+    Sprite.prototype.popEffects = function () {
+        if (this.effects.silhouette.enabled) {
+            if (this.spriteType === Sprite.Type.SPRITE) {
+                this.displayObject.filters = null;
+            }
+        }
     };
     Sprite.prototype.getCurrentAnimationName = function () {
         return this.animationManager.getCurrentAnimationName();
@@ -1229,6 +1253,31 @@ var S;
         };
     }
     S.dialog = dialog;
+    function dialogp(portrait, text) {
+        return {
+            generator: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            global.theater.dialogBox.showPortrait(portrait);
+                            global.theater.dialogBox.showDialog(text);
+                            _a.label = 1;
+                        case 1:
+                            if (!!global.theater.dialogBox.done) return [3 /*break*/, 3];
+                            return [4 /*yield*/];
+                        case 2:
+                            _a.sent();
+                            return [3 /*break*/, 1];
+                        case 3: return [2 /*return*/];
+                    }
+                });
+            },
+            endState: function () {
+                global.theater.dialogBox.done = true;
+            }
+        };
+    }
+    S.dialogp = dialogp;
     function fadeSlides(duration, removeAllButLast) {
         if (removeAllButLast === void 0) { removeAllButLast = 1; }
         return {
@@ -1408,8 +1457,11 @@ var DialogBox = /** @class */ (function (_super) {
     function DialogBox(config) {
         var _this = _super.call(this, config) || this;
         _this.charQueue = [];
-        _this.textArea = config.textArea;
+        _this.textAreaFull = config.textAreaFull;
+        _this.portraitPosition = config.portraitPosition;
+        _this.textAreaPortrait = config.textAreaPortrait;
         _this.advanceKey = config.advanceKey;
+        _this.textArea = _this.textAreaFull;
         _this.done = true;
         _this.spriteText = new SpriteText({
             font: config.spriteTextFont,
@@ -1417,6 +1469,7 @@ var DialogBox = /** @class */ (function (_super) {
         _this.spriteTextMask = Mask.newRectangleMask(_this.getTextAreaWorldRect());
         _this.spriteText.mask = _this.spriteTextMask;
         _this.spriteTextOffset = 0;
+        _this.portraitSprite = new Sprite({ texture: "milo/happy" });
         _this.characterTimer = new Timer(0.05, function () { return _this.advanceCharacter(); }, true);
         return _this;
     }
@@ -1432,8 +1485,12 @@ var DialogBox = /** @class */ (function (_super) {
     };
     DialogBox.prototype.render = function () {
         _super.prototype.render.call(this);
-        this.setSpriteTextProperties();
         this.drawMask();
+        if (this.portraitSprite.visible) {
+            this.setPortraitSpriteProperties();
+            this.portraitSprite.render();
+        }
+        this.setSpriteTextProperties();
         this.spriteText.render();
     };
     DialogBox.prototype.advanceDialog = function () {
@@ -1470,6 +1527,12 @@ var DialogBox = /** @class */ (function (_super) {
     DialogBox.prototype.drawMask = function () {
         Mask.drawRectangleMask(this.spriteTextMask, this.getTextAreaWorldRect());
     };
+    DialogBox.prototype.getPortraitWorldPosition = function () {
+        return {
+            x: this.x + this.portraitPosition.x,
+            y: this.y + this.portraitPosition.y,
+        };
+    };
     DialogBox.prototype.getTextAreaWorldRect = function () {
         return {
             x: this.x + this.textArea.x,
@@ -1477,6 +1540,10 @@ var DialogBox = /** @class */ (function (_super) {
             width: this.textArea.width,
             height: this.textArea.height,
         };
+    };
+    DialogBox.prototype.setPortraitSpriteProperties = function () {
+        this.portraitSprite.x = this.x + this.portraitPosition.x;
+        this.portraitSprite.y = this.y + this.portraitPosition.y;
     };
     DialogBox.prototype.setSpriteTextProperties = function () {
         this.spriteText.x = this.x + this.textArea.x;
@@ -1492,7 +1559,18 @@ var DialogBox = /** @class */ (function (_super) {
         this.characterTimer.reset();
         this.advanceCharacter(); // Advance character once to start the dialog with one displayed character.
     };
+    DialogBox.prototype.showPortrait = function (portrait) {
+        if (!portrait || portrait === DialogBox.NONE_PORTRAIT) {
+            this.portraitSprite.visible = false;
+            this.textArea = this.textAreaFull;
+        }
+        else {
+            this.portraitSprite.visible = true;
+            this.textArea = this.textAreaPortrait;
+        }
+    };
     DialogBox.MAX_COMPLETE_PAGE_ITERS = 10000;
+    DialogBox.NONE_PORTRAIT = 'none';
     return DialogBox;
 }(Sprite));
 var Direction2D = /** @class */ (function () {
@@ -1697,6 +1775,18 @@ var Draw = /** @class */ (function () {
     Draw.ALIGNMENT_OUTER = 1;
     return Draw;
 }());
+var Effects;
+(function (Effects) {
+    function empty() {
+        return {
+            silhouette: {
+                enabled: false,
+                color: 0xFFFFFF,
+            }
+        };
+    }
+    Effects.empty = empty;
+})(Effects || (Effects = {}));
 var Follow = /** @class */ (function () {
     function Follow(target, maxDistance, moveThreshold) {
         if (moveThreshold === void 0) { moveThreshold = 2; }
@@ -2084,7 +2174,9 @@ var Main = /** @class */ (function () {
                 x: Main.width / 2, y: Main.height - 32,
                 texture: 'dialogbox',
                 spriteTextFont: Assets.fonts.DELUXE16,
-                textArea: { x: -122, y: -27, width: 244, height: 54 },
+                textAreaFull: { x: -122, y: -27, width: 244, height: 54 },
+                textAreaPortrait: { x: -122, y: -27, width: 174, height: 54 },
+                portraitPosition: { x: 86, y: 0 },
                 advanceKey: 'advanceDialog',
             },
             skipCutsceneScriptKey: 'skipCutsceneScript',
@@ -3427,20 +3519,24 @@ var S;
                             return [4 /*yield*/, S.dialog("What's that boy up to?")];
                         case 9:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("I'd better check outside.")];
+                            return [4 /*yield*/, S.dialogp('notnone', "I'd better check outside.")];
                         case 10:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(0.2)];
+                            return [4 /*yield*/, S.dialogp('none', "I'd better check outside.")];
                         case 11:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialogp('notnone', "I'd better check outside.")];
+                        case 12:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(0.2)];
+                        case 13:
                             _a.sent();
                             angie.angle = 0;
                             angie.x -= 12;
                             return [4 /*yield*/, S.jump(angie, 8, 0.5, true)];
-                        case 12:
+                        case 14:
                             _a.sent();
                             DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = false;
-                            angie.x = -291;
-                            angie.y = -413;
                             return [2 /*return*/];
                     }
                 });
@@ -3450,6 +3546,7 @@ var S;
         'test': {
             type: 'gameplay',
             start: function () {
+                //global.world.camera.setModeFocus(Main.width/2, Main.height/2);
                 global.world.camera.setModeFollow('angie', 0, -18);
                 global.getSprite('angie').controllable = true;
                 global.getSprite('milo').follow('angie');

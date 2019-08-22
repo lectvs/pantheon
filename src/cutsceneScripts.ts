@@ -13,6 +13,21 @@ namespace S {
         }
     }
 
+    export function dialogp(portrait: string, text: string): Script.Function {
+        return {
+            generator: function*() {
+                global.theater.dialogBox.showPortrait(portrait);
+                global.theater.dialogBox.showDialog(text);
+                while (!global.theater.dialogBox.done) {
+                    yield;
+                }
+            },
+            endState: () => {
+                global.theater.dialogBox.done = true;
+            }
+        }
+    }
+
     export function fadeSlides(duration: number, removeAllButLast: number = 1): Script.Function {
         return {
             generator: function*() {
