@@ -81,7 +81,7 @@ class Sprite extends PhysicsWorldObject {
         this.setDisplayObjectProperties();
 
         this.pushEffects();
-        global.renderer.render(this.displayObject, global.renderTexture, false, global.matrix);
+        global.renderer.render(this.displayObject, global.renderTexture, false);
         this.popEffects();
 
         super.render();
@@ -92,7 +92,7 @@ class Sprite extends PhysicsWorldObject {
             if (this.spriteType === Sprite.Type.SPRITE) {
                 let filter = new PIXI.filters.ColorMatrixFilter();
                 this.displayObject.filters = [filter];
-                this.displayObject.filterArea = new PIXI.Rectangle(-global.matrix.tx, -global.matrix.ty, global.renderer.width, global.renderer.height);
+                this.displayObject.filterArea = new PIXI.Rectangle(0, 0, global.renderer.width, global.renderer.height);
                 //filter.matrix = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0];
                 filter.matrix = [0, 0, 0, 0, 1,
                                  0, 0, 0, 0, 1,

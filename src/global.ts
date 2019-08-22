@@ -4,7 +4,6 @@ class global {
         this.deltaStack = [];
         this.rendererStack = [];
         this.renderTextureStack = [];
-        this.matrixStack = [];
         this.scriptStack = [];
     }
 
@@ -38,11 +37,6 @@ class global {
     private static renderTextureStack: PIXI.RenderTexture[] = [];
     static pushRenderTexture(renderTexture: PIXI.RenderTexture) { this.renderTextureStack.push(renderTexture); }
     static popRenderTexture() { return this.renderTextureStack.pop(); }
-
-    static get matrix() { return this.matrixStack[this.matrixStack.length-1]; };
-    private static matrixStack: PIXI.Matrix[] = [];
-    static pushMatrix(matrix: PIXI.Matrix) { this.matrixStack.push(matrix); }
-    static popMatrix() { return this.matrixStack.pop(); }
 
     static get script() { return this.scriptStack[this.scriptStack.length-1]; };
     private static scriptStack: Script[] = [];

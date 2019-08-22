@@ -207,8 +207,10 @@ var WorldObject = /** @class */ (function () {
     WorldObject.prototype.preRender = function () {
         this.preRenderStoredX = this.x;
         this.preRenderStoredY = this.y;
-        this.x = Math.floor(this.x - global.world.camera.x) + global.world.camera.x;
-        this.y = Math.floor(this.y - global.world.camera.y) + global.world.camera.y;
+        this.x -= global.world.camera.x - global.world.camera.width / 2;
+        this.y -= global.world.camera.y - global.world.camera.height / 2;
+        this.x = Math.floor(this.x);
+        this.y = Math.floor(this.y);
     };
     WorldObject.prototype.render = function () {
     };
@@ -366,7 +368,7 @@ var Sprite = /** @class */ (function (_super) {
     Sprite.prototype.render = function () {
         this.setDisplayObjectProperties();
         this.pushEffects();
-        global.renderer.render(this.displayObject, global.renderTexture, false, global.matrix);
+        global.renderer.render(this.displayObject, global.renderTexture, false);
         this.popEffects();
         _super.prototype.render.call(this);
     };
@@ -375,7 +377,7 @@ var Sprite = /** @class */ (function (_super) {
             if (this.spriteType === Sprite.Type.SPRITE) {
                 var filter = new PIXI.filters.ColorMatrixFilter();
                 this.displayObject.filters = [filter];
-                this.displayObject.filterArea = new PIXI.Rectangle(-global.matrix.tx, -global.matrix.ty, global.renderer.width, global.renderer.height);
+                this.displayObject.filterArea = new PIXI.Rectangle(0, 0, global.renderer.width, global.renderer.height);
                 //filter.matrix = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0];
                 filter.matrix = [0, 0, 0, 0, 1,
                     0, 0, 0, 0, 1,
@@ -1765,7 +1767,7 @@ var Draw = /** @class */ (function () {
         return this;
     };
     Draw.render = function () {
-        global.renderer.render(this.graphics, global.renderTexture, false, global.matrix);
+        global.renderer.render(this.graphics, global.renderTexture, false);
     };
     Draw.graphics = new PIXI.Graphics();
     Draw._fillColor = 0x000000;
@@ -1851,7 +1853,6 @@ var global = /** @class */ (function () {
         this.deltaStack = [];
         this.rendererStack = [];
         this.renderTextureStack = [];
-        this.matrixStack = [];
         this.scriptStack = [];
     };
     global.getSprite = function (name) {
@@ -1896,14 +1897,6 @@ var global = /** @class */ (function () {
     ;
     global.pushRenderTexture = function (renderTexture) { this.renderTextureStack.push(renderTexture); };
     global.popRenderTexture = function () { return this.renderTextureStack.pop(); };
-    Object.defineProperty(global, "matrix", {
-        get: function () { return this.matrixStack[this.matrixStack.length - 1]; },
-        enumerable: true,
-        configurable: true
-    });
-    ;
-    global.pushMatrix = function (matrix) { this.matrixStack.push(matrix); };
-    global.popMatrix = function () { return this.matrixStack.pop(); };
     Object.defineProperty(global, "script", {
         get: function () { return this.scriptStack[this.scriptStack.length - 1]; },
         enumerable: true,
@@ -1916,7 +1909,6 @@ var global = /** @class */ (function () {
     global.deltaStack = [];
     global.rendererStack = [];
     global.renderTextureStack = [];
-    global.matrixStack = [];
     global.scriptStack = [];
     return global;
 }());
@@ -2185,7 +2177,6 @@ var Main = /** @class */ (function () {
         global.clearStacks();
         global.pushRenderer(this.renderer);
         global.pushRenderTexture(undefined);
-        global.pushMatrix(PIXI.Matrix.IDENTITY);
         PIXI.Ticker.shared.add(function (frameDelta) {
             _this.delta = frameDelta / 60;
             Input.update();
@@ -2665,7 +2656,7 @@ var Tilemap = /** @class */ (function (_super) {
         }
         this.renderTexture.x = this.x;
         this.renderTexture.y = this.y;
-        global.renderer.render(this.renderTexture, global.renderTexture, false, global.matrix);
+        global.renderer.render(this.renderTexture, global.renderTexture, false);
         _super.prototype.render.call(this);
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
@@ -3053,7 +3044,7 @@ var SpriteText = /** @class */ (function (_super) {
                 var char = _c.value;
                 this.setFontSpriteToCharacter(char);
                 this.setStyle(char.style);
-                global.renderer.render(this.fontSprite, global.renderTexture, false, global.matrix);
+                global.renderer.render(this.fontSprite, global.renderTexture, false);
             }
         }
         catch (e_11_1) { e_11 = { error: e_11_1 }; }
@@ -3655,21 +3646,16 @@ var World = /** @class */ (function (_super) {
             global.pushRenderTexture(this.renderTexture.renderTexture);
             this.renderWorld();
             global.popRenderTexture();
-            global.renderer.render(this.renderTexture, global.renderTexture, false, global.matrix);
+            global.renderer.render(this.renderTexture, global.renderTexture, false);
         }
         _super.prototype.render.call(this);
     };
     World.prototype.renderWorld = function () {
         var e_17, _a, e_18, _b;
-        var oldtx = global.matrix.tx;
-        var oldty = global.matrix.ty;
         var cameraMatrix = this.camera.rendererMatrix;
-        global.matrix.translate(cameraMatrix.tx, cameraMatrix.ty);
         // Render background color.
-        global.pushMatrix(PIXI.Matrix.IDENTITY);
         Draw.noStroke().fillColor(this.backgroundColor, this.backgroundAlpha)
             .drawRectangle(0, 0, this.width, this.height);
-        global.popMatrix();
         global.pushWorld(this);
         try {
             for (var _c = __values(this.layers), _d = _c.next(); !_d.done; _d = _c.next()) {
@@ -3702,7 +3688,6 @@ var World = /** @class */ (function (_super) {
             finally { if (e_17) throw e_17.error; }
         }
         global.popWorld();
-        global.matrix.translate(oldtx - global.matrix.tx, oldty - global.matrix.ty);
     };
     World.prototype.addWorldObject = function (obj, options) {
         if (!obj)
@@ -3906,10 +3891,14 @@ var World = /** @class */ (function (_super) {
     World.prototype.takeSnapshot = function () {
         var renderTextureSprite = new PIXIRenderTextureSprite(this.camera.width, this.camera.height);
         global.pushRenderTexture(renderTextureSprite.renderTexture);
-        global.pushMatrix(PIXI.Matrix.IDENTITY);
+        var lastx = this.x;
+        var lasty = this.y;
+        this.x = 0;
+        this.y = 0;
         this.render();
+        this.x = lastx;
+        this.y = lasty;
         global.popRenderTexture();
-        global.popMatrix();
         return renderTextureSprite;
     };
     World.prototype.createLayers = function (layers) {

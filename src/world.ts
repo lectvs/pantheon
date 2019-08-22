@@ -118,22 +118,17 @@ class World extends WorldObject {
             global.pushRenderTexture(this.renderTexture.renderTexture);
             this.renderWorld();
             global.popRenderTexture();
-            global.renderer.render(this.renderTexture, global.renderTexture, false, global.matrix);
+            global.renderer.render(this.renderTexture, global.renderTexture, false);
         }
         super.render();
     }
 
     renderWorld() {
-        let oldtx = global.matrix.tx;
-        let oldty = global.matrix.ty;
         let cameraMatrix = this.camera.rendererMatrix;
-        global.matrix.translate(cameraMatrix.tx, cameraMatrix.ty);
 
         // Render background color.
-        global.pushMatrix(PIXI.Matrix.IDENTITY);
         Draw.noStroke().fillColor(this.backgroundColor, this.backgroundAlpha)
             .drawRectangle(0, 0, this.width, this.height);
-        global.popMatrix();
 
         global.pushWorld(this);
         for (let layer of this.layers) {
@@ -147,8 +142,6 @@ class World extends WorldObject {
             }
         }
         global.popWorld();
-
-        global.matrix.translate(oldtx - global.matrix.tx, oldty - global.matrix.ty);
     }
     
     addWorldObject<T extends WorldObject>(obj: T, options?: { name?: string, layer?: string, physicsGroup?: string }) {
@@ -303,10 +296,14 @@ class World extends WorldObject {
     takeSnapshot() {
         let renderTextureSprite = new PIXIRenderTextureSprite(this.camera.width, this.camera.height);
         global.pushRenderTexture(renderTextureSprite.renderTexture);
-        global.pushMatrix(PIXI.Matrix.IDENTITY);
+        let lastx = this.x;
+        let lasty = this.y;
+        this.x = 0;
+        this.y = 0;
         this.render();
+        this.x = lastx;
+        this.y = lasty;
         global.popRenderTexture();
-        global.popMatrix();
         return renderTextureSprite;
     }
 

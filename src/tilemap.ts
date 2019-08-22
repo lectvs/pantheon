@@ -78,7 +78,7 @@ class Tilemap extends WorldObject {
         
         this.renderTexture.x = this.x;
         this.renderTexture.y = this.y;
-        global.renderer.render(this.renderTexture, global.renderTexture, false, global.matrix);
+        global.renderer.render(this.renderTexture, global.renderTexture, false);
 
         super.render();
     }

@@ -81,7 +81,6 @@ class Main {
         global.clearStacks();
         global.pushRenderer(this.renderer);
         global.pushRenderTexture(undefined);
-        global.pushMatrix(PIXI.Matrix.IDENTITY);
 
         PIXI.Ticker.shared.add(frameDelta => {
             this.delta = frameDelta/60;

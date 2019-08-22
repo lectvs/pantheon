@@ -35,7 +35,7 @@ class Draw {
     }
 
     private static render() {
-        global.renderer.render(this.graphics, global.renderTexture, false, global.matrix);
+        global.renderer.render(this.graphics, global.renderTexture, false);
     }
 
     static ALIGNMENT_INNER: number = 0;
