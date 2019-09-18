@@ -9,8 +9,8 @@ class PIXIRenderTextureSprite extends PIXI.Sprite {
         this._renderTexture = renderTexture;
     }
 
-    clear(renderer: PIXI.Renderer) {
-        renderer.render(Utils.NOOP_DISPLAYOBJECT, this._renderTexture, true);
+    clear() {
+        global.renderer.render(Utils.NOOP_DISPLAYOBJECT, this._renderTexture, true);
     }
     
     resize(width: number, height: number) {

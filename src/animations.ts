@@ -7,7 +7,7 @@ namespace Animation {
     }
 
     export type Frame = {
-        duration: number;
+        duration?: number;
         nextFrameRef?: string;
         forceRequired?: boolean;
     

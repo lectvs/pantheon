@@ -8,8 +8,10 @@ namespace Sprite {
         offset?: Pt;
         angle?: number;
         animations?: Animation.Config[];
+        defaultAnimation?: string;
         tint?: number;
         alpha?: number;
+        effects?: Effects;
     }
 }
 
@@ -28,6 +30,7 @@ class Sprite extends PhysicsWorldObject {
     alpha: number;
 
     effects: Effects;
+    effectsFilter: Effects.Filter;
 
     constructor(config: Sprite.Config, defaults: Sprite.Config = {}) {
         config = O.withDefaults(config, defaults);
@@ -56,8 +59,15 @@ class Sprite extends PhysicsWorldObject {
 
         if (config.animations) {
             for (let animation of config.animations) {
+                _.defaults(animation, {
+                    duration: 0,
+                });
                 this.animationManager.addAnimation(animation.name, animation.frames);
             }
+        }
+
+        if (config.defaultAnimation) {
+            this.playAnimation(config.defaultAnimation, 0, true);
         }
 
         this.flipX = false;
@@ -70,44 +80,25 @@ class Sprite extends PhysicsWorldObject {
         this.alpha = O.getOrDefault(config.alpha, 1);
 
         this.effects = Effects.empty();
+        this.setEffects(config.effects);
+        this.effectsFilter = new Effects.Filter(this.effects);
     }
 
     update() {
         super.update();
         this.animationManager.update();
+
+        if (global.world.getName(this) === 'angie' && Input.justDown('1')) {
+            this.effects.outline.enabled = !this.effects.outline.enabled;
+            this.effects.outline.color = 0xFF00FF;
+        }
     }
 
     render() {
+        this.effectsFilter.update();
         this.setDisplayObjectProperties();
-
-        this.pushEffects();
         global.renderer.render(this.displayObject, global.renderTexture, false);
-        this.popEffects();
-
         super.render();
-    }
-
-    pushEffects() {
-        if (this.effects.silhouette.enabled) {
-            if (this.spriteType === Sprite.Type.SPRITE) {
-                let filter = new PIXI.filters.ColorMatrixFilter();
-                this.displayObject.filters = [filter];
-                this.displayObject.filterArea = new PIXI.Rectangle(0, 0, global.renderer.width, global.renderer.height);
-                //filter.matrix = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0];
-                filter.matrix = [0, 0, 0, 0, 1,
-                                 0, 0, 0, 0, 1,
-                                 0, 0, 0, 0, 0,
-                                 0, 0, 0, 1, 0];
-            }
-        }
-    }
-
-    popEffects() {
-        if (this.effects.silhouette.enabled) {
-            if (this.spriteType === Sprite.Type.SPRITE) {
-                this.displayObject.filters = null;
-            }
-        }
     }
 
     getCurrentAnimationName() {
@@ -135,6 +126,15 @@ class Sprite extends PhysicsWorldObject {
         this.displayObject.angle = this.angle;
         this.displayObject.tint = this.tint;
         this.displayObject.alpha = this.alpha;
+        this.displayObject.filters = [this.effectsFilter];
+        this.displayObject.filterArea = global.renderer.screen;
+    }
+
+    setEffects(effects: Effects) {
+        if (!effects) return;
+        for (let key in effects) {
+            this.effects[key] = _.clone(effects[key]);
+        }
     }
 
     setGraphics(graphics: PIXI.Graphics) {
@@ -164,7 +164,8 @@ class Sprite extends PhysicsWorldObject {
             let sprite = <PIXI.Sprite>this.displayObject;
             let texture = AssetCache.getTexture(key);
             if (sprite.texture !== texture) {
-                sprite.texture = texture;
+                // creating new PIXI sprite to avoid scaling/anchor issues when changing to a texture with a different width/height/anchor
+                this.displayObject = new PIXI.Sprite(texture);
             }
         } else {
             this.displayObject = new PIXI.Sprite(AssetCache.getTexture(key));

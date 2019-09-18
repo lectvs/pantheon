@@ -1,6 +1,6 @@
 class AnimationManager {
     sprite: Sprite;
-    animations: {[name: string]: Animation.Frame[]};
+    animations: Dict<Animation.Frame[]>;
 
     private currentFrame: Animation.Frame;
     private currentFrameTime: number;

@@ -1,3 +1,5 @@
+/// <reference path="./physicsWorldObject.ts"/>
+
 class BackWall extends PhysicsWorldObject {
     tiles: Sprite[];
 

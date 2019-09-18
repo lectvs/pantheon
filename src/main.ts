@@ -39,8 +39,13 @@ class Main {
             'right':                ['ArrowRight'],
             'up':                   ['ArrowUp'],
             'down':                 ['ArrowDown'],
-            'advanceDialog':        ['MouseLeft'],
+            'interact':             ['e'],
+            'advanceDialog':        ['MouseLeft', 'e', ' '],
             'skipCutsceneScript':   ['Escape'],
+            'debugMoveCameraUp':    ['i'],
+            'debugMoveCameraDown':  ['k'],
+            'debugMoveCameraLeft':  ['j'],
+            'debugMoveCameraRight': ['l'],
             '1':                    ['1'],
             '2':                    ['2'],
             '3':                    ['3'],
@@ -61,9 +66,10 @@ class Main {
 
         this.theater = new Theater({
             stages: stages,
-            stageToLoad: 'main_with_backwall',
+            stageToLoad: 'main',
+            stageEntryPoint: 'entrance',
             storyboard: storyboard,
-            storyboardEntry: 'main',
+            storyboardEntry: 'room_intro',
             party: party,
             dialogBox: {
                 x: Main.width/2, y: Main.height - 32,
@@ -75,6 +81,15 @@ class Main {
                 advanceKey: 'advanceDialog',
             },
             skipCutsceneScriptKey: 'skipCutsceneScript',
+            interactionManager: {
+                highlightFunction: sprite => {
+                    sprite.effects.outline.enabled = true;
+                    sprite.effects.outline.color = 0xFFFF00;
+                },
+                resetFunction: sprite => {
+                    sprite.effects.outline.enabled = false;
+                },
+            }
         });
 
         global.theater = this.theater;

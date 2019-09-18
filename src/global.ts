@@ -7,13 +7,17 @@ class global {
         this.scriptStack = [];
     }
 
-    static getSprite(name: string): Sprite | any {
+    static getSprite<T extends Sprite>(name: string): T {
         let obj = this.world.getWorldObjectByName(name);
         if (!(obj instanceof Sprite)) {
             debug(`Getting sprite '${name}' from world which is not a sprite!`, this.world);
             return undefined;
         }
-        return obj;
+        return <T>obj;
+    }
+
+    static getWorldObject<T extends WorldObject>(name: string): T {
+        return <T>this.world.getWorldObjectByName(name);
     }
 
     // Update options

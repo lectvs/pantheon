@@ -57,7 +57,7 @@ namespace Stage {
         return stage.entryPoints[entryPointKey];
     }
 
-    export function resolveStageConfig(config: Stage) {
+    export function resolveStageConfig(config: Stage): Stage {
         if (!config.parent) return _.clone(config);
 
         let result = resolveStageConfig(config.parent);
@@ -75,6 +75,11 @@ namespace Stage {
                     });
             } else if (key === 'entryPoints') {
                 result[key] = mergeObject(config[key], result[key]);
+            } else if (key === 'layers') {
+                result[key] = mergeArray(config[key], result[key], (e: World.LayerConfig) => e.name,
+                    (e: World.LayerConfig, into: World.LayerConfig) => {
+                        return mergeObject(e, into);
+                    });
             } else {
                 result[key] = config[key];
             }
@@ -83,7 +88,7 @@ namespace Stage {
         return result;
     }
 
-    export function resolveWorldObjectConfig(config: SomeStageConfig) {
+    export function resolveWorldObjectConfig(config: SomeStageConfig): SomeStageConfig {
         if (!config.parent) return _.clone(config);
 
         let result = resolveWorldObjectConfig(config.parent);

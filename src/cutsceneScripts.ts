@@ -1,23 +1,13 @@
 namespace S {
-    export function dialog(text: string): Script.Function {
+    export function dialog(p1: string, p2?: string): Script.Function {
         return {
             generator: function*() {
-                global.theater.dialogBox.showDialog(text);
-                while (!global.theater.dialogBox.done) {
-                    yield;
+                if (p2) {
+                    global.theater.dialogBox.showPortrait(p1);
+                    global.theater.dialogBox.showDialog(p2);
+                } else {
+                    global.theater.dialogBox.showDialog(p1);
                 }
-            },
-            endState: () => {
-                global.theater.dialogBox.done = true;
-            }
-        }
-    }
-
-    export function dialogp(portrait: string, text: string): Script.Function {
-        return {
-            generator: function*() {
-                global.theater.dialogBox.showPortrait(portrait);
-                global.theater.dialogBox.showDialog(text);
                 while (!global.theater.dialogBox.done) {
                     yield;
                 }
@@ -73,6 +63,67 @@ namespace S {
             },
             endState: () => {
                 sprite.offset.y = start + groundDelta;
+            }
+        }
+    }
+
+    export function moveTo(worldObject: WorldObject, x: number, y: number, maxTime: number = 10) {
+        return simul(
+            moveToX(worldObject, x, maxTime),
+            moveToY(worldObject, y, maxTime),
+        );
+    }
+
+    export function moveToX(worldObject: WorldObject, x: number, maxTime: number = 10) {
+        return {
+            generator: function*() {
+                let dx = x - worldObject.x;
+                if (dx === 0) return;
+
+                let timer = new Timer(maxTime);
+                if (dx > 0) {
+                    while (worldObject.x < x && !timer.done) {
+                        worldObject.controller.right = true;
+                        timer.update();
+                        yield;
+                    }
+                } else {
+                    while (worldObject.x > x && !timer.done) {
+                        worldObject.controller.left = true;
+                        timer.update();
+                        yield;
+                    }
+                }
+            },
+            endState: () => {
+                worldObject.x = x;
+            }
+        }
+    }
+
+    export function moveToY(worldObject: WorldObject, y: number, maxTime: number = 10) {
+        return {
+            generator: function*() {
+                let dy = y - worldObject.y;
+                if (dy === 0) return;
+
+                let timer = new Timer(maxTime);
+                if (dy > 0) {
+                    while (worldObject.y < y && !timer.done) {
+                        worldObject.controller.down = true;
+                        timer.update();
+                        yield;
+                    }
+                } else {
+                    while (worldObject.y > y && !timer.done) {
+                        worldObject.controller.up = true;
+                        timer.update();
+                        yield;
+                    }
+                }
+            },
+            endState: () => {
+                worldObject.y = y;
             }
         }
     }

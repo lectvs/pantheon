@@ -39,11 +39,11 @@ namespace A {
         return array.map(line => _.isEmpty(line) ? [] : line.map(fn));
     }
 
-    export function removeAll<T>(array: T[], obj: T) {
+    export function removeAll<T>(array: T[], obj: T, startingAt: number = 0) {
         if (!array) return 0;
 
         let count = 0;
-        for (let i = array.length-1; i >= 0; i--) {
+        for (let i = array.length-1; i >= startingAt; i--) {
             if (array[i] === obj) {
                 array.splice(i, 1);
                 count++;
@@ -51,6 +51,13 @@ namespace A {
         }
 
         return count;
+    }
+
+    export function removeDuplicates<T>(array: T[]) {
+        for (let i = 0; i < array.length - 1; i++) {
+            removeAll(array, array[i], i+1);
+        }
+        return array;
     }
 
     export function repeat<T>(array: T[], count: number) {

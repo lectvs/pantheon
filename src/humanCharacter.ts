@@ -53,6 +53,10 @@ class HumanCharacter extends Sprite {
 
         super.update();
 
+        if (this.isControlled) {
+            this.updateInteractions();
+        }
+
         // Handle animation.
         let anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'run';
         let anim_dir = this.direction.v == Direction.UP ? 'up' : (this.direction.h == Direction.NONE ? 'down' : 'side');
@@ -60,7 +64,27 @@ class HumanCharacter extends Sprite {
         this.playAnimation(`${anim_state}_${anim_dir}`);
     }
 
-    follow(thing: Follow.Target, maxDistance: number = 16) {
+    updateInteractions() {
+        let interactableObjects = global.theater.interactionManager.getInteractableObjects();
+        let interactRadius = 2;
+
+        let highlightedObject: string = null;
+
+        G.expandRectangle(this.bounds, interactRadius);
+        for (let obj of interactableObjects) {
+            if (this.isOverlapping(global.getWorldObject(obj))) {
+                highlightedObject = obj;
+            }
+        }
+        G.expandRectangle(this.bounds, -interactRadius);
+
+        global.theater.interactionManager.highlight(highlightedObject);
+        if (Input.justDown('interact') && highlightedObject) {
+            global.theater.interactionManager.interact(highlightedObject);
+        }
+    }
+
+    follow(thing: Follow.Target, maxDistance: number = 24) {
         this._follow = new Follow(thing, maxDistance);
     }
 
@@ -68,6 +92,11 @@ class HumanCharacter extends Sprite {
         if (other instanceof Warp) {
             other.warp();
         }
+    }
+
+    setDirection(direction: Direction2D) {
+        this.direction.h = direction.h;
+        this.direction.v = direction.v;
     }
 
     updateFollow() {

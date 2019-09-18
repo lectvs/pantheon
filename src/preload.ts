@@ -154,11 +154,18 @@ class Preload {
     static loadPyxelTilemap(key: string, tilemap: Preload.PyxelTilemap) {
         let tilemapJson: Preload.PyxelTilemapJson = PIXI.Loader.shared.resources[key + this.TILEMAP_KEY_SUFFIX].data;
 
-        let tilemapForCache: Tilemap.Tilemap = A.filledArray2D(tilemapJson.tileshigh, tilemapJson.tileswide);
-        for (let tile of tilemapJson.layers[0].tiles) {
-            tilemapForCache[tile.y][tile.x] = {
-                index: Math.max(tile.tile, -1),
-            };
+        let tilemapForCache: Tilemap.Tilemap = {
+            tileset: tilemap.tileset,
+            layers: [],
+        };
+        for (let i = 0; i < tilemapJson.layers.length; i++) {
+            let tilemapLayer: Tilemap.TilemapLayer = A.filledArray2D(tilemapJson.tileshigh, tilemapJson.tileswide);
+            for (let tile of tilemapJson.layers[i].tiles) {
+                tilemapLayer[tile.y][tile.x] = {
+                    index: Math.max(tile.tile, -1),
+                };
+            }
+            tilemapForCache.layers.push(tilemapLayer);
         }
         AssetCache.tilemaps[key] = tilemapForCache;
     }

@@ -1,4 +1,14 @@
 namespace O {
+    export function deepOverride<T>(obj: T, overrides: any) {
+        for (let key in overrides) {
+            if (obj[key] && _.isObject(obj[key]) && _.isObject(overrides[key])) {
+                deepOverride(obj[key], overrides[key]);
+            } else {
+                obj[key] = overrides[key];
+            }
+        }
+    }
+
     export function getOrDefault<T>(obj: T, def: T) {
         return obj === undefined ? def : obj;
     }

@@ -1,7 +1,7 @@
 namespace Tilemap {
     export type Config = WorldObject.Config & {
         tilemap: string;
-        tileset: Tilemap.Tileset;
+        tilemapLayer?: number;
         collisionPhysicsGroup?: string;
         collisionDebugBounds?: boolean;
     }
@@ -10,7 +10,12 @@ namespace Tilemap {
         index: number;
     }
 
-    export type Tilemap = Tile[][];
+    export type Tilemap = {
+        tileset: Tilemap.Tileset;
+        layers: TilemapLayer[];
+    }
+
+    export type TilemapLayer = Tile[][];
 
     export type Tileset = {
         tiles: string[];
@@ -22,7 +27,6 @@ namespace Tilemap {
 
 class Tilemap extends WorldObject {
     tilemap: Tilemap.Tilemap;
-    tileset: Tilemap.Tileset;
     collisionPhysicsGroup: string;
 
     numTilesX: number;
@@ -31,21 +35,24 @@ class Tilemap extends WorldObject {
     renderTexture: PIXIRenderTextureSprite;
     collisionBoxes: PhysicsWorldObject[];
     
+    private tilemapLayer: number;
     private tileSprite: PIXI.Sprite;
     private dirty: boolean;
+
+    get currentTilemapLayer() { return this.tilemap.layers[this.tilemapLayer]; }
 
     constructor(config: Tilemap.Config) {
         super(config);
 
-        this.tilemap = A.clone2D(AssetCache.getTilemap(config.tilemap));
-        this.tileset = config.tileset;
+        this.tilemap = Tilemap.cloneTilemap(AssetCache.getTilemap(config.tilemap));
+        this.tilemapLayer = O.getOrDefault(config.tilemapLayer, 0);
         this.collisionPhysicsGroup = config.collisionPhysicsGroup;
 
-        let tilemapDimens = A.get2DArrayDimensions(this.tilemap);
+        let tilemapDimens = A.get2DArrayDimensions(this.currentTilemapLayer);
         this.numTilesX = tilemapDimens.width;
         this.numTilesY = tilemapDimens.height;
 
-        this.renderTexture = new PIXIRenderTextureSprite(this.numTilesX * this.tileset.tileWidth, this.numTilesY * this.tileset.tileHeight);
+        this.renderTexture = new PIXIRenderTextureSprite(this.numTilesX * this.tilemap.tileset.tileWidth, this.numTilesY * this.tilemap.tileset.tileHeight);
         this.createCollisionBoxes(O.getOrDefault(config.collisionDebugBounds, false));
 
         this.tileSprite = new PIXI.Sprite();
@@ -85,7 +92,7 @@ class Tilemap extends WorldObject {
 
     createCollisionBoxes(debugBounds: boolean = false) {
         this.collisionBoxes = [];
-        let collisionRects = Tilemap.getCollisionRects(this.tilemap, this.tileset);
+        let collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects);  // Not optimizing entire array first to save some cycles.
         Tilemap.optimizeCollisionRects(collisionRects, Tilemap.OPTIMIZE_ALL);
         for (let rect of collisionRects) {
@@ -96,15 +103,15 @@ class Tilemap extends WorldObject {
     }
 
     drawRenderTexture() {
-        this.renderTexture.clear(global.renderer);
-        for (let y = 0; y < this.tilemap.length; y++) {
-            for (let x = 0; x < this.tilemap[y].length; x++) {
-                if (!this.tilemap[y][x] || this.tilemap[y][x].index < 0) continue;
-                let tile = this.tilemap[y][x];
-                let textureKey = this.tileset.tiles[tile.index];
+        this.renderTexture.clear();
+        for (let y = 0; y < this.currentTilemapLayer.length; y++) {
+            for (let x = 0; x < this.currentTilemapLayer[y].length; x++) {
+                if (!this.currentTilemapLayer[y][x] || this.currentTilemapLayer[y][x].index < 0) continue;
+                let tile = this.currentTilemapLayer[y][x];
+                let textureKey = this.tilemap.tileset.tiles[tile.index];
                 this.tileSprite.texture = AssetCache.getTexture(textureKey);
-                this.tileSprite.x = x * this.tileset.tileWidth;
-                this.tileSprite.y = y * this.tileset.tileHeight;
+                this.tileSprite.x = x * this.tilemap.tileset.tileWidth;
+                this.tileSprite.y = y * this.tilemap.tileset.tileHeight;
                 global.renderer.render(this.tileSprite, this.renderTexture.renderTexture, false);
             }
         }
@@ -118,12 +125,25 @@ class Tilemap extends WorldObject {
 }
 
 namespace Tilemap {
-    export function getCollisionRects(tilemap: Tilemap, tileset: Tileset) {
+    export function cloneTilemap(tilemap: Tilemap) {
+        let result: Tilemap = {
+            tileset: tilemap.tileset,
+            layers: [],
+        };
+
+        for (let i = 0; i < tilemap.layers.length; i++) {
+            result.layers.push(A.clone2D(tilemap.layers[i]));
+        }
+
+        return result;
+    }
+
+    export function getCollisionRects(tilemapLayer: Tilemap.TilemapLayer, tileset: Tileset) {
         if (_.isEmpty(tileset.collisionIndices)) return [];
         let result: Rect[] = [];
-        for (let y = 0; y < tilemap.length; y++) {
-            for (let x = 0; x < tilemap[y].length; x++) {
-                let tile = tilemap[y][x];
+        for (let y = 0; y < tilemapLayer.length; y++) {
+            for (let x = 0; x < tilemapLayer[y].length; x++) {
+                let tile = tilemapLayer[y][x];
                 if (_.contains(tileset.collisionIndices, tile.index)) {
                     let rect = {
                         x: x*tileset.tileWidth,

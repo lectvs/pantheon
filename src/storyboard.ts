@@ -6,8 +6,10 @@ namespace Storyboard {
     export namespace Component {
         export type Cutscene = {
             type: 'cutscene';
-            script : () => IterableIterator<Script.Function>;
+            script : Cutscene.Generator;
             after?: string;
+            playOnlyOnce?: boolean;
+            playOnInteractWith?: string[];
         }
 
         export type Gameplay = {

@@ -61,6 +61,7 @@ class Physics {
 
     static collide(obj: PhysicsWorldObject, from: PhysicsWorldObject[], options: Physics.CollideOptions = {}): Pt {
         if (_.isEmpty(from)) return;
+        if (!obj.colliding) return;
 
         _.defaults(options, {
             callback: false,
@@ -71,7 +72,7 @@ class Physics {
         let startX = obj.x;
         let startY = obj.y;
 
-        let collidingWith = from.filter(other => obj !== other && obj.isOverlapping(other));
+        let collidingWith = from.filter(other => obj !== other && other.colliding && obj.isOverlapping(other));
 
         let iters = 0;
         while (!_.isEmpty(collidingWith) && iters < options.maxIters) {

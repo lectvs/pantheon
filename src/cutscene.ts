@@ -1,7 +1,8 @@
 type Cutscene = Storyboard.Component.Cutscene;
 
 namespace Cutscene {
-    export function toScript(generator: () => IterableIterator<Script.Function>, skipCutsceneScriptKey: string): Script.Function {
+    export type Generator = () => IterableIterator<Script.Function | (() => IterableIterator<Script.Function>)[]>;
+    export function toScript(generator: Generator, skipCutsceneScriptKey: string): Script.Function {
         return {
             generator: function*() {
                 let iterator = generator();
@@ -9,6 +10,9 @@ namespace Cutscene {
                 while (true) {
                     let result = iterator.next();
                     if (result.value) {
+                        if (_.isArray(result.value)) {
+                            result.value = S.simul(...result.value.map(scr => Cutscene.toScript(scr, skipCutsceneScriptKey)));
+                        }
                         let script = global.world.runScript(result.value);
                         if (DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS) {
                             script.finishImmediately();
@@ -24,7 +28,8 @@ namespace Cutscene {
                     }
                     if (result.done) break;
                 }
-            }
+            },
+            endState: () => {}
         }
     }
 }

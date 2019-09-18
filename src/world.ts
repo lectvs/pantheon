@@ -6,6 +6,8 @@ namespace World {
         collisionOrder?: CollisionConfig[];
         layers?: World.LayerConfig[];
 
+        camera?: Camera.Config;
+
         renderDirectly?: boolean;
         width?: number;
         height?: number;
@@ -25,6 +27,7 @@ namespace World {
         name: string;
         sortKey?: string;
         reverseSort?: boolean;
+        effects?: Effects;
     }
 
     export type PhysicsGroupConfig = {
@@ -49,6 +52,8 @@ class World extends WorldObject {
     private renderTexture: PIXIRenderTextureSprite;
 
     debugMoveCameraWithArrows: boolean;
+    private debugCameraX: number;
+    private debugCameraY: number;
 
     get renderingDirectly() { return !this.renderTexture; }
 
@@ -68,7 +73,13 @@ class World extends WorldObject {
         this.backgroundColor = O.getOrDefault(config.backgroundColor, Main.backgroundColor);
         this.backgroundAlpha = O.getOrDefault(config.backgroundAlpha, 1);
 
-        this.camera = new Camera(this.width, this.height);
+        let cameraConfig = O.getOrDefault(config.camera, {});
+        _.defaults(cameraConfig, {
+            width: this.width,
+            height: this.height,
+        });
+        this.camera = new Camera(cameraConfig);
+
         this.scriptManager = new ScriptManager();
 
         if (!config.renderDirectly) {
@@ -76,12 +87,18 @@ class World extends WorldObject {
         }
 
         this.debugMoveCameraWithArrows = false;
+        this.debugCameraX = 0;
+        this.debugCameraY = 0;
     }
 
     update() {
         super.update();
 
         global.pushWorld(this);
+        for (let worldObject of this.worldObjects) {
+            worldObject.resetController();
+        }
+
         this.scriptManager.update();
         
 
@@ -99,22 +116,21 @@ class World extends WorldObject {
             if (worldObject.active) worldObject.postUpdate();
         }
 
+        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this.debugMoveCameraWithArrows) {
+            if (Input.isDown('debugMoveCameraLeft'))  this.debugCameraX -= 1;
+            if (Input.isDown('debugMoveCameraRight')) this.debugCameraX += 1;
+            if (Input.isDown('debugMoveCameraUp'))    this.debugCameraY -= 1;
+            if (Input.isDown('debugMoveCameraDown'))  this.debugCameraY += 1;
+        }
         this.camera.update();
         global.popWorld();
-
-        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this.debugMoveCameraWithArrows) {
-            if (Input.isDown('left'))  (this.camera.x -= 1) && this.camera.setModeFocus(this.camera.x, this.camera.y);
-            if (Input.isDown('right')) (this.camera.x += 1) && this.camera.setModeFocus(this.camera.x, this.camera.y);
-            if (Input.isDown('up'))    (this.camera.y -= 1) && this.camera.setModeFocus(this.camera.x, this.camera.y);
-            if (Input.isDown('down'))  (this.camera.y += 1) && this.camera.setModeFocus(this.camera.x, this.camera.y);
-        }
     }
 
     render() {
         if (this.renderingDirectly) {
             this.renderWorld();
         } else {
-            this.renderTexture.clear(global.renderer);
+            this.renderTexture.clear();
             global.pushRenderTexture(this.renderTexture.renderTexture);
             this.renderWorld();
             global.popRenderTexture();
@@ -124,7 +140,12 @@ class World extends WorldObject {
     }
 
     renderWorld() {
-        let cameraMatrix = this.camera.rendererMatrix;
+        let oldCameraX = this.camera.x;
+        let oldCameraY = this.camera.y;
+        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this.debugMoveCameraWithArrows) {
+            this.camera.x += this.debugCameraX;
+            this.camera.y += this.debugCameraY;
+        }
 
         // Render background color.
         Draw.noStroke().fillColor(this.backgroundColor, this.backgroundAlpha)
@@ -132,16 +153,29 @@ class World extends WorldObject {
 
         global.pushWorld(this);
         for (let layer of this.layers) {
-            layer.sort();
-            for (let worldObject of layer.worldObjects) {
-                if (worldObject.visible) {
-                    worldObject.preRender();
-                    worldObject.render();
-                    worldObject.postRender();
-                }
+            if (layer.renderTexture) {
+                layer.renderTexture.clear();
+                global.pushRenderTexture(layer.renderTexture.renderTexture);
+                this.renderLayer(layer);
+                global.popRenderTexture();
+                layer.renderTextureSprite.render();
+            } else {
+                this.renderLayer(layer);
             }
         }
         global.popWorld();
+
+        this.camera.x = oldCameraX;
+        this.camera.y = oldCameraY;
+    }
+
+    renderLayer(layer: World.Layer) {
+        layer.sort();
+        for (let worldObject of layer.worldObjects) {
+            if (worldObject.visible) {
+                worldObject.fullRender();
+            }
+        }
     }
     
     addWorldObject<T extends WorldObject>(obj: T, options?: { name?: string, layer?: string, physicsGroup?: string }) {
@@ -317,7 +351,7 @@ class World extends WorldObject {
             _.defaults(layer, {
                 reverseSort: false,
             });
-            result.push(new World.Layer(layer.name, layer));
+            result.push(new World.Layer(layer.name, layer, this.width, this.height));
         }
 
         return result;
@@ -346,11 +380,19 @@ namespace World {
         sortKey: string;
         reverseSort: boolean;
 
-        constructor(name: string, config: World.LayerConfig) {
+        renderTexture: PIXIRenderTextureSprite;
+        renderTextureSprite: Sprite;
+        
+        get effects() { return this.renderTextureSprite.effects };
+
+        constructor(name: string, config: World.LayerConfig, width: number, height: number) {
             this.name = name;
             this.worldObjects = [];
             this.sortKey = config.sortKey;
             this.reverseSort = config.reverseSort;
+
+            this.renderTexture = new PIXIRenderTextureSprite(width, height);
+            this.renderTextureSprite = new Sprite({ x: 0, y: 0, renderTexture: this.renderTexture, effects: config.effects });
         }
 
         sort() {

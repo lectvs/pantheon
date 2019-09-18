@@ -4,6 +4,7 @@ namespace WorldObject {
         y?: number;
         visible?: boolean;
         active?: boolean;
+        ignoreCamera?: boolean;
         data?: any;
         controllable?: boolean;
     }
@@ -14,6 +15,7 @@ class WorldObject {
     y: number;
     visible: boolean;
     active: boolean;
+    ignoreCamera: boolean;
     data: any;
 
     lastx: number;
@@ -26,6 +28,8 @@ class WorldObject {
     private preRenderStoredX: number;
     private preRenderStoredY: number;
 
+    get isControlled() { return this.controllable && !global.theater.isCutscenePlaying; }
+
     get mask(): Mask { return undefined; }
     set mask(value: Mask) { }
 
@@ -35,6 +39,7 @@ class WorldObject {
         this.y = O.getOrDefault(config.y, 0);
         this.visible = O.getOrDefault(config.visible, true);
         this.active = O.getOrDefault(config.active, true);
+        this.ignoreCamera = O.getOrDefault(config.ignoreCamera, false);
         this.data = _.clone(O.getOrDefault(config.data, {}));
 
         this.lastx = this.x;
@@ -51,7 +56,9 @@ class WorldObject {
     preUpdate() {
         this.lastx = this.x;
         this.lasty = this.y;
-        this.updateController();
+        if (this.isControlled) {
+            this.updateControllerFromSchema();
+        }
     }
 
     update() {
@@ -62,13 +69,23 @@ class WorldObject {
         
     }
 
+    fullUpdate() {
+        this.preUpdate();
+        this.update();
+        this.postUpdate();
+    }
+
     preRender() {
         this.preRenderStoredX = this.x;
         this.preRenderStoredY = this.y;
-        this.x -= global.world.camera.x - global.world.camera.width/2;
-        this.y -= global.world.camera.y - global.world.camera.height/2;
-        this.x = Math.floor(this.x);
-        this.y = Math.floor(this.y);
+
+        if (!this.ignoreCamera) {
+            this.x -= global.world.camera.worldOffsetX;
+            this.y -= global.world.camera.worldOffsetY;
+        }
+
+        this.x = Math.round(this.x);
+        this.y = Math.round(this.y);
     }
 
     render() {
@@ -80,17 +97,22 @@ class WorldObject {
         this.y = this.preRenderStoredY;
     }
 
-    updateController() {
-        if (this.controllable) {
-            for (let key in this.controllerSchema) {
-                this.controller[key] = this.controllerSchema[key]();
-            }
-        } else {
-            for (let key in this.controller) {
-                this.controller[key] = false;
-            }
+    fullRender() {
+        this.preRender();
+        this.render();
+        this.postRender();
+    }
+
+    resetController() {
+        for (let key in this.controller) {
+            this.controller[key] = false;
         }
-        
+    }
+
+    updateControllerFromSchema() {
+        for (let key in this.controllerSchema) {
+            this.controller[key] = this.controllerSchema[key]();
+        }
     }
 
     onAdd() {

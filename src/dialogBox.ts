@@ -47,7 +47,7 @@ class DialogBox extends Sprite {
         this.spriteText.mask = this.spriteTextMask;
         this.spriteTextOffset = 0;
 
-        this.portraitSprite = new Sprite({ texture: "milo/happy" });
+        this.portraitSprite = new Sprite({ texture: 'none' });
 
         this.characterTimer = new Timer(0.05, () => this.advanceCharacter(), true);
     }
@@ -161,6 +161,7 @@ class DialogBox extends Sprite {
             this.portraitSprite.visible = false;
             this.textArea = this.textAreaFull;
         } else {
+            this.portraitSprite.setTexture(portrait);
             this.portraitSprite.visible = true;
             this.textArea = this.textAreaPortrait;
         }

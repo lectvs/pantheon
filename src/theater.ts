@@ -5,11 +5,13 @@ namespace Theater {
     export type Config = {
         stages: Dict<Stage>;
         stageToLoad: string;
+        stageEntryPoint: Stage.EntryPoint;
         storyboard: Storyboard;
         storyboardEntry: string;
         party: Party;
         dialogBox: DialogBox.Config;
         skipCutsceneScriptKey: string;
+        interactionManager: InteractionManager.Config;
     }
 }
 
@@ -24,9 +26,12 @@ class Theater extends World {
     currentStageName: string;
     currentWorld: World;
     currentStoryboardComponentName: string;
+    stageLoadQueue: { stage: string, entryPoint: Stage.EntryPoint, transition: Transition };
 
     dialogBox: DialogBox;
     slides: Slide[];
+
+    interactionManager: InteractionManager;
 
     private debugMousePosition = new SpriteText({ font: Assets.fonts.DELUXE16, x: 0, y: 0 });
 
@@ -47,15 +52,19 @@ class Theater extends World {
         this.storyboard = config.storyboard;
 
         this.party = config.party;
-        this.loadParty();
+        this.party.load();
 
         this.cutsceneManager = new CutsceneManager();
         this.skipCutsceneScriptKey = config.skipCutsceneScriptKey;
+        
+        this.stageLoadQueue = null;
 
         this.loadDialogBox(config.dialogBox);
         this.slides = [];
 
-        this.loadStage(config.stageToLoad);
+        this.interactionManager = new InteractionManager(config.interactionManager);
+
+        this.loadStage(config.stageToLoad, undefined, config.stageEntryPoint, true);
 
         // Start storyboard entry point
         this.startStoryboardComponentByName(config.storyboardEntry);
@@ -68,6 +77,15 @@ class Theater extends World {
     update() {
         this.cutsceneManager.update();
         super.update();
+
+        global.pushWorld(this.currentWorld);
+        this.interactionManager.update();
+        global.popWorld();
+
+        if (this.stageLoadQueue) {
+            this.loadStage(this.stageLoadQueue.stage, this.stageLoadQueue.transition, this.stageLoadQueue.entryPoint, true);
+            this.stageLoadQueue = null;
+        }
 
         if (DEBUG_SHOW_MOUSE_POSITION) {
             this.debugMousePosition.setText(`${S.padLeft(this.currentWorld.getWorldMouseX().toString(), 3)} ${S.padLeft(this.currentWorld.getWorldMouseY().toString(), 3)}`);
@@ -90,17 +108,31 @@ class Theater extends World {
         this.slides.splice(0, deleteCount);
     }
 
-    loadStage(name: string, transition?: Transition, entryPoint?: Stage.EntryPoint) {
+    getStoryboardComponentByName(name: string) {
+        let component = this.storyboard[name];
+        if (!component) {
+            debug(`Component '${name}' does not exist in storyboard:`, this.storyboard);
+        }
+        return component;
+    }
+
+    loadStage(name: string, transition?: Transition, entryPoint?: Stage.EntryPoint, immediate: boolean = false) {
+        if (!immediate) {
+            this.stageLoadQueue = { stage: name, entryPoint: entryPoint, transition: transition };
+            return;
+        }
+
         if (transition) {
             this.loadStageWithTransition(name, transition, entryPoint);
             return;
         }
 
-        let stage = Stage.resolveStageConfig(this.stages[name]);
-        if (!stage) {
+        if (!this.stages[name]) {
             debug(`Stage '${name}' does not exist in world.`);
             return;
         }
+
+        let stage = Stage.resolveStageConfig(this.stages[name]);
 
         // Remove old stuff
         if (this.currentWorld) {
@@ -108,6 +140,7 @@ class Theater extends World {
         }
 
         this.cutsceneManager.reset();
+        this.interactionManager.reset();
 
         // Create new stuff
         this.currentStageName = name;
@@ -123,12 +156,12 @@ class Theater extends World {
 
     private loadStageWithTransition(name: string, transition: Transition, entryPoint?: Stage.EntryPoint) {
         if (!this.currentWorld) {
-            this.loadStage(name, undefined, entryPoint);
+            this.loadStage(name, undefined, entryPoint, true);
             return;
         }
 
         let oldSnapshot = this.currentWorld.takeSnapshot();
-        this.loadStage(name, undefined, entryPoint);
+        this.loadStage(name, undefined, entryPoint, true);
         this.currentWorld.update();
         let newSnapshot = this.currentWorld.takeSnapshot();
 
@@ -153,14 +186,11 @@ class Theater extends World {
     }
 
     startStoryboardComponentByName(name: string) {
-        let component = this.storyboard[name];
-        if (!component) {
-            debug(`Component '${name}' does not exist in storyboard:`, this.storyboard);
-            return;
-        }
+        let component = this.getStoryboardComponentByName(name);
+        if (!component) return;
 
         if (component.type === 'cutscene') {
-            this.cutsceneManager.playCutscene(component, this.currentWorld, this.skipCutsceneScriptKey);
+            this.cutsceneManager.playCutscene(name, component, this.currentWorld, this.skipCutsceneScriptKey);
         } else if (component.type === 'gameplay') {
             global.pushWorld(this.currentWorld);
             component.start();
@@ -192,8 +222,8 @@ class Theater extends World {
         if (_.isString(entryPoint)) {
             entryPoint = Stage.getEntryPoint(stage, entryPoint);
         }
-        for (let member of this.getActivePartyMembers()) {
-            let memberObj = Party.addMemberToWorld(member, world);
+        for (let member of this.party.activeMembers) {
+            let memberObj = this.party.addMemberToWorld(member, world);
             memberObj.x = entryPoint.x;
             memberObj.y = entryPoint.y;
         }
@@ -201,19 +231,11 @@ class Theater extends World {
         this.currentWorld = world;
     }
 
-    private getActivePartyMembers() {
-        return Party.getActiveMembers(this.party);
-    }
-
     private loadDialogBox(config: DialogBox.Config) {
         this.dialogBox = new DialogBox(config);
         this.dialogBox.visible = false;
         this.addWorldObject(this.dialogBox);
         this.setLayer(this.dialogBox, Theater.LAYER_DIALOG);
-    }
-
-    private loadParty() {
-        Party.load(this.party);
     }
     
     private addWorldObjectFromStageConfig(world: World, worldObject: SomeStageConfig) {
@@ -225,7 +247,7 @@ class Theater extends World {
             layer: World.DEFAULT_LAYER,
         });
 
-        let obj: WorldObject = new worldObject.constructor(worldObject);
+        let obj: WorldObject = new config.constructor(config);
         world.addWorldObject(obj, {
             name: config.name,
             layer: config.layer,

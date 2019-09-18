@@ -20,10 +20,6 @@ namespace Assets {
             spritesheet: { frameWidth: 32, frameHeight: 36 },
         },
 
-        'milo_demon_sprites': {
-
-        },
-
         'angie_sprites': {
             defaultAnchor: { x: 0.5, y: 1 },
             spritesheet: { frameWidth: 32, frameHeight: 36 },
@@ -52,6 +48,10 @@ namespace Assets {
                 'desk': {
                     rect: { x: 16, y: 40, width: 36, height: 34 },
                 },
+                'stone_frame': {
+                    rect: { x: 117, y: 2, width: 16, height: 72 },
+                    anchor: { x: 0, y: 1 },
+                },
                 'archway': {
                     rect: { x: 174, y: 2, width: 80, height: 119 },
                     anchor: { x: 1, y: 0 },
@@ -63,20 +63,15 @@ namespace Assets {
             }
         },
 
-        'follower': {
-            anchor: { x: 0.5, y: 0.5 }
-        },
-
-        'testtiles': {
-            spritesheet: { frameWidth: 16, frameHeight: 16 },
-        },
-
-        'tilestest': {
-            spritesheet: { frameWidth: 16, frameHeight: 16 },
-        },
+        'spotlight': {},
 
         'mainworld': {
             url: 'assets/tilemap/mainworld.png',
+            spritesheet: { frameWidth: 16, frameHeight: 16 },
+        },
+
+        'cave': {
+            url: 'assets/tilemap/cave.png',
             spritesheet: { frameWidth: 16, frameHeight: 16 },
         },
 
@@ -85,7 +80,31 @@ namespace Assets {
             defaultAnchor: { x: 0.5, y: 0.5 },
             frames: {
                 'milo/happy': {
-                    rect: { x: 0, y: 0, width: 74, height: 54 },
+                    rect: { x: 0*74, y: 0*54, width: 74, height: 54 },
+                },
+                'milo/angry': {
+                    rect: { x: 1*74, y: 0*54, width: 74, height: 54 },
+                },
+                'milo/sad': {
+                    rect: { x: 2*74, y: 0*54, width: 74, height: 54 },
+                },
+                'milo/sigh': {
+                    rect: { x: 3*74, y: 0*54, width: 74, height: 54 },
+                },
+                'milo/scared': {
+                    rect: { x: 4*74, y: 0*54, width: 74, height: 54 },
+                },
+                'milo/shocked': {
+                    rect: { x: 5*74, y: 0*54, width: 74, height: 54 },
+                },
+            }
+        },
+
+        'portraits/angie': {
+            defaultAnchor: { x: 0.5, y: 0.5 },
+            frames: {
+                'angie/happy': {
+                    rect: { x: 0*74, y: 0*54, width: 74, height: 54 },
                 },
             }
         },
@@ -103,12 +122,30 @@ namespace Assets {
             tileWidth: 16,
             tileHeight: 16,
             collisionIndices: [ -1, 9, 10, 11 ],
-        }
+        },
+        'cave': {
+            tiles: Preload.allTilesWithPrefix('cave_'),
+            tileWidth: 16,
+            tileHeight: 16,
+            collisionIndices: [ -1, 1, 5, 16 ],
+        },
     }
 
     export const pyxelTilemaps: Dict<Preload.PyxelTilemap> = {
         'mainworld': {
             url: 'assets/tilemap/mainworld.json',
+            tileset: tilesets.mainworld,
+        },
+        'cave': {
+            url: 'assets/tilemap/cave.json',
+            tileset: tilesets.cave,
+        },
+        'connector': {
+            url: 'assets/tilemap/connector.json',
+            tileset: tilesets.mainworld,
+        },
+        'upper': {
+            url: 'assets/tilemap/upper.json',
             tileset: tilesets.mainworld,
         },
     }

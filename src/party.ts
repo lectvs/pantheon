@@ -1,13 +1,31 @@
-type Party = Dict<Party.Member>;
-
 namespace Party {
+    export type Config = {
+        leader: string;
+        activeMembers: string[];
+        members: Dict<Party.Member>;
+    }
+
     export type Member = {
         config: SomeStageConfig;
         worldObject?: WorldObject;
-        active?: boolean;
+    }
+}
+
+class Party {
+    activeMembers: string[];
+    members: Dict<Party.Member>;
+
+    private _leader: string;
+
+    constructor(config: Party.Config) {
+        this.leader = config.leader;
+        this.activeMembers = config.activeMembers;
+        this.members = config.members;
     }
 
-    export function addMemberToWorld(member: Party.Member, world: World) {
+    addMemberToWorld(name: string, world: World) {
+        let member = this.members[name];
+        if (!member) return;
         return world.addWorldObject(member.worldObject, {
             name: member.config.name,
             layer: member.config.layer,
@@ -16,21 +34,47 @@ namespace Party {
         });
     }
 
-    export function getActiveMembers(party: Party) {
-        let result: Party.Member[] = [];
-        for (let key in party) {
-            if (party[key].active) {
-                result.push(party[key]);
-            }
+    getMember(name: string) {
+        let member = this.members[name];
+        if (!member) {
+            debug(`No party member named '${name}':`, this);
         }
-        return result;
+        return member;
     }
 
-    export function load(party: Party) {
-        for (let key in party) {
-            let member = party[key];
-            member.worldObject = new member.config.constructor(member.config);
-            member.active = false;
+    isMemberActive(name: string) {
+        return _.contains(this.activeMembers, name);
+    }
+
+    get leader() {
+        return this._leader;
+    }
+
+    set leader(name: string) {
+        this._leader = name;
+        for (let key in this.members) {
+            if (this.members[key].worldObject) {
+                this.members[key].worldObject.controllable = (key === this.leader);
+            }
         }
+    }
+
+    load() {
+        for (let key in this.members) {
+            let member = this.members[key];
+            member.worldObject = new member.config.constructor(member.config);
+            if (key === this.leader) {
+                member.worldObject.controllable = true;
+            }
+        }
+    }
+
+    setMemberActive(name: string) {
+        if (this.isMemberActive(name)) return;
+        this.activeMembers.push(name);
+    }
+
+    setMemberInactive(name: string) {
+        A.removeAll(this.activeMembers, name);
     }
 }

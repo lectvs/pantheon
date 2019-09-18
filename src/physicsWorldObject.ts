@@ -9,6 +9,7 @@ namespace PhysicsWorldObject {
         bounce?: number;
         bounds?: Rect;
         immovable?: boolean;
+        colliding?: boolean;
 
         debugBounds?: boolean;
         startSimulating?: boolean;
@@ -23,6 +24,7 @@ class PhysicsWorldObject extends WorldObject {
     bounce: number;
     bounds: Rectangle;
     immovable: boolean;
+    colliding: boolean;
 
     debugBounds: boolean;
     simulating: boolean;
@@ -41,6 +43,7 @@ class PhysicsWorldObject extends WorldObject {
         this.bounce = O.getOrDefault(config.bounce, 0);
         this.bounds = config.bounds ? new Rectangle(config.bounds.x, config.bounds.y, config.bounds.width, config.bounds.height) : new Rectangle(0, 0, 0, 0);
         this.immovable = O.getOrDefault(config.immovable, false);
+        this.colliding = O.getOrDefault(config.colliding, true);
 
         this.debugBounds = O.getOrDefault(config.debugBounds, false);
         this.simulating = O.getOrDefault(config.startSimulating, true);

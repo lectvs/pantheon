@@ -1,6 +1,6 @@
 //var DEBUG: boolean = true;
 var DEBUG_ALL_PHYSICS_BOUNDS: boolean = false;
-var DEBUG_MOVE_CAMERA_WITH_ARROWS: boolean = false;
+var DEBUG_MOVE_CAMERA_WITH_ARROWS: boolean = true;
 var DEBUG_SHOW_MOUSE_POSITION: boolean = true;
 var DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS: boolean = false;
 

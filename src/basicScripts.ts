@@ -44,6 +44,44 @@ namespace S {
         }();
     }
 
+    export function simul(...scriptFunctions: Script.Function[]) {
+        let scripts: Script[] = [];
+        return {
+            generator: function*() {
+                scripts = scriptFunctions.map(sfn => global.world.runScript(sfn));
+                while (!_.isEmpty(scripts)) {
+                    for (let i = scripts.length-1; i >= 0; i--) {
+                        if (scripts[i].done) scripts.splice(i, 1);
+                    }
+                    yield;
+                }
+            },
+            endState: () => {
+                if (!_.isEmpty(scripts)) {
+                    for (let script of scripts) {
+                        script.endState();
+                    }
+                }
+            }
+        }
+    }
+
+    export function tween(obj: any, prop: string, start: number, end: number, duration: number, easingFunction: Tween.Easing.Function = Tween.Easing.Linear) {
+        return {
+            generator: function*() {
+                let tween = new Tween(start, end, duration, easingFunction);
+                while (!tween.done) {
+                    tween.update();
+                    obj[prop] = tween.value;
+                    yield;
+                }
+            },
+            endState: () => {
+                obj[prop] = end;
+            }
+        }
+    }
+
     export function wait(time: number): Script.Function {
         return {
             generator: doOverTime(time, t => null).generator,
