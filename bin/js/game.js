@@ -447,7 +447,6 @@ var Assets;
         'dialogbox': {
             anchor: { x: 0.5, y: 0.5 },
         },
-        'indicator': {},
         'room_bg': {},
         'room_backwall': {
             spritesheet: { frameWidth: 16, frameHeight: 16, anchor: { x: 0.5, y: 0.5 } },

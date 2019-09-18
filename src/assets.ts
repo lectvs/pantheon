@@ -8,7 +8,6 @@ namespace Assets {
         'dialogbox': {
             anchor: { x: 0.5, y: 0.5 },
         },
-        'indicator': {},
 
         'room_bg': {},
         'room_backwall': {
