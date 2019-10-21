@@ -19,6 +19,10 @@ class BackWall extends PhysicsWorldObject {
     update() {
         super.update();
 
+        for (let tile of this.tiles) {
+            tile.visible = this.visible;
+        }
+
         if (Input.justDown('1')) {
             for (let i = 0; i < 10; i++) this.crumble();
         }
@@ -47,7 +51,7 @@ class BackWall extends PhysicsWorldObject {
                         x: 8 + 16*x,
                         y: 8 + 16*y,
                     },
-                    texture: `room_backwall_${x + 8*y}`,
+                    texture: `room_backwall_covered_${x + 8*y}`,
                 });
                 this.tiles.push(tile);
             }

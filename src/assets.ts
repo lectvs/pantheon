@@ -10,8 +10,15 @@ namespace Assets {
         },
 
         'room_bg': {},
-        'room_backwall': {
+        'room_backwall': {},
+        'room_backwall_covered': {
             spritesheet: { frameWidth: 16, frameHeight: 16, anchor: { x: 0.5, y: 0.5 } },
+        },
+        'board1': {
+            anchor: { x: 0.5, y: 0.5 },
+        },
+        'board2': {
+            anchor: { x: 0.5, y: 0.5 },
         },
 
         'milo_sprites': {

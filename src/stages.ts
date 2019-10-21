@@ -89,10 +89,20 @@ const stages: Dict<Stage> = {
             },
             { // Back wall
                 name: 'backwall',
+                constructor: Sprite,
+                texture: 'room_backwall',
+                x: 64, y: 0,
+                layer: 'room',
+                physicsGroup: 'walls',
+                bounds: { x: 0, y: 64, width: 128, height: 16 },
+            },
+            { // Back wall (covered)
+                name: 'backwall_covered',
                 constructor: BackWall,
                 x: 64, y: 0,
                 layer: 'room',
                 physicsGroup: 'walls',
+                visible: false,
             },
             { // Bed
                 name: 'bed',

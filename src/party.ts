@@ -62,6 +62,7 @@ class Party {
     load() {
         for (let key in this.members) {
             let member = this.members[key];
+            member.config = Stage.resolveWorldObjectConfig(member.config);
             member.worldObject = new member.config.constructor(member.config);
             if (key === this.leader) {
                 member.worldObject.controllable = true;

@@ -47,8 +47,8 @@ class Sprite extends PhysicsWorldObject {
                 this.setRenderTextureDimensions(config.renderTexture.width, config.renderTexture.height);
             }
         } else {
-            debug("SpriteConfig must have texture, graphics, or renderTexture specified:", config);
-            this.setGraphics(new PIXI.Graphics());  // Continue gracefully
+            // Continue gracefully
+            this.setGraphics(new PIXI.Graphics());
         }
 
         if (config.bounds === undefined) {

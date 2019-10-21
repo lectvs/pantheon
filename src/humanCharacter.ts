@@ -53,9 +53,7 @@ class HumanCharacter extends Sprite {
 
         super.update();
 
-        if (this.isControlled) {
-            this.updateInteractions();
-        }
+        this.updateInteractions();
 
         // Handle animation.
         let anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'run';
@@ -65,6 +63,11 @@ class HumanCharacter extends Sprite {
     }
 
     updateInteractions() {
+        if (!this.isControlled) {
+            global.theater.interactionManager.highlight(null);
+            return;
+        }
+
         let interactableObjects = global.theater.interactionManager.getInteractableObjects();
         let interactRadius = 2;
 
