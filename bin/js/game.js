@@ -18,15 +18,16 @@ var __spread = (this && this.__spread) || function () {
     for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
     return ar;
 };
-var __values = (this && this.__values) || function (o) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+var __values = (this && this.__values) || function(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
     if (m) return m.call(o);
-    return {
+    if (o && typeof o.length === "number") return {
         next: function () {
             if (o && i >= o.length) o = void 0;
             return { value: o && o[i++], done: !o };
         }
     };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -34,7 +35,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -405,7 +406,7 @@ var Preload = /** @class */ (function () {
         for (var i = 0; i < tilemapJson.layers.length; i++) {
             var tilemapLayer = A.filledArray2D(tilemapJson.tileshigh, tilemapJson.tileswide);
             try {
-                for (var _b = __values(tilemapJson.layers[i].tiles), _c = _b.next(); !_c.done; _c = _b.next()) {
+                for (var _b = (e_1 = void 0, __values(tilemapJson.layers[i].tiles)), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var tile = _c.value;
                     tilemapLayer[tile.y][tile.x] = {
                         index: Math.max(tile.tile, -1),
@@ -2338,7 +2339,7 @@ var Input = /** @class */ (function () {
         this.keysByKeycode = {};
         for (var name_2 in keyCodesByName) {
             try {
-                for (var _c = __values(keyCodesByName[name_2]), _d = _c.next(); !_d.done; _d = _c.next()) {
+                for (var _c = (e_8 = void 0, __values(keyCodesByName[name_2])), _d = _c.next(); !_d.done; _d = _c.next()) {
                     var keyCode = _d.value;
                     this.isDownByKeyCode[keyCode] = false;
                     this.keysByKeycode[keyCode] = this.keysByKeycode[keyCode] || new Input.Key();
@@ -2553,7 +2554,7 @@ var InteractionManager = /** @class */ (function () {
             for (var cutscenes_1 = __values(cutscenes), cutscenes_1_1 = cutscenes_1.next(); !cutscenes_1_1.done; cutscenes_1_1 = cutscenes_1.next()) {
                 var cutscene = cutscenes_1_1.value;
                 try {
-                    for (var _c = __values(global.theater.storyboard[cutscene].playOnInteractWith), _d = _c.next(); !_d.done; _d = _c.next()) {
+                    for (var _c = (e_12 = void 0, __values(global.theater.storyboard[cutscene].playOnInteractWith)), _d = _c.next(); !_d.done; _d = _c.next()) {
                         var obj = _d.value;
                         result.add(obj);
                     }
@@ -2920,8 +2921,8 @@ var Physics = /** @class */ (function () {
         return result;
     };
     Physics.collide = function (obj, from, options) {
-        if (options === void 0) { options = {}; }
         var e_13, _a;
+        if (options === void 0) { options = {}; }
         if (_.isEmpty(from))
             return;
         if (!obj.colliding)
@@ -2939,7 +2940,7 @@ var Physics = /** @class */ (function () {
             var collisions = collidingWith.map(function (other) { return Physics.getCollision(obj, other); });
             collisions.sort(function (a, b) { return a.t - b.t; });
             try {
-                for (var collisions_1 = __values(collisions), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
+                for (var collisions_1 = (e_13 = void 0, __values(collisions)), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
                     var collision = collisions_1_1.value;
                     var d = Physics.separate(collision);
                     if (d !== 0 && options.transferMomentum) {
@@ -3574,8 +3575,8 @@ var Stage;
     }
     Stage.resolveWorldObjectConfig = resolveWorldObjectConfig;
     function mergeArray(array, into, key, combine) {
-        if (combine === void 0) { combine = (function (e, into) { return e; }); }
         var e_16, _a;
+        if (combine === void 0) { combine = (function (e, into) { return e; }); }
         var result = A.clone(into);
         try {
             for (var array_1 = __values(array), array_1_1 = array_1.next(); !array_1_1.done; array_1_1 = array_1.next()) {
@@ -3760,8 +3761,8 @@ var Tilemap = /** @class */ (function (_super) {
         _super.prototype.render.call(this);
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        if (debugBounds === void 0) { debugBounds = false; }
         var e_19, _a;
+        if (debugBounds === void 0) { debugBounds = false; }
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -4738,8 +4739,8 @@ var World = /** @class */ (function (_super) {
         return this.worldObjectsByName[name];
     };
     World.prototype.handleCollisions = function () {
-        var _this = this;
         var e_28, _a, e_29, _b, e_30, _c;
+        var _this = this;
         try {
             for (var _d = __values(this.collisionOrder), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var collision = _e.value;
@@ -4747,11 +4748,11 @@ var World = /** @class */ (function (_super) {
                 var from = _.isArray(collision.from) ? collision.from : [collision.from];
                 var fromObjects = _.flatten(from.map(function (name) { return _this.physicsGroups[name].worldObjects; }));
                 try {
-                    for (var move_1 = __values(move), move_1_1 = move_1.next(); !move_1_1.done; move_1_1 = move_1.next()) {
+                    for (var move_1 = (e_29 = void 0, __values(move)), move_1_1 = move_1.next(); !move_1_1.done; move_1_1 = move_1.next()) {
                         var moveGroup = move_1_1.value;
                         var group_2 = this.physicsGroups[moveGroup].worldObjects;
                         try {
-                            for (var group_1 = __values(group_2), group_1_1 = group_1.next(); !group_1_1.done; group_1_1 = group_1.next()) {
+                            for (var group_1 = (e_30 = void 0, __values(group_2)), group_1_1 = group_1.next(); !group_1_1.done; group_1_1 = group_1.next()) {
                                 var obj = group_1_1.value;
                                 Physics.collide(obj, fromObjects, {
                                     callback: collision.callback,
@@ -4833,8 +4834,8 @@ var World = /** @class */ (function (_super) {
         this.worldObjectsByName[name] = obj;
     };
     World.prototype.setLayer = function (obj, name) {
-        if (name === void 0) { name = World.DEFAULT_LAYER; }
         var e_32, _a;
+        if (name === void 0) { name = World.DEFAULT_LAYER; }
         this.removeFromAllLayers(obj);
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -5117,8 +5118,8 @@ var Theater = /** @class */ (function (_super) {
         this.currentStoryboardComponentName = name;
     };
     Theater.prototype.setNewWorldFromStage = function (stage, entryPoint) {
-        if (entryPoint === void 0) { entryPoint = Theater.DEFAULT_ENTRY_POINT; }
         var e_34, _a, e_35, _b;
+        if (entryPoint === void 0) { entryPoint = Theater.DEFAULT_ENTRY_POINT; }
         var world = new World(stage, {
             renderDirectly: true,
         });
