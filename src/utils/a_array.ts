@@ -67,4 +67,22 @@ namespace A {
         }
         return result;
     }
+
+    export function sort(array: number[], reverse: boolean = false) {
+        let r = reverse ? -1 : 1;
+        return array.sort((a,b) => r*(a-b));
+    }
+
+    export function sorted(array: number[], reverse: boolean = false) {
+        return A.sort(A.clone(array), reverse);
+    }
+
+    export function sum(array: number[]) {
+        if (_.isEmpty(array)) return 0;
+        let result = 0;
+        for (let i = 0; i < array.length; i++) {
+            result += array[i];
+        }
+        return result;
+    }
 }

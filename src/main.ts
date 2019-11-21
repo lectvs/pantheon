@@ -97,6 +97,8 @@ class Main {
         global.pushRenderer(this.renderer);
         global.pushRenderTexture(undefined);
 
+        let fps = new FPSMetricManager(1);
+
         PIXI.Ticker.shared.add(frameDelta => {
             this.delta = frameDelta/60;
 
@@ -104,6 +106,8 @@ class Main {
 
             global.pushWorld(null);
             global.pushDelta(this.delta);
+
+            fps.update();
 
             this.theater.update();
 
