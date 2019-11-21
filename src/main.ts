@@ -1,30 +1,22 @@
 /// <reference path="./preload.ts" />
 
-function load() {
-    PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
-
-    Preload.preload({
-        textures: Assets.textures,
-        pyxelTilemaps: Assets.pyxelTilemaps,
-        onLoad: () => Main.start(),
-    })
-}
-
 class Main {
     static renderer: PIXI.Renderer;
     static theater: Theater;
+    static screen: Texture;
 
-    static backgroundColor: number;
-    
     static delta: number;
 
     static get width()  { return 256; }
     static get height() { return 192; }
 
-    static start() {
-        PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+    static get backgroundColor() { return 0x061639; }
 
-        this.backgroundColor = 0x061639;
+    // no need to modify
+    static preload() {
+        PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
+
+        PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
         this.renderer = PIXI.autoDetectRenderer({
             width: this.width,
@@ -32,7 +24,22 @@ class Main {
             resolution: 4,
             backgroundColor: this.backgroundColor,
         });
+
+        Preload.preload({
+            textures: Assets.textures,
+            pyxelTilemaps: Assets.pyxelTilemaps,
+            onLoad: () => {
+                Main.load();
+                Main.play();
+            }
+        });
+    }
+
+    // modify this method
+    private static load() {
         document.body.appendChild(this.renderer.view);
+
+        this.screen = new Texture(this.width, this.height);
 
         Input.setKeys({
             'left':                 ['ArrowLeft'],
@@ -91,11 +98,15 @@ class Main {
                 },
             }
         });
+    }
 
+    // no need to modify
+    private static play() {
         global.theater = this.theater;
         global.clearStacks();
-        global.pushRenderer(this.renderer);
-        global.pushRenderTexture(undefined);
+        global.pushScreen(this.screen);
+
+        let fps = new FPSMetricManager(1);
 
         PIXI.Ticker.shared.add(frameDelta => {
             this.delta = frameDelta/60;
@@ -105,13 +116,18 @@ class Main {
             global.pushWorld(null);
             global.pushDelta(this.delta);
 
+            fps.update();
+
             this.theater.update();
+            
+            this.screen.clear();
+            this.theater.render();
 
             this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
-            this.theater.render();
+            this.renderer.render(this.screen.renderTextureSprite);
         });
     }
 }
 
 // Actually load the game
-load();
+Main.preload();

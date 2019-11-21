@@ -102,6 +102,7 @@ class Preload {
             mainTexture.defaultAnchor = new Point(anchor.x, anchor.y);
         }
         AssetCache.textures[key] = mainTexture;
+        AssetCache.textures2[key] = this.pixiTextureToTexture(mainTexture);
 
         let frames: Dict<Preload.TextureFrame> = {};
 
@@ -143,6 +144,7 @@ class Preload {
                 frameTexture.defaultAnchor = new Point(anchor.x, anchor.y);
             }
             AssetCache.textures[frame] = frameTexture;
+            AssetCache.textures2[frame] = this.pixiTextureToTexture(frameTexture);
         }
     }
 
@@ -168,6 +170,17 @@ class Preload {
             tilemapForCache.layers.push(tilemapLayer);
         }
         AssetCache.tilemaps[key] = tilemapForCache;
+    }
+
+    private static pixiTextureToTexture(pixiTexture: PIXI.Texture) {
+        let sprite = new PIXI.Sprite(pixiTexture);
+        let texture = new Texture(pixiTexture.width, pixiTexture.height);
+        texture.anchorX = pixiTexture.defaultAnchor.x;
+        texture.anchorY = pixiTexture.defaultAnchor.y;
+        sprite.x = texture.pivotX;
+        sprite.y = texture.pivotY;
+        texture.renderDisplayObject(sprite);
+        return texture;
     }
 
     private static TILEMAP_KEY_SUFFIX = '_tilemap_';

@@ -85,7 +85,7 @@ class Tilemap extends WorldObject {
         
         this.renderTexture.x = this.x;
         this.renderTexture.y = this.y;
-        global.renderer.render(this.renderTexture, global.renderTexture, false);
+        global.screen.renderDisplayObject(this.renderTexture);
 
         super.render();
     }
@@ -112,7 +112,7 @@ class Tilemap extends WorldObject {
                 this.tileSprite.texture = AssetCache.getTexture(textureKey);
                 this.tileSprite.x = x * this.tilemap.tileset.tileWidth;
                 this.tileSprite.y = y * this.tilemap.tileset.tileHeight;
-                global.renderer.render(this.tileSprite, this.renderTexture.renderTexture, false);
+                Main.renderer.render(this.tileSprite, this.renderTexture.renderTexture, false);
             }
         }
     }

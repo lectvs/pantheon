@@ -18,16 +18,15 @@ var __spread = (this && this.__spread) || function () {
     for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
     return ar;
 };
-var __values = (this && this.__values) || function(o) {
-    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+var __values = (this && this.__values) || function (o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
     if (m) return m.call(o);
-    if (o && typeof o.length === "number") return {
+    return {
         next: function () {
             if (o && i >= o.length) o = void 0;
             return { value: o && o[i++], done: !o };
         }
     };
-    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -35,7 +34,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    };
+    }
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -248,6 +247,27 @@ var A;
         return result;
     }
     A.repeat = repeat;
+    function sort(array, reverse) {
+        if (reverse === void 0) { reverse = false; }
+        var r = reverse ? -1 : 1;
+        return array.sort(function (a, b) { return r * (a - b); });
+    }
+    A.sort = sort;
+    function sorted(array, reverse) {
+        if (reverse === void 0) { reverse = false; }
+        return A.sort(A.clone(array), reverse);
+    }
+    A.sorted = sorted;
+    function sum(array) {
+        if (_.isEmpty(array))
+            return 0;
+        var result = 0;
+        for (var i = 0; i < array.length; i++) {
+            result += array[i];
+        }
+        return result;
+    }
+    A.sum = sum;
 })(A || (A = {}));
 /// <reference path="./utils/a_array.ts" />
 var Animations = /** @class */ (function () {
@@ -295,6 +315,12 @@ var AssetCache = /** @class */ (function () {
         }
         return this.textures[key];
     };
+    AssetCache.getTexture2 = function (key) {
+        if (!this.textures2[key]) {
+            debug("Texture2 '" + key + "' does not exist.");
+        }
+        return this.textures2[key];
+    };
     AssetCache.getTilemap = function (key) {
         if (!this.tilemaps[key]) {
             debug("Tilemap '" + key + "' does not exist.");
@@ -302,6 +328,7 @@ var AssetCache = /** @class */ (function () {
         return this.tilemaps[key];
     };
     AssetCache.textures = {};
+    AssetCache.textures2 = {};
     AssetCache.tilemaps = {};
     AssetCache.DEFAULT_ANCHOR = { x: 0, y: 0 };
     return AssetCache;
@@ -354,6 +381,7 @@ var Preload = /** @class */ (function () {
             mainTexture.defaultAnchor = new Point(anchor.x, anchor.y);
         }
         AssetCache.textures[key] = mainTexture;
+        AssetCache.textures2[key] = this.pixiTextureToTexture(mainTexture);
         var frames = {};
         if (texture.spritesheet) {
             var numFramesX = Math.floor(baseTexture.width / texture.spritesheet.frameWidth);
@@ -390,6 +418,7 @@ var Preload = /** @class */ (function () {
                 frameTexture.defaultAnchor = new Point(anchor_1.x, anchor_1.y);
             }
             AssetCache.textures[frame] = frameTexture;
+            AssetCache.textures2[frame] = this.pixiTextureToTexture(frameTexture);
         }
     };
     Preload.preloadPyxelTilemap = function (key, tilemap) {
@@ -406,7 +435,7 @@ var Preload = /** @class */ (function () {
         for (var i = 0; i < tilemapJson.layers.length; i++) {
             var tilemapLayer = A.filledArray2D(tilemapJson.tileshigh, tilemapJson.tileswide);
             try {
-                for (var _b = (e_1 = void 0, __values(tilemapJson.layers[i].tiles)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                for (var _b = __values(tilemapJson.layers[i].tiles), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var tile = _c.value;
                     tilemapLayer[tile.y][tile.x] = {
                         index: Math.max(tile.tile, -1),
@@ -423,6 +452,16 @@ var Preload = /** @class */ (function () {
             tilemapForCache.layers.push(tilemapLayer);
         }
         AssetCache.tilemaps[key] = tilemapForCache;
+    };
+    Preload.pixiTextureToTexture = function (pixiTexture) {
+        var sprite = new PIXI.Sprite(pixiTexture);
+        var texture = new Texture(pixiTexture.width, pixiTexture.height);
+        texture.anchorX = pixiTexture.defaultAnchor.x;
+        texture.anchorY = pixiTexture.defaultAnchor.y;
+        sprite.x = texture.pivotX;
+        sprite.y = texture.pivotY;
+        texture.renderDisplayObject(sprite);
+        return texture;
     };
     Preload.TILEMAP_KEY_SUFFIX = '_tilemap_';
     return Preload;
@@ -1601,7 +1640,20 @@ var Sprite = /** @class */ (function (_super) {
     Sprite.prototype.render = function () {
         this.effectsFilter.update();
         this.setDisplayObjectProperties();
-        global.renderer.render(this.displayObject, global.renderTexture, false);
+        if (this.spriteType === Sprite.Type.SPRITE) {
+            global.screen.render(this.texture, {
+                x: this.x + this.offset.x,
+                y: this.y + this.offset.y,
+                scaleX: this.flipX ? -1 : 1,
+                scaleY: this.flipY ? -1 : 1,
+                angle: this.angle,
+                tint: this.tint,
+                alpha: this.alpha,
+            });
+        }
+        else {
+            global.screen.renderDisplayObject(this.displayObject);
+        }
         _super.prototype.render.call(this);
     };
     Sprite.prototype.getCurrentAnimationName = function () {
@@ -1628,7 +1680,7 @@ var Sprite = /** @class */ (function (_super) {
         this.displayObject.tint = this.tint;
         this.displayObject.alpha = this.alpha;
         this.displayObject.filters = [this.effectsFilter];
-        this.displayObject.filterArea = global.renderer.screen;
+        this.displayObject.filterArea = Main.renderer.screen;
     };
     Sprite.prototype.setEffects = function (effects) {
         if (!effects)
@@ -1670,6 +1722,7 @@ var Sprite = /** @class */ (function (_super) {
             this.displayObject = new PIXI.Sprite(AssetCache.getTexture(key));
             this.spriteType = Sprite.Type.SPRITE;
         }
+        this.texture = AssetCache.getTexture2(key);
     };
     return Sprite;
 }(PhysicsWorldObject));
@@ -1996,7 +2049,7 @@ var Draw = /** @class */ (function () {
         return this;
     };
     Draw.render = function () {
-        global.renderer.render(this.graphics, global.renderTexture, false);
+        global.screen.renderDisplayObject(this.graphics);
     };
     Draw.graphics = new PIXI.Graphics();
     Draw._fillColor = 0x000000;
@@ -2112,14 +2165,33 @@ var Follow = /** @class */ (function () {
     };
     return Follow;
 }());
+var FPSMetricManager = /** @class */ (function () {
+    function FPSMetricManager(timePerReport) {
+        this.monitor = new Monitor();
+        this.timePerReport = timePerReport;
+        this.time = 0;
+    }
+    FPSMetricManager.prototype.update = function () {
+        this.monitor.addPoint(global.delta);
+        this.time += global.delta;
+        if (this.time >= this.timePerReport) {
+            this.report();
+            this.monitor.clear();
+            this.time = 0;
+        }
+    };
+    FPSMetricManager.prototype.report = function () {
+        debug("avg: " + 1 / this.monitor.getAvg() + ", p50: " + 1 / this.monitor.getP(50));
+    };
+    return FPSMetricManager;
+}());
 var global = /** @class */ (function () {
     function global() {
     }
     global.clearStacks = function () {
         this.worldStack = [];
         this.deltaStack = [];
-        this.rendererStack = [];
-        this.renderTextureStack = [];
+        this.screenStack = [];
         this.scriptStack = [];
     };
     global.getSprite = function (name) {
@@ -2150,23 +2222,15 @@ var global = /** @class */ (function () {
     ;
     global.pushDelta = function (delta) { this.deltaStack.push(delta); };
     global.popDelta = function () { return this.deltaStack.pop(); };
-    Object.defineProperty(global, "renderer", {
+    Object.defineProperty(global, "screen", {
         // Render options
-        get: function () { return this.rendererStack[this.rendererStack.length - 1]; },
+        get: function () { return this.screenStack[this.screenStack.length - 1]; },
         enumerable: true,
         configurable: true
     });
     ;
-    global.pushRenderer = function (renderer) { this.rendererStack.push(renderer); };
-    global.popRenderer = function () { return this.rendererStack.pop(); };
-    Object.defineProperty(global, "renderTexture", {
-        get: function () { return this.renderTextureStack[this.renderTextureStack.length - 1]; },
-        enumerable: true,
-        configurable: true
-    });
-    ;
-    global.pushRenderTexture = function (renderTexture) { this.renderTextureStack.push(renderTexture); };
-    global.popRenderTexture = function () { return this.renderTextureStack.pop(); };
+    global.pushScreen = function (screen) { this.screenStack.push(screen); };
+    global.popScreen = function () { return this.screenStack.pop(); };
     Object.defineProperty(global, "script", {
         get: function () { return this.scriptStack[this.scriptStack.length - 1]; },
         enumerable: true,
@@ -2177,8 +2241,7 @@ var global = /** @class */ (function () {
     global.popScript = function () { return this.scriptStack.pop(); };
     global.worldStack = [];
     global.deltaStack = [];
-    global.rendererStack = [];
-    global.renderTextureStack = [];
+    global.screenStack = [];
     global.scriptStack = [];
     return global;
 }());
@@ -2339,7 +2402,7 @@ var Input = /** @class */ (function () {
         this.keysByKeycode = {};
         for (var name_2 in keyCodesByName) {
             try {
-                for (var _c = (e_8 = void 0, __values(keyCodesByName[name_2])), _d = _c.next(); !_d.done; _d = _c.next()) {
+                for (var _c = __values(keyCodesByName[name_2]), _d = _c.next(); !_d.done; _d = _c.next()) {
                     var keyCode = _d.value;
                     this.isDownByKeyCode[keyCode] = false;
                     this.keysByKeycode[keyCode] = this.keysByKeycode[keyCode] || new Input.Key();
@@ -2554,7 +2617,7 @@ var InteractionManager = /** @class */ (function () {
             for (var cutscenes_1 = __values(cutscenes), cutscenes_1_1 = cutscenes_1.next(); !cutscenes_1_1.done; cutscenes_1_1 = cutscenes_1.next()) {
                 var cutscene = cutscenes_1_1.value;
                 try {
-                    for (var _c = (e_12 = void 0, __values(global.theater.storyboard[cutscene].playOnInteractWith)), _d = _c.next(); !_d.done; _d = _c.next()) {
+                    for (var _c = __values(global.theater.storyboard[cutscene].playOnInteractWith), _d = _c.next(); !_d.done; _d = _c.next()) {
                         var obj = _d.value;
                         result.add(obj);
                     }
@@ -2634,14 +2697,6 @@ var InteractionManager = /** @class */ (function () {
     return InteractionManager;
 }());
 /// <reference path="./preload.ts" />
-function load() {
-    PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
-    Preload.preload({
-        textures: Assets.textures,
-        pyxelTilemaps: Assets.pyxelTilemaps,
-        onLoad: function () { return Main.start(); },
-    });
-}
 var Main = /** @class */ (function () {
     function Main() {
     }
@@ -2655,17 +2710,34 @@ var Main = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Main.start = function () {
-        var _this = this;
+    Object.defineProperty(Main, "backgroundColor", {
+        get: function () { return 0x061639; },
+        enumerable: true,
+        configurable: true
+    });
+    // no need to modify
+    Main.preload = function () {
+        PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
-        this.backgroundColor = 0x061639;
         this.renderer = PIXI.autoDetectRenderer({
             width: this.width,
             height: this.height,
             resolution: 4,
             backgroundColor: this.backgroundColor,
         });
+        Preload.preload({
+            textures: Assets.textures,
+            pyxelTilemaps: Assets.pyxelTilemaps,
+            onLoad: function () {
+                Main.load();
+                Main.play();
+            }
+        });
+    };
+    // modify this method
+    Main.load = function () {
         document.body.appendChild(this.renderer.view);
+        this.screen = new Texture(this.width, this.height);
         Input.setKeys({
             'left': ['ArrowLeft'],
             'right': ['ArrowRight'],
@@ -2721,24 +2793,31 @@ var Main = /** @class */ (function () {
                 },
             }
         });
+    };
+    // no need to modify
+    Main.play = function () {
+        var _this = this;
         global.theater = this.theater;
         global.clearStacks();
-        global.pushRenderer(this.renderer);
-        global.pushRenderTexture(undefined);
+        global.pushScreen(this.screen);
+        var fps = new FPSMetricManager(1);
         PIXI.Ticker.shared.add(function (frameDelta) {
             _this.delta = frameDelta / 60;
             Input.update();
             global.pushWorld(null);
             global.pushDelta(_this.delta);
+            fps.update();
             _this.theater.update();
-            _this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true); // Clear the renderer
+            _this.screen.clear();
             _this.theater.render();
+            _this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true); // Clear the renderer
+            _this.renderer.render(_this.screen.renderTextureSprite);
         });
     };
     return Main;
 }());
 // Actually load the game
-load();
+Main.preload();
 var Mask;
 (function (Mask) {
     function drawRectangleMask(mask, rect) {
@@ -2759,6 +2838,39 @@ var Mask;
     }
     Mask.newRectangleMask = newRectangleMask;
 })(Mask || (Mask = {}));
+var Monitor = /** @class */ (function () {
+    function Monitor() {
+        this.points = [];
+    }
+    Monitor.prototype.addPoint = function (point) {
+        this.points.push(point);
+    };
+    Monitor.prototype.clear = function () {
+        this.points = [];
+    };
+    Monitor.prototype.getAvg = function () {
+        return A.sum(this.points) / this.points.length;
+    };
+    Monitor.prototype.getP = function (p) {
+        var count = (p === 100) ? 1 : Math.ceil(this.points.length * (100 - p) / 100);
+        var sum = 0;
+        A.sort(this.points);
+        for (var i = this.points.length - count; i < this.points.length; i++) {
+            sum += this.points[i];
+        }
+        return sum / count;
+    };
+    Monitor.prototype.getQ = function (q) {
+        var count = (q === 0) ? 1 : Math.ceil(this.points.length * q / 100);
+        var sum = 0;
+        A.sort(this.points);
+        for (var i = 0; i < count; i++) {
+            sum += this.points[i];
+        }
+        return sum / count;
+    };
+    return Monitor;
+}());
 var Party = /** @class */ (function () {
     function Party(config) {
         this.leader = config.leader;
@@ -2921,8 +3033,8 @@ var Physics = /** @class */ (function () {
         return result;
     };
     Physics.collide = function (obj, from, options) {
-        var e_13, _a;
         if (options === void 0) { options = {}; }
+        var e_13, _a;
         if (_.isEmpty(from))
             return;
         if (!obj.colliding)
@@ -2940,7 +3052,7 @@ var Physics = /** @class */ (function () {
             var collisions = collidingWith.map(function (other) { return Physics.getCollision(obj, other); });
             collisions.sort(function (a, b) { return a.t - b.t; });
             try {
-                for (var collisions_1 = (e_13 = void 0, __values(collisions)), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
+                for (var collisions_1 = __values(collisions), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
                     var collision = collisions_1_1.value;
                     var d = Physics.separate(collision);
                     if (d !== 0 && options.transferMomentum) {
@@ -3129,7 +3241,7 @@ var PIXIRenderTextureSprite = /** @class */ (function (_super) {
         configurable: true
     });
     PIXIRenderTextureSprite.prototype.clear = function () {
-        global.renderer.render(Utils.NOOP_DISPLAYOBJECT, this._renderTexture, true);
+        Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, this._renderTexture, true);
     };
     PIXIRenderTextureSprite.prototype.resize = function (width, height) {
         this._renderTexture.resize(width, height);
@@ -3257,7 +3369,7 @@ var SpriteText = /** @class */ (function (_super) {
                 var char = _c.value;
                 this.setFontSpriteToCharacter(char);
                 this.setStyle(char.style);
-                global.renderer.render(this.fontSprite, global.renderTexture, false);
+                global.screen.renderDisplayObject(this.fontSprite);
             }
         }
         catch (e_14_1) { e_14 = { error: e_14_1 }; }
@@ -3575,8 +3687,8 @@ var Stage;
     }
     Stage.resolveWorldObjectConfig = resolveWorldObjectConfig;
     function mergeArray(array, into, key, combine) {
-        var e_16, _a;
         if (combine === void 0) { combine = (function (e, into) { return e; }); }
+        var e_16, _a;
         var result = A.clone(into);
         try {
             for (var array_1 = __values(array), array_1_1 = array_1.next(); !array_1_1.done; array_1_1 = array_1.next()) {
@@ -3757,12 +3869,12 @@ var Tilemap = /** @class */ (function (_super) {
         }
         this.renderTexture.x = this.x;
         this.renderTexture.y = this.y;
-        global.renderer.render(this.renderTexture, global.renderTexture, false);
+        global.screen.renderDisplayObject(this.renderTexture);
         _super.prototype.render.call(this);
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_19, _a;
         if (debugBounds === void 0) { debugBounds = false; }
+        var e_19, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -3794,7 +3906,7 @@ var Tilemap = /** @class */ (function (_super) {
                 this.tileSprite.texture = AssetCache.getTexture(textureKey);
                 this.tileSprite.x = x * this.tilemap.tileset.tileWidth;
                 this.tileSprite.y = y * this.tilemap.tileset.tileHeight;
-                global.renderer.render(this.tileSprite, this.renderTexture.renderTexture, false);
+                Main.renderer.render(this.tileSprite, this.renderTexture.renderTexture, false);
             }
         }
     };
@@ -4484,6 +4596,59 @@ var S;
     };
 })(S || (S = {}));
 var storyboard = S.storyboard;
+var Texture = /** @class */ (function () {
+    function Texture(width, height) {
+        this.renderTextureSprite = new PIXIRenderTextureSprite(width, height);
+        this.anchorX = 0;
+        this.anchorY = 0;
+    }
+    Object.defineProperty(Texture.prototype, "width", {
+        get: function () { return this.renderTextureSprite.width; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Texture.prototype, "height", {
+        get: function () { return this.renderTextureSprite.height; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Texture.prototype, "pivotX", {
+        get: function () { return this.anchorX * this.width; },
+        set: function (value) { this.anchorX = value / this.width; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Texture.prototype, "pivotY", {
+        get: function () { return this.anchorY * this.height; },
+        set: function (value) { this.anchorY = value / this.height; },
+        enumerable: true,
+        configurable: true
+    });
+    Texture.prototype.clear = function () {
+        this.renderTextureSprite.clear();
+    };
+    Texture.prototype.render = function (texture, properties) {
+        texture.setRenderTextureSpriteProperties(properties);
+        this.renderDisplayObject(texture.renderTextureSprite);
+    };
+    Texture.prototype.renderDisplayObject = function (displayObject) {
+        Main.renderer.render(displayObject, this.renderTextureSprite.renderTexture, false);
+    };
+    Texture.prototype.setRenderTextureSpriteProperties = function (properties) {
+        if (!properties)
+            properties = {};
+        this.renderTextureSprite.x = O.getOrDefault(properties.x, 0);
+        this.renderTextureSprite.y = O.getOrDefault(properties.y, 0);
+        this.renderTextureSprite.scale.x = O.getOrDefault(properties.scaleX, 1);
+        this.renderTextureSprite.scale.y = O.getOrDefault(properties.scaleY, 1);
+        this.renderTextureSprite.angle = O.getOrDefault(properties.angle, 0);
+        this.renderTextureSprite.tint = O.getOrDefault(properties.tint, 0xFFFFFF);
+        this.renderTextureSprite.alpha = O.getOrDefault(properties.alpha, 1);
+        this.renderTextureSprite.anchor.x = this.anchorX;
+        this.renderTextureSprite.anchor.y = this.anchorY;
+    };
+    return Texture;
+}());
 /// <reference path="./worldObject.ts" />
 var World = /** @class */ (function (_super) {
     __extends(World, _super);
@@ -4508,19 +4673,12 @@ var World = /** @class */ (function (_super) {
         });
         _this.camera = new Camera(cameraConfig);
         _this.scriptManager = new ScriptManager();
-        if (!config.renderDirectly) {
-            _this.renderTexture = new PIXIRenderTextureSprite(_this.width, _this.height);
-        }
+        _this.screen = new Texture(_this.width, _this.height);
         _this.debugMoveCameraWithArrows = false;
         _this.debugCameraX = 0;
         _this.debugCameraY = 0;
         return _this;
     }
-    Object.defineProperty(World.prototype, "renderingDirectly", {
-        get: function () { return !this.renderTexture; },
-        enumerable: true,
-        configurable: true
-    });
     World.prototype.update = function () {
         var e_21, _a, e_22, _b, e_23, _c, e_24, _d;
         _super.prototype.update.call(this);
@@ -4596,16 +4754,11 @@ var World = /** @class */ (function (_super) {
         global.popWorld();
     };
     World.prototype.render = function () {
-        if (this.renderingDirectly) {
-            this.renderWorld();
-        }
-        else {
-            this.renderTexture.clear();
-            global.pushRenderTexture(this.renderTexture.renderTexture);
-            this.renderWorld();
-            global.popRenderTexture();
-            global.renderer.render(this.renderTexture, global.renderTexture, false);
-        }
+        this.screen.clear();
+        global.pushScreen(this.screen);
+        this.renderWorld();
+        global.popScreen();
+        global.screen.renderDisplayObject(this.screen.renderTextureSprite);
         _super.prototype.render.call(this);
     };
     World.prototype.renderWorld = function () {
@@ -4623,16 +4776,11 @@ var World = /** @class */ (function (_super) {
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var layer = _c.value;
-                if (layer.renderTexture) {
-                    layer.renderTexture.clear();
-                    global.pushRenderTexture(layer.renderTexture.renderTexture);
-                    this.renderLayer(layer);
-                    global.popRenderTexture();
-                    layer.renderTextureSprite.render();
-                }
-                else {
-                    this.renderLayer(layer);
-                }
+                layer.screen.clear();
+                global.pushScreen(layer.screen);
+                this.renderLayer(layer);
+                global.popScreen();
+                layer.renderTextureSprite.render();
             }
         }
         catch (e_25_1) { e_25 = { error: e_25_1 }; }
@@ -4739,8 +4887,8 @@ var World = /** @class */ (function (_super) {
         return this.worldObjectsByName[name];
     };
     World.prototype.handleCollisions = function () {
-        var e_28, _a, e_29, _b, e_30, _c;
         var _this = this;
+        var e_28, _a, e_29, _b, e_30, _c;
         try {
             for (var _d = __values(this.collisionOrder), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var collision = _e.value;
@@ -4748,11 +4896,11 @@ var World = /** @class */ (function (_super) {
                 var from = _.isArray(collision.from) ? collision.from : [collision.from];
                 var fromObjects = _.flatten(from.map(function (name) { return _this.physicsGroups[name].worldObjects; }));
                 try {
-                    for (var move_1 = (e_29 = void 0, __values(move)), move_1_1 = move_1.next(); !move_1_1.done; move_1_1 = move_1.next()) {
+                    for (var move_1 = __values(move), move_1_1 = move_1.next(); !move_1_1.done; move_1_1 = move_1.next()) {
                         var moveGroup = move_1_1.value;
                         var group_2 = this.physicsGroups[moveGroup].worldObjects;
                         try {
-                            for (var group_1 = (e_30 = void 0, __values(group_2)), group_1_1 = group_1.next(); !group_1_1.done; group_1_1 = group_1.next()) {
+                            for (var group_1 = __values(group_2), group_1_1 = group_1.next(); !group_1_1.done; group_1_1 = group_1.next()) {
                                 var obj = group_1_1.value;
                                 Physics.collide(obj, fromObjects, {
                                     callback: collision.callback,
@@ -4834,8 +4982,8 @@ var World = /** @class */ (function (_super) {
         this.worldObjectsByName[name] = obj;
     };
     World.prototype.setLayer = function (obj, name) {
-        var e_32, _a;
         if (name === void 0) { name = World.DEFAULT_LAYER; }
+        var e_32, _a;
         this.removeFromAllLayers(obj);
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -4865,8 +5013,8 @@ var World = /** @class */ (function (_super) {
         physicsGroup.worldObjects.push(obj);
     };
     World.prototype.takeSnapshot = function () {
-        var renderTextureSprite = new PIXIRenderTextureSprite(this.camera.width, this.camera.height);
-        global.pushRenderTexture(renderTextureSprite.renderTexture);
+        var screen = new Texture(this.camera.width, this.camera.height);
+        global.pushScreen(screen);
         var lastx = this.x;
         var lasty = this.y;
         this.x = 0;
@@ -4874,8 +5022,8 @@ var World = /** @class */ (function (_super) {
         this.render();
         this.x = lastx;
         this.y = lasty;
-        global.popRenderTexture();
-        return renderTextureSprite;
+        global.popScreen();
+        return screen.renderTextureSprite;
     };
     World.prototype.createLayers = function (layers) {
         var e_33, _a;
@@ -4923,8 +5071,9 @@ var World = /** @class */ (function (_super) {
             this.worldObjects = [];
             this.sortKey = config.sortKey;
             this.reverseSort = config.reverseSort;
-            this.renderTexture = new PIXIRenderTextureSprite(width, height);
-            this.renderTextureSprite = new Sprite({ x: 0, y: 0, renderTexture: this.renderTexture, effects: config.effects });
+            //this.renderTexture = new PIXIRenderTextureSprite(width, height);
+            this.screen = new Texture(width, height);
+            this.renderTextureSprite = new Sprite({ x: 0, y: 0, renderTexture: this.screen.renderTextureSprite, effects: config.effects });
         }
         Object.defineProperty(Layer.prototype, "effects", {
             get: function () { return this.renderTextureSprite.effects; },
@@ -5118,11 +5267,9 @@ var Theater = /** @class */ (function (_super) {
         this.currentStoryboardComponentName = name;
     };
     Theater.prototype.setNewWorldFromStage = function (stage, entryPoint) {
-        var e_34, _a, e_35, _b;
         if (entryPoint === void 0) { entryPoint = Theater.DEFAULT_ENTRY_POINT; }
-        var world = new World(stage, {
-            renderDirectly: true,
-        });
+        var e_34, _a, e_35, _b;
+        var world = new World(stage);
         if (stage.worldObjects) {
             try {
                 for (var _c = __values(stage.worldObjects), _d = _c.next(); !_d.done; _d = _c.next()) {

@@ -47,7 +47,7 @@ class SpriteText extends WorldObject {
         for (let char of this.chars) {
             this.setFontSpriteToCharacter(char);
             this.setStyle(char.style);
-            global.renderer.render(this.fontSprite, global.renderTexture, false);
+            global.screen.renderDisplayObject(this.fontSprite);
         }
         super.render();
     }

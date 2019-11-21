@@ -16,6 +16,7 @@ namespace Sprite {
 }
 
 class Sprite extends PhysicsWorldObject {
+    private texture: Texture;
     private displayObject: PIXI.Sprite | PIXI.Graphics | PIXIRenderTextureSprite;
     spriteType: Sprite.Type;
 
@@ -97,7 +98,22 @@ class Sprite extends PhysicsWorldObject {
     render() {
         this.effectsFilter.update();
         this.setDisplayObjectProperties();
-        global.renderer.render(this.displayObject, global.renderTexture, false);
+        if (this.spriteType === Sprite.Type.SPRITE) {
+            global.screen.render(this.texture, {
+                x: this.x + this.offset.x,
+                y: this.y + this.offset.y,
+                scaleX: this.flipX ? -1 : 1,
+                scaleY: this.flipY ? -1 : 1,
+                angle: this.angle,
+                tint: this.tint,
+                alpha: this.alpha,
+                // filter?
+                // filterArea?
+            });
+        } else {
+            global.screen.renderDisplayObject(this.displayObject);
+        }
+        
         super.render();
     }
 
@@ -127,7 +143,7 @@ class Sprite extends PhysicsWorldObject {
         this.displayObject.tint = this.tint;
         this.displayObject.alpha = this.alpha;
         this.displayObject.filters = [this.effectsFilter];
-        this.displayObject.filterArea = global.renderer.screen;
+        this.displayObject.filterArea = Main.renderer.screen;
     }
 
     setEffects(effects: Effects) {
@@ -171,6 +187,7 @@ class Sprite extends PhysicsWorldObject {
             this.displayObject = new PIXI.Sprite(AssetCache.getTexture(key));
             this.spriteType = Sprite.Type.SPRITE;
         }
+        this.texture = AssetCache.getTexture2(key);
     }
 }
 

@@ -2,8 +2,7 @@ class global {
     static clearStacks() {
         this.worldStack = [];
         this.deltaStack = [];
-        this.rendererStack = [];
-        this.renderTextureStack = [];
+        this.screenStack = [];
         this.scriptStack = [];
     }
 
@@ -32,15 +31,10 @@ class global {
     static popDelta() { return this.deltaStack.pop(); }
 
     // Render options
-    static get renderer() { return this.rendererStack[this.rendererStack.length-1]; };
-    private static rendererStack: PIXI.Renderer[] = [];
-    static pushRenderer(renderer: PIXI.Renderer) { this.rendererStack.push(renderer); }
-    static popRenderer() { return this.rendererStack.pop(); }
-
-    static get renderTexture() { return this.renderTextureStack[this.renderTextureStack.length-1]; };
-    private static renderTextureStack: PIXI.RenderTexture[] = [];
-    static pushRenderTexture(renderTexture: PIXI.RenderTexture) { this.renderTextureStack.push(renderTexture); }
-    static popRenderTexture() { return this.renderTextureStack.pop(); }
+    static get screen() { return this.screenStack[this.screenStack.length-1]; };
+    private static screenStack: Texture[] = [];
+    static pushScreen(screen: Texture) { this.screenStack.push(screen); }
+    static popScreen() { return this.screenStack.pop(); }
 
     static get script() { return this.scriptStack[this.scriptStack.length-1]; };
     private static scriptStack: Script[] = [];

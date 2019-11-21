@@ -8,7 +8,6 @@ namespace World {
 
         camera?: Camera.Config;
 
-        renderDirectly?: boolean;
         width?: number;
         height?: number;
 
@@ -49,13 +48,11 @@ class World extends WorldObject {
 
     camera: Camera;
     private scriptManager: ScriptManager;
-    private renderTexture: PIXIRenderTextureSprite;
+    private screen: Texture;
 
     debugMoveCameraWithArrows: boolean;
     private debugCameraX: number;
     private debugCameraY: number;
-
-    get renderingDirectly() { return !this.renderTexture; }
 
     constructor(config: World.Config, defaults: World.Config = {}) {
         config = O.withDefaults(config, defaults);
@@ -82,9 +79,7 @@ class World extends WorldObject {
 
         this.scriptManager = new ScriptManager();
 
-        if (!config.renderDirectly) {
-            this.renderTexture = new PIXIRenderTextureSprite(this.width, this.height);
-        }
+        this.screen = new Texture(this.width, this.height);
 
         this.debugMoveCameraWithArrows = false;
         this.debugCameraX = 0;
@@ -127,15 +122,11 @@ class World extends WorldObject {
     }
 
     render() {
-        if (this.renderingDirectly) {
-            this.renderWorld();
-        } else {
-            this.renderTexture.clear();
-            global.pushRenderTexture(this.renderTexture.renderTexture);
-            this.renderWorld();
-            global.popRenderTexture();
-            global.renderer.render(this.renderTexture, global.renderTexture, false);
-        }
+        this.screen.clear();
+        global.pushScreen(this.screen);
+        this.renderWorld();
+        global.popScreen();
+        global.screen.renderDisplayObject(this.screen.renderTextureSprite);
         super.render();
     }
 
@@ -153,15 +144,11 @@ class World extends WorldObject {
 
         global.pushWorld(this);
         for (let layer of this.layers) {
-            if (layer.renderTexture) {
-                layer.renderTexture.clear();
-                global.pushRenderTexture(layer.renderTexture.renderTexture);
-                this.renderLayer(layer);
-                global.popRenderTexture();
-                layer.renderTextureSprite.render();
-            } else {
-                this.renderLayer(layer);
-            }
+            layer.screen.clear();
+            global.pushScreen(layer.screen);
+            this.renderLayer(layer);
+            global.popScreen();
+            layer.renderTextureSprite.render();
         }
         global.popWorld();
 
@@ -328,8 +315,8 @@ class World extends WorldObject {
     }
 
     takeSnapshot() {
-        let renderTextureSprite = new PIXIRenderTextureSprite(this.camera.width, this.camera.height);
-        global.pushRenderTexture(renderTextureSprite.renderTexture);
+        let screen = new Texture(this.camera.width, this.camera.height);
+        global.pushScreen(screen);
         let lastx = this.x;
         let lasty = this.y;
         this.x = 0;
@@ -337,8 +324,8 @@ class World extends WorldObject {
         this.render();
         this.x = lastx;
         this.y = lasty;
-        global.popRenderTexture();
-        return renderTextureSprite;
+        global.popScreen();
+        return screen.renderTextureSprite;
     }
 
     private createLayers(layers: World.LayerConfig[]) {
@@ -380,7 +367,8 @@ namespace World {
         sortKey: string;
         reverseSort: boolean;
 
-        renderTexture: PIXIRenderTextureSprite;
+        //renderTexture: PIXIRenderTextureSprite;
+        screen: Texture;
         renderTextureSprite: Sprite;
         
         get effects() { return this.renderTextureSprite.effects };
@@ -391,8 +379,9 @@ namespace World {
             this.sortKey = config.sortKey;
             this.reverseSort = config.reverseSort;
 
-            this.renderTexture = new PIXIRenderTextureSprite(width, height);
-            this.renderTextureSprite = new Sprite({ x: 0, y: 0, renderTexture: this.renderTexture, effects: config.effects });
+            //this.renderTexture = new PIXIRenderTextureSprite(width, height);
+            this.screen = new Texture(width, height);
+            this.renderTextureSprite = new Sprite({ x: 0, y: 0, renderTexture: this.screen.renderTextureSprite, effects: config.effects });
         }
 
         sort() {

@@ -208,9 +208,7 @@ class Theater extends World {
     }
 
     private setNewWorldFromStage(stage: Stage, entryPoint: Stage.EntryPoint = Theater.DEFAULT_ENTRY_POINT) {
-        let world = new World(stage, {
-            renderDirectly: true,
-        });
+        let world = new World(stage);
 
         if (stage.worldObjects) {
             for (let worldObject of stage.worldObjects) {
