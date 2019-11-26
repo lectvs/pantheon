@@ -81,6 +81,9 @@ namespace Assets {
             spritesheet: { frameWidth: 16, frameHeight: 16 },
         },
 
+        'grad': {},
+        'masktest': {},
+
         // Portraits
         'portraits/milo': {
             defaultAnchor: { x: 0.5, y: 0.5 },
@@ -117,7 +120,7 @@ namespace Assets {
 
         // Fonts
         'deluxe16': {
-            rect: { x: 0, y: 0, width: 8, height: 15 },
+            //rect: { x: 0, y: 0, width: 8, height: 15 },
             anchor: { x: 0, y: 0 },
         },
     }

@@ -5,10 +5,10 @@ namespace Theater {
     export type Config = {
         stages: Dict<Stage>;
         stageToLoad: string;
-        stageEntryPoint: Stage.EntryPoint;
+        stageEntryPoint?: Stage.EntryPoint;
         storyboard: Storyboard;
         storyboardEntry: string;
-        party: Party;
+        party: Party.Config;
         dialogBox: DialogBox.Config;
         skipCutsceneScriptKey: string;
         interactionManager: InteractionManager.Config;
@@ -51,8 +51,7 @@ class Theater extends World {
         this.stages = config.stages;
         this.storyboard = config.storyboard;
 
-        this.party = config.party;
-        this.party.load();
+        this.party = new Party(config.party);
 
         this.cutsceneManager = new CutsceneManager();
         this.skipCutsceneScriptKey = config.skipCutsceneScriptKey;

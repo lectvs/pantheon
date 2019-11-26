@@ -6,8 +6,8 @@ namespace G {
         rect.height += 2*amount;
     }
 
-    export function overlapRectangles(rect1: Rectangle, rect2: Rectangle) {
-        return rect1.left < rect2.right && rect1.right > rect2.left && rect1.top < rect2.bottom && rect1.bottom > rect2.top;
+    export function overlapRectangles(rect1: Rect, rect2: Rect) {
+        return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y;
     }
 
     export function rectContains(rect: Rect, contains: Rect) {

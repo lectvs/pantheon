@@ -7,7 +7,7 @@ var HUMAN_CHARACTER: Sprite.StageConfig = {
     bounds: { x: -5, y: -2, width: 10, height: 2 },
 }
 
-const party: Party = new Party({
+const party: Party.Config = {
     leader: 'angie',
     activeMembers: ['angie'],
     members: {
@@ -47,4 +47,4 @@ const party: Party = new Party({
             },
         },
     }
-});
+};

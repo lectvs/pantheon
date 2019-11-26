@@ -20,9 +20,9 @@ class PhysicsWorldObject extends WorldObject {
     vx: number;
     vy: number;
     mass: number;
-    gravity: Point;
+    gravity: Pt;
     bounce: number;
-    bounds: Rectangle;
+    bounds: Rect;
     immovable: boolean;
     colliding: boolean;
 
@@ -39,9 +39,9 @@ class PhysicsWorldObject extends WorldObject {
         this.vx = O.getOrDefault(config.vx, 0);
         this.vy = O.getOrDefault(config.vy, 0);
         this.mass = O.getOrDefault(config.mass, 1);
-        this.gravity = config.gravity ? new Point(config.gravity.x, config.gravity.y) : new Point(0, 0);
+        this.gravity = config.gravity || { x: 0, y: 0 };
         this.bounce = O.getOrDefault(config.bounce, 0);
-        this.bounds = config.bounds ? new Rectangle(config.bounds.x, config.bounds.y, config.bounds.width, config.bounds.height) : new Rectangle(0, 0, 0, 0);
+        this.bounds = config.bounds || { x: 0, y: 0, width: 0, height: 0 };
         this.immovable = O.getOrDefault(config.immovable, false);
         this.colliding = O.getOrDefault(config.colliding, true);
 

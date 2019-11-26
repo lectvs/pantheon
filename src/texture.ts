@@ -1,3 +1,5 @@
+/// <reference path="textureFilter.ts"/>
+
 namespace Texture {
     export type Properties = {
         x?: number;
@@ -7,6 +9,8 @@ namespace Texture {
         angle?: number;
         tint?: number;
         alpha?: number;
+        slice?: Rect;
+        filters?: TextureFilter[];
     }
 }
 
@@ -16,45 +20,130 @@ class Texture {
     get height() { return this.renderTextureSprite.height; }
     anchorX: number;
     anchorY: number;
-    get pivotX() { return this.anchorX * this.width; }
-    get pivotY() { return this.anchorY * this.height; }
-    set pivotX(value: number) { this.anchorX = value / this.width;}
-    set pivotY(value: number) { this.anchorY = value / this.height;}
 
-    constructor(width: number, height: number) {
+    immutable: boolean;
+
+    constructor(width: number, height: number, immutable: boolean = false) {
         this.renderTextureSprite = new PIXIRenderTextureSprite(width, height);
         this.anchorX = 0;
         this.anchorY = 0;
+        this.immutable = immutable;
     }
 
     clear() {
         this.renderTextureSprite.clear();
     }
 
+    clone() {
+        let result = new Texture(this.width, this.height);
+        result.render(this, { x: this.anchorX * this.width, y: this.anchorY * this.height });
+        result.anchorX = this.anchorX;
+        result.anchorY = this.anchorY;
+        return result;
+    }
+
+    fill(color: number) {
+        let graphics = new PIXI.Graphics();
+        graphics.beginFill(color, 1);
+        graphics.drawRect(0, 0, this.width, this.height);
+        graphics.endFill();
+        this.renderDisplayObject(graphics);
+    }
+
+    free() {
+        this.renderTextureSprite.renderTexture.destroy(true);
+    }
+
     render(texture: Texture, properties?: Texture.Properties) {
-        texture.setRenderTextureSpriteProperties(properties);
+        if (this.immutable) {
+            debug('Cannot render to immutable texture!');
+            return;
+        }
+        this.setRenderTextureSpriteProperties(texture, properties);
         this.renderDisplayObject(texture.renderTextureSprite);
     }
 
     renderDisplayObject(displayObject: PIXI.DisplayObject) {
+        if (this.immutable) {
+            debug('Cannot render to immutable texture!');
+            return;
+        }
         Main.renderer.render(displayObject, this.renderTextureSprite.renderTexture, false);
     }
 
-    private setRenderTextureSpriteProperties(properties: Texture.Properties) {
-        if (!properties) properties = {};
-        this.renderTextureSprite.x = O.getOrDefault(properties.x, 0);
-        this.renderTextureSprite.y = O.getOrDefault(properties.y, 0);
-        this.renderTextureSprite.scale.x = O.getOrDefault(properties.scaleX, 1);
-        this.renderTextureSprite.scale.y = O.getOrDefault(properties.scaleY, 1);
-        this.renderTextureSprite.angle = O.getOrDefault(properties.angle, 0);
-        this.renderTextureSprite.tint = O.getOrDefault(properties.tint, 0xFFFFFF);
-        this.renderTextureSprite.alpha = O.getOrDefault(properties.alpha, 1);
+    toMaskTexture() {
+        return this.renderTextureSprite.renderTexture;
+    }
 
-        this.renderTextureSprite.anchor.x = this.anchorX;
-        this.renderTextureSprite.anchor.y = this.anchorY;
+    private setRenderTextureSpriteProperties(texture: Texture, properties: Texture.Properties) {
+        if (!properties) properties = {};
+
+        _.defaults(properties, {
+            x: 0,
+            y: 0,
+            scaleX: 1,
+            scaleY: 1,
+            angle: 0,
+            tint: 0xFFFFFF,
+            alpha: 1,
+            slice: undefined,
+            filters: [],
+        });
+
+        let sliceRect = properties.slice || { x: 0, y: 0, width: texture.width, height: texture.height };
+
+        // Position
+        let afterSliceX = properties.x + texture.anchorX * texture.width - (sliceRect.x + texture.anchorX * sliceRect.width);
+        let afterSliceY = properties.y + texture.anchorY * texture.height - (sliceRect.y + texture.anchorY * sliceRect.height);
+        texture.renderTextureSprite.x = afterSliceX;
+        texture.renderTextureSprite.y = afterSliceY;
+
+        // Other values
+        texture.renderTextureSprite.scale.x = properties.scaleX;
+        texture.renderTextureSprite.scale.y = properties.scaleY;
+        texture.renderTextureSprite.angle = properties.angle;
+        texture.renderTextureSprite.tint = properties.tint;
+        texture.renderTextureSprite.alpha = properties.alpha;
+
+        // Filter values
+        let sliceFilterPosX = texture.renderTextureSprite.x - texture.anchorX*sliceRect.width;
+        let sliceFilterPosY = texture.renderTextureSprite.y - texture.anchorY*sliceRect.height;
+        let sliceFilter = properties.slice ? [TextureFilter.SLICE(properties.slice)] : [];
+        sliceFilter.forEach(filter => Texture.setFilterProperties(filter, this.width, this.height, sliceFilterPosX, sliceFilterPosY));
+
+        let filterPosX = properties.x - texture.anchorX*sliceRect.width;
+        let filterPosY = properties.y - texture.anchorY*sliceRect.height;
+        properties.filters.forEach(filter => Texture.setFilterProperties(filter, this.width, this.height, filterPosX, filterPosY));
+
+        let allFilters: TextureFilter[] = [...sliceFilter, ...properties.filters];
+        texture.renderTextureSprite.filters = allFilters.map(filter => filter.getPixiFilter());
+        texture.renderTextureSprite.filterArea = new PIXI.Rectangle(0, 0, this.width, this.height);
+
+        // Anchor
+        texture.renderTextureSprite.anchor.x = texture.anchorX;
+        texture.renderTextureSprite.anchor.y = texture.anchorY;
+    }
+
+    private static setFilterProperties(filter: TextureFilter, width: number, height: number, posx: number, posy: number) {
+        filter.setDimensions(width, height);
+        filter.setTexturePosition(posx, posy);
     }
 }
 
 namespace Texture {
-    
+    export function fromPixiTexture(pixiTexture: PIXI.Texture) {
+        let sprite = new PIXI.Sprite(pixiTexture);
+        let texture = new Texture(pixiTexture.width, pixiTexture.height);
+        texture.anchorX = pixiTexture.defaultAnchor.x;
+        texture.anchorY = pixiTexture.defaultAnchor.y;
+        sprite.x = texture.anchorX * texture.width;
+        sprite.y = texture.anchorY * texture.height;
+        texture.renderDisplayObject(sprite);
+        texture.immutable = true;
+        return texture;
+    }
+    export function none() {
+        return new Texture(1, 1);
+    }
 }
+

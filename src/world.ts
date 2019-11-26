@@ -144,8 +144,8 @@ class World extends WorldObject {
 
         global.pushWorld(this);
         for (let layer of this.layers) {
-            layer.screen.clear();
-            global.pushScreen(layer.screen);
+            layer.texture.clear();
+            global.pushScreen(layer.texture);
             this.renderLayer(layer);
             global.popScreen();
             layer.renderTextureSprite.render();
@@ -325,7 +325,7 @@ class World extends WorldObject {
         this.x = lastx;
         this.y = lasty;
         global.popScreen();
-        return screen.renderTextureSprite;
+        return screen;
     }
 
     private createLayers(layers: World.LayerConfig[]) {
@@ -368,7 +368,7 @@ namespace World {
         reverseSort: boolean;
 
         //renderTexture: PIXIRenderTextureSprite;
-        screen: Texture;
+        texture: Texture;
         renderTextureSprite: Sprite;
         
         get effects() { return this.renderTextureSprite.effects };
@@ -380,8 +380,8 @@ namespace World {
             this.reverseSort = config.reverseSort;
 
             //this.renderTexture = new PIXIRenderTextureSprite(width, height);
-            this.screen = new Texture(width, height);
-            this.renderTextureSprite = new Sprite({ x: 0, y: 0, renderTexture: this.screen.renderTextureSprite, effects: config.effects });
+            this.texture = new Texture(width, height);
+            this.renderTextureSprite = new Sprite({ x: 0, y: 0, texture: this.texture, effects: config.effects });
         }
 
         sort() {

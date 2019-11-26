@@ -1,5 +1,6 @@
 /// <reference path="./backWall.ts" />
 /// <reference path="./baseStage.ts" />
+/// <reference path="./camera.ts" />
 /// <reference path="./utils/o_object.ts" />
 /// <reference path="./transition.ts" />
 /// <reference path="./tilemap.ts" />
@@ -53,11 +54,16 @@ const stages: Dict<Stage> = {
     'main': {
         parent: BASE_STAGE,
         camera: {
-            bounds: {
-                left: 0,
-                top: 0,
-                right: 256,
-                bottom: 192
+            // bounds: {
+            //     left: 0,
+            //     top: 0,
+            //     right: 256,
+            //     bottom: 192
+            // },
+            mode: {
+                type: 'follow',
+                target: 'angie',
+                offset: { x: 0, y: -18 }
             }
         },
         entryPoints: {

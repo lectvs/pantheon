@@ -22,6 +22,6 @@ class FPSMetricManager {
     }
 
     report() {
-        debug(`avg: ${1/this.monitor.getAvg()}, p50: ${1/this.monitor.getP(50)}`);
+        //debug(`avg: ${1/this.monitor.getAvg()}, p50: ${1/this.monitor.getP(50)}`);
     }
 }

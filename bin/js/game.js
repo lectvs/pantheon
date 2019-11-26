@@ -18,16 +18,6 @@ var __spread = (this && this.__spread) || function () {
     for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
     return ar;
 };
-var __values = (this && this.__values) || function (o) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
-    if (m) return m.call(o);
-    return {
-        next: function () {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
-        }
-    };
-};
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -41,6 +31,16 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var __values = (this && this.__values) || function (o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+    if (m) return m.call(o);
+    return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+};
 var __generator = (this && this.__generator) || function (thisArg, body) {
     var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
     return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
@@ -309,17 +309,18 @@ var Animations = /** @class */ (function () {
 var AssetCache = /** @class */ (function () {
     function AssetCache() {
     }
-    AssetCache.getTexture = function (key) {
-        if (!this.textures[key]) {
+    AssetCache.getPixiTexture = function (key) {
+        if (!this.pixiTextures[key]) {
             debug("Texture '" + key + "' does not exist.");
         }
-        return this.textures[key];
+        return this.pixiTextures[key];
     };
-    AssetCache.getTexture2 = function (key) {
-        if (!this.textures2[key]) {
+    AssetCache.getTexture = function (key) {
+        if (!this.textures[key]) {
             debug("Texture2 '" + key + "' does not exist.");
+            return Texture.none();
         }
-        return this.textures2[key];
+        return this.textures[key];
     };
     AssetCache.getTilemap = function (key) {
         if (!this.tilemaps[key]) {
@@ -327,12 +328,327 @@ var AssetCache = /** @class */ (function () {
         }
         return this.tilemaps[key];
     };
+    AssetCache.pixiTextures = {};
     AssetCache.textures = {};
-    AssetCache.textures2 = {};
     AssetCache.tilemaps = {};
     AssetCache.DEFAULT_ANCHOR = { x: 0, y: 0 };
     return AssetCache;
 }());
+var TextureFilter = /** @class */ (function () {
+    function TextureFilter(config) {
+        var uniforms = (config.uniforms || []).map(function (uniform) { return "uniform " + uniform + ";"; }).join('');
+        var vert = TextureFilter.vert;
+        var frag = TextureFilter.fragPreUniforms + uniforms + TextureFilter.fragStartFunc + config.code + TextureFilter.fragEndFunc;
+        this.pixiFilter = new PIXI.Filter(vert, frag, {});
+        this.setUniforms(config.defaultUniforms);
+    }
+    TextureFilter.prototype.getPixiFilter = function () {
+        return this.pixiFilter;
+    };
+    TextureFilter.prototype.getUniform = function (uniform) {
+        return this.pixiFilter.uniforms[uniform];
+    };
+    TextureFilter.prototype.setDimensions = function (width, height) { };
+    TextureFilter.prototype.setTexturePosition = function (posx, posy) {
+        this.pixiFilter.uniforms['posx'] = posx;
+        this.pixiFilter.uniforms['posy'] = posy;
+    };
+    TextureFilter.prototype.setUniform = function (uniform, value) {
+        this.pixiFilter.uniforms[uniform] = value;
+    };
+    TextureFilter.prototype.setUniforms = function (uniforms) {
+        if (!uniforms)
+            return;
+        for (var key in uniforms) {
+            this.pixiFilter.uniforms[key] = uniforms[key];
+        }
+    };
+    TextureFilter.vert = "\n        attribute vec2 aVertexPosition;\n        uniform mat3 projectionMatrix;\n        varying vec2 vTextureCoord;\n        uniform vec4 inputSize;\n        uniform vec4 outputFrame;\n        varying vec4 is;\n        \n        vec4 filterVertexPosition(void) {\n            vec2 position = aVertexPosition * max(outputFrame.zw, vec2(0.)) + outputFrame.xy;\n            return vec4((projectionMatrix * vec3(position, 1.0)).xy, 0.0, 1.0);\n        }\n        \n        vec2 filterTextureCoord(void) {\n            return aVertexPosition * (outputFrame.zw * inputSize.zw);\n        }\n        \n        void main(void) {\n            gl_Position = filterVertexPosition();\n            vTextureCoord = filterTextureCoord();\n            is = inputSize;\n        }\n    ";
+    TextureFilter.fragPreUniforms = "\n        varying vec2 vTextureCoord;\n        varying vec4 is;\n        uniform sampler2D uSampler;\n        uniform float posx;\n        uniform float posy;\n\n        float width;\n        float height;\n    ";
+    TextureFilter.fragStartFunc = "\n        vec4 getColor(float localx, float localy) {\n            float tx = (localx + posx) / width;\n            float ty = (localy + posy) / height;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        vec4 getWorldColor(float worldx, float worldy) {\n            float tx = worldx / width;\n            float ty = worldy / height;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        void main(void) {\n            width = is.x;\n            height = is.y;\n            float worldx = vTextureCoord.x * width;\n            float worldy = vTextureCoord.y * height;\n            float x = worldx - posx;\n            float y = worldy - posy;\n            vec4 color = texture2D(uSampler, vTextureCoord);\n            // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.\n            if (color.a > 0.0) {\n                color.rgb /= color.a;\n            }\n            vec4 result = vec4(color.r, color.g, color.b, color.a);\n    ";
+    TextureFilter.fragEndFunc = "\n            // Premultiply alpha again.\n            result.rgb *= result.a;\n            gl_FragColor = result;\n        }\n    ";
+    return TextureFilter;
+}());
+(function (TextureFilter) {
+    var Static = /** @class */ (function (_super) {
+        __extends(Static, _super);
+        function Static(code) {
+            return _super.call(this, { code: code }) || this;
+        }
+        return Static;
+    }(TextureFilter));
+    TextureFilter.Static = Static;
+    var Mask = /** @class */ (function (_super) {
+        __extends(Mask, _super);
+        function Mask(config) {
+            var _this = _super.call(this, {
+                uniforms: ["sampler2D mask", "float maskWidth", "float maskHeight", "float maskX", "float maskY", "bool invert"],
+                code: "\n                    vec2 vTextureCoordMask = vTextureCoord * is.xy / vec2(maskWidth, maskHeight) - vec2(maskX, maskY) / vec2(maskWidth, maskHeight);\n                    if (vTextureCoordMask.x >= 0.0 && vTextureCoordMask.x < 1.0 && vTextureCoordMask.y >= 0.0 && vTextureCoordMask.y < 1.0) {\n                        float a = texture2D(mask, vTextureCoordMask).a;\n                        result *= invert ? 1.0-a : a;\n                    } else {\n                        result.a = invert ? color.a : 0.0;\n                    }\n                "
+            }) || this;
+            _this.type = config.type;
+            _this.offsetX = O.getOrDefault(config.offsetX, 0);
+            _this.offsetY = O.getOrDefault(config.offsetY, 0);
+            _this.invert = O.getOrDefault(config.invert, false);
+            _this.setMask(config.mask);
+            return _this;
+        }
+        Object.defineProperty(Mask.prototype, "invert", {
+            get: function () { return this.getUniform('invert'); },
+            set: function (value) { this.setUniform('invert', value); },
+            enumerable: true,
+            configurable: true
+        });
+        Mask.prototype.setMask = function (mask) {
+            this.setUniform('mask', mask.toMaskTexture());
+            this.setUniform('maskWidth', mask.width);
+            this.setUniform('maskHeight', mask.height);
+            this.setMaskPosition(0, 0);
+        };
+        Mask.prototype.setTexturePosition = function (posx, posy) {
+            _super.prototype.setTexturePosition.call(this, posx, posy);
+            this.setMaskPosition(posx, posy);
+        };
+        Mask.prototype.setMaskPosition = function (textureX, textureY) {
+            if (this.type === Mask.Type.GLOBAL) {
+                this.setUniform('maskX', this.offsetX);
+                this.setUniform('maskY', this.offsetY);
+            }
+            else if (this.type === Mask.Type.LOCAL) {
+                this.setUniform('maskX', textureX + this.offsetX);
+                this.setUniform('maskY', textureY + this.offsetY);
+            }
+        };
+        return Mask;
+    }(TextureFilter));
+    TextureFilter.Mask = Mask;
+    (function (Mask) {
+        var Type;
+        (function (Type) {
+            Type["GLOBAL"] = "global";
+            Type["LOCAL"] = "local";
+        })(Type = Mask.Type || (Mask.Type = {}));
+    })(Mask = TextureFilter.Mask || (TextureFilter.Mask = {}));
+    var LocalMask = /** @class */ (function (_super) {
+        __extends(LocalMask, _super);
+        function LocalMask(mask) {
+            var _this = _super.call(this, {
+                uniforms: ["sampler2D mask"],
+                defaultUniforms: {},
+                code: "\n                    result *= texture2D(mask, vTextureCoord).a;\n                "
+            }) || this;
+            _this.setMask(mask);
+            return _this;
+        }
+        LocalMask.prototype.setDimensions = function (width, height) {
+            _super.prototype.setDimensions.call(this, width, height);
+            if (this.currentMaskWidth !== width || this.currentMaskHeight !== height) {
+                this.currentMaskWidth = width;
+                this.currentMaskHeight = height;
+                this.refreshMask();
+            }
+        };
+        LocalMask.prototype.setTexturePosition = function (posx, posy) {
+            _super.prototype.setTexturePosition.call(this, posx, posy);
+            if (this.currentMaskX !== posx || this.currentMaskY !== posy) {
+                this.currentMaskX = posx;
+                this.currentMaskY = posy;
+                this.refreshMask();
+            }
+        };
+        LocalMask.prototype.setMask = function (mask) {
+            this.mask = mask;
+            this.currentMaskTexture = mask;
+            this.setDimensions(this.currentMaskTexture.width, this.currentMaskTexture.height);
+            this.setTexturePosition(0, 0);
+            this.refreshMask();
+        };
+        LocalMask.prototype.refreshMask = function () {
+            if (this.currentMaskTexture !== this.mask)
+                this.currentMaskTexture.free();
+            this.currentMaskTexture = new Texture(M.minPowerOf2(this.currentMaskWidth), M.minPowerOf2(this.currentMaskHeight));
+            this.currentMaskTexture.render(this.mask, { x: this.currentMaskX, y: this.currentMaskY });
+            this.setUniform('mask', this.currentMaskTexture.toMaskTexture());
+        };
+        return LocalMask;
+    }(TextureFilter));
+    TextureFilter.LocalMask = LocalMask;
+    var Slice = /** @class */ (function (_super) {
+        __extends(Slice, _super);
+        function Slice(rect) {
+            return _super.call(this, {
+                uniforms: ["float sliceX", "float sliceY", "float sliceWidth", "float sliceHeight"],
+                defaultUniforms: {
+                    'sliceX': rect.x,
+                    'sliceY': rect.y,
+                    'sliceWidth': rect.width,
+                    'sliceHeight': rect.height,
+                },
+                code: "\n                    if (x < sliceX || x >= sliceX + sliceWidth || y < sliceY || y >= sliceY + sliceHeight) {\n                        result.a = 0.0;\n                    }\n                "
+            }) || this;
+        }
+        Slice.prototype.setSlice = function (rect) {
+            this.setUniforms({
+                'sliceX': rect.x,
+                'sliceY': rect.y,
+                'sliceWidth': rect.width,
+                'sliceHeight': rect.height,
+            });
+        };
+        return Slice;
+    }(TextureFilter));
+    TextureFilter.Slice = Slice;
+    var _sliceFilter = new Slice({ x: 0, y: 0, width: 0, height: 0 });
+    function SLICE(rect) {
+        _sliceFilter.setSlice(rect);
+        return _sliceFilter;
+    }
+    TextureFilter.SLICE = SLICE;
+    var Outline = /** @class */ (function (_super) {
+        __extends(Outline, _super);
+        function Outline(color, alpha) {
+            return _super.call(this, {
+                uniforms: ["vec3 outlineColor", "float outlineAlpha"],
+                defaultUniforms: {
+                    'outlineColor': Outline.colorToVec3(color),
+                    'outlineAlpha': alpha,
+                },
+                code: "\n                    if (color.a == 0.0 && (getColor(x-1.0, y).a > 0.0 || getColor(x+1.0, y).a > 0.0 || getColor(x, y-1.0).a > 0.0 || getColor(x, y+1.0).a > 0.0)) {\n                        result = vec4(outlineColor, outlineAlpha);\n                    }\n                "
+            }) || this;
+        }
+        Outline.colorToVec3 = function (color) {
+            var r = (color >> 16) & 255;
+            var g = (color >> 8) & 255;
+            var b = color & 255;
+            return [r / 255, g / 255, b / 255];
+        };
+        return Outline;
+    }(TextureFilter));
+    TextureFilter.Outline = Outline;
+})(TextureFilter || (TextureFilter = {}));
+/// <reference path="textureFilter.ts"/>
+var Texture = /** @class */ (function () {
+    function Texture(width, height, immutable) {
+        if (immutable === void 0) { immutable = false; }
+        this.renderTextureSprite = new PIXIRenderTextureSprite(width, height);
+        this.anchorX = 0;
+        this.anchorY = 0;
+        this.immutable = immutable;
+    }
+    Object.defineProperty(Texture.prototype, "width", {
+        get: function () { return this.renderTextureSprite.width; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Texture.prototype, "height", {
+        get: function () { return this.renderTextureSprite.height; },
+        enumerable: true,
+        configurable: true
+    });
+    Texture.prototype.clear = function () {
+        this.renderTextureSprite.clear();
+    };
+    Texture.prototype.clone = function () {
+        var result = new Texture(this.width, this.height);
+        result.render(this, { x: this.anchorX * this.width, y: this.anchorY * this.height });
+        result.anchorX = this.anchorX;
+        result.anchorY = this.anchorY;
+        return result;
+    };
+    Texture.prototype.fill = function (color) {
+        var graphics = new PIXI.Graphics();
+        graphics.beginFill(color, 1);
+        graphics.drawRect(0, 0, this.width, this.height);
+        graphics.endFill();
+        this.renderDisplayObject(graphics);
+    };
+    Texture.prototype.free = function () {
+        this.renderTextureSprite.renderTexture.destroy(true);
+    };
+    Texture.prototype.render = function (texture, properties) {
+        if (this.immutable) {
+            debug('Cannot render to immutable texture!');
+            return;
+        }
+        this.setRenderTextureSpriteProperties(texture, properties);
+        this.renderDisplayObject(texture.renderTextureSprite);
+    };
+    Texture.prototype.renderDisplayObject = function (displayObject) {
+        if (this.immutable) {
+            debug('Cannot render to immutable texture!');
+            return;
+        }
+        Main.renderer.render(displayObject, this.renderTextureSprite.renderTexture, false);
+    };
+    Texture.prototype.toMaskTexture = function () {
+        return this.renderTextureSprite.renderTexture;
+    };
+    Texture.prototype.setRenderTextureSpriteProperties = function (texture, properties) {
+        var _this = this;
+        if (!properties)
+            properties = {};
+        _.defaults(properties, {
+            x: 0,
+            y: 0,
+            scaleX: 1,
+            scaleY: 1,
+            angle: 0,
+            tint: 0xFFFFFF,
+            alpha: 1,
+            slice: undefined,
+            filters: [],
+        });
+        var sliceRect = properties.slice || { x: 0, y: 0, width: texture.width, height: texture.height };
+        // Position
+        var afterSliceX = properties.x + texture.anchorX * texture.width - (sliceRect.x + texture.anchorX * sliceRect.width);
+        var afterSliceY = properties.y + texture.anchorY * texture.height - (sliceRect.y + texture.anchorY * sliceRect.height);
+        texture.renderTextureSprite.x = afterSliceX;
+        texture.renderTextureSprite.y = afterSliceY;
+        // Other values
+        texture.renderTextureSprite.scale.x = properties.scaleX;
+        texture.renderTextureSprite.scale.y = properties.scaleY;
+        texture.renderTextureSprite.angle = properties.angle;
+        texture.renderTextureSprite.tint = properties.tint;
+        texture.renderTextureSprite.alpha = properties.alpha;
+        // Filter values
+        var sliceFilterPosX = texture.renderTextureSprite.x - texture.anchorX * sliceRect.width;
+        var sliceFilterPosY = texture.renderTextureSprite.y - texture.anchorY * sliceRect.height;
+        var sliceFilter = properties.slice ? [TextureFilter.SLICE(properties.slice)] : [];
+        sliceFilter.forEach(function (filter) { return Texture.setFilterProperties(filter, _this.width, _this.height, sliceFilterPosX, sliceFilterPosY); });
+        var filterPosX = properties.x - texture.anchorX * sliceRect.width;
+        var filterPosY = properties.y - texture.anchorY * sliceRect.height;
+        properties.filters.forEach(function (filter) { return Texture.setFilterProperties(filter, _this.width, _this.height, filterPosX, filterPosY); });
+        var allFilters = __spread(sliceFilter, properties.filters);
+        texture.renderTextureSprite.filters = allFilters.map(function (filter) { return filter.getPixiFilter(); });
+        texture.renderTextureSprite.filterArea = new PIXI.Rectangle(0, 0, this.width, this.height);
+        // Anchor
+        texture.renderTextureSprite.anchor.x = texture.anchorX;
+        texture.renderTextureSprite.anchor.y = texture.anchorY;
+    };
+    Texture.setFilterProperties = function (filter, width, height, posx, posy) {
+        filter.setDimensions(width, height);
+        filter.setTexturePosition(posx, posy);
+    };
+    return Texture;
+}());
+(function (Texture) {
+    function fromPixiTexture(pixiTexture) {
+        var sprite = new PIXI.Sprite(pixiTexture);
+        var texture = new Texture(pixiTexture.width, pixiTexture.height);
+        texture.anchorX = pixiTexture.defaultAnchor.x;
+        texture.anchorY = pixiTexture.defaultAnchor.y;
+        sprite.x = texture.anchorX * texture.width;
+        sprite.y = texture.anchorY * texture.height;
+        texture.renderDisplayObject(sprite);
+        texture.immutable = true;
+        return texture;
+    }
+    Texture.fromPixiTexture = fromPixiTexture;
+    function none() {
+        return new Texture(1, 1);
+    }
+    Texture.none = none;
+})(Texture || (Texture = {}));
+/// <reference path="texture.ts"/>
 var Preload = /** @class */ (function () {
     function Preload() {
     }
@@ -380,8 +696,8 @@ var Preload = /** @class */ (function () {
         if (anchor) {
             mainTexture.defaultAnchor = new Point(anchor.x, anchor.y);
         }
-        AssetCache.textures[key] = mainTexture;
-        AssetCache.textures2[key] = this.pixiTextureToTexture(mainTexture);
+        AssetCache.pixiTextures[key] = mainTexture;
+        AssetCache.textures[key] = Texture.fromPixiTexture(mainTexture);
         var frames = {};
         if (texture.spritesheet) {
             var numFramesX = Math.floor(baseTexture.width / texture.spritesheet.frameWidth);
@@ -417,8 +733,8 @@ var Preload = /** @class */ (function () {
             if (anchor_1) {
                 frameTexture.defaultAnchor = new Point(anchor_1.x, anchor_1.y);
             }
-            AssetCache.textures[frame] = frameTexture;
-            AssetCache.textures2[frame] = this.pixiTextureToTexture(frameTexture);
+            AssetCache.pixiTextures[frame] = frameTexture;
+            AssetCache.textures[frame] = Texture.fromPixiTexture(frameTexture);
         }
     };
     Preload.preloadPyxelTilemap = function (key, tilemap) {
@@ -452,16 +768,6 @@ var Preload = /** @class */ (function () {
             tilemapForCache.layers.push(tilemapLayer);
         }
         AssetCache.tilemaps[key] = tilemapForCache;
-    };
-    Preload.pixiTextureToTexture = function (pixiTexture) {
-        var sprite = new PIXI.Sprite(pixiTexture);
-        var texture = new Texture(pixiTexture.width, pixiTexture.height);
-        texture.anchorX = pixiTexture.defaultAnchor.x;
-        texture.anchorY = pixiTexture.defaultAnchor.y;
-        sprite.x = texture.pivotX;
-        sprite.y = texture.pivotY;
-        texture.renderDisplayObject(sprite);
-        return texture;
     };
     Preload.TILEMAP_KEY_SUFFIX = '_tilemap_';
     return Preload;
@@ -552,6 +858,8 @@ var Assets;
             url: 'assets/tilemap/cave.png',
             spritesheet: { frameWidth: 16, frameHeight: 16 },
         },
+        'grad': {},
+        'masktest': {},
         // Portraits
         'portraits/milo': {
             defaultAnchor: { x: 0.5, y: 0.5 },
@@ -586,7 +894,7 @@ var Assets;
         },
         // Fonts
         'deluxe16': {
-            rect: { x: 0, y: 0, width: 8, height: 15 },
+            //rect: { x: 0, y: 0, width: 8, height: 15 },
             anchor: { x: 0, y: 0 },
         },
     };
@@ -729,9 +1037,9 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         _this.vx = O.getOrDefault(config.vx, 0);
         _this.vy = O.getOrDefault(config.vy, 0);
         _this.mass = O.getOrDefault(config.mass, 1);
-        _this.gravity = config.gravity ? new Point(config.gravity.x, config.gravity.y) : new Point(0, 0);
+        _this.gravity = config.gravity || { x: 0, y: 0 };
         _this.bounce = O.getOrDefault(config.bounce, 0);
-        _this.bounds = config.bounds ? new Rectangle(config.bounds.x, config.bounds.y, config.bounds.width, config.bounds.height) : new Rectangle(0, 0, 0, 0);
+        _this.bounds = config.bounds || { x: 0, y: 0, width: 0, height: 0 };
         _this.immovable = O.getOrDefault(config.immovable, false);
         _this.colliding = O.getOrDefault(config.colliding, true);
         _this.debugBounds = O.getOrDefault(config.debugBounds, false);
@@ -1342,11 +1650,9 @@ var S;
     S.fadeSlides = fadeSlides;
     function fadeOut(duration, tint) {
         if (tint === void 0) { tint = 0x000000; }
-        var graphics = new PIXI.Graphics();
-        graphics.beginFill(tint, 1);
-        graphics.drawRect(0, 0, Main.width, Main.height);
-        graphics.endFill();
-        return showSlide({ x: 0, y: 0, graphics: graphics, timeToLoad: duration, fadeIn: true });
+        var texture = new Texture(Main.width, Main.height);
+        texture.fill(tint);
+        return showSlide({ x: 0, y: 0, texture: texture, timeToLoad: duration, fadeIn: true });
     }
     S.fadeOut = fadeOut;
     function jump(sprite, peakDelta, time, landOnGround) {
@@ -1575,26 +1881,9 @@ var Sprite = /** @class */ (function (_super) {
         var _this = this;
         config = O.withDefaults(config, defaults);
         _this = _super.call(this, config) || this;
-        if (config.texture) {
-            _this.setTexture(config.texture);
-        }
-        else if (config.graphics) {
-            _this.setGraphics(config.graphics);
-        }
-        else if (config.renderTexture) {
-            if (config.renderTexture instanceof PIXIRenderTextureSprite) {
-                _this.setRenderTexture(config.renderTexture);
-            }
-            else {
-                _this.setRenderTextureDimensions(config.renderTexture.width, config.renderTexture.height);
-            }
-        }
-        else {
-            // Continue gracefully
-            _this.setGraphics(new PIXI.Graphics());
-        }
+        _this.setTexture(config.texture);
         if (config.bounds === undefined) {
-            _this.bounds = _this.getDisplayObjectLocalBounds();
+            _this.bounds = { x: 0, y: 0, width: 0, height: 0 }; //this.getTextureLocalBounds();
         }
         _this.animationManager = new AnimationManager(_this);
         if (config.animations) {
@@ -1639,48 +1928,25 @@ var Sprite = /** @class */ (function (_super) {
     };
     Sprite.prototype.render = function () {
         this.effectsFilter.update();
-        this.setDisplayObjectProperties();
-        if (this.spriteType === Sprite.Type.SPRITE) {
-            global.screen.render(this.texture, {
-                x: this.x + this.offset.x,
-                y: this.y + this.offset.y,
-                scaleX: this.flipX ? -1 : 1,
-                scaleY: this.flipY ? -1 : 1,
-                angle: this.angle,
-                tint: this.tint,
-                alpha: this.alpha,
-            });
-        }
-        else {
-            global.screen.renderDisplayObject(this.displayObject);
-        }
+        global.screen.render(this.texture, {
+            x: this.x + this.offset.x,
+            y: this.y + this.offset.y,
+            scaleX: this.flipX ? -1 : 1,
+            scaleY: this.flipY ? -1 : 1,
+            angle: this.angle,
+            tint: this.tint,
+            alpha: this.alpha,
+            filters: [],
+        });
         _super.prototype.render.call(this);
     };
     Sprite.prototype.getCurrentAnimationName = function () {
         return this.animationManager.getCurrentAnimationName();
     };
-    Sprite.prototype.getDisplayObjectLocalBounds = function () {
-        return this.displayObject.getLocalBounds();
-    };
-    Sprite.prototype.getDisplayObjectWorldBounds = function () {
-        var local = this.getDisplayObjectLocalBounds();
-        return new Rectangle(local.x + this.displayObject.x, local.y + this.displayObject.y, local.width, local.height);
-    };
     Sprite.prototype.playAnimation = function (name, startFrame, force) {
         if (startFrame === void 0) { startFrame = 0; }
         if (force === void 0) { force = false; }
         this.animationManager.playAnimation(name, startFrame, force);
-    };
-    Sprite.prototype.setDisplayObjectProperties = function () {
-        this.displayObject.x = this.x + this.offset.x;
-        this.displayObject.y = this.y + this.offset.y;
-        this.displayObject.scale.x = this.flipX ? -1 : 1;
-        this.displayObject.scale.y = this.flipY ? -1 : 1;
-        this.displayObject.angle = this.angle;
-        this.displayObject.tint = this.tint;
-        this.displayObject.alpha = this.alpha;
-        this.displayObject.filters = [this.effectsFilter];
-        this.displayObject.filterArea = Main.renderer.screen;
     };
     Sprite.prototype.setEffects = function (effects) {
         if (!effects)
@@ -1689,51 +1955,17 @@ var Sprite = /** @class */ (function (_super) {
             this.effects[key] = _.clone(effects[key]);
         }
     };
-    Sprite.prototype.setGraphics = function (graphics) {
-        this.displayObject = graphics;
-        this.spriteType = Sprite.Type.GRAPHICS;
-    };
-    Sprite.prototype.setRenderTexture = function (renderTexture) {
-        this.displayObject = renderTexture;
-        this.spriteType = Sprite.Type.RENDERTEXTURE;
-    };
-    Sprite.prototype.setRenderTextureDimensions = function (width, height) {
-        if (this.spriteType === Sprite.Type.RENDERTEXTURE) {
-            var renderTexture = this.displayObject;
-            if (renderTexture.width !== width || renderTexture.height !== height) {
-                renderTexture.resize(width, height);
-            }
-        }
-        else {
-            this.displayObject = new PIXIRenderTextureSprite(width, height);
-            this.spriteType = Sprite.Type.RENDERTEXTURE;
-        }
-    };
     Sprite.prototype.setTexture = function (key) {
-        if (this.spriteType === Sprite.Type.SPRITE) {
-            var sprite = this.displayObject;
-            var texture = AssetCache.getTexture(key);
-            if (sprite.texture !== texture) {
-                // creating new PIXI sprite to avoid scaling/anchor issues when changing to a texture with a different width/height/anchor
-                this.displayObject = new PIXI.Sprite(texture);
-            }
+        if (!key) {
+            this.texture = Texture.none();
+            return;
         }
-        else {
-            this.displayObject = new PIXI.Sprite(AssetCache.getTexture(key));
-            this.spriteType = Sprite.Type.SPRITE;
-        }
-        this.texture = AssetCache.getTexture2(key);
+        if (_.isString(key))
+            key = AssetCache.getTexture(key);
+        this.texture = key;
     };
     return Sprite;
 }(PhysicsWorldObject));
-(function (Sprite) {
-    var Type;
-    (function (Type) {
-        Type[Type["SPRITE"] = 0] = "SPRITE";
-        Type[Type["GRAPHICS"] = 1] = "GRAPHICS";
-        Type[Type["RENDERTEXTURE"] = 2] = "RENDERTEXTURE";
-    })(Type = Sprite.Type || (Sprite.Type = {}));
-})(Sprite || (Sprite = {}));
 /// <reference path="./sprite.ts" />
 var DialogBox = /** @class */ (function (_super) {
     __extends(DialogBox, _super);
@@ -2181,7 +2413,7 @@ var FPSMetricManager = /** @class */ (function () {
         }
     };
     FPSMetricManager.prototype.report = function () {
-        debug("avg: " + 1 / this.monitor.getAvg() + ", p50: " + 1 / this.monitor.getP(50));
+        //debug(`avg: ${1/this.monitor.getAvg()}, p50: ${1/this.monitor.getP(50)}`);
     };
     return FPSMetricManager;
 }());
@@ -2797,21 +3029,33 @@ var Main = /** @class */ (function () {
     // no need to modify
     Main.play = function () {
         var _this = this;
-        global.theater = this.theater;
-        global.clearStacks();
-        global.pushScreen(this.screen);
         var fps = new FPSMetricManager(1);
+        var mask = new TextureFilter.Mask({ mask: AssetCache.getTexture('masktest'), type: TextureFilter.Mask.Type.LOCAL, offsetX: 3, offsetY: 2 });
+        var outline = new TextureFilter.Outline(0xFF0000, 1);
         PIXI.Ticker.shared.add(function (frameDelta) {
             _this.delta = frameDelta / 60;
             Input.update();
+            global.theater = _this.theater;
+            global.clearStacks();
+            global.pushScreen(_this.screen);
             global.pushWorld(null);
             global.pushDelta(_this.delta);
             fps.update();
             _this.theater.update();
+            if (Input.justDown('1'))
+                mask.invert = !mask.invert;
             _this.screen.clear();
             _this.theater.render();
+            // this.screen.render(AssetCache.getTexture('bed'), {
+            //     x: Input.mouseX,
+            //     y: Input.mouseY,
+            //     filters: [mask, outline]
+            // });
             _this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true); // Clear the renderer
             _this.renderer.render(_this.screen.renderTextureSprite);
+            global.popDelta();
+            global.popWorld();
+            global.popScreen();
         });
     };
     return Main;
@@ -2837,6 +3081,26 @@ var Mask;
         return result;
     }
     Mask.newRectangleMask = newRectangleMask;
+    var Maskf = /** @class */ (function (_super) {
+        __extends(Maskf, _super);
+        function Maskf(rect) {
+            var _this = _super.call(this, Mask.vert, Mask.frag, {}) || this;
+            _this.rect = rect;
+            _this.update();
+            return _this;
+        }
+        Maskf.prototype.update = function () {
+            this.uniforms.filterDimensions = [Main.width, Main.width];
+            this.uniforms.left = this.rect.x;
+            this.uniforms.right = this.rect.x + this.rect.width;
+            this.uniforms.top = this.rect.y;
+            this.uniforms.bottom = this.rect.y + this.rect.height;
+        };
+        return Maskf;
+    }(PIXI.Filter));
+    Mask.Maskf = Maskf;
+    Mask.vert = "\n        attribute vec2 aVertexPosition;\n        uniform mat3 projectionMatrix;\n        varying vec2 vTextureCoord;\n        uniform vec4 inputSize;\n        uniform vec4 outputFrame;\n        \n        vec4 filterVertexPosition(void) {\n            vec2 position = aVertexPosition * max(outputFrame.zw, vec2(0.)) + outputFrame.xy;\n            return vec4((projectionMatrix * vec3(position, 1.0)).xy, 0.0, 1.0);\n        }\n        \n        vec2 filterTextureCoord(void) {\n            return aVertexPosition * (outputFrame.zw * inputSize.zw);\n        }\n        \n        void main(void) {\n            gl_Position = filterVertexPosition();\n            vTextureCoord = filterTextureCoord();\n        }\n    ";
+    Mask.frag = "\n        varying vec2 vTextureCoord;\n        uniform sampler2D uSampler;\n        uniform vec2 filterDimensions;\n\n        uniform float top;\n        uniform float bottom;\n        uniform float left;\n        uniform float right;\n\n        void main(void) {\n            vec2 px = vec2(1.0/filterDimensions.x, 1.0/filterDimensions.y);\n            vec4 c = texture2D(uSampler, vTextureCoord);\n\n            if (vTextureCoord.x < left*px.x || vTextureCoord.x > right*px.x || vTextureCoord.y < top*px.y || vTextureCoord.y > bottom*px.y) {\n                c.a = 0.0;\n            }\n\n            gl_FragColor = c * c.a;\n        }\n    ";
 })(Mask || (Mask = {}));
 var Monitor = /** @class */ (function () {
     function Monitor() {
@@ -2876,6 +3140,7 @@ var Party = /** @class */ (function () {
         this.leader = config.leader;
         this.activeMembers = config.activeMembers;
         this.members = config.members;
+        this.load();
     }
     Party.prototype.addMemberToWorld = function (name, world) {
         var member = this.members[name];
@@ -2940,7 +3205,7 @@ var HUMAN_CHARACTER = {
     physicsGroup: 'player',
     bounds: { x: -5, y: -2, width: 10, height: 2 },
 };
-var party = new Party({
+var party = {
     leader: 'angie',
     activeMembers: ['angie'],
     members: {
@@ -2979,7 +3244,7 @@ var party = new Party({
             },
         },
     }
-});
+};
 var Physics = /** @class */ (function () {
     function Physics() {
     }
@@ -3356,7 +3621,7 @@ var SpriteText = /** @class */ (function (_super) {
             offset: 0,
         });
         _this.setText(config.text);
-        _this.fontSprite = new PIXI.Sprite(AssetCache.getTexture(_this.font.texture).clone());
+        _this.fontTexture = AssetCache.getTexture(_this.font.texture);
         return _this;
     }
     SpriteText.prototype.update = function () {
@@ -3367,9 +3632,17 @@ var SpriteText = /** @class */ (function (_super) {
         try {
             for (var _b = __values(this.chars), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var char = _c.value;
-                this.setFontSpriteToCharacter(char);
-                this.setStyle(char.style);
-                global.screen.renderDisplayObject(this.fontSprite);
+                global.screen.render(this.fontTexture, {
+                    x: this.x + char.x,
+                    y: this.y + char.y + O.getOrDefault(char.style.offset, this.style.offset),
+                    tint: O.getOrDefault(char.style.color, this.style.color),
+                    slice: {
+                        x: SpriteText.charCodes[char.char].x * this.font.charWidth,
+                        y: SpriteText.charCodes[char.char].y * this.font.charHeight,
+                        width: this.font.charWidth,
+                        height: this.font.charHeight
+                    },
+                });
             }
         }
         catch (e_14_1) { e_14 = { error: e_14_1 }; }
@@ -3386,28 +3659,16 @@ var SpriteText = /** @class */ (function (_super) {
     };
     Object.defineProperty(SpriteText.prototype, "mask", {
         get: function () {
-            return this.fontSprite.mask;
+            return null; //this.fontSprite.mask;
         },
         set: function (value) {
-            this.fontSprite.mask = value;
+            //this.fontSprite.mask = value;
         },
         enumerable: true,
         configurable: true
     });
     SpriteText.prototype.getTextHeight = function () {
         return SpriteText.getHeightOfCharList(this.chars);
-    };
-    SpriteText.prototype.setFontSpriteToCharacter = function (char) {
-        this.fontSprite.x = this.x + char.x;
-        this.fontSprite.y = this.y + char.y;
-        var frame = SpriteText.charCodes[char.char];
-        this.fontSprite.texture.frame.x = frame.x * this.font.charWidth;
-        this.fontSprite.texture.frame.y = frame.y * this.font.charHeight;
-        this.fontSprite.texture.frame = this.fontSprite.texture.frame; // Must actually set the frame for changes to take effect.
-    };
-    SpriteText.prototype.setStyle = function (style) {
-        this.fontSprite.tint = O.getOrDefault(style.color, this.style.color);
-        this.fontSprite.y += O.getOrDefault(style.offset, this.style.offset);
     };
     SpriteText.prototype.setText = function (text) {
         this.chars = SpriteTextConverter.textToCharListWithWordWrap(text, this.font, 0);
@@ -3772,8 +4033,8 @@ var Transition;
         __extends(Obj, _super);
         function Obj(oldSnapshot, newSnapshot, transition) {
             var _this = _super.call(this, {}) || this;
-            _this.oldSprite = new Sprite({ renderTexture: oldSnapshot });
-            _this.newSprite = new Sprite({ renderTexture: newSnapshot });
+            _this.oldSprite = new Sprite({ texture: oldSnapshot });
+            _this.newSprite = new Sprite({ texture: newSnapshot });
             _this.done = false;
             if (transition.type === 'instant') {
                 _this.done = true;
@@ -3813,9 +4074,8 @@ var Tilemap = /** @class */ (function (_super) {
         var tilemapDimens = A.get2DArrayDimensions(_this.currentTilemapLayer);
         _this.numTilesX = tilemapDimens.width;
         _this.numTilesY = tilemapDimens.height;
-        _this.renderTexture = new PIXIRenderTextureSprite(_this.numTilesX * _this.tilemap.tileset.tileWidth, _this.numTilesY * _this.tilemap.tileset.tileHeight);
+        _this.renderTexture = new Texture(_this.numTilesX * _this.tilemap.tileset.tileWidth, _this.numTilesY * _this.tilemap.tileset.tileHeight);
         _this.createCollisionBoxes(O.getOrDefault(config.collisionDebugBounds, false));
-        _this.tileSprite = new PIXI.Sprite();
         _this.dirty = true;
         return _this;
     }
@@ -3867,9 +4127,7 @@ var Tilemap = /** @class */ (function (_super) {
             this.drawRenderTexture();
             this.dirty = false;
         }
-        this.renderTexture.x = this.x;
-        this.renderTexture.y = this.y;
-        global.screen.renderDisplayObject(this.renderTexture);
+        global.screen.render(this.renderTexture, { x: this.x, y: this.y });
         _super.prototype.render.call(this);
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
@@ -3903,10 +4161,8 @@ var Tilemap = /** @class */ (function (_super) {
                     continue;
                 var tile = this.currentTilemapLayer[y][x];
                 var textureKey = this.tilemap.tileset.tiles[tile.index];
-                this.tileSprite.texture = AssetCache.getTexture(textureKey);
-                this.tileSprite.x = x * this.tilemap.tileset.tileWidth;
-                this.tileSprite.y = y * this.tilemap.tileset.tileHeight;
-                Main.renderer.render(this.tileSprite, this.renderTexture.renderTexture, false);
+                var texture = AssetCache.getTexture(textureKey);
+                this.renderTexture.render(texture, { x: x * this.tilemap.tileset.tileWidth, y: y * this.tilemap.tileset.tileHeight });
             }
         }
     };
@@ -4030,6 +4286,7 @@ var Warp = /** @class */ (function (_super) {
 }(PhysicsWorldObject));
 /// <reference path="./backWall.ts" />
 /// <reference path="./baseStage.ts" />
+/// <reference path="./camera.ts" />
 /// <reference path="./utils/o_object.ts" />
 /// <reference path="./transition.ts" />
 /// <reference path="./tilemap.ts" />
@@ -4078,11 +4335,16 @@ var stages = {
     'main': {
         parent: BASE_STAGE,
         camera: {
-            bounds: {
-                left: 0,
-                top: 0,
-                right: 256,
-                bottom: 192
+            // bounds: {
+            //     left: 0,
+            //     top: 0,
+            //     right: 256,
+            //     bottom: 192
+            // },
+            mode: {
+                type: 'follow',
+                target: 'angie',
+                offset: { x: 0, y: -18 }
             }
         },
         entryPoints: {
@@ -4596,59 +4858,6 @@ var S;
     };
 })(S || (S = {}));
 var storyboard = S.storyboard;
-var Texture = /** @class */ (function () {
-    function Texture(width, height) {
-        this.renderTextureSprite = new PIXIRenderTextureSprite(width, height);
-        this.anchorX = 0;
-        this.anchorY = 0;
-    }
-    Object.defineProperty(Texture.prototype, "width", {
-        get: function () { return this.renderTextureSprite.width; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Texture.prototype, "height", {
-        get: function () { return this.renderTextureSprite.height; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Texture.prototype, "pivotX", {
-        get: function () { return this.anchorX * this.width; },
-        set: function (value) { this.anchorX = value / this.width; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Texture.prototype, "pivotY", {
-        get: function () { return this.anchorY * this.height; },
-        set: function (value) { this.anchorY = value / this.height; },
-        enumerable: true,
-        configurable: true
-    });
-    Texture.prototype.clear = function () {
-        this.renderTextureSprite.clear();
-    };
-    Texture.prototype.render = function (texture, properties) {
-        texture.setRenderTextureSpriteProperties(properties);
-        this.renderDisplayObject(texture.renderTextureSprite);
-    };
-    Texture.prototype.renderDisplayObject = function (displayObject) {
-        Main.renderer.render(displayObject, this.renderTextureSprite.renderTexture, false);
-    };
-    Texture.prototype.setRenderTextureSpriteProperties = function (properties) {
-        if (!properties)
-            properties = {};
-        this.renderTextureSprite.x = O.getOrDefault(properties.x, 0);
-        this.renderTextureSprite.y = O.getOrDefault(properties.y, 0);
-        this.renderTextureSprite.scale.x = O.getOrDefault(properties.scaleX, 1);
-        this.renderTextureSprite.scale.y = O.getOrDefault(properties.scaleY, 1);
-        this.renderTextureSprite.angle = O.getOrDefault(properties.angle, 0);
-        this.renderTextureSprite.tint = O.getOrDefault(properties.tint, 0xFFFFFF);
-        this.renderTextureSprite.alpha = O.getOrDefault(properties.alpha, 1);
-        this.renderTextureSprite.anchor.x = this.anchorX;
-        this.renderTextureSprite.anchor.y = this.anchorY;
-    };
-    return Texture;
-}());
 /// <reference path="./worldObject.ts" />
 var World = /** @class */ (function (_super) {
     __extends(World, _super);
@@ -4776,8 +4985,8 @@ var World = /** @class */ (function (_super) {
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var layer = _c.value;
-                layer.screen.clear();
-                global.pushScreen(layer.screen);
+                layer.texture.clear();
+                global.pushScreen(layer.texture);
                 this.renderLayer(layer);
                 global.popScreen();
                 layer.renderTextureSprite.render();
@@ -5023,7 +5232,7 @@ var World = /** @class */ (function (_super) {
         this.x = lastx;
         this.y = lasty;
         global.popScreen();
-        return screen.renderTextureSprite;
+        return screen;
     };
     World.prototype.createLayers = function (layers) {
         var e_33, _a;
@@ -5072,8 +5281,8 @@ var World = /** @class */ (function (_super) {
             this.sortKey = config.sortKey;
             this.reverseSort = config.reverseSort;
             //this.renderTexture = new PIXIRenderTextureSprite(width, height);
-            this.screen = new Texture(width, height);
-            this.renderTextureSprite = new Sprite({ x: 0, y: 0, renderTexture: this.screen.renderTextureSprite, effects: config.effects });
+            this.texture = new Texture(width, height);
+            this.renderTextureSprite = new Sprite({ x: 0, y: 0, texture: this.texture, effects: config.effects });
         }
         Object.defineProperty(Layer.prototype, "effects", {
             get: function () { return this.renderTextureSprite.effects; },
@@ -5116,8 +5325,7 @@ var Theater = /** @class */ (function (_super) {
         _this.debugMousePosition = new SpriteText({ font: Assets.fonts.DELUXE16, x: 0, y: 0 });
         _this.stages = config.stages;
         _this.storyboard = config.storyboard;
-        _this.party = config.party;
-        _this.party.load();
+        _this.party = new Party(config.party);
         _this.cutsceneManager = new CutsceneManager();
         _this.skipCutsceneScriptKey = config.skipCutsceneScriptKey;
         _this.stageLoadQueue = null;
@@ -5336,6 +5544,72 @@ var Theater = /** @class */ (function (_super) {
     Theater.DEFAULT_ENTRY_POINT = { x: Main.width / 2, y: Main.height / 2 };
     return Theater;
 }(World));
+/// <reference path="theater.ts"/>
+var TestTheater = /** @class */ (function (_super) {
+    __extends(TestTheater, _super);
+    function TestTheater() {
+        var _this = this;
+        DEBUG_SHOW_MOUSE_POSITION = false;
+        _this = _super.call(this, {
+            stages: { 's': { backgroundColor: 0x000066 } },
+            stageToLoad: 's',
+            storyboard: { 's': { type: 'gameplay', start: function () { } } },
+            storyboardEntry: 's',
+            party: party,
+            dialogBox: {
+                x: Main.width / 2, y: Main.height - 32,
+                texture: 'dialogbox',
+                spriteTextFont: Assets.fonts.DELUXE16,
+                textAreaFull: { x: -122, y: -27, width: 244, height: 54 },
+                textAreaPortrait: { x: -122, y: -27, width: 174, height: 54 },
+                portraitPosition: { x: 86, y: 0 },
+                advanceKey: 'advanceDialog',
+            },
+            skipCutsceneScriptKey: 'skipCutsceneScript',
+            interactionManager: {
+                highlightFunction: function (sprite) {
+                    sprite.effects.outline.enabled = true;
+                    sprite.effects.outline.color = 0xFFFF00;
+                },
+                resetFunction: function (sprite) {
+                    sprite.effects.outline.enabled = false;
+                },
+            }
+        }) || this;
+        _this.t = AssetCache.getTexture('grad');
+        _this.f = new TextureFilter({
+            uniforms: [],
+            defaultUniforms: {},
+            code: "\n                result = vec4(1.0 - color.r, 1.0 - color.g, 1.0 - color.b, color.a);\n            "
+        });
+        _this.f2 = new TextureFilter({
+            uniforms: [],
+            defaultUniforms: {},
+            code: "\n                result = vec4(1.0, 0.0, 0.0, color.a);\n            "
+        });
+        _this.doSlice = true;
+        return _this;
+    }
+    TestTheater.prototype.render = function () {
+        _super.prototype.render.call(this);
+        if (Input.justDown('1')) {
+            this.doSlice = !this.doSlice;
+        }
+        global.screen.render(AssetCache.getTexture('bed'), {
+            x: 100,
+            y: 100,
+            slice: this.doSlice ? { x: 0, y: 0, width: 20, height: 20 } : undefined,
+            filters: [this.f]
+        });
+        global.screen.render(this.t, {
+            x: Input.mouseX,
+            y: Input.mouseY,
+            slice: { x: 20, y: 20, width: 20, height: 20 },
+            filters: [this.f2],
+        });
+    };
+    return TestTheater;
+}(Theater));
 var Timer = /** @class */ (function () {
     function Timer(duration, callback, repeat) {
         if (repeat === void 0) { repeat = false; }
@@ -5430,7 +5704,7 @@ var G;
     }
     G.expandRectangle = expandRectangle;
     function overlapRectangles(rect1, rect2) {
-        return rect1.left < rect2.right && rect1.right > rect2.left && rect1.top < rect2.bottom && rect1.bottom > rect2.top;
+        return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y;
     }
     G.overlapRectangles = overlapRectangles;
     function rectContains(rect, contains) {
@@ -5502,6 +5776,10 @@ var M;
         return result;
     }
     M.min = min;
+    function minPowerOf2(num) {
+        return Math.pow(2, Math.ceil(Math.log2(num)));
+    }
+    M.minPowerOf2 = minPowerOf2;
 })(M || (M = {}));
 var RandomNumberGenerator = /** @class */ (function () {
     function RandomNumberGenerator(seed) {

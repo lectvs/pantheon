@@ -20,11 +20,11 @@ namespace Transition {
         newSprite: Sprite;
         done: boolean;
 
-        constructor(oldSnapshot: PIXIRenderTextureSprite, newSnapshot: PIXIRenderTextureSprite, transition: Transition) {
+        constructor(oldSnapshot: Texture, newSnapshot: Texture, transition: Transition) {
             super({});
 
-            this.oldSprite = new Sprite({ renderTexture: oldSnapshot });
-            this.newSprite = new Sprite({ renderTexture: newSnapshot });
+            this.oldSprite = new Sprite({ texture: oldSnapshot });
+            this.newSprite = new Sprite({ texture: newSnapshot });
             this.done = false;
 
             if (transition.type === 'instant') {

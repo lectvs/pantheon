@@ -21,6 +21,7 @@ class Party {
         this.leader = config.leader;
         this.activeMembers = config.activeMembers;
         this.members = config.members;
+        this.load();
     }
 
     addMemberToWorld(name: string, world: World) {

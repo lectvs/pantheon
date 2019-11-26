@@ -2,9 +2,7 @@
 
 namespace Sprite {
     export type Config = PhysicsWorldObject.Config & {
-        texture?: string;
-        graphics?: PIXI.Graphics;
-        renderTexture?: PIXIRenderTextureSprite | { width: number, height: number };
+        texture?: string | Texture;
         offset?: Pt;
         angle?: number;
         animations?: Animation.Config[];
@@ -17,9 +15,6 @@ namespace Sprite {
 
 class Sprite extends PhysicsWorldObject {
     private texture: Texture;
-    private displayObject: PIXI.Sprite | PIXI.Graphics | PIXIRenderTextureSprite;
-    spriteType: Sprite.Type;
-
     protected animationManager: AnimationManager;
 
     flipX: boolean;
@@ -37,23 +32,10 @@ class Sprite extends PhysicsWorldObject {
         config = O.withDefaults(config, defaults);
         super(config);
 
-        if (config.texture) {
-            this.setTexture(config.texture);
-        } else if (config.graphics) {
-            this.setGraphics(config.graphics);
-        } else if (config.renderTexture) {
-            if (config.renderTexture instanceof PIXIRenderTextureSprite) {
-                this.setRenderTexture(config.renderTexture);
-            } else {
-                this.setRenderTextureDimensions(config.renderTexture.width, config.renderTexture.height);
-            }
-        } else {
-            // Continue gracefully
-            this.setGraphics(new PIXI.Graphics());
-        }
+        this.setTexture(config.texture);
 
         if (config.bounds === undefined) {
-            this.bounds = this.getDisplayObjectLocalBounds();
+            this.bounds = { x: 0, y: 0, width: 0, height: 0 };//this.getTextureLocalBounds();
         }
 
         this.animationManager = new AnimationManager(this);
@@ -97,22 +79,16 @@ class Sprite extends PhysicsWorldObject {
 
     render() {
         this.effectsFilter.update();
-        this.setDisplayObjectProperties();
-        if (this.spriteType === Sprite.Type.SPRITE) {
-            global.screen.render(this.texture, {
-                x: this.x + this.offset.x,
-                y: this.y + this.offset.y,
-                scaleX: this.flipX ? -1 : 1,
-                scaleY: this.flipY ? -1 : 1,
-                angle: this.angle,
-                tint: this.tint,
-                alpha: this.alpha,
-                // filter?
-                // filterArea?
-            });
-        } else {
-            global.screen.renderDisplayObject(this.displayObject);
-        }
+        global.screen.render(this.texture, {
+            x: this.x + this.offset.x,
+            y: this.y + this.offset.y,
+            scaleX: this.flipX ? -1 : 1,
+            scaleY: this.flipY ? -1 : 1,
+            angle: this.angle,
+            tint: this.tint,
+            alpha: this.alpha,
+            filters: [],
+        });
         
         super.render();
     }
@@ -121,29 +97,8 @@ class Sprite extends PhysicsWorldObject {
         return this.animationManager.getCurrentAnimationName();
     }
 
-    getDisplayObjectLocalBounds() {
-        return this.displayObject.getLocalBounds();
-    }
-
-    getDisplayObjectWorldBounds() {
-        let local = this.getDisplayObjectLocalBounds();
-        return new Rectangle(local.x + this.displayObject.x, local.y + this.displayObject.y, local.width, local.height);
-    }
-
     playAnimation(name: string, startFrame: number = 0, force: boolean = false) {
         this.animationManager.playAnimation(name, startFrame, force);
-    }
-
-    setDisplayObjectProperties() {
-        this.displayObject.x = this.x + this.offset.x;
-        this.displayObject.y = this.y + this.offset.y;
-        this.displayObject.scale.x = this.flipX ? -1 : 1;
-        this.displayObject.scale.y = this.flipY ? -1 : 1;
-        this.displayObject.angle = this.angle;
-        this.displayObject.tint = this.tint;
-        this.displayObject.alpha = this.alpha;
-        this.displayObject.filters = [this.effectsFilter];
-        this.displayObject.filterArea = Main.renderer.screen;
     }
 
     setEffects(effects: Effects) {
@@ -153,46 +108,13 @@ class Sprite extends PhysicsWorldObject {
         }
     }
 
-    setGraphics(graphics: PIXI.Graphics) {
-        this.displayObject = graphics;
-        this.spriteType = Sprite.Type.GRAPHICS;
-    }
-
-    setRenderTexture(renderTexture: PIXIRenderTextureSprite) {
-        this.displayObject = renderTexture;
-        this.spriteType = Sprite.Type.RENDERTEXTURE;
-    }
-
-    setRenderTextureDimensions(width: number, height: number) {
-        if (this.spriteType === Sprite.Type.RENDERTEXTURE) {
-            let renderTexture = <PIXIRenderTextureSprite>this.displayObject;
-            if (renderTexture.width !== width || renderTexture.height !== height) {
-                renderTexture.resize(width, height);
-            }
-        } else {
-            this.displayObject = new PIXIRenderTextureSprite(width, height);
-            this.spriteType = Sprite.Type.RENDERTEXTURE;
+    setTexture(key: string | Texture) {
+        if (!key) {
+            this.texture = Texture.none();
+            return;
         }
-    }
-
-    setTexture(key: string) {
-        if (this.spriteType === Sprite.Type.SPRITE) {
-            let sprite = <PIXI.Sprite>this.displayObject;
-            let texture = AssetCache.getTexture(key);
-            if (sprite.texture !== texture) {
-                // creating new PIXI sprite to avoid scaling/anchor issues when changing to a texture with a different width/height/anchor
-                this.displayObject = new PIXI.Sprite(texture);
-            }
-        } else {
-            this.displayObject = new PIXI.Sprite(AssetCache.getTexture(key));
-            this.spriteType = Sprite.Type.SPRITE;
-        }
-        this.texture = AssetCache.getTexture2(key);
+        if (_.isString(key)) key = AssetCache.getTexture(key);
+        this.texture = key;
     }
 }
 
-namespace Sprite {
-    export enum Type {
-        SPRITE, GRAPHICS, RENDERTEXTURE,
-    }
-}

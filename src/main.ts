@@ -102,29 +102,43 @@ class Main {
 
     // no need to modify
     private static play() {
-        global.theater = this.theater;
-        global.clearStacks();
-        global.pushScreen(this.screen);
-
         let fps = new FPSMetricManager(1);
+
+        let mask = new TextureFilter.Mask({ mask: AssetCache.getTexture('masktest'), type: TextureFilter.Mask.Type.LOCAL, offsetX: 3, offsetY: 2 });
+        let outline = new TextureFilter.Outline(0xFF0000, 1);
 
         PIXI.Ticker.shared.add(frameDelta => {
             this.delta = frameDelta/60;
 
             Input.update();
 
+            global.theater = this.theater;
+            global.clearStacks();
+            global.pushScreen(this.screen);
             global.pushWorld(null);
             global.pushDelta(this.delta);
 
             fps.update();
 
             this.theater.update();
+
+            if (Input.justDown('1')) mask.invert = !mask.invert;
             
             this.screen.clear();
             this.theater.render();
 
+            // this.screen.render(AssetCache.getTexture('bed'), {
+            //     x: Input.mouseX,
+            //     y: Input.mouseY,
+            //     filters: [mask, outline]
+            // });
+
             this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
             this.renderer.render(this.screen.renderTextureSprite);
+
+            global.popDelta();
+            global.popWorld();
+            global.popScreen();
         });
     }
 }

@@ -25,7 +25,7 @@ class SpriteText extends WorldObject {
     style: SpriteText.Style;
     chars: SpriteText.Character[];
 
-    private fontSprite: PIXI.Sprite;
+    private fontTexture: Texture;
 
     constructor(config: SpriteText.Config) {
         super(config);
@@ -36,7 +36,7 @@ class SpriteText extends WorldObject {
         });
         this.setText(config.text);
 
-        this.fontSprite = new PIXI.Sprite(AssetCache.getTexture(this.font.texture).clone());
+        this.fontTexture = AssetCache.getTexture(this.font.texture);
     }
 
     update() {
@@ -45,9 +45,17 @@ class SpriteText extends WorldObject {
 
     render() {
         for (let char of this.chars) {
-            this.setFontSpriteToCharacter(char);
-            this.setStyle(char.style);
-            global.screen.renderDisplayObject(this.fontSprite);
+            global.screen.render(this.fontTexture, {
+                x: this.x + char.x,
+                y: this.y + char.y + O.getOrDefault(char.style.offset, this.style.offset),
+                tint: O.getOrDefault(char.style.color, this.style.color),
+                slice: {
+                    x: SpriteText.charCodes[char.char].x * this.font.charWidth,
+                    y: SpriteText.charCodes[char.char].y * this.font.charHeight,
+                    width: this.font.charWidth,
+                    height: this.font.charHeight
+                },
+            });
         }
         super.render();
     }
@@ -57,30 +65,15 @@ class SpriteText extends WorldObject {
     }
 
     get mask() {
-        return this.fontSprite.mask;
+        return null;//this.fontSprite.mask;
     }
 
     getTextHeight() {
         return SpriteText.getHeightOfCharList(this.chars);
     }
 
-    setFontSpriteToCharacter(char: SpriteText.Character) {
-        this.fontSprite.x = this.x + char.x;
-        this.fontSprite.y = this.y + char.y;
-
-        let frame = SpriteText.charCodes[char.char];
-        this.fontSprite.texture.frame.x = frame.x * this.font.charWidth;
-        this.fontSprite.texture.frame.y = frame.y * this.font.charHeight;
-        this.fontSprite.texture.frame = this.fontSprite.texture.frame;  // Must actually set the frame for changes to take effect.
-    }
-
     set mask(value) {
-        this.fontSprite.mask = value;
-    }
-
-    setStyle(style: SpriteText.Style) {
-        this.fontSprite.tint = O.getOrDefault(style.color, this.style.color);
-        this.fontSprite.y += O.getOrDefault(style.offset, this.style.offset);
+        //this.fontSprite.mask = value;
     }
 
     setText(text: string) {

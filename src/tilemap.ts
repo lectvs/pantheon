@@ -32,11 +32,10 @@ class Tilemap extends WorldObject {
     numTilesX: number;
     numTilesY: number;
 
-    renderTexture: PIXIRenderTextureSprite;
+    renderTexture: Texture;
     collisionBoxes: PhysicsWorldObject[];
     
     private tilemapLayer: number;
-    private tileSprite: PIXI.Sprite;
     private dirty: boolean;
 
     get currentTilemapLayer() { return this.tilemap.layers[this.tilemapLayer]; }
@@ -52,10 +51,9 @@ class Tilemap extends WorldObject {
         this.numTilesX = tilemapDimens.width;
         this.numTilesY = tilemapDimens.height;
 
-        this.renderTexture = new PIXIRenderTextureSprite(this.numTilesX * this.tilemap.tileset.tileWidth, this.numTilesY * this.tilemap.tileset.tileHeight);
+        this.renderTexture = new Texture(this.numTilesX * this.tilemap.tileset.tileWidth, this.numTilesY * this.tilemap.tileset.tileHeight);
         this.createCollisionBoxes(O.getOrDefault(config.collisionDebugBounds, false));
 
-        this.tileSprite = new PIXI.Sprite();
         this.dirty = true;
     }
 
@@ -83,9 +81,7 @@ class Tilemap extends WorldObject {
             this.dirty = false;
         }
         
-        this.renderTexture.x = this.x;
-        this.renderTexture.y = this.y;
-        global.screen.renderDisplayObject(this.renderTexture);
+        global.screen.render(this.renderTexture, { x: this.x, y: this.y });
 
         super.render();
     }
@@ -109,10 +105,8 @@ class Tilemap extends WorldObject {
                 if (!this.currentTilemapLayer[y][x] || this.currentTilemapLayer[y][x].index < 0) continue;
                 let tile = this.currentTilemapLayer[y][x];
                 let textureKey = this.tilemap.tileset.tiles[tile.index];
-                this.tileSprite.texture = AssetCache.getTexture(textureKey);
-                this.tileSprite.x = x * this.tilemap.tileset.tileWidth;
-                this.tileSprite.y = y * this.tilemap.tileset.tileHeight;
-                Main.renderer.render(this.tileSprite, this.renderTexture.renderTexture, false);
+                let texture = AssetCache.getTexture(textureKey);
+                this.renderTexture.render(texture, { x: x * this.tilemap.tileset.tileWidth, y: y * this.tilemap.tileset.tileHeight });
             }
         }
     }

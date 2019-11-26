@@ -42,11 +42,9 @@ namespace S {
     }
 
     export function fadeOut(duration: number, tint: number = 0x000000): Script.Function {
-        let graphics = new PIXI.Graphics();
-        graphics.beginFill(tint, 1);
-        graphics.drawRect(0, 0, Main.width, Main.height);
-        graphics.endFill();
-        return showSlide({ x: 0, y: 0, graphics: graphics, timeToLoad: duration, fadeIn: true });
+        let texture = new Texture(Main.width, Main.height);
+        texture.fill(tint);
+        return showSlide({ x: 0, y: 0, texture: texture, timeToLoad: duration, fadeIn: true });
     }
 
     export function jump(sprite: Sprite, peakDelta: number, time: number, landOnGround: boolean = false): Script.Function {

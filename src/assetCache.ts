@@ -1,21 +1,22 @@
 // Only meant to be populated by Preload
 class AssetCache {
-    static textures: Dict<PIXI.Texture> = {};
-    static textures2: Dict<Texture> = {};
+    static pixiTextures: Dict<PIXI.Texture> = {};
+    static textures: Dict<Texture> = {};
     static tilemaps: Dict<Tilemap.Tilemap> = {};
+
+    static getPixiTexture(key: string) {
+        if (!this.pixiTextures[key]) {
+            debug(`Texture '${key}' does not exist.`);
+        }
+        return this.pixiTextures[key];
+    }
 
     static getTexture(key: string) {
         if (!this.textures[key]) {
-            debug(`Texture '${key}' does not exist.`);
+            debug(`Texture2 '${key}' does not exist.`);
+            return Texture.none();
         }
         return this.textures[key];
-    }
-
-    static getTexture2(key: string) {
-        if (!this.textures2[key]) {
-            debug(`Texture2 '${key}' does not exist.`);
-        }
-        return this.textures2[key];
     }
 
     static getTilemap(key: string) {
