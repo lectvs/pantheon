@@ -334,12 +334,31 @@ var AssetCache = /** @class */ (function () {
     AssetCache.DEFAULT_ANCHOR = { x: 0, y: 0 };
     return AssetCache;
 }());
+//var DEBUG: boolean = true;
+var DEBUG_ALL_PHYSICS_BOUNDS = false;
+var DEBUG_MOVE_CAMERA_WITH_ARROWS = true;
+var DEBUG_SHOW_MOUSE_POSITION = true;
+var DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = false;
+var debug = console.info;
+// function debug(message?: any, ...optionalParams: any[]) {
+//     if (DEBUG) {
+//         console.log(message, ...optionalParams);
+//     }
+// }
+function get(name) {
+    var worldObject = Main.theater.currentWorld.getWorldObjectByName(name);
+    if (worldObject)
+        return worldObject;
+    return undefined;
+}
+///<reference path="./debug.ts"/>
 var TextureFilter = /** @class */ (function () {
     function TextureFilter(config) {
-        var uniforms = (config.uniforms || []).map(function (uniform) { return "uniform " + uniform + ";"; }).join('');
+        var uniformsCode = (config.uniforms || []).map(function (uniform) { return "uniform " + uniform + ";"; }).join('');
         var vert = TextureFilter.vert;
-        var frag = TextureFilter.fragPreUniforms + uniforms + TextureFilter.fragStartFunc + config.code + TextureFilter.fragEndFunc;
+        var frag = TextureFilter.fragPreUniforms + uniformsCode + TextureFilter.fragStartFunc + config.code + TextureFilter.fragEndFunc;
         this.pixiFilter = new PIXI.Filter(vert, frag, {});
+        this.uniforms = this.constructUniforms(config.uniforms);
         this.setUniforms(config.defaultUniforms);
     }
     TextureFilter.prototype.getPixiFilter = function () {
@@ -347,6 +366,8 @@ var TextureFilter = /** @class */ (function () {
     };
     TextureFilter.prototype.getUniform = function (uniform) {
         return this.pixiFilter.uniforms[uniform];
+    };
+    TextureFilter.prototype.setPixiUniforms = function () {
     };
     TextureFilter.prototype.setDimensions = function (width, height) { };
     TextureFilter.prototype.setTexturePosition = function (posx, posy) {
@@ -363,6 +384,16 @@ var TextureFilter = /** @class */ (function () {
             this.pixiFilter.uniforms[key] = uniforms[key];
         }
     };
+    TextureFilter.prototype.constructUniforms = function (uniformDeclarations) {
+        if (_.isEmpty(uniformDeclarations))
+            return {};
+        var uniformMap = {};
+        uniformDeclarations
+            .map(function (decl) { return decl.trim(); })
+            .map(function (decl) { return decl.substring(decl.lastIndexOf(' ') + 1); })
+            .forEach(function (decl) { return (uniformMap[decl] = undefined); });
+        return uniformMap;
+    };
     TextureFilter.vert = "\n        attribute vec2 aVertexPosition;\n        uniform mat3 projectionMatrix;\n        varying vec2 vTextureCoord;\n        uniform vec4 inputSize;\n        uniform vec4 outputFrame;\n        varying vec4 is;\n        \n        vec4 filterVertexPosition(void) {\n            vec2 position = aVertexPosition * max(outputFrame.zw, vec2(0.)) + outputFrame.xy;\n            return vec4((projectionMatrix * vec3(position, 1.0)).xy, 0.0, 1.0);\n        }\n        \n        vec2 filterTextureCoord(void) {\n            return aVertexPosition * (outputFrame.zw * inputSize.zw);\n        }\n        \n        void main(void) {\n            gl_Position = filterVertexPosition();\n            vTextureCoord = filterTextureCoord();\n            is = inputSize;\n        }\n    ";
     TextureFilter.fragPreUniforms = "\n        varying vec2 vTextureCoord;\n        varying vec4 is;\n        uniform sampler2D uSampler;\n        uniform float posx;\n        uniform float posy;\n\n        float width;\n        float height;\n    ";
     TextureFilter.fragStartFunc = "\n        vec4 getColor(float localx, float localy) {\n            float tx = (localx + posx) / width;\n            float ty = (localy + posy) / height;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        vec4 getWorldColor(float worldx, float worldy) {\n            float tx = worldx / width;\n            float ty = worldy / height;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        void main(void) {\n            width = is.x;\n            height = is.y;\n            float worldx = vTextureCoord.x * width;\n            float worldy = vTextureCoord.y * height;\n            float x = worldx - posx;\n            float y = worldy - posy;\n            vec4 color = texture2D(uSampler, vTextureCoord);\n            // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.\n            if (color.a > 0.0) {\n                color.rgb /= color.a;\n            }\n            vec4 result = vec4(color.r, color.g, color.b, color.a);\n    ";
@@ -370,6 +401,7 @@ var TextureFilter = /** @class */ (function () {
     return TextureFilter;
 }());
 (function (TextureFilter) {
+    TextureFilter.cache = {};
     var Static = /** @class */ (function (_super) {
         __extends(Static, _super);
         function Static(code) {
@@ -1855,23 +1887,6 @@ var S;
     }
     S.showSlide = showSlide;
 })(S || (S = {}));
-//var DEBUG: boolean = true;
-var DEBUG_ALL_PHYSICS_BOUNDS = false;
-var DEBUG_MOVE_CAMERA_WITH_ARROWS = true;
-var DEBUG_SHOW_MOUSE_POSITION = true;
-var DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = false;
-var debug = console.info;
-// function debug(message?: any, ...optionalParams: any[]) {
-//     if (DEBUG) {
-//         console.log(message, ...optionalParams);
-//     }
-// }
-function get(name) {
-    var worldObject = Main.theater.currentWorld.getWorldObjectByName(name);
-    if (worldObject)
-        return worldObject;
-    return undefined;
-}
 /// <reference path="./physicsWorldObject.ts" />
 var Sprite = /** @class */ (function (_super) {
     __extends(Sprite, _super);

@@ -1,3 +1,5 @@
+///<reference path="./debug.ts"/>
+
 namespace TextureFilter {
     export type Config = {
         uniforms?: string[];
@@ -7,13 +9,15 @@ namespace TextureFilter {
 }
 
 class TextureFilter {
+    private uniforms: Dict<any>;
     private pixiFilter: PIXI.Filter;
 
     constructor(config: TextureFilter.Config) {
-        let uniforms = (config.uniforms || []).map(uniform => `uniform ${uniform};`).join('');
+        let uniformsCode = (config.uniforms || []).map(uniform => `uniform ${uniform};`).join('');
         let vert = TextureFilter.vert;
-        let frag = TextureFilter.fragPreUniforms + uniforms + TextureFilter.fragStartFunc + config.code + TextureFilter.fragEndFunc;
+        let frag = TextureFilter.fragPreUniforms + uniformsCode + TextureFilter.fragStartFunc + config.code + TextureFilter.fragEndFunc;
         this.pixiFilter = new PIXI.Filter(vert, frag, {});
+        this.uniforms = this.constructUniforms(config.uniforms);
         this.setUniforms(config.defaultUniforms);
     }
 
@@ -23,6 +27,10 @@ class TextureFilter {
 
     getUniform(uniform: string) {
         return this.pixiFilter.uniforms[uniform];
+    }
+
+    setPixiUniforms() {
+        
     }
 
     setDimensions(width: number, height: number) { }
@@ -41,6 +49,16 @@ class TextureFilter {
         for (let key in uniforms) {
             this.pixiFilter.uniforms[key] = uniforms[key];
         }
+    }
+
+    private constructUniforms(uniformDeclarations: string[]) {
+        if (_.isEmpty(uniformDeclarations)) return {};
+        let uniformMap = {};
+        uniformDeclarations
+            .map(decl => decl.trim())
+            .map(decl => decl.substring(decl.lastIndexOf(' ') + 1))
+            .forEach(decl => (uniformMap[decl] = undefined));
+        return uniformMap;
     }
 
     private static vert = `
@@ -115,6 +133,8 @@ class TextureFilter {
 }
 
 namespace TextureFilter {
+    export const cache: Dict<PIXI.Filter> = {};
+
     export class Static extends TextureFilter {
         constructor(code: string) {
             super({ code });
