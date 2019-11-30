@@ -127,11 +127,11 @@ class Main {
             this.screen.clear();
             this.theater.render();
 
-            // this.screen.render(AssetCache.getTexture('bed'), {
-            //     x: Input.mouseX,
-            //     y: Input.mouseY,
-            //     filters: [mask, outline]
-            // });
+            this.screen.render(AssetCache.getTexture('bed'), {
+                x: Input.mouseX,
+                y: Input.mouseY,
+                filters: [mask, outline]
+            });
 
             this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
             this.renderer.render(this.screen.renderTextureSprite);

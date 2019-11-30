@@ -13,10 +13,7 @@ class TextureFilter {
     private pixiFilter: PIXI.Filter;
 
     constructor(config: TextureFilter.Config) {
-        let uniformsCode = (config.uniforms || []).map(uniform => `uniform ${uniform};`).join('');
-        let vert = TextureFilter.vert;
-        let frag = TextureFilter.fragPreUniforms + uniformsCode + TextureFilter.fragStartFunc + config.code + TextureFilter.fragEndFunc;
-        this.pixiFilter = new PIXI.Filter(vert, frag, {});
+        this.pixiFilter = this.constructPixiFilterCached(config.code, config.uniforms);
         this.uniforms = this.constructUniforms(config.uniforms);
         this.setUniforms(config.defaultUniforms);
     }
@@ -26,11 +23,13 @@ class TextureFilter {
     }
 
     getUniform(uniform: string) {
-        return this.pixiFilter.uniforms[uniform];
+        return this.uniforms[uniform];
     }
 
     setPixiUniforms() {
-        
+        for (let uniform in this.uniforms) {
+            this.pixiFilter.uniforms[uniform] = this.uniforms[uniform];
+        }
     }
 
     setDimensions(width: number, height: number) { }
@@ -41,13 +40,13 @@ class TextureFilter {
     }
 
     setUniform(uniform: string, value: any) {
-        this.pixiFilter.uniforms[uniform] = value;
+        this.uniforms[uniform] = value;
     }
 
     setUniforms(uniforms: Dict<any>) {
         if (!uniforms) return;
         for (let key in uniforms) {
-            this.pixiFilter.uniforms[key] = uniforms[key];
+            this.uniforms[key] = uniforms[key];
         }
     }
 
@@ -59,6 +58,20 @@ class TextureFilter {
             .map(decl => decl.substring(decl.lastIndexOf(' ') + 1))
             .forEach(decl => (uniformMap[decl] = undefined));
         return uniformMap;
+    }
+
+    private constructPixiFilterCached(code: string, uniforms: string[]) {
+        let uniformsCode = (uniforms || []).map(uniform => `uniform ${uniform};`).join('');
+        let cacheKey = uniformsCode + code;
+
+        if (!TextureFilter.cache[cacheKey]) {
+            let vert = TextureFilter.vert;
+            let frag = TextureFilter.fragPreUniforms + uniformsCode + TextureFilter.fragStartFunc + code + TextureFilter.fragEndFunc;
+            let result = new PIXI.Filter(vert, frag, {});
+            TextureFilter.cache[cacheKey] = result;
+        }
+        
+        return TextureFilter.cache[cacheKey];
     }
 
     private static vert = `

@@ -127,6 +127,7 @@ class Texture {
     private static setFilterProperties(filter: TextureFilter, width: number, height: number, posx: number, posy: number) {
         filter.setDimensions(width, height);
         filter.setTexturePosition(posx, posy);
+        filter.setPixiUniforms();
     }
 }
 
