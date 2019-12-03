@@ -1,131 +1,92 @@
-type Effects = {
-    silhouette: Effects.Base & {
-        color: number;
-    };
-    outline: Effects.Base & {
-        color: number;
-    };
+namespace Effects {
+    export type Config = {
+        silhouette?: { color?: number, alpha?: number };
+        outline?: { color?: number, alpha?: number };
+    }
+}
+
+class Effects {
+    private effects: [Effects.Filters.Silhouette, Effects.Filters.Outline];
+    private static SILHOUETTE_I: number = 0;
+    private static OUTLINE_I: number = 1;
+
+    get silhouette(): Effects.Filters.Silhouette {
+        if (!this.effects[Effects.SILHOUETTE_I]) {
+            this.effects[Effects.SILHOUETTE_I] = new Effects.Filters.Silhouette(0x000000, 1);
+            this.effects[Effects.SILHOUETTE_I].enabled = false;
+        }
+        return this.effects[Effects.SILHOUETTE_I];
+    }
+    get outline(): Effects.Filters.Outline {
+        if (!this.effects[Effects.OUTLINE_I]) {
+            this.effects[Effects.OUTLINE_I] = new Effects.Filters.Outline(0x000000, 1);
+            this.effects[Effects.OUTLINE_I].enabled = false;
+        }
+        return this.effects[Effects.OUTLINE_I];
+    }
+
+    constructor(config: Effects.Config = {}) {
+        this.effects = [undefined, undefined];
+        this.updateFromConfig(config);
+    }
+
+    getFilterList() {
+        return this.effects;
+    }
+
+    updateFromConfig(config: Effects.Config) {
+        if (config.silhouette) {
+            this.silhouette.color = config.silhouette.color || 0x000000;
+            this.silhouette.alpha = config.silhouette.alpha || 1;
+        }
+
+        if (config.outline) {
+            this.outline.color = config.outline.color || 0x000000;
+            this.outline.alpha = config.outline.alpha || 1;
+        }
+    }
 }
 
 namespace Effects {
-    export type Base = {
-        enabled: boolean;
-    }
+    export namespace Filters {
+        export class Outline extends TextureFilter {
+            get color() { return M.vec3ToColor(this.getUniform('color')); }
+            set color(value: number) { this.setUniform('color', M.colorToVec3(value)); }
+            get alpha() { return this.getUniform('alpha'); }
+            set alpha(value: number) { this.setUniform('alpha', value); }
 
-    export function empty(): Effects {
-        return {
-            silhouette: {
-                enabled: false,
-                color: 0xFFFFFF,
-            },
-            outline: {
-                enabled: false,
-                color: 0x000000,
-            },
-        }
-    }
-
-    export function partial(effects: any) {
-        let result = empty();
-        O.deepOverride(result, effects);
-        return result;
-    }
-
-    export class Filter extends PIXI.Filter {
-        effects: Effects;
-
-        constructor(effects: Effects) {
-            super(Filter.vertSource, Filter.fragSource, {});
-            this.effects = effects;
-            this.update();
+            constructor(color: number, alpha: number) {
+                super({
+                    uniforms: [ "vec3 color", "float alpha" ],
+                    code: `
+                        if (inp.a == 0.0 && (getColor(x-1.0, y).a > 0.0 || getColor(x+1.0, y).a > 0.0 || getColor(x, y-1.0).a > 0.0 || getColor(x, y+1.0).a > 0.0)) {
+                            outp = vec4(color, alpha);
+                        }
+                    `
+                });
+                this.color = color;
+                this.alpha = alpha;
+            }
         }
 
-        update() {
-            this.uniforms.filterDimensions = [Main.width, Main.height];
-            this.uniforms.silhouetteEnabled = this.effects.silhouette.enabled;
-            this.uniforms.silhouetteColor = this.colorToVec3(this.effects.silhouette.color);
+        export class Silhouette extends TextureFilter {
+            get color() { return M.vec3ToColor(this.getUniform('color')); }
+            set color(value: number) { this.setUniform('color', M.colorToVec3(value)); }
+            get alpha() { return this.getUniform('alpha'); }
+            set alpha(value: number) { this.setUniform('alpha', value); }
 
-            this.uniforms.outlineEnabled = this.effects.outline.enabled;
-            this.uniforms.outlineColor = this.colorToVec3(this.effects.outline.color);
+            constructor(color: number, alpha: number) {
+                super({
+                    uniforms: [ "vec3 color", "float alpha" ],
+                    code: `
+                        if (inp.a > 0.0) {
+                            outp = vec4(color, alpha);
+                        }
+                    `
+                });
+                this.color = color;
+                this.alpha = alpha;
+            }
         }
-
-        private colorToVec3(color: number) {
-            let r = (color >> 16) & 255;
-            let g = (color >> 8) & 255;
-            let b = color & 255;
-            return [r/255, g/255, b/255];
-        }
-    }
-
-    export namespace Filter {
-        export const vertSource = `
-            attribute vec2 aVertexPosition;
-            uniform mat3 projectionMatrix;
-            varying vec2 vTextureCoord;
-            uniform vec4 inputSize;
-            uniform vec4 outputFrame;
-            
-            vec4 filterVertexPosition(void) {
-                vec2 position = aVertexPosition * max(outputFrame.zw, vec2(0.)) + outputFrame.xy;
-                return vec4((projectionMatrix * vec3(position, 1.0)).xy, 0.0, 1.0);
-            }
-            
-            vec2 filterTextureCoord(void) {
-                return aVertexPosition * (outputFrame.zw * inputSize.zw);
-            }
-            
-            void main(void) {
-                gl_Position = filterVertexPosition();
-                vTextureCoord = filterTextureCoord();
-            }
-        `;
-
-        export const fragSource = `
-            varying vec2 vTextureCoord;
-            uniform sampler2D uSampler;
-            uniform vec2 filterDimensions;
-
-            uniform bool silhouetteEnabled;
-            uniform vec3 silhouetteColor;
-
-            uniform bool outlineEnabled;
-            uniform vec3 outlineColor;
-            
-            void main(void) {
-                vec2 px = vec2(1.0/filterDimensions.x, 1.0/filterDimensions.y);
-                vec4 c = texture2D(uSampler, vTextureCoord);
-                
-                // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.
-                if (c.a > 0.0) {
-                    c.rgb /= c.a;
-                }
-                
-                vec4 result = vec4(c);
-
-                if (silhouetteEnabled) {
-                    result.r = silhouetteColor.r;
-                    result.g = silhouetteColor.g;
-                    result.b = silhouetteColor.b;
-                }
-
-                if (outlineEnabled) {
-                    vec4 cup = texture2D(uSampler, vTextureCoord + vec2(0.0, -px.y));
-                    vec4 cdown = texture2D(uSampler, vTextureCoord + vec2(0.0, px.y));
-                    vec4 cleft = texture2D(uSampler, vTextureCoord + vec2(-px.x, 0.0));
-                    vec4 cright = texture2D(uSampler, vTextureCoord + vec2(px.x, 0.0));
-                    if (c.a == 0. && (cup.a > 0. || cdown.a > 0. || cleft.a > 0. || cright.a > 0.)) {
-                        result.r = outlineColor.r;
-                        result.g = outlineColor.g;
-                        result.b = outlineColor.b;
-                        result.a = 1.0;
-                    }
-                }
-                
-                // Premultiply alpha again.
-                result.rgb *= result.a;
-
-                gl_FragColor = result;
-            }
-        `;
     }
 }

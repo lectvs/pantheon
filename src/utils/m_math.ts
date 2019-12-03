@@ -19,6 +19,13 @@ namespace M {
         return result;
     }
 
+    export function colorToVec3(color: number) {
+        let r = (color >> 16) & 255;
+        let g = (color >> 8) & 255;
+        let b = color & 255;
+        return [r/255, g/255, b/255];
+    }
+
     export function distance(p1: Pt, p2: Pt) {
         return Math.sqrt(distanceSq(p1, p2));
     }
@@ -63,5 +70,9 @@ namespace M {
 
     export function minPowerOf2(num: number) {
         return Math.pow(2, Math.ceil(Math.log2(num)));
+    }
+
+    export function vec3ToColor(vec3: [number, number, number]) {
+        return (Math.round(vec3[0] * 255) << 16) + (Math.round(vec3[1] * 255) << 8) + Math.round(vec3[2] * 255);
     }
 }

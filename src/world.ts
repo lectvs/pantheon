@@ -26,7 +26,7 @@ namespace World {
         name: string;
         sortKey?: string;
         reverseSort?: boolean;
-        effects?: Effects;
+        effects?: Effects.Config;
     }
 
     export type PhysicsGroupConfig = {
@@ -49,6 +49,7 @@ class World extends WorldObject {
     camera: Camera;
     private scriptManager: ScriptManager;
     private screen: Texture;
+    private layerTexture: Texture;
 
     debugMoveCameraWithArrows: boolean;
     private debugCameraX: number;
@@ -80,6 +81,7 @@ class World extends WorldObject {
         this.scriptManager = new ScriptManager();
 
         this.screen = new Texture(this.width, this.height);
+        this.layerTexture = new Texture(this.width, this.height);
 
         this.debugMoveCameraWithArrows = false;
         this.debugCameraX = 0;
@@ -144,11 +146,11 @@ class World extends WorldObject {
 
         global.pushWorld(this);
         for (let layer of this.layers) {
-            layer.texture.clear();
-            global.pushScreen(layer.texture);
+            this.layerTexture.clear();
+            global.pushScreen(this.layerTexture);
             this.renderLayer(layer);
             global.popScreen();
-            layer.renderTextureSprite.render();
+            global.screen.render(this.layerTexture);
         }
         global.popWorld();
 
@@ -367,21 +369,15 @@ namespace World {
         sortKey: string;
         reverseSort: boolean;
 
-        //renderTexture: PIXIRenderTextureSprite;
-        texture: Texture;
-        renderTextureSprite: Sprite;
+        effects: Effects;
         
-        get effects() { return this.renderTextureSprite.effects };
-
         constructor(name: string, config: World.LayerConfig, width: number, height: number) {
             this.name = name;
             this.worldObjects = [];
             this.sortKey = config.sortKey;
             this.reverseSort = config.reverseSort;
 
-            //this.renderTexture = new PIXIRenderTextureSprite(width, height);
-            this.texture = new Texture(width, height);
-            this.renderTextureSprite = new Sprite({ x: 0, y: 0, texture: this.texture, effects: config.effects });
+            this.effects = new Effects(config.effects);
         }
 
         sort() {

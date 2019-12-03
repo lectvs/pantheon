@@ -257,29 +257,25 @@ const stages: Dict<Stage> = {
         layers: [
             {
                 name: 'bg',
-                effects: Effects.partial({
+                effects: {
                     silhouette: {
-                        color: 0x000000,
-                        enabled: true
+                        color: 0x000000
                     },
                     outline: {
-                        color: 0xFFFFFF,
-                        enabled: true
+                        color: 0xFFFFFF
                     },
-                })
+                }
             },
             {
                 name: 'main',
-                effects: Effects.partial({
+                effects: {
                     silhouette: {
-                        color: 0x000000,
-                        enabled: true
+                        color: 0x000000
                     },
                     outline: {
-                        color: 0xFFFFFF,
-                        enabled: true
+                        color: 0xFFFFFF
                     },
-                })
+                }
             }
         ],
         entryPoints: {

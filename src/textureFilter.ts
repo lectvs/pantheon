@@ -9,6 +9,8 @@ namespace TextureFilter {
 }
 
 class TextureFilter {
+    enabled: boolean;
+
     private uniforms: Dict<any>;
     private pixiFilter: PIXI.Filter;
 
@@ -16,6 +18,7 @@ class TextureFilter {
         this.pixiFilter = this.constructPixiFilterCached(config.code, config.uniforms);
         this.uniforms = this.constructUniforms(config.uniforms);
         this.setUniforms(config.defaultUniforms);
+        this.enabled = true;
     }
 
     getPixiFilter() {
@@ -129,18 +132,18 @@ class TextureFilter {
             float worldy = vTextureCoord.y * height;
             float x = worldx - posx;
             float y = worldy - posy;
-            vec4 color = texture2D(uSampler, vTextureCoord);
+            vec4 inp = texture2D(uSampler, vTextureCoord);
             // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.
-            if (color.a > 0.0) {
-                color.rgb /= color.a;
+            if (inp.a > 0.0) {
+                inp.rgb /= inp.a;
             }
-            vec4 result = vec4(color.r, color.g, color.b, color.a);
+            vec4 outp = vec4(inp.r, inp.g, inp.b, inp.a);
     `;
 
     private static fragEndFunc = `
             // Premultiply alpha again.
-            result.rgb *= result.a;
-            gl_FragColor = result;
+            outp.rgb *= outp.a;
+            gl_FragColor = outp;
         }
     `;
 }
@@ -169,9 +172,9 @@ namespace TextureFilter {
                     vec2 vTextureCoordMask = vTextureCoord * is.xy / vec2(maskWidth, maskHeight) - vec2(maskX, maskY) / vec2(maskWidth, maskHeight);
                     if (vTextureCoordMask.x >= 0.0 && vTextureCoordMask.x < 1.0 && vTextureCoordMask.y >= 0.0 && vTextureCoordMask.y < 1.0) {
                         float a = texture2D(mask, vTextureCoordMask).a;
-                        result *= invert ? 1.0-a : a;
+                        outp *= invert ? 1.0-a : a;
                     } else {
-                        result.a = invert ? color.a : 0.0;
+                        outp.a = invert ? inp.a : 0.0;
                     }
                 `
             });
@@ -232,7 +235,7 @@ namespace TextureFilter {
                 uniforms: [ "sampler2D mask" ],
                 defaultUniforms: {},
                 code: `
-                    result *= texture2D(mask, vTextureCoord).a;
+                    outp *= texture2D(mask, vTextureCoord).a;
                 `
             });
             this.setMask(mask);
@@ -287,7 +290,7 @@ namespace TextureFilter {
                 },
                 code: `
                     if (x < sliceX || x >= sliceX + sliceWidth || y < sliceY || y >= sliceY + sliceHeight) {
-                        result.a = 0.0;
+                        outp.a = 0.0;
                     }
                 `
             });
@@ -307,29 +310,5 @@ namespace TextureFilter {
     export function SLICE(rect: Rect) {
         _sliceFilter.setSlice(rect);
         return _sliceFilter;
-    }
-
-    export class Outline extends TextureFilter {
-        constructor(color: number, alpha: number) {
-            super({
-                uniforms: [ "vec3 outlineColor", "float outlineAlpha" ],
-                defaultUniforms: {
-                    'outlineColor': Outline.colorToVec3(color),
-                    'outlineAlpha': alpha,
-                },
-                code: `
-                    if (color.a == 0.0 && (getColor(x-1.0, y).a > 0.0 || getColor(x+1.0, y).a > 0.0 || getColor(x, y-1.0).a > 0.0 || getColor(x, y+1.0).a > 0.0)) {
-                        result = vec4(outlineColor, outlineAlpha);
-                    }
-                `
-            })
-        }
-
-        private static colorToVec3(color: number) {
-            let r = (color >> 16) & 255;
-            let g = (color >> 8) & 255;
-            let b = color & 255;
-            return [r/255, g/255, b/255];
-        }
     }
 }

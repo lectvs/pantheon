@@ -9,7 +9,7 @@ namespace Sprite {
         defaultAnimation?: string;
         tint?: number;
         alpha?: number;
-        effects?: Effects;
+        effects?: Effects.Config;
     }
 }
 
@@ -26,7 +26,6 @@ class Sprite extends PhysicsWorldObject {
     alpha: number;
 
     effects: Effects;
-    effectsFilter: Effects.Filter;
 
     constructor(config: Sprite.Config, defaults: Sprite.Config = {}) {
         config = O.withDefaults(config, defaults);
@@ -62,9 +61,7 @@ class Sprite extends PhysicsWorldObject {
         this.tint = O.getOrDefault(config.tint, 0xFFFFFF);
         this.alpha = O.getOrDefault(config.alpha, 1);
 
-        this.effects = Effects.empty();
-        this.setEffects(config.effects);
-        this.effectsFilter = new Effects.Filter(this.effects);
+        this.effects = new Effects();
     }
 
     update() {
@@ -78,7 +75,6 @@ class Sprite extends PhysicsWorldObject {
     }
 
     render() {
-        this.effectsFilter.update();
         global.screen.render(this.texture, {
             x: this.x + this.offset.x,
             y: this.y + this.offset.y,
@@ -87,7 +83,7 @@ class Sprite extends PhysicsWorldObject {
             angle: this.angle,
             tint: this.tint,
             alpha: this.alpha,
-            filters: [],
+            filters: this.effects.getFilterList(),
         });
         
         super.render();
@@ -99,13 +95,6 @@ class Sprite extends PhysicsWorldObject {
 
     playAnimation(name: string, startFrame: number = 0, force: boolean = false) {
         this.animationManager.playAnimation(name, startFrame, force);
-    }
-
-    setEffects(effects: Effects) {
-        if (!effects) return;
-        for (let key in effects) {
-            this.effects[key] = _.clone(effects[key]);
-        }
     }
 
     setTexture(key: string | Texture) {

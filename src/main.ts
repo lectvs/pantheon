@@ -105,7 +105,8 @@ class Main {
         let fps = new FPSMetricManager(1);
 
         let mask = new TextureFilter.Mask({ mask: AssetCache.getTexture('masktest'), type: TextureFilter.Mask.Type.LOCAL, offsetX: 3, offsetY: 2 });
-        let outline = new TextureFilter.Outline(0xFF0000, 1);
+        let outline = new Effects.Filters.Outline(0xFF0000, 1);
+        let silhouette = new Effects.Filters.Silhouette(0x00FFFF, 0.5);
 
         PIXI.Ticker.shared.add(frameDelta => {
             this.delta = frameDelta/60;
@@ -130,7 +131,7 @@ class Main {
             this.screen.render(AssetCache.getTexture('bed'), {
                 x: Input.mouseX,
                 y: Input.mouseY,
-                filters: [mask, outline]
+                filters: [mask, outline, null, silhouette]
             });
 
             this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer

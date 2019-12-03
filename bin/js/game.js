@@ -24,23 +24,22 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    };
+    }
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-var __values = (this && this.__values) || function(o) {
-    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+var __values = (this && this.__values) || function (o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
     if (m) return m.call(o);
-    if (o && typeof o.length === "number") return {
+    return {
         next: function () {
             if (o && i >= o.length) o = void 0;
             return { value: o && o[i++], done: !o };
         }
     };
-    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
     var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
@@ -358,6 +357,7 @@ var TextureFilter = /** @class */ (function () {
         this.pixiFilter = this.constructPixiFilterCached(config.code, config.uniforms);
         this.uniforms = this.constructUniforms(config.uniforms);
         this.setUniforms(config.defaultUniforms);
+        this.enabled = true;
     }
     TextureFilter.prototype.getPixiFilter = function () {
         return this.pixiFilter;
@@ -408,8 +408,8 @@ var TextureFilter = /** @class */ (function () {
     };
     TextureFilter.vert = "\n        attribute vec2 aVertexPosition;\n        uniform mat3 projectionMatrix;\n        varying vec2 vTextureCoord;\n        uniform vec4 inputSize;\n        uniform vec4 outputFrame;\n        varying vec4 is;\n        \n        vec4 filterVertexPosition(void) {\n            vec2 position = aVertexPosition * max(outputFrame.zw, vec2(0.)) + outputFrame.xy;\n            return vec4((projectionMatrix * vec3(position, 1.0)).xy, 0.0, 1.0);\n        }\n        \n        vec2 filterTextureCoord(void) {\n            return aVertexPosition * (outputFrame.zw * inputSize.zw);\n        }\n        \n        void main(void) {\n            gl_Position = filterVertexPosition();\n            vTextureCoord = filterTextureCoord();\n            is = inputSize;\n        }\n    ";
     TextureFilter.fragPreUniforms = "\n        varying vec2 vTextureCoord;\n        varying vec4 is;\n        uniform sampler2D uSampler;\n        uniform float posx;\n        uniform float posy;\n\n        float width;\n        float height;\n    ";
-    TextureFilter.fragStartFunc = "\n        vec4 getColor(float localx, float localy) {\n            float tx = (localx + posx) / width;\n            float ty = (localy + posy) / height;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        vec4 getWorldColor(float worldx, float worldy) {\n            float tx = worldx / width;\n            float ty = worldy / height;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        void main(void) {\n            width = is.x;\n            height = is.y;\n            float worldx = vTextureCoord.x * width;\n            float worldy = vTextureCoord.y * height;\n            float x = worldx - posx;\n            float y = worldy - posy;\n            vec4 color = texture2D(uSampler, vTextureCoord);\n            // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.\n            if (color.a > 0.0) {\n                color.rgb /= color.a;\n            }\n            vec4 result = vec4(color.r, color.g, color.b, color.a);\n    ";
-    TextureFilter.fragEndFunc = "\n            // Premultiply alpha again.\n            result.rgb *= result.a;\n            gl_FragColor = result;\n        }\n    ";
+    TextureFilter.fragStartFunc = "\n        vec4 getColor(float localx, float localy) {\n            float tx = (localx + posx) / width;\n            float ty = (localy + posy) / height;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        vec4 getWorldColor(float worldx, float worldy) {\n            float tx = worldx / width;\n            float ty = worldy / height;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        void main(void) {\n            width = is.x;\n            height = is.y;\n            float worldx = vTextureCoord.x * width;\n            float worldy = vTextureCoord.y * height;\n            float x = worldx - posx;\n            float y = worldy - posy;\n            vec4 inp = texture2D(uSampler, vTextureCoord);\n            // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.\n            if (inp.a > 0.0) {\n                inp.rgb /= inp.a;\n            }\n            vec4 outp = vec4(inp.r, inp.g, inp.b, inp.a);\n    ";
+    TextureFilter.fragEndFunc = "\n            // Premultiply alpha again.\n            outp.rgb *= outp.a;\n            gl_FragColor = outp;\n        }\n    ";
     return TextureFilter;
 }());
 (function (TextureFilter) {
@@ -427,7 +427,7 @@ var TextureFilter = /** @class */ (function () {
         function Mask(config) {
             var _this = _super.call(this, {
                 uniforms: ["sampler2D mask", "float maskWidth", "float maskHeight", "float maskX", "float maskY", "bool invert"],
-                code: "\n                    vec2 vTextureCoordMask = vTextureCoord * is.xy / vec2(maskWidth, maskHeight) - vec2(maskX, maskY) / vec2(maskWidth, maskHeight);\n                    if (vTextureCoordMask.x >= 0.0 && vTextureCoordMask.x < 1.0 && vTextureCoordMask.y >= 0.0 && vTextureCoordMask.y < 1.0) {\n                        float a = texture2D(mask, vTextureCoordMask).a;\n                        result *= invert ? 1.0-a : a;\n                    } else {\n                        result.a = invert ? color.a : 0.0;\n                    }\n                "
+                code: "\n                    vec2 vTextureCoordMask = vTextureCoord * is.xy / vec2(maskWidth, maskHeight) - vec2(maskX, maskY) / vec2(maskWidth, maskHeight);\n                    if (vTextureCoordMask.x >= 0.0 && vTextureCoordMask.x < 1.0 && vTextureCoordMask.y >= 0.0 && vTextureCoordMask.y < 1.0) {\n                        float a = texture2D(mask, vTextureCoordMask).a;\n                        outp *= invert ? 1.0-a : a;\n                    } else {\n                        outp.a = invert ? inp.a : 0.0;\n                    }\n                "
             }) || this;
             _this.type = config.type;
             _this.offsetX = O.getOrDefault(config.offsetX, 0);
@@ -478,7 +478,7 @@ var TextureFilter = /** @class */ (function () {
             var _this = _super.call(this, {
                 uniforms: ["sampler2D mask"],
                 defaultUniforms: {},
-                code: "\n                    result *= texture2D(mask, vTextureCoord).a;\n                "
+                code: "\n                    outp *= texture2D(mask, vTextureCoord).a;\n                "
             }) || this;
             _this.setMask(mask);
             return _this;
@@ -527,7 +527,7 @@ var TextureFilter = /** @class */ (function () {
                     'sliceWidth': rect.width,
                     'sliceHeight': rect.height,
                 },
-                code: "\n                    if (x < sliceX || x >= sliceX + sliceWidth || y < sliceY || y >= sliceY + sliceHeight) {\n                        result.a = 0.0;\n                    }\n                "
+                code: "\n                    if (x < sliceX || x >= sliceX + sliceWidth || y < sliceY || y >= sliceY + sliceHeight) {\n                        outp.a = 0.0;\n                    }\n                "
             }) || this;
         }
         Slice.prototype.setSlice = function (rect) {
@@ -547,27 +547,6 @@ var TextureFilter = /** @class */ (function () {
         return _sliceFilter;
     }
     TextureFilter.SLICE = SLICE;
-    var Outline = /** @class */ (function (_super) {
-        __extends(Outline, _super);
-        function Outline(color, alpha) {
-            return _super.call(this, {
-                uniforms: ["vec3 outlineColor", "float outlineAlpha"],
-                defaultUniforms: {
-                    'outlineColor': Outline.colorToVec3(color),
-                    'outlineAlpha': alpha,
-                },
-                code: "\n                    if (color.a == 0.0 && (getColor(x-1.0, y).a > 0.0 || getColor(x+1.0, y).a > 0.0 || getColor(x, y-1.0).a > 0.0 || getColor(x, y+1.0).a > 0.0)) {\n                        result = vec4(outlineColor, outlineAlpha);\n                    }\n                "
-            }) || this;
-        }
-        Outline.colorToVec3 = function (color) {
-            var r = (color >> 16) & 255;
-            var g = (color >> 8) & 255;
-            var b = color & 255;
-            return [r / 255, g / 255, b / 255];
-        };
-        return Outline;
-    }(TextureFilter));
-    TextureFilter.Outline = Outline;
 })(TextureFilter || (TextureFilter = {}));
 /// <reference path="textureFilter.ts"/>
 var Texture = /** @class */ (function () {
@@ -654,15 +633,19 @@ var Texture = /** @class */ (function () {
         texture.renderTextureSprite.tint = properties.tint;
         texture.renderTextureSprite.alpha = properties.alpha;
         // Filter values
-        var sliceFilterPosX = texture.renderTextureSprite.x - texture.anchorX * sliceRect.width;
-        var sliceFilterPosY = texture.renderTextureSprite.y - texture.anchorY * sliceRect.height;
-        var sliceFilter = properties.slice ? [TextureFilter.SLICE(properties.slice)] : [];
-        sliceFilter.forEach(function (filter) { return Texture.setFilterProperties(filter, _this.width, _this.height, sliceFilterPosX, sliceFilterPosY); });
+        var allFilters = [];
+        if (properties.slice) {
+            var sliceFilterPosX = texture.renderTextureSprite.x - texture.anchorX * sliceRect.width;
+            var sliceFilterPosY = texture.renderTextureSprite.y - texture.anchorY * sliceRect.height;
+            var sliceFilter = TextureFilter.SLICE(properties.slice);
+            Texture.setFilterProperties(sliceFilter, this.width, this.height, sliceFilterPosX, sliceFilterPosY);
+            allFilters.push(sliceFilter);
+        }
         var filterPosX = properties.x - texture.anchorX * sliceRect.width;
         var filterPosY = properties.y - texture.anchorY * sliceRect.height;
-        properties.filters.forEach(function (filter) { return Texture.setFilterProperties(filter, _this.width, _this.height, filterPosX, filterPosY); });
-        var allFilters = __spread(sliceFilter, properties.filters);
-        texture.renderTextureSprite.filters = allFilters.map(function (filter) { return filter.getPixiFilter(); });
+        properties.filters.forEach(function (filter) { return filter && Texture.setFilterProperties(filter, _this.width, _this.height, filterPosX, filterPosY); });
+        allFilters.push.apply(allFilters, __spread(properties.filters));
+        texture.renderTextureSprite.filters = allFilters.filter(function (filter) { return filter && filter.enabled; }).map(function (filter) { return filter.getPixiFilter(); });
         texture.renderTextureSprite.filterArea = new PIXI.Rectangle(0, 0, this.width, this.height);
         // Anchor
         texture.renderTextureSprite.anchor.x = texture.anchorX;
@@ -796,7 +779,7 @@ var Preload = /** @class */ (function () {
         for (var i = 0; i < tilemapJson.layers.length; i++) {
             var tilemapLayer = A.filledArray2D(tilemapJson.tileshigh, tilemapJson.tileswide);
             try {
-                for (var _b = (e_1 = void 0, __values(tilemapJson.layers[i].tiles)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                for (var _b = __values(tilemapJson.layers[i].tiles), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var tile = _c.value;
                     tilemapLayer[tile.y][tile.x] = {
                         index: Math.max(tile.tile, -1),
@@ -1941,9 +1924,7 @@ var Sprite = /** @class */ (function (_super) {
         _this.angle = O.getOrDefault(config.angle, 0);
         _this.tint = O.getOrDefault(config.tint, 0xFFFFFF);
         _this.alpha = O.getOrDefault(config.alpha, 1);
-        _this.effects = Effects.empty();
-        _this.setEffects(config.effects);
-        _this.effectsFilter = new Effects.Filter(_this.effects);
+        _this.effects = new Effects();
         return _this;
     }
     Sprite.prototype.update = function () {
@@ -1955,7 +1936,6 @@ var Sprite = /** @class */ (function (_super) {
         }
     };
     Sprite.prototype.render = function () {
-        this.effectsFilter.update();
         global.screen.render(this.texture, {
             x: this.x + this.offset.x,
             y: this.y + this.offset.y,
@@ -1964,7 +1944,7 @@ var Sprite = /** @class */ (function (_super) {
             angle: this.angle,
             tint: this.tint,
             alpha: this.alpha,
-            filters: [],
+            filters: this.effects.getFilterList(),
         });
         _super.prototype.render.call(this);
     };
@@ -1975,13 +1955,6 @@ var Sprite = /** @class */ (function (_super) {
         if (startFrame === void 0) { startFrame = 0; }
         if (force === void 0) { force = false; }
         this.animationManager.playAnimation(name, startFrame, force);
-    };
-    Sprite.prototype.setEffects = function (effects) {
-        if (!effects)
-            return;
-        for (var key in effects) {
-            this.effects[key] = _.clone(effects[key]);
-        }
     };
     Sprite.prototype.setTexture = function (key) {
         if (!key) {
@@ -2319,55 +2292,107 @@ var Draw = /** @class */ (function () {
     Draw.ALIGNMENT_OUTER = 1;
     return Draw;
 }());
-var Effects;
-(function (Effects) {
-    function empty() {
-        return {
-            silhouette: {
-                enabled: false,
-                color: 0xFFFFFF,
-            },
-            outline: {
-                enabled: false,
-                color: 0x000000,
-            },
-        };
+var Effects = /** @class */ (function () {
+    function Effects(config) {
+        if (config === void 0) { config = {}; }
+        this.effects = [undefined, undefined];
+        this.updateFromConfig(config);
     }
-    Effects.empty = empty;
-    function partial(effects) {
-        var result = empty();
-        O.deepOverride(result, effects);
-        return result;
-    }
-    Effects.partial = partial;
-    var Filter = /** @class */ (function (_super) {
-        __extends(Filter, _super);
-        function Filter(effects) {
-            var _this = _super.call(this, Filter.vertSource, Filter.fragSource, {}) || this;
-            _this.effects = effects;
-            _this.update();
-            return _this;
+    Object.defineProperty(Effects.prototype, "silhouette", {
+        get: function () {
+            if (!this.effects[Effects.SILHOUETTE_I]) {
+                this.effects[Effects.SILHOUETTE_I] = new Effects.Filters.Silhouette(0x000000, 1);
+                this.effects[Effects.SILHOUETTE_I].enabled = false;
+            }
+            return this.effects[Effects.SILHOUETTE_I];
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Effects.prototype, "outline", {
+        get: function () {
+            if (!this.effects[Effects.OUTLINE_I]) {
+                this.effects[Effects.OUTLINE_I] = new Effects.Filters.Outline(0x000000, 1);
+                this.effects[Effects.OUTLINE_I].enabled = false;
+            }
+            return this.effects[Effects.OUTLINE_I];
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Effects.prototype.getFilterList = function () {
+        return this.effects;
+    };
+    Effects.prototype.updateFromConfig = function (config) {
+        if (config.silhouette) {
+            this.silhouette.color = config.silhouette.color || 0x000000;
+            this.silhouette.alpha = config.silhouette.alpha || 1;
         }
-        Filter.prototype.update = function () {
-            this.uniforms.filterDimensions = [Main.width, Main.height];
-            this.uniforms.silhouetteEnabled = this.effects.silhouette.enabled;
-            this.uniforms.silhouetteColor = this.colorToVec3(this.effects.silhouette.color);
-            this.uniforms.outlineEnabled = this.effects.outline.enabled;
-            this.uniforms.outlineColor = this.colorToVec3(this.effects.outline.color);
-        };
-        Filter.prototype.colorToVec3 = function (color) {
-            var r = (color >> 16) & 255;
-            var g = (color >> 8) & 255;
-            var b = color & 255;
-            return [r / 255, g / 255, b / 255];
-        };
-        return Filter;
-    }(PIXI.Filter));
-    Effects.Filter = Filter;
-    (function (Filter) {
-        Filter.vertSource = "\n            attribute vec2 aVertexPosition;\n            uniform mat3 projectionMatrix;\n            varying vec2 vTextureCoord;\n            uniform vec4 inputSize;\n            uniform vec4 outputFrame;\n            \n            vec4 filterVertexPosition(void) {\n                vec2 position = aVertexPosition * max(outputFrame.zw, vec2(0.)) + outputFrame.xy;\n                return vec4((projectionMatrix * vec3(position, 1.0)).xy, 0.0, 1.0);\n            }\n            \n            vec2 filterTextureCoord(void) {\n                return aVertexPosition * (outputFrame.zw * inputSize.zw);\n            }\n            \n            void main(void) {\n                gl_Position = filterVertexPosition();\n                vTextureCoord = filterTextureCoord();\n            }\n        ";
-        Filter.fragSource = "\n            varying vec2 vTextureCoord;\n            uniform sampler2D uSampler;\n            uniform vec2 filterDimensions;\n\n            uniform bool silhouetteEnabled;\n            uniform vec3 silhouetteColor;\n\n            uniform bool outlineEnabled;\n            uniform vec3 outlineColor;\n            \n            void main(void) {\n                vec2 px = vec2(1.0/filterDimensions.x, 1.0/filterDimensions.y);\n                vec4 c = texture2D(uSampler, vTextureCoord);\n                \n                // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.\n                if (c.a > 0.0) {\n                    c.rgb /= c.a;\n                }\n                \n                vec4 result = vec4(c);\n\n                if (silhouetteEnabled) {\n                    result.r = silhouetteColor.r;\n                    result.g = silhouetteColor.g;\n                    result.b = silhouetteColor.b;\n                }\n\n                if (outlineEnabled) {\n                    vec4 cup = texture2D(uSampler, vTextureCoord + vec2(0.0, -px.y));\n                    vec4 cdown = texture2D(uSampler, vTextureCoord + vec2(0.0, px.y));\n                    vec4 cleft = texture2D(uSampler, vTextureCoord + vec2(-px.x, 0.0));\n                    vec4 cright = texture2D(uSampler, vTextureCoord + vec2(px.x, 0.0));\n                    if (c.a == 0. && (cup.a > 0. || cdown.a > 0. || cleft.a > 0. || cright.a > 0.)) {\n                        result.r = outlineColor.r;\n                        result.g = outlineColor.g;\n                        result.b = outlineColor.b;\n                        result.a = 1.0;\n                    }\n                }\n                \n                // Premultiply alpha again.\n                result.rgb *= result.a;\n\n                gl_FragColor = result;\n            }\n        ";
-    })(Filter = Effects.Filter || (Effects.Filter = {}));
+        if (config.outline) {
+            this.outline.color = config.outline.color || 0x000000;
+            this.outline.alpha = config.outline.alpha || 1;
+        }
+    };
+    Effects.SILHOUETTE_I = 0;
+    Effects.OUTLINE_I = 1;
+    return Effects;
+}());
+(function (Effects) {
+    var Filters;
+    (function (Filters) {
+        var Outline = /** @class */ (function (_super) {
+            __extends(Outline, _super);
+            function Outline(color, alpha) {
+                var _this = _super.call(this, {
+                    uniforms: ["vec3 color", "float alpha"],
+                    code: "\n                        if (inp.a == 0.0 && (getColor(x-1.0, y).a > 0.0 || getColor(x+1.0, y).a > 0.0 || getColor(x, y-1.0).a > 0.0 || getColor(x, y+1.0).a > 0.0)) {\n                            outp = vec4(color, alpha);\n                        }\n                    "
+                }) || this;
+                _this.color = color;
+                _this.alpha = alpha;
+                return _this;
+            }
+            Object.defineProperty(Outline.prototype, "color", {
+                get: function () { return M.vec3ToColor(this.getUniform('color')); },
+                set: function (value) { this.setUniform('color', M.colorToVec3(value)); },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Outline.prototype, "alpha", {
+                get: function () { return this.getUniform('alpha'); },
+                set: function (value) { this.setUniform('alpha', value); },
+                enumerable: true,
+                configurable: true
+            });
+            return Outline;
+        }(TextureFilter));
+        Filters.Outline = Outline;
+        var Silhouette = /** @class */ (function (_super) {
+            __extends(Silhouette, _super);
+            function Silhouette(color, alpha) {
+                var _this = _super.call(this, {
+                    uniforms: ["vec3 color", "float alpha"],
+                    code: "\n                        if (inp.a > 0.0) {\n                            outp = vec4(color, alpha);\n                        }\n                    "
+                }) || this;
+                _this.color = color;
+                _this.alpha = alpha;
+                return _this;
+            }
+            Object.defineProperty(Silhouette.prototype, "color", {
+                get: function () { return M.vec3ToColor(this.getUniform('color')); },
+                set: function (value) { this.setUniform('color', M.colorToVec3(value)); },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Silhouette.prototype, "alpha", {
+                get: function () { return this.getUniform('alpha'); },
+                set: function (value) { this.setUniform('alpha', value); },
+                enumerable: true,
+                configurable: true
+            });
+            return Silhouette;
+        }(TextureFilter));
+        Filters.Silhouette = Silhouette;
+    })(Filters = Effects.Filters || (Effects.Filters = {}));
 })(Effects || (Effects = {}));
 var Follow = /** @class */ (function () {
     function Follow(target, maxDistance, moveThreshold) {
@@ -2662,7 +2687,7 @@ var Input = /** @class */ (function () {
         this.keysByKeycode = {};
         for (var name_2 in keyCodesByName) {
             try {
-                for (var _c = (e_8 = void 0, __values(keyCodesByName[name_2])), _d = _c.next(); !_d.done; _d = _c.next()) {
+                for (var _c = __values(keyCodesByName[name_2]), _d = _c.next(); !_d.done; _d = _c.next()) {
                     var keyCode = _d.value;
                     this.isDownByKeyCode[keyCode] = false;
                     this.keysByKeycode[keyCode] = this.keysByKeycode[keyCode] || new Input.Key();
@@ -2877,7 +2902,7 @@ var InteractionManager = /** @class */ (function () {
             for (var cutscenes_1 = __values(cutscenes), cutscenes_1_1 = cutscenes_1.next(); !cutscenes_1_1.done; cutscenes_1_1 = cutscenes_1.next()) {
                 var cutscene = cutscenes_1_1.value;
                 try {
-                    for (var _c = (e_12 = void 0, __values(global.theater.storyboard[cutscene].playOnInteractWith)), _d = _c.next(); !_d.done; _d = _c.next()) {
+                    for (var _c = __values(global.theater.storyboard[cutscene].playOnInteractWith), _d = _c.next(); !_d.done; _d = _c.next()) {
                         var obj = _d.value;
                         result.add(obj);
                     }
@@ -3059,7 +3084,8 @@ var Main = /** @class */ (function () {
         var _this = this;
         var fps = new FPSMetricManager(1);
         var mask = new TextureFilter.Mask({ mask: AssetCache.getTexture('masktest'), type: TextureFilter.Mask.Type.LOCAL, offsetX: 3, offsetY: 2 });
-        var outline = new TextureFilter.Outline(0xFF0000, 1);
+        var outline = new Effects.Filters.Outline(0xFF0000, 1);
+        var silhouette = new Effects.Filters.Silhouette(0x00FFFF, 0.5);
         PIXI.Ticker.shared.add(function (frameDelta) {
             _this.delta = frameDelta / 60;
             Input.update();
@@ -3077,7 +3103,7 @@ var Main = /** @class */ (function () {
             _this.screen.render(AssetCache.getTexture('bed'), {
                 x: Input.mouseX,
                 y: Input.mouseY,
-                filters: [mask, outline]
+                filters: [mask, outline, null, silhouette]
             });
             _this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true); // Clear the renderer
             _this.renderer.render(_this.screen.renderTextureSprite);
@@ -3326,8 +3352,8 @@ var Physics = /** @class */ (function () {
         return result;
     };
     Physics.collide = function (obj, from, options) {
-        var e_13, _a;
         if (options === void 0) { options = {}; }
+        var e_13, _a;
         if (_.isEmpty(from))
             return;
         if (!obj.colliding)
@@ -3345,7 +3371,7 @@ var Physics = /** @class */ (function () {
             var collisions = collidingWith.map(function (other) { return Physics.getCollision(obj, other); });
             collisions.sort(function (a, b) { return a.t - b.t; });
             try {
-                for (var collisions_1 = (e_13 = void 0, __values(collisions)), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
+                for (var collisions_1 = __values(collisions), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
                     var collision = collisions_1_1.value;
                     var d = Physics.separate(collision);
                     if (d !== 0 && options.transferMomentum) {
@@ -3976,8 +4002,8 @@ var Stage;
     }
     Stage.resolveWorldObjectConfig = resolveWorldObjectConfig;
     function mergeArray(array, into, key, combine) {
-        var e_16, _a;
         if (combine === void 0) { combine = (function (e, into) { return e; }); }
+        var e_16, _a;
         var result = A.clone(into);
         try {
             for (var array_1 = __values(array), array_1_1 = array_1.next(); !array_1_1.done; array_1_1 = array_1.next()) {
@@ -4159,8 +4185,8 @@ var Tilemap = /** @class */ (function (_super) {
         _super.prototype.render.call(this);
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_19, _a;
         if (debugBounds === void 0) { debugBounds = false; }
+        var e_19, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -4560,29 +4586,25 @@ var stages = {
         layers: [
             {
                 name: 'bg',
-                effects: Effects.partial({
+                effects: {
                     silhouette: {
-                        color: 0x000000,
-                        enabled: true
+                        color: 0x000000
                     },
                     outline: {
-                        color: 0xFFFFFF,
-                        enabled: true
+                        color: 0xFFFFFF
                     },
-                })
+                }
             },
             {
                 name: 'main',
-                effects: Effects.partial({
+                effects: {
                     silhouette: {
-                        color: 0x000000,
-                        enabled: true
+                        color: 0x000000
                     },
                     outline: {
-                        color: 0xFFFFFF,
-                        enabled: true
+                        color: 0xFFFFFF
                     },
-                })
+                }
             }
         ],
         entryPoints: {
@@ -4911,6 +4933,7 @@ var World = /** @class */ (function (_super) {
         _this.camera = new Camera(cameraConfig);
         _this.scriptManager = new ScriptManager();
         _this.screen = new Texture(_this.width, _this.height);
+        _this.layerTexture = new Texture(_this.width, _this.height);
         _this.debugMoveCameraWithArrows = false;
         _this.debugCameraX = 0;
         _this.debugCameraY = 0;
@@ -5013,11 +5036,11 @@ var World = /** @class */ (function (_super) {
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var layer = _c.value;
-                layer.texture.clear();
-                global.pushScreen(layer.texture);
+                this.layerTexture.clear();
+                global.pushScreen(this.layerTexture);
                 this.renderLayer(layer);
                 global.popScreen();
-                layer.renderTextureSprite.render();
+                global.screen.render(this.layerTexture);
             }
         }
         catch (e_25_1) { e_25 = { error: e_25_1 }; }
@@ -5124,8 +5147,8 @@ var World = /** @class */ (function (_super) {
         return this.worldObjectsByName[name];
     };
     World.prototype.handleCollisions = function () {
-        var e_28, _a, e_29, _b, e_30, _c;
         var _this = this;
+        var e_28, _a, e_29, _b, e_30, _c;
         try {
             for (var _d = __values(this.collisionOrder), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var collision = _e.value;
@@ -5133,11 +5156,11 @@ var World = /** @class */ (function (_super) {
                 var from = _.isArray(collision.from) ? collision.from : [collision.from];
                 var fromObjects = _.flatten(from.map(function (name) { return _this.physicsGroups[name].worldObjects; }));
                 try {
-                    for (var move_1 = (e_29 = void 0, __values(move)), move_1_1 = move_1.next(); !move_1_1.done; move_1_1 = move_1.next()) {
+                    for (var move_1 = __values(move), move_1_1 = move_1.next(); !move_1_1.done; move_1_1 = move_1.next()) {
                         var moveGroup = move_1_1.value;
                         var group_2 = this.physicsGroups[moveGroup].worldObjects;
                         try {
-                            for (var group_1 = (e_30 = void 0, __values(group_2)), group_1_1 = group_1.next(); !group_1_1.done; group_1_1 = group_1.next()) {
+                            for (var group_1 = __values(group_2), group_1_1 = group_1.next(); !group_1_1.done; group_1_1 = group_1.next()) {
                                 var obj = group_1_1.value;
                                 Physics.collide(obj, fromObjects, {
                                     callback: collision.callback,
@@ -5219,8 +5242,8 @@ var World = /** @class */ (function (_super) {
         this.worldObjectsByName[name] = obj;
     };
     World.prototype.setLayer = function (obj, name) {
-        var e_32, _a;
         if (name === void 0) { name = World.DEFAULT_LAYER; }
+        var e_32, _a;
         this.removeFromAllLayers(obj);
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -5308,16 +5331,8 @@ var World = /** @class */ (function (_super) {
             this.worldObjects = [];
             this.sortKey = config.sortKey;
             this.reverseSort = config.reverseSort;
-            //this.renderTexture = new PIXIRenderTextureSprite(width, height);
-            this.texture = new Texture(width, height);
-            this.renderTextureSprite = new Sprite({ x: 0, y: 0, texture: this.texture, effects: config.effects });
+            this.effects = new Effects(config.effects);
         }
-        Object.defineProperty(Layer.prototype, "effects", {
-            get: function () { return this.renderTextureSprite.effects; },
-            enumerable: true,
-            configurable: true
-        });
-        ;
         Layer.prototype.sort = function () {
             var _this = this;
             if (!this.sortKey)
@@ -5503,8 +5518,8 @@ var Theater = /** @class */ (function (_super) {
         this.currentStoryboardComponentName = name;
     };
     Theater.prototype.setNewWorldFromStage = function (stage, entryPoint) {
-        var e_34, _a, e_35, _b;
         if (entryPoint === void 0) { entryPoint = Theater.DEFAULT_ENTRY_POINT; }
+        var e_34, _a, e_35, _b;
         var world = new World(stage);
         if (stage.worldObjects) {
             try {
@@ -5762,6 +5777,13 @@ var M;
         return result;
     }
     M.argmin = argmin;
+    function colorToVec3(color) {
+        var r = (color >> 16) & 255;
+        var g = (color >> 8) & 255;
+        var b = color & 255;
+        return [r / 255, g / 255, b / 255];
+    }
+    M.colorToVec3 = colorToVec3;
     function distance(p1, p2) {
         return Math.sqrt(distanceSq(p1, p2));
     }
@@ -5808,6 +5830,10 @@ var M;
         return Math.pow(2, Math.ceil(Math.log2(num)));
     }
     M.minPowerOf2 = minPowerOf2;
+    function vec3ToColor(vec3) {
+        return (Math.round(vec3[0] * 255) << 16) + (Math.round(vec3[1] * 255) << 8) + Math.round(vec3[2] * 255);
+    }
+    M.vec3ToColor = vec3ToColor;
 })(M || (M = {}));
 var RandomNumberGenerator = /** @class */ (function () {
     function RandomNumberGenerator(seed) {
