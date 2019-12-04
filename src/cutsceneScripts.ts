@@ -43,7 +43,9 @@ namespace S {
 
     export function fadeOut(duration: number, tint: number = 0x000000): Script.Function {
         let texture = new Texture(Main.width, Main.height);
-        texture.fill(tint);
+        Draw.brush.color = tint;
+        Draw.brush.alpha = 1;
+        Draw.fill(texture);
         return showSlide({ x: 0, y: 0, texture: texture, timeToLoad: duration, fadeIn: true });
     }
 

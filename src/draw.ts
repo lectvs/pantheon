@@ -1,44 +1,67 @@
+namespace Draw {
+    export type Brush = {
+        color: number;
+        alpha: number;
+        thickness: number;
+    }
+}
 
 class Draw {
+    static brush: Draw.Brush = {
+        color: 0x000000,
+        alpha: 1,
+        thickness: 1
+    };
+
     private static graphics: PIXI.Graphics = new PIXI.Graphics();
-    private static _fillColor: number = 0x000000;
-    private static _fillAlpha: number = 1;
-    
-    static lineStyle(width: number, color: number, alpha: number = 1, alignment: number = Draw.ALIGNMENT_INNER) {
-        this.graphics.lineStyle(width, color, alpha, alignment);
-        return this;
-    }
 
-    static noStroke() {
-        return this.lineStyle(0, 0x000000, 0);
-    }
-
-    static fillColor(color: number, alpha: number = 1) {
-        this._fillColor = color;
-        this._fillAlpha = alpha;
-        return this;
-    }
-
-    static noFill() {
-        return this.fillColor(0x000000, 0);
-    }
-
-    static drawRectangle(x: number, y: number, width: number, height: number) {
+    static fill(texture: Texture, brush: Draw.Brush = Draw.brush) {
+        this.graphics.lineStyle(0, 0, 0);
         this.graphics.clear();
-        this.graphics.beginFill(this._fillColor, this._fillAlpha);
+        this.graphics.beginFill(brush.color, brush.alpha);
+        this.graphics.drawRect(0, 0, texture.width, texture.height);
+        this.graphics.endFill();
+        texture.clear();
+        texture.renderDisplayObject(this.graphics);
+    }
+
+    static pixel(texture: Texture, x: number, y: number, brush: Draw.Brush = Draw.brush) {
+        this.graphics.lineStyle(1, brush.color, brush.alpha, this.ALIGNMENT_INNER);
+        this.graphics.clear();
+        this.graphics.beginFill(0, 0);
+        this.graphics.drawRect(x, y, 1, 1);
+        this.graphics.endFill();
+        texture.renderDisplayObject(this.graphics);
+    }
+
+    static rectangleOutline(texture: Texture, x: number, y: number, width: number, height: number, alignment: number = this.ALIGNMENT_INNER, brush: Draw.Brush = Draw.brush) {
+        this.graphics.lineStyle(brush.thickness, brush.color, brush.alpha, alignment);
+        this.graphics.clear();
+        this.graphics.beginFill(0, 0);
         this.graphics.drawRect(x, y, width, height);
         this.graphics.endFill();
-
-        this.render();
-
-        return this;
+        texture.renderDisplayObject(this.graphics);
     }
 
-    private static render() {
-        global.screen.renderDisplayObject(this.graphics);
+    static rectangleSolid(texture: Texture, x: number, y: number, width: number, height: number, brush: Draw.Brush = Draw.brush) {
+        this.graphics.lineStyle(0, 0, 0);
+        this.graphics.clear();
+        this.graphics.beginFill(brush.color, brush.alpha);
+        this.graphics.drawRect(x, y, width, height);
+        this.graphics.endFill();
+        texture.renderDisplayObject(this.graphics);
     }
 
     static ALIGNMENT_INNER: number = 0;
     static ALIGNMENT_MIDDLE: number = 0.5;
     static ALIGNMENT_OUTER: number = 1;
 }
+`
+
+Draw.pixel(texture, 34, 56, 0xFFF000, 0.5);
+
+Draw.color = 0xFFF000;
+Draw.alpha = 1;
+Draw.pixel(texture, 34, 56);
+
+`

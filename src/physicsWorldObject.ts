@@ -62,8 +62,9 @@ class PhysicsWorldObject extends WorldObject {
     render() {
         if (DEBUG_ALL_PHYSICS_BOUNDS || this.debugBounds) {
             let worldBounds = this.getWorldBounds();
-            Draw.lineStyle(1, 0x00FF00).noFill()
-                .drawRectangle(worldBounds.x, worldBounds.y, worldBounds.width, worldBounds.height);
+            Draw.brush.color = 0x00FF00;
+            Draw.brush.alpha = 1;
+            Draw.rectangleOutline(global.screen, worldBounds.x, worldBounds.y, worldBounds.width, worldBounds.height);
         }
         super.render();
     }

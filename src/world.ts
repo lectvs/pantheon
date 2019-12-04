@@ -124,15 +124,6 @@ class World extends WorldObject {
     }
 
     render() {
-        this.screen.clear();
-        global.pushScreen(this.screen);
-        this.renderWorld();
-        global.popScreen();
-        global.screen.renderDisplayObject(this.screen.renderTextureSprite);
-        super.render();
-    }
-
-    renderWorld() {
         let oldCameraX = this.camera.x;
         let oldCameraY = this.camera.y;
         if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this.debugMoveCameraWithArrows) {
@@ -141,9 +132,11 @@ class World extends WorldObject {
         }
 
         // Render background color.
-        Draw.noStroke().fillColor(this.backgroundColor, this.backgroundAlpha)
-            .drawRectangle(0, 0, this.width, this.height);
+        Draw.brush.color = this.backgroundColor;
+        Draw.brush.alpha = this.backgroundAlpha;
+        Draw.fill(this.screen);
 
+        global.pushScreen(this.screen);
         global.pushWorld(this);
         for (let layer of this.layers) {
             this.layerTexture.clear();
@@ -153,9 +146,13 @@ class World extends WorldObject {
             global.screen.render(this.layerTexture);
         }
         global.popWorld();
+        global.popScreen();
 
         this.camera.x = oldCameraX;
         this.camera.y = oldCameraY;
+        
+        global.screen.render(this.screen);
+        super.render();
     }
 
     renderLayer(layer: World.Layer) {

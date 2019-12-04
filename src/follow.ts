@@ -45,8 +45,9 @@ class Follow {
 
     renderTrail() {
         for (let i = 0; i < this.targetHistory.length-1; i += 2) {
-            Draw.noStroke().fillColor(0x00FF00)
-                .drawRectangle(this.targetHistory[i], this.targetHistory[i+1], 1, 1);
+            Draw.brush.color = 0x00FF00;
+            Draw.brush.alpha = 1;
+            Draw.pixel(global.screen, this.targetHistory[i], this.targetHistory[i+1]);
         }
     }
 

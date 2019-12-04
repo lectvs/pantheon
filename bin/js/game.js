@@ -568,6 +568,10 @@ var Texture = /** @class */ (function () {
         configurable: true
     });
     Texture.prototype.clear = function () {
+        if (this.immutable) {
+            debug('Cannot clear immutable texture!');
+            return;
+        }
         this.renderTextureSprite.clear();
     };
     Texture.prototype.clone = function () {
@@ -576,13 +580,6 @@ var Texture = /** @class */ (function () {
         result.anchorX = this.anchorX;
         result.anchorY = this.anchorY;
         return result;
-    };
-    Texture.prototype.fill = function (color) {
-        var graphics = new PIXI.Graphics();
-        graphics.beginFill(color, 1);
-        graphics.drawRect(0, 0, this.width, this.height);
-        graphics.endFill();
-        this.renderDisplayObject(graphics);
     };
     Texture.prototype.free = function () {
         this.renderTextureSprite.renderTexture.destroy(true);
@@ -1085,8 +1082,9 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
     PhysicsWorldObject.prototype.render = function () {
         if (DEBUG_ALL_PHYSICS_BOUNDS || this.debugBounds) {
             var worldBounds = this.getWorldBounds();
-            Draw.lineStyle(1, 0x00FF00).noFill()
-                .drawRectangle(worldBounds.x, worldBounds.y, worldBounds.width, worldBounds.height);
+            Draw.brush.color = 0x00FF00;
+            Draw.brush.alpha = 1;
+            Draw.rectangleOutline(global.screen, worldBounds.x, worldBounds.y, worldBounds.width, worldBounds.height);
         }
         _super.prototype.render.call(this);
     };
@@ -1679,7 +1677,9 @@ var S;
     function fadeOut(duration, tint) {
         if (tint === void 0) { tint = 0x000000; }
         var texture = new Texture(Main.width, Main.height);
-        texture.fill(tint);
+        Draw.brush.color = tint;
+        Draw.brush.alpha = 1;
+        Draw.fill(texture);
         return showSlide({ x: 0, y: 0, texture: texture, timeToLoad: duration, fadeIn: true });
     }
     S.fadeOut = fadeOut;
@@ -2255,43 +2255,56 @@ var Direction = /** @class */ (function () {
 var Draw = /** @class */ (function () {
     function Draw() {
     }
-    Draw.lineStyle = function (width, color, alpha, alignment) {
-        if (alpha === void 0) { alpha = 1; }
-        if (alignment === void 0) { alignment = Draw.ALIGNMENT_INNER; }
-        this.graphics.lineStyle(width, color, alpha, alignment);
-        return this;
-    };
-    Draw.noStroke = function () {
-        return this.lineStyle(0, 0x000000, 0);
-    };
-    Draw.fillColor = function (color, alpha) {
-        if (alpha === void 0) { alpha = 1; }
-        this._fillColor = color;
-        this._fillAlpha = alpha;
-        return this;
-    };
-    Draw.noFill = function () {
-        return this.fillColor(0x000000, 0);
-    };
-    Draw.drawRectangle = function (x, y, width, height) {
+    Draw.fill = function (texture, brush) {
+        if (brush === void 0) { brush = Draw.brush; }
+        this.graphics.lineStyle(0, 0, 0);
         this.graphics.clear();
-        this.graphics.beginFill(this._fillColor, this._fillAlpha);
+        this.graphics.beginFill(brush.color, brush.alpha);
+        this.graphics.drawRect(0, 0, texture.width, texture.height);
+        this.graphics.endFill();
+        texture.clear();
+        texture.renderDisplayObject(this.graphics);
+    };
+    Draw.pixel = function (texture, x, y, brush) {
+        if (brush === void 0) { brush = Draw.brush; }
+        this.graphics.lineStyle(1, brush.color, brush.alpha, this.ALIGNMENT_INNER);
+        this.graphics.clear();
+        this.graphics.beginFill(0, 0);
+        this.graphics.drawRect(x, y, 1, 1);
+        this.graphics.endFill();
+        texture.renderDisplayObject(this.graphics);
+    };
+    Draw.rectangleOutline = function (texture, x, y, width, height, alignment, brush) {
+        if (alignment === void 0) { alignment = this.ALIGNMENT_INNER; }
+        if (brush === void 0) { brush = Draw.brush; }
+        this.graphics.lineStyle(brush.thickness, brush.color, brush.alpha, alignment);
+        this.graphics.clear();
+        this.graphics.beginFill(0, 0);
         this.graphics.drawRect(x, y, width, height);
         this.graphics.endFill();
-        this.render();
-        return this;
+        texture.renderDisplayObject(this.graphics);
     };
-    Draw.render = function () {
-        global.screen.renderDisplayObject(this.graphics);
+    Draw.rectangleSolid = function (texture, x, y, width, height, brush) {
+        if (brush === void 0) { brush = Draw.brush; }
+        this.graphics.lineStyle(0, 0, 0);
+        this.graphics.clear();
+        this.graphics.beginFill(brush.color, brush.alpha);
+        this.graphics.drawRect(x, y, width, height);
+        this.graphics.endFill();
+        texture.renderDisplayObject(this.graphics);
+    };
+    Draw.brush = {
+        color: 0x000000,
+        alpha: 1,
+        thickness: 1
     };
     Draw.graphics = new PIXI.Graphics();
-    Draw._fillColor = 0x000000;
-    Draw._fillAlpha = 1;
     Draw.ALIGNMENT_INNER = 0;
     Draw.ALIGNMENT_MIDDLE = 0.5;
     Draw.ALIGNMENT_OUTER = 1;
     return Draw;
 }());
+"\n\nDraw.pixel(texture, 34, 56, 0xFFF000, 0.5);\n\nDraw.color = 0xFFF000;\nDraw.alpha = 1;\nDraw.pixel(texture, 34, 56);\n\n";
 var Effects = /** @class */ (function () {
     function Effects(config) {
         if (config === void 0) { config = {}; }
@@ -2430,8 +2443,9 @@ var Follow = /** @class */ (function () {
     };
     Follow.prototype.renderTrail = function () {
         for (var i = 0; i < this.targetHistory.length - 1; i += 2) {
-            Draw.noStroke().fillColor(0x00FF00)
-                .drawRectangle(this.targetHistory[i], this.targetHistory[i + 1], 1, 1);
+            Draw.brush.color = 0x00FF00;
+            Draw.brush.alpha = 1;
+            Draw.pixel(global.screen, this.targetHistory[i], this.targetHistory[i + 1]);
         }
     };
     Follow.prototype.attemptToResolveTarget = function () {
@@ -3045,6 +3059,7 @@ var Main = /** @class */ (function () {
             '8': ['8'],
             '9': ['9'],
             '0': ['0'],
+            'lmb': ['MouseLeft'],
         });
         window.addEventListener("keydown", function (event) { return Input.handleKeyDownEvent(event); }, false);
         window.addEventListener("keyup", function (event) { return Input.handleKeyUpEvent(event); }, false);
@@ -3083,9 +3098,6 @@ var Main = /** @class */ (function () {
     Main.play = function () {
         var _this = this;
         var fps = new FPSMetricManager(1);
-        var mask = new TextureFilter.Mask({ mask: AssetCache.getTexture('masktest'), type: TextureFilter.Mask.Type.LOCAL, offsetX: 3, offsetY: 2 });
-        var outline = new Effects.Filters.Outline(0xFF0000, 1);
-        var silhouette = new Effects.Filters.Silhouette(0x00FFFF, 0.5);
         PIXI.Ticker.shared.add(function (frameDelta) {
             _this.delta = frameDelta / 60;
             Input.update();
@@ -3096,15 +3108,8 @@ var Main = /** @class */ (function () {
             global.pushDelta(_this.delta);
             fps.update();
             _this.theater.update();
-            if (Input.justDown('1'))
-                mask.invert = !mask.invert;
             _this.screen.clear();
             _this.theater.render();
-            _this.screen.render(AssetCache.getTexture('bed'), {
-                x: Input.mouseX,
-                y: Input.mouseY,
-                filters: [mask, outline, null, silhouette]
-            });
             _this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true); // Clear the renderer
             _this.renderer.render(_this.screen.renderTextureSprite);
             global.popDelta();
@@ -5014,14 +5019,6 @@ var World = /** @class */ (function (_super) {
         global.popWorld();
     };
     World.prototype.render = function () {
-        this.screen.clear();
-        global.pushScreen(this.screen);
-        this.renderWorld();
-        global.popScreen();
-        global.screen.renderDisplayObject(this.screen.renderTextureSprite);
-        _super.prototype.render.call(this);
-    };
-    World.prototype.renderWorld = function () {
         var e_25, _a;
         var oldCameraX = this.camera.x;
         var oldCameraY = this.camera.y;
@@ -5030,8 +5027,10 @@ var World = /** @class */ (function (_super) {
             this.camera.y += this.debugCameraY;
         }
         // Render background color.
-        Draw.noStroke().fillColor(this.backgroundColor, this.backgroundAlpha)
-            .drawRectangle(0, 0, this.width, this.height);
+        Draw.brush.color = this.backgroundColor;
+        Draw.brush.alpha = this.backgroundAlpha;
+        Draw.fill(this.screen);
+        global.pushScreen(this.screen);
         global.pushWorld(this);
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -5051,8 +5050,11 @@ var World = /** @class */ (function (_super) {
             finally { if (e_25) throw e_25.error; }
         }
         global.popWorld();
+        global.popScreen();
         this.camera.x = oldCameraX;
         this.camera.y = oldCameraY;
+        global.screen.render(this.screen);
+        _super.prototype.render.call(this);
     };
     World.prototype.renderLayer = function (layer) {
         var e_26, _a;

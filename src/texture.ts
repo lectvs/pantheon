@@ -31,6 +31,10 @@ class Texture {
     }
 
     clear() {
+        if (this.immutable) {
+            debug('Cannot clear immutable texture!');
+            return;
+        }
         this.renderTextureSprite.clear();
     }
 
@@ -40,14 +44,6 @@ class Texture {
         result.anchorX = this.anchorX;
         result.anchorY = this.anchorY;
         return result;
-    }
-
-    fill(color: number) {
-        let graphics = new PIXI.Graphics();
-        graphics.beginFill(color, 1);
-        graphics.drawRect(0, 0, this.width, this.height);
-        graphics.endFill();
-        this.renderDisplayObject(graphics);
     }
 
     free() {
