@@ -22,7 +22,6 @@ class DialogBox extends Sprite {
     done: boolean;
 
     private spriteText: SpriteText;
-    private spriteTextMask: PIXI.Graphics;
     private spriteTextOffset: number;
     private portraitSprite: Sprite;
     private characterTimer: Timer;
@@ -43,11 +42,14 @@ class DialogBox extends Sprite {
         this.spriteText = new SpriteText({
             font: config.spriteTextFont,
         });
-        this.spriteTextMask = Mask.newRectangleMask(this.getTextAreaWorldRect());
-        this.spriteText.mask = this.spriteTextMask;
+        let textAreaWorldRect = this.getTextAreaWorldRect();
+        this.spriteText.mask = new Texture(Main.width, Main.height);
+        Draw.brush.color = 0xFFFFFF;
+        Draw.brush.alpha = 1;
+        Draw.rectangleSolid(this.spriteText.mask, textAreaWorldRect.x, textAreaWorldRect.y, textAreaWorldRect.width, textAreaWorldRect.height);
         this.spriteTextOffset = 0;
 
-        this.portraitSprite = new Sprite({ texture: 'none' });
+        this.portraitSprite = new Sprite({});
 
         this.characterTimer = new Timer(0.05, () => this.advanceCharacter(), true);
     }
@@ -67,8 +69,6 @@ class DialogBox extends Sprite {
 
     render() {
         super.render();
-
-        this.drawMask();
 
         if (this.portraitSprite.visible) {
             this.setPortraitSpriteProperties();
@@ -111,10 +111,6 @@ class DialogBox extends Sprite {
         while (this.advanceCharacter() && iters < DialogBox.MAX_COMPLETE_PAGE_ITERS) {
             iters++;
         }
-    }
-
-    drawMask() {
-        Mask.drawRectangleMask(this.spriteTextMask, this.getTextAreaWorldRect());
     }
 
     getPortraitWorldPosition(): Pt {

@@ -7,8 +7,8 @@ class Main {
 
     static delta: number;
 
-    static get width()  { return 256; }
-    static get height() { return 192; }
+    static get width()  { return 240; }
+    static get height() { return 180; }
 
     static get backgroundColor() { return 0x061639; }
 
@@ -74,18 +74,18 @@ class Main {
 
         this.theater = new Theater({
             stages: stages,
-            stageToLoad: 'main',
-            stageEntryPoint: 'entrance',
+            stageToLoad: 'outside',
+            stageEntryPoint: 'main',
             storyboard: storyboard,
-            storyboardEntry: 'room_intro',
+            storyboardEntry: 'outside',
             party: party,
             dialogBox: {
                 x: Main.width/2, y: Main.height - 32,
                 texture: 'dialogbox',
                 spriteTextFont: Assets.fonts.DELUXE16,
-                textAreaFull: { x: -122, y: -27, width: 244, height: 54 },
-                textAreaPortrait: { x: -122, y: -27, width: 174, height: 54 },
-                portraitPosition: { x: 86, y: 0 },
+                textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
+                textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
+                portraitPosition: { x: 78, y: 0 },
                 advanceKey: 'advanceDialog',
             },
             skipCutsceneScriptKey: 'skipCutsceneScript',

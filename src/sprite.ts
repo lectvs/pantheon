@@ -3,10 +3,12 @@
 namespace Sprite {
     export type Config = PhysicsWorldObject.Config & {
         texture?: string | Texture;
-        offset?: Pt;
-        angle?: number;
         animations?: Animation.Config[];
         defaultAnimation?: string;
+        flipX?: boolean;
+        flipY?: boolean;
+        offset?: Pt;
+        angle?: number;
         tint?: number;
         alpha?: number;
         effects?: Effects.Config;
@@ -34,7 +36,8 @@ class Sprite extends PhysicsWorldObject {
         this.setTexture(config.texture);
 
         if (config.bounds === undefined) {
-            this.bounds = { x: 0, y: 0, width: 0, height: 0 };//this.getTextureLocalBounds();
+            // TODO: set this to texture's bounds (local)
+            this.bounds = { x: 0, y: 0, width: 0, height: 0 };
         }
 
         this.animationManager = new AnimationManager(this);
@@ -52,8 +55,8 @@ class Sprite extends PhysicsWorldObject {
             this.playAnimation(config.defaultAnimation, 0, true);
         }
 
-        this.flipX = false;
-        this.flipY = false;
+        this.flipX = O.getOrDefault(config.flipX, false);
+        this.flipY = O.getOrDefault(config.flipY, false);
 
         this.offset = config.offset || { x: 0, y: 0 };
         this.angle = O.getOrDefault(config.angle, 0);
@@ -67,11 +70,6 @@ class Sprite extends PhysicsWorldObject {
     update() {
         super.update();
         this.animationManager.update();
-
-        if (global.world.getName(this) === 'angie' && Input.justDown('1')) {
-            this.effects.outline.enabled = !this.effects.outline.enabled;
-            this.effects.outline.color = 0xFF00FF;
-        }
     }
 
     render() {

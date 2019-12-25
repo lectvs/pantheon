@@ -222,62 +222,6 @@ namespace TextureFilter {
         }
     }
 
-    export class LocalMask extends TextureFilter {
-        private mask: Texture;
-        private currentMaskTexture: Texture;
-        private currentMaskWidth: number;
-        private currentMaskHeight: number;
-        private currentMaskX: number;
-        private currentMaskY: number;
-
-        constructor(mask: Texture) {
-            super({
-                uniforms: [ "sampler2D mask" ],
-                defaultUniforms: {},
-                code: `
-                    outp *= texture2D(mask, vTextureCoord).a;
-                `
-            });
-            this.setMask(mask);
-        }
-
-        setDimensions(width: number, height: number) {
-            super.setDimensions(width, height);
-            if (this.currentMaskWidth !== width || this.currentMaskHeight !== height) {
-                this.currentMaskWidth = width;
-                this.currentMaskHeight = height;
-                this.refreshMask();
-            }
-        }
-
-        setTexturePosition(posx: number, posy: number) {
-            super.setTexturePosition(posx, posy);
-            if (this.currentMaskX !== posx || this.currentMaskY !== posy) {
-                this.currentMaskX = posx;
-                this.currentMaskY = posy;
-                this.refreshMask();
-            }
-        }
-
-        setMask(mask: Texture) {
-            this.mask = mask;
-            this.currentMaskTexture = mask;
-            this.setDimensions(this.currentMaskTexture.width, this.currentMaskTexture.height);
-            this.setTexturePosition(0, 0);
-            this.refreshMask();
-        }
-
-        private refreshMask() {
-            if (this.currentMaskTexture !== this.mask) this.currentMaskTexture.free();
-            this.currentMaskTexture = new Texture(
-                M.minPowerOf2(this.currentMaskWidth), 
-                M.minPowerOf2(this.currentMaskHeight)
-            );
-            this.currentMaskTexture.render(this.mask, { x: this.currentMaskX, y: this.currentMaskY });
-            this.setUniform('mask', this.currentMaskTexture.toMaskTexture());
-        }
-    }
-
     export class Slice extends TextureFilter {
         constructor(rect: Rect) {
             super({

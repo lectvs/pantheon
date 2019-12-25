@@ -36,7 +36,9 @@ class InteractionManager {
         let cutscenes = this.getInteractableCutscenes();
         for (let cutscene of cutscenes) {
             for (let obj of (<Cutscene>global.theater.storyboard[cutscene]).playOnInteractWith) {
-                result.add(obj);
+                if (global.worldObjectExists(obj)) {
+                    result.add(obj);
+                }
             }
         }
 

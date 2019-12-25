@@ -24,22 +24,23 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-var __values = (this && this.__values) || function (o) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+var __values = (this && this.__values) || function(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
     if (m) return m.call(o);
-    return {
+    if (o && typeof o.length === "number") return {
         next: function () {
             if (o && i >= o.length) o = void 0;
             return { value: o && o[i++], done: !o };
         }
     };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
     var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
@@ -472,50 +473,6 @@ var TextureFilter = /** @class */ (function () {
             Type["LOCAL"] = "local";
         })(Type = Mask.Type || (Mask.Type = {}));
     })(Mask = TextureFilter.Mask || (TextureFilter.Mask = {}));
-    var LocalMask = /** @class */ (function (_super) {
-        __extends(LocalMask, _super);
-        function LocalMask(mask) {
-            var _this = _super.call(this, {
-                uniforms: ["sampler2D mask"],
-                defaultUniforms: {},
-                code: "\n                    outp *= texture2D(mask, vTextureCoord).a;\n                "
-            }) || this;
-            _this.setMask(mask);
-            return _this;
-        }
-        LocalMask.prototype.setDimensions = function (width, height) {
-            _super.prototype.setDimensions.call(this, width, height);
-            if (this.currentMaskWidth !== width || this.currentMaskHeight !== height) {
-                this.currentMaskWidth = width;
-                this.currentMaskHeight = height;
-                this.refreshMask();
-            }
-        };
-        LocalMask.prototype.setTexturePosition = function (posx, posy) {
-            _super.prototype.setTexturePosition.call(this, posx, posy);
-            if (this.currentMaskX !== posx || this.currentMaskY !== posy) {
-                this.currentMaskX = posx;
-                this.currentMaskY = posy;
-                this.refreshMask();
-            }
-        };
-        LocalMask.prototype.setMask = function (mask) {
-            this.mask = mask;
-            this.currentMaskTexture = mask;
-            this.setDimensions(this.currentMaskTexture.width, this.currentMaskTexture.height);
-            this.setTexturePosition(0, 0);
-            this.refreshMask();
-        };
-        LocalMask.prototype.refreshMask = function () {
-            if (this.currentMaskTexture !== this.mask)
-                this.currentMaskTexture.free();
-            this.currentMaskTexture = new Texture(M.minPowerOf2(this.currentMaskWidth), M.minPowerOf2(this.currentMaskHeight));
-            this.currentMaskTexture.render(this.mask, { x: this.currentMaskX, y: this.currentMaskY });
-            this.setUniform('mask', this.currentMaskTexture.toMaskTexture());
-        };
-        return LocalMask;
-    }(TextureFilter));
-    TextureFilter.LocalMask = LocalMask;
     var Slice = /** @class */ (function (_super) {
         __extends(Slice, _super);
         function Slice(rect) {
@@ -776,7 +733,7 @@ var Preload = /** @class */ (function () {
         for (var i = 0; i < tilemapJson.layers.length; i++) {
             var tilemapLayer = A.filledArray2D(tilemapJson.tileshigh, tilemapJson.tileswide);
             try {
-                for (var _b = __values(tilemapJson.layers[i].tiles), _c = _b.next(); !_c.done; _c = _b.next()) {
+                for (var _b = (e_1 = void 0, __values(tilemapJson.layers[i].tiles)), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var tile = _c.value;
                     tilemapLayer[tile.y][tile.x] = {
                         index: Math.max(tile.tile, -1),
@@ -818,6 +775,23 @@ var Assets;
         'dialogbox': {
             anchor: { x: 0.5, y: 0.5 },
         },
+        // Debug
+        'grad': {},
+        'masktest': {},
+        // Character sprites
+        'milo_sprites': {
+            defaultAnchor: { x: 0.5, y: 1 },
+            spritesheet: { frameWidth: 32, frameHeight: 36 },
+        },
+        'angie_sprites': {
+            defaultAnchor: { x: 0.5, y: 1 },
+            spritesheet: { frameWidth: 32, frameHeight: 36 },
+        },
+        'generic_sprites': {
+            defaultAnchor: { x: 0.5, y: 1 },
+            spritesheet: { frameWidth: 32, frameHeight: 36 },
+        },
+        // Props
         'room_bg': {},
         'room_backwall': {},
         'room_backwall_covered': {
@@ -829,14 +803,7 @@ var Assets;
         'board2': {
             anchor: { x: 0.5, y: 0.5 },
         },
-        'milo_sprites': {
-            defaultAnchor: { x: 0.5, y: 1 },
-            spritesheet: { frameWidth: 32, frameHeight: 36 },
-        },
-        'angie_sprites': {
-            defaultAnchor: { x: 0.5, y: 1 },
-            spritesheet: { frameWidth: 32, frameHeight: 36 },
-        },
+        'spotlight': {},
         'props': {
             defaultAnchor: { x: 0.5, y: 1 },
             frames: {
@@ -845,11 +812,9 @@ var Assets;
                 },
                 'door_closed': {
                     rect: { x: 40, y: 2, width: 24, height: 36 },
-                    anchor: { x: 0, y: 0 },
                 },
                 'door_open': {
                     rect: { x: 66, y: 2, width: 4, height: 45 },
-                    anchor: { x: 0, y: 0 },
                 },
                 'window': {
                     rect: { x: 72, y: 2, width: 44, height: 35 },
@@ -874,7 +839,7 @@ var Assets;
                 },
             }
         },
-        'spotlight': {},
+        // Tilesets
         'mainworld': {
             url: 'assets/tilemap/mainworld.png',
             spritesheet: { frameWidth: 16, frameHeight: 16 },
@@ -883,45 +848,45 @@ var Assets;
             url: 'assets/tilemap/cave.png',
             spritesheet: { frameWidth: 16, frameHeight: 16 },
         },
-        'grad': {},
-        'masktest': {},
+        'outside': {
+            url: 'assets/tilemap/outside.png',
+            spritesheet: { frameWidth: 12, frameHeight: 12 },
+        },
         // Portraits
-        'portraits/milo': {
+        'portraits/sai': {
             defaultAnchor: { x: 0.5, y: 0.5 },
             frames: {
-                'milo/happy': {
+                'sai/default': {
                     rect: { x: 0 * 74, y: 0 * 54, width: 74, height: 54 },
-                },
-                'milo/angry': {
-                    rect: { x: 1 * 74, y: 0 * 54, width: 74, height: 54 },
-                },
-                'milo/sad': {
-                    rect: { x: 2 * 74, y: 0 * 54, width: 74, height: 54 },
-                },
-                'milo/sigh': {
-                    rect: { x: 3 * 74, y: 0 * 54, width: 74, height: 54 },
-                },
-                'milo/scared': {
-                    rect: { x: 4 * 74, y: 0 * 54, width: 74, height: 54 },
-                },
-                'milo/shocked': {
-                    rect: { x: 5 * 74, y: 0 * 54, width: 74, height: 54 },
                 },
             }
         },
-        'portraits/angie': {
+        'portraits/dad': {
             defaultAnchor: { x: 0.5, y: 0.5 },
             frames: {
-                'angie/happy': {
+                'dad/default': {
+                    rect: { x: 0 * 74, y: 0 * 54, width: 74, height: 54 },
+                },
+            }
+        },
+        'portraits/guard1': {
+            defaultAnchor: { x: 0.5, y: 0.5 },
+            frames: {
+                'guard1/default': {
+                    rect: { x: 0 * 74, y: 0 * 54, width: 74, height: 54 },
+                },
+            }
+        },
+        'portraits/guard2': {
+            defaultAnchor: { x: 0.5, y: 0.5 },
+            frames: {
+                'guard2/default': {
                     rect: { x: 0 * 74, y: 0 * 54, width: 74, height: 54 },
                 },
             }
         },
         // Fonts
-        'deluxe16': {
-            //rect: { x: 0, y: 0, width: 8, height: 15 },
-            anchor: { x: 0, y: 0 },
-        },
+        'deluxe16': {},
     };
     Assets.tilesets = {
         'mainworld': {
@@ -935,6 +900,12 @@ var Assets;
             tileWidth: 16,
             tileHeight: 16,
             collisionIndices: [-1, 1, 5, 16],
+        },
+        'outside': {
+            tiles: Preload.allTilesWithPrefix('outside_'),
+            tileWidth: 12,
+            tileHeight: 12,
+            collisionIndices: [7, 8, 9, 10, 11, 12, 13, 14, 15],
         },
     };
     Assets.pyxelTilemaps = {
@@ -954,6 +925,10 @@ var Assets;
             url: 'assets/tilemap/upper.json',
             tileset: Assets.tilesets.mainworld,
         },
+        'outside': {
+            url: 'assets/tilemap/outside.json',
+            tileset: Assets.tilesets.outside,
+        }
     };
     var fonts = /** @class */ (function () {
         function fonts() {
@@ -989,12 +964,6 @@ var WorldObject = /** @class */ (function () {
     }
     Object.defineProperty(WorldObject.prototype, "isControlled", {
         get: function () { return this.controllable && !global.theater.isCutscenePlaying; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(WorldObject.prototype, "mask", {
-        get: function () { return undefined; },
-        set: function (value) { },
         enumerable: true,
         configurable: true
     });
@@ -1214,6 +1183,52 @@ var BackWall = /** @class */ (function (_super) {
     };
     return BackWall;
 }(PhysicsWorldObject));
+var Transition;
+(function (Transition) {
+    Transition.INSTANT = { type: 'instant' };
+    function FADE(preTime, time, postTime) {
+        return {
+            type: 'fade', preTime: preTime, time: time, postTime: postTime
+        };
+    }
+    Transition.FADE = FADE;
+    var Obj = /** @class */ (function (_super) {
+        __extends(Obj, _super);
+        function Obj(oldSnapshot, newSnapshot, transition) {
+            var _this = _super.call(this, {}) || this;
+            _this.oldSprite = new Sprite({ texture: oldSnapshot });
+            _this.newSprite = new Sprite({ texture: newSnapshot });
+            _this.done = false;
+            if (transition.type === 'instant') {
+                _this.done = true;
+            }
+            else if (transition.type === 'fade') {
+                _this.oldSprite.alpha = 1;
+                _this.newSprite.alpha = 0;
+                global.theater.runScript({
+                    generator: S.chain(S.wait(transition.preTime), S.doOverTime(transition.time, function (t) {
+                        _this.oldSprite.alpha = 1 - t;
+                        _this.newSprite.alpha = t;
+                    }), S.wait(transition.postTime)).generator,
+                    endState: function () { return (_this.done = true); },
+                });
+            }
+            return _this;
+        }
+        Obj.prototype.update = function () {
+            _super.prototype.update.call(this);
+        };
+        Obj.prototype.render = function () {
+            _super.prototype.render.call(this);
+            this.newSprite.render();
+            this.oldSprite.render();
+        };
+        return Obj;
+    }(WorldObject));
+    Transition.Obj = Obj;
+})(Transition || (Transition = {}));
+/// <reference path="./transition.ts" />
+var DEFAULT_SCREEN_TRANSITION = Transition.FADE(0.5, 1, 0.5);
 var BASE_STAGE = {
     layers: [
         { name: 'bg' },
@@ -1231,6 +1246,50 @@ var BASE_STAGE = {
         { move: 'player', from: ['props', 'walls'], callback: true },
     ],
 };
+function HUMAN_CHARACTER(texture) {
+    return {
+        constructor: HumanCharacter,
+        layer: 'main',
+        physicsGroup: 'player',
+        bounds: { x: -5, y: -2, width: 10, height: 2 },
+        animations: [
+            Animations.fromTextureList({ name: 'idle_side', texturePrefix: texture + '_', textures: [0, 1], frameRate: 1, count: -1 }),
+            Animations.fromTextureList({ name: 'idle_down', texturePrefix: texture + '_', textures: [8, 9], frameRate: 1, count: -1 }),
+            Animations.fromTextureList({ name: 'idle_up', texturePrefix: texture + '_', textures: [16, 17], frameRate: 1, count: -1 }),
+            Animations.fromTextureList({ name: 'run_side', texturePrefix: texture + '_', textures: [2, 3], frameRate: 8, count: -1 }),
+            Animations.fromTextureList({ name: 'run_down', texturePrefix: texture + '_', textures: [10, 11], frameRate: 8, count: -1 }),
+            Animations.fromTextureList({ name: 'run_up', texturePrefix: texture + '_', textures: [18, 19], frameRate: 8, count: -1 }),
+        ],
+        defaultAnimation: 'idle_side',
+    };
+}
+function WORLD_BOUNDS(left, top, right, bottom) {
+    var thickness = 12;
+    var width = right - left;
+    var height = bottom - top;
+    return [
+        {
+            constructor: PhysicsWorldObject,
+            bounds: { x: left - thickness, y: top - thickness, width: thickness, height: height + 2 * thickness },
+            physicsGroup: 'walls',
+        },
+        {
+            constructor: PhysicsWorldObject,
+            bounds: { x: right, y: top - thickness, width: thickness, height: height + 2 * thickness },
+            physicsGroup: 'walls',
+        },
+        {
+            constructor: PhysicsWorldObject,
+            bounds: { x: left, y: top - thickness, width: width, height: thickness },
+            physicsGroup: 'walls',
+        },
+        {
+            constructor: PhysicsWorldObject,
+            bounds: { x: left, y: bottom, width: width, height: thickness },
+            physicsGroup: 'walls',
+        },
+    ];
+}
 var S;
 (function (S) {
     function chain() {
@@ -1894,7 +1953,8 @@ var Sprite = /** @class */ (function (_super) {
         _this = _super.call(this, config) || this;
         _this.setTexture(config.texture);
         if (config.bounds === undefined) {
-            _this.bounds = { x: 0, y: 0, width: 0, height: 0 }; //this.getTextureLocalBounds();
+            // TODO: set this to texture's bounds (local)
+            _this.bounds = { x: 0, y: 0, width: 0, height: 0 };
         }
         _this.animationManager = new AnimationManager(_this);
         if (config.animations) {
@@ -1918,8 +1978,8 @@ var Sprite = /** @class */ (function (_super) {
         if (config.defaultAnimation) {
             _this.playAnimation(config.defaultAnimation, 0, true);
         }
-        _this.flipX = false;
-        _this.flipY = false;
+        _this.flipX = O.getOrDefault(config.flipX, false);
+        _this.flipY = O.getOrDefault(config.flipY, false);
         _this.offset = config.offset || { x: 0, y: 0 };
         _this.angle = O.getOrDefault(config.angle, 0);
         _this.tint = O.getOrDefault(config.tint, 0xFFFFFF);
@@ -1930,10 +1990,6 @@ var Sprite = /** @class */ (function (_super) {
     Sprite.prototype.update = function () {
         _super.prototype.update.call(this);
         this.animationManager.update();
-        if (global.world.getName(this) === 'angie' && Input.justDown('1')) {
-            this.effects.outline.enabled = !this.effects.outline.enabled;
-            this.effects.outline.color = 0xFF00FF;
-        }
     };
     Sprite.prototype.render = function () {
         global.screen.render(this.texture, {
@@ -1982,10 +2038,13 @@ var DialogBox = /** @class */ (function (_super) {
         _this.spriteText = new SpriteText({
             font: config.spriteTextFont,
         });
-        _this.spriteTextMask = Mask.newRectangleMask(_this.getTextAreaWorldRect());
-        _this.spriteText.mask = _this.spriteTextMask;
+        var textAreaWorldRect = _this.getTextAreaWorldRect();
+        _this.spriteText.mask = new Texture(Main.width, Main.height);
+        Draw.brush.color = 0xFFFFFF;
+        Draw.brush.alpha = 1;
+        Draw.rectangleSolid(_this.spriteText.mask, textAreaWorldRect.x, textAreaWorldRect.y, textAreaWorldRect.width, textAreaWorldRect.height);
         _this.spriteTextOffset = 0;
-        _this.portraitSprite = new Sprite({ texture: 'none' });
+        _this.portraitSprite = new Sprite({});
         _this.characterTimer = new Timer(0.05, function () { return _this.advanceCharacter(); }, true);
         return _this;
     }
@@ -2001,7 +2060,6 @@ var DialogBox = /** @class */ (function (_super) {
     };
     DialogBox.prototype.render = function () {
         _super.prototype.render.call(this);
-        this.drawMask();
         if (this.portraitSprite.visible) {
             this.setPortraitSpriteProperties();
             this.portraitSprite.render();
@@ -2039,9 +2097,6 @@ var DialogBox = /** @class */ (function (_super) {
         while (this.advanceCharacter() && iters < DialogBox.MAX_COMPLETE_PAGE_ITERS) {
             iters++;
         }
-    };
-    DialogBox.prototype.drawMask = function () {
-        Mask.drawRectangleMask(this.spriteTextMask, this.getTextAreaWorldRect());
     };
     DialogBox.prototype.getPortraitWorldPosition = function () {
         return {
@@ -2504,6 +2559,9 @@ var global = /** @class */ (function () {
     global.getWorldObject = function (name) {
         return this.world.getWorldObjectByName(name);
     };
+    global.worldObjectExists = function (name) {
+        return !!this.world.worldObjectsByName[name];
+    };
     Object.defineProperty(global, "world", {
         // Update options
         get: function () { return this.worldStack[this.worldStack.length - 1]; },
@@ -2685,6 +2743,9 @@ var HumanCharacter = /** @class */ (function (_super) {
         this.direction.h = direction.h;
         this.direction.v = direction.v;
     };
+    HumanCharacter.prototype.unfollow = function () {
+        this._follow = null;
+    };
     HumanCharacter.prototype.updateFollow = function () {
         if (this._follow)
             this._follow.update(this);
@@ -2701,7 +2762,7 @@ var Input = /** @class */ (function () {
         this.keysByKeycode = {};
         for (var name_2 in keyCodesByName) {
             try {
-                for (var _c = __values(keyCodesByName[name_2]), _d = _c.next(); !_d.done; _d = _c.next()) {
+                for (var _c = (e_8 = void 0, __values(keyCodesByName[name_2])), _d = _c.next(); !_d.done; _d = _c.next()) {
                     var keyCode = _d.value;
                     this.isDownByKeyCode[keyCode] = false;
                     this.keysByKeycode[keyCode] = this.keysByKeycode[keyCode] || new Input.Key();
@@ -2916,9 +2977,11 @@ var InteractionManager = /** @class */ (function () {
             for (var cutscenes_1 = __values(cutscenes), cutscenes_1_1 = cutscenes_1.next(); !cutscenes_1_1.done; cutscenes_1_1 = cutscenes_1.next()) {
                 var cutscene = cutscenes_1_1.value;
                 try {
-                    for (var _c = __values(global.theater.storyboard[cutscene].playOnInteractWith), _d = _c.next(); !_d.done; _d = _c.next()) {
+                    for (var _c = (e_12 = void 0, __values(global.theater.storyboard[cutscene].playOnInteractWith)), _d = _c.next(); !_d.done; _d = _c.next()) {
                         var obj = _d.value;
-                        result.add(obj);
+                        if (global.worldObjectExists(obj)) {
+                            result.add(obj);
+                        }
                     }
                 }
                 catch (e_12_1) { e_12 = { error: e_12_1 }; }
@@ -3000,12 +3063,12 @@ var Main = /** @class */ (function () {
     function Main() {
     }
     Object.defineProperty(Main, "width", {
-        get: function () { return 256; },
+        get: function () { return 240; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(Main, "height", {
-        get: function () { return 192; },
+        get: function () { return 180; },
         enumerable: true,
         configurable: true
     });
@@ -3068,18 +3131,18 @@ var Main = /** @class */ (function () {
         //window.addEventListener("contextmenu", event => event.preventDefault(), false);
         this.theater = new Theater({
             stages: stages,
-            stageToLoad: 'main',
-            stageEntryPoint: 'entrance',
+            stageToLoad: 'outside',
+            stageEntryPoint: 'main',
             storyboard: storyboard,
-            storyboardEntry: 'room_intro',
+            storyboardEntry: 'outside',
             party: party,
             dialogBox: {
                 x: Main.width / 2, y: Main.height - 32,
                 texture: 'dialogbox',
                 spriteTextFont: Assets.fonts.DELUXE16,
-                textAreaFull: { x: -122, y: -27, width: 244, height: 54 },
-                textAreaPortrait: { x: -122, y: -27, width: 174, height: 54 },
-                portraitPosition: { x: 86, y: 0 },
+                textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
+                textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
+                portraitPosition: { x: 78, y: 0 },
                 advanceKey: 'advanceDialog',
             },
             skipCutsceneScriptKey: 'skipCutsceneScript',
@@ -3258,48 +3321,20 @@ var Party = /** @class */ (function () {
     return Party;
 }());
 /// <reference path="./party.ts"/>
-var HUMAN_CHARACTER = {
-    constructor: HumanCharacter,
-    layer: 'main',
-    physicsGroup: 'player',
-    bounds: { x: -5, y: -2, width: 10, height: 2 },
-};
 var party = {
-    leader: 'angie',
-    activeMembers: ['angie'],
+    leader: 'sai',
+    activeMembers: ['sai', 'dad'],
     members: {
-        'angie': {
+        'sai': {
             config: {
-                name: 'angie',
-                parent: HUMAN_CHARACTER,
-                animations: [
-                    Animations.fromTextureList({ name: 'idle_side', texturePrefix: 'angie_sprites_', textures: [0, 1], frameRate: 1, count: -1 }),
-                    Animations.fromTextureList({ name: 'idle_down', texturePrefix: 'angie_sprites_', textures: [8, 9], frameRate: 1, count: -1 }),
-                    Animations.fromTextureList({ name: 'idle_up', texturePrefix: 'angie_sprites_', textures: [16, 17], frameRate: 1, count: -1 }),
-                    Animations.fromTextureList({ name: 'run_side', texturePrefix: 'angie_sprites_', textures: [2, 3], frameRate: 8, count: -1 }),
-                    Animations.fromTextureList({ name: 'run_down', texturePrefix: 'angie_sprites_', textures: [10, 11], frameRate: 8, count: -1 }),
-                    Animations.fromTextureList({ name: 'run_up', texturePrefix: 'angie_sprites_', textures: [18, 19], frameRate: 8, count: -1 }),
-                    Animations.fromTextureList({ name: 'throw_start', texturePrefix: 'angie_sprites_', textures: [4], frameRate: 1, count: -1, forceRequired: true }),
-                    Animations.fromTextureList({ name: 'throw_end', texturePrefix: 'angie_sprites_', textures: [5], frameRate: 1, count: -1, forceRequired: true }),
-                ],
-                defaultAnimation: 'idle_side',
-                controllable: true,
+                name: 'sai',
+                parent: HUMAN_CHARACTER('generic_sprites'),
             },
         },
-        'milo': {
+        'dad': {
             config: {
-                name: 'milo',
-                parent: HUMAN_CHARACTER,
-                animations: [
-                    Animations.fromTextureList({ name: 'idle_side', texturePrefix: 'milo_sprites_', textures: [0, 1], frameRate: 1, count: -1 }),
-                    Animations.fromTextureList({ name: 'idle_down', texturePrefix: 'milo_sprites_', textures: [8, 9], frameRate: 1, count: -1 }),
-                    Animations.fromTextureList({ name: 'idle_up', texturePrefix: 'milo_sprites_', textures: [16, 17], frameRate: 1, count: -1 }),
-                    Animations.fromTextureList({ name: 'run_side', texturePrefix: 'milo_sprites_', textures: [2, 3], frameRate: 8, count: -1 }),
-                    Animations.fromTextureList({ name: 'run_down', texturePrefix: 'milo_sprites_', textures: [10, 11], frameRate: 8, count: -1 }),
-                    Animations.fromTextureList({ name: 'run_up', texturePrefix: 'milo_sprites_', textures: [18, 19], frameRate: 8, count: -1 }),
-                    Animations.fromTextureList({ name: 'flop_lay', texturePrefix: 'milo_sprites_', textures: [4], frameRate: 1, count: -1, forceRequired: true }),
-                ],
-                defaultAnimation: 'idle_side'
+                name: 'dad',
+                parent: HUMAN_CHARACTER('generic_sprites'),
             },
         },
     }
@@ -3357,8 +3392,8 @@ var Physics = /** @class */ (function () {
         return result;
     };
     Physics.collide = function (obj, from, options) {
-        if (options === void 0) { options = {}; }
         var e_13, _a;
+        if (options === void 0) { options = {}; }
         if (_.isEmpty(from))
             return;
         if (!obj.colliding)
@@ -3376,7 +3411,7 @@ var Physics = /** @class */ (function () {
             var collisions = collidingWith.map(function (other) { return Physics.getCollision(obj, other); });
             collisions.sort(function (a, b) { return a.t - b.t; });
             try {
-                for (var collisions_1 = __values(collisions), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
+                for (var collisions_1 = (e_13 = void 0, __values(collisions)), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
                     var collision = collisions_1_1.value;
                     var d = Physics.separate(collision);
                     if (d !== 0 && options.transferMomentum) {
@@ -3688,6 +3723,7 @@ var SpriteText = /** @class */ (function (_super) {
     };
     SpriteText.prototype.render = function () {
         var e_14, _a;
+        var filters = this.mask ? [new TextureFilter.Mask({ type: TextureFilter.Mask.Type.GLOBAL, mask: this.mask })] : [];
         try {
             for (var _b = __values(this.chars), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var char = _c.value;
@@ -3701,6 +3737,7 @@ var SpriteText = /** @class */ (function (_super) {
                         width: this.font.charWidth,
                         height: this.font.charHeight
                     },
+                    filters: filters,
                 });
             }
         }
@@ -3716,16 +3753,6 @@ var SpriteText = /** @class */ (function (_super) {
     SpriteText.prototype.clear = function () {
         this.setText("");
     };
-    Object.defineProperty(SpriteText.prototype, "mask", {
-        get: function () {
-            return null; //this.fontSprite.mask;
-        },
-        set: function (value) {
-            //this.fontSprite.mask = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
     SpriteText.prototype.getTextHeight = function () {
         return SpriteText.getHeightOfCharList(this.chars);
     };
@@ -4007,8 +4034,8 @@ var Stage;
     }
     Stage.resolveWorldObjectConfig = resolveWorldObjectConfig;
     function mergeArray(array, into, key, combine) {
-        if (combine === void 0) { combine = (function (e, into) { return e; }); }
         var e_16, _a;
+        if (combine === void 0) { combine = (function (e, into) { return e; }); }
         var result = A.clone(into);
         try {
             for (var array_1 = __values(array), array_1_1 = array_1.next(); !array_1_1.done; array_1_1 = array_1.next()) {
@@ -4049,80 +4076,6 @@ var Stage;
         return result;
     }
 })(Stage || (Stage = {}));
-var O;
-(function (O) {
-    function deepOverride(obj, overrides) {
-        for (var key in overrides) {
-            if (obj[key] && _.isObject(obj[key]) && _.isObject(overrides[key])) {
-                deepOverride(obj[key], overrides[key]);
-            }
-            else {
-                obj[key] = overrides[key];
-            }
-        }
-    }
-    O.deepOverride = deepOverride;
-    function getOrDefault(obj, def) {
-        return obj === undefined ? def : obj;
-    }
-    O.getOrDefault = getOrDefault;
-    function withDefaults(obj, defaults) {
-        var result = _.clone(obj);
-        _.defaults(result, defaults);
-        return result;
-    }
-    O.withDefaults = withDefaults;
-    function withOverrides(obj, overrides) {
-        var result = _.clone(obj);
-        _.extend(result, overrides);
-        return result;
-    }
-    O.withOverrides = withOverrides;
-})(O || (O = {}));
-var Transition;
-(function (Transition) {
-    Transition.INSTANT = { type: 'instant' };
-    function FADE(preTime, time, postTime) {
-        return {
-            type: 'fade', preTime: preTime, time: time, postTime: postTime
-        };
-    }
-    Transition.FADE = FADE;
-    var Obj = /** @class */ (function (_super) {
-        __extends(Obj, _super);
-        function Obj(oldSnapshot, newSnapshot, transition) {
-            var _this = _super.call(this, {}) || this;
-            _this.oldSprite = new Sprite({ texture: oldSnapshot });
-            _this.newSprite = new Sprite({ texture: newSnapshot });
-            _this.done = false;
-            if (transition.type === 'instant') {
-                _this.done = true;
-            }
-            else if (transition.type === 'fade') {
-                _this.oldSprite.alpha = 1;
-                _this.newSprite.alpha = 0;
-                global.theater.runScript({
-                    generator: S.chain(S.wait(transition.preTime), S.doOverTime(transition.time, function (t) {
-                        _this.oldSprite.alpha = 1 - t;
-                        _this.newSprite.alpha = t;
-                    }), S.wait(transition.postTime)).generator,
-                    endState: function () { return (_this.done = true); },
-                });
-            }
-            return _this;
-        }
-        Obj.prototype.update = function () {
-            _super.prototype.update.call(this);
-        };
-        Obj.prototype.render = function () {
-            _super.prototype.render.call(this);
-            this.newSprite.render();
-            this.oldSprite.render();
-        };
-        return Obj;
-    }(WorldObject));
-    Transition.Obj = Obj;
-})(Transition || (Transition = {}));
 var Tilemap = /** @class */ (function (_super) {
     __extends(Tilemap, _super);
     function Tilemap(config) {
@@ -4190,8 +4143,8 @@ var Tilemap = /** @class */ (function (_super) {
         _super.prototype.render.call(this);
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        if (debugBounds === void 0) { debugBounds = false; }
         var e_19, _a;
+        if (debugBounds === void 0) { debugBounds = false; }
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -4329,587 +4282,153 @@ var Tilemap = /** @class */ (function (_super) {
         return false;
     }
 })(Tilemap || (Tilemap = {}));
-var Warp = /** @class */ (function (_super) {
-    __extends(Warp, _super);
-    function Warp(config) {
-        var _this = _super.call(this, config) || this;
-        _this.stage = config.data.stage;
-        _this.entryPoint = config.data.entryPoint;
-        _this.transition = O.getOrDefault(config.data.transition, Transition.INSTANT);
-        return _this;
-    }
-    Warp.prototype.warp = function () {
-        global.theater.loadStage(this.stage, this.transition, this.entryPoint);
-    };
-    return Warp;
-}(PhysicsWorldObject));
-/// <reference path="./backWall.ts" />
-/// <reference path="./baseStage.ts" />
-/// <reference path="./camera.ts" />
-/// <reference path="./utils/o_object.ts" />
-/// <reference path="./transition.ts" />
+/// <reference path="./base.ts" />
 /// <reference path="./tilemap.ts" />
-/// <reference path="./warp.ts" />
-var defaultScreenTransition = Transition.FADE(0.5, 1, 0.5);
-var archway = [
-    {
-        name: 'archway',
-        constructor: Sprite,
-        texture: 'archway',
-        x: 40, y: -119,
-        layer: 'main',
-        physicsGroup: 'props',
-        bounds: { x: -57, y: 64, width: 57, height: 16 },
-    },
-    {
-        name: 'archway_front',
-        constructor: Sprite,
-        texture: 'archway_front',
-        layer: 'main',
-        physicsGroup: 'props',
-        bounds: { x: -49, y: -7, width: 49, height: 16 },
-    },
-    {
-        name: 'cave_warp',
-        constructor: Warp,
-        physicsGroup: 'props',
-        bounds: { x: -49, y: -55, width: 32, height: 48 },
-    },
-];
-var entrance_frame = [
-    {
-        name: 'frame',
-        constructor: Sprite,
-        layer: 'main',
-        texture: 'stone_frame',
-    },
-    {
-        name: 'warp',
-        constructor: Warp,
-        physicsGroup: 'props',
-        bounds: { x: 12, y: -20, width: 4, height: 16 },
-    },
-];
 var stages = {
-    'main': {
+    'outside': {
         parent: BASE_STAGE,
         camera: {
-            // bounds: {
-            //     left: 0,
-            //     top: 0,
-            //     right: 256,
-            //     bottom: 192
-            // },
+            bounds: { left: 0, top: 0, right: 240, bottom: 180 },
             mode: {
-                type: 'follow',
-                target: 'angie',
-                offset: { x: 0, y: -18 }
+                type: 'focus',
+                point: { x: 120, y: 90 }
             }
         },
         entryPoints: {
-            'entrance': { x: 128, y: 96 },
-            'exit': { x: -342, y: -416 },
+            'main': { x: 120, y: 156 },
         },
-        worldObjects: __spread([
-            // ROOM //
+        worldObjects: __spread(WORLD_BOUNDS(0, 0, 240, 180), [
             {
-                constructor: PhysicsWorldObject,
-                bounds: { x: 48, y: -128, width: 16, height: 304 },
-                physicsGroup: 'walls',
-            },
-            {
-                constructor: PhysicsWorldObject,
-                bounds: { x: 192, y: -128, width: 16, height: 304 },
-                physicsGroup: 'walls',
-            },
-            {
-                constructor: PhysicsWorldObject,
-                bounds: { x: 64, y: 160, width: 128, height: 16 },
-                physicsGroup: 'walls',
-            },
-            {
-                constructor: Sprite,
-                texture: 'room_bg',
-                x: -256, y: -192,
-                layer: 'room',
-            },
-            {
-                name: 'backwall',
-                constructor: Sprite,
-                texture: 'room_backwall',
-                x: 64, y: 0,
-                layer: 'room',
-                physicsGroup: 'walls',
-                bounds: { x: 0, y: 64, width: 128, height: 16 },
-            },
-            {
-                name: 'backwall_covered',
-                constructor: BackWall,
-                x: 64, y: 0,
-                layer: 'room',
-                physicsGroup: 'walls',
-                visible: false,
-            },
-            {
-                name: 'bed',
-                constructor: Sprite,
-                texture: 'bed',
-                x: 84, y: 158,
-                layer: 'main',
-                physicsGroup: 'props',
-                bounds: { x: -18, y: -20, width: 36, height: 20 },
-            },
-            {
-                name: 'chair',
-                constructor: Sprite,
-                texture: 'chair',
-                x: 172, y: 134,
-                layer: 'main',
-            },
-            {
-                name: 'desk',
-                constructor: Sprite,
-                texture: 'desk',
-                x: 172, y: 158,
-                layer: 'main',
-                physicsGroup: 'props',
-                bounds: { x: -18, y: -23, width: 36, height: 23 },
-            },
-            {
-                name: 'door',
-                constructor: Sprite,
-                texture: 'door_closed',
-                x: 84, y: 80,
-                layer: 'main',
-                offset: { x: 0, y: -36 },
-                animations: [
-                    { name: 'open', frames: [{ texture: 'door_open' }] },
-                    { name: 'closed', frames: [{ texture: 'door_closed' }] },
-                ],
-                defaultAnimation: 'closed',
-            },
-            {
-                name: 'window',
-                constructor: Sprite,
-                texture: 'window',
-                x: 156, y: 80,
-                layer: 'main',
-                offset: { x: 0, y: -7 },
-                physicsGroup: 'props',
-                bounds: { x: -22, y: -3, width: 43, height: 3 },
-            },
-            // WORLD //
-            {
-                name: 'tilemap',
-                constructor: Tilemap,
-                x: -720, y: -768,
-                layer: 'bg',
-                tilemap: 'mainworld',
-                collisionPhysicsGroup: 'walls',
-            }
-        ], group({
-            worldObjects: archway,
-            x: -351, y: -393,
-            overrides: [
-                {
-                    name: 'cave_warp',
-                    data: {
-                        stage: 'connector',
-                        entryPoint: 'entrance',
-                        transition: defaultScreenTransition,
-                    }
-                },
-            ]
-        }))
-    },
-    'cave': {
-        parent: BASE_STAGE,
-        entryPoints: {
-            'entrance': { x: 656, y: 626 },
-            'exit': { x: 656, y: 626 },
-        },
-        worldObjects: __spread([
-            {
-                name: 'spotlight',
-                constructor: Sprite,
-                x: 0, y: 0,
-                layer: 'spotlight',
-                texture: 'spotlight',
-                ignoreCamera: true,
-                visible: false,
-            },
-            {
-                name: 'tilemap',
+                name: 'fort_walls',
                 constructor: Tilemap,
                 x: 0, y: 0,
-                layer: 'bg',
-                tilemap: 'cave',
-                tilemapLayer: 1,
-                collisionPhysicsGroup: 'walls',
-            },
-            {
-                name: 'tilemap_walls',
-                constructor: Tilemap,
-                x: 0, y: 0,
-                layer: 'fg',
-                tilemap: 'cave',
+                layer: 'main',
+                tilemap: 'outside',
                 tilemapLayer: 0,
-            }
-        ], group({
-            prefix: 'entrance_',
-            worldObjects: entrance_frame,
-            x: 656, y: 636,
-            overrides: [
-                {
-                    name: 'warp',
-                    data: {
-                        stage: 'main',
-                        entryPoint: 'exit',
-                        transition: defaultScreenTransition,
-                    },
-                }
-            ]
-        }), group({
-            prefix: 'exit_',
-            worldObjects: entrance_frame,
-            x: 656, y: 416,
-            overrides: [
-                {
-                    name: 'warp',
-                    data: {
-                        stage: 'connector',
-                        entryPoint: 'entrance',
-                        transition: defaultScreenTransition,
-                    }
-                },
-            ]
-        }))
-    },
-    'connector': {
-        parent: BASE_STAGE,
-        backgroundColor: 0x000000,
-        layers: [
-            {
-                name: 'bg',
-                effects: {
-                    silhouette: {
-                        color: 0x000000
-                    },
-                    outline: {
-                        color: 0xFFFFFF
-                    },
-                }
+                collisionPhysicsGroup: 'walls',
             },
             {
-                name: 'main',
-                effects: {
-                    silhouette: {
-                        color: 0x000000
-                    },
-                    outline: {
-                        color: 0xFFFFFF
-                    },
-                }
-            }
-        ],
-        entryPoints: {
-            'entrance': { x: 372, y: 256 },
-            'exit': { x: 976, y: 32 },
-        },
-        camera: {
-            bounds: { top: 0 }
-        },
-        worldObjects: __spread([
-            {
-                name: 'tilemap',
+                name: 'ground',
                 constructor: Tilemap,
                 x: 0, y: 0,
                 layer: 'bg',
-                tilemap: 'connector',
-                collisionPhysicsGroup: 'walls',
-            }
-        ], group({
-            worldObjects: archway,
-            x: 369, y: 280,
-            overrides: [
-                {
-                    name: 'cave_warp',
-                    data: {
-                        stage: 'cave',
-                        entryPoint: 'exit',
-                        transition: defaultScreenTransition,
-                    }
-                },
-            ]
-        }), [
+                tilemap: 'outside',
+                tilemapLayer: 1,
+            },
             {
-                constructor: Warp,
-                physicsGroup: 'props',
-                bounds: { x: 944, y: -16, width: 64, height: 16 },
-                data: {
-                    stage: 'upper',
-                    entryPoint: 'entrance',
-                    transition: defaultScreenTransition,
-                }
+                name: 'guard1',
+                parent: HUMAN_CHARACTER('generic_sprites'),
+                x: 96, y: 100,
+                flipX: true,
+            },
+            {
+                name: 'guard2',
+                parent: HUMAN_CHARACTER('generic_sprites'),
+                x: 144, y: 100,
             },
         ])
-    },
-    'upper': {
-        parent: BASE_STAGE,
-        entryPoints: {
-            'entrance': { x: 224, y: 680 },
-        },
-        camera: {
-            bounds: { bottom: 688 }
-        },
-        worldObjects: [
-            {
-                name: 'tilemap',
-                constructor: Tilemap,
-                x: 0, y: 0,
-                layer: 'bg',
-                tilemap: 'upper',
-                collisionPhysicsGroup: 'walls',
-            },
-            {
-                constructor: Warp,
-                physicsGroup: 'props',
-                bounds: { x: 192, y: 704, width: 64, height: 16 },
-                data: {
-                    stage: 'connector',
-                    entryPoint: 'exit',
-                    transition: defaultScreenTransition,
-                }
-            },
-        ]
     },
 };
 var S;
 (function (S) {
     S.storyboard = {
-        'room_intro': {
+        'outside': {
             type: 'cutscene',
             script: function () {
-                var angie;
+                var sai, dad, guard1, guard2;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = true;
+                            sai = global.getWorldObject('sai');
+                            dad = global.getWorldObject('dad');
+                            guard1 = global.getWorldObject('guard1');
+                            guard2 = global.getWorldObject('guard2');
                             S.finishImmediately(S.fadeOut(1));
-                            angie = global.getSprite('angie');
-                            angie.x = 98;
-                            angie.y = 160;
-                            angie.offset.y = -19;
-                            angie.flipX = true;
-                            angie.angle = -90;
-                            return [4 /*yield*/, S.fadeSlides(2)];
+                            sai.follow(dad, 12);
+                            return [4 /*yield*/, S.fadeSlides(1)];
                         case 1:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(3)];
+                            return [4 /*yield*/, S.moveToY(dad, 100)];
                         case 2:
                             _a.sent();
-                            return [4 /*yield*/, S.shake(1, 2)];
+                            return [4 /*yield*/, S.dialog('guard1/default', "Well, well. What do we have here?")];
                         case 3:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(3)];
+                            return [4 /*yield*/, S.dialog('guard2/default', "We're not expecting the mail til this evening.")];
                         case 4:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog('angie/happy', "I felt that one.")];
+                            return [4 /*yield*/, S.dialog('dad/default', "Ha ha. I've got a prisoner.")];
                         case 5:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(1)];
+                            return [4 /*yield*/, S.dialog('guard2/default', "A prisoner?")];
                         case 6:
                             _a.sent();
-                            return [4 /*yield*/, S.shake(1, 2)];
+                            return [4 /*yield*/, S.moveToY(guard1, sai.y)];
                         case 7:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(2)];
+                            return [4 /*yield*/, S.moveToX(guard1, guard1.x + 4)];
                         case 8:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog('angie/happy', "What's that boy up to?")];
+                            return [4 /*yield*/, S.moveToY(guard2, sai.y)];
                         case 9:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog('angie/happy', "I'd better check outside.")];
+                            return [4 /*yield*/, S.moveToX(guard2, guard2.x - 4)];
                         case 10:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(0.2)];
+                            return [4 /*yield*/, S.dialog('sai/default', "...")];
                         case 11:
                             _a.sent();
-                            angie.angle = 0;
-                            angie.x -= 12;
-                            return [4 /*yield*/, S.jump(angie, 8, 0.5, true)];
+                            return [4 /*yield*/, S.dialog('guard2/default', "He's a kid. You're bringing a kid in as a prisoner?")];
                         case 12:
                             _a.sent();
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            after: 'angie_start_gameplay'
-        },
-        'angie_start_gameplay': {
-            type: 'gameplay',
-            start: function () { }
-        },
-        'interact_window': {
-            type: 'cutscene',
-            playOnlyOnce: true,
-            playOnInteractWith: ['window'],
-            script: function () {
-                var angie, door, milo, board1, board2;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            angie = global.getSprite('angie');
-                            door = global.getSprite('door');
-                            return [4 /*yield*/, S.dialog('angie/happy', "...")];
-                        case 1:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('angie/happy', "Oh no...")];
-                        case 2:
-                            _a.sent();
-                            return [4 /*yield*/, [
-                                    function () {
-                                        return __generator(this, function (_a) {
-                                            switch (_a.label) {
-                                                case 0:
-                                                    door.playAnimation('open');
-                                                    return [4 /*yield*/, S.shake(1, 0.1)];
-                                                case 1:
-                                                    _a.sent();
-                                                    return [2 /*return*/];
-                                            }
-                                        });
-                                    },
-                                    function () {
-                                        return __generator(this, function (_a) {
-                                            switch (_a.label) {
-                                                case 0:
-                                                    global.theater.party.addMemberToWorld('milo', global.world);
-                                                    global.theater.party.setMemberActive('milo');
-                                                    milo = global.getSprite('milo');
-                                                    milo.colliding = false;
-                                                    global.world.setLayer(milo, 'room');
-                                                    milo.x = 98;
-                                                    milo.y = 80;
-                                                    milo.playAnimation('flop_lay');
-                                                    return [4 /*yield*/, S.tween(milo, 'y', milo.y, milo.y + 52, 0.2, Tween.Easing.InvSquare)];
-                                                case 1:
-                                                    _a.sent();
-                                                    return [2 /*return*/];
-                                            }
-                                        });
-                                    },
-                                    function () {
-                                        return __generator(this, function (_a) {
-                                            switch (_a.label) {
-                                                case 0:
-                                                    angie.setDirection(Direction2D.DOWN);
-                                                    angie.flipX = false;
-                                                    return [4 /*yield*/, S.jump(angie, 16, 0.2, true)];
-                                                case 1:
-                                                    _a.sent();
-                                                    return [2 /*return*/];
-                                            }
-                                        });
-                                    }
-                                ]];
-                        case 3:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('angie/happy', "Milo?")];
-                        case 4:
-                            _a.sent();
-                            return [4 /*yield*/, S.moveTo(angie, 110, 116)];
-                        case 5:
-                            _a.sent();
-                            angie.setDirection(Direction2D.LEFT);
-                            return [4 /*yield*/, S.dialog('angie/happy', "Hey, Milo! Come on, get up!")];
-                        case 6:
-                            _a.sent();
-                            return [4 /*yield*/, S.shake(1, 1)];
-                        case 7:
-                            _a.sent();
-                            DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = false;
-                            return [4 /*yield*/, S.dialog('angie/happy', "Milo!!")];
-                        case 8:
-                            _a.sent();
-                            return [4 /*yield*/, S.shake(1, 0.1)];
-                        case 9:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('milo/sigh', 'Ow!')];
-                        case 10:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('angie/happy', "Good!")];
-                        case 11:
-                            _a.sent();
-                            return [4 /*yield*/, S.moveTo(angie, 98, 91)];
-                        case 12:
-                            _a.sent();
-                            door.playAnimation('closed');
-                            return [4 /*yield*/, S.moveTo(angie, 129, 143)];
+                            return [4 /*yield*/, S.dialog('guard1/default', "Jesus... what did you do to him?")];
                         case 13:
                             _a.sent();
-                            angie.setDirection(Direction2D.UP);
-                            angie.flipX = false;
-                            angie.playAnimation('throw_start');
-                            board1 = global.world.addWorldObject(new Sprite({ texture: 'board1', x: 129, y: 108 }), { layer: 'fg' });
-                            board2 = global.world.addWorldObject(new Sprite({ texture: 'board2', x: 126, y: 108 }), { layer: 'fg' });
-                            return [4 /*yield*/, S.moveToY(angie, angie.y + 2)];
+                            return [4 /*yield*/, S.dialog('dad/default', "I don't need you to lecture me. I need to take him to the closest cell as soon as possible.")];
                         case 14:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(0.5)];
+                            return [4 /*yield*/, S.dialog('dad/default', "He's a feisty one. Don't underestimate him.")];
                         case 15:
                             _a.sent();
-                            return [4 /*yield*/, S.moveToY(angie, angie.y + 2)];
+                            return [4 /*yield*/, S.dialog('guard1/default', "Well, you didn't have to-")];
                         case 16:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(1)];
+                            return [4 /*yield*/, S.dialog('dad/default', "Hey, I'm not getting paid by the hour. Are you going to let me in or not?")];
                         case 17:
                             _a.sent();
-                            return [4 /*yield*/, [
-                                    function () {
-                                        return __generator(this, function (_a) {
-                                            switch (_a.label) {
-                                                case 0: return [4 /*yield*/, S.tween(board1, 'y', board1.y, 56, 0.3, Tween.Easing.Linear)];
-                                                case 1:
-                                                    _a.sent();
-                                                    return [4 /*yield*/, S.tween(board2, 'y', board2.y, 56, 0.3, Tween.Easing.Linear)];
-                                                case 2:
-                                                    _a.sent();
-                                                    global.getWorldObject('backwall_covered').visible = true;
-                                                    global.world.removeWorldObject(global.getWorldObject('backwall'));
-                                                    global.world.removeWorldObject(global.getWorldObject('door'));
-                                                    global.world.removeWorldObject(global.getWorldObject('window'));
-                                                    global.world.removeWorldObject(board1);
-                                                    global.world.removeWorldObject(board2);
-                                                    return [2 /*return*/];
-                                            }
-                                        });
-                                    },
-                                    function () {
-                                        return __generator(this, function (_a) {
-                                            switch (_a.label) {
-                                                case 0:
-                                                    angie.playAnimation('throw_end', 0, true);
-                                                    return [4 /*yield*/, S.moveToY(angie, angie.y - 8)];
-                                                case 1:
-                                                    _a.sent();
-                                                    return [2 /*return*/];
-                                            }
-                                        });
-                                    }
-                                ]];
+                            return [4 /*yield*/, S.dialog('guard1/default', "...")];
                         case 18:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(1)];
+                            return [4 /*yield*/, S.dialog('guard2/default', "...")];
                         case 19:
                             _a.sent();
-                            angie.playAnimation('idle_up', 0, true);
+                            return [4 /*yield*/, S.dialog('guard2/default', "Fine, fine. You don't have to get mad.")];
+                        case 20:
+                            _a.sent();
+                            return [4 /*yield*/, S.moveTo(guard2, 144, 100)];
+                        case 21:
+                            _a.sent();
+                            return [4 /*yield*/, S.moveTo(guard1, 96, 100)];
+                        case 22:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog('dad/default', "Thank you. I won't be long.")];
+                        case 23:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog('dad/default', "Come on, boy. I don't have all day.")];
+                        case 24:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog('sai/default', "...")];
+                        case 25:
+                            _a.sent();
+                            return [4 /*yield*/, S.moveToY(dad, 96)];
+                        case 26:
+                            _a.sent();
+                            sai.unfollow();
                             return [2 /*return*/];
                     }
                 });
-            },
-            after: 'angie_start_gameplay'
-        }
+            }
+        },
     };
 })(S || (S = {}));
 var storyboard = S.storyboard;
@@ -5149,8 +4668,8 @@ var World = /** @class */ (function (_super) {
         return this.worldObjectsByName[name];
     };
     World.prototype.handleCollisions = function () {
-        var _this = this;
         var e_28, _a, e_29, _b, e_30, _c;
+        var _this = this;
         try {
             for (var _d = __values(this.collisionOrder), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var collision = _e.value;
@@ -5158,11 +4677,11 @@ var World = /** @class */ (function (_super) {
                 var from = _.isArray(collision.from) ? collision.from : [collision.from];
                 var fromObjects = _.flatten(from.map(function (name) { return _this.physicsGroups[name].worldObjects; }));
                 try {
-                    for (var move_1 = __values(move), move_1_1 = move_1.next(); !move_1_1.done; move_1_1 = move_1.next()) {
+                    for (var move_1 = (e_29 = void 0, __values(move)), move_1_1 = move_1.next(); !move_1_1.done; move_1_1 = move_1.next()) {
                         var moveGroup = move_1_1.value;
                         var group_2 = this.physicsGroups[moveGroup].worldObjects;
                         try {
-                            for (var group_1 = __values(group_2), group_1_1 = group_1.next(); !group_1_1.done; group_1_1 = group_1.next()) {
+                            for (var group_1 = (e_30 = void 0, __values(group_2)), group_1_1 = group_1.next(); !group_1_1.done; group_1_1 = group_1.next()) {
                                 var obj = group_1_1.value;
                                 Physics.collide(obj, fromObjects, {
                                     callback: collision.callback,
@@ -5244,8 +4763,8 @@ var World = /** @class */ (function (_super) {
         this.worldObjectsByName[name] = obj;
     };
     World.prototype.setLayer = function (obj, name) {
-        if (name === void 0) { name = World.DEFAULT_LAYER; }
         var e_32, _a;
+        if (name === void 0) { name = World.DEFAULT_LAYER; }
         this.removeFromAllLayers(obj);
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -5520,8 +5039,8 @@ var Theater = /** @class */ (function (_super) {
         this.currentStoryboardComponentName = name;
     };
     Theater.prototype.setNewWorldFromStage = function (stage, entryPoint) {
-        if (entryPoint === void 0) { entryPoint = Theater.DEFAULT_ENTRY_POINT; }
         var e_34, _a, e_35, _b;
+        if (entryPoint === void 0) { entryPoint = Theater.DEFAULT_ENTRY_POINT; }
         var world = new World(stage);
         if (stage.worldObjects) {
             try {
@@ -5739,6 +5258,20 @@ var Wall = /** @class */ (function (_super) {
     }
     return Wall;
 }(Sprite));
+var Warp = /** @class */ (function (_super) {
+    __extends(Warp, _super);
+    function Warp(config) {
+        var _this = _super.call(this, config) || this;
+        _this.stage = config.data.stage;
+        _this.entryPoint = config.data.entryPoint;
+        _this.transition = O.getOrDefault(config.data.transition, Transition.INSTANT);
+        return _this;
+    }
+    Warp.prototype.warp = function () {
+        global.theater.loadStage(this.stage, this.transition, this.entryPoint);
+    };
+    return Warp;
+}(PhysicsWorldObject));
 var G;
 (function (G) {
     function expandRectangle(rect, amount) {
@@ -5837,6 +5370,36 @@ var M;
     }
     M.vec3ToColor = vec3ToColor;
 })(M || (M = {}));
+var O;
+(function (O) {
+    function deepOverride(obj, overrides) {
+        for (var key in overrides) {
+            if (obj[key] && _.isObject(obj[key]) && _.isObject(overrides[key])) {
+                deepOverride(obj[key], overrides[key]);
+            }
+            else {
+                obj[key] = overrides[key];
+            }
+        }
+    }
+    O.deepOverride = deepOverride;
+    function getOrDefault(obj, def) {
+        return obj === undefined ? def : obj;
+    }
+    O.getOrDefault = getOrDefault;
+    function withDefaults(obj, defaults) {
+        var result = _.clone(obj);
+        _.defaults(result, defaults);
+        return result;
+    }
+    O.withDefaults = withDefaults;
+    function withOverrides(obj, overrides) {
+        var result = _.clone(obj);
+        _.extend(result, overrides);
+        return result;
+    }
+    O.withOverrides = withOverrides;
+})(O || (O = {}));
 var RandomNumberGenerator = /** @class */ (function () {
     function RandomNumberGenerator(seed) {
         this.seed(seed);

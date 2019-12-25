@@ -44,6 +44,7 @@ class SpriteText extends WorldObject {
     }
 
     render() {
+        let filters = this.mask ? [new TextureFilter.Mask({ type: TextureFilter.Mask.Type.GLOBAL, mask: this.mask})] : [];
         for (let char of this.chars) {
             global.screen.render(this.fontTexture, {
                 x: this.x + char.x,
@@ -55,6 +56,7 @@ class SpriteText extends WorldObject {
                     width: this.font.charWidth,
                     height: this.font.charHeight
                 },
+                filters: filters,
             });
         }
         super.render();
@@ -64,16 +66,8 @@ class SpriteText extends WorldObject {
         this.setText("");
     }
 
-    get mask() {
-        return null;//this.fontSprite.mask;
-    }
-
     getTextHeight() {
         return SpriteText.getHeightOfCharList(this.chars);
-    }
-
-    set mask(value) {
-        //this.fontSprite.mask = value;
     }
 
     setText(text: string) {

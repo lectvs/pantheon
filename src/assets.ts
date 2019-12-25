@@ -9,6 +9,27 @@ namespace Assets {
             anchor: { x: 0.5, y: 0.5 },
         },
 
+        // Debug
+        'grad': {},
+        'masktest': {},
+
+        // Character sprites
+        'milo_sprites': {
+            defaultAnchor: { x: 0.5, y: 1 },
+            spritesheet: { frameWidth: 32, frameHeight: 36 },
+        },
+
+        'angie_sprites': {
+            defaultAnchor: { x: 0.5, y: 1 },
+            spritesheet: { frameWidth: 32, frameHeight: 36 },
+        },
+
+        'generic_sprites': {
+            defaultAnchor: { x: 0.5, y: 1 },
+            spritesheet: { frameWidth: 32, frameHeight: 36 },
+        },
+
+        // Props
         'room_bg': {},
         'room_backwall': {},
         'room_backwall_covered': {
@@ -20,16 +41,7 @@ namespace Assets {
         'board2': {
             anchor: { x: 0.5, y: 0.5 },
         },
-
-        'milo_sprites': {
-            defaultAnchor: { x: 0.5, y: 1 },
-            spritesheet: { frameWidth: 32, frameHeight: 36 },
-        },
-
-        'angie_sprites': {
-            defaultAnchor: { x: 0.5, y: 1 },
-            spritesheet: { frameWidth: 32, frameHeight: 36 },
-        },
+        'spotlight': {},
 
         'props': {
             defaultAnchor: { x: 0.5, y: 1 },
@@ -39,11 +51,9 @@ namespace Assets {
                 },
                 'door_closed': {
                     rect: { x: 40, y: 2, width: 24, height: 36 },
-                    anchor: { x: 0, y: 0 },
                 },
                 'door_open': {
                     rect: { x: 66, y: 2, width: 4, height: 45 },
-                    anchor: { x: 0, y: 0 },
                 },
                 'window': {
                     rect: { x: 72, y: 2, width: 44, height: 35 },
@@ -69,60 +79,56 @@ namespace Assets {
             }
         },
 
-        'spotlight': {},
-
+        // Tilesets
         'mainworld': {
             url: 'assets/tilemap/mainworld.png',
             spritesheet: { frameWidth: 16, frameHeight: 16 },
         },
-
         'cave': {
             url: 'assets/tilemap/cave.png',
             spritesheet: { frameWidth: 16, frameHeight: 16 },
         },
-
-        'grad': {},
-        'masktest': {},
+        'outside': {
+            url: 'assets/tilemap/outside.png',
+            spritesheet: { frameWidth: 12, frameHeight: 12 },
+        },
 
         // Portraits
-        'portraits/milo': {
+        'portraits/sai': {
             defaultAnchor: { x: 0.5, y: 0.5 },
             frames: {
-                'milo/happy': {
+                'sai/default': {
                     rect: { x: 0*74, y: 0*54, width: 74, height: 54 },
-                },
-                'milo/angry': {
-                    rect: { x: 1*74, y: 0*54, width: 74, height: 54 },
-                },
-                'milo/sad': {
-                    rect: { x: 2*74, y: 0*54, width: 74, height: 54 },
-                },
-                'milo/sigh': {
-                    rect: { x: 3*74, y: 0*54, width: 74, height: 54 },
-                },
-                'milo/scared': {
-                    rect: { x: 4*74, y: 0*54, width: 74, height: 54 },
-                },
-                'milo/shocked': {
-                    rect: { x: 5*74, y: 0*54, width: 74, height: 54 },
                 },
             }
         },
-
-        'portraits/angie': {
+        'portraits/dad': {
             defaultAnchor: { x: 0.5, y: 0.5 },
             frames: {
-                'angie/happy': {
+                'dad/default': {
+                    rect: { x: 0*74, y: 0*54, width: 74, height: 54 },
+                },
+            }
+        },
+        'portraits/guard1': {
+            defaultAnchor: { x: 0.5, y: 0.5 },
+            frames: {
+                'guard1/default': {
+                    rect: { x: 0*74, y: 0*54, width: 74, height: 54 },
+                },
+            }
+        },
+        'portraits/guard2': {
+            defaultAnchor: { x: 0.5, y: 0.5 },
+            frames: {
+                'guard2/default': {
                     rect: { x: 0*74, y: 0*54, width: 74, height: 54 },
                 },
             }
         },
 
         // Fonts
-        'deluxe16': {
-            //rect: { x: 0, y: 0, width: 8, height: 15 },
-            anchor: { x: 0, y: 0 },
-        },
+        'deluxe16': {},
     }
 
     export const tilesets: Dict<Tilemap.Tileset> = {
@@ -137,6 +143,12 @@ namespace Assets {
             tileWidth: 16,
             tileHeight: 16,
             collisionIndices: [ -1, 1, 5, 16 ],
+        },
+        'outside': {
+            tiles: Preload.allTilesWithPrefix('outside_'),
+            tileWidth: 12,
+            tileHeight: 12,
+            collisionIndices: [ 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
         },
     }
 
@@ -157,6 +169,10 @@ namespace Assets {
             url: 'assets/tilemap/upper.json',
             tileset: tilesets.mainworld,
         },
+        'outside': {
+            url: 'assets/tilemap/outside.json',
+            tileset: tilesets.outside,
+        }
     }
 
     export class fonts {

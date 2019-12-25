@@ -25,13 +25,12 @@ class WorldObject {
     controller: Controller;
     protected controllerSchema: Controller.Schema;
 
+    mask: Texture;
+
     private preRenderStoredX: number;
     private preRenderStoredY: number;
 
     get isControlled() { return this.controllable && !global.theater.isCutscenePlaying; }
-
-    get mask(): Mask { return undefined; }
-    set mask(value: Mask) { }
 
     constructor(config: WorldObject.Config, defaults: WorldObject.Config = {}) {
         config = O.withDefaults(config, defaults);

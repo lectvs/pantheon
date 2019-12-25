@@ -19,6 +19,10 @@ class global {
         return <T>this.world.getWorldObjectByName(name);
     }
 
+    static worldObjectExists(name: string) {
+        return !!this.world.worldObjectsByName[name];
+    }
+
     // Update options
     static get world() { return this.worldStack[this.worldStack.length-1]; };
     private static worldStack: World[] = [];

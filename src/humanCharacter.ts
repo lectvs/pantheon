@@ -102,7 +102,11 @@ class HumanCharacter extends Sprite {
         this.direction.v = direction.v;
     }
 
-    updateFollow() {
+    unfollow() {
+        this._follow = null;
+    }
+
+    private updateFollow() {
         if (this._follow) this._follow.update(this);
     }
 }
