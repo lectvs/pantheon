@@ -18,6 +18,20 @@ namespace S {
         }
     }
 
+    export function exitUp(sprite: Sprite): Script.Function {
+        return {
+            generator: function*() {
+                let script = global.world.runScript(moveTo(sprite, 0, sprite.y - 1000));
+                while (!script.done || Main.theater.stageLoadQueue) {
+                    yield;
+                }
+            },
+            endState: () => {
+
+            }
+        }
+    }
+
     export function fadeSlides(duration: number, removeAllButLast: number = 1): Script.Function {
         return {
             generator: function*() {

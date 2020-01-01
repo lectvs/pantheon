@@ -51,7 +51,6 @@ class World extends WorldObject {
     private screen: Texture;
     private layerTexture: Texture;
 
-    debugMoveCameraWithArrows: boolean;
     private debugCameraX: number;
     private debugCameraY: number;
 
@@ -83,7 +82,6 @@ class World extends WorldObject {
         this.screen = new Texture(this.width, this.height);
         this.layerTexture = new Texture(this.width, this.height);
 
-        this.debugMoveCameraWithArrows = false;
         this.debugCameraX = 0;
         this.debugCameraY = 0;
     }
@@ -113,7 +111,7 @@ class World extends WorldObject {
             if (worldObject.active) worldObject.postUpdate();
         }
 
-        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this.debugMoveCameraWithArrows) {
+        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this === Main.theater.currentWorld) {
             if (Input.isDown('debugMoveCameraLeft'))  this.debugCameraX -= 1;
             if (Input.isDown('debugMoveCameraRight')) this.debugCameraX += 1;
             if (Input.isDown('debugMoveCameraUp'))    this.debugCameraY -= 1;
@@ -126,7 +124,7 @@ class World extends WorldObject {
     render() {
         let oldCameraX = this.camera.x;
         let oldCameraY = this.camera.y;
-        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this.debugMoveCameraWithArrows) {
+        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this === Main.theater.currentWorld) {
             this.camera.x += this.debugCameraX;
             this.camera.y += this.debugCameraY;
         }

@@ -31,6 +31,7 @@ class Theater extends World {
     dialogBox: DialogBox;
     slides: Slide[];
 
+    stageManager: StageManager;
     interactionManager: InteractionManager;
 
     private debugMousePosition = new SpriteText({ font: Assets.fonts.DELUXE16, x: 0, y: 0 });
@@ -61,6 +62,7 @@ class Theater extends World {
         this.loadDialogBox(config.dialogBox);
         this.slides = [];
 
+        this.stageManager = new StageManager(config.stages);
         this.interactionManager = new InteractionManager(config.interactionManager);
 
         this.loadStage(config.stageToLoad, undefined, config.stageEntryPoint, true);
@@ -74,7 +76,10 @@ class Theater extends World {
     }
 
     update() {
+        global.pushWorld(this.currentWorld);
         this.cutsceneManager.update();
+        global.popWorld();
+
         super.update();
 
         global.pushWorld(this.currentWorld);
@@ -137,20 +142,13 @@ class Theater extends World {
         if (this.currentWorld) {
             this.removeWorldObject(this.currentWorld);
         }
-
-        this.cutsceneManager.reset();
         this.interactionManager.reset();
 
         // Create new stuff
         this.currentStageName = name;
         this.setNewWorldFromStage(stage, entryPoint);
-        this.currentWorld.debugMoveCameraWithArrows = DEBUG_MOVE_CAMERA_WITH_ARROWS;
         this.addWorldObject(this.currentWorld);
         this.setLayer(this.currentWorld, Theater.LAYER_WORLD);
-
-        if (this.currentStoryboardComponentName) {
-            this.startStoryboardComponentByName(this.currentStoryboardComponentName);
-        }
     }
 
     private loadStageWithTransition(name: string, transition: Transition, entryPoint?: Stage.EntryPoint) {

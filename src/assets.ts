@@ -4,43 +4,20 @@ namespace Assets {
     export const textures: Dict<Preload.Texture> = {
         'none': {},
         'blank': {},
-        'debug': {},
         'dialogbox': {
             anchor: { x: 0.5, y: 0.5 },
         },
 
         // Debug
-        'grad': {},
-        'masktest': {},
+        'debug': {},
 
         // Character sprites
-        'milo_sprites': {
-            defaultAnchor: { x: 0.5, y: 1 },
-            spritesheet: { frameWidth: 32, frameHeight: 36 },
-        },
-
-        'angie_sprites': {
-            defaultAnchor: { x: 0.5, y: 1 },
-            spritesheet: { frameWidth: 32, frameHeight: 36 },
-        },
-
         'generic_sprites': {
             defaultAnchor: { x: 0.5, y: 1 },
             spritesheet: { frameWidth: 32, frameHeight: 36 },
         },
 
         // Props
-        'room_bg': {},
-        'room_backwall': {},
-        'room_backwall_covered': {
-            spritesheet: { frameWidth: 16, frameHeight: 16, anchor: { x: 0.5, y: 0.5 } },
-        },
-        'board1': {
-            anchor: { x: 0.5, y: 0.5 },
-        },
-        'board2': {
-            anchor: { x: 0.5, y: 0.5 },
-        },
         'spotlight': {},
 
         'props': {
@@ -80,16 +57,12 @@ namespace Assets {
         },
 
         // Tilesets
-        'mainworld': {
-            url: 'assets/tilemap/mainworld.png',
-            spritesheet: { frameWidth: 16, frameHeight: 16 },
-        },
-        'cave': {
-            url: 'assets/tilemap/cave.png',
-            spritesheet: { frameWidth: 16, frameHeight: 16 },
-        },
         'outside': {
             url: 'assets/tilemap/outside.png',
+            spritesheet: { frameWidth: 12, frameHeight: 12 },
+        },
+        'inside': {
+            url: 'assets/tilemap/inside.png',
             spritesheet: { frameWidth: 12, frameHeight: 12 },
         },
 
@@ -132,47 +105,29 @@ namespace Assets {
     }
 
     export const tilesets: Dict<Tilemap.Tileset> = {
-        'mainworld': {
-            tiles: Preload.allTilesWithPrefix('mainworld_'),
-            tileWidth: 16,
-            tileHeight: 16,
-            collisionIndices: [ -1, 9, 10, 11 ],
-        },
-        'cave': {
-            tiles: Preload.allTilesWithPrefix('cave_'),
-            tileWidth: 16,
-            tileHeight: 16,
-            collisionIndices: [ -1, 1, 5, 16 ],
-        },
         'outside': {
             tiles: Preload.allTilesWithPrefix('outside_'),
             tileWidth: 12,
             tileHeight: 12,
             collisionIndices: [ 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
         },
+        'inside': {
+            tiles: Preload.allTilesWithPrefix('inside_'),
+            tileWidth: 12,
+            tileHeight: 12,
+            collisionIndices: [ -1, 0 ],
+        },
     }
 
     export const pyxelTilemaps: Dict<Preload.PyxelTilemap> = {
-        'mainworld': {
-            url: 'assets/tilemap/mainworld.json',
-            tileset: tilesets.mainworld,
-        },
-        'cave': {
-            url: 'assets/tilemap/cave.json',
-            tileset: tilesets.cave,
-        },
-        'connector': {
-            url: 'assets/tilemap/connector.json',
-            tileset: tilesets.mainworld,
-        },
-        'upper': {
-            url: 'assets/tilemap/upper.json',
-            tileset: tilesets.mainworld,
-        },
         'outside': {
             url: 'assets/tilemap/outside.json',
             tileset: tilesets.outside,
-        }
+        },
+        'inside': {
+            url: 'assets/tilemap/inside.json',
+            tileset: tilesets.inside,
+        },
     }
 
     export class fonts {

@@ -12,7 +12,7 @@ namespace S { export const storyboard: Storyboard = {
             finishImmediately(fadeOut(1));
             sai.follow(dad, 12);
             yield fadeSlides(1);
-            yield moveToY(dad, 100);
+            yield moveToY(dad, 120);
             yield dialog('guard1/default', "Well, well. What do we have here?");
             yield dialog('guard2/default', "We're not expecting the mail til this evening.");
             yield dialog('dad/default', "Ha ha. I've got a prisoner.");
@@ -32,11 +32,14 @@ namespace S { export const storyboard: Storyboard = {
             yield dialog('guard2/default', "...");
             yield dialog('guard2/default', "Fine, fine. You don't have to get mad.");
             yield moveTo(guard2, 144, 100);
+            guard2.setDirection(Direction2D.DOWN);
             yield moveTo(guard1, 96, 100);
+            guard1.setDirection(Direction2D.DOWN);
             yield dialog('dad/default', "Thank you. I won't be long.");
             yield dialog('dad/default', "Come on, boy. I don't have all day.");
             yield dialog('sai/default', "...");
             yield moveToY(dad, 96);
+            debug('hi!');
             sai.unfollow();
         }
     },

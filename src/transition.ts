@@ -8,7 +8,7 @@ type Transition = {
 }
 
 namespace Transition {
-    export const INSTANT = { type: 'instant' };
+    export const INSTANT: Transition = { type: 'instant' };
     export function FADE(preTime: number, time: number, postTime: number): Transition {
         return {
             type: 'fade', preTime, time, postTime

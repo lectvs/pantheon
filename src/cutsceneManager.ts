@@ -11,6 +11,7 @@ class CutsceneManager {
 
     update() {
         if (this.current) {
+            this.current.script.update();
             if (this.current.script.done) {
                 let completedCutscene = this.current;
                 this.current = null;
@@ -35,13 +36,17 @@ class CutsceneManager {
         return true;
     }
 
+    onStageLoad() {
+        
+    }
+
     playCutscene(name: string, cutscene: Cutscene, world: World, skipCutsceneScriptKey: string) {
         if (this.current) {
             debug("Cannot play cutscene:", cutscene, "because a cutscene is already playing:", this.current.cutscene);
             return;
         }
 
-        let script = world.runScript(Cutscene.toScript(cutscene.script, skipCutsceneScriptKey));
+        let script = new Script(Cutscene.toScript(cutscene.script, skipCutsceneScriptKey));
         this.current = { name, cutscene, script };
     }
 
