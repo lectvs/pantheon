@@ -2,9 +2,10 @@
 
 class Main {
     static renderer: PIXI.Renderer;
-    static theater: Theater;
+    private static theater: Theater;
     static screen: Texture;
 
+    static fpsMetricManager: FPSMetricManager;
     static delta: number;
 
     static get width()  { return 240; }
@@ -99,12 +100,12 @@ class Main {
                 },
             }
         });
+
+        this.fpsMetricManager = new FPSMetricManager(1);
     }
 
     // no need to modify
     private static play() {
-        let fps = new FPSMetricManager(1);
-
         PIXI.Ticker.shared.add(frameDelta => {
             this.delta = frameDelta/60;
 
@@ -116,7 +117,7 @@ class Main {
             global.pushWorld(null);
             global.pushDelta(this.delta);
 
-            fps.update();
+            this.fpsMetricManager.update();
 
             this.theater.update();
 

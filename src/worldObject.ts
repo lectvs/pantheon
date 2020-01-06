@@ -65,7 +65,7 @@ class WorldObject {
     }
 
     postUpdate() {
-        
+        this.resetController();
     }
 
     fullUpdate() {

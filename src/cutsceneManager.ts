@@ -37,10 +37,10 @@ class CutsceneManager {
     }
 
     onStageLoad() {
-        
+
     }
 
-    playCutscene(name: string, cutscene: Cutscene, world: World, skipCutsceneScriptKey: string) {
+    playCutscene(name: string, cutscene: Cutscene, skipCutsceneScriptKey: string) {
         if (this.current) {
             debug("Cannot play cutscene:", cutscene, "because a cutscene is already playing:", this.current.cutscene);
             return;

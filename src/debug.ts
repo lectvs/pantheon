@@ -12,6 +12,7 @@ var debug = console.info;
 // }
 
 function get(name: string) {
+    /// @ts-ignore
     let worldObject = Main.theater.currentWorld.getWorldObjectByName(name);
     if (worldObject) return worldObject;
     return undefined;

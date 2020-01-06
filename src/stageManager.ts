@@ -4,9 +4,11 @@ class StageManager {
     currentStageName: string;
     currentWorld: World;
 
+    private theater: Theater;
     private stageLoadQueue: { name: string, transition: Transition, entryPoint: Stage.EntryPoint };
 
-    constructor(stages: Dict<Stage>) {
+    constructor(theater: Theater, stages: Dict<Stage>) {
+        this.theater = theater;
         this.stages = stages;
         this.currentStageName = null;
         this.currentWorld = null;
@@ -37,17 +39,17 @@ class StageManager {
         this.currentWorld.visible = false;
 
         let transitionObj = new Transition.Obj(oldSnapshot, newSnapshot, transition);
-        let stageManager = this;
+        this.theater.addWorldObject(transitionObj, { layer: Theater.LAYER_TRANSITION });
 
-        Main.theater.runScript({
+        let stageManager = this;
+        this.theater.runScript({
             generator: function* () {
-                Main.theater.addWorldObject(transitionObj, { layer: Theater.LAYER_TRANSITION });
                 while (!transitionObj.done) {
                     yield;
                 }
             },
             endState: () => {
-                Main.theater.removeWorldObject(transitionObj);
+                stageManager.theater.removeWorldObject(transitionObj);
                 stageManager.currentWorld.active = true;
                 stageManager.currentWorld.visible = true;
             }
@@ -64,16 +66,16 @@ class StageManager {
 
         // Remove old stuff
         if (this.currentWorld) {
-            Main.theater.removeWorldObject(this.currentWorld);
+            this.theater.removeWorldObject(this.currentWorld);
         }
-        Main.theater.interactionManager.reset();
+        this.theater.interactionManager.reset();
 
         // Create new stuff
         this.currentStageName = name;
         this.currentWorld = this.newWorldFromStage(stage);
-        this.addPartyToWorld(Main.theater.party, Main.theater.currentWorld, stage, entryPoint);
-        Main.theater.addWorldObject(this.currentWorld);
-        Main.theater.setLayer(this.currentWorld, Theater.LAYER_WORLD);
+        this.addPartyToWorld(this.theater.party, this.theater.currentWorld, stage, entryPoint);
+        this.theater.addWorldObject(this.currentWorld);
+        this.theater.setLayer(this.currentWorld, Theater.LAYER_WORLD);
     }
 
     private newWorldFromStage(stage: Stage) {

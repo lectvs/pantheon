@@ -22,7 +22,7 @@ namespace S {
         return {
             generator: function*() {
                 let script = global.world.runScript(moveTo(sprite, 0, sprite.y - 1000));
-                while (!script.done || Main.theater.stageLoadQueue) {
+                while (!script.done) {
                     yield;
                 }
             },

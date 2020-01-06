@@ -4,6 +4,7 @@ namespace S { export const storyboard: Storyboard = {
     'outside': {
         type: 'cutscene',
         script: function*() {
+            DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = true;
             let sai = global.getWorldObject<HumanCharacter>('sai');
             let dad = global.getWorldObject<HumanCharacter>('dad');
             let guard1 = global.getWorldObject<HumanCharacter>('guard1');
@@ -37,6 +38,7 @@ namespace S { export const storyboard: Storyboard = {
             guard1.setDirection(Direction2D.DOWN);
             yield dialog('dad/default', "Thank you. I won't be long.");
             yield dialog('dad/default', "Come on, boy. I don't have all day.");
+            DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = false;
             yield dialog('sai/default', "...");
             yield moveToY(dad, 96);
             debug('hi!');

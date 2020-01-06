@@ -90,10 +90,6 @@ class World extends WorldObject {
         super.update();
 
         global.pushWorld(this);
-        for (let worldObject of this.worldObjects) {
-            worldObject.resetController();
-        }
-
         this.scriptManager.update();
         
 
@@ -111,7 +107,7 @@ class World extends WorldObject {
             if (worldObject.active) worldObject.postUpdate();
         }
 
-        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this === Main.theater.currentWorld) {
+        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this === global.theater.currentWorld) {
             if (Input.isDown('debugMoveCameraLeft'))  this.debugCameraX -= 1;
             if (Input.isDown('debugMoveCameraRight')) this.debugCameraX += 1;
             if (Input.isDown('debugMoveCameraUp'))    this.debugCameraY -= 1;
@@ -124,7 +120,7 @@ class World extends WorldObject {
     render() {
         let oldCameraX = this.camera.x;
         let oldCameraY = this.camera.y;
-        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this === Main.theater.currentWorld) {
+        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this === global.theater.currentWorld) {
             this.camera.x += this.debugCameraX;
             this.camera.y += this.debugCameraY;
         }
@@ -134,17 +130,15 @@ class World extends WorldObject {
         Draw.brush.alpha = this.backgroundAlpha;
         Draw.fill(this.screen);
 
-        global.pushScreen(this.screen);
         global.pushWorld(this);
         for (let layer of this.layers) {
             this.layerTexture.clear();
             global.pushScreen(this.layerTexture);
             this.renderLayer(layer);
             global.popScreen();
-            global.screen.render(this.layerTexture);
+            this.screen.render(this.layerTexture);
         }
         global.popWorld();
-        global.popScreen();
 
         this.camera.x = oldCameraX;
         this.camera.y = oldCameraY;
