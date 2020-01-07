@@ -1167,8 +1167,7 @@ var Transition;
                     generator: S.chain(S.wait(transition.preTime), S.doOverTime(transition.time, function (t) {
                         _this.oldSprite.alpha = 1 - t;
                         _this.newSprite.alpha = t;
-                    }), S.wait(transition.postTime)).generator,
-                    endState: function () { return (_this.done = true); },
+                    }), S.wait(transition.postTime), S.call(function () { return _this.done = true; })).generator
                 });
             }
             return _this;
@@ -1250,33 +1249,55 @@ function WORLD_BOUNDS(left, top, right, bottom) {
 }
 var S;
 (function (S) {
+    function call(func) {
+        return {
+            generator: function () {
+                return __generator(this, function (_a) {
+                    func();
+                    return [2 /*return*/];
+                });
+            }
+        };
+    }
+    S.call = call;
     function chain() {
         var scriptFunctions = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             scriptFunctions[_i] = arguments[_i];
         }
-        var i = 0;
         return {
             generator: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
+                var e_4, _a, scriptFunctions_1, scriptFunctions_1_1, scriptFunction, e_4_1;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
                         case 0:
-                            if (!(i < scriptFunctions.length)) return [3 /*break*/, 2];
-                            return [5 /*yield**/, __values(runScript(scriptFunctions[i]))];
+                            _b.trys.push([0, 5, 6, 7]);
+                            scriptFunctions_1 = __values(scriptFunctions), scriptFunctions_1_1 = scriptFunctions_1.next();
+                            _b.label = 1;
                         case 1:
-                            _a.sent();
-                            i++;
-                            return [3 /*break*/, 0];
-                        case 2: return [2 /*return*/];
+                            if (!!scriptFunctions_1_1.done) return [3 /*break*/, 4];
+                            scriptFunction = scriptFunctions_1_1.value;
+                            return [5 /*yield**/, __values(runScript(scriptFunction))];
+                        case 2:
+                            _b.sent();
+                            _b.label = 3;
+                        case 3:
+                            scriptFunctions_1_1 = scriptFunctions_1.next();
+                            return [3 /*break*/, 1];
+                        case 4: return [3 /*break*/, 7];
+                        case 5:
+                            e_4_1 = _b.sent();
+                            e_4 = { error: e_4_1 };
+                            return [3 /*break*/, 7];
+                        case 6:
+                            try {
+                                if (scriptFunctions_1_1 && !scriptFunctions_1_1.done && (_a = scriptFunctions_1.return)) _a.call(scriptFunctions_1);
+                            }
+                            finally { if (e_4) throw e_4.error; }
+                            return [7 /*endfinally*/];
+                        case 7: return [2 /*return*/];
                     }
                 });
-            },
-            endState: function () {
-                while (i < scriptFunctions.length) {
-                    if (scriptFunctions[i].endState)
-                        scriptFunctions[i].endState();
-                    i++;
-                }
             }
         };
     }
@@ -1298,10 +1319,12 @@ var S;
                         case 2:
                             _a.sent();
                             return [3 /*break*/, 1];
-                        case 3: return [2 /*return*/];
+                        case 3:
+                            func(1);
+                            return [2 /*return*/];
                     }
                 });
-            }, endState: function () { return func(1); },
+            }
         };
     }
     S.doOverTime = doOverTime;
@@ -1336,10 +1359,9 @@ var S;
         for (var _i = 0; _i < arguments.length; _i++) {
             scriptFunctions[_i] = arguments[_i];
         }
-        var scripts = [];
         return {
             generator: function () {
-                var i;
+                var scripts;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -1347,10 +1369,7 @@ var S;
                             _a.label = 1;
                         case 1:
                             if (!!_.isEmpty(scripts)) return [3 /*break*/, 3];
-                            for (i = scripts.length - 1; i >= 0; i--) {
-                                if (scripts[i].done)
-                                    scripts.splice(i, 1);
-                            }
+                            scripts = scripts.filter(function (script) { return script.done; });
                             return [4 /*yield*/];
                         case 2:
                             _a.sent();
@@ -1358,24 +1377,6 @@ var S;
                         case 3: return [2 /*return*/];
                     }
                 });
-            },
-            endState: function () {
-                var e_4, _a;
-                if (!_.isEmpty(scripts)) {
-                    try {
-                        for (var scripts_1 = __values(scripts), scripts_1_1 = scripts_1.next(); !scripts_1_1.done; scripts_1_1 = scripts_1.next()) {
-                            var script = scripts_1_1.value;
-                            script.endState();
-                        }
-                    }
-                    catch (e_4_1) { e_4 = { error: e_4_1 }; }
-                    finally {
-                        try {
-                            if (scripts_1_1 && !scripts_1_1.done && (_a = scripts_1.return)) _a.call(scripts_1);
-                        }
-                        finally { if (e_4) throw e_4.error; }
-                    }
-                }
             }
         };
     }
@@ -1398,19 +1399,18 @@ var S;
                         case 2:
                             _a.sent();
                             return [3 /*break*/, 1];
-                        case 3: return [2 /*return*/];
+                        case 3:
+                            obj[prop] = end;
+                            return [2 /*return*/];
                     }
                 });
-            },
-            endState: function () {
-                obj[prop] = end;
             }
         };
     }
     S.tween = tween;
     function wait(time) {
         return {
-            generator: doOverTime(time, function (t) { return null; }).generator,
+            generator: doOverTime(time, function (t) { return null; }).generator
         };
     }
     S.wait = wait;
@@ -1525,12 +1525,6 @@ var Camera = /** @class */ (function () {
     };
     return Camera;
 }());
-var ControllerManager = /** @class */ (function () {
-    function ControllerManager(theater) {
-        this.theater = theater;
-    }
-    return ControllerManager;
-}());
 var Cutscene;
 (function (Cutscene) {
     function toScript(generator, skipCutsceneScriptKey) {
@@ -1584,16 +1578,17 @@ var Cutscene;
                         case 8: return [2 /*return*/];
                     }
                 });
-            },
-            endState: function () { }
+            }
         };
     }
     Cutscene.toScript = toScript;
 })(Cutscene || (Cutscene = {}));
 var CutsceneManager = /** @class */ (function () {
-    function CutsceneManager() {
+    function CutsceneManager(theater, skipCutsceneScriptKey) {
+        this.theater = theater;
         this.current = null;
         this.playedCutscenes = new Set();
+        this.skipCutsceneScriptKey = skipCutsceneScriptKey;
     }
     Object.defineProperty(CutsceneManager.prototype, "isCutscenePlaying", {
         get: function () { return !!this.current; },
@@ -1608,13 +1603,13 @@ var CutsceneManager = /** @class */ (function () {
                 this.current = null;
                 this.playedCutscenes.add(completedCutscene.name);
                 if (completedCutscene.cutscene.after) {
-                    global.theater.startStoryboardComponentByName(completedCutscene.cutscene.after);
+                    this.theater.startStoryboardComponentByName(completedCutscene.cutscene.after);
                 }
             }
         }
     };
     CutsceneManager.prototype.canPlayCutscene = function (name) {
-        var cutscene = global.theater.getStoryboardComponentByName(name);
+        var cutscene = this.theater.getStoryboardComponentByName(name);
         if (cutscene.type !== 'cutscene') {
             return false;
         }
@@ -1625,12 +1620,12 @@ var CutsceneManager = /** @class */ (function () {
     };
     CutsceneManager.prototype.onStageLoad = function () {
     };
-    CutsceneManager.prototype.playCutscene = function (name, cutscene, skipCutsceneScriptKey) {
+    CutsceneManager.prototype.playCutscene = function (name, cutscene) {
         if (this.current) {
             debug("Cannot play cutscene:", cutscene, "because a cutscene is already playing:", this.current.cutscene);
             return;
         }
-        var script = new Script(Cutscene.toScript(cutscene.script, skipCutsceneScriptKey));
+        var script = new Script(Cutscene.toScript(cutscene.script, this.skipCutsceneScriptKey));
         this.current = { name: name, cutscene: cutscene, script: script };
     };
     CutsceneManager.prototype.reset = function () {
@@ -1666,9 +1661,6 @@ var S;
                         case 3: return [2 /*return*/];
                     }
                 });
-            },
-            endState: function () {
-                global.theater.dialogBox.done = true;
             }
         };
     }
@@ -1691,21 +1683,17 @@ var S;
                         case 3: return [2 /*return*/];
                     }
                 });
-            },
-            endState: function () {
             }
         };
     }
     S.exitUp = exitUp;
-    function fadeSlides(duration, removeAllButLast) {
-        if (removeAllButLast === void 0) { removeAllButLast = 1; }
+    function fadeSlides(duration) {
         return {
             generator: function () {
                 var slideAlphas, timer, i;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            global.theater.clearSlides(removeAllButLast);
                             if (_.isEmpty(global.theater.slides))
                                 return [2 /*return*/];
                             slideAlphas = global.theater.slides.map(function (slide) { return slide.alpha; });
@@ -1721,12 +1709,11 @@ var S;
                         case 2:
                             _a.sent();
                             return [3 /*break*/, 1];
-                        case 3: return [2 /*return*/];
+                        case 3:
+                            global.theater.clearSlides();
+                            return [2 /*return*/];
                     }
                 });
-            },
-            endState: function () {
-                global.theater.clearSlides();
             }
         };
     }
@@ -1742,14 +1729,14 @@ var S;
     S.fadeOut = fadeOut;
     function jump(sprite, peakDelta, time, landOnGround) {
         if (landOnGround === void 0) { landOnGround = false; }
-        var start = sprite.offset.y;
-        var groundDelta = landOnGround ? -start : 0;
         return {
             generator: function () {
-                var timer;
+                var start, groundDelta, timer;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
+                            start = sprite.offset.y;
+                            groundDelta = landOnGround ? -start : 0;
                             timer = new Timer(time);
                             _a.label = 1;
                         case 1:
@@ -1760,12 +1747,11 @@ var S;
                         case 2:
                             _a.sent();
                             return [3 /*break*/, 1];
-                        case 3: return [2 /*return*/];
+                        case 3:
+                            sprite.offset.y = start + groundDelta;
+                            return [2 /*return*/];
                     }
                 });
-            },
-            endState: function () {
-                sprite.offset.y = start + groundDelta;
             }
         };
     }
@@ -1806,12 +1792,11 @@ var S;
                         case 5:
                             _a.sent();
                             return [3 /*break*/, 4];
-                        case 6: return [2 /*return*/];
+                        case 6:
+                            worldObject.x = x;
+                            return [2 /*return*/];
                     }
                 });
-            },
-            endState: function () {
-                worldObject.x = x;
             }
         };
     }
@@ -1847,12 +1832,11 @@ var S;
                         case 5:
                             _a.sent();
                             return [3 /*break*/, 4];
-                        case 6: return [2 /*return*/];
+                        case 6:
+                            worldObject.y = y;
+                            return [2 /*return*/];
                     }
                 });
-            },
-            endState: function () {
-                worldObject.y = y;
             }
         };
     }
@@ -1889,7 +1873,7 @@ var S;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            global.world.camera.shakeIntensity = intensity;
+                            global.world.camera.shakeIntensity += intensity;
                             timer = new Timer(time);
                             _a.label = 1;
                         case 1:
@@ -1899,12 +1883,11 @@ var S;
                         case 2:
                             _a.sent();
                             return [3 /*break*/, 1];
-                        case 3: return [2 /*return*/];
+                        case 3:
+                            global.world.camera.shakeIntensity -= intensity;
+                            return [2 /*return*/];
                     }
                 });
-            },
-            endState: function () {
-                global.world.camera.shakeIntensity = 0;
             }
         };
     }
@@ -1929,12 +1912,6 @@ var S;
                         case 3: return [2 /*return*/];
                     }
                 });
-            },
-            endState: function () {
-                if (!slide) {
-                    slide = global.theater.addSlideByConfig(config);
-                }
-                slide.finishLoading();
             }
         };
     }
@@ -3608,7 +3585,6 @@ var PIXIRenderTextureSprite = /** @class */ (function (_super) {
 var Script = /** @class */ (function () {
     function Script(scriptFunction) {
         this.generator = scriptFunction.generator();
-        this.endState = scriptFunction.endState;
         this.skippable = O.getOrDefault(scriptFunction.skippable, true);
     }
     Object.defineProperty(Script.prototype, "running", {
@@ -3624,8 +3600,6 @@ var Script = /** @class */ (function () {
         global.pushScript(this);
         var result = this.generator.next();
         if (result.done) {
-            if (this.endState)
-                this.endState();
             this.done = true;
         }
         global.popScript();
@@ -3636,8 +3610,6 @@ var Script = /** @class */ (function () {
         for (var i = 0; i < maxIters && !result.done; i++) {
             result = this.generator.next();
         }
-        if (this.endState)
-            this.endState();
         this.done = true;
     };
     Script.FINISH_IMMEDIATELY_MAX_ITERS = 1000000;
@@ -4134,14 +4106,13 @@ var StageManager = /** @class */ (function () {
                         case 1:
                             _a.sent();
                             return [3 /*break*/, 0];
-                        case 2: return [2 /*return*/];
+                        case 2:
+                            stageManager.theater.removeWorldObject(transitionObj);
+                            stageManager.currentWorld.active = true;
+                            stageManager.currentWorld.visible = true;
+                            return [2 /*return*/];
                     }
                 });
-            },
-            endState: function () {
-                stageManager.theater.removeWorldObject(transitionObj);
-                stageManager.currentWorld.active = true;
-                stageManager.currentWorld.visible = true;
             }
         });
     };
@@ -5083,8 +5054,7 @@ var Theater = /** @class */ (function (_super) {
         _this.stages = config.stages;
         _this.storyboard = config.storyboard;
         _this.party = new Party(config.party);
-        _this.cutsceneManager = new CutsceneManager();
-        _this.skipCutsceneScriptKey = config.skipCutsceneScriptKey;
+        _this.cutsceneManager = new CutsceneManager(_this, config.skipCutsceneScriptKey);
         _this.loadDialogBox(config.dialogBox);
         _this.stageManager = new StageManager(_this, config.stages);
         _this.interactionManager = new InteractionManager(config.interactionManager);
@@ -5159,7 +5129,7 @@ var Theater = /** @class */ (function (_super) {
         if (!component)
             return;
         if (component.type === 'cutscene') {
-            this.cutsceneManager.playCutscene(name, component, this.skipCutsceneScriptKey);
+            this.cutsceneManager.playCutscene(name, component);
         }
         else if (component.type === 'gameplay') {
             global.pushWorld(this.currentWorld);

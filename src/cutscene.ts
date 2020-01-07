@@ -34,8 +34,7 @@ namespace Cutscene {
                     }
                     if (result.done) break;
                 }
-            },
-            endState: () => {}
+            }
         }
     }
 }

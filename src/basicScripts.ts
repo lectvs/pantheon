@@ -1,17 +1,17 @@
 namespace S {
-    export function chain(...scriptFunctions: Script.Function[]) {
-        let i = 0;
+    export function call(func: () => any): Script.Function {
         return {
             generator: function*() {
-                while (i < scriptFunctions.length) {
-                    yield* runScript(scriptFunctions[i]);
-                    i++;
-                }
-            },
-            endState: () => {
-                while (i < scriptFunctions.length) {
-                    if (scriptFunctions[i].endState) scriptFunctions[i].endState();
-                    i++;
+                func();
+            }
+        }
+    }
+
+    export function chain(...scriptFunctions: Script.Function[]): Script.Function {
+        return {
+            generator: function*() {
+                for (let scriptFunction of scriptFunctions) {
+                    yield* runScript(scriptFunction);
                 }
             }
         }
@@ -26,11 +26,12 @@ namespace S {
                     t.update();
                     yield;
                 }
-            }, endState: () => func(1),
+                func(1);
+            }
         }
     }
 
-    export function finishImmediately(scriptFunction: Script.Function, maxIters: number = Script.FINISH_IMMEDIATELY_MAX_ITERS) {
+    export function finishImmediately(scriptFunction: Script.Function, maxIters: number = Script.FINISH_IMMEDIATELY_MAX_ITERS): void {
         let script = new Script(scriptFunction);
         script.finishImmediately(maxIters);
     }
@@ -44,29 +45,19 @@ namespace S {
         }();
     }
 
-    export function simul(...scriptFunctions: Script.Function[]) {
-        let scripts: Script[] = [];
+    export function simul(...scriptFunctions: Script.Function[]): Script.Function {
         return {
             generator: function*() {
-                scripts = scriptFunctions.map(sfn => global.world.runScript(sfn));
+                let scripts: Script[] = scriptFunctions.map(sfn => global.world.runScript(sfn));
                 while (!_.isEmpty(scripts)) {
-                    for (let i = scripts.length-1; i >= 0; i--) {
-                        if (scripts[i].done) scripts.splice(i, 1);
-                    }
+                    scripts = scripts.filter(script => script.done);
                     yield;
-                }
-            },
-            endState: () => {
-                if (!_.isEmpty(scripts)) {
-                    for (let script of scripts) {
-                        script.endState();
-                    }
                 }
             }
         }
     }
 
-    export function tween(obj: any, prop: string, start: number, end: number, duration: number, easingFunction: Tween.Easing.Function = Tween.Easing.Linear) {
+    export function tween(obj: any, prop: string, start: number, end: number, duration: number, easingFunction: Tween.Easing.Function = Tween.Easing.Linear): Script.Function {
         return {
             generator: function*() {
                 let tween = new Tween(start, end, duration, easingFunction);
@@ -75,8 +66,6 @@ namespace S {
                     obj[prop] = tween.value;
                     yield;
                 }
-            },
-            endState: () => {
                 obj[prop] = end;
             }
         }
@@ -84,7 +73,7 @@ namespace S {
 
     export function wait(time: number): Script.Function {
         return {
-            generator: doOverTime(time, t => null).generator,
+            generator: doOverTime(time, t => null).generator
         }
     }
 }

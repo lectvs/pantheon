@@ -40,8 +40,8 @@ namespace Transition {
                             this.newSprite.alpha = t;
                         }),
                         S.wait(transition.postTime),
-                    ).generator,
-                    endState: () => (this.done = true),
+                        S.call(() => this.done = true),
+                    ).generator
                 });
             }
         }

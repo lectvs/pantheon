@@ -1,12 +1,17 @@
 class CutsceneManager {
+    theater: Theater;
+
     current: { name: string, cutscene: Cutscene, script: Script };
     playedCutscenes: Set<string>;
+    skipCutsceneScriptKey: string;
 
     get isCutscenePlaying() { return !!this.current; }
 
-    constructor() {
+    constructor(theater: Theater, skipCutsceneScriptKey: string) {
+        this.theater = theater;
         this.current = null;
         this.playedCutscenes = new Set<string>();
+        this.skipCutsceneScriptKey = skipCutsceneScriptKey;
     }
 
     update() {
@@ -19,14 +24,14 @@ class CutsceneManager {
                 this.playedCutscenes.add(completedCutscene.name);
 
                 if (completedCutscene.cutscene.after) {
-                    global.theater.startStoryboardComponentByName(completedCutscene.cutscene.after);
+                    this.theater.startStoryboardComponentByName(completedCutscene.cutscene.after);
                 }
             }
         }
     }
 
     canPlayCutscene(name: string) {
-        let cutscene = global.theater.getStoryboardComponentByName(name);
+        let cutscene = this.theater.getStoryboardComponentByName(name);
         if (cutscene.type !== 'cutscene') {
             return false;
         }
@@ -40,13 +45,13 @@ class CutsceneManager {
 
     }
 
-    playCutscene(name: string, cutscene: Cutscene, skipCutsceneScriptKey: string) {
+    playCutscene(name: string, cutscene: Cutscene) {
         if (this.current) {
             debug("Cannot play cutscene:", cutscene, "because a cutscene is already playing:", this.current.cutscene);
             return;
         }
 
-        let script = new Script(Cutscene.toScript(cutscene.script, skipCutsceneScriptKey));
+        let script = new Script(Cutscene.toScript(cutscene.script, this.skipCutsceneScriptKey));
         this.current = { name, cutscene, script };
     }
 

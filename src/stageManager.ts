@@ -47,8 +47,6 @@ class StageManager {
                 while (!transitionObj.done) {
                     yield;
                 }
-            },
-            endState: () => {
                 stageManager.theater.removeWorldObject(transitionObj);
                 stageManager.currentWorld.active = true;
                 stageManager.currentWorld.visible = true;

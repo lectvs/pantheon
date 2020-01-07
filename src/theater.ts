@@ -20,14 +20,11 @@ class Theater extends World {
     storyboard: Storyboard;
     party: Party;
 
-    cutsceneManager: CutsceneManager;
-    skipCutsceneScriptKey: string;
-
     currentStoryboardComponentName: string;
 
     dialogBox: DialogBox;
     
-
+    cutsceneManager: CutsceneManager;
     stageManager: StageManager;
     interactionManager: InteractionManager;
     slideManager: SlideManager;
@@ -55,8 +52,7 @@ class Theater extends World {
 
         this.party = new Party(config.party);
 
-        this.cutsceneManager = new CutsceneManager();
-        this.skipCutsceneScriptKey = config.skipCutsceneScriptKey;
+        this.cutsceneManager = new CutsceneManager(this, config.skipCutsceneScriptKey);
         
         this.loadDialogBox(config.dialogBox);
 
@@ -117,7 +113,7 @@ class Theater extends World {
         if (!component) return;
 
         if (component.type === 'cutscene') {
-            this.cutsceneManager.playCutscene(name, component, this.skipCutsceneScriptKey);
+            this.cutsceneManager.playCutscene(name, component);
         } else if (component.type === 'gameplay') {
             global.pushWorld(this.currentWorld);
             component.start();

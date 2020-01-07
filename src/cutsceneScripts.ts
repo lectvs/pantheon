@@ -11,9 +11,6 @@ namespace S {
                 while (!global.theater.dialogBox.done) {
                     yield;
                 }
-            },
-            endState: () => {
-                global.theater.dialogBox.done = true;
             }
         }
     }
@@ -25,17 +22,13 @@ namespace S {
                 while (!script.done) {
                     yield;
                 }
-            },
-            endState: () => {
-
             }
         }
     }
 
-    export function fadeSlides(duration: number, removeAllButLast: number = 1): Script.Function {
+    export function fadeSlides(duration: number): Script.Function {
         return {
             generator: function*() {
-                global.theater.clearSlides(removeAllButLast);
                 if (_.isEmpty(global.theater.slides)) return;
 
                 let slideAlphas = global.theater.slides.map(slide => slide.alpha);
@@ -48,8 +41,7 @@ namespace S {
                     timer.update();
                     yield;
                 }
-            },
-            endState: () => {
+
                 global.theater.clearSlides();
             }
         }
@@ -64,31 +56,30 @@ namespace S {
     }
 
     export function jump(sprite: Sprite, peakDelta: number, time: number, landOnGround: boolean = false): Script.Function {
-        let start = sprite.offset.y;
-        let groundDelta = landOnGround ? -start : 0;
         return {
             generator: function*() {
+                let start = sprite.offset.y;
+                let groundDelta = landOnGround ? -start : 0;
+
                 let timer = new Timer(time);
                 while (!timer.done) {
                     sprite.offset.y = M.jumpParabola(start, -peakDelta, groundDelta, timer.progress);
                     timer.update();
                     yield;
                 }
-            },
-            endState: () => {
                 sprite.offset.y = start + groundDelta;
             }
         }
     }
 
-    export function moveTo(worldObject: WorldObject, x: number, y: number, maxTime: number = 10) {
+    export function moveTo(worldObject: WorldObject, x: number, y: number, maxTime: number = 10): Script.Function {
         return simul(
             moveToX(worldObject, x, maxTime),
             moveToY(worldObject, y, maxTime),
         );
     }
 
-    export function moveToX(worldObject: WorldObject, x: number, maxTime: number = 10) {
+    export function moveToX(worldObject: WorldObject, x: number, maxTime: number = 10): Script.Function {
         return {
             generator: function*() {
                 let dx = x - worldObject.x;
@@ -108,14 +99,13 @@ namespace S {
                         yield;
                     }
                 }
-            },
-            endState: () => {
+
                 worldObject.x = x;
             }
         }
     }
 
-    export function moveToY(worldObject: WorldObject, y: number, maxTime: number = 10) {
+    export function moveToY(worldObject: WorldObject, y: number, maxTime: number = 10): Script.Function {
         return {
             generator: function*() {
                 let dy = y - worldObject.y;
@@ -135,8 +125,7 @@ namespace S {
                         yield;
                     }
                 }
-            },
-            endState: () => {
+
                 worldObject.y = y;
             }
         }
@@ -155,18 +144,16 @@ namespace S {
         }
     }
 
-    export function shake(intensity: number, time: number) {
+    export function shake(intensity: number, time: number): Script.Function {
         return {
             generator: function*() {
-                global.world.camera.shakeIntensity = intensity;
+                global.world.camera.shakeIntensity += intensity;
                 let timer = new Timer(time);
                 while (!timer.done) {
                     timer.update();
                     yield;
                 }
-            },
-            endState: () => {
-                global.world.camera.shakeIntensity = 0;
+                global.world.camera.shakeIntensity -= intensity;
             }
         }
     }
@@ -181,12 +168,6 @@ namespace S {
                         yield;
                     }
                 }
-            },
-            endState: () => {
-                if (!slide) {
-                    slide = global.theater.addSlideByConfig(config);
-                }
-                slide.finishLoading();
             }
         }
     }
