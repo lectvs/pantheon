@@ -41,9 +41,25 @@ namespace S { export const storyboard: Storyboard = {
             DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = false;
             yield dialog('sai/default', "...");
             yield moveToY(dad, 96);
-            debug('hi!');
+        },
+        after: 'inside'
+    },
+    'inside': {
+        type: 'cutscene',
+        script: function*() {
+            let sai = global.getWorldObject<HumanCharacter>('sai');
+            let dad = global.getWorldObject<HumanCharacter>('dad');
+
+            yield moveToY(dad, dad.y - 64);
+        },
+        after: 'gameplay'
+    },
+    'gameplay': {
+        type: 'gameplay',
+        start: () => {
+            let sai = global.getWorldObject<HumanCharacter>('sai');
             sai.unfollow();
         }
-    },
+    }
 
 }} const storyboard = S.storyboard;

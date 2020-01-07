@@ -13,15 +13,6 @@ namespace S {
         }
     }
 
-    export function exitUp(sprite: Sprite): Script.Function {
-        return function*() {
-            let script = global.world.runScript(moveTo(sprite, 0, sprite.y - 1000));
-            while (!script.done) {
-                yield;
-            }
-        }
-    }
-
     export function fadeSlides(duration: number): Script.Function {
         return function*() {
             if (_.isEmpty(global.theater.slides)) return;

@@ -108,6 +108,10 @@ class Theater extends World {
         this.stageManager.loadStage(name, transition, entryPoint);
     }
 
+    onStageLoad() {
+        this.cutsceneManager.onStageLoad();
+    }
+
     startStoryboardComponentByName(name: string) {
         let component = this.getStoryboardComponentByName(name);
         if (!component) return;
@@ -126,6 +130,8 @@ class Theater extends World {
                 return this.startStoryboardComponentByName(component.after);
             }
         }
+
+        debug('started ' + name);
 
         this.currentStoryboardComponentName = name;
     }

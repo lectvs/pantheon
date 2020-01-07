@@ -18,14 +18,7 @@ class CutsceneManager {
         if (this.current) {
             this.current.script.update();
             if (this.current.script.done) {
-                let completedCutscene = this.current;
-                this.current = null;
-
-                this.playedCutscenes.add(completedCutscene.name);
-
-                if (completedCutscene.cutscene.after) {
-                    this.theater.startStoryboardComponentByName(completedCutscene.cutscene.after);
-                }
+                this.finishCurrentCutscene();
             }
         }
     }
@@ -41,8 +34,20 @@ class CutsceneManager {
         return true;
     }
 
-    onStageLoad() {
+    finishCurrentCutscene() {
+        if (!this.current) return;
+        let completedCutscene = this.current;
+        this.current = null;
 
+        this.playedCutscenes.add(completedCutscene.name);
+
+        if (completedCutscene.cutscene.after) {
+            this.theater.startStoryboardComponentByName(completedCutscene.cutscene.after);
+        }
+    }
+
+    onStageLoad() {
+        this.finishCurrentCutscene();
     }
 
     playCutscene(name: string, cutscene: Cutscene) {

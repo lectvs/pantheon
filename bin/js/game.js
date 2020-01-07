@@ -1529,11 +1529,6 @@ var Cutscene;
                             result.value = S.simul.apply(S, __spread(result.value.map(function (scr) { return Cutscene.toScript(scr, skipCutsceneScriptKey); })));
                         }
                         script = new Script(result.value);
-                        if (DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS) {
-                            global.pushWorld(global.theater.currentWorld);
-                            script.finishImmediately();
-                            global.popWorld();
-                        }
                         _a.label = 2;
                     case 2:
                         if (!!script.done) return [3 /*break*/, 4];
@@ -1545,6 +1540,8 @@ var Cutscene;
                             script.update();
                         }
                         global.popWorld();
+                        if (script.done)
+                            return [3 /*break*/, 4];
                         return [4 /*yield*/];
                     case 3:
                         _a.sent();
@@ -1583,12 +1580,7 @@ var CutsceneManager = /** @class */ (function () {
         if (this.current) {
             this.current.script.update();
             if (this.current.script.done) {
-                var completedCutscene = this.current;
-                this.current = null;
-                this.playedCutscenes.add(completedCutscene.name);
-                if (completedCutscene.cutscene.after) {
-                    this.theater.startStoryboardComponentByName(completedCutscene.cutscene.after);
-                }
+                this.finishCurrentCutscene();
             }
         }
     };
@@ -1602,7 +1594,18 @@ var CutsceneManager = /** @class */ (function () {
         }
         return true;
     };
+    CutsceneManager.prototype.finishCurrentCutscene = function () {
+        if (!this.current)
+            return;
+        var completedCutscene = this.current;
+        this.current = null;
+        this.playedCutscenes.add(completedCutscene.name);
+        if (completedCutscene.cutscene.after) {
+            this.theater.startStoryboardComponentByName(completedCutscene.cutscene.after);
+        }
+    };
     CutsceneManager.prototype.onStageLoad = function () {
+        this.finishCurrentCutscene();
     };
     CutsceneManager.prototype.playCutscene = function (name, cutscene) {
         if (this.current) {
@@ -1647,26 +1650,6 @@ var S;
         };
     }
     S.dialog = dialog;
-    function exitUp(sprite) {
-        return function () {
-            var script;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        script = global.world.runScript(moveTo(sprite, 0, sprite.y - 1000));
-                        _a.label = 1;
-                    case 1:
-                        if (!!script.done) return [3 /*break*/, 3];
-                        return [4 /*yield*/];
-                    case 2:
-                        _a.sent();
-                        return [3 /*break*/, 1];
-                    case 3: return [2 /*return*/];
-                }
-            });
-        };
-    }
-    S.exitUp = exitUp;
     function fadeSlides(duration) {
         return function () {
             var slideAlphas, timer, i;
@@ -3551,6 +3534,7 @@ var PIXIRenderTextureSprite = /** @class */ (function (_super) {
 var Script = /** @class */ (function () {
     function Script(scriptFunction) {
         this.iterator = scriptFunction();
+        this.data = {};
     }
     Object.defineProperty(Script.prototype, "running", {
         get: function () {
@@ -4058,22 +4042,26 @@ var StageManager = /** @class */ (function () {
         var newSnapshot = this.currentWorld.takeSnapshot();
         this.currentWorld.active = false;
         this.currentWorld.visible = false;
-        var transitionObj = new Transition.Obj(oldSnapshot, newSnapshot, transition);
-        this.theater.addWorldObject(transitionObj, { layer: Theater.LAYER_TRANSITION });
         var stageManager = this;
         this.theater.runScript(function () {
+            var transitionObj;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        if (!!transitionObj.done) return [3 /*break*/, 2];
-                        return [4 /*yield*/];
+                        transitionObj = new Transition.Obj(oldSnapshot, newSnapshot, transition);
+                        stageManager.theater.addWorldObject(transitionObj, { layer: Theater.LAYER_TRANSITION });
+                        _a.label = 1;
                     case 1:
-                        _a.sent();
-                        return [3 /*break*/, 0];
+                        if (!!transitionObj.done) return [3 /*break*/, 3];
+                        return [4 /*yield*/];
                     case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3:
                         stageManager.theater.removeWorldObject(transitionObj);
                         stageManager.currentWorld.active = true;
                         stageManager.currentWorld.visible = true;
+                        stageManager.theater.onStageLoad();
                         return [2 /*return*/];
                 }
             });
@@ -4565,13 +4553,37 @@ var S;
                             return [4 /*yield*/, S.moveToY(dad, 96)];
                         case 26:
                             _a.sent();
-                            debug('hi!');
-                            sai.unfollow();
                             return [2 /*return*/];
                     }
                 });
-            }
+            },
+            after: 'inside'
         },
+        'inside': {
+            type: 'cutscene',
+            script: function () {
+                var sai, dad;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            sai = global.getWorldObject('sai');
+                            dad = global.getWorldObject('dad');
+                            return [4 /*yield*/, S.moveToY(dad, dad.y - 64)];
+                        case 1:
+                            _a.sent();
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            after: 'gameplay'
+        },
+        'gameplay': {
+            type: 'gameplay',
+            start: function () {
+                var sai = global.getWorldObject('sai');
+                sai.unfollow();
+            }
+        }
     };
 })(S || (S = {}));
 var storyboard = S.storyboard;
@@ -5087,6 +5099,9 @@ var Theater = /** @class */ (function (_super) {
         if (entryPoint === void 0) { entryPoint = Theater.DEFAULT_ENTRY_POINT; }
         this.stageManager.loadStage(name, transition, entryPoint);
     };
+    Theater.prototype.onStageLoad = function () {
+        this.cutsceneManager.onStageLoad();
+    };
     Theater.prototype.startStoryboardComponentByName = function (name) {
         var component = this.getStoryboardComponentByName(name);
         if (!component)
@@ -5107,6 +5122,7 @@ var Theater = /** @class */ (function (_super) {
                 return this.startStoryboardComponentByName(component.after);
             }
         }
+        debug('started ' + name);
         this.currentStoryboardComponentName = name;
     };
     Theater.prototype.loadDialogBox = function (config) {

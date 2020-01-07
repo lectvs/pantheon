@@ -4,12 +4,14 @@ namespace Script {
 
 class Script {
     iterator: IterableIterator<any>;
+    data: any;
 
     paused: boolean;
     done: boolean;
 
     constructor(scriptFunction: Script.Function) {
         this.iterator = scriptFunction();
+        this.data = {};
     }
 
     get running() {

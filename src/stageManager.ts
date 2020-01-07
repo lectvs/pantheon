@@ -38,17 +38,20 @@ class StageManager {
         this.currentWorld.active = false;
         this.currentWorld.visible = false;
 
-        let transitionObj = new Transition.Obj(oldSnapshot, newSnapshot, transition);
-        this.theater.addWorldObject(transitionObj, { layer: Theater.LAYER_TRANSITION });
-
         let stageManager = this;
         this.theater.runScript(function* () {
+            let transitionObj = new Transition.Obj(oldSnapshot, newSnapshot, transition);
+            stageManager.theater.addWorldObject(transitionObj, { layer: Theater.LAYER_TRANSITION });
+
             while (!transitionObj.done) {
                 yield;
             }
+
             stageManager.theater.removeWorldObject(transitionObj);
             stageManager.currentWorld.active = true;
             stageManager.currentWorld.visible = true;
+
+            stageManager.theater.onStageLoad();
         });
     }
 

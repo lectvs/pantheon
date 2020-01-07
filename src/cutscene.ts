@@ -13,11 +13,6 @@ namespace Cutscene {
                         result.value = S.simul(...result.value.map(scr => Cutscene.toScript(scr, skipCutsceneScriptKey)));
                     }
                     let script = new Script(result.value);
-                    if (DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS) {
-                        global.pushWorld(global.theater.currentWorld);
-                        script.finishImmediately();
-                        global.popWorld();
-                    }
                     while (!script.done) {
                         global.pushWorld(global.theater.currentWorld);
                         if (DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS || Input.justDown(skipCutsceneScriptKey)) {
@@ -26,6 +21,7 @@ namespace Cutscene {
                             script.update();
                         }
                         global.popWorld();
+                        if (script.done) break;
                         yield;
                     }
                 } else if (!result.done) {  // Normal yield statement.
