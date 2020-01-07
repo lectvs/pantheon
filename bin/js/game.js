@@ -1163,12 +1163,10 @@ var Transition;
             else if (transition.type === 'fade') {
                 _this.oldSprite.alpha = 1;
                 _this.newSprite.alpha = 0;
-                global.theater.runScript({
-                    generator: S.chain(S.wait(transition.preTime), S.doOverTime(transition.time, function (t) {
-                        _this.oldSprite.alpha = 1 - t;
-                        _this.newSprite.alpha = t;
-                    }), S.wait(transition.postTime), S.call(function () { return _this.done = true; })).generator
-                });
+                global.theater.runScript(S.chain(S.wait(transition.preTime), S.doOverTime(transition.time, function (t) {
+                    _this.oldSprite.alpha = 1 - t;
+                    _this.newSprite.alpha = t;
+                }), S.wait(transition.postTime), S.call(function () { return _this.done = true; })));
             }
             return _this;
         }
@@ -1250,13 +1248,11 @@ function WORLD_BOUNDS(left, top, right, bottom) {
 var S;
 (function (S) {
     function call(func) {
-        return {
-            generator: function () {
-                return __generator(this, function (_a) {
-                    func();
-                    return [2 /*return*/];
-                });
-            }
+        return function () {
+            return __generator(this, function (_a) {
+                func();
+                return [2 /*return*/];
+            });
         };
     }
     S.call = call;
@@ -1265,66 +1261,62 @@ var S;
         for (var _i = 0; _i < arguments.length; _i++) {
             scriptFunctions[_i] = arguments[_i];
         }
-        return {
-            generator: function () {
-                var e_4, _a, scriptFunctions_1, scriptFunctions_1_1, scriptFunction, e_4_1;
-                return __generator(this, function (_b) {
-                    switch (_b.label) {
-                        case 0:
-                            _b.trys.push([0, 5, 6, 7]);
-                            scriptFunctions_1 = __values(scriptFunctions), scriptFunctions_1_1 = scriptFunctions_1.next();
-                            _b.label = 1;
-                        case 1:
-                            if (!!scriptFunctions_1_1.done) return [3 /*break*/, 4];
-                            scriptFunction = scriptFunctions_1_1.value;
-                            return [5 /*yield**/, __values(runScript(scriptFunction))];
-                        case 2:
-                            _b.sent();
-                            _b.label = 3;
-                        case 3:
-                            scriptFunctions_1_1 = scriptFunctions_1.next();
-                            return [3 /*break*/, 1];
-                        case 4: return [3 /*break*/, 7];
-                        case 5:
-                            e_4_1 = _b.sent();
-                            e_4 = { error: e_4_1 };
-                            return [3 /*break*/, 7];
-                        case 6:
-                            try {
-                                if (scriptFunctions_1_1 && !scriptFunctions_1_1.done && (_a = scriptFunctions_1.return)) _a.call(scriptFunctions_1);
-                            }
-                            finally { if (e_4) throw e_4.error; }
-                            return [7 /*endfinally*/];
-                        case 7: return [2 /*return*/];
-                    }
-                });
-            }
+        return function () {
+            var e_4, _a, scriptFunctions_1, scriptFunctions_1_1, scriptFunction, e_4_1;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _b.trys.push([0, 5, 6, 7]);
+                        scriptFunctions_1 = __values(scriptFunctions), scriptFunctions_1_1 = scriptFunctions_1.next();
+                        _b.label = 1;
+                    case 1:
+                        if (!!scriptFunctions_1_1.done) return [3 /*break*/, 4];
+                        scriptFunction = scriptFunctions_1_1.value;
+                        return [5 /*yield**/, __values(runScript(scriptFunction))];
+                    case 2:
+                        _b.sent();
+                        _b.label = 3;
+                    case 3:
+                        scriptFunctions_1_1 = scriptFunctions_1.next();
+                        return [3 /*break*/, 1];
+                    case 4: return [3 /*break*/, 7];
+                    case 5:
+                        e_4_1 = _b.sent();
+                        e_4 = { error: e_4_1 };
+                        return [3 /*break*/, 7];
+                    case 6:
+                        try {
+                            if (scriptFunctions_1_1 && !scriptFunctions_1_1.done && (_a = scriptFunctions_1.return)) _a.call(scriptFunctions_1);
+                        }
+                        finally { if (e_4) throw e_4.error; }
+                        return [7 /*endfinally*/];
+                    case 7: return [2 /*return*/];
+                }
+            });
         };
     }
     S.chain = chain;
     function doOverTime(time, func) {
-        return {
-            generator: function () {
-                var t;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            t = new Timer(time);
-                            _a.label = 1;
-                        case 1:
-                            if (!!t.done) return [3 /*break*/, 3];
-                            func(t.progress);
-                            t.update();
-                            return [4 /*yield*/];
-                        case 2:
-                            _a.sent();
-                            return [3 /*break*/, 1];
-                        case 3:
-                            func(1);
-                            return [2 /*return*/];
-                    }
-                });
-            }
+        return function () {
+            var t;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        t = new Timer(time);
+                        _a.label = 1;
+                    case 1:
+                        if (!!t.done) return [3 /*break*/, 3];
+                        func(t.progress);
+                        t.update();
+                        return [4 /*yield*/];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3:
+                        func(1);
+                        return [2 /*return*/];
+                }
+            });
         };
     }
     S.doOverTime = doOverTime;
@@ -1359,59 +1351,53 @@ var S;
         for (var _i = 0; _i < arguments.length; _i++) {
             scriptFunctions[_i] = arguments[_i];
         }
-        return {
-            generator: function () {
-                var scripts;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            scripts = scriptFunctions.map(function (sfn) { return global.world.runScript(sfn); });
-                            _a.label = 1;
-                        case 1:
-                            if (!!_.isEmpty(scripts)) return [3 /*break*/, 3];
-                            scripts = scripts.filter(function (script) { return script.done; });
-                            return [4 /*yield*/];
-                        case 2:
-                            _a.sent();
-                            return [3 /*break*/, 1];
-                        case 3: return [2 /*return*/];
-                    }
-                });
-            }
+        return function () {
+            var scripts;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        scripts = scriptFunctions.map(function (sfn) { return global.world.runScript(sfn); });
+                        _a.label = 1;
+                    case 1:
+                        if (!!_.isEmpty(scripts)) return [3 /*break*/, 3];
+                        scripts = scripts.filter(function (script) { return script.done; });
+                        return [4 /*yield*/];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3: return [2 /*return*/];
+                }
+            });
         };
     }
     S.simul = simul;
     function tween(obj, prop, start, end, duration, easingFunction) {
         if (easingFunction === void 0) { easingFunction = Tween.Easing.Linear; }
-        return {
-            generator: function () {
-                var tween;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            tween = new Tween(start, end, duration, easingFunction);
-                            _a.label = 1;
-                        case 1:
-                            if (!!tween.done) return [3 /*break*/, 3];
-                            tween.update();
-                            obj[prop] = tween.value;
-                            return [4 /*yield*/];
-                        case 2:
-                            _a.sent();
-                            return [3 /*break*/, 1];
-                        case 3:
-                            obj[prop] = end;
-                            return [2 /*return*/];
-                    }
-                });
-            }
+        return function () {
+            var tween;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        tween = new Tween(start, end, duration, easingFunction);
+                        _a.label = 1;
+                    case 1:
+                        if (!!tween.done) return [3 /*break*/, 3];
+                        tween.update();
+                        obj[prop] = tween.value;
+                        return [4 /*yield*/];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3:
+                        obj[prop] = end;
+                        return [2 /*return*/];
+                }
+            });
         };
     }
     S.tween = tween;
     function wait(time) {
-        return {
-            generator: doOverTime(time, function (t) { return null; }).generator
-        };
+        return doOverTime(time, function (t) { return null; });
     }
     S.wait = wait;
 })(S || (S = {}));
@@ -1528,57 +1514,55 @@ var Camera = /** @class */ (function () {
 var Cutscene;
 (function (Cutscene) {
     function toScript(generator, skipCutsceneScriptKey) {
-        return {
-            generator: function () {
-                var iterator, result, script;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            iterator = generator();
-                            _a.label = 1;
-                        case 1:
-                            if (!true) return [3 /*break*/, 8];
-                            result = iterator.next();
-                            if (!result.value) return [3 /*break*/, 5];
-                            if (_.isArray(result.value)) {
-                                result.value = S.simul.apply(S, __spread(result.value.map(function (scr) { return Cutscene.toScript(scr, skipCutsceneScriptKey); })));
-                            }
-                            script = new Script(result.value);
-                            if (DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS) {
-                                global.pushWorld(global.theater.currentWorld);
-                                script.finishImmediately();
-                                global.popWorld();
-                            }
-                            _a.label = 2;
-                        case 2:
-                            if (!!script.done) return [3 /*break*/, 4];
+        return function () {
+            var iterator, result, script;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        iterator = generator();
+                        _a.label = 1;
+                    case 1:
+                        if (!true) return [3 /*break*/, 8];
+                        result = iterator.next();
+                        if (!result.value) return [3 /*break*/, 5];
+                        if (_.isArray(result.value)) {
+                            result.value = S.simul.apply(S, __spread(result.value.map(function (scr) { return Cutscene.toScript(scr, skipCutsceneScriptKey); })));
+                        }
+                        script = new Script(result.value);
+                        if (DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS) {
                             global.pushWorld(global.theater.currentWorld);
-                            if (DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS || Input.justDown(skipCutsceneScriptKey)) {
-                                script.finishImmediately();
-                            }
-                            else {
-                                script.update();
-                            }
+                            script.finishImmediately();
                             global.popWorld();
-                            return [4 /*yield*/];
-                        case 3:
-                            _a.sent();
-                            return [3 /*break*/, 2];
-                        case 4: return [3 /*break*/, 7];
-                        case 5:
-                            if (!!result.done) return [3 /*break*/, 7];
-                            return [4 /*yield*/];
-                        case 6:
-                            _a.sent();
-                            _a.label = 7;
-                        case 7:
-                            if (result.done)
-                                return [3 /*break*/, 8];
-                            return [3 /*break*/, 1];
-                        case 8: return [2 /*return*/];
-                    }
-                });
-            }
+                        }
+                        _a.label = 2;
+                    case 2:
+                        if (!!script.done) return [3 /*break*/, 4];
+                        global.pushWorld(global.theater.currentWorld);
+                        if (DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS || Input.justDown(skipCutsceneScriptKey)) {
+                            script.finishImmediately();
+                        }
+                        else {
+                            script.update();
+                        }
+                        global.popWorld();
+                        return [4 /*yield*/];
+                    case 3:
+                        _a.sent();
+                        return [3 /*break*/, 2];
+                    case 4: return [3 /*break*/, 7];
+                    case 5:
+                        if (!!result.done) return [3 /*break*/, 7];
+                        return [4 /*yield*/];
+                    case 6:
+                        _a.sent();
+                        _a.label = 7;
+                    case 7:
+                        if (result.done)
+                            return [3 /*break*/, 8];
+                        return [3 /*break*/, 1];
+                    case 8: return [2 /*return*/];
+                }
+            });
         };
     }
     Cutscene.toScript = toScript;
@@ -1639,82 +1623,76 @@ var CutsceneManager = /** @class */ (function () {
 var S;
 (function (S) {
     function dialog(p1, p2) {
-        return {
-            generator: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            if (p2) {
-                                global.theater.dialogBox.showPortrait(p1);
-                                global.theater.dialogBox.showDialog(p2);
-                            }
-                            else {
-                                global.theater.dialogBox.showDialog(p1);
-                            }
-                            _a.label = 1;
-                        case 1:
-                            if (!!global.theater.dialogBox.done) return [3 /*break*/, 3];
-                            return [4 /*yield*/];
-                        case 2:
-                            _a.sent();
-                            return [3 /*break*/, 1];
-                        case 3: return [2 /*return*/];
-                    }
-                });
-            }
+        return function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (p2) {
+                            global.theater.dialogBox.showPortrait(p1);
+                            global.theater.dialogBox.showDialog(p2);
+                        }
+                        else {
+                            global.theater.dialogBox.showDialog(p1);
+                        }
+                        _a.label = 1;
+                    case 1:
+                        if (!!global.theater.dialogBox.done) return [3 /*break*/, 3];
+                        return [4 /*yield*/];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3: return [2 /*return*/];
+                }
+            });
         };
     }
     S.dialog = dialog;
     function exitUp(sprite) {
-        return {
-            generator: function () {
-                var script;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            script = global.world.runScript(moveTo(sprite, 0, sprite.y - 1000));
-                            _a.label = 1;
-                        case 1:
-                            if (!!script.done) return [3 /*break*/, 3];
-                            return [4 /*yield*/];
-                        case 2:
-                            _a.sent();
-                            return [3 /*break*/, 1];
-                        case 3: return [2 /*return*/];
-                    }
-                });
-            }
+        return function () {
+            var script;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        script = global.world.runScript(moveTo(sprite, 0, sprite.y - 1000));
+                        _a.label = 1;
+                    case 1:
+                        if (!!script.done) return [3 /*break*/, 3];
+                        return [4 /*yield*/];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3: return [2 /*return*/];
+                }
+            });
         };
     }
     S.exitUp = exitUp;
     function fadeSlides(duration) {
-        return {
-            generator: function () {
-                var slideAlphas, timer, i;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            if (_.isEmpty(global.theater.slides))
-                                return [2 /*return*/];
-                            slideAlphas = global.theater.slides.map(function (slide) { return slide.alpha; });
-                            timer = new Timer(duration);
-                            _a.label = 1;
-                        case 1:
-                            if (!!timer.done) return [3 /*break*/, 3];
-                            for (i = 0; i < global.theater.slides.length; i++) {
-                                global.theater.slides[i].alpha = slideAlphas[i] * (1 - timer.progress);
-                            }
-                            timer.update();
-                            return [4 /*yield*/];
-                        case 2:
-                            _a.sent();
-                            return [3 /*break*/, 1];
-                        case 3:
-                            global.theater.clearSlides();
+        return function () {
+            var slideAlphas, timer, i;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (_.isEmpty(global.theater.slides))
                             return [2 /*return*/];
-                    }
-                });
-            }
+                        slideAlphas = global.theater.slides.map(function (slide) { return slide.alpha; });
+                        timer = new Timer(duration);
+                        _a.label = 1;
+                    case 1:
+                        if (!!timer.done) return [3 /*break*/, 3];
+                        for (i = 0; i < global.theater.slides.length; i++) {
+                            global.theater.slides[i].alpha = slideAlphas[i] * (1 - timer.progress);
+                        }
+                        timer.update();
+                        return [4 /*yield*/];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3:
+                        global.theater.clearSlides();
+                        return [2 /*return*/];
+                }
+            });
         };
     }
     S.fadeSlides = fadeSlides;
@@ -1729,30 +1707,28 @@ var S;
     S.fadeOut = fadeOut;
     function jump(sprite, peakDelta, time, landOnGround) {
         if (landOnGround === void 0) { landOnGround = false; }
-        return {
-            generator: function () {
-                var start, groundDelta, timer;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            start = sprite.offset.y;
-                            groundDelta = landOnGround ? -start : 0;
-                            timer = new Timer(time);
-                            _a.label = 1;
-                        case 1:
-                            if (!!timer.done) return [3 /*break*/, 3];
-                            sprite.offset.y = M.jumpParabola(start, -peakDelta, groundDelta, timer.progress);
-                            timer.update();
-                            return [4 /*yield*/];
-                        case 2:
-                            _a.sent();
-                            return [3 /*break*/, 1];
-                        case 3:
-                            sprite.offset.y = start + groundDelta;
-                            return [2 /*return*/];
-                    }
-                });
-            }
+        return function () {
+            var start, groundDelta, timer;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        start = sprite.offset.y;
+                        groundDelta = landOnGround ? -start : 0;
+                        timer = new Timer(time);
+                        _a.label = 1;
+                    case 1:
+                        if (!!timer.done) return [3 /*break*/, 3];
+                        sprite.offset.y = M.jumpParabola(start, -peakDelta, groundDelta, timer.progress);
+                        timer.update();
+                        return [4 /*yield*/];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3:
+                        sprite.offset.y = start + groundDelta;
+                        return [2 /*return*/];
+                }
+            });
         };
     }
     S.jump = jump;
@@ -1763,81 +1739,77 @@ var S;
     S.moveTo = moveTo;
     function moveToX(worldObject, x, maxTime) {
         if (maxTime === void 0) { maxTime = 10; }
-        return {
-            generator: function () {
-                var dx, timer;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            dx = x - worldObject.x;
-                            if (dx === 0)
-                                return [2 /*return*/];
-                            timer = new Timer(maxTime);
-                            if (!(dx > 0)) return [3 /*break*/, 4];
-                            _a.label = 1;
-                        case 1:
-                            if (!(worldObject.x < x && !timer.done)) return [3 /*break*/, 3];
-                            worldObject.controller.right = true;
-                            timer.update();
-                            return [4 /*yield*/];
-                        case 2:
-                            _a.sent();
-                            return [3 /*break*/, 1];
-                        case 3: return [3 /*break*/, 6];
-                        case 4:
-                            if (!(worldObject.x > x && !timer.done)) return [3 /*break*/, 6];
-                            worldObject.controller.left = true;
-                            timer.update();
-                            return [4 /*yield*/];
-                        case 5:
-                            _a.sent();
-                            return [3 /*break*/, 4];
-                        case 6:
-                            worldObject.x = x;
+        return function () {
+            var dx, timer;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        dx = x - worldObject.x;
+                        if (dx === 0)
                             return [2 /*return*/];
-                    }
-                });
-            }
+                        timer = new Timer(maxTime);
+                        if (!(dx > 0)) return [3 /*break*/, 4];
+                        _a.label = 1;
+                    case 1:
+                        if (!(worldObject.x < x && !timer.done)) return [3 /*break*/, 3];
+                        worldObject.controller.right = true;
+                        timer.update();
+                        return [4 /*yield*/];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3: return [3 /*break*/, 6];
+                    case 4:
+                        if (!(worldObject.x > x && !timer.done)) return [3 /*break*/, 6];
+                        worldObject.controller.left = true;
+                        timer.update();
+                        return [4 /*yield*/];
+                    case 5:
+                        _a.sent();
+                        return [3 /*break*/, 4];
+                    case 6:
+                        worldObject.x = x;
+                        return [2 /*return*/];
+                }
+            });
         };
     }
     S.moveToX = moveToX;
     function moveToY(worldObject, y, maxTime) {
         if (maxTime === void 0) { maxTime = 10; }
-        return {
-            generator: function () {
-                var dy, timer;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            dy = y - worldObject.y;
-                            if (dy === 0)
-                                return [2 /*return*/];
-                            timer = new Timer(maxTime);
-                            if (!(dy > 0)) return [3 /*break*/, 4];
-                            _a.label = 1;
-                        case 1:
-                            if (!(worldObject.y < y && !timer.done)) return [3 /*break*/, 3];
-                            worldObject.controller.down = true;
-                            timer.update();
-                            return [4 /*yield*/];
-                        case 2:
-                            _a.sent();
-                            return [3 /*break*/, 1];
-                        case 3: return [3 /*break*/, 6];
-                        case 4:
-                            if (!(worldObject.y > y && !timer.done)) return [3 /*break*/, 6];
-                            worldObject.controller.up = true;
-                            timer.update();
-                            return [4 /*yield*/];
-                        case 5:
-                            _a.sent();
-                            return [3 /*break*/, 4];
-                        case 6:
-                            worldObject.y = y;
+        return function () {
+            var dy, timer;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        dy = y - worldObject.y;
+                        if (dy === 0)
                             return [2 /*return*/];
-                    }
-                });
-            }
+                        timer = new Timer(maxTime);
+                        if (!(dy > 0)) return [3 /*break*/, 4];
+                        _a.label = 1;
+                    case 1:
+                        if (!(worldObject.y < y && !timer.done)) return [3 /*break*/, 3];
+                        worldObject.controller.down = true;
+                        timer.update();
+                        return [4 /*yield*/];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3: return [3 /*break*/, 6];
+                    case 4:
+                        if (!(worldObject.y > y && !timer.done)) return [3 /*break*/, 6];
+                        worldObject.controller.up = true;
+                        timer.update();
+                        return [4 /*yield*/];
+                    case 5:
+                        _a.sent();
+                        return [3 /*break*/, 4];
+                    case 6:
+                        worldObject.y = y;
+                        return [2 /*return*/];
+                }
+            });
         };
     }
     S.moveToY = moveToY;
@@ -1845,74 +1817,68 @@ var S;
         if (startFrame === void 0) { startFrame = 0; }
         if (force === void 0) { force = true; }
         if (waitForCompletion === void 0) { waitForCompletion = true; }
-        return {
-            generator: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            sprite.playAnimation(animationName, startFrame, force);
-                            if (!waitForCompletion) return [3 /*break*/, 3];
-                            _a.label = 1;
-                        case 1:
-                            if (!(sprite.getCurrentAnimationName() === animationName)) return [3 /*break*/, 3];
-                            return [4 /*yield*/];
-                        case 2:
-                            _a.sent();
-                            return [3 /*break*/, 1];
-                        case 3: return [2 /*return*/];
-                    }
-                });
-            }
+        return function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        sprite.playAnimation(animationName, startFrame, force);
+                        if (!waitForCompletion) return [3 /*break*/, 3];
+                        _a.label = 1;
+                    case 1:
+                        if (!(sprite.getCurrentAnimationName() === animationName)) return [3 /*break*/, 3];
+                        return [4 /*yield*/];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3: return [2 /*return*/];
+                }
+            });
         };
     }
     S.playAnimation = playAnimation;
     function shake(intensity, time) {
-        return {
-            generator: function () {
-                var timer;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            global.world.camera.shakeIntensity += intensity;
-                            timer = new Timer(time);
-                            _a.label = 1;
-                        case 1:
-                            if (!!timer.done) return [3 /*break*/, 3];
-                            timer.update();
-                            return [4 /*yield*/];
-                        case 2:
-                            _a.sent();
-                            return [3 /*break*/, 1];
-                        case 3:
-                            global.world.camera.shakeIntensity -= intensity;
-                            return [2 /*return*/];
-                    }
-                });
-            }
+        return function () {
+            var timer;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        global.world.camera.shakeIntensity += intensity;
+                        timer = new Timer(time);
+                        _a.label = 1;
+                    case 1:
+                        if (!!timer.done) return [3 /*break*/, 3];
+                        timer.update();
+                        return [4 /*yield*/];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3:
+                        global.world.camera.shakeIntensity -= intensity;
+                        return [2 /*return*/];
+                }
+            });
         };
     }
     S.shake = shake;
     function showSlide(config, waitForCompletion) {
         if (waitForCompletion === void 0) { waitForCompletion = true; }
         var slide;
-        return {
-            generator: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            slide = global.theater.addSlideByConfig(config);
-                            if (!waitForCompletion) return [3 /*break*/, 3];
-                            _a.label = 1;
-                        case 1:
-                            if (!!slide.fullyLoaded) return [3 /*break*/, 3];
-                            return [4 /*yield*/];
-                        case 2:
-                            _a.sent();
-                            return [3 /*break*/, 1];
-                        case 3: return [2 /*return*/];
-                    }
-                });
-            }
+        return function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        slide = global.theater.addSlideByConfig(config);
+                        if (!waitForCompletion) return [3 /*break*/, 3];
+                        _a.label = 1;
+                    case 1:
+                        if (!!slide.fullyLoaded) return [3 /*break*/, 3];
+                        return [4 /*yield*/];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3: return [2 /*return*/];
+                }
+            });
         };
     }
     S.showSlide = showSlide;
@@ -3584,8 +3550,7 @@ var PIXIRenderTextureSprite = /** @class */ (function (_super) {
 }(PIXI.Sprite));
 var Script = /** @class */ (function () {
     function Script(scriptFunction) {
-        this.generator = scriptFunction.generator();
-        this.skippable = O.getOrDefault(scriptFunction.skippable, true);
+        this.iterator = scriptFunction();
     }
     Object.defineProperty(Script.prototype, "running", {
         get: function () {
@@ -3598,7 +3563,7 @@ var Script = /** @class */ (function () {
         if (!this.running)
             return;
         global.pushScript(this);
-        var result = this.generator.next();
+        var result = this.iterator.next();
         if (result.done) {
             this.done = true;
         }
@@ -3606,9 +3571,9 @@ var Script = /** @class */ (function () {
     };
     Script.prototype.finishImmediately = function (maxIters) {
         if (maxIters === void 0) { maxIters = Script.FINISH_IMMEDIATELY_MAX_ITERS; }
-        var result = this.generator.next();
+        var result = this.iterator.next();
         for (var i = 0; i < maxIters && !result.done; i++) {
-            result = this.generator.next();
+            result = this.iterator.next();
         }
         this.done = true;
     };
@@ -4096,24 +4061,22 @@ var StageManager = /** @class */ (function () {
         var transitionObj = new Transition.Obj(oldSnapshot, newSnapshot, transition);
         this.theater.addWorldObject(transitionObj, { layer: Theater.LAYER_TRANSITION });
         var stageManager = this;
-        this.theater.runScript({
-            generator: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            if (!!transitionObj.done) return [3 /*break*/, 2];
-                            return [4 /*yield*/];
-                        case 1:
-                            _a.sent();
-                            return [3 /*break*/, 0];
-                        case 2:
-                            stageManager.theater.removeWorldObject(transitionObj);
-                            stageManager.currentWorld.active = true;
-                            stageManager.currentWorld.visible = true;
-                            return [2 /*return*/];
-                    }
-                });
-            }
+        this.theater.runScript(function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!!transitionObj.done) return [3 /*break*/, 2];
+                        return [4 /*yield*/];
+                    case 1:
+                        _a.sent();
+                        return [3 /*break*/, 0];
+                    case 2:
+                        stageManager.theater.removeWorldObject(transitionObj);
+                        stageManager.currentWorld.active = true;
+                        stageManager.currentWorld.visible = true;
+                        return [2 /*return*/];
+                }
+            });
         });
     };
     StageManager.prototype.setStage = function (name, entryPoint) {

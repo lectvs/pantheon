@@ -1,20 +1,15 @@
 namespace Script {
-    export type Function = {
-        generator: () => IterableIterator<any>;
-        skippable?: boolean;
-    }
+    export type Function = () => IterableIterator<any>;
 }
 
 class Script {
-    generator: IterableIterator<any>;
-    skippable: boolean;
+    iterator: IterableIterator<any>;
 
     paused: boolean;
     done: boolean;
 
     constructor(scriptFunction: Script.Function) {
-        this.generator = scriptFunction.generator();
-        this.skippable = O.getOrDefault(scriptFunction.skippable, true);
+        this.iterator = scriptFunction();
     }
 
     get running() {
@@ -26,7 +21,7 @@ class Script {
 
         global.pushScript(this);
 
-        let result = this.generator.next();
+        let result = this.iterator.next();
         if (result.done) {
             this.done = true;
         }
@@ -35,9 +30,9 @@ class Script {
     }
 
     finishImmediately(maxIters: number = Script.FINISH_IMMEDIATELY_MAX_ITERS) {
-        let result = this.generator.next();
+        let result = this.iterator.next();
         for (let i = 0; i < maxIters && !result.done; i++) {
-            result = this.generator.next();
+            result = this.iterator.next();
         }
         this.done = true;
     }

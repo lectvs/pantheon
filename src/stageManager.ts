@@ -42,15 +42,13 @@ class StageManager {
         this.theater.addWorldObject(transitionObj, { layer: Theater.LAYER_TRANSITION });
 
         let stageManager = this;
-        this.theater.runScript({
-            generator: function* () {
-                while (!transitionObj.done) {
-                    yield;
-                }
-                stageManager.theater.removeWorldObject(transitionObj);
-                stageManager.currentWorld.active = true;
-                stageManager.currentWorld.visible = true;
+        this.theater.runScript(function* () {
+            while (!transitionObj.done) {
+                yield;
             }
+            stageManager.theater.removeWorldObject(transitionObj);
+            stageManager.currentWorld.active = true;
+            stageManager.currentWorld.visible = true;
         });
     }
 

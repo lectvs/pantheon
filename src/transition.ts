@@ -32,17 +32,15 @@ namespace Transition {
             } else if (transition.type === 'fade') {
                 this.oldSprite.alpha = 1;
                 this.newSprite.alpha = 0;
-                global.theater.runScript({
-                    generator: S.chain(
-                        S.wait(transition.preTime),
-                        S.doOverTime(transition.time, t => {
-                            this.oldSprite.alpha = 1 - t;
-                            this.newSprite.alpha = t;
-                        }),
-                        S.wait(transition.postTime),
-                        S.call(() => this.done = true),
-                    ).generator
-                });
+                global.theater.runScript(S.chain(
+                    S.wait(transition.preTime),
+                    S.doOverTime(transition.time, t => {
+                        this.oldSprite.alpha = 1 - t;
+                        this.newSprite.alpha = t;
+                    }),
+                    S.wait(transition.postTime),
+                    S.call(() => this.done = true),
+                ));
             }
         }
 
