@@ -8,12 +8,24 @@ const party: Party.Config = {
             config: {
                 name: 'sai',
                 parent: HUMAN_CHARACTER('generic_sprites'),
+                effects: {
+                    outline: {
+                        color: 0xFF0000,
+                        alpha: 1
+                    }
+                }
             },
         },
         'dad': {
             config: {
                 name: 'dad',
                 parent: HUMAN_CHARACTER('generic_sprites'),
+                effects: {
+                    outline: {
+                        color: 0x0000FF,
+                        alpha: 1
+                    }
+                }
             },
         },
     }

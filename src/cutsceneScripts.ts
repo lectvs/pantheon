@@ -8,6 +8,7 @@ namespace S {
                 global.theater.dialogBox.showDialog(p1);
             }
             while (!global.theater.dialogBox.done) {
+                if (DEBUG_SKIP_ACTIVE) global.theater.dialogBox.done = true;
                 yield;
             }
         }

@@ -1,17 +1,24 @@
 
 namespace S { export const storyboard: Storyboard = {
-
+    'start': {
+        type: 'code',
+        func: () => {
+            global.theater.party.leader = 'sai';
+        },
+        after: 'outside'
+    },
     'outside': {
         type: 'cutscene',
         script: function*() {
-            DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = true;
+            DEBUG_SKIP_ACTIVE = true;
             let sai = global.getWorldObject<HumanCharacter>('sai');
             let dad = global.getWorldObject<HumanCharacter>('dad');
             let guard1 = global.getWorldObject<HumanCharacter>('guard1');
             let guard2 = global.getWorldObject<HumanCharacter>('guard2');
 
-            finishImmediately(fadeOut(1));
             sai.follow(dad, 12);
+
+            yield fadeOut(0);
             yield fadeSlides(1);
             yield moveToY(dad, 120);
             yield dialog('guard1/default', "Well, well. What do we have here?");
@@ -38,7 +45,8 @@ namespace S { export const storyboard: Storyboard = {
             guard1.setDirection(Direction2D.DOWN);
             yield dialog('dad/default', "Thank you. I won't be long.");
             yield dialog('dad/default', "Come on, boy. I don't have all day.");
-            DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = false;
+            DEBUG_SKIP_ACTIVE = false;
+            
             yield dialog('sai/default', "...");
             yield moveToY(dad, 96);
         },

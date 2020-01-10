@@ -46,6 +46,7 @@ class Theater extends World {
                 { name: Theater.LAYER_DIALOG },
             ],
         });
+        global.theater = this;
 
         this.stages = config.stages;
         this.storyboard = config.storyboard;

@@ -65,6 +65,7 @@ class Sprite extends PhysicsWorldObject {
         this.alpha = O.getOrDefault(config.alpha, 1);
 
         this.effects = new Effects();
+        this.effects.updateFromConfig(config.effects);
     }
 
     update() {

@@ -1,7 +1,7 @@
 namespace Effects {
     export type Config = {
-        silhouette?: { color?: number, alpha?: number };
-        outline?: { color?: number, alpha?: number };
+        silhouette?: { color?: number, alpha?: number, enabled?: boolean };
+        outline?: { color?: number, alpha?: number, enabled?: boolean };
     }
 }
 
@@ -35,14 +35,18 @@ class Effects {
     }
 
     updateFromConfig(config: Effects.Config) {
+        if (!config) return;
+
         if (config.silhouette) {
-            this.silhouette.color = config.silhouette.color || 0x000000;
-            this.silhouette.alpha = config.silhouette.alpha || 1;
+            this.silhouette.color = O.getOrDefault(config.silhouette.color, 0x000000);
+            this.silhouette.alpha = O.getOrDefault(config.silhouette.alpha, 1);
+            this.silhouette.enabled = O.getOrDefault(config.silhouette.enabled, true);
         }
 
         if (config.outline) {
-            this.outline.color = config.outline.color || 0x000000;
-            this.outline.alpha = config.outline.alpha || 1;
+            this.outline.color = O.getOrDefault(config.outline.color, 0x000000);
+            this.outline.alpha = O.getOrDefault(config.outline.alpha, 1);
+            this.outline.enabled = O.getOrDefault(config.outline.enabled, true);;
         }
     }
 }

@@ -78,7 +78,7 @@ class Main {
             stageToLoad: 'outside',
             stageEntryPoint: 'main',
             storyboard: storyboard,
-            storyboardEntry: 'outside',
+            storyboardEntry: 'start',
             party: party,
             dialogBox: {
                 x: Main.width/2, y: Main.height - 32,
@@ -92,11 +92,11 @@ class Main {
             skipCutsceneScriptKey: 'skipCutsceneScript',
             interactionManager: {
                 highlightFunction: sprite => {
-                    sprite.effects.outline.enabled = true;
-                    sprite.effects.outline.color = 0xFFFF00;
+                    //sprite.effects.outline.enabled = true;
+                    //sprite.effects.outline.color = 0xFFFF00;
                 },
                 resetFunction: sprite => {
-                    sprite.effects.outline.enabled = false;
+                    //sprite.effects.outline.enabled = false;
                 },
             }
         });
@@ -121,6 +121,10 @@ class Main {
 
             this.theater.update();
 
+            if (DEBUG_SKIP_ACTIVE) {
+                this.updateTheaterSkip();
+            }
+
             this.screen.clear();
             this.theater.render();
 
@@ -131,6 +135,12 @@ class Main {
             global.popWorld();
             global.popScreen();
         });
+    }
+
+    private static updateTheaterSkip() {
+        for (let i = 0; i < 9; i++) {
+            this.theater.update();
+        }
     }
 }
 

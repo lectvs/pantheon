@@ -56,7 +56,7 @@ class CutsceneManager {
             return;
         }
 
-        let script = new Script(Cutscene.toScript(cutscene.script, this.skipCutsceneScriptKey));
+        let script = new Script(Cutscene.toScript(cutscene.script));
         this.current = { name, cutscene, script };
     }
 

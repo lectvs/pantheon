@@ -338,7 +338,7 @@ var AssetCache = /** @class */ (function () {
 var DEBUG_ALL_PHYSICS_BOUNDS = false;
 var DEBUG_MOVE_CAMERA_WITH_ARROWS = true;
 var DEBUG_SHOW_MOUSE_POSITION = true;
-var DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = false;
+var DEBUG_SKIP_ACTIVE = false;
 var debug = console.info;
 // function debug(message?: any, ...optionalParams: any[]) {
 //     if (DEBUG) {
@@ -1272,7 +1272,7 @@ var S;
                     case 1:
                         if (!!scriptFunctions_1_1.done) return [3 /*break*/, 4];
                         scriptFunction = scriptFunctions_1_1.value;
-                        return [5 /*yield**/, __values(runScript(scriptFunction))];
+                        return [5 /*yield**/, __values(scriptFunction())];
                     case 2:
                         _b.sent();
                         _b.label = 3;
@@ -1320,32 +1320,6 @@ var S;
         };
     }
     S.doOverTime = doOverTime;
-    function finishImmediately(scriptFunction, maxIters) {
-        if (maxIters === void 0) { maxIters = Script.FINISH_IMMEDIATELY_MAX_ITERS; }
-        var script = new Script(scriptFunction);
-        script.finishImmediately(maxIters);
-    }
-    S.finishImmediately = finishImmediately;
-    function runScript(scriptFunction) {
-        return function () {
-            var script;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        script = global.world.runScript(scriptFunction);
-                        _a.label = 1;
-                    case 1:
-                        if (!!script.done) return [3 /*break*/, 3];
-                        return [4 /*yield*/];
-                    case 2:
-                        _a.sent();
-                        return [3 /*break*/, 1];
-                    case 3: return [2 /*return*/];
-                }
-            });
-        }();
-    }
-    S.runScript = runScript;
     function simul() {
         var scriptFunctions = [];
         for (var _i = 0; _i < arguments.length; _i++) {
@@ -1360,7 +1334,7 @@ var S;
                         _a.label = 1;
                     case 1:
                         if (!!_.isEmpty(scripts)) return [3 /*break*/, 3];
-                        scripts = scripts.filter(function (script) { return script.done; });
+                        scripts = scripts.filter(function (script) { return !script.done; });
                         return [4 /*yield*/];
                     case 2:
                         _a.sent();
@@ -1513,7 +1487,7 @@ var Camera = /** @class */ (function () {
 }());
 var Cutscene;
 (function (Cutscene) {
-    function toScript(generator, skipCutsceneScriptKey) {
+    function toScript(generator) {
         return function () {
             var iterator, result, script;
             return __generator(this, function (_a) {
@@ -1526,19 +1500,14 @@ var Cutscene;
                         result = iterator.next();
                         if (!result.value) return [3 /*break*/, 5];
                         if (_.isArray(result.value)) {
-                            result.value = S.simul.apply(S, __spread(result.value.map(function (scr) { return Cutscene.toScript(scr, skipCutsceneScriptKey); })));
+                            result.value = S.simul.apply(S, __spread(result.value.map(function (scr) { return Cutscene.toScript(scr); })));
                         }
                         script = new Script(result.value);
                         _a.label = 2;
                     case 2:
                         if (!!script.done) return [3 /*break*/, 4];
                         global.pushWorld(global.theater.currentWorld);
-                        if (DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS || Input.justDown(skipCutsceneScriptKey)) {
-                            script.finishImmediately();
-                        }
-                        else {
-                            script.update();
-                        }
+                        script.update();
                         global.popWorld();
                         if (script.done)
                             return [3 /*break*/, 4];
@@ -1612,7 +1581,7 @@ var CutsceneManager = /** @class */ (function () {
             debug("Cannot play cutscene:", cutscene, "because a cutscene is already playing:", this.current.cutscene);
             return;
         }
-        var script = new Script(Cutscene.toScript(cutscene.script, this.skipCutsceneScriptKey));
+        var script = new Script(Cutscene.toScript(cutscene.script));
         this.current = { name: name, cutscene: cutscene, script: script };
     };
     CutsceneManager.prototype.reset = function () {
@@ -1640,6 +1609,8 @@ var S;
                         _a.label = 1;
                     case 1:
                         if (!!global.theater.dialogBox.done) return [3 /*break*/, 3];
+                        if (DEBUG_SKIP_ACTIVE)
+                            global.theater.dialogBox.done = true;
                         return [4 /*yield*/];
                     case 2:
                         _a.sent();
@@ -1909,6 +1880,7 @@ var Sprite = /** @class */ (function (_super) {
         _this.tint = O.getOrDefault(config.tint, 0xFFFFFF);
         _this.alpha = O.getOrDefault(config.alpha, 1);
         _this.effects = new Effects();
+        _this.effects.updateFromConfig(config.effects);
         return _this;
     }
     Sprite.prototype.update = function () {
@@ -2316,13 +2288,18 @@ var Effects = /** @class */ (function () {
         return this.effects;
     };
     Effects.prototype.updateFromConfig = function (config) {
+        if (!config)
+            return;
         if (config.silhouette) {
-            this.silhouette.color = config.silhouette.color || 0x000000;
-            this.silhouette.alpha = config.silhouette.alpha || 1;
+            this.silhouette.color = O.getOrDefault(config.silhouette.color, 0x000000);
+            this.silhouette.alpha = O.getOrDefault(config.silhouette.alpha, 1);
+            this.silhouette.enabled = O.getOrDefault(config.silhouette.enabled, true);
         }
         if (config.outline) {
-            this.outline.color = config.outline.color || 0x000000;
-            this.outline.alpha = config.outline.alpha || 1;
+            this.outline.color = O.getOrDefault(config.outline.color, 0x000000);
+            this.outline.alpha = O.getOrDefault(config.outline.alpha, 1);
+            this.outline.enabled = O.getOrDefault(config.outline.enabled, true);
+            ;
         }
     };
     Effects.SILHOUETTE_I = 0;
@@ -3058,7 +3035,7 @@ var Main = /** @class */ (function () {
             stageToLoad: 'outside',
             stageEntryPoint: 'main',
             storyboard: storyboard,
-            storyboardEntry: 'outside',
+            storyboardEntry: 'start',
             party: party,
             dialogBox: {
                 x: Main.width / 2, y: Main.height - 32,
@@ -3072,11 +3049,11 @@ var Main = /** @class */ (function () {
             skipCutsceneScriptKey: 'skipCutsceneScript',
             interactionManager: {
                 highlightFunction: function (sprite) {
-                    sprite.effects.outline.enabled = true;
-                    sprite.effects.outline.color = 0xFFFF00;
+                    //sprite.effects.outline.enabled = true;
+                    //sprite.effects.outline.color = 0xFFFF00;
                 },
                 resetFunction: function (sprite) {
-                    sprite.effects.outline.enabled = false;
+                    //sprite.effects.outline.enabled = false;
                 },
             }
         });
@@ -3095,6 +3072,9 @@ var Main = /** @class */ (function () {
             global.pushDelta(_this.delta);
             _this.fpsMetricManager.update();
             _this.theater.update();
+            if (DEBUG_SKIP_ACTIVE) {
+                _this.updateTheaterSkip();
+            }
             _this.screen.clear();
             _this.theater.render();
             _this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true); // Clear the renderer
@@ -3103,6 +3083,11 @@ var Main = /** @class */ (function () {
             global.popWorld();
             global.popScreen();
         });
+    };
+    Main.updateTheaterSkip = function () {
+        for (var i = 0; i < 9; i++) {
+            this.theater.update();
+        }
     };
     return Main;
 }());
@@ -3253,12 +3238,24 @@ var party = {
             config: {
                 name: 'sai',
                 parent: HUMAN_CHARACTER('generic_sprites'),
+                effects: {
+                    outline: {
+                        color: 0xFF0000,
+                        alpha: 1
+                    }
+                }
             },
         },
         'dad': {
             config: {
                 name: 'dad',
                 parent: HUMAN_CHARACTER('generic_sprites'),
+                effects: {
+                    outline: {
+                        color: 0x0000FF,
+                        alpha: 1
+                    }
+                }
             },
         },
     }
@@ -4042,22 +4039,20 @@ var StageManager = /** @class */ (function () {
         var newSnapshot = this.currentWorld.takeSnapshot();
         this.currentWorld.active = false;
         this.currentWorld.visible = false;
+        // this is outside the script to avoid 1-frame flicker
+        var transitionObj = new Transition.Obj(oldSnapshot, newSnapshot, transition);
+        this.theater.addWorldObject(transitionObj, { layer: Theater.LAYER_TRANSITION });
         var stageManager = this;
         this.theater.runScript(function () {
-            var transitionObj;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        transitionObj = new Transition.Obj(oldSnapshot, newSnapshot, transition);
-                        stageManager.theater.addWorldObject(transitionObj, { layer: Theater.LAYER_TRANSITION });
-                        _a.label = 1;
-                    case 1:
-                        if (!!transitionObj.done) return [3 /*break*/, 3];
+                        if (!!transitionObj.done) return [3 /*break*/, 2];
                         return [4 /*yield*/];
-                    case 2:
+                    case 1:
                         _a.sent();
-                        return [3 /*break*/, 1];
-                    case 3:
+                        return [3 /*break*/, 0];
+                    case 2:
                         stageManager.theater.removeWorldObject(transitionObj);
                         stageManager.currentWorld.active = true;
                         stageManager.currentWorld.visible = true;
@@ -4458,6 +4453,13 @@ var stages = {
 var S;
 (function (S) {
     S.storyboard = {
+        'start': {
+            type: 'code',
+            func: function () {
+                global.theater.party.leader = 'sai';
+            },
+            after: 'outside'
+        },
         'outside': {
             type: 'cutscene',
             script: function () {
@@ -4465,93 +4467,95 @@ var S;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = true;
+                            DEBUG_SKIP_ACTIVE = true;
                             sai = global.getWorldObject('sai');
                             dad = global.getWorldObject('dad');
                             guard1 = global.getWorldObject('guard1');
                             guard2 = global.getWorldObject('guard2');
-                            S.finishImmediately(S.fadeOut(1));
                             sai.follow(dad, 12);
-                            return [4 /*yield*/, S.fadeSlides(1)];
+                            return [4 /*yield*/, S.fadeOut(0)];
                         case 1:
                             _a.sent();
-                            return [4 /*yield*/, S.moveToY(dad, 120)];
+                            return [4 /*yield*/, S.fadeSlides(1)];
                         case 2:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog('guard1/default', "Well, well. What do we have here?")];
+                            return [4 /*yield*/, S.moveToY(dad, 120)];
                         case 3:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog('guard2/default', "We're not expecting the mail til this evening.")];
+                            return [4 /*yield*/, S.dialog('guard1/default', "Well, well. What do we have here?")];
                         case 4:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "Ha ha. I've got a prisoner.")];
+                            return [4 /*yield*/, S.dialog('guard2/default', "We're not expecting the mail til this evening.")];
                         case 5:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog('guard2/default', "A prisoner?")];
+                            return [4 /*yield*/, S.dialog('dad/default', "Ha ha. I've got a prisoner.")];
                         case 6:
                             _a.sent();
-                            return [4 /*yield*/, S.moveToY(guard1, sai.y)];
+                            return [4 /*yield*/, S.dialog('guard2/default', "A prisoner?")];
                         case 7:
                             _a.sent();
-                            return [4 /*yield*/, S.moveToX(guard1, guard1.x + 4)];
+                            return [4 /*yield*/, S.moveToY(guard1, sai.y)];
                         case 8:
                             _a.sent();
-                            return [4 /*yield*/, S.moveToY(guard2, sai.y)];
+                            return [4 /*yield*/, S.moveToX(guard1, guard1.x + 4)];
                         case 9:
                             _a.sent();
-                            return [4 /*yield*/, S.moveToX(guard2, guard2.x - 4)];
+                            return [4 /*yield*/, S.moveToY(guard2, sai.y)];
                         case 10:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog('sai/default', "...")];
+                            return [4 /*yield*/, S.moveToX(guard2, guard2.x - 4)];
                         case 11:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog('guard2/default', "He's a kid. You're bringing a kid in as a prisoner?")];
+                            return [4 /*yield*/, S.dialog('sai/default', "...")];
                         case 12:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog('guard1/default', "Jesus... what did you do to him?")];
+                            return [4 /*yield*/, S.dialog('guard2/default', "He's a kid. You're bringing a kid in as a prisoner?")];
                         case 13:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "I don't need you to lecture me. I need to take him to the closest cell as soon as possible.")];
+                            return [4 /*yield*/, S.dialog('guard1/default', "Jesus... what did you do to him?")];
                         case 14:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "He's a feisty one. Don't underestimate him.")];
+                            return [4 /*yield*/, S.dialog('dad/default', "I don't need you to lecture me. I need to take him to the closest cell as soon as possible.")];
                         case 15:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog('guard1/default', "Well, you didn't have to-")];
+                            return [4 /*yield*/, S.dialog('dad/default', "He's a feisty one. Don't underestimate him.")];
                         case 16:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "Hey, I'm not getting paid by the hour. Are you going to let me in or not?")];
+                            return [4 /*yield*/, S.dialog('guard1/default', "Well, you didn't have to-")];
                         case 17:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog('guard1/default', "...")];
+                            return [4 /*yield*/, S.dialog('dad/default', "Hey, I'm not getting paid by the hour. Are you going to let me in or not?")];
                         case 18:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog('guard2/default', "...")];
+                            return [4 /*yield*/, S.dialog('guard1/default', "...")];
                         case 19:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog('guard2/default', "Fine, fine. You don't have to get mad.")];
+                            return [4 /*yield*/, S.dialog('guard2/default', "...")];
                         case 20:
                             _a.sent();
-                            return [4 /*yield*/, S.moveTo(guard2, 144, 100)];
+                            return [4 /*yield*/, S.dialog('guard2/default', "Fine, fine. You don't have to get mad.")];
                         case 21:
+                            _a.sent();
+                            return [4 /*yield*/, S.moveTo(guard2, 144, 100)];
+                        case 22:
                             _a.sent();
                             guard2.setDirection(Direction2D.DOWN);
                             return [4 /*yield*/, S.moveTo(guard1, 96, 100)];
-                        case 22:
+                        case 23:
                             _a.sent();
                             guard1.setDirection(Direction2D.DOWN);
                             return [4 /*yield*/, S.dialog('dad/default', "Thank you. I won't be long.")];
-                        case 23:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "Come on, boy. I don't have all day.")];
                         case 24:
                             _a.sent();
-                            DEBUG_SKIP_ALL_CUTSCENE_SCRIPTS = false;
-                            return [4 /*yield*/, S.dialog('sai/default', "...")];
+                            return [4 /*yield*/, S.dialog('dad/default', "Come on, boy. I don't have all day.")];
                         case 25:
                             _a.sent();
-                            return [4 /*yield*/, S.moveToY(dad, 96)];
+                            DEBUG_SKIP_ACTIVE = false;
+                            return [4 /*yield*/, S.dialog('sai/default', "...")];
                         case 26:
+                            _a.sent();
+                            return [4 /*yield*/, S.moveToY(dad, 96)];
+                        case 27:
                             _a.sent();
                             return [2 /*return*/];
                     }
@@ -5026,6 +5030,7 @@ var Theater = /** @class */ (function (_super) {
             ],
         }) || this;
         _this.debugMousePosition = new SpriteText({ font: Assets.fonts.DELUXE16, x: 0, y: 0 });
+        global.theater = _this;
         _this.stages = config.stages;
         _this.storyboard = config.storyboard;
         _this.party = new Party(config.party);

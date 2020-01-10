@@ -38,11 +38,12 @@ class StageManager {
         this.currentWorld.active = false;
         this.currentWorld.visible = false;
 
+        // this is outside the script to avoid 1-frame flicker
+        let transitionObj = new Transition.Obj(oldSnapshot, newSnapshot, transition);
+        this.theater.addWorldObject(transitionObj, { layer: Theater.LAYER_TRANSITION });
+
         let stageManager = this;
         this.theater.runScript(function* () {
-            let transitionObj = new Transition.Obj(oldSnapshot, newSnapshot, transition);
-            stageManager.theater.addWorldObject(transitionObj, { layer: Theater.LAYER_TRANSITION });
-
             while (!transitionObj.done) {
                 yield;
             }

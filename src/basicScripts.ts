@@ -8,7 +8,7 @@ namespace S {
     export function chain(...scriptFunctions: Script.Function[]): Script.Function {
         return function*() {
             for (let scriptFunction of scriptFunctions) {
-                yield* runScript(scriptFunction);
+                yield* scriptFunction();
             }
         }
     }
@@ -25,25 +25,11 @@ namespace S {
         }
     }
 
-    export function finishImmediately(scriptFunction: Script.Function, maxIters: number = Script.FINISH_IMMEDIATELY_MAX_ITERS): void {
-        let script = new Script(scriptFunction);
-        script.finishImmediately(maxIters);
-    }
-
-    export function runScript(scriptFunction: Script.Function): IterableIterator<any> {
-        return function*() {
-            let script = global.world.runScript(scriptFunction);
-            while (!script.done) {
-                yield;
-            }
-        }();
-    }
-
     export function simul(...scriptFunctions: Script.Function[]): Script.Function {
         return function*() {
             let scripts: Script[] = scriptFunctions.map(sfn => global.world.runScript(sfn));
             while (!_.isEmpty(scripts)) {
-                scripts = scripts.filter(script => script.done);
+                scripts = scripts.filter(script => !script.done);
                 yield;
             }
         }
