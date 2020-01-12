@@ -19,7 +19,7 @@ class HumanCharacter extends Sprite {
         this.direction = Direction2D.LEFT;
     }
 
-    update(world: World) {
+    update(world: World, delta: number) {
         this.updateFollow(world);
 
         let haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
@@ -51,7 +51,7 @@ class HumanCharacter extends Sprite {
             this.vy = 0;
         }
 
-        super.update(world);
+        super.update(world, delta);
 
         this.updateInteractions(world);
 

@@ -52,10 +52,10 @@ class PhysicsWorldObject extends WorldObject {
         this.preMovementY = this.y;
     }
 
-    update(world: World) {
-        super.update(world);
+    update(world: World, delta: number) {
+        super.update(world, delta);
         if (this.simulating) {
-            this.simulate(global.delta, world);
+            this.simulate(delta);
         }
     }
 
@@ -102,7 +102,7 @@ class PhysicsWorldObject extends WorldObject {
         this.y += this.vy * delta;
     }
 
-    simulate(delta: number, world?: World) {
+    simulate(delta: number) {
         this.applyGravity(delta);
         this.move(delta);
     }

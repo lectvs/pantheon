@@ -16,22 +16,22 @@ class BackWall extends PhysicsWorldObject {
         }
     }
 
-    update(world: World) {
-        super.update(world);
+    update(world: World, delta: number) {
+        super.update(world, delta);
 
         for (let tile of this.tiles) {
             tile.visible = this.visible;
         }
 
         if (Input.justDown('1')) {
-            for (let i = 0; i < 10; i++) this.crumble(world);
+            for (let i = 0; i < 10; i++) this.crumble(world, delta);
         }
     }
 
-    crumble(world: World) {
+    crumble(world: World, delta: number) {
         for (let i = 0; i < 4; i++) {
             if (!_.isEmpty(this.tiles)) {
-                this.destroyTile(world, Random.index(this.tiles));
+                this.destroyTile(world, delta, Random.index(this.tiles));
             }
         }
 
@@ -58,7 +58,7 @@ class BackWall extends PhysicsWorldObject {
         }
     }
 
-    destroyTile(world: World, index: number) {
+    destroyTile(world: World, delta: number, index: number) {
         let [tile] = this.tiles.splice(index, 1);
 
         let gravity = 200;
@@ -69,8 +69,8 @@ class BackWall extends PhysicsWorldObject {
         tile.vy = velocity.y;
 
         world.runScript(S.doOverTime(1, t => {
-            tile.vy += gravity * global.delta;
-            tile.angle += angularSpeed * global.delta;
+            tile.vy += gravity * delta;
+            tile.angle += angularSpeed * delta;
             if (t === 1) {
                 world.removeWorldObject(tile);
             }

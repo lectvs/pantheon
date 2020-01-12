@@ -25,7 +25,7 @@ namespace S {
                 for (let i = 0; i < global.theater.slides.length; i++) {
                     global.theater.slides[i].alpha = slideAlphas[i] * (1 - timer.progress);
                 }
-                timer.update();
+                timer.update(global.script.delta);
                 yield;
             }
 
@@ -49,7 +49,7 @@ namespace S {
             let timer = new Timer(time);
             while (!timer.done) {
                 sprite.offset.y = M.jumpParabola(start, -peakDelta, groundDelta, timer.progress);
-                timer.update();
+                timer.update(global.script.delta);
                 yield;
             }
             sprite.offset.y = start + groundDelta;
@@ -72,13 +72,13 @@ namespace S {
             if (dx > 0) {
                 while (worldObject.x < x && !timer.done) {
                     worldObject.controller.right = true;
-                    timer.update();
+                    timer.update(global.script.delta);
                     yield;
                 }
             } else {
                 while (worldObject.x > x && !timer.done) {
                     worldObject.controller.left = true;
-                    timer.update();
+                    timer.update(global.script.delta);
                     yield;
                 }
             }
@@ -96,13 +96,13 @@ namespace S {
             if (dy > 0) {
                 while (worldObject.y < y && !timer.done) {
                     worldObject.controller.down = true;
-                    timer.update();
+                    timer.update(global.script.delta);
                     yield;
                 }
             } else {
                 while (worldObject.y > y && !timer.done) {
                     worldObject.controller.up = true;
-                    timer.update();
+                    timer.update(global.script.delta);
                     yield;
                 }
             }
@@ -136,7 +136,7 @@ namespace S {
             global.script.world.camera.shakeIntensity += intensity;
             let timer = new Timer(time);
             while (!timer.done) {
-                timer.update();
+                timer.update(global.script.delta);
                 yield;
             }
             global.script.world.camera.shakeIntensity -= intensity;

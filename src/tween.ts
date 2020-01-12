@@ -18,8 +18,8 @@ class Tween {
         this.timer = new Timer(duration);
     }
 
-    update() {
-        this.timer.update();
+    update(delta: number) {
+        this.timer.update(delta);
     }
 }
 

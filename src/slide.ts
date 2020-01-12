@@ -27,11 +27,11 @@ class Slide extends Sprite {
         this.fullyLoaded = false;
     }
 
-    update(world: World) {
-        super.update(world);
+    update(world: World, delta: number) {
+        super.update(world, delta);
         if (this.fullyLoaded) return;
         
-        this.timer.update();
+        this.timer.update(delta);
         if (this.targetAlpha !== undefined) {
             this.alpha = this.targetAlpha * this.timer.progress;
         }

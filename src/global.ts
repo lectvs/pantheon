@@ -1,6 +1,5 @@
 class global {
     static clearStacks() {
-        this.deltaStack = [];
         this.scriptStack = [];
     }
 
@@ -9,11 +8,6 @@ class global {
     }
 
     // Update options
-    
-    static get delta() { return this.deltaStack[this.deltaStack.length-1]; };
-    private static deltaStack: number[] = [];
-    static pushDelta(delta: number) { this.deltaStack.push(delta); }
-    static popDelta() { return this.deltaStack.pop(); }
 
     static get script() { return this.scriptStack[this.scriptStack.length-1]; };
     private static scriptStack: Script[] = [];

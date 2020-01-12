@@ -18,7 +18,7 @@ namespace S {
             let t = new Timer(time);
             while (!t.done) {
                 func(t.progress);
-                t.update();
+                t.update(global.script.delta);
                 yield;
             }
             func(1);
@@ -39,7 +39,7 @@ namespace S {
         return function*() {
             let tween = new Tween(start, end, duration, easingFunction);
             while (!tween.done) {
-                tween.update();
+                tween.update(global.script.delta);
                 obj[prop] = tween.value;
                 yield;
             }

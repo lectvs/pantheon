@@ -60,7 +60,7 @@ class WorldObject {
         }
     }
 
-    update(world: World) {
+    update(world: World, delta: number) {
         
     }
 
@@ -68,9 +68,9 @@ class WorldObject {
         this.resetController();
     }
 
-    fullUpdate(world: World) {
+    fullUpdate(world: World, delta: number) {
         this.preUpdate(world);
-        this.update(world);
+        this.update(world, delta);
         this.postUpdate(world);
     }
 

@@ -19,9 +19,9 @@ class Timer {
         this.repeat = repeat;
     }
 
-    update() {
+    update(delta: number) {
         if (!this.done) {
-            this.time += global.delta;
+            this.time += delta;
 
             if (this.time >= this.duration) {
                 if (this.callback) this.callback();

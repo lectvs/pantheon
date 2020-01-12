@@ -77,9 +77,9 @@ var AnimationManager = /** @class */ (function () {
         this.currentFrame = null;
         this.currentFrameTime = 0;
     }
-    AnimationManager.prototype.update = function () {
+    AnimationManager.prototype.update = function (delta) {
         if (this.currentFrame) {
-            this.currentFrameTime += global.delta;
+            this.currentFrameTime += delta;
             if (this.currentFrameTime >= this.currentFrame.duration) {
                 this.currentFrameTime -= this.currentFrame.duration;
                 this.setCurrentFrame(this.currentFrame.nextFrameRef, false, true);
@@ -931,14 +931,14 @@ var WorldObject = /** @class */ (function () {
             this.updateControllerFromSchema();
         }
     };
-    WorldObject.prototype.update = function (world) {
+    WorldObject.prototype.update = function (world, delta) {
     };
     WorldObject.prototype.postUpdate = function (world) {
         this.resetController();
     };
-    WorldObject.prototype.fullUpdate = function (world) {
+    WorldObject.prototype.fullUpdate = function (world, delta) {
         this.preUpdate(world);
-        this.update(world);
+        this.update(world, delta);
         this.postUpdate(world);
     };
     WorldObject.prototype.preRender = function (world) {
@@ -1000,10 +1000,10 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         _this.preMovementY = _this.y;
         return _this;
     }
-    PhysicsWorldObject.prototype.update = function (world) {
-        _super.prototype.update.call(this, world);
+    PhysicsWorldObject.prototype.update = function (world, delta) {
+        _super.prototype.update.call(this, world, delta);
         if (this.simulating) {
-            this.simulate(global.delta, world);
+            this.simulate(delta);
         }
     };
     PhysicsWorldObject.prototype.render = function (screen) {
@@ -1044,7 +1044,7 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         this.x += this.vx * delta;
         this.y += this.vy * delta;
     };
-    PhysicsWorldObject.prototype.simulate = function (delta, world) {
+    PhysicsWorldObject.prototype.simulate = function (delta) {
         this.applyGravity(delta);
         this.move(delta);
     };
@@ -1076,9 +1076,9 @@ var BackWall = /** @class */ (function (_super) {
             finally { if (e_2) throw e_2.error; }
         }
     };
-    BackWall.prototype.update = function (world) {
+    BackWall.prototype.update = function (world, delta) {
         var e_3, _a;
-        _super.prototype.update.call(this, world);
+        _super.prototype.update.call(this, world, delta);
         try {
             for (var _b = __values(this.tiles), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var tile = _c.value;
@@ -1094,13 +1094,13 @@ var BackWall = /** @class */ (function (_super) {
         }
         if (Input.justDown('1')) {
             for (var i = 0; i < 10; i++)
-                this.crumble(world);
+                this.crumble(world, delta);
         }
     };
-    BackWall.prototype.crumble = function (world) {
+    BackWall.prototype.crumble = function (world, delta) {
         for (var i = 0; i < 4; i++) {
             if (!_.isEmpty(this.tiles)) {
-                this.destroyTile(world, Random.index(this.tiles));
+                this.destroyTile(world, delta, Random.index(this.tiles));
             }
         }
         if (_.isEmpty(this.tiles)) {
@@ -1124,7 +1124,7 @@ var BackWall = /** @class */ (function (_super) {
             }
         }
     };
-    BackWall.prototype.destroyTile = function (world, index) {
+    BackWall.prototype.destroyTile = function (world, delta, index) {
         var _a = __read(this.tiles.splice(index, 1), 1), tile = _a[0];
         var gravity = 200;
         var angularSpeed = Math.sqrt(Random.value) * 500 * Random.sign();
@@ -1132,8 +1132,8 @@ var BackWall = /** @class */ (function (_super) {
         tile.vx = velocity.x;
         tile.vy = velocity.y;
         world.runScript(S.doOverTime(1, function (t) {
-            tile.vy += gravity * global.delta;
-            tile.angle += angularSpeed * global.delta;
+            tile.vy += gravity * delta;
+            tile.angle += angularSpeed * delta;
             if (t === 1) {
                 world.removeWorldObject(tile);
             }
@@ -1304,7 +1304,7 @@ var S;
                     case 1:
                         if (!!t.done) return [3 /*break*/, 3];
                         func(t.progress);
-                        t.update();
+                        t.update(global.script.delta);
                         return [4 /*yield*/];
                     case 2:
                         _a.sent();
@@ -1353,7 +1353,7 @@ var S;
                         _a.label = 1;
                     case 1:
                         if (!!tween.done) return [3 /*break*/, 3];
-                        tween.update();
+                        tween.update(global.script.delta);
                         obj[prop] = tween.value;
                         return [4 /*yield*/];
                     case 2:
@@ -1503,7 +1503,7 @@ var Cutscene;
                         _a.label = 2;
                     case 2:
                         if (!!script.done) return [3 /*break*/, 4];
-                        script.update(global.script.theater);
+                        script.update(global.script.theater, global.script.delta);
                         if (script.done)
                             return [3 /*break*/, 4];
                         return [4 /*yield*/];
@@ -1540,9 +1540,9 @@ var CutsceneManager = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    CutsceneManager.prototype.update = function () {
+    CutsceneManager.prototype.update = function (delta) {
         if (this.current) {
-            this.current.script.update(this.theater);
+            this.current.script.update(this.theater, delta);
             if (this.current.script.done) {
                 this.finishCurrentCutscene();
             }
@@ -1632,7 +1632,7 @@ var S;
                         for (i = 0; i < global.theater.slides.length; i++) {
                             global.theater.slides[i].alpha = slideAlphas[i] * (1 - timer.progress);
                         }
-                        timer.update();
+                        timer.update(global.script.delta);
                         return [4 /*yield*/];
                     case 2:
                         _a.sent();
@@ -1668,7 +1668,7 @@ var S;
                     case 1:
                         if (!!timer.done) return [3 /*break*/, 3];
                         sprite.offset.y = M.jumpParabola(start, -peakDelta, groundDelta, timer.progress);
-                        timer.update();
+                        timer.update(global.script.delta);
                         return [4 /*yield*/];
                     case 2:
                         _a.sent();
@@ -1702,7 +1702,7 @@ var S;
                     case 1:
                         if (!(worldObject.x < x && !timer.done)) return [3 /*break*/, 3];
                         worldObject.controller.right = true;
-                        timer.update();
+                        timer.update(global.script.delta);
                         return [4 /*yield*/];
                     case 2:
                         _a.sent();
@@ -1711,7 +1711,7 @@ var S;
                     case 4:
                         if (!(worldObject.x > x && !timer.done)) return [3 /*break*/, 6];
                         worldObject.controller.left = true;
-                        timer.update();
+                        timer.update(global.script.delta);
                         return [4 /*yield*/];
                     case 5:
                         _a.sent();
@@ -1740,7 +1740,7 @@ var S;
                     case 1:
                         if (!(worldObject.y < y && !timer.done)) return [3 /*break*/, 3];
                         worldObject.controller.down = true;
-                        timer.update();
+                        timer.update(global.script.delta);
                         return [4 /*yield*/];
                     case 2:
                         _a.sent();
@@ -1749,7 +1749,7 @@ var S;
                     case 4:
                         if (!(worldObject.y > y && !timer.done)) return [3 /*break*/, 6];
                         worldObject.controller.up = true;
-                        timer.update();
+                        timer.update(global.script.delta);
                         return [4 /*yield*/];
                     case 5:
                         _a.sent();
@@ -1816,7 +1816,7 @@ var S;
                         _a.label = 1;
                     case 1:
                         if (!!timer.done) return [3 /*break*/, 3];
-                        timer.update();
+                        timer.update(global.script.delta);
                         return [4 /*yield*/];
                     case 2:
                         _a.sent();
@@ -1898,9 +1898,9 @@ var Sprite = /** @class */ (function (_super) {
         _this.effects.updateFromConfig(config.effects);
         return _this;
     }
-    Sprite.prototype.update = function (world) {
-        _super.prototype.update.call(this, world);
-        this.animationManager.update();
+    Sprite.prototype.update = function (world, delta) {
+        _super.prototype.update.call(this, world, delta);
+        this.animationManager.update(delta);
     };
     Sprite.prototype.render = function (screen) {
         screen.render(this.texture, {
@@ -1959,9 +1959,9 @@ var DialogBox = /** @class */ (function (_super) {
         _this.characterTimer = new Timer(0.05, function () { return _this.advanceCharacter(); }, true);
         return _this;
     }
-    DialogBox.prototype.update = function (world) {
-        _super.prototype.update.call(this, world);
-        this.characterTimer.update();
+    DialogBox.prototype.update = function (world, delta) {
+        _super.prototype.update.call(this, world, delta);
+        this.characterTimer.update(delta);
         if (this.done) {
             this.visible = false;
         }
@@ -2441,9 +2441,9 @@ var FPSMetricManager = /** @class */ (function () {
         this.timePerReport = timePerReport;
         this.time = 0;
     }
-    FPSMetricManager.prototype.update = function () {
-        this.monitor.addPoint(global.delta);
-        this.time += global.delta;
+    FPSMetricManager.prototype.update = function (delta) {
+        this.monitor.addPoint(delta);
+        this.time += delta;
         if (this.time >= this.timePerReport) {
             this.report();
             this.monitor.clear();
@@ -2459,22 +2459,13 @@ var global = /** @class */ (function () {
     function global() {
     }
     global.clearStacks = function () {
-        this.deltaStack = [];
         this.scriptStack = [];
     };
     global.getWorldObject = function (name) {
         return global.theater.currentWorld.getWorldObjectByName(name);
     };
-    Object.defineProperty(global, "delta", {
-        // Update options
-        get: function () { return this.deltaStack[this.deltaStack.length - 1]; },
-        enumerable: true,
-        configurable: true
-    });
-    ;
-    global.pushDelta = function (delta) { this.deltaStack.push(delta); };
-    global.popDelta = function () { return this.deltaStack.pop(); };
     Object.defineProperty(global, "script", {
+        // Update options
         get: function () { return this.scriptStack[this.scriptStack.length - 1]; },
         enumerable: true,
         configurable: true
@@ -2482,7 +2473,6 @@ var global = /** @class */ (function () {
     ;
     global.pushScript = function (script) { this.scriptStack.push(script); };
     global.popScript = function () { return this.scriptStack.pop(); };
-    global.deltaStack = [];
     global.scriptStack = [];
     return global;
 }());
@@ -2540,7 +2530,7 @@ var HumanCharacter = /** @class */ (function (_super) {
         _this.direction = Direction2D.LEFT;
         return _this;
     }
-    HumanCharacter.prototype.update = function (world) {
+    HumanCharacter.prototype.update = function (world, delta) {
         this.updateFollow(world);
         var haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
         var vaxis = (this.controller.down ? 1 : 0) - (this.controller.up ? 1 : 0);
@@ -2576,7 +2566,7 @@ var HumanCharacter = /** @class */ (function (_super) {
         else {
             this.vy = 0;
         }
-        _super.prototype.update.call(this, world);
+        _super.prototype.update.call(this, world, delta);
         this.updateInteractions(world);
         // Handle animation.
         var anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'run';
@@ -3050,9 +3040,8 @@ var Main = /** @class */ (function () {
             Input.update();
             global.theater = _this.theater;
             global.clearStacks();
-            global.pushDelta(_this.delta);
-            _this.fpsMetricManager.update();
-            _this.theater.update(null);
+            _this.fpsMetricManager.update(_this.delta);
+            _this.theater.update(null, _this.delta);
             if (DEBUG_SKIP_ACTIVE) {
                 _this.updateTheaterSkip();
             }
@@ -3060,12 +3049,11 @@ var Main = /** @class */ (function () {
             _this.theater.render(_this.screen);
             _this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true); // Clear the renderer
             _this.renderer.render(_this.screen.renderTextureSprite);
-            global.popDelta();
         });
     };
     Main.updateTheaterSkip = function () {
         for (var i = 0; i < 9; i++) {
-            this.theater.update(null);
+            this.theater.update(null, this.delta);
         }
     };
     return Main;
@@ -3519,12 +3507,13 @@ var Script = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Script.prototype.update = function (world) {
+    Script.prototype.update = function (world, delta) {
         if (!this.running)
             return;
         global.pushScript(this);
         this.world = world;
         this.theater = global.theater;
+        this.delta = delta;
         var result = this.iterator.next();
         if (result.done) {
             this.done = true;
@@ -3534,7 +3523,7 @@ var Script = /** @class */ (function () {
     Script.prototype.finishImmediately = function (world, maxIters) {
         if (maxIters === void 0) { maxIters = Script.FINISH_IMMEDIATELY_MAX_ITERS; }
         for (var i = 0; i < maxIters && !this.done; i++) {
-            this.update(world);
+            this.update(world, 0.01);
         }
         this.done = true;
     };
@@ -3545,9 +3534,9 @@ var ScriptManager = /** @class */ (function () {
     function ScriptManager() {
         this.activeScripts = [];
     }
-    ScriptManager.prototype.update = function (world) {
+    ScriptManager.prototype.update = function (world, delta) {
         for (var i = this.activeScripts.length - 1; i >= 0; i--) {
-            this.activeScripts[i].update(world);
+            this.activeScripts[i].update(world, delta);
             if (this.activeScripts[i].done) {
                 this.activeScripts.splice(i, 1);
             }
@@ -3584,11 +3573,11 @@ var Slide = /** @class */ (function (_super) {
         _this.fullyLoaded = false;
         return _this;
     }
-    Slide.prototype.update = function (world) {
-        _super.prototype.update.call(this, world);
+    Slide.prototype.update = function (world, delta) {
+        _super.prototype.update.call(this, world, delta);
         if (this.fullyLoaded)
             return;
-        this.timer.update();
+        this.timer.update(delta);
         if (this.targetAlpha !== undefined) {
             this.alpha = this.targetAlpha * this.timer.progress;
         }
@@ -4012,7 +4001,7 @@ var StageManager = /** @class */ (function () {
         var oldWorld = this.currentWorld;
         var oldSnapshot = oldWorld.takeSnapshot();
         this.setStage(name, entryPoint);
-        this.currentWorld.update(this.theater);
+        this.currentWorld.update(this.theater, 0.01);
         var newSnapshot = this.currentWorld.takeSnapshot();
         this.currentWorld.active = false;
         this.currentWorld.visible = false;
@@ -4598,10 +4587,10 @@ var World = /** @class */ (function (_super) {
         _this.debugCameraY = 0;
         return _this;
     }
-    World.prototype.update = function (world) {
+    World.prototype.update = function (world, delta) {
         var e_23, _a, e_24, _b, e_25, _c;
-        _super.prototype.update.call(this, world);
-        this.scriptManager.update(this);
+        _super.prototype.update.call(this, world, delta);
+        this.scriptManager.update(this, delta);
         try {
             for (var _d = __values(this.worldObjects), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var worldObject = _e.value;
@@ -4620,7 +4609,7 @@ var World = /** @class */ (function (_super) {
             for (var _f = __values(this.worldObjects), _g = _f.next(); !_g.done; _g = _f.next()) {
                 var worldObject = _g.value;
                 if (worldObject.active)
-                    worldObject.update(this);
+                    worldObject.update(this, delta);
             }
         }
         catch (e_24_1) { e_24 = { error: e_24_1 }; }
@@ -5043,9 +5032,9 @@ var Theater = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Theater.prototype.update = function (world) {
-        this.cutsceneManager.update();
-        _super.prototype.update.call(this, world);
+    Theater.prototype.update = function (world, delta) {
+        this.cutsceneManager.update(delta);
+        _super.prototype.update.call(this, world, delta);
         this.interactionManager.update(this.currentWorld);
         this.stageManager.loadStageIfQueued();
         if (DEBUG_SHOW_MOUSE_POSITION) {
@@ -5194,9 +5183,9 @@ var Timer = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Timer.prototype.update = function () {
+    Timer.prototype.update = function (delta) {
         if (!this.done) {
-            this.time += global.delta;
+            this.time += delta;
             if (this.time >= this.duration) {
                 if (this.callback)
                     this.callback();
@@ -5235,8 +5224,8 @@ var Tween = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Tween.prototype.update = function () {
-        this.timer.update();
+    Tween.prototype.update = function (delta) {
+        this.timer.update(delta);
     };
     return Tween;
 }());

@@ -86,10 +86,10 @@ class World extends WorldObject {
         this.debugCameraY = 0;
     }
 
-    update(world: World) {
-        super.update(world);
+    update(world: World, delta: number) {
+        super.update(world, delta);
 
-        this.scriptManager.update(this);
+        this.scriptManager.update(this, delta);
         
 
         for (let worldObject of this.worldObjects) {
@@ -97,7 +97,7 @@ class World extends WorldObject {
         }
 
         for (let worldObject of this.worldObjects) {
-            if (worldObject.active) worldObject.update(this);
+            if (worldObject.active) worldObject.update(this, delta);
         }
 
         this.handleCollisions();

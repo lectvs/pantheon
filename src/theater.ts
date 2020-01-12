@@ -71,10 +71,10 @@ class Theater extends World {
         }
     }
 
-    update(world: World) {
-        this.cutsceneManager.update();
+    update(world: World, delta: number) {
+        this.cutsceneManager.update(delta);
 
-        super.update(world);
+        super.update(world, delta);
 
         this.interactionManager.update(this.currentWorld);
 

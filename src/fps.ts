@@ -10,9 +10,9 @@ class FPSMetricManager {
         this.time = 0;
     }
 
-    update() {
-        this.monitor.addPoint(global.delta);
-        this.time += global.delta;
+    update(delta: number) {
+        this.monitor.addPoint(delta);
+        this.time += delta;
 
         if (this.time >= this.timePerReport) {
             this.report();

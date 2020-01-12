@@ -14,9 +14,9 @@ class CutsceneManager {
         this.skipCutsceneScriptKey = skipCutsceneScriptKey;
     }
 
-    update() {
+    update(delta: number) {
         if (this.current) {
-            this.current.script.update(this.theater);
+            this.current.script.update(this.theater, delta);
             if (this.current.script.done) {
                 this.finishCurrentCutscene();
             }

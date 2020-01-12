@@ -113,11 +113,10 @@ class Main {
 
             global.theater = this.theater;
             global.clearStacks();
-            global.pushDelta(this.delta);
 
-            this.fpsMetricManager.update();
+            this.fpsMetricManager.update(this.delta);
 
-            this.theater.update(null);
+            this.theater.update(null, this.delta);
 
             if (DEBUG_SKIP_ACTIVE) {
                 this.updateTheaterSkip();
@@ -128,14 +127,12 @@ class Main {
 
             this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
             this.renderer.render(this.screen.renderTextureSprite);
-
-            global.popDelta();
         });
     }
 
     private static updateTheaterSkip() {
         for (let i = 0; i < 9; i++) {
-            this.theater.update(null);
+            this.theater.update(null, this.delta);
         }
     }
 }
