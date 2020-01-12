@@ -54,8 +54,8 @@ class DialogBox extends Sprite {
         this.characterTimer = new Timer(0.05, () => this.advanceCharacter(), true);
     }
 
-    update() {
-        super.update();
+    update(world: World) {
+        super.update(world);
         this.characterTimer.update();
 
         if (this.done) {
@@ -67,16 +67,16 @@ class DialogBox extends Sprite {
         }
     }
 
-    render() {
-        super.render();
+    render(screen: Texture) {
+        super.render(screen);
 
         if (this.portraitSprite.visible) {
             this.setPortraitSpriteProperties();
-            this.portraitSprite.render();
+            this.portraitSprite.render(screen);
         }
 
         this.setSpriteTextProperties();
-        this.spriteText.render();
+        this.spriteText.render(screen);
     }
 
     advanceDialog() {

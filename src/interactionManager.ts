@@ -18,8 +18,8 @@ class InteractionManager {
         this.highlightedObject = null;
     }
 
-    update() {
-        for (let obj of global.world.worldObjects) {
+    update(world: World) {
+        for (let obj of world.worldObjects) {
             if (obj instanceof Sprite) {
                 if (obj === this.highlightedObject) {
                     this.highlightFunction(obj);
@@ -30,13 +30,13 @@ class InteractionManager {
         }
     }
 
-    getInteractableObjects(): Set<string> {
+    getInteractableObjects(world: World): Set<string> {
         let result = new Set<string>();
 
         let cutscenes = this.getInteractableCutscenes();
         for (let cutscene of cutscenes) {
             for (let obj of (<Cutscene>global.theater.storyboard[cutscene]).playOnInteractWith) {
-                if (global.worldObjectExists(obj)) {
+                if (world.containsWorldObject(obj)) {
                     result.add(obj);
                 }
             }
@@ -45,22 +45,22 @@ class InteractionManager {
         return result;
     }
 
-    highlight(obj: string | Sprite) {
+    highlight(world: World, obj: string | Sprite) {
         if (!obj) {
             this.highlightedObject = null;
             return;
         }
         if (_.isString(obj)) {
-            let worldObject = global.world.getWorldObjectByName(obj);
+            let worldObject = world.getWorldObjectByName(obj);
             if (!(worldObject instanceof Sprite)) return;
             obj = worldObject;
         }
         this.highlightedObject = obj;
     }
 
-    interact(obj: string | Sprite) {
+    interact(world: World, obj: string | Sprite) {
         if (!_.isString(obj)) {
-            let objName = global.world.getName(obj);
+            let objName = world.getName(obj);
             if (!objName) return;
             obj = objName;
         }

@@ -14,9 +14,7 @@ namespace Cutscene {
                     }
                     let script = new Script(result.value);
                     while (!script.done) {
-                        global.pushWorld(global.theater.currentWorld);
-                        script.update();
-                        global.popWorld();
+                        script.update(global.script.theater);
                         if (script.done) break;
                         yield;
                     }

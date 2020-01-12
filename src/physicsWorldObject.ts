@@ -52,21 +52,21 @@ class PhysicsWorldObject extends WorldObject {
         this.preMovementY = this.y;
     }
 
-    update() {
-        super.update();
+    update(world: World) {
+        super.update(world);
         if (this.simulating) {
-            this.simulate(global.delta, global.world);
+            this.simulate(global.delta, world);
         }
     }
 
-    render() {
+    render(screen: Texture) {
         if (DEBUG_ALL_PHYSICS_BOUNDS || this.debugBounds) {
             let worldBounds = this.getWorldBounds();
             Draw.brush.color = 0x00FF00;
             Draw.brush.alpha = 1;
-            Draw.rectangleOutline(global.screen, worldBounds.x, worldBounds.y, worldBounds.width, worldBounds.height);
+            Draw.rectangleOutline(screen, worldBounds.x, worldBounds.y, worldBounds.width, worldBounds.height);
         }
-        super.render();
+        super.render(screen);
     }
 
     onCollide(other: PhysicsWorldObject) {

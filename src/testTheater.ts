@@ -55,21 +55,21 @@ class TestTheater extends Theater {
         this.doSlice = true;
     }
 
-    render() {
-        super.render();
+    render(screen: Texture) {
+        super.render(screen);
 
         if (Input.justDown('1')) {
             this.doSlice = !this.doSlice;
         }
 
-        global.screen.render(AssetCache.getTexture('bed'), {
+        screen.render(AssetCache.getTexture('bed'), {
             x: 100,
             y: 100,
             slice: this.doSlice ? { x: 0, y: 0, width: 20, height: 20 } : undefined,
             filters: [this.f]
         });
 
-         global.screen.render(this.t, {
+         screen.render(this.t, {
              x: Input.mouseX,
              y: Input.mouseY,
              slice: { x: 20, y: 20, width: 20, height: 20 },

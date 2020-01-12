@@ -3,6 +3,8 @@ namespace Script {
 }
 
 class Script {
+    world: World;
+    theater: Theater;
     iterator: IterableIterator<any>;
     data: any;
 
@@ -18,10 +20,12 @@ class Script {
         return !this.paused && !this.done;
     }
 
-    update() {
+    update(world: World) {
         if (!this.running) return;
 
         global.pushScript(this);
+        this.world = world;
+        this.theater = global.theater;
 
         let result = this.iterator.next();
         if (result.done) {
@@ -31,10 +35,9 @@ class Script {
         global.popScript();
     }
 
-    finishImmediately(maxIters: number = Script.FINISH_IMMEDIATELY_MAX_ITERS) {
-        let result = this.iterator.next();
-        for (let i = 0; i < maxIters && !result.done; i++) {
-            result = this.iterator.next();
+    finishImmediately(world: World, maxIters: number = Script.FINISH_IMMEDIATELY_MAX_ITERS) {
+        for (let i = 0; i < maxIters && !this.done; i++) {
+            this.update(world);
         }
         this.done = true;
     }

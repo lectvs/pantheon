@@ -924,42 +924,42 @@ var WorldObject = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    WorldObject.prototype.preUpdate = function () {
+    WorldObject.prototype.preUpdate = function (world) {
         this.lastx = this.x;
         this.lasty = this.y;
         if (this.isControlled) {
             this.updateControllerFromSchema();
         }
     };
-    WorldObject.prototype.update = function () {
+    WorldObject.prototype.update = function (world) {
     };
-    WorldObject.prototype.postUpdate = function () {
+    WorldObject.prototype.postUpdate = function (world) {
         this.resetController();
     };
-    WorldObject.prototype.fullUpdate = function () {
-        this.preUpdate();
-        this.update();
-        this.postUpdate();
+    WorldObject.prototype.fullUpdate = function (world) {
+        this.preUpdate(world);
+        this.update(world);
+        this.postUpdate(world);
     };
-    WorldObject.prototype.preRender = function () {
+    WorldObject.prototype.preRender = function (world) {
         this.preRenderStoredX = this.x;
         this.preRenderStoredY = this.y;
         if (!this.ignoreCamera) {
-            this.x -= global.world.camera.worldOffsetX;
-            this.y -= global.world.camera.worldOffsetY;
+            this.x -= world.camera.worldOffsetX;
+            this.y -= world.camera.worldOffsetY;
         }
         this.x = Math.round(this.x);
         this.y = Math.round(this.y);
     };
-    WorldObject.prototype.render = function () {
+    WorldObject.prototype.render = function (screen) {
     };
     WorldObject.prototype.postRender = function () {
         this.x = this.preRenderStoredX;
         this.y = this.preRenderStoredY;
     };
-    WorldObject.prototype.fullRender = function () {
-        this.preRender();
-        this.render();
+    WorldObject.prototype.fullRender = function (screen, world) {
+        this.preRender(world);
+        this.render(screen);
         this.postRender();
     };
     WorldObject.prototype.resetController = function () {
@@ -972,9 +972,9 @@ var WorldObject = /** @class */ (function () {
             this.controller[key] = this.controllerSchema[key]();
         }
     };
-    WorldObject.prototype.onAdd = function () {
+    WorldObject.prototype.onAdd = function (world) {
     };
-    WorldObject.prototype.onRemove = function () {
+    WorldObject.prototype.onRemove = function (world) {
     };
     return WorldObject;
 }());
@@ -1000,20 +1000,20 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         _this.preMovementY = _this.y;
         return _this;
     }
-    PhysicsWorldObject.prototype.update = function () {
-        _super.prototype.update.call(this);
+    PhysicsWorldObject.prototype.update = function (world) {
+        _super.prototype.update.call(this, world);
         if (this.simulating) {
-            this.simulate(global.delta, global.world);
+            this.simulate(global.delta, world);
         }
     };
-    PhysicsWorldObject.prototype.render = function () {
+    PhysicsWorldObject.prototype.render = function (screen) {
         if (DEBUG_ALL_PHYSICS_BOUNDS || this.debugBounds) {
             var worldBounds = this.getWorldBounds();
             Draw.brush.color = 0x00FF00;
             Draw.brush.alpha = 1;
-            Draw.rectangleOutline(global.screen, worldBounds.x, worldBounds.y, worldBounds.width, worldBounds.height);
+            Draw.rectangleOutline(screen, worldBounds.x, worldBounds.y, worldBounds.width, worldBounds.height);
         }
-        _super.prototype.render.call(this);
+        _super.prototype.render.call(this, screen);
     };
     PhysicsWorldObject.prototype.onCollide = function (other) {
     };
@@ -1060,12 +1060,12 @@ var BackWall = /** @class */ (function (_super) {
         _this.createTiles();
         return _this;
     }
-    BackWall.prototype.onAdd = function () {
+    BackWall.prototype.onAdd = function (world) {
         var e_2, _a;
         try {
             for (var _b = __values(this.tiles), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var tile = _c.value;
-                global.world.addWorldObject(tile, { layer: global.world.getLayer(this) });
+                world.addWorldObject(tile, { layer: world.getLayer(this) });
             }
         }
         catch (e_2_1) { e_2 = { error: e_2_1 }; }
@@ -1076,9 +1076,9 @@ var BackWall = /** @class */ (function (_super) {
             finally { if (e_2) throw e_2.error; }
         }
     };
-    BackWall.prototype.update = function () {
+    BackWall.prototype.update = function (world) {
         var e_3, _a;
-        _super.prototype.update.call(this);
+        _super.prototype.update.call(this, world);
         try {
             for (var _b = __values(this.tiles), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var tile = _c.value;
@@ -1094,17 +1094,17 @@ var BackWall = /** @class */ (function (_super) {
         }
         if (Input.justDown('1')) {
             for (var i = 0; i < 10; i++)
-                this.crumble();
+                this.crumble(world);
         }
     };
-    BackWall.prototype.crumble = function () {
+    BackWall.prototype.crumble = function (world) {
         for (var i = 0; i < 4; i++) {
             if (!_.isEmpty(this.tiles)) {
-                this.destroyTile(Random.index(this.tiles));
+                this.destroyTile(world, Random.index(this.tiles));
             }
         }
         if (_.isEmpty(this.tiles)) {
-            global.world.removeWorldObject(this);
+            world.removeWorldObject(this);
         }
     };
     BackWall.prototype.createTiles = function () {
@@ -1124,18 +1124,18 @@ var BackWall = /** @class */ (function (_super) {
             }
         }
     };
-    BackWall.prototype.destroyTile = function (index) {
+    BackWall.prototype.destroyTile = function (world, index) {
         var _a = __read(this.tiles.splice(index, 1), 1), tile = _a[0];
         var gravity = 200;
         var angularSpeed = Math.sqrt(Random.value) * 500 * Random.sign();
         var velocity = Random.onCircle(32);
         tile.vx = velocity.x;
         tile.vy = velocity.y;
-        global.world.runScript(S.doOverTime(1, function (t) {
+        world.runScript(S.doOverTime(1, function (t) {
             tile.vy += gravity * global.delta;
             tile.angle += angularSpeed * global.delta;
             if (t === 1) {
-                global.world.removeWorldObject(tile);
+                world.removeWorldObject(tile);
             }
         }));
     };
@@ -1170,13 +1170,10 @@ var Transition;
             }
             return _this;
         }
-        Obj.prototype.update = function () {
-            _super.prototype.update.call(this);
-        };
-        Obj.prototype.render = function () {
-            _super.prototype.render.call(this);
-            this.newSprite.render();
-            this.oldSprite.render();
+        Obj.prototype.render = function (screen) {
+            _super.prototype.render.call(this, screen);
+            this.newSprite.render(screen);
+            this.oldSprite.render(screen);
         };
         return Obj;
     }(WorldObject));
@@ -1330,7 +1327,7 @@ var S;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        scripts = scriptFunctions.map(function (sfn) { return global.world.runScript(sfn); });
+                        scripts = scriptFunctions.map(function (sfn) { return global.script.world.runScript(sfn); });
                         _a.label = 1;
                     case 1:
                         if (!!_.isEmpty(scripts)) return [3 /*break*/, 3];
@@ -1410,11 +1407,11 @@ var Camera = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Camera.prototype.update = function () {
+    Camera.prototype.update = function (world) {
         if (this.mode.type === 'follow') {
             var target = this.mode.target;
             if (_.isString(target)) {
-                target = global.world.getWorldObjectByName(target);
+                target = world.getWorldObjectByName(target);
             }
             this.moveTowardsPoint(target.x + this.mode.offset.x, target.y + this.mode.offset.y);
         }
@@ -1506,9 +1503,7 @@ var Cutscene;
                         _a.label = 2;
                     case 2:
                         if (!!script.done) return [3 /*break*/, 4];
-                        global.pushWorld(global.theater.currentWorld);
-                        script.update();
-                        global.popWorld();
+                        script.update(global.script.theater);
                         if (script.done)
                             return [3 /*break*/, 4];
                         return [4 /*yield*/];
@@ -1547,7 +1542,7 @@ var CutsceneManager = /** @class */ (function () {
     });
     CutsceneManager.prototype.update = function () {
         if (this.current) {
-            this.current.script.update();
+            this.current.script.update(this.theater);
             if (this.current.script.done) {
                 this.finishCurrentCutscene();
             }
@@ -1661,7 +1656,7 @@ var S;
     S.fadeOut = fadeOut;
     function jump(sprite, peakDelta, time, landOnGround) {
         if (landOnGround === void 0) { landOnGround = false; }
-        return function () {
+        return runInCurrentWorld(function () {
             var start, groundDelta, timer;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -1683,7 +1678,7 @@ var S;
                         return [2 /*return*/];
                 }
             });
-        };
+        });
     }
     S.jump = jump;
     function moveTo(worldObject, x, y, maxTime) {
@@ -1693,7 +1688,7 @@ var S;
     S.moveTo = moveTo;
     function moveToX(worldObject, x, maxTime) {
         if (maxTime === void 0) { maxTime = 10; }
-        return function () {
+        return runInCurrentWorld(function () {
             var dx, timer;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -1726,12 +1721,12 @@ var S;
                         return [2 /*return*/];
                 }
             });
-        };
+        });
     }
     S.moveToX = moveToX;
     function moveToY(worldObject, y, maxTime) {
         if (maxTime === void 0) { maxTime = 10; }
-        return function () {
+        return runInCurrentWorld(function () {
             var dy, timer;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -1764,14 +1759,14 @@ var S;
                         return [2 /*return*/];
                 }
             });
-        };
+        });
     }
     S.moveToY = moveToY;
     function playAnimation(sprite, animationName, startFrame, force, waitForCompletion) {
         if (startFrame === void 0) { startFrame = 0; }
         if (force === void 0) { force = true; }
         if (waitForCompletion === void 0) { waitForCompletion = true; }
-        return function () {
+        return runInCurrentWorld(function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -1787,16 +1782,36 @@ var S;
                     case 3: return [2 /*return*/];
                 }
             });
-        };
+        });
     }
     S.playAnimation = playAnimation;
-    function shake(intensity, time) {
+    function runInCurrentWorld(script) {
         return function () {
+            var scr;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        scr = global.script.theater.currentWorld.runScript(script);
+                        _a.label = 1;
+                    case 1:
+                        if (!!scr.done) return [3 /*break*/, 3];
+                        return [4 /*yield*/];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3: return [2 /*return*/];
+                }
+            });
+        };
+    }
+    S.runInCurrentWorld = runInCurrentWorld;
+    function shake(intensity, time) {
+        return runInCurrentWorld(function () {
             var timer;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        global.world.camera.shakeIntensity += intensity;
+                        global.script.world.camera.shakeIntensity += intensity;
                         timer = new Timer(time);
                         _a.label = 1;
                     case 1:
@@ -1807,11 +1822,11 @@ var S;
                         _a.sent();
                         return [3 /*break*/, 1];
                     case 3:
-                        global.world.camera.shakeIntensity -= intensity;
+                        global.script.world.camera.shakeIntensity -= intensity;
                         return [2 /*return*/];
                 }
             });
-        };
+        });
     }
     S.shake = shake;
     function showSlide(config, waitForCompletion) {
@@ -1883,12 +1898,12 @@ var Sprite = /** @class */ (function (_super) {
         _this.effects.updateFromConfig(config.effects);
         return _this;
     }
-    Sprite.prototype.update = function () {
-        _super.prototype.update.call(this);
+    Sprite.prototype.update = function (world) {
+        _super.prototype.update.call(this, world);
         this.animationManager.update();
     };
-    Sprite.prototype.render = function () {
-        global.screen.render(this.texture, {
+    Sprite.prototype.render = function (screen) {
+        screen.render(this.texture, {
             x: this.x + this.offset.x,
             y: this.y + this.offset.y,
             scaleX: this.flipX ? -1 : 1,
@@ -1898,7 +1913,7 @@ var Sprite = /** @class */ (function (_super) {
             alpha: this.alpha,
             filters: this.effects.getFilterList(),
         });
-        _super.prototype.render.call(this);
+        _super.prototype.render.call(this, screen);
     };
     Sprite.prototype.getCurrentAnimationName = function () {
         return this.animationManager.getCurrentAnimationName();
@@ -1944,8 +1959,8 @@ var DialogBox = /** @class */ (function (_super) {
         _this.characterTimer = new Timer(0.05, function () { return _this.advanceCharacter(); }, true);
         return _this;
     }
-    DialogBox.prototype.update = function () {
-        _super.prototype.update.call(this);
+    DialogBox.prototype.update = function (world) {
+        _super.prototype.update.call(this, world);
         this.characterTimer.update();
         if (this.done) {
             this.visible = false;
@@ -1954,14 +1969,14 @@ var DialogBox = /** @class */ (function (_super) {
             this.advanceDialog();
         }
     };
-    DialogBox.prototype.render = function () {
-        _super.prototype.render.call(this);
+    DialogBox.prototype.render = function (screen) {
+        _super.prototype.render.call(this, screen);
         if (this.portraitSprite.visible) {
             this.setPortraitSpriteProperties();
-            this.portraitSprite.render();
+            this.portraitSprite.render(screen);
         }
         this.setSpriteTextProperties();
-        this.spriteText.render();
+        this.spriteText.render(screen);
     };
     DialogBox.prototype.advanceDialog = function () {
         if (this.advanceCharacter()) {
@@ -2371,8 +2386,8 @@ var Follow = /** @class */ (function () {
         this.targetHistory = [];
         this.moveThreshold = moveThreshold;
     }
-    Follow.prototype.update = function (sprite) {
-        this.attemptToResolveTarget();
+    Follow.prototype.update = function (world, sprite) {
+        this.attemptToResolveTarget(world);
         this.pushTargetPosition();
         var dist = 0;
         var i = 0;
@@ -2397,16 +2412,16 @@ var Follow = /** @class */ (function () {
                 sprite.controller.up = true;
         }
     };
-    Follow.prototype.renderTrail = function () {
+    Follow.prototype.renderTrail = function (screen) {
         for (var i = 0; i < this.targetHistory.length - 1; i += 2) {
             Draw.brush.color = 0x00FF00;
             Draw.brush.alpha = 1;
-            Draw.pixel(global.screen, this.targetHistory[i], this.targetHistory[i + 1]);
+            Draw.pixel(screen, this.targetHistory[i], this.targetHistory[i + 1]);
         }
     };
-    Follow.prototype.attemptToResolveTarget = function () {
+    Follow.prototype.attemptToResolveTarget = function (world) {
         if (_.isString(this.target)) {
-            this.target = global.world.worldObjectsByName[this.target] || this.target;
+            this.target = world.worldObjectsByName[this.target] || this.target;
         }
     };
     Follow.prototype.pushTargetPosition = function () {
@@ -2444,35 +2459,14 @@ var global = /** @class */ (function () {
     function global() {
     }
     global.clearStacks = function () {
-        this.worldStack = [];
         this.deltaStack = [];
-        this.screenStack = [];
         this.scriptStack = [];
     };
-    global.getSprite = function (name) {
-        var obj = this.world.getWorldObjectByName(name);
-        if (!(obj instanceof Sprite)) {
-            debug("Getting sprite '" + name + "' from world which is not a sprite!", this.world);
-            return undefined;
-        }
-        return obj;
-    };
     global.getWorldObject = function (name) {
-        return this.world.getWorldObjectByName(name);
+        return global.theater.currentWorld.getWorldObjectByName(name);
     };
-    global.worldObjectExists = function (name) {
-        return !!this.world.worldObjectsByName[name];
-    };
-    Object.defineProperty(global, "world", {
-        // Update options
-        get: function () { return this.worldStack[this.worldStack.length - 1]; },
-        enumerable: true,
-        configurable: true
-    });
-    ;
-    global.pushWorld = function (world) { this.worldStack.push(world); };
-    global.popWorld = function () { return this.worldStack.pop(); };
     Object.defineProperty(global, "delta", {
+        // Update options
         get: function () { return this.deltaStack[this.deltaStack.length - 1]; },
         enumerable: true,
         configurable: true
@@ -2480,15 +2474,6 @@ var global = /** @class */ (function () {
     ;
     global.pushDelta = function (delta) { this.deltaStack.push(delta); };
     global.popDelta = function () { return this.deltaStack.pop(); };
-    Object.defineProperty(global, "screen", {
-        // Render options
-        get: function () { return this.screenStack[this.screenStack.length - 1]; },
-        enumerable: true,
-        configurable: true
-    });
-    ;
-    global.pushScreen = function (screen) { this.screenStack.push(screen); };
-    global.popScreen = function () { return this.screenStack.pop(); };
     Object.defineProperty(global, "script", {
         get: function () { return this.scriptStack[this.scriptStack.length - 1]; },
         enumerable: true,
@@ -2497,9 +2482,7 @@ var global = /** @class */ (function () {
     ;
     global.pushScript = function (script) { this.scriptStack.push(script); };
     global.popScript = function () { return this.scriptStack.pop(); };
-    global.worldStack = [];
     global.deltaStack = [];
-    global.screenStack = [];
     global.scriptStack = [];
     return global;
 }());
@@ -2557,8 +2540,8 @@ var HumanCharacter = /** @class */ (function (_super) {
         _this.direction = Direction2D.LEFT;
         return _this;
     }
-    HumanCharacter.prototype.update = function () {
-        this.updateFollow();
+    HumanCharacter.prototype.update = function (world) {
+        this.updateFollow(world);
         var haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
         var vaxis = (this.controller.down ? 1 : 0) - (this.controller.up ? 1 : 0);
         if (haxis < 0) {
@@ -2593,27 +2576,27 @@ var HumanCharacter = /** @class */ (function (_super) {
         else {
             this.vy = 0;
         }
-        _super.prototype.update.call(this);
-        this.updateInteractions();
+        _super.prototype.update.call(this, world);
+        this.updateInteractions(world);
         // Handle animation.
         var anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'run';
         var anim_dir = this.direction.v == Direction.UP ? 'up' : (this.direction.h == Direction.NONE ? 'down' : 'side');
         this.playAnimation(anim_state + "_" + anim_dir);
     };
-    HumanCharacter.prototype.updateInteractions = function () {
+    HumanCharacter.prototype.updateInteractions = function (world) {
         var e_7, _a;
         if (!this.isControlled) {
-            global.theater.interactionManager.highlight(null);
+            global.theater.interactionManager.highlight(world, null);
             return;
         }
-        var interactableObjects = global.theater.interactionManager.getInteractableObjects();
+        var interactableObjects = global.theater.interactionManager.getInteractableObjects(world);
         var interactRadius = 2;
         var highlightedObject = null;
         G.expandRectangle(this.bounds, interactRadius);
         try {
             for (var interactableObjects_1 = __values(interactableObjects), interactableObjects_1_1 = interactableObjects_1.next(); !interactableObjects_1_1.done; interactableObjects_1_1 = interactableObjects_1.next()) {
                 var obj = interactableObjects_1_1.value;
-                if (this.isOverlapping(global.getWorldObject(obj))) {
+                if (this.isOverlapping(world.getWorldObjectByName(obj))) {
                     highlightedObject = obj;
                 }
             }
@@ -2626,9 +2609,9 @@ var HumanCharacter = /** @class */ (function (_super) {
             finally { if (e_7) throw e_7.error; }
         }
         G.expandRectangle(this.bounds, -interactRadius);
-        global.theater.interactionManager.highlight(highlightedObject);
+        global.theater.interactionManager.highlight(world, highlightedObject);
         if (Input.justDown('interact') && highlightedObject) {
-            global.theater.interactionManager.interact(highlightedObject);
+            global.theater.interactionManager.interact(world, highlightedObject);
         }
     };
     HumanCharacter.prototype.follow = function (thing, maxDistance) {
@@ -2647,9 +2630,9 @@ var HumanCharacter = /** @class */ (function (_super) {
     HumanCharacter.prototype.unfollow = function () {
         this._follow = null;
     };
-    HumanCharacter.prototype.updateFollow = function () {
+    HumanCharacter.prototype.updateFollow = function (world) {
         if (this._follow)
-            this._follow.update(this);
+            this._follow.update(world, this);
     };
     return HumanCharacter;
 }(Sprite));
@@ -2847,10 +2830,10 @@ var InteractionManager = /** @class */ (function () {
         this.resetFunction = config.resetFunction;
         this.highlightedObject = null;
     }
-    InteractionManager.prototype.update = function () {
+    InteractionManager.prototype.update = function (world) {
         var e_10, _a;
         try {
-            for (var _b = __values(global.world.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
+            for (var _b = __values(world.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var obj = _c.value;
                 if (obj instanceof Sprite) {
                     if (obj === this.highlightedObject) {
@@ -2870,7 +2853,7 @@ var InteractionManager = /** @class */ (function () {
             finally { if (e_10) throw e_10.error; }
         }
     };
-    InteractionManager.prototype.getInteractableObjects = function () {
+    InteractionManager.prototype.getInteractableObjects = function (world) {
         var e_11, _a, e_12, _b;
         var result = new Set();
         var cutscenes = this.getInteractableCutscenes();
@@ -2880,7 +2863,7 @@ var InteractionManager = /** @class */ (function () {
                 try {
                     for (var _c = __values(global.theater.storyboard[cutscene].playOnInteractWith), _d = _c.next(); !_d.done; _d = _c.next()) {
                         var obj = _d.value;
-                        if (global.worldObjectExists(obj)) {
+                        if (world.containsWorldObject(obj)) {
                             result.add(obj);
                         }
                     }
@@ -2903,22 +2886,22 @@ var InteractionManager = /** @class */ (function () {
         }
         return result;
     };
-    InteractionManager.prototype.highlight = function (obj) {
+    InteractionManager.prototype.highlight = function (world, obj) {
         if (!obj) {
             this.highlightedObject = null;
             return;
         }
         if (_.isString(obj)) {
-            var worldObject = global.world.getWorldObjectByName(obj);
+            var worldObject = world.getWorldObjectByName(obj);
             if (!(worldObject instanceof Sprite))
                 return;
             obj = worldObject;
         }
         this.highlightedObject = obj;
     };
-    InteractionManager.prototype.interact = function (obj) {
+    InteractionManager.prototype.interact = function (world, obj) {
         if (!_.isString(obj)) {
-            var objName = global.world.getName(obj);
+            var objName = world.getName(obj);
             if (!objName)
                 return;
             obj = objName;
@@ -3067,26 +3050,22 @@ var Main = /** @class */ (function () {
             Input.update();
             global.theater = _this.theater;
             global.clearStacks();
-            global.pushScreen(_this.screen);
-            global.pushWorld(null);
             global.pushDelta(_this.delta);
             _this.fpsMetricManager.update();
-            _this.theater.update();
+            _this.theater.update(null);
             if (DEBUG_SKIP_ACTIVE) {
                 _this.updateTheaterSkip();
             }
             _this.screen.clear();
-            _this.theater.render();
+            _this.theater.render(_this.screen);
             _this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true); // Clear the renderer
             _this.renderer.render(_this.screen.renderTextureSprite);
             global.popDelta();
-            global.popWorld();
-            global.popScreen();
         });
     };
     Main.updateTheaterSkip = function () {
         for (var i = 0; i < 9; i++) {
-            this.theater.update();
+            this.theater.update(null);
         }
     };
     return Main;
@@ -3540,21 +3519,22 @@ var Script = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Script.prototype.update = function () {
+    Script.prototype.update = function (world) {
         if (!this.running)
             return;
         global.pushScript(this);
+        this.world = world;
+        this.theater = global.theater;
         var result = this.iterator.next();
         if (result.done) {
             this.done = true;
         }
         global.popScript();
     };
-    Script.prototype.finishImmediately = function (maxIters) {
+    Script.prototype.finishImmediately = function (world, maxIters) {
         if (maxIters === void 0) { maxIters = Script.FINISH_IMMEDIATELY_MAX_ITERS; }
-        var result = this.iterator.next();
-        for (var i = 0; i < maxIters && !result.done; i++) {
-            result = this.iterator.next();
+        for (var i = 0; i < maxIters && !this.done; i++) {
+            this.update(world);
         }
         this.done = true;
     };
@@ -3565,9 +3545,9 @@ var ScriptManager = /** @class */ (function () {
     function ScriptManager() {
         this.activeScripts = [];
     }
-    ScriptManager.prototype.update = function () {
+    ScriptManager.prototype.update = function (world) {
         for (var i = this.activeScripts.length - 1; i >= 0; i--) {
-            this.activeScripts[i].update();
+            this.activeScripts[i].update(world);
             if (this.activeScripts[i].done) {
                 this.activeScripts.splice(i, 1);
             }
@@ -3604,8 +3584,8 @@ var Slide = /** @class */ (function (_super) {
         _this.fullyLoaded = false;
         return _this;
     }
-    Slide.prototype.update = function () {
-        _super.prototype.update.call(this);
+    Slide.prototype.update = function (world) {
+        _super.prototype.update.call(this, world);
         if (this.fullyLoaded)
             return;
         this.timer.update();
@@ -3656,16 +3636,13 @@ var SpriteText = /** @class */ (function (_super) {
         _this.fontTexture = AssetCache.getTexture(_this.font.texture);
         return _this;
     }
-    SpriteText.prototype.update = function () {
-        _super.prototype.update.call(this);
-    };
-    SpriteText.prototype.render = function () {
+    SpriteText.prototype.render = function (screen) {
         var e_14, _a;
         var filters = this.mask ? [new TextureFilter.Mask({ type: TextureFilter.Mask.Type.GLOBAL, mask: this.mask })] : [];
         try {
             for (var _b = __values(this.chars), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var char = _c.value;
-                global.screen.render(this.fontTexture, {
+                screen.render(this.fontTexture, {
                     x: this.x + char.x,
                     y: this.y + char.y + O.getOrDefault(char.style.offset, this.style.offset),
                     tint: O.getOrDefault(char.style.color, this.style.color),
@@ -3686,7 +3663,7 @@ var SpriteText = /** @class */ (function (_super) {
             }
             finally { if (e_14) throw e_14.error; }
         }
-        _super.prototype.render.call(this);
+        _super.prototype.render.call(this, screen);
     };
     SpriteText.prototype.clear = function () {
         this.setText("");
@@ -4035,7 +4012,7 @@ var StageManager = /** @class */ (function () {
         var oldWorld = this.currentWorld;
         var oldSnapshot = oldWorld.takeSnapshot();
         this.setStage(name, entryPoint);
-        this.currentWorld.update();
+        this.currentWorld.update(this.theater);
         var newSnapshot = this.currentWorld.takeSnapshot();
         this.currentWorld.active = false;
         this.currentWorld.visible = false;
@@ -4160,12 +4137,12 @@ var Tilemap = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Tilemap.prototype.onAdd = function () {
+    Tilemap.prototype.onAdd = function (world) {
         var e_19, _a;
         try {
             for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var box = _c.value;
-                global.world.addWorldObject(box, {
+                world.addWorldObject(box, {
                     physicsGroup: this.collisionPhysicsGroup
                 });
             }
@@ -4178,7 +4155,7 @@ var Tilemap = /** @class */ (function (_super) {
             finally { if (e_19) throw e_19.error; }
         }
     };
-    Tilemap.prototype.postUpdate = function () {
+    Tilemap.prototype.postUpdate = function (world) {
         var e_20, _a;
         if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
             try {
@@ -4196,15 +4173,15 @@ var Tilemap = /** @class */ (function (_super) {
                 finally { if (e_20) throw e_20.error; }
             }
         }
-        _super.prototype.postUpdate.call(this);
+        _super.prototype.postUpdate.call(this, world);
     };
-    Tilemap.prototype.render = function () {
+    Tilemap.prototype.render = function (screen) {
         if (this.dirty) {
             this.drawRenderTexture();
             this.dirty = false;
         }
-        global.screen.render(this.renderTexture, { x: this.x, y: this.y });
-        _super.prototype.render.call(this);
+        screen.render(this.renderTexture, { x: this.x, y: this.y });
+        _super.prototype.render.call(this, screen);
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
         if (debugBounds === void 0) { debugBounds = false; }
@@ -4242,12 +4219,12 @@ var Tilemap = /** @class */ (function (_super) {
             }
         }
     };
-    Tilemap.prototype.onRemove = function () {
+    Tilemap.prototype.onRemove = function (world) {
         var e_22, _a;
         try {
             for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var box = _c.value;
-                global.world.removeWorldObject(box);
+                world.removeWorldObject(box);
             }
         }
         catch (e_22_1) { e_22 = { error: e_22_1 }; }
@@ -4621,16 +4598,15 @@ var World = /** @class */ (function (_super) {
         _this.debugCameraY = 0;
         return _this;
     }
-    World.prototype.update = function () {
+    World.prototype.update = function (world) {
         var e_23, _a, e_24, _b, e_25, _c;
-        _super.prototype.update.call(this);
-        global.pushWorld(this);
-        this.scriptManager.update();
+        _super.prototype.update.call(this, world);
+        this.scriptManager.update(this);
         try {
             for (var _d = __values(this.worldObjects), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var worldObject = _e.value;
                 if (worldObject.active)
-                    worldObject.preUpdate();
+                    worldObject.preUpdate(this);
             }
         }
         catch (e_23_1) { e_23 = { error: e_23_1 }; }
@@ -4644,7 +4620,7 @@ var World = /** @class */ (function (_super) {
             for (var _f = __values(this.worldObjects), _g = _f.next(); !_g.done; _g = _f.next()) {
                 var worldObject = _g.value;
                 if (worldObject.active)
-                    worldObject.update();
+                    worldObject.update(this);
             }
         }
         catch (e_24_1) { e_24 = { error: e_24_1 }; }
@@ -4659,7 +4635,7 @@ var World = /** @class */ (function (_super) {
             for (var _h = __values(this.worldObjects), _j = _h.next(); !_j.done; _j = _h.next()) {
                 var worldObject = _j.value;
                 if (worldObject.active)
-                    worldObject.postUpdate();
+                    worldObject.postUpdate(this);
             }
         }
         catch (e_25_1) { e_25 = { error: e_25_1 }; }
@@ -4679,10 +4655,9 @@ var World = /** @class */ (function (_super) {
             if (Input.isDown('debugMoveCameraDown'))
                 this.debugCameraY += 1;
         }
-        this.camera.update();
-        global.popWorld();
+        this.camera.update(this);
     };
-    World.prototype.render = function () {
+    World.prototype.render = function (screen) {
         var e_26, _a;
         var oldCameraX = this.camera.x;
         var oldCameraY = this.camera.y;
@@ -4694,14 +4669,11 @@ var World = /** @class */ (function (_super) {
         Draw.brush.color = this.backgroundColor;
         Draw.brush.alpha = this.backgroundAlpha;
         Draw.fill(this.screen);
-        global.pushWorld(this);
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var layer = _c.value;
                 this.layerTexture.clear();
-                global.pushScreen(this.layerTexture);
                 this.renderLayer(layer);
-                global.popScreen();
                 this.screen.render(this.layerTexture);
             }
         }
@@ -4712,11 +4684,10 @@ var World = /** @class */ (function (_super) {
             }
             finally { if (e_26) throw e_26.error; }
         }
-        global.popWorld();
         this.camera.x = oldCameraX;
         this.camera.y = oldCameraY;
-        global.screen.render(this.screen);
-        _super.prototype.render.call(this);
+        screen.render(this.screen);
+        _super.prototype.render.call(this, screen);
     };
     World.prototype.renderLayer = function (layer) {
         var e_27, _a;
@@ -4725,7 +4696,7 @@ var World = /** @class */ (function (_super) {
             for (var _b = __values(layer.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var worldObject = _c.value;
                 if (worldObject.visible) {
-                    worldObject.fullRender();
+                    worldObject.fullRender(this.layerTexture, this);
                 }
             }
         }
@@ -4755,10 +4726,14 @@ var World = /** @class */ (function (_super) {
         if (options.physicsGroup && obj instanceof PhysicsWorldObject) {
             this.setPhysicsGroup(obj, options.physicsGroup);
         }
-        global.pushWorld(this);
-        obj.onAdd();
-        global.popWorld();
+        obj.onAdd(this);
         return obj;
+    };
+    World.prototype.containsWorldObject = function (obj) {
+        if (_.isString(obj)) {
+            return !!this.worldObjectsByName[obj];
+        }
+        return _.contains(this.worldObjects, obj);
     };
     World.prototype.getLayer = function (obj) {
         var e_28, _a;
@@ -4890,9 +4865,7 @@ var World = /** @class */ (function (_super) {
         this.removeFromAllLayers(obj);
         this.removeFromAllPhysicsGroups(obj);
         A.removeAll(this.worldObjects, obj);
-        global.pushWorld(this);
-        obj.onRemove();
-        global.popWorld();
+        obj.onRemove(this);
     };
     World.prototype.runScript = function (script) {
         return this.scriptManager.runScript(script);
@@ -4938,15 +4911,13 @@ var World = /** @class */ (function (_super) {
     };
     World.prototype.takeSnapshot = function () {
         var screen = new Texture(this.camera.width, this.camera.height);
-        global.pushScreen(screen);
         var lastx = this.x;
         var lasty = this.y;
         this.x = 0;
         this.y = 0;
-        this.render();
+        this.render(screen);
         this.x = lastx;
         this.y = lasty;
-        global.popScreen();
         return screen;
     };
     World.prototype.createLayers = function (layers) {
@@ -5072,14 +5043,10 @@ var Theater = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Theater.prototype.update = function () {
-        global.pushWorld(this.currentWorld);
+    Theater.prototype.update = function (world) {
         this.cutsceneManager.update();
-        global.popWorld();
-        _super.prototype.update.call(this);
-        global.pushWorld(this.currentWorld);
-        this.interactionManager.update();
-        global.popWorld();
+        _super.prototype.update.call(this, world);
+        this.interactionManager.update(this.currentWorld);
         this.stageManager.loadStageIfQueued();
         if (DEBUG_SHOW_MOUSE_POSITION) {
             this.debugMousePosition.setText(S.padLeft(this.currentWorld.getWorldMouseX().toString(), 3) + " " + S.padLeft(this.currentWorld.getWorldMouseY().toString(), 3));
@@ -5115,14 +5082,10 @@ var Theater = /** @class */ (function (_super) {
             this.cutsceneManager.playCutscene(name, component);
         }
         else if (component.type === 'gameplay') {
-            global.pushWorld(this.currentWorld);
             component.start();
-            global.popWorld();
         }
         else if (component.type === 'code') {
-            global.pushWorld(this.currentWorld);
             component.func();
-            global.popWorld();
             if (component.after) {
                 return this.startStoryboardComponentByName(component.after);
             }
@@ -5190,18 +5153,18 @@ var TestTheater = /** @class */ (function (_super) {
         _this.doSlice = true;
         return _this;
     }
-    TestTheater.prototype.render = function () {
-        _super.prototype.render.call(this);
+    TestTheater.prototype.render = function (screen) {
+        _super.prototype.render.call(this, screen);
         if (Input.justDown('1')) {
             this.doSlice = !this.doSlice;
         }
-        global.screen.render(AssetCache.getTexture('bed'), {
+        screen.render(AssetCache.getTexture('bed'), {
             x: 100,
             y: 100,
             slice: this.doSlice ? { x: 0, y: 0, width: 20, height: 20 } : undefined,
             filters: [this.f]
         });
-        global.screen.render(this.t, {
+        screen.render(this.t, {
             x: Input.mouseX,
             y: Input.mouseY,
             slice: { x: 20, y: 20, width: 20, height: 20 },

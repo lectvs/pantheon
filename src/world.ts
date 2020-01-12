@@ -86,25 +86,24 @@ class World extends WorldObject {
         this.debugCameraY = 0;
     }
 
-    update() {
-        super.update();
+    update(world: World) {
+        super.update(world);
 
-        global.pushWorld(this);
-        this.scriptManager.update();
+        this.scriptManager.update(this);
         
 
         for (let worldObject of this.worldObjects) {
-            if (worldObject.active) worldObject.preUpdate();
+            if (worldObject.active) worldObject.preUpdate(this);
         }
 
         for (let worldObject of this.worldObjects) {
-            if (worldObject.active) worldObject.update();
+            if (worldObject.active) worldObject.update(this);
         }
 
         this.handleCollisions();
 
         for (let worldObject of this.worldObjects) {
-            if (worldObject.active) worldObject.postUpdate();
+            if (worldObject.active) worldObject.postUpdate(this);
         }
 
         if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this === global.theater.currentWorld) {
@@ -113,11 +112,10 @@ class World extends WorldObject {
             if (Input.isDown('debugMoveCameraUp'))    this.debugCameraY -= 1;
             if (Input.isDown('debugMoveCameraDown'))  this.debugCameraY += 1;
         }
-        this.camera.update();
-        global.popWorld();
+        this.camera.update(this);
     }
 
-    render() {
+    render(screen: Texture) {
         let oldCameraX = this.camera.x;
         let oldCameraY = this.camera.y;
         if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this === global.theater.currentWorld) {
@@ -130,28 +128,24 @@ class World extends WorldObject {
         Draw.brush.alpha = this.backgroundAlpha;
         Draw.fill(this.screen);
 
-        global.pushWorld(this);
         for (let layer of this.layers) {
             this.layerTexture.clear();
-            global.pushScreen(this.layerTexture);
             this.renderLayer(layer);
-            global.popScreen();
             this.screen.render(this.layerTexture);
         }
-        global.popWorld();
 
         this.camera.x = oldCameraX;
         this.camera.y = oldCameraY;
         
-        global.screen.render(this.screen);
-        super.render();
+        screen.render(this.screen);
+        super.render(screen);
     }
 
     renderLayer(layer: World.Layer) {
         layer.sort();
         for (let worldObject of layer.worldObjects) {
             if (worldObject.visible) {
-                worldObject.fullRender();
+                worldObject.fullRender(this.layerTexture, this);
             }
         }
     }
@@ -176,10 +170,15 @@ class World extends WorldObject {
             this.setPhysicsGroup(obj, options.physicsGroup);
         }
         
-        global.pushWorld(this);
-        obj.onAdd();
-        global.popWorld();
+        obj.onAdd(this);
         return obj;
+    }
+
+    containsWorldObject(obj: string | WorldObject) {
+        if (_.isString(obj)) {
+            return !!this.worldObjectsByName[obj];
+        }
+        return _.contains(this.worldObjects, obj);
     }
 
     getLayer(obj: string | WorldObject) {
@@ -214,11 +213,11 @@ class World extends WorldObject {
         return Input.mouseY + Math.floor(this.camera.y - this.camera.height/2);
     }
 
-    getWorldObjectByName(name: string) {
-        if (!this.worldObjectsByName[name]) {
+    getWorldObjectByName<T extends WorldObject>(name: string): T {
+        if (!this.worldObjectsByName[name]) {   
             debug(`No object with name '${name}' exists in world`, this);
         }
-        return this.worldObjectsByName[name];
+        return <T>this.worldObjectsByName[name];
     }
 
     handleCollisions() {
@@ -262,9 +261,7 @@ class World extends WorldObject {
         this.removeFromAllLayers(obj);
         this.removeFromAllPhysicsGroups(obj);
         A.removeAll(this.worldObjects, obj);
-        global.pushWorld(this);
-        obj.onRemove();
-        global.popWorld();
+        obj.onRemove(this);
     }
 
     runScript(script: Script | Script.Function) {
@@ -307,15 +304,13 @@ class World extends WorldObject {
 
     takeSnapshot() {
         let screen = new Texture(this.camera.width, this.camera.height);
-        global.pushScreen(screen);
         let lastx = this.x;
         let lasty = this.y;
         this.x = 0;
         this.y = 0;
-        this.render();
+        this.render(screen);
         this.x = lastx;
         this.y = lasty;
-        global.popScreen();
         return screen;
     }
 

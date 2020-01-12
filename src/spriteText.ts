@@ -39,14 +39,10 @@ class SpriteText extends WorldObject {
         this.fontTexture = AssetCache.getTexture(this.font.texture);
     }
 
-    update() {
-        super.update();
-    }
-
-    render() {
+    render(screen: Texture) {
         let filters = this.mask ? [new TextureFilter.Mask({ type: TextureFilter.Mask.Type.GLOBAL, mask: this.mask})] : [];
         for (let char of this.chars) {
-            global.screen.render(this.fontTexture, {
+            screen.render(this.fontTexture, {
                 x: this.x + char.x,
                 y: this.y + char.y + O.getOrDefault(char.style.offset, this.style.offset),
                 tint: O.getOrDefault(char.style.color, this.style.color),
@@ -59,7 +55,7 @@ class SpriteText extends WorldObject {
                 filters: filters,
             });
         }
-        super.render();
+        super.render(screen);
     }
 
     clear() {

@@ -42,7 +42,7 @@ namespace S {
     }
 
     export function jump(sprite: Sprite, peakDelta: number, time: number, landOnGround: boolean = false): Script.Function {
-        return function*() {
+        return runInCurrentWorld(function*() {
             let start = sprite.offset.y;
             let groundDelta = landOnGround ? -start : 0;
 
@@ -53,7 +53,7 @@ namespace S {
                 yield;
             }
             sprite.offset.y = start + groundDelta;
-        }
+        })
     }
 
     export function moveTo(worldObject: WorldObject, x: number, y: number, maxTime: number = 10): Script.Function {
@@ -64,7 +64,7 @@ namespace S {
     }
 
     export function moveToX(worldObject: WorldObject, x: number, maxTime: number = 10): Script.Function {
-        return function*() {
+        return runInCurrentWorld(function*() {
             let dx = x - worldObject.x;
             if (dx === 0) return;
 
@@ -84,11 +84,11 @@ namespace S {
             }
 
             worldObject.x = x;
-        }
+        })
     }
 
     export function moveToY(worldObject: WorldObject, y: number, maxTime: number = 10): Script.Function {
-        return function*() {
+        return runInCurrentWorld(function*() {
             let dy = y - worldObject.y;
             if (dy === 0) return;
 
@@ -108,30 +108,39 @@ namespace S {
             }
 
             worldObject.y = y;
-        }
+        })
     }
 
     export function playAnimation(sprite: Sprite, animationName: string, startFrame: number = 0, force: boolean = true, waitForCompletion: boolean = true): Script.Function {
-        return function*() {
+        return runInCurrentWorld(function*() {
             sprite.playAnimation(animationName, startFrame, force);
             if (waitForCompletion) {
                 while (sprite.getCurrentAnimationName() === animationName) {
                     yield;
                 }
             }
+        })
+    }
+
+    export function runInCurrentWorld(script: Script.Function): Script.Function {
+        return function*() {
+            let scr = global.script.theater.currentWorld.runScript(script);
+            while (!scr.done) {
+                yield;
+            }
         }
     }
 
     export function shake(intensity: number, time: number): Script.Function {
-        return function*() {
-            global.world.camera.shakeIntensity += intensity;
+        return runInCurrentWorld(function*() {
+            global.script.world.camera.shakeIntensity += intensity;
             let timer = new Timer(time);
             while (!timer.done) {
                 timer.update();
                 yield;
             }
-            global.world.camera.shakeIntensity -= intensity;
-        }
+            global.script.world.camera.shakeIntensity -= intensity;
+        })
     }
 
     export function showSlide(config: Slide.Config, waitForCompletion: boolean = true): Script.Function {

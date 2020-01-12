@@ -86,11 +86,11 @@ class Camera {
         this._shakeY = 0;
     }
 
-    update() {
+    update(world: World) {
         if (this.mode.type === 'follow') {
             let target = this.mode.target;
             if (_.isString(target)) {
-                target = global.world.getWorldObjectByName(target);
+                target = world.getWorldObjectByName(target);
             }
             this.moveTowardsPoint(target.x + this.mode.offset.x, target.y + this.mode.offset.y);
         } else if (this.mode.type === 'focus') {

@@ -10,33 +10,33 @@ class BackWall extends PhysicsWorldObject {
         this.createTiles();
     }
 
-    onAdd() {
+    onAdd(world: World) {
         for (let tile of this.tiles) {
-            global.world.addWorldObject(tile, { layer: global.world.getLayer(this) });
+            world.addWorldObject(tile, { layer: world.getLayer(this) });
         }
     }
 
-    update() {
-        super.update();
+    update(world: World) {
+        super.update(world);
 
         for (let tile of this.tiles) {
             tile.visible = this.visible;
         }
 
         if (Input.justDown('1')) {
-            for (let i = 0; i < 10; i++) this.crumble();
+            for (let i = 0; i < 10; i++) this.crumble(world);
         }
     }
 
-    crumble() {
+    crumble(world: World) {
         for (let i = 0; i < 4; i++) {
             if (!_.isEmpty(this.tiles)) {
-                this.destroyTile(Random.index(this.tiles));
+                this.destroyTile(world, Random.index(this.tiles));
             }
         }
 
         if (_.isEmpty(this.tiles)) {
-            global.world.removeWorldObject(this);
+            world.removeWorldObject(this);
         }
     }
 
@@ -58,7 +58,7 @@ class BackWall extends PhysicsWorldObject {
         }
     }
 
-    destroyTile(index: number) {
+    destroyTile(world: World, index: number) {
         let [tile] = this.tiles.splice(index, 1);
 
         let gravity = 200;
@@ -68,11 +68,11 @@ class BackWall extends PhysicsWorldObject {
         tile.vx = velocity.x;
         tile.vy = velocity.y;
 
-        global.world.runScript(S.doOverTime(1, t => {
+        world.runScript(S.doOverTime(1, t => {
             tile.vy += gravity * global.delta;
             tile.angle += angularSpeed * global.delta;
             if (t === 1) {
-                global.world.removeWorldObject(tile);
+                world.removeWorldObject(tile);
             }
         }));
     }

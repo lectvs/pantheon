@@ -71,16 +71,12 @@ class Theater extends World {
         }
     }
 
-    update() {
-        global.pushWorld(this.currentWorld);
+    update(world: World) {
         this.cutsceneManager.update();
-        global.popWorld();
 
-        super.update();
+        super.update(world);
 
-        global.pushWorld(this.currentWorld);
-        this.interactionManager.update();
-        global.popWorld();
+        this.interactionManager.update(this.currentWorld);
 
         this.stageManager.loadStageIfQueued();
 
@@ -120,13 +116,9 @@ class Theater extends World {
         if (component.type === 'cutscene') {
             this.cutsceneManager.playCutscene(name, component);
         } else if (component.type === 'gameplay') {
-            global.pushWorld(this.currentWorld);
             component.start();
-            global.popWorld();
         } else if (component.type === 'code') {
-            global.pushWorld(this.currentWorld);
             component.func();
-            global.popWorld();
             if (component.after) {
                 return this.startStoryboardComponentByName(component.after);
             }

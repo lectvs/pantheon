@@ -57,33 +57,33 @@ class Tilemap extends WorldObject {
         this.dirty = true;
     }
 
-    onAdd() {
+    onAdd(world: World) {
         for (let box of this.collisionBoxes) {
-            global.world.addWorldObject(box, {
+            world.addWorldObject(box, {
                 physicsGroup: this.collisionPhysicsGroup
             });
         }
     }
 
-    postUpdate() {
+    postUpdate(world: World) {
         if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
             for (let box of this.collisionBoxes) {
                 box.x = this.x;
                 box.y = this.y;
             }
         }
-        super.postUpdate();
+        super.postUpdate(world);
     }
 
-    render() {
+    render(screen: Texture) {
         if (this.dirty) {
             this.drawRenderTexture();
             this.dirty = false;
         }
         
-        global.screen.render(this.renderTexture, { x: this.x, y: this.y });
+        screen.render(this.renderTexture, { x: this.x, y: this.y });
 
-        super.render();
+        super.render(screen);
     }
 
     createCollisionBoxes(debugBounds: boolean = false) {
@@ -111,9 +111,9 @@ class Tilemap extends WorldObject {
         }
     }
 
-    onRemove() {
+    onRemove(world: World) {
         for (let box of this.collisionBoxes) {
-            global.world.removeWorldObject(box);
+            world.removeWorldObject(box);
         }
     }
 }

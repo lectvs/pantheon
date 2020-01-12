@@ -44,14 +44,10 @@ namespace Transition {
             }
         }
 
-        update() {
-            super.update();
-        }
-
-        render() {
-            super.render();
-            this.newSprite.render();
-            this.oldSprite.render();
+        render(screen: Texture) {
+            super.render(screen);
+            this.newSprite.render(screen);
+            this.oldSprite.render(screen);
         }
     }
 }

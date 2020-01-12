@@ -52,7 +52,7 @@ class WorldObject {
         this.preRenderStoredY = this.y;
     }
 
-    preUpdate() {
+    preUpdate(world: World) {
         this.lastx = this.x;
         this.lasty = this.y;
         if (this.isControlled) {
@@ -60,34 +60,34 @@ class WorldObject {
         }
     }
 
-    update() {
+    update(world: World) {
         
     }
 
-    postUpdate() {
+    postUpdate(world: World) {
         this.resetController();
     }
 
-    fullUpdate() {
-        this.preUpdate();
-        this.update();
-        this.postUpdate();
+    fullUpdate(world: World) {
+        this.preUpdate(world);
+        this.update(world);
+        this.postUpdate(world);
     }
 
-    preRender() {
+    preRender(world: World) {
         this.preRenderStoredX = this.x;
         this.preRenderStoredY = this.y;
 
         if (!this.ignoreCamera) {
-            this.x -= global.world.camera.worldOffsetX;
-            this.y -= global.world.camera.worldOffsetY;
+            this.x -= world.camera.worldOffsetX;
+            this.y -= world.camera.worldOffsetY;
         }
 
         this.x = Math.round(this.x);
         this.y = Math.round(this.y);
     }
 
-    render() {
+    render(screen: Texture) {
 
     }
 
@@ -96,9 +96,9 @@ class WorldObject {
         this.y = this.preRenderStoredY;
     }
 
-    fullRender() {
-        this.preRender();
-        this.render();
+    fullRender(screen: Texture, world: World) {
+        this.preRender(world);
+        this.render(screen);
         this.postRender();
     }
 
@@ -114,11 +114,11 @@ class WorldObject {
         }
     }
 
-    onAdd() {
+    onAdd(world: World) {
 
     }
 
-    onRemove() {
+    onRemove(world: World) {
         
     }
 }

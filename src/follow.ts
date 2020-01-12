@@ -17,8 +17,8 @@ class Follow {
         this.moveThreshold = moveThreshold;
     }
 
-    update(sprite: Sprite) {
-        this.attemptToResolveTarget();
+    update(world: World, sprite: Sprite) {
+        this.attemptToResolveTarget(world);
         this.pushTargetPosition();
 
         let dist = 0;
@@ -43,17 +43,17 @@ class Follow {
         }
     }
 
-    renderTrail() {
+    renderTrail(screen: Texture) {
         for (let i = 0; i < this.targetHistory.length-1; i += 2) {
             Draw.brush.color = 0x00FF00;
             Draw.brush.alpha = 1;
-            Draw.pixel(global.screen, this.targetHistory[i], this.targetHistory[i+1]);
+            Draw.pixel(screen, this.targetHistory[i], this.targetHistory[i+1]);
         }
     }
 
-    private attemptToResolveTarget() {
+    private attemptToResolveTarget(world: World) {
         if (_.isString(this.target)) {
-            this.target = global.world.worldObjectsByName[this.target] || this.target;
+            this.target = world.worldObjectsByName[this.target] || this.target;
         }
     }
 

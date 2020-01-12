@@ -68,13 +68,13 @@ class Sprite extends PhysicsWorldObject {
         this.effects.updateFromConfig(config.effects);
     }
 
-    update() {
-        super.update();
+    update(world: World) {
+        super.update(world);
         this.animationManager.update();
     }
 
-    render() {
-        global.screen.render(this.texture, {
+    render(screen: Texture) {
+        screen.render(this.texture, {
             x: this.x + this.offset.x,
             y: this.y + this.offset.y,
             scaleX: this.flipX ? -1 : 1,
@@ -85,7 +85,7 @@ class Sprite extends PhysicsWorldObject {
             filters: this.effects.getFilterList(),
         });
         
-        super.render();
+        super.render(screen);
     }
 
     getCurrentAnimationName() {

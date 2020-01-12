@@ -113,33 +113,29 @@ class Main {
 
             global.theater = this.theater;
             global.clearStacks();
-            global.pushScreen(this.screen);
-            global.pushWorld(null);
             global.pushDelta(this.delta);
 
             this.fpsMetricManager.update();
 
-            this.theater.update();
+            this.theater.update(null);
 
             if (DEBUG_SKIP_ACTIVE) {
                 this.updateTheaterSkip();
             }
 
             this.screen.clear();
-            this.theater.render();
+            this.theater.render(this.screen);
 
             this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
             this.renderer.render(this.screen.renderTextureSprite);
 
             global.popDelta();
-            global.popWorld();
-            global.popScreen();
         });
     }
 
     private static updateTheaterSkip() {
         for (let i = 0; i < 9; i++) {
-            this.theater.update();
+            this.theater.update(null);
         }
     }
 }

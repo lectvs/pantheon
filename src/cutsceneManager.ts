@@ -16,7 +16,7 @@ class CutsceneManager {
 
     update() {
         if (this.current) {
-            this.current.script.update();
+            this.current.script.update(this.theater);
             if (this.current.script.done) {
                 this.finishCurrentCutscene();
             }
