@@ -3123,46 +3123,6 @@ var Main = /** @class */ (function () {
 }());
 // Actually load the game
 Main.preload();
-var Mask;
-(function (Mask) {
-    function drawRectangleMask(mask, rect) {
-        mask.clear();
-        mask.lineStyle(0);
-        mask.beginFill(0xFFFFFF, 1);
-        mask.drawRect(rect.x, rect.y, rect.width, rect.height);
-        mask.endFill();
-    }
-    Mask.drawRectangleMask = drawRectangleMask;
-    function newRectangleMask(rect) {
-        var result = new PIXI.Graphics();
-        result.lineStyle(0);
-        result.beginFill(0xFFFFFF, 1);
-        result.drawRect(rect.x, rect.y, rect.width, rect.height);
-        result.endFill();
-        return result;
-    }
-    Mask.newRectangleMask = newRectangleMask;
-    var Maskf = /** @class */ (function (_super) {
-        __extends(Maskf, _super);
-        function Maskf(rect) {
-            var _this = _super.call(this, Mask.vert, Mask.frag, {}) || this;
-            _this.rect = rect;
-            _this.update();
-            return _this;
-        }
-        Maskf.prototype.update = function () {
-            this.uniforms.filterDimensions = [Main.width, Main.width];
-            this.uniforms.left = this.rect.x;
-            this.uniforms.right = this.rect.x + this.rect.width;
-            this.uniforms.top = this.rect.y;
-            this.uniforms.bottom = this.rect.y + this.rect.height;
-        };
-        return Maskf;
-    }(PIXI.Filter));
-    Mask.Maskf = Maskf;
-    Mask.vert = "\n        attribute vec2 aVertexPosition;\n        uniform mat3 projectionMatrix;\n        varying vec2 vTextureCoord;\n        uniform vec4 inputSize;\n        uniform vec4 outputFrame;\n        \n        vec4 filterVertexPosition(void) {\n            vec2 position = aVertexPosition * max(outputFrame.zw, vec2(0.)) + outputFrame.xy;\n            return vec4((projectionMatrix * vec3(position, 1.0)).xy, 0.0, 1.0);\n        }\n        \n        vec2 filterTextureCoord(void) {\n            return aVertexPosition * (outputFrame.zw * inputSize.zw);\n        }\n        \n        void main(void) {\n            gl_Position = filterVertexPosition();\n            vTextureCoord = filterTextureCoord();\n        }\n    ";
-    Mask.frag = "\n        varying vec2 vTextureCoord;\n        uniform sampler2D uSampler;\n        uniform vec2 filterDimensions;\n\n        uniform float top;\n        uniform float bottom;\n        uniform float left;\n        uniform float right;\n\n        void main(void) {\n            vec2 px = vec2(1.0/filterDimensions.x, 1.0/filterDimensions.y);\n            vec4 c = texture2D(uSampler, vTextureCoord);\n\n            if (vTextureCoord.x < left*px.x || vTextureCoord.x > right*px.x || vTextureCoord.y < top*px.y || vTextureCoord.y > bottom*px.y) {\n                c.a = 0.0;\n            }\n\n            gl_FragColor = c * c.a;\n        }\n    ";
-})(Mask || (Mask = {}));
 var Monitor = /** @class */ (function () {
     function Monitor() {
         this.points = [];
