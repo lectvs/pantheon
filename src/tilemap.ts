@@ -64,14 +64,14 @@ class Tilemap extends WorldObject {
         }
     }
 
-    postUpdate(world: World) {
+    postUpdate() {
         if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
             for (let box of this.collisionBoxes) {
                 box.x = this.x;
                 box.y = this.y;
             }
         }
-        super.postUpdate(world);
+        super.postUpdate();
     }
 
     render(screen: Texture) {

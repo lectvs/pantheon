@@ -6,20 +6,24 @@ namespace InteractionManager {
 }
 
 class InteractionManager {
+    theater: Theater;
+
     private highlightFunction: (sprite: Sprite) => any;
     private resetFunction: (sprite: Sprite) => any;
 
     private highlightedObject: Sprite;
 
-    constructor(config: InteractionManager.Config) {
+    constructor(theater: Theater, config: InteractionManager.Config) {
+        this.theater = theater;
+
         this.highlightFunction = config.highlightFunction;
         this.resetFunction = config.resetFunction;
 
         this.highlightedObject = null;
     }
 
-    update(world: World) {
-        for (let obj of world.worldObjects) {
+    update() {
+        for (let obj of this.theater.currentWorld.worldObjects) {
             if (obj instanceof Sprite) {
                 if (obj === this.highlightedObject) {
                     this.highlightFunction(obj);
@@ -30,13 +34,13 @@ class InteractionManager {
         }
     }
 
-    getInteractableObjects(world: World): Set<string> {
+    getInteractableObjects(): Set<string> {
         let result = new Set<string>();
 
         let cutscenes = this.getInteractableCutscenes();
         for (let cutscene of cutscenes) {
             for (let obj of (<Cutscene>global.theater.storyboard[cutscene]).playOnInteractWith) {
-                if (world.containsWorldObject(obj)) {
+                if (this.theater.currentWorld.containsWorldObject(obj)) {
                     result.add(obj);
                 }
             }
@@ -45,22 +49,22 @@ class InteractionManager {
         return result;
     }
 
-    highlight(world: World, obj: string | Sprite) {
+    highlight(obj: string | Sprite) {
         if (!obj) {
             this.highlightedObject = null;
             return;
         }
         if (_.isString(obj)) {
-            let worldObject = world.getWorldObjectByName(obj);
+            let worldObject = this.theater.currentWorld.getWorldObjectByName(obj);
             if (!(worldObject instanceof Sprite)) return;
             obj = worldObject;
         }
         this.highlightedObject = obj;
     }
 
-    interact(world: World, obj: string | Sprite) {
+    interact(obj: string | Sprite) {
         if (!_.isString(obj)) {
-            let objName = world.getName(obj);
+            let objName = this.theater.currentWorld.getName(obj);
             if (!objName) return;
             obj = objName;
         }

@@ -58,7 +58,7 @@ class Theater extends World {
         this.loadDialogBox(config.dialogBox);
 
         this.stageManager = new StageManager(this, config.stages);
-        this.interactionManager = new InteractionManager(config.interactionManager);
+        this.interactionManager = new InteractionManager(this, config.interactionManager);
         this.slideManager = new SlideManager(this);
 
         this.stageManager.setStage(config.stageToLoad, config.stageEntryPoint);
@@ -72,12 +72,12 @@ class Theater extends World {
         }
     }
 
-    update(world: World, delta: number) {
+    update(delta: number) {
         this.cutsceneManager.update(delta);
 
-        super.update(world, delta);
+        super.update(delta);
 
-        this.interactionManager.update(this.currentWorld);
+        this.interactionManager.update();
 
         this.stageManager.loadStageIfQueued();
 

@@ -73,7 +73,7 @@ class WorldObject {
         this.internalSetPhysicsGroupWorldObject(config.physicsGroup);
     }
 
-    preUpdate(world: World) {
+    preUpdate() {
         this.lastx = this.x;
         this.lasty = this.y;
         if (this.isControlled) {
@@ -81,18 +81,18 @@ class WorldObject {
         }
     }
 
-    update(world: World, delta: number) {
+    update(delta: number) {
         
     }
 
-    postUpdate(world: World) {
+    postUpdate() {
         this.resetController();
     }
 
-    fullUpdate(world: World, delta: number) {
-        this.preUpdate(world);
-        this.update(world, delta);
-        this.postUpdate(world);
+    fullUpdate(delta: number) {
+        this.preUpdate();
+        this.update(delta);
+        this.postUpdate();
     }
 
     preRender(world: World) {

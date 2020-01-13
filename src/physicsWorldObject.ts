@@ -52,8 +52,8 @@ class PhysicsWorldObject extends WorldObject {
         this.preMovementY = this.y;
     }
 
-    update(world: World, delta: number) {
-        super.update(world, delta);
+    update(delta: number) {
+        super.update(delta);
         if (this.simulating) {
             this.simulate(delta);
         }

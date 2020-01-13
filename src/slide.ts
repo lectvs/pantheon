@@ -27,8 +27,8 @@ class Slide extends Sprite {
         this.fullyLoaded = false;
     }
 
-    update(world: World, delta: number) {
-        super.update(world, delta);
+    update(delta: number) {
+        super.update(delta);
         if (this.fullyLoaded) return;
         
         this.timer.update(delta);

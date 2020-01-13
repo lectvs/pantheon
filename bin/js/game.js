@@ -539,7 +539,7 @@ var TextureFilter = /** @class */ (function () {
 var Texture = /** @class */ (function () {
     function Texture(width, height, immutable) {
         if (immutable === void 0) { immutable = false; }
-        this.renderTextureSprite = new PIXIRenderTextureSprite(width, height);
+        this.renderTextureSprite = new Texture.PIXIRenderTextureSprite(width, height);
         this.anchorX = 0;
         this.anchorY = 0;
         this.immutable = immutable;
@@ -656,9 +656,32 @@ var Texture = /** @class */ (function () {
     }
     Texture.fromPixiTexture = fromPixiTexture;
     function none() {
-        return new Texture(1, 1);
+        return new Texture(0, 0);
     }
     Texture.none = none;
+    var PIXIRenderTextureSprite = /** @class */ (function (_super) {
+        __extends(PIXIRenderTextureSprite, _super);
+        function PIXIRenderTextureSprite(width, height) {
+            var _this = this;
+            var renderTexture = PIXI.RenderTexture.create({ width: width, height: height });
+            _this = _super.call(this, renderTexture) || this;
+            _this._renderTexture = renderTexture;
+            return _this;
+        }
+        Object.defineProperty(PIXIRenderTextureSprite.prototype, "renderTexture", {
+            get: function () { return this._renderTexture; },
+            enumerable: true,
+            configurable: true
+        });
+        PIXIRenderTextureSprite.prototype.clear = function () {
+            Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, this._renderTexture, true);
+        };
+        PIXIRenderTextureSprite.prototype.resize = function (width, height) {
+            this._renderTexture.resize(width, height);
+        };
+        return PIXIRenderTextureSprite;
+    }(PIXI.Sprite));
+    Texture.PIXIRenderTextureSprite = PIXIRenderTextureSprite;
 })(Texture || (Texture = {}));
 /// <reference path="texture.ts"/>
 var Preload = /** @class */ (function () {
@@ -977,22 +1000,22 @@ var WorldObject = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    WorldObject.prototype.preUpdate = function (world) {
+    WorldObject.prototype.preUpdate = function () {
         this.lastx = this.x;
         this.lasty = this.y;
         if (this.isControlled) {
             this.updateControllerFromSchema();
         }
     };
-    WorldObject.prototype.update = function (world, delta) {
+    WorldObject.prototype.update = function (delta) {
     };
-    WorldObject.prototype.postUpdate = function (world) {
+    WorldObject.prototype.postUpdate = function () {
         this.resetController();
     };
-    WorldObject.prototype.fullUpdate = function (world, delta) {
-        this.preUpdate(world);
-        this.update(world, delta);
-        this.postUpdate(world);
+    WorldObject.prototype.fullUpdate = function (delta) {
+        this.preUpdate();
+        this.update(delta);
+        this.postUpdate();
     };
     WorldObject.prototype.preRender = function (world) {
         this.preRenderStoredX = this.x;
@@ -1841,8 +1864,8 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         _this.preMovementY = _this.y;
         return _this;
     }
-    PhysicsWorldObject.prototype.update = function (world, delta) {
-        _super.prototype.update.call(this, world, delta);
+    PhysicsWorldObject.prototype.update = function (delta) {
+        _super.prototype.update.call(this, delta);
         if (this.simulating) {
             this.simulate(delta);
         }
@@ -1937,8 +1960,8 @@ var Sprite = /** @class */ (function (_super) {
         _this.effects.updateFromConfig(config.effects);
         return _this;
     }
-    Sprite.prototype.update = function (world, delta) {
-        _super.prototype.update.call(this, world, delta);
+    Sprite.prototype.update = function (delta) {
+        _super.prototype.update.call(this, delta);
         this.animationManager.update(delta);
     };
     Sprite.prototype.render = function (screen) {
@@ -1998,8 +2021,8 @@ var DialogBox = /** @class */ (function (_super) {
         _this.characterTimer = new Timer(0.05, function () { return _this.advanceCharacter(); }, true);
         return _this;
     }
-    DialogBox.prototype.update = function (world, delta) {
-        _super.prototype.update.call(this, world, delta);
+    DialogBox.prototype.update = function (delta) {
+        _super.prototype.update.call(this, delta);
         this.characterTimer.update(delta);
         if (this.done) {
             this.visible = false;
@@ -2425,8 +2448,8 @@ var Follow = /** @class */ (function () {
         this.targetHistory = [];
         this.moveThreshold = moveThreshold;
     }
-    Follow.prototype.update = function (world, sprite) {
-        this.attemptToResolveTarget(world);
+    Follow.prototype.update = function (sprite) {
+        this.attemptToResolveTarget(sprite);
         this.pushTargetPosition();
         var dist = 0;
         var i = 0;
@@ -2458,9 +2481,9 @@ var Follow = /** @class */ (function () {
             Draw.pixel(screen, this.targetHistory[i], this.targetHistory[i + 1]);
         }
     };
-    Follow.prototype.attemptToResolveTarget = function (world) {
+    Follow.prototype.attemptToResolveTarget = function (sprite) {
         if (_.isString(this.target)) {
-            this.target = world.worldObjectsByName[this.target] || this.target;
+            this.target = sprite.world.worldObjectsByName[this.target] || this.target;
         }
     };
     Follow.prototype.pushTargetPosition = function () {
@@ -2569,8 +2592,8 @@ var HumanCharacter = /** @class */ (function (_super) {
         _this.direction = Direction2D.LEFT;
         return _this;
     }
-    HumanCharacter.prototype.update = function (world, delta) {
-        this.updateFollow(world);
+    HumanCharacter.prototype.update = function (delta) {
+        this.updateFollow();
         var haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
         var vaxis = (this.controller.down ? 1 : 0) - (this.controller.up ? 1 : 0);
         if (haxis < 0) {
@@ -2605,27 +2628,27 @@ var HumanCharacter = /** @class */ (function (_super) {
         else {
             this.vy = 0;
         }
-        _super.prototype.update.call(this, world, delta);
-        this.updateInteractions(world);
+        _super.prototype.update.call(this, delta);
+        this.updateInteractions();
         // Handle animation.
         var anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'run';
         var anim_dir = this.direction.v == Direction.UP ? 'up' : (this.direction.h == Direction.NONE ? 'down' : 'side');
         this.playAnimation(anim_state + "_" + anim_dir);
     };
-    HumanCharacter.prototype.updateInteractions = function (world) {
+    HumanCharacter.prototype.updateInteractions = function () {
         var e_6, _a;
         if (!this.isControlled) {
-            global.theater.interactionManager.highlight(world, null);
+            global.theater.interactionManager.highlight(null);
             return;
         }
-        var interactableObjects = global.theater.interactionManager.getInteractableObjects(world);
+        var interactableObjects = global.theater.interactionManager.getInteractableObjects();
         var interactRadius = 2;
         var highlightedObject = null;
         G.expandRectangle(this.bounds, interactRadius);
         try {
             for (var interactableObjects_1 = __values(interactableObjects), interactableObjects_1_1 = interactableObjects_1.next(); !interactableObjects_1_1.done; interactableObjects_1_1 = interactableObjects_1.next()) {
                 var obj = interactableObjects_1_1.value;
-                if (this.isOverlapping(world.getWorldObjectByName(obj))) {
+                if (this.isOverlapping(this.world.getWorldObjectByName(obj))) {
                     highlightedObject = obj;
                 }
             }
@@ -2638,9 +2661,9 @@ var HumanCharacter = /** @class */ (function (_super) {
             finally { if (e_6) throw e_6.error; }
         }
         G.expandRectangle(this.bounds, -interactRadius);
-        global.theater.interactionManager.highlight(world, highlightedObject);
+        global.theater.interactionManager.highlight(highlightedObject);
         if (Input.justDown('interact') && highlightedObject) {
-            global.theater.interactionManager.interact(world, highlightedObject);
+            global.theater.interactionManager.interact(highlightedObject);
         }
     };
     HumanCharacter.prototype.follow = function (thing, maxDistance) {
@@ -2659,9 +2682,9 @@ var HumanCharacter = /** @class */ (function (_super) {
     HumanCharacter.prototype.unfollow = function () {
         this._follow = null;
     };
-    HumanCharacter.prototype.updateFollow = function (world) {
+    HumanCharacter.prototype.updateFollow = function () {
         if (this._follow)
-            this._follow.update(world, this);
+            this._follow.update(this);
     };
     return HumanCharacter;
 }(Sprite));
@@ -2854,15 +2877,16 @@ var Input = /** @class */ (function () {
     Input.Key = Key;
 })(Input || (Input = {}));
 var InteractionManager = /** @class */ (function () {
-    function InteractionManager(config) {
+    function InteractionManager(theater, config) {
+        this.theater = theater;
         this.highlightFunction = config.highlightFunction;
         this.resetFunction = config.resetFunction;
         this.highlightedObject = null;
     }
-    InteractionManager.prototype.update = function (world) {
+    InteractionManager.prototype.update = function () {
         var e_9, _a;
         try {
-            for (var _b = __values(world.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
+            for (var _b = __values(this.theater.currentWorld.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var obj = _c.value;
                 if (obj instanceof Sprite) {
                     if (obj === this.highlightedObject) {
@@ -2882,7 +2906,7 @@ var InteractionManager = /** @class */ (function () {
             finally { if (e_9) throw e_9.error; }
         }
     };
-    InteractionManager.prototype.getInteractableObjects = function (world) {
+    InteractionManager.prototype.getInteractableObjects = function () {
         var e_10, _a, e_11, _b;
         var result = new Set();
         var cutscenes = this.getInteractableCutscenes();
@@ -2892,7 +2916,7 @@ var InteractionManager = /** @class */ (function () {
                 try {
                     for (var _c = __values(global.theater.storyboard[cutscene].playOnInteractWith), _d = _c.next(); !_d.done; _d = _c.next()) {
                         var obj = _d.value;
-                        if (world.containsWorldObject(obj)) {
+                        if (this.theater.currentWorld.containsWorldObject(obj)) {
                             result.add(obj);
                         }
                     }
@@ -2915,22 +2939,22 @@ var InteractionManager = /** @class */ (function () {
         }
         return result;
     };
-    InteractionManager.prototype.highlight = function (world, obj) {
+    InteractionManager.prototype.highlight = function (obj) {
         if (!obj) {
             this.highlightedObject = null;
             return;
         }
         if (_.isString(obj)) {
-            var worldObject = world.getWorldObjectByName(obj);
+            var worldObject = this.theater.currentWorld.getWorldObjectByName(obj);
             if (!(worldObject instanceof Sprite))
                 return;
             obj = worldObject;
         }
         this.highlightedObject = obj;
     };
-    InteractionManager.prototype.interact = function (world, obj) {
+    InteractionManager.prototype.interact = function (obj) {
         if (!_.isString(obj)) {
-            var objName = world.getName(obj);
+            var objName = this.theater.currentWorld.getName(obj);
             if (!objName)
                 return;
             obj = objName;
@@ -3080,7 +3104,7 @@ var Main = /** @class */ (function () {
             global.theater = _this.theater;
             global.clearStacks();
             _this.fpsMetricManager.update(_this.delta);
-            _this.theater.update(null, _this.delta);
+            _this.theater.update(_this.delta);
             if (DEBUG_SKIP_ACTIVE) {
                 _this.updateTheaterSkip();
             }
@@ -3092,7 +3116,7 @@ var Main = /** @class */ (function () {
     };
     Main.updateTheaterSkip = function () {
         for (var i = 0; i < 9; i++) {
-            this.theater.update(null, this.delta);
+            this.theater.update(this.delta);
         }
     };
     return Main;
@@ -3512,28 +3536,6 @@ var Physics = /** @class */ (function () {
         })(Direction = Collision.Direction || (Collision.Direction = {}));
     })(Collision = Physics.Collision || (Physics.Collision = {}));
 })(Physics || (Physics = {}));
-var PIXIRenderTextureSprite = /** @class */ (function (_super) {
-    __extends(PIXIRenderTextureSprite, _super);
-    function PIXIRenderTextureSprite(width, height) {
-        var _this = this;
-        var renderTexture = PIXI.RenderTexture.create({ width: width, height: height });
-        _this = _super.call(this, renderTexture) || this;
-        _this._renderTexture = renderTexture;
-        return _this;
-    }
-    Object.defineProperty(PIXIRenderTextureSprite.prototype, "renderTexture", {
-        get: function () { return this._renderTexture; },
-        enumerable: true,
-        configurable: true
-    });
-    PIXIRenderTextureSprite.prototype.clear = function () {
-        Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, this._renderTexture, true);
-    };
-    PIXIRenderTextureSprite.prototype.resize = function (width, height) {
-        this._renderTexture.resize(width, height);
-    };
-    return PIXIRenderTextureSprite;
-}(PIXI.Sprite));
 var Script = /** @class */ (function () {
     function Script(scriptFunction) {
         this.iterator = scriptFunction();
@@ -3612,8 +3614,8 @@ var Slide = /** @class */ (function (_super) {
         _this.fullyLoaded = false;
         return _this;
     }
-    Slide.prototype.update = function (world, delta) {
-        _super.prototype.update.call(this, world, delta);
+    Slide.prototype.update = function (delta) {
+        _super.prototype.update.call(this, delta);
         if (this.fullyLoaded)
             return;
         this.timer.update(delta);
@@ -3975,7 +3977,7 @@ var StageManager = /** @class */ (function () {
         var oldWorld = this.currentWorld;
         var oldSnapshot = oldWorld.takeSnapshot();
         this.setStage(name, entryPoint);
-        this.currentWorld.update(this.theater, 0.01);
+        this.currentWorld.update(0);
         var newSnapshot = this.currentWorld.takeSnapshot();
         this.currentWorld.active = false;
         this.currentWorld.visible = false;
@@ -4104,7 +4106,7 @@ var Tilemap = /** @class */ (function (_super) {
             finally { if (e_17) throw e_17.error; }
         }
     };
-    Tilemap.prototype.postUpdate = function (world) {
+    Tilemap.prototype.postUpdate = function () {
         var e_18, _a;
         if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
             try {
@@ -4122,7 +4124,7 @@ var Tilemap = /** @class */ (function (_super) {
                 finally { if (e_18) throw e_18.error; }
             }
         }
-        _super.prototype.postUpdate.call(this, world);
+        _super.prototype.postUpdate.call(this);
     };
     Tilemap.prototype.render = function (screen) {
         if (this.dirty) {
@@ -4547,15 +4549,15 @@ var World = /** @class */ (function (_super) {
         _this.debugCameraY = 0;
         return _this;
     }
-    World.prototype.update = function (world, delta) {
+    World.prototype.update = function (delta) {
         var e_21, _a, e_22, _b, e_23, _c;
-        _super.prototype.update.call(this, world, delta);
+        _super.prototype.update.call(this, delta);
         this.scriptManager.update(this, delta);
         try {
             for (var _d = __values(this.worldObjects), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var worldObject = _e.value;
                 if (worldObject.active)
-                    worldObject.preUpdate(this);
+                    worldObject.preUpdate();
             }
         }
         catch (e_21_1) { e_21 = { error: e_21_1 }; }
@@ -4569,7 +4571,7 @@ var World = /** @class */ (function (_super) {
             for (var _f = __values(this.worldObjects), _g = _f.next(); !_g.done; _g = _f.next()) {
                 var worldObject = _g.value;
                 if (worldObject.active)
-                    worldObject.update(this, delta);
+                    worldObject.update(delta);
             }
         }
         catch (e_22_1) { e_22 = { error: e_22_1 }; }
@@ -4584,7 +4586,7 @@ var World = /** @class */ (function (_super) {
             for (var _h = __values(this.worldObjects), _j = _h.next(); !_j.done; _j = _h.next()) {
                 var worldObject = _j.value;
                 if (worldObject.active)
-                    worldObject.postUpdate(this);
+                    worldObject.postUpdate();
             }
         }
         catch (e_23_1) { e_23 = { error: e_23_1 }; }
@@ -5049,7 +5051,7 @@ var Theater = /** @class */ (function (_super) {
         _this.cutsceneManager = new CutsceneManager(_this, config.skipCutsceneScriptKey);
         _this.loadDialogBox(config.dialogBox);
         _this.stageManager = new StageManager(_this, config.stages);
-        _this.interactionManager = new InteractionManager(config.interactionManager);
+        _this.interactionManager = new InteractionManager(_this, config.interactionManager);
         _this.slideManager = new SlideManager(_this);
         _this.stageManager.setStage(config.stageToLoad, config.stageEntryPoint);
         // Start storyboard entry point
@@ -5085,10 +5087,10 @@ var Theater = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Theater.prototype.update = function (world, delta) {
+    Theater.prototype.update = function (delta) {
         this.cutsceneManager.update(delta);
-        _super.prototype.update.call(this, world, delta);
-        this.interactionManager.update(this.currentWorld);
+        _super.prototype.update.call(this, delta);
+        this.interactionManager.update();
         this.stageManager.loadStageIfQueued();
         if (DEBUG_SHOW_MOUSE_POSITION) {
             this.debugMousePosition.setText(S.padLeft(this.currentWorld.getWorldMouseX().toString(), 3) + " " + S.padLeft(this.currentWorld.getWorldMouseY().toString(), 3));

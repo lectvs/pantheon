@@ -116,7 +116,7 @@ class Main {
 
             this.fpsMetricManager.update(this.delta);
 
-            this.theater.update(null, this.delta);
+            this.theater.update(this.delta);
 
             if (DEBUG_SKIP_ACTIVE) {
                 this.updateTheaterSkip();
@@ -132,7 +132,7 @@ class Main {
 
     private static updateTheaterSkip() {
         for (let i = 0; i < 9; i++) {
-            this.theater.update(null, this.delta);
+            this.theater.update(this.delta);
         }
     }
 }

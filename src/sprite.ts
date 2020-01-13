@@ -68,8 +68,8 @@ class Sprite extends PhysicsWorldObject {
         this.effects.updateFromConfig(config.effects);
     }
 
-    update(world: World, delta: number) {
-        super.update(world, delta);
+    update(delta: number) {
+        super.update(delta);
         this.animationManager.update(delta);
     }
 

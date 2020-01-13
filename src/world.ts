@@ -86,24 +86,24 @@ class World extends WorldObject {
         this.debugCameraY = 0;
     }
 
-    update(world: World, delta: number) {
-        super.update(world, delta);
+    update(delta: number) {
+        super.update(delta);
 
         this.scriptManager.update(this, delta);
         
 
         for (let worldObject of this.worldObjects) {
-            if (worldObject.active) worldObject.preUpdate(this);
+            if (worldObject.active) worldObject.preUpdate();
         }
 
         for (let worldObject of this.worldObjects) {
-            if (worldObject.active) worldObject.update(this, delta);
+            if (worldObject.active) worldObject.update(delta);
         }
 
         this.handleCollisions();
 
         for (let worldObject of this.worldObjects) {
-            if (worldObject.active) worldObject.postUpdate(this);
+            if (worldObject.active) worldObject.postUpdate();
         }
 
         if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this === global.theater.currentWorld) {

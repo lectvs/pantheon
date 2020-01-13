@@ -17,8 +17,8 @@ class Follow {
         this.moveThreshold = moveThreshold;
     }
 
-    update(world: World, sprite: Sprite) {
-        this.attemptToResolveTarget(world);
+    update(sprite: Sprite) {
+        this.attemptToResolveTarget(sprite);
         this.pushTargetPosition();
 
         let dist = 0;
@@ -51,9 +51,9 @@ class Follow {
         }
     }
 
-    private attemptToResolveTarget(world: World) {
+    private attemptToResolveTarget(sprite: Sprite) {
         if (_.isString(this.target)) {
-            this.target = world.worldObjectsByName[this.target] || this.target;
+            this.target = sprite.world.worldObjectsByName[this.target] || this.target;
         }
     }
 

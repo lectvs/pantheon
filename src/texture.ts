@@ -15,7 +15,7 @@ namespace Texture {
 }
 
 class Texture {
-    renderTextureSprite: PIXIRenderTextureSprite;
+    renderTextureSprite: Texture.PIXIRenderTextureSprite;
     get width() { return this.renderTextureSprite.width; }
     get height() { return this.renderTextureSprite.height; }
     anchorX: number;
@@ -24,7 +24,7 @@ class Texture {
     immutable: boolean;
 
     constructor(width: number, height: number, immutable: boolean = false) {
-        this.renderTextureSprite = new PIXIRenderTextureSprite(width, height);
+        this.renderTextureSprite = new Texture.PIXIRenderTextureSprite(width, height);
         this.anchorX = 0;
         this.anchorY = 0;
         this.immutable = immutable;
@@ -144,8 +144,29 @@ namespace Texture {
         texture.immutable = true;
         return texture;
     }
+
     export function none() {
-        return new Texture(1, 1);
+        return new Texture(0, 0);
+    }
+
+    export class PIXIRenderTextureSprite extends PIXI.Sprite {
+        _renderTexture: PIXI.RenderTexture;
+        get renderTexture() { return this._renderTexture; }
+    
+        constructor(width: number, height: number) {
+            let renderTexture = PIXI.RenderTexture.create({ width, height });
+            super(renderTexture);
+            
+            this._renderTexture = renderTexture;
+        }
+    
+        clear() {
+            Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, this._renderTexture, true);
+        }
+        
+        resize(width: number, height: number) {
+            this._renderTexture.resize(width, height);
+        }
     }
 }
 

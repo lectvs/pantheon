@@ -19,8 +19,8 @@ class HumanCharacter extends Sprite {
         this.direction = Direction2D.LEFT;
     }
 
-    update(world: World, delta: number) {
-        this.updateFollow(world);
+    update(delta: number) {
+        this.updateFollow();
 
         let haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
         let vaxis = (this.controller.down ? 1 : 0) - (this.controller.up ? 1 : 0);
@@ -51,9 +51,9 @@ class HumanCharacter extends Sprite {
             this.vy = 0;
         }
 
-        super.update(world, delta);
+        super.update(delta);
 
-        this.updateInteractions(world);
+        this.updateInteractions();
 
         // Handle animation.
         let anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'run';
@@ -62,28 +62,28 @@ class HumanCharacter extends Sprite {
         this.playAnimation(`${anim_state}_${anim_dir}`);
     }
 
-    updateInteractions(world: World) {
+    updateInteractions() {
         if (!this.isControlled) {
-            global.theater.interactionManager.highlight(world, null);
+            global.theater.interactionManager.highlight(null);
             return;
         }
 
-        let interactableObjects = global.theater.interactionManager.getInteractableObjects(world);
+        let interactableObjects = global.theater.interactionManager.getInteractableObjects();
         let interactRadius = 2;
 
         let highlightedObject: string = null;
 
         G.expandRectangle(this.bounds, interactRadius);
         for (let obj of interactableObjects) {
-            if (this.isOverlapping(world.getWorldObjectByName<PhysicsWorldObject>(obj))) {
+            if (this.isOverlapping(this.world.getWorldObjectByName<PhysicsWorldObject>(obj))) {
                 highlightedObject = obj;
             }
         }
         G.expandRectangle(this.bounds, -interactRadius);
 
-        global.theater.interactionManager.highlight(world, highlightedObject);
+        global.theater.interactionManager.highlight(highlightedObject);
         if (Input.justDown('interact') && highlightedObject) {
-            global.theater.interactionManager.interact(world, highlightedObject);
+            global.theater.interactionManager.interact(highlightedObject);
         }
     }
 
@@ -106,7 +106,7 @@ class HumanCharacter extends Sprite {
         this._follow = null;
     }
 
-    private updateFollow(world: World) {
-        if (this._follow) this._follow.update(world, this);
+    private updateFollow() {
+        if (this._follow) this._follow.update(this);
     }
 }
