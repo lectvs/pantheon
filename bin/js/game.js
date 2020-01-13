@@ -1086,7 +1086,15 @@ var WorldObject = /** @class */ (function () {
     WorldObject.fromConfig = fromConfig;
 })(WorldObject || (WorldObject = {}));
 /// <reference path="./worldObject.ts"/>
-var Transition;
+var Transition = /** @class */ (function (_super) {
+    __extends(Transition, _super);
+    function Transition() {
+        var _this = _super.call(this, {}) || this;
+        _this.done = false;
+        return _this;
+    }
+    return Transition;
+}(WorldObject));
 (function (Transition) {
     Transition.INSTANT = { type: 'instant' };
     function FADE(preTime, time, postTime) {
@@ -1095,34 +1103,48 @@ var Transition;
         };
     }
     Transition.FADE = FADE;
-    var Obj = /** @class */ (function (_super) {
-        __extends(Obj, _super);
-        function Obj(oldSnapshot, newSnapshot, transition) {
-            var _this = _super.call(this, {}) || this;
-            _this.oldSprite = new Sprite({ texture: oldSnapshot });
-            _this.newSprite = new Sprite({ texture: newSnapshot });
-            _this.done = false;
-            if (transition.type === 'instant') {
-                _this.done = true;
-            }
-            else if (transition.type === 'fade') {
-                _this.oldSprite.alpha = 1;
-                _this.newSprite.alpha = 0;
-                global.theater.runScript(S.chain(S.wait(transition.preTime), S.doOverTime(transition.time, function (t) {
-                    _this.oldSprite.alpha = 1 - t;
-                    _this.newSprite.alpha = t;
-                }), S.wait(transition.postTime), S.call(function () { return _this.done = true; })));
-            }
+    function fromConfigAndSnapshots(config, oldSnapshot, newSnapshot) {
+        if (config.type === 'instant') {
+            return new Instant();
+        }
+        if (config.type === 'fade') {
+            return new Fade(oldSnapshot, newSnapshot, config.preTime, config.time, config.postTime);
+        }
+        // @ts-ignore
+        debug("Transition type " + config.type + " not found.");
+        return undefined;
+    }
+    Transition.fromConfigAndSnapshots = fromConfigAndSnapshots;
+    var Instant = /** @class */ (function (_super) {
+        __extends(Instant, _super);
+        function Instant() {
+            var _this = _super.call(this) || this;
+            _this.done = true;
             return _this;
         }
-        Obj.prototype.render = function (screen) {
+        return Instant;
+    }(Transition));
+    var Fade = /** @class */ (function (_super) {
+        __extends(Fade, _super);
+        function Fade(oldSnapshot, newSnapshot, preTime, time, postTime) {
+            var _this = _super.call(this) || this;
+            _this.oldSnapshot = oldSnapshot;
+            _this.newSnapshot = newSnapshot;
+            _this.newAlpha = 0;
+            global.theater.runScript(S.chain(S.wait(preTime), S.doOverTime(time, function (t) {
+                _this.newAlpha = t;
+            }), S.wait(postTime), S.call(function () { return _this.done = true; })));
+            return _this;
+        }
+        Fade.prototype.render = function (screen) {
             _super.prototype.render.call(this, screen);
-            this.newSprite.render(screen);
-            this.oldSprite.render(screen);
+            screen.render(this.oldSnapshot);
+            screen.render(this.newSnapshot, {
+                alpha: this.newAlpha
+            });
         };
-        return Obj;
-    }(WorldObject));
-    Transition.Obj = Obj;
+        return Fade;
+    }(Transition));
 })(Transition || (Transition = {}));
 /// <reference path="./transition.ts" />
 var DEFAULT_SCREEN_TRANSITION = Transition.FADE(0.5, 1, 0.5);
@@ -3940,14 +3962,14 @@ var StageManager = /** @class */ (function () {
         this.currentWorld = null;
         this.stageLoadQueue = null;
     }
-    StageManager.prototype.loadStage = function (name, transition, entryPoint) {
-        this.stageLoadQueue = { name: name, transition: transition, entryPoint: entryPoint };
+    StageManager.prototype.loadStage = function (name, transitionConfig, entryPoint) {
+        this.stageLoadQueue = { name: name, transitionConfig: transitionConfig, entryPoint: entryPoint };
     };
     StageManager.prototype.loadStageIfQueued = function () {
         if (!this.stageLoadQueue)
             return;
         var name = this.stageLoadQueue.name;
-        var transition = this.stageLoadQueue.transition;
+        var transitionConfig = this.stageLoadQueue.transitionConfig;
         var entryPoint = this.stageLoadQueue.entryPoint;
         this.stageLoadQueue = null;
         var oldWorld = this.currentWorld;
@@ -3958,21 +3980,21 @@ var StageManager = /** @class */ (function () {
         this.currentWorld.active = false;
         this.currentWorld.visible = false;
         // this is outside the script to avoid 1-frame flicker
-        var transitionObj = new Transition.Obj(oldSnapshot, newSnapshot, transition);
-        World.Actions.setLayer(transitionObj, Theater.LAYER_TRANSITION);
-        World.Actions.addWorldObjectToWorld(transitionObj, this.theater);
+        var transition = Transition.fromConfigAndSnapshots(transitionConfig, oldSnapshot, newSnapshot);
+        World.Actions.setLayer(transition, Theater.LAYER_TRANSITION);
+        World.Actions.addWorldObjectToWorld(transition, this.theater);
         var stageManager = this;
         this.theater.runScript(function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        if (!!transitionObj.done) return [3 /*break*/, 2];
+                        if (!!transition.done) return [3 /*break*/, 2];
                         return [4 /*yield*/];
                     case 1:
                         _a.sent();
                         return [3 /*break*/, 0];
                     case 2:
-                        World.Actions.removeWorldObjectFromWorld(transitionObj);
+                        World.Actions.removeWorldObjectFromWorld(transition);
                         stageManager.currentWorld.active = true;
                         stageManager.currentWorld.visible = true;
                         stageManager.theater.onStageLoad();

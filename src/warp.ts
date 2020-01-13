@@ -1,7 +1,7 @@
 class Warp extends PhysicsWorldObject {
     stage: string;
     entryPoint: Stage.EntryPoint;
-    transition: Transition;
+    transition: Transition.Config;
 
     constructor(config: PhysicsWorldObject.Config) {
         super(config);

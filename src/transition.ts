@@ -1,55 +1,81 @@
 /// <reference path="./worldObject.ts"/>
 
-type Transition = {
-    type: 'instant';
-} | {
-    type: 'fade';
-    preTime: number;
-    time: number;
-    postTime: number;
+namespace Transition {
+    export type Config = {
+        type: 'instant';
+    } | {
+        type: 'fade';
+        preTime: number;
+        time: number;
+        postTime: number;
+    }
+}
+
+class Transition extends WorldObject {
+    done: boolean;
+
+    constructor() {
+        super({});
+        this.done = false;
+    }
 }
 
 namespace Transition {
-    export const INSTANT: Transition = { type: 'instant' };
-    export function FADE(preTime: number, time: number, postTime: number): Transition {
+    export const INSTANT: Transition.Config = { type: 'instant' };
+    export function FADE(preTime: number, time: number, postTime: number): Transition.Config {
         return {
             type: 'fade', preTime, time, postTime
         };
     }
 
-    export class Obj extends WorldObject {
-        oldSprite: Sprite;
-        newSprite: Sprite;
-        done: boolean;
+    export function fromConfigAndSnapshots(config: Transition.Config, oldSnapshot: Texture, newSnapshot: Texture) {
+        if (config.type === 'instant') {
+            return new Instant();
+        }
 
-        constructor(oldSnapshot: Texture, newSnapshot: Texture, transition: Transition) {
-            super({});
+        if (config.type === 'fade') {
+            return new Fade(oldSnapshot, newSnapshot, config.preTime, config.time, config.postTime);
+        }
 
-            this.oldSprite = new Sprite({ texture: oldSnapshot });
-            this.newSprite = new Sprite({ texture: newSnapshot });
-            this.done = false;
+        // @ts-ignore
+        debug(`Transition type ${config.type} not found.`);
+        return undefined;
+    }
 
-            if (transition.type === 'instant') {
-                this.done = true;
-            } else if (transition.type === 'fade') {
-                this.oldSprite.alpha = 1;
-                this.newSprite.alpha = 0;
-                global.theater.runScript(S.chain(
-                    S.wait(transition.preTime),
-                    S.doOverTime(transition.time, t => {
-                        this.oldSprite.alpha = 1 - t;
-                        this.newSprite.alpha = t;
-                    }),
-                    S.wait(transition.postTime),
-                    S.call(() => this.done = true),
-                ));
-            }
+    class Instant extends Transition {
+        constructor() {
+            super();
+            this.done = true;
+        }
+    }
+
+    class Fade extends Transition {
+        private oldSnapshot: Texture;
+        private newSnapshot: Texture;
+        private newAlpha: number;
+
+        constructor(oldSnapshot: Texture, newSnapshot: Texture, preTime: number, time: number, postTime: number) {
+            super();
+            this.oldSnapshot = oldSnapshot;
+            this.newSnapshot = newSnapshot;
+            this.newAlpha = 0;
+
+            global.theater.runScript(S.chain(
+                S.wait(preTime),
+                S.doOverTime(time, t => {
+                    this.newAlpha = t;
+                }),
+                S.wait(postTime),
+                S.call(() => this.done = true),
+            ));
         }
 
         render(screen: Texture) {
             super.render(screen);
-            this.newSprite.render(screen);
-            this.oldSprite.render(screen);
+            screen.render(this.oldSnapshot);
+            screen.render(this.newSnapshot, {
+                alpha: this.newAlpha
+            });
         }
     }
 }

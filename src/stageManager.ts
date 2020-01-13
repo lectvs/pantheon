@@ -5,7 +5,7 @@ class StageManager {
     currentWorld: World;
 
     private theater: Theater;
-    private stageLoadQueue: { name: string, transition: Transition, entryPoint: Stage.EntryPoint };
+    private stageLoadQueue: { name: string, transitionConfig: Transition.Config, entryPoint: Stage.EntryPoint };
 
     constructor(theater: Theater, stages: Dict<Stage>) {
         this.theater = theater;
@@ -15,15 +15,15 @@ class StageManager {
         this.stageLoadQueue = null;
     }
 
-    loadStage(name: string, transition: Transition, entryPoint: Stage.EntryPoint) {
-        this.stageLoadQueue = { name, transition, entryPoint };
+    loadStage(name: string, transitionConfig: Transition.Config, entryPoint: Stage.EntryPoint) {
+        this.stageLoadQueue = { name, transitionConfig, entryPoint };
     }
 
     loadStageIfQueued() {
         if (!this.stageLoadQueue) return;
 
         let name = this.stageLoadQueue.name;
-        let transition = this.stageLoadQueue.transition;
+        let transitionConfig = this.stageLoadQueue.transitionConfig;
         let entryPoint = this.stageLoadQueue.entryPoint;
         this.stageLoadQueue = null;
 
@@ -39,17 +39,17 @@ class StageManager {
         this.currentWorld.visible = false;
 
         // this is outside the script to avoid 1-frame flicker
-        let transitionObj = new Transition.Obj(oldSnapshot, newSnapshot, transition);
-        World.Actions.setLayer(transitionObj, Theater.LAYER_TRANSITION);
-        World.Actions.addWorldObjectToWorld(transitionObj, this.theater);
+        let transition = Transition.fromConfigAndSnapshots(transitionConfig, oldSnapshot, newSnapshot);
+        World.Actions.setLayer(transition, Theater.LAYER_TRANSITION);
+        World.Actions.addWorldObjectToWorld(transition, this.theater);
 
         let stageManager = this;
         this.theater.runScript(function* () {
-            while (!transitionObj.done) {
+            while (!transition.done) {
                 yield;
             }
 
-            World.Actions.removeWorldObjectFromWorld(transitionObj)
+            World.Actions.removeWorldObjectFromWorld(transition)
             stageManager.currentWorld.active = true;
             stageManager.currentWorld.visible = true;
 

@@ -102,7 +102,7 @@ class Theater extends World {
         return component;
     }
 
-    loadStage(name: string, transition: Transition = Transition.INSTANT, entryPoint: Stage.EntryPoint = Theater.DEFAULT_ENTRY_POINT) {
+    loadStage(name: string, transition: Transition.Config = Transition.INSTANT, entryPoint: Stage.EntryPoint = Theater.DEFAULT_ENTRY_POINT) {
         this.stageManager.loadStage(name, transition, entryPoint);
     }
 
