@@ -274,17 +274,17 @@ class World extends WorldObject {
         this.worldObjects.push(obj);
 
         if (obj.name) {
-            this.internalSetNameWorld(obj, obj.name);
+            World.Actions.setName(obj, obj.name);
         }
 
         if (obj.layer) {
-            this.internalSetLayerWorld(obj, obj.layer);
+            World.Actions.setLayer(obj, obj.layer);
         } else {
-            this.internalSetLayerWorld(obj, World.DEFAULT_LAYER);
+            World.Actions.setLayer(obj, World.DEFAULT_LAYER);
         }
 
         if (obj instanceof PhysicsWorldObject && obj.physicsGroup) {
-            this.internalSetPhysicsGroupWorld(obj, obj.physicsGroup);
+            World.Actions.setPhysicsGroup(obj, obj.physicsGroup);
         }
     }
 
@@ -392,9 +392,9 @@ namespace World {
             }
 
             /// @ts-ignore
-            world.internalAddWorldObjectToWorldWorld(obj);
-            /// @ts-ignore
             obj.internalAddWorldObjectToWorldWorldObject(world);
+            /// @ts-ignore
+            world.internalAddWorldObjectToWorldWorld(obj);
 
             obj.onAdd(world);
             return true;
@@ -411,9 +411,9 @@ namespace World {
             let world = obj.world;
 
             /// @ts-ignore
-            world.internalRemoveWorldObjectFromWorldWorld(obj);
-            /// @ts-ignore
             obj.internalRemoveWorldObjectFromWorldWorldObject(world);
+            /// @ts-ignore
+            world.internalRemoveWorldObjectFromWorldWorld(obj);
             
             obj.onRemove(world);
             return true;

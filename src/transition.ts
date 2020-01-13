@@ -1,3 +1,5 @@
+/// <reference path="./worldObject.ts"/>
+
 type Transition = {
     type: 'instant';
 } | {

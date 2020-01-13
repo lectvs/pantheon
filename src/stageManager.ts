@@ -63,7 +63,7 @@ class StageManager {
             return;
         }
 
-        let stage = Stage.resolveStageConfig(this.stages[name]);
+        let stage = Stage.resolveConfig(this.stages[name]);
 
         // Remove old stuff
         if (this.currentWorld) {
@@ -83,8 +83,9 @@ class StageManager {
         let world = new World(stage);
 
         if (stage.worldObjects) {
-            for (let worldObject of stage.worldObjects) {
-                this.addWorldObjectFromStageConfig(world, worldObject);
+            for (let worldObjectConfig of stage.worldObjects) {
+                let worldObject = WorldObject.fromConfig(worldObjectConfig);
+                World.Actions.addWorldObjectToWorld(worldObject, world);
             }
         }
 
@@ -102,25 +103,5 @@ class StageManager {
             memberObj.x = entryPoint.x;
             memberObj.y = entryPoint.y;
         }
-    }
-
-    private addWorldObjectFromStageConfig(world: World, worldObject: SomeWorldObjectConfig) {
-        worldObject = Stage.resolveWorldObjectConfig(worldObject);
-        if (!worldObject.constructor) return null;
-
-        let config = <SomeWorldObjectConfig> worldObject;
-        _.defaults(config, {
-            layer: World.DEFAULT_LAYER,
-        });
-
-        let obj: WorldObject = new config.constructor(config);
-        World.Actions.setName(obj, config.name);
-        World.Actions.setLayer(obj, config.layer);
-        if (obj instanceof PhysicsWorldObject) {
-            World.Actions.setPhysicsGroup(obj, config.physicsGroup);
-        }
-        World.Actions.addWorldObjectToWorld(obj, world);
-
-        return obj;
     }
 }

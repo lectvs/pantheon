@@ -26,15 +26,13 @@ class Party {
 
     addMemberToWorld(name: string, world: World) {
         let member = this.members[name];
-        if (!member) return;
+        if (!member) {
+            debug(`Could not find party member named ${name}. Party:`, this);
+            return;
+        }
+        
         if (member.worldObject.world) {
             World.Actions.removeWorldObjectFromWorld(member.worldObject);
-        }
-        World.Actions.setName(member.worldObject, member.config.name);
-        World.Actions.setLayer(member.worldObject, member.config.layer);
-        if (member.worldObject instanceof PhysicsWorldObject) {
-            /// @ts-ignore
-            World.Actions.setPhysicsGroup(member.worldObject, member.config.physicsGroup);
         }
 
         return World.Actions.addWorldObjectToWorld(member.worldObject, world);
@@ -68,8 +66,8 @@ class Party {
     load() {
         for (let key in this.members) {
             let member = this.members[key];
-            member.config = Stage.resolveWorldObjectConfig(member.config);
-            member.worldObject = new member.config.constructor(member.config);
+            member.config = WorldObject.resolveConfig(member.config);
+            member.worldObject = WorldObject.fromConfig(member.config);
             if (key === this.leader) {
                 member.worldObject.controllable = true;
             }

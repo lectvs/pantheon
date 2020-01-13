@@ -67,6 +67,10 @@ class WorldObject {
 
         this.preRenderStoredX = this.x;
         this.preRenderStoredY = this.y;
+
+        this.internalSetNameWorldObject(config.name);
+        this.internalSetLayerWorldObject(config.layer);
+        this.internalSetPhysicsGroupWorldObject(config.physicsGroup);
     }
 
     preUpdate(world: World) {
@@ -163,5 +167,35 @@ class WorldObject {
     // For use with World.Actions.setPhysicsGroup
     private internalSetPhysicsGroupWorldObject(physicsGroup: string) {
         this._physicsGroup = physicsGroup;
+    }
+}
+
+namespace WorldObject {
+    export function resolveConfig(config: SomeWorldObjectConfig): SomeWorldObjectConfig {
+        if (!config.parent) return _.clone(config);
+
+        let result = WorldObject.resolveConfig(config.parent);
+
+        for (let key in config) {
+            if (key === 'parent') continue;
+            if (!result[key]) {
+                result[key] = config[key];
+            } else if (key === 'animations') {
+                result[key] = A.mergeArray(config[key], result[key], (e: Animation.Config) => e.name);
+            } else if (key === 'data') {
+                result[key] = O.withOverrides(result[key], config[key]);
+            } else {
+                result[key] = config[key];
+            }
+        }
+
+        return result;
+    }
+
+    export function fromConfig(config: SomeWorldObjectConfig) {
+        config = WorldObject.resolveConfig(config);
+        if (!config.constructor) return null;
+
+        return new config.constructor(config);
     }
 }

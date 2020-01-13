@@ -16,12 +16,12 @@ function group(config: Group.Config) {
         prefix: '',
     });
 
-    let results = config.worldObjects.map(obj => Stage.resolveWorldObjectConfig(obj));
+    let results = config.worldObjects.map(obj => WorldObject.resolveConfig(obj));
 
     for (let override of config.overrides) {
         for (let i = 0; i < results.length; i++) {
             if (results[i].name === override.name) {
-                override = Stage.resolveWorldObjectConfig(override);
+                override = WorldObject.resolveConfig(override);
                 override.parent = results[i];
                 delete override.name;
                 results[i] = override;
