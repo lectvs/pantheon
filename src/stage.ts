@@ -1,50 +1,16 @@
-type AllStageConfig  = WorldObject.StageConfig & World.StageConfig & PhysicsWorldObject.StageConfig & Sprite.StageConfig & SpriteText.StageConfig & Tilemap.StageConfig;
-type SomeStageConfig = WorldObject.StageConfig | World.StageConfig | PhysicsWorldObject.StageConfig | Sprite.StageConfig | SpriteText.StageConfig | Tilemap.StageConfig;
+type SomeWorldObjectConfig =
+        | WorldObject.Config
+        | World.Config
+        | PhysicsWorldObject.Config
+        | Sprite.Config
+        | SpriteText.Config
+        | Tilemap.Config;
 
 type Stage = World.Config & {
     parent?: Stage;
     entryPoints?: Dict<Pt>;
-    worldObjects?: SomeStageConfig[];
+    worldObjects?: SomeWorldObjectConfig[];
 };
-
-namespace WorldObject {
-    export type StageConfig = Config & {
-        name?: string;
-        parent?: SomeStageConfig;
-        constructor?: any;
-        layer?: string;
-    }
-}
-
-namespace World {
-    export type StageConfig = Config & WorldObject.StageConfig & {
-        
-    };
-}
-
-namespace PhysicsWorldObject {
-    export type StageConfig = Config & WorldObject.StageConfig & {
-        physicsGroup?: string;
-    }
-}
-
-namespace Sprite {
-    export type StageConfig = Sprite.Config & PhysicsWorldObject.StageConfig & {
-        
-    }
-}
-
-namespace SpriteText {
-    export type StageConfig = SpriteText.Config & WorldObject.StageConfig & {
-
-    }
-}
-
-namespace Tilemap {
-    export type StageConfig = Tilemap.Config & WorldObject.StageConfig & {
-
-    }
-}
 
 namespace Stage {
     export type EntryPoint = string | Pt;
@@ -67,18 +33,18 @@ namespace Stage {
             if (!result[key]) {
                 result[key] = config[key];
             } else if (key === 'worldObjects') {
-                result[key] = mergeArray(config[key], result[key], (e: WorldObject.StageConfig) => e.name,
-                    (e: WorldObject.StageConfig, into: WorldObject.StageConfig) => {
+                result[key] = A.mergeArray(config[key], result[key], (e: WorldObject.Config) => e.name,
+                    (e: WorldObject.Config, into: WorldObject.Config) => {
                         e = resolveWorldObjectConfig(e);
                         e.parent = into;
                         return resolveWorldObjectConfig(e);
                     });
             } else if (key === 'entryPoints') {
-                result[key] = mergeObject(config[key], result[key]);
+                result[key] = O.mergeObject(config[key], result[key]);
             } else if (key === 'layers') {
-                result[key] = mergeArray(config[key], result[key], (e: World.LayerConfig) => e.name,
+                result[key] = A.mergeArray(config[key], result[key], (e: World.LayerConfig) => e.name,
                     (e: World.LayerConfig, into: World.LayerConfig) => {
-                        return mergeObject(e, into);
+                        return O.mergeObject(e, into);
                     });
             } else {
                 result[key] = config[key];
@@ -88,7 +54,7 @@ namespace Stage {
         return result;
     }
 
-    export function resolveWorldObjectConfig(config: SomeStageConfig): SomeStageConfig {
+    export function resolveWorldObjectConfig(config: SomeWorldObjectConfig): SomeWorldObjectConfig {
         if (!config.parent) return _.clone(config);
 
         let result = resolveWorldObjectConfig(config.parent);
@@ -98,7 +64,7 @@ namespace Stage {
             if (!result[key]) {
                 result[key] = config[key];
             } else if (key === 'animations') {
-                result[key] = mergeArray(config[key], result[key], (e: Animation.Config) => e.name);
+                result[key] = A.mergeArray(config[key], result[key], (e: Animation.Config) => e.name);
             } else if (key === 'data') {
                 result[key] = O.withOverrides(result[key], config[key]);
             } else {
@@ -106,36 +72,6 @@ namespace Stage {
             }
         }
 
-        return result;
-    }
-
-    function mergeArray<T>(array: T[], into: T[], key: (element: T) => any, combine: (e: T, into: T) => T = ((e, into) => e)) {
-        let result = A.clone(into);
-        for (let element of array) {
-            let resultContainedKey = false;
-            for (let i = 0; i < result.length; i++) {
-                if (key(element) === key(result[i])) {
-                    result[i] = combine(element, result[i]);
-                    resultContainedKey = true;
-                    break;
-                }
-            }
-            if (!resultContainedKey) {
-                result.push(element);
-            }
-        }
-        return result;
-    }
-
-    function mergeObject<T>(obj: T, into: T, combine: (e: any, into: any) => any = ((e, into) => e)) {
-        let result = _.clone(into);
-        for (let key in obj) {
-            if (result[key]) {
-                result[key] = combine(obj[key], result[key]);
-            } else {
-                result[key] = obj[key];
-            }
-        }
         return result;
     }
 }

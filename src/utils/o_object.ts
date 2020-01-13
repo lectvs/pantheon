@@ -13,6 +13,18 @@ namespace O {
         return obj === undefined ? def : obj;
     }
 
+    export function mergeObject<T>(obj: T, into: T, combine: (e: any, into: any) => any = ((e, into) => e)) {
+        let result = _.clone(into);
+        for (let key in obj) {
+            if (result[key]) {
+                result[key] = combine(obj[key], result[key]);
+            } else {
+                result[key] = obj[key];
+            }
+        }
+        return result;
+    }
+
     export function withDefaults<T>(obj: T, defaults: any): T {
         let result = _.clone(obj);
         _.defaults(result, defaults);

@@ -1,5 +1,10 @@
 namespace WorldObject {
     export type Config = {
+        parent?: SomeWorldObjectConfig;
+        constructor?: any;
+        name?: string;
+        layer?: string;
+        physicsGroup?: string;
         x?: number;
         y?: number;
         visible?: boolean;
@@ -17,6 +22,18 @@ class WorldObject {
     active: boolean;
     ignoreCamera: boolean;
     data: any;
+
+    // World data
+    private _world: World;
+    private _name: string;
+    private _layer: string;
+    private _physicsGroup: string;
+
+    get world() { return this._world; }
+    get name() { return this._name; }
+    get layer() { return this._layer; }
+    get physicsGroup() { return this._physicsGroup; }
+    //
 
     lastx: number;
     lasty: number;
@@ -120,5 +137,31 @@ class WorldObject {
 
     onRemove(world: World) {
         
+    }
+
+    // For use with World.Actions.addWorldObjectToWorld
+    private internalAddWorldObjectToWorldWorldObject(world: World) {
+        this._world = world;
+        if (!this._layer) this._layer = World.DEFAULT_LAYER;
+    }
+
+    // For use with World.Actions.removeWorldObjectFromWorld
+    private internalRemoveWorldObjectFromWorldWorldObject(world: World) {
+        this._world = null;
+    }
+
+    // For use with World.Actions.setName
+    private internalSetNameWorldObject(name: string) {
+        this._name = name;
+    }
+
+    // For use with World.Actions.setLyer
+    private internalSetLayerWorldObject(layer: string) {
+        this._layer = layer;
+    }
+
+    // For use with World.Actions.setPhysicsGroup
+    private internalSetPhysicsGroupWorldObject(physicsGroup: string) {
+        this._physicsGroup = physicsGroup;
     }
 }

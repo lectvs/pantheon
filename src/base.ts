@@ -20,7 +20,7 @@ const BASE_STAGE: Stage = {
     ],
 }
 
-function HUMAN_CHARACTER(texture: string): Sprite.StageConfig {
+function HUMAN_CHARACTER(texture: string): Sprite.Config {
     return {
         constructor: HumanCharacter,
         layer: 'main',
@@ -38,7 +38,7 @@ function HUMAN_CHARACTER(texture: string): Sprite.StageConfig {
     }
 }
 
-function WORLD_BOUNDS(left: number, top: number, right: number, bottom: number): PhysicsWorldObject.StageConfig[] {
+function WORLD_BOUNDS(left: number, top: number, right: number, bottom: number): PhysicsWorldObject.Config[] {
     let thickness = 12;
     let width = right-left;
     let height = bottom-top;

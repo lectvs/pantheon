@@ -149,30 +149,6 @@ class World extends WorldObject {
             }
         }
     }
-    
-    addWorldObject<T extends WorldObject>(obj: T, options?: { name?: string, layer?: string, physicsGroup?: string }) {
-        if (!obj) return obj;
-        this.worldObjects.push(obj);
-
-        if (!options) options = {};
-
-        if (options.name) {
-            this.setName(obj, options.name);
-        }
-
-        if (options.layer) {
-            this.setLayer(obj, options.layer);
-        } else {
-            this.setLayer(obj, World.DEFAULT_LAYER);
-        }
-
-        if (options.physicsGroup && obj instanceof PhysicsWorldObject) {
-            this.setPhysicsGroup(obj, options.physicsGroup);
-        }
-        
-        obj.onAdd(this);
-        return obj;
-    }
 
     containsWorldObject(obj: string | WorldObject) {
         if (_.isString(obj)) {
@@ -185,6 +161,13 @@ class World extends WorldObject {
         if (_.isString(obj)) obj = this.getWorldObjectByName(obj);
         for (let layer of this.layers) {
             if (_.contains(layer.worldObjects, obj)) return layer.name;
+        }
+        return undefined;
+    }
+
+    getLayerByName(name: string) {
+        for (let layer of this.layers) {
+            if (layer.name === name) return layer;
         }
         return undefined;
     }
@@ -203,6 +186,10 @@ class World extends WorldObject {
             if (_.contains(this.physicsGroups[name].worldObjects, obj)) return name;
         }
         return undefined;
+    }
+
+    getPhysicsGroupByName(name: string) {
+        return this.physicsGroups[name];
     }
 
     getWorldMouseX() {
@@ -237,69 +224,8 @@ class World extends WorldObject {
         }
     }
 
-    removeName(obj: WorldObject) {
-        for (let name in this.worldObjectsByName) {
-            if (this.worldObjectsByName[name] === obj) {
-                delete this.worldObjectsByName[name];
-            }
-        }
-    }
-
-    removeFromAllLayers(obj: WorldObject) {
-        for (let layer of this.layers) {
-            A.removeAll(layer.worldObjects, obj);
-        }
-    }
-
-    removeFromAllPhysicsGroups(obj: WorldObject) {
-        for (let name in this.physicsGroups) {
-            A.removeAll(this.physicsGroups[name].worldObjects, obj);
-        }
-    }
-
-    removeWorldObject(obj: WorldObject) {
-        this.removeFromAllLayers(obj);
-        this.removeFromAllPhysicsGroups(obj);
-        A.removeAll(this.worldObjects, obj);
-        obj.onRemove(this);
-    }
-
     runScript(script: Script | Script.Function) {
         return this.scriptManager.runScript(script);
-    }
-
-    setName(obj: WorldObject, name: string) {
-        if (this.worldObjectsByName[name] && this.worldObjectsByName[name] !== obj) {
-            debug(`Cannot name object '${name}' as that name aleady exists in world`, this);
-            return;
-        }
-        this.removeName(obj);
-        this.worldObjectsByName[name] = obj;
-    }
-
-    setLayer(obj: WorldObject, name: string = World.DEFAULT_LAYER) {
-        this.removeFromAllLayers(obj);
-
-        for (let layer of this.layers) {
-            if (layer.name === name) {
-                layer.worldObjects.push(obj);
-                return;
-            }
-        }
-
-        debug(`Layer '${name}' does not exist in world`, this);
-    }
-
-    setPhysicsGroup(obj: PhysicsWorldObject, name: string) {
-        this.removeFromAllPhysicsGroups(obj);
-
-        let physicsGroup = this.physicsGroups[name];
-        if (!physicsGroup) {
-            debug(`PhysicsGroup '${name}' does not exist in world`, this);
-            return;
-        }
-
-        physicsGroup.worldObjects.push(obj);
     }
 
     takeSnapshot() {
@@ -343,6 +269,76 @@ class World extends WorldObject {
         return result;
     }
 
+    // For use with World.Actions.addWorldObjectToWorld
+    private internalAddWorldObjectToWorldWorld(obj: WorldObject) {
+        this.worldObjects.push(obj);
+
+        if (obj.name) {
+            this.internalSetNameWorld(obj, obj.name);
+        }
+
+        if (obj.layer) {
+            this.internalSetLayerWorld(obj, obj.layer);
+        } else {
+            this.internalSetLayerWorld(obj, World.DEFAULT_LAYER);
+        }
+
+        if (obj instanceof PhysicsWorldObject && obj.physicsGroup) {
+            this.internalSetPhysicsGroupWorld(obj, obj.physicsGroup);
+        }
+    }
+
+    // For use with World.Actions.removeWorldObjectFromWorld
+    private internalRemoveWorldObjectFromWorldWorld(obj: WorldObject) {
+        this.removeFromAllLayers(obj);
+        this.removeFromAllPhysicsGroups(obj);
+        A.removeAll(this.worldObjects, obj);
+    }
+
+    // For use with World.Actions.setName
+    private internalSetNameWorld(obj: WorldObject, name: string) {
+        this.removeName(obj);
+        this.worldObjectsByName[name] = obj;
+    }
+
+    // For use with World.Actions.setLayer
+    private internalSetLayerWorld(obj: WorldObject, layerName: string) {
+        this.removeFromAllLayers(obj);
+
+        for (let layer of this.layers) {
+            if (layer.name === layerName) {
+                layer.worldObjects.push(obj);
+                return;
+            }
+        }
+    }
+
+    // For use with World.Actions.setPhysicsGroup
+    private internalSetPhysicsGroupWorld(obj: PhysicsWorldObject, physicsGroupName: string) {
+        this.removeFromAllPhysicsGroups(obj);
+        this.getPhysicsGroupByName(physicsGroupName).worldObjects.push(obj);
+    }
+
+    private removeName(obj: WorldObject) {
+        for (let name in this.worldObjectsByName) {
+            if (this.worldObjectsByName[name] === obj) {
+                delete this.worldObjectsByName[name];
+            }
+        }
+    }
+
+    private removeFromAllLayers(obj: WorldObject) {
+        for (let layer of this.layers) {
+            A.removeAll(layer.worldObjects, obj);
+        }
+    }
+
+    private removeFromAllPhysicsGroups(obj: WorldObject) {
+        for (let name in this.physicsGroups) {
+            A.removeAll(this.physicsGroups[name].worldObjects, obj);
+        }
+    }
+
     static DEFAULT_LAYER: string = 'default';
 }
 
@@ -378,6 +374,102 @@ namespace World {
         constructor(name: string, config: World.PhysicsGroupConfig) {
             this.name = name;
             this.worldObjects = [];
+        }
+    }
+
+    export namespace Actions {
+        export function addWorldObjectToWorld(obj: WorldObject, world: World): boolean {
+            if (!obj) return false;
+
+            if (obj.world) {
+                debug(`Cannot add object ${obj.name} to world because it aleady exists in another world! You must remove object from previous world first. World:`, world, 'Previous world:', obj.world);
+                return false;
+            }
+
+            if (obj.name && world.containsWorldObject(obj.name)) {
+                debug(`Cannot add object ${obj.name} to world because an object already exists with that name! World:`, world);
+                return false;
+            }
+
+            /// @ts-ignore
+            world.internalAddWorldObjectToWorldWorld(obj);
+            /// @ts-ignore
+            obj.internalAddWorldObjectToWorldWorldObject(world);
+
+            obj.onAdd(world);
+            return true;
+        }
+
+        export function removeWorldObjectFromWorld(obj: WorldObject): boolean {
+            if (!obj) return false;
+
+            if (!obj.world) {
+                debug(`Cannot remove object ${obj.name} from world because it does not belong to a world! Object:`, obj);
+                return false;
+            }
+
+            let world = obj.world;
+
+            /// @ts-ignore
+            world.internalRemoveWorldObjectFromWorldWorld(obj);
+            /// @ts-ignore
+            obj.internalRemoveWorldObjectFromWorldWorldObject(world);
+            
+            obj.onRemove(world);
+            return true;
+        }
+
+        export function setName(obj: WorldObject, name: string) {
+            if (!obj) return false;
+
+            if (obj.world && obj.world.containsWorldObject(name)) {
+                debug(`Cannot name object '${name}' as that name already exists in world!`, obj.world);
+                return false;
+            }
+
+            /// @ts-ignore
+            obj.internalSetNameWorldObject(name);
+
+            if (obj.world) {
+                /// @ts-ignore
+                obj.world.internalSetNameWorld(obj, name);
+            }
+        }
+
+        export function setLayer(obj: WorldObject, layerName: string) {
+            if (!obj) return false;
+
+            if (obj.world && !obj.world.getLayerByName(layerName)) {
+                debug(`Cannot set layer on object '${obj.name}' as no layer named ${layerName} exists in world!`, obj.world);
+                return false;
+            }
+
+            /// @ts-ignore
+            obj.internalSetLayerWorldObject(layerName);
+
+            if (obj.world) {
+                /// @ts-ignore
+                obj.world.internalSetLayerWorld(obj, layerName);
+            }
+        }
+
+        export function setPhysicsGroup(obj: PhysicsWorldObject, physicsGroupName: string) {
+            if (!obj) return false;
+
+            if (obj.world && !obj.world.getPhysicsGroupByName(physicsGroupName)) {
+                debug(`Cannot set physicsGroup on object '${obj.name}' as no physicsGroup named ${physicsGroupName} exists in world!`, obj.world);
+                return;
+            }
+
+            /// @ts-ignore
+            obj.internalSetPhysicsGroupWorldObject(physicsGroupName);
+
+            if (obj.world) {
+                /// @ts-ignore
+                obj.world.internalSetPhysicsGroupWorld(obj, physicsGroupName);
+            }
+
+            return true;
         }
     }
 }

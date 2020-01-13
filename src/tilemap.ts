@@ -59,9 +59,8 @@ class Tilemap extends WorldObject {
 
     onAdd(world: World) {
         for (let box of this.collisionBoxes) {
-            world.addWorldObject(box, {
-                physicsGroup: this.collisionPhysicsGroup
-            });
+            World.Actions.setPhysicsGroup(box, this.collisionPhysicsGroup);
+            World.Actions.addWorldObjectToWorld(box, world);
         }
     }
 
@@ -113,7 +112,7 @@ class Tilemap extends WorldObject {
 
     onRemove(world: World) {
         for (let box of this.collisionBoxes) {
-            world.removeWorldObject(box);
+            World.Actions.removeWorldObjectFromWorld(box);
         }
     }
 }

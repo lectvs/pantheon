@@ -12,7 +12,8 @@ class BackWall extends PhysicsWorldObject {
 
     onAdd(world: World) {
         for (let tile of this.tiles) {
-            world.addWorldObject(tile, { layer: world.getLayer(this) });
+            World.Actions.setLayer(tile, this.layer);
+            World.Actions.addWorldObjectToWorld(tile, world);
         }
     }
 
@@ -36,7 +37,7 @@ class BackWall extends PhysicsWorldObject {
         }
 
         if (_.isEmpty(this.tiles)) {
-            world.removeWorldObject(this);
+            World.Actions.removeWorldObjectFromWorld(this);
         }
     }
 
@@ -72,7 +73,7 @@ class BackWall extends PhysicsWorldObject {
             tile.vy += gravity * delta;
             tile.angle += angularSpeed * delta;
             if (t === 1) {
-                world.removeWorldObject(tile);
+                World.Actions.removeWorldObjectFromWorld(tile);
             }
         }));
     }

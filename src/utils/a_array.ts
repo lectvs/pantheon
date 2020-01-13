@@ -39,6 +39,24 @@ namespace A {
         return array.map(line => _.isEmpty(line) ? [] : line.map(fn));
     }
 
+    export function mergeArray<T>(array: T[], into: T[], key: (element: T) => any, combine: (e: T, into: T) => T = ((e, into) => e)) {
+        let result = A.clone(into);
+        for (let element of array) {
+            let resultContainedKey = false;
+            for (let i = 0; i < result.length; i++) {
+                if (key(element) === key(result[i])) {
+                    result[i] = combine(element, result[i]);
+                    resultContainedKey = true;
+                    break;
+                }
+            }
+            if (!resultContainedKey) {
+                result.push(element);
+            }
+        }
+        return result;
+    }
+
     export function removeAll<T>(array: T[], obj: T, startingAt: number = 0) {
         if (!array) return 0;
 

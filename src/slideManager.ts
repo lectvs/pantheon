@@ -9,8 +9,8 @@ class SlideManager {
 
     addSlideByConfig(config: Slide.Config) {
         let slide = new Slide(config);
-        this.theater.addWorldObject(slide);
-        this.theater.setLayer(slide, Theater.LAYER_SLIDES);
+        World.Actions.setLayer(slide, Theater.LAYER_SLIDES);
+        World.Actions.addWorldObjectToWorld(slide, this.theater);
         this.slides.push(slide);
         return slide;
     }
@@ -18,7 +18,7 @@ class SlideManager {
     clearSlides(exceptLast: number = 0) {
         let deleteCount = this.slides.length - exceptLast;
         for (let i = 0; i < deleteCount; i++) {
-            this.theater.removeWorldObject(this.slides[i]);
+            World.Actions.removeWorldObjectFromWorld(this.slides[i]);
         }
         this.slides.splice(0, deleteCount);
     }

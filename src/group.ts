@@ -1,8 +1,8 @@
 
 namespace Group {
     export type Config = {
-        worldObjects: SomeStageConfig[];
-        overrides?: SomeStageConfig[];
+        worldObjects: SomeWorldObjectConfig[];
+        overrides?: SomeWorldObjectConfig[];
         x?: number;
         y?: number;
         prefix?: string;

@@ -67,7 +67,8 @@ class Theater extends World {
         this.startStoryboardComponentByName(config.storyboardEntry);
 
         if (DEBUG_SHOW_MOUSE_POSITION) {
-            this.debugMousePosition = this.addWorldObject(new SpriteText({ x: 0, y: 0, font: Assets.fonts.DELUXE16 }));
+            this.debugMousePosition = new SpriteText({ x: 0, y: 0, font: Assets.fonts.DELUXE16 });
+            World.Actions.addWorldObjectToWorld(this.debugMousePosition, this);
         }
     }
 
@@ -132,8 +133,8 @@ class Theater extends World {
     private loadDialogBox(config: DialogBox.Config) {
         this.dialogBox = new DialogBox(config);
         this.dialogBox.visible = false;
-        this.addWorldObject(this.dialogBox);
-        this.setLayer(this.dialogBox, Theater.LAYER_DIALOG);
+        World.Actions.setLayer(this.dialogBox, Theater.LAYER_DIALOG);
+        World.Actions.addWorldObjectToWorld(this.dialogBox, this);
     }
 
     static LAYER_WORLD = 'world';

@@ -40,7 +40,8 @@ class StageManager {
 
         // this is outside the script to avoid 1-frame flicker
         let transitionObj = new Transition.Obj(oldSnapshot, newSnapshot, transition);
-        this.theater.addWorldObject(transitionObj, { layer: Theater.LAYER_TRANSITION });
+        World.Actions.setLayer(transitionObj, Theater.LAYER_TRANSITION);
+        World.Actions.addWorldObjectToWorld(transitionObj, this.theater);
 
         let stageManager = this;
         this.theater.runScript(function* () {
@@ -48,7 +49,7 @@ class StageManager {
                 yield;
             }
 
-            stageManager.theater.removeWorldObject(transitionObj);
+            World.Actions.removeWorldObjectFromWorld(transitionObj)
             stageManager.currentWorld.active = true;
             stageManager.currentWorld.visible = true;
 
@@ -66,7 +67,7 @@ class StageManager {
 
         // Remove old stuff
         if (this.currentWorld) {
-            this.theater.removeWorldObject(this.currentWorld);
+            World.Actions.removeWorldObjectFromWorld(this.currentWorld);
         }
         this.theater.interactionManager.reset();
 
@@ -74,8 +75,8 @@ class StageManager {
         this.currentStageName = name;
         this.currentWorld = this.newWorldFromStage(stage);
         this.addPartyToWorld(this.theater.party, this.theater.currentWorld, stage, entryPoint);
-        this.theater.addWorldObject(this.currentWorld);
-        this.theater.setLayer(this.currentWorld, Theater.LAYER_WORLD);
+        World.Actions.setLayer(this.currentWorld, Theater.LAYER_WORLD);
+        World.Actions.addWorldObjectToWorld(this.currentWorld, this.theater);
     }
 
     private newWorldFromStage(stage: Stage) {
@@ -96,27 +97,29 @@ class StageManager {
             entryPoint = Stage.getEntryPoint(stage, entryPoint);
         }
         for (let member of party.activeMembers) {
-            let memberObj = party.addMemberToWorld(member, world);
+            party.addMemberToWorld(member, world);
+            let memberObj = party.members[member].worldObject;
             memberObj.x = entryPoint.x;
             memberObj.y = entryPoint.y;
         }
     }
 
-    private addWorldObjectFromStageConfig(world: World, worldObject: SomeStageConfig) {
+    private addWorldObjectFromStageConfig(world: World, worldObject: SomeWorldObjectConfig) {
         worldObject = Stage.resolveWorldObjectConfig(worldObject);
         if (!worldObject.constructor) return null;
 
-        let config = <AllStageConfig> worldObject;
+        let config = <SomeWorldObjectConfig> worldObject;
         _.defaults(config, {
             layer: World.DEFAULT_LAYER,
         });
 
         let obj: WorldObject = new config.constructor(config);
-        world.addWorldObject(obj, {
-            name: config.name,
-            layer: config.layer,
-            physicsGroup: config.physicsGroup,
-        });
+        World.Actions.setName(obj, config.name);
+        World.Actions.setLayer(obj, config.layer);
+        if (obj instanceof PhysicsWorldObject) {
+            World.Actions.setPhysicsGroup(obj, config.physicsGroup);
+        }
+        World.Actions.addWorldObjectToWorld(obj, world);
 
         return obj;
     }

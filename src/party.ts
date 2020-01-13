@@ -6,7 +6,7 @@ namespace Party {
     }
 
     export type Member = {
-        config: SomeStageConfig;
+        config: SomeWorldObjectConfig;
         worldObject?: WorldObject;
     }
 }
@@ -27,12 +27,17 @@ class Party {
     addMemberToWorld(name: string, world: World) {
         let member = this.members[name];
         if (!member) return;
-        return world.addWorldObject(member.worldObject, {
-            name: member.config.name,
-            layer: member.config.layer,
-            // @ts-ignore
-            physicsGroup: member.config.physicsGroup,
-        });
+        if (member.worldObject.world) {
+            World.Actions.removeWorldObjectFromWorld(member.worldObject);
+        }
+        World.Actions.setName(member.worldObject, member.config.name);
+        World.Actions.setLayer(member.worldObject, member.config.layer);
+        if (member.worldObject instanceof PhysicsWorldObject) {
+            /// @ts-ignore
+            World.Actions.setPhysicsGroup(member.worldObject, member.config.physicsGroup);
+        }
+
+        return World.Actions.addWorldObjectToWorld(member.worldObject, world);
     }
 
     getMember(name: string) {
