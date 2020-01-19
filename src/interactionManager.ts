@@ -39,11 +39,11 @@ class InteractionManager {
 
         let cutscenes = this.getInteractableCutscenes();
         for (let cutscene of cutscenes) {
-            for (let obj of (<Cutscene>global.theater.storyboard[cutscene]).playOnInteractWith) {
-                if (this.theater.currentWorld.containsWorldObject(obj)) {
-                    result.add(obj);
-                }
-            }
+            // for (let obj of (<Cutscene>global.theater.storyboard[cutscene]).playOnInteractWith) {
+            //     if (this.theater.currentWorld.containsWorldObject(obj)) {
+            //         result.add(obj);
+            //     }
+            // }
         }
 
         return result;
@@ -81,7 +81,7 @@ class InteractionManager {
             return;
         }
 
-        global.theater.startStoryboardComponentByName(cutscenes[0]);
+        //global.theater.startStoryboardComponentByName(cutscenes[0]);
     }
 
     reset() {
@@ -90,19 +90,19 @@ class InteractionManager {
 
     private getCutscenesForInteraction(objName: string) {
         return this.getInteractableCutscenes().filter(cutscene => {
-            let component = global.theater.storyboard[cutscene];
-            return component && component.type === 'cutscene' && _.contains(component.playOnInteractWith, objName);
+            let component = global.theater.storyManager.storyboard[cutscene];
+            return component && component.type === 'cutscene'// && _.contains(component.playOnInteractWith, objName);
         });
     }
 
     private getInteractableCutscenes() {
         let result: string[] = [];
 
-        for (let key in global.theater.storyboard) {
-            let component = global.theater.storyboard[key];
+        for (let key in global.theater.storyManager.storyboard) {
+            let component = global.theater.storyManager.storyboard[key];
             if (component.type !== 'cutscene') continue;
-            if (!global.theater.cutsceneManager.canPlayCutscene(key)) continue;
-            if (_.isEmpty(component.playOnInteractWith)) continue;
+            if (!global.theater.storyManager.cutsceneManager.canPlayCutscene(key)) continue;
+            //if (_.isEmpty(component.playOnInteractWith)) continue;
             result.push(key);
         }
 

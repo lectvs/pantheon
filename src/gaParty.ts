@@ -1,3 +1,4 @@
+/// <reference path="./base.ts"/>
 /// <reference path="./party.ts"/>
 
 const party: Party.Config = {

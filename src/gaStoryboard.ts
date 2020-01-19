@@ -1,11 +1,19 @@
 
 namespace S { export const storyboard: Storyboard = {
     'start': {
-        type: 'code',
-        func: () => {
-            global.theater.party.leader = 'sai';
+        type: 'start',
+        transitions: [
+            { toNode: 'outsideConfig', type: 'instant' }
+        ]
+    },
+    'outsideConfig': {
+        type: 'config',
+        config: {
+            partyLeader: 'dad',
         },
-        after: 'outside'
+        transitions: [
+            { toNode: 'outside', type: 'onStage', stage: 'outside'}
+        ]
     },
     'outside': {
         type: 'cutscene',
@@ -15,8 +23,6 @@ namespace S { export const storyboard: Storyboard = {
             let dad = global.getWorldObject<HumanCharacter>('dad');
             let guard1 = global.getWorldObject<HumanCharacter>('guard1');
             let guard2 = global.getWorldObject<HumanCharacter>('guard2');
-
-            sai.follow(dad, 12);
 
             yield fadeOut(0);
             yield fadeSlides(1);
@@ -50,7 +56,9 @@ namespace S { export const storyboard: Storyboard = {
             yield dialog('sai/default', "...");
             yield moveToY(dad, 96);
         },
-        after: 'inside'
+        transitions: [
+            { toNode: 'inside', type: 'onStage', stage: 'inside' }
+        ]
     },
     'inside': {
         type: 'cutscene',
@@ -59,15 +67,27 @@ namespace S { export const storyboard: Storyboard = {
             let dad = global.getWorldObject<HumanCharacter>('dad');
 
             yield moveToY(dad, dad.y - 64);
-        },
-        after: 'gameplay'
-    },
-    'gameplay': {
-        type: 'gameplay',
-        start: () => {
-            let sai = global.getWorldObject<HumanCharacter>('sai');
             sai.unfollow();
-        }
+            yield moveToY(dad, dad.y - 64);
+        },
+        transitions: [
+            { toNode: 'insideConfig', type: 'instant' }
+        ]
+    },
+    'insideConfig': {
+        type: 'config',
+        config: {
+            partyLeader: 'sai',
+            separated: true
+        },
+        transitions: [
+            { toNode: 'insideGameplay', type: 'instant' }
+        ]
+    },
+    'insideGameplay': {
+        type: 'gameplay',
+        transitions: [
+            
+        ]
     }
-
 }} const storyboard = S.storyboard;

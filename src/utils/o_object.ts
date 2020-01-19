@@ -1,4 +1,15 @@
 namespace O {
+    export function deepClone<T>(obj: T): T {
+        let result: any = {};
+        for (let key in obj) {
+            if (obj[key] && _.isObject(obj[key])) {
+                result[key] = deepClone(obj[key]);
+            } else {
+                result[key] = obj[key];
+            }
+        }
+        return <T>result;
+    }
     export function deepOverride<T>(obj: T, overrides: any) {
         for (let key in overrides) {
             if (obj[key] && _.isObject(obj[key]) && _.isObject(overrides[key])) {

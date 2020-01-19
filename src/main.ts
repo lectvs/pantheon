@@ -75,10 +75,13 @@ class Main {
 
         this.theater = new Theater({
             stages: stages,
-            stageToLoad: 'outside',
+            stageToLoad: 'inside',
             stageEntryPoint: 'main',
-            storyboard: storyboard,
-            storyboardEntry: 'start',
+            story: {
+                storyboard: storyboard,
+                storyboardPath: Storyboard.arbitraryPathToNode(storyboard, 'inside'),
+                storyConfig: storyConfig
+            },
             party: party,
             dialogBox: {
                 x: Main.width/2, y: Main.height - 32,

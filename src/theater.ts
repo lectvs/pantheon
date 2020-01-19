@@ -6,8 +6,11 @@ namespace Theater {
         stages: Dict<Stage>;
         stageToLoad: string;
         stageEntryPoint?: Stage.EntryPoint;
-        storyboard: Storyboard;
-        storyboardEntry: string;
+        story: {
+            storyboard: Storyboard;
+            storyboardPath: string[];
+            storyConfig: StoryConfig.Config;
+        },
         party: Party.Config;
         dialogBox: DialogBox.Config;
         skipCutsceneScriptKey: string;
@@ -17,14 +20,11 @@ namespace Theater {
 
 class Theater extends World {
     stages: Dict<Stage>;
-    storyboard: Storyboard;
     party: Party;
-
-    currentStoryboardComponentName: string;
 
     dialogBox: DialogBox;
     
-    cutsceneManager: CutsceneManager;
+    storyManager: StoryManager;
     stageManager: StageManager;
     interactionManager: InteractionManager;
     slideManager: SlideManager;
@@ -34,7 +34,7 @@ class Theater extends World {
     get currentStageName() { return this.stageManager.currentStageName; }
     get currentWorld() { return this.stageManager.currentWorld; }
     get currentStage() { return this.stages[this.currentStageName]; }
-    get isCutscenePlaying() { return this.cutsceneManager.isCutscenePlaying; }
+    get isCutscenePlaying() { return this.storyManager.cutsceneManager.isCutscenePlaying; }
     get slides() { return this.slideManager.slides; }
     
     constructor(config: Theater.Config) {
@@ -49,22 +49,16 @@ class Theater extends World {
         global.theater = this;
 
         this.stages = config.stages;
-        this.storyboard = config.storyboard;
 
         this.party = new Party(config.party);
-
-        this.cutsceneManager = new CutsceneManager(this, config.skipCutsceneScriptKey);
-        
         this.loadDialogBox(config.dialogBox);
 
+        this.storyManager = new StoryManager(this, config.story.storyboard, config.story.storyboardPath, config.story.storyConfig);
         this.stageManager = new StageManager(this, config.stages);
         this.interactionManager = new InteractionManager(this, config.interactionManager);
         this.slideManager = new SlideManager(this);
 
         this.stageManager.setStage(config.stageToLoad, config.stageEntryPoint);
-
-        // Start storyboard entry point
-        this.startStoryboardComponentByName(config.storyboardEntry);
 
         if (DEBUG_SHOW_MOUSE_POSITION) {
             this.debugMousePosition = new SpriteText({ x: 0, y: 0, font: Assets.fonts.DELUXE16 });
@@ -73,8 +67,6 @@ class Theater extends World {
     }
 
     update(delta: number) {
-        this.cutsceneManager.update(delta);
-
         super.update(delta);
 
         this.interactionManager.update();
@@ -94,40 +86,12 @@ class Theater extends World {
         this.slideManager.clearSlides(exceptLast);
     }
 
-    getStoryboardComponentByName(name: string) {
-        let component = this.storyboard[name];
-        if (!component) {
-            debug(`Component '${name}' does not exist in storyboard:`, this.storyboard);
-        }
-        return component;
-    }
-
     loadStage(name: string, transition: Transition.Config = Transition.INSTANT, entryPoint: Stage.EntryPoint = Theater.DEFAULT_ENTRY_POINT) {
         this.stageManager.loadStage(name, transition, entryPoint);
     }
 
     onStageLoad() {
-        this.cutsceneManager.onStageLoad();
-    }
-
-    startStoryboardComponentByName(name: string) {
-        let component = this.getStoryboardComponentByName(name);
-        if (!component) return;
-
-        if (component.type === 'cutscene') {
-            this.cutsceneManager.playCutscene(name, component);
-        } else if (component.type === 'gameplay') {
-            component.start();
-        } else if (component.type === 'code') {
-            component.func();
-            if (component.after) {
-                return this.startStoryboardComponentByName(component.after);
-            }
-        }
-
-        debug('started ' + name);
-
-        this.currentStoryboardComponentName = name;
+        this.storyManager.cutsceneManager.onStageLoad();
     }
 
     private loadDialogBox(config: DialogBox.Config) {

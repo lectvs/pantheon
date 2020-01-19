@@ -11,8 +11,14 @@ class TestTheater extends Theater {
         super({
             stages: {'s': { backgroundColor: 0x000066 }},
             stageToLoad: 's',
-            storyboard: {'s': { type: 'gameplay', start: () => {} }},
-            storyboardEntry: 's',
+            story: {
+                storyboard: {'s': { type: 'gameplay', transitions: [] }},
+                storyboardPath: ['s'],
+                storyConfig: {
+                    initialConfig: {},
+                    executeFn: sc => null,
+                }
+            },
             party: party,
             dialogBox: {
                 x: Main.width/2, y: Main.height - 32,

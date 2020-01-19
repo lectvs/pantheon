@@ -1,3 +1,4 @@
+/// <reference path="./humanCharacter.ts" />
 /// <reference path="./transition.ts" />
 
 const DEFAULT_SCREEN_TRANSITION = Transition.FADE(0.5, 1, 0.5);
