@@ -3204,15 +3204,68 @@ var S;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
+                            DEBUG_SKIP_ACTIVE = true;
                             sai = global.getWorldObject('sai');
                             dad = global.getWorldObject('dad');
                             return [4 /*yield*/, S.moveToY(dad, dad.y - 64)];
                         case 1:
                             _a.sent();
-                            sai.unfollow();
-                            return [4 /*yield*/, S.moveToY(dad, dad.y - 64)];
+                            return [4 /*yield*/, S.dialog('dad/default', "Let's see, the storage room is probably nearby. It should be right down...")];
                         case 2:
                             _a.sent();
+                            return [4 /*yield*/, S.dialog('sai/default', "Are we there yet, dad? Do we have to keep walking?")];
+                        case 3:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog('dad/default', "...")];
+                        case 4:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog('dad/default', "Hey, what did I tell you about talking?")];
+                        case 5:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog('sai/default', "Sorry... my legs hurt...")];
+                        case 6:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog('dad/default', "(Sigh) ...")];
+                        case 7:
+                            _a.sent();
+                            sai.unfollow();
+                            return [4 /*yield*/, S.moveToY(dad, dad.y + 4)];
+                        case 8:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog('dad/default', "Sai...")];
+                        case 9:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog('dad/default', "Do you remember what you learned about dealing with pain?")];
+                        case 10:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog('sai/default', "Take deep breaths...")];
+                        case 11:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog('dad/default', "That's right. Can you do that for me?")];
+                        case 12:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog('sai/default', "...")];
+                        case 13:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog('sai/default', "They still hurt...")];
+                        case 14:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog('dad/default', "Well, there's nothing we can really do about it right now. You'll just have to hold on, okay?")];
+                        case 15:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog('dad/default', "You're a powerful weapon, Sai. You know what they'll do if they find you out.")];
+                        case 16:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog('dad/default', "Come on. We need to keep moving. I think the storage room is down the hall.")];
+                        case 17:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog('sai/default', "...")];
+                        case 18:
+                            _a.sent();
+                            return [4 /*yield*/, S.moveToY(dad, 120)];
+                        case 19:
+                            _a.sent();
+                            DEBUG_SKIP_ACTIVE = false;
                             return [2 /*return*/];
                     }
                 });

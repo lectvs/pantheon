@@ -63,12 +63,32 @@ namespace S { export const storyboard: Storyboard = {
     'inside': {
         type: 'cutscene',
         script: function*() {
+            DEBUG_SKIP_ACTIVE = true;
             let sai = global.getWorldObject<HumanCharacter>('sai');
             let dad = global.getWorldObject<HumanCharacter>('dad');
 
             yield moveToY(dad, dad.y - 64);
+            yield dialog('dad/default', "Let's see, the storage room is probably nearby. It should be right down...");
+            yield dialog('sai/default', "Are we there yet, dad? Do we have to keep walking?");
+            yield dialog('dad/default', "...");
+            yield dialog('dad/default', "Hey, what did I tell you about talking?");
+            yield dialog('sai/default', "Sorry... my legs hurt...");
+            yield dialog('dad/default', "(Sigh) ...");
             sai.unfollow();
-            yield moveToY(dad, dad.y - 64);
+            yield moveToY(dad, dad.y + 4);
+            yield dialog('dad/default', "Sai...");
+            yield dialog('dad/default', "Do you remember what you learned about dealing with pain?");
+            yield dialog('sai/default', "Take deep breaths...");
+            yield dialog('dad/default', "That's right. Can you do that for me?");
+            yield dialog('sai/default', "...");
+            yield dialog('sai/default', "They still hurt...");
+            yield dialog('dad/default', "Well, there's nothing we can really do about it right now. You'll just have to hold on, okay?");
+            yield dialog('dad/default', "You're a powerful weapon, Sai. You know what they'll do if they find you out.");
+            yield dialog('dad/default', "Come on. We need to keep moving. I think the storage room is down the hall.");
+            yield dialog('sai/default', "...");
+            yield moveToY(dad, 120);
+            DEBUG_SKIP_ACTIVE = false;
+
         },
         transitions: [
             { toNode: 'insideConfig', type: 'instant' }
