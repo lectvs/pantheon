@@ -112,7 +112,7 @@ class WorldObject {
 
     }
 
-    postRender() {
+    postRender(world: World) {
         this.x = this.preRenderStoredX;
         this.y = this.preRenderStoredY;
     }
@@ -120,7 +120,7 @@ class WorldObject {
     fullRender(screen: Texture, world: World) {
         this.preRender(world);
         this.render(screen);
-        this.postRender();
+        this.postRender(world);
     }
 
     resetController() {
@@ -192,10 +192,10 @@ namespace WorldObject {
         return result;
     }
 
-    export function fromConfig(config: SomeWorldObjectConfig) {
+    export function fromConfig<T extends WorldObject>(config: SomeWorldObjectConfig): T {
         config = WorldObject.resolveConfig(config);
         if (!config.constructor) return null;
 
-        return new config.constructor(config);
+        return <T>new config.constructor(config);
     }
 }

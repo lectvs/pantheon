@@ -1,8 +1,11 @@
 namespace Effects {
     export type Config = {
-        silhouette?: { color?: number, alpha?: number, enabled?: boolean };
-        outline?: { color?: number, alpha?: number, enabled?: boolean };
+        silhouette?: SilhouetteConfig;
+        outline?: OutlineConfig;
     }
+
+    export type SilhouetteConfig = { color?: number, alpha?: number, enabled?: boolean };
+    export type OutlineConfig = { color?: number, alpha?: number, enabled?: boolean };
 }
 
 class Effects {

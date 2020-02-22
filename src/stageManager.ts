@@ -52,8 +52,6 @@ class StageManager {
             World.Actions.removeWorldObjectFromWorld(transition)
             stageManager.currentWorld.active = true;
             stageManager.currentWorld.visible = true;
-
-            stageManager.theater.onStageLoad();
         });
     }
 
@@ -74,9 +72,11 @@ class StageManager {
         // Create new stuff
         this.currentStageName = name;
         this.currentWorld = this.newWorldFromStage(stage);
-        this.addPartyToWorld(this.theater.party, this.theater.currentWorld, stage, entryPoint);
+        this.addPartyToWorld(this.theater.party, this.theater.currentWorld, name, entryPoint);
         World.Actions.setLayer(this.currentWorld, Theater.LAYER_WORLD);
         World.Actions.addWorldObjectToWorld(this.currentWorld, this.theater);
+
+        this.theater.onStageLoad();
     }
 
     private newWorldFromStage(stage: Stage) {
@@ -92,16 +92,21 @@ class StageManager {
         return world;
     }
 
-    private addPartyToWorld(party: Party, world: World, stage: Stage, entryPoint: Stage.EntryPoint) {
+    private addPartyToWorld(party: Party, world: World, stageName: string, entryPoint: Stage.EntryPoint) {
         // Resolve entry point.
         if (_.isString(entryPoint)) {
-            entryPoint = Stage.getEntryPoint(stage, entryPoint);
+            entryPoint = Stage.getEntryPoint(this.stages[stageName], entryPoint);
         }
-        for (let member of party.activeMembers) {
-            party.addMemberToWorld(member, world);
-            let memberObj = party.members[member].worldObject;
-            memberObj.x = entryPoint.x;
-            memberObj.y = entryPoint.y;
+        for (let memberName in party.members) {
+            let member = party.members[memberName];
+            if (_.contains(party.activeMembers, memberName)) {
+                member.stage = stageName;
+                member.worldObject.x = entryPoint.x;
+                member.worldObject.y = entryPoint.y;
+            }
+            if (member.stage === stageName) {
+                party.addMemberToWorld(memberName, world);
+            }
         }
     }
 }

@@ -64,7 +64,6 @@ class HumanCharacter extends Sprite {
 
     updateInteractions() {
         if (!this.isControlled) {
-            global.theater.interactionManager.highlight(null);
             return;
         }
 
@@ -92,7 +91,7 @@ class HumanCharacter extends Sprite {
     }
 
     onCollide(other: PhysicsWorldObject) {
-        if (other instanceof Warp) {
+        if (other instanceof Warp && this.controllable) {
             other.warp();
         }
     }
@@ -100,6 +99,10 @@ class HumanCharacter extends Sprite {
     setDirection(direction: Direction2D) {
         this.direction.h = direction.h;
         this.direction.v = direction.v;
+    }
+
+    setSpeed(speed: number) {
+        this.speed = speed;
     }
 
     unfollow() {

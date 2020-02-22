@@ -1,3 +1,5 @@
+/// <reference path="./utils/o_object.ts"/>
+
 namespace Camera {
     export type Config = {
         width?: number;
@@ -135,33 +137,52 @@ class Camera {
         }
     }
 
+    setMode(mode: Camera.Mode) {
+        this.mode = mode;
+    }
+
     setModeFollow(target: string | WorldObject, offsetX?: number, offsetY?: number) {
-        this.mode = {
+        this.setMode({
             type: 'follow',
             target: target,
             offset: { x: offsetX || 0, y: offsetY || 0 },
-        };
+        });
     }
 
     setModeFocus(x: number, y: number) {
-        this.mode = {
+        this.setMode({
             type: 'focus',
             point: { x: x, y: y },
-        };
+        });
+    }
+
+    setMovement(movement: Camera.Movement) {
+        this.movement = movement;
     }
 
     setMovementSnap() {
-        this.movement = {
+        this.setMovement({
             type: 'snap',
-        };
+        });
     }
 
     setMovementSmooth(speed: number, deadZoneWidth: number, deadZoneHeight: number) {
-        this.movement = {
+        this.setMovement({
             type: 'smooth',
             speed: speed,
             deadZoneWidth: deadZoneWidth,
             deadZoneHeight: deadZoneHeight,
-        };
+        });
+    }
+}
+
+namespace Camera {
+    export namespace Mode {
+        export function FOLLOW(target: string | WorldObject, offsetX?: number, offsetY?: number): FollowMode {
+            return { type: 'follow', target, offset: { x: O.getOrDefault(offsetX, 0), y: O.getOrDefault(offsetY, 0) } };
+        }
+        export function FOCUS(x: number, y: number): FocusMode {
+            return { type: 'focus', point: { x, y } };
+        }
     }
 }

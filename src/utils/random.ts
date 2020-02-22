@@ -21,6 +21,13 @@ class RandomNumberGenerator {
     }
 
     /**
+     * Random color from 0x000000 to 0xFFFFFF.
+     */
+    color() {
+        return this.int(0x000000, 0xFFFFFF);
+    }
+
+    /**
      * Random float between {min} and {max}.
      * @param min Default: 0
      * @param max Default: 1

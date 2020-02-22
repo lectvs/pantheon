@@ -1,16 +1,13 @@
+/// <reference path="./main.ts"/>
+
 var storyConfig: StoryConfig.Config = {
     initialConfig: {
-        partyLeader: 'dad',
         separated: false,
+        cameraMode: Camera.Mode.FOCUS(Main.width/2, Main.height/2),
     },
     executeFn: sc => {
-        if (!_.contains(sc.theater.party.activeMembers, sc.config.partyLeader)) {
-            debug(`Invalid party leader ${sc.config.partyLeader}`);
-            return;
-        }
-
-        sc.theater.party.leader = sc.config.partyLeader;
         
+        // separated
         let sai = <HumanCharacter>sc.theater.party.members['sai'].worldObject;
         let dad = <HumanCharacter>sc.theater.party.members['dad'].worldObject;
 
@@ -23,6 +20,11 @@ var storyConfig: StoryConfig.Config = {
             } else {
                 sai.follow('dad');
             }
+        }
+
+        // cameraMode
+        if (sc.theater.currentWorld) {
+            sc.theater.currentWorld.camera.setMode(sc.config.cameraMode);
         }
     }
 }

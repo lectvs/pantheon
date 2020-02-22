@@ -55,12 +55,8 @@ class CutsceneManager {
     canPlayCutscene(name: string) {
         let cutscene = this.getCutsceneByName(name);
         if (!cutscene) return false;
-        if (cutscene.type !== 'cutscene') {
-            return false;
-        }
-        // if (cutscene.playOnlyOnce && this.playedCutscenes.has(name)) {
-        //     return false;
-        // }
+        if (cutscene.type !== 'cutscene') return false;
+        if (cutscene.playOnlyOnce && this.playedCutscenes.has(name)) return false;
         return true;
     }
 

@@ -8,104 +8,75 @@ namespace InteractionManager {
 class InteractionManager {
     theater: Theater;
 
-    private highlightFunction: (sprite: Sprite) => any;
-    private resetFunction: (sprite: Sprite) => any;
-
     private highlightedObject: Sprite;
+    private highlightedObjectOutline: Effects.OutlineConfig;
 
-    constructor(theater: Theater, config: InteractionManager.Config) {
+    get interactRequested() { return this._interactRequested; }
+    private _interactRequested: string;
+
+    constructor(theater: Theater) {
         this.theater = theater;
 
-        this.highlightFunction = config.highlightFunction;
-        this.resetFunction = config.resetFunction;
-
-        this.highlightedObject = null;
+        this.reset();
     }
 
-    update() {
-        for (let obj of this.theater.currentWorld.worldObjects) {
-            if (obj instanceof Sprite) {
-                if (obj === this.highlightedObject) {
-                    this.highlightFunction(obj);
-                } else {
-                    this.resetFunction(obj);
-                }
-            }
+    preRender() {
+        if (this.highlightedObject) {
+            this.highlightedObjectOutline = {
+                enabled: this.highlightedObject.effects.outline.enabled,
+                color: this.highlightedObject.effects.outline.color,
+                alpha: this.highlightedObject.effects.outline.alpha
+            };
+            this.highlightedObject.effects.outline.enabled = true;
+            this.highlightedObject.effects.outline.color = 0xFFFF00;
+            this.highlightedObject.effects.outline.alpha = 1;
         }
+    }
+
+    postRender() {
+        if (this.highlightedObject) {
+            this.highlightedObject.effects.outline.enabled = this.highlightedObjectOutline.enabled;
+            this.highlightedObject.effects.outline.color = this.highlightedObjectOutline.color;
+            this.highlightedObject.effects.outline.alpha = this.highlightedObjectOutline.alpha;
+        }
+    }
+
+    consumeInteraction() {
+        this._interactRequested = null;
     }
 
     getInteractableObjects(): Set<string> {
+        let interactableObjects = this.theater.storyManager.getInteractableObjects(this.theater.storyManager.currentNode);
         let result = new Set<string>();
-
-        let cutscenes = this.getInteractableCutscenes();
-        for (let cutscene of cutscenes) {
-            // for (let obj of (<Cutscene>global.theater.storyboard[cutscene]).playOnInteractWith) {
-            //     if (this.theater.currentWorld.containsWorldObject(obj)) {
-            //         result.add(obj);
-            //     }
-            // }
+        for (let name of interactableObjects) {
+            if (!this.theater.currentWorld.containsWorldObject(name)) continue;
+            result.add(name);
         }
-
         return result;
     }
 
-    highlight(obj: string | Sprite) {
+    highlight(obj: string) {
         if (!obj) {
             this.highlightedObject = null;
             return;
         }
-        if (_.isString(obj)) {
-            let worldObject = this.theater.currentWorld.getWorldObjectByName(obj);
-            if (!(worldObject instanceof Sprite)) return;
-            obj = worldObject;
+
+        let worldObject = this.theater.currentWorld.getWorldObjectByName(obj);
+        if (!(worldObject instanceof Sprite)) {
+            debug(`Cannot highlight object ${obj} because it is not a Sprite`);
+            return;
         }
-        this.highlightedObject = obj;
+
+        this.highlightedObject = worldObject;
     }
 
-    interact(obj: string | Sprite) {
-        if (!_.isString(obj)) {
-            let objName = this.theater.currentWorld.getName(obj);
-            if (!objName) return;
-            obj = objName;
-        }
-
-        let cutscenes = this.getCutscenesForInteraction(obj);
-
-        if (_.isEmpty(cutscenes)) {
-            debug(`No cutscene available to interact with object ${obj}`);
-            return;
-        }
-
-        if (cutscenes.length > 1) {
-            debug(`More than one cutscene available to interact with object ${obj}`);
-            return;
-        }
-
-        //global.theater.startStoryboardComponentByName(cutscenes[0]);
+    interact(obj: string = this.highlightedObject.name) {
+        this._interactRequested = obj;
     }
 
     reset() {
         this.highlightedObject = null;
-    }
-
-    private getCutscenesForInteraction(objName: string) {
-        return this.getInteractableCutscenes().filter(cutscene => {
-            let component = global.theater.storyManager.storyboard[cutscene];
-            return component && component.type === 'cutscene'// && _.contains(component.playOnInteractWith, objName);
-        });
-    }
-
-    private getInteractableCutscenes() {
-        let result: string[] = [];
-
-        for (let key in global.theater.storyManager.storyboard) {
-            let component = global.theater.storyManager.storyboard[key];
-            if (component.type !== 'cutscene') continue;
-            if (!global.theater.storyManager.cutsceneManager.canPlayCutscene(key)) continue;
-            //if (_.isEmpty(component.playOnInteractWith)) continue;
-            result.push(key);
-        }
-
-        return result;
+        this.highlightedObjectOutline = null;
+        this._interactRequested = null;
     }
 }

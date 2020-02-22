@@ -16,6 +16,7 @@ const party: Party.Config = {
                     }
                 }
             },
+            stage: 'outside',
         },
         'dad': {
             config: {
@@ -28,6 +29,7 @@ const party: Party.Config = {
                     }
                 }
             },
+            stage: 'outside',
         },
     }
 };

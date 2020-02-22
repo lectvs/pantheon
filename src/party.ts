@@ -7,6 +7,7 @@ namespace Party {
 
     export type Member = {
         config: SomeWorldObjectConfig;
+        stage: string;
         worldObject?: WorldObject;
     }
 }

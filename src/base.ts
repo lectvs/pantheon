@@ -1,7 +1,7 @@
 /// <reference path="./humanCharacter.ts" />
 /// <reference path="./transition.ts" />
 
-const DEFAULT_SCREEN_TRANSITION = Transition.FADE(0.5, 1, 0.5);
+const DEFAULT_SCREEN_TRANSITION = Transition.FADE(0.2, 0.5, 0.2);
 
 const BASE_STAGE: Stage = {
     layers: [

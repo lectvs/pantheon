@@ -75,12 +75,13 @@ class Main {
 
         this.theater = new Theater({
             stages: stages,
-            stageToLoad: 'inside',
+            stageToLoad: 'outside',
             stageEntryPoint: 'main',
             story: {
                 storyboard: storyboard,
-                storyboardPath: Storyboard.arbitraryPathToNode(storyboard, 'inside'),
-                storyConfig: storyConfig
+                storyboardPath: ['start'],
+                storyEvents: storyEvents,
+                storyConfig: storyConfig,
             },
             party: party,
             dialogBox: {
@@ -93,15 +94,7 @@ class Main {
                 advanceKey: 'advanceDialog',
             },
             skipCutsceneScriptKey: 'skipCutsceneScript',
-            interactionManager: {
-                highlightFunction: sprite => {
-                    //sprite.effects.outline.enabled = true;
-                    //sprite.effects.outline.color = 0xFFFF00;
-                },
-                resetFunction: sprite => {
-                    //sprite.effects.outline.enabled = false;
-                },
-            }
+            autoPlayScript: autoPlayScript('inside_gameplay'),
         });
 
         this.fpsMetricManager = new FPSMetricManager(1);
@@ -112,17 +105,13 @@ class Main {
         PIXI.Ticker.shared.add(frameDelta => {
             this.delta = frameDelta/60;
 
-            Input.update();
-
             global.theater = this.theater;
             global.clearStacks();
 
-            this.fpsMetricManager.update(this.delta);
-
-            this.theater.update(this.delta);
-
-            if (DEBUG_SKIP_ACTIVE) {
-                this.updateTheaterSkip();
+            for (let i = 0; i < DEBUG_SKIP_RATE; i++) {
+                Input.update();
+                this.fpsMetricManager.update(this.delta);
+                this.theater.update(this.delta);
             }
 
             this.screen.clear();
@@ -131,12 +120,6 @@ class Main {
             this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
             this.renderer.render(this.screen.renderTextureSprite);
         });
-    }
-
-    private static updateTheaterSkip() {
-        for (let i = 0; i < 9; i++) {
-            this.theater.update(this.delta);
-        }
     }
 }
 

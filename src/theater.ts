@@ -9,12 +9,13 @@ namespace Theater {
         story: {
             storyboard: Storyboard;
             storyboardPath: string[];
+            storyEvents: StoryEvent.Map;
             storyConfig: StoryConfig.Config;
         },
         party: Party.Config;
         dialogBox: DialogBox.Config;
         skipCutsceneScriptKey: string;
-        interactionManager: InteractionManager.Config;
+        autoPlayScript?: () => IterableIterator<any>;
     }
 }
 
@@ -31,11 +32,11 @@ class Theater extends World {
 
     private debugMousePosition = new SpriteText({ font: Assets.fonts.DELUXE16, x: 0, y: 0 });
 
-    get currentStageName() { return this.stageManager.currentStageName; }
-    get currentWorld() { return this.stageManager.currentWorld; }
-    get currentStage() { return this.stages[this.currentStageName]; }
-    get isCutscenePlaying() { return this.storyManager.cutsceneManager.isCutscenePlaying; }
-    get slides() { return this.slideManager.slides; }
+    get currentStageName() { return this.stageManager ? this.stageManager.currentStageName : undefined; }
+    get currentWorld() { return this.stageManager ? this.stageManager.currentWorld : undefined; }
+    get currentStage() { return this.stages ? this.stages[this.currentStageName] : undefined; }
+    get isCutscenePlaying() { return this.storyManager ? this.storyManager.cutsceneManager.isCutscenePlaying : false; }
+    get slides() { return this.slideManager ? this.slideManager.slides : []; }
     
     constructor(config: Theater.Config) {
         super({
@@ -46,16 +47,15 @@ class Theater extends World {
                 { name: Theater.LAYER_DIALOG },
             ],
         });
-        global.theater = this;
 
         this.stages = config.stages;
 
         this.party = new Party(config.party);
         this.loadDialogBox(config.dialogBox);
 
-        this.storyManager = new StoryManager(this, config.story.storyboard, config.story.storyboardPath, config.story.storyConfig);
+        this.storyManager = new StoryManager(this, config.story.storyboard, config.story.storyboardPath, config.story.storyEvents, config.story.storyConfig);
         this.stageManager = new StageManager(this, config.stages);
-        this.interactionManager = new InteractionManager(this, config.interactionManager);
+        this.interactionManager = new InteractionManager(this);
         this.slideManager = new SlideManager(this);
 
         this.stageManager.setStage(config.stageToLoad, config.stageEntryPoint);
@@ -64,18 +64,30 @@ class Theater extends World {
             this.debugMousePosition = new SpriteText({ x: 0, y: 0, font: Assets.fonts.DELUXE16 });
             World.Actions.addWorldObjectToWorld(this.debugMousePosition, this);
         }
+
+        if (DEBUG_AUTOPLAY && config.autoPlayScript) {
+            this.runScript(config.autoPlayScript);
+        }
     }
+
+    // Theater cannot have preUpdate or postUpdate because I say so
 
     update(delta: number) {
         super.update(delta);
-
-        this.interactionManager.update();
 
         this.stageManager.loadStageIfQueued();
 
         if (DEBUG_SHOW_MOUSE_POSITION) {
             this.debugMousePosition.setText(`${S.padLeft(this.currentWorld.getWorldMouseX().toString(), 3)} ${S.padLeft(this.currentWorld.getWorldMouseY().toString(), 3)}`);
         }
+    }
+
+    // Theater cannot have preRender or postRender because it doesn't have a parent world
+
+    render(screen: Texture) {
+        this.interactionManager.preRender();
+        super.render(screen);
+        this.interactionManager.postRender();
     }
 
     addSlideByConfig(config: Slide.Config) {
@@ -91,7 +103,7 @@ class Theater extends World {
     }
 
     onStageLoad() {
-        this.storyManager.cutsceneManager.onStageLoad();
+        this.storyManager.onStageLoad();
     }
 
     private loadDialogBox(config: DialogBox.Config) {

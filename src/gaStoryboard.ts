@@ -3,14 +3,12 @@ namespace S { export const storyboard: Storyboard = {
     'start': {
         type: 'start',
         transitions: [
-            { toNode: 'outsideConfig', type: 'instant' }
+            { toNode: 'outside_party', type: 'instant' }
         ]
     },
-    'outsideConfig': {
-        type: 'config',
-        config: {
-            partyLeader: 'dad',
-        },
+    'outside_party': {
+        type: 'party',
+        setLeader: 'dad',
         transitions: [
             { toNode: 'outside', type: 'onStage', stage: 'outside'}
         ]
@@ -18,7 +16,6 @@ namespace S { export const storyboard: Storyboard = {
     'outside': {
         type: 'cutscene',
         script: function*() {
-            DEBUG_SKIP_ACTIVE = true;
             let sai = global.getWorldObject<HumanCharacter>('sai');
             let dad = global.getWorldObject<HumanCharacter>('dad');
             let guard1 = global.getWorldObject<HumanCharacter>('guard1');
@@ -51,19 +48,26 @@ namespace S { export const storyboard: Storyboard = {
             guard1.setDirection(Direction2D.DOWN);
             yield dialog('dad/default', "Thank you. I won't be long.");
             yield dialog('dad/default', "Come on, boy. I don't have all day.");
-            DEBUG_SKIP_ACTIVE = false;
             
             yield dialog('sai/default', "...");
             yield moveToY(dad, 96);
         },
         transitions: [
-            { toNode: 'inside', type: 'onStage', stage: 'inside' }
+            { toNode: 'inside_load', type: 'onStage', stage: 'inside' }
         ]
     },
-    'inside': {
+    'inside_load': {
+        type: 'config',
+        config: {
+            cameraMode: Camera.Mode.FOCUS(120, 270),
+        },
+        transitions: [
+            { toNode: 'inside_talk', type: 'instant' }
+        ]
+    },
+    'inside_talk': {
         type: 'cutscene',
         script: function*() {
-            DEBUG_SKIP_ACTIVE = true;
             let sai = global.getWorldObject<HumanCharacter>('sai');
             let dad = global.getWorldObject<HumanCharacter>('dad');
 
@@ -87,27 +91,135 @@ namespace S { export const storyboard: Storyboard = {
             yield dialog('dad/default', "Come on. We need to keep moving. I think the storage room is down the hall.");
             yield dialog('sai/default', "...");
             yield moveToY(dad, 120);
-            DEBUG_SKIP_ACTIVE = false;
-
+            World.Actions.removeWorldObjectFromWorld(dad);
         },
         transitions: [
-            { toNode: 'insideConfig', type: 'instant' }
+            { toNode: 'inside_pre_gameplay_party', type: 'instant' }
         ]
     },
-    'insideConfig': {
+    'inside_pre_gameplay_party': {
+        type: 'party',
+        setLeader: 'sai',
+        setMembersInactive: ['dad'],
+        transitions: [
+            { toNode: 'inside_pre_gameplay', type: 'instant' }
+        ]
+    },
+    'inside_pre_gameplay': {
         type: 'config',
         config: {
-            partyLeader: 'sai',
-            separated: true
+            separated: true,
+            cameraMode: Camera.Mode.FOLLOW('sai', 0, -18),
         },
         transitions: [
-            { toNode: 'insideGameplay', type: 'instant' }
+            { toNode: 'inside_gameplay', type: 'instant' }
         ]
     },
-    'insideGameplay': {
+    'inside_gameplay': {
         type: 'gameplay',
         transitions: [
-            
+            { type: 'onStage', stage: 'hallway', toNode: 'hallway_talk' },
         ]
-    }
+    },
+    'hallway_talk': {
+        type: 'cutscene',
+        script: function*() {
+            let dad = <HumanCharacter>global.script.theater.party.getMember('dad').worldObject;
+            dad.x = 120; dad.y = 420;
+            dad.setDirection(Direction2D.UP);
+            World.Actions.addWorldObjectToWorld(dad, global.script.theater.currentWorld);
+        },
+        transitions: [
+            { toNode: 'hallway_gameplay', type: 'instant' }
+        ]
+    },
+    'hallway_gameplay': {
+        type: 'gameplay',
+        transitions: [
+            { type: 'onInteract', with: 'demon1', toNode: 'i_demon1' },
+            { type: 'onInteract', with: 'demon2', toNode: 'i_demon2' },
+            { type: 'onInteract', with: 'demon3', toNode: 'i_demon3' },
+            { type: 'onInteract', with: 'demon4', toNode: 'i_demon4' },
+            { type: 'onInteract', with: 'demon5', toNode: 'i_demon5' },
+            { type: 'onInteract', with: 'demon6', toNode: 'i_demon6' },
+            { type: 'onInteract', with: 'demon7', toNode: 'i_demon7' },
+            { type: 'onInteract', with: 'demon8', toNode: 'i_demon8' },
+        ]
+    },
+    'i_demon1': {
+        type: 'cutscene',
+        script: function*() {
+            yield dialog('demon/default', "Aw, you're all bruised up...");
+            yield dialog('demon/default', "That's dedication to your act.");
+        },
+        transitions: [
+            { type: 'instant', toNode: 'inside_gameplay' }
+        ]
+    },
+    'i_demon2': {
+        type: 'cutscene',
+        script: function*() {
+            yield dialog('demon/default', "It... is an act, right?");
+        },
+        transitions: [
+            { type: 'instant', toNode: 'inside_gameplay' }
+        ]
+    },
+    'i_demon3': {
+        type: 'cutscene',
+        script: function*() {
+            yield dialog('demon/default', "Aw, you're all bruised up...");
+            yield dialog('demon/default', "That's dedication to your act.");
+        },
+        transitions: [
+            { type: 'instant', toNode: 'inside_gameplay' }
+        ]
+    },
+    'i_demon4': {
+        type: 'cutscene',
+        script: function*() {
+            yield dialog('demon/default', "It... is an act, right?");
+        },
+        transitions: [
+            { type: 'instant', toNode: 'inside_gameplay' }
+        ]
+    },
+    'i_demon5': {
+        type: 'cutscene',
+        script: function*() {
+            yield dialog('demon/default', "Aw, you're all bruised up...");
+            yield dialog('demon/default', "That's dedication to your act.");
+        },
+        transitions: [
+            { type: 'instant', toNode: 'inside_gameplay' }
+        ]
+    },
+    'i_demon6': {
+        type: 'cutscene',
+        script: function*() {
+            yield dialog('demon/default', "It... is an act, right?");
+        },
+        transitions: [
+            { type: 'instant', toNode: 'inside_gameplay' }
+        ]
+    },
+    'i_demon7': {
+        type: 'cutscene',
+        script: function*() {
+            yield dialog('demon/default', "Aw, you're all bruised up...");
+            yield dialog('demon/default', "That's dedication to your act.");
+        },
+        transitions: [
+            { type: 'instant', toNode: 'inside_gameplay' }
+        ]
+    },
+    'i_demon8': {
+        type: 'cutscene',
+        script: function*() {
+            yield dialog('demon/default', "It... is an act, right?");
+        },
+        transitions: [
+            { type: 'instant', toNode: 'inside_gameplay' }
+        ]
+    },
 }} const storyboard = S.storyboard;

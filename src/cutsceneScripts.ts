@@ -2,13 +2,12 @@ namespace S {
     export function dialog(p1: string, p2?: string): Script.Function {
         return function*() {
             if (p2) {
-                global.theater.dialogBox.showPortrait(p1);
-                global.theater.dialogBox.showDialog(p2);
+                global.script.theater.dialogBox.showPortrait(p1);
+                global.script.theater.dialogBox.showDialog(p2);
             } else {
-                global.theater.dialogBox.showDialog(p1);
+                global.script.theater.dialogBox.showDialog(p1);
             }
-            while (!global.theater.dialogBox.done) {
-                if (DEBUG_SKIP_ACTIVE) global.theater.dialogBox.done = true;
+            while (!global.script.theater.dialogBox.done) {
                 yield;
             }
         }
@@ -16,20 +15,20 @@ namespace S {
 
     export function fadeSlides(duration: number): Script.Function {
         return function*() {
-            if (_.isEmpty(global.theater.slides)) return;
+            if (_.isEmpty(global.script.theater.slides)) return;
 
-            let slideAlphas = global.theater.slides.map(slide => slide.alpha);
+            let slideAlphas = global.script.theater.slides.map(slide => slide.alpha);
 
             let timer = new Timer(duration);
             while (!timer.done) {
-                for (let i = 0; i < global.theater.slides.length; i++) {
-                    global.theater.slides[i].alpha = slideAlphas[i] * (1 - timer.progress);
+                for (let i = 0; i < global.script.theater.slides.length; i++) {
+                    global.script.theater.slides[i].alpha = slideAlphas[i] * (1 - timer.progress);
                 }
                 timer.update(global.script.delta);
                 yield;
             }
 
-            global.theater.clearSlides();
+            global.script.theater.clearSlides();
         }
     }
 
@@ -146,7 +145,7 @@ namespace S {
     export function showSlide(config: Slide.Config, waitForCompletion: boolean = true): Script.Function {
         let slide: Slide;
         return function*() {
-            slide = global.theater.addSlideByConfig(config);
+            slide = global.script.theater.addSlideByConfig(config);
             if (waitForCompletion) {
                 while (!slide.fullyLoaded) {
                     yield;

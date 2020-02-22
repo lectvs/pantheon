@@ -2,7 +2,7 @@ type Storyboard = Dict<Storyboard.Node>;
 
 namespace Storyboard {
 
-    export type Node = (Nodes.Cutscene | Nodes.Config | Nodes.Start | Nodes.Gameplay) & {
+    export type Node = (Nodes.Cutscene | Nodes.Party | Nodes.Config | Nodes.Start | Nodes.Gameplay) & {
         transitions: Node.Transition[];
     }
 
@@ -10,10 +10,18 @@ namespace Storyboard {
         export type Cutscene = {
             type: 'cutscene';
             script: Cutscene.Generator;
+            playOnlyOnce?: boolean;
         }
 
         export type Gameplay = {
             type: 'gameplay';
+        }
+
+        export type Party = {
+            type: 'party';
+            setLeader?: string;
+            setMembersActive?: string[];
+            setMembersInactive?: string[];
         }
 
         export type Config = {
@@ -27,7 +35,11 @@ namespace Storyboard {
     }
 
     export namespace Node {
-        export type Transition = (Node.Transitions.Instant | Node.Transitions.OnStage) & {
+        export type Transition = (
+                  Node.Transitions.Instant
+                | Node.Transitions.OnStage
+                | Node.Transitions.OnInteract
+            ) & {
             toNode: string;
         }
     }
@@ -40,6 +52,12 @@ namespace Storyboard {
         export type OnStage = {
             type: 'onStage';
             stage: string;
+        }
+
+        export type OnInteract = {
+            type: 'onInteract';
+            with: string;
+            onStage?: string;
         }
     }
 

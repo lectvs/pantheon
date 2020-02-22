@@ -14,6 +14,7 @@ class TestTheater extends Theater {
             story: {
                 storyboard: {'s': { type: 'gameplay', transitions: [] }},
                 storyboardPath: ['s'],
+                storyEvents: {},
                 storyConfig: {
                     initialConfig: {},
                     executeFn: sc => null,
@@ -30,15 +31,6 @@ class TestTheater extends Theater {
                 advanceKey: 'advanceDialog',
             },
             skipCutsceneScriptKey: 'skipCutsceneScript',
-            interactionManager: {
-                highlightFunction: sprite => {
-                    sprite.effects.outline.enabled = true;
-                    sprite.effects.outline.color = 0xFFFF00;
-                },
-                resetFunction: sprite => {
-                    sprite.effects.outline.enabled = false;
-                },
-            }
         });
 
         this.t = AssetCache.getTexture('grad');

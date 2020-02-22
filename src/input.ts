@@ -13,26 +13,54 @@ class Input {
         this.keysByKeycode = {};
 
         for (let name in keyCodesByName) {
+            this.keyCodesByName[name].push(this.debugKeyCode(name));
             for (let keyCode of keyCodesByName[name]) {
-                this.isDownByKeyCode[keyCode] = false;
-                this.keysByKeycode[keyCode] = this.keysByKeycode[keyCode] || new Input.Key();
+                this.setupKeyCode(keyCode);
             }
-        }
-
-        for (let keyCode of Input.MOUSE_KEYCODES) {
-            this.isDownByKeyCode[keyCode] = false;
-            this.keysByKeycode[keyCode] = new Input.Key();
         }
     }
 
     static update() {
+        if (DEBUG_PROGRAMMATIC_INPUT) {
+            this.clearKeys();
+        }
         this.updateKeys();
         this.updateMousePosition();
+    }
+
+    static debugKeyDown(name: string) {
+        if (!DEBUG_PROGRAMMATIC_INPUT) return;
+        this.keysByKeycode[this.debugKeyCode(name)].setDown();
+    }
+
+    static debugKeyJustDown(name: string) {
+        if (!DEBUG_PROGRAMMATIC_INPUT) return;
+        this.keysByKeycode[this.debugKeyCode(name)].setJustDown();
+    }
+
+    static debugKeyUp(name: string) {
+        if (!DEBUG_PROGRAMMATIC_INPUT) return;
+        this.keysByKeycode[this.debugKeyCode(name)].setUp();
+    }
+
+    static debugKeyJustUp(name: string) {
+        if (!DEBUG_PROGRAMMATIC_INPUT) return;
+        this.keysByKeycode[this.debugKeyCode(name)].setJustUp();
+    }
+
+    private static debugKeyCode(name: string) {
+        return this.DEBUG_PREFIX + name;
     }
 
     private static updateKeys() {
         for (let keyCode in this.keysByKeycode) {
             this.keysByKeycode[keyCode].update(this.isDownByKeyCode[keyCode]);
+        }
+    }
+
+    private static clearKeys() {
+        for (let keyCode in this.isDownByKeyCode) {
+            this.isDownByKeyCode[keyCode] = false;
         }
     }
 
@@ -43,6 +71,11 @@ class Input {
             this._mouseX = Math.floor(this._globalMouseX);
             this._mouseY = Math.floor(this._globalMouseY);
         }
+    }
+
+    private static setupKeyCode(keyCode: string) {
+        this.isDownByKeyCode[keyCode] = false;
+        this.keysByKeycode[keyCode] = this.keysByKeycode[keyCode] || new Input.Key();
     }
 
     static isDown(key: string) {
@@ -121,6 +154,8 @@ class Input {
     }
 
     static MOUSE_KEYCODES: string[] = ["MouseLeft", "MouseMiddle", "MouseRight", "MouseBack", "MouseForward"];
+    static DEBUG_PREFIX: string = "debug::";
+
 }
 
 namespace Input {
@@ -140,6 +175,26 @@ namespace Input {
         update(isDown: boolean) {
             this._lastDown = this._isDown;
             this._isDown = isDown;
+        }
+
+        setDown() {
+            this._isDown = true;
+            this._lastDown = true;
+        }
+
+        setJustDown() {
+            this._isDown = true;
+            this._lastDown = false;
+        }
+
+        setUp() {
+            this._isDown = false;
+            this._lastDown = false;
+        }
+
+        setJustUp() {
+            this._isDown = false;
+            this._lastDown = true;
         }
     }
 }

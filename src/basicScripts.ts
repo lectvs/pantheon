@@ -1,4 +1,6 @@
 namespace S {
+    // There is no async function. Use global.script.world.runScript(scriptFunction) instead.
+
     export function call(func: () => any): Script.Function {
         return function*() {
             func();
@@ -49,5 +51,13 @@ namespace S {
 
     export function wait(time: number): Script.Function {
         return doOverTime(time, t => null);
+    }
+
+    export function waitUntil(condition: () => any): Script.Function {
+        return function*() {
+            while (!condition()) {
+                yield;
+            }
+        }
     }
 }
