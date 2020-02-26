@@ -24,16 +24,20 @@ function autoPlayScript(options: {endNode?: string, stage?: string}) {
                 yield;
             }
         
-            while (theater.storyManager.currentStageForStory === 'hallway') {
+            while (theater.currentStageName === 'hallway') {
                 Input.debugKeyJustDown('advanceDialog');
                 Input.debugKeyDown('up');
+                yield;
+            }
+
+            while (theater.stageManager.transitioning) {
                 yield;
             }
         });
 
         let optionsMatched = () => {
             if (options.endNode && theater.storyManager.currentNodeName !== options.endNode) return false;
-            if (options.stage && theater.storyManager.currentStageForStory !== options.stage) return false;
+            if (options.stage && (theater.currentStageName !== options.stage || theater.stageManager.transitioning)) return false;
             return true;
         };
 

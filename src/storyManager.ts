@@ -6,9 +6,6 @@ class StoryManager {
     eventManager: StoryEventManager;
     storyConfig: StoryConfig;
 
-    private _currentStageForStory: string;
-    get currentStageForStory() { return this._currentStageForStory; }
-
     private _currentNodeName: string;
     get currentNodeName() { return this._currentNodeName; }
     get currentNode() { return this.getNodeByName(this.currentNodeName); }
@@ -64,10 +61,6 @@ class StoryManager {
         this.storyConfig.execute();
     }
 
-    onStageStart() {
-        this._currentStageForStory = this.theater.currentStageName;
-    }
-
     getInteractableObjects(node: Storyboard.Node, stageName?: string) {
         let result = new Set<string>();
 
@@ -107,7 +100,7 @@ class StoryManager {
             if (transition.type === 'instant') {
                 return transition;
             } else if (transition.type === 'onStage') {
-                if (this.currentStageForStory === transition.stage) return transition;
+                if (this.theater.currentStageName === transition.stage && !this.theater.stageManager.transitioning) return transition;
             } else if (transition.type === 'onInteract') {
                 if (this.theater.interactionManager.interactRequested === transition.with) {
                     this.theater.interactionManager.consumeInteraction();

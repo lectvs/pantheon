@@ -2825,21 +2825,27 @@ function autoPlayScript(options) {
                                     _a.sent();
                                     return [3 /*break*/, 4];
                                 case 6:
-                                    if (!(theater.storyManager.currentStageForStory === 'hallway')) return [3 /*break*/, 8];
+                                    if (!(theater.currentStageName === 'hallway')) return [3 /*break*/, 8];
                                     Input.debugKeyJustDown('advanceDialog');
                                     Input.debugKeyDown('up');
                                     return [4 /*yield*/];
                                 case 7:
                                     _a.sent();
                                     return [3 /*break*/, 6];
-                                case 8: return [2 /*return*/];
+                                case 8:
+                                    if (!theater.stageManager.transitioning) return [3 /*break*/, 10];
+                                    return [4 /*yield*/];
+                                case 9:
+                                    _a.sent();
+                                    return [3 /*break*/, 8];
+                                case 10: return [2 /*return*/];
                             }
                         });
                     });
                     optionsMatched = function () {
                         if (options.endNode && theater.storyManager.currentNodeName !== options.endNode)
                             return false;
-                        if (options.stage && theater.storyManager.currentStageForStory !== options.stage)
+                        if (options.stage && (theater.currentStageName !== options.stage || theater.stageManager.transitioning))
                             return false;
                         return true;
                     };
@@ -5162,6 +5168,11 @@ var StageManager = /** @class */ (function () {
         this.currentWorld = null;
         this.stageLoadQueue = null;
     }
+    Object.defineProperty(StageManager.prototype, "transitioning", {
+        get: function () { return !!this.transition; },
+        enumerable: true,
+        configurable: true
+    });
     StageManager.prototype.loadStage = function (name, transitionConfig, entryPoint) {
         if (!this.stages[name]) {
             debug("Cannot load stage '" + name + "' because it does not exist:", this.stages);
@@ -5171,7 +5182,6 @@ var StageManager = /** @class */ (function () {
             if (transitionConfig.type !== 'instant')
                 debug("Ignoring transition " + transitionConfig.type + " for stage " + name + " because no other stage is loaded");
             this.setStage(name, entryPoint);
-            this.theater.onStageStart();
         }
         this.stageLoadQueue = { name: name, transitionConfig: transitionConfig, entryPoint: entryPoint };
     };
@@ -5190,24 +5200,24 @@ var StageManager = /** @class */ (function () {
         this.currentWorld.active = false;
         this.currentWorld.visible = false;
         // this is outside the script to avoid 1-frame flicker
-        var transition = Transition.fromConfigAndSnapshots(transitionConfig, oldSnapshot, newSnapshot);
-        World.Actions.setLayer(transition, Theater.LAYER_TRANSITION);
-        World.Actions.addWorldObjectToWorld(transition, this.theater);
+        this.transition = Transition.fromConfigAndSnapshots(transitionConfig, oldSnapshot, newSnapshot);
+        World.Actions.setLayer(this.transition, Theater.LAYER_TRANSITION);
+        World.Actions.addWorldObjectToWorld(this.transition, this.theater);
         var stageManager = this;
         this.theater.runScript(function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        if (!!transition.done) return [3 /*break*/, 2];
+                        if (!!stageManager.transition.done) return [3 /*break*/, 2];
                         return [4 /*yield*/];
                     case 1:
                         _a.sent();
                         return [3 /*break*/, 0];
                     case 2:
-                        World.Actions.removeWorldObjectFromWorld(transition);
+                        World.Actions.removeWorldObjectFromWorld(stageManager.transition);
+                        stageManager.transition = null;
                         stageManager.currentWorld.active = true;
                         stageManager.currentWorld.visible = true;
-                        stageManager.theater.onStageStart();
                         return [2 /*return*/];
                 }
             });
@@ -5385,11 +5395,6 @@ var StoryManager = /** @class */ (function () {
             this.theater.runScript(this.script());
         }
     }
-    Object.defineProperty(StoryManager.prototype, "currentStageForStory", {
-        get: function () { return this._currentStageForStory; },
-        enumerable: true,
-        configurable: true
-    });
     Object.defineProperty(StoryManager.prototype, "currentNodeName", {
         get: function () { return this._currentNodeName; },
         enumerable: true,
@@ -5452,9 +5457,6 @@ var StoryManager = /** @class */ (function () {
         this.eventManager.onStageLoad();
         this.storyConfig.execute();
     };
-    StoryManager.prototype.onStageStart = function () {
-        this._currentStageForStory = this.theater.currentStageName;
-    };
     StoryManager.prototype.getInteractableObjects = function (node, stageName) {
         var e_18, _a;
         var result = new Set();
@@ -5509,7 +5511,7 @@ var StoryManager = /** @class */ (function () {
                     return transition;
                 }
                 else if (transition.type === 'onStage') {
-                    if (this.currentStageForStory === transition.stage)
+                    if (this.theater.currentStageName === transition.stage && !this.theater.stageManager.transitioning)
                         return transition;
                 }
                 else if (transition.type === 'onInteract') {
@@ -6198,9 +6200,6 @@ var Theater = /** @class */ (function (_super) {
     };
     Theater.prototype.onStageLoad = function () {
         this.storyManager.onStageLoad();
-    };
-    Theater.prototype.onStageStart = function () {
-        this.storyManager.onStageStart();
     };
     Theater.prototype.loadDialogBox = function (config) {
         this.dialogBox = new DialogBox(config);

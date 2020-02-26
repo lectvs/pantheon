@@ -102,10 +102,6 @@ class Theater extends World {
         this.storyManager.onStageLoad();
     }
     
-    onStageStart() {
-        this.storyManager.onStageStart();
-    }
-
     private loadDialogBox(config: DialogBox.Config) {
         this.dialogBox = new DialogBox(config);
         this.dialogBox.visible = false;

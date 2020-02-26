@@ -4,6 +4,9 @@ class StageManager {
     currentStageName: string;
     currentWorld: World;
 
+    private transition: Transition;
+    get transitioning() { return !!this.transition; }
+
     private theater: Theater;
     private stageLoadQueue: { name: string, transitionConfig: Transition.Config, entryPoint: Stage.EntryPoint };
 
@@ -23,7 +26,6 @@ class StageManager {
         if (!this.currentStageName) {
             if (transitionConfig.type !== 'instant') debug(`Ignoring transition ${transitionConfig.type} for stage ${name} because no other stage is loaded`);
             this.setStage(name, entryPoint);
-            this.theater.onStageStart();
         }
         this.stageLoadQueue = { name, transitionConfig, entryPoint };
     }
@@ -48,20 +50,20 @@ class StageManager {
         this.currentWorld.visible = false;
 
         // this is outside the script to avoid 1-frame flicker
-        let transition = Transition.fromConfigAndSnapshots(transitionConfig, oldSnapshot, newSnapshot);
-        World.Actions.setLayer(transition, Theater.LAYER_TRANSITION);
-        World.Actions.addWorldObjectToWorld(transition, this.theater);
+        this.transition = Transition.fromConfigAndSnapshots(transitionConfig, oldSnapshot, newSnapshot);
+        World.Actions.setLayer(this.transition, Theater.LAYER_TRANSITION);
+        World.Actions.addWorldObjectToWorld(this.transition, this.theater);
 
         let stageManager = this;
         this.theater.runScript(function* () {
-            while (!transition.done) {
+            while (!stageManager.transition.done) {
                 yield;
             }
 
-            World.Actions.removeWorldObjectFromWorld(transition)
+            World.Actions.removeWorldObjectFromWorld(stageManager.transition);
+            stageManager.transition = null;
             stageManager.currentWorld.active = true;
             stageManager.currentWorld.visible = true;
-            stageManager.theater.onStageStart();
         });
     }
 
