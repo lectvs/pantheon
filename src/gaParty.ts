@@ -1,5 +1,5 @@
 /// <reference path="./base.ts"/>
-/// <reference path="./party.ts"/>
+/// <reference path="./partyManager.ts"/>
 
 const party: Party.Config = {
     leader: 'sai',

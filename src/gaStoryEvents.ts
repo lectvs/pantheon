@@ -20,11 +20,5 @@ namespace S { export const storyEvents: StoryEvent.Map = {
             yield doOverTime(0.3, t => girldemon.alpha = 1-t);
         }
     },
-    'hallway_dad': {
-        stage: 'hallway',
-        script: function*() {
-            
-        }
-    }
 
 }} const storyEvents = S.storyEvents;

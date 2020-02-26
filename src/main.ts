@@ -94,7 +94,7 @@ class Main {
                 advanceKey: 'advanceDialog',
             },
             skipCutsceneScriptKey: 'skipCutsceneScript',
-            autoPlayScript: autoPlayScript('inside_gameplay'),
+            autoPlayScript: autoPlayScript({ endNode: 'hallway_gameplay', stage: 'escaperoom'}),
         });
 
         this.fpsMetricManager = new FPSMetricManager(1);

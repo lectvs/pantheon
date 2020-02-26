@@ -8,8 +8,8 @@ var storyConfig: StoryConfig.Config = {
     executeFn: sc => {
         
         // separated
-        let sai = <HumanCharacter>sc.theater.party.members['sai'].worldObject;
-        let dad = <HumanCharacter>sc.theater.party.members['dad'].worldObject;
+        let sai = <HumanCharacter>sc.theater.partyManager.getMember('sai').worldObject;
+        let dad = <HumanCharacter>sc.theater.partyManager.getMember('dad').worldObject;
 
         sai.unfollow();
         dad.unfollow();

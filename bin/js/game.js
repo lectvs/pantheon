@@ -2786,16 +2786,16 @@ var FPSMetricManager = /** @class */ (function () {
     };
     return FPSMetricManager;
 }());
-function autoPlayScript(endNode) {
+function autoPlayScript(options) {
     return function () {
-        var theater, sai, script;
+        var theater, sai, script, optionsMatched;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/];
                 case 1:
                     _a.sent();
                     theater = global.theater;
-                    sai = theater.party.members['sai'].worldObject;
+                    sai = theater.partyManager.getMember('sai').worldObject;
                     script = new Script(function () {
                         return __generator(this, function (_a) {
                             switch (_a.label) {
@@ -2817,6 +2817,7 @@ function autoPlayScript(endNode) {
                                     return [3 /*break*/, 2];
                                 case 4:
                                     if (!(sai.x < Main.width / 2)) return [3 /*break*/, 6];
+                                    Input.debugKeyJustDown('advanceDialog');
                                     Input.debugKeyDown('up');
                                     Input.debugKeyDown('right');
                                     return [4 /*yield*/];
@@ -2824,7 +2825,8 @@ function autoPlayScript(endNode) {
                                     _a.sent();
                                     return [3 /*break*/, 4];
                                 case 6:
-                                    if (!(theater.currentStageName === 'hallway')) return [3 /*break*/, 8];
+                                    if (!(theater.storyManager.currentStageForStory === 'hallway')) return [3 /*break*/, 8];
+                                    Input.debugKeyJustDown('advanceDialog');
                                     Input.debugKeyDown('up');
                                     return [4 /*yield*/];
                                 case 7:
@@ -2834,11 +2836,18 @@ function autoPlayScript(endNode) {
                             }
                         });
                     });
+                    optionsMatched = function () {
+                        if (options.endNode && theater.storyManager.currentNodeName !== options.endNode)
+                            return false;
+                        if (options.stage && theater.storyManager.currentStageForStory !== options.stage)
+                            return false;
+                        return true;
+                    };
                     DEBUG_PROGRAMMATIC_INPUT = true;
                     DEBUG_SKIP_RATE = 100;
                     _a.label = 2;
                 case 2:
-                    if (!(!script.done && theater.storyManager.currentNodeName !== endNode)) return [3 /*break*/, 4];
+                    if (!(!script.done && !optionsMatched())) return [3 /*break*/, 4];
                     script.update(global.script.world, global.script.delta);
                     return [4 /*yield*/];
                 case 3:
@@ -2852,35 +2861,41 @@ function autoPlayScript(endNode) {
         });
     };
 }
-var Party = /** @class */ (function () {
-    function Party(config) {
+var PartyManager = /** @class */ (function () {
+    function PartyManager(theater, config) {
+        this.theater = theater;
         this.leader = config.leader;
-        this.activeMembers = config.activeMembers;
+        this.activeMembers = new Set(config.activeMembers);
         this.members = config.members;
         this.load();
     }
-    Party.prototype.addMemberToWorld = function (name, world) {
-        var member = this.members[name];
-        if (!member) {
-            debug("Could not find party member named " + name + ". Party:", this);
-            return;
+    PartyManager.prototype.addMembersToWorld = function (world, stageName, entryPoint) {
+        for (var memberName in this.members) {
+            var member = this.members[memberName];
+            if (this.isMemberActive(memberName)) {
+                member.stage = stageName;
+                member.worldObject.x = entryPoint.x;
+                member.worldObject.y = entryPoint.y;
+            }
+            if (member.stage === stageName) {
+                if (member.worldObject.world) {
+                    World.Actions.removeWorldObjectFromWorld(member.worldObject);
+                }
+                World.Actions.addWorldObjectToWorld(member.worldObject, world);
+            }
         }
-        if (member.worldObject.world) {
-            World.Actions.removeWorldObjectFromWorld(member.worldObject);
-        }
-        return World.Actions.addWorldObjectToWorld(member.worldObject, world);
     };
-    Party.prototype.getMember = function (name) {
+    PartyManager.prototype.getMember = function (name) {
         var member = this.members[name];
         if (!member) {
             debug("No party member named '" + name + "':", this);
         }
         return member;
     };
-    Party.prototype.isMemberActive = function (name) {
-        return _.contains(this.activeMembers, name);
+    PartyManager.prototype.isMemberActive = function (name) {
+        return this.activeMembers.has(name);
     };
-    Object.defineProperty(Party.prototype, "leader", {
+    Object.defineProperty(PartyManager.prototype, "leader", {
         get: function () {
             return this._leader;
         },
@@ -2895,7 +2910,7 @@ var Party = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Party.prototype.load = function () {
+    PartyManager.prototype.load = function () {
         for (var key in this.members) {
             var member = this.members[key];
             member.config = WorldObject.resolveConfig(member.config);
@@ -2905,18 +2920,33 @@ var Party = /** @class */ (function () {
             }
         }
     };
-    Party.prototype.setMemberActive = function (name) {
-        if (this.isMemberActive(name))
+    PartyManager.prototype.moveMemberToStage = function (memberName, stageName, x, y) {
+        var member = this.getMember(memberName);
+        if (!member)
             return;
-        this.activeMembers.push(name);
+        var stage = this.theater.stageManager.stages[stageName];
+        if (!stage) {
+            debug("Cannot move party member " + memberName + " to stage " + stageName + " because the stage does not exist");
+            return;
+        }
+        member.stage = stageName;
+        member.worldObject.x = x;
+        member.worldObject.y = y;
     };
-    Party.prototype.setMemberInactive = function (name) {
-        A.removeAll(this.activeMembers, name);
+    PartyManager.prototype.setMemberActive = function (name) {
+        if (!this.getMember(name))
+            return;
+        this.activeMembers.add(name);
     };
-    return Party;
+    PartyManager.prototype.setMemberInactive = function (name) {
+        if (!this.getMember(name))
+            return;
+        this.activeMembers.delete(name);
+    };
+    return PartyManager;
 }());
 /// <reference path="./base.ts"/>
-/// <reference path="./party.ts"/>
+/// <reference path="./partyManager.ts"/>
 var party = {
     leader: 'sai',
     activeMembers: ['sai', 'dad'],
@@ -3566,7 +3596,7 @@ var Main = /** @class */ (function () {
                 advanceKey: 'advanceDialog',
             },
             skipCutsceneScriptKey: 'skipCutsceneScript',
-            autoPlayScript: autoPlayScript('inside_gameplay'),
+            autoPlayScript: autoPlayScript({ endNode: 'hallway_gameplay', stage: 'escaperoom' }),
         });
         this.fpsMetricManager = new FPSMetricManager(1);
     };
@@ -3600,8 +3630,8 @@ var storyConfig = {
     },
     executeFn: function (sc) {
         // separated
-        var sai = sc.theater.party.members['sai'].worldObject;
-        var dad = sc.theater.party.members['dad'].worldObject;
+        var sai = sc.theater.partyManager.getMember('sai').worldObject;
+        var dad = sc.theater.partyManager.getMember('dad').worldObject;
         sai.unfollow();
         dad.unfollow();
         if (!sc.config.separated) {
@@ -3656,14 +3686,6 @@ var S;
                 });
             }
         },
-        'hallway_dad': {
-            stage: 'hallway',
-            script: function () {
-                return __generator(this, function (_a) {
-                    return [2 /*return*/];
-                });
-            }
-        }
     };
 })(S || (S = {}));
 var storyEvents = S.storyEvents;
@@ -3862,6 +3884,7 @@ var S;
                         case 19:
                             _a.sent();
                             World.Actions.removeWorldObjectFromWorld(dad);
+                            global.script.theater.partyManager.moveMemberToStage('dad', 'hallway', 120, 420);
                             return [2 /*return*/];
                     }
                 });
@@ -3897,14 +3920,17 @@ var S;
         'hallway_talk': {
             type: 'cutscene',
             script: function () {
-                var dad;
+                var sai, dad;
                 return __generator(this, function (_a) {
-                    dad = global.script.theater.party.getMember('dad').worldObject;
-                    dad.x = 120;
-                    dad.y = 420;
-                    dad.setDirection(Direction2D.UP);
-                    World.Actions.addWorldObjectToWorld(dad, global.script.theater.currentWorld);
-                    return [2 /*return*/];
+                    switch (_a.label) {
+                        case 0:
+                            sai = global.getWorldObject('sai');
+                            dad = global.getWorldObject('dad');
+                            return [4 /*yield*/, S.dialog('dad/default', "Hey, keep up. You don't know if more guards are coming.")];
+                        case 1:
+                            _a.sent();
+                            return [2 /*return*/];
+                    }
                 });
             },
             transitions: [
@@ -5137,6 +5163,16 @@ var StageManager = /** @class */ (function () {
         this.stageLoadQueue = null;
     }
     StageManager.prototype.loadStage = function (name, transitionConfig, entryPoint) {
+        if (!this.stages[name]) {
+            debug("Cannot load stage '" + name + "' because it does not exist:", this.stages);
+            return;
+        }
+        if (!this.currentStageName) {
+            if (transitionConfig.type !== 'instant')
+                debug("Ignoring transition " + transitionConfig.type + " for stage " + name + " because no other stage is loaded");
+            this.setStage(name, entryPoint);
+            this.theater.onStageStart();
+        }
         this.stageLoadQueue = { name: name, transitionConfig: transitionConfig, entryPoint: entryPoint };
     };
     StageManager.prototype.loadStageIfQueued = function () {
@@ -5171,16 +5207,13 @@ var StageManager = /** @class */ (function () {
                         World.Actions.removeWorldObjectFromWorld(transition);
                         stageManager.currentWorld.active = true;
                         stageManager.currentWorld.visible = true;
+                        stageManager.theater.onStageStart();
                         return [2 /*return*/];
                 }
             });
         });
     };
     StageManager.prototype.setStage = function (name, entryPoint) {
-        if (!this.stages[name]) {
-            debug("Stage '" + name + "' does not exist in world.");
-            return;
-        }
         var stage = Stage.resolveConfig(this.stages[name]);
         // Remove old stuff
         if (this.currentWorld) {
@@ -5190,10 +5223,17 @@ var StageManager = /** @class */ (function () {
         // Create new stuff
         this.currentStageName = name;
         this.currentWorld = this.newWorldFromStage(stage);
-        this.addPartyToWorld(this.theater.party, this.theater.currentWorld, name, entryPoint);
+        this.addPartyToWorld(this.theater.currentWorld, name, entryPoint);
         World.Actions.setLayer(this.currentWorld, Theater.LAYER_WORLD);
         World.Actions.addWorldObjectToWorld(this.currentWorld, this.theater);
         this.theater.onStageLoad();
+    };
+    StageManager.prototype.addPartyToWorld = function (world, stageName, entryPoint) {
+        // Resolve entry point.
+        if (_.isString(entryPoint)) {
+            entryPoint = Stage.getEntryPoint(this.stages[stageName], entryPoint);
+        }
+        this.theater.partyManager.addMembersToWorld(world, stageName, entryPoint);
     };
     StageManager.prototype.newWorldFromStage = function (stage) {
         var e_17, _a;
@@ -5215,23 +5255,6 @@ var StageManager = /** @class */ (function () {
             }
         }
         return world;
-    };
-    StageManager.prototype.addPartyToWorld = function (party, world, stageName, entryPoint) {
-        // Resolve entry point.
-        if (_.isString(entryPoint)) {
-            entryPoint = Stage.getEntryPoint(this.stages[stageName], entryPoint);
-        }
-        for (var memberName in party.members) {
-            var member = party.members[memberName];
-            if (_.contains(party.activeMembers, memberName)) {
-                member.stage = stageName;
-                member.worldObject.x = entryPoint.x;
-                member.worldObject.y = entryPoint.y;
-            }
-            if (member.stage === stageName) {
-                party.addMemberToWorld(memberName, world);
-            }
-        }
     };
     return StageManager;
 }());
@@ -5362,6 +5385,11 @@ var StoryManager = /** @class */ (function () {
             this.theater.runScript(this.script());
         }
     }
+    Object.defineProperty(StoryManager.prototype, "currentStageForStory", {
+        get: function () { return this._currentStageForStory; },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(StoryManager.prototype, "currentNodeName", {
         get: function () { return this._currentNodeName; },
         enumerable: true,
@@ -5424,6 +5452,9 @@ var StoryManager = /** @class */ (function () {
         this.eventManager.onStageLoad();
         this.storyConfig.execute();
     };
+    StoryManager.prototype.onStageStart = function () {
+        this._currentStageForStory = this.theater.currentStageName;
+    };
     StoryManager.prototype.getInteractableObjects = function (node, stageName) {
         var e_18, _a;
         var result = new Set();
@@ -5478,7 +5509,7 @@ var StoryManager = /** @class */ (function () {
                     return transition;
                 }
                 else if (transition.type === 'onStage') {
-                    if (this.theater.currentStageName === transition.stage)
+                    if (this.currentStageForStory === transition.stage)
                         return transition;
                 }
                 else if (transition.type === 'onInteract') {
@@ -5507,15 +5538,13 @@ var StoryManager = /** @class */ (function () {
     StoryManager.prototype.updateParty = function (party) {
         var e_20, _a, e_21, _b;
         if (party.setLeader !== undefined) {
-            this.theater.party.leader = party.setLeader;
+            this.theater.partyManager.leader = party.setLeader;
         }
         if (!_.isEmpty(party.setMembersActive)) {
             try {
                 for (var _c = __values(party.setMembersActive), _d = _c.next(); !_d.done; _d = _c.next()) {
                     var m = _d.value;
-                    if (!_.contains(this.theater.party.activeMembers, m)) {
-                        this.theater.party.activeMembers.push(m);
-                    }
+                    this.theater.partyManager.setMemberActive(m);
                 }
             }
             catch (e_20_1) { e_20 = { error: e_20_1 }; }
@@ -5530,9 +5559,7 @@ var StoryManager = /** @class */ (function () {
             try {
                 for (var _e = __values(party.setMembersInactive), _f = _e.next(); !_f.done; _f = _e.next()) {
                     var m = _f.value;
-                    if (_.contains(this.theater.party.activeMembers, m)) {
-                        A.removeAll(this.theater.party.activeMembers, m);
-                    }
+                    this.theater.partyManager.setMemberInactive(m);
                 }
             }
             catch (e_21_1) { e_21 = { error: e_21_1 }; }
@@ -6102,14 +6129,13 @@ var Theater = /** @class */ (function (_super) {
             ],
         }) || this;
         _this.debugMousePosition = new SpriteText({ font: Assets.fonts.DELUXE16, x: 0, y: 0 });
-        _this.stages = config.stages;
-        _this.party = new Party(config.party);
         _this.loadDialogBox(config.dialogBox);
+        _this.partyManager = new PartyManager(_this, config.party);
         _this.storyManager = new StoryManager(_this, config.story.storyboard, config.story.storyboardPath, config.story.storyEvents, config.story.storyConfig);
         _this.stageManager = new StageManager(_this, config.stages);
         _this.interactionManager = new InteractionManager(_this);
         _this.slideManager = new SlideManager(_this);
-        _this.stageManager.setStage(config.stageToLoad, config.stageEntryPoint);
+        _this.stageManager.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
         if (DEBUG_SHOW_MOUSE_POSITION) {
             _this.debugMousePosition = new SpriteText({ x: 0, y: 0, font: Assets.fonts.DELUXE16 });
             World.Actions.addWorldObjectToWorld(_this.debugMousePosition, _this);
@@ -6130,7 +6156,7 @@ var Theater = /** @class */ (function (_super) {
         configurable: true
     });
     Object.defineProperty(Theater.prototype, "currentStage", {
-        get: function () { return this.stages ? this.stages[this.currentStageName] : undefined; },
+        get: function () { return (this.stageManager && this.stageManager.stages) ? this.stageManager.stages[this.stageManager.currentStageName] : undefined; },
         enumerable: true,
         configurable: true
     });
@@ -6172,6 +6198,9 @@ var Theater = /** @class */ (function (_super) {
     };
     Theater.prototype.onStageLoad = function () {
         this.storyManager.onStageLoad();
+    };
+    Theater.prototype.onStageStart = function () {
+        this.storyManager.onStageStart();
     };
     Theater.prototype.loadDialogBox = function (config) {
         this.dialogBox = new DialogBox(config);

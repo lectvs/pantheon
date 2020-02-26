@@ -16,6 +16,15 @@ class StageManager {
     }
 
     loadStage(name: string, transitionConfig: Transition.Config, entryPoint: Stage.EntryPoint) {
+        if (!this.stages[name]) {
+            debug(`Cannot load stage '${name}' because it does not exist:`, this.stages);
+            return;
+        }
+        if (!this.currentStageName) {
+            if (transitionConfig.type !== 'instant') debug(`Ignoring transition ${transitionConfig.type} for stage ${name} because no other stage is loaded`);
+            this.setStage(name, entryPoint);
+            this.theater.onStageStart();
+        }
         this.stageLoadQueue = { name, transitionConfig, entryPoint };
     }
 
@@ -52,15 +61,11 @@ class StageManager {
             World.Actions.removeWorldObjectFromWorld(transition)
             stageManager.currentWorld.active = true;
             stageManager.currentWorld.visible = true;
+            stageManager.theater.onStageStart();
         });
     }
 
-    setStage(name: string, entryPoint: Stage.EntryPoint) {
-        if (!this.stages[name]) {
-            debug(`Stage '${name}' does not exist in world.`);
-            return;
-        }
-
+    private setStage(name: string, entryPoint: Stage.EntryPoint) {
         let stage = Stage.resolveConfig(this.stages[name]);
 
         // Remove old stuff
@@ -72,11 +77,19 @@ class StageManager {
         // Create new stuff
         this.currentStageName = name;
         this.currentWorld = this.newWorldFromStage(stage);
-        this.addPartyToWorld(this.theater.party, this.theater.currentWorld, name, entryPoint);
+        this.addPartyToWorld(this.theater.currentWorld, name, entryPoint);
         World.Actions.setLayer(this.currentWorld, Theater.LAYER_WORLD);
         World.Actions.addWorldObjectToWorld(this.currentWorld, this.theater);
 
         this.theater.onStageLoad();
+    }
+
+    private addPartyToWorld(world: World, stageName: string, entryPoint: Stage.EntryPoint) {
+        // Resolve entry point.
+        if (_.isString(entryPoint)) {
+            entryPoint = Stage.getEntryPoint(this.stages[stageName], entryPoint);
+        }
+        this.theater.partyManager.addMembersToWorld(world, stageName, entryPoint);
     }
 
     private newWorldFromStage(stage: Stage) {
@@ -90,23 +103,5 @@ class StageManager {
         }
 
         return world;
-    }
-
-    private addPartyToWorld(party: Party, world: World, stageName: string, entryPoint: Stage.EntryPoint) {
-        // Resolve entry point.
-        if (_.isString(entryPoint)) {
-            entryPoint = Stage.getEntryPoint(this.stages[stageName], entryPoint);
-        }
-        for (let memberName in party.members) {
-            let member = party.members[memberName];
-            if (_.contains(party.activeMembers, memberName)) {
-                member.stage = stageName;
-                member.worldObject.x = entryPoint.x;
-                member.worldObject.y = entryPoint.y;
-            }
-            if (member.stage === stageName) {
-                party.addMemberToWorld(memberName, world);
-            }
-        }
     }
 }

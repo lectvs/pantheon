@@ -20,11 +20,9 @@ namespace Theater {
 }
 
 class Theater extends World {
-    stages: Dict<Stage>;
-    party: Party;
-
     dialogBox: DialogBox;
     
+    partyManager: PartyManager;
     storyManager: StoryManager;
     stageManager: StageManager;
     interactionManager: InteractionManager;
@@ -34,7 +32,7 @@ class Theater extends World {
 
     get currentStageName() { return this.stageManager ? this.stageManager.currentStageName : undefined; }
     get currentWorld() { return this.stageManager ? this.stageManager.currentWorld : undefined; }
-    get currentStage() { return this.stages ? this.stages[this.currentStageName] : undefined; }
+    get currentStage() { return (this.stageManager && this.stageManager.stages) ? this.stageManager.stages[this.stageManager.currentStageName] : undefined; }
     get isCutscenePlaying() { return this.storyManager ? this.storyManager.cutsceneManager.isCutscenePlaying : false; }
     get slides() { return this.slideManager ? this.slideManager.slides : []; }
     
@@ -48,17 +46,15 @@ class Theater extends World {
             ],
         });
 
-        this.stages = config.stages;
-
-        this.party = new Party(config.party);
         this.loadDialogBox(config.dialogBox);
 
+        this.partyManager = new PartyManager(this, config.party);
         this.storyManager = new StoryManager(this, config.story.storyboard, config.story.storyboardPath, config.story.storyEvents, config.story.storyConfig);
         this.stageManager = new StageManager(this, config.stages);
         this.interactionManager = new InteractionManager(this);
         this.slideManager = new SlideManager(this);
 
-        this.stageManager.setStage(config.stageToLoad, config.stageEntryPoint);
+        this.stageManager.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
 
         if (DEBUG_SHOW_MOUSE_POSITION) {
             this.debugMousePosition = new SpriteText({ x: 0, y: 0, font: Assets.fonts.DELUXE16 });
@@ -104,6 +100,10 @@ class Theater extends World {
 
     onStageLoad() {
         this.storyManager.onStageLoad();
+    }
+    
+    onStageStart() {
+        this.storyManager.onStageStart();
     }
 
     private loadDialogBox(config: DialogBox.Config) {

@@ -548,7 +548,7 @@
                 },
                 {
                     "x": 8,
-                    "tile": 1,
+                    "tile": 0,
                     "y": 3,
                     "flipX": false,
                     "index": 68,
@@ -556,7 +556,7 @@
                 },
                 {
                     "x": 9,
-                    "tile": 1,
+                    "tile": 0,
                     "y": 3,
                     "flipX": false,
                     "index": 69,
@@ -564,7 +564,7 @@
                 },
                 {
                     "x": 10,
-                    "tile": 1,
+                    "tile": 0,
                     "y": 3,
                     "flipX": false,
                     "index": 70,
@@ -572,7 +572,7 @@
                 },
                 {
                     "x": 11,
-                    "tile": 1,
+                    "tile": 0,
                     "y": 3,
                     "flipX": false,
                     "index": 71,

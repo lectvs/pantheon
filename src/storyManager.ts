@@ -6,6 +6,9 @@ class StoryManager {
     eventManager: StoryEventManager;
     storyConfig: StoryConfig;
 
+    private _currentStageForStory: string;
+    get currentStageForStory() { return this._currentStageForStory; }
+
     private _currentNodeName: string;
     get currentNodeName() { return this._currentNodeName; }
     get currentNode() { return this.getNodeByName(this.currentNodeName); }
@@ -61,6 +64,10 @@ class StoryManager {
         this.storyConfig.execute();
     }
 
+    onStageStart() {
+        this._currentStageForStory = this.theater.currentStageName;
+    }
+
     getInteractableObjects(node: Storyboard.Node, stageName?: string) {
         let result = new Set<string>();
 
@@ -100,7 +107,7 @@ class StoryManager {
             if (transition.type === 'instant') {
                 return transition;
             } else if (transition.type === 'onStage') {
-                if (this.theater.currentStageName === transition.stage) return transition;
+                if (this.currentStageForStory === transition.stage) return transition;
             } else if (transition.type === 'onInteract') {
                 if (this.theater.interactionManager.interactRequested === transition.with) {
                     this.theater.interactionManager.consumeInteraction();
@@ -120,22 +127,18 @@ class StoryManager {
 
     private updateParty(party: Storyboard.Nodes.Party) {
         if (party.setLeader !== undefined) {
-            this.theater.party.leader = party.setLeader;
+            this.theater.partyManager.leader = party.setLeader;
         }
 
         if (!_.isEmpty(party.setMembersActive)) {
             for (let m of party.setMembersActive) {
-                if (!_.contains(this.theater.party.activeMembers, m)) {
-                    this.theater.party.activeMembers.push(m);
-                }
+                this.theater.partyManager.setMemberActive(m);
             }
         }
 
         if (!_.isEmpty(party.setMembersInactive)) {
             for (let m of party.setMembersInactive) {
-                if (_.contains(this.theater.party.activeMembers, m)) {
-                    A.removeAll(this.theater.party.activeMembers, m);
-                }
+                this.theater.partyManager.setMemberInactive(m);
             }
         }
     }

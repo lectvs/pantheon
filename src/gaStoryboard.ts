@@ -92,6 +92,7 @@ namespace S { export const storyboard: Storyboard = {
             yield dialog('sai/default', "...");
             yield moveToY(dad, 120);
             World.Actions.removeWorldObjectFromWorld(dad);
+            global.script.theater.partyManager.moveMemberToStage('dad', 'hallway', 120, 420);
         },
         transitions: [
             { toNode: 'inside_pre_gameplay_party', type: 'instant' }
@@ -124,10 +125,10 @@ namespace S { export const storyboard: Storyboard = {
     'hallway_talk': {
         type: 'cutscene',
         script: function*() {
-            let dad = <HumanCharacter>global.script.theater.party.getMember('dad').worldObject;
-            dad.x = 120; dad.y = 420;
-            dad.setDirection(Direction2D.UP);
-            World.Actions.addWorldObjectToWorld(dad, global.script.theater.currentWorld);
+            let sai = global.getWorldObject<HumanCharacter>('sai');
+            let dad = global.getWorldObject<HumanCharacter>('dad');
+
+            yield dialog('dad/default', "Hey, keep up. You don't know if more guards are coming.");
         },
         transitions: [
             { toNode: 'hallway_gameplay', type: 'instant' }
