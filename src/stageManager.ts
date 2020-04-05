@@ -26,6 +26,7 @@ class StageManager {
         if (!this.currentStageName) {
             if (transitionConfig.type !== 'instant') debug(`Ignoring transition ${transitionConfig.type} for stage ${name} because no other stage is loaded`);
             this.setStage(name, entryPoint);
+            return;
         }
         this.stageLoadQueue = { name, transitionConfig, entryPoint };
     }

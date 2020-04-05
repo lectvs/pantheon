@@ -323,6 +323,14 @@ class World extends WorldObject {
         this.getPhysicsGroupByName(physicsGroupName).worldObjects.push(obj);
     }
 
+    internalAddChildToParentWorld(child: WorldObject, obj: WorldObject) {
+        World.Actions.addWorldObjectToWorld(child, this);
+    }
+
+    internalRemoveChildFromParentWorld(child: WorldObject) {
+        World.Actions.removeWorldObjectFromWorld(child);
+    }
+
     private removeName(obj: WorldObject) {
         for (let name in this.worldObjectsByName) {
             if (this.worldObjectsByName[name] === obj) {
@@ -383,7 +391,7 @@ namespace World {
 
     export namespace Actions {
         export function addWorldObjectToWorld(obj: WorldObject, world: World): boolean {
-            if (!obj) return false;
+            if (!obj || !world) return false;
 
             if (obj.world) {
                 debug(`Cannot add object ${obj.name} to world because it aleady exists in another world! You must remove object from previous world first. World:`, world, 'Previous world:', obj.world);
@@ -399,6 +407,10 @@ namespace World {
             obj.internalAddWorldObjectToWorldWorldObject(world);
             /// @ts-ignore
             world.internalAddWorldObjectToWorldWorld(obj);
+
+            for (let child of obj.children) {
+                World.Actions.addWorldObjectToWorld(child, world);
+            }
 
             obj.onAdd(world);
             return true;
@@ -419,6 +431,14 @@ namespace World {
             /// @ts-ignore
             world.internalRemoveWorldObjectFromWorldWorld(obj);
             
+            for (let child of obj.children) {
+                World.Actions.removeWorldObjectFromWorld(child);
+            }
+
+            if (obj.parent) {
+                World.Actions.removeChildFromParent(obj);
+            }
+
             obj.onRemove(world);
             return true;
         }
@@ -462,7 +482,7 @@ namespace World {
 
             if (obj.world && !obj.world.getPhysicsGroupByName(physicsGroupName)) {
                 debug(`Cannot set physicsGroup on object '${obj.name}' as no physicsGroup named ${physicsGroupName} exists in world!`, obj.world);
-                return;
+                return false;
             }
 
             /// @ts-ignore
@@ -471,6 +491,41 @@ namespace World {
             if (obj.world) {
                 /// @ts-ignore
                 obj.world.internalSetPhysicsGroupWorld(obj, physicsGroupName);
+            }
+
+            return true;
+        }
+
+        export function addChildToParent(child: WorldObject, obj: WorldObject) {
+            if (!child || !obj) return false;
+
+            if (child.world && child.world !== obj.world) {
+                debug(`Cannot add child ${child.name} to parent ${obj.name} becase the child exists in a different world!`, child.world);
+                return false;
+            }
+
+            obj.internalAddChildToParentWorldObject(child);
+
+            if (obj.world) {
+                obj.world.internalAddChildToParentWorld(child, obj);
+            }
+
+            return true;
+        }
+
+        export function removeChildFromParent(child: WorldObject) {
+            if (!child) return false;
+
+            if (!child.parent) {
+                debug(`Cannot remove child ${child.name} from parent because its parent does not exist! Child:`, child);
+                return false;
+            }
+
+
+            child.parent.internalRemoveChildFromParentWorldObject(child);
+
+            if (child.world) {
+                child.world.internalRemoveChildFromParentWorld(child);
             }
 
             return true;

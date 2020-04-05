@@ -27,6 +27,12 @@ class TestTheater extends Theater {
             },
             skipCutsceneScriptKey: 'skipCutsceneScript',
         });
+
+        let sprite = new Sprite({ x: 20, y: 20, texture: 'door_closed' });
+        let child = new Sprite({ x: 60, y: 60, texture: 'debug' });
+        World.Actions.addChildToParent(child, sprite);
+        World.Actions.addWorldObjectToWorld(sprite, this.currentWorld);
+        World.Actions.removeWorldObjectFromWorld(child);
     }
 
     render(screen: Texture) {

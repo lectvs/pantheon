@@ -28,11 +28,15 @@ class WorldObject {
     private _name: string;
     private _layer: string;
     private _physicsGroup: string;
+    private _children: WorldObject[];
+    private _parent: WorldObject;
 
     get world() { return this._world; }
     get name() { return this._name; }
     get layer() { return this._layer; }
     get physicsGroup() { return this._physicsGroup; }
+    get children() { return <ReadonlyArray<WorldObject>>this._children; }
+    get parent() { return this._parent; }
     //
 
     lastx: number;
@@ -68,9 +72,12 @@ class WorldObject {
         this.preRenderStoredX = this.x;
         this.preRenderStoredY = this.y;
 
+        this._world = null;
         this.internalSetNameWorldObject(config.name);
         this.internalSetLayerWorldObject(config.layer);
         this.internalSetPhysicsGroupWorldObject(config.physicsGroup);
+        this._children = [];
+        this._parent = null;
     }
 
     preUpdate() {
@@ -159,7 +166,7 @@ class WorldObject {
         this._name = name;
     }
 
-    // For use with World.Actions.setLyer
+    // For use with World.Actions.setLayer
     private internalSetLayerWorldObject(layer: string) {
         this._layer = layer;
     }
@@ -167,6 +174,16 @@ class WorldObject {
     // For use with World.Actions.setPhysicsGroup
     private internalSetPhysicsGroupWorldObject(physicsGroup: string) {
         this._physicsGroup = physicsGroup;
+    }
+
+    internalAddChildToParentWorldObject(child: WorldObject) {
+        this._children.push(child);
+        child._parent = this;
+    }
+
+    internalRemoveChildFromParentWorldObject(child: WorldObject) {
+        A.removeAll(this._children, child);
+        child._parent = null;
     }
 }
 
