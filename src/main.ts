@@ -2,10 +2,9 @@
 
 class Main {
     static renderer: PIXI.Renderer;
-    private static theater: Theater;
+    private static game: Game;
     static screen: Texture;
 
-    static fpsMetricManager: FPSMetricManager;
     static delta: number;
 
     static get width()  { return 240; }
@@ -49,7 +48,8 @@ class Main {
             'down':                 ['ArrowDown'],
             'interact':             ['e'],
             'advanceDialog':        ['MouseLeft', 'e', ' '],
-            'skipCutsceneScript':   ['Escape'],
+            'pause':                ['Escape', 'Backspace'],
+            'skipCutsceneScript':   ['Space'],
             'debugMoveCameraUp':    ['i'],
             'debugMoveCameraDown':  ['k'],
             'debugMoveCameraLeft':  ['j'],
@@ -73,31 +73,37 @@ class Main {
         window.addEventListener("mouseup", event => Input.handleMouseUpEvent(event), false);
         //window.addEventListener("contextmenu", event => event.preventDefault(), false);
 
-        this.theater = new Theater({
-            stages: stages,
-            stageToLoad: 'outside',
-            stageEntryPoint: 'main',
-            story: {
-                storyboard: storyboard,
-                storyboardPath: ['start'],
-                storyEvents: storyEvents,
-                storyConfig: storyConfig,
-            },
-            party: party,
-            dialogBox: {
-                x: Main.width/2, y: Main.height - 32,
-                texture: 'dialogbox',
-                spriteTextFont: Assets.fonts.DELUXE16,
-                textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
-                textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
-                portraitPosition: { x: 78, y: 0 },
-                advanceKey: 'advanceDialog',
-            },
-            skipCutsceneScriptKey: 'skipCutsceneScript',
-            autoPlayScript: autoPlayScript({ endNode: 'hallway_gameplay', stage: 'escaperoom'}),
+        this.game = new Game({
+            mainMenuClass: MainMenu,
+            pauseMenuClass: PauseMenu,
+            // theaterClass: Theater,
+            // theaterConfig: {
+            //     stages: stages,
+            //     stageToLoad: 'outside',
+            //     stageEntryPoint: 'main',
+            //     story: {
+            //         storyboard: storyboard,
+            //         storyboardPath: ['start'],
+            //         storyEvents: storyEvents,
+            //         storyConfig: storyConfig,
+            //     },
+            //     party: party,
+            //     dialogBox: {
+            //         x: Main.width/2, y: Main.height - 32,
+            //         texture: 'dialogbox',
+            //         spriteTextFont: Assets.fonts.DELUXE16,
+            //         textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
+            //         textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
+            //         portraitPosition: { x: 78, y: 0 },
+            //         advanceKey: 'advanceDialog',
+            //     },
+            //     skipCutsceneScriptKey: 'skipCutsceneScript',
+            //     autoPlayScript: autoPlayScript({ endNode: 'none', stage: 'escaperoom'}),
+            // },
+            theaterClass: TestTheater,
+            theaterConfig: undefined,
         });
-
-        this.fpsMetricManager = new FPSMetricManager(1);
+        global.game = this.game;
     }
 
     // no need to modify
@@ -105,17 +111,15 @@ class Main {
         PIXI.Ticker.shared.add(frameDelta => {
             this.delta = frameDelta/60;
 
-            global.theater = this.theater;
             global.clearStacks();
 
             for (let i = 0; i < DEBUG_SKIP_RATE; i++) {
                 Input.update();
-                this.fpsMetricManager.update(this.delta);
-                this.theater.update(this.delta);
+                this.game.update(this.delta);
             }
 
             this.screen.clear();
-            this.theater.render(this.screen);
+            this.game.render(this.screen);
 
             this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
             this.renderer.render(this.screen.renderTextureSprite);

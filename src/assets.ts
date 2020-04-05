@@ -22,43 +22,23 @@ namespace Assets {
         },
 
         // Props
-        'spotlight': {},
-
-        // 'props': {
-        //     defaultAnchor: { x: 0.5, y: 1 },
-        //     frames: {
-        //         'bed': {
-        //             rect: { x: 2, y: 2, width: 36, height: 27 },
-        //         },
-        //         'door_closed': {
-        //             rect: { x: 40, y: 2, width: 24, height: 36 },
-        //         },
-        //         'door_open': {
-        //             rect: { x: 66, y: 2, width: 4, height: 45 },
-        //         },
-        //         'window': {
-        //             rect: { x: 72, y: 2, width: 44, height: 35 },
-        //         },
-        //         'chair': {
-        //             rect: { x: 2, y: 31, width: 12, height: 17 },
-        //         },
-        //         'desk': {
-        //             rect: { x: 16, y: 40, width: 36, height: 34 },
-        //         },
-        //         'stone_frame': {
-        //             rect: { x: 117, y: 2, width: 16, height: 72 },
-        //             anchor: { x: 0, y: 1 },
-        //         },
-        //         'archway': {
-        //             rect: { x: 174, y: 2, width: 80, height: 119 },
-        //             anchor: { x: 1, y: 0 },
-        //         },
-        //         'archway_front': {
-        //             rect: { x: 174, y: 2, width: 40, height: 119 },
-        //             anchor: { x: 1, y: 1 },
-        //         },
-        //     }
-        // },
+        'props': {
+            defaultAnchor: { x: 0.5, y: 1 },
+            frames: {
+                'door_closed': {
+                    rect: { x: 0, y: 0, width: 24, height: 36 },
+                    anchor: { x: 0, y: 0 },
+                },
+                'door_open': {
+                    rect: { x: 24, y: 0, width: 4, height: 48 },
+                    anchor: { x: 0, y: 0 },
+                },
+                'keypad': {
+                    rect: { x: 28, y: 0, width: 9, height: 12 },
+                    anchor: { x: 0, y: 0 },
+                },
+            }
+        },
 
         // Tilesets
         'outside': {

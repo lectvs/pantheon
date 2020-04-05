@@ -5,18 +5,21 @@ function autoPlayScript(options: {endNode?: string, stage?: string}) {
         let sai = theater.partyManager.getMember('sai').worldObject;
 
         let script = new Script(function* () {
-            while (theater.currentStageName === 'outside') {
+            // @ts-ignore
+            while (theater.currentStageName !== 'inside') {
                 Input.debugKeyJustDown('advanceDialog');
                 yield;
             }
         
-            while (theater.currentStageName === 'inside') {
+            // @ts-ignore
+            while (theater.currentStageName !== 'hallway') {
                 Input.debugKeyJustDown('advanceDialog');
                 Input.debugKeyDown('up');
                 Input.debugKeyDown('right');
                 yield;
             }
         
+            // @ts-ignore
             while (sai.x < Main.width/2) {
                 Input.debugKeyJustDown('advanceDialog');
                 Input.debugKeyDown('up');
@@ -24,12 +27,36 @@ function autoPlayScript(options: {endNode?: string, stage?: string}) {
                 yield;
             }
         
-            while (theater.currentStageName === 'hallway') {
+            // @ts-ignore
+            while (theater.currentStageName !== 'escaperoom') {
                 Input.debugKeyJustDown('advanceDialog');
                 Input.debugKeyDown('up');
                 yield;
             }
 
+            // @ts-ignore
+            while (sai.x > 92) {
+                Input.debugKeyJustDown('advanceDialog');
+                Input.debugKeyDown('up');
+                Input.debugKeyDown('left');
+                yield;
+            }
+
+            // @ts-ignore
+            while (theater.storyManager.currentNodeName !== 'i_keypad') {
+                Input.debugKeyJustDown('advanceDialog');
+                Input.debugKeyDown('up');
+                Input.debugKeyJustDown('interact');
+                yield;
+            }
+
+            // @ts-ignore
+            while (theater.currentStageName !== 'none') {
+                Input.debugKeyJustDown('advanceDialog');
+                yield;
+            }
+
+            // @ts-ignore
             while (theater.stageManager.transitioning) {
                 yield;
             }
@@ -44,7 +71,7 @@ function autoPlayScript(options: {endNode?: string, stage?: string}) {
         DEBUG_PROGRAMMATIC_INPUT = true;
         DEBUG_SKIP_RATE = 100;
 
-        while (!script.done && !optionsMatched()) {
+        while (!script.done && !optionsMatched() && DEBUG_SKIP_RATE > 1 && DEBUG_PROGRAMMATIC_INPUT) {
             script.update(global.script.world, global.script.delta);
             yield;
         }

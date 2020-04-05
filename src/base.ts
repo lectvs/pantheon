@@ -39,6 +39,12 @@ function HUMAN_CHARACTER(texture: string): Sprite.Config {
     }
 }
 
+function GUARD(): Sprite.Config {
+    return {
+        parent: HUMAN_CHARACTER('generic_sprites'),
+    };
+}
+
 function WORLD_BOUNDS(left: number, top: number, right: number, bottom: number): PhysicsWorldObject.Config[] {
     let thickness = 12;
     let width = right-left;

@@ -25,6 +25,7 @@ namespace Tilemap {
     }
 }
 
+// TODO: convert this to a sprite?
 class Tilemap extends WorldObject {
     tilemap: Tilemap.Tilemap;
     collisionPhysicsGroup: string;
@@ -101,13 +102,16 @@ class Tilemap extends WorldObject {
         this.renderTexture.clear();
         for (let y = 0; y < this.currentTilemapLayer.length; y++) {
             for (let x = 0; x < this.currentTilemapLayer[y].length; x++) {
-                if (!this.currentTilemapLayer[y][x] || this.currentTilemapLayer[y][x].index < 0) continue;
-                let tile = this.currentTilemapLayer[y][x];
-                let textureKey = this.tilemap.tileset.tiles[tile.index];
-                let texture = AssetCache.getTexture(textureKey);
-                this.renderTexture.render(texture, { x: x * this.tilemap.tileset.tileWidth, y: y * this.tilemap.tileset.tileHeight });
+                this.drawTile(this.currentTilemapLayer[y][x], x, y, this.renderTexture);
             }
         }
+    }
+
+    drawTile(tile: Tilemap.Tile, tileX: number, tileY: number, renderTexture: Texture) {
+        if (!tile || tile.index < 0) return;
+        let textureKey = this.tilemap.tileset.tiles[tile.index];
+        let texture = AssetCache.getTexture(textureKey);
+        this.renderTexture.render(texture, { x: tileX * this.tilemap.tileset.tileWidth, y: tileY * this.tilemap.tileset.tileHeight });
     }
 
     onRemove(world: World) {
@@ -171,8 +175,8 @@ namespace Tilemap {
     export const OPTIMIZE_ALL = true;
 
     function combineRects(rect: Rect, into: Rect) {
-        if (G.rectContains(into, rect)) return true;
-        if (G.rectContains(rect, into)) {
+        if (G.rectContainsRect(into, rect)) return true;
+        if (G.rectContainsRect(rect, into)) {
             into.x = rect.x;
             into.y = rect.y;
             into.width = rect.width;

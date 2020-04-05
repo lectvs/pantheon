@@ -1,12 +1,7 @@
 /// <reference path="theater.ts"/>
 
 class TestTheater extends Theater {
-    t: Texture;
-    f: TextureFilter;
-    f2: TextureFilter;
-    doSlice: boolean;
-
-    constructor() {
+    constructor(config) {
         DEBUG_SHOW_MOUSE_POSITION = false;
         super({
             stages: {'s': { backgroundColor: 0x000066 }},
@@ -20,7 +15,7 @@ class TestTheater extends Theater {
                     executeFn: sc => null,
                 }
             },
-            party: party,
+            party: { leader: undefined, activeMembers: [], members: {} },
             dialogBox: {
                 x: Main.width/2, y: Main.height - 32,
                 texture: 'dialogbox',
@@ -32,46 +27,9 @@ class TestTheater extends Theater {
             },
             skipCutsceneScriptKey: 'skipCutsceneScript',
         });
-
-        this.t = AssetCache.getTexture('grad');
-        this.f = new TextureFilter({
-            uniforms: [],
-            defaultUniforms: {},
-            code: `
-                result = vec4(1.0 - color.r, 1.0 - color.g, 1.0 - color.b, color.a);
-            `
-        });
-
-        this.f2 = new TextureFilter({
-            uniforms: [],
-            defaultUniforms: {},
-            code: `
-                result = vec4(1.0, 0.0, 0.0, color.a);
-            `
-        });
-
-        this.doSlice = true;
     }
 
     render(screen: Texture) {
         super.render(screen);
-
-        if (Input.justDown('1')) {
-            this.doSlice = !this.doSlice;
-        }
-
-        screen.render(AssetCache.getTexture('bed'), {
-            x: 100,
-            y: 100,
-            slice: this.doSlice ? { x: 0, y: 0, width: 20, height: 20 } : undefined,
-            filters: [this.f]
-        });
-
-         screen.render(this.t, {
-             x: Input.mouseX,
-             y: Input.mouseY,
-             slice: { x: 20, y: 20, width: 20, height: 20 },
-             filters: [ this.f2 ],
-        });
     }
 }

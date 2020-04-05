@@ -129,6 +129,9 @@ namespace S { export const storyboard: Storyboard = {
             let dad = global.getWorldObject<HumanCharacter>('dad');
 
             yield dialog('dad/default', "Hey, keep up. You don't know if more guards are coming.");
+            yield moveToY(dad, 120);
+            World.Actions.removeWorldObjectFromWorld(dad);
+            global.script.theater.partyManager.moveMemberToStage('dad', 'escaperoom', 74, 64);
         },
         transitions: [
             { toNode: 'hallway_gameplay', type: 'instant' }
@@ -145,6 +148,7 @@ namespace S { export const storyboard: Storyboard = {
             { type: 'onInteract', with: 'demon6', toNode: 'i_demon6' },
             { type: 'onInteract', with: 'demon7', toNode: 'i_demon7' },
             { type: 'onInteract', with: 'demon8', toNode: 'i_demon8' },
+            { type: 'onStage', stage: 'escaperoom', toNode: 'escaperoom_talk' },
         ]
     },
     'i_demon1': {
@@ -221,6 +225,99 @@ namespace S { export const storyboard: Storyboard = {
         },
         transitions: [
             { type: 'instant', toNode: 'inside_gameplay' }
+        ]
+    },
+    'escaperoom_talk': {
+        type: 'cutscene',
+        script: function*() {
+            let sai = global.getWorldObject<HumanCharacter>('sai');
+            let dad = global.getWorldObject<HumanCharacter>('dad');
+
+            yield dialog('dad/default', "Here we are. the escape room.");
+        },
+        transitions: [
+            { toNode: 'escaperoom_gameplay', type: 'instant' }
+        ]
+    },
+    'escaperoom_gameplay': {
+        type: 'gameplay',
+        transitions: [
+            { type: 'onInteract', with: 'codedemon', toNode: 'i_codedemon' },
+            { type: 'onInteract', with: 'keypad', toNode: 'i_keypad' },
+        ]
+    },
+    'i_codedemon': {
+        type: 'cutscene',
+        script: function*() {
+            yield dialog('demon/default', "Hey, have you tried 1234?");
+        },
+        transitions: [
+            { type: 'instant', toNode: 'escaperoom_gameplay' }
+        ]
+    },
+    'i_keypad': {
+        type: 'cutscene',
+        script: function*() {
+            let sai = global.getWorldObject<HumanCharacter>('sai');
+            let dad = global.getWorldObject<HumanCharacter>('dad');
+            let door = global.getWorldObject<Sprite>('door');
+
+            yield dialog('sai/default', "Click.");
+            door.setTexture('door_open');
+            yield dialog('sai/default', "They're coming...");
+            yield dialog('dad/default', "Alright. You stay here and distract them. I'll get the loot.");
+            yield S.doOverTime(0.5, t => {
+                dad.alpha = 1-t;
+                dad.effects.outline.alpha = 1-t;
+            });
+            World.Actions.removeWorldObjectFromWorld(dad);
+            global.script.theater.partyManager.moveMemberToStage('dad', null, 0, 0);
+
+            yield moveToX(sai, 120);
+
+            let entryPoint = global.theater.currentStage.entryPoints['main'];
+            let guard1 = WorldObject.fromConfig<Sprite>({
+                name: 'guard1',
+                parent: GUARD(),
+                x: entryPoint.x, y: entryPoint.y,
+                alpha: 0,
+            });
+            let guard2 = WorldObject.fromConfig<Sprite>({
+                name: 'guard2',
+                parent: GUARD(),
+                x: entryPoint.x, y: entryPoint.y,
+                alpha: 0,
+            });
+            let guard3 = WorldObject.fromConfig<Sprite>({
+                name: 'guard3',
+                parent: GUARD(),
+                x: entryPoint.x, y: entryPoint.y,
+                alpha: 0,
+            });
+            
+            World.Actions.addWorldObjectToWorld(guard1, global.theater.currentWorld);
+            yield doOverTime(0.5, t => guard1.alpha = t);
+            yield moveTo(guard1, 100, 100);
+
+            World.Actions.addWorldObjectToWorld(guard2, global.theater.currentWorld);
+            yield doOverTime(0.5, t => guard2.alpha = t);
+            yield moveTo(guard2, 120, 105);
+
+            World.Actions.addWorldObjectToWorld(guard3, global.theater.currentWorld);
+            yield doOverTime(0.5, t => guard3.alpha = t);
+            yield moveTo(guard3, 140, 100);
+
+            DEBUG_SKIP_RATE = 1;
+
+            yield dialog('sai/default', '...');
+
+            yield moveTo(guard2, 120, sai.y+1);
+
+            yield fadeOut(1);
+            global.game.menuSystem.loadMenu(MainMenu);
+        },
+        transitions: [
+            { type: 'instant', toNode: 'escaperoom_gameplay' }
         ]
     },
 }} const storyboard = S.storyboard;

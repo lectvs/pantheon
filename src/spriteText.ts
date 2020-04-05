@@ -14,6 +14,7 @@ namespace SpriteText {
 
     export type Style = {
         color?: number;
+        alpha?: number;
         offset?: number;
     }
 
@@ -32,6 +33,7 @@ class SpriteText extends WorldObject {
         this.font = config.font;
         this.style = _.defaults(config.style, {
             color: 0xFFFFFF,
+            alpha: 1,
             offset: 0,
         });
         this.setText(config.text);
@@ -46,6 +48,7 @@ class SpriteText extends WorldObject {
                 x: this.x + char.x,
                 y: this.y + char.y + O.getOrDefault(char.style.offset, this.style.offset),
                 tint: O.getOrDefault(char.style.color, this.style.color),
+                alpha: O.getOrDefault(char.style.alpha, this.style.alpha),
                 slice: {
                     x: SpriteText.charCodes[char.char].x * this.font.charWidth,
                     y: SpriteText.charCodes[char.char].y * this.font.charHeight,
@@ -62,8 +65,17 @@ class SpriteText extends WorldObject {
         this.setText("");
     }
 
+    getTextWidth() {
+        return SpriteText.getWidthOfCharList(this.chars);
+    }
+
     getTextHeight() {
         return SpriteText.getHeightOfCharList(this.chars);
+    }
+
+    getTextWorldBounds(): Rect {
+        // TODO: adjust for alignment
+        return { x: this.x, y: this.y, width: this.getTextWidth(), height: this.getTextHeight() };
     }
 
     setText(text: string) {
@@ -128,6 +140,11 @@ namespace SpriteText {
         get bottom() {
             return this.y + this.height;
         }
+    }
+
+    export function getWidthOfCharList(list: SpriteText.Character[]) {
+        if (_.isEmpty(list)) return 0;
+        return M.max(list, char => char.x + char.width);
     }
 
     export function getHeightOfCharList(list: SpriteText.Character[]) {

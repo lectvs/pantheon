@@ -82,6 +82,12 @@ class PartyManager {
     moveMemberToStage(memberName: string, stageName: string, x: number, y: number) {
         let member = this.getMember(memberName);
         if (!member) return;
+
+        if (!stageName) {
+            member.stage = null;
+            return;
+        }
+
         let stage = this.theater.stageManager.stages[stageName];
         if (!stage) {
             debug(`Cannot move party member ${memberName} to stage ${stageName} because the stage does not exist`);

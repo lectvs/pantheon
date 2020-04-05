@@ -106,7 +106,7 @@ class World extends WorldObject {
             if (worldObject.active) worldObject.postUpdate();
         }
 
-        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this === global.theater.currentWorld) {
+        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
             if (Input.isDown('debugMoveCameraLeft'))  this.debugCameraX -= 1;
             if (Input.isDown('debugMoveCameraRight')) this.debugCameraX += 1;
             if (Input.isDown('debugMoveCameraUp'))    this.debugCameraY -= 1;
@@ -118,7 +118,7 @@ class World extends WorldObject {
     render(screen: Texture) {
         let oldCameraX = this.camera.x;
         let oldCameraY = this.camera.y;
-        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && this === global.theater.currentWorld) {
+        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
             this.camera.x += this.debugCameraX;
             this.camera.y += this.debugCameraY;
         }
@@ -198,6 +198,10 @@ class World extends WorldObject {
 
     getWorldMouseY() {
         return Input.mouseY + Math.floor(this.camera.y - this.camera.height/2);
+    }
+
+    getWorldMousePosition(): Pt {
+        return { x: this.getWorldMouseX(), y: this.getWorldMouseY() };
     }
 
     getWorldObjectByName<T extends WorldObject>(name: string): T {

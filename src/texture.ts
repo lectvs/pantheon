@@ -51,6 +51,7 @@ class Texture {
     }
 
     render(texture: Texture, properties?: Texture.Properties) {
+        if (!texture) return;
         if (this.immutable) {
             debug('Cannot render to immutable texture!');
             return;

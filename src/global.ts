@@ -14,5 +14,6 @@ class global {
     static pushScript(script: Script) { this.scriptStack.push(script); }
     static popScript() { return this.scriptStack.pop(); }
 
+    static game: Game;
     static theater: Theater;
 }

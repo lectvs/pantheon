@@ -4,8 +4,8 @@ class Input {
     private static keyCodesByName: {[name: string]: string[]};
     private static _mouseX: number = 0;
     private static _mouseY: number = 0;
-    private static _globalMouseX: number = 0;
-    private static _globalMouseY: number = 0;
+    private static _canvasMouseX: number = 0;
+    private static _canvasMouseY: number = 0;
 
     static setKeys(keyCodesByName: {[name: string]: string[]}) {
         this.keyCodesByName = _.clone(keyCodesByName);
@@ -26,6 +26,12 @@ class Input {
         }
         this.updateKeys();
         this.updateMousePosition();
+    }
+
+    static consume(key: string) {
+        for (let keyCode of this.keyCodesByName[key] || []) {
+            this.keysByKeycode[keyCode].consume();
+        }
     }
 
     static debugKeyDown(name: string) {
@@ -65,11 +71,11 @@ class Input {
     }
 
     private static updateMousePosition() {
-        this._globalMouseX = Main.renderer.plugins.interaction.mouse.global.x;
-        this._globalMouseY = Main.renderer.plugins.interaction.mouse.global.y;
+        this._canvasMouseX = Main.renderer.plugins.interaction.mouse.global.x;
+        this._canvasMouseY = Main.renderer.plugins.interaction.mouse.global.y;
         if (this.isMouseOnCanvas) {
-            this._mouseX = Math.floor(this._globalMouseX);
-            this._mouseY = Math.floor(this._globalMouseY);
+            this._mouseX = Math.floor(this._canvasMouseX);
+            this._mouseY = Math.floor(this._canvasMouseY);
         }
     }
 
@@ -103,24 +109,24 @@ class Input {
         return this._mouseY;
     }
 
-    static get mousePosition() {
-        return new Point(this.mouseX, this.mouseY);
+    static get mousePosition(): Pt {
+        return { x: this.mouseX, y: this.mouseY };
     }
 
-    static get globalMouseX() {
-        return this._globalMouseX;
+    static get canvasMouseX() {
+        return this._canvasMouseX;
     }
 
-    static get globalMouseY() {
-        return this._globalMouseY;
+    static get canvasMouseY() {
+        return this._canvasMouseY;
     }
 
-    static get globalMousePosition() {
-        return new Point(this.globalMouseX, this.globalMouseY);
+    static get canvasMousePosition(): Pt {
+        return { x: this.canvasMouseX, y: this.canvasMouseY };
     }
 
     static get isMouseOnCanvas() {
-        return 0 <= this.globalMouseX && this.globalMouseX < Main.width && 0 <= this.globalMouseY && this.globalMouseY < Main.height;
+        return 0 <= this.canvasMouseX && this.canvasMouseX < Main.width && 0 <= this.canvasMouseY && this.canvasMouseY < Main.height;
     }
 
     static handleKeyDownEvent(event: KeyboardEvent) {
@@ -175,6 +181,10 @@ namespace Input {
         update(isDown: boolean) {
             this._lastDown = this._isDown;
             this._isDown = isDown;
+        }
+
+        consume() {
+            this._lastDown = this._isDown;
         }
 
         setDown() {

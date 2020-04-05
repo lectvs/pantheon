@@ -43,13 +43,13 @@ const stages: Dict<Stage> = {
             },
             {
                 name: 'guard1',
-                parent: HUMAN_CHARACTER('generic_sprites'),
+                parent: GUARD(),
                 x: 96, y: 100,
                 flipX: true,
             },
             {
                 name: 'guard2',
-                parent: HUMAN_CHARACTER('generic_sprites'),
+                parent: GUARD(),
                 x: 144, y: 100,
             },
         ]
@@ -213,6 +213,32 @@ const stages: Dict<Stage> = {
                 tilemap: 'escaperoom',
                 tilemapLayer: 0,
                 collisionPhysicsGroup: 'walls',
+            },
+            {
+                name: 'door',
+                constructor: Sprite,
+                layer: 'main',
+                x: 60, y: 12,
+                texture: 'door_closed',
+            },
+            {
+                name: 'keypad',
+                constructor: Sprite,
+                layer: 'main',
+                x: 88, y: 48,
+                texture: 'keypad',
+                offset: { x: 0, y: -23 },
+                physicsGroup: 'props',
+                bounds: { x: 0, y: 0, width: 9, height: 0 },
+            },
+            {
+                name: 'codedemon',
+                parent: HUMAN_CHARACTER('generic_sprites_dark'),
+                x: 168, y: 60,
+                effects: {
+                    outline: { color: 0xFFFFFF }
+                },
+                physicsGroup: 'props',
             },
         ]
     },

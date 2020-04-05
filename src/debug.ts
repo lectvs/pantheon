@@ -5,6 +5,7 @@ var DEBUG_SHOW_MOUSE_POSITION: boolean = true;
 var DEBUG_SKIP_RATE: number = 1;
 var DEBUG_PROGRAMMATIC_INPUT: boolean = false;
 var DEBUG_AUTOPLAY: boolean = true;
+var DEBUG_SKIP_MAIN_MENU: boolean = true;
 
 var debug = console.info;
 // function debug(message?: any, ...optionalParams: any[]) {
