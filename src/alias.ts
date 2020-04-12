@@ -21,4 +21,10 @@ type Rect = {
     height: number;
 }
 
+type Bounds = {
+    top?: number;
+    bottom?: number;
+    left?: number;
+    right?: number;
+}
 

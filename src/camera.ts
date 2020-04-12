@@ -9,13 +9,6 @@ namespace Camera {
         movement?: Movement;
     }
 
-    export type Bounds = {
-        top?: number;
-        bottom?: number;
-        left?: number;
-        right?: number;
-    }
-
     export type Mode = FollowMode | FocusMode;
 
     export type FollowMode = {
@@ -49,7 +42,7 @@ class Camera {
     width: number;
     height: number;
 
-    bounds: Camera.Bounds;
+    bounds: Bounds;
     mode: Camera.Mode;
     movement: Camera.Movement;
 

@@ -21,7 +21,7 @@ const stages: Dict<Stage> = {
                 layer: 'main',
                 tilemap: 'outside',
                 tilemapLayer: 0,
-                collisionPhysicsGroup: 'walls',
+                physicsGroup: 'walls',
             },
             {
                 name: 'ground',
@@ -70,7 +70,7 @@ const stages: Dict<Stage> = {
                 layer: 'main',
                 tilemap: 'inside',
                 tilemapLayer: 0,
-                collisionPhysicsGroup: 'walls',
+                physicsGroup: 'walls',
             },
             {
                 name: 'warp',
@@ -101,7 +101,7 @@ const stages: Dict<Stage> = {
                 layer: 'main',
                 tilemap: 'hallway',
                 tilemapLayer: 0,
-                collisionPhysicsGroup: 'walls',
+                physicsGroup: 'walls',
             },
             {
                 name: 'demon1',
@@ -212,7 +212,7 @@ const stages: Dict<Stage> = {
                 layer: 'main',
                 tilemap: 'escaperoom',
                 tilemapLayer: 0,
-                collisionPhysicsGroup: 'walls',
+                physicsGroup: 'walls',
             },
             {
                 name: 'door',

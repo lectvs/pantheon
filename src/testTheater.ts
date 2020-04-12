@@ -2,9 +2,39 @@
 
 class TestTheater extends Theater {
     constructor(config) {
-        DEBUG_SHOW_MOUSE_POSITION = false;
         super({
-            stages: {'s': { backgroundColor: 0x000066 }},
+            stages: {'s': {
+                parent: BASE_STAGE,
+                backgroundColor: 0x000066,
+                camera: {
+                    mode: Camera.Mode.FOLLOW('player', 8, 8)
+                },
+                worldObjects: [
+                    <Tilemap.Config>{
+                        name: 'ground',
+                        constructor: Tilemap,
+                        tilemap: 'cave',
+                        tilemapLayer: 1,
+                        layer: 'main',
+                        physicsGroup: 'walls',
+                    },
+                    <ZOrderedTilemap.Config>{
+                        name: 'cave',
+                        constructor: ZOrderedTilemap,
+                        tilemap: 'cave',
+                        tilemapLayer: 0,
+                        layer: 'main',
+                        zMap: { 2: 3, 3: 3, 5: 1, 7: 3, 8: 3, 9: 3, 10: 3, 11: 3, 12: 3, 13: 3, 17: 3, 18: 3, 19: 3, 20: 3, 21: 3, 22: 3 },
+                    },
+                    {
+                        name: 'player',
+                        constructor: TestPlayer,
+                        x: 400, y: 400,
+                        layer: 'main',
+                        physicsGroup: 'player',
+                    }
+                ]
+            }},
             stageToLoad: 's',
             story: {
                 storyboard: {'s': { type: 'gameplay', transitions: [] }},
@@ -27,12 +57,6 @@ class TestTheater extends Theater {
             },
             skipCutsceneScriptKey: 'skipCutsceneScript',
         });
-
-        let sprite = new Sprite({ x: 20, y: 20, texture: 'door_closed' });
-        let child = new Sprite({ x: 60, y: 60, texture: 'debug' });
-        World.Actions.addChildToParent(child, sprite);
-        World.Actions.addWorldObjectToWorld(sprite, this.currentWorld);
-        World.Actions.removeWorldObjectFromWorld(child);
     }
 
     render(screen: Texture) {

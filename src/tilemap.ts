@@ -2,8 +2,7 @@ namespace Tilemap {
     export type Config = WorldObject.Config & {
         tilemap: string;
         tilemapLayer?: number;
-        collisionPhysicsGroup?: string;
-        collisionDebugBounds?: boolean;
+        debugBounds?: boolean;
     }
 
     export type Tile = {
@@ -28,7 +27,6 @@ namespace Tilemap {
 // TODO: convert this to a sprite?
 class Tilemap extends WorldObject {
     tilemap: Tilemap.Tilemap;
-    collisionPhysicsGroup: string;
 
     numTilesX: number;
     numTilesY: number;
@@ -46,21 +44,20 @@ class Tilemap extends WorldObject {
 
         this.tilemap = Tilemap.cloneTilemap(AssetCache.getTilemap(config.tilemap));
         this.tilemapLayer = O.getOrDefault(config.tilemapLayer, 0);
-        this.collisionPhysicsGroup = config.collisionPhysicsGroup;
 
         let tilemapDimens = A.get2DArrayDimensions(this.currentTilemapLayer);
         this.numTilesX = tilemapDimens.width;
         this.numTilesY = tilemapDimens.height;
 
         this.renderTexture = new Texture(this.numTilesX * this.tilemap.tileset.tileWidth, this.numTilesY * this.tilemap.tileset.tileHeight);
-        this.createCollisionBoxes(O.getOrDefault(config.collisionDebugBounds, false));
+        this.createCollisionBoxes(O.getOrDefault(config.debugBounds, false));
 
         this.dirty = true;
     }
 
     onAdd(world: World) {
         for (let box of this.collisionBoxes) {
-            World.Actions.setPhysicsGroup(box, this.collisionPhysicsGroup);
+            World.Actions.setPhysicsGroup(box, this.physicsGroup);
             World.Actions.addWorldObjectToWorld(box, world);
         }
     }
@@ -86,7 +83,7 @@ class Tilemap extends WorldObject {
         super.render(screen);
     }
 
-    createCollisionBoxes(debugBounds: boolean = false) {
+    createCollisionBoxes(debugBounds: boolean) {
         this.collisionBoxes = [];
         let collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects);  // Not optimizing entire array first to save some cycles.
@@ -111,7 +108,7 @@ class Tilemap extends WorldObject {
         if (!tile || tile.index < 0) return;
         let textureKey = this.tilemap.tileset.tiles[tile.index];
         let texture = AssetCache.getTexture(textureKey);
-        this.renderTexture.render(texture, { x: tileX * this.tilemap.tileset.tileWidth, y: tileY * this.tilemap.tileset.tileHeight });
+        renderTexture.render(texture, { x: tileX * this.tilemap.tileset.tileWidth, y: tileY * this.tilemap.tileset.tileHeight });
     }
 
     onRemove(world: World) {

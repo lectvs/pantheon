@@ -870,6 +870,10 @@ var Assets;
             url: 'assets/tilemap/inside.png',
             spritesheet: { frameWidth: 12, frameHeight: 12 },
         },
+        'cave': {
+            url: 'assets/tilemap/cave.png',
+            spritesheet: { frameWidth: 16, frameHeight: 16 },
+        },
         // Portraits
         'portraits/sai': {
             defaultAnchor: { x: 0.5, y: 0.5 },
@@ -927,6 +931,12 @@ var Assets;
             tileHeight: 12,
             collisionIndices: [-1, 0],
         },
+        'cave': {
+            tiles: Preload.allTilesWithPrefix('cave_'),
+            tileWidth: 16,
+            tileHeight: 16,
+            collisionIndices: [16],
+        },
     };
     Assets.pyxelTilemaps = {
         'outside': {
@@ -945,6 +955,10 @@ var Assets;
             url: 'assets/tilemap/escaperoom.json',
             tileset: Assets.tilesets.inside,
         },
+        'cave': {
+            url: 'assets/tilemap/cave.json',
+            tileset: Assets.tilesets.cave,
+        }
     };
     var fonts = /** @class */ (function () {
         function fonts() {
@@ -3784,12 +3798,11 @@ var Tilemap = /** @class */ (function (_super) {
         var _this = _super.call(this, config) || this;
         _this.tilemap = Tilemap.cloneTilemap(AssetCache.getTilemap(config.tilemap));
         _this.tilemapLayer = O.getOrDefault(config.tilemapLayer, 0);
-        _this.collisionPhysicsGroup = config.collisionPhysicsGroup;
         var tilemapDimens = A.get2DArrayDimensions(_this.currentTilemapLayer);
         _this.numTilesX = tilemapDimens.width;
         _this.numTilesY = tilemapDimens.height;
         _this.renderTexture = new Texture(_this.numTilesX * _this.tilemap.tileset.tileWidth, _this.numTilesY * _this.tilemap.tileset.tileHeight);
-        _this.createCollisionBoxes(O.getOrDefault(config.collisionDebugBounds, false));
+        _this.createCollisionBoxes(O.getOrDefault(config.debugBounds, false));
         _this.dirty = true;
         return _this;
     }
@@ -3803,7 +3816,7 @@ var Tilemap = /** @class */ (function (_super) {
         try {
             for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var box = _c.value;
-                World.Actions.setPhysicsGroup(box, this.collisionPhysicsGroup);
+                World.Actions.setPhysicsGroup(box, this.physicsGroup);
                 World.Actions.addWorldObjectToWorld(box, world);
             }
         }
@@ -3844,7 +3857,6 @@ var Tilemap = /** @class */ (function (_super) {
         _super.prototype.render.call(this, screen);
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        if (debugBounds === void 0) { debugBounds = false; }
         var e_25, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
@@ -3879,7 +3891,7 @@ var Tilemap = /** @class */ (function (_super) {
             return;
         var textureKey = this.tilemap.tileset.tiles[tile.index];
         var texture = AssetCache.getTexture(textureKey);
-        this.renderTexture.render(texture, { x: tileX * this.tilemap.tileset.tileWidth, y: tileY * this.tilemap.tileset.tileHeight });
+        renderTexture.render(texture, { x: tileX * this.tilemap.tileset.tileWidth, y: tileY * this.tilemap.tileset.tileHeight });
     };
     Tilemap.prototype.onRemove = function (world) {
         var e_26, _a;
@@ -4019,7 +4031,7 @@ var stages = {
                 layer: 'main',
                 tilemap: 'outside',
                 tilemapLayer: 0,
-                collisionPhysicsGroup: 'walls',
+                physicsGroup: 'walls',
             },
             {
                 name: 'ground',
@@ -4067,7 +4079,7 @@ var stages = {
                 layer: 'main',
                 tilemap: 'inside',
                 tilemapLayer: 0,
-                collisionPhysicsGroup: 'walls',
+                physicsGroup: 'walls',
             },
             {
                 name: 'warp',
@@ -4097,7 +4109,7 @@ var stages = {
                 layer: 'main',
                 tilemap: 'hallway',
                 tilemapLayer: 0,
-                collisionPhysicsGroup: 'walls',
+                physicsGroup: 'walls',
             },
             {
                 name: 'demon1',
@@ -4207,7 +4219,7 @@ var stages = {
                 layer: 'main',
                 tilemap: 'escaperoom',
                 tilemapLayer: 0,
-                collisionPhysicsGroup: 'walls',
+                physicsGroup: 'walls',
             },
             {
                 name: 'door',
@@ -4313,32 +4325,30 @@ var Main = /** @class */ (function () {
         this.game = new Game({
             mainMenuClass: MainMenu,
             pauseMenuClass: PauseMenu,
-            // theaterClass: Theater,
-            // theaterConfig: {
-            //     stages: stages,
-            //     stageToLoad: 'outside',
-            //     stageEntryPoint: 'main',
-            //     story: {
-            //         storyboard: storyboard,
-            //         storyboardPath: ['start'],
-            //         storyEvents: storyEvents,
-            //         storyConfig: storyConfig,
-            //     },
-            //     party: party,
-            //     dialogBox: {
-            //         x: Main.width/2, y: Main.height - 32,
-            //         texture: 'dialogbox',
-            //         spriteTextFont: Assets.fonts.DELUXE16,
-            //         textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
-            //         textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
-            //         portraitPosition: { x: 78, y: 0 },
-            //         advanceKey: 'advanceDialog',
-            //     },
-            //     skipCutsceneScriptKey: 'skipCutsceneScript',
-            //     autoPlayScript: autoPlayScript({ endNode: 'none', stage: 'escaperoom'}),
-            // },
-            theaterClass: TestTheater,
-            theaterConfig: undefined,
+            theaterClass: Theater,
+            theaterConfig: {
+                stages: stages,
+                stageToLoad: 'outside',
+                stageEntryPoint: 'main',
+                story: {
+                    storyboard: storyboard,
+                    storyboardPath: ['start'],
+                    storyEvents: storyEvents,
+                    storyConfig: storyConfig,
+                },
+                party: party,
+                dialogBox: {
+                    x: Main.width / 2, y: Main.height - 32,
+                    texture: 'dialogbox',
+                    spriteTextFont: Assets.fonts.DELUXE16,
+                    textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
+                    textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
+                    portraitPosition: { x: 78, y: 0 },
+                    advanceKey: 'advanceDialog',
+                },
+                skipCutsceneScriptKey: 'skipCutsceneScript',
+                autoPlayScript: autoPlayScript({ endNode: 'none', stage: 'escaperoom' }),
+            },
         });
         global.game = this.game;
     };
@@ -6645,15 +6655,21 @@ var Storyboard;
     }
     Storyboard.arbitraryPathToNode = arbitraryPathToNode;
 })(Storyboard || (Storyboard = {}));
-var TestParent = /** @class */ (function (_super) {
-    __extends(TestParent, _super);
-    function TestParent() {
-        return _super.call(this, {
-            x: 20, y: 20,
-            texture: 'door_closed',
+var TestPlayer = /** @class */ (function (_super) {
+    __extends(TestPlayer, _super);
+    function TestPlayer(config) {
+        return _super.call(this, config, {
+            texture: 'generic_sprites_0',
+            bounds: { x: -5, y: -2, width: 10, height: 2 },
         }) || this;
     }
-    return TestParent;
+    TestPlayer.prototype.update = function (delta) {
+        var speed = 100;
+        this.vx = ((Input.isDown('left') ? -1 : 0) + (Input.isDown('right') ? 1 : 0)) * speed;
+        this.vy = ((Input.isDown('up') ? -1 : 0) + (Input.isDown('down') ? 1 : 0)) * speed;
+        _super.prototype.update.call(this, delta);
+    };
+    return TestPlayer;
 }(Sprite));
 /// <reference path="./transition.ts"/>
 /// <reference path="./world.ts"/>
@@ -6757,10 +6773,39 @@ var Theater = /** @class */ (function (_super) {
 var TestTheater = /** @class */ (function (_super) {
     __extends(TestTheater, _super);
     function TestTheater(config) {
-        var _this = this;
-        DEBUG_SHOW_MOUSE_POSITION = false;
-        _this = _super.call(this, {
-            stages: { 's': { backgroundColor: 0x000066 } },
+        return _super.call(this, {
+            stages: { 's': {
+                    parent: BASE_STAGE,
+                    backgroundColor: 0x000066,
+                    camera: {
+                        mode: Camera.Mode.FOLLOW('player', 8, 8)
+                    },
+                    worldObjects: [
+                        {
+                            name: 'ground',
+                            constructor: Tilemap,
+                            tilemap: 'cave',
+                            tilemapLayer: 1,
+                            layer: 'main',
+                            physicsGroup: 'walls',
+                        },
+                        {
+                            name: 'cave',
+                            constructor: ZOrderedTilemap,
+                            tilemap: 'cave',
+                            tilemapLayer: 0,
+                            layer: 'main',
+                            zMap: { 2: 3, 3: 3, 5: 1, 7: 3, 8: 3, 9: 3, 10: 3, 11: 3, 12: 3, 13: 3, 17: 3, 18: 3, 19: 3, 20: 3, 21: 3, 22: 3 },
+                        },
+                        {
+                            name: 'player',
+                            constructor: TestPlayer,
+                            x: 400, y: 400,
+                            layer: 'main',
+                            physicsGroup: 'player',
+                        }
+                    ]
+                } },
             stageToLoad: 's',
             story: {
                 storyboard: { 's': { type: 'gameplay', transitions: [] } },
@@ -6783,12 +6828,6 @@ var TestTheater = /** @class */ (function (_super) {
             },
             skipCutsceneScriptKey: 'skipCutsceneScript',
         }) || this;
-        var sprite = new Sprite({ x: 20, y: 20, texture: 'door_closed' });
-        var child = new Sprite({ x: 60, y: 60, texture: 'debug' });
-        World.Actions.addChildToParent(child, sprite);
-        World.Actions.addWorldObjectToWorld(sprite, _this.currentWorld);
-        World.Actions.removeWorldObjectFromWorld(child);
-        return _this;
     }
     TestTheater.prototype.render = function (screen) {
         _super.prototype.render.call(this, screen);
@@ -6883,20 +6922,225 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
     __extends(ZOrderedTilemap, _super);
     function ZOrderedTilemap(config) {
         var _this = _super.call(this, config) || this;
+        _this.tilemap = Tilemap.cloneTilemap(AssetCache.getTilemap(config.tilemap));
+        _this.tilemapLayer = O.getOrDefault(config.tilemapLayer, 0);
+        var tilemapDimens = A.get2DArrayDimensions(_this.currentTilemapLayer);
+        _this.numTilesX = tilemapDimens.width;
+        _this.numTilesY = tilemapDimens.height;
+        _this.createCollisionBoxes(O.getOrDefault(config.debugBounds, false));
+        _this.dirty = true;
         _this.zMap = config.zMap;
         return _this;
-        //this.zRenderTextures = [];
     }
+    Object.defineProperty(ZOrderedTilemap.prototype, "currentTilemapLayer", {
+        get: function () { return this.tilemap.layers[this.tilemapLayer]; },
+        enumerable: true,
+        configurable: true
+    });
+    ZOrderedTilemap.prototype.onAdd = function (world) {
+        var e_39, _a;
+        try {
+            for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var box = _c.value;
+                World.Actions.setPhysicsGroup(box, this.physicsGroup);
+                World.Actions.addWorldObjectToWorld(box, world);
+            }
+        }
+        catch (e_39_1) { e_39 = { error: e_39_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_39) throw e_39.error; }
+        }
+    };
+    ZOrderedTilemap.prototype.update = function (delta) {
+        if (this.dirty) {
+            this.drawRenderTexture();
+            this.dirty = false;
+        }
+    };
+    ZOrderedTilemap.prototype.postUpdate = function () {
+        var e_40, _a;
+        if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
+            try {
+                for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var box = _c.value;
+                    box.x = this.x;
+                    box.y = this.y;
+                }
+            }
+            catch (e_40_1) { e_40 = { error: e_40_1 }; }
+            finally {
+                try {
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                }
+                finally { if (e_40) throw e_40.error; }
+            }
+        }
+        _super.prototype.postUpdate.call(this);
+    };
+    ZOrderedTilemap.prototype.createCollisionBoxes = function (debugBounds) {
+        if (debugBounds === void 0) { debugBounds = false; }
+        var e_41, _a;
+        this.collisionBoxes = [];
+        var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
+        Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
+        Tilemap.optimizeCollisionRects(collisionRects, Tilemap.OPTIMIZE_ALL);
+        try {
+            for (var collisionRects_2 = __values(collisionRects), collisionRects_2_1 = collisionRects_2.next(); !collisionRects_2_1.done; collisionRects_2_1 = collisionRects_2.next()) {
+                var rect = collisionRects_2_1.value;
+                var box = new PhysicsWorldObject({ x: this.x, y: this.y, bounds: rect });
+                box.debugBounds = debugBounds;
+                this.collisionBoxes.push(box);
+            }
+        }
+        catch (e_41_1) { e_41 = { error: e_41_1 }; }
+        finally {
+            try {
+                if (collisionRects_2_1 && !collisionRects_2_1.done && (_a = collisionRects_2.return)) _a.call(collisionRects_2);
+            }
+            finally { if (e_41) throw e_41.error; }
+        }
+    };
     ZOrderedTilemap.prototype.drawRenderTexture = function () {
-        this.renderTexture.clear();
+        this.clearZTextures();
+        var zTileIndices = ZOrderedTilemap.createZTileIndicies(this.currentTilemapLayer, this.zMap);
+        var zTextures = this.createZTextures(zTileIndices);
         for (var y = 0; y < this.currentTilemapLayer.length; y++) {
             for (var x = 0; x < this.currentTilemapLayer[y].length; x++) {
-                this.drawTile(this.currentTilemapLayer[y][x], x, y, this.renderTexture);
+                var zValue = ZOrderedTilemap.getZValue(zTileIndices, y, x);
+                if (!zTextures[zValue])
+                    continue;
+                this.drawTile(this.currentTilemapLayer[y][x], x - zTextures[zValue].tileBounds.left, y - zTextures[zValue].tileBounds.top, zTextures[zValue].texture);
             }
         }
     };
+    ZOrderedTilemap.prototype.drawTile = function (tile, tileX, tileY, renderTexture) {
+        if (!tile || tile.index < 0)
+            return;
+        var textureKey = this.tilemap.tileset.tiles[tile.index];
+        var texture = AssetCache.getTexture(textureKey);
+        renderTexture.render(texture, { x: tileX * this.tilemap.tileset.tileWidth, y: tileY * this.tilemap.tileset.tileHeight });
+    };
+    ZOrderedTilemap.prototype.onRemove = function (world) {
+        var e_42, _a;
+        try {
+            for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var box = _c.value;
+                World.Actions.removeWorldObjectFromWorld(box);
+            }
+        }
+        catch (e_42_1) { e_42 = { error: e_42_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_42) throw e_42.error; }
+        }
+    };
+    ZOrderedTilemap.prototype.createZTextures = function (zTileIndices) {
+        var texturesByZ = ZOrderedTilemap.createEmptyZTextures(zTileIndices, this.tilemap.tileset);
+        for (var zValue in texturesByZ) {
+            var zHeight = texturesByZ[zValue].zHeight * this.tilemap.tileset.tileHeight;
+            World.Actions.addChildToParent(new Sprite({
+                layer: this.layer,
+                x: this.x + texturesByZ[zValue].bounds.x,
+                y: this.y + texturesByZ[zValue].bounds.y + zHeight,
+                texture: texturesByZ[zValue].texture,
+                offset: { x: 0, y: -zHeight },
+            }), this);
+        }
+        return texturesByZ;
+    };
+    ZOrderedTilemap.prototype.clearZTextures = function () {
+        while (!_.isEmpty(this.children)) {
+            World.Actions.removeChildFromParent(this.children[0]);
+        }
+    };
     return ZOrderedTilemap;
-}(Tilemap));
+}(WorldObject));
+(function (ZOrderedTilemap) {
+    function createZTileIndicies(layer, zMap) {
+        var zTileIndices = getInitialZTileIndicies(layer, zMap);
+        fillZTileIndicies(zTileIndices);
+        return zTileIndices;
+    }
+    ZOrderedTilemap.createZTileIndicies = createZTileIndicies;
+    function createEmptyZTextures(zTileIndices, tileset) {
+        var zTextureSlots = {};
+        for (var y = 0; y < zTileIndices.length; y++) {
+            for (var x = 0; x < zTileIndices[y].length; x++) {
+                if (isFinite(zTileIndices[y][x])) {
+                    var zValue = getZValue(zTileIndices, y, x);
+                    if (!zTextureSlots[zValue])
+                        zTextureSlots[zValue] = {
+                            texture: null,
+                            bounds: { x: 0, y: 0, width: 0, height: 0 },
+                            tileBounds: { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity },
+                            zHeight: -Infinity,
+                        };
+                    if (x < zTextureSlots[zValue].tileBounds.left)
+                        zTextureSlots[zValue].tileBounds.left = x;
+                    if (x > zTextureSlots[zValue].tileBounds.right)
+                        zTextureSlots[zValue].tileBounds.right = x;
+                    if (y < zTextureSlots[zValue].tileBounds.top)
+                        zTextureSlots[zValue].tileBounds.top = y;
+                    if (y > zTextureSlots[zValue].tileBounds.bottom)
+                        zTextureSlots[zValue].tileBounds.bottom = y;
+                    if (zTileIndices[y][x] > zTextureSlots[zValue].zHeight)
+                        zTextureSlots[zValue].zHeight = zTileIndices[y][x];
+                }
+            }
+        }
+        for (var zValue in zTextureSlots) {
+            zTextureSlots[zValue].bounds.x = zTextureSlots[zValue].tileBounds.left * tileset.tileWidth;
+            zTextureSlots[zValue].bounds.y = zTextureSlots[zValue].tileBounds.top * tileset.tileHeight;
+            zTextureSlots[zValue].bounds.width = (zTextureSlots[zValue].tileBounds.right - zTextureSlots[zValue].tileBounds.left + 1) * tileset.tileWidth;
+            zTextureSlots[zValue].bounds.height = (zTextureSlots[zValue].tileBounds.bottom - zTextureSlots[zValue].tileBounds.top + 1) * tileset.tileHeight;
+            zTextureSlots[zValue].texture = new Texture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height);
+        }
+        return zTextureSlots;
+    }
+    ZOrderedTilemap.createEmptyZTextures = createEmptyZTextures;
+    function getZValue(zTileIndices, y, x) {
+        return y + zTileIndices[y][x];
+    }
+    ZOrderedTilemap.getZValue = getZValue;
+    function getInitialZTileIndicies(layer, zMap) {
+        var zTileIndices = A.filledArray2D(layer.length, layer[0].length, undefined);
+        for (var y = 0; y < layer.length; y++) {
+            for (var x = 0; x < layer[y].length; x++) {
+                var tileIndex = layer[y][x].index;
+                zTileIndices[y][x] = tileIndex === -1 ? -Infinity : zMap[tileIndex];
+            }
+        }
+        return zTileIndices;
+    }
+    function fillZTileIndicies(zTileIndices) {
+        for (var y = 1; y < zTileIndices.length; y++) {
+            for (var x = 0; x < zTileIndices[y].length; x++) {
+                if (zTileIndices[y][x] === undefined && isFinite(zTileIndices[y - 1][x])) {
+                    zTileIndices[y][x] = zTileIndices[y - 1][x] - 1;
+                }
+            }
+        }
+        for (var y = zTileIndices.length - 2; y >= 0; y--) {
+            for (var x = 0; x < zTileIndices[y].length; x++) {
+                if (zTileIndices[y][x] === undefined && isFinite(zTileIndices[y + 1][x])) {
+                    zTileIndices[y][x] = zTileIndices[y + 1][x] + 1;
+                }
+            }
+        }
+        for (var y = 0; y < zTileIndices.length; y++) {
+            for (var x = 0; x < zTileIndices[y].length; x++) {
+                if (zTileIndices[y][x] === undefined) {
+                    zTileIndices[y][x] = 0;
+                }
+            }
+        }
+    }
+})(ZOrderedTilemap || (ZOrderedTilemap = {}));
 var G;
 (function (G) {
     function expandRectangle(rect, amount) {

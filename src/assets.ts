@@ -49,6 +49,10 @@ namespace Assets {
             url: 'assets/tilemap/inside.png',
             spritesheet: { frameWidth: 12, frameHeight: 12 },
         },
+        'cave': {
+            url: 'assets/tilemap/cave.png',
+            spritesheet: { frameWidth: 16, frameHeight: 16 },
+        },
 
         // Portraits
         'portraits/sai': {
@@ -109,6 +113,12 @@ namespace Assets {
             tileHeight: 12,
             collisionIndices: [ -1, 0 ],
         },
+        'cave': {
+            tiles: Preload.allTilesWithPrefix('cave_'),
+            tileWidth: 16,
+            tileHeight: 16,
+            collisionIndices: [ 16 ],
+        },
     }
 
     export const pyxelTilemaps: Dict<Preload.PyxelTilemap> = {
@@ -128,6 +138,10 @@ namespace Assets {
             url: 'assets/tilemap/escaperoom.json',
             tileset: tilesets.inside,
         },
+        'cave': {
+            url: 'assets/tilemap/cave.json',
+            tileset: tilesets.cave,
+        }
     }
 
     export class fonts {
