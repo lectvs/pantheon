@@ -158,7 +158,7 @@ namespace S { export const storyboard: Storyboard = {
             yield dialog('demon/default', "That's dedication to your act.");
         },
         transitions: [
-            { type: 'instant', toNode: 'inside_gameplay' }
+            { type: 'instant', toNode: 'hallway_gameplay' }
         ]
     },
     'i_demon2': {
@@ -167,7 +167,7 @@ namespace S { export const storyboard: Storyboard = {
             yield dialog('demon/default', "It... is an act, right?");
         },
         transitions: [
-            { type: 'instant', toNode: 'inside_gameplay' }
+            { type: 'instant', toNode: 'hallway_gameplay' }
         ]
     },
     'i_demon3': {
@@ -177,7 +177,7 @@ namespace S { export const storyboard: Storyboard = {
             yield dialog('demon/default', "That's dedication to your act.");
         },
         transitions: [
-            { type: 'instant', toNode: 'inside_gameplay' }
+            { type: 'instant', toNode: 'hallway_gameplay' }
         ]
     },
     'i_demon4': {
@@ -186,7 +186,7 @@ namespace S { export const storyboard: Storyboard = {
             yield dialog('demon/default', "It... is an act, right?");
         },
         transitions: [
-            { type: 'instant', toNode: 'inside_gameplay' }
+            { type: 'instant', toNode: 'hallway_gameplay' }
         ]
     },
     'i_demon5': {
@@ -196,7 +196,7 @@ namespace S { export const storyboard: Storyboard = {
             yield dialog('demon/default', "That's dedication to your act.");
         },
         transitions: [
-            { type: 'instant', toNode: 'inside_gameplay' }
+            { type: 'instant', toNode: 'hallway_gameplay' }
         ]
     },
     'i_demon6': {
@@ -205,7 +205,7 @@ namespace S { export const storyboard: Storyboard = {
             yield dialog('demon/default', "It... is an act, right?");
         },
         transitions: [
-            { type: 'instant', toNode: 'inside_gameplay' }
+            { type: 'instant', toNode: 'hallway_gameplay' }
         ]
     },
     'i_demon7': {
@@ -215,7 +215,7 @@ namespace S { export const storyboard: Storyboard = {
             yield dialog('demon/default', "That's dedication to your act.");
         },
         transitions: [
-            { type: 'instant', toNode: 'inside_gameplay' }
+            { type: 'instant', toNode: 'hallway_gameplay' }
         ]
     },
     'i_demon8': {
@@ -224,7 +224,7 @@ namespace S { export const storyboard: Storyboard = {
             yield dialog('demon/default', "It... is an act, right?");
         },
         transitions: [
-            { type: 'instant', toNode: 'inside_gameplay' }
+            { type: 'instant', toNode: 'hallway_gameplay' }
         ]
     },
     'escaperoom_talk': {
@@ -307,7 +307,7 @@ namespace S { export const storyboard: Storyboard = {
             yield doOverTime(0.5, t => guard3.alpha = t);
             yield moveTo(guard3, 140, 100);
 
-            DEBUG_SKIP_RATE = 1;
+            Debug.SKIP_RATE = 1;
 
             yield dialog('sai/default', '...');
 

@@ -60,7 +60,7 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     render(screen: Texture) {
-        if (DEBUG_ALL_PHYSICS_BOUNDS || this.debugBounds) {
+        if (Debug.ALL_PHYSICS_BOUNDS || this.debugBounds) {
             let worldBounds = this.getWorldBounds();
             Draw.brush.color = 0x00FF00;
             Draw.brush.alpha = 1;

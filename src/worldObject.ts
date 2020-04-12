@@ -176,12 +176,14 @@ class WorldObject {
         this._physicsGroup = physicsGroup;
     }
 
-    internalAddChildToParentWorldObject(child: WorldObject) {
+    // For use with World.Actions.addChildToParent
+    private internalAddChildToParentWorldObject(child: WorldObject) {
         this._children.push(child);
         child._parent = this;
     }
 
-    internalRemoveChildFromParentWorldObject(child: WorldObject) {
+    // For use with World.Actions.removeChildFromParent
+    private internalRemoveChildFromParentWorldObject(child: WorldObject) {
         A.removeAll(this._children, child);
         child._parent = null;
     }

@@ -21,7 +21,7 @@ class Input {
     }
 
     static update() {
-        if (DEBUG_PROGRAMMATIC_INPUT) {
+        if (Debug.PROGRAMMATIC_INPUT) {
             this.clearKeys();
         }
         this.updateKeys();
@@ -35,22 +35,22 @@ class Input {
     }
 
     static debugKeyDown(name: string) {
-        if (!DEBUG_PROGRAMMATIC_INPUT) return;
+        if (!Debug.PROGRAMMATIC_INPUT) return;
         this.keysByKeycode[this.debugKeyCode(name)].setDown();
     }
 
     static debugKeyJustDown(name: string) {
-        if (!DEBUG_PROGRAMMATIC_INPUT) return;
+        if (!Debug.PROGRAMMATIC_INPUT) return;
         this.keysByKeycode[this.debugKeyCode(name)].setJustDown();
     }
 
     static debugKeyUp(name: string) {
-        if (!DEBUG_PROGRAMMATIC_INPUT) return;
+        if (!Debug.PROGRAMMATIC_INPUT) return;
         this.keysByKeycode[this.debugKeyCode(name)].setUp();
     }
 
     static debugKeyJustUp(name: string) {
-        if (!DEBUG_PROGRAMMATIC_INPUT) return;
+        if (!Debug.PROGRAMMATIC_INPUT) return;
         this.keysByKeycode[this.debugKeyCode(name)].setJustUp();
     }
 

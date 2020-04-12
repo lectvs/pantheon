@@ -98,7 +98,7 @@ class Main {
                     advanceKey: 'advanceDialog',
                 },
                 skipCutsceneScriptKey: 'skipCutsceneScript',
-                autoPlayScript: autoPlayScript({ endNode: 'none', stage: 'escaperoom'}),
+                autoPlayScript: autoPlayScript({ endNode: 'inside_gameplay', stage: 'inside'}),
             },
             //theaterClass: TestTheater,
             //theaterConfig: undefined,
@@ -113,7 +113,7 @@ class Main {
 
             global.clearStacks();
 
-            for (let i = 0; i < DEBUG_SKIP_RATE; i++) {
+            for (let i = 0; i < Debug.SKIP_RATE; i++) {
                 Input.update();
                 this.game.update(this.delta);
             }

@@ -68,16 +68,16 @@ function autoPlayScript(options: {endNode?: string, stage?: string}) {
             return true;
         };
 
-        DEBUG_PROGRAMMATIC_INPUT = true;
-        DEBUG_SKIP_RATE = 100;
+        Debug.PROGRAMMATIC_INPUT = true;
+        Debug.SKIP_RATE = 100;
 
-        while (!script.done && !optionsMatched() && DEBUG_SKIP_RATE > 1 && DEBUG_PROGRAMMATIC_INPUT) {
+        while (!script.done && !optionsMatched() && Debug.SKIP_RATE > 1 && Debug.PROGRAMMATIC_INPUT) {
             script.update(global.script.world, global.script.delta);
             yield;
         }
 
-        DEBUG_PROGRAMMATIC_INPUT = false;
-        DEBUG_SKIP_RATE = 1;
+        Debug.PROGRAMMATIC_INPUT = false;
+        Debug.SKIP_RATE = 1;
     }
 }
 

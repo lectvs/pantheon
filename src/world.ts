@@ -106,7 +106,7 @@ class World extends WorldObject {
             if (worldObject.active) worldObject.postUpdate();
         }
 
-        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
+        if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
             if (Input.isDown('debugMoveCameraLeft'))  this.debugCameraX -= 1;
             if (Input.isDown('debugMoveCameraRight')) this.debugCameraX += 1;
             if (Input.isDown('debugMoveCameraUp'))    this.debugCameraY -= 1;
@@ -118,7 +118,7 @@ class World extends WorldObject {
     render(screen: Texture) {
         let oldCameraX = this.camera.x;
         let oldCameraY = this.camera.y;
-        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
+        if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
             this.camera.x += this.debugCameraX;
             this.camera.y += this.debugCameraY;
         }
@@ -323,11 +323,13 @@ class World extends WorldObject {
         this.getPhysicsGroupByName(physicsGroupName).worldObjects.push(obj);
     }
 
-    internalAddChildToParentWorld(child: WorldObject, obj: WorldObject) {
+    // For use with World.Actions.addChildToParent
+    private internalAddChildToParentWorld(child: WorldObject, obj: WorldObject) {
         World.Actions.addWorldObjectToWorld(child, this);
     }
 
-    internalRemoveChildFromParentWorld(child: WorldObject) {
+    // For use with World.Actions.removeChildFromParent
+    private internalRemoveChildFromParentWorld(child: WorldObject) {
         World.Actions.removeWorldObjectFromWorld(child);
     }
 
@@ -505,13 +507,21 @@ namespace World {
                 return false;
             }
 
+            /// @ts-ignore
             obj.internalAddChildToParentWorldObject(child);
 
             if (obj.world) {
+                /// @ts-ignore
                 obj.world.internalAddChildToParentWorld(child, obj);
             }
 
             return true;
+        }
+
+        export function addChildrenToParent(children: WorldObject[], obj: WorldObject) {
+            for (let child of children || []) {
+                addChildToParent(child, obj);
+            }
         }
 
         export function removeChildFromParent(child: WorldObject) {
@@ -523,13 +533,21 @@ namespace World {
             }
 
 
+            /// @ts-ignore
             child.parent.internalRemoveChildFromParentWorldObject(child);
 
             if (child.world) {
+                /// @ts-ignore
                 child.world.internalRemoveChildFromParentWorld(child);
             }
 
             return true;
+        }
+
+        export function removeAllChildrenFromParent(parent: WorldObject) {
+            while (!_.isEmpty(parent.children)) {
+                removeChildFromParent(parent.children[0]);
+            }
         }
     }
 }

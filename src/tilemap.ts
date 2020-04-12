@@ -55,19 +55,6 @@ class Tilemap extends WorldObject {
         this.dirty = true;
     }
 
-    onAdd() {
-        for (let box of this.collisionBoxes) {
-            World.Actions.setPhysicsGroup(box, this.physicsGroup);
-            World.Actions.addWorldObjectToWorld(box, this.world);
-        }
-    }
-
-    onRemove() {
-        for (let box of this.collisionBoxes) {
-            World.Actions.removeWorldObjectFromWorld(box);
-        }
-    }
-
     postUpdate() {
         if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
             for (let box of this.collisionBoxes) {
@@ -95,10 +82,12 @@ class Tilemap extends WorldObject {
         Tilemap.optimizeCollisionRects(collisionRects);  // Not optimizing entire array first to save some cycles.
         Tilemap.optimizeCollisionRects(collisionRects, Tilemap.OPTIMIZE_ALL);
         for (let rect of collisionRects) {
-            let box = new PhysicsWorldObject({ x: this.x, y: this.y, bounds: rect });
+            let box = new PhysicsWorldObject({ x: this.x, y: this.y, bounds: rect, physicsGroup: this.physicsGroup });
             box.debugBounds = debugBounds;
             this.collisionBoxes.push(box);
         }
+
+        World.Actions.addChildrenToParent(this.collisionBoxes, this);
     }
 
     drawRenderTexture() {

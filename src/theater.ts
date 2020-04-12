@@ -56,12 +56,12 @@ class Theater extends World {
 
         this.stageManager.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
 
-        if (DEBUG_SHOW_MOUSE_POSITION) {
+        if (Debug.SHOW_MOUSE_POSITION) {
             this.debugMousePosition = new SpriteText({ x: 0, y: 0, font: Assets.fonts.DELUXE16 });
             World.Actions.addWorldObjectToWorld(this.debugMousePosition, this);
         }
 
-        if (DEBUG_AUTOPLAY && config.autoPlayScript) {
+        if (Debug.AUTOPLAY && config.autoPlayScript) {
             this.runScript(config.autoPlayScript);
         }
     }
@@ -73,7 +73,7 @@ class Theater extends World {
 
         this.stageManager.loadStageIfQueued();
 
-        if (DEBUG_SHOW_MOUSE_POSITION) {
+        if (Debug.SHOW_MOUSE_POSITION) {
             this.debugMousePosition.setText(`${S.padLeft(this.currentWorld.getWorldMouseX().toString(), 3)} ${S.padLeft(this.currentWorld.getWorldMouseY().toString(), 3)}`);
         }
     }

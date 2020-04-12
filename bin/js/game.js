@@ -364,14 +364,68 @@ var AssetCache = /** @class */ (function () {
     AssetCache.DEFAULT_ANCHOR = { x: 0, y: 0 };
     return AssetCache;
 }());
-//var DEBUG: boolean = true;
-var DEBUG_ALL_PHYSICS_BOUNDS = false;
-var DEBUG_MOVE_CAMERA_WITH_ARROWS = true;
-var DEBUG_SHOW_MOUSE_POSITION = true;
-var DEBUG_SKIP_RATE = 1;
-var DEBUG_PROGRAMMATIC_INPUT = false;
-var DEBUG_AUTOPLAY = true;
-var DEBUG_SKIP_MAIN_MENU = true;
+var DebugValues = /** @class */ (function () {
+    function DebugValues() {
+    }
+    Object.defineProperty(DebugValues.prototype, "DEBUG", {
+        get: function () { return this._DEBUG; },
+        set: function (value) { this._DEBUG = value; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(DebugValues.prototype, "ALL_PHYSICS_BOUNDS", {
+        get: function () { return this.DEBUG && this._ALL_PHYSICS_BOUNDS; },
+        set: function (value) { this._ALL_PHYSICS_BOUNDS = value; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(DebugValues.prototype, "MOVE_CAMERA_WITH_ARROWS", {
+        get: function () { return this.DEBUG && this._MOVE_CAMERA_WITH_ARROWS; },
+        set: function (value) { this._MOVE_CAMERA_WITH_ARROWS = value; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(DebugValues.prototype, "SHOW_MOUSE_POSITION", {
+        get: function () { return this.DEBUG && this._SHOW_MOUSE_POSITION; },
+        set: function (value) { this._SHOW_MOUSE_POSITION = value; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(DebugValues.prototype, "SKIP_RATE", {
+        get: function () { return this.DEBUG ? this._SKIP_RATE : 1; },
+        set: function (value) { this._SKIP_RATE = value; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(DebugValues.prototype, "PROGRAMMATIC_INPUT", {
+        get: function () { return this.DEBUG && this._PROGRAMMATIC_INPUT; },
+        set: function (value) { this._PROGRAMMATIC_INPUT = value; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(DebugValues.prototype, "AUTOPLAY", {
+        get: function () { return this.DEBUG && this._AUTOPLAY; },
+        set: function (value) { this._AUTOPLAY = value; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(DebugValues.prototype, "SKIP_MAIN_MENU", {
+        get: function () { return this.DEBUG && this._SKIP_MAIN_MENU; },
+        set: function (value) { this._SKIP_MAIN_MENU = value; },
+        enumerable: true,
+        configurable: true
+    });
+    return DebugValues;
+}());
+var Debug = new DebugValues();
+Debug.DEBUG = true;
+Debug.ALL_PHYSICS_BOUNDS = false;
+Debug.MOVE_CAMERA_WITH_ARROWS = true;
+Debug.SHOW_MOUSE_POSITION = true;
+Debug.SKIP_RATE = 1;
+Debug.PROGRAMMATIC_INPUT = false;
+Debug.AUTOPLAY = true;
+Debug.SKIP_MAIN_MENU = true;
 var debug = console.info;
 // function debug(message?: any, ...optionalParams: any[]) {
 //     if (DEBUG) {
@@ -379,8 +433,7 @@ var debug = console.info;
 //     }
 // }
 function get(name) {
-    /// @ts-ignore
-    var worldObject = Main.theater.currentWorld.getWorldObjectByName(name);
+    var worldObject = global.game.theater.currentWorld.getWorldObjectByName(name);
     if (worldObject)
         return worldObject;
     return undefined;
@@ -1107,10 +1160,12 @@ var WorldObject = /** @class */ (function () {
     WorldObject.prototype.internalSetPhysicsGroupWorldObject = function (physicsGroup) {
         this._physicsGroup = physicsGroup;
     };
+    // For use with World.Actions.addChildToParent
     WorldObject.prototype.internalAddChildToParentWorldObject = function (child) {
         this._children.push(child);
         child._parent = this;
     };
+    // For use with World.Actions.removeChildFromParent
     WorldObject.prototype.internalRemoveChildFromParentWorldObject = function (child) {
         A.removeAll(this._children, child);
         child._parent = null;
@@ -1178,7 +1233,7 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         }
     };
     PhysicsWorldObject.prototype.render = function (screen) {
-        if (DEBUG_ALL_PHYSICS_BOUNDS || this.debugBounds) {
+        if (Debug.ALL_PHYSICS_BOUNDS || this.debugBounds) {
             var worldBounds = this.getWorldBounds();
             Draw.brush.color = 0x00FF00;
             Draw.brush.alpha = 1;
@@ -2898,19 +2953,19 @@ function autoPlayScript(options) {
                             return false;
                         return true;
                     };
-                    DEBUG_PROGRAMMATIC_INPUT = true;
-                    DEBUG_SKIP_RATE = 100;
+                    Debug.PROGRAMMATIC_INPUT = true;
+                    Debug.SKIP_RATE = 100;
                     _a.label = 2;
                 case 2:
-                    if (!(!script.done && !optionsMatched() && DEBUG_SKIP_RATE > 1 && DEBUG_PROGRAMMATIC_INPUT)) return [3 /*break*/, 4];
+                    if (!(!script.done && !optionsMatched() && Debug.SKIP_RATE > 1 && Debug.PROGRAMMATIC_INPUT)) return [3 /*break*/, 4];
                     script.update(global.script.world, global.script.delta);
                     return [4 /*yield*/];
                 case 3:
                     _a.sent();
                     return [3 /*break*/, 2];
                 case 4:
-                    DEBUG_PROGRAMMATIC_INPUT = false;
-                    DEBUG_SKIP_RATE = 1;
+                    Debug.PROGRAMMATIC_INPUT = false;
+                    Debug.SKIP_RATE = 1;
                     return [2 /*return*/];
             }
         });
@@ -2993,7 +3048,7 @@ var World = /** @class */ (function (_super) {
             }
             finally { if (e_9) throw e_9.error; }
         }
-        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
+        if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
             if (Input.isDown('debugMoveCameraLeft'))
                 this.debugCameraX -= 1;
             if (Input.isDown('debugMoveCameraRight'))
@@ -3009,7 +3064,7 @@ var World = /** @class */ (function (_super) {
         var e_10, _a;
         var oldCameraX = this.camera.x;
         var oldCameraY = this.camera.y;
-        if (DEBUG_MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
+        if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
             this.camera.x += this.debugCameraX;
             this.camera.y += this.debugCameraY;
         }
@@ -3287,9 +3342,11 @@ var World = /** @class */ (function (_super) {
         this.removeFromAllPhysicsGroups(obj);
         this.getPhysicsGroupByName(physicsGroupName).worldObjects.push(obj);
     };
+    // For use with World.Actions.addChildToParent
     World.prototype.internalAddChildToParentWorld = function (child, obj) {
         World.Actions.addWorldObjectToWorld(child, this);
     };
+    // For use with World.Actions.removeChildFromParent
     World.prototype.internalRemoveChildFromParentWorld = function (child) {
         World.Actions.removeWorldObjectFromWorld(child);
     };
@@ -3472,13 +3529,32 @@ var World = /** @class */ (function (_super) {
                 debug("Cannot add child " + child.name + " to parent " + obj.name + " becase the child exists in a different world!", child.world);
                 return false;
             }
+            /// @ts-ignore
             obj.internalAddChildToParentWorldObject(child);
             if (obj.world) {
+                /// @ts-ignore
                 obj.world.internalAddChildToParentWorld(child, obj);
             }
             return true;
         }
         Actions.addChildToParent = addChildToParent;
+        function addChildrenToParent(children, obj) {
+            var e_22, _a;
+            try {
+                for (var _b = __values(children || []), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var child = _c.value;
+                    addChildToParent(child, obj);
+                }
+            }
+            catch (e_22_1) { e_22 = { error: e_22_1 }; }
+            finally {
+                try {
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                }
+                finally { if (e_22) throw e_22.error; }
+            }
+        }
+        Actions.addChildrenToParent = addChildrenToParent;
         function removeChildFromParent(child) {
             if (!child)
                 return false;
@@ -3486,13 +3562,21 @@ var World = /** @class */ (function (_super) {
                 debug("Cannot remove child " + child.name + " from parent because its parent does not exist! Child:", child);
                 return false;
             }
+            /// @ts-ignore
             child.parent.internalRemoveChildFromParentWorldObject(child);
             if (child.world) {
+                /// @ts-ignore
                 child.world.internalRemoveChildFromParentWorld(child);
             }
             return true;
         }
         Actions.removeChildFromParent = removeChildFromParent;
+        function removeAllChildrenFromParent(parent) {
+            while (!_.isEmpty(parent.children)) {
+                removeChildFromParent(parent.children[0]);
+            }
+        }
+        Actions.removeAllChildrenFromParent = removeAllChildrenFromParent;
     })(Actions = World.Actions || (World.Actions = {}));
 })(World || (World = {}));
 /// <reference path="./world.ts" />
@@ -3506,7 +3590,7 @@ var Menu = /** @class */ (function (_super) {
         return _this;
     }
     Menu.prototype.addItemsToWorld = function (items) {
-        var e_22, _a;
+        var e_23, _a;
         if (_.isEmpty(items))
             return;
         try {
@@ -3515,12 +3599,12 @@ var Menu = /** @class */ (function (_super) {
                 World.Actions.addWorldObjectToWorld(item, this);
             }
         }
-        catch (e_22_1) { e_22 = { error: e_22_1 }; }
+        catch (e_23_1) { e_23 = { error: e_23_1 }; }
         finally {
             try {
                 if (items_1_1 && !items_1_1.done && (_a = items_1.return)) _a.call(items_1);
             }
-            finally { if (e_22) throw e_22.error; }
+            finally { if (e_23) throw e_23.error; }
         }
     };
     return Menu;
@@ -3811,41 +3895,8 @@ var Tilemap = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Tilemap.prototype.onAdd = function () {
-        var e_23, _a;
-        try {
-            for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var box = _c.value;
-                World.Actions.setPhysicsGroup(box, this.physicsGroup);
-                World.Actions.addWorldObjectToWorld(box, this.world);
-            }
-        }
-        catch (e_23_1) { e_23 = { error: e_23_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_23) throw e_23.error; }
-        }
-    };
-    Tilemap.prototype.onRemove = function () {
-        var e_24, _a;
-        try {
-            for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var box = _c.value;
-                World.Actions.removeWorldObjectFromWorld(box);
-            }
-        }
-        catch (e_24_1) { e_24 = { error: e_24_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_24) throw e_24.error; }
-        }
-    };
     Tilemap.prototype.postUpdate = function () {
-        var e_25, _a;
+        var e_24, _a;
         if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
             try {
                 for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -3854,12 +3905,12 @@ var Tilemap = /** @class */ (function (_super) {
                     box.y = this.y;
                 }
             }
-            catch (e_25_1) { e_25 = { error: e_25_1 }; }
+            catch (e_24_1) { e_24 = { error: e_24_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_25) throw e_25.error; }
+                finally { if (e_24) throw e_24.error; }
             }
         }
         _super.prototype.postUpdate.call(this);
@@ -3873,7 +3924,7 @@ var Tilemap = /** @class */ (function (_super) {
         _super.prototype.render.call(this, screen);
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_26, _a;
+        var e_25, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -3881,18 +3932,19 @@ var Tilemap = /** @class */ (function (_super) {
         try {
             for (var collisionRects_1 = __values(collisionRects), collisionRects_1_1 = collisionRects_1.next(); !collisionRects_1_1.done; collisionRects_1_1 = collisionRects_1.next()) {
                 var rect = collisionRects_1_1.value;
-                var box = new PhysicsWorldObject({ x: this.x, y: this.y, bounds: rect });
+                var box = new PhysicsWorldObject({ x: this.x, y: this.y, bounds: rect, physicsGroup: this.physicsGroup });
                 box.debugBounds = debugBounds;
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_26_1) { e_26 = { error: e_26_1 }; }
+        catch (e_25_1) { e_25 = { error: e_25_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_26) throw e_26.error; }
+            finally { if (e_25) throw e_25.error; }
         }
+        World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };
     Tilemap.prototype.drawRenderTexture = function () {
         this.renderTexture.clear();
@@ -4347,7 +4399,7 @@ var Main = /** @class */ (function () {
                     advanceKey: 'advanceDialog',
                 },
                 skipCutsceneScriptKey: 'skipCutsceneScript',
-                autoPlayScript: autoPlayScript({ endNode: 'none', stage: 'escaperoom' }),
+                autoPlayScript: autoPlayScript({ endNode: 'inside_gameplay', stage: 'inside' }),
             },
         });
         global.game = this.game;
@@ -4358,7 +4410,7 @@ var Main = /** @class */ (function () {
         PIXI.Ticker.shared.add(function (frameDelta) {
             _this.delta = frameDelta / 60;
             global.clearStacks();
-            for (var i = 0; i < DEBUG_SKIP_RATE; i++) {
+            for (var i = 0; i < Debug.SKIP_RATE; i++) {
                 Input.update();
                 _this.game.update(_this.delta);
             }
@@ -4722,7 +4774,7 @@ var S;
                 });
             },
             transitions: [
-                { type: 'instant', toNode: 'inside_gameplay' }
+                { type: 'instant', toNode: 'hallway_gameplay' }
             ]
         },
         'i_demon2': {
@@ -4738,7 +4790,7 @@ var S;
                 });
             },
             transitions: [
-                { type: 'instant', toNode: 'inside_gameplay' }
+                { type: 'instant', toNode: 'hallway_gameplay' }
             ]
         },
         'i_demon3': {
@@ -4757,7 +4809,7 @@ var S;
                 });
             },
             transitions: [
-                { type: 'instant', toNode: 'inside_gameplay' }
+                { type: 'instant', toNode: 'hallway_gameplay' }
             ]
         },
         'i_demon4': {
@@ -4773,7 +4825,7 @@ var S;
                 });
             },
             transitions: [
-                { type: 'instant', toNode: 'inside_gameplay' }
+                { type: 'instant', toNode: 'hallway_gameplay' }
             ]
         },
         'i_demon5': {
@@ -4792,7 +4844,7 @@ var S;
                 });
             },
             transitions: [
-                { type: 'instant', toNode: 'inside_gameplay' }
+                { type: 'instant', toNode: 'hallway_gameplay' }
             ]
         },
         'i_demon6': {
@@ -4808,7 +4860,7 @@ var S;
                 });
             },
             transitions: [
-                { type: 'instant', toNode: 'inside_gameplay' }
+                { type: 'instant', toNode: 'hallway_gameplay' }
             ]
         },
         'i_demon7': {
@@ -4827,7 +4879,7 @@ var S;
                 });
             },
             transitions: [
-                { type: 'instant', toNode: 'inside_gameplay' }
+                { type: 'instant', toNode: 'hallway_gameplay' }
             ]
         },
         'i_demon8': {
@@ -4843,7 +4895,7 @@ var S;
                 });
             },
             transitions: [
-                { type: 'instant', toNode: 'inside_gameplay' }
+                { type: 'instant', toNode: 'hallway_gameplay' }
             ]
         },
         'escaperoom_talk': {
@@ -4960,7 +5012,7 @@ var S;
                             return [4 /*yield*/, S.moveTo(guard3, 140, 100)];
                         case 11:
                             _a.sent();
-                            DEBUG_SKIP_RATE = 1;
+                            Debug.SKIP_RATE = 1;
                             return [4 /*yield*/, S.dialog('sai/default', '...')];
                         case 12:
                             _a.sent();
@@ -4991,7 +5043,7 @@ var Game = /** @class */ (function () {
         this.fpsMetricManager = new FPSMetricManager(1);
         this.menuSystem = new MenuSystem(this);
         this.loadMainMenu();
-        if (DEBUG_SKIP_MAIN_MENU) {
+        if (Debug.SKIP_MAIN_MENU) {
             this.startGame();
         }
     }
@@ -5071,7 +5123,7 @@ var global = /** @class */ (function () {
     return global;
 }());
 function group(config) {
-    var e_27, _a;
+    var e_26, _a;
     _.defaults(config, {
         overrides: [],
         x: 0, y: 0,
@@ -5095,12 +5147,12 @@ function group(config) {
             }
         }
     }
-    catch (e_27_1) { e_27 = { error: e_27_1 }; }
+    catch (e_26_1) { e_26 = { error: e_26_1 }; }
     finally {
         try {
             if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
         }
-        finally { if (e_27) throw e_27.error; }
+        finally { if (e_26) throw e_26.error; }
     }
     for (var i = 0; i < results.length; i++) {
         results[i].x = config.x + O.getOrDefault(config.worldObjects[i].x, 0);
@@ -5113,7 +5165,7 @@ var Input = /** @class */ (function () {
     function Input() {
     }
     Input.setKeys = function (keyCodesByName) {
-        var e_28, _a;
+        var e_27, _a;
         this.keyCodesByName = _.clone(keyCodesByName);
         this.isDownByKeyCode = {};
         this.keysByKeycode = {};
@@ -5125,55 +5177,55 @@ var Input = /** @class */ (function () {
                     this.setupKeyCode(keyCode);
                 }
             }
-            catch (e_28_1) { e_28 = { error: e_28_1 }; }
+            catch (e_27_1) { e_27 = { error: e_27_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_28) throw e_28.error; }
+                finally { if (e_27) throw e_27.error; }
             }
         }
     };
     Input.update = function () {
-        if (DEBUG_PROGRAMMATIC_INPUT) {
+        if (Debug.PROGRAMMATIC_INPUT) {
             this.clearKeys();
         }
         this.updateKeys();
         this.updateMousePosition();
     };
     Input.consume = function (key) {
-        var e_29, _a;
+        var e_28, _a;
         try {
             for (var _b = __values(this.keyCodesByName[key] || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var keyCode = _c.value;
                 this.keysByKeycode[keyCode].consume();
             }
         }
-        catch (e_29_1) { e_29 = { error: e_29_1 }; }
+        catch (e_28_1) { e_28 = { error: e_28_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_29) throw e_29.error; }
+            finally { if (e_28) throw e_28.error; }
         }
     };
     Input.debugKeyDown = function (name) {
-        if (!DEBUG_PROGRAMMATIC_INPUT)
+        if (!Debug.PROGRAMMATIC_INPUT)
             return;
         this.keysByKeycode[this.debugKeyCode(name)].setDown();
     };
     Input.debugKeyJustDown = function (name) {
-        if (!DEBUG_PROGRAMMATIC_INPUT)
+        if (!Debug.PROGRAMMATIC_INPUT)
             return;
         this.keysByKeycode[this.debugKeyCode(name)].setJustDown();
     };
     Input.debugKeyUp = function (name) {
-        if (!DEBUG_PROGRAMMATIC_INPUT)
+        if (!Debug.PROGRAMMATIC_INPUT)
             return;
         this.keysByKeycode[this.debugKeyCode(name)].setUp();
     };
     Input.debugKeyJustUp = function (name) {
-        if (!DEBUG_PROGRAMMATIC_INPUT)
+        if (!Debug.PROGRAMMATIC_INPUT)
             return;
         this.keysByKeycode[this.debugKeyCode(name)].setJustUp();
     };
@@ -5387,7 +5439,7 @@ var InteractionManager = /** @class */ (function () {
         this._interactRequested = null;
     };
     InteractionManager.prototype.getInteractableObjects = function () {
-        var e_30, _a;
+        var e_29, _a;
         var interactableObjects = this.theater.storyManager.getInteractableObjects(this.theater.storyManager.currentNode);
         var result = new Set();
         try {
@@ -5398,12 +5450,12 @@ var InteractionManager = /** @class */ (function () {
                 result.add(name_8);
             }
         }
-        catch (e_30_1) { e_30 = { error: e_30_1 }; }
+        catch (e_29_1) { e_29 = { error: e_29_1 }; }
         finally {
             try {
                 if (interactableObjects_2_1 && !interactableObjects_2_1.done && (_a = interactableObjects_2.return)) _a.call(interactableObjects_2);
             }
-            finally { if (e_30) throw e_30.error; }
+            finally { if (e_29) throw e_29.error; }
         }
         return result;
     };
@@ -5445,7 +5497,7 @@ var SpriteText = /** @class */ (function (_super) {
         return _this;
     }
     SpriteText.prototype.render = function (screen) {
-        var e_31, _a;
+        var e_30, _a;
         var filters = this.mask ? [new TextureFilter.Mask({ type: TextureFilter.Mask.Type.GLOBAL, mask: this.mask })] : [];
         try {
             for (var _b = __values(this.chars), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -5465,12 +5517,12 @@ var SpriteText = /** @class */ (function (_super) {
                 });
             }
         }
-        catch (e_31_1) { e_31 = { error: e_31_1 }; }
+        catch (e_30_1) { e_30 = { error: e_30_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_31) throw e_31.error; }
+            finally { if (e_30) throw e_30.error; }
         }
         _super.prototype.render.call(this, screen);
     };
@@ -5749,7 +5801,7 @@ var Physics = /** @class */ (function () {
     };
     Physics.collide = function (obj, from, options) {
         if (options === void 0) { options = {}; }
-        var e_32, _a;
+        var e_31, _a;
         if (_.isEmpty(from))
             return;
         if (!obj.colliding)
@@ -5784,12 +5836,12 @@ var Physics = /** @class */ (function () {
                     }
                 }
             }
-            catch (e_32_1) { e_32 = { error: e_32_1 }; }
+            catch (e_31_1) { e_31 = { error: e_31_1 }; }
             finally {
                 try {
                     if (collisions_1_1 && !collisions_1_1.done && (_a = collisions_1.return)) _a.call(collisions_1);
                 }
-                finally { if (e_32) throw e_32.error; }
+                finally { if (e_31) throw e_31.error; }
             }
             collidingWith = collidingWith.filter(function (other) { return obj.isOverlapping(other); });
             iters++;
@@ -6134,7 +6186,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_33, _a;
+        var e_32, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -6148,12 +6200,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_33_1) { e_33 = { error: e_33_1 }; }
+            catch (e_32_1) { e_32 = { error: e_32_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_33) throw e_33.error; }
+                finally { if (e_32) throw e_32.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -6295,7 +6347,7 @@ var StageManager = /** @class */ (function () {
         this.theater.partyManager.addMembersToWorld(world, stageName, entryPoint);
     };
     StageManager.prototype.newWorldFromStage = function (stage) {
-        var e_34, _a;
+        var e_33, _a;
         var world = new World(stage);
         if (stage.worldObjects) {
             try {
@@ -6305,12 +6357,12 @@ var StageManager = /** @class */ (function () {
                     World.Actions.addWorldObjectToWorld(worldObject, world);
                 }
             }
-            catch (e_34_1) { e_34 = { error: e_34_1 }; }
+            catch (e_33_1) { e_33 = { error: e_33_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_34) throw e_34.error; }
+                finally { if (e_33) throw e_33.error; }
             }
         }
         return world;
@@ -6507,7 +6559,7 @@ var StoryManager = /** @class */ (function () {
         this.storyConfig.execute();
     };
     StoryManager.prototype.getInteractableObjects = function (node, stageName) {
-        var e_35, _a;
+        var e_34, _a;
         var result = new Set();
         if (!node)
             return result;
@@ -6524,12 +6576,12 @@ var StoryManager = /** @class */ (function () {
                 result.add(transition.with);
             }
         }
-        catch (e_35_1) { e_35 = { error: e_35_1 }; }
+        catch (e_34_1) { e_34 = { error: e_34_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_35) throw e_35.error; }
+            finally { if (e_34) throw e_34.error; }
         }
         return result;
     };
@@ -6552,7 +6604,7 @@ var StoryManager = /** @class */ (function () {
         this._currentNodeName = _.last(path);
     };
     StoryManager.prototype.getFirstValidTransition = function (node) {
-        var e_36, _a;
+        var e_35, _a;
         try {
             for (var _b = __values(node.transitions), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -6571,12 +6623,12 @@ var StoryManager = /** @class */ (function () {
                 }
             }
         }
-        catch (e_36_1) { e_36 = { error: e_36_1 }; }
+        catch (e_35_1) { e_35 = { error: e_35_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_36) throw e_36.error; }
+            finally { if (e_35) throw e_35.error; }
         }
         return null;
     };
@@ -6587,7 +6639,7 @@ var StoryManager = /** @class */ (function () {
         return this.storyboard[name];
     };
     StoryManager.prototype.updateParty = function (party) {
-        var e_37, _a, e_38, _b;
+        var e_36, _a, e_37, _b;
         if (party.setLeader !== undefined) {
             this.theater.partyManager.leader = party.setLeader;
         }
@@ -6598,12 +6650,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberActive(m);
                 }
             }
-            catch (e_37_1) { e_37 = { error: e_37_1 }; }
+            catch (e_36_1) { e_36 = { error: e_36_1 }; }
             finally {
                 try {
                     if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                 }
-                finally { if (e_37) throw e_37.error; }
+                finally { if (e_36) throw e_36.error; }
             }
         }
         if (!_.isEmpty(party.setMembersInactive)) {
@@ -6613,12 +6665,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberInactive(m);
                 }
             }
-            catch (e_38_1) { e_38 = { error: e_38_1 }; }
+            catch (e_37_1) { e_37 = { error: e_37_1 }; }
             finally {
                 try {
                     if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
                 }
-                finally { if (e_38) throw e_38.error; }
+                finally { if (e_37) throw e_37.error; }
             }
         }
     };
@@ -6692,11 +6744,11 @@ var Theater = /** @class */ (function (_super) {
         _this.interactionManager = new InteractionManager(_this);
         _this.slideManager = new SlideManager(_this);
         _this.stageManager.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
-        if (DEBUG_SHOW_MOUSE_POSITION) {
+        if (Debug.SHOW_MOUSE_POSITION) {
             _this.debugMousePosition = new SpriteText({ x: 0, y: 0, font: Assets.fonts.DELUXE16 });
             World.Actions.addWorldObjectToWorld(_this.debugMousePosition, _this);
         }
-        if (DEBUG_AUTOPLAY && config.autoPlayScript) {
+        if (Debug.AUTOPLAY && config.autoPlayScript) {
             _this.runScript(config.autoPlayScript);
         }
         return _this;
@@ -6730,7 +6782,7 @@ var Theater = /** @class */ (function (_super) {
     Theater.prototype.update = function (delta) {
         _super.prototype.update.call(this, delta);
         this.stageManager.loadStageIfQueued();
-        if (DEBUG_SHOW_MOUSE_POSITION) {
+        if (Debug.SHOW_MOUSE_POSITION) {
             this.debugMousePosition.setText(S.padLeft(this.currentWorld.getWorldMouseX().toString(), 3) + " " + S.padLeft(this.currentWorld.getWorldMouseY().toString(), 3));
         }
     };
@@ -6937,39 +6989,6 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
-    ZOrderedTilemap.prototype.onAdd = function () {
-        var e_39, _a;
-        try {
-            for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var box = _c.value;
-                World.Actions.setPhysicsGroup(box, this.physicsGroup);
-                World.Actions.addWorldObjectToWorld(box, this.world);
-            }
-        }
-        catch (e_39_1) { e_39 = { error: e_39_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_39) throw e_39.error; }
-        }
-    };
-    ZOrderedTilemap.prototype.onRemove = function () {
-        var e_40, _a;
-        try {
-            for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var box = _c.value;
-                World.Actions.removeWorldObjectFromWorld(box);
-            }
-        }
-        catch (e_40_1) { e_40 = { error: e_40_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_40) throw e_40.error; }
-        }
-    };
     ZOrderedTilemap.prototype.update = function (delta) {
         if (this.dirty) {
             this.drawRenderTexture();
@@ -6977,7 +6996,7 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
         }
     };
     ZOrderedTilemap.prototype.postUpdate = function () {
-        var e_41, _a;
+        var e_38, _a;
         if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
             try {
                 for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -6986,19 +7005,19 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
                     box.y = this.y;
                 }
             }
-            catch (e_41_1) { e_41 = { error: e_41_1 }; }
+            catch (e_38_1) { e_38 = { error: e_38_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_41) throw e_41.error; }
+                finally { if (e_38) throw e_38.error; }
             }
         }
         _super.prototype.postUpdate.call(this);
     };
     ZOrderedTilemap.prototype.createCollisionBoxes = function (debugBounds) {
         if (debugBounds === void 0) { debugBounds = false; }
-        var e_42, _a;
+        var e_39, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -7006,18 +7025,19 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
         try {
             for (var collisionRects_2 = __values(collisionRects), collisionRects_2_1 = collisionRects_2.next(); !collisionRects_2_1.done; collisionRects_2_1 = collisionRects_2.next()) {
                 var rect = collisionRects_2_1.value;
-                var box = new PhysicsWorldObject({ x: this.x, y: this.y, bounds: rect });
+                var box = new PhysicsWorldObject({ x: this.x, y: this.y, bounds: rect, physicsGroup: this.physicsGroup });
                 box.debugBounds = debugBounds;
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_42_1) { e_42 = { error: e_42_1 }; }
+        catch (e_39_1) { e_39 = { error: e_39_1 }; }
         finally {
             try {
                 if (collisionRects_2_1 && !collisionRects_2_1.done && (_a = collisionRects_2.return)) _a.call(collisionRects_2);
             }
-            finally { if (e_42) throw e_42.error; }
+            finally { if (e_39) throw e_39.error; }
         }
+        World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };
     ZOrderedTilemap.prototype.drawRenderTexture = function () {
         this.clearZTextures();

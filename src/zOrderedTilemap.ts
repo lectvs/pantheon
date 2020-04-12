@@ -39,19 +39,6 @@ class ZOrderedTilemap extends WorldObject {
         this.zMap = config.zMap;
     }
 
-    onAdd() {
-        for (let box of this.collisionBoxes) {
-            World.Actions.setPhysicsGroup(box, this.physicsGroup);
-            World.Actions.addWorldObjectToWorld(box, this.world);
-        }
-    }
-
-    onRemove() {
-        for (let box of this.collisionBoxes) {
-            World.Actions.removeWorldObjectFromWorld(box);
-        }
-    }
-
     update(delta: number) {
         if (this.dirty) {
             this.drawRenderTexture();
@@ -75,10 +62,12 @@ class ZOrderedTilemap extends WorldObject {
         Tilemap.optimizeCollisionRects(collisionRects);  // Not optimizing entire array first to save some cycles.
         Tilemap.optimizeCollisionRects(collisionRects, Tilemap.OPTIMIZE_ALL);
         for (let rect of collisionRects) {
-            let box = new PhysicsWorldObject({ x: this.x, y: this.y, bounds: rect });
+            let box = new PhysicsWorldObject({ x: this.x, y: this.y, bounds: rect, physicsGroup: this.physicsGroup });
             box.debugBounds = debugBounds;
             this.collisionBoxes.push(box);
         }
+
+        World.Actions.addChildrenToParent(this.collisionBoxes, this);
     }
 
     drawRenderTexture() {

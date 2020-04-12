@@ -30,7 +30,7 @@ class Game {
 
         this.loadMainMenu();
 
-        if (DEBUG_SKIP_MAIN_MENU) {
+        if (Debug.SKIP_MAIN_MENU) {
             this.startGame();
         }
     }
