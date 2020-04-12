@@ -145,7 +145,7 @@ class World extends WorldObject {
         layer.sort();
         for (let worldObject of layer.worldObjects) {
             if (worldObject.visible) {
-                worldObject.fullRender(this.layerTexture, this);
+                worldObject.fullRender(this.layerTexture);
             }
         }
     }
@@ -412,7 +412,7 @@ namespace World {
                 World.Actions.addWorldObjectToWorld(child, world);
             }
 
-            obj.onAdd(world);
+            obj.onAdd();
             return true;
         }
 
@@ -426,6 +426,8 @@ namespace World {
 
             let world = obj.world;
 
+            obj.onRemove();
+
             /// @ts-ignore
             obj.internalRemoveWorldObjectFromWorldWorldObject(world);
             /// @ts-ignore
@@ -438,8 +440,7 @@ namespace World {
             if (obj.parent) {
                 World.Actions.removeChildFromParent(obj);
             }
-
-            obj.onRemove(world);
+            
             return true;
         }
 

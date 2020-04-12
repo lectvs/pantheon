@@ -55,10 +55,16 @@ class Tilemap extends WorldObject {
         this.dirty = true;
     }
 
-    onAdd(world: World) {
+    onAdd() {
         for (let box of this.collisionBoxes) {
             World.Actions.setPhysicsGroup(box, this.physicsGroup);
-            World.Actions.addWorldObjectToWorld(box, world);
+            World.Actions.addWorldObjectToWorld(box, this.world);
+        }
+    }
+
+    onRemove() {
+        for (let box of this.collisionBoxes) {
+            World.Actions.removeWorldObjectFromWorld(box);
         }
     }
 
@@ -109,12 +115,6 @@ class Tilemap extends WorldObject {
         let textureKey = this.tilemap.tileset.tiles[tile.index];
         let texture = AssetCache.getTexture(textureKey);
         renderTexture.render(texture, { x: tileX * this.tilemap.tileset.tileWidth, y: tileY * this.tilemap.tileset.tileHeight });
-    }
-
-    onRemove(world: World) {
-        for (let box of this.collisionBoxes) {
-            World.Actions.removeWorldObjectFromWorld(box);
-        }
     }
 }
 

@@ -102,13 +102,13 @@ class WorldObject {
         this.postUpdate();
     }
 
-    preRender(world: World) {
+    preRender() {
         this.preRenderStoredX = this.x;
         this.preRenderStoredY = this.y;
 
         if (!this.ignoreCamera) {
-            this.x -= world.camera.worldOffsetX;
-            this.y -= world.camera.worldOffsetY;
+            this.x -= this.world.camera.worldOffsetX;
+            this.y -= this.world.camera.worldOffsetY;
         }
 
         this.x = Math.round(this.x);
@@ -119,15 +119,15 @@ class WorldObject {
 
     }
 
-    postRender(world: World) {
+    postRender() {
         this.x = this.preRenderStoredX;
         this.y = this.preRenderStoredY;
     }
 
-    fullRender(screen: Texture, world: World) {
-        this.preRender(world);
+    fullRender(screen: Texture) {
+        this.preRender();
         this.render(screen);
-        this.postRender(world);
+        this.postRender();
     }
 
     resetController() {
@@ -142,11 +142,11 @@ class WorldObject {
         }
     }
 
-    onAdd(world: World) {
+    onAdd() {
 
     }
 
-    onRemove(world: World) {
+    onRemove() {
         
     }
 

@@ -1050,26 +1050,26 @@ var WorldObject = /** @class */ (function () {
         this.update(delta);
         this.postUpdate();
     };
-    WorldObject.prototype.preRender = function (world) {
+    WorldObject.prototype.preRender = function () {
         this.preRenderStoredX = this.x;
         this.preRenderStoredY = this.y;
         if (!this.ignoreCamera) {
-            this.x -= world.camera.worldOffsetX;
-            this.y -= world.camera.worldOffsetY;
+            this.x -= this.world.camera.worldOffsetX;
+            this.y -= this.world.camera.worldOffsetY;
         }
         this.x = Math.round(this.x);
         this.y = Math.round(this.y);
     };
     WorldObject.prototype.render = function (screen) {
     };
-    WorldObject.prototype.postRender = function (world) {
+    WorldObject.prototype.postRender = function () {
         this.x = this.preRenderStoredX;
         this.y = this.preRenderStoredY;
     };
-    WorldObject.prototype.fullRender = function (screen, world) {
-        this.preRender(world);
+    WorldObject.prototype.fullRender = function (screen) {
+        this.preRender();
         this.render(screen);
-        this.postRender(world);
+        this.postRender();
     };
     WorldObject.prototype.resetController = function () {
         for (var key in this.controller) {
@@ -1081,9 +1081,9 @@ var WorldObject = /** @class */ (function () {
             this.controller[key] = this.controllerSchema[key]();
         }
     };
-    WorldObject.prototype.onAdd = function (world) {
+    WorldObject.prototype.onAdd = function () {
     };
-    WorldObject.prototype.onRemove = function (world) {
+    WorldObject.prototype.onRemove = function () {
     };
     // For use with World.Actions.addWorldObjectToWorld
     WorldObject.prototype.internalAddWorldObjectToWorldWorldObject = function (world) {
@@ -3044,7 +3044,7 @@ var World = /** @class */ (function (_super) {
             for (var _b = __values(layer.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var worldObject = _c.value;
                 if (worldObject.visible) {
-                    worldObject.fullRender(this.layerTexture, this);
+                    worldObject.fullRender(this.layerTexture);
                 }
             }
         }
@@ -3382,7 +3382,7 @@ var World = /** @class */ (function (_super) {
                 }
                 finally { if (e_20) throw e_20.error; }
             }
-            obj.onAdd(world);
+            obj.onAdd();
             return true;
         }
         Actions.addWorldObjectToWorld = addWorldObjectToWorld;
@@ -3395,6 +3395,7 @@ var World = /** @class */ (function (_super) {
                 return false;
             }
             var world = obj.world;
+            obj.onRemove();
             /// @ts-ignore
             obj.internalRemoveWorldObjectFromWorldWorldObject(world);
             /// @ts-ignore
@@ -3415,7 +3416,6 @@ var World = /** @class */ (function (_super) {
             if (obj.parent) {
                 World.Actions.removeChildFromParent(obj);
             }
-            obj.onRemove(world);
             return true;
         }
         Actions.removeWorldObjectFromWorld = removeWorldObjectFromWorld;
@@ -3811,13 +3811,13 @@ var Tilemap = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Tilemap.prototype.onAdd = function (world) {
+    Tilemap.prototype.onAdd = function () {
         var e_23, _a;
         try {
             for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var box = _c.value;
                 World.Actions.setPhysicsGroup(box, this.physicsGroup);
-                World.Actions.addWorldObjectToWorld(box, world);
+                World.Actions.addWorldObjectToWorld(box, this.world);
             }
         }
         catch (e_23_1) { e_23 = { error: e_23_1 }; }
@@ -3828,8 +3828,24 @@ var Tilemap = /** @class */ (function (_super) {
             finally { if (e_23) throw e_23.error; }
         }
     };
-    Tilemap.prototype.postUpdate = function () {
+    Tilemap.prototype.onRemove = function () {
         var e_24, _a;
+        try {
+            for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var box = _c.value;
+                World.Actions.removeWorldObjectFromWorld(box);
+            }
+        }
+        catch (e_24_1) { e_24 = { error: e_24_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_24) throw e_24.error; }
+        }
+    };
+    Tilemap.prototype.postUpdate = function () {
+        var e_25, _a;
         if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
             try {
                 for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -3838,12 +3854,12 @@ var Tilemap = /** @class */ (function (_super) {
                     box.y = this.y;
                 }
             }
-            catch (e_24_1) { e_24 = { error: e_24_1 }; }
+            catch (e_25_1) { e_25 = { error: e_25_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_24) throw e_24.error; }
+                finally { if (e_25) throw e_25.error; }
             }
         }
         _super.prototype.postUpdate.call(this);
@@ -3857,7 +3873,7 @@ var Tilemap = /** @class */ (function (_super) {
         _super.prototype.render.call(this, screen);
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_25, _a;
+        var e_26, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -3870,12 +3886,12 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_25_1) { e_25 = { error: e_25_1 }; }
+        catch (e_26_1) { e_26 = { error: e_26_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_25) throw e_25.error; }
+            finally { if (e_26) throw e_26.error; }
         }
     };
     Tilemap.prototype.drawRenderTexture = function () {
@@ -3892,22 +3908,6 @@ var Tilemap = /** @class */ (function (_super) {
         var textureKey = this.tilemap.tileset.tiles[tile.index];
         var texture = AssetCache.getTexture(textureKey);
         renderTexture.render(texture, { x: tileX * this.tilemap.tileset.tileWidth, y: tileY * this.tilemap.tileset.tileHeight });
-    };
-    Tilemap.prototype.onRemove = function (world) {
-        var e_26, _a;
-        try {
-            for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var box = _c.value;
-                World.Actions.removeWorldObjectFromWorld(box);
-            }
-        }
-        catch (e_26_1) { e_26 = { error: e_26_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_26) throw e_26.error; }
-        }
     };
     return Tilemap;
 }(WorldObject));
@@ -6937,13 +6937,13 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
-    ZOrderedTilemap.prototype.onAdd = function (world) {
+    ZOrderedTilemap.prototype.onAdd = function () {
         var e_39, _a;
         try {
             for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var box = _c.value;
                 World.Actions.setPhysicsGroup(box, this.physicsGroup);
-                World.Actions.addWorldObjectToWorld(box, world);
+                World.Actions.addWorldObjectToWorld(box, this.world);
             }
         }
         catch (e_39_1) { e_39 = { error: e_39_1 }; }
@@ -6954,6 +6954,22 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
             finally { if (e_39) throw e_39.error; }
         }
     };
+    ZOrderedTilemap.prototype.onRemove = function () {
+        var e_40, _a;
+        try {
+            for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var box = _c.value;
+                World.Actions.removeWorldObjectFromWorld(box);
+            }
+        }
+        catch (e_40_1) { e_40 = { error: e_40_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_40) throw e_40.error; }
+        }
+    };
     ZOrderedTilemap.prototype.update = function (delta) {
         if (this.dirty) {
             this.drawRenderTexture();
@@ -6961,7 +6977,7 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
         }
     };
     ZOrderedTilemap.prototype.postUpdate = function () {
-        var e_40, _a;
+        var e_41, _a;
         if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
             try {
                 for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -6970,19 +6986,19 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
                     box.y = this.y;
                 }
             }
-            catch (e_40_1) { e_40 = { error: e_40_1 }; }
+            catch (e_41_1) { e_41 = { error: e_41_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_40) throw e_40.error; }
+                finally { if (e_41) throw e_41.error; }
             }
         }
         _super.prototype.postUpdate.call(this);
     };
     ZOrderedTilemap.prototype.createCollisionBoxes = function (debugBounds) {
         if (debugBounds === void 0) { debugBounds = false; }
-        var e_41, _a;
+        var e_42, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -6995,12 +7011,12 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_41_1) { e_41 = { error: e_41_1 }; }
+        catch (e_42_1) { e_42 = { error: e_42_1 }; }
         finally {
             try {
                 if (collisionRects_2_1 && !collisionRects_2_1.done && (_a = collisionRects_2.return)) _a.call(collisionRects_2);
             }
-            finally { if (e_41) throw e_41.error; }
+            finally { if (e_42) throw e_42.error; }
         }
     };
     ZOrderedTilemap.prototype.drawRenderTexture = function () {
@@ -7022,22 +7038,6 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
         var textureKey = this.tilemap.tileset.tiles[tile.index];
         var texture = AssetCache.getTexture(textureKey);
         renderTexture.render(texture, { x: tileX * this.tilemap.tileset.tileWidth, y: tileY * this.tilemap.tileset.tileHeight });
-    };
-    ZOrderedTilemap.prototype.onRemove = function (world) {
-        var e_42, _a;
-        try {
-            for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var box = _c.value;
-                World.Actions.removeWorldObjectFromWorld(box);
-            }
-        }
-        catch (e_42_1) { e_42 = { error: e_42_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_42) throw e_42.error; }
-        }
     };
     ZOrderedTilemap.prototype.createZTextures = function (zTileIndices) {
         var texturesByZ = ZOrderedTilemap.createEmptyZTextures(zTileIndices, this.tilemap.tileset);
