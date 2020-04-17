@@ -5007,7 +5007,7 @@ var Theater = /** @class */ (function (_super) {
         this.storyManager.onStageLoad();
     };
     Theater.prototype.loadDialogBox = function (config) {
-        this.dialogBox = new DialogBox(config);
+        this.dialogBox = WorldObject.fromConfig(config);
         this.dialogBox.visible = false;
         World.Actions.setLayer(this.dialogBox, Theater.LAYER_DIALOG);
         World.Actions.addWorldObjectToWorld(this.dialogBox, this);
@@ -5758,137 +5758,16 @@ var Assets;
     Assets.textures = {
         'none': {},
         'blank': {},
-        'dialogbox': {
-            anchor: { x: 0.5, y: 0.5 },
-        },
         // Debug
         'debug': {},
-        // Character sprites
-        'generic_sprites': {
-            defaultAnchor: { x: 0.5, y: 1 },
-            spritesheet: { frameWidth: 32, frameHeight: 36 },
-        },
-        'generic_sprites_dark': {
-            defaultAnchor: { x: 0.5, y: 1 },
-            spritesheet: { frameWidth: 32, frameHeight: 36 },
-        },
-        // Props
-        'props': {
-            defaultAnchor: { x: 0.5, y: 1 },
-            frames: {
-                'door_closed': {
-                    rect: { x: 0, y: 0, width: 24, height: 36 },
-                    anchor: { x: 0, y: 0 },
-                },
-                'door_open': {
-                    rect: { x: 24, y: 0, width: 4, height: 48 },
-                    anchor: { x: 0, y: 0 },
-                },
-                'keypad': {
-                    rect: { x: 28, y: 0, width: 9, height: 12 },
-                    anchor: { x: 0, y: 0 },
-                },
-            }
-        },
-        // Tilesets
-        'outside': {
-            url: 'assets/tilemap/outside.png',
-            spritesheet: { frameWidth: 12, frameHeight: 12 },
-        },
-        'inside': {
-            url: 'assets/tilemap/inside.png',
-            spritesheet: { frameWidth: 12, frameHeight: 12 },
-        },
-        'cave': {
-            url: 'assets/tilemap/cave.png',
-            spritesheet: { frameWidth: 16, frameHeight: 16 },
-        },
-        // Portraits
-        'portraits/sai': {
-            defaultAnchor: { x: 0.5, y: 0.5 },
-            frames: {
-                'sai/default': {
-                    rect: { x: 0 * 74, y: 0 * 54, width: 74, height: 54 },
-                },
-            }
-        },
-        'portraits/dad': {
-            defaultAnchor: { x: 0.5, y: 0.5 },
-            frames: {
-                'dad/default': {
-                    rect: { x: 0 * 74, y: 0 * 54, width: 74, height: 54 },
-                },
-            }
-        },
-        'portraits/demon': {
-            defaultAnchor: { x: 0.5, y: 0.5 },
-            frames: {
-                'demon/default': {
-                    rect: { x: 0 * 74, y: 0 * 54, width: 74, height: 54 },
-                },
-            }
-        },
-        'portraits/guard1': {
-            defaultAnchor: { x: 0.5, y: 0.5 },
-            frames: {
-                'guard1/default': {
-                    rect: { x: 0 * 74, y: 0 * 54, width: 74, height: 54 },
-                },
-            }
-        },
-        'portraits/guard2': {
-            defaultAnchor: { x: 0.5, y: 0.5 },
-            frames: {
-                'guard2/default': {
-                    rect: { x: 0 * 74, y: 0 * 54, width: 74, height: 54 },
-                },
-            }
+        'dialogbox': {
+            anchor: { x: 0.5, y: 0.5 },
         },
         // Fonts
         'deluxe16': {},
     };
-    Assets.tilesets = {
-        'outside': {
-            tiles: Preload.allTilesWithPrefix('outside_'),
-            tileWidth: 12,
-            tileHeight: 12,
-            collisionIndices: [7, 8, 9, 10, 11, 12, 13, 14, 15],
-        },
-        'inside': {
-            tiles: Preload.allTilesWithPrefix('inside_'),
-            tileWidth: 12,
-            tileHeight: 12,
-            collisionIndices: [-1, 0],
-        },
-        'cave': {
-            tiles: Preload.allTilesWithPrefix('cave_'),
-            tileWidth: 16,
-            tileHeight: 16,
-            collisionIndices: [16],
-        },
-    };
-    Assets.pyxelTilemaps = {
-        'outside': {
-            url: 'assets/tilemap/outside.json',
-            tileset: Assets.tilesets.outside,
-        },
-        'inside': {
-            url: 'assets/tilemap/inside.json',
-            tileset: Assets.tilesets.inside,
-        },
-        'hallway': {
-            url: 'assets/tilemap/hallway.json',
-            tileset: Assets.tilesets.inside,
-        },
-        'escaperoom': {
-            url: 'assets/tilemap/escaperoom.json',
-            tileset: Assets.tilesets.inside,
-        },
-        'cave': {
-            url: 'assets/tilemap/cave.json',
-            tileset: Assets.tilesets.cave,
-        }
-    };
+    Assets.tilesets = {};
+    Assets.pyxelTilemaps = {};
     var fonts = /** @class */ (function () {
         function fonts() {
         }
@@ -5903,121 +5782,6 @@ var Assets;
     Assets.fonts = fonts;
     Assets.tags = {};
 })(Assets || (Assets = {}));
-/// <reference path="../lectvs/sprite.ts" />
-var HumanCharacter = /** @class */ (function (_super) {
-    __extends(HumanCharacter, _super);
-    function HumanCharacter(config) {
-        var _this = _super.call(this, config) || this;
-        _this.speed = 60;
-        _this.controllerSchema = {
-            left: function () { return Input.isDown('left'); },
-            right: function () { return Input.isDown('right'); },
-            up: function () { return Input.isDown('up'); },
-            down: function () { return Input.isDown('down'); },
-        };
-        _this.direction = Direction2D.LEFT;
-        return _this;
-    }
-    HumanCharacter.prototype.update = function (delta) {
-        this.updateFollow();
-        var haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
-        var vaxis = (this.controller.down ? 1 : 0) - (this.controller.up ? 1 : 0);
-        if (haxis < 0) {
-            this.vx = -this.speed;
-            this.direction.h = Direction.LEFT;
-            if (vaxis == 0)
-                this.direction.v = Direction.NONE;
-            this.flipX = false;
-        }
-        else if (haxis > 0) {
-            this.vx = this.speed;
-            this.direction.h = Direction.RIGHT;
-            if (vaxis == 0)
-                this.direction.v = Direction.NONE;
-            this.flipX = true;
-        }
-        else {
-            this.vx = 0;
-        }
-        if (vaxis < 0) {
-            this.vy = -this.speed;
-            this.direction.v = Direction.UP;
-            if (haxis == 0)
-                this.direction.h = Direction.NONE;
-        }
-        else if (vaxis > 0) {
-            this.vy = this.speed;
-            this.direction.v = Direction.DOWN;
-            if (haxis == 0)
-                this.direction.h = Direction.NONE;
-        }
-        else {
-            this.vy = 0;
-        }
-        _super.prototype.update.call(this, delta);
-        this.updateInteractions();
-        // Handle animation.
-        var anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'run';
-        var anim_dir = this.direction.v == Direction.UP ? 'up' : (this.direction.h == Direction.NONE ? 'down' : 'side');
-        this.playAnimation(anim_state + "_" + anim_dir);
-    };
-    HumanCharacter.prototype.updateInteractions = function () {
-        var e_40, _a;
-        if (!this.isControlled) {
-            return;
-        }
-        var interactableObjects = global.theater.interactionManager.getInteractableObjects();
-        var interactRadius = 2;
-        var highlightedObject = null;
-        G.expandRectangle(this.bounds, interactRadius);
-        try {
-            for (var interactableObjects_2 = __values(interactableObjects), interactableObjects_2_1 = interactableObjects_2.next(); !interactableObjects_2_1.done; interactableObjects_2_1 = interactableObjects_2.next()) {
-                var obj = interactableObjects_2_1.value;
-                if (this.isOverlapping(this.world.getWorldObjectByName(obj))) {
-                    highlightedObject = obj;
-                }
-            }
-        }
-        catch (e_40_1) { e_40 = { error: e_40_1 }; }
-        finally {
-            try {
-                if (interactableObjects_2_1 && !interactableObjects_2_1.done && (_a = interactableObjects_2.return)) _a.call(interactableObjects_2);
-            }
-            finally { if (e_40) throw e_40.error; }
-        }
-        G.expandRectangle(this.bounds, -interactRadius);
-        global.theater.interactionManager.highlight(highlightedObject);
-        if (Input.justDown('interact') && highlightedObject) {
-            global.theater.interactionManager.interact(highlightedObject);
-        }
-    };
-    HumanCharacter.prototype.follow = function (thing, maxDistance) {
-        if (maxDistance === void 0) { maxDistance = 24; }
-        this._follow = new Follow(thing, maxDistance);
-    };
-    HumanCharacter.prototype.onCollide = function (other) {
-        if (other instanceof Warp && this.controllable) {
-            other.warp();
-        }
-    };
-    HumanCharacter.prototype.setDirection = function (direction) {
-        this.direction.h = direction.h;
-        this.direction.v = direction.v;
-    };
-    HumanCharacter.prototype.setSpeed = function (speed) {
-        this.speed = speed;
-    };
-    HumanCharacter.prototype.unfollow = function () {
-        this._follow = null;
-    };
-    HumanCharacter.prototype.updateFollow = function () {
-        if (this._follow)
-            this._follow.update(this);
-    };
-    return HumanCharacter;
-}(Sprite));
-/// <reference path="../lectvs/transition.ts" />
-/// <reference path="./humanCharacter.ts" />
 var DEFAULT_SCREEN_TRANSITION = Transition.FADE(0.2, 0.5, 0.2);
 var BASE_STAGE = {
     layers: [
@@ -6036,216 +5800,34 @@ var BASE_STAGE = {
         { move: 'player', from: ['props', 'walls'], callback: true },
     ],
 };
-function HUMAN_CHARACTER(texture) {
-    return {
-        constructor: HumanCharacter,
-        layer: 'main',
-        physicsGroup: 'player',
-        bounds: { x: -5, y: -2, width: 10, height: 2 },
-        animations: [
-            Animations.fromTextureList({ name: 'idle_side', texturePrefix: texture + '_', textures: [0, 1], frameRate: 1, count: -1 }),
-            Animations.fromTextureList({ name: 'idle_down', texturePrefix: texture + '_', textures: [8, 9], frameRate: 1, count: -1 }),
-            Animations.fromTextureList({ name: 'idle_up', texturePrefix: texture + '_', textures: [16, 17], frameRate: 1, count: -1 }),
-            Animations.fromTextureList({ name: 'run_side', texturePrefix: texture + '_', textures: [2, 3], frameRate: 8, count: -1 }),
-            Animations.fromTextureList({ name: 'run_down', texturePrefix: texture + '_', textures: [10, 11], frameRate: 8, count: -1 }),
-            Animations.fromTextureList({ name: 'run_up', texturePrefix: texture + '_', textures: [18, 19], frameRate: 8, count: -1 }),
-        ],
-        defaultAnimation: 'idle_side',
-    };
-}
-function GUARD() {
-    return {
-        parent: HUMAN_CHARACTER('generic_sprites'),
-    };
-}
 function WORLD_BOUNDS(left, top, right, bottom) {
     var thickness = 12;
     var width = right - left;
     var height = bottom - top;
-    return [
-        {
-            constructor: PhysicsWorldObject,
-            bounds: { x: left - thickness, y: top - thickness, width: thickness, height: height + 2 * thickness },
-            physicsGroup: 'walls',
-        },
-        {
-            constructor: PhysicsWorldObject,
-            bounds: { x: right, y: top - thickness, width: thickness, height: height + 2 * thickness },
-            physicsGroup: 'walls',
-        },
-        {
-            constructor: PhysicsWorldObject,
-            bounds: { x: left, y: top - thickness, width: width, height: thickness },
-            physicsGroup: 'walls',
-        },
-        {
-            constructor: PhysicsWorldObject,
-            bounds: { x: left, y: bottom, width: width, height: thickness },
-            physicsGroup: 'walls',
-        },
-    ];
-}
-var Follow = /** @class */ (function () {
-    function Follow(target, maxDistance, moveThreshold) {
-        if (moveThreshold === void 0) { moveThreshold = 2; }
-        this.target = target;
-        this.maxDistance = maxDistance;
-        this.targetHistory = [];
-        this.moveThreshold = moveThreshold;
-    }
-    Follow.prototype.update = function (sprite) {
-        this.attemptToResolveTarget(sprite);
-        this.pushTargetPosition();
-        var dist = 0;
-        var i = 0;
-        for (i = this.targetHistory.length - 4; i >= 0 && dist < this.maxDistance; i -= 2) {
-            var p1 = { x: this.targetHistory[i + 0], y: this.targetHistory[i + 1] };
-            var p2 = { x: this.targetHistory[i + 2], y: this.targetHistory[i + 3] };
-            dist += M.distance(p1, p2);
-        }
-        if (i >= 0) {
-            this.targetHistory.splice(0, i);
-        }
-        if (!_.isEmpty(this.targetHistory)) {
-            var dx = this.targetHistory[0] - sprite.x;
-            var dy = this.targetHistory[1] - sprite.y;
-            if (dx >= this.moveThreshold)
-                sprite.controller.right = true;
-            else if (dx <= -this.moveThreshold)
-                sprite.controller.left = true;
-            if (dy >= this.moveThreshold)
-                sprite.controller.down = true;
-            else if (dy <= -this.moveThreshold)
-                sprite.controller.up = true;
-        }
-    };
-    Follow.prototype.renderTrail = function (screen) {
-        for (var i = 0; i < this.targetHistory.length - 1; i += 2) {
-            Draw.brush.color = 0x00FF00;
-            Draw.brush.alpha = 1;
-            Draw.pixel(screen, this.targetHistory[i], this.targetHistory[i + 1]);
-        }
-    };
-    Follow.prototype.attemptToResolveTarget = function (sprite) {
-        if (_.isString(this.target)) {
-            this.target = sprite.world.worldObjectsByName[this.target] || this.target;
-        }
-    };
-    Follow.prototype.pushTargetPosition = function () {
-        if (_.isString(this.target))
-            return;
-        if (_.isEmpty(this.targetHistory)
-            || this.target.x !== this.targetHistory[this.targetHistory.length - 2]
-            || this.target.y !== this.targetHistory[this.targetHistory.length - 1]) {
-            this.targetHistory.push(this.target.x, this.target.y);
-        }
-    };
-    return Follow;
-}());
-function autoPlayScript(options) {
-    return function () {
-        var theater, sai, script, optionsMatched;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/];
-                case 1:
-                    _a.sent();
-                    theater = global.theater;
-                    sai = theater.partyManager.getMember('sai').worldObject;
-                    script = new Script(function () {
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    if (!(theater.currentStageName !== 'inside')) return [3 /*break*/, 2];
-                                    Input.debugKeyJustDown('advanceDialog');
-                                    return [4 /*yield*/];
-                                case 1:
-                                    _a.sent();
-                                    return [3 /*break*/, 0];
-                                case 2:
-                                    if (!(theater.currentStageName !== 'hallway')) return [3 /*break*/, 4];
-                                    Input.debugKeyJustDown('advanceDialog');
-                                    Input.debugKeyDown('up');
-                                    Input.debugKeyDown('right');
-                                    return [4 /*yield*/];
-                                case 3:
-                                    _a.sent();
-                                    return [3 /*break*/, 2];
-                                case 4:
-                                    if (!(sai.x < Main.width / 2)) return [3 /*break*/, 6];
-                                    Input.debugKeyJustDown('advanceDialog');
-                                    Input.debugKeyDown('up');
-                                    Input.debugKeyDown('right');
-                                    return [4 /*yield*/];
-                                case 5:
-                                    _a.sent();
-                                    return [3 /*break*/, 4];
-                                case 6:
-                                    if (!(theater.currentStageName !== 'escaperoom')) return [3 /*break*/, 8];
-                                    Input.debugKeyJustDown('advanceDialog');
-                                    Input.debugKeyDown('up');
-                                    return [4 /*yield*/];
-                                case 7:
-                                    _a.sent();
-                                    return [3 /*break*/, 6];
-                                case 8:
-                                    if (!(sai.x > 92)) return [3 /*break*/, 10];
-                                    Input.debugKeyJustDown('advanceDialog');
-                                    Input.debugKeyDown('up');
-                                    Input.debugKeyDown('left');
-                                    return [4 /*yield*/];
-                                case 9:
-                                    _a.sent();
-                                    return [3 /*break*/, 8];
-                                case 10:
-                                    if (!(theater.storyManager.currentNodeName !== 'i_keypad')) return [3 /*break*/, 12];
-                                    Input.debugKeyJustDown('advanceDialog');
-                                    Input.debugKeyDown('up');
-                                    Input.debugKeyJustDown('interact');
-                                    return [4 /*yield*/];
-                                case 11:
-                                    _a.sent();
-                                    return [3 /*break*/, 10];
-                                case 12:
-                                    if (!(theater.currentStageName !== 'none')) return [3 /*break*/, 14];
-                                    Input.debugKeyJustDown('advanceDialog');
-                                    return [4 /*yield*/];
-                                case 13:
-                                    _a.sent();
-                                    return [3 /*break*/, 12];
-                                case 14:
-                                    if (!theater.stageManager.transitioning) return [3 /*break*/, 16];
-                                    return [4 /*yield*/];
-                                case 15:
-                                    _a.sent();
-                                    return [3 /*break*/, 14];
-                                case 16: return [2 /*return*/];
-                            }
-                        });
-                    });
-                    optionsMatched = function () {
-                        if (options.endNode && theater.storyManager.currentNodeName !== options.endNode)
-                            return false;
-                        if (options.stage && (theater.currentStageName !== options.stage || theater.stageManager.transitioning))
-                            return false;
-                        return true;
-                    };
-                    Debug.PROGRAMMATIC_INPUT = true;
-                    Debug.SKIP_RATE = 100;
-                    _a.label = 2;
-                case 2:
-                    if (!(!script.done && !optionsMatched() && Debug.SKIP_RATE > 1 && Debug.PROGRAMMATIC_INPUT)) return [3 /*break*/, 4];
-                    script.update(global.script.world, global.script.delta);
-                    return [4 /*yield*/];
-                case 3:
-                    _a.sent();
-                    return [3 /*break*/, 2];
-                case 4:
-                    Debug.PROGRAMMATIC_INPUT = false;
-                    Debug.SKIP_RATE = 1;
-                    return [2 /*return*/];
-            }
-        });
+    return {
+        constructor: WorldObject,
+        children: [
+            {
+                constructor: PhysicsWorldObject,
+                bounds: { x: left - thickness, y: top - thickness, width: thickness, height: height + 2 * thickness },
+                physicsGroup: 'walls',
+            },
+            {
+                constructor: PhysicsWorldObject,
+                bounds: { x: right, y: top - thickness, width: thickness, height: height + 2 * thickness },
+                physicsGroup: 'walls',
+            },
+            {
+                constructor: PhysicsWorldObject,
+                bounds: { x: left, y: top - thickness, width: width, height: thickness },
+                physicsGroup: 'walls',
+            },
+            {
+                constructor: PhysicsWorldObject,
+                bounds: { x: left, y: bottom, width: width, height: thickness },
+                physicsGroup: 'walls',
+            },
+        ]
     };
 }
 /// <reference path="../lectvs/menu.ts" />
@@ -6299,296 +5881,40 @@ var PauseMenu = /** @class */ (function (_super) {
     }
     return PauseMenu;
 }(Menu));
-/// <reference path="../lectvs/partyManager.ts"/>
-/// <reference path="./base.ts"/>
-var party = {
-    leader: 'sai',
-    activeMembers: ['sai', 'dad'],
-    members: {
-        'sai': {
-            config: {
-                name: 'sai',
-                parent: HUMAN_CHARACTER('generic_sprites'),
-                effects: {
-                    outline: {
-                        color: 0xFF0000,
-                        alpha: 1
-                    }
-                }
-            },
-            stage: 'outside',
-        },
-        'dad': {
-            config: {
-                name: 'dad',
-                parent: HUMAN_CHARACTER('generic_sprites'),
-                effects: {
-                    outline: {
-                        color: 0x0000FF,
-                        alpha: 1
-                    }
-                }
-            },
-            stage: 'outside',
-        },
-    }
-};
-/// <reference path="../lectvs/tilemap.ts" />
-/// <reference path="../lectvs/warp.ts" />
-/// <reference path="./base.ts" />
-var stages = {
-    'outside': {
-        parent: BASE_STAGE,
-        camera: {
-            bounds: { left: 0, top: 0, right: 240, bottom: 180 },
-        },
-        entryPoints: {
-            'main': { x: 120, y: 156 },
-        },
-        worldObjects: __spread(WORLD_BOUNDS(0, 0, 240, 180), [
-            {
-                name: 'fort_walls',
-                constructor: Tilemap,
-                layer: 'main',
-                tilemap: 'outside',
-                tilemapLayer: 0,
-                physicsGroup: 'walls',
-            },
-            {
-                name: 'ground',
-                constructor: Tilemap,
-                layer: 'bg',
-                tilemap: 'outside',
-                tilemapLayer: 1,
-            },
-            {
-                name: 'warp',
-                constructor: Warp,
-                physicsGroup: 'props',
-                bounds: { x: 108, y: 96, width: 24, height: 2 },
-                data: {
-                    stage: 'inside',
-                    entryPoint: 'main',
-                    transition: DEFAULT_SCREEN_TRANSITION
-                }
-            },
-            {
-                name: 'guard1',
-                parent: GUARD(),
-                x: 96, y: 100,
-                flipX: true,
-            },
-            {
-                name: 'guard2',
-                parent: GUARD(),
-                x: 144, y: 100,
-            },
-        ])
-    },
-    'inside': {
-        parent: BASE_STAGE,
-        camera: {
-            bounds: { left: 0, top: 0, right: 240, bottom: 360 },
-        },
-        entryPoints: {
-            'main': { x: 120, y: 296 },
-        },
-        worldObjects: __spread(WORLD_BOUNDS(0, 0, 240, 360), [
-            {
-                name: 'ground',
-                constructor: Tilemap,
-                layer: 'main',
-                tilemap: 'inside',
-                tilemapLayer: 0,
-                physicsGroup: 'walls',
-            },
-            {
-                name: 'warp',
-                constructor: Warp,
-                physicsGroup: 'props',
-                bounds: { x: 180, y: 84, width: 12, height: 36 },
-                data: {
-                    stage: 'hallway',
-                    entryPoint: 'main',
-                    transition: DEFAULT_SCREEN_TRANSITION
-                }
-            },
-        ])
-    },
-    'hallway': {
-        parent: BASE_STAGE,
-        camera: {
-            bounds: { left: 0, top: 0, right: 240, bottom: 540 },
-        },
-        entryPoints: {
-            'main': { x: 64, y: 438 },
-        },
-        worldObjects: __spread(WORLD_BOUNDS(0, 0, 240, 540), [
-            {
-                name: 'ground',
-                constructor: Tilemap,
-                layer: 'main',
-                tilemap: 'hallway',
-                tilemapLayer: 0,
-                physicsGroup: 'walls',
-            },
-            {
-                name: 'demon1',
-                parent: HUMAN_CHARACTER('generic_sprites_dark'),
-                x: 72, y: 408,
-                flipX: true,
-                effects: {
-                    outline: { color: 0xFFFFFF }
-                },
-                physicsGroup: 'props',
-            },
-            {
-                name: 'demon2',
-                parent: HUMAN_CHARACTER('generic_sprites_dark'),
-                x: 168, y: 408,
-                flipX: false,
-                effects: {
-                    outline: { color: 0xFFFFFF }
-                },
-                physicsGroup: 'props',
-            },
-            {
-                name: 'demon3',
-                parent: HUMAN_CHARACTER('generic_sprites_dark'),
-                x: 72, y: 300,
-                flipX: true,
-                effects: {
-                    outline: { color: 0xFFFFFF }
-                },
-                physicsGroup: 'props',
-            },
-            {
-                name: 'demon4',
-                parent: HUMAN_CHARACTER('generic_sprites_dark'),
-                x: 168, y: 300,
-                flipX: false,
-                effects: {
-                    outline: { color: 0xFFFFFF }
-                },
-                physicsGroup: 'props',
-            },
-            {
-                name: 'demon5',
-                parent: HUMAN_CHARACTER('generic_sprites_dark'),
-                x: 72, y: 192,
-                flipX: true,
-                effects: {
-                    outline: { color: 0xFFFFFF }
-                },
-                physicsGroup: 'props',
-            },
-            {
-                name: 'demon6',
-                parent: HUMAN_CHARACTER('generic_sprites_dark'),
-                x: 168, y: 192,
-                flipX: false,
-                effects: {
-                    outline: { color: 0xFFFFFF }
-                },
-                physicsGroup: 'props',
-            },
-            {
-                name: 'demon7',
-                parent: HUMAN_CHARACTER('generic_sprites_dark'),
-                x: 72, y: 84,
-                flipX: true,
-                effects: {
-                    outline: { color: 0xFFFFFF }
-                },
-                physicsGroup: 'props',
-            },
-            {
-                name: 'demon8',
-                parent: HUMAN_CHARACTER('generic_sprites_dark'),
-                x: 168, y: 84,
-                flipX: false,
-                effects: {
-                    outline: { color: 0xFFFFFF }
-                },
-                physicsGroup: 'props',
-            },
-            {
-                name: 'warp',
-                constructor: Warp,
-                physicsGroup: 'props',
-                bounds: { x: 96, y: 48, width: 48, height: 12 },
-                data: {
-                    stage: 'escaperoom',
-                    entryPoint: 'main',
-                    transition: DEFAULT_SCREEN_TRANSITION
-                }
-            },
-        ])
-    },
-    'escaperoom': {
-        parent: BASE_STAGE,
-        camera: {
-            bounds: { left: 0, top: 0, right: 240, bottom: 180 },
-        },
-        entryPoints: {
-            'main': { x: 120, y: 130 },
-        },
-        worldObjects: __spread(WORLD_BOUNDS(0, 0, 240, 180), [
-            {
-                name: 'ground',
-                constructor: Tilemap,
-                layer: 'main',
-                tilemap: 'escaperoom',
-                tilemapLayer: 0,
-                physicsGroup: 'walls',
-            },
-            {
-                name: 'door',
-                constructor: Sprite,
-                layer: 'main',
-                x: 60, y: 12,
-                texture: 'door_closed',
-            },
-            {
-                name: 'keypad',
-                constructor: Sprite,
-                layer: 'main',
-                x: 88, y: 48,
-                texture: 'keypad',
-                offset: { x: 0, y: -23 },
-                physicsGroup: 'props',
-                bounds: { x: 0, y: 0, width: 9, height: 0 },
-            },
-            {
-                name: 'codedemon',
-                parent: HUMAN_CHARACTER('generic_sprites_dark'),
-                x: 168, y: 60,
-                effects: {
-                    outline: { color: 0xFFFFFF }
-                },
-                physicsGroup: 'props',
-            },
-        ])
-    },
-};
 /// <reference path="../lectvs/preload.ts" />
 /// <reference path="./assets.ts" />
 var Main = /** @class */ (function () {
     function Main() {
     }
+    Object.defineProperty(Main, "width", {
+        get: function () { return 240; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Main, "height", {
+        get: function () { return 180; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Main, "backgroundColor", {
+        get: function () { return 0x061639; },
+        enumerable: true,
+        configurable: true
+    });
     // no need to modify
     Main.preload = function () {
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
-        global.gameWidth = 240;
-        global.gameHeight = 180;
-        global.backgroundColor = 0x061639;
-        global.renderer = PIXI.autoDetectRenderer({
+        global.gameWidth = Main.width;
+        global.gameHeight = Main.height;
+        global.backgroundColor = Main.backgroundColor;
+        Main.renderer = PIXI.autoDetectRenderer({
             width: global.gameWidth,
             height: global.gameHeight,
             resolution: 4,
             backgroundColor: global.backgroundColor,
         });
+        global.renderer = Main.renderer;
         Preload.preload({
             textures: Assets.textures,
             pyxelTilemaps: Assets.pyxelTilemaps,
@@ -6600,8 +5926,8 @@ var Main = /** @class */ (function () {
     };
     // modify this method
     Main.load = function () {
-        document.body.appendChild(global.renderer.view);
-        this.screen = new Texture(global.gameWidth, global.gameHeight);
+        document.body.appendChild(Main.renderer.view);
+        Main.screen = new Texture(Main.width, Main.height);
         Input.setKeys({
             'left': ['ArrowLeft'],
             'right': ['ArrowRight'],
@@ -6610,7 +5936,6 @@ var Main = /** @class */ (function () {
             'interact': ['e'],
             'advanceDialog': ['MouseLeft', 'e', ' '],
             'pause': ['Escape', 'Backspace'],
-            'skipCutsceneScript': ['Space'],
             'debugMoveCameraUp': ['i'],
             'debugMoveCameraDown': ['k'],
             'debugMoveCameraLeft': ['j'],
@@ -6631,14 +5956,14 @@ var Main = /** @class */ (function () {
         window.addEventListener("keyup", function (event) { return Input.handleKeyUpEvent(event); }, false);
         window.addEventListener("mousedown", function (event) { return Input.handleMouseDownEvent(event); }, false);
         window.addEventListener("mouseup", function (event) { return Input.handleMouseUpEvent(event); }, false);
-        //window.addEventListener("contextmenu", event => event.preventDefault(), false);
+        window.addEventListener("contextmenu", function (event) { return event.preventDefault(); }, false);
         this.game = new Game({
             mainMenuClass: MainMenu,
             pauseMenuClass: PauseMenu,
             theaterClass: Theater,
             theaterConfig: {
                 stages: stages,
-                stageToLoad: 'outside',
+                stageToLoad: 'game',
                 stageEntryPoint: 'main',
                 story: {
                     storyboard: storyboard,
@@ -6648,7 +5973,8 @@ var Main = /** @class */ (function () {
                 },
                 party: party,
                 dialogBox: {
-                    x: global.gameWidth / 2, y: global.gameHeight - 32,
+                    constructor: DialogBox,
+                    x: Main.width / 2, y: Main.height - 32,
                     texture: 'dialogbox',
                     spriteTextFont: Assets.fonts.DELUXE16,
                     textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
@@ -6656,98 +5982,72 @@ var Main = /** @class */ (function () {
                     portraitPosition: { x: 78, y: 0 },
                     advanceKey: 'advanceDialog',
                 },
-                skipCutsceneScriptKey: 'skipCutsceneScript',
-                autoPlayScript: autoPlayScript({ endNode: 'inside_gameplay', stage: 'inside' }),
                 debugMousePositionFont: Assets.fonts.DELUXE16,
             },
         });
-        global.game = this.game;
+        global.game = Main.game;
     };
     // no need to modify
     Main.play = function () {
-        var _this = this;
         PIXI.Ticker.shared.add(function (frameDelta) {
-            _this.delta = frameDelta / 60;
+            Main.delta = frameDelta / 60;
             global.clearStacks();
             for (var i = 0; i < Debug.SKIP_RATE; i++) {
                 Input.update();
-                _this.game.update(_this.delta);
+                Main.game.update(Main.delta);
             }
-            _this.screen.clear();
-            _this.game.render(_this.screen);
-            global.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true); // Clear the renderer
-            global.renderer.render(_this.screen.renderTextureSprite);
+            Main.screen.clear();
+            Main.game.render(Main.screen);
+            Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true); // Clear the renderer
+            Main.renderer.render(Main.screen.renderTextureSprite);
         });
     };
     return Main;
 }());
 // Actually load the game
 Main.preload();
+/// <reference path="main.ts" />
+var party = {
+    leader: 'sai',
+    activeMembers: ['sai', 'dad'],
+    members: {
+        'player': {
+            config: {
+                name: 'player',
+                constructor: Sprite,
+                x: Main.width / 2 - 8, y: Main.height / 2 - 8,
+                texture: 'debug',
+            },
+            stage: 'game',
+        },
+    }
+};
+/// <reference path="base.ts" />
+/// <reference path="main.ts" />
+var stages = {
+    'game': {
+        parent: BASE_STAGE,
+        camera: {
+            bounds: { left: 0, top: 0, right: Main.width, bottom: Main.height },
+            mode: Camera.Mode.FOCUS(Main.width / 2, Main.height / 2),
+        },
+        entryPoints: {
+            'main': { x: Main.width / 2, y: Main.height / 2 },
+        },
+        worldObjects: [
+            WORLD_BOUNDS(0, 0, Main.width, Main.height),
+        ]
+    },
+};
 /// <reference path="./main.ts"/>
 var storyConfig = {
-    initialConfig: {
-        separated: false,
-        cameraMode: Camera.Mode.FOCUS(global.gameWidth / 2, global.gameHeight / 2),
-    },
+    initialConfig: {},
     executeFn: function (sc) {
-        // separated
-        var sai = sc.theater.partyManager.getMember('sai').worldObject;
-        var dad = sc.theater.partyManager.getMember('dad').worldObject;
-        sai.unfollow();
-        dad.unfollow();
-        if (!sc.config.separated) {
-            if (sc.config.partyLeader === 'sai') {
-                dad.follow('sai');
-            }
-            else {
-                sai.follow('dad');
-            }
-        }
-        // cameraMode
-        if (sc.theater.currentWorld) {
-            sc.theater.currentWorld.camera.setMode(sc.config.cameraMode);
-        }
     }
 };
 var S;
 (function (S) {
-    S.storyEvents = {
-        'inside_girldemon': {
-            stage: 'inside',
-            script: function () {
-                var girldemon, sai;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            girldemon = WorldObject.fromConfig({
-                                name: 'girldemon',
-                                parent: HUMAN_CHARACTER('generic_sprites_dark'),
-                                x: 120, y: 108,
-                            });
-                            girldemon.setSpeed(100);
-                            World.Actions.addWorldObjectToWorld(girldemon, global.script.theater.currentWorld);
-                            sai = global.getWorldObject('sai');
-                            _a.label = 1;
-                        case 1:
-                            if (!(sai.y > 160)) return [3 /*break*/, 3];
-                            return [4 /*yield*/];
-                        case 2:
-                            _a.sent();
-                            return [3 /*break*/, 1];
-                        case 3:
-                            global.script.world.runScript(S.moveToX(girldemon, 180));
-                            return [4 /*yield*/, S.waitUntil(function () { return girldemon.x > 150; })];
-                        case 4:
-                            _a.sent();
-                            return [4 /*yield*/, S.doOverTime(0.3, function (t) { return girldemon.alpha = 1 - t; })];
-                        case 5:
-                            _a.sent();
-                            return [2 /*return*/];
-                    }
-                });
-            }
-        },
-    };
+    S.storyEvents = {};
 })(S || (S = {}));
 var storyEvents = S.storyEvents;
 var S;
@@ -6755,735 +6055,8 @@ var S;
     S.storyboard = {
         'start': {
             type: 'start',
-            transitions: [
-                { toNode: 'outside_party', type: 'instant' }
-            ]
-        },
-        'outside_party': {
-            type: 'party',
-            setLeader: 'dad',
-            transitions: [
-                { toNode: 'outside', type: 'onStage', stage: 'outside' }
-            ]
-        },
-        'outside': {
-            type: 'cutscene',
-            script: function () {
-                var sai, dad, guard1, guard2;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            sai = global.getWorldObject('sai');
-                            dad = global.getWorldObject('dad');
-                            guard1 = global.getWorldObject('guard1');
-                            guard2 = global.getWorldObject('guard2');
-                            return [4 /*yield*/, S.fadeOut(0)];
-                        case 1:
-                            _a.sent();
-                            return [4 /*yield*/, S.fadeSlides(1)];
-                        case 2:
-                            _a.sent();
-                            return [4 /*yield*/, S.moveToY(dad, 120)];
-                        case 3:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('guard1/default', "Well, well. What do we have here?")];
-                        case 4:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('guard2/default', "We're not expecting the mail til this evening.")];
-                        case 5:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "Ha ha. I've got a prisoner.")];
-                        case 6:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('guard2/default', "A prisoner?")];
-                        case 7:
-                            _a.sent();
-                            return [4 /*yield*/, S.moveToY(guard1, sai.y)];
-                        case 8:
-                            _a.sent();
-                            return [4 /*yield*/, S.moveToX(guard1, guard1.x + 4)];
-                        case 9:
-                            _a.sent();
-                            return [4 /*yield*/, S.moveToY(guard2, sai.y)];
-                        case 10:
-                            _a.sent();
-                            return [4 /*yield*/, S.moveToX(guard2, guard2.x - 4)];
-                        case 11:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('sai/default', "...")];
-                        case 12:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('guard2/default', "He's a kid. You're bringing a kid in as a prisoner?")];
-                        case 13:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('guard1/default', "Jesus... what did you do to him?")];
-                        case 14:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "I don't need you to lecture me. I need to take him to the closest cell as soon as possible.")];
-                        case 15:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "He's a feisty one. Don't underestimate him.")];
-                        case 16:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('guard1/default', "Well, you didn't have to-")];
-                        case 17:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "Hey, I'm not getting paid by the hour. Are you going to let me in or not?")];
-                        case 18:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('guard1/default', "...")];
-                        case 19:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('guard2/default', "...")];
-                        case 20:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('guard2/default', "Fine, fine. You don't have to get mad.")];
-                        case 21:
-                            _a.sent();
-                            return [4 /*yield*/, S.moveTo(guard2, 144, 100)];
-                        case 22:
-                            _a.sent();
-                            guard2.setDirection(Direction2D.DOWN);
-                            return [4 /*yield*/, S.moveTo(guard1, 96, 100)];
-                        case 23:
-                            _a.sent();
-                            guard1.setDirection(Direction2D.DOWN);
-                            return [4 /*yield*/, S.dialog('dad/default', "Thank you. I won't be long.")];
-                        case 24:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "Come on, boy. I don't have all day.")];
-                        case 25:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('sai/default', "...")];
-                        case 26:
-                            _a.sent();
-                            return [4 /*yield*/, S.moveToY(dad, 96)];
-                        case 27:
-                            _a.sent();
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [
-                { toNode: 'inside_load', type: 'onStage', stage: 'inside' }
-            ]
-        },
-        'inside_load': {
-            type: 'config',
-            config: {
-                cameraMode: Camera.Mode.FOCUS(120, 270),
-            },
-            transitions: [
-                { toNode: 'inside_talk', type: 'instant' }
-            ]
-        },
-        'inside_talk': {
-            type: 'cutscene',
-            script: function () {
-                var sai, dad;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            sai = global.getWorldObject('sai');
-                            dad = global.getWorldObject('dad');
-                            return [4 /*yield*/, S.moveToY(dad, dad.y - 64)];
-                        case 1:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "Let's see, the storage room is probably nearby. It should be right down...")];
-                        case 2:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('sai/default', "Are we there yet, dad? Do we have to keep walking?")];
-                        case 3:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "...")];
-                        case 4:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "Hey, what did I tell you about talking?")];
-                        case 5:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('sai/default', "Sorry... my legs hurt...")];
-                        case 6:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "(Sigh) ...")];
-                        case 7:
-                            _a.sent();
-                            sai.unfollow();
-                            return [4 /*yield*/, S.moveToY(dad, dad.y + 4)];
-                        case 8:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "Sai...")];
-                        case 9:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "Do you remember what you learned about dealing with pain?")];
-                        case 10:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('sai/default', "Take deep breaths...")];
-                        case 11:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "That's right. Can you do that for me?")];
-                        case 12:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('sai/default', "...")];
-                        case 13:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('sai/default', "They still hurt...")];
-                        case 14:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "Well, there's nothing we can really do about it right now. You'll just have to hold on, okay?")];
-                        case 15:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "You're a powerful weapon, Sai. You know what they'll do if they find you out.")];
-                        case 16:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "Come on. We need to keep moving. I think the storage room is down the hall.")];
-                        case 17:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('sai/default', "...")];
-                        case 18:
-                            _a.sent();
-                            return [4 /*yield*/, S.moveToY(dad, 120)];
-                        case 19:
-                            _a.sent();
-                            World.Actions.removeWorldObjectFromWorld(dad);
-                            global.script.theater.partyManager.moveMemberToStage('dad', 'hallway', 120, 420);
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [
-                { toNode: 'inside_pre_gameplay_party', type: 'instant' }
-            ]
-        },
-        'inside_pre_gameplay_party': {
-            type: 'party',
-            setLeader: 'sai',
-            setMembersInactive: ['dad'],
-            transitions: [
-                { toNode: 'inside_pre_gameplay', type: 'instant' }
-            ]
-        },
-        'inside_pre_gameplay': {
-            type: 'config',
-            config: {
-                separated: true,
-                cameraMode: Camera.Mode.FOLLOW('sai', 0, -18),
-            },
-            transitions: [
-                { toNode: 'inside_gameplay', type: 'instant' }
-            ]
-        },
-        'inside_gameplay': {
-            type: 'gameplay',
-            transitions: [
-                { type: 'onStage', stage: 'hallway', toNode: 'hallway_talk' },
-            ]
-        },
-        'hallway_talk': {
-            type: 'cutscene',
-            script: function () {
-                var sai, dad;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            sai = global.getWorldObject('sai');
-                            dad = global.getWorldObject('dad');
-                            return [4 /*yield*/, S.dialog('dad/default', "Hey, keep up. You don't know if more guards are coming.")];
-                        case 1:
-                            _a.sent();
-                            return [4 /*yield*/, S.moveToY(dad, 120)];
-                        case 2:
-                            _a.sent();
-                            World.Actions.removeWorldObjectFromWorld(dad);
-                            global.script.theater.partyManager.moveMemberToStage('dad', 'escaperoom', 74, 64);
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [
-                { toNode: 'hallway_gameplay', type: 'instant' }
-            ]
-        },
-        'hallway_gameplay': {
-            type: 'gameplay',
-            transitions: [
-                { type: 'onInteract', with: 'demon1', toNode: 'i_demon1' },
-                { type: 'onInteract', with: 'demon2', toNode: 'i_demon2' },
-                { type: 'onInteract', with: 'demon3', toNode: 'i_demon3' },
-                { type: 'onInteract', with: 'demon4', toNode: 'i_demon4' },
-                { type: 'onInteract', with: 'demon5', toNode: 'i_demon5' },
-                { type: 'onInteract', with: 'demon6', toNode: 'i_demon6' },
-                { type: 'onInteract', with: 'demon7', toNode: 'i_demon7' },
-                { type: 'onInteract', with: 'demon8', toNode: 'i_demon8' },
-                { type: 'onStage', stage: 'escaperoom', toNode: 'escaperoom_talk' },
-            ]
-        },
-        'i_demon1': {
-            type: 'cutscene',
-            script: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.dialog('demon/default', "Aw, you're all bruised up...")];
-                        case 1:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('demon/default', "That's dedication to your act.")];
-                        case 2:
-                            _a.sent();
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [
-                { type: 'instant', toNode: 'hallway_gameplay' }
-            ]
-        },
-        'i_demon2': {
-            type: 'cutscene',
-            script: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.dialog('demon/default', "It... is an act, right?")];
-                        case 1:
-                            _a.sent();
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [
-                { type: 'instant', toNode: 'hallway_gameplay' }
-            ]
-        },
-        'i_demon3': {
-            type: 'cutscene',
-            script: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.dialog('demon/default', "Aw, you're all bruised up...")];
-                        case 1:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('demon/default', "That's dedication to your act.")];
-                        case 2:
-                            _a.sent();
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [
-                { type: 'instant', toNode: 'hallway_gameplay' }
-            ]
-        },
-        'i_demon4': {
-            type: 'cutscene',
-            script: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.dialog('demon/default', "It... is an act, right?")];
-                        case 1:
-                            _a.sent();
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [
-                { type: 'instant', toNode: 'hallway_gameplay' }
-            ]
-        },
-        'i_demon5': {
-            type: 'cutscene',
-            script: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.dialog('demon/default', "Aw, you're all bruised up...")];
-                        case 1:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('demon/default', "That's dedication to your act.")];
-                        case 2:
-                            _a.sent();
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [
-                { type: 'instant', toNode: 'hallway_gameplay' }
-            ]
-        },
-        'i_demon6': {
-            type: 'cutscene',
-            script: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.dialog('demon/default', "It... is an act, right?")];
-                        case 1:
-                            _a.sent();
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [
-                { type: 'instant', toNode: 'hallway_gameplay' }
-            ]
-        },
-        'i_demon7': {
-            type: 'cutscene',
-            script: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.dialog('demon/default', "Aw, you're all bruised up...")];
-                        case 1:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('demon/default', "That's dedication to your act.")];
-                        case 2:
-                            _a.sent();
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [
-                { type: 'instant', toNode: 'hallway_gameplay' }
-            ]
-        },
-        'i_demon8': {
-            type: 'cutscene',
-            script: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.dialog('demon/default', "It... is an act, right?")];
-                        case 1:
-                            _a.sent();
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [
-                { type: 'instant', toNode: 'hallway_gameplay' }
-            ]
-        },
-        'escaperoom_talk': {
-            type: 'cutscene',
-            script: function () {
-                var sai, dad;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            sai = global.getWorldObject('sai');
-                            dad = global.getWorldObject('dad');
-                            return [4 /*yield*/, S.dialog('dad/default', "Here we are. the escape room.")];
-                        case 1:
-                            _a.sent();
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [
-                { toNode: 'escaperoom_gameplay', type: 'instant' }
-            ]
-        },
-        'escaperoom_gameplay': {
-            type: 'gameplay',
-            transitions: [
-                { type: 'onInteract', with: 'codedemon', toNode: 'i_codedemon' },
-                { type: 'onInteract', with: 'keypad', toNode: 'i_keypad' },
-            ]
-        },
-        'i_codedemon': {
-            type: 'cutscene',
-            script: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.dialog('demon/default', "Hey, have you tried 1234?")];
-                        case 1:
-                            _a.sent();
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [
-                { type: 'instant', toNode: 'escaperoom_gameplay' }
-            ]
-        },
-        'i_keypad': {
-            type: 'cutscene',
-            script: function () {
-                var sai, dad, door, entryPoint, guard1, guard2, guard3;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            sai = global.getWorldObject('sai');
-                            dad = global.getWorldObject('dad');
-                            door = global.getWorldObject('door');
-                            return [4 /*yield*/, S.dialog('sai/default', "Click.")];
-                        case 1:
-                            _a.sent();
-                            door.setTexture('door_open');
-                            return [4 /*yield*/, S.dialog('sai/default', "They're coming...")];
-                        case 2:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog('dad/default', "Alright. You stay here and distract them. I'll get the loot.")];
-                        case 3:
-                            _a.sent();
-                            return [4 /*yield*/, S.doOverTime(0.5, function (t) {
-                                    dad.alpha = 1 - t;
-                                    dad.effects.outline.alpha = 1 - t;
-                                })];
-                        case 4:
-                            _a.sent();
-                            World.Actions.removeWorldObjectFromWorld(dad);
-                            global.script.theater.partyManager.moveMemberToStage('dad', null, 0, 0);
-                            return [4 /*yield*/, S.moveToX(sai, 120)];
-                        case 5:
-                            _a.sent();
-                            entryPoint = global.theater.currentStage.entryPoints['main'];
-                            guard1 = WorldObject.fromConfig({
-                                name: 'guard1',
-                                parent: GUARD(),
-                                x: entryPoint.x, y: entryPoint.y,
-                                alpha: 0,
-                            });
-                            guard2 = WorldObject.fromConfig({
-                                name: 'guard2',
-                                parent: GUARD(),
-                                x: entryPoint.x, y: entryPoint.y,
-                                alpha: 0,
-                            });
-                            guard3 = WorldObject.fromConfig({
-                                name: 'guard3',
-                                parent: GUARD(),
-                                x: entryPoint.x, y: entryPoint.y,
-                                alpha: 0,
-                            });
-                            World.Actions.addWorldObjectToWorld(guard1, global.theater.currentWorld);
-                            return [4 /*yield*/, S.doOverTime(0.5, function (t) { return guard1.alpha = t; })];
-                        case 6:
-                            _a.sent();
-                            return [4 /*yield*/, S.moveTo(guard1, 100, 100)];
-                        case 7:
-                            _a.sent();
-                            World.Actions.addWorldObjectToWorld(guard2, global.theater.currentWorld);
-                            return [4 /*yield*/, S.doOverTime(0.5, function (t) { return guard2.alpha = t; })];
-                        case 8:
-                            _a.sent();
-                            return [4 /*yield*/, S.moveTo(guard2, 120, 105)];
-                        case 9:
-                            _a.sent();
-                            World.Actions.addWorldObjectToWorld(guard3, global.theater.currentWorld);
-                            return [4 /*yield*/, S.doOverTime(0.5, function (t) { return guard3.alpha = t; })];
-                        case 10:
-                            _a.sent();
-                            return [4 /*yield*/, S.moveTo(guard3, 140, 100)];
-                        case 11:
-                            _a.sent();
-                            Debug.SKIP_RATE = 1;
-                            return [4 /*yield*/, S.dialog('sai/default', '...')];
-                        case 12:
-                            _a.sent();
-                            return [4 /*yield*/, S.moveTo(guard2, 120, sai.y + 1)];
-                        case 13:
-                            _a.sent();
-                            return [4 /*yield*/, S.fadeOut(1)];
-                        case 14:
-                            _a.sent();
-                            global.game.menuSystem.loadMenu(MainMenu);
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [
-                { type: 'instant', toNode: 'escaperoom_gameplay' }
-            ]
+            transitions: []
         },
     };
 })(S || (S = {}));
 var storyboard = S.storyboard;
-var Raytracer = /** @class */ (function (_super) {
-    __extends(Raytracer, _super);
-    function Raytracer(config) {
-        var _this = _super.call(this, config) || this;
-        _this.tex = new Texture(32, 32);
-        _this.setTexture(_this.tex);
-        _this.camX = 0;
-        _this.camY = 0;
-        _this.camZ = -2;
-        _this.lightX = 2;
-        _this.lightY = -2;
-        _this.lightZ = -2;
-        _this.ar = 0.4;
-        _this.ag = 0.1;
-        _this.ab = 0.1;
-        _this.t = 0;
-        _this.draw();
-        return _this;
-    }
-    Raytracer.prototype.update = function (delta) {
-        _super.prototype.update.call(this, delta);
-        this.t += 4 * delta;
-        this.lightX = 2 * Math.cos(this.t);
-        this.lightY = -2 * Math.sin(this.t);
-    };
-    Raytracer.prototype.render = function (screen) {
-        this.draw();
-        _super.prototype.render.call(this, screen);
-    };
-    Raytracer.prototype.draw = function () {
-        for (var x = 0; x < this.tex.width; x++) {
-            for (var y = 0; y < this.tex.height; y++) {
-                var ray = this.pixelToRay(x, y);
-                Draw.brush.color = this.raycast(ray);
-                Draw.brush.alpha = 1;
-                Draw.pixel(this.tex, x, y);
-            }
-        }
-    };
-    Raytracer.prototype.raycast = function (ray) {
-        var i = this.intersect(ray);
-        if (isNaN(i)) {
-            return 0xFFFFFF;
-        }
-        var x = ray.x + i * ray.dx;
-        var y = ray.y + i * ray.dy;
-        var z = ray.z + i * ray.dz;
-        var dotp = this.dot(x, y, z, -ray.dx, -ray.dy, -ray.dz);
-        var lx = 2 * dotp * x + ray.dx;
-        var ly = 2 * dotp * y + ray.dy;
-        var lz = 2 * dotp * z + ray.dz;
-        var ldx = this.lightX - x;
-        var ldy = this.lightY - y;
-        var ldz = this.lightZ - z;
-        var lightValue = this.ndot(lx, ly, lz, ldx, ldy, ldz);
-        lightValue = Math.max(0, lightValue) / (Math.pow(ldx, 2) + Math.pow(ldy, 2) + Math.pow(ldz, 2)) * 4;
-        return M.vec3ToColor([Math.min(1, this.ar + lightValue), Math.min(1, this.ag + lightValue), Math.min(1, this.ab + lightValue)]);
-    };
-    Raytracer.prototype.intersect = function (ray) {
-        var a = Math.pow(ray.dx, 2) + Math.pow(ray.dy, 2) + Math.pow(ray.dz, 2);
-        var b = 2 * ray.x * ray.dx + 2 * ray.y * ray.dy + 2 * ray.z * ray.dz;
-        var c = Math.pow(ray.x, 2) + Math.pow(ray.y, 2) + Math.pow(ray.z, 2) - 1;
-        var disc = Math.pow(b, 2) - 4 * a * c;
-        if (disc < 0)
-            return NaN;
-        var t1 = (-b + Math.sqrt(disc)) / 2 / a;
-        var t2 = (-b - Math.sqrt(disc)) / 2 / a;
-        if (t1 < 0 && t2 < 0)
-            return NaN;
-        if (t1 < 0)
-            return t2;
-        if (t2 < 0)
-            return t1;
-        return Math.min(t1, t2);
-    };
-    Raytracer.prototype.pixelToRay = function (x, y) {
-        return {
-            x: this.camX,
-            y: this.camY,
-            z: this.camZ,
-            dx: x - 16,
-            dy: y - 16,
-            dz: 16
-        };
-    };
-    Raytracer.prototype.dot = function (x1, y1, z1, x2, y2, z2) {
-        return x1 * x2 + y1 * y2 + z1 * z2;
-    };
-    Raytracer.prototype.ndot = function (x1, y1, z1, x2, y2, z2) {
-        return (x1 * x2 + y1 * y2 + z1 * z2) / Math.sqrt(Math.pow(x1, 2) + Math.pow(y1, 2) + Math.pow(z1, 2)) / Math.sqrt(Math.pow(x2, 2) + Math.pow(y2, 2) + Math.pow(z2, 2));
-    };
-    return Raytracer;
-}(Sprite));
-var TestPlayer = /** @class */ (function (_super) {
-    __extends(TestPlayer, _super);
-    function TestPlayer(config) {
-        return _super.call(this, config, {
-            texture: 'generic_sprites_0',
-            bounds: { x: -5, y: -2, width: 10, height: 2 },
-        }) || this;
-    }
-    TestPlayer.prototype.update = function (delta) {
-        var speed = 100;
-        this.vx = ((Input.isDown('left') ? -1 : 0) + (Input.isDown('right') ? 1 : 0)) * speed;
-        this.vy = ((Input.isDown('up') ? -1 : 0) + (Input.isDown('down') ? 1 : 0)) * speed;
-        _super.prototype.update.call(this, delta);
-    };
-    return TestPlayer;
-}(Sprite));
-/// <reference path="../lectvs/theater.ts"/>
-var TestTheater = /** @class */ (function (_super) {
-    __extends(TestTheater, _super);
-    function TestTheater(config) {
-        return _super.call(this, {
-            stages: { 's': {
-                    parent: BASE_STAGE,
-                    backgroundColor: 0x000066,
-                    camera: {
-                        mode: Camera.Mode.FOLLOW('player', 8, 8)
-                    },
-                    worldObjects: [
-                        {
-                            name: 'ground',
-                            constructor: Tilemap,
-                            tilemap: 'cave',
-                            tilemapLayer: 1,
-                            layer: 'main',
-                            physicsGroup: 'walls',
-                            debugBounds: true
-                        },
-                        // <ZOrderedTilemap.Config>{
-                        //     name: 'cave',
-                        //     constructor: ZOrderedTilemap,
-                        //     tilemap: 'cave',
-                        //     tilemapLayer: 0,
-                        //     layer: 'main',
-                        //     zMap: { 2: 3, 3: 3, 5: 1, 7: 3, 8: 3, 9: 3, 10: 3, 11: 3, 12: 3, 13: 3, 17: 3, 18: 3, 19: 3, 20: 3, 21: 3, 22: 3 },
-                        // },
-                        {
-                            name: 'player',
-                            constructor: TestPlayer,
-                            x: 400, y: 400,
-                            layer: 'main',
-                            physicsGroup: 'player',
-                            children: [
-                                {
-                                    constructor: Sprite,
-                                    texture: 'debug',
-                                    x: 0, y: 0,
-                                    bounds: { x: 0, y: 0, width: 16, height: 16 },
-                                    physicsGroup: 'player'
-                                }
-                            ]
-                        }
-                    ]
-                } },
-            stageToLoad: 's',
-            story: {
-                storyboard: { 's': { type: 'gameplay', transitions: [] } },
-                storyboardPath: ['s'],
-                storyEvents: {},
-                storyConfig: {
-                    initialConfig: {},
-                    executeFn: function (sc) { return null; },
-                }
-            },
-            party: { leader: undefined, activeMembers: [], members: {} },
-            dialogBox: {
-                x: global.gameWidth / 2, y: global.gameHeight - 32,
-                texture: 'dialogbox',
-                spriteTextFont: Assets.fonts.DELUXE16,
-                textAreaFull: { x: -122, y: -27, width: 244, height: 54 },
-                textAreaPortrait: { x: -122, y: -27, width: 174, height: 54 },
-                portraitPosition: { x: 86, y: 0 },
-                advanceKey: 'advanceDialog',
-            },
-            skipCutsceneScriptKey: 'skipCutsceneScript',
-            debugMousePositionFont: Assets.fonts.DELUXE16,
-        }) || this;
-    }
-    TestTheater.prototype.render = function (screen) {
-        _super.prototype.render.call(this, screen);
-    };
-    return TestTheater;
-}(Theater));
-var Wall = /** @class */ (function (_super) {
-    __extends(Wall, _super);
-    function Wall(config) {
-        return _super.call(this, config, {
-            texture: 'debug',
-        }) || this;
-    }
-    return Wall;
-}(Sprite));

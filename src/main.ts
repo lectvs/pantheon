@@ -3,9 +3,13 @@
 
 class Main {
     private static game: Game;
+    static renderer: PIXI.Renderer;
     static screen: Texture;
-
     static delta: number;
+
+    static get width() { return 240; }
+    static get height() { return 180; }
+    static get backgroundColor() { return 0x061639; }
 
     // no need to modify
     static preload() {
@@ -13,15 +17,16 @@ class Main {
 
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
-        global.gameWidth = 240;
-        global.gameHeight = 180;
-        global.backgroundColor = 0x061639;
-        global.renderer = PIXI.autoDetectRenderer({
+        global.gameWidth = Main.width;
+        global.gameHeight = Main.height;
+        global.backgroundColor = Main.backgroundColor;
+        Main.renderer = PIXI.autoDetectRenderer({
             width: global.gameWidth,
             height: global.gameHeight,
             resolution: 4,
             backgroundColor: global.backgroundColor,
         });
+        global.renderer = Main.renderer;
 
         Preload.preload({
             textures: Assets.textures,
@@ -35,9 +40,9 @@ class Main {
 
     // modify this method
     private static load() {
-        document.body.appendChild(global.renderer.view);
+        document.body.appendChild(Main.renderer.view);
 
-        this.screen = new Texture(global.gameWidth, global.gameHeight);
+        Main.screen = new Texture(Main.width, Main.height);
 
         Input.setKeys({
             'left':                 ['ArrowLeft'],
@@ -47,7 +52,6 @@ class Main {
             'interact':             ['e'],
             'advanceDialog':        ['MouseLeft', 'e', ' '],
             'pause':                ['Escape', 'Backspace'],
-            'skipCutsceneScript':   ['Space'],
             'debugMoveCameraUp':    ['i'],
             'debugMoveCameraDown':  ['k'],
             'debugMoveCameraLeft':  ['j'],
@@ -69,7 +73,7 @@ class Main {
         window.addEventListener("keyup", event => Input.handleKeyUpEvent(event), false);
         window.addEventListener("mousedown", event => Input.handleMouseDownEvent(event), false);
         window.addEventListener("mouseup", event => Input.handleMouseUpEvent(event), false);
-        //window.addEventListener("contextmenu", event => event.preventDefault(), false);
+        window.addEventListener("contextmenu", event => event.preventDefault(), false);
 
         this.game = new Game({
             mainMenuClass: MainMenu,
@@ -77,7 +81,7 @@ class Main {
             theaterClass: Theater,
             theaterConfig: {
                 stages: stages,
-                stageToLoad: 'outside',
+                stageToLoad: 'game',
                 stageEntryPoint: 'main',
                 story: {
                     storyboard: storyboard,
@@ -87,7 +91,8 @@ class Main {
                 },
                 party: party,
                 dialogBox: {
-                    x: global.gameWidth/2, y: global.gameHeight - 32,
+                    constructor: DialogBox,
+                    x: Main.width/2, y: Main.height - 32,
                     texture: 'dialogbox',
                     spriteTextFont: Assets.fonts.DELUXE16,
                     textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
@@ -95,33 +100,29 @@ class Main {
                     portraitPosition: { x: 78, y: 0 },
                     advanceKey: 'advanceDialog',
                 },
-                skipCutsceneScriptKey: 'skipCutsceneScript',
-                autoPlayScript: autoPlayScript({ endNode: 'inside_gameplay', stage: 'inside'}),
                 debugMousePositionFont: Assets.fonts.DELUXE16,
             },
-            //theaterClass: TestTheater,
-            //theaterConfig: undefined,
         });
-        global.game = this.game;
+        global.game = Main.game;
     }
 
     // no need to modify
     private static play() {
         PIXI.Ticker.shared.add(frameDelta => {
-            this.delta = frameDelta/60;
+            Main.delta = frameDelta/60;
 
             global.clearStacks();
 
             for (let i = 0; i < Debug.SKIP_RATE; i++) {
                 Input.update();
-                this.game.update(this.delta);
+                Main.game.update(Main.delta);
             }
 
-            this.screen.clear();
-            this.game.render(this.screen);
+            Main.screen.clear();
+            Main.game.render(Main.screen);
 
-            global.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
-            global.renderer.render(this.screen.renderTextureSprite);
+            Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
+            Main.renderer.render(Main.screen.renderTextureSprite);
         });
     }
 }

@@ -14,7 +14,6 @@ namespace Theater {
         },
         party: Party.Config;
         dialogBox: DialogBox.Config;
-        skipCutsceneScriptKey: string;
         autoPlayScript?: () => IterableIterator<any>;
         debugMousePositionFont?: SpriteText.Font;
     }
@@ -104,7 +103,7 @@ class Theater extends World {
     }
     
     private loadDialogBox(config: DialogBox.Config) {
-        this.dialogBox = new DialogBox(config);
+        this.dialogBox = WorldObject.fromConfig<DialogBox>(config);
         this.dialogBox.visible = false;
         World.Actions.setLayer(this.dialogBox, Theater.LAYER_DIALOG);
         World.Actions.addWorldObjectToWorld(this.dialogBox, this);
