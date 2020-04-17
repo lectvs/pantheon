@@ -17,21 +17,31 @@ class TestTheater extends Theater {
                         tilemapLayer: 1,
                         layer: 'main',
                         physicsGroup: 'walls',
+                        debugBounds: true
                     },
-                    <ZOrderedTilemap.Config>{
-                        name: 'cave',
-                        constructor: ZOrderedTilemap,
-                        tilemap: 'cave',
-                        tilemapLayer: 0,
-                        layer: 'main',
-                        zMap: { 2: 3, 3: 3, 5: 1, 7: 3, 8: 3, 9: 3, 10: 3, 11: 3, 12: 3, 13: 3, 17: 3, 18: 3, 19: 3, 20: 3, 21: 3, 22: 3 },
-                    },
+                    // <ZOrderedTilemap.Config>{
+                    //     name: 'cave',
+                    //     constructor: ZOrderedTilemap,
+                    //     tilemap: 'cave',
+                    //     tilemapLayer: 0,
+                    //     layer: 'main',
+                    //     zMap: { 2: 3, 3: 3, 5: 1, 7: 3, 8: 3, 9: 3, 10: 3, 11: 3, 12: 3, 13: 3, 17: 3, 18: 3, 19: 3, 20: 3, 21: 3, 22: 3 },
+                    // },
                     {
                         name: 'player',
                         constructor: TestPlayer,
                         x: 400, y: 400,
                         layer: 'main',
                         physicsGroup: 'player',
+                        children: [
+                            {
+                                constructor: Sprite,
+                                texture: 'debug',
+                                x: 0, y: 0,
+                                bounds: { x: 0, y: 0, width: 16, height: 16 },
+                                physicsGroup: 'player'
+                            }
+                        ]
                     }
                 ]
             }},

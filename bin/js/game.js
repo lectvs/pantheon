@@ -1031,8 +1031,8 @@ var WorldObject = /** @class */ (function () {
     function WorldObject(config, defaults) {
         if (defaults === void 0) { defaults = {}; }
         config = O.withDefaults(config, defaults);
-        this.x = O.getOrDefault(config.x, 0);
-        this.y = O.getOrDefault(config.y, 0);
+        this.localx = O.getOrDefault(config.x, 0);
+        this.localy = O.getOrDefault(config.y, 0);
         this.visible = O.getOrDefault(config.visible, true);
         this.active = O.getOrDefault(config.active, true);
         this.ignoreCamera = O.getOrDefault(config.ignoreCamera, false);
@@ -1050,7 +1050,22 @@ var WorldObject = /** @class */ (function () {
         this.internalSetPhysicsGroupWorldObject(config.physicsGroup);
         this._children = [];
         this._parent = null;
+        if (!_.isEmpty(config.children)) {
+            World.Actions.addChildrenToParent(config.children.map(WorldObject.fromConfig), this);
+        }
     }
+    Object.defineProperty(WorldObject.prototype, "x", {
+        get: function () { return this.localx + (this.parent ? this.parent.x : 0); },
+        set: function (value) { this.localx = value - (this.parent ? this.parent.x : 0); },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WorldObject.prototype, "y", {
+        get: function () { return this.localy + (this.parent ? this.parent.y : 0); },
+        set: function (value) { this.localy = value - (this.parent ? this.parent.y : 0); },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(WorldObject.prototype, "world", {
         get: function () { return this._world; },
         enumerable: true,
@@ -3344,7 +3359,9 @@ var World = /** @class */ (function (_super) {
     };
     // For use with World.Actions.addChildToParent
     World.prototype.internalAddChildToParentWorld = function (child, obj) {
-        World.Actions.addWorldObjectToWorld(child, this);
+        if (child.world !== this) {
+            World.Actions.addWorldObjectToWorld(child, this);
+        }
     };
     // For use with World.Actions.removeChildFromParent
     World.prototype.internalRemoveChildFromParentWorld = function (child) {
@@ -3443,8 +3460,27 @@ var World = /** @class */ (function (_super) {
             return true;
         }
         Actions.addWorldObjectToWorld = addWorldObjectToWorld;
-        function removeWorldObjectFromWorld(obj) {
+        function addWorldObjectsToWorld(objs, world) {
             var e_21, _a;
+            var result = true;
+            try {
+                for (var _b = __values(objs || []), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var obj = _c.value;
+                    result = result && addWorldObjectToWorld(obj, world);
+                }
+            }
+            catch (e_21_1) { e_21 = { error: e_21_1 }; }
+            finally {
+                try {
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                }
+                finally { if (e_21) throw e_21.error; }
+            }
+            return result;
+        }
+        Actions.addWorldObjectsToWorld = addWorldObjectsToWorld;
+        function removeWorldObjectFromWorld(obj) {
+            var e_22, _a;
             if (!obj)
                 return false;
             if (!obj.world) {
@@ -3463,12 +3499,12 @@ var World = /** @class */ (function (_super) {
                     World.Actions.removeWorldObjectFromWorld(child);
                 }
             }
-            catch (e_21_1) { e_21 = { error: e_21_1 }; }
+            catch (e_22_1) { e_22 = { error: e_22_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_21) throw e_21.error; }
+                finally { if (e_22) throw e_22.error; }
             }
             if (obj.parent) {
                 World.Actions.removeChildFromParent(obj);
@@ -3476,6 +3512,25 @@ var World = /** @class */ (function (_super) {
             return true;
         }
         Actions.removeWorldObjectFromWorld = removeWorldObjectFromWorld;
+        function removeWorldObjectsFromWorld(objs) {
+            var e_23, _a;
+            var result = true;
+            try {
+                for (var _b = __values(objs || []), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var obj = _c.value;
+                    result = result && removeWorldObjectFromWorld(obj);
+                }
+            }
+            catch (e_23_1) { e_23 = { error: e_23_1 }; }
+            finally {
+                try {
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                }
+                finally { if (e_23) throw e_23.error; }
+            }
+            return result;
+        }
+        Actions.removeWorldObjectsFromWorld = removeWorldObjectsFromWorld;
         function setName(obj, name) {
             if (!obj)
                 return false;
@@ -3489,6 +3544,7 @@ var World = /** @class */ (function (_super) {
                 /// @ts-ignore
                 obj.world.internalSetNameWorld(obj, name);
             }
+            return true;
         }
         Actions.setName = setName;
         function setLayer(obj, layerName) {
@@ -3504,6 +3560,7 @@ var World = /** @class */ (function (_super) {
                 /// @ts-ignore
                 obj.world.internalSetLayerWorld(obj, layerName);
             }
+            return true;
         }
         Actions.setLayer = setLayer;
         function setPhysicsGroup(obj, physicsGroupName) {
@@ -3525,6 +3582,10 @@ var World = /** @class */ (function (_super) {
         function addChildToParent(child, obj) {
             if (!child || !obj)
                 return false;
+            if (child.parent) {
+                debug("Cannot add child " + child.name + " to parent " + obj.name + " becase the child is already the child of another parent!", child.parent);
+                return false;
+            }
             if (child.world && child.world !== obj.world) {
                 debug("Cannot add child " + child.name + " to parent " + obj.name + " becase the child exists in a different world!", child.world);
                 return false;
@@ -3539,20 +3600,22 @@ var World = /** @class */ (function (_super) {
         }
         Actions.addChildToParent = addChildToParent;
         function addChildrenToParent(children, obj) {
-            var e_22, _a;
+            var e_24, _a;
+            var result = true;
             try {
                 for (var _b = __values(children || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var child = _c.value;
-                    addChildToParent(child, obj);
+                    result = result && addChildToParent(child, obj);
                 }
             }
-            catch (e_22_1) { e_22 = { error: e_22_1 }; }
+            catch (e_24_1) { e_24 = { error: e_24_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_22) throw e_22.error; }
+                finally { if (e_24) throw e_24.error; }
             }
+            return result;
         }
         Actions.addChildrenToParent = addChildrenToParent;
         function removeChildFromParent(child) {
@@ -3572,9 +3635,11 @@ var World = /** @class */ (function (_super) {
         }
         Actions.removeChildFromParent = removeChildFromParent;
         function removeAllChildrenFromParent(parent) {
+            var result = true;
             while (!_.isEmpty(parent.children)) {
-                removeChildFromParent(parent.children[0]);
+                result = result && removeChildFromParent(parent.children[0]);
             }
+            return result;
         }
         Actions.removeAllChildrenFromParent = removeAllChildrenFromParent;
     })(Actions = World.Actions || (World.Actions = {}));
@@ -3586,27 +3651,9 @@ var Menu = /** @class */ (function (_super) {
         if (config === void 0) { config = {}; }
         var _this = _super.call(this, config) || this;
         _this.menuSystem = menuSystem;
-        _this.addItemsToWorld(items);
+        World.Actions.addWorldObjectsToWorld(items, _this);
         return _this;
     }
-    Menu.prototype.addItemsToWorld = function (items) {
-        var e_23, _a;
-        if (_.isEmpty(items))
-            return;
-        try {
-            for (var items_1 = __values(items), items_1_1 = items_1.next(); !items_1_1.done; items_1_1 = items_1.next()) {
-                var item = items_1_1.value;
-                World.Actions.addWorldObjectToWorld(item, this);
-            }
-        }
-        catch (e_23_1) { e_23 = { error: e_23_1 }; }
-        finally {
-            try {
-                if (items_1_1 && !items_1_1.done && (_a = items_1.return)) _a.call(items_1);
-            }
-            finally { if (e_23) throw e_23.error; }
-        }
-    };
     return Menu;
 }(World));
 /// <reference path="./menu.ts" />
@@ -3896,7 +3943,7 @@ var Tilemap = /** @class */ (function (_super) {
         configurable: true
     });
     Tilemap.prototype.postUpdate = function () {
-        var e_24, _a;
+        var e_25, _a;
         if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
             try {
                 for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -3905,12 +3952,12 @@ var Tilemap = /** @class */ (function (_super) {
                     box.y = this.y;
                 }
             }
-            catch (e_24_1) { e_24 = { error: e_24_1 }; }
+            catch (e_25_1) { e_25 = { error: e_25_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_24) throw e_24.error; }
+                finally { if (e_25) throw e_25.error; }
             }
         }
         _super.prototype.postUpdate.call(this);
@@ -3924,7 +3971,7 @@ var Tilemap = /** @class */ (function (_super) {
         _super.prototype.render.call(this, screen);
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_25, _a;
+        var e_26, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -3937,12 +3984,12 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_25_1) { e_25 = { error: e_25_1 }; }
+        catch (e_26_1) { e_26 = { error: e_26_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_25) throw e_25.error; }
+            finally { if (e_26) throw e_26.error; }
         }
         World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };
@@ -4377,30 +4424,32 @@ var Main = /** @class */ (function () {
         this.game = new Game({
             mainMenuClass: MainMenu,
             pauseMenuClass: PauseMenu,
-            theaterClass: Theater,
-            theaterConfig: {
-                stages: stages,
-                stageToLoad: 'outside',
-                stageEntryPoint: 'main',
-                story: {
-                    storyboard: storyboard,
-                    storyboardPath: ['start'],
-                    storyEvents: storyEvents,
-                    storyConfig: storyConfig,
-                },
-                party: party,
-                dialogBox: {
-                    x: Main.width / 2, y: Main.height - 32,
-                    texture: 'dialogbox',
-                    spriteTextFont: Assets.fonts.DELUXE16,
-                    textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
-                    textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
-                    portraitPosition: { x: 78, y: 0 },
-                    advanceKey: 'advanceDialog',
-                },
-                skipCutsceneScriptKey: 'skipCutsceneScript',
-                autoPlayScript: autoPlayScript({ endNode: 'inside_gameplay', stage: 'inside' }),
-            },
+            // theaterClass: Theater,
+            // theaterConfig: {
+            //     stages: stages,
+            //     stageToLoad: 'outside',
+            //     stageEntryPoint: 'main',
+            //     story: {
+            //         storyboard: storyboard,
+            //         storyboardPath: ['start'],
+            //         storyEvents: storyEvents,
+            //         storyConfig: storyConfig,
+            //     },
+            //     party: party,
+            //     dialogBox: {
+            //         x: Main.width/2, y: Main.height - 32,
+            //         texture: 'dialogbox',
+            //         spriteTextFont: Assets.fonts.DELUXE16,
+            //         textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
+            //         textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
+            //         portraitPosition: { x: 78, y: 0 },
+            //         advanceKey: 'advanceDialog',
+            //     },
+            //     skipCutsceneScriptKey: 'skipCutsceneScript',
+            //     autoPlayScript: autoPlayScript({ endNode: 'inside_gameplay', stage: 'inside'}),
+            // },
+            theaterClass: TestTheater,
+            theaterConfig: undefined,
         });
         global.game = this.game;
     };
@@ -5123,7 +5172,7 @@ var global = /** @class */ (function () {
     return global;
 }());
 function group(config) {
-    var e_26, _a;
+    var e_27, _a;
     _.defaults(config, {
         overrides: [],
         x: 0, y: 0,
@@ -5147,12 +5196,12 @@ function group(config) {
             }
         }
     }
-    catch (e_26_1) { e_26 = { error: e_26_1 }; }
+    catch (e_27_1) { e_27 = { error: e_27_1 }; }
     finally {
         try {
             if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
         }
-        finally { if (e_26) throw e_26.error; }
+        finally { if (e_27) throw e_27.error; }
     }
     for (var i = 0; i < results.length; i++) {
         results[i].x = config.x + O.getOrDefault(config.worldObjects[i].x, 0);
@@ -5165,7 +5214,7 @@ var Input = /** @class */ (function () {
     function Input() {
     }
     Input.setKeys = function (keyCodesByName) {
-        var e_27, _a;
+        var e_28, _a;
         this.keyCodesByName = _.clone(keyCodesByName);
         this.isDownByKeyCode = {};
         this.keysByKeycode = {};
@@ -5177,12 +5226,12 @@ var Input = /** @class */ (function () {
                     this.setupKeyCode(keyCode);
                 }
             }
-            catch (e_27_1) { e_27 = { error: e_27_1 }; }
+            catch (e_28_1) { e_28 = { error: e_28_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_27) throw e_27.error; }
+                finally { if (e_28) throw e_28.error; }
             }
         }
     };
@@ -5194,19 +5243,19 @@ var Input = /** @class */ (function () {
         this.updateMousePosition();
     };
     Input.consume = function (key) {
-        var e_28, _a;
+        var e_29, _a;
         try {
             for (var _b = __values(this.keyCodesByName[key] || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var keyCode = _c.value;
                 this.keysByKeycode[keyCode].consume();
             }
         }
-        catch (e_28_1) { e_28 = { error: e_28_1 }; }
+        catch (e_29_1) { e_29 = { error: e_29_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_28) throw e_28.error; }
+            finally { if (e_29) throw e_29.error; }
         }
     };
     Input.debugKeyDown = function (name) {
@@ -5439,7 +5488,7 @@ var InteractionManager = /** @class */ (function () {
         this._interactRequested = null;
     };
     InteractionManager.prototype.getInteractableObjects = function () {
-        var e_29, _a;
+        var e_30, _a;
         var interactableObjects = this.theater.storyManager.getInteractableObjects(this.theater.storyManager.currentNode);
         var result = new Set();
         try {
@@ -5450,12 +5499,12 @@ var InteractionManager = /** @class */ (function () {
                 result.add(name_8);
             }
         }
-        catch (e_29_1) { e_29 = { error: e_29_1 }; }
+        catch (e_30_1) { e_30 = { error: e_30_1 }; }
         finally {
             try {
                 if (interactableObjects_2_1 && !interactableObjects_2_1.done && (_a = interactableObjects_2.return)) _a.call(interactableObjects_2);
             }
-            finally { if (e_29) throw e_29.error; }
+            finally { if (e_30) throw e_30.error; }
         }
         return result;
     };
@@ -5497,7 +5546,7 @@ var SpriteText = /** @class */ (function (_super) {
         return _this;
     }
     SpriteText.prototype.render = function (screen) {
-        var e_30, _a;
+        var e_31, _a;
         var filters = this.mask ? [new TextureFilter.Mask({ type: TextureFilter.Mask.Type.GLOBAL, mask: this.mask })] : [];
         try {
             for (var _b = __values(this.chars), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -5517,12 +5566,12 @@ var SpriteText = /** @class */ (function (_super) {
                 });
             }
         }
-        catch (e_30_1) { e_30 = { error: e_30_1 }; }
+        catch (e_31_1) { e_31 = { error: e_31_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_30) throw e_30.error; }
+            finally { if (e_31) throw e_31.error; }
         }
         _super.prototype.render.call(this, screen);
     };
@@ -5801,7 +5850,7 @@ var Physics = /** @class */ (function () {
     };
     Physics.collide = function (obj, from, options) {
         if (options === void 0) { options = {}; }
-        var e_31, _a;
+        var e_32, _a;
         if (_.isEmpty(from))
             return;
         if (!obj.colliding)
@@ -5836,12 +5885,12 @@ var Physics = /** @class */ (function () {
                     }
                 }
             }
-            catch (e_31_1) { e_31 = { error: e_31_1 }; }
+            catch (e_32_1) { e_32 = { error: e_32_1 }; }
             finally {
                 try {
                     if (collisions_1_1 && !collisions_1_1.done && (_a = collisions_1.return)) _a.call(collisions_1);
                 }
-                finally { if (e_31) throw e_31.error; }
+                finally { if (e_32) throw e_32.error; }
             }
             collidingWith = collidingWith.filter(function (other) { return obj.isOverlapping(other); });
             iters++;
@@ -6186,7 +6235,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_32, _a;
+        var e_33, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -6200,12 +6249,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_32_1) { e_32 = { error: e_32_1 }; }
+            catch (e_33_1) { e_33 = { error: e_33_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_32) throw e_32.error; }
+                finally { if (e_33) throw e_33.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -6347,7 +6396,7 @@ var StageManager = /** @class */ (function () {
         this.theater.partyManager.addMembersToWorld(world, stageName, entryPoint);
     };
     StageManager.prototype.newWorldFromStage = function (stage) {
-        var e_33, _a;
+        var e_34, _a;
         var world = new World(stage);
         if (stage.worldObjects) {
             try {
@@ -6357,12 +6406,12 @@ var StageManager = /** @class */ (function () {
                     World.Actions.addWorldObjectToWorld(worldObject, world);
                 }
             }
-            catch (e_33_1) { e_33 = { error: e_33_1 }; }
+            catch (e_34_1) { e_34 = { error: e_34_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_33) throw e_33.error; }
+                finally { if (e_34) throw e_34.error; }
             }
         }
         return world;
@@ -6559,7 +6608,7 @@ var StoryManager = /** @class */ (function () {
         this.storyConfig.execute();
     };
     StoryManager.prototype.getInteractableObjects = function (node, stageName) {
-        var e_34, _a;
+        var e_35, _a;
         var result = new Set();
         if (!node)
             return result;
@@ -6576,12 +6625,12 @@ var StoryManager = /** @class */ (function () {
                 result.add(transition.with);
             }
         }
-        catch (e_34_1) { e_34 = { error: e_34_1 }; }
+        catch (e_35_1) { e_35 = { error: e_35_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_34) throw e_34.error; }
+            finally { if (e_35) throw e_35.error; }
         }
         return result;
     };
@@ -6604,7 +6653,7 @@ var StoryManager = /** @class */ (function () {
         this._currentNodeName = _.last(path);
     };
     StoryManager.prototype.getFirstValidTransition = function (node) {
-        var e_35, _a;
+        var e_36, _a;
         try {
             for (var _b = __values(node.transitions), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -6623,12 +6672,12 @@ var StoryManager = /** @class */ (function () {
                 }
             }
         }
-        catch (e_35_1) { e_35 = { error: e_35_1 }; }
+        catch (e_36_1) { e_36 = { error: e_36_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_35) throw e_35.error; }
+            finally { if (e_36) throw e_36.error; }
         }
         return null;
     };
@@ -6639,7 +6688,7 @@ var StoryManager = /** @class */ (function () {
         return this.storyboard[name];
     };
     StoryManager.prototype.updateParty = function (party) {
-        var e_36, _a, e_37, _b;
+        var e_37, _a, e_38, _b;
         if (party.setLeader !== undefined) {
             this.theater.partyManager.leader = party.setLeader;
         }
@@ -6650,12 +6699,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberActive(m);
                 }
             }
-            catch (e_36_1) { e_36 = { error: e_36_1 }; }
+            catch (e_37_1) { e_37 = { error: e_37_1 }; }
             finally {
                 try {
                     if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                 }
-                finally { if (e_36) throw e_36.error; }
+                finally { if (e_37) throw e_37.error; }
             }
         }
         if (!_.isEmpty(party.setMembersInactive)) {
@@ -6665,12 +6714,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberInactive(m);
                 }
             }
-            catch (e_37_1) { e_37 = { error: e_37_1 }; }
+            catch (e_38_1) { e_38 = { error: e_38_1 }; }
             finally {
                 try {
                     if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
                 }
-                finally { if (e_37) throw e_37.error; }
+                finally { if (e_38) throw e_38.error; }
             }
         }
     };
@@ -6840,21 +6889,31 @@ var TestTheater = /** @class */ (function (_super) {
                             tilemapLayer: 1,
                             layer: 'main',
                             physicsGroup: 'walls',
+                            debugBounds: true
                         },
-                        {
-                            name: 'cave',
-                            constructor: ZOrderedTilemap,
-                            tilemap: 'cave',
-                            tilemapLayer: 0,
-                            layer: 'main',
-                            zMap: { 2: 3, 3: 3, 5: 1, 7: 3, 8: 3, 9: 3, 10: 3, 11: 3, 12: 3, 13: 3, 17: 3, 18: 3, 19: 3, 20: 3, 21: 3, 22: 3 },
-                        },
+                        // <ZOrderedTilemap.Config>{
+                        //     name: 'cave',
+                        //     constructor: ZOrderedTilemap,
+                        //     tilemap: 'cave',
+                        //     tilemapLayer: 0,
+                        //     layer: 'main',
+                        //     zMap: { 2: 3, 3: 3, 5: 1, 7: 3, 8: 3, 9: 3, 10: 3, 11: 3, 12: 3, 13: 3, 17: 3, 18: 3, 19: 3, 20: 3, 21: 3, 22: 3 },
+                        // },
                         {
                             name: 'player',
                             constructor: TestPlayer,
                             x: 400, y: 400,
                             layer: 'main',
                             physicsGroup: 'player',
+                            children: [
+                                {
+                                    constructor: Sprite,
+                                    texture: 'debug',
+                                    x: 0, y: 0,
+                                    bounds: { x: 0, y: 0, width: 16, height: 16 },
+                                    physicsGroup: 'player'
+                                }
+                            ]
                         }
                     ]
                 } },
@@ -6996,7 +7055,7 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
         }
     };
     ZOrderedTilemap.prototype.postUpdate = function () {
-        var e_38, _a;
+        var e_39, _a;
         if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
             try {
                 for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -7005,19 +7064,19 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
                     box.y = this.y;
                 }
             }
-            catch (e_38_1) { e_38 = { error: e_38_1 }; }
+            catch (e_39_1) { e_39 = { error: e_39_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_38) throw e_38.error; }
+                finally { if (e_39) throw e_39.error; }
             }
         }
         _super.prototype.postUpdate.call(this);
     };
     ZOrderedTilemap.prototype.createCollisionBoxes = function (debugBounds) {
         if (debugBounds === void 0) { debugBounds = false; }
-        var e_39, _a;
+        var e_40, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -7030,12 +7089,12 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_39_1) { e_39 = { error: e_39_1 }; }
+        catch (e_40_1) { e_40 = { error: e_40_1 }; }
         finally {
             try {
                 if (collisionRects_2_1 && !collisionRects_2_1.done && (_a = collisionRects_2.return)) _a.call(collisionRects_2);
             }
-            finally { if (e_39) throw e_39.error; }
+            finally { if (e_40) throw e_40.error; }
         }
         World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };

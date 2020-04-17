@@ -325,7 +325,9 @@ class World extends WorldObject {
 
     // For use with World.Actions.addChildToParent
     private internalAddChildToParentWorld(child: WorldObject, obj: WorldObject) {
-        World.Actions.addWorldObjectToWorld(child, this);
+        if (child.world !== this) {
+            World.Actions.addWorldObjectToWorld(child, this);
+        }
     }
 
     // For use with World.Actions.removeChildFromParent
@@ -418,6 +420,14 @@ namespace World {
             return true;
         }
 
+        export function addWorldObjectsToWorld(objs: WorldObject[], world: World): boolean {
+            let result = true;
+            for (let obj of objs || []) {
+                result = result && addWorldObjectToWorld(obj, world);
+            }
+            return result;
+        }
+
         export function removeWorldObjectFromWorld(obj: WorldObject): boolean {
             if (!obj) return false;
 
@@ -446,7 +456,15 @@ namespace World {
             return true;
         }
 
-        export function setName(obj: WorldObject, name: string) {
+        export function removeWorldObjectsFromWorld(objs: WorldObject[]): boolean {
+            let result = true;
+            for (let obj of objs || []) {
+                result = result && removeWorldObjectFromWorld(obj);
+            }
+            return result;
+        }
+
+        export function setName(obj: WorldObject, name: string): boolean {
             if (!obj) return false;
 
             if (obj.world && obj.world.containsWorldObject(name)) {
@@ -461,9 +479,11 @@ namespace World {
                 /// @ts-ignore
                 obj.world.internalSetNameWorld(obj, name);
             }
+
+            return true;
         }
 
-        export function setLayer(obj: WorldObject, layerName: string) {
+        export function setLayer(obj: WorldObject, layerName: string): boolean {
             if (!obj) return false;
 
             if (obj.world && !obj.world.getLayerByName(layerName)) {
@@ -478,9 +498,11 @@ namespace World {
                 /// @ts-ignore
                 obj.world.internalSetLayerWorld(obj, layerName);
             }
+
+            return true;
         }
 
-        export function setPhysicsGroup(obj: PhysicsWorldObject, physicsGroupName: string) {
+        export function setPhysicsGroup(obj: PhysicsWorldObject, physicsGroupName: string): boolean {
             if (!obj) return false;
 
             if (obj.world && !obj.world.getPhysicsGroupByName(physicsGroupName)) {
@@ -499,8 +521,13 @@ namespace World {
             return true;
         }
 
-        export function addChildToParent(child: WorldObject, obj: WorldObject) {
+        export function addChildToParent(child: WorldObject, obj: WorldObject): boolean {
             if (!child || !obj) return false;
+
+            if (child.parent) {
+                debug(`Cannot add child ${child.name} to parent ${obj.name} becase the child is already the child of another parent!`, child.parent);
+                return false;
+            }
 
             if (child.world && child.world !== obj.world) {
                 debug(`Cannot add child ${child.name} to parent ${obj.name} becase the child exists in a different world!`, child.world);
@@ -518,13 +545,15 @@ namespace World {
             return true;
         }
 
-        export function addChildrenToParent(children: WorldObject[], obj: WorldObject) {
+        export function addChildrenToParent(children: WorldObject[], obj: WorldObject): boolean {
+            let result = true;
             for (let child of children || []) {
-                addChildToParent(child, obj);
+                result = result && addChildToParent(child, obj);
             }
+            return result;
         }
 
-        export function removeChildFromParent(child: WorldObject) {
+        export function removeChildFromParent(child: WorldObject): boolean {
             if (!child) return false;
 
             if (!child.parent) {
@@ -544,10 +573,12 @@ namespace World {
             return true;
         }
 
-        export function removeAllChildrenFromParent(parent: WorldObject) {
+        export function removeAllChildrenFromParent(parent: WorldObject): boolean {
+            let result = true;
             while (!_.isEmpty(parent.children)) {
-                removeChildFromParent(parent.children[0]);
+                result = result && removeChildFromParent(parent.children[0]);
             }
+            return result;
         }
     }
 }

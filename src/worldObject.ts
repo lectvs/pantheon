@@ -12,16 +12,22 @@ namespace WorldObject {
         ignoreCamera?: boolean;
         data?: any;
         controllable?: boolean;
+        children?: SomeWorldObjectConfig[];
     }
 }
 
 class WorldObject {
-    x: number;
-    y: number;
+    localx: number;
+    localy: number;
     visible: boolean;
     active: boolean;
     ignoreCamera: boolean;
     data: any;
+
+    get x() { return this.localx + (this.parent ? this.parent.x : 0); }
+    get y() { return this.localy + (this.parent ? this.parent.y : 0); }
+    set x(value: number) { this.localx = value - (this.parent ? this.parent.x : 0); }
+    set y(value: number) { this.localy = value - (this.parent ? this.parent.y : 0); }
 
     // World data
     private _world: World;
@@ -55,8 +61,8 @@ class WorldObject {
 
     constructor(config: WorldObject.Config, defaults: WorldObject.Config = {}) {
         config = O.withDefaults(config, defaults);
-        this.x = O.getOrDefault(config.x, 0);
-        this.y = O.getOrDefault(config.y, 0);
+        this.localx = O.getOrDefault(config.x, 0);
+        this.localy = O.getOrDefault(config.y, 0);
         this.visible = O.getOrDefault(config.visible, true);
         this.active = O.getOrDefault(config.active, true);
         this.ignoreCamera = O.getOrDefault(config.ignoreCamera, false);
@@ -78,6 +84,10 @@ class WorldObject {
         this.internalSetPhysicsGroupWorldObject(config.physicsGroup);
         this._children = [];
         this._parent = null;
+
+        if (!_.isEmpty(config.children)) {
+            World.Actions.addChildrenToParent(config.children.map(WorldObject.fromConfig), this);
+        }
     }
 
     preUpdate() {

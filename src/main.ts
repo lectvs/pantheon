@@ -76,32 +76,32 @@ class Main {
         this.game = new Game({
             mainMenuClass: MainMenu,
             pauseMenuClass: PauseMenu,
-            theaterClass: Theater,
-            theaterConfig: {
-                stages: stages,
-                stageToLoad: 'outside',
-                stageEntryPoint: 'main',
-                story: {
-                    storyboard: storyboard,
-                    storyboardPath: ['start'],
-                    storyEvents: storyEvents,
-                    storyConfig: storyConfig,
-                },
-                party: party,
-                dialogBox: {
-                    x: Main.width/2, y: Main.height - 32,
-                    texture: 'dialogbox',
-                    spriteTextFont: Assets.fonts.DELUXE16,
-                    textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
-                    textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
-                    portraitPosition: { x: 78, y: 0 },
-                    advanceKey: 'advanceDialog',
-                },
-                skipCutsceneScriptKey: 'skipCutsceneScript',
-                autoPlayScript: autoPlayScript({ endNode: 'inside_gameplay', stage: 'inside'}),
-            },
-            //theaterClass: TestTheater,
-            //theaterConfig: undefined,
+            // theaterClass: Theater,
+            // theaterConfig: {
+            //     stages: stages,
+            //     stageToLoad: 'outside',
+            //     stageEntryPoint: 'main',
+            //     story: {
+            //         storyboard: storyboard,
+            //         storyboardPath: ['start'],
+            //         storyEvents: storyEvents,
+            //         storyConfig: storyConfig,
+            //     },
+            //     party: party,
+            //     dialogBox: {
+            //         x: Main.width/2, y: Main.height - 32,
+            //         texture: 'dialogbox',
+            //         spriteTextFont: Assets.fonts.DELUXE16,
+            //         textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
+            //         textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
+            //         portraitPosition: { x: 78, y: 0 },
+            //         advanceKey: 'advanceDialog',
+            //     },
+            //     skipCutsceneScriptKey: 'skipCutsceneScript',
+            //     autoPlayScript: autoPlayScript({ endNode: 'inside_gameplay', stage: 'inside'}),
+            // },
+            theaterClass: TestTheater,
+            theaterConfig: undefined,
         });
         global.game = this.game;
     }
