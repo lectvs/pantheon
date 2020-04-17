@@ -1,4 +1,4 @@
-/// <reference path="./preload.ts" />
+/// <reference path="../lectvs/preload.ts" />
 
 namespace Assets {
     export const textures: Dict<Preload.Texture> = {

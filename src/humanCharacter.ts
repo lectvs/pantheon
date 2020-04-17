@@ -1,4 +1,4 @@
-/// <reference path="./sprite.ts" />
+/// <reference path="../lectvs/sprite.ts" />
 
 class HumanCharacter extends Sprite {
     speed: number = 60;

@@ -1,16 +1,11 @@
-/// <reference path="./preload.ts" />
+/// <reference path="../lectvs/preload.ts" />
+/// <reference path="./assets.ts" />
 
 class Main {
-    static renderer: PIXI.Renderer;
     private static game: Game;
     static screen: Texture;
 
     static delta: number;
-
-    static get width()  { return 240; }
-    static get height() { return 180; }
-
-    static get backgroundColor() { return 0x061639; }
 
     // no need to modify
     static preload() {
@@ -18,11 +13,14 @@ class Main {
 
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
-        this.renderer = PIXI.autoDetectRenderer({
-            width: this.width,
-            height: this.height,
+        global.gameWidth = 240;
+        global.gameHeight = 180;
+        global.backgroundColor = 0x061639;
+        global.renderer = PIXI.autoDetectRenderer({
+            width: global.gameWidth,
+            height: global.gameHeight,
             resolution: 4,
-            backgroundColor: this.backgroundColor,
+            backgroundColor: global.backgroundColor,
         });
 
         Preload.preload({
@@ -37,9 +35,9 @@ class Main {
 
     // modify this method
     private static load() {
-        document.body.appendChild(this.renderer.view);
+        document.body.appendChild(global.renderer.view);
 
-        this.screen = new Texture(this.width, this.height);
+        this.screen = new Texture(global.gameWidth, global.gameHeight);
 
         Input.setKeys({
             'left':                 ['ArrowLeft'],
@@ -76,32 +74,33 @@ class Main {
         this.game = new Game({
             mainMenuClass: MainMenu,
             pauseMenuClass: PauseMenu,
-            // theaterClass: Theater,
-            // theaterConfig: {
-            //     stages: stages,
-            //     stageToLoad: 'outside',
-            //     stageEntryPoint: 'main',
-            //     story: {
-            //         storyboard: storyboard,
-            //         storyboardPath: ['start'],
-            //         storyEvents: storyEvents,
-            //         storyConfig: storyConfig,
-            //     },
-            //     party: party,
-            //     dialogBox: {
-            //         x: Main.width/2, y: Main.height - 32,
-            //         texture: 'dialogbox',
-            //         spriteTextFont: Assets.fonts.DELUXE16,
-            //         textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
-            //         textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
-            //         portraitPosition: { x: 78, y: 0 },
-            //         advanceKey: 'advanceDialog',
-            //     },
-            //     skipCutsceneScriptKey: 'skipCutsceneScript',
-            //     autoPlayScript: autoPlayScript({ endNode: 'inside_gameplay', stage: 'inside'}),
-            // },
-            theaterClass: TestTheater,
-            theaterConfig: undefined,
+            theaterClass: Theater,
+            theaterConfig: {
+                stages: stages,
+                stageToLoad: 'outside',
+                stageEntryPoint: 'main',
+                story: {
+                    storyboard: storyboard,
+                    storyboardPath: ['start'],
+                    storyEvents: storyEvents,
+                    storyConfig: storyConfig,
+                },
+                party: party,
+                dialogBox: {
+                    x: global.gameWidth/2, y: global.gameHeight - 32,
+                    texture: 'dialogbox',
+                    spriteTextFont: Assets.fonts.DELUXE16,
+                    textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
+                    textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
+                    portraitPosition: { x: 78, y: 0 },
+                    advanceKey: 'advanceDialog',
+                },
+                skipCutsceneScriptKey: 'skipCutsceneScript',
+                autoPlayScript: autoPlayScript({ endNode: 'inside_gameplay', stage: 'inside'}),
+                debugMousePositionFont: Assets.fonts.DELUXE16,
+            },
+            //theaterClass: TestTheater,
+            //theaterConfig: undefined,
         });
         global.game = this.game;
     }
@@ -121,8 +120,8 @@ class Main {
             this.screen.clear();
             this.game.render(this.screen);
 
-            this.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
-            this.renderer.render(this.screen.renderTextureSprite);
+            global.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
+            global.renderer.render(this.screen.renderTextureSprite);
         });
     }
 }

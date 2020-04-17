@@ -33,7 +33,7 @@ namespace S {
     }
 
     export function fadeOut(duration: number, tint: number = 0x000000): Script.Function {
-        let texture = new Texture(Main.width, Main.height);
+        let texture = new Texture(global.gameWidth, global.gameHeight);
         Draw.brush.color = tint;
         Draw.brush.alpha = 1;
         Draw.fill(texture);

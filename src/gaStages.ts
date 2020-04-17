@@ -1,7 +1,6 @@
+/// <reference path="../lectvs/tilemap.ts" />
+/// <reference path="../lectvs/warp.ts" />
 /// <reference path="./base.ts" />
-/// <reference path="./raytracer.ts" />
-/// <reference path="./tilemap.ts" />
-/// <reference path="./warp.ts" />
 
 const stages: Dict<Stage> = {
 

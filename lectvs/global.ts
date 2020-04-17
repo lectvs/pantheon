@@ -16,4 +16,9 @@ class global {
 
     static game: Game;
     static theater: Theater;
+
+    static gameWidth: number;
+    static gameHeight: number;
+    static backgroundColor: number;
+    static renderer: PIXI.Renderer;
 }

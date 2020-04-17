@@ -58,8 +58,8 @@ class World extends WorldObject {
         config = O.withDefaults(config, defaults);
         super(config);
 
-        this.width = O.getOrDefault(config.width, Main.width);
-        this.height = O.getOrDefault(config.width, Main.height);
+        this.width = O.getOrDefault(config.width, global.gameWidth);
+        this.height = O.getOrDefault(config.height, global.gameHeight);
         this.worldObjects = [];
 
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
@@ -67,7 +67,7 @@ class World extends WorldObject {
         this.worldObjectsByName = {};
         this.layers = this.createLayers(config.layers);
 
-        this.backgroundColor = O.getOrDefault(config.backgroundColor, Main.backgroundColor);
+        this.backgroundColor = O.getOrDefault(config.backgroundColor, 0x000000);
         this.backgroundAlpha = O.getOrDefault(config.backgroundAlpha, 1);
 
         let cameraConfig = O.getOrDefault(config.camera, {});

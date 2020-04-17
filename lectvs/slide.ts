@@ -14,8 +14,8 @@ class Slide extends Sprite {
 
     constructor(config: Slide.Config) {
         super(config, {
-            x: Main.width/2,
-            y: Main.height/2,
+            x: global.gameWidth/2,
+            y: global.gameHeight/2,
         });
         this.timer = new Timer(O.getOrDefault(config.timeToLoad, 0));
 

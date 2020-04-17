@@ -71,8 +71,8 @@ class Input {
     }
 
     private static updateMousePosition() {
-        this._canvasMouseX = Main.renderer.plugins.interaction.mouse.global.x;
-        this._canvasMouseY = Main.renderer.plugins.interaction.mouse.global.y;
+        this._canvasMouseX = global.renderer.plugins.interaction.mouse.global.x;
+        this._canvasMouseY = global.renderer.plugins.interaction.mouse.global.y;
         if (this.isMouseOnCanvas) {
             this._mouseX = Math.floor(this._canvasMouseX);
             this._mouseY = Math.floor(this._canvasMouseY);
@@ -126,7 +126,7 @@ class Input {
     }
 
     static get isMouseOnCanvas() {
-        return 0 <= this.canvasMouseX && this.canvasMouseX < Main.width && 0 <= this.canvasMouseY && this.canvasMouseY < Main.height;
+        return 0 <= this.canvasMouseX && this.canvasMouseX < global.gameWidth && 0 <= this.canvasMouseY && this.canvasMouseY < global.gameHeight;
     }
 
     static handleKeyDownEvent(event: KeyboardEvent) {

@@ -3,7 +3,7 @@
 var storyConfig: StoryConfig.Config = {
     initialConfig: {
         separated: false,
-        cameraMode: Camera.Mode.FOCUS(Main.width/2, Main.height/2),
+        cameraMode: Camera.Mode.FOCUS(global.gameWidth/2, global.gameHeight/2),
     },
     executeFn: sc => {
         

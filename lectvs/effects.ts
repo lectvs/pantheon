@@ -1,3 +1,5 @@
+/// <reference path="./textureFilter.ts" />
+
 namespace Effects {
     export type Config = {
         silhouette?: SilhouetteConfig;

@@ -1,4 +1,4 @@
-/// <reference path="theater.ts"/>
+/// <reference path="../lectvs/theater.ts"/>
 
 class TestTheater extends Theater {
     constructor(config) {
@@ -57,7 +57,7 @@ class TestTheater extends Theater {
             },
             party: { leader: undefined, activeMembers: [], members: {} },
             dialogBox: {
-                x: Main.width/2, y: Main.height - 32,
+                x: global.gameWidth/2, y: global.gameHeight - 32,
                 texture: 'dialogbox',
                 spriteTextFont: Assets.fonts.DELUXE16,
                 textAreaFull: { x: -122, y: -27, width: 244, height: 54 },
@@ -66,6 +66,7 @@ class TestTheater extends Theater {
                 advanceKey: 'advanceDialog',
             },
             skipCutsceneScriptKey: 'skipCutsceneScript',
+            debugMousePositionFont: Assets.fonts.DELUXE16,
         });
     }
 

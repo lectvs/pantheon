@@ -16,6 +16,7 @@ namespace Theater {
         dialogBox: DialogBox.Config;
         skipCutsceneScriptKey: string;
         autoPlayScript?: () => IterableIterator<any>;
+        debugMousePositionFont?: SpriteText.Font;
     }
 }
 
@@ -28,7 +29,7 @@ class Theater extends World {
     interactionManager: InteractionManager;
     slideManager: SlideManager;
 
-    private debugMousePosition = new SpriteText({ font: Assets.fonts.DELUXE16, x: 0, y: 0 });
+    private debugMousePosition;
 
     get currentStageName() { return this.stageManager ? this.stageManager.currentStageName : undefined; }
     get currentWorld() { return this.stageManager ? this.stageManager.currentWorld : undefined; }
@@ -56,8 +57,8 @@ class Theater extends World {
 
         this.stageManager.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
 
-        if (Debug.SHOW_MOUSE_POSITION) {
-            this.debugMousePosition = new SpriteText({ x: 0, y: 0, font: Assets.fonts.DELUXE16 });
+        if (Debug.SHOW_MOUSE_POSITION && config.debugMousePositionFont) {
+            this.debugMousePosition = new SpriteText({ x: 0, y: 0, font: config.debugMousePositionFont });
             World.Actions.addWorldObjectToWorld(this.debugMousePosition, this);
         }
 
@@ -94,7 +95,7 @@ class Theater extends World {
         this.slideManager.clearSlides(exceptLast);
     }
 
-    loadStage(name: string, transition: Transition.Config = Transition.INSTANT, entryPoint: Stage.EntryPoint = Theater.DEFAULT_ENTRY_POINT) {
+    loadStage(name: string, transition: Transition.Config = Transition.INSTANT, entryPoint?: Stage.EntryPoint) {
         this.stageManager.loadStage(name, transition, entryPoint);
     }
 
@@ -113,7 +114,4 @@ class Theater extends World {
     static LAYER_TRANSITION = 'transition';
     static LAYER_SLIDES = 'slides';
     static LAYER_DIALOG = 'dialog';
-
-    static DEFAULT_CAMERA_MODE: Camera.Mode = { type: 'focus', point: { x: Main.width/2, y: Main.height/2 } };
-    static DEFAULT_ENTRY_POINT: Pt = { x: Main.width/2, y: Main.height/2 };
 }

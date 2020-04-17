@@ -55,8 +55,8 @@ class Camera {
 
     constructor(config: Camera.Config) {
         _.defaults(config, {
-            width: Main.width,
-            height: Main.height,
+            width: global.gameWidth,
+            height: global.gameHeight,
             bounds: { x: -Infinity, y: -Infinity, width: Infinity, height: Infinity },
             mode: { type: 'focus', point: { x: config.width/2, y: config.height/2 } },
             movement: { type: 'snap' },

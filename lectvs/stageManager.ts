@@ -18,11 +18,12 @@ class StageManager {
         this.stageLoadQueue = null;
     }
 
-    loadStage(name: string, transitionConfig: Transition.Config, entryPoint: Stage.EntryPoint) {
+    loadStage(name: string, transitionConfig: Transition.Config, entryPoint?: Stage.EntryPoint) {
         if (!this.stages[name]) {
             debug(`Cannot load stage '${name}' because it does not exist:`, this.stages);
             return;
         }
+        if (!entryPoint) entryPoint = { x: this.theater.width/2, y: this.theater.height/2 };
         if (!this.currentStageName) {
             if (transitionConfig.type !== 'instant') debug(`Ignoring transition ${transitionConfig.type} for stage ${name} because no other stage is loaded`);
             this.setStage(name, entryPoint);

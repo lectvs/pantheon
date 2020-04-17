@@ -43,7 +43,7 @@ class DialogBox extends Sprite {
             font: config.spriteTextFont,
         });
         let textAreaWorldRect = this.getTextAreaWorldRect();
-        this.spriteText.mask = new Texture(Main.width, Main.height);
+        this.spriteText.mask = new Texture(global.gameWidth, global.gameHeight);
         Draw.brush.color = 0xFFFFFF;
         Draw.brush.alpha = 1;
         Draw.rectangleSolid(this.spriteText.mask, textAreaWorldRect.x, textAreaWorldRect.y, textAreaWorldRect.width, textAreaWorldRect.height);

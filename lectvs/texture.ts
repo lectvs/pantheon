@@ -65,7 +65,7 @@ class Texture {
             debug('Cannot render to immutable texture!');
             return;
         }
-        Main.renderer.render(displayObject, this.renderTextureSprite.renderTexture, false);
+        global.renderer.render(displayObject, this.renderTextureSprite.renderTexture, false);
     }
 
     toMaskTexture() {
@@ -162,7 +162,7 @@ namespace Texture {
         }
     
         clear() {
-            Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, this._renderTexture, true);
+            global.renderer.render(Utils.NOOP_DISPLAYOBJECT, this._renderTexture, true);
         }
         
         resize(width: number, height: number) {
