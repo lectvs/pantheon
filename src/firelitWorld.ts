@@ -85,7 +85,7 @@ class FirelitWorld extends World {
 
         // Spawn monster after 60 seconds
         this.runScript(S.chain(
-            S.wait(60),
+            S.wait(Debug.DEBUG ? 3 : 60),
             S.call(() => {
                 let player = this.getWorldObjectByName('player');
                 let monster = WorldObject.fromConfig({

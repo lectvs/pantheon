@@ -173,6 +173,7 @@ class Player extends Sprite {
     }
 
     private dropHeldItem() {
+        if (!this.heldItem) return;
         let droppedItem = this.heldItem.asGroundItem(this.x, this.y, this.layer, 'items');
         droppedItem.flipX = this.heldItem.flipX;
         World.Actions.removeChildFromParent(this.heldItem);
@@ -207,6 +208,7 @@ class Player extends Sprite {
     }
 
     private pickupItem(item: ItemGround) {
+        if (!item) return;
         this.heldItem = item.asHandItem(0, -this.itemOffsetY, this.layer);
         World.Actions.addChildToParent(this.heldItem, this);
         World.Actions.removeWorldObjectFromWorld(item);
@@ -244,6 +246,7 @@ class Player extends Sprite {
     }
 
     private hitStuff(item: ItemHand) {
+        if (!item) return;
         let swingHitbox = this.getSwingHitbox();
         for (let obj of this.world.worldObjects) {
             if (item.cutsTrees && obj instanceof Tree && obj.isOverlappingRect(swingHitbox)) {

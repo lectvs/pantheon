@@ -101,7 +101,7 @@ class Monster extends Sprite {
                 if (this.swingScript) {
                     this.swingScript.done = true;
                 }
-                this.heldItem.visible = false;
+                if (this.heldItem) this.heldItem.visible = false;
             }),
             S.doOverTime(0.5, t => {
                 this.offset.y = -16 * Math.exp(-4*t)*Math.abs(Math.sin(4*Math.PI*t*t));
@@ -110,7 +110,7 @@ class Monster extends Sprite {
             S.call(() => {
                 this.alpha = 1;
                 this.stunned = false;
-                this.heldItem.visible = true;
+                if (this.heldItem) this.heldItem.visible = true;
             })
         ));
     }
@@ -155,6 +155,7 @@ class Monster extends Sprite {
     }
 
     private handleAttacking() {
+        if (!this.world) return;
         if (this.immobile) return;
 
         let player = this.world.getWorldObjectByName('player');
@@ -165,12 +166,14 @@ class Monster extends Sprite {
     }
 
     private swingItem() {
+        if (!this.world) return;
         if (!this.swingScript || this.swingScript.done) {
             let swingHitbox = this.getSwingHitbox();
             this.swingScript = this.world.runScript(S.chain(
                 S.wait(0.3),
                 S.simul(
                     S.doOverTime(this.swingTime, t => {
+                        if (!this.heldItem) return;
                         let angle = (this.flipX ? -1 : 1) * 90 * Math.pow(Math.sin(Math.PI * Math.pow(t, 0.5)), 0.1);
                         this.heldItem.offset.x = this.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
                         this.heldItem.offset.y = this.itemOffsetY * -Math.cos(M.degToRad(angle));

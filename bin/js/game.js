@@ -6250,7 +6250,7 @@ var FirelitWorld = /** @class */ (function (_super) {
             trees[6].spawnsTorch = true;
         }));
         // Spawn monster after 60 seconds
-        _this.runScript(S.chain(S.wait(60), S.call(function () {
+        _this.runScript(S.chain(S.wait(Debug.DEBUG ? 3 : 60), S.call(function () {
             var player = _this.getWorldObjectByName('player');
             var monster = WorldObject.fromConfig({
                 name: 'monster',
@@ -6966,13 +6966,15 @@ var Monster = /** @class */ (function (_super) {
             if (_this.swingScript) {
                 _this.swingScript.done = true;
             }
-            _this.heldItem.visible = false;
+            if (_this.heldItem)
+                _this.heldItem.visible = false;
         }), S.doOverTime(0.5, function (t) {
             _this.offset.y = -16 * Math.exp(-4 * t) * Math.abs(Math.sin(4 * Math.PI * t * t));
         }), S.wait(1.5), S.call(function () {
             _this.alpha = 1;
             _this.stunned = false;
-            _this.heldItem.visible = true;
+            if (_this.heldItem)
+                _this.heldItem.visible = true;
         })));
     };
     Monster.prototype.updateMovement = function (haxis, vaxis) {
@@ -7019,6 +7021,8 @@ var Monster = /** @class */ (function (_super) {
         }
     };
     Monster.prototype.handleAttacking = function () {
+        if (!this.world)
+            return;
         if (this.immobile)
             return;
         var player = this.world.getWorldObjectByName('player');
@@ -7028,9 +7032,13 @@ var Monster = /** @class */ (function (_super) {
     };
     Monster.prototype.swingItem = function () {
         var _this = this;
+        if (!this.world)
+            return;
         if (!this.swingScript || this.swingScript.done) {
             var swingHitbox_1 = this.getSwingHitbox();
             this.swingScript = this.world.runScript(S.chain(S.wait(0.3), S.simul(S.doOverTime(this.swingTime, function (t) {
+                if (!_this.heldItem)
+                    return;
                 var angle = (_this.flipX ? -1 : 1) * 90 * Math.pow(Math.sin(Math.PI * Math.pow(t, 0.5)), 0.1);
                 _this.heldItem.offset.x = _this.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
                 _this.heldItem.offset.y = _this.itemOffsetY * -Math.cos(M.degToRad(angle));
@@ -7241,6 +7249,8 @@ var Player = /** @class */ (function (_super) {
         this.swingItem();
     };
     Player.prototype.dropHeldItem = function () {
+        if (!this.heldItem)
+            return;
         var droppedItem = this.heldItem.asGroundItem(this.x, this.y, this.layer, 'items');
         droppedItem.flipX = this.heldItem.flipX;
         World.Actions.removeChildFromParent(this.heldItem);
@@ -7271,6 +7281,8 @@ var Player = /** @class */ (function (_super) {
         this.heldItem = null;
     };
     Player.prototype.pickupItem = function (item) {
+        if (!item)
+            return;
         this.heldItem = item.asHandItem(0, -this.itemOffsetY, this.layer);
         World.Actions.addChildToParent(this.heldItem, this);
         World.Actions.removeWorldObjectFromWorld(item);
@@ -7299,6 +7311,8 @@ var Player = /** @class */ (function (_super) {
     };
     Player.prototype.hitStuff = function (item) {
         var e_43, _a;
+        if (!item)
+            return;
         var swingHitbox = this.getSwingHitbox();
         try {
             for (var _b = __values(this.world.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
