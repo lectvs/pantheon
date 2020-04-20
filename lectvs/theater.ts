@@ -57,7 +57,7 @@ class Theater extends World {
         this.stageManager.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
 
         if (Debug.SHOW_MOUSE_POSITION && config.debugMousePositionFont) {
-            this.debugMousePosition = new SpriteText({ x: 0, y: 0, font: config.debugMousePositionFont });
+            this.debugMousePosition = new SpriteText({ x: 0, y: 0, font: config.debugMousePositionFont, style: { color: 0x008800 } });
             World.Actions.addWorldObjectToWorld(this.debugMousePosition, this);
         }
 

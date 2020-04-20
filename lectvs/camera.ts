@@ -81,15 +81,15 @@ class Camera {
         this._shakeY = 0;
     }
 
-    update(world: World) {
+    update(world: World, delta: number) {
         if (this.mode.type === 'follow') {
             let target = this.mode.target;
             if (_.isString(target)) {
                 target = world.getWorldObjectByName(target);
             }
-            this.moveTowardsPoint(target.x + this.mode.offset.x, target.y + this.mode.offset.y);
+            this.moveTowardsPoint(target.x + this.mode.offset.x, target.y + this.mode.offset.y, delta);
         } else if (this.mode.type === 'focus') {
-            this.moveTowardsPoint(this.mode.point.x, this.mode.point.y);
+            this.moveTowardsPoint(this.mode.point.x, this.mode.point.y, delta);
         }
 
         if (this.shakeIntensity > 0) {
@@ -119,14 +119,14 @@ class Camera {
         }
     }
 
-    moveTowardsPoint(x: number, y: number) {
+    moveTowardsPoint(x: number, y: number, delta: number) {
         if (this.movement.type === 'snap') {
             this.x = x;
             this.y = y;
         } else if (this.movement.type === 'smooth') {
             // TODO: implement smooth movement
-            this.x = x;
-            this.y = y;
+            this.x = M.lerp(this.x, x, 0.25);
+            this.y = M.lerp(this.y, y, 0.25);
         }
     }
 

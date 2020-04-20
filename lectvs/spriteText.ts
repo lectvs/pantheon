@@ -10,6 +10,7 @@ namespace SpriteText {
         charWidth: number;
         charHeight: number;
         spaceWidth: number;
+        newlineHeight: number;
     }
 
     export type Style = {
@@ -162,6 +163,10 @@ namespace SpriteText {
         },
         'o': (params) => {
             return { offset: getInt(params[0], 0) };
+        },
+        // can't define custom tags in Assets...
+        'e': (params) => {
+            return { color: 0x424242 };
         }
     }
 

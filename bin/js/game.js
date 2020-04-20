@@ -440,6 +440,45 @@ var S;
         };
     }
     S.doOverTime = doOverTime;
+    function loopFor(count, scriptFunction) {
+        return function () {
+            var i;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        i = 0;
+                        _a.label = 1;
+                    case 1:
+                        if (!(i < count)) return [3 /*break*/, 4];
+                        return [5 /*yield**/, __values(scriptFunction())];
+                    case 2:
+                        _a.sent();
+                        _a.label = 3;
+                    case 3:
+                        i++;
+                        return [3 /*break*/, 1];
+                    case 4: return [2 /*return*/];
+                }
+            });
+        };
+    }
+    S.loopFor = loopFor;
+    function loopUntil(condition, scriptFunction) {
+        return function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!!condition()) return [3 /*break*/, 2];
+                        return [5 /*yield**/, __values(scriptFunction())];
+                    case 1:
+                        _a.sent();
+                        return [3 /*break*/, 0];
+                    case 2: return [2 /*return*/];
+                }
+            });
+        };
+    }
+    S.loopUntil = loopUntil;
     function simul() {
         var scriptFunctions = [];
         for (var _i = 0; _i < arguments.length; _i++) {
@@ -630,16 +669,16 @@ var Camera = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Camera.prototype.update = function (world) {
+    Camera.prototype.update = function (world, delta) {
         if (this.mode.type === 'follow') {
             var target = this.mode.target;
             if (_.isString(target)) {
                 target = world.getWorldObjectByName(target);
             }
-            this.moveTowardsPoint(target.x + this.mode.offset.x, target.y + this.mode.offset.y);
+            this.moveTowardsPoint(target.x + this.mode.offset.x, target.y + this.mode.offset.y, delta);
         }
         else if (this.mode.type === 'focus') {
-            this.moveTowardsPoint(this.mode.point.x, this.mode.point.y);
+            this.moveTowardsPoint(this.mode.point.x, this.mode.point.y, delta);
         }
         if (this.shakeIntensity > 0) {
             var pt = Random.inCircle(this.shakeIntensity);
@@ -666,15 +705,15 @@ var Camera = /** @class */ (function () {
             this.y = this.bounds.bottom - this.height / 2;
         }
     };
-    Camera.prototype.moveTowardsPoint = function (x, y) {
+    Camera.prototype.moveTowardsPoint = function (x, y, delta) {
         if (this.movement.type === 'snap') {
             this.x = x;
             this.y = y;
         }
         else if (this.movement.type === 'smooth') {
             // TODO: implement smooth movement
-            this.x = x;
-            this.y = y;
+            this.x = M.lerp(this.x, x, 0.25);
+            this.y = M.lerp(this.y, y, 0.25);
         }
     };
     Camera.prototype.setMode = function (mode) {
@@ -1161,7 +1200,7 @@ var DebugValues = /** @class */ (function () {
     return DebugValues;
 }());
 var Debug = new DebugValues();
-Debug.DEBUG = true;
+Debug.DEBUG = false;
 Debug.ALL_PHYSICS_BOUNDS = false;
 Debug.MOVE_CAMERA_WITH_ARROWS = true;
 Debug.SHOW_MOUSE_POSITION = true;
@@ -1428,6 +1467,14 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         other.bounds.y -= other.y;
         return result;
     };
+    PhysicsWorldObject.prototype.isOverlappingRect = function (rect) {
+        this.bounds.x += this.x;
+        this.bounds.y += this.y;
+        var result = G.overlapRectangles(this.bounds, rect);
+        this.bounds.x -= this.x;
+        this.bounds.y -= this.y;
+        return result;
+    };
     PhysicsWorldObject.prototype.getWorldBounds = function (newX, newY) {
         if (newX === void 0) { newX = this.x; }
         if (newY === void 0) { newY = this.y; }
@@ -1485,6 +1532,8 @@ var Sprite = /** @class */ (function (_super) {
         _this.flipY = O.getOrDefault(config.flipY, false);
         _this.offset = config.offset || { x: 0, y: 0 };
         _this.angle = O.getOrDefault(config.angle, 0);
+        _this.scaleX = O.getOrDefault(config.scaleX, 1);
+        _this.scaleY = O.getOrDefault(config.scaleY, 1);
         _this.tint = O.getOrDefault(config.tint, 0xFFFFFF);
         _this.alpha = O.getOrDefault(config.alpha, 1);
         _this.effects = new Effects();
@@ -1499,8 +1548,8 @@ var Sprite = /** @class */ (function (_super) {
         screen.render(this.texture, {
             x: this.x + this.offset.x,
             y: this.y + this.offset.y,
-            scaleX: this.flipX ? -1 : 1,
-            scaleY: this.flipY ? -1 : 1,
+            scaleX: (this.flipX ? -1 : 1) * this.scaleX,
+            scaleY: (this.flipY ? -1 : 1) * this.scaleY,
             angle: this.angle,
             tint: this.tint,
             alpha: this.alpha,
@@ -2199,6 +2248,8 @@ var Game = /** @class */ (function () {
     Game.prototype.loadTheater = function () {
         this.theater = new this.theaterClass(this.theaterConfig);
         global.theater = this.theater;
+        // fade out since the cutscene can't do this in 1 frame
+        global.theater.runScript(S.fadeOut(0)).finishImmediately(global.theater);
     };
     Game.prototype.pauseGame = function () {
         this.menuSystem.loadMenu(this.pauseMenuClass);
@@ -2608,7 +2659,7 @@ var World = /** @class */ (function (_super) {
         _this.collisionOrder = O.getOrDefault(config.collisionOrder, []);
         _this.worldObjectsByName = {};
         _this.layers = _this.createLayers(config.layers);
-        _this.backgroundColor = O.getOrDefault(config.backgroundColor, 0x000000);
+        _this.backgroundColor = O.getOrDefault(config.backgroundColor, global.backgroundColor);
         _this.backgroundAlpha = O.getOrDefault(config.backgroundAlpha, 1);
         var cameraConfig = O.getOrDefault(config.camera, {});
         _.defaults(cameraConfig, {
@@ -2680,7 +2731,7 @@ var World = /** @class */ (function (_super) {
             if (Input.isDown('debugMoveCameraDown'))
                 this.debugCameraY += 1;
         }
-        this.camera.update(this);
+        this.camera.update(this, delta);
     };
     World.prototype.render = function (screen) {
         var e_12, _a;
@@ -2697,9 +2748,7 @@ var World = /** @class */ (function (_super) {
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var layer = _c.value;
-                this.layerTexture.clear();
-                this.renderLayer(layer);
-                this.screen.render(this.layerTexture);
+                this.renderLayer(layer, this.layerTexture, this.screen);
             }
         }
         catch (e_12_1) { e_12 = { error: e_12_1 }; }
@@ -2714,14 +2763,15 @@ var World = /** @class */ (function (_super) {
         screen.render(this.screen);
         _super.prototype.render.call(this, screen);
     };
-    World.prototype.renderLayer = function (layer) {
+    World.prototype.renderLayer = function (layer, layerTexture, screen) {
         var e_13, _a;
+        layerTexture.clear();
         layer.sort();
         try {
             for (var _b = __values(layer.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var worldObject = _c.value;
                 if (worldObject.visible) {
-                    worldObject.fullRender(this.layerTexture);
+                    worldObject.fullRender(layerTexture);
                 }
             }
         }
@@ -2732,6 +2782,7 @@ var World = /** @class */ (function (_super) {
             }
             finally { if (e_13) throw e_13.error; }
         }
+        screen.render(layerTexture);
     };
     World.prototype.containsWorldObject = function (obj) {
         if (_.isString(obj)) {
@@ -2812,6 +2863,10 @@ var World = /** @class */ (function (_super) {
             debug("No object with name '" + name + "' exists in world", this);
         }
         return this.worldObjectsByName[name];
+    };
+    // TODO: better way to type-signature this?
+    World.prototype.getWorldObjectsByType = function (type) {
+        return this.worldObjects.filter(function (obj) { return obj instanceof type; });
     };
     World.prototype.handleCollisions = function () {
         var _this = this;
@@ -2929,6 +2984,7 @@ var World = /** @class */ (function (_super) {
     };
     // For use with World.Actions.removeWorldObjectFromWorld
     World.prototype.internalRemoveWorldObjectFromWorldWorld = function (obj) {
+        this.removeName(obj);
         this.removeFromAllLayers(obj);
         this.removeFromAllPhysicsGroups(obj);
         A.removeAll(this.worldObjects, obj);
@@ -3422,6 +3478,10 @@ var SpriteText = /** @class */ (function (_super) {
         },
         _a['o'] = function (params) {
             return { offset: getInt(params[0], 0) };
+        },
+        // can't define custom tags in Assets...
+        _a['e'] = function (params) {
+            return { color: 0x424242 };
         },
         _a);
     function getInt(text, def) {
@@ -4282,7 +4342,8 @@ var SpriteTextConverter = /** @class */ (function () {
             else if (text[i] === '\n') {
                 this.pushWord(word, result, nextCharPosition, maxWidth);
                 nextCharPosition.x = 0;
-                nextCharPosition.y = SpriteText.getHeightOfCharList(result);
+                // TODO: properly newline
+                nextCharPosition.y += font.newlineHeight; //SpriteText.getHeightOfCharList(result);
             }
             else if (text[i] === '[') {
                 var closingBracketIndex = text.indexOf(']', i);
@@ -4504,7 +4565,7 @@ var StageManager = /** @class */ (function () {
     };
     StageManager.prototype.newWorldFromStage = function (stage) {
         var e_31, _a;
-        var world = new World(stage);
+        var world = WorldObject.fromConfig(stage);
         if (stage.worldObjects) {
             try {
                 for (var _b = __values(stage.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -4945,7 +5006,7 @@ var Theater = /** @class */ (function (_super) {
         _this.slideManager = new SlideManager(_this);
         _this.stageManager.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
         if (Debug.SHOW_MOUSE_POSITION && config.debugMousePositionFont) {
-            _this.debugMousePosition = new SpriteText({ x: 0, y: 0, font: config.debugMousePositionFont });
+            _this.debugMousePosition = new SpriteText({ x: 0, y: 0, font: config.debugMousePositionFont, style: { color: 0x008800 } });
             World.Actions.addWorldObjectToWorld(_this.debugMousePosition, _this);
         }
         if (Debug.AUTOPLAY && config.autoPlayScript) {
@@ -5030,6 +5091,7 @@ var Tilemap = /** @class */ (function (_super) {
         _this.numTilesY = tilemapDimens.height;
         _this.renderTexture = new Texture(_this.numTilesX * _this.tilemap.tileset.tileWidth, _this.numTilesY * _this.tilemap.tileset.tileHeight);
         _this.createCollisionBoxes(O.getOrDefault(config.debugBounds, false));
+        _this.tint = O.getOrDefault(config.tint, 0xFFFFFF);
         _this.dirty = true;
         return _this;
     }
@@ -5063,7 +5125,11 @@ var Tilemap = /** @class */ (function (_super) {
             this.drawRenderTexture();
             this.dirty = false;
         }
-        screen.render(this.renderTexture, { x: this.x, y: this.y });
+        screen.render(this.renderTexture, {
+            x: this.x,
+            y: this.y,
+            tint: this.tint
+        });
         _super.prototype.render.call(this, screen);
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
@@ -5075,7 +5141,12 @@ var Tilemap = /** @class */ (function (_super) {
         try {
             for (var collisionRects_1 = __values(collisionRects), collisionRects_1_1 = collisionRects_1.next(); !collisionRects_1_1.done; collisionRects_1_1 = collisionRects_1.next()) {
                 var rect = collisionRects_1_1.value;
-                var box = new PhysicsWorldObject({ x: this.x, y: this.y, bounds: rect, physicsGroup: this.physicsGroup });
+                var box = new PhysicsWorldObject({
+                    x: this.x, y: this.y,
+                    bounds: rect,
+                    physicsGroup: this.physicsGroup,
+                    immovable: true,
+                });
                 box.debugBounds = debugBounds;
                 this.collisionBoxes.push(box);
             }
@@ -5474,6 +5545,14 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
 })(ZOrderedTilemap || (ZOrderedTilemap = {}));
 var G;
 (function (G) {
+    function distance(pt1, pt2) {
+        return M.distance(pt1.x, pt1.y, pt2.x, pt2.y);
+    }
+    G.distance = distance;
+    function distanceSq(pt1, pt2) {
+        return M.distanceSq(pt1.x, pt1.y, pt2.x, pt2.y);
+    }
+    G.distanceSq = distanceSq;
     function expandRectangle(rect, amount) {
         rect.x -= amount;
         rect.y -= amount;
@@ -5516,6 +5595,10 @@ var M;
         return result;
     }
     M.argmin = argmin;
+    function clamp(val, min, max) {
+        return val < min ? min : (val > max ? max : val);
+    }
+    M.clamp = clamp;
     function colorToVec3(color) {
         var r = (color >> 16) & 255;
         var g = (color >> 8) & 255;
@@ -5523,13 +5606,17 @@ var M;
         return [r / 255, g / 255, b / 255];
     }
     M.colorToVec3 = colorToVec3;
-    function distance(p1, p2) {
-        return Math.sqrt(distanceSq(p1, p2));
+    function degToRad(deg) {
+        return Math.PI * deg / 180;
+    }
+    M.degToRad = degToRad;
+    function distance(x1, y1, x2, y2) {
+        return Math.sqrt(distanceSq(x1, y1, x2, y2));
     }
     M.distance = distance;
-    function distanceSq(p1, p2) {
-        var dx = p2.x - p1.x;
-        var dy = p2.y - p1.y;
+    function distanceSq(x1, y1, x2, y2) {
+        var dx = x2 - x1;
+        var dy = y2 - y1;
         return dx * dx + dy * dy;
     }
     M.distanceSq = distanceSq;
@@ -5541,6 +5628,10 @@ var M;
         return a * t * t + b * t + startHeight;
     }
     M.jumpParabola = jumpParabola;
+    function lerp(a, b, t) {
+        return a * (1 - t) + b * t;
+    }
+    M.lerp = lerp;
     function magnitude(dx, dy) {
         return Math.sqrt(this.magnitudeSq(dx, dy));
     }
@@ -5569,6 +5660,10 @@ var M;
         return Math.pow(2, Math.ceil(Math.log2(num)));
     }
     M.minPowerOf2 = minPowerOf2;
+    function radToDeg(rad) {
+        return 180 / Math.PI * rad;
+    }
+    M.radToDeg = radToDeg;
     function vec3ToColor(vec3) {
         return (Math.round(vec3[0] * 255) << 16) + (Math.round(vec3[1] * 255) << 8) + Math.round(vec3[2] * 255);
     }
@@ -5752,7 +5847,6 @@ var V;
     }
     V.setMagnitude = setMagnitude;
 })(V || (V = {}));
-/// <reference path="../lectvs/preload.ts" />
 var Assets;
 (function (Assets) {
     Assets.textures = {
@@ -5760,14 +5854,75 @@ var Assets;
         'blank': {},
         // Debug
         'debug': {},
-        'dialogbox': {
-            anchor: { x: 0.5, y: 0.5 },
+        // Entities
+        'player': {
+            defaultAnchor: { x: 0.5, y: 1 },
+            spritesheet: { frameWidth: 16, frameHeight: 16 },
+        },
+        'blacktree': {
+            anchor: { x: 0.5, y: 1 }
+        },
+        'whitetree': {
+            anchor: { x: 0.5, y: 1 }
+        },
+        'door': {
+            anchor: { x: 0.5, y: 1 }
+        },
+        'monster': {
+            defaultAnchor: { x: 0.5, y: 1 },
+            spritesheet: { frameWidth: 16, frameHeight: 16 },
+        },
+        // Items
+        'log': {
+            anchor: { x: 0.5, y: 0.5 }
+        },
+        'axe': {
+            anchor: { x: 0.5, y: 0.5 }
+        },
+        'key': {
+            anchor: { x: 0.5, y: 0.5 }
+        },
+        'torch': {
+            anchor: { x: 0.5, y: 0.5 }
+        },
+        'gasoline': {
+            anchor: { x: 0.5, y: 0.5 }
+        },
+        // Props
+        'campfire': {
+            anchor: { x: 0.5, y: 0.5 }
+        },
+        'fire': {
+            defaultAnchor: { x: 0.5, y: 1 },
+            spritesheet: { frameWidth: 16, frameHeight: 16 }
+        },
+        'smoke': {
+            anchor: { x: 0.5, y: 1 }
+        },
+        // Scenery
+        'world': {
+            spritesheet: { frameWidth: 16, frameHeight: 16 }
+        },
+        'ground': {
+            anchor: { x: 0.5, y: 0.5 }
         },
         // Fonts
         'deluxe16': {},
     };
-    Assets.tilesets = {};
-    Assets.pyxelTilemaps = {};
+    Assets.tilesets = {
+        'world': {
+            tiles: Preload.allTilesWithPrefix('world_'),
+            tileWidth: 16,
+            tileHeight: 16,
+            collisionIndices: [1],
+        },
+    };
+    Assets.pyxelTilemaps = {
+        'world': {
+            url: 'assets/world.json',
+            tileset: Assets.tilesets['world']
+        }
+    };
     var fonts = /** @class */ (function () {
         function fonts() {
         }
@@ -5776,6 +5931,7 @@ var Assets;
             charWidth: 8,
             charHeight: 15,
             spaceWidth: 8,
+            newlineHeight: 15,
         };
         return fonts;
     }());
@@ -5786,18 +5942,19 @@ var DEFAULT_SCREEN_TRANSITION = Transition.FADE(0.2, 0.5, 0.2);
 var BASE_STAGE = {
     layers: [
         { name: 'bg' },
-        { name: 'room' },
         { name: 'main', sortKey: 'y' },
         { name: 'fg' },
-        { name: 'spotlight' },
+        { name: 'above' },
     ],
     physicsGroups: {
         'player': {},
         'props': {},
+        'items': {},
         'walls': {},
     },
     collisionOrder: [
         { move: 'player', from: ['props', 'walls'], callback: true },
+        { move: 'items', from: ['props', 'walls'], callback: true, transferMomentum: true },
     ],
 };
 function WORLD_BOUNDS(left, top, right, bottom) {
@@ -5830,41 +5987,736 @@ function WORLD_BOUNDS(left, top, right, bottom) {
         ]
     };
 }
+function fireSpriteConfig() {
+    return {
+        constructor: Sprite,
+        animations: [
+            Animations.fromTextureList({ name: 'blaze', texturePrefix: 'fire_', textures: [0, 1, 2, 3, 4, 5, 6, 7], frameRate: 16, count: -1 }),
+        ],
+        defaultAnimation: 'blaze'
+    };
+}
+function screenShake(world) {
+    return function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!global.theater || global.theater.currentWorld !== world)
+                        return [2 /*return*/];
+                    world.camera.shakeIntensity += 1;
+                    return [5 /*yield**/, __values(S.wait(0.1)())];
+                case 1:
+                    _a.sent();
+                    world.camera.shakeIntensity -= 1;
+                    return [2 /*return*/];
+            }
+        });
+    };
+}
+var Campfire = /** @class */ (function (_super) {
+    __extends(Campfire, _super);
+    function Campfire(config) {
+        var _this = _super.call(this, config, {
+            texture: 'campfire',
+        }) || this;
+        _this.introRadius = 40;
+        _this.winRadius = 40;
+        _this.fireRadiusAtFullTime = 200;
+        _this.fireRadiusBufferAtFull = 20;
+        _this.fullTime = 60;
+        _this.logConsumptionRadius = 16;
+        _this.timeGainedOnLogConsumptionAtZero = 25;
+        _this.timeGainedOnLogConsumptionAtFull = 10;
+        _this.fireSprite = WorldObject.fromConfig({
+            name: 'fire',
+            parent: fireSpriteConfig(),
+            layer: _this.layer,
+        });
+        World.Actions.addChildToParent(_this.fireSprite, _this);
+        _this.timer = new Timer(_this.fullTime);
+        _this.visualFireBaseRadius = _this.fireBaseRadiusGoal;
+        _this.fireRadiusBuffer = _this.fireRadiusBufferAtFull;
+        _this.visualFireRadiusBuffer = _this.fireRadiusBufferGoal;
+        _this.currentlyConsumedItems = [];
+        _this.introEffect = false;
+        _this.winEffect = false;
+        _this.hitEffect = false;
+        _this.hasConsumedGasoline = false;
+        return _this;
+    }
+    Object.defineProperty(Campfire.prototype, "fireBaseRadiusGoal", {
+        get: function () {
+            if (this.hitEffect)
+                return this.hitRadius;
+            if (this.winEffect)
+                return Math.min(this.winRadius, this.visualFireBaseRadius);
+            return this.fireRadiusAtFullTime * (1 - this.timer.progress);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Campfire.prototype, "trueFireBaseRadius", {
+        get: function () {
+            return this.fireRadiusAtFullTime * (1 - this.timer.progress);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Campfire.prototype, "fireRadiusBufferGoal", {
+        get: function () {
+            if (this.hitEffect)
+                return this.hitBuffer - this.visualFireBaseRadius;
+            return this.fireRadiusBuffer;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Campfire.prototype, "isOut", {
+        get: function () { return this.timer.done; },
+        enumerable: true,
+        configurable: true
+    });
+    Campfire.prototype.update = function (delta) {
+        _super.prototype.update.call(this, delta);
+        if (!this.winEffect)
+            this.timer.update(delta);
+        var fireScale = 0.2 + (1 - this.timer.progress);
+        if (this.introEffect)
+            fireScale = 0.3;
+        this.fireSprite.scaleX = fireScale;
+        this.fireSprite.scaleY = fireScale;
+        if (Random.boolean(5 * delta)) {
+            this.fireSprite.offset.y = Random.int(0, 1);
+        }
+        this.updateRadius(delta);
+        this.updateRadiusBuffer(delta);
+        this.consumeItems();
+        if (this.world.hasLost) {
+            this.timer.time = this.fullTime;
+        }
+    };
+    Campfire.prototype.start = function () {
+        this.timer.time = this.timer.duration / 2;
+    };
+    Campfire.prototype.hit = function () {
+        var _this = this;
+        this.world.runScript(S.chain(S.call(function () {
+            _this.hitRadius = 0;
+            _this.hitBuffer = _this.visualFireBaseRadius + _this.visualFireRadiusBuffer;
+            _this.hitEffect = true;
+            _this.visualFireBaseRadius = 0;
+        }), S.wait(1), S.doOverTime(0.5, function (t) {
+            _this.hitRadius = _this.trueFireBaseRadius;
+            _this.hitBuffer = _this.visualFireBaseRadius + _this.visualFireRadiusBuffer;
+        }), S.call(function () {
+            _this.hitEffect = false;
+        })));
+    };
+    Campfire.prototype.updateRadius = function (delta) {
+        var speed = 600;
+        if (this.visualFireBaseRadius > this.fireBaseRadiusGoal) {
+            this.visualFireBaseRadius = Math.max(this.fireBaseRadiusGoal, this.visualFireBaseRadius - speed * delta);
+        }
+        else if (this.visualFireBaseRadius < this.fireBaseRadiusGoal) {
+            this.visualFireBaseRadius = Math.min(this.fireBaseRadiusGoal, this.visualFireBaseRadius + speed * delta);
+        }
+        if (this.introEffect)
+            this.visualFireBaseRadius = this.introRadius;
+    };
+    Campfire.prototype.updateRadiusBuffer = function (delta) {
+        if (this.winEffect)
+            return;
+        var speed = this.hitEffect ? 10000 : 100;
+        if (this.visualFireRadiusBuffer > this.fireRadiusBufferGoal) {
+            this.visualFireRadiusBuffer = Math.max(this.fireRadiusBufferGoal, this.visualFireRadiusBuffer - speed * delta);
+        }
+        else if (this.visualFireRadiusBuffer < this.fireRadiusBufferGoal) {
+            this.visualFireRadiusBuffer = Math.min(this.fireRadiusBufferGoal, this.visualFireRadiusBuffer + speed * delta);
+        }
+    };
+    Campfire.prototype.consumeItems = function () {
+        var e_40, _a;
+        var items = this.world.getWorldObjectsByType(ItemGround).filter(function (item) { return item.consumable; });
+        try {
+            for (var items_1 = __values(items), items_1_1 = items_1.next(); !items_1_1.done; items_1_1 = items_1.next()) {
+                var item = items_1_1.value;
+                if (_.contains(this.currentlyConsumedItems, item))
+                    continue;
+                if (item.offset.y < -4)
+                    continue;
+                if (M.distance(item.x, item.y, this.x, this.y) > this.logConsumptionRadius)
+                    continue;
+                this.consumeItem(item);
+            }
+        }
+        catch (e_40_1) { e_40 = { error: e_40_1 }; }
+        finally {
+            try {
+                if (items_1_1 && !items_1_1.done && (_a = items_1.return)) _a.call(items_1);
+            }
+            finally { if (e_40) throw e_40.error; }
+        }
+    };
+    Campfire.prototype.consumeItem = function (item) {
+        var _this = this;
+        this.currentlyConsumedItems.push(item);
+        item.beingConsumed = true;
+        if (item.type === Item.Type.GASOLINE) {
+            this.hasConsumedGasoline = true;
+        }
+        this.world.runScript(S.chain(item.type !== Item.Type.GASOLINE
+            ? S.doOverTime(0.5, function (t) { item.alpha = 1 - t; })
+            : S.doOverTime(4, function (t) {
+                if (Random.boolean(1 - t)) {
+                    item.alpha = 1 - item.alpha;
+                }
+                if (t == 1)
+                    item.alpha = 0;
+            }), S.call(function () {
+            World.Actions.removeWorldObjectFromWorld(item);
+            A.removeAll(_this.currentlyConsumedItems, item);
+            if (!_this.hasConsumedGasoline) {
+                var timeGainedOnLogConsumption = M.lerp(_this.timeGainedOnLogConsumptionAtFull, _this.timeGainedOnLogConsumptionAtZero, _this.timer.progress);
+                _this.timer.time -= timeGainedOnLogConsumption;
+            }
+        })));
+    };
+    return Campfire;
+}(Sprite));
+var Door = /** @class */ (function (_super) {
+    __extends(Door, _super);
+    function Door(config) {
+        return _super.call(this, config, {
+            texture: 'door',
+            bounds: { x: -16, y: -4, width: 32, height: 4 },
+            immovable: true,
+        }) || this;
+    }
+    Door.prototype.onCollide = function (other) {
+        if (other instanceof ItemGround && other.type === Item.Type.KEY) {
+            World.Actions.removeWorldObjectFromWorld(this);
+            World.Actions.removeWorldObjectFromWorld(other);
+        }
+        if (other instanceof Player && other.heldItem && other.heldItem.type === Item.Type.KEY) {
+            World.Actions.removeWorldObjectFromWorld(this);
+            other.removeHeldItem();
+        }
+    };
+    return Door;
+}(Sprite));
+var FirelitWorld = /** @class */ (function (_super) {
+    __extends(FirelitWorld, _super);
+    function FirelitWorld(config) {
+        var _this = _super.call(this, config) || this;
+        _this.torchRefuelDistance = 16;
+        _this.lights = [
+            { x: 0, y: 0, radius: 0, buffer: 0 },
+            { x: 0, y: 0, radius: 0, buffer: 0 },
+            { x: 0, y: 0, radius: 0, buffer: 0 },
+        ];
+        var uniforms = [];
+        var defaultUniforms = {};
+        var distanceCalculations = "";
+        var lightCalculations = "";
+        var maxCalculations = "";
+        for (var i = 0; i < _this.lights.length; i++) {
+            uniforms.push("float light_" + i + "_x");
+            uniforms.push("float light_" + i + "_y");
+            uniforms.push("float light_" + i + "_radius");
+            uniforms.push("float light_" + i + "_buffer");
+            defaultUniforms["light_" + i + "_x"] = 0;
+            defaultUniforms["light_" + i + "_y"] = 0;
+            defaultUniforms["light_" + i + "_radius"] = 0;
+            defaultUniforms["light_" + i + "_buffer"] = 0;
+            distanceCalculations += "float light_" + i + "_distance = sqrt((worldx - light_" + i + "_x) * (worldx - light_" + i + "_x) + (worldy - light_" + i + "_y) * (worldy - light_" + i + "_y));\n";
+            lightCalculations += "float light_" + i + "_light = 1.0;\n                                  if (light_" + i + "_distance > light_" + i + "_radius) light_" + i + "_light = 0.5;\n                                  if (light_" + i + "_distance > light_" + i + "_radius + light_" + i + "_buffer) light_" + i + "_light = 0.0;\n";
+            maxCalculations += "light = max(light, light_" + i + "_light);\n";
+        }
+        _this.firelightFilter = new TextureFilter({
+            uniforms: uniforms,
+            defaultUniforms: defaultUniforms,
+            code: "\n                float light = 0.0;\n\n                " + distanceCalculations + "\n                " + lightCalculations + "\n                " + maxCalculations + "\n\n                if (light == 0.5) {\n                    if (outp.rgb == vec3(1.0, 1.0, 1.0)) {\n                        outp.rgb = vec3(0.0, 0.0, 0.0);\n                    } else if (outp.rgb == vec3(0.0, 0.0, 0.0)) {\n                        outp.rgb = vec3(1.0, 1.0, 1.0);\n                    }\n                } else if (light == 0.0 && inp.rgb != vec3(1.0, 0.0, 0.0)) {\n                    outp.r = 0.0;\n                    outp.g = 0.0;\n                    outp.b = 0.0;\n                }\n            "
+        });
+        _this.fireRadiusNoise = 0;
+        _this.torchFuel = 0;
+        _this.torchFireSprite = WorldObject.fromConfig({
+            parent: fireSpriteConfig(),
+            layer: 'main'
+        });
+        _this.winKeyRadius = 0;
+        _this.runScript(S.call(function () {
+            // Load torch in a script to delay one frame... :(
+            var trees = _this.getWorldObjectsByType(Tree);
+            trees[6].spawnsTorch = true;
+        }));
+        // Spawn monster after 60 seconds
+        _this.runScript(S.chain(S.wait(60), S.call(function () {
+            var player = _this.getWorldObjectByName('player');
+            var monster = WorldObject.fromConfig({
+                name: 'monster',
+                constructor: Monster,
+                x: player.x + 200, y: player.y + 200,
+                layer: 'main',
+            });
+            World.Actions.addWorldObjectToWorld(monster, _this);
+        })));
+        return _this;
+    }
+    FirelitWorld.prototype.update = function (delta) {
+        var _this = this;
+        _super.prototype.update.call(this, delta);
+        var campfire = this.getWorldObjectByName('campfire');
+        var torch = this.worldObjectsByName['torch'];
+        var player = this.getWorldObjectByName('player');
+        // Update fire light
+        this.lights[0].x = campfire.x - this.camera.worldOffsetX;
+        this.lights[0].y = campfire.y - this.camera.worldOffsetY;
+        this.lights[0].radius = campfire.visualFireBaseRadius + this.fireRadiusNoise;
+        this.lights[0].buffer = campfire.visualFireRadiusBuffer;
+        if (Random.boolean(10 * delta)) {
+            this.fireRadiusNoise = Random.float(-1, 1);
+        }
+        // Update torch light
+        if (torch) {
+            var oldTorchFuel = this.torchFuel;
+            this.torchFuel -= 0.03 * delta;
+            if (M.distance(campfire.x, campfire.y, torch.x, torch.y) < this.torchRefuelDistance) {
+                this.torchFuel += 1 * delta;
+            }
+            this.torchFuel = M.clamp(this.torchFuel, 0, 1);
+            if (this.torchFireSprite.parent !== torch) {
+                World.Actions.addChildToParent(this.torchFireSprite, torch);
+            }
+            var torchScale = this.torchFuel;
+            this.torchFireSprite.scaleX = 0.7 * torchScale;
+            this.torchFireSprite.scaleY = 0.7 * torchScale;
+            this.torchFireSprite.offset.x = torch.offset.x;
+            this.torchFireSprite.offset.y = torch.offset.y - 4;
+            var torchFuelEmptyThreshold = 0.1;
+            if (this.torchFuel <= torchFuelEmptyThreshold && oldTorchFuel > torchFuelEmptyThreshold) {
+                this.torchFuel = 0;
+                var smoke_1 = WorldObject.fromConfig({
+                    constructor: Sprite,
+                    x: 0, y: 0,
+                    texture: 'smoke',
+                    scaleX: 0.5, scaleY: 0.5,
+                    layer: 'above',
+                });
+                World.Actions.addChildToParent(smoke_1, this.torchFireSprite);
+                this.runScript(S.doOverTime(2, function (t) {
+                    smoke_1.offset.x = _this.torchFireSprite.offset.x + 2 * Math.exp(-t) * Math.sin(4 * Math.PI * t);
+                    smoke_1.offset.y = _this.torchFireSprite.offset.y + -16 * t;
+                    smoke_1.alpha = 1 - t;
+                }));
+            }
+        }
+        if (torch && !campfire.hitEffect && !this.hasLost) {
+            this.lights[1].x = torch.x + torch.offset.x - this.camera.worldOffsetX;
+            this.lights[1].y = torch.y + torch.offset.y - this.camera.worldOffsetY;
+            this.lights[1].radius = Math.pow(this.torchFuel, 0.7) * 40;
+            this.lights[1].buffer = Math.pow(this.torchFuel, 0.7) * 10;
+            if (Random.boolean(10 * delta)) {
+                this.lights[1].radius += Random.float(-1, 1);
+            }
+        }
+        else {
+            this.lights[1].radius = 0;
+        }
+        // Update win light
+        this.lights[2].x = campfire.x - this.camera.worldOffsetX;
+        this.lights[2].y = campfire.y - this.camera.worldOffsetY;
+        this.lights[2].radius = this.winKeyRadius;
+        this.lights[2].buffer = 0;
+        this.updateLights();
+        // Check for win condition
+        if (campfire.hasConsumedGasoline && !this.hasWon) {
+            this.hasWon = true;
+            this.runScript(S.chain(S.call(function () {
+                _this.camera.setModeFocus(campfire.x, campfire.y);
+                _this.camera.setMovementSmooth(0, 0, 0);
+                player.controllable = false;
+                if (_this.containsWorldObject('monster')) {
+                    World.Actions.removeWorldObjectFromWorld(_this.getWorldObjectByName('monster'));
+                }
+                campfire.winEffect = true;
+                if (campfire.winRadius < campfire.visualFireBaseRadius) {
+                    campfire.visualFireRadiusBuffer = 100;
+                }
+            }), S.wait(4), S.doOverTime(3, function (t) {
+                _this.winKeyRadius = 400 * t;
+                campfire.timer.time -= 120 * global.script.delta;
+            }), S.call(function () {
+                var whiteScreen = new Texture(Main.width, Main.height);
+                Draw.brush.color = 0xFFFFFF;
+                Draw.fill(whiteScreen);
+                World.Actions.addWorldObjectToWorld(WorldObject.fromConfig({
+                    constructor: Sprite,
+                    texture: whiteScreen,
+                    layer: 'above',
+                    ignoreCamera: true,
+                }), _this);
+                World.Actions.addWorldObjectToWorld(WorldObject.fromConfig({
+                    constructor: SpriteText,
+                    font: Assets.fonts.DELUXE16,
+                    x: 61, y: 72,
+                    text: "your fire lives\nanother day...",
+                    style: { color: 0x000000, },
+                    ignoreCamera: true,
+                }), _this);
+            }), S.wait(2), S.fadeOut(3, 0xFFFFFF), S.wait(1), S.fadeOut(3), S.wait(1), S.call(function () {
+                global.game.loadMainMenu();
+            })));
+        }
+        // Check for loss condition
+        if (campfire.isOut && !this.hasLost && !this.hasWon) {
+            this.hasLost = true;
+            var smoke_2;
+            this.runScript(S.chain(S.call(function () {
+                _this.camera.setModeFocus(campfire.x, campfire.y);
+                _this.camera.setMovementSmooth(0, 0, 0);
+                player.controllable = false;
+                if (_this.containsWorldObject('monster')) {
+                    World.Actions.removeWorldObjectFromWorld(_this.getWorldObjectByName('monster'));
+                }
+            }), S.wait(2), S.call(function () {
+                campfire.fireSprite.alpha = 0;
+                smoke_2 = WorldObject.fromConfig({
+                    constructor: Sprite,
+                    x: campfire.x, y: campfire.y,
+                    texture: 'smoke',
+                    layer: 'above',
+                });
+                World.Actions.addWorldObjectToWorld(smoke_2, _this);
+            }), S.doOverTime(2, function (t) {
+                smoke_2.offset.x = 4 * Math.exp(-t) * Math.sin(4 * Math.PI * t);
+                smoke_2.offset.y = -32 * t;
+                smoke_2.alpha = 1 - t;
+            }), S.wait(1), S.call(function () {
+                var blackScreen = new Texture(Main.width, Main.height);
+                Draw.brush.color = 0x000000;
+                Draw.fill(blackScreen);
+                World.Actions.addWorldObjectToWorld(WorldObject.fromConfig({
+                    constructor: Sprite,
+                    texture: blackScreen,
+                    ignoreCamera: true,
+                }), _this);
+                World.Actions.addWorldObjectToWorld(WorldObject.fromConfig({
+                    name: 'losstext',
+                    constructor: SpriteText,
+                    font: Assets.fonts.DELUXE16,
+                    x: 30, y: 80,
+                    text: "you ran out of light...",
+                    style: { color: 0xFFFFFF, },
+                    ignoreCamera: true,
+                }), _this);
+            }), S.wait(2), S.call(function () {
+                var hint = Random.element([
+                    "chop faster",
+                    "[e]throw[/e] logs into the fire",
+                    "did you find the [e]door[/e]?",
+                    "did you find the [e]key[/e]?",
+                    "did you find the [e]torch[/e]?",
+                ]);
+                World.Actions.addWorldObjectToWorld(WorldObject.fromConfig({
+                    name: 'losshint',
+                    constructor: SpriteText,
+                    font: Assets.fonts.DELUXE16,
+                    x: 30, y: 160,
+                    text: hint,
+                    style: { color: 0x333333, alpha: 0 },
+                    ignoreCamera: true,
+                }), _this);
+            }), S.doOverTime(2, function (t) {
+                var losshint = _this.getWorldObjectByName('losshint');
+                losshint.x = Main.width / 2 - losshint.getTextWidth() / 2;
+                losshint.style.alpha = t;
+            }), S.wait(2), S.fadeOut(3), S.wait(1), S.call(function () {
+                global.game.loadMainMenu();
+            })));
+        }
+    };
+    FirelitWorld.prototype.renderLayer = function (layer, layerTexture, screen) {
+        var e_41, _a;
+        layerTexture.clear();
+        layer.sort();
+        try {
+            for (var _b = __values(layer.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var worldObject = _c.value;
+                if (worldObject.visible) {
+                    worldObject.fullRender(layerTexture);
+                }
+            }
+        }
+        catch (e_41_1) { e_41 = { error: e_41_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_41) throw e_41.error; }
+        }
+        var filters = [];
+        if (layer.name === 'bg' || layer.name === 'main' || layer.name === 'fg') {
+            filters.push(this.firelightFilter);
+        }
+        screen.render(layerTexture, {
+            filters: filters
+        });
+    };
+    FirelitWorld.prototype.updateLights = function () {
+        for (var i = 0; i < this.lights.length; i++) {
+            this.firelightFilter.setUniform("light_" + i + "_x", this.lights[i].x);
+            this.firelightFilter.setUniform("light_" + i + "_y", this.lights[i].y);
+            this.firelightFilter.setUniform("light_" + i + "_radius", this.lights[i].radius);
+            this.firelightFilter.setUniform("light_" + i + "_buffer", this.lights[i].buffer);
+        }
+    };
+    return FirelitWorld;
+}(World));
+var Item;
+(function (Item) {
+    var Type;
+    (function (Type) {
+        Type["LOG"] = "log";
+        Type["AXE"] = "axe";
+        Type["KEY"] = "key";
+        Type["TORCH"] = "torch";
+        Type["GASOLINE"] = "gasoline";
+    })(Type = Item.Type || (Item.Type = {}));
+})(Item || (Item = {}));
+var ItemGround = /** @class */ (function (_super) {
+    __extends(ItemGround, _super);
+    function ItemGround(config) {
+        var _this = _super.call(this, config, {
+            texture: config.type,
+            bounds: { x: 0, y: 0, width: 0, height: 0 },
+            bounce: 1,
+        }) || this;
+        _this.friction = 20000;
+        _this.zGravity = 100;
+        _this.type = config.type;
+        _this.vz = 0;
+        _this.beingConsumed = false;
+        return _this;
+    }
+    Object.defineProperty(ItemGround.prototype, "consumable", {
+        get: function () {
+            return this.type === Item.Type.LOG || this.type === Item.Type.GASOLINE;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    ItemGround.prototype.update = function (delta) {
+        this.updateMovement(delta);
+        _super.prototype.update.call(this, delta);
+    };
+    ItemGround.prototype.updateMovement = function (delta) {
+        this.offset.y = Math.min(0, this.offset.y + this.vz * delta);
+        this.vz += this.zGravity * delta;
+        if (this.offset.y == 0) {
+            this.vz = 0;
+            if (this.vx > 0) {
+                this.vx = Math.max(0, this.vx - this.friction * delta);
+            }
+            else if (this.vx < 0) {
+                this.vx = Math.min(0, this.vx + this.friction * delta);
+            }
+            if (this.vy > 0) {
+                this.vy = Math.max(0, this.vy - this.friction * delta);
+            }
+            else if (this.vy < 0) {
+                this.vy = Math.min(0, this.vy + this.friction * delta);
+            }
+        }
+    };
+    ItemGround.prototype.asHandItem = function (x, y, layer) {
+        return WorldObject.fromConfig({
+            constructor: ItemHand,
+            layer: layer,
+            offset: { x: x, y: y },
+            type: this.type,
+        });
+    };
+    return ItemGround;
+}(Sprite));
+var ItemHand = /** @class */ (function (_super) {
+    __extends(ItemHand, _super);
+    function ItemHand(config) {
+        var _this = _super.call(this, config, {
+            texture: config.type,
+        }) || this;
+        _this.type = config.type;
+        return _this;
+    }
+    Object.defineProperty(ItemHand.prototype, "cutsTrees", {
+        get: function () {
+            return this.type === Item.Type.AXE;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ItemHand.prototype, "hurtsMonster", {
+        get: function () {
+            return this.type === Item.Type.AXE || this.type === Item.Type.LOG;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    ItemHand.prototype.asGroundItem = function (x, y, layer, physicsGroup) {
+        return WorldObject.fromConfig({
+            constructor: ItemGround,
+            x: x, y: y,
+            layer: layer,
+            physicsGroup: physicsGroup,
+            type: this.type,
+        });
+    };
+    return ItemHand;
+}(Sprite));
+var ItemName = /** @class */ (function (_super) {
+    __extends(ItemName, _super);
+    function ItemName(config) {
+        var _this = _super.call(this, config) || this;
+        _this.life = 1;
+        _this.style.color = 0x555555;
+        _this.lifetimer = new Timer(_this.life);
+        return _this;
+    }
+    ItemName.prototype.update = function (delta) {
+        _super.prototype.update.call(this, delta);
+        this.localy -= 16 * delta;
+        this.style.alpha = 1 - Math.pow(this.lifetimer.progress, 2);
+        this.lifetimer.update(delta);
+        if (this.lifetimer.done) {
+            World.Actions.removeWorldObjectFromWorld(this);
+        }
+    };
+    return ItemName;
+}(SpriteText));
 /// <reference path="../lectvs/menu.ts" />
+var IntroMenu = /** @class */ (function (_super) {
+    __extends(IntroMenu, _super);
+    function IntroMenu(menuSystem) {
+        var _this = _super.call(this, menuSystem, {
+            backgroundColor: 0x000000,
+        }, [
+            new SpriteText({
+                name: 'introtext',
+                x: 20, y: 80, text: "- a game by hayden mccraw -",
+                font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+            }),
+        ]) || this;
+        var introtext = _this.getWorldObjectByName('introtext');
+        introtext.x = Main.width / 2 - introtext.getTextWidth() / 2;
+        introtext.y = Main.height / 2 - introtext.getTextHeight() / 2;
+        _this.runScript(S.chain(S.wait(1.5), S.call(function () {
+            introtext.setText("- made in 48 hours\n  for ludum dare 46 -");
+            introtext.x = Main.width / 2 - introtext.getTextWidth() / 2;
+            introtext.y = Main.height / 2 - introtext.getTextHeight() / 2;
+        }), S.wait(1.5), S.call(function () { menuSystem.loadMenu(MainMenu); })));
+        return _this;
+    }
+    return IntroMenu;
+}(Menu));
 var MainMenu = /** @class */ (function (_super) {
     __extends(MainMenu, _super);
     function MainMenu(menuSystem) {
         return _super.call(this, menuSystem, {
             backgroundColor: 0x000000,
         }, [
+            new SpriteText({
+                x: 20, y: 20, text: "- a night in the dark -",
+                font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+            }),
             new MenuTextButton({
-                x: 20, y: 20, text: "start game",
+                x: 20, y: 50, text: "start game",
                 font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
                 onClick: function () { return menuSystem.game.startGame(); },
             }),
             new MenuTextButton({
-                x: 20, y: 35, text: "options",
+                x: 20, y: 68, text: "controls",
                 font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                onClick: function () { return menuSystem.loadMenu(OptionsMenu); },
+                onClick: function () { return menuSystem.loadMenu(ControlsMenu); },
             }),
         ]) || this;
     }
     return MainMenu;
 }(Menu));
-var OptionsMenu = /** @class */ (function (_super) {
-    __extends(OptionsMenu, _super);
-    function OptionsMenu(menuSystem) {
-        return _super.call(this, menuSystem, {
+var ControlsMenu = /** @class */ (function (_super) {
+    __extends(ControlsMenu, _super);
+    function ControlsMenu(menuSystem) {
+        var _this = _super.call(this, menuSystem, {
             backgroundColor: 0x000000,
+            physicsGroups: { 'items': {} }
         }, [
+            new SpriteText({
+                x: 20, y: 15, text: "controls",
+                font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+            }),
+            new SpriteText({
+                x: 20, y: 42, text: "arrows <^> - move\n\n" +
+                    "c - pickup\n" +
+                    "    drop\n" +
+                    "    throw\n\n" +
+                    "x - attack",
+                font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+            }),
+            new Player({
+                name: 'player_move',
+                x: 180, y: 53,
+                effects: { outline: { color: 0xFFFFFF } }
+            }),
+            new Player({
+                name: 'player_pickup',
+                x: 140, y: 90,
+                effects: { outline: { color: 0xFFFFFF } }
+            }),
+            new ItemGround({
+                name: 'log',
+                x: 140, y: 90,
+                type: Item.Type.LOG,
+            }),
+            new Player({
+                name: 'player_attack',
+                x: 140, y: 154,
+                effects: { outline: { color: 0xFFFFFF } }
+            }),
+            new ItemGround({
+                name: 'axe',
+                x: 140, y: 156,
+                type: Item.Type.AXE,
+                effects: { outline: { color: 0xFFFFFF } }
+            }),
+            new Tree({
+                name: 'tree',
+                x: 160, y: 156,
+                effects: { outline: { color: 0xFFFFFF } }
+            }),
             new MenuTextButton({
-                x: 20, y: 20, text: "back",
+                x: 20, y: 160, text: "back",
                 font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
                 onClick: function () { return menuSystem.back(); },
             }),
         ]) || this;
+        var player_move = _this.getWorldObjectByName('player_move');
+        player_move.test = true;
+        var player_pickup = _this.getWorldObjectByName('player_pickup');
+        player_pickup.test = true;
+        var player_attack = _this.getWorldObjectByName('player_attack');
+        player_attack.test = true;
+        var tree = _this.getWorldObjectByName('tree');
+        tree.setTexture('blacktree');
+        _this.runScript(S.simul(S.loopFor(Infinity, S.chain(S.doOverTime(0.8, function (t) { player_move.controller.right = true; }), S.doOverTime(0.8, function (t) { player_move.controller.left = true; }))), S.loopFor(Infinity, S.chain(S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.simul(S.doOverTime(1.5, function (t) { player_pickup.controller.right = true; }), S.chain(S.wait(0.2), S.call(function () { player_pickup.controller.pickupDropItem = true; }))), S.call(function () { player_pickup.flipX = true; }), S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.simul(S.doOverTime(1.5, function (t) { player_pickup.controller.left = true; }), S.chain(S.wait(0.2), S.call(function () { player_pickup.controller.pickupDropItem = true; }))), S.call(function () { player_pickup.flipX = false; }))), S.loopFor(Infinity, S.chain(S.call(function () {
+            var log = _this.getWorldObjectByName('log');
+            log.effects.outline.enabled = true;
+            log.effects.outline.color = 0xFFFFFF;
+        }), S.call(function () {
+            var axe = _this.getWorldObjectByName('axe');
+            axe.effects.outline.enabled = true;
+            axe.effects.outline.color = 0xFFFFFF;
+        }), S.wait(0.01))), S.chain(S.call(function () { player_attack.controller.pickupDropItem = true; }), S.loopFor(Infinity, S.chain(S.wait(0.5), S.call(function () { player_attack.controller.useItem = true; }), S.call(function () { tree.hp = 3; }))))));
+        return _this;
     }
-    return OptionsMenu;
+    return ControlsMenu;
 }(Menu));
 var PauseMenu = /** @class */ (function (_super) {
     __extends(PauseMenu, _super);
@@ -5872,8 +6724,12 @@ var PauseMenu = /** @class */ (function (_super) {
         return _super.call(this, menuSystem, {
             backgroundColor: 0x000000,
         }, [
+            new SpriteText({
+                x: 20, y: 20, text: "- paused -",
+                font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+            }),
             new MenuTextButton({
-                x: 20, y: 20, text: "resume",
+                x: 20, y: 50, text: "resume",
                 font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
                 onClick: function () { return menuSystem.game.unpauseGame(); },
             }),
@@ -5897,7 +6753,7 @@ var Main = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(Main, "backgroundColor", {
-        get: function () { return 0x061639; },
+        get: function () { return 0x000000; },
         enumerable: true,
         configurable: true
     });
@@ -5933,6 +6789,8 @@ var Main = /** @class */ (function () {
             'right': ['ArrowRight'],
             'up': ['ArrowUp'],
             'down': ['ArrowDown'],
+            'useItem': ['x'],
+            'pickupDropItem': ['c'],
             'interact': ['e'],
             'advanceDialog': ['MouseLeft', 'e', ' '],
             'pause': ['Escape', 'Backspace'],
@@ -5958,7 +6816,7 @@ var Main = /** @class */ (function () {
         window.addEventListener("mouseup", function (event) { return Input.handleMouseUpEvent(event); }, false);
         window.addEventListener("contextmenu", function (event) { return event.preventDefault(); }, false);
         this.game = new Game({
-            mainMenuClass: MainMenu,
+            mainMenuClass: IntroMenu,
             pauseMenuClass: PauseMenu,
             theaterClass: Theater,
             theaterConfig: {
@@ -5975,7 +6833,7 @@ var Main = /** @class */ (function () {
                 dialogBox: {
                     constructor: DialogBox,
                     x: Main.width / 2, y: Main.height - 32,
-                    texture: 'dialogbox',
+                    texture: 'none',
                     spriteTextFont: Assets.fonts.DELUXE16,
                     textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
                     textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
@@ -6018,25 +6876,641 @@ var party = {
                 x: Main.width / 2 - 8, y: Main.height / 2 - 8,
                 texture: 'debug',
             },
-            stage: 'game',
+            stage: 'none',
         },
     }
 };
+var Monster = /** @class */ (function (_super) {
+    __extends(Monster, _super);
+    function Monster(config) {
+        var _this = _super.call(this, config, {
+            bounds: { x: -4, y: -2, width: 8, height: 4 },
+            animations: [
+                Animations.fromTextureList({ name: 'idle_holding', texturePrefix: 'monster_', textures: [0, 1, 2], frameRate: 4, count: -1 }),
+                Animations.fromTextureList({ name: 'walk_holding', texturePrefix: 'monster_', textures: [4, 5, 6, 7], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'swing', texturePrefix: 'monster_', textures: [9, 9, 9, 8], frameRate: 8, count: 1, forceRequired: true }),
+                Animations.fromTextureList({ name: 'hurt', texturePrefix: 'monster_', textures: [12, 12, 12, 12, 12, 12, 12, 12,
+                        13, 14, 15, 14, 13, 14, 15, 14], frameRate: 8, count: 1, forceRequired: true }),
+            ]
+        }) || this;
+        _this.speed = 10;
+        _this.attackDistance = 16;
+        _this.swingTime = 0.3;
+        _this.itemOffsetY = 20;
+        _this.itemFullSwingOffsetX = 10;
+        _this.direction = Direction2D.RIGHT;
+        _this.attackdx = 0;
+        _this.attackdy = 0;
+        _this.heldItem = WorldObject.fromConfig({
+            constructor: ItemHand,
+            type: Item.Type.AXE,
+            offset: { x: 0, y: -_this.itemOffsetY },
+            layer: 'main',
+        });
+        World.Actions.addChildToParent(_this.heldItem, _this);
+        return _this;
+    }
+    Object.defineProperty(Monster.prototype, "immobile", {
+        get: function () { return this.stunned || (this.swingScript && this.swingScript.running); },
+        enumerable: true,
+        configurable: true
+    });
+    Monster.prototype.onRemove = function () {
+        if (this.swingScript)
+            this.swingScript.done = true;
+    };
+    Monster.prototype.update = function (delta) {
+        var player = this.world.getWorldObjectByName('player');
+        var haxis = 0;
+        var vaxis = 0;
+        if (!this.immobile) {
+            haxis = player.x - this.x;
+            vaxis = player.y - this.y;
+            if (-2 < haxis && haxis < 2)
+                haxis = 0;
+            if (-2 < vaxis && vaxis < 2)
+                vaxis = 0;
+        }
+        this.updateMovement(haxis, vaxis);
+        _super.prototype.update.call(this, delta);
+        this.attackdx = player.x - this.x;
+        this.attackdy = player.y - this.y;
+        var mag = M.magnitude(this.attackdx, this.attackdy);
+        if (mag !== 0) {
+            this.attackdx /= mag;
+            this.attackdy /= mag;
+        }
+        if (this.heldItem) {
+            this.heldItem.flipX = this.flipX;
+        }
+        this.handleAttacking();
+        // Handle animation.
+        var anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'walk';
+        var holding = this.heldItem ? 'holding' : 'empty';
+        //let anim_dir = this.direction.v == Direction.UP ? 'up' : (this.direction.h == Direction.NONE ? 'down' : 'side');
+        this.playAnimation(anim_state + "_" + holding);
+    };
+    Monster.prototype.render = function (screen) {
+        _super.prototype.render.call(this, screen);
+        if (this.debugBounds) {
+            var shb = this.getSwingHitbox();
+            Draw.brush.color = 0x00FF00;
+            Draw.rectangleOutline(screen, shb.x, shb.y, shb.width, shb.height);
+        }
+    };
+    Monster.prototype.hit = function () {
+        var _this = this;
+        this.playAnimation('hurt', 0, true);
+        this.world.runScript(S.chain(S.call(function () {
+            _this.stunned = true;
+            if (_this.swingScript) {
+                _this.swingScript.done = true;
+            }
+            _this.heldItem.visible = false;
+        }), S.doOverTime(0.5, function (t) {
+            _this.offset.y = -16 * Math.exp(-4 * t) * Math.abs(Math.sin(4 * Math.PI * t * t));
+        }), S.wait(1.5), S.call(function () {
+            _this.alpha = 1;
+            _this.stunned = false;
+            _this.heldItem.visible = true;
+        })));
+    };
+    Monster.prototype.updateMovement = function (haxis, vaxis) {
+        if (this.swingScript && this.swingScript.running) {
+            this.vx = 0;
+            this.vy = 0;
+            return;
+        }
+        var player = this.world.getWorldObjectByName('player');
+        if (player.x < this.x) {
+            this.vx = -this.speed;
+        }
+        if (haxis < 0) {
+            this.vx = -this.speed;
+            this.direction.h = Direction.LEFT;
+            if (vaxis == 0)
+                this.direction.v = Direction.NONE;
+            this.flipX = true;
+        }
+        else if (haxis > 0) {
+            this.vx = this.speed;
+            this.direction.h = Direction.RIGHT;
+            if (vaxis == 0)
+                this.direction.v = Direction.NONE;
+            this.flipX = false;
+        }
+        else {
+            this.vx = 0;
+        }
+        if (vaxis < 0) {
+            this.vy = -this.speed;
+            this.direction.v = Direction.UP;
+            if (haxis == 0)
+                this.direction.h = Direction.NONE;
+        }
+        else if (vaxis > 0) {
+            this.vy = this.speed;
+            this.direction.v = Direction.DOWN;
+            if (haxis == 0)
+                this.direction.h = Direction.NONE;
+        }
+        else {
+            this.vy = 0;
+        }
+    };
+    Monster.prototype.handleAttacking = function () {
+        if (this.immobile)
+            return;
+        var player = this.world.getWorldObjectByName('player');
+        if (M.distance(this.x, this.y, player.x, player.y) < this.attackDistance) {
+            this.swingItem();
+        }
+    };
+    Monster.prototype.swingItem = function () {
+        var _this = this;
+        if (!this.swingScript || this.swingScript.done) {
+            var swingHitbox_1 = this.getSwingHitbox();
+            this.swingScript = this.world.runScript(S.chain(S.wait(0.3), S.simul(S.doOverTime(this.swingTime, function (t) {
+                var angle = (_this.flipX ? -1 : 1) * 90 * Math.pow(Math.sin(Math.PI * Math.pow(t, 0.5)), 0.1);
+                _this.heldItem.offset.x = _this.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
+                _this.heldItem.offset.y = _this.itemOffsetY * -Math.cos(M.degToRad(angle));
+                _this.heldItem.angle = angle;
+                if (t == 1)
+                    _this.heldItem.angle = 0;
+            }), S.chain(S.playAnimation(this, 'swing', 0, true, false), S.wait(this.swingTime * 0.25), S.call(function () {
+                _this.hitPlayer(swingHitbox_1);
+            }))), S.wait(2)));
+        }
+    };
+    Monster.prototype.hitPlayer = function (swingHitbox) {
+        if (!this.world)
+            return;
+        var player = this.world.getWorldObjectByName('player');
+        if (player.isOverlappingRect(swingHitbox)) {
+            player.hit();
+        }
+    };
+    Monster.prototype.getSwingHitbox = function () {
+        return {
+            x: this.x - 8 + this.attackdx * 8,
+            y: this.y - 8 + this.attackdy * 8,
+            width: 16,
+            height: 16
+        };
+    };
+    return Monster;
+}(Sprite));
+var Player = /** @class */ (function (_super) {
+    __extends(Player, _super);
+    function Player(config) {
+        var _this = _super.call(this, config, {
+            bounds: { x: -4, y: -2, width: 8, height: 4 },
+            animations: [
+                Animations.fromTextureList({ name: 'idle_empty', texturePrefix: 'player_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'run_empty', texturePrefix: 'player_', textures: [4, 5, 6, 7], frameRate: 16, count: -1 }),
+                Animations.fromTextureList({ name: 'idle_holding', texturePrefix: 'player_', textures: [8, 9, 10], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'run_holding', texturePrefix: 'player_', textures: [12, 13, 14, 15], frameRate: 16, count: -1 }),
+                Animations.fromTextureList({ name: 'throw', texturePrefix: 'player_', textures: [16, 17, 17, 17, 17], frameRate: 24, count: 1, forceRequired: true }),
+                Animations.fromTextureList({ name: 'swing', texturePrefix: 'player_', textures: [16, 17, 17, 17, 16], frameRate: 24, count: 1, forceRequired: true }),
+                Animations.fromTextureList({ name: 'hurt', texturePrefix: 'player_', textures: [20, 20, 20, 20, 20, 20, 20, 20,
+                        21, 22, 23, 22, 21, 22, 23, 22], frameRate: 16, count: 1, forceRequired: true }),
+                Animations.fromTextureList({ name: 'intro_idle', texturePrefix: 'player_', textures: [0, 1, 2], frameRate: 2, count: 3, forceRequired: true }),
+            ]
+        }) || this;
+        _this.speed = 40;
+        _this.throwSpeed = 80;
+        _this.hurtDropSpeed = 40;
+        _this.swingTime = 0.15;
+        _this.itemOffsetY = 20;
+        _this.itemFullSwingOffsetX = 10;
+        _this.controllerSchema = {
+            left: function () { return Input.isDown('left'); },
+            right: function () { return Input.isDown('right'); },
+            up: function () { return Input.isDown('up'); },
+            down: function () { return Input.isDown('down'); },
+            useItem: function () { return Input.justDown('useItem'); },
+            pickupDropItem: function () { return Input.justDown('pickupDropItem'); },
+        };
+        _this.direction = Direction2D.RIGHT;
+        _this.test = false;
+        return _this;
+    }
+    Object.defineProperty(Player.prototype, "swinging", {
+        get: function () { return this.swingScript && this.swingScript.running; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Player.prototype, "heldItemName", {
+        get: function () { return this.heldItem ? this.heldItem.name : undefined; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Player.prototype, "moving", {
+        get: function () { return Math.abs(this.vx) > 1 || Math.abs(this.vy) > 1; },
+        enumerable: true,
+        configurable: true
+    });
+    Player.prototype.update = function (delta) {
+        var haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
+        var vaxis = (this.controller.down ? 1 : 0) - (this.controller.up ? 1 : 0);
+        this.updateMovement(haxis, vaxis);
+        _super.prototype.update.call(this, delta);
+        if (this.heldItem) {
+            this.heldItem.flipX = this.flipX;
+        }
+        if (this.controller.useItem) {
+            this.handleItemUse();
+        }
+        this.handleItemPickupDrop();
+        // Handle animation.
+        var anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'run';
+        var holding = this.heldItem ? 'holding' : 'empty';
+        //let anim_dir = this.direction.v == Direction.UP ? 'up' : (this.direction.h == Direction.NONE ? 'down' : 'side');
+        this.playAnimation(anim_state + "_" + holding);
+    };
+    Player.prototype.render = function (screen) {
+        _super.prototype.render.call(this, screen);
+        if (this.debugBounds) {
+            var shb = this.getSwingHitbox();
+            Draw.brush.color = 0x00FF00;
+            Draw.rectangleOutline(screen, shb.x, shb.y, shb.width, shb.height);
+        }
+    };
+    Player.prototype.hit = function () {
+        var _this = this;
+        var campfire = this.world.getWorldObjectByName('campfire');
+        campfire.hit();
+        this.playAnimation('hurt', 0, true);
+        if (this.swingScript)
+            this.swingScript.done = true;
+        if (this.heldItem)
+            this.dropHeldItem();
+        this.world.runScript(S.chain(S.call(function () {
+            _this.controllable = false;
+        }), S.doOverTime(0.5, function (t) {
+            _this.offset.y = -16 * Math.exp(-4 * t) * Math.abs(Math.sin(4 * Math.PI * t * t));
+        }), S.wait(0.5), S.call(function () {
+            _this.alpha = 1;
+            _this.controllable = true;
+        })));
+    };
+    Player.prototype.updateMovement = function (haxis, vaxis) {
+        if (haxis < 0) {
+            this.vx = -this.speed;
+            this.direction.h = Direction.LEFT;
+            if (vaxis == 0)
+                this.direction.v = Direction.NONE;
+            this.flipX = true;
+        }
+        else if (haxis > 0) {
+            this.vx = this.speed;
+            this.direction.h = Direction.RIGHT;
+            if (vaxis == 0)
+                this.direction.v = Direction.NONE;
+            this.flipX = false;
+        }
+        else {
+            this.vx = 0;
+        }
+        if (vaxis < 0) {
+            this.vy = -this.speed;
+            this.direction.v = Direction.UP;
+            if (haxis == 0)
+                this.direction.h = Direction.NONE;
+        }
+        else if (vaxis > 0) {
+            this.vy = this.speed;
+            this.direction.v = Direction.DOWN;
+            if (haxis == 0)
+                this.direction.h = Direction.NONE;
+        }
+        else {
+            this.vy = 0;
+        }
+    };
+    Player.prototype.handleItemPickupDrop = function () {
+        var e_42, _a;
+        var overlappingItemDistance = Infinity;
+        var overlappingItem;
+        try {
+            for (var _b = __values(this.world.getWorldObjectsByType(ItemGround)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var item = _c.value;
+                var distance = M.distance(this.x, this.y, item.x, item.y);
+                if (distance < 16 && distance < overlappingItemDistance && !item.beingConsumed) {
+                    overlappingItem = item;
+                    overlappingItemDistance = distance;
+                }
+                if (!this.test)
+                    item.effects.outline.enabled = false;
+            }
+        }
+        catch (e_42_1) { e_42 = { error: e_42_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_42) throw e_42.error; }
+        }
+        if (overlappingItem) {
+            overlappingItem.effects.outline.color = 0xFFFF00;
+            overlappingItem.effects.outline.enabled = true;
+            if (this.controller.pickupDropItem && !this.swinging) {
+                if (this.heldItem) {
+                    this.dropHeldItem();
+                    if (!this.moving)
+                        this.pickupItem(overlappingItem);
+                }
+                else {
+                    this.pickupItem(overlappingItem);
+                }
+            }
+            return;
+        }
+        if (this.heldItem) {
+            if (this.controller.pickupDropItem && !this.swinging) {
+                this.dropHeldItem();
+            }
+            return;
+        }
+    };
+    Player.prototype.handleItemUse = function () {
+        if (!this.heldItem)
+            return;
+        if (this.heldItem.type === Item.Type.KEY)
+            return;
+        this.swingItem();
+    };
+    Player.prototype.dropHeldItem = function () {
+        var droppedItem = this.heldItem.asGroundItem(this.x, this.y, this.layer, 'items');
+        droppedItem.flipX = this.heldItem.flipX;
+        World.Actions.removeChildFromParent(this.heldItem);
+        World.Actions.addWorldObjectToWorld(droppedItem, this.world);
+        World.Actions.setName(droppedItem, this.heldItem.name);
+        this.heldItem = null;
+        if (this.getCurrentAnimationName() === 'hurt') {
+            // toss randomly
+            droppedItem.offset.x = 0;
+            droppedItem.offset.y = -this.itemOffsetY;
+            var v = Random.onCircle(this.hurtDropSpeed);
+            droppedItem.vx = v.x;
+            droppedItem.vy = v.y;
+            return;
+        }
+        if (this.moving) {
+            // throw instead of drop
+            droppedItem.offset.x = 0;
+            droppedItem.offset.y = -this.itemOffsetY;
+            droppedItem.vx = this.throwSpeed * Math.sign(this.vx);
+            droppedItem.vy = this.throwSpeed * Math.sign(this.vy);
+            this.playAnimation('throw', 0, true);
+            return;
+        }
+    };
+    Player.prototype.removeHeldItem = function () {
+        World.Actions.removeChildFromParent(this.heldItem);
+        this.heldItem = null;
+    };
+    Player.prototype.pickupItem = function (item) {
+        this.heldItem = item.asHandItem(0, -this.itemOffsetY, this.layer);
+        World.Actions.addChildToParent(this.heldItem, this);
+        World.Actions.removeWorldObjectFromWorld(item);
+        World.Actions.setName(this.heldItem, item.name);
+        if (this.world.getLayerByName('above')) {
+            var itemName = new ItemName({ text: item.type, font: Assets.fonts.DELUXE16, layer: 'above' });
+            itemName.x = -itemName.getTextWidth() / 2;
+            itemName.y = -32;
+            World.Actions.addChildToParent(itemName, this);
+        }
+    };
+    Player.prototype.swingItem = function () {
+        var _this = this;
+        if (!this.swingScript || this.swingScript.done) {
+            this.swingScript = this.world.runScript(S.chain(S.simul(S.doOverTime(this.swingTime, function (t) {
+                if (!_this.heldItem)
+                    return;
+                var angle = (_this.flipX ? -1 : 1) * 90 * Math.sin(Math.PI * Math.pow(t, 0.5));
+                _this.heldItem.offset.x = _this.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
+                _this.heldItem.offset.y = _this.itemOffsetY * -Math.cos(M.degToRad(angle));
+                _this.heldItem.angle = angle;
+            }), S.chain(S.call(function () { return _this.playAnimation('swing', 0, true); }), S.wait(this.swingTime * 0.25), S.call(function () {
+                _this.hitStuff(_this.heldItem);
+            })))));
+        }
+    };
+    Player.prototype.hitStuff = function (item) {
+        var e_43, _a;
+        var swingHitbox = this.getSwingHitbox();
+        try {
+            for (var _b = __values(this.world.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var obj = _c.value;
+                if (item.cutsTrees && obj instanceof Tree && obj.isOverlappingRect(swingHitbox)) {
+                    obj.hit();
+                }
+                if (item.hurtsMonster && obj instanceof Monster && obj.isOverlappingRect(swingHitbox)) {
+                    obj.hit();
+                }
+            }
+        }
+        catch (e_43_1) { e_43 = { error: e_43_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_43) throw e_43.error; }
+        }
+    };
+    Player.prototype.getSwingHitbox = function () {
+        return {
+            x: this.x - 10 + (this.flipX ? -1 : 1) * 10,
+            y: this.y - 8 - 18,
+            width: 20,
+            height: 36
+        };
+    };
+    return Player;
+}(Sprite));
+var Tree = /** @class */ (function (_super) {
+    __extends(Tree, _super);
+    function Tree(config) {
+        var _this = _super.call(this, config, {
+            texture: Random.boolean() ? 'blacktree' : 'whitetree',
+            flipX: Random.boolean(),
+            bounds: { x: -4, y: -2, width: 8, height: 3 },
+        }) || this;
+        _this.hp = 3;
+        _this.spawnsTorch = false;
+        return _this;
+    }
+    Object.defineProperty(Tree.prototype, "alive", {
+        get: function () { return this.hp > 0; },
+        enumerable: true,
+        configurable: true
+    });
+    Tree.prototype.hit = function () {
+        var _this = this;
+        if (!this.alive)
+            return;
+        if (this.hitScript) {
+            this.hitScript.done = true;
+        }
+        this.hp--;
+        if (this.alive) {
+            this.hitScript = this.world.runScript(S.doOverTime(0.5, function (t) { _this.angle = 30 * Math.exp(5 * -t) * Math.cos(5 * t); }));
+        }
+        else {
+            this.hitScript = this.world.runScript(S.chain(S.doOverTime(0.5, function (t) { _this.angle = 30 * Math.exp(5 * -t) * Math.cos(5 * t); }), S.call(function () {
+                _this.colliding = false;
+            }), S.doOverTime(1, function (t) { _this.angle = 90 * (t + t * t) / 2; }), S.call(function () {
+                _this.spawnLog();
+                if (_this.spawnsTorch)
+                    _this.spawnTorch();
+                World.Actions.removeWorldObjectFromWorld(_this);
+            })));
+        }
+        //this.world.runScript(screenShake(this.world));
+    };
+    Tree.prototype.spawnLog = function () {
+        var log = WorldObject.fromConfig({
+            constructor: ItemGround,
+            x: this.x + 16, y: this.y,
+            layer: 'main',
+            offset: { x: 0, y: -8 },
+            physicsGroup: 'items',
+            type: Item.Type.LOG,
+        });
+        World.Actions.addWorldObjectToWorld(log, this.world);
+    };
+    Tree.prototype.spawnTorch = function () {
+        var log = WorldObject.fromConfig({
+            name: 'torch',
+            constructor: ItemGround,
+            x: this.x, y: this.y,
+            layer: 'main',
+            offset: { x: 0, y: -12 },
+            physicsGroup: 'items',
+            type: Item.Type.TORCH,
+        });
+        World.Actions.addWorldObjectToWorld(log, this.world);
+    };
+    return Tree;
+}(Sprite));
 /// <reference path="base.ts" />
+/// <reference path="campfire.ts" />
+/// <reference path="door.ts" />
+/// <reference path="firelitWorld.ts" />
+/// <reference path="item.ts" />
 /// <reference path="main.ts" />
+/// <reference path="monster.ts" />
+/// <reference path="player.ts" />
+/// <reference path="tree.ts" />
 var stages = {
     'game': {
+        constructor: FirelitWorld,
         parent: BASE_STAGE,
         camera: {
-            bounds: { left: 0, top: 0, right: Main.width, bottom: Main.height },
-            mode: Camera.Mode.FOCUS(Main.width / 2, Main.height / 2),
+            movement: { type: 'smooth', speed: 0, deadZoneWidth: 0, deadZoneHeight: 0 },
+            mode: Camera.Mode.FOLLOW('player', 0, -8),
         },
         entryPoints: {
             'main': { x: Main.width / 2, y: Main.height / 2 },
         },
-        worldObjects: [
+        worldObjects: __spread([
             WORLD_BOUNDS(0, 0, Main.width, Main.height),
-        ]
+            {
+                constructor: Tilemap,
+                x: 0, y: 0,
+                tilemap: 'world',
+                tilemapLayer: 1,
+                layer: 'bg',
+            },
+            {
+                constructor: Tilemap,
+                x: 0, y: 0,
+                tilemap: 'world',
+                tilemapLayer: 0,
+                layer: 'fg',
+                physicsGroup: 'walls',
+            },
+            {
+                name: 'ground',
+                constructor: Sprite,
+                x: 400, y: 400,
+                texture: 'ground',
+                layer: 'bg',
+            },
+            {
+                name: 'campfire',
+                constructor: Campfire,
+                x: 400, y: 400,
+                layer: 'main',
+            },
+            {
+                name: 'player',
+                constructor: Player,
+                controllable: true,
+                x: 387, y: 394,
+                flipX: false,
+                layer: 'main',
+                physicsGroup: 'player',
+            },
+            {
+                name: 'door',
+                constructor: Door,
+                x: 400, y: 240,
+                layer: 'main',
+                physicsGroup: 'props',
+            }
+        ], [
+            { x: 424, y: 296 },
+            { x: 344, y: 344 },
+            { x: 392, y: 328 },
+            { x: 472, y: 360 },
+            { x: 312, y: 408 },
+            { x: 504, y: 408 },
+            { x: 328, y: 440 },
+            { x: 472, y: 440 },
+            { x: 376, y: 472 },
+            { x: 408, y: 488 },
+            { x: 584, y: 408 },
+        ].map(function (pos) { return ({
+            constructor: Tree,
+            x: pos.x, y: pos.y,
+            layer: 'main',
+            physicsGroup: 'props',
+            immovable: true,
+        }); }), [
+            {
+                name: 'start_log',
+                constructor: ItemGround,
+                type: Item.Type.LOG,
+                x: 425, y: 408,
+                layer: 'main',
+                physicsGroup: 'items',
+            },
+            {
+                constructor: ItemGround,
+                type: Item.Type.AXE,
+                x: 447, y: 436,
+                angle: -90,
+                layer: 'main',
+                physicsGroup: 'items',
+            },
+            {
+                constructor: ItemGround,
+                type: Item.Type.KEY,
+                x: 688, y: 400,
+                layer: 'main',
+                physicsGroup: 'items',
+            },
+            {
+                name: 'gasoline',
+                constructor: ItemGround,
+                type: Item.Type.GASOLINE,
+                x: 528, y: 84,
+                layer: 'main',
+                physicsGroup: 'items',
+            },
+        ])
     },
 };
 /// <reference path="./main.ts"/>
@@ -6055,8 +7529,90 @@ var S;
     S.storyboard = {
         'start': {
             type: 'start',
-            transitions: []
+            transitions: [{ type: 'instant', toNode: 'intro' }]
         },
+        'intro': {
+            type: 'cutscene',
+            script: function () {
+                var SKIP, player, campfire, startLog;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            SKIP = Debug.DEBUG && true;
+                            player = global.getWorldObject('player');
+                            campfire = global.getWorldObject('campfire');
+                            startLog = global.getWorldObject('start_log');
+                            campfire.introEffect = true;
+                            global.script.theater.currentWorld.camera.setModeFocus(campfire.x, campfire.y);
+                            if (!!SKIP) return [3 /*break*/, 5];
+                            return [4 /*yield*/, S.wait(2)];
+                        case 1:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Don't let the fire burn out...")];
+                        case 2:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("It's the only light you have in this world.")];
+                        case 3:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(0.5)];
+                        case 4:
+                            _a.sent();
+                            _a.label = 5;
+                        case 5:
+                            if (SKIP)
+                                Debug.SKIP_RATE = 100;
+                            return [4 /*yield*/, S.simul(S.fadeSlides(1), S.playAnimation(player, 'intro_idle'))];
+                        case 6:
+                            _a.sent();
+                            return [4 /*yield*/, S.moveToX(player, startLog.x)];
+                        case 7:
+                            _a.sent();
+                            player.flipX = true;
+                            return [4 /*yield*/, S.wait(0.5)];
+                        case 8:
+                            _a.sent();
+                            return [4 /*yield*/, S.moveToY(player, startLog.y - 2)];
+                        case 9:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(0.5)];
+                        case 10:
+                            _a.sent();
+                            player.controller.pickupDropItem = true;
+                            return [4 /*yield*/];
+                        case 11:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(0.5)];
+                        case 12:
+                            _a.sent();
+                            return [4 /*yield*/, S.moveToX(player, player.x - 12)];
+                        case 13:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(0.5)];
+                        case 14:
+                            _a.sent();
+                            player.controller.pickupDropItem = true;
+                            return [4 /*yield*/];
+                        case 15:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(1)];
+                        case 16:
+                            _a.sent();
+                            campfire.introEffect = false;
+                            return [4 /*yield*/, S.wait(1)];
+                        case 17:
+                            _a.sent();
+                            global.script.theater.currentWorld.camera.setModeFollow('player');
+                            Debug.SKIP_RATE = 1;
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [{ type: 'instant', toNode: 'gameplay' }]
+        },
+        'gameplay': {
+            type: 'gameplay',
+            transitions: []
+        }
     };
 })(S || (S = {}));
 var storyboard = S.storyboard;

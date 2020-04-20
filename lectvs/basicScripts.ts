@@ -27,6 +27,22 @@ namespace S {
         }
     }
 
+    export function loopFor(count: number, scriptFunction: Script.Function) {
+        return function*() {
+            for (let i = 0; i < count; i++) {
+                yield* scriptFunction();
+            }
+        }
+    }
+
+    export function loopUntil(condition: () => any, scriptFunction: Script.Function) {
+        return function*() {
+            while (!condition()) {
+                yield* scriptFunction();
+            }
+        }
+    }
+
     export function simul(...scriptFunctions: Script.Function[]): Script.Function {
         return function*() {
             let scripts: Script[] = scriptFunctions.map(sfn => global.script.world.runScript(sfn));

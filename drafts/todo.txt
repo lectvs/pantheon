@@ -1,0 +1,38 @@
+essential
+- /make better controls
+- /end screens
+- /proper axe swing hitbox
+- /prevent cheese during loss
+- /intro cutscene
+- /controls menu
+- /show item name when picking it up
+- /loss animation (fire going out)
+- /fix torch thrown through door
+- /spawn torch
+- /torch fuel
+
+juice
+- /smooth increase in fire light
+- /better hitboxes on items
+- /torch fire animation
+- /better controls menu
+- /screen shake on tree hit
+- /flowers on ground
+- /hit animation
+- /animate fire
+- /smooth camera transition to campfire on loss
+- /leaves on outside of world
+- /turn the star into gasoline
+- /torch put out animation
+- /hints after death
+- animated flowers
+- monster chase after axe
+- door unlock animation
+- dynamic radius buffer
+- player thinking about key when near door
+- random noise on fire lighting
+- animated leaves
+- smooth camera follow
+- trees falling the other way
+- logs getting pulled into the fire
+- sound??

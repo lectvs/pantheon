@@ -9,6 +9,8 @@ namespace Sprite {
         flipY?: boolean;
         offset?: Pt;
         angle?: number;
+        scaleX?: number;
+        scaleY?: number;
         tint?: number;
         alpha?: number;
         effects?: Effects.Config;
@@ -23,6 +25,8 @@ class Sprite extends PhysicsWorldObject {
     flipY: boolean;
     offset: Pt;
     angle: number;
+    scaleX: number;
+    scaleY: number;
 
     tint: number;
     alpha: number;
@@ -60,6 +64,8 @@ class Sprite extends PhysicsWorldObject {
 
         this.offset = config.offset || { x: 0, y: 0 };
         this.angle = O.getOrDefault(config.angle, 0);
+        this.scaleX = O.getOrDefault(config.scaleX, 1);
+        this.scaleY = O.getOrDefault(config.scaleY, 1);
 
         this.tint = O.getOrDefault(config.tint, 0xFFFFFF);
         this.alpha = O.getOrDefault(config.alpha, 1);
@@ -77,8 +83,8 @@ class Sprite extends PhysicsWorldObject {
         screen.render(this.texture, {
             x: this.x + this.offset.x,
             y: this.y + this.offset.y,
-            scaleX: this.flipX ? -1 : 1,
-            scaleY: this.flipY ? -1 : 1,
+            scaleX: (this.flipX ? -1 : 1) * this.scaleX,
+            scaleY: (this.flipY ? -1 : 1) * this.scaleY,
             angle: this.angle,
             tint: this.tint,
             alpha: this.alpha,

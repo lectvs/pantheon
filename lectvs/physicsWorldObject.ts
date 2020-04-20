@@ -91,6 +91,15 @@ class PhysicsWorldObject extends WorldObject {
         return result;
     }
 
+    isOverlappingRect(rect: Rect) {
+        this.bounds.x += this.x;
+        this.bounds.y += this.y;
+        let result = G.overlapRectangles(this.bounds, rect);
+        this.bounds.x -= this.x;
+        this.bounds.y -= this.y;
+        return result;
+    }
+
     getWorldBounds(newX: number = this.x, newY: number = this.y) {
         return new Rectangle(newX + this.bounds.x, newY + this.bounds.y, this.bounds.width, this.bounds.height);
     }

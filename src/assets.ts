@@ -1,5 +1,3 @@
-/// <reference path="../lectvs/preload.ts" />
-
 namespace Assets {
     export const textures: Dict<Preload.Texture> = {
         'none': {},
@@ -8,8 +6,61 @@ namespace Assets {
         // Debug
         'debug': {},
 
-        'dialogbox': {
-            anchor: { x: 0.5, y: 0.5 },
+        // Entities
+        'player': {
+            defaultAnchor: { x: 0.5, y: 1 },
+            spritesheet: { frameWidth: 16, frameHeight: 16 },
+        },
+        'blacktree': {
+            anchor: { x: 0.5, y: 1 }
+        },
+        'whitetree': {
+            anchor: { x: 0.5, y: 1 }
+        },
+        'door': {
+            anchor: { x: 0.5, y: 1 }
+        },
+        'monster': {
+            defaultAnchor: { x: 0.5, y: 1 },
+            spritesheet: { frameWidth: 16, frameHeight: 16 },
+        },
+
+        // Items
+        'log': {
+            anchor: { x: 0.5, y: 0.5 }
+        },
+        'axe': {
+            anchor: { x: 0.5, y: 0.5 }
+        },
+        'key': {
+            anchor: { x: 0.5, y: 0.5 }
+        },
+        'torch': {
+            anchor: { x: 0.5, y: 0.5 }
+        },
+        'gasoline': {
+            anchor: { x: 0.5, y: 0.5 }
+        },
+
+        // Props
+        'campfire': {
+            anchor: { x: 0.5, y: 0.5 }
+        },
+        'fire': {
+            defaultAnchor: { x: 0.5, y: 1 },
+            spritesheet: { frameWidth: 16, frameHeight: 16 }
+
+        },
+        'smoke': {
+            anchor: { x: 0.5, y: 1 }
+        },
+
+        // Scenery
+        'world': {
+            spritesheet: { frameWidth: 16, frameHeight: 16 }
+        },
+        'ground': {
+            anchor: { x: 0.5, y: 0.5 }
         },
 
         // Fonts
@@ -17,11 +68,19 @@ namespace Assets {
     }
 
     export const tilesets: Dict<Tilemap.Tileset> = {
-
+        'world': {
+            tiles: Preload.allTilesWithPrefix('world_'),
+            tileWidth: 16,
+            tileHeight: 16,
+            collisionIndices: [1],
+        },
     }
 
     export const pyxelTilemaps: Dict<Preload.PyxelTilemap> = {
-
+        'world': {
+            url: 'assets/world.json',
+            tileset: tilesets['world']
+        }
     }
 
     export class fonts {
@@ -30,6 +89,7 @@ namespace Assets {
             charWidth: 8,
             charHeight: 15,
             spaceWidth: 8,
+            newlineHeight: 15,
         }
     }
 

@@ -11,7 +11,7 @@ const party: Party.Config = {
                 x: Main.width/2 - 8, y: Main.height/2 - 8,
                 texture: 'debug',
             },
-            stage: 'game',
+            stage: 'none',
         },
     }
 };

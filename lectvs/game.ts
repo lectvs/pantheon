@@ -74,6 +74,9 @@ class Game {
     loadTheater() {
         this.theater = new this.theaterClass(this.theaterConfig);
         global.theater = this.theater;
+
+        // fade out since the cutscene can't do this in 1 frame
+        global.theater.runScript(S.fadeOut(0)).finishImmediately(global.theater);
     }
 
     pauseGame() {

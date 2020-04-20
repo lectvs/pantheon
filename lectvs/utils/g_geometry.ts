@@ -1,4 +1,12 @@
 namespace G {
+    export function distance(pt1: Pt, pt2: Pt) {
+        return M.distance(pt1.x, pt1.y, pt2.x, pt2.y);
+    }
+
+    export function distanceSq(pt1: Pt, pt2: Pt) {
+        return M.distanceSq(pt1.x, pt1.y, pt2.x, pt2.y);
+    }
+
     export function expandRectangle(rect: Rect, amount: number) {
         rect.x -= amount;
         rect.y -= amount;

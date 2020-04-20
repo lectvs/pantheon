@@ -19,6 +19,10 @@ namespace M {
         return result;
     }
 
+    export function clamp(val: number, min: number, max: number) {
+        return val < min ? min : (val > max ? max : val);
+    }
+
     export function colorToVec3(color: number) {
         let r = (color >> 16) & 255;
         let g = (color >> 8) & 255;
@@ -26,13 +30,17 @@ namespace M {
         return [r/255, g/255, b/255];
     }
 
-    export function distance(p1: Pt, p2: Pt) {
-        return Math.sqrt(distanceSq(p1, p2));
+    export function degToRad(deg: number) {
+        return Math.PI * deg / 180;
     }
 
-    export function distanceSq(p1: Pt, p2: Pt) {
-        let dx = p2.x - p1.x;
-        let dy = p2.y - p1.y;
+    export function distance(x1: number, y1: number, x2: number, y2: number) {
+        return Math.sqrt(distanceSq(x1, y1, x2, y2));
+    }
+
+    export function distanceSq(x1: number, y1: number, x2: number, y2: number) {
+        let dx = x2 - x1;
+        let dy = y2 - y1;
         return dx*dx + dy*dy;
     }
 
@@ -42,6 +50,10 @@ namespace M {
         let a = 2*groundDelta - 4*peakDelta;
         let b = 4*peakDelta - groundDelta;
         return a*t*t + b*t + startHeight;
+    }
+
+    export function lerp(a: number, b: number, t: number) {
+        return a*(1-t) + b*t;
     }
 
     export function magnitude(dx: number, dy: number) {
@@ -70,6 +82,10 @@ namespace M {
 
     export function minPowerOf2(num: number) {
         return Math.pow(2, Math.ceil(Math.log2(num)));
+    }
+
+    export function radToDeg(rad: number) {
+        return 180 / Math.PI * rad;
     }
 
     export function vec3ToColor(vec3: [number, number, number]) {

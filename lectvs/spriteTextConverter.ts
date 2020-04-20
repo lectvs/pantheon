@@ -14,7 +14,8 @@ class SpriteTextConverter {
             } else if (text[i] === '\n') {
                 this.pushWord(word, result, nextCharPosition, maxWidth);
                 nextCharPosition.x = 0;
-                nextCharPosition.y = SpriteText.getHeightOfCharList(result);
+                // TODO: properly newline
+                nextCharPosition.y += font.newlineHeight; //SpriteText.getHeightOfCharList(result);
             } else if (text[i] === '[') {
                 let closingBracketIndex = text.indexOf(']', i); 
                 if (closingBracketIndex < i+1) {

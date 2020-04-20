@@ -97,7 +97,7 @@ class StageManager {
     }
 
     private newWorldFromStage(stage: Stage) {
-        let world = new World(stage);
+        let world = WorldObject.fromConfig<World>(stage);
 
         if (stage.worldObjects) {
             for (let worldObjectConfig of stage.worldObjects) {

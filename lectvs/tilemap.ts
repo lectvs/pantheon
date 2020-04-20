@@ -1,6 +1,7 @@
 namespace Tilemap {
     export type Config = WorldObject.Config & {
         tilemap: string;
+        tint?: number;
         tilemapLayer?: number;
         debugBounds?: boolean;
     }
@@ -33,6 +34,8 @@ class Tilemap extends WorldObject {
 
     renderTexture: Texture;
     collisionBoxes: PhysicsWorldObject[];
+
+    tint: number;
     
     private tilemapLayer: number;
     private dirty: boolean;
@@ -52,6 +55,7 @@ class Tilemap extends WorldObject {
         this.renderTexture = new Texture(this.numTilesX * this.tilemap.tileset.tileWidth, this.numTilesY * this.tilemap.tileset.tileHeight);
         this.createCollisionBoxes(O.getOrDefault(config.debugBounds, false));
 
+        this.tint = O.getOrDefault(config.tint, 0xFFFFFF);
         this.dirty = true;
     }
 
@@ -71,7 +75,11 @@ class Tilemap extends WorldObject {
             this.dirty = false;
         }
         
-        screen.render(this.renderTexture, { x: this.x, y: this.y });
+        screen.render(this.renderTexture, {
+            x: this.x,
+            y: this.y,
+            tint: this.tint
+        });
 
         super.render(screen);
     }
@@ -82,7 +90,12 @@ class Tilemap extends WorldObject {
         Tilemap.optimizeCollisionRects(collisionRects);  // Not optimizing entire array first to save some cycles.
         Tilemap.optimizeCollisionRects(collisionRects, Tilemap.OPTIMIZE_ALL);
         for (let rect of collisionRects) {
-            let box = new PhysicsWorldObject({ x: this.x, y: this.y, bounds: rect, physicsGroup: this.physicsGroup });
+            let box = new PhysicsWorldObject({
+                x: this.x, y: this.y,
+                bounds: rect,
+                physicsGroup: this.physicsGroup,
+                immovable: true,
+            });
             box.debugBounds = debugBounds;
             this.collisionBoxes.push(box);
         }

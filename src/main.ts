@@ -9,7 +9,7 @@ class Main {
 
     static get width() { return 240; }
     static get height() { return 180; }
-    static get backgroundColor() { return 0x061639; }
+    static get backgroundColor() { return 0x000000; }
 
     // no need to modify
     static preload() {
@@ -49,6 +49,8 @@ class Main {
             'right':                ['ArrowRight'],
             'up':                   ['ArrowUp'],
             'down':                 ['ArrowDown'],
+            'useItem':              ['x'],
+            'pickupDropItem':       ['c'],
             'interact':             ['e'],
             'advanceDialog':        ['MouseLeft', 'e', ' '],
             'pause':                ['Escape', 'Backspace'],
@@ -76,7 +78,7 @@ class Main {
         window.addEventListener("contextmenu", event => event.preventDefault(), false);
 
         this.game = new Game({
-            mainMenuClass: MainMenu,
+            mainMenuClass: IntroMenu,
             pauseMenuClass: PauseMenu,
             theaterClass: Theater,
             theaterConfig: {
@@ -93,7 +95,7 @@ class Main {
                 dialogBox: {
                     constructor: DialogBox,
                     x: Main.width/2, y: Main.height - 32,
-                    texture: 'dialogbox',
+                    texture: 'none',
                     spriteTextFont: Assets.fonts.DELUXE16,
                     textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
                     textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },

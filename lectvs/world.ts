@@ -67,7 +67,7 @@ class World extends WorldObject {
         this.worldObjectsByName = {};
         this.layers = this.createLayers(config.layers);
 
-        this.backgroundColor = O.getOrDefault(config.backgroundColor, 0x000000);
+        this.backgroundColor = O.getOrDefault(config.backgroundColor, global.backgroundColor);
         this.backgroundAlpha = O.getOrDefault(config.backgroundAlpha, 1);
 
         let cameraConfig = O.getOrDefault(config.camera, {});
@@ -112,7 +112,7 @@ class World extends WorldObject {
             if (Input.isDown('debugMoveCameraUp'))    this.debugCameraY -= 1;
             if (Input.isDown('debugMoveCameraDown'))  this.debugCameraY += 1;
         }
-        this.camera.update(this);
+        this.camera.update(this, delta);
     }
 
     render(screen: Texture) {
@@ -129,9 +129,7 @@ class World extends WorldObject {
         Draw.fill(this.screen);
 
         for (let layer of this.layers) {
-            this.layerTexture.clear();
-            this.renderLayer(layer);
-            this.screen.render(this.layerTexture);
+            this.renderLayer(layer, this.layerTexture, this.screen);
         }
 
         this.camera.x = oldCameraX;
@@ -141,13 +139,15 @@ class World extends WorldObject {
         super.render(screen);
     }
 
-    renderLayer(layer: World.Layer) {
+    renderLayer(layer: World.Layer, layerTexture: Texture, screen: Texture) {
+        layerTexture.clear();
         layer.sort();
         for (let worldObject of layer.worldObjects) {
             if (worldObject.visible) {
-                worldObject.fullRender(this.layerTexture);
+                worldObject.fullRender(layerTexture);
             }
         }
+        screen.render(layerTexture);
     }
 
     containsWorldObject(obj: string | WorldObject) {
@@ -209,6 +209,11 @@ class World extends WorldObject {
             debug(`No object with name '${name}' exists in world`, this);
         }
         return <T>this.worldObjectsByName[name];
+    }
+
+    // TODO: better way to type-signature this?
+    getWorldObjectsByType<T extends WorldObject>(type: any) {
+        return <T[]>this.worldObjects.filter(obj => obj instanceof type);
     }
 
     handleCollisions() {
@@ -294,6 +299,7 @@ class World extends WorldObject {
 
     // For use with World.Actions.removeWorldObjectFromWorld
     private internalRemoveWorldObjectFromWorldWorld(obj: WorldObject) {
+        this.removeName(obj);
         this.removeFromAllLayers(obj);
         this.removeFromAllPhysicsGroups(obj);
         A.removeAll(this.worldObjects, obj);
