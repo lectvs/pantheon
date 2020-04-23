@@ -1,0 +1,53 @@
+Hey all! This was one of the most fun and exciting Ludum Dare events I've participated in, and I wanted to share my thoughts after completion of my LD46 entry, "A Night In The Dark." If you're reading this and haven't played the game yet, give it a go! You know, for context of course... :)
+ 
+https://ldjam.com/events/ludum-dare/46/a-night-in-the-dark
+ 
+-----
+ 
+Alright, let's get started. As some of you may know, this game was built using a game engine I've been writing over the past year or so. It uses pixi.js to render textures to the screen, but aside from that, everything else was written from scratch. I was hesitant to join this Ludum Dare because my engine is largely incomplete, but ultimately decided it would be a good metric on how far it's come and how far it has to go, so I signed up! To my surprise, this jam went much smoother than I expected, and I was able to put out a game that I'm proud of.
+ 
+### THOUGHTS
+ 
+Here are my thoughts after a couple days of reviews. If you don't want to read this, skip down to LEARNINGS.
+ 
+#### THE GOOD
+- **Despite my engine being half-complete, I was able to implement nearly every feature I wanted in the game**, and with less effort than anticipated. This tells me that my engine fits my development workflow very well and has enough basic functionality to get things working.
+- **I was able to get a visual, interactive prototype up in less than two hours**. This included the main "lighting" effect of the game and some background art, and it served as a proof-of-concept that this game could work. I'm quite proud of how quickly I was able to produce it using my engine's core functionality. Everything I added to my game during this initial phase "just worked", and I didn't have to mess around with bug fixes or anything - just typed some code and watched it work!
+- **The lighting effect was a breeze to implement, and people seem to really like it**. :)
+- **Secrets**! One of the most common positive comments on my game was that players liked that the game "opened up more secrets" as it progressed (referring to the locked door and the key). The great thing about this: it was unintentional! The door and the key are essential to completing the game and weren't meant to be "secrets", but people seemed happy when they discovered things that the game initially hid in shadow. :)
+- **The game was easy to progress through, and gave hints to the player on death to help them along**. Let's face it. With almost 5000 entries in this Ludum Dare, it's hard to keep players' attention (especially when they're incentivized to rate as many games as they can). As a result, I believe that if you make your game too hard, players will simply give up and move on. As harsh as it is, most players have zero investment in your game, so it's up to you to prove to the player why they should keep playing your game. In my case, I had a certain progression system in mind: player initially does nothing but throw logs into the fire -> player finds the door after the light gets big enough, and thus concludes that they need to find a key -> player explores and finds the key -> player unlocks the door, acquires the win condition, and wins. Even if the player loses, if they know what to do next time, they'll give it one more go! One thing that helped this along was a set of hints displayed on screen after death (stuff like "did you find the torch?"). I haven't received much feedback on this, but because many players ended up beating the game, I assume it helped.
+- **The controls menu**. If you haven't seen it, please take a look! I was pleasantly surprised that I was able to add animated examples of each control in such a short time (took me ~1.5 hours). I assumed everything would break once I added the Player entity into the menu, but shockingly, it worked! (with a few minor tweaks)
+ 
+#### THE BAD
+- **No audio**. This one's kind of obvious. My engine doesn't have audio support yet, and I didn't even attempt to add it in due to the time it would take. This kind of ended up being a blessing in disguise, however, since the time I would have spent writing music and generating sound effects, I instead spent on enhancing the graphics and polish of the game.
+- **The monster**. Oh man. I spent probably 4-5 hours adding him in and tweaking everything to look good, but he ended up being nothing more than a frustration for many players. A common feedback I received is that people thought they could kill the monster, and would hit him with the axe multiple times before giving up in frustration and moving on. Despite my measures to try and visually communicate to players that he didn't take damage (he doesn't flash or flicker, but instead falls down, shakes his head, and gets back up), players still assumed that because there was an enemy in the game, it should be beatable. This was a little disappointing, but good information to keep in mind for my next game.
+- **Crashes! NullPointers! Oh no!** On release, my game had at least *four different game-crashing bugs*. These were *all* caused by improper attachment of scripts to objects. Basically, in my game, "scripts" (aka coroutines for you Unity folks) are spawned in the world, and the world manages updating and executing the scripts during gameplay. The problem arises when a script that logically modifies an entity (such as an animation) continues running after the entity is destroyed. Because the script is managed by the world and has no understanding of whether the entity is alive or not, it will continue to execute after the entity has been removed from the world... and in many cases cause a null-pointer exception because it can't find the entity it's looking for. My solution to this going forward is to allow scripts to be attached to individual entities, so that they automatically go away if the entity is removed.
+ 
+#### THE UGLY
+- **The code is -i-n-c-r-e-d-i-b-l-y- hacky**. Yes, I know, it's a game jam, it's supposed to be hacky. The issue with my code this time around is that many of the hacks came from a lack of functionality in my game engine, and a general mismanagement of code by myself. It started with the lighting effect; my engine does not have the functionality to apply a shader to an entire world layer, so I had to hack that in. I did that by extending the base "World" class to create a "FirelitWorld" and overriding the renderLayer method to apply the shader. The opened the floodgates to all sorts of hacks. Everything that my engine didn't support, I ended up adding a hack in firelitWorld.ts, and the file eventually reached 300 lines of code! (download the source code and read it, seriously) Some hacks were not even related to the world! This made things very difficult down the line, as locating where a certain piece of code I had written earlier started eating up more and more of my time.
+ 
+ 
+### LEARNINGS
+ 
+Wow okay, that's a lot of text. For those who don't want to read all that, let's summarize what I've learned from all this. Maybe this will help you too!
+ 
+- **Get a proof-of-concept working ASAP**. It's never fun to have to change ideas mid-jam, so make sure you have some confidence that your game will work first! For me, since my game heavily centered around a single lighting shader effect, it was really nice to be able to see it in action before implementing the rest of the game.
+- **Emergent gameplay is amazing**. In a game jam, you don’t have time to make a lot of content. One way I’ve found to enhance the gameplay without adding new content is to make the systems in your game work together. I’ve played a few games from this Ludum Dare that use this strategy, and seeing different elements of the game interact in interesting ways adds a lot to the experience.
+- **Make your game easy to progress through**. Give the player a reason to keep playing your game. Players will give up and quit early if your game is too frustrating, hard, or unclear on the objective.
+- **Don't reveal your entire game in the screenshots/description**. Players love the feeling of discovery. Keep some features of your game hidden for the player to find themselves (even if they aren't literally "secrets").
+- **If an enemy exists, players will try to kill it**. Sometimes they will try in vain for longer than you'd like. Try to design your game so that enemies can be defeated.
+- **Hack late, hack sparsely**. It's a game jam, you're inevitably going to have to hack. But like the real-world, your hacks will have consequences! Hacking something in on Day 1 might cause an hour or two of wasted time searching through code (or debugging...). Thus, I recommend making a deliberate attempt to avoid hacks for as long as you can (at least through the first 24 hours). That way, when you break down on Day 3 and start hacking the crap out of your game, you'll still have a nice foundation to work from.
+ 
+ 
+### NEXT STEPS
+ 
+I'm really excited. Not just because I made a game I'm proud of, but because of what it means for my game engine. This Ludum Dare was more informative than I ever could have hoped, and I now have a solid game plan for continuing work on my engine. Here's my goal to be accomplished before the next Ludum Dare in October: I'm going to go through the *entire source code* of my game, from top to bottom, and refactor everything. Functionality will be added to the core engine for *every hack* that had to be made. The end result is new source code that will represent the *perfect, ideal implementation* of "A Night In The Dark" using my engine. This should bring the engine to a nice state that will hopefully make next Ludum Dare much easier. I'll also be finishing up all the remaining items on my "juice todo list", which will add in some cool functionality to my game engine, including native support for animated tilemaps, dynamic camera movement, slightly more advanced AI... and of course, sound! All of this should be wrapped up in a nice post-jam version of the game, which I'll release along with the cleaned-up source code. I might even look into adding more content to the game... but we'll see.
+ 
+The goal is to use Ludum Dare to iteratively develop my engine (1. make a game, 2. implement missing features into the engine afterward, and 3. repeat).
+ 
+-----
+ 
+Okay, that's about it for this retrospective. Thanks to everyone who played and/or rated my game, I hope you enjoyed playing it as much as I enjoyed making it! Hope you also learned a thing or two from my development process.
+ 
+Until next time!  
+\- Hayden (twitter.com/lectvs)
