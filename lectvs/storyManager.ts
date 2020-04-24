@@ -100,7 +100,7 @@ class StoryManager {
             if (transition.type === 'instant') {
                 return transition;
             } else if (transition.type === 'onStage') {
-                if (this.theater.currentStageName === transition.stage && !this.theater.worldManager.transitioning) return transition;
+                if (this.theater.currentStageName === transition.stage && !this.theater.stageManager.transitioning) return transition;
             } else if (transition.type === 'onInteract') {
                 if (this.theater.interactionManager.interactRequested === transition.with) {
                     this.theater.interactionManager.consumeInteraction();

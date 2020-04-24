@@ -3667,7 +3667,7 @@ var PartyManager = /** @class */ (function () {
             member.stage = null;
             return;
         }
-        var stage = this.theater.worldManager.worlds[stageName];
+        var stage = this.theater.stageManager.stages[stageName];
         if (!stage) {
             debug("Cannot move party member " + memberName + " to stage " + stageName + " because the stage does not exist");
             return;
@@ -4451,6 +4451,95 @@ var SpriteTextConverter = /** @class */ (function () {
     };
     return SpriteTextConverter;
 }());
+var StageManager = /** @class */ (function () {
+    function StageManager(theater, stages) {
+        this.theater = theater;
+        this.stages = stages;
+        this.currentStageName = null;
+        this.currentWorld = null;
+        this.stageLoadQueue = null;
+    }
+    Object.defineProperty(StageManager.prototype, "transitioning", {
+        get: function () { return !!this.transition; },
+        enumerable: true,
+        configurable: true
+    });
+    StageManager.prototype.loadStage = function (name, transitionConfig, entryPoint) {
+        if (!this.stages[name]) {
+            debug("Cannot load world '" + name + "' because it does not exist:", this.stages);
+            return;
+        }
+        if (!entryPoint)
+            entryPoint = { x: this.theater.width / 2, y: this.theater.height / 2 };
+        if (!this.currentStageName) {
+            if (transitionConfig.type !== 'instant')
+                debug("Ignoring transition " + transitionConfig.type + " for world " + name + " because no other world is loaded");
+            this.setStage(name, entryPoint);
+            return;
+        }
+        this.stageLoadQueue = { name: name, transitionConfig: transitionConfig, entryPoint: entryPoint };
+    };
+    StageManager.prototype.loadStageIfQueued = function () {
+        if (!this.stageLoadQueue)
+            return;
+        var name = this.stageLoadQueue.name;
+        var transitionConfig = this.stageLoadQueue.transitionConfig;
+        var entryPoint = this.stageLoadQueue.entryPoint;
+        this.stageLoadQueue = null;
+        var oldWorld = this.currentWorld;
+        var oldSnapshot = oldWorld.takeSnapshot();
+        this.setStage(name, entryPoint);
+        this.currentWorld.update(0);
+        var newSnapshot = this.currentWorld.takeSnapshot();
+        this.currentWorld.active = false;
+        this.currentWorld.visible = false;
+        // this is outside the script to avoid 1-frame flicker
+        this.transition = Transition.fromConfigAndSnapshots(transitionConfig, oldSnapshot, newSnapshot);
+        World.Actions.setLayer(this.transition, Theater.LAYER_TRANSITION);
+        World.Actions.addWorldObjectToWorld(this.transition, this.theater);
+        var stageManager = this;
+        this.theater.runScript(function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!!stageManager.transition.done) return [3 /*break*/, 2];
+                        return [4 /*yield*/];
+                    case 1:
+                        _a.sent();
+                        return [3 /*break*/, 0];
+                    case 2:
+                        World.Actions.removeWorldObjectFromWorld(stageManager.transition);
+                        stageManager.transition = null;
+                        stageManager.currentWorld.active = true;
+                        stageManager.currentWorld.visible = true;
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    StageManager.prototype.setStage = function (name, entryPoint) {
+        // Remove old stuff
+        if (this.currentWorld) {
+            World.Actions.removeWorldObjectFromWorld(this.currentWorld);
+        }
+        this.theater.interactionManager.reset();
+        // Create new stuff
+        this.currentStageName = name;
+        this.currentWorld = WorldObject.fromConfig(this.stages[name]);
+        this.addPartyToWorld(this.currentWorld, name, entryPoint);
+        World.Actions.setLayer(this.currentWorld, Theater.LAYER_WORLD);
+        World.Actions.addWorldObjectToWorld(this.currentWorld, this.theater);
+        this.theater.onStageLoad();
+    };
+    StageManager.prototype.addPartyToWorld = function (world, stageName, entryPoint) {
+        // Resolve entry point.
+        if (_.isString(entryPoint)) {
+            entryPoint = world.getEntryPoint(entryPoint);
+        }
+        this.theater.partyManager.addMembersToWorld(world, stageName, entryPoint);
+    };
+    return StageManager;
+}());
 var StoryConfig = /** @class */ (function () {
     function StoryConfig(theater, config) {
         this.theater = theater;
@@ -4694,7 +4783,7 @@ var StoryManager = /** @class */ (function () {
                     return transition;
                 }
                 else if (transition.type === 'onStage') {
-                    if (this.theater.currentStageName === transition.stage && !this.theater.worldManager.transitioning)
+                    if (this.theater.currentStageName === transition.stage && !this.theater.stageManager.transitioning)
                         return transition;
                 }
                 else if (transition.type === 'onInteract') {
@@ -4871,10 +4960,10 @@ var Theater = /** @class */ (function (_super) {
         _this.loadDialogBox(config.dialogBox);
         _this.partyManager = new PartyManager(_this, config.party);
         _this.storyManager = new StoryManager(_this, config.story.storyboard, config.story.storyboardPath, config.story.storyEvents, config.story.storyConfig);
-        _this.worldManager = new WorldManager(_this, config.worlds);
+        _this.stageManager = new StageManager(_this, config.stages);
         _this.interactionManager = new InteractionManager(_this);
         _this.slideManager = new SlideManager(_this);
-        _this.worldManager.loadStage(config.worldToLoad, Transition.INSTANT, config.worldEntryPoint);
+        _this.stageManager.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
         if (Debug.SHOW_MOUSE_POSITION && config.debugMousePositionFont) {
             _this.debugMousePosition = new SpriteText({ x: 0, y: 0, font: config.debugMousePositionFont, style: { color: 0x008800 } });
             World.Actions.addWorldObjectToWorld(_this.debugMousePosition, _this);
@@ -4885,17 +4974,17 @@ var Theater = /** @class */ (function (_super) {
         return _this;
     }
     Object.defineProperty(Theater.prototype, "currentStageName", {
-        get: function () { return this.worldManager ? this.worldManager.currentWorldName : undefined; },
+        get: function () { return this.stageManager ? this.stageManager.currentStageName : undefined; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(Theater.prototype, "currentWorld", {
-        get: function () { return this.worldManager ? this.worldManager.currentWorld : undefined; },
+        get: function () { return this.stageManager ? this.stageManager.currentWorld : undefined; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(Theater.prototype, "currentStage", {
-        get: function () { return (this.worldManager && this.worldManager.worlds) ? this.worldManager.worlds[this.worldManager.currentWorldName] : undefined; },
+        get: function () { return (this.stageManager && this.stageManager.stages) ? this.stageManager.stages[this.stageManager.currentStageName] : undefined; },
         enumerable: true,
         configurable: true
     });
@@ -4912,7 +5001,7 @@ var Theater = /** @class */ (function (_super) {
     // Theater cannot have preUpdate or postUpdate because I say so
     Theater.prototype.update = function (delta) {
         _super.prototype.update.call(this, delta);
-        this.worldManager.loadStageIfQueued();
+        this.stageManager.loadStageIfQueued();
         if (Debug.SHOW_MOUSE_POSITION) {
             this.debugMousePosition.setText(S.padLeft(this.currentWorld.getWorldMouseX().toString(), 3) + " " + S.padLeft(this.currentWorld.getWorldMouseY().toString(), 3));
         }
@@ -4932,7 +5021,7 @@ var Theater = /** @class */ (function (_super) {
     };
     Theater.prototype.loadStage = function (name, transition, entryPoint) {
         if (transition === void 0) { transition = Transition.INSTANT; }
-        this.worldManager.loadStage(name, transition, entryPoint);
+        this.stageManager.loadStage(name, transition, entryPoint);
     };
     Theater.prototype.onStageLoad = function () {
         this.storyManager.onStageLoad();
@@ -5222,95 +5311,6 @@ var Warp = /** @class */ (function (_super) {
     };
     return Warp;
 }(PhysicsWorldObject));
-var WorldManager = /** @class */ (function () {
-    function WorldManager(theater, worlds) {
-        this.theater = theater;
-        this.worlds = worlds;
-        this.currentWorldName = null;
-        this.currentWorld = null;
-        this.stageLoadQueue = null;
-    }
-    Object.defineProperty(WorldManager.prototype, "transitioning", {
-        get: function () { return !!this.transition; },
-        enumerable: true,
-        configurable: true
-    });
-    WorldManager.prototype.loadStage = function (name, transitionConfig, entryPoint) {
-        if (!this.worlds[name]) {
-            debug("Cannot load world '" + name + "' because it does not exist:", this.worlds);
-            return;
-        }
-        if (!entryPoint)
-            entryPoint = { x: this.theater.width / 2, y: this.theater.height / 2 };
-        if (!this.currentWorldName) {
-            if (transitionConfig.type !== 'instant')
-                debug("Ignoring transition " + transitionConfig.type + " for world " + name + " because no other world is loaded");
-            this.setWorld(name, entryPoint);
-            return;
-        }
-        this.stageLoadQueue = { name: name, transitionConfig: transitionConfig, entryPoint: entryPoint };
-    };
-    WorldManager.prototype.loadStageIfQueued = function () {
-        if (!this.stageLoadQueue)
-            return;
-        var name = this.stageLoadQueue.name;
-        var transitionConfig = this.stageLoadQueue.transitionConfig;
-        var entryPoint = this.stageLoadQueue.entryPoint;
-        this.stageLoadQueue = null;
-        var oldWorld = this.currentWorld;
-        var oldSnapshot = oldWorld.takeSnapshot();
-        this.setWorld(name, entryPoint);
-        this.currentWorld.update(0);
-        var newSnapshot = this.currentWorld.takeSnapshot();
-        this.currentWorld.active = false;
-        this.currentWorld.visible = false;
-        // this is outside the script to avoid 1-frame flicker
-        this.transition = Transition.fromConfigAndSnapshots(transitionConfig, oldSnapshot, newSnapshot);
-        World.Actions.setLayer(this.transition, Theater.LAYER_TRANSITION);
-        World.Actions.addWorldObjectToWorld(this.transition, this.theater);
-        var stageManager = this;
-        this.theater.runScript(function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!!stageManager.transition.done) return [3 /*break*/, 2];
-                        return [4 /*yield*/];
-                    case 1:
-                        _a.sent();
-                        return [3 /*break*/, 0];
-                    case 2:
-                        World.Actions.removeWorldObjectFromWorld(stageManager.transition);
-                        stageManager.transition = null;
-                        stageManager.currentWorld.active = true;
-                        stageManager.currentWorld.visible = true;
-                        return [2 /*return*/];
-                }
-            });
-        });
-    };
-    WorldManager.prototype.setWorld = function (name, entryPoint) {
-        // Remove old stuff
-        if (this.currentWorld) {
-            World.Actions.removeWorldObjectFromWorld(this.currentWorld);
-        }
-        this.theater.interactionManager.reset();
-        // Create new stuff
-        this.currentWorldName = name;
-        this.currentWorld = WorldObject.fromConfig(this.worlds[name]);
-        this.addPartyToWorld(this.currentWorld, name, entryPoint);
-        World.Actions.setLayer(this.currentWorld, Theater.LAYER_WORLD);
-        World.Actions.addWorldObjectToWorld(this.currentWorld, this.theater);
-        this.theater.onStageLoad();
-    };
-    WorldManager.prototype.addPartyToWorld = function (world, stageName, entryPoint) {
-        // Resolve entry point.
-        if (_.isString(entryPoint)) {
-            entryPoint = world.getEntryPoint(entryPoint);
-        }
-        this.theater.partyManager.addMembersToWorld(world, stageName, entryPoint);
-    };
-    return WorldManager;
-}());
 var ZOrderedTilemap = /** @class */ (function (_super) {
     __extends(ZOrderedTilemap, _super);
     function ZOrderedTilemap(config) {
@@ -5896,7 +5896,7 @@ var Assets;
     Assets.tags = {};
 })(Assets || (Assets = {}));
 var DEFAULT_SCREEN_TRANSITION = Transition.FADE(0.2, 0.5, 0.2);
-var BASE_WORLD_CONFIG = {
+var BASE_STAGE = {
     layers: [
         { name: 'bg' },
         { name: 'main', sortKey: 'y' },
@@ -6599,9 +6599,9 @@ var Main = /** @class */ (function () {
             pauseMenuClass: PauseMenu,
             theaterClass: Theater,
             theaterConfig: {
-                worlds: worlds,
-                worldToLoad: 'game',
-                worldEntryPoint: 'main',
+                stages: stages,
+                stageToLoad: 'game',
+                stageEntryPoint: 'main',
                 story: {
                     storyboard: storyboard,
                     storyboardPath: ['start'],
@@ -6659,17 +6659,275 @@ var party = {
         },
     }
 };
-/// <reference path="./main.ts"/>
-var storyConfig = {
-    initialConfig: {},
-    executeFn: function (sc) {
+var LightingManager = /** @class */ (function (_super) {
+    __extends(LightingManager, _super);
+    function LightingManager(config) {
+        var _this = _super.call(this, config) || this;
+        _this.lights = [
+            { x: 0, y: 0, radius: 0, buffer: 0 },
+            { x: 0, y: 0, radius: 0, buffer: 0 },
+            { x: 0, y: 0, radius: 0, buffer: 0 },
+        ];
+        var uniforms = [];
+        var defaultUniforms = {};
+        var distanceCalculations = "";
+        var lightCalculations = "";
+        var maxCalculations = "";
+        for (var i = 0; i < _this.lights.length; i++) {
+            uniforms.push("float light_" + i + "_x");
+            uniforms.push("float light_" + i + "_y");
+            uniforms.push("float light_" + i + "_radius");
+            uniforms.push("float light_" + i + "_buffer");
+            defaultUniforms["light_" + i + "_x"] = 0;
+            defaultUniforms["light_" + i + "_y"] = 0;
+            defaultUniforms["light_" + i + "_radius"] = 0;
+            defaultUniforms["light_" + i + "_buffer"] = 0;
+            distanceCalculations += "float light_" + i + "_distance = sqrt((worldx - light_" + i + "_x) * (worldx - light_" + i + "_x) + (worldy - light_" + i + "_y) * (worldy - light_" + i + "_y));\n";
+            lightCalculations += "float light_" + i + "_light = 1.0;\n                                  if (light_" + i + "_distance > light_" + i + "_radius) light_" + i + "_light = 0.5;\n                                  if (light_" + i + "_distance > light_" + i + "_radius + light_" + i + "_buffer) light_" + i + "_light = 0.0;\n";
+            maxCalculations += "light = max(light, light_" + i + "_light);\n";
+        }
+        _this.firelightFilter = new TextureFilter({
+            uniforms: uniforms,
+            defaultUniforms: defaultUniforms,
+            code: "\n                float light = 0.0;\n\n                " + distanceCalculations + "\n                " + lightCalculations + "\n                " + maxCalculations + "\n\n                if (light == 0.5) {\n                    if (outp.rgb == vec3(1.0, 1.0, 1.0)) {\n                        outp.rgb = vec3(0.0, 0.0, 0.0);\n                    } else if (outp.rgb == vec3(0.0, 0.0, 0.0)) {\n                        outp.rgb = vec3(1.0, 1.0, 1.0);\n                    }\n                } else if (light == 0.0 && inp.rgb != vec3(1.0, 0.0, 0.0)) {\n                    outp.r = 0.0;\n                    outp.g = 0.0;\n                    outp.b = 0.0;\n                }\n            "
+        });
+        _this.fireRadiusNoise = 0;
+        _this.winKeyRadius = 0;
+        return _this;
     }
-};
-var S;
-(function (S) {
-    S.storyEvents = {};
-})(S || (S = {}));
-var storyEvents = S.storyEvents;
+    LightingManager.prototype.update = function (delta) {
+        var world = this.world;
+        var campfire = this.world.getWorldObjectByName('campfire');
+        var torch = this.world.worldObjectsByName['torch'];
+        // Update fire light
+        this.lights[0].x = campfire.x - world.camera.worldOffsetX;
+        this.lights[0].y = campfire.y - world.camera.worldOffsetY;
+        this.lights[0].radius = campfire.visualFireBaseRadius + this.fireRadiusNoise;
+        this.lights[0].buffer = campfire.visualFireRadiusBuffer;
+        if (Random.boolean(10 * delta)) {
+            this.fireRadiusNoise = Random.float(-1, 1);
+        }
+        // Update torch light
+        if (torch) {
+        }
+        if (torch && !campfire.hitEffect && global.theater.storyManager.currentNodeName !== 'lose') {
+            this.lights[1].x = torch.x + torch.offset.x - world.camera.worldOffsetX;
+            this.lights[1].y = torch.y + torch.offset.y - world.camera.worldOffsetY;
+            this.lights[1].radius = Math.pow(world.torchFuel, 0.7) * 40;
+            this.lights[1].buffer = Math.pow(world.torchFuel, 0.7) * 10;
+            if (Random.boolean(10 * delta)) {
+                this.lights[1].radius += Random.float(-1, 1);
+            }
+        }
+        else {
+            this.lights[1].radius = 0;
+        }
+        // Update win light
+        this.lights[2].x = campfire.x - world.camera.worldOffsetX;
+        this.lights[2].y = campfire.y - world.camera.worldOffsetY;
+        this.lights[2].radius = this.winKeyRadius;
+        this.lights[2].buffer = 0;
+        this.updateLights();
+        _super.prototype.update.call(this, delta);
+    };
+    LightingManager.prototype.updateLights = function () {
+        for (var i = 0; i < this.lights.length; i++) {
+            this.firelightFilter.setUniform("light_" + i + "_x", this.lights[i].x);
+            this.firelightFilter.setUniform("light_" + i + "_y", this.lights[i].y);
+            this.firelightFilter.setUniform("light_" + i + "_radius", this.lights[i].radius);
+            this.firelightFilter.setUniform("light_" + i + "_buffer", this.lights[i].buffer);
+        }
+    };
+    return LightingManager;
+}(WorldObject));
+var Monster = /** @class */ (function (_super) {
+    __extends(Monster, _super);
+    function Monster(config) {
+        var _this = _super.call(this, config, {
+            bounds: { x: -4, y: -2, width: 8, height: 4 },
+            animations: [
+                Animations.fromTextureList({ name: 'idle_holding', texturePrefix: 'monster_', textures: [0, 1, 2], frameRate: 4, count: -1 }),
+                Animations.fromTextureList({ name: 'walk_holding', texturePrefix: 'monster_', textures: [4, 5, 6, 7], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'swing', texturePrefix: 'monster_', textures: [9, 9, 9, 8], frameRate: 8, count: 1, forceRequired: true }),
+                Animations.fromTextureList({ name: 'hurt', texturePrefix: 'monster_', textures: [12, 12, 12, 12, 12, 12, 12, 12,
+                        13, 14, 15, 14, 13, 14, 15, 14], frameRate: 8, count: 1, forceRequired: true }),
+            ]
+        }) || this;
+        _this.speed = 10;
+        _this.attackDistance = 16;
+        _this.swingTime = 0.3;
+        _this.itemOffsetY = 20;
+        _this.itemFullSwingOffsetX = 10;
+        _this.direction = Direction2D.RIGHT;
+        _this.attackdx = 0;
+        _this.attackdy = 0;
+        _this.heldItem = WorldObject.fromConfig({
+            constructor: ItemHand,
+            type: Item.Type.AXE,
+            offset: { x: 0, y: -_this.itemOffsetY },
+            layer: 'main',
+        });
+        World.Actions.addChildToParent(_this.heldItem, _this);
+        return _this;
+    }
+    Object.defineProperty(Monster.prototype, "immobile", {
+        get: function () { return this.stunned || (this.swingScript && this.swingScript.running); },
+        enumerable: true,
+        configurable: true
+    });
+    Monster.prototype.onRemove = function () {
+        if (this.swingScript)
+            this.swingScript.done = true;
+    };
+    Monster.prototype.update = function (delta) {
+        var player = this.world.getWorldObjectByName('player');
+        var haxis = 0;
+        var vaxis = 0;
+        if (!this.immobile) {
+            haxis = player.x - this.x;
+            vaxis = player.y - this.y;
+            if (-2 < haxis && haxis < 2)
+                haxis = 0;
+            if (-2 < vaxis && vaxis < 2)
+                vaxis = 0;
+        }
+        this.updateMovement(haxis, vaxis);
+        _super.prototype.update.call(this, delta);
+        this.attackdx = player.x - this.x;
+        this.attackdy = player.y - this.y;
+        var mag = M.magnitude(this.attackdx, this.attackdy);
+        if (mag !== 0) {
+            this.attackdx /= mag;
+            this.attackdy /= mag;
+        }
+        if (this.heldItem) {
+            this.heldItem.flipX = this.flipX;
+        }
+        this.handleAttacking();
+        // Handle animation.
+        var anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'walk';
+        var holding = this.heldItem ? 'holding' : 'empty';
+        //let anim_dir = this.direction.v == Direction.UP ? 'up' : (this.direction.h == Direction.NONE ? 'down' : 'side');
+        this.playAnimation(anim_state + "_" + holding);
+    };
+    Monster.prototype.render = function (screen) {
+        _super.prototype.render.call(this, screen);
+        if (this.debugBounds) {
+            var shb = this.getSwingHitbox();
+            Draw.brush.color = 0x00FF00;
+            Draw.rectangleOutline(screen, shb.x, shb.y, shb.width, shb.height);
+        }
+    };
+    Monster.prototype.hit = function () {
+        var _this = this;
+        this.playAnimation('hurt', 0, true);
+        this.world.runScript(S.chain(S.call(function () {
+            _this.stunned = true;
+            if (_this.swingScript) {
+                _this.swingScript.done = true;
+            }
+            if (_this.heldItem)
+                _this.heldItem.visible = false;
+        }), S.doOverTime(0.5, function (t) {
+            _this.offset.y = -16 * Math.exp(-4 * t) * Math.abs(Math.sin(4 * Math.PI * t * t));
+        }), S.wait(1.5), S.call(function () {
+            _this.alpha = 1;
+            _this.stunned = false;
+            if (_this.heldItem)
+                _this.heldItem.visible = true;
+        })));
+    };
+    Monster.prototype.updateMovement = function (haxis, vaxis) {
+        if (this.swingScript && this.swingScript.running) {
+            this.vx = 0;
+            this.vy = 0;
+            return;
+        }
+        var player = this.world.getWorldObjectByName('player');
+        if (player.x < this.x) {
+            this.vx = -this.speed;
+        }
+        if (haxis < 0) {
+            this.vx = -this.speed;
+            this.direction.h = Direction.LEFT;
+            if (vaxis == 0)
+                this.direction.v = Direction.NONE;
+            this.flipX = true;
+        }
+        else if (haxis > 0) {
+            this.vx = this.speed;
+            this.direction.h = Direction.RIGHT;
+            if (vaxis == 0)
+                this.direction.v = Direction.NONE;
+            this.flipX = false;
+        }
+        else {
+            this.vx = 0;
+        }
+        if (vaxis < 0) {
+            this.vy = -this.speed;
+            this.direction.v = Direction.UP;
+            if (haxis == 0)
+                this.direction.h = Direction.NONE;
+        }
+        else if (vaxis > 0) {
+            this.vy = this.speed;
+            this.direction.v = Direction.DOWN;
+            if (haxis == 0)
+                this.direction.h = Direction.NONE;
+        }
+        else {
+            this.vy = 0;
+        }
+    };
+    Monster.prototype.handleAttacking = function () {
+        if (!this.world)
+            return;
+        if (this.immobile)
+            return;
+        var player = this.world.getWorldObjectByName('player');
+        if (M.distance(this.x, this.y, player.x, player.y) < this.attackDistance) {
+            this.swingItem();
+        }
+    };
+    Monster.prototype.swingItem = function () {
+        var _this = this;
+        if (!this.world)
+            return;
+        if (!this.swingScript || this.swingScript.done) {
+            var swingHitbox_1 = this.getSwingHitbox();
+            this.swingScript = this.world.runScript(S.chain(S.wait(0.3), S.simul(S.doOverTime(this.swingTime, function (t) {
+                if (!_this.heldItem)
+                    return;
+                var angle = (_this.flipX ? -1 : 1) * 90 * Math.pow(Math.sin(Math.PI * Math.pow(t, 0.5)), 0.1);
+                _this.heldItem.offset.x = _this.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
+                _this.heldItem.offset.y = _this.itemOffsetY * -Math.cos(M.degToRad(angle));
+                _this.heldItem.angle = angle;
+                if (t == 1)
+                    _this.heldItem.angle = 0;
+            }), S.chain(S.playAnimation(this, 'swing', 0, true, false), S.wait(this.swingTime * 0.25), S.call(function () {
+                _this.hitPlayer(swingHitbox_1);
+            }))), S.wait(2)));
+        }
+    };
+    Monster.prototype.hitPlayer = function (swingHitbox) {
+        if (!this.world)
+            return;
+        var player = this.world.getWorldObjectByName('player');
+        if (player.isOverlappingRect(swingHitbox)) {
+            player.hit();
+        }
+    };
+    Monster.prototype.getSwingHitbox = function () {
+        return {
+            x: this.x - 8 + this.attackdx * 8,
+            y: this.y - 8 + this.attackdy * 8,
+            width: 16,
+            height: 16
+        };
+    };
+    return Monster;
+}(Sprite));
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player(config) {
@@ -6944,6 +7202,206 @@ var Player = /** @class */ (function (_super) {
     };
     return Player;
 }(Sprite));
+var Tree = /** @class */ (function (_super) {
+    __extends(Tree, _super);
+    function Tree(config) {
+        var _this = _super.call(this, config, {
+            texture: Random.boolean() ? 'blacktree' : 'whitetree',
+            flipX: Random.boolean(),
+            bounds: { x: -4, y: -2, width: 8, height: 3 },
+        }) || this;
+        _this.hp = 3;
+        _this.spawnsTorch = false;
+        return _this;
+    }
+    Object.defineProperty(Tree.prototype, "alive", {
+        get: function () { return this.hp > 0; },
+        enumerable: true,
+        configurable: true
+    });
+    Tree.prototype.hit = function () {
+        var _this = this;
+        if (!this.alive)
+            return;
+        if (this.hitScript) {
+            this.hitScript.done = true;
+        }
+        this.hp--;
+        if (this.alive) {
+            this.hitScript = this.world.runScript(S.doOverTime(0.5, function (t) { _this.angle = 30 * Math.exp(5 * -t) * Math.cos(5 * t); }));
+        }
+        else {
+            this.hitScript = this.world.runScript(S.chain(S.doOverTime(0.5, function (t) { _this.angle = 30 * Math.exp(5 * -t) * Math.cos(5 * t); }), S.call(function () {
+                _this.colliding = false;
+            }), S.doOverTime(1, function (t) { _this.angle = 90 * (t + t * t) / 2; }), S.call(function () {
+                _this.spawnLog();
+                if (_this.spawnsTorch)
+                    _this.spawnTorch();
+                World.Actions.removeWorldObjectFromWorld(_this);
+            })));
+        }
+        //this.world.runScript(screenShake(this.world));
+    };
+    Tree.prototype.spawnLog = function () {
+        var log = WorldObject.fromConfig({
+            constructor: ItemGround,
+            x: this.x + 16, y: this.y,
+            layer: 'main',
+            offset: { x: 0, y: -8 },
+            physicsGroup: 'items',
+            type: Item.Type.LOG,
+        });
+        World.Actions.addWorldObjectToWorld(log, this.world);
+    };
+    Tree.prototype.spawnTorch = function () {
+        var log = WorldObject.fromConfig({
+            name: 'torch',
+            constructor: ItemGround,
+            x: this.x, y: this.y,
+            layer: 'main',
+            offset: { x: 0, y: -12 },
+            physicsGroup: 'items',
+            type: Item.Type.TORCH,
+        });
+        World.Actions.addWorldObjectToWorld(log, this.world);
+    };
+    return Tree;
+}(Sprite));
+/// <reference path="base.ts" />
+/// <reference path="campfire.ts" />
+/// <reference path="door.ts" />
+/// <reference path="firelitWorld.ts" />
+/// <reference path="item.ts" />
+/// <reference path="lightingManager.ts" />
+/// <reference path="main.ts" />
+/// <reference path="monster.ts" />
+/// <reference path="player.ts" />
+/// <reference path="tree.ts" />
+var stages = {
+    'game': {
+        constructor: FirelitWorld,
+        parent: BASE_STAGE,
+        camera: {
+            movement: { type: 'smooth', speed: 0, deadZoneWidth: 0, deadZoneHeight: 0 },
+            mode: Camera.Mode.FOLLOW('player', 0, -8),
+        },
+        entryPoints: {
+            'main': { x: Main.width / 2, y: Main.height / 2 },
+        },
+        worldObjects: __spread([
+            WORLD_BOUNDS(0, 0, Main.width, Main.height),
+            {
+                name: 'lightingManager',
+                constructor: LightingManager,
+            },
+            {
+                constructor: Tilemap,
+                x: 0, y: 0,
+                tilemap: 'world',
+                tilemapLayer: 1,
+                layer: 'bg',
+            },
+            {
+                constructor: Tilemap,
+                x: 0, y: 0,
+                tilemap: 'world',
+                tilemapLayer: 0,
+                layer: 'fg',
+                physicsGroup: 'walls',
+            },
+            {
+                name: 'ground',
+                constructor: Sprite,
+                x: 400, y: 400,
+                texture: 'ground',
+                layer: 'bg',
+            },
+            {
+                name: 'campfire',
+                constructor: Campfire,
+                x: 400, y: 400,
+                layer: 'main',
+            },
+            {
+                name: 'player',
+                constructor: Player,
+                controllable: true,
+                x: 387, y: 394,
+                flipX: false,
+                layer: 'main',
+                physicsGroup: 'player',
+            },
+            {
+                name: 'door',
+                constructor: Door,
+                x: 400, y: 240,
+                layer: 'main',
+                physicsGroup: 'props',
+            }
+        ], [
+            { x: 424, y: 296 },
+            { x: 344, y: 344 },
+            { x: 392, y: 328 },
+            { x: 472, y: 360 },
+            { x: 312, y: 408 },
+            { x: 504, y: 408 },
+            { x: 328, y: 440 },
+            { x: 472, y: 440 },
+            { x: 376, y: 472 },
+            { x: 408, y: 488 },
+            { x: 584, y: 408 },
+        ].map(function (pos) { return ({
+            constructor: Tree,
+            x: pos.x, y: pos.y,
+            layer: 'main',
+            physicsGroup: 'props',
+            immovable: true,
+        }); }), [
+            {
+                name: 'start_log',
+                constructor: ItemGround,
+                type: Item.Type.LOG,
+                x: 425, y: 408,
+                layer: 'main',
+                physicsGroup: 'items',
+            },
+            {
+                constructor: ItemGround,
+                type: Item.Type.AXE,
+                x: 447, y: 436,
+                angle: -90,
+                layer: 'main',
+                physicsGroup: 'items',
+            },
+            {
+                constructor: ItemGround,
+                type: Item.Type.KEY,
+                x: 688, y: 400,
+                layer: 'main',
+                physicsGroup: 'items',
+            },
+            {
+                name: 'gasoline',
+                constructor: ItemGround,
+                type: Item.Type.GASOLINE,
+                x: 528, y: 84,
+                layer: 'main',
+                physicsGroup: 'items',
+            },
+        ])
+    },
+};
+/// <reference path="./main.ts"/>
+var storyConfig = {
+    initialConfig: {},
+    executeFn: function (sc) {
+    }
+};
+var S;
+(function (S) {
+    S.storyEvents = {};
+})(S || (S = {}));
+var storyEvents = S.storyEvents;
 /// <reference path="player.ts" />
 var S;
 (function (S) {
@@ -7196,461 +7654,3 @@ var S;
     };
 })(S || (S = {}));
 var storyboard = S.storyboard;
-var LightingManager = /** @class */ (function (_super) {
-    __extends(LightingManager, _super);
-    function LightingManager(config) {
-        var _this = _super.call(this, config) || this;
-        _this.lights = [
-            { x: 0, y: 0, radius: 0, buffer: 0 },
-            { x: 0, y: 0, radius: 0, buffer: 0 },
-            { x: 0, y: 0, radius: 0, buffer: 0 },
-        ];
-        var uniforms = [];
-        var defaultUniforms = {};
-        var distanceCalculations = "";
-        var lightCalculations = "";
-        var maxCalculations = "";
-        for (var i = 0; i < _this.lights.length; i++) {
-            uniforms.push("float light_" + i + "_x");
-            uniforms.push("float light_" + i + "_y");
-            uniforms.push("float light_" + i + "_radius");
-            uniforms.push("float light_" + i + "_buffer");
-            defaultUniforms["light_" + i + "_x"] = 0;
-            defaultUniforms["light_" + i + "_y"] = 0;
-            defaultUniforms["light_" + i + "_radius"] = 0;
-            defaultUniforms["light_" + i + "_buffer"] = 0;
-            distanceCalculations += "float light_" + i + "_distance = sqrt((worldx - light_" + i + "_x) * (worldx - light_" + i + "_x) + (worldy - light_" + i + "_y) * (worldy - light_" + i + "_y));\n";
-            lightCalculations += "float light_" + i + "_light = 1.0;\n                                  if (light_" + i + "_distance > light_" + i + "_radius) light_" + i + "_light = 0.5;\n                                  if (light_" + i + "_distance > light_" + i + "_radius + light_" + i + "_buffer) light_" + i + "_light = 0.0;\n";
-            maxCalculations += "light = max(light, light_" + i + "_light);\n";
-        }
-        _this.firelightFilter = new TextureFilter({
-            uniforms: uniforms,
-            defaultUniforms: defaultUniforms,
-            code: "\n                float light = 0.0;\n\n                " + distanceCalculations + "\n                " + lightCalculations + "\n                " + maxCalculations + "\n\n                if (light == 0.5) {\n                    if (outp.rgb == vec3(1.0, 1.0, 1.0)) {\n                        outp.rgb = vec3(0.0, 0.0, 0.0);\n                    } else if (outp.rgb == vec3(0.0, 0.0, 0.0)) {\n                        outp.rgb = vec3(1.0, 1.0, 1.0);\n                    }\n                } else if (light == 0.0 && inp.rgb != vec3(1.0, 0.0, 0.0)) {\n                    outp.r = 0.0;\n                    outp.g = 0.0;\n                    outp.b = 0.0;\n                }\n            "
-        });
-        _this.fireRadiusNoise = 0;
-        _this.winKeyRadius = 0;
-        return _this;
-    }
-    LightingManager.prototype.update = function (delta) {
-        var world = this.world;
-        var campfire = this.world.getWorldObjectByName('campfire');
-        var torch = this.world.worldObjectsByName['torch'];
-        // Update fire light
-        this.lights[0].x = campfire.x - world.camera.worldOffsetX;
-        this.lights[0].y = campfire.y - world.camera.worldOffsetY;
-        this.lights[0].radius = campfire.visualFireBaseRadius + this.fireRadiusNoise;
-        this.lights[0].buffer = campfire.visualFireRadiusBuffer;
-        if (Random.boolean(10 * delta)) {
-            this.fireRadiusNoise = Random.float(-1, 1);
-        }
-        // Update torch light
-        if (torch) {
-        }
-        if (torch && !campfire.hitEffect && global.theater.storyManager.currentNodeName !== 'lose') {
-            this.lights[1].x = torch.x + torch.offset.x - world.camera.worldOffsetX;
-            this.lights[1].y = torch.y + torch.offset.y - world.camera.worldOffsetY;
-            this.lights[1].radius = Math.pow(world.torchFuel, 0.7) * 40;
-            this.lights[1].buffer = Math.pow(world.torchFuel, 0.7) * 10;
-            if (Random.boolean(10 * delta)) {
-                this.lights[1].radius += Random.float(-1, 1);
-            }
-        }
-        else {
-            this.lights[1].radius = 0;
-        }
-        // Update win light
-        this.lights[2].x = campfire.x - world.camera.worldOffsetX;
-        this.lights[2].y = campfire.y - world.camera.worldOffsetY;
-        this.lights[2].radius = this.winKeyRadius;
-        this.lights[2].buffer = 0;
-        this.updateLights();
-        _super.prototype.update.call(this, delta);
-    };
-    LightingManager.prototype.updateLights = function () {
-        for (var i = 0; i < this.lights.length; i++) {
-            this.firelightFilter.setUniform("light_" + i + "_x", this.lights[i].x);
-            this.firelightFilter.setUniform("light_" + i + "_y", this.lights[i].y);
-            this.firelightFilter.setUniform("light_" + i + "_radius", this.lights[i].radius);
-            this.firelightFilter.setUniform("light_" + i + "_buffer", this.lights[i].buffer);
-        }
-    };
-    return LightingManager;
-}(WorldObject));
-var Monster = /** @class */ (function (_super) {
-    __extends(Monster, _super);
-    function Monster(config) {
-        var _this = _super.call(this, config, {
-            bounds: { x: -4, y: -2, width: 8, height: 4 },
-            animations: [
-                Animations.fromTextureList({ name: 'idle_holding', texturePrefix: 'monster_', textures: [0, 1, 2], frameRate: 4, count: -1 }),
-                Animations.fromTextureList({ name: 'walk_holding', texturePrefix: 'monster_', textures: [4, 5, 6, 7], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'swing', texturePrefix: 'monster_', textures: [9, 9, 9, 8], frameRate: 8, count: 1, forceRequired: true }),
-                Animations.fromTextureList({ name: 'hurt', texturePrefix: 'monster_', textures: [12, 12, 12, 12, 12, 12, 12, 12,
-                        13, 14, 15, 14, 13, 14, 15, 14], frameRate: 8, count: 1, forceRequired: true }),
-            ]
-        }) || this;
-        _this.speed = 10;
-        _this.attackDistance = 16;
-        _this.swingTime = 0.3;
-        _this.itemOffsetY = 20;
-        _this.itemFullSwingOffsetX = 10;
-        _this.direction = Direction2D.RIGHT;
-        _this.attackdx = 0;
-        _this.attackdy = 0;
-        _this.heldItem = WorldObject.fromConfig({
-            constructor: ItemHand,
-            type: Item.Type.AXE,
-            offset: { x: 0, y: -_this.itemOffsetY },
-            layer: 'main',
-        });
-        World.Actions.addChildToParent(_this.heldItem, _this);
-        return _this;
-    }
-    Object.defineProperty(Monster.prototype, "immobile", {
-        get: function () { return this.stunned || (this.swingScript && this.swingScript.running); },
-        enumerable: true,
-        configurable: true
-    });
-    Monster.prototype.onRemove = function () {
-        if (this.swingScript)
-            this.swingScript.done = true;
-    };
-    Monster.prototype.update = function (delta) {
-        var player = this.world.getWorldObjectByName('player');
-        var haxis = 0;
-        var vaxis = 0;
-        if (!this.immobile) {
-            haxis = player.x - this.x;
-            vaxis = player.y - this.y;
-            if (-2 < haxis && haxis < 2)
-                haxis = 0;
-            if (-2 < vaxis && vaxis < 2)
-                vaxis = 0;
-        }
-        this.updateMovement(haxis, vaxis);
-        _super.prototype.update.call(this, delta);
-        this.attackdx = player.x - this.x;
-        this.attackdy = player.y - this.y;
-        var mag = M.magnitude(this.attackdx, this.attackdy);
-        if (mag !== 0) {
-            this.attackdx /= mag;
-            this.attackdy /= mag;
-        }
-        if (this.heldItem) {
-            this.heldItem.flipX = this.flipX;
-        }
-        this.handleAttacking();
-        // Handle animation.
-        var anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'walk';
-        var holding = this.heldItem ? 'holding' : 'empty';
-        //let anim_dir = this.direction.v == Direction.UP ? 'up' : (this.direction.h == Direction.NONE ? 'down' : 'side');
-        this.playAnimation(anim_state + "_" + holding);
-    };
-    Monster.prototype.render = function (screen) {
-        _super.prototype.render.call(this, screen);
-        if (this.debugBounds) {
-            var shb = this.getSwingHitbox();
-            Draw.brush.color = 0x00FF00;
-            Draw.rectangleOutline(screen, shb.x, shb.y, shb.width, shb.height);
-        }
-    };
-    Monster.prototype.hit = function () {
-        var _this = this;
-        this.playAnimation('hurt', 0, true);
-        this.world.runScript(S.chain(S.call(function () {
-            _this.stunned = true;
-            if (_this.swingScript) {
-                _this.swingScript.done = true;
-            }
-            if (_this.heldItem)
-                _this.heldItem.visible = false;
-        }), S.doOverTime(0.5, function (t) {
-            _this.offset.y = -16 * Math.exp(-4 * t) * Math.abs(Math.sin(4 * Math.PI * t * t));
-        }), S.wait(1.5), S.call(function () {
-            _this.alpha = 1;
-            _this.stunned = false;
-            if (_this.heldItem)
-                _this.heldItem.visible = true;
-        })));
-    };
-    Monster.prototype.updateMovement = function (haxis, vaxis) {
-        if (this.swingScript && this.swingScript.running) {
-            this.vx = 0;
-            this.vy = 0;
-            return;
-        }
-        var player = this.world.getWorldObjectByName('player');
-        if (player.x < this.x) {
-            this.vx = -this.speed;
-        }
-        if (haxis < 0) {
-            this.vx = -this.speed;
-            this.direction.h = Direction.LEFT;
-            if (vaxis == 0)
-                this.direction.v = Direction.NONE;
-            this.flipX = true;
-        }
-        else if (haxis > 0) {
-            this.vx = this.speed;
-            this.direction.h = Direction.RIGHT;
-            if (vaxis == 0)
-                this.direction.v = Direction.NONE;
-            this.flipX = false;
-        }
-        else {
-            this.vx = 0;
-        }
-        if (vaxis < 0) {
-            this.vy = -this.speed;
-            this.direction.v = Direction.UP;
-            if (haxis == 0)
-                this.direction.h = Direction.NONE;
-        }
-        else if (vaxis > 0) {
-            this.vy = this.speed;
-            this.direction.v = Direction.DOWN;
-            if (haxis == 0)
-                this.direction.h = Direction.NONE;
-        }
-        else {
-            this.vy = 0;
-        }
-    };
-    Monster.prototype.handleAttacking = function () {
-        if (!this.world)
-            return;
-        if (this.immobile)
-            return;
-        var player = this.world.getWorldObjectByName('player');
-        if (M.distance(this.x, this.y, player.x, player.y) < this.attackDistance) {
-            this.swingItem();
-        }
-    };
-    Monster.prototype.swingItem = function () {
-        var _this = this;
-        if (!this.world)
-            return;
-        if (!this.swingScript || this.swingScript.done) {
-            var swingHitbox_1 = this.getSwingHitbox();
-            this.swingScript = this.world.runScript(S.chain(S.wait(0.3), S.simul(S.doOverTime(this.swingTime, function (t) {
-                if (!_this.heldItem)
-                    return;
-                var angle = (_this.flipX ? -1 : 1) * 90 * Math.pow(Math.sin(Math.PI * Math.pow(t, 0.5)), 0.1);
-                _this.heldItem.offset.x = _this.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
-                _this.heldItem.offset.y = _this.itemOffsetY * -Math.cos(M.degToRad(angle));
-                _this.heldItem.angle = angle;
-                if (t == 1)
-                    _this.heldItem.angle = 0;
-            }), S.chain(S.playAnimation(this, 'swing', 0, true, false), S.wait(this.swingTime * 0.25), S.call(function () {
-                _this.hitPlayer(swingHitbox_1);
-            }))), S.wait(2)));
-        }
-    };
-    Monster.prototype.hitPlayer = function (swingHitbox) {
-        if (!this.world)
-            return;
-        var player = this.world.getWorldObjectByName('player');
-        if (player.isOverlappingRect(swingHitbox)) {
-            player.hit();
-        }
-    };
-    Monster.prototype.getSwingHitbox = function () {
-        return {
-            x: this.x - 8 + this.attackdx * 8,
-            y: this.y - 8 + this.attackdy * 8,
-            width: 16,
-            height: 16
-        };
-    };
-    return Monster;
-}(Sprite));
-var Tree = /** @class */ (function (_super) {
-    __extends(Tree, _super);
-    function Tree(config) {
-        var _this = _super.call(this, config, {
-            texture: Random.boolean() ? 'blacktree' : 'whitetree',
-            flipX: Random.boolean(),
-            bounds: { x: -4, y: -2, width: 8, height: 3 },
-        }) || this;
-        _this.hp = 3;
-        _this.spawnsTorch = false;
-        return _this;
-    }
-    Object.defineProperty(Tree.prototype, "alive", {
-        get: function () { return this.hp > 0; },
-        enumerable: true,
-        configurable: true
-    });
-    Tree.prototype.hit = function () {
-        var _this = this;
-        if (!this.alive)
-            return;
-        if (this.hitScript) {
-            this.hitScript.done = true;
-        }
-        this.hp--;
-        if (this.alive) {
-            this.hitScript = this.world.runScript(S.doOverTime(0.5, function (t) { _this.angle = 30 * Math.exp(5 * -t) * Math.cos(5 * t); }));
-        }
-        else {
-            this.hitScript = this.world.runScript(S.chain(S.doOverTime(0.5, function (t) { _this.angle = 30 * Math.exp(5 * -t) * Math.cos(5 * t); }), S.call(function () {
-                _this.colliding = false;
-            }), S.doOverTime(1, function (t) { _this.angle = 90 * (t + t * t) / 2; }), S.call(function () {
-                _this.spawnLog();
-                if (_this.spawnsTorch)
-                    _this.spawnTorch();
-                World.Actions.removeWorldObjectFromWorld(_this);
-            })));
-        }
-        //this.world.runScript(screenShake(this.world));
-    };
-    Tree.prototype.spawnLog = function () {
-        var log = WorldObject.fromConfig({
-            constructor: ItemGround,
-            x: this.x + 16, y: this.y,
-            layer: 'main',
-            offset: { x: 0, y: -8 },
-            physicsGroup: 'items',
-            type: Item.Type.LOG,
-        });
-        World.Actions.addWorldObjectToWorld(log, this.world);
-    };
-    Tree.prototype.spawnTorch = function () {
-        var log = WorldObject.fromConfig({
-            name: 'torch',
-            constructor: ItemGround,
-            x: this.x, y: this.y,
-            layer: 'main',
-            offset: { x: 0, y: -12 },
-            physicsGroup: 'items',
-            type: Item.Type.TORCH,
-        });
-        World.Actions.addWorldObjectToWorld(log, this.world);
-    };
-    return Tree;
-}(Sprite));
-/// <reference path="base.ts" />
-/// <reference path="campfire.ts" />
-/// <reference path="door.ts" />
-/// <reference path="firelitWorld.ts" />
-/// <reference path="item.ts" />
-/// <reference path="lightingManager.ts" />
-/// <reference path="main.ts" />
-/// <reference path="monster.ts" />
-/// <reference path="player.ts" />
-/// <reference path="tree.ts" />
-var worlds = {
-    'game': {
-        constructor: FirelitWorld,
-        parent: BASE_WORLD_CONFIG,
-        camera: {
-            movement: { type: 'smooth', speed: 0, deadZoneWidth: 0, deadZoneHeight: 0 },
-            mode: Camera.Mode.FOLLOW('player', 0, -8),
-        },
-        entryPoints: {
-            'main': { x: Main.width / 2, y: Main.height / 2 },
-        },
-        worldObjects: __spread([
-            WORLD_BOUNDS(0, 0, Main.width, Main.height),
-            {
-                name: 'lightingManager',
-                constructor: LightingManager,
-            },
-            {
-                constructor: Tilemap,
-                x: 0, y: 0,
-                tilemap: 'world',
-                tilemapLayer: 1,
-                layer: 'bg',
-            },
-            {
-                constructor: Tilemap,
-                x: 0, y: 0,
-                tilemap: 'world',
-                tilemapLayer: 0,
-                layer: 'fg',
-                physicsGroup: 'walls',
-            },
-            {
-                name: 'ground',
-                constructor: Sprite,
-                x: 400, y: 400,
-                texture: 'ground',
-                layer: 'bg',
-            },
-            {
-                name: 'campfire',
-                constructor: Campfire,
-                x: 400, y: 400,
-                layer: 'main',
-            },
-            {
-                name: 'player',
-                constructor: Player,
-                controllable: true,
-                x: 387, y: 394,
-                flipX: false,
-                layer: 'main',
-                physicsGroup: 'player',
-            },
-            {
-                name: 'door',
-                constructor: Door,
-                x: 400, y: 240,
-                layer: 'main',
-                physicsGroup: 'props',
-            }
-        ], [
-            { x: 424, y: 296 },
-            { x: 344, y: 344 },
-            { x: 392, y: 328 },
-            { x: 472, y: 360 },
-            { x: 312, y: 408 },
-            { x: 504, y: 408 },
-            { x: 328, y: 440 },
-            { x: 472, y: 440 },
-            { x: 376, y: 472 },
-            { x: 408, y: 488 },
-            { x: 584, y: 408 },
-        ].map(function (pos) { return ({
-            constructor: Tree,
-            x: pos.x, y: pos.y,
-            layer: 'main',
-            physicsGroup: 'props',
-            immovable: true,
-        }); }), [
-            {
-                name: 'start_log',
-                constructor: ItemGround,
-                type: Item.Type.LOG,
-                x: 425, y: 408,
-                layer: 'main',
-                physicsGroup: 'items',
-            },
-            {
-                constructor: ItemGround,
-                type: Item.Type.AXE,
-                x: 447, y: 436,
-                angle: -90,
-                layer: 'main',
-                physicsGroup: 'items',
-            },
-            {
-                constructor: ItemGround,
-                type: Item.Type.KEY,
-                x: 688, y: 400,
-                layer: 'main',
-                physicsGroup: 'items',
-            },
-            {
-                name: 'gasoline',
-                constructor: ItemGround,
-                type: Item.Type.GASOLINE,
-                x: 528, y: 84,
-                layer: 'main',
-                physicsGroup: 'items',
-            },
-        ])
-    },
-};

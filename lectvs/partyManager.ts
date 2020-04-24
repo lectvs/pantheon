@@ -88,7 +88,7 @@ class PartyManager {
             return;
         }
 
-        let stage = this.theater.worldManager.worlds[stageName];
+        let stage = this.theater.stageManager.stages[stageName];
         if (!stage) {
             debug(`Cannot move party member ${memberName} to stage ${stageName} because the stage does not exist`);
             return;

@@ -9,11 +9,11 @@
 /// <reference path="player.ts" />
 /// <reference path="tree.ts" />
 
-const worlds: Dict<World.Config> = {
+const stages: Dict<World.Config> = {
 
     'game': {
         constructor: FirelitWorld,
-        parent: BASE_WORLD_CONFIG,
+        parent: BASE_STAGE,
         camera: {
             movement: { type: 'smooth', speed: 0, deadZoneWidth: 0, deadZoneHeight: 0 },
             mode: Camera.Mode.FOLLOW('player', 0, -8),

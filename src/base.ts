@@ -1,7 +1,7 @@
 
 const DEFAULT_SCREEN_TRANSITION = Transition.FADE(0.2, 0.5, 0.2);
 
-const BASE_WORLD_CONFIG: World.Config = {
+const BASE_STAGE: World.Config = {
     layers: [
         { name: 'bg' },
         { name: 'main', sortKey: 'y' },

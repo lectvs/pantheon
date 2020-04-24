@@ -1,7 +1,7 @@
-class WorldManager {
-    worlds: Dict<World.Config>;
+class StageManager {
+    stages: Dict<World.Config>;
 
-    currentWorldName: string;
+    currentStageName: string;
     currentWorld: World;
 
     private transition: Transition;
@@ -10,23 +10,23 @@ class WorldManager {
     private theater: Theater;
     private stageLoadQueue: { name: string, transitionConfig: Transition.Config, entryPoint: World.EntryPoint };
 
-    constructor(theater: Theater, worlds: Dict<World.Config>) {
+    constructor(theater: Theater, stages: Dict<World.Config>) {
         this.theater = theater;
-        this.worlds = worlds;
-        this.currentWorldName = null;
+        this.stages = stages;
+        this.currentStageName = null;
         this.currentWorld = null;
         this.stageLoadQueue = null;
     }
 
     loadStage(name: string, transitionConfig: Transition.Config, entryPoint?: World.EntryPoint) {
-        if (!this.worlds[name]) {
-            debug(`Cannot load world '${name}' because it does not exist:`, this.worlds);
+        if (!this.stages[name]) {
+            debug(`Cannot load world '${name}' because it does not exist:`, this.stages);
             return;
         }
         if (!entryPoint) entryPoint = { x: this.theater.width/2, y: this.theater.height/2 };
-        if (!this.currentWorldName) {
+        if (!this.currentStageName) {
             if (transitionConfig.type !== 'instant') debug(`Ignoring transition ${transitionConfig.type} for world ${name} because no other world is loaded`);
-            this.setWorld(name, entryPoint);
+            this.setStage(name, entryPoint);
             return;
         }
         this.stageLoadQueue = { name, transitionConfig, entryPoint };
@@ -43,7 +43,7 @@ class WorldManager {
         let oldWorld = this.currentWorld;
         let oldSnapshot = oldWorld.takeSnapshot();
 
-        this.setWorld(name, entryPoint);
+        this.setStage(name, entryPoint);
         this.currentWorld.update(0);
         
         let newSnapshot = this.currentWorld.takeSnapshot();
@@ -69,7 +69,7 @@ class WorldManager {
         });
     }
 
-    private setWorld(name: string, entryPoint: World.EntryPoint) {
+    private setStage(name: string, entryPoint: World.EntryPoint) {
         // Remove old stuff
         if (this.currentWorld) {
             World.Actions.removeWorldObjectFromWorld(this.currentWorld);
@@ -77,8 +77,8 @@ class WorldManager {
         this.theater.interactionManager.reset();
 
         // Create new stuff
-        this.currentWorldName = name;
-        this.currentWorld = WorldObject.fromConfig<World>(this.worlds[name]);
+        this.currentStageName = name;
+        this.currentWorld = WorldObject.fromConfig<World>(this.stages[name]);
         this.addPartyToWorld(this.currentWorld, name, entryPoint);
         World.Actions.setLayer(this.currentWorld, Theater.LAYER_WORLD);
         World.Actions.addWorldObjectToWorld(this.currentWorld, this.theater);
