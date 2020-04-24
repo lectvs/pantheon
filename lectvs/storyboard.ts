@@ -39,6 +39,7 @@ namespace Storyboard {
                   Node.Transitions.Instant
                 | Node.Transitions.OnStage
                 | Node.Transitions.OnInteract
+                | Node.Transitions.OnCondition
             ) & {
             toNode: string;
         }
@@ -58,6 +59,11 @@ namespace Storyboard {
             type: 'onInteract';
             with: string;
             onStage?: string;
+        }
+
+        export type OnCondition = {
+            type: 'onCondition';
+            condition: () => any;
         }
     }
 

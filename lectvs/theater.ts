@@ -3,9 +3,9 @@
 
 namespace Theater {
     export type Config = {
-        stages: Dict<Stage>;
-        stageToLoad: string;
-        stageEntryPoint?: Stage.EntryPoint;
+        worlds: Dict<World.Config>;
+        worldToLoad: string;
+        worldEntryPoint?: World.EntryPoint;
         story: {
             storyboard: Storyboard;
             storyboardPath: string[];
@@ -24,15 +24,15 @@ class Theater extends World {
     
     partyManager: PartyManager;
     storyManager: StoryManager;
-    stageManager: StageManager;
+    worldManager: WorldManager;
     interactionManager: InteractionManager;
     slideManager: SlideManager;
 
     private debugMousePosition;
 
-    get currentStageName() { return this.stageManager ? this.stageManager.currentStageName : undefined; }
-    get currentWorld() { return this.stageManager ? this.stageManager.currentWorld : undefined; }
-    get currentStage() { return (this.stageManager && this.stageManager.stages) ? this.stageManager.stages[this.stageManager.currentStageName] : undefined; }
+    get currentStageName() { return this.worldManager ? this.worldManager.currentWorldName : undefined; }
+    get currentWorld() { return this.worldManager ? this.worldManager.currentWorld : undefined; }
+    get currentStage() { return (this.worldManager && this.worldManager.worlds) ? this.worldManager.worlds[this.worldManager.currentWorldName] : undefined; }
     get isCutscenePlaying() { return this.storyManager ? this.storyManager.cutsceneManager.isCutscenePlaying : false; }
     get slides() { return this.slideManager ? this.slideManager.slides : []; }
     
@@ -50,11 +50,11 @@ class Theater extends World {
 
         this.partyManager = new PartyManager(this, config.party);
         this.storyManager = new StoryManager(this, config.story.storyboard, config.story.storyboardPath, config.story.storyEvents, config.story.storyConfig);
-        this.stageManager = new StageManager(this, config.stages);
+        this.worldManager = new WorldManager(this, config.worlds);
         this.interactionManager = new InteractionManager(this);
         this.slideManager = new SlideManager(this);
 
-        this.stageManager.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
+        this.worldManager.loadStage(config.worldToLoad, Transition.INSTANT, config.worldEntryPoint);
 
         if (Debug.SHOW_MOUSE_POSITION && config.debugMousePositionFont) {
             this.debugMousePosition = new SpriteText({ x: 0, y: 0, font: config.debugMousePositionFont, style: { color: 0x008800 } });
@@ -71,7 +71,7 @@ class Theater extends World {
     update(delta: number) {
         super.update(delta);
 
-        this.stageManager.loadStageIfQueued();
+        this.worldManager.loadStageIfQueued();
 
         if (Debug.SHOW_MOUSE_POSITION) {
             this.debugMousePosition.setText(`${S.padLeft(this.currentWorld.getWorldMouseX().toString(), 3)} ${S.padLeft(this.currentWorld.getWorldMouseY().toString(), 3)}`);
@@ -94,8 +94,8 @@ class Theater extends World {
         this.slideManager.clearSlides(exceptLast);
     }
 
-    loadStage(name: string, transition: Transition.Config = Transition.INSTANT, entryPoint?: Stage.EntryPoint) {
-        this.stageManager.loadStage(name, transition, entryPoint);
+    loadStage(name: string, transition: Transition.Config = Transition.INSTANT, entryPoint?: World.EntryPoint) {
+        this.worldManager.loadStage(name, transition, entryPoint);
     }
 
     onStageLoad() {

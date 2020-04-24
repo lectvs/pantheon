@@ -5,7 +5,7 @@ const party: Party.Config = {
     activeMembers: ['sai', 'dad'],
     members: {
         'player': {
-            config: {
+            config: <Sprite.Config>{
                 name: 'player',
                 constructor: Sprite,
                 x: Main.width/2 - 8, y: Main.height/2 - 8,

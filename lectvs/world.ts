@@ -13,6 +13,9 @@ namespace World {
 
         backgroundColor?: number;
         backgroundAlpha?: number;
+
+        entryPoints?: Dict<Pt>;
+        worldObjects?: WorldObject.Config[];
     }
 
     export type CollisionConfig = {
@@ -31,11 +34,14 @@ namespace World {
 
     export type PhysicsGroupConfig = {
     }
+
+    export type EntryPoint = string | Pt;
 }
 
 class World extends WorldObject {
     width: number;
     height: number;
+    entryPoints: Dict<Pt>;
     worldObjects: WorldObject[];
 
     physicsGroups: Dict<World.PhysicsGroup>;
@@ -82,6 +88,12 @@ class World extends WorldObject {
         this.screen = new Texture(this.width, this.height);
         this.layerTexture = new Texture(this.width, this.height);
 
+        this.entryPoints = O.getOrDefault(config.entryPoints, {});
+
+        for (let worldObjectConfig of config.worldObjects || []) {
+            World.Actions.addWorldObjectToWorld(WorldObject.fromConfig(worldObjectConfig), this);
+        }
+        
         this.debugCameraX = 0;
         this.debugCameraY = 0;
     }
@@ -155,6 +167,14 @@ class World extends WorldObject {
             return !!this.worldObjectsByName[obj];
         }
         return _.contains(this.worldObjects, obj);
+    }
+
+    getEntryPoint(entryPointKey: string) {
+        if (!this.entryPoints || !this.entryPoints[entryPointKey]) {
+            debug(`World does not have an entry point named '${entryPointKey}':`, this);
+            return undefined;
+        }
+        return this.entryPoints[entryPointKey];
     }
 
     getLayer(obj: string | WorldObject) {
@@ -338,7 +358,7 @@ class World extends WorldObject {
 
     // For use with World.Actions.removeChildFromParent
     private internalRemoveChildFromParentWorld(child: WorldObject) {
-        World.Actions.removeWorldObjectFromWorld(child);
+        
     }
 
     private removeName(obj: WorldObject) {
@@ -400,17 +420,20 @@ namespace World {
     }
 
     export namespace Actions {
-        export function addWorldObjectToWorld(obj: WorldObject, world: World): boolean {
-            if (!obj || !world) return false;
+        /**
+         * Adds a WorldObject to the world. Returns the object added.
+         */
+        export function addWorldObjectToWorld<T extends WorldObject>(obj: T, world: World): T {
+            if (!obj || !world) return obj;
 
             if (obj.world) {
                 debug(`Cannot add object ${obj.name} to world because it aleady exists in another world! You must remove object from previous world first. World:`, world, 'Previous world:', obj.world);
-                return false;
+                return undefined;
             }
 
             if (obj.name && world.containsWorldObject(obj.name)) {
                 debug(`Cannot add object ${obj.name} to world because an object already exists with that name! World:`, world);
-                return false;
+                return undefined;
             }
 
             /// @ts-ignore
@@ -423,23 +446,26 @@ namespace World {
             }
 
             obj.onAdd();
-            return true;
+            return obj;
         }
 
-        export function addWorldObjectsToWorld(objs: WorldObject[], world: World): boolean {
-            let result = true;
-            for (let obj of objs || []) {
-                result = result && addWorldObjectToWorld(obj, world);
-            }
-            return result;
+        /**
+         * Adds a list of WorldObjects to a world. Returns as a list the objects added successfully.
+         */
+        export function addWorldObjectsToWorld<T extends WorldObject>(objs: ReadonlyArray<T>, world: World): T[] {
+            if (_.isEmpty(objs)) return [];
+            return objs.filter(obj => addWorldObjectToWorld(obj, world));
         }
 
-        export function removeWorldObjectFromWorld(obj: WorldObject): boolean {
-            if (!obj) return false;
+        /**
+         * Removes a WorldObject from its containing world. Returns the object removed.
+         */
+        export function removeWorldObjectFromWorld<T extends WorldObject>(obj: T): T {
+            if (!obj) return obj;
 
             if (!obj.world) {
-                debug(`Cannot remove object ${obj.name} from world because it does not belong to a world! Object:`, obj);
-                return false;
+                debug(`Tried to remove object ${obj.name} from its containing world, but it does not belong to a world! Object:`, obj);
+                return obj;
             }
 
             let world = obj.world;
@@ -459,23 +485,26 @@ namespace World {
                 World.Actions.removeChildFromParent(obj);
             }
             
-            return true;
+            return obj;
         }
 
-        export function removeWorldObjectsFromWorld(objs: WorldObject[]): boolean {
-            let result = true;
-            for (let obj of objs || []) {
-                result = result && removeWorldObjectFromWorld(obj);
-            }
-            return result;
+        /**
+         * Removes a list of WorldObjects from their containing worlds. Returns as a list the objects successfully removed.
+         */
+        export function removeWorldObjectsFromWorld<T extends WorldObject>(objs: ReadonlyArray<T>): T[] {
+            if (_.isEmpty(objs)) return [];
+            return objs.filter(obj => removeWorldObjectFromWorld(obj));
         }
 
-        export function setName(obj: WorldObject, name: string): boolean {
-            if (!obj) return false;
+        /**
+         * Sets the name of a WorldObject. Returns the new name of the object.
+         */
+        export function setName(obj: WorldObject, name: string): string {
+            if (!obj) return undefined;
 
             if (obj.world && obj.world.containsWorldObject(name)) {
                 debug(`Cannot name object '${name}' as that name already exists in world!`, obj.world);
-                return false;
+                return obj.name;
             }
 
             /// @ts-ignore
@@ -486,15 +515,18 @@ namespace World {
                 obj.world.internalSetNameWorld(obj, name);
             }
 
-            return true;
+            return obj.name;
         }
 
-        export function setLayer(obj: WorldObject, layerName: string): boolean {
-            if (!obj) return false;
+        /**
+         * Sets the layer of a WorldObject. Returns the new layer name of the object.
+         */
+        export function setLayer(obj: WorldObject, layerName: string): string {
+            if (!obj) return undefined;
 
             if (obj.world && !obj.world.getLayerByName(layerName)) {
                 debug(`Cannot set layer on object '${obj.name}' as no layer named ${layerName} exists in world!`, obj.world);
-                return false;
+                return obj.layer;
             }
 
             /// @ts-ignore
@@ -505,15 +537,18 @@ namespace World {
                 obj.world.internalSetLayerWorld(obj, layerName);
             }
 
-            return true;
+            return obj.layer;
         }
 
-        export function setPhysicsGroup(obj: PhysicsWorldObject, physicsGroupName: string): boolean {
-            if (!obj) return false;
+        /**
+         * Sets the physics group of a WorldObject. Returns the new physics group name of the object.
+         */
+        export function setPhysicsGroup(obj: PhysicsWorldObject, physicsGroupName: string): string {
+            if (!obj) return undefined;
 
             if (obj.world && !obj.world.getPhysicsGroupByName(physicsGroupName)) {
                 debug(`Cannot set physicsGroup on object '${obj.name}' as no physicsGroup named ${physicsGroupName} exists in world!`, obj.world);
-                return false;
+                return obj.physicsGroup;
             }
 
             /// @ts-ignore
@@ -524,65 +559,80 @@ namespace World {
                 obj.world.internalSetPhysicsGroupWorld(obj, physicsGroupName);
             }
 
-            return true;
+            return obj.physicsGroup;
         }
 
-        export function addChildToParent(child: WorldObject, obj: WorldObject): boolean {
-            if (!child || !obj) return false;
+        /**
+         * Adds a WorldObject as a child to a parent. Returns the child object if successful.
+         */
+        export function addChildToParent<T extends WorldObject>(child: T, obj: WorldObject): T {
+            if (!child || !obj) return child;
 
             if (child.parent) {
                 debug(`Cannot add child ${child.name} to parent ${obj.name} becase the child is already the child of another parent!`, child.parent);
-                return false;
+                return undefined;
             }
 
             if (child.world && child.world !== obj.world) {
                 debug(`Cannot add child ${child.name} to parent ${obj.name} becase the child exists in a different world!`, child.world);
-                return false;
+                return undefined;
             }
 
             /// @ts-ignore
-            obj.internalAddChildToParentWorldObject(child);
+            child.internalAddChildToParentWorldObjectChild(obj);
+            /// @ts-ignore
+            obj.internalAddChildToParentWorldObjectParent(child);
 
             if (obj.world) {
                 /// @ts-ignore
                 obj.world.internalAddChildToParentWorld(child, obj);
             }
 
-            return true;
+            return child;
         }
 
-        export function addChildrenToParent(children: WorldObject[], obj: WorldObject): boolean {
-            let result = true;
-            for (let child of children || []) {
-                result = result && addChildToParent(child, obj);
-            }
-            return result;
+        /**
+         * Adds a list of WorldObjects as children to a parent. Returns as a list the children successfully added.
+         */
+        export function addChildrenToParent<T extends WorldObject>(children: ReadonlyArray<T>, obj: WorldObject): T[] {
+            if (_.isEmpty(children)) return [];
+            return children.filter(child => addChildToParent(child, obj));
         }
 
-        export function removeChildFromParent(child: WorldObject): boolean {
-            if (!child) return false;
+        /**
+         * Removes a child from its parent. Returns the child if successfully removed.
+         */
+        export function removeChildFromParent<T extends WorldObject>(child: T): T {
+            if (!child) return child;
 
             if (!child.parent) {
-                debug(`Cannot remove child ${child.name} from parent because its parent does not exist! Child:`, child);
-                return false;
+                debug(`Tried to remove child ${child.name} from its parent, but its parent does not exist! Child:`, child);
+                return child;
             }
 
 
             /// @ts-ignore
-            child.parent.internalRemoveChildFromParentWorldObject(child);
+            child.parent.internalRemoveChildFromParentWorldObjectParent(child);
+            /// @ts-ignore
+            child.internalRemoveChildFromParentWorldObjectChild();
 
             if (child.world) {
                 /// @ts-ignore
                 child.world.internalRemoveChildFromParentWorld(child);
             }
 
-            return true;
+            return child;
         }
 
-        export function removeAllChildrenFromParent(parent: WorldObject): boolean {
-            let result = true;
+        /**
+         * Removes all of an object's children. Returns as a list the objects successfully removed.
+         */
+        export function removeAllChildrenFromParent<T extends WorldObject>(parent: WorldObject): T[] {
+            if (!_.isEmpty(parent.children)) return [];
+            let result = [];
             while (!_.isEmpty(parent.children)) {
-                result = result && removeChildFromParent(parent.children[0]);
+                let child = removeChildFromParent(parent.children[0]);
+                if (child) result.push(child);
             }
             return result;
         }

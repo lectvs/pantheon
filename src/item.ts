@@ -103,25 +103,15 @@ class ItemHand extends Sprite {
 }
 
 class ItemName extends SpriteText {
-    life = 1;
-
-    private lifetimer: Timer;
-
     constructor(config: SpriteText.Config) {
         super(config);
         this.style.color = 0x555555;
-        this.lifetimer = new Timer(this.life);
     }
 
     update(delta: number) {
         super.update(delta);
 
         this.localy -= 16*delta;
-        this.style.alpha = 1-this.lifetimer.progress**2;
-
-        this.lifetimer.update(delta);
-        if (this.lifetimer.done) {
-            World.Actions.removeWorldObjectFromWorld(this);
-        }
+        this.style.alpha = 1-this.life.progress**2;
     }
 }

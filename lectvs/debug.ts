@@ -33,7 +33,7 @@ class DebugValues {
 }
 
 var Debug = new DebugValues();
-Debug.DEBUG = false;
+Debug.DEBUG = true;
 Debug.ALL_PHYSICS_BOUNDS = false;
 Debug.MOVE_CAMERA_WITH_ARROWS = true;
 Debug.SHOW_MOUSE_POSITION = true;

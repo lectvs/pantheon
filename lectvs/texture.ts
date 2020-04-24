@@ -134,6 +134,12 @@ class Texture {
 }
 
 namespace Texture {
+    export function filledRect(width: number, height: number, fillColor: number, fillAlpha: number = 1) {
+        let result = new Texture(width, height);
+        Draw.fill(result, { color: fillColor, alpha: fillAlpha, thickness: 0 });
+        return result;
+    }
+
     export function fromPixiTexture(pixiTexture: PIXI.Texture) {
         let sprite = new PIXI.Sprite(pixiTexture);
         let texture = new Texture(pixiTexture.width, pixiTexture.height);

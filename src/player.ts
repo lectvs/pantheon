@@ -66,7 +66,6 @@ class Player extends Sprite {
         // Handle animation.
         let anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'run';
         let holding = this.heldItem ? 'holding' : 'empty';
-        //let anim_dir = this.direction.v == Direction.UP ? 'up' : (this.direction.h == Direction.NONE ? 'down' : 'side');
 
         this.playAnimation(`${anim_state}_${holding}`);
     }
@@ -176,7 +175,7 @@ class Player extends Sprite {
         if (!this.heldItem) return;
         let droppedItem = this.heldItem.asGroundItem(this.x, this.y, this.layer, 'items');
         droppedItem.flipX = this.heldItem.flipX;
-        World.Actions.removeChildFromParent(this.heldItem);
+        World.Actions.removeWorldObjectFromWorld(this.heldItem);
         World.Actions.addWorldObjectToWorld(droppedItem, this.world);
         World.Actions.setName(droppedItem, this.heldItem.name);
         this.heldItem = null;
@@ -203,7 +202,7 @@ class Player extends Sprite {
     }
 
     removeHeldItem() {
-        World.Actions.removeChildFromParent(this.heldItem);
+        World.Actions.removeWorldObjectFromWorld(this.heldItem);
         this.heldItem = null;
     }
 
@@ -215,7 +214,7 @@ class Player extends Sprite {
         World.Actions.setName(this.heldItem, item.name);
 
         if (this.world.getLayerByName('above')) {
-            let itemName = new ItemName({ text: item.type, font: Assets.fonts.DELUXE16, layer: 'above' });
+            let itemName = new ItemName({ text: item.type, font: Assets.fonts.DELUXE16, life: 1, layer: 'above' });
             itemName.x = -itemName.getTextWidth()/2;
             itemName.y = -32;
             World.Actions.addChildToParent(itemName, this);

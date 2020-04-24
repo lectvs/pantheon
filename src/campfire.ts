@@ -85,7 +85,7 @@ class Campfire extends Sprite {
         this.updateRadius(delta);
         this.updateRadiusBuffer(delta);
         this.consumeItems();
-        if ((<FirelitWorld>this.world).hasLost) {
+        if (global.theater.storyManager.currentNodeName === 'lose') {
             this.timer.time = this.fullTime;
         }
     }

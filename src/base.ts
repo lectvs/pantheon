@@ -1,7 +1,7 @@
 
 const DEFAULT_SCREEN_TRANSITION = Transition.FADE(0.2, 0.5, 0.2);
 
-const BASE_STAGE: Stage = {
+const BASE_WORLD_CONFIG: World.Config = {
     layers: [
         { name: 'bg' },
         { name: 'main', sortKey: 'y' },
@@ -28,22 +28,22 @@ function WORLD_BOUNDS(left: number, top: number, right: number, bottom: number):
     return {
         constructor: WorldObject,
         children: [
-            {
+            <PhysicsWorldObject.Config>{
                 constructor: PhysicsWorldObject,
                 bounds: { x: left-thickness, y: top-thickness, width: thickness, height: height+2*thickness },
                 physicsGroup: 'walls',
             },
-            {
+            <PhysicsWorldObject.Config>{
                 constructor: PhysicsWorldObject,
                 bounds: { x: right, y: top-thickness, width: thickness, height: height+2*thickness },
                 physicsGroup: 'walls',
             },
-            {
+            <PhysicsWorldObject.Config>{
                 constructor: PhysicsWorldObject,
                 bounds: { x: left, y: top-thickness, width: width, height: thickness },
                 physicsGroup: 'walls',
             },
-            {
+            <PhysicsWorldObject.Config>{
                 constructor: PhysicsWorldObject,
                 bounds: { x: left, y: bottom, width: width, height: thickness },
                 physicsGroup: 'walls',

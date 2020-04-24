@@ -111,9 +111,7 @@ class ZOrderedTilemap extends WorldObject {
     }
 
     private clearZTextures() {
-        while (!_.isEmpty(this.children)) {
-            World.Actions.removeChildFromParent(this.children[0]);
-        }
+        World.Actions.removeWorldObjectsFromWorld(this.children);
     }
 }
 

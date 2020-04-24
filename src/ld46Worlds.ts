@@ -3,16 +3,17 @@
 /// <reference path="door.ts" />
 /// <reference path="firelitWorld.ts" />
 /// <reference path="item.ts" />
+/// <reference path="lightingManager.ts" />
 /// <reference path="main.ts" />
 /// <reference path="monster.ts" />
 /// <reference path="player.ts" />
 /// <reference path="tree.ts" />
 
-const stages: Dict<Stage> = {
+const worlds: Dict<World.Config> = {
 
     'game': {
         constructor: FirelitWorld,
-        parent: BASE_STAGE,
+        parent: BASE_WORLD_CONFIG,
         camera: {
             movement: { type: 'smooth', speed: 0, deadZoneWidth: 0, deadZoneHeight: 0 },
             mode: Camera.Mode.FOLLOW('player', 0, -8),
@@ -23,13 +24,17 @@ const stages: Dict<Stage> = {
         worldObjects: [
             WORLD_BOUNDS(0, 0, Main.width, Main.height),
             {
+                name: 'lightingManager',
+                constructor: LightingManager,
+            },
+            <Tilemap.Config>{
                 constructor: Tilemap,
                 x: 0, y: 0,
                 tilemap: 'world',
                 tilemapLayer: 1,
                 layer: 'bg',
             },
-            {
+            <Tilemap.Config>{
                 constructor: Tilemap,
                 x: 0, y: 0,
                 tilemap: 'world',
@@ -37,7 +42,7 @@ const stages: Dict<Stage> = {
                 layer: 'fg',
                 physicsGroup: 'walls',
             },
-            {
+            <Sprite.Config>{
                 name: 'ground',
                 constructor: Sprite,
                 x: 400, y: 400,

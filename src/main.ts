@@ -82,9 +82,9 @@ class Main {
             pauseMenuClass: PauseMenu,
             theaterClass: Theater,
             theaterConfig: {
-                stages: stages,
-                stageToLoad: 'game',
-                stageEntryPoint: 'main',
+                worlds: worlds,
+                worldToLoad: 'game',
+                worldEntryPoint: 'main',
                 story: {
                     storyboard: storyboard,
                     storyboardPath: ['start'],

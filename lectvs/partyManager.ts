@@ -6,7 +6,7 @@ namespace Party {
     }
 
     export type Member = {
-        config: SomeWorldObjectConfig;
+        config: WorldObject.Config;
         stage: string;
         worldObject?: WorldObject;
     }
@@ -88,7 +88,7 @@ class PartyManager {
             return;
         }
 
-        let stage = this.theater.stageManager.stages[stageName];
+        let stage = this.theater.worldManager.worlds[stageName];
         if (!stage) {
             debug(`Cannot move party member ${memberName} to stage ${stageName} because the stage does not exist`);
             return;
