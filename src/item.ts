@@ -40,6 +40,10 @@ class ItemGround extends Sprite {
     update(delta: number) {
         this.updateMovement(delta);
         super.update(delta);
+
+        if (this.type === Item.Type.TORCH) {
+            Item.updateTorchFireSprite(this);
+        }
     }
 
     private updateMovement(delta: number) {
@@ -64,12 +68,16 @@ class ItemGround extends Sprite {
     }
 
     asHandItem(x: number, y: number, layer: string) {
-        return WorldObject.fromConfig<ItemHand>(<Item.Config>{
+        let handItem = WorldObject.fromConfig<ItemHand>(<Item.Config>{
             constructor: ItemHand,
             layer: layer,
             offset: { x: x, y: y },
             type: this.type,
         });
+
+        handItem.addChildren(this.world.removeWorldObjects(this.children));
+
+        return handItem;
     }
 }
 
@@ -91,14 +99,25 @@ class ItemHand extends Sprite {
         this.type = config.type;
     }
 
+    update(delta: number) {
+        super.update(delta);
+        if (this.type === Item.Type.TORCH) {
+            Item.updateTorchFireSprite(this);
+        }
+    }
+
     asGroundItem(x: number, y: number, layer: string, physicsGroup: string) {
-        return WorldObject.fromConfig<ItemGround>(<Item.Config>{
+        let groundItem = WorldObject.fromConfig<ItemGround>(<Item.Config>{
             constructor: ItemGround,
             x: x, y: y,
             layer: layer,
             physicsGroup: physicsGroup,
             type: this.type,
         });
+
+        groundItem.addChildren(this.world.removeWorldObjects(this.children));
+
+        return groundItem;
     }
 }
 
@@ -113,5 +132,17 @@ class ItemName extends SpriteText {
 
         this.localy -= 16*delta;
         this.style.alpha = 1-this.life.progress**2;
+    }
+}
+
+namespace Item {
+    export function updateTorchFireSprite(item: Sprite) {
+        let torchFire = item.getChildByName<Sprite>('torchFire');
+        let torchLightManager = item.world.getWorldObjectByName<TorchLightManager>('torchLightManager');
+        let torchScale = torchLightManager.torchFuel;
+        torchFire.scaleX = 0.7*torchScale;
+        torchFire.scaleY = 0.7*torchScale;
+        torchFire.offset.x = item.offset.x;
+        torchFire.offset.y = item.offset.y - 4;
     }
 }

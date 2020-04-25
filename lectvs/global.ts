@@ -3,10 +3,6 @@ class global {
         this.scriptStack = [];
     }
 
-    static getWorldObject<T extends WorldObject>(name: string): T {
-        return <T>global.theater.currentWorld.getWorldObjectByName(name);
-    }
-
     // Update options
 
     static get script() { return this.scriptStack[this.scriptStack.length-1]; };
@@ -16,6 +12,7 @@ class global {
 
     static game: Game;
     static theater: Theater;
+    static get world(): World { return this.theater ? this.theater.currentWorld : undefined; }
 
     static gameWidth: number;
     static gameHeight: number;

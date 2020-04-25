@@ -1,3 +1,10 @@
+type Light = {
+    x: number;
+    y: number;
+    radius: number;
+    buffer: number;
+}
+
 class LightingManager extends WorldObject {
     firelightFilter: TextureFilter;
     lights: Light[];
@@ -65,6 +72,7 @@ class LightingManager extends WorldObject {
         let world = <FirelitWorld>this.world;
         let campfire = this.world.getWorldObjectByName<Campfire>('campfire');
         let torch = <Sprite>this.world.worldObjectsByName['torch'];
+        let torchLightManager = this.world.getWorldObjectByName<TorchLightManager>('torchLightManager');
 
         // Update fire light
         this.lights[0].x = campfire.x - world.camera.worldOffsetX;
@@ -76,15 +84,11 @@ class LightingManager extends WorldObject {
         }
 
         // Update torch light
-        if (torch) {
-
-            
-        }
         if (torch && !campfire.hitEffect && global.theater.storyManager.currentNodeName !== 'lose') {
             this.lights[1].x = torch.x + torch.offset.x - world.camera.worldOffsetX;
             this.lights[1].y = torch.y + torch.offset.y - world.camera.worldOffsetY;
-            this.lights[1].radius = Math.pow(world.torchFuel, 0.7) * 40;
-            this.lights[1].buffer = Math.pow(world.torchFuel, 0.7) * 10;
+            this.lights[1].radius = Math.pow(torchLightManager.torchFuel, 0.7) * 40;
+            this.lights[1].buffer = Math.pow(torchLightManager.torchFuel, 0.7) * 10;
             if (Random.boolean(10*delta)) {
                 this.lights[1].radius += Random.float(-1, 1);
             }

@@ -163,12 +163,47 @@ class WorldObject {
         }
     }
 
-    onAdd() {
+    onAdd() {}
+    onRemove() {}
 
+    addChild<T extends WorldObject>(child: T | WorldObject.Config): T {
+        let worldObject: T = child instanceof WorldObject ? child : WorldObject.fromConfig(child);
+        return World.Actions.addChildToParent(worldObject, this);
     }
 
-    onRemove() {
-        
+    addChildren<T extends WorldObject>(children: (T | WorldObject.Config)[]): T[] {
+        let worldObjects: T[] = _.isEmpty(children) ? [] : children.map(child => child instanceof WorldObject ? <T>child : WorldObject.fromConfig<T>(child));
+        return World.Actions.addChildrenToParent(worldObjects, this);
+    }
+
+    getChildByName<T extends WorldObject>(name: string): T {
+        for (let child of this.children) {
+            if (child.name === name) return <T>child;
+        }
+        debug(`Cannot find child named ${name} on parent:`, this);
+        return undefined;
+    }
+
+    removeChild<T extends WorldObject>(child: T | string): T {
+        if (!child) return undefined;
+        if (_.isString(child)) {
+            child = this.getChildByName<T>(child);
+            if (!child) return;
+        }
+        if (child.parent !== this) {
+            debug(`Cannot remove child ${child.name} from parent ${this.name}, but no such relationship exists`);
+            return undefined;
+        }
+        return World.Actions.removeChildFromParent(child);
+    }
+
+    removeChildren<T extends WorldObject>(children: ReadonlyArray<T>): T[] {
+        if (_.isEmpty(children)) return [];
+        return children.map(child => this.removeChild(child)).filter(child => child);
+    }
+
+    removeAllChildren<T extends WorldObject>(): T[] {
+        return this.removeChildren(<ReadonlyArray<T>>this.children);
     }
 
     // For use with World.Actions.addWorldObjectToWorld
@@ -257,8 +292,10 @@ namespace WorldObject {
 
     export function fromConfig<T extends WorldObject>(config: WorldObject.Config): T {
         config = WorldObject.resolveConfig(config);
-        if (!config.constructor) return null;
 
-        return <T>new config.constructor(config);
+        let result = new config.constructor(config);
+        if (result === config) result = new WorldObject(config);  // Default constructor to WorldObject
+
+        return <T>result;
     }
 }

@@ -7,6 +7,7 @@
 /// <reference path="main.ts" />
 /// <reference path="monster.ts" />
 /// <reference path="player.ts" />
+/// <reference path="torchLightManager.ts" />
 /// <reference path="tree.ts" />
 
 const stages: Dict<World.Config> = {
@@ -26,6 +27,10 @@ const stages: Dict<World.Config> = {
             {
                 name: 'lightingManager',
                 constructor: LightingManager,
+            },
+            {
+                name: 'torchLightManager',
+                constructor: TorchLightManager,
             },
             <Tilemap.Config>{
                 constructor: Tilemap,
@@ -83,9 +88,10 @@ const stages: Dict<World.Config> = {
                 { x: 376, y: 472 },
                 { x: 408, y: 488 },
                 { x: 584, y: 408 },
-            ].map(pos => <Sprite.Config>{
+            ].map(pos => <Tree.Config>{
                 constructor: Tree,
                 x: pos.x, y: pos.y,
+                spawnsTorch: pos.x === 328 && pos.y === 440,
                 layer: 'main',
                 physicsGroup: 'props',
                 immovable: true,

@@ -162,6 +162,16 @@ class World extends WorldObject {
         screen.render(layerTexture);
     }
 
+    addWorldObject<T extends WorldObject>(obj: T | WorldObject.Config): T {
+        let worldObject: T = obj instanceof WorldObject ? obj : WorldObject.fromConfig<T>(obj);
+        return World.Actions.addWorldObjectToWorld(worldObject, this);
+    }
+    
+    addWorldObjects<T extends WorldObject>(objs: (T | WorldObject)[]): T[] {
+        let worldObjects: T[] = _.isEmpty(objs) ? [] : objs.map(obj => obj instanceof WorldObject ? <T>obj : WorldObject.fromConfig<T>(obj));
+        return World.Actions.addWorldObjectsToWorld(worldObjects, this);
+    }
+
     containsWorldObject(obj: string | WorldObject) {
         if (_.isString(obj)) {
             return !!this.worldObjectsByName[obj];
@@ -251,6 +261,25 @@ class World extends WorldObject {
                 }
             }
         }
+    }
+
+    
+    removeWorldObject<T extends WorldObject>(obj: T | string): T {
+        if (!obj) return undefined;
+        if (_.isString(obj)) {
+            obj = this.getWorldObjectByName<T>(obj);
+            if (!obj) return;
+        }
+        if (obj.world !== this) {
+            debug(`Cannot remove object ${obj.name} from world because it does not exist in the world. World:`, this);
+            return undefined;
+        }
+        return World.Actions.removeWorldObjectFromWorld(obj);
+    }
+    
+    removeWorldObjects<T extends WorldObject>(objs: ReadonlyArray<T | string>): T[] {
+        if (_.isEmpty(objs)) return [];
+        return objs.map(obj => this.removeWorldObject(obj)).filter(obj => obj);
     }
 
     runScript(script: Script | Script.Function) {
@@ -610,7 +639,6 @@ namespace World {
                 return child;
             }
 
-
             /// @ts-ignore
             child.parent.internalRemoveChildFromParentWorldObjectParent(child);
             /// @ts-ignore
@@ -625,16 +653,13 @@ namespace World {
         }
 
         /**
-         * Removes all of an object's children. Returns as a list the objects successfully removed.
+         * Removes a list of children from their parents. Returns as a list the children successfully removed.
          */
-        export function removeAllChildrenFromParent<T extends WorldObject>(parent: WorldObject): T[] {
-            if (!_.isEmpty(parent.children)) return [];
-            let result = [];
-            while (!_.isEmpty(parent.children)) {
-                let child = removeChildFromParent(parent.children[0]);
-                if (child) result.push(child);
-            }
-            return result;
+        export function removeChildrenFromParent<T extends WorldObject>(children: ReadonlyArray<T>): T[] {
+            if (_.isEmpty(children)) return [];
+            // Protect against iterating against the same list you're removing from.
+            if (children[0].parent && children === children[0].parent.children) children = A.clone(<T[]>children);
+            return children.filter(child => removeChildFromParent(child));
         }
     }
 }

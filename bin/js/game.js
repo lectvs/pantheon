@@ -1348,9 +1348,57 @@ var WorldObject = /** @class */ (function () {
             this.controller[key] = this.controllerSchema[key]();
         }
     };
-    WorldObject.prototype.onAdd = function () {
+    WorldObject.prototype.onAdd = function () { };
+    WorldObject.prototype.onRemove = function () { };
+    WorldObject.prototype.addChild = function (child) {
+        var worldObject = child instanceof WorldObject ? child : WorldObject.fromConfig(child);
+        return World.Actions.addChildToParent(worldObject, this);
     };
-    WorldObject.prototype.onRemove = function () {
+    WorldObject.prototype.addChildren = function (children) {
+        var worldObjects = _.isEmpty(children) ? [] : children.map(function (child) { return child instanceof WorldObject ? child : WorldObject.fromConfig(child); });
+        return World.Actions.addChildrenToParent(worldObjects, this);
+    };
+    WorldObject.prototype.getChildByName = function (name) {
+        var e_4, _a;
+        try {
+            for (var _b = __values(this.children), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var child = _c.value;
+                if (child.name === name)
+                    return child;
+            }
+        }
+        catch (e_4_1) { e_4 = { error: e_4_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_4) throw e_4.error; }
+        }
+        debug("Cannot find child named " + name + " on parent:", this);
+        return undefined;
+    };
+    WorldObject.prototype.removeChild = function (child) {
+        if (!child)
+            return undefined;
+        if (_.isString(child)) {
+            child = this.getChildByName(child);
+            if (!child)
+                return;
+        }
+        if (child.parent !== this) {
+            debug("Cannot remove child " + child.name + " from parent " + this.name + ", but no such relationship exists");
+            return undefined;
+        }
+        return World.Actions.removeChildFromParent(child);
+    };
+    WorldObject.prototype.removeChildren = function (children) {
+        var _this = this;
+        if (_.isEmpty(children))
+            return [];
+        return children.map(function (child) { return _this.removeChild(child); }).filter(function (child) { return child; });
+    };
+    WorldObject.prototype.removeAllChildren = function () {
+        return this.removeChildren(this.children);
     };
     // For use with World.Actions.addWorldObjectToWorld
     WorldObject.prototype.internalAddWorldObjectToWorldWorldObject = function (world) {
@@ -1434,9 +1482,10 @@ var WorldObject = /** @class */ (function () {
     WorldObject.resolveConfig = resolveConfig;
     function fromConfig(config) {
         config = WorldObject.resolveConfig(config);
-        if (!config.constructor)
-            return null;
-        return new config.constructor(config);
+        var result = new config.constructor(config);
+        if (result === config)
+            result = new WorldObject(config); // Default constructor to WorldObject
+        return result;
     }
     WorldObject.fromConfig = fromConfig;
 })(WorldObject || (WorldObject = {}));
@@ -1524,7 +1573,7 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
 var Sprite = /** @class */ (function (_super) {
     __extends(Sprite, _super);
     function Sprite(config, defaults) {
-        var e_4, _a;
+        var e_5, _a;
         if (defaults === void 0) { defaults = {}; }
         var _this = this;
         config = O.withDefaults(config, defaults);
@@ -1545,12 +1594,12 @@ var Sprite = /** @class */ (function (_super) {
                     _this.animationManager.addAnimation(animation.name, animation.frames);
                 }
             }
-            catch (e_4_1) { e_4 = { error: e_4_1 }; }
+            catch (e_5_1) { e_5 = { error: e_5_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_4) throw e_4.error; }
+                finally { if (e_5) throw e_5.error; }
             }
         }
         if (config.defaultAnimation) {
@@ -2297,9 +2346,6 @@ var global = /** @class */ (function () {
     global.clearStacks = function () {
         this.scriptStack = [];
     };
-    global.getWorldObject = function (name) {
-        return global.theater.currentWorld.getWorldObjectByName(name);
-    };
     Object.defineProperty(global, "script", {
         // Update options
         get: function () { return this.scriptStack[this.scriptStack.length - 1]; },
@@ -2309,6 +2355,11 @@ var global = /** @class */ (function () {
     ;
     global.pushScript = function (script) { this.scriptStack.push(script); };
     global.popScript = function () { return this.scriptStack.pop(); };
+    Object.defineProperty(global, "world", {
+        get: function () { return this.theater ? this.theater.currentWorld : undefined; },
+        enumerable: true,
+        configurable: true
+    });
     global.scriptStack = [];
     return global;
 }());
@@ -2316,7 +2367,7 @@ var Input = /** @class */ (function () {
     function Input() {
     }
     Input.setKeys = function (keyCodesByName) {
-        var e_5, _a;
+        var e_6, _a;
         this.keyCodesByName = _.clone(keyCodesByName);
         this.isDownByKeyCode = {};
         this.keysByKeycode = {};
@@ -2328,12 +2379,12 @@ var Input = /** @class */ (function () {
                     this.setupKeyCode(keyCode);
                 }
             }
-            catch (e_5_1) { e_5 = { error: e_5_1 }; }
+            catch (e_6_1) { e_6 = { error: e_6_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_5) throw e_5.error; }
+                finally { if (e_6) throw e_6.error; }
             }
         }
     };
@@ -2345,19 +2396,19 @@ var Input = /** @class */ (function () {
         this.updateMousePosition();
     };
     Input.consume = function (key) {
-        var e_6, _a;
+        var e_7, _a;
         try {
             for (var _b = __values(this.keyCodesByName[key] || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var keyCode = _c.value;
                 this.keysByKeycode[keyCode].consume();
             }
         }
-        catch (e_6_1) { e_6 = { error: e_6_1 }; }
+        catch (e_7_1) { e_7 = { error: e_7_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_6) throw e_6.error; }
+            finally { if (e_7) throw e_7.error; }
         }
     };
     Input.debugKeyDown = function (name) {
@@ -2590,7 +2641,7 @@ var InteractionManager = /** @class */ (function () {
         this._interactRequested = null;
     };
     InteractionManager.prototype.getInteractableObjects = function () {
-        var e_7, _a;
+        var e_8, _a;
         var interactableObjects = this.theater.storyManager.getInteractableObjects(this.theater.storyManager.currentNode);
         var result = new Set();
         try {
@@ -2601,12 +2652,12 @@ var InteractionManager = /** @class */ (function () {
                 result.add(name_3);
             }
         }
-        catch (e_7_1) { e_7 = { error: e_7_1 }; }
+        catch (e_8_1) { e_8 = { error: e_8_1 }; }
         finally {
             try {
                 if (interactableObjects_1_1 && !interactableObjects_1_1.done && (_a = interactableObjects_1.return)) _a.call(interactableObjects_1);
             }
-            finally { if (e_7) throw e_7.error; }
+            finally { if (e_8) throw e_8.error; }
         }
         return result;
     };
@@ -2637,7 +2688,7 @@ var InteractionManager = /** @class */ (function () {
 var World = /** @class */ (function (_super) {
     __extends(World, _super);
     function World(config, defaults) {
-        var e_8, _a;
+        var e_9, _a;
         if (defaults === void 0) { defaults = {}; }
         var _this = this;
         config = O.withDefaults(config, defaults);
@@ -2667,19 +2718,19 @@ var World = /** @class */ (function (_super) {
                 World.Actions.addWorldObjectToWorld(WorldObject.fromConfig(worldObjectConfig), _this);
             }
         }
-        catch (e_8_1) { e_8 = { error: e_8_1 }; }
+        catch (e_9_1) { e_9 = { error: e_9_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_8) throw e_8.error; }
+            finally { if (e_9) throw e_9.error; }
         }
         _this.debugCameraX = 0;
         _this.debugCameraY = 0;
         return _this;
     }
     World.prototype.update = function (delta) {
-        var e_9, _a, e_10, _b, e_11, _c;
+        var e_10, _a, e_11, _b, e_12, _c;
         _super.prototype.update.call(this, delta);
         this.scriptManager.update(this, delta);
         try {
@@ -2689,12 +2740,12 @@ var World = /** @class */ (function (_super) {
                     worldObject.preUpdate();
             }
         }
-        catch (e_9_1) { e_9 = { error: e_9_1 }; }
+        catch (e_10_1) { e_10 = { error: e_10_1 }; }
         finally {
             try {
                 if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
             }
-            finally { if (e_9) throw e_9.error; }
+            finally { if (e_10) throw e_10.error; }
         }
         try {
             for (var _f = __values(this.worldObjects), _g = _f.next(); !_g.done; _g = _f.next()) {
@@ -2703,12 +2754,12 @@ var World = /** @class */ (function (_super) {
                     worldObject.update(delta);
             }
         }
-        catch (e_10_1) { e_10 = { error: e_10_1 }; }
+        catch (e_11_1) { e_11 = { error: e_11_1 }; }
         finally {
             try {
                 if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
             }
-            finally { if (e_10) throw e_10.error; }
+            finally { if (e_11) throw e_11.error; }
         }
         this.handleCollisions();
         try {
@@ -2718,12 +2769,12 @@ var World = /** @class */ (function (_super) {
                     worldObject.postUpdate();
             }
         }
-        catch (e_11_1) { e_11 = { error: e_11_1 }; }
+        catch (e_12_1) { e_12 = { error: e_12_1 }; }
         finally {
             try {
                 if (_j && !_j.done && (_c = _h.return)) _c.call(_h);
             }
-            finally { if (e_11) throw e_11.error; }
+            finally { if (e_12) throw e_12.error; }
         }
         if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
             if (Input.isDown('debugMoveCameraLeft'))
@@ -2738,7 +2789,7 @@ var World = /** @class */ (function (_super) {
         this.camera.update(this, delta);
     };
     World.prototype.render = function (screen) {
-        var e_12, _a;
+        var e_13, _a;
         var oldCameraX = this.camera.x;
         var oldCameraY = this.camera.y;
         if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
@@ -2755,12 +2806,12 @@ var World = /** @class */ (function (_super) {
                 this.renderLayer(layer, this.layerTexture, this.screen);
             }
         }
-        catch (e_12_1) { e_12 = { error: e_12_1 }; }
+        catch (e_13_1) { e_13 = { error: e_13_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_12) throw e_12.error; }
+            finally { if (e_13) throw e_13.error; }
         }
         this.camera.x = oldCameraX;
         this.camera.y = oldCameraY;
@@ -2768,7 +2819,7 @@ var World = /** @class */ (function (_super) {
         _super.prototype.render.call(this, screen);
     };
     World.prototype.renderLayer = function (layer, layerTexture, screen) {
-        var e_13, _a;
+        var e_14, _a;
         layerTexture.clear();
         layer.sort();
         try {
@@ -2779,14 +2830,22 @@ var World = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_13_1) { e_13 = { error: e_13_1 }; }
+        catch (e_14_1) { e_14 = { error: e_14_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_13) throw e_13.error; }
+            finally { if (e_14) throw e_14.error; }
         }
         screen.render(layerTexture);
+    };
+    World.prototype.addWorldObject = function (obj) {
+        var worldObject = obj instanceof WorldObject ? obj : WorldObject.fromConfig(obj);
+        return World.Actions.addWorldObjectToWorld(worldObject, this);
+    };
+    World.prototype.addWorldObjects = function (objs) {
+        var worldObjects = _.isEmpty(objs) ? [] : objs.map(function (obj) { return obj instanceof WorldObject ? obj : WorldObject.fromConfig(obj); });
+        return World.Actions.addWorldObjectsToWorld(worldObjects, this);
     };
     World.prototype.containsWorldObject = function (obj) {
         if (_.isString(obj)) {
@@ -2802,7 +2861,7 @@ var World = /** @class */ (function (_super) {
         return this.entryPoints[entryPointKey];
     };
     World.prototype.getLayer = function (obj) {
-        var e_14, _a;
+        var e_15, _a;
         if (_.isString(obj))
             obj = this.getWorldObjectByName(obj);
         try {
@@ -2812,17 +2871,17 @@ var World = /** @class */ (function (_super) {
                     return layer.name;
             }
         }
-        catch (e_14_1) { e_14 = { error: e_14_1 }; }
+        catch (e_15_1) { e_15 = { error: e_15_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_14) throw e_14.error; }
+            finally { if (e_15) throw e_15.error; }
         }
         return undefined;
     };
     World.prototype.getLayerByName = function (name) {
-        var e_15, _a;
+        var e_16, _a;
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var layer = _c.value;
@@ -2830,12 +2889,12 @@ var World = /** @class */ (function (_super) {
                     return layer;
             }
         }
-        catch (e_15_1) { e_15 = { error: e_15_1 }; }
+        catch (e_16_1) { e_16 = { error: e_16_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_15) throw e_15.error; }
+            finally { if (e_16) throw e_16.error; }
         }
         return undefined;
     };
@@ -2881,7 +2940,7 @@ var World = /** @class */ (function (_super) {
     };
     World.prototype.handleCollisions = function () {
         var _this = this;
-        var e_16, _a, e_17, _b, e_18, _c;
+        var e_17, _a, e_18, _b, e_19, _c;
         try {
             for (var _d = __values(this.collisionOrder), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var collision = _e.value;
@@ -2901,31 +2960,51 @@ var World = /** @class */ (function (_super) {
                                 });
                             }
                         }
-                        catch (e_18_1) { e_18 = { error: e_18_1 }; }
+                        catch (e_19_1) { e_19 = { error: e_19_1 }; }
                         finally {
                             try {
                                 if (group_1_1 && !group_1_1.done && (_c = group_1.return)) _c.call(group_1);
                             }
-                            finally { if (e_18) throw e_18.error; }
+                            finally { if (e_19) throw e_19.error; }
                         }
                     }
                 }
-                catch (e_17_1) { e_17 = { error: e_17_1 }; }
+                catch (e_18_1) { e_18 = { error: e_18_1 }; }
                 finally {
                     try {
                         if (move_1_1 && !move_1_1.done && (_b = move_1.return)) _b.call(move_1);
                     }
-                    finally { if (e_17) throw e_17.error; }
+                    finally { if (e_18) throw e_18.error; }
                 }
             }
         }
-        catch (e_16_1) { e_16 = { error: e_16_1 }; }
+        catch (e_17_1) { e_17 = { error: e_17_1 }; }
         finally {
             try {
                 if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
             }
-            finally { if (e_16) throw e_16.error; }
+            finally { if (e_17) throw e_17.error; }
         }
+    };
+    World.prototype.removeWorldObject = function (obj) {
+        if (!obj)
+            return undefined;
+        if (_.isString(obj)) {
+            obj = this.getWorldObjectByName(obj);
+            if (!obj)
+                return;
+        }
+        if (obj.world !== this) {
+            debug("Cannot remove object " + obj.name + " from world because it does not exist in the world. World:", this);
+            return undefined;
+        }
+        return World.Actions.removeWorldObjectFromWorld(obj);
+    };
+    World.prototype.removeWorldObjects = function (objs) {
+        var _this = this;
+        if (_.isEmpty(objs))
+            return [];
+        return objs.map(function (obj) { return _this.removeWorldObject(obj); }).filter(function (obj) { return obj; });
     };
     World.prototype.runScript = function (script) {
         return this.scriptManager.runScript(script);
@@ -2942,7 +3021,7 @@ var World = /** @class */ (function (_super) {
         return screen;
     };
     World.prototype.createLayers = function (layers) {
-        var e_19, _a;
+        var e_20, _a;
         if (_.isEmpty(layers))
             layers = [];
         layers.push({ name: World.DEFAULT_LAYER });
@@ -2956,12 +3035,12 @@ var World = /** @class */ (function (_super) {
                 result.push(new World.Layer(layer.name, layer, this.width, this.height));
             }
         }
-        catch (e_19_1) { e_19 = { error: e_19_1 }; }
+        catch (e_20_1) { e_20 = { error: e_20_1 }; }
         finally {
             try {
                 if (layers_1_1 && !layers_1_1.done && (_a = layers_1.return)) _a.call(layers_1);
             }
-            finally { if (e_19) throw e_19.error; }
+            finally { if (e_20) throw e_20.error; }
         }
         return result;
     };
@@ -3007,7 +3086,7 @@ var World = /** @class */ (function (_super) {
     };
     // For use with World.Actions.setLayer
     World.prototype.internalSetLayerWorld = function (obj, layerName) {
-        var e_20, _a;
+        var e_21, _a;
         this.removeFromAllLayers(obj);
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -3018,12 +3097,12 @@ var World = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_20_1) { e_20 = { error: e_20_1 }; }
+        catch (e_21_1) { e_21 = { error: e_21_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_20) throw e_20.error; }
+            finally { if (e_21) throw e_21.error; }
         }
     };
     // For use with World.Actions.setPhysicsGroup
@@ -3048,19 +3127,19 @@ var World = /** @class */ (function (_super) {
         }
     };
     World.prototype.removeFromAllLayers = function (obj) {
-        var e_21, _a;
+        var e_22, _a;
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var layer = _c.value;
                 A.removeAll(layer.worldObjects, obj);
             }
         }
-        catch (e_21_1) { e_21 = { error: e_21_1 }; }
+        catch (e_22_1) { e_22 = { error: e_22_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_21) throw e_21.error; }
+            finally { if (e_22) throw e_22.error; }
         }
     };
     World.prototype.removeFromAllPhysicsGroups = function (obj) {
@@ -3104,7 +3183,7 @@ var World = /** @class */ (function (_super) {
          * Adds a WorldObject to the world. Returns the object added.
          */
         function addWorldObjectToWorld(obj, world) {
-            var e_22, _a;
+            var e_23, _a;
             if (!obj || !world)
                 return obj;
             if (obj.world) {
@@ -3125,12 +3204,12 @@ var World = /** @class */ (function (_super) {
                     World.Actions.addWorldObjectToWorld(child, world);
                 }
             }
-            catch (e_22_1) { e_22 = { error: e_22_1 }; }
+            catch (e_23_1) { e_23 = { error: e_23_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_22) throw e_22.error; }
+                finally { if (e_23) throw e_23.error; }
             }
             obj.onAdd();
             return obj;
@@ -3149,7 +3228,7 @@ var World = /** @class */ (function (_super) {
          * Removes a WorldObject from its containing world. Returns the object removed.
          */
         function removeWorldObjectFromWorld(obj) {
-            var e_23, _a;
+            var e_24, _a;
             if (!obj)
                 return obj;
             if (!obj.world) {
@@ -3168,12 +3247,12 @@ var World = /** @class */ (function (_super) {
                     World.Actions.removeWorldObjectFromWorld(child);
                 }
             }
-            catch (e_23_1) { e_23 = { error: e_23_1 }; }
+            catch (e_24_1) { e_24 = { error: e_24_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_23) throw e_23.error; }
+                finally { if (e_24) throw e_24.error; }
             }
             if (obj.parent) {
                 World.Actions.removeChildFromParent(obj);
@@ -3303,20 +3382,17 @@ var World = /** @class */ (function (_super) {
         }
         Actions.removeChildFromParent = removeChildFromParent;
         /**
-         * Removes all of an object's children. Returns as a list the objects successfully removed.
+         * Removes a list of children from their parents. Returns as a list the children successfully removed.
          */
-        function removeAllChildrenFromParent(parent) {
-            if (!_.isEmpty(parent.children))
+        function removeChildrenFromParent(children) {
+            if (_.isEmpty(children))
                 return [];
-            var result = [];
-            while (!_.isEmpty(parent.children)) {
-                var child = removeChildFromParent(parent.children[0]);
-                if (child)
-                    result.push(child);
-            }
-            return result;
+            // Protect against iterating against the same list you're removing from.
+            if (children[0].parent && children === children[0].parent.children)
+                children = A.clone(children);
+            return children.filter(function (child) { return removeChildFromParent(child); });
         }
-        Actions.removeAllChildrenFromParent = removeAllChildrenFromParent;
+        Actions.removeChildrenFromParent = removeChildrenFromParent;
     })(Actions = World.Actions || (World.Actions = {}));
 })(World || (World = {}));
 /// <reference path="./world.ts" />
@@ -3346,7 +3422,7 @@ var SpriteText = /** @class */ (function (_super) {
         return _this;
     }
     SpriteText.prototype.render = function (screen) {
-        var e_24, _a;
+        var e_25, _a;
         var filters = this.mask ? [new TextureFilter.Mask({ type: TextureFilter.Mask.Type.GLOBAL, mask: this.mask })] : [];
         try {
             for (var _b = __values(this.chars), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -3366,12 +3442,12 @@ var SpriteText = /** @class */ (function (_super) {
                 });
             }
         }
-        catch (e_24_1) { e_24 = { error: e_24_1 }; }
+        catch (e_25_1) { e_25 = { error: e_25_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_24) throw e_24.error; }
+            finally { if (e_25) throw e_25.error; }
         }
         _super.prototype.render.call(this, screen);
     };
@@ -3742,7 +3818,7 @@ var Physics = /** @class */ (function () {
     };
     Physics.collide = function (obj, from, options) {
         if (options === void 0) { options = {}; }
-        var e_25, _a;
+        var e_26, _a;
         if (_.isEmpty(from))
             return;
         if (!obj.colliding)
@@ -3777,12 +3853,12 @@ var Physics = /** @class */ (function () {
                     }
                 }
             }
-            catch (e_25_1) { e_25 = { error: e_25_1 }; }
+            catch (e_26_1) { e_26 = { error: e_26_1 }; }
             finally {
                 try {
                     if (collisions_1_1 && !collisions_1_1.done && (_a = collisions_1.return)) _a.call(collisions_1);
                 }
-                finally { if (e_25) throw e_25.error; }
+                finally { if (e_26) throw e_26.error; }
             }
             collidingWith = collidingWith.filter(function (other) { return obj.isOverlapping(other); });
             iters++;
@@ -4185,7 +4261,7 @@ var Preload = /** @class */ (function () {
         PIXI.Loader.shared.add(key + this.TILEMAP_KEY_SUFFIX, url);
     };
     Preload.loadPyxelTilemap = function (key, tilemap) {
-        var e_26, _a;
+        var e_27, _a;
         var tilemapJson = PIXI.Loader.shared.resources[key + this.TILEMAP_KEY_SUFFIX].data;
         var tilemapForCache = {
             tileset: tilemap.tileset,
@@ -4201,12 +4277,12 @@ var Preload = /** @class */ (function () {
                     };
                 }
             }
-            catch (e_26_1) { e_26 = { error: e_26_1 }; }
+            catch (e_27_1) { e_27 = { error: e_27_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_26) throw e_26.error; }
+                finally { if (e_27) throw e_27.error; }
             }
             tilemapForCache.layers.push(tilemapLayer);
         }
@@ -4420,7 +4496,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_27, _a;
+        var e_28, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -4434,12 +4510,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_27_1) { e_27 = { error: e_27_1 }; }
+            catch (e_28_1) { e_28 = { error: e_28_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_27) throw e_27.error; }
+                finally { if (e_28) throw e_28.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -4730,7 +4806,7 @@ var StoryManager = /** @class */ (function () {
         this.storyConfig.execute();
     };
     StoryManager.prototype.getInteractableObjects = function (node, stageName) {
-        var e_28, _a;
+        var e_29, _a;
         var result = new Set();
         if (!node)
             return result;
@@ -4747,12 +4823,12 @@ var StoryManager = /** @class */ (function () {
                 result.add(transition.with);
             }
         }
-        catch (e_28_1) { e_28 = { error: e_28_1 }; }
+        catch (e_29_1) { e_29 = { error: e_29_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_28) throw e_28.error; }
+            finally { if (e_29) throw e_29.error; }
         }
         return result;
     };
@@ -4775,7 +4851,7 @@ var StoryManager = /** @class */ (function () {
         this._currentNodeName = _.last(path);
     };
     StoryManager.prototype.getFirstValidTransition = function (node) {
-        var e_29, _a;
+        var e_30, _a;
         try {
             for (var _b = __values(node.transitions), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -4799,12 +4875,12 @@ var StoryManager = /** @class */ (function () {
                 }
             }
         }
-        catch (e_29_1) { e_29 = { error: e_29_1 }; }
+        catch (e_30_1) { e_30 = { error: e_30_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_29) throw e_29.error; }
+            finally { if (e_30) throw e_30.error; }
         }
         return null;
     };
@@ -4815,7 +4891,7 @@ var StoryManager = /** @class */ (function () {
         return this.storyboard[name];
     };
     StoryManager.prototype.updateParty = function (party) {
-        var e_30, _a, e_31, _b;
+        var e_31, _a, e_32, _b;
         if (party.setLeader !== undefined) {
             this.theater.partyManager.leader = party.setLeader;
         }
@@ -4826,12 +4902,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberActive(m);
                 }
             }
-            catch (e_30_1) { e_30 = { error: e_30_1 }; }
+            catch (e_31_1) { e_31 = { error: e_31_1 }; }
             finally {
                 try {
                     if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                 }
-                finally { if (e_30) throw e_30.error; }
+                finally { if (e_31) throw e_31.error; }
             }
         }
         if (!_.isEmpty(party.setMembersInactive)) {
@@ -4841,12 +4917,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberInactive(m);
                 }
             }
-            catch (e_31_1) { e_31 = { error: e_31_1 }; }
+            catch (e_32_1) { e_32 = { error: e_32_1 }; }
             finally {
                 try {
                     if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
                 }
-                finally { if (e_31) throw e_31.error; }
+                finally { if (e_32) throw e_32.error; }
             }
         }
     };
@@ -5060,7 +5136,7 @@ var Tilemap = /** @class */ (function (_super) {
         configurable: true
     });
     Tilemap.prototype.postUpdate = function () {
-        var e_32, _a;
+        var e_33, _a;
         if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
             try {
                 for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -5069,12 +5145,12 @@ var Tilemap = /** @class */ (function (_super) {
                     box.y = this.y;
                 }
             }
-            catch (e_32_1) { e_32 = { error: e_32_1 }; }
+            catch (e_33_1) { e_33 = { error: e_33_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_32) throw e_32.error; }
+                finally { if (e_33) throw e_33.error; }
             }
         }
         _super.prototype.postUpdate.call(this);
@@ -5092,7 +5168,7 @@ var Tilemap = /** @class */ (function (_super) {
         _super.prototype.render.call(this, screen);
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_33, _a;
+        var e_34, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -5110,12 +5186,12 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_33_1) { e_33 = { error: e_33_1 }; }
+        catch (e_34_1) { e_34 = { error: e_34_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_33) throw e_33.error; }
+            finally { if (e_34) throw e_34.error; }
         }
         World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };
@@ -5337,7 +5413,7 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
         }
     };
     ZOrderedTilemap.prototype.postUpdate = function () {
-        var e_34, _a;
+        var e_35, _a;
         if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
             try {
                 for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -5346,19 +5422,19 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
                     box.y = this.y;
                 }
             }
-            catch (e_34_1) { e_34 = { error: e_34_1 }; }
+            catch (e_35_1) { e_35 = { error: e_35_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_34) throw e_34.error; }
+                finally { if (e_35) throw e_35.error; }
             }
         }
         _super.prototype.postUpdate.call(this);
     };
     ZOrderedTilemap.prototype.createCollisionBoxes = function (debugBounds) {
         if (debugBounds === void 0) { debugBounds = false; }
-        var e_35, _a;
+        var e_36, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -5371,12 +5447,12 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_35_1) { e_35 = { error: e_35_1 }; }
+        catch (e_36_1) { e_36 = { error: e_36_1 }; }
         finally {
             try {
                 if (collisionRects_2_1 && !collisionRects_2_1.done && (_a = collisionRects_2.return)) _a.call(collisionRects_2);
             }
-            finally { if (e_35) throw e_35.error; }
+            finally { if (e_36) throw e_36.error; }
         }
         World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };
@@ -6092,7 +6168,7 @@ var Campfire = /** @class */ (function (_super) {
         }
     };
     Campfire.prototype.consumeItems = function () {
-        var e_36, _a;
+        var e_37, _a;
         var items = this.world.getWorldObjectsByType(ItemGround).filter(function (item) { return item.consumable; });
         try {
             for (var items_1 = __values(items), items_1_1 = items_1.next(); !items_1_1.done; items_1_1 = items_1.next()) {
@@ -6106,12 +6182,12 @@ var Campfire = /** @class */ (function (_super) {
                 this.consumeItem(item);
             }
         }
-        catch (e_36_1) { e_36 = { error: e_36_1 }; }
+        catch (e_37_1) { e_37 = { error: e_37_1 }; }
         finally {
             try {
                 if (items_1_1 && !items_1_1.done && (_a = items_1.return)) _a.call(items_1);
             }
-            finally { if (e_36) throw e_36.error; }
+            finally { if (e_37) throw e_37.error; }
         }
     };
     Campfire.prototype.consumeItem = function (item) {
@@ -6165,18 +6241,6 @@ var FirelitWorld = /** @class */ (function (_super) {
     __extends(FirelitWorld, _super);
     function FirelitWorld(config) {
         var _this = _super.call(this, config) || this;
-        _this.torchRefuelDistance = 16;
-        _this.torchFuelEmptyThreshold = 0.1;
-        _this.torchFireSprite = WorldObject.fromConfig({
-            parent: fireSpriteConfig(),
-            layer: 'main'
-        });
-        _this.torchFuel = 0;
-        _this.runScript(S.call(function () {
-            // Load torch in a script to delay one frame... :(
-            var trees = _this.getWorldObjectsByType(Tree);
-            trees[6].spawnsTorch = true;
-        }));
         // Spawn monster after 60 seconds
         _this.runScript(S.chain(S.wait(Debug.DEBUG ? 3 : 60), S.call(function () {
             var player = _this.getWorldObjectByName('player');
@@ -6190,45 +6254,8 @@ var FirelitWorld = /** @class */ (function (_super) {
         })));
         return _this;
     }
-    FirelitWorld.prototype.update = function (delta) {
-        var _this = this;
-        _super.prototype.update.call(this, delta);
-        var campfire = this.getWorldObjectByName('campfire');
-        var torch = this.worldObjectsByName['torch'];
-        var lightingManager = this.getWorldObjectByName('lightingManager');
-        var player = this.getWorldObjectByName('player');
-        if (torch) {
-            var oldTorchFuel = this.torchFuel;
-            this.torchFuel -= 0.03 * delta;
-            if (M.distance(campfire.x, campfire.y, torch.x, torch.y) < this.torchRefuelDistance) {
-                this.torchFuel += 1 * delta;
-            }
-            this.torchFuel = M.clamp(this.torchFuel, 0, 1);
-            var torchScale = this.torchFuel;
-            this.torchFireSprite.scaleX = 0.7 * torchScale;
-            this.torchFireSprite.scaleY = 0.7 * torchScale;
-            this.torchFireSprite.offset.x = torch.offset.x;
-            this.torchFireSprite.offset.y = torch.offset.y - 4;
-            if (this.torchFuel <= this.torchFuelEmptyThreshold && oldTorchFuel > this.torchFuelEmptyThreshold) {
-                this.torchFuel = 0;
-                var smoke_1 = WorldObject.fromConfig({
-                    constructor: Sprite,
-                    x: 0, y: 0,
-                    texture: 'smoke',
-                    scaleX: 0.5, scaleY: 0.5,
-                    layer: 'above',
-                });
-                World.Actions.addChildToParent(smoke_1, this.torchFireSprite);
-                this.world.runScript(S.doOverTime(2, function (t) {
-                    smoke_1.offset.x = _this.torchFireSprite.offset.x + 2 * Math.exp(-t) * Math.sin(4 * Math.PI * t);
-                    smoke_1.offset.y = _this.torchFireSprite.offset.y + -16 * t;
-                    smoke_1.alpha = 1 - t;
-                }));
-            }
-        }
-    };
     FirelitWorld.prototype.renderLayer = function (layer, layerTexture, screen) {
-        var e_37, _a;
+        var e_38, _a;
         var lightingManager = this.getWorldObjectByName('lightingManager');
         layerTexture.clear();
         layer.sort();
@@ -6240,12 +6267,12 @@ var FirelitWorld = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_37_1) { e_37 = { error: e_37_1 }; }
+        catch (e_38_1) { e_38 = { error: e_38_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_37) throw e_37.error; }
+            finally { if (e_38) throw e_38.error; }
         }
         var filters = [];
         if (layer.name === 'bg' || layer.name === 'main' || layer.name === 'fg') {
@@ -6293,6 +6320,9 @@ var ItemGround = /** @class */ (function (_super) {
     ItemGround.prototype.update = function (delta) {
         this.updateMovement(delta);
         _super.prototype.update.call(this, delta);
+        if (this.type === Item.Type.TORCH) {
+            Item.updateTorchFireSprite(this);
+        }
     };
     ItemGround.prototype.updateMovement = function (delta) {
         this.offset.y = Math.min(0, this.offset.y + this.vz * delta);
@@ -6314,12 +6344,14 @@ var ItemGround = /** @class */ (function (_super) {
         }
     };
     ItemGround.prototype.asHandItem = function (x, y, layer) {
-        return WorldObject.fromConfig({
+        var handItem = WorldObject.fromConfig({
             constructor: ItemHand,
             layer: layer,
             offset: { x: x, y: y },
             type: this.type,
         });
+        handItem.addChildren(this.world.removeWorldObjects(this.children));
+        return handItem;
     };
     return ItemGround;
 }(Sprite));
@@ -6346,14 +6378,22 @@ var ItemHand = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
+    ItemHand.prototype.update = function (delta) {
+        _super.prototype.update.call(this, delta);
+        if (this.type === Item.Type.TORCH) {
+            Item.updateTorchFireSprite(this);
+        }
+    };
     ItemHand.prototype.asGroundItem = function (x, y, layer, physicsGroup) {
-        return WorldObject.fromConfig({
+        var groundItem = WorldObject.fromConfig({
             constructor: ItemGround,
             x: x, y: y,
             layer: layer,
             physicsGroup: physicsGroup,
             type: this.type,
         });
+        groundItem.addChildren(this.world.removeWorldObjects(this.children));
+        return groundItem;
     };
     return ItemHand;
 }(Sprite));
@@ -6371,6 +6411,18 @@ var ItemName = /** @class */ (function (_super) {
     };
     return ItemName;
 }(SpriteText));
+(function (Item) {
+    function updateTorchFireSprite(item) {
+        var torchFire = item.getChildByName('torchFire');
+        var torchLightManager = item.world.getWorldObjectByName('torchLightManager');
+        var torchScale = torchLightManager.torchFuel;
+        torchFire.scaleX = 0.7 * torchScale;
+        torchFire.scaleY = 0.7 * torchScale;
+        torchFire.offset.x = item.offset.x;
+        torchFire.offset.y = item.offset.y - 4;
+    }
+    Item.updateTorchFireSprite = updateTorchFireSprite;
+})(Item || (Item = {}));
 /// <reference path="../lectvs/menu.ts" />
 var IntroMenu = /** @class */ (function (_super) {
     __extends(IntroMenu, _super);
@@ -6699,6 +6751,7 @@ var LightingManager = /** @class */ (function (_super) {
         var world = this.world;
         var campfire = this.world.getWorldObjectByName('campfire');
         var torch = this.world.worldObjectsByName['torch'];
+        var torchLightManager = this.world.getWorldObjectByName('torchLightManager');
         // Update fire light
         this.lights[0].x = campfire.x - world.camera.worldOffsetX;
         this.lights[0].y = campfire.y - world.camera.worldOffsetY;
@@ -6708,13 +6761,11 @@ var LightingManager = /** @class */ (function (_super) {
             this.fireRadiusNoise = Random.float(-1, 1);
         }
         // Update torch light
-        if (torch) {
-        }
         if (torch && !campfire.hitEffect && global.theater.storyManager.currentNodeName !== 'lose') {
             this.lights[1].x = torch.x + torch.offset.x - world.camera.worldOffsetX;
             this.lights[1].y = torch.y + torch.offset.y - world.camera.worldOffsetY;
-            this.lights[1].radius = Math.pow(world.torchFuel, 0.7) * 40;
-            this.lights[1].buffer = Math.pow(world.torchFuel, 0.7) * 10;
+            this.lights[1].radius = Math.pow(torchLightManager.torchFuel, 0.7) * 40;
+            this.lights[1].buffer = Math.pow(torchLightManager.torchFuel, 0.7) * 10;
             if (Random.boolean(10 * delta)) {
                 this.lights[1].radius += Random.float(-1, 1);
             }
@@ -7056,7 +7107,7 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.handleItemPickupDrop = function () {
-        var e_38, _a;
+        var e_39, _a;
         var overlappingItemDistance = Infinity;
         var overlappingItem;
         try {
@@ -7071,12 +7122,12 @@ var Player = /** @class */ (function (_super) {
                     item.effects.outline.enabled = false;
             }
         }
-        catch (e_38_1) { e_38 = { error: e_38_1 }; }
+        catch (e_39_1) { e_39 = { error: e_39_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_38) throw e_38.error; }
+            finally { if (e_39) throw e_39.error; }
         }
         if (overlappingItem) {
             overlappingItem.effects.outline.color = 0xFFFF00;
@@ -7169,7 +7220,7 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.hitStuff = function (item) {
-        var e_39, _a;
+        var e_40, _a;
         if (!item)
             return;
         var swingHitbox = this.getSwingHitbox();
@@ -7184,12 +7235,12 @@ var Player = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_39_1) { e_39 = { error: e_39_1 }; }
+        catch (e_40_1) { e_40 = { error: e_40_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_39) throw e_39.error; }
+            finally { if (e_40) throw e_40.error; }
         }
     };
     Player.prototype.getSwingHitbox = function () {
@@ -7202,6 +7253,48 @@ var Player = /** @class */ (function (_super) {
     };
     return Player;
 }(Sprite));
+var TorchLightManager = /** @class */ (function (_super) {
+    __extends(TorchLightManager, _super);
+    function TorchLightManager(config) {
+        var _this = _super.call(this, config) || this;
+        _this.torchRefuelDistance = 16;
+        _this.torchFuelEmptyThreshold = 0.1;
+        _this.torchFuel = 0;
+        return _this;
+    }
+    TorchLightManager.prototype.update = function (delta) {
+        if (this.world.containsWorldObject('torch')) {
+            var torch = this.world.getWorldObjectByName('torch');
+            var campfire = this.world.getWorldObjectByName('campfire');
+            var oldTorchFuel = this.torchFuel;
+            this.torchFuel -= 0.03 * delta;
+            if (M.distance(campfire.x, campfire.y, torch.x, torch.y) < this.torchRefuelDistance) {
+                this.torchFuel += 1 * delta;
+            }
+            this.torchFuel = M.clamp(this.torchFuel, 0, 1);
+            if (this.torchFuel <= this.torchFuelEmptyThreshold && oldTorchFuel > this.torchFuelEmptyThreshold) {
+                this.torchFuel = 0;
+                this.world.getWorldObjectByName('torchFire').addChild({
+                    constructor: Sprite,
+                    x: 0, y: 0,
+                    texture: 'smoke',
+                    scaleX: 0.5, scaleY: 0.5,
+                    layer: 'above',
+                    life: 2,
+                    updateCallback: function (delta, smoke) {
+                        var t = smoke.life.progress;
+                        var torchFire = smoke.parent;
+                        smoke.offset.x = torchFire.offset.x + 2 * Math.exp(-t) * Math.sin(4 * Math.PI * t);
+                        smoke.offset.y = torchFire.offset.y + -16 * t;
+                        smoke.alpha = 1 - t;
+                    }
+                });
+            }
+        }
+        _super.prototype.update.call(this, delta);
+    };
+    return TorchLightManager;
+}(WorldObject));
 var Tree = /** @class */ (function (_super) {
     __extends(Tree, _super);
     function Tree(config) {
@@ -7211,7 +7304,7 @@ var Tree = /** @class */ (function (_super) {
             bounds: { x: -4, y: -2, width: 8, height: 3 },
         }) || this;
         _this.hp = 3;
-        _this.spawnsTorch = false;
+        _this.spawnsTorch = O.getOrDefault(config.spawnsTorch, false);
         return _this;
     }
     Object.defineProperty(Tree.prototype, "alive", {
@@ -7263,6 +7356,11 @@ var Tree = /** @class */ (function (_super) {
             physicsGroup: 'items',
             type: Item.Type.TORCH,
         });
+        log.addChild({
+            name: 'torchFire',
+            parent: fireSpriteConfig(),
+            layer: 'main'
+        });
         World.Actions.addWorldObjectToWorld(log, this.world);
     };
     return Tree;
@@ -7276,6 +7374,7 @@ var Tree = /** @class */ (function (_super) {
 /// <reference path="main.ts" />
 /// <reference path="monster.ts" />
 /// <reference path="player.ts" />
+/// <reference path="torchLightManager.ts" />
 /// <reference path="tree.ts" />
 var stages = {
     'game': {
@@ -7293,6 +7392,10 @@ var stages = {
             {
                 name: 'lightingManager',
                 constructor: LightingManager,
+            },
+            {
+                name: 'torchLightManager',
+                constructor: TorchLightManager,
             },
             {
                 constructor: Tilemap,
@@ -7353,6 +7456,7 @@ var stages = {
         ].map(function (pos) { return ({
             constructor: Tree,
             x: pos.x, y: pos.y,
+            spawnsTorch: pos.x === 328 && pos.y === 440,
             layer: 'main',
             physicsGroup: 'props',
             immovable: true,
@@ -7418,11 +7522,11 @@ var S;
                     switch (_a.label) {
                         case 0:
                             SKIP = Debug.DEBUG && true;
-                            player = global.getWorldObject('player');
-                            campfire = global.getWorldObject('campfire');
-                            startLog = global.getWorldObject('start_log');
+                            player = global.world.getWorldObjectByName('player');
+                            campfire = global.world.getWorldObjectByName('campfire');
+                            startLog = global.world.getWorldObjectByName('start_log');
                             campfire.introEffect = true;
-                            global.script.theater.currentWorld.camera.setModeFocus(campfire.x, campfire.y);
+                            global.world.camera.setModeFocus(campfire.x, campfire.y);
                             if (!!SKIP) return [3 /*break*/, 5];
                             return [4 /*yield*/, S.wait(2)];
                         case 1:
@@ -7491,24 +7595,23 @@ var S;
         'gameplay': {
             type: 'gameplay',
             transitions: [
-                { type: 'onCondition', condition: function () { return global.getWorldObject('campfire').hasConsumedGasoline; }, toNode: 'win' },
-                { type: 'onCondition', condition: function () { return global.getWorldObject('campfire').isOut; }, toNode: 'lose' },
+                { type: 'onCondition', condition: function () { return global.world.getWorldObjectByName('campfire').hasConsumedGasoline; }, toNode: 'win' },
+                { type: 'onCondition', condition: function () { return global.world.getWorldObjectByName('campfire').isOut; }, toNode: 'lose' },
             ]
         },
         'win': {
             type: 'cutscene',
             script: function () {
-                var campfire, currentWorld, lightingManager;
+                var campfire, lightingManager;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            campfire = global.getWorldObject('campfire');
-                            currentWorld = global.theater.currentWorld;
-                            lightingManager = global.getWorldObject('lightingManager');
-                            currentWorld.camera.setModeFocus(campfire.x, campfire.y);
-                            currentWorld.camera.setMovementSmooth(0, 0, 0);
-                            if (currentWorld.containsWorldObject('monster')) {
-                                World.Actions.removeWorldObjectFromWorld(currentWorld.getWorldObjectByName('monster'));
+                            campfire = global.world.getWorldObjectByName('campfire');
+                            lightingManager = global.world.getWorldObjectByName('lightingManager');
+                            global.world.camera.setModeFocus(campfire.x, campfire.y);
+                            global.world.camera.setMovementSmooth(0, 0, 0);
+                            if (global.world.containsWorldObject('monster')) {
+                                global.world.removeWorldObject('monster');
                             }
                             campfire.winEffect = true;
                             if (campfire.winRadius < campfire.visualFireBaseRadius) {
@@ -7523,20 +7626,20 @@ var S;
                                 })];
                         case 2:
                             _a.sent();
-                            World.Actions.addWorldObjectToWorld(WorldObject.fromConfig({
+                            global.world.addWorldObject({
                                 constructor: Sprite,
                                 texture: Texture.filledRect(Main.width, Main.height, 0xFFFFFF),
                                 layer: 'above',
                                 ignoreCamera: true,
-                            }), currentWorld);
-                            World.Actions.addWorldObjectToWorld(WorldObject.fromConfig({
+                            });
+                            global.world.addWorldObject({
                                 constructor: SpriteText,
                                 font: Assets.fonts.DELUXE16,
                                 x: 61, y: 72,
                                 text: "your fire lives\nanother day...",
                                 style: { color: 0x000000, },
                                 ignoreCamera: true,
-                            }), currentWorld);
+                            });
                             return [4 /*yield*/, S.wait(2)];
                         case 3:
                             _a.sent();
@@ -7562,22 +7665,21 @@ var S;
         'lose': {
             type: 'cutscene',
             script: function () {
-                var campfire, currentWorld, losshint;
+                var campfire, losshint;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            campfire = global.getWorldObject('campfire');
-                            currentWorld = global.theater.currentWorld;
-                            currentWorld.camera.setModeFocus(campfire.x, campfire.y);
-                            currentWorld.camera.setMovementSmooth(0, 0, 0);
-                            if (currentWorld.containsWorldObject('monster')) {
-                                World.Actions.removeWorldObjectFromWorld(currentWorld.getWorldObjectByName('monster'));
+                            campfire = global.world.getWorldObjectByName('campfire');
+                            global.world.camera.setModeFocus(campfire.x, campfire.y);
+                            global.world.camera.setMovementSmooth(0, 0, 0);
+                            if (global.world.containsWorldObject('monster')) {
+                                global.world.removeWorldObject('monster');
                             }
                             return [4 /*yield*/, S.wait(2)];
                         case 1:
                             _a.sent();
                             campfire.fireSprite.alpha = 0;
-                            World.Actions.addWorldObjectToWorld(WorldObject.fromConfig({
+                            global.world.addWorldObject({
                                 name: 'fireout',
                                 constructor: Sprite,
                                 x: campfire.x, y: campfire.y,
@@ -7590,19 +7692,19 @@ var S;
                                     smoke.offset.y = -32 * t;
                                     smoke.alpha = 1 - t;
                                 }
-                            }), currentWorld);
-                            return [4 /*yield*/, S.waitUntil(function () { return !currentWorld.containsWorldObject('fireout'); })];
+                            });
+                            return [4 /*yield*/, S.waitUntil(function () { return !global.world.containsWorldObject('fireout'); })];
                         case 2:
                             _a.sent();
                             return [4 /*yield*/, S.wait(1)];
                         case 3:
                             _a.sent();
-                            World.Actions.addWorldObjectToWorld(WorldObject.fromConfig({
+                            global.world.addWorldObject({
                                 constructor: Sprite,
                                 texture: Texture.filledRect(Main.width, Main.height, 0x000000),
                                 ignoreCamera: true,
-                            }), currentWorld);
-                            World.Actions.addWorldObjectToWorld(WorldObject.fromConfig({
+                            });
+                            global.world.addWorldObject({
                                 name: 'losstext',
                                 constructor: SpriteText,
                                 font: Assets.fonts.DELUXE16,
@@ -7610,11 +7712,11 @@ var S;
                                 text: "you ran out of light...",
                                 style: { color: 0xFFFFFF, },
                                 ignoreCamera: true,
-                            }), currentWorld);
+                            });
                             return [4 /*yield*/, S.wait(2)];
                         case 4:
                             _a.sent();
-                            losshint = World.Actions.addWorldObjectToWorld(WorldObject.fromConfig({
+                            losshint = global.world.addWorldObject({
                                 name: 'losshint',
                                 constructor: SpriteText,
                                 font: Assets.fonts.DELUXE16,
@@ -7628,7 +7730,7 @@ var S;
                                 ]),
                                 style: { color: 0x333333, alpha: 0 },
                                 ignoreCamera: true,
-                            }), currentWorld);
+                            });
                             return [4 /*yield*/, S.doOverTime(2, function (t) {
                                     losshint.x = Main.width / 2 - losshint.getTextWidth() / 2;
                                     losshint.style.alpha = t;

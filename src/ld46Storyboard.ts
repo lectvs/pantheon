@@ -10,11 +10,11 @@ namespace S { export const storyboard: Storyboard = {
         script: function*() {
             let SKIP = Debug.DEBUG && true;
 
-            let player = global.getWorldObject<Player>('player');
-            let campfire = global.getWorldObject<Campfire>('campfire');
-            let startLog = global.getWorldObject<ItemGround>('start_log');
+            let player = global.world.getWorldObjectByName<Player>('player');
+            let campfire = global.world.getWorldObjectByName<Campfire>('campfire');
+            let startLog = global.world.getWorldObjectByName<ItemGround>('start_log');
             campfire.introEffect = true;
-            global.script.theater.currentWorld.camera.setModeFocus(campfire.x, campfire.y);
+            global.world.camera.setModeFocus(campfire.x, campfire.y);
             
             if (!SKIP) {
                 yield S.wait(2);
@@ -49,21 +49,20 @@ namespace S { export const storyboard: Storyboard = {
     'gameplay': {
         type: 'gameplay',
         transitions: [
-            { type: 'onCondition', condition: () => global.getWorldObject<Campfire>('campfire').hasConsumedGasoline, toNode: 'win' },
-            { type: 'onCondition', condition: () => global.getWorldObject<Campfire>('campfire').isOut, toNode: 'lose' },
+            { type: 'onCondition', condition: () => global.world.getWorldObjectByName<Campfire>('campfire').hasConsumedGasoline, toNode: 'win' },
+            { type: 'onCondition', condition: () => global.world.getWorldObjectByName<Campfire>('campfire').isOut, toNode: 'lose' },
         ]
     },
     'win': {
         type: 'cutscene',
         script: function*() {
-            let campfire = global.getWorldObject<Campfire>('campfire');
-            let currentWorld = <FirelitWorld>global.theater.currentWorld;
-            let lightingManager = global.getWorldObject<LightingManager>('lightingManager');
+            let campfire = global.world.getWorldObjectByName<Campfire>('campfire');
+            let lightingManager = global.world.getWorldObjectByName<LightingManager>('lightingManager');
 
-            currentWorld.camera.setModeFocus(campfire.x, campfire.y);
-            currentWorld.camera.setMovementSmooth(0, 0, 0);
-            if (currentWorld.containsWorldObject('monster')) {
-                World.Actions.removeWorldObjectFromWorld(currentWorld.getWorldObjectByName('monster'));
+            global.world.camera.setModeFocus(campfire.x, campfire.y);
+            global.world.camera.setMovementSmooth(0, 0, 0);
+            if (global.world.containsWorldObject('monster')) {
+                global.world.removeWorldObject('monster');
             }
             campfire.winEffect = true;
             if (campfire.winRadius < campfire.visualFireBaseRadius) {
@@ -76,20 +75,20 @@ namespace S { export const storyboard: Storyboard = {
                 campfire.timer.time -= 120*global.script.delta;
             });
 
-            World.Actions.addWorldObjectToWorld(WorldObject.fromConfig(<Sprite.Config>{
+            global.world.addWorldObject(<Sprite.Config>{
                 constructor: Sprite,
                 texture: Texture.filledRect(Main.width, Main.height, 0xFFFFFF),
                 layer: 'above',
                 ignoreCamera: true,
-            }), currentWorld);
-            World.Actions.addWorldObjectToWorld(WorldObject.fromConfig(<SpriteText.Config>{
+            });
+            global.world.addWorldObject(<SpriteText.Config>{
                 constructor: SpriteText,
                 font: Assets.fonts.DELUXE16,
                 x: 61, y: 72,
                 text: "your fire lives\nanother day...",
                 style: { color: 0x000000, },
                 ignoreCamera: true,
-            }), currentWorld);
+            });
 
             yield S.wait(2);
             yield S.fadeOut(3, 0xFFFFFF);
@@ -104,19 +103,18 @@ namespace S { export const storyboard: Storyboard = {
     'lose': {
         type: 'cutscene',
         script: function*() {
-            let campfire = global.getWorldObject<Campfire>('campfire');
-            let currentWorld = <FirelitWorld>global.theater.currentWorld;
+            let campfire = global.world.getWorldObjectByName<Campfire>('campfire');
 
-            currentWorld.camera.setModeFocus(campfire.x, campfire.y);
-            currentWorld.camera.setMovementSmooth(0, 0, 0);
-            if (currentWorld.containsWorldObject('monster')) {
-                World.Actions.removeWorldObjectFromWorld(currentWorld.getWorldObjectByName('monster'));
+            global.world.camera.setModeFocus(campfire.x, campfire.y);
+            global.world.camera.setMovementSmooth(0, 0, 0);
+            if (global.world.containsWorldObject('monster')) {
+                global.world.removeWorldObject('monster');
             }
 
             yield S.wait(2);
 
             campfire.fireSprite.alpha = 0;
-            World.Actions.addWorldObjectToWorld(WorldObject.fromConfig<Sprite>(<Sprite.Config>{
+            global.world.addWorldObject(<Sprite.Config>{
                 name: 'fireout',
                 constructor: Sprite,
                 x: campfire.x, y: campfire.y,
@@ -129,17 +127,17 @@ namespace S { export const storyboard: Storyboard = {
                     smoke.offset.y = -32 * t;
                     smoke.alpha = 1-t;
                 }
-            }), currentWorld);
+            });
 
-            yield S.waitUntil(() => !currentWorld.containsWorldObject('fireout'));
+            yield S.waitUntil(() => !global.world.containsWorldObject('fireout'));
             yield S.wait(1);
 
-            World.Actions.addWorldObjectToWorld(WorldObject.fromConfig(<Sprite.Config>{
+            global.world.addWorldObject(<Sprite.Config>{
                 constructor: Sprite,
                 texture: Texture.filledRect(Main.width, Main.height, 0x000000),
                 ignoreCamera: true,
-            }), currentWorld);
-            World.Actions.addWorldObjectToWorld(WorldObject.fromConfig(<SpriteText.Config>{
+            });
+            global.world.addWorldObject(<SpriteText.Config>{
                 name: 'losstext',
                 constructor: SpriteText,
                 font: Assets.fonts.DELUXE16,
@@ -147,11 +145,11 @@ namespace S { export const storyboard: Storyboard = {
                 text: "you ran out of light...",
                 style: { color: 0xFFFFFF, },
                 ignoreCamera: true,
-            }), currentWorld);
+            });
 
             yield S.wait(2);
 
-            let losshint = World.Actions.addWorldObjectToWorld<SpriteText>(WorldObject.fromConfig(<SpriteText.Config>{
+            let losshint = global.world.addWorldObject<SpriteText>(<SpriteText.Config>{
                 name: 'losshint',
                 constructor: SpriteText,
                 font: Assets.fonts.DELUXE16,
@@ -165,7 +163,7 @@ namespace S { export const storyboard: Storyboard = {
                 ]),
                 style: { color: 0x333333, alpha: 0 },
                 ignoreCamera: true,
-            }), currentWorld);
+            });
 
             yield S.doOverTime(2, t => {
                 losshint.x = Main.width/2 - losshint.getTextWidth()/2;

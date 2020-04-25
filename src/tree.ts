@@ -1,18 +1,24 @@
+namespace Tree {
+    export type Config = Sprite.Config & {
+        spawnsTorch?: boolean;
+    }
+}
+
 class Tree extends Sprite {
-    spawnsTorch: boolean;
+    private spawnsTorch: boolean;
     private hitScript: Script;
     hp: number;
 
     get alive() { return this.hp > 0; }
 
-    constructor(config: Sprite.Config) {
+    constructor(config: Tree.Config) {
         super(config, {
             texture: Random.boolean() ? 'blacktree' : 'whitetree',
             flipX: Random.boolean(),
             bounds: { x: -4, y: -2, width: 8, height: 3 },
         });
         this.hp = 3;
-        this.spawnsTorch = false;
+        this.spawnsTorch = O.getOrDefault(config.spawnsTorch, false);
     }
 
     hit() {
@@ -64,6 +70,11 @@ class Tree extends Sprite {
             offset: { x: 0, y: -12 },
             physicsGroup: 'items',
             type: Item.Type.TORCH,
+        });
+        log.addChild({
+            name: 'torchFire',
+            parent: fireSpriteConfig(),
+            layer: 'main'
         });
         World.Actions.addWorldObjectToWorld(log, this.world);
     }
