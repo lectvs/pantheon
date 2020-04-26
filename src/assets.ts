@@ -32,6 +32,9 @@ namespace Assets {
         'axe': {
             anchor: { x: 0.5, y: 0.5 }
         },
+        'monsteraxe': {
+            anchor: { x: 0.5, y: 0.5 }
+        },
         'key': {
             anchor: { x: 0.5, y: 0.5 }
         },

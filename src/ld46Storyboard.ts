@@ -13,7 +13,6 @@ namespace S { export const storyboard: Storyboard = {
             let player = global.world.getWorldObjectByType(Player);
             let campfire = global.world.getWorldObjectByType(Campfire);
             let startLog = global.world.getWorldObjectByName<ItemGround>('start_log');
-            campfire.introEffect = true;
             global.world.camera.setModeFocus(campfire.x, campfire.y);
             
             if (!SKIP) {
@@ -39,10 +38,18 @@ namespace S { export const storyboard: Storyboard = {
             yield S.wait(0.5);
             player.controller.pickupDropItem = true; yield;
             yield S.wait(1);
-            campfire.introEffect = false;
+
+            campfire.startBurn();
+
+            Debug.SKIP_RATE = 1;
+        },
+        transitions: [{ type: 'instant', toNode: 'post_intro_wait' }]
+    },
+    'post_intro_wait': {
+        type: 'cutscene',
+        script: function*() {
             yield S.wait(1);
             global.script.theater.currentWorld.camera.setModeFollow('player');
-            Debug.SKIP_RATE = 1;
         },
         transitions: [{ type: 'instant', toNode: 'gameplay' }]
     },
@@ -64,15 +71,12 @@ namespace S { export const storyboard: Storyboard = {
             if (global.world.hasWorldObject('monster')) {
                 global.world.removeWorldObject('monster');
             }
-            campfire.winEffect = true;
-            if (campfire.winRadius < campfire.visualFireBaseRadius) {
-                campfire.visualFireRadiusBuffer = 100;
-            }
 
+            campfire.stopBurn();
             yield S.wait(4);
+            campfire.win();
             yield S.doOverTime(3, t => {
-                lightingManager.winKeyRadius = 400 * t;
-                campfire.timer.time -= 120*global.script.delta;
+                lightingManager.winRadius += 400*global.script.delta;
             });
 
             global.world.addWorldObject(<Sprite.Config>{
@@ -113,7 +117,7 @@ namespace S { export const storyboard: Storyboard = {
 
             yield S.wait(2);
 
-            campfire.fireSprite.alpha = 0;
+            campfire.extinguish();
             global.world.addWorldObject(<Sprite.Config>{
                 name: 'fireout',
                 constructor: Sprite,

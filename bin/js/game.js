@@ -5327,9 +5327,15 @@ var Timer = /** @class */ (function () {
         this.duration = duration;
         this.speed = 1;
         this.time = 0;
+        this.paused = false;
         this.callback = callback;
         this.repeat = repeat;
     }
+    Object.defineProperty(Timer.prototype, "running", {
+        get: function () { return !this.done && !this.paused; },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(Timer.prototype, "done", {
         get: function () { return !this.repeat && this.progress >= 1; },
         enumerable: true,
@@ -5343,15 +5349,20 @@ var Timer = /** @class */ (function () {
         configurable: true
     });
     Timer.prototype.update = function (delta) {
-        if (!this.done) {
-            this.time += delta;
+        if (this.running) {
+            this.time += delta * this.speed;
             if (this.time >= this.duration) {
-                if (this.callback)
-                    this.callback();
                 if (this.repeat) {
                     while (this.time >= this.duration) {
                         this.time -= this.duration;
+                        if (this.callback)
+                            this.callback();
                     }
+                }
+                else {
+                    this.time = this.duration;
+                    if (this.callback)
+                        this.callback();
                 }
             }
         }
@@ -5935,6 +5946,9 @@ var Assets;
         'axe': {
             anchor: { x: 0.5, y: 0.5 }
         },
+        'monsteraxe': {
+            anchor: { x: 0.5, y: 0.5 }
+        },
         'key': {
             anchor: { x: 0.5, y: 0.5 }
         },
@@ -6036,8 +6050,9 @@ var LightingManager = /** @class */ (function (_super) {
     __extends(LightingManager, _super);
     function LightingManager(config) {
         var _this = _super.call(this, config) || this;
-        _this.fireRadiusNoise = 0;
-        _this.winKeyRadius = 0;
+        _this.fireRadius = new LerpingValueWithNoise(0, 600, 10, 1);
+        _this.fireBuffer = new LerpingValueWithNoise(0, 600, 0, 0);
+        _this.winRadius = 0;
         return _this;
     }
     Object.defineProperty(LightingManager.prototype, "firelightFilter", {
@@ -6046,16 +6061,28 @@ var LightingManager = /** @class */ (function (_super) {
         configurable: true
     });
     LightingManager.prototype.update = function (delta) {
+        var player = this.world.getWorldObjectByType(Player);
         var campfire = this.world.getWorldObjectByType(Campfire);
         var torchLightManager = this.world.getWorldObjectByType(TorchLightManager);
         // Update fire light
-        if (Random.boolean(10 * delta)) {
-            this.fireRadiusNoise = Random.float(-1, 1);
+        this.fireRadius.goal = campfire.getRadius();
+        this.fireBuffer.goal = campfire.getBuffer();
+        if (global.theater.storyManager.currentNodeName === 'intro') {
+            this.fireRadius.goal = 40;
         }
+        if (global.theater.storyManager.currentNodeName === 'win') {
+            this.fireRadius.goal = Math.min(this.fireRadius.goal, 40);
+        }
+        if (player.hurt) {
+            this.fireRadius.goal = 0;
+            this.fireBuffer.goal = campfire.getRadius() + campfire.getBuffer();
+        }
+        this.fireRadius.update(delta);
+        this.fireBuffer.update(delta);
         this.firelightFilter.setLightUniform(0, 'x', campfire.x - this.world.camera.worldOffsetX);
         this.firelightFilter.setLightUniform(0, 'y', campfire.y - this.world.camera.worldOffsetY);
-        this.firelightFilter.setLightUniform(0, 'radius', campfire.visualFireBaseRadius + this.fireRadiusNoise);
-        this.firelightFilter.setLightUniform(0, 'buffer', campfire.visualFireRadiusBuffer);
+        this.firelightFilter.setLightUniform(0, 'radius', this.fireRadius.value);
+        this.firelightFilter.setLightUniform(0, 'buffer', this.fireBuffer.value);
         // Update torch light
         this.firelightFilter.setLightUniform(1, 'x', torchLightManager.torchLightX - this.world.camera.worldOffsetX);
         this.firelightFilter.setLightUniform(1, 'y', torchLightManager.torchLightY - this.world.camera.worldOffsetY);
@@ -6064,7 +6091,7 @@ var LightingManager = /** @class */ (function (_super) {
         // Update win light
         this.firelightFilter.setLightUniform(2, 'x', campfire.x - this.world.camera.worldOffsetX);
         this.firelightFilter.setLightUniform(2, 'y', campfire.y - this.world.camera.worldOffsetY);
-        this.firelightFilter.setLightUniform(2, 'radius', this.winKeyRadius);
+        this.firelightFilter.setLightUniform(2, 'radius', this.winRadius);
         this.firelightFilter.setLightUniform(2, 'buffer', 0);
         _super.prototype.update.call(this, delta);
     };
@@ -6156,120 +6183,51 @@ var Campfire = /** @class */ (function (_super) {
         var _this = _super.call(this, config, {
             texture: 'campfire',
         }) || this;
-        _this.introRadius = 40;
-        _this.winRadius = 40;
-        _this.fireRadiusAtFullTime = 200;
-        _this.fireRadiusBufferAtFull = 20;
-        _this.fullTime = 60;
         _this.logConsumptionRadius = 16;
-        _this.timeGainedOnLogConsumptionAtZero = 25;
-        _this.timeGainedOnLogConsumptionAtFull = 10;
-        _this.fireSprite = WorldObject.fromConfig({
+        _this.fireSprite = _this.addChild({
             name: 'fire',
             parent: fireSpriteConfig(),
             layer: _this.layer,
         });
-        World.Actions.addChildToParent(_this.fireSprite, _this);
-        _this.timer = new Timer(_this.fullTime);
-        _this.visualFireBaseRadius = _this.fireBaseRadiusGoal;
-        _this.fireRadiusBuffer = _this.fireRadiusBufferAtFull;
-        _this.visualFireRadiusBuffer = _this.fireRadiusBufferGoal;
+        _this.fireRadius = new FireRadius();
+        _this.fireBuffer = new FireBuffer();
         _this.currentlyConsumedItems = [];
-        _this.introEffect = false;
-        _this.winEffect = false;
-        _this.hitEffect = false;
         _this.hasConsumedGasoline = false;
         return _this;
     }
-    Object.defineProperty(Campfire.prototype, "fireBaseRadiusGoal", {
-        get: function () {
-            if (this.hitEffect)
-                return this.hitRadius;
-            if (this.winEffect)
-                return Math.min(this.winRadius, this.visualFireBaseRadius);
-            return this.fireRadiusAtFullTime * (1 - this.timer.progress);
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Campfire.prototype, "trueFireBaseRadius", {
-        get: function () {
-            return this.fireRadiusAtFullTime * (1 - this.timer.progress);
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Campfire.prototype, "fireRadiusBufferGoal", {
-        get: function () {
-            if (this.hitEffect)
-                return this.hitBuffer - this.visualFireBaseRadius;
-            return this.fireRadiusBuffer;
-        },
-        enumerable: true,
-        configurable: true
-    });
     Object.defineProperty(Campfire.prototype, "isOut", {
-        get: function () { return this.timer.done; },
+        get: function () { return this.fireRadius.getRadiusPercent() === 0; },
         enumerable: true,
         configurable: true
     });
     Campfire.prototype.update = function (delta) {
         _super.prototype.update.call(this, delta);
-        if (!this.winEffect)
-            this.timer.update(delta);
-        var fireScale = 0.2 + (1 - this.timer.progress);
-        if (this.introEffect)
-            fireScale = 0.3;
+        this.consumeItems();
+        this.fireRadius.update(delta);
+        var fireScale = 0.2 + this.fireRadius.getRadiusPercent();
         this.fireSprite.scaleX = fireScale;
         this.fireSprite.scaleY = fireScale;
         if (Random.boolean(5 * delta)) {
             this.fireSprite.offset.y = Random.int(0, 1);
         }
-        this.updateRadius(delta);
-        this.updateRadiusBuffer(delta);
-        this.consumeItems();
-        if (global.theater.storyManager.currentNodeName === 'lose') {
-            this.timer.time = this.fullTime;
-        }
     };
-    Campfire.prototype.start = function () {
-        this.timer.time = this.timer.duration / 2;
+    Campfire.prototype.extinguish = function () {
+        this.fireSprite.alpha = 0;
     };
-    Campfire.prototype.hit = function () {
-        var _this = this;
-        this.world.runScript(S.chain(S.call(function () {
-            _this.hitRadius = 0;
-            _this.hitBuffer = _this.visualFireBaseRadius + _this.visualFireRadiusBuffer;
-            _this.hitEffect = true;
-            _this.visualFireBaseRadius = 0;
-        }), S.wait(1), S.doOverTime(0.5, function (t) {
-            _this.hitRadius = _this.trueFireBaseRadius;
-            _this.hitBuffer = _this.visualFireBaseRadius + _this.visualFireRadiusBuffer;
-        }), S.call(function () {
-            _this.hitEffect = false;
-        })));
+    Campfire.prototype.getBuffer = function () {
+        return this.fireBuffer.getBuffer();
     };
-    Campfire.prototype.updateRadius = function (delta) {
-        var speed = 600;
-        if (this.visualFireBaseRadius > this.fireBaseRadiusGoal) {
-            this.visualFireBaseRadius = Math.max(this.fireBaseRadiusGoal, this.visualFireBaseRadius - speed * delta);
-        }
-        else if (this.visualFireBaseRadius < this.fireBaseRadiusGoal) {
-            this.visualFireBaseRadius = Math.min(this.fireBaseRadiusGoal, this.visualFireBaseRadius + speed * delta);
-        }
-        if (this.introEffect)
-            this.visualFireBaseRadius = this.introRadius;
+    Campfire.prototype.getRadius = function () {
+        return this.fireRadius.getRadius();
     };
-    Campfire.prototype.updateRadiusBuffer = function (delta) {
-        if (this.winEffect)
-            return;
-        var speed = this.hitEffect ? 10000 : 100;
-        if (this.visualFireRadiusBuffer > this.fireRadiusBufferGoal) {
-            this.visualFireRadiusBuffer = Math.max(this.fireRadiusBufferGoal, this.visualFireRadiusBuffer - speed * delta);
-        }
-        else if (this.visualFireRadiusBuffer < this.fireRadiusBufferGoal) {
-            this.visualFireRadiusBuffer = Math.min(this.fireRadiusBufferGoal, this.visualFireRadiusBuffer + speed * delta);
-        }
+    Campfire.prototype.startBurn = function () {
+        this.fireRadius.startBurn();
+    };
+    Campfire.prototype.stopBurn = function () {
+        this.fireRadius.stopBurn();
+    };
+    Campfire.prototype.win = function () {
+        this.fireRadius.win();
     };
     Campfire.prototype.consumeItems = function () {
         var e_37, _a;
@@ -6310,11 +6268,11 @@ var Campfire = /** @class */ (function (_super) {
                 if (t == 1)
                     item.alpha = 0;
             }), S.call(function () {
-            World.Actions.removeWorldObjectFromWorld(item);
+            item.world.removeWorldObject(item);
             A.removeAll(_this.currentlyConsumedItems, item);
             if (!_this.hasConsumedGasoline) {
-                var timeGainedOnLogConsumption = M.lerp(_this.timeGainedOnLogConsumptionAtFull, _this.timeGainedOnLogConsumptionAtZero, _this.timer.progress);
-                _this.timer.time -= timeGainedOnLogConsumption;
+                _this.fireRadius.increaseTime();
+                _this.fireBuffer.increaseBuffer();
             }
         })));
     };
@@ -6341,12 +6299,351 @@ var Door = /** @class */ (function (_super) {
     };
     return Door;
 }(Sprite));
+var FireBuffer = /** @class */ (function () {
+    function FireBuffer() {
+        this.bufferAtFull = 20;
+        this.bufferIncrease = 16;
+        this.decaySpeed = 4;
+        this.buffer = this.bufferAtFull;
+    }
+    Object.defineProperty(FireBuffer.prototype, "baseBuffer", {
+        get: function () { return this.buffer; },
+        enumerable: true,
+        configurable: true
+    });
+    FireBuffer.prototype.update = function (delta) {
+        this.buffer -= this.decaySpeed * delta;
+        this.buffer = M.clamp(this.buffer, this.bufferAtFull, Infinity);
+    };
+    FireBuffer.prototype.getBuffer = function () {
+        return this.baseBuffer;
+    };
+    FireBuffer.prototype.increaseBuffer = function () {
+        this.buffer += this.bufferIncrease;
+    };
+    return FireBuffer;
+}());
+var FireRadius = /** @class */ (function () {
+    function FireRadius() {
+        this.fullTime = 60;
+        this.radiusAtFullTime = 200;
+        this.timeGainedOnLogConsumptionAtZero = 25;
+        this.timeGainedOnLogConsumptionAtFull = 10;
+        this.timer = new Timer(this.fullTime);
+        this.timer.time = this.fullTime / 2;
+        this.timer.paused = true;
+    }
+    Object.defineProperty(FireRadius.prototype, "baseRadius", {
+        get: function () { return this.radiusAtFullTime * (1 - this.timer.progress); },
+        enumerable: true,
+        configurable: true
+    });
+    FireRadius.prototype.update = function (delta) {
+        this.timer.update(delta);
+    };
+    FireRadius.prototype.getRadius = function () {
+        return this.baseRadius;
+    };
+    FireRadius.prototype.getRadiusPercent = function () {
+        return this.getRadius() / this.radiusAtFullTime;
+    };
+    FireRadius.prototype.increaseTime = function () {
+        var timeGainedOnLogConsumption = M.lerp(this.timeGainedOnLogConsumptionAtFull, this.timeGainedOnLogConsumptionAtZero, this.timer.progress);
+        this.timer.time -= timeGainedOnLogConsumption;
+    };
+    FireRadius.prototype.startBurn = function () {
+        this.timer.paused = false;
+    };
+    FireRadius.prototype.stopBurn = function () {
+        this.timer.paused = true;
+    };
+    FireRadius.prototype.win = function () {
+        this.timer.paused = false;
+        this.timer.speed = -200;
+    };
+    return FireRadius;
+}());
+var Human = /** @class */ (function (_super) {
+    __extends(Human, _super);
+    function Human(config) {
+        var _this = _super.call(this, config, {
+            bounds: { x: -4, y: -2, width: 8, height: 4 },
+            animations: [
+                Animations.fromTextureList({ name: 'idle_empty', texturePrefix: config.texturePrefix, textures: [0, 1, 2], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'run_empty', texturePrefix: config.texturePrefix, textures: [4, 5, 6, 7], frameRate: 16, count: -1 }),
+                Animations.fromTextureList({ name: 'idle_holding', texturePrefix: config.texturePrefix, textures: [8, 9, 10], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'run_holding', texturePrefix: config.texturePrefix, textures: [12, 13, 14, 15], frameRate: 16, count: -1 }),
+                Animations.fromTextureList({ name: 'throw', texturePrefix: config.texturePrefix, textures: [16, 17, 17, 17, 17], frameRate: 24, count: 1, forceRequired: true }),
+                Animations.fromTextureList({ name: 'swing', texturePrefix: config.texturePrefix, textures: [16, 17, 17, 17, 16], frameRate: 24, count: 1, forceRequired: true }),
+                Animations.fromTextureList({ name: 'hurt', texturePrefix: config.texturePrefix, textures: [20, 20, 20, 20, 20, 20, 20, 20,
+                        21, 22, 23, 22, 21, 22, 23, 22], frameRate: 16, count: 1, forceRequired: true }),
+                Animations.fromTextureList({ name: 'intro_idle', texturePrefix: config.texturePrefix, textures: [0, 1, 2], frameRate: 2, count: 3, forceRequired: true }),
+            ]
+        }) || this;
+        _this.speed = 40;
+        _this.throwSpeed = 80;
+        _this.hurtDropSpeed = 40;
+        _this.swingTime = 0.15;
+        _this.itemOffsetY = 20;
+        _this.itemFullSwingOffsetX = 10;
+        _this.controllerSchema = {
+            left: function () { return Input.isDown('left'); },
+            right: function () { return Input.isDown('right'); },
+            up: function () { return Input.isDown('up'); },
+            down: function () { return Input.isDown('down'); },
+            useItem: function () { return Input.justDown('useItem'); },
+            pickupDropItem: function () { return Input.justDown('pickupDropItem'); },
+        };
+        _this.direction = Direction2D.RIGHT;
+        return _this;
+    }
+    Object.defineProperty(Human.prototype, "swinging", {
+        get: function () { return this.swingScript && this.swingScript.running; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Human.prototype, "heldItemName", {
+        get: function () { return this.heldItem ? this.heldItem.name : undefined; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Human.prototype, "moving", {
+        get: function () { return Math.abs(this.vx) > 1 || Math.abs(this.vy) > 1; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Human.prototype, "hurt", {
+        get: function () { return this.hurtScript && !this.hurtScript.done; },
+        enumerable: true,
+        configurable: true
+    });
+    Human.prototype.update = function (delta) {
+        var haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
+        var vaxis = (this.controller.down ? 1 : 0) - (this.controller.up ? 1 : 0);
+        this.updateMovement(haxis, vaxis);
+        _super.prototype.update.call(this, delta);
+        if (this.heldItem) {
+            this.heldItem.flipX = this.flipX;
+        }
+        if (this.controller.useItem) {
+            this.handleItemUse();
+        }
+        this.handleItemPickupDrop();
+        // Handle animation.
+        var anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'run';
+        var holding = this.heldItem ? 'holding' : 'empty';
+        this.playAnimation(anim_state + "_" + holding);
+    };
+    Human.prototype.render = function (screen) {
+        _super.prototype.render.call(this, screen);
+        if (this.debugBounds) {
+            var shb = this.getSwingHitbox();
+            Draw.brush.color = 0x00FF00;
+            Draw.rectangleOutline(screen, shb.x, shb.y, shb.width, shb.height);
+        }
+    };
+    Human.prototype.hit = function () {
+        var _this = this;
+        this.playAnimation('hurt', 0, true);
+        if (this.swingScript)
+            this.swingScript.done = true;
+        if (this.heldItem)
+            this.dropHeldItem();
+        this.hurtScript = this.world.runScript(S.chain(S.call(function () {
+            _this.controllable = false;
+        }), S.doOverTime(0.5, function (t) {
+            _this.offset.y = -16 * Math.exp(-4 * t) * Math.abs(Math.sin(4 * Math.PI * t * t));
+        }), S.wait(0.5), S.call(function () {
+            _this.alpha = 1;
+            _this.controllable = true;
+        })));
+    };
+    Human.prototype.updateMovement = function (haxis, vaxis) {
+        if (haxis < 0) {
+            this.vx = -this.speed;
+            this.direction.h = Direction.LEFT;
+            if (vaxis == 0)
+                this.direction.v = Direction.NONE;
+            this.flipX = true;
+        }
+        else if (haxis > 0) {
+            this.vx = this.speed;
+            this.direction.h = Direction.RIGHT;
+            if (vaxis == 0)
+                this.direction.v = Direction.NONE;
+            this.flipX = false;
+        }
+        else {
+            this.vx = 0;
+        }
+        if (vaxis < 0) {
+            this.vy = -this.speed;
+            this.direction.v = Direction.UP;
+            if (haxis == 0)
+                this.direction.h = Direction.NONE;
+        }
+        else if (vaxis > 0) {
+            this.vy = this.speed;
+            this.direction.v = Direction.DOWN;
+            if (haxis == 0)
+                this.direction.h = Direction.NONE;
+        }
+        else {
+            this.vy = 0;
+        }
+    };
+    Human.prototype.handleItemPickupDrop = function () {
+        var e_38, _a;
+        var overlappingItemDistance = Infinity;
+        var overlappingItem;
+        try {
+            for (var _b = __values(this.world.getWorldObjectsByType(ItemGround)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var item = _c.value;
+                var distance = M.distance(this.x, this.y, item.x, item.y);
+                if (distance < 16 && distance < overlappingItemDistance && !item.beingConsumed) {
+                    overlappingItem = item;
+                    overlappingItemDistance = distance;
+                }
+            }
+        }
+        catch (e_38_1) { e_38 = { error: e_38_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_38) throw e_38.error; }
+        }
+        if (overlappingItem) {
+            overlappingItem.effects.outline.color = 0xFFFF00;
+            overlappingItem.effects.outline.enabled = true;
+            if (this.controller.pickupDropItem && !this.swinging) {
+                if (this.heldItem) {
+                    this.dropHeldItem();
+                    if (!this.moving)
+                        this.pickupItem(overlappingItem);
+                }
+                else {
+                    this.pickupItem(overlappingItem);
+                }
+            }
+            return;
+        }
+        if (this.heldItem) {
+            if (this.controller.pickupDropItem && !this.swinging) {
+                this.dropHeldItem();
+            }
+            return;
+        }
+    };
+    Human.prototype.handleItemUse = function () {
+        if (!this.heldItem)
+            return;
+        if (this.heldItem.type === Item.Type.KEY)
+            return;
+        this.swingItem();
+    };
+    Human.prototype.dropHeldItem = function () {
+        if (!this.heldItem)
+            return;
+        var droppedItem = this.heldItem.asGroundItem(this.x, this.y, this.layer, 'items');
+        droppedItem.flipX = this.heldItem.flipX;
+        World.Actions.removeWorldObjectFromWorld(this.heldItem);
+        World.Actions.addWorldObjectToWorld(droppedItem, this.world);
+        World.Actions.setName(droppedItem, this.heldItem.name);
+        this.heldItem = null;
+        if (this.getCurrentAnimationName() === 'hurt') {
+            // toss randomly
+            droppedItem.offset.x = 0;
+            droppedItem.offset.y = -this.itemOffsetY;
+            var v = Random.onCircle(this.hurtDropSpeed);
+            droppedItem.vx = v.x;
+            droppedItem.vy = v.y;
+            return;
+        }
+        if (this.moving) {
+            // throw instead of drop
+            droppedItem.offset.x = 0;
+            droppedItem.offset.y = -this.itemOffsetY;
+            droppedItem.vx = this.throwSpeed * Math.sign(this.vx);
+            droppedItem.vy = this.throwSpeed * Math.sign(this.vy);
+            this.playAnimation('throw', 0, true);
+            return;
+        }
+    };
+    Human.prototype.removeHeldItem = function () {
+        World.Actions.removeWorldObjectFromWorld(this.heldItem);
+        this.heldItem = null;
+    };
+    Human.prototype.pickupItem = function (item) {
+        if (!item)
+            return;
+        this.heldItem = item.asHandItem(0, -this.itemOffsetY, this.layer);
+        World.Actions.addChildToParent(this.heldItem, this);
+        World.Actions.removeWorldObjectFromWorld(item);
+        World.Actions.setName(this.heldItem, item.name);
+        if (this.world.getLayerByName('above')) {
+            var itemName = new ItemName({ text: item.type, font: Assets.fonts.DELUXE16, life: 1, layer: 'above' });
+            itemName.x = -itemName.getTextWidth() / 2;
+            itemName.y = -32;
+            World.Actions.addChildToParent(itemName, this);
+        }
+    };
+    Human.prototype.swingItem = function () {
+        var _this = this;
+        if (!this.swingScript || this.swingScript.done) {
+            this.swingScript = this.world.runScript(S.chain(S.simul(S.doOverTime(this.swingTime, function (t) {
+                if (!_this.heldItem)
+                    return;
+                var angle = (_this.flipX ? -1 : 1) * 90 * Math.sin(Math.PI * Math.pow(t, 0.5));
+                _this.heldItem.offset.x = _this.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
+                _this.heldItem.offset.y = _this.itemOffsetY * -Math.cos(M.degToRad(angle));
+                _this.heldItem.angle = angle;
+            }), S.chain(S.call(function () { return _this.playAnimation('swing', 0, true); }), S.wait(this.swingTime * 0.25), S.call(function () {
+                _this.hitStuff(_this.heldItem);
+            })))));
+        }
+    };
+    Human.prototype.hitStuff = function (item) {
+        var e_39, _a;
+        if (!item)
+            return;
+        var swingHitbox = this.getSwingHitbox();
+        try {
+            for (var _b = __values(this.world.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var obj = _c.value;
+                if (item.cutsTrees && obj instanceof Tree && obj.isOverlappingRect(swingHitbox)) {
+                    obj.hit();
+                }
+                if (item.hurtsMonster && obj instanceof Monster && obj.isOverlappingRect(swingHitbox)) {
+                    obj.hit();
+                }
+            }
+        }
+        catch (e_39_1) { e_39 = { error: e_39_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_39) throw e_39.error; }
+        }
+    };
+    Human.prototype.getSwingHitbox = function () {
+        return {
+            x: this.x - 10 + (this.flipX ? -1 : 1) * 10,
+            y: this.y - 8 - 18,
+            width: 20,
+            height: 36
+        };
+    };
+    return Human;
+}(Sprite));
 var Item;
 (function (Item) {
     var Type;
     (function (Type) {
         Type["LOG"] = "log";
         Type["AXE"] = "axe";
+        Type["MONSTERAXE"] = "monsteraxe";
         Type["KEY"] = "key";
         Type["TORCH"] = "torch";
         Type["GASOLINE"] = "gasoline";
@@ -6423,14 +6720,14 @@ var ItemHand = /** @class */ (function (_super) {
     }
     Object.defineProperty(ItemHand.prototype, "cutsTrees", {
         get: function () {
-            return this.type === Item.Type.AXE;
+            return this.type === Item.Type.AXE || this.type === Item.Type.MONSTERAXE;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(ItemHand.prototype, "hurtsMonster", {
         get: function () {
-            return this.type === Item.Type.AXE || this.type === Item.Type.LOG;
+            return this.type === Item.Type.AXE || this.type === Item.Type.MONSTERAXE || this.type === Item.Type.LOG;
         },
         enumerable: true,
         configurable: true
@@ -6791,9 +7088,9 @@ var Monster = /** @class */ (function (_super) {
         _this.attackdy = 0;
         _this.heldItem = WorldObject.fromConfig({
             constructor: ItemHand,
-            type: Item.Type.AXE,
+            type: Item.Type.MONSTERAXE,
             offset: { x: 0, y: -_this.itemOffsetY },
-            layer: 'main',
+            layer: _this.layer,
         });
         World.Actions.addChildToParent(_this.heldItem, _this);
         return _this;
@@ -7006,6 +7303,11 @@ var Player = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(Player.prototype, "hurt", {
+        get: function () { return this.hurtScript && !this.hurtScript.done; },
+        enumerable: true,
+        configurable: true
+    });
     Player.prototype.update = function (delta) {
         var haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
         var vaxis = (this.controller.down ? 1 : 0) - (this.controller.up ? 1 : 0);
@@ -7033,14 +7335,12 @@ var Player = /** @class */ (function (_super) {
     };
     Player.prototype.hit = function () {
         var _this = this;
-        var campfire = this.world.getWorldObjectByType(Campfire);
-        campfire.hit();
         this.playAnimation('hurt', 0, true);
         if (this.swingScript)
             this.swingScript.done = true;
         if (this.heldItem)
             this.dropHeldItem();
-        this.world.runScript(S.chain(S.call(function () {
+        this.hurtScript = this.world.runScript(S.chain(S.call(function () {
             _this.controllable = false;
         }), S.doOverTime(0.5, function (t) {
             _this.offset.y = -16 * Math.exp(-4 * t) * Math.abs(Math.sin(4 * Math.PI * t * t));
@@ -7084,7 +7384,7 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.handleItemPickupDrop = function () {
-        var e_38, _a;
+        var e_40, _a;
         var overlappingItemDistance = Infinity;
         var overlappingItem;
         try {
@@ -7099,12 +7399,12 @@ var Player = /** @class */ (function (_super) {
                     item.effects.outline.enabled = false;
             }
         }
-        catch (e_38_1) { e_38 = { error: e_38_1 }; }
+        catch (e_40_1) { e_40 = { error: e_40_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_38) throw e_38.error; }
+            finally { if (e_40) throw e_40.error; }
         }
         if (overlappingItem) {
             overlappingItem.effects.outline.color = 0xFFFF00;
@@ -7197,7 +7497,7 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.hitStuff = function (item) {
-        var e_39, _a;
+        var e_41, _a;
         if (!item)
             return;
         var swingHitbox = this.getSwingHitbox();
@@ -7212,12 +7512,12 @@ var Player = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_39_1) { e_39 = { error: e_39_1 }; }
+        catch (e_41_1) { e_41 = { error: e_41_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_39) throw e_39.error; }
+            finally { if (e_41) throw e_41.error; }
         }
     };
     Player.prototype.getSwingHitbox = function () {
@@ -7264,10 +7564,11 @@ var TorchLightManager = /** @class */ (function (_super) {
     });
     Object.defineProperty(TorchLightManager.prototype, "torchLightRadius", {
         get: function () {
-            if (!this.world.hasWorldObject('torch') || this.world.getWorldObjectByType(Campfire).hitEffect || global.theater.storyManager.currentNodeName === 'lose') {
+            if (!this.world.hasWorldObject('torch') || /*this.world.getWorldObjectByType(Campfire).hitEffect ||*/ global.theater.storyManager.currentNodeName === 'lose') {
                 return 0;
             }
-            return Math.pow(this.torchFuel, 0.7) * 40 + this.torchRadiusNoise;
+            var radius = Math.pow(this.torchFuel, 0.7) * 40;
+            return radius === 0 ? 0 : radius + this.torchRadiusNoise;
         },
         enumerable: true,
         configurable: true
@@ -7561,7 +7862,6 @@ var S;
                             player = global.world.getWorldObjectByType(Player);
                             campfire = global.world.getWorldObjectByType(Campfire);
                             startLog = global.world.getWorldObjectByName('start_log');
-                            campfire.introEffect = true;
                             global.world.camera.setModeFocus(campfire.x, campfire.y);
                             if (!!SKIP) return [3 /*break*/, 5];
                             return [4 /*yield*/, S.wait(2)];
@@ -7616,12 +7916,23 @@ var S;
                             return [4 /*yield*/, S.wait(1)];
                         case 16:
                             _a.sent();
-                            campfire.introEffect = false;
-                            return [4 /*yield*/, S.wait(1)];
-                        case 17:
+                            campfire.startBurn();
+                            Debug.SKIP_RATE = 1;
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [{ type: 'instant', toNode: 'post_intro_wait' }]
+        },
+        'post_intro_wait': {
+            type: 'cutscene',
+            script: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, S.wait(1)];
+                        case 1:
                             _a.sent();
                             global.script.theater.currentWorld.camera.setModeFollow('player');
-                            Debug.SKIP_RATE = 1;
                             return [2 /*return*/];
                     }
                 });
@@ -7649,16 +7960,13 @@ var S;
                             if (global.world.hasWorldObject('monster')) {
                                 global.world.removeWorldObject('monster');
                             }
-                            campfire.winEffect = true;
-                            if (campfire.winRadius < campfire.visualFireBaseRadius) {
-                                campfire.visualFireRadiusBuffer = 100;
-                            }
+                            campfire.stopBurn();
                             return [4 /*yield*/, S.wait(4)];
                         case 1:
                             _a.sent();
+                            campfire.win();
                             return [4 /*yield*/, S.doOverTime(3, function (t) {
-                                    lightingManager.winKeyRadius = 400 * t;
-                                    campfire.timer.time -= 120 * global.script.delta;
+                                    lightingManager.winRadius += 400 * global.script.delta;
                                 })];
                         case 2:
                             _a.sent();
@@ -7714,7 +8022,7 @@ var S;
                             return [4 /*yield*/, S.wait(2)];
                         case 1:
                             _a.sent();
-                            campfire.fireSprite.alpha = 0;
+                            campfire.extinguish();
                             global.world.addWorldObject({
                                 name: 'fireout',
                                 constructor: Sprite,
@@ -7792,3 +8100,30 @@ var S;
     };
 })(S || (S = {}));
 var storyboard = S.storyboard;
+var LerpingValueWithNoise = /** @class */ (function () {
+    function LerpingValueWithNoise(initialValue, speed, noiseFactor, noiseIntensity) {
+        this.speed = speed;
+        this.noiseFactor = noiseFactor;
+        this.noiseIntensity = noiseIntensity;
+        this.baseValue = initialValue;
+        this.goal = initialValue;
+        this.noise = 0;
+    }
+    Object.defineProperty(LerpingValueWithNoise.prototype, "value", {
+        get: function () { return this.baseValue + this.noise; },
+        enumerable: true,
+        configurable: true
+    });
+    LerpingValueWithNoise.prototype.update = function (delta) {
+        if (this.baseValue > this.goal) {
+            this.baseValue = Math.max(this.baseValue - this.speed * delta, this.goal);
+        }
+        else if (this.baseValue < this.goal) {
+            this.baseValue = Math.min(this.baseValue + this.speed * delta, this.goal);
+        }
+        if (Random.boolean(this.noiseFactor * delta)) {
+            this.noise = Random.float(-this.noiseIntensity, this.noiseIntensity);
+        }
+    };
+    return LerpingValueWithNoise;
+}());

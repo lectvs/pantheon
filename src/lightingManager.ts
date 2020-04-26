@@ -57,28 +57,44 @@ namespace Lighting {
 class LightingManager extends WorldObject {
     get firelightFilter() { return <Lighting.FirelightFilter>this.world.getLayerByName('main').effects.post.filters[0]; }
 
-    fireRadiusNoise: number;
-    winKeyRadius: number;
+    fireRadius: LerpingValueWithNoise;
+    fireBuffer: LerpingValueWithNoise;
+
+    winRadius: number;
 
     constructor(config: WorldObject.Config) {
         super(config);
 
-        this.fireRadiusNoise = 0;
-        this.winKeyRadius = 0;
+        this.fireRadius = new LerpingValueWithNoise(0, 600, 10, 1);
+        this.fireBuffer = new LerpingValueWithNoise(0, 600, 0, 0);
+        this.winRadius = 0;
     }
 
     update(delta: number) {
+        let player = this.world.getWorldObjectByType(Player);
         let campfire = this.world.getWorldObjectByType(Campfire);
         let torchLightManager = this.world.getWorldObjectByType(TorchLightManager);
 
         // Update fire light
-        if (Random.boolean(10*delta)) {
-            this.fireRadiusNoise = Random.float(-1, 1);
+        this.fireRadius.goal = campfire.getRadius();
+        this.fireBuffer.goal = campfire.getBuffer();
+        if (global.theater.storyManager.currentNodeName === 'intro') {
+            this.fireRadius.goal = 40;
         }
+        if (global.theater.storyManager.currentNodeName === 'win') {
+            this.fireRadius.goal = Math.min(this.fireRadius.goal, 40);
+        }
+        if (player.hurt) {
+            this.fireRadius.goal = 0;
+            this.fireBuffer.goal = campfire.getRadius() + campfire.getBuffer();
+        }
+        this.fireRadius.update(delta);
+        this.fireBuffer.update(delta);
+
         this.firelightFilter.setLightUniform(0, 'x', campfire.x - this.world.camera.worldOffsetX);
         this.firelightFilter.setLightUniform(0, 'y', campfire.y - this.world.camera.worldOffsetY);
-        this.firelightFilter.setLightUniform(0, 'radius', campfire.visualFireBaseRadius + this.fireRadiusNoise);
-        this.firelightFilter.setLightUniform(0, 'buffer', campfire.visualFireRadiusBuffer);
+        this.firelightFilter.setLightUniform(0, 'radius', this.fireRadius.value);
+        this.firelightFilter.setLightUniform(0, 'buffer', this.fireBuffer.value);
 
         // Update torch light
         this.firelightFilter.setLightUniform(1, 'x', torchLightManager.torchLightX - this.world.camera.worldOffsetX);
@@ -89,7 +105,7 @@ class LightingManager extends WorldObject {
         // Update win light
         this.firelightFilter.setLightUniform(2, 'x', campfire.x - this.world.camera.worldOffsetX);
         this.firelightFilter.setLightUniform(2, 'y', campfire.y - this.world.camera.worldOffsetY);
-        this.firelightFilter.setLightUniform(2, 'radius', this.winKeyRadius);
+        this.firelightFilter.setLightUniform(2, 'radius', this.winRadius);
         this.firelightFilter.setLightUniform(2, 'buffer', 0);
 
         super.update(delta);

@@ -21,10 +21,11 @@ class TorchLightManager extends WorldObject {
     }
 
     get torchLightRadius() {
-        if (!this.world.hasWorldObject('torch') || this.world.getWorldObjectByType(Campfire).hitEffect || global.theater.storyManager.currentNodeName === 'lose') {
+        if (!this.world.hasWorldObject('torch') || /*this.world.getWorldObjectByType(Campfire).hitEffect ||*/ global.theater.storyManager.currentNodeName === 'lose') {
             return 0;
         }
-        return Math.pow(this.torchFuel, 0.7) * 40 + this.torchRadiusNoise;
+        let radius = Math.pow(this.torchFuel, 0.7) * 40;
+        return radius === 0 ? 0 : radius + this.torchRadiusNoise;
     }
     get torchLightBuffer() { return Math.pow(this.torchFuel, 0.7) * 10; }
 

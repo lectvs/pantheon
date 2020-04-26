@@ -18,6 +18,9 @@ class Player extends Sprite {
 
     get moving() { return Math.abs(this.vx) > 1 || Math.abs(this.vy) > 1;}
 
+    private hurtScript: Script;
+    get hurt() { return this.hurtScript && !this.hurtScript.done; }
+
     constructor(config: Sprite.Config) {
         super(config, {
             bounds: { x: -4, y: -2, width: 8, height: 4 },
@@ -81,12 +84,10 @@ class Player extends Sprite {
     }
 
     hit() {
-        let campfire = this.world.getWorldObjectByType(Campfire);
-        campfire.hit();
         this.playAnimation('hurt', 0, true);
         if (this.swingScript) this.swingScript.done = true;
         if (this.heldItem) this.dropHeldItem();
-        this.world.runScript(S.chain(
+        this.hurtScript = this.world.runScript(S.chain(
             S.call(() => {
                 this.controllable = false;
             }),

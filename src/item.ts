@@ -6,6 +6,7 @@ namespace Item {
     export enum Type {
         LOG = 'log',
         AXE = 'axe',
+        MONSTERAXE = 'monsteraxe',
         KEY = 'key',
         TORCH = 'torch',
         GASOLINE = 'gasoline',
@@ -85,11 +86,11 @@ class ItemHand extends Sprite {
     type: Item.Type;
 
     get cutsTrees() {
-        return this.type === Item.Type.AXE;
+        return this.type === Item.Type.AXE || this.type === Item.Type.MONSTERAXE;
     }
 
     get hurtsMonster() {
-        return this.type === Item.Type.AXE || this.type === Item.Type.LOG;
+        return this.type === Item.Type.AXE || this.type === Item.Type.MONSTERAXE || this.type === Item.Type.LOG;
     }
 
     constructor(config: Item.Config) {

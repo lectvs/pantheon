@@ -25,7 +25,7 @@ class Monster extends Sprite {
                 Animations.fromTextureList({ name: 'walk_holding', texturePrefix: 'monster_', textures: [4, 5, 6, 7], frameRate: 8, count: -1 }),
                 Animations.fromTextureList({ name: 'swing', texturePrefix: 'monster_', textures: [9, 9, 9, 8], frameRate: 8, count: 1, forceRequired: true }),
                 Animations.fromTextureList({ name: 'hurt', texturePrefix: 'monster_', textures: [12, 12, 12, 12, 12, 12, 12, 12,
-                                                                                                13, 14, 15, 14, 13, 14, 15, 14], frameRate: 8, count: 1, forceRequired: true }),
+                                                                                                 13, 14, 15, 14, 13, 14, 15, 14], frameRate: 8, count: 1, forceRequired: true }),
             ]
         });
 
@@ -35,9 +35,9 @@ class Monster extends Sprite {
 
         this.heldItem = WorldObject.fromConfig(<Item.Config>{
             constructor: ItemHand,
-            type: Item.Type.AXE,
+            type: Item.Type.MONSTERAXE,
             offset: { x: 0, y: -this.itemOffsetY },
-            layer: 'main',
+            layer: this.layer,
         });
         World.Actions.addChildToParent(this.heldItem, this);
     }
