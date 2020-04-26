@@ -2144,10 +2144,13 @@ var TextureFilter = /** @class */ (function () {
     TextureFilter.SLICE = SLICE;
 })(TextureFilter || (TextureFilter = {}));
 /// <reference path="./textureFilter.ts" />
+// TODO: major issue where the same two filter types cannot be applied to a texture at the same time (due to caching issues)
 var Effects = /** @class */ (function () {
     function Effects(config) {
         if (config === void 0) { config = {}; }
         this.effects = [undefined, undefined];
+        this.pre = { filters: [], enabled: true };
+        this.post = { filters: [], enabled: true };
         this.updateFromConfig(config);
     }
     Object.defineProperty(Effects.prototype, "silhouette", {
@@ -2173,11 +2176,15 @@ var Effects = /** @class */ (function () {
         configurable: true
     });
     Effects.prototype.getFilterList = function () {
-        return this.effects;
+        return this.pre.filters.concat(this.effects).concat(this.post.filters);
     };
     Effects.prototype.updateFromConfig = function (config) {
         if (!config)
             return;
+        if (config.pre) {
+            this.pre.filters = O.getOrDefault(config.pre.filters, []);
+            this.pre.enabled = O.getOrDefault(config.pre.enabled, true);
+        }
         if (config.silhouette) {
             this.silhouette.color = O.getOrDefault(config.silhouette.color, 0x000000);
             this.silhouette.alpha = O.getOrDefault(config.silhouette.alpha, 1);
@@ -2189,6 +2196,10 @@ var Effects = /** @class */ (function () {
             this.outline.enabled = O.getOrDefault(config.outline.enabled, true);
             ;
         }
+        if (config.post) {
+            this.post.filters = O.getOrDefault(config.post.filters, []);
+            this.post.enabled = O.getOrDefault(config.post.enabled, true);
+        }
     };
     Effects.SILHOUETTE_I = 0;
     Effects.OUTLINE_I = 1;
@@ -2197,32 +2208,6 @@ var Effects = /** @class */ (function () {
 (function (Effects) {
     var Filters;
     (function (Filters) {
-        var Outline = /** @class */ (function (_super) {
-            __extends(Outline, _super);
-            function Outline(color, alpha) {
-                var _this = _super.call(this, {
-                    uniforms: ["vec3 color", "float alpha"],
-                    code: "\n                        if (inp.a == 0.0 && (getColor(x-1.0, y).a > 0.0 || getColor(x+1.0, y).a > 0.0 || getColor(x, y-1.0).a > 0.0 || getColor(x, y+1.0).a > 0.0)) {\n                            outp = vec4(color, alpha);\n                        }\n                    "
-                }) || this;
-                _this.color = color;
-                _this.alpha = alpha;
-                return _this;
-            }
-            Object.defineProperty(Outline.prototype, "color", {
-                get: function () { return M.vec3ToColor(this.getUniform('color')); },
-                set: function (value) { this.setUniform('color', M.colorToVec3(value)); },
-                enumerable: true,
-                configurable: true
-            });
-            Object.defineProperty(Outline.prototype, "alpha", {
-                get: function () { return this.getUniform('alpha'); },
-                set: function (value) { this.setUniform('alpha', value); },
-                enumerable: true,
-                configurable: true
-            });
-            return Outline;
-        }(TextureFilter));
-        Filters.Outline = Outline;
         var Silhouette = /** @class */ (function (_super) {
             __extends(Silhouette, _super);
             function Silhouette(color, alpha) {
@@ -2249,6 +2234,32 @@ var Effects = /** @class */ (function () {
             return Silhouette;
         }(TextureFilter));
         Filters.Silhouette = Silhouette;
+        var Outline = /** @class */ (function (_super) {
+            __extends(Outline, _super);
+            function Outline(color, alpha) {
+                var _this = _super.call(this, {
+                    uniforms: ["vec3 color", "float alpha"],
+                    code: "\n                        if (inp.a == 0.0 && (getColor(x-1.0, y).a > 0.0 || getColor(x+1.0, y).a > 0.0 || getColor(x, y-1.0).a > 0.0 || getColor(x, y+1.0).a > 0.0)) {\n                            outp = vec4(color, alpha);\n                        }\n                    "
+                }) || this;
+                _this.color = color;
+                _this.alpha = alpha;
+                return _this;
+            }
+            Object.defineProperty(Outline.prototype, "color", {
+                get: function () { return M.vec3ToColor(this.getUniform('color')); },
+                set: function (value) { this.setUniform('color', M.colorToVec3(value)); },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Outline.prototype, "alpha", {
+                get: function () { return this.getUniform('alpha'); },
+                set: function (value) { this.setUniform('alpha', value); },
+                enumerable: true,
+                configurable: true
+            });
+            return Outline;
+        }(TextureFilter));
+        Filters.Outline = Outline;
     })(Filters = Effects.Filters || (Effects.Filters = {}));
 })(Effects || (Effects = {}));
 var FPSMetricManager = /** @class */ (function () {
@@ -2647,7 +2658,7 @@ var InteractionManager = /** @class */ (function () {
         try {
             for (var interactableObjects_1 = __values(interactableObjects), interactableObjects_1_1 = interactableObjects_1.next(); !interactableObjects_1_1.done; interactableObjects_1_1 = interactableObjects_1.next()) {
                 var name_3 = interactableObjects_1_1.value;
-                if (!this.theater.currentWorld.containsWorldObject(name_3))
+                if (!this.theater.currentWorld.hasWorldObject(name_3))
                     continue;
                 result.add(name_3);
             }
@@ -2837,7 +2848,9 @@ var World = /** @class */ (function (_super) {
             }
             finally { if (e_14) throw e_14.error; }
         }
-        screen.render(layerTexture);
+        screen.render(layerTexture, {
+            filters: layer.effects.getFilterList()
+        });
     };
     World.prototype.addWorldObject = function (obj) {
         var worldObject = obj instanceof WorldObject ? obj : WorldObject.fromConfig(obj);
@@ -2846,12 +2859,6 @@ var World = /** @class */ (function (_super) {
     World.prototype.addWorldObjects = function (objs) {
         var worldObjects = _.isEmpty(objs) ? [] : objs.map(function (obj) { return obj instanceof WorldObject ? obj : WorldObject.fromConfig(obj); });
         return World.Actions.addWorldObjectsToWorld(worldObjects, this);
-    };
-    World.prototype.containsWorldObject = function (obj) {
-        if (_.isString(obj)) {
-            return !!this.worldObjectsByName[obj];
-        }
-        return _.contains(this.worldObjects, obj);
     };
     World.prototype.getEntryPoint = function (entryPointKey) {
         if (!this.entryPoints || !this.entryPoints[entryPointKey]) {
@@ -2934,7 +2941,17 @@ var World = /** @class */ (function (_super) {
         }
         return this.worldObjectsByName[name];
     };
-    // TODO: better way to type-signature this?
+    World.prototype.getWorldObjectByType = function (type) {
+        var results = this.getWorldObjectsByType(type);
+        if (_.isEmpty(results)) {
+            debug("No object of type " + type.name + " exists in world", this);
+            return undefined;
+        }
+        if (results.length > 1) {
+            debug("Multiple objects of type " + type.name + " exist in world. Returning one of them. World:", this);
+        }
+        return results[0];
+    };
     World.prototype.getWorldObjectsByType = function (type) {
         return this.worldObjects.filter(function (obj) { return obj instanceof type; });
     };
@@ -2985,6 +3002,12 @@ var World = /** @class */ (function (_super) {
             }
             finally { if (e_17) throw e_17.error; }
         }
+    };
+    World.prototype.hasWorldObject = function (obj) {
+        if (_.isString(obj)) {
+            return !!this.worldObjectsByName[obj];
+        }
+        return _.contains(this.worldObjects, obj);
     };
     World.prototype.removeWorldObject = function (obj) {
         if (!obj)
@@ -3190,7 +3213,7 @@ var World = /** @class */ (function (_super) {
                 debug("Cannot add object " + obj.name + " to world because it aleady exists in another world! You must remove object from previous world first. World:", world, 'Previous world:', obj.world);
                 return undefined;
             }
-            if (obj.name && world.containsWorldObject(obj.name)) {
+            if (obj.name && world.hasWorldObject(obj.name)) {
                 debug("Cannot add object " + obj.name + " to world because an object already exists with that name! World:", world);
                 return undefined;
             }
@@ -3275,7 +3298,7 @@ var World = /** @class */ (function (_super) {
         function setName(obj, name) {
             if (!obj)
                 return undefined;
-            if (obj.world && obj.world.containsWorldObject(name)) {
+            if (obj.world && obj.world.hasWorldObject(name)) {
                 debug("Cannot name object '" + name + "' as that name already exists in world!", obj.world);
                 return obj.name;
             }
@@ -5971,25 +5994,106 @@ var Assets;
     Assets.fonts = fonts;
     Assets.tags = {};
 })(Assets || (Assets = {}));
+var Lighting;
+(function (Lighting) {
+    var FirelightFilter = /** @class */ (function (_super) {
+        __extends(FirelightFilter, _super);
+        function FirelightFilter(numLights) {
+            var _this = this;
+            var uniforms = [];
+            var defaultUniforms = {};
+            var distanceCalculations = "";
+            var lightCalculations = "";
+            var maxCalculations = "";
+            for (var i = 0; i < numLights; i++) {
+                uniforms.push("float light_" + i + "_x");
+                uniforms.push("float light_" + i + "_y");
+                uniforms.push("float light_" + i + "_radius");
+                uniforms.push("float light_" + i + "_buffer");
+                defaultUniforms["light_" + i + "_x"] = 0;
+                defaultUniforms["light_" + i + "_y"] = 0;
+                defaultUniforms["light_" + i + "_radius"] = 0;
+                defaultUniforms["light_" + i + "_buffer"] = 0;
+                distanceCalculations += "float light_" + i + "_distance = sqrt((worldx - light_" + i + "_x) * (worldx - light_" + i + "_x) + (worldy - light_" + i + "_y) * (worldy - light_" + i + "_y));\n";
+                lightCalculations += "float light_" + i + "_light = 1.0;\n                                    if (light_" + i + "_distance > light_" + i + "_radius) light_" + i + "_light = 0.5;\n                                    if (light_" + i + "_distance > light_" + i + "_radius + light_" + i + "_buffer) light_" + i + "_light = 0.0;\n";
+                maxCalculations += "light = max(light, light_" + i + "_light);\n";
+            }
+            _this = _super.call(this, {
+                uniforms: uniforms,
+                defaultUniforms: defaultUniforms,
+                code: "\n                    float light = 0.0;\n\n                    " + distanceCalculations + "\n                    " + lightCalculations + "\n                    " + maxCalculations + "\n\n                    if (light == 0.5) {\n                        if (outp.rgb == vec3(1.0, 1.0, 1.0)) {\n                            outp.rgb = vec3(0.0, 0.0, 0.0);\n                        } else if (outp.rgb == vec3(0.0, 0.0, 0.0)) {\n                            outp.rgb = vec3(1.0, 1.0, 1.0);\n                        }\n                    } else if (light == 0.0 && inp.rgb != vec3(1.0, 0.0, 0.0)) {\n                        outp.r = 0.0;\n                        outp.g = 0.0;\n                        outp.b = 0.0;\n                    }\n                "
+            }) || this;
+            return _this;
+        }
+        FirelightFilter.prototype.setLightUniform = function (i, uniform, value) {
+            this.setUniform("light_" + i + "_" + uniform, value);
+        };
+        return FirelightFilter;
+    }(TextureFilter));
+    Lighting.FirelightFilter = FirelightFilter;
+})(Lighting || (Lighting = {}));
+var LightingManager = /** @class */ (function (_super) {
+    __extends(LightingManager, _super);
+    function LightingManager(config) {
+        var _this = _super.call(this, config) || this;
+        _this.fireRadiusNoise = 0;
+        _this.winKeyRadius = 0;
+        return _this;
+    }
+    Object.defineProperty(LightingManager.prototype, "firelightFilter", {
+        get: function () { return this.world.getLayerByName('main').effects.post.filters[0]; },
+        enumerable: true,
+        configurable: true
+    });
+    LightingManager.prototype.update = function (delta) {
+        var campfire = this.world.getWorldObjectByType(Campfire);
+        var torchLightManager = this.world.getWorldObjectByType(TorchLightManager);
+        // Update fire light
+        if (Random.boolean(10 * delta)) {
+            this.fireRadiusNoise = Random.float(-1, 1);
+        }
+        this.firelightFilter.setLightUniform(0, 'x', campfire.x - this.world.camera.worldOffsetX);
+        this.firelightFilter.setLightUniform(0, 'y', campfire.y - this.world.camera.worldOffsetY);
+        this.firelightFilter.setLightUniform(0, 'radius', campfire.visualFireBaseRadius + this.fireRadiusNoise);
+        this.firelightFilter.setLightUniform(0, 'buffer', campfire.visualFireRadiusBuffer);
+        // Update torch light
+        this.firelightFilter.setLightUniform(1, 'x', torchLightManager.torchLightX - this.world.camera.worldOffsetX);
+        this.firelightFilter.setLightUniform(1, 'y', torchLightManager.torchLightY - this.world.camera.worldOffsetY);
+        this.firelightFilter.setLightUniform(1, 'radius', torchLightManager.torchLightRadius);
+        this.firelightFilter.setLightUniform(1, 'buffer', torchLightManager.torchLightBuffer);
+        // Update win light
+        this.firelightFilter.setLightUniform(2, 'x', campfire.x - this.world.camera.worldOffsetX);
+        this.firelightFilter.setLightUniform(2, 'y', campfire.y - this.world.camera.worldOffsetY);
+        this.firelightFilter.setLightUniform(2, 'radius', this.winKeyRadius);
+        this.firelightFilter.setLightUniform(2, 'buffer', 0);
+        _super.prototype.update.call(this, delta);
+    };
+    return LightingManager;
+}(WorldObject));
+/// <reference path="lightingManager.ts" />
 var DEFAULT_SCREEN_TRANSITION = Transition.FADE(0.2, 0.5, 0.2);
-var BASE_STAGE = {
-    layers: [
-        { name: 'bg' },
-        { name: 'main', sortKey: 'y' },
-        { name: 'fg' },
-        { name: 'above' },
-    ],
-    physicsGroups: {
-        'player': {},
-        'props': {},
-        'items': {},
-        'walls': {},
-    },
-    collisionOrder: [
-        { move: 'player', from: ['props', 'walls'], callback: true },
-        { move: 'items', from: ['props', 'walls'], callback: true, transferMomentum: true },
-    ],
-};
+function BASE_STAGE() {
+    var firelightFilter = new Lighting.FirelightFilter(3);
+    return {
+        constructor: World,
+        layers: [
+            { name: 'bg', effects: { post: { filters: [firelightFilter] } } },
+            { name: 'main', sortKey: 'y', effects: { post: { filters: [firelightFilter] } } },
+            { name: 'fg', effects: { post: { filters: [firelightFilter] } } },
+            { name: 'above' },
+        ],
+        physicsGroups: {
+            'player': {},
+            'props': {},
+            'items': {},
+            'walls': {},
+        },
+        collisionOrder: [
+            { move: 'player', from: ['props', 'walls'], callback: true },
+            { move: 'items', from: ['props', 'walls'], callback: true, transferMomentum: true },
+        ],
+    };
+}
 function WORLD_BOUNDS(left, top, right, bottom) {
     var thickness = 12;
     var width = right - left;
@@ -6237,53 +6341,6 @@ var Door = /** @class */ (function (_super) {
     };
     return Door;
 }(Sprite));
-var FirelitWorld = /** @class */ (function (_super) {
-    __extends(FirelitWorld, _super);
-    function FirelitWorld(config) {
-        var _this = _super.call(this, config) || this;
-        // Spawn monster after 60 seconds
-        _this.runScript(S.chain(S.wait(Debug.DEBUG ? 3 : 60), S.call(function () {
-            var player = _this.getWorldObjectByName('player');
-            var monster = WorldObject.fromConfig({
-                name: 'monster',
-                constructor: Monster,
-                x: player.x + 200, y: player.y + 200,
-                layer: 'main',
-            });
-            World.Actions.addWorldObjectToWorld(monster, _this);
-        })));
-        return _this;
-    }
-    FirelitWorld.prototype.renderLayer = function (layer, layerTexture, screen) {
-        var e_38, _a;
-        var lightingManager = this.getWorldObjectByName('lightingManager');
-        layerTexture.clear();
-        layer.sort();
-        try {
-            for (var _b = __values(layer.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var worldObject = _c.value;
-                if (worldObject.visible) {
-                    worldObject.fullRender(layerTexture);
-                }
-            }
-        }
-        catch (e_38_1) { e_38 = { error: e_38_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_38) throw e_38.error; }
-        }
-        var filters = [];
-        if (layer.name === 'bg' || layer.name === 'main' || layer.name === 'fg') {
-            filters.push(lightingManager.firelightFilter);
-        }
-        screen.render(layerTexture, {
-            filters: filters
-        });
-    };
-    return FirelitWorld;
-}(World));
 var Item;
 (function (Item) {
     var Type;
@@ -6414,7 +6471,7 @@ var ItemName = /** @class */ (function (_super) {
 (function (Item) {
     function updateTorchFireSprite(item) {
         var torchFire = item.getChildByName('torchFire');
-        var torchLightManager = item.world.getWorldObjectByName('torchLightManager');
+        var torchLightManager = item.world.getWorldObjectByType(TorchLightManager);
         var torchScale = torchLightManager.torchFuel;
         torchFire.scaleX = 0.7 * torchScale;
         torchFire.scaleY = 0.7 * torchScale;
@@ -6711,86 +6768,6 @@ var party = {
         },
     }
 };
-var LightingManager = /** @class */ (function (_super) {
-    __extends(LightingManager, _super);
-    function LightingManager(config) {
-        var _this = _super.call(this, config) || this;
-        _this.lights = [
-            { x: 0, y: 0, radius: 0, buffer: 0 },
-            { x: 0, y: 0, radius: 0, buffer: 0 },
-            { x: 0, y: 0, radius: 0, buffer: 0 },
-        ];
-        var uniforms = [];
-        var defaultUniforms = {};
-        var distanceCalculations = "";
-        var lightCalculations = "";
-        var maxCalculations = "";
-        for (var i = 0; i < _this.lights.length; i++) {
-            uniforms.push("float light_" + i + "_x");
-            uniforms.push("float light_" + i + "_y");
-            uniforms.push("float light_" + i + "_radius");
-            uniforms.push("float light_" + i + "_buffer");
-            defaultUniforms["light_" + i + "_x"] = 0;
-            defaultUniforms["light_" + i + "_y"] = 0;
-            defaultUniforms["light_" + i + "_radius"] = 0;
-            defaultUniforms["light_" + i + "_buffer"] = 0;
-            distanceCalculations += "float light_" + i + "_distance = sqrt((worldx - light_" + i + "_x) * (worldx - light_" + i + "_x) + (worldy - light_" + i + "_y) * (worldy - light_" + i + "_y));\n";
-            lightCalculations += "float light_" + i + "_light = 1.0;\n                                  if (light_" + i + "_distance > light_" + i + "_radius) light_" + i + "_light = 0.5;\n                                  if (light_" + i + "_distance > light_" + i + "_radius + light_" + i + "_buffer) light_" + i + "_light = 0.0;\n";
-            maxCalculations += "light = max(light, light_" + i + "_light);\n";
-        }
-        _this.firelightFilter = new TextureFilter({
-            uniforms: uniforms,
-            defaultUniforms: defaultUniforms,
-            code: "\n                float light = 0.0;\n\n                " + distanceCalculations + "\n                " + lightCalculations + "\n                " + maxCalculations + "\n\n                if (light == 0.5) {\n                    if (outp.rgb == vec3(1.0, 1.0, 1.0)) {\n                        outp.rgb = vec3(0.0, 0.0, 0.0);\n                    } else if (outp.rgb == vec3(0.0, 0.0, 0.0)) {\n                        outp.rgb = vec3(1.0, 1.0, 1.0);\n                    }\n                } else if (light == 0.0 && inp.rgb != vec3(1.0, 0.0, 0.0)) {\n                    outp.r = 0.0;\n                    outp.g = 0.0;\n                    outp.b = 0.0;\n                }\n            "
-        });
-        _this.fireRadiusNoise = 0;
-        _this.winKeyRadius = 0;
-        return _this;
-    }
-    LightingManager.prototype.update = function (delta) {
-        var world = this.world;
-        var campfire = this.world.getWorldObjectByName('campfire');
-        var torch = this.world.worldObjectsByName['torch'];
-        var torchLightManager = this.world.getWorldObjectByName('torchLightManager');
-        // Update fire light
-        this.lights[0].x = campfire.x - world.camera.worldOffsetX;
-        this.lights[0].y = campfire.y - world.camera.worldOffsetY;
-        this.lights[0].radius = campfire.visualFireBaseRadius + this.fireRadiusNoise;
-        this.lights[0].buffer = campfire.visualFireRadiusBuffer;
-        if (Random.boolean(10 * delta)) {
-            this.fireRadiusNoise = Random.float(-1, 1);
-        }
-        // Update torch light
-        if (torch && !campfire.hitEffect && global.theater.storyManager.currentNodeName !== 'lose') {
-            this.lights[1].x = torch.x + torch.offset.x - world.camera.worldOffsetX;
-            this.lights[1].y = torch.y + torch.offset.y - world.camera.worldOffsetY;
-            this.lights[1].radius = Math.pow(torchLightManager.torchFuel, 0.7) * 40;
-            this.lights[1].buffer = Math.pow(torchLightManager.torchFuel, 0.7) * 10;
-            if (Random.boolean(10 * delta)) {
-                this.lights[1].radius += Random.float(-1, 1);
-            }
-        }
-        else {
-            this.lights[1].radius = 0;
-        }
-        // Update win light
-        this.lights[2].x = campfire.x - world.camera.worldOffsetX;
-        this.lights[2].y = campfire.y - world.camera.worldOffsetY;
-        this.lights[2].radius = this.winKeyRadius;
-        this.lights[2].buffer = 0;
-        this.updateLights();
-        _super.prototype.update.call(this, delta);
-    };
-    LightingManager.prototype.updateLights = function () {
-        for (var i = 0; i < this.lights.length; i++) {
-            this.firelightFilter.setUniform("light_" + i + "_x", this.lights[i].x);
-            this.firelightFilter.setUniform("light_" + i + "_y", this.lights[i].y);
-            this.firelightFilter.setUniform("light_" + i + "_radius", this.lights[i].radius);
-            this.firelightFilter.setUniform("light_" + i + "_buffer", this.lights[i].buffer);
-        }
-    };
-    return LightingManager;
-}(WorldObject));
 var Monster = /** @class */ (function (_super) {
     __extends(Monster, _super);
     function Monster(config) {
@@ -7056,7 +7033,7 @@ var Player = /** @class */ (function (_super) {
     };
     Player.prototype.hit = function () {
         var _this = this;
-        var campfire = this.world.getWorldObjectByName('campfire');
+        var campfire = this.world.getWorldObjectByType(Campfire);
         campfire.hit();
         this.playAnimation('hurt', 0, true);
         if (this.swingScript)
@@ -7107,7 +7084,7 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.handleItemPickupDrop = function () {
-        var e_39, _a;
+        var e_38, _a;
         var overlappingItemDistance = Infinity;
         var overlappingItem;
         try {
@@ -7122,12 +7099,12 @@ var Player = /** @class */ (function (_super) {
                     item.effects.outline.enabled = false;
             }
         }
-        catch (e_39_1) { e_39 = { error: e_39_1 }; }
+        catch (e_38_1) { e_38 = { error: e_38_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_39) throw e_39.error; }
+            finally { if (e_38) throw e_38.error; }
         }
         if (overlappingItem) {
             overlappingItem.effects.outline.color = 0xFFFF00;
@@ -7220,7 +7197,7 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.hitStuff = function (item) {
-        var e_40, _a;
+        var e_39, _a;
         if (!item)
             return;
         var swingHitbox = this.getSwingHitbox();
@@ -7235,12 +7212,12 @@ var Player = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_40_1) { e_40 = { error: e_40_1 }; }
+        catch (e_39_1) { e_39 = { error: e_39_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_40) throw e_40.error; }
+            finally { if (e_39) throw e_39.error; }
         }
     };
     Player.prototype.getSwingHitbox = function () {
@@ -7260,12 +7237,50 @@ var TorchLightManager = /** @class */ (function (_super) {
         _this.torchRefuelDistance = 16;
         _this.torchFuelEmptyThreshold = 0.1;
         _this.torchFuel = 0;
+        _this.torchRadiusNoise = 0;
         return _this;
     }
-    TorchLightManager.prototype.update = function (delta) {
-        if (this.world.containsWorldObject('torch')) {
+    Object.defineProperty(TorchLightManager.prototype, "torchLightX", {
+        get: function () {
+            if (!this.world.hasWorldObject('torch')) {
+                return 0;
+            }
             var torch = this.world.getWorldObjectByName('torch');
-            var campfire = this.world.getWorldObjectByName('campfire');
+            return torch.x + torch.offset.x;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TorchLightManager.prototype, "torchLightY", {
+        get: function () {
+            if (!this.world.hasWorldObject('torch')) {
+                return 0;
+            }
+            var torch = this.world.getWorldObjectByName('torch');
+            return torch.y + torch.offset.y;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TorchLightManager.prototype, "torchLightRadius", {
+        get: function () {
+            if (!this.world.hasWorldObject('torch') || this.world.getWorldObjectByType(Campfire).hitEffect || global.theater.storyManager.currentNodeName === 'lose') {
+                return 0;
+            }
+            return Math.pow(this.torchFuel, 0.7) * 40 + this.torchRadiusNoise;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TorchLightManager.prototype, "torchLightBuffer", {
+        get: function () { return Math.pow(this.torchFuel, 0.7) * 10; },
+        enumerable: true,
+        configurable: true
+    });
+    TorchLightManager.prototype.update = function (delta) {
+        if (this.world.hasWorldObject('torch')) {
+            var torch = this.world.getWorldObjectByName('torch');
+            var campfire = this.world.getWorldObjectByType(Campfire);
             var oldTorchFuel = this.torchFuel;
             this.torchFuel -= 0.03 * delta;
             if (M.distance(campfire.x, campfire.y, torch.x, torch.y) < this.torchRefuelDistance) {
@@ -7290,6 +7305,9 @@ var TorchLightManager = /** @class */ (function (_super) {
                     }
                 });
             }
+        }
+        if (Random.boolean(10 * delta)) {
+            this.torchRadiusNoise = Random.float(-1, 1);
         }
         _super.prototype.update.call(this, delta);
     };
@@ -7368,7 +7386,6 @@ var Tree = /** @class */ (function (_super) {
 /// <reference path="base.ts" />
 /// <reference path="campfire.ts" />
 /// <reference path="door.ts" />
-/// <reference path="firelitWorld.ts" />
 /// <reference path="item.ts" />
 /// <reference path="lightingManager.ts" />
 /// <reference path="main.ts" />
@@ -7378,8 +7395,7 @@ var Tree = /** @class */ (function (_super) {
 /// <reference path="tree.ts" />
 var stages = {
     'game': {
-        constructor: FirelitWorld,
-        parent: BASE_STAGE,
+        parent: BASE_STAGE(),
         camera: {
             movement: { type: 'smooth', speed: 0, deadZoneWidth: 0, deadZoneHeight: 0 },
             mode: Camera.Mode.FOLLOW('player', 0, -8),
@@ -7390,11 +7406,9 @@ var stages = {
         worldObjects: __spread([
             WORLD_BOUNDS(0, 0, Main.width, Main.height),
             {
-                name: 'lightingManager',
                 constructor: LightingManager,
             },
             {
-                name: 'torchLightManager',
                 constructor: TorchLightManager,
             },
             {
@@ -7503,7 +7517,29 @@ var storyConfig = {
 };
 var S;
 (function (S) {
-    S.storyEvents = {};
+    S.storyEvents = {
+        'spawn_monster': {
+            stage: 'game',
+            script: function () {
+                var player;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, S.wait(Debug.DEBUG ? 3 : 60)];
+                        case 1:
+                            _a.sent();
+                            player = global.world.getWorldObjectByType(Player);
+                            global.world.addWorldObject({
+                                name: 'monster',
+                                constructor: Monster,
+                                x: player.x + 200, y: player.y + 200,
+                                layer: 'main',
+                            });
+                            return [2 /*return*/];
+                    }
+                });
+            }
+        }
+    };
 })(S || (S = {}));
 var storyEvents = S.storyEvents;
 /// <reference path="player.ts" />
@@ -7522,8 +7558,8 @@ var S;
                     switch (_a.label) {
                         case 0:
                             SKIP = Debug.DEBUG && true;
-                            player = global.world.getWorldObjectByName('player');
-                            campfire = global.world.getWorldObjectByName('campfire');
+                            player = global.world.getWorldObjectByType(Player);
+                            campfire = global.world.getWorldObjectByType(Campfire);
                             startLog = global.world.getWorldObjectByName('start_log');
                             campfire.introEffect = true;
                             global.world.camera.setModeFocus(campfire.x, campfire.y);
@@ -7595,8 +7631,8 @@ var S;
         'gameplay': {
             type: 'gameplay',
             transitions: [
-                { type: 'onCondition', condition: function () { return global.world.getWorldObjectByName('campfire').hasConsumedGasoline; }, toNode: 'win' },
-                { type: 'onCondition', condition: function () { return global.world.getWorldObjectByName('campfire').isOut; }, toNode: 'lose' },
+                { type: 'onCondition', condition: function () { return global.world.getWorldObjectByType(Campfire).hasConsumedGasoline; }, toNode: 'win' },
+                { type: 'onCondition', condition: function () { return global.world.getWorldObjectByType(Campfire).isOut; }, toNode: 'lose' },
             ]
         },
         'win': {
@@ -7606,11 +7642,11 @@ var S;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            campfire = global.world.getWorldObjectByName('campfire');
-                            lightingManager = global.world.getWorldObjectByName('lightingManager');
+                            campfire = global.world.getWorldObjectByType(Campfire);
+                            lightingManager = global.world.getWorldObjectByType(LightingManager);
                             global.world.camera.setModeFocus(campfire.x, campfire.y);
                             global.world.camera.setMovementSmooth(0, 0, 0);
-                            if (global.world.containsWorldObject('monster')) {
+                            if (global.world.hasWorldObject('monster')) {
                                 global.world.removeWorldObject('monster');
                             }
                             campfire.winEffect = true;
@@ -7669,10 +7705,10 @@ var S;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            campfire = global.world.getWorldObjectByName('campfire');
+                            campfire = global.world.getWorldObjectByType(Campfire);
                             global.world.camera.setModeFocus(campfire.x, campfire.y);
                             global.world.camera.setMovementSmooth(0, 0, 0);
-                            if (global.world.containsWorldObject('monster')) {
+                            if (global.world.hasWorldObject('monster')) {
                                 global.world.removeWorldObject('monster');
                             }
                             return [4 /*yield*/, S.wait(2)];
@@ -7693,7 +7729,7 @@ var S;
                                     smoke.alpha = 1 - t;
                                 }
                             });
-                            return [4 /*yield*/, S.waitUntil(function () { return !global.world.containsWorldObject('fireout'); })];
+                            return [4 /*yield*/, S.waitUntil(function () { return !global.world.hasWorldObject('fireout'); })];
                         case 2:
                             _a.sent();
                             return [4 /*yield*/, S.wait(1)];

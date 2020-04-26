@@ -81,7 +81,7 @@ class Player extends Sprite {
     }
 
     hit() {
-        let campfire = this.world.getWorldObjectByName<Campfire>('campfire');
+        let campfire = this.world.getWorldObjectByType(Campfire);
         campfire.hit();
         this.playAnimation('hurt', 0, true);
         if (this.swingScript) this.swingScript.done = true;

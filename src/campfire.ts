@@ -1,10 +1,4 @@
-namespace Campfire {
-    export type Config = Sprite.Config & {
-    }
-}
-
 class Campfire extends Sprite {
-
     introEffect: boolean;
     private introRadius = 40;
 
@@ -47,7 +41,7 @@ class Campfire extends Sprite {
 
     hasConsumedGasoline: boolean;
 
-    constructor(config: Campfire.Config) {
+    constructor(config: Sprite.Config) {
         super(config, {
             texture: 'campfire',
         });

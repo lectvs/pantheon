@@ -2,18 +2,27 @@
 
 namespace Effects {
     export type Config = {
+        pre?: PreConfig;
         silhouette?: SilhouetteConfig;
         outline?: OutlineConfig;
+        post?: PostConfig;
     }
 
+    export type PreConfig = { filters?: TextureFilter[], enabled?: boolean };
     export type SilhouetteConfig = { color?: number, alpha?: number, enabled?: boolean };
     export type OutlineConfig = { color?: number, alpha?: number, enabled?: boolean };
+    export type PostConfig = { filters?: TextureFilter[], enabled?: boolean };
 }
 
+
+// TODO: major issue where the same two filter types cannot be applied to a texture at the same time (due to caching issues)
 class Effects {
     private effects: [Effects.Filters.Silhouette, Effects.Filters.Outline];
     private static SILHOUETTE_I: number = 0;
     private static OUTLINE_I: number = 1;
+
+    pre: Effects.FilterList;
+    post: Effects.FilterList;
 
     get silhouette(): Effects.Filters.Silhouette {
         if (!this.effects[Effects.SILHOUETTE_I]) {
@@ -32,15 +41,22 @@ class Effects {
 
     constructor(config: Effects.Config = {}) {
         this.effects = [undefined, undefined];
+        this.pre = { filters: [], enabled: true };
+        this.post = { filters: [], enabled: true };
         this.updateFromConfig(config);
     }
 
     getFilterList() {
-        return this.effects;
+        return this.pre.filters.concat(this.effects).concat(this.post.filters);
     }
 
     updateFromConfig(config: Effects.Config) {
         if (!config) return;
+
+        if (config.pre) {
+            this.pre.filters = O.getOrDefault(config.pre.filters, []);
+            this.pre.enabled = O.getOrDefault(config.pre.enabled, true);
+        }
 
         if (config.silhouette) {
             this.silhouette.color = O.getOrDefault(config.silhouette.color, 0x000000);
@@ -53,31 +69,17 @@ class Effects {
             this.outline.alpha = O.getOrDefault(config.outline.alpha, 1);
             this.outline.enabled = O.getOrDefault(config.outline.enabled, true);;
         }
+
+        if (config.post) {
+            this.post.filters = O.getOrDefault(config.post.filters, []);
+            this.post.enabled = O.getOrDefault(config.post.enabled, true);
+        }
     }
 }
 
 namespace Effects {
+    export type FilterList = { filters: TextureFilter[], enabled: boolean };
     export namespace Filters {
-        export class Outline extends TextureFilter {
-            get color() { return M.vec3ToColor(this.getUniform('color')); }
-            set color(value: number) { this.setUniform('color', M.colorToVec3(value)); }
-            get alpha() { return this.getUniform('alpha'); }
-            set alpha(value: number) { this.setUniform('alpha', value); }
-
-            constructor(color: number, alpha: number) {
-                super({
-                    uniforms: [ "vec3 color", "float alpha" ],
-                    code: `
-                        if (inp.a == 0.0 && (getColor(x-1.0, y).a > 0.0 || getColor(x+1.0, y).a > 0.0 || getColor(x, y-1.0).a > 0.0 || getColor(x, y+1.0).a > 0.0)) {
-                            outp = vec4(color, alpha);
-                        }
-                    `
-                });
-                this.color = color;
-                this.alpha = alpha;
-            }
-        }
-
         export class Silhouette extends TextureFilter {
             get color() { return M.vec3ToColor(this.getUniform('color')); }
             set color(value: number) { this.setUniform('color', M.colorToVec3(value)); }
@@ -89,6 +91,26 @@ namespace Effects {
                     uniforms: [ "vec3 color", "float alpha" ],
                     code: `
                         if (inp.a > 0.0) {
+                            outp = vec4(color, alpha);
+                        }
+                    `
+                });
+                this.color = color;
+                this.alpha = alpha;
+            }
+        }
+
+        export class Outline extends TextureFilter {
+            get color() { return M.vec3ToColor(this.getUniform('color')); }
+            set color(value: number) { this.setUniform('color', M.colorToVec3(value)); }
+            get alpha() { return this.getUniform('alpha'); }
+            set alpha(value: number) { this.setUniform('alpha', value); }
+
+            constructor(color: number, alpha: number) {
+                super({
+                    uniforms: [ "vec3 color", "float alpha" ],
+                    code: `
+                        if (inp.a == 0.0 && (getColor(x-1.0, y).a > 0.0 || getColor(x+1.0, y).a > 0.0 || getColor(x, y-1.0).a > 0.0 || getColor(x, y+1.0).a > 0.0)) {
                             outp = vec4(color, alpha);
                         }
                     `

@@ -1,7 +1,6 @@
 /// <reference path="base.ts" />
 /// <reference path="campfire.ts" />
 /// <reference path="door.ts" />
-/// <reference path="firelitWorld.ts" />
 /// <reference path="item.ts" />
 /// <reference path="lightingManager.ts" />
 /// <reference path="main.ts" />
@@ -13,8 +12,7 @@
 const stages: Dict<World.Config> = {
 
     'game': {
-        constructor: FirelitWorld,
-        parent: BASE_STAGE,
+        parent: BASE_STAGE(),
         camera: {
             movement: { type: 'smooth', speed: 0, deadZoneWidth: 0, deadZoneHeight: 0 },
             mode: Camera.Mode.FOLLOW('player', 0, -8),
@@ -25,11 +23,9 @@ const stages: Dict<World.Config> = {
         worldObjects: [
             WORLD_BOUNDS(0, 0, Main.width, Main.height),
             {
-                name: 'lightingManager',
                 constructor: LightingManager,
             },
             {
-                name: 'torchLightManager',
                 constructor: TorchLightManager,
             },
             <Tilemap.Config>{
@@ -54,7 +50,7 @@ const stages: Dict<World.Config> = {
                 texture: 'ground',
                 layer: 'bg',
             },
-            <Campfire.Config>{
+            <Sprite.Config>{
                 name: 'campfire',
                 constructor: Campfire,
                 x: 400, y: 400,

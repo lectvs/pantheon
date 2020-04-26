@@ -138,7 +138,7 @@ class ItemName extends SpriteText {
 namespace Item {
     export function updateTorchFireSprite(item: Sprite) {
         let torchFire = item.getChildByName<Sprite>('torchFire');
-        let torchLightManager = item.world.getWorldObjectByName<TorchLightManager>('torchLightManager');
+        let torchLightManager = item.world.getWorldObjectByType<TorchLightManager>(TorchLightManager);
         let torchScale = torchLightManager.torchFuel;
         torchFire.scaleX = 0.7*torchScale;
         torchFire.scaleY = 0.7*torchScale;

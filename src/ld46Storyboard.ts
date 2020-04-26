@@ -10,8 +10,8 @@ namespace S { export const storyboard: Storyboard = {
         script: function*() {
             let SKIP = Debug.DEBUG && true;
 
-            let player = global.world.getWorldObjectByName<Player>('player');
-            let campfire = global.world.getWorldObjectByName<Campfire>('campfire');
+            let player = global.world.getWorldObjectByType(Player);
+            let campfire = global.world.getWorldObjectByType(Campfire);
             let startLog = global.world.getWorldObjectByName<ItemGround>('start_log');
             campfire.introEffect = true;
             global.world.camera.setModeFocus(campfire.x, campfire.y);
@@ -49,19 +49,19 @@ namespace S { export const storyboard: Storyboard = {
     'gameplay': {
         type: 'gameplay',
         transitions: [
-            { type: 'onCondition', condition: () => global.world.getWorldObjectByName<Campfire>('campfire').hasConsumedGasoline, toNode: 'win' },
-            { type: 'onCondition', condition: () => global.world.getWorldObjectByName<Campfire>('campfire').isOut, toNode: 'lose' },
+            { type: 'onCondition', condition: () => global.world.getWorldObjectByType(Campfire).hasConsumedGasoline, toNode: 'win' },
+            { type: 'onCondition', condition: () => global.world.getWorldObjectByType(Campfire).isOut, toNode: 'lose' },
         ]
     },
     'win': {
         type: 'cutscene',
         script: function*() {
-            let campfire = global.world.getWorldObjectByName<Campfire>('campfire');
-            let lightingManager = global.world.getWorldObjectByName<LightingManager>('lightingManager');
+            let campfire = global.world.getWorldObjectByType(Campfire);
+            let lightingManager = global.world.getWorldObjectByType(LightingManager);
 
             global.world.camera.setModeFocus(campfire.x, campfire.y);
             global.world.camera.setMovementSmooth(0, 0, 0);
-            if (global.world.containsWorldObject('monster')) {
+            if (global.world.hasWorldObject('monster')) {
                 global.world.removeWorldObject('monster');
             }
             campfire.winEffect = true;
@@ -103,11 +103,11 @@ namespace S { export const storyboard: Storyboard = {
     'lose': {
         type: 'cutscene',
         script: function*() {
-            let campfire = global.world.getWorldObjectByName<Campfire>('campfire');
+            let campfire = global.world.getWorldObjectByType(Campfire);
 
             global.world.camera.setModeFocus(campfire.x, campfire.y);
             global.world.camera.setMovementSmooth(0, 0, 0);
-            if (global.world.containsWorldObject('monster')) {
+            if (global.world.hasWorldObject('monster')) {
                 global.world.removeWorldObject('monster');
             }
 
@@ -129,7 +129,7 @@ namespace S { export const storyboard: Storyboard = {
                 }
             });
 
-            yield S.waitUntil(() => !global.world.containsWorldObject('fireout'));
+            yield S.waitUntil(() => !global.world.hasWorldObject('fireout'));
             yield S.wait(1);
 
             global.world.addWorldObject(<Sprite.Config>{

@@ -159,7 +159,9 @@ class World extends WorldObject {
                 worldObject.fullRender(layerTexture);
             }
         }
-        screen.render(layerTexture);
+        screen.render(layerTexture, {
+            filters: layer.effects.getFilterList()
+        });
     }
 
     addWorldObject<T extends WorldObject>(obj: T | WorldObject.Config): T {
@@ -170,13 +172,6 @@ class World extends WorldObject {
     addWorldObjects<T extends WorldObject>(objs: (T | WorldObject)[]): T[] {
         let worldObjects: T[] = _.isEmpty(objs) ? [] : objs.map(obj => obj instanceof WorldObject ? <T>obj : WorldObject.fromConfig<T>(obj));
         return World.Actions.addWorldObjectsToWorld(worldObjects, this);
-    }
-
-    containsWorldObject(obj: string | WorldObject) {
-        if (_.isString(obj)) {
-            return !!this.worldObjectsByName[obj];
-        }
-        return _.contains(this.worldObjects, obj);
     }
 
     getEntryPoint(entryPointKey: string) {
@@ -241,8 +236,19 @@ class World extends WorldObject {
         return <T>this.worldObjectsByName[name];
     }
 
-    // TODO: better way to type-signature this?
-    getWorldObjectsByType<T extends WorldObject>(type: any) {
+    getWorldObjectByType<T extends WorldObject>(type: new (...args) => T) {
+        let results = this.getWorldObjectsByType<T>(type);
+        if (_.isEmpty(results)) {
+            debug(`No object of type ${type.name} exists in world`, this);
+            return undefined;
+        }
+        if (results.length > 1) {
+            debug(`Multiple objects of type ${type.name} exist in world. Returning one of them. World:`, this);
+        }
+        return <T>results[0];
+    }
+
+    getWorldObjectsByType<T extends WorldObject>(type: new (...args) => T) {
         return <T[]>this.worldObjects.filter(obj => obj instanceof type);
     }
 
@@ -261,6 +267,13 @@ class World extends WorldObject {
                 }
             }
         }
+    }
+
+    hasWorldObject(obj: string | WorldObject) {
+        if (_.isString(obj)) {
+            return !!this.worldObjectsByName[obj];
+        }
+        return _.contains(this.worldObjects, obj);
     }
 
     
@@ -460,7 +473,7 @@ namespace World {
                 return undefined;
             }
 
-            if (obj.name && world.containsWorldObject(obj.name)) {
+            if (obj.name && world.hasWorldObject(obj.name)) {
                 debug(`Cannot add object ${obj.name} to world because an object already exists with that name! World:`, world);
                 return undefined;
             }
@@ -531,7 +544,7 @@ namespace World {
         export function setName(obj: WorldObject, name: string): string {
             if (!obj) return undefined;
 
-            if (obj.world && obj.world.containsWorldObject(name)) {
+            if (obj.world && obj.world.hasWorldObject(name)) {
                 debug(`Cannot name object '${name}' as that name already exists in world!`, obj.world);
                 return obj.name;
             }

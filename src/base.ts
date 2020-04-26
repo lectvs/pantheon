@@ -1,25 +1,30 @@
 
+/// <reference path="lightingManager.ts" />
+
 const DEFAULT_SCREEN_TRANSITION = Transition.FADE(0.2, 0.5, 0.2);
 
-const BASE_STAGE: World.Config = {
-    layers: [
-        { name: 'bg' },
-        { name: 'main', sortKey: 'y' },
-        { name: 'fg' },
-        { name: 'above' },
-    ],
-    physicsGroups: {
-        'player': {},
-        'props': {},
-        'items': {},
-        'walls': {},
-    },
-    collisionOrder: [
-        { move: 'player', from: ['props', 'walls'], callback: true },
-        { move: 'items', from: ['props', 'walls'], callback: true, transferMomentum: true },
-    ],
+function BASE_STAGE(): World.Config {
+    let firelightFilter = new Lighting.FirelightFilter(3);
+    return {
+        constructor: World,
+        layers: [
+            { name: 'bg', effects: { post: { filters: [firelightFilter] } } },
+            { name: 'main', sortKey: 'y', effects: { post: { filters: [firelightFilter] } } },
+            { name: 'fg', effects: { post: { filters: [firelightFilter] } } },
+            { name: 'above' },
+        ],
+        physicsGroups: {
+            'player': {},
+            'props': {},
+            'items': {},
+            'walls': {},
+        },
+        collisionOrder: [
+            { move: 'player', from: ['props', 'walls'], callback: true },
+            { move: 'items', from: ['props', 'walls'], callback: true, transferMomentum: true },
+        ],
+    };
 }
-
 
 function WORLD_BOUNDS(left: number, top: number, right: number, bottom: number): WorldObject.Config {
     let thickness = 12;

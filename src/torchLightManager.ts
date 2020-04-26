@@ -1,17 +1,43 @@
 class TorchLightManager extends WorldObject {
     torchFuel: number;
+    torchRadiusNoise: number;
     torchRefuelDistance = 16;
     torchFuelEmptyThreshold = 0.1;
+
+    get torchLightX() {
+        if (!this.world.hasWorldObject('torch')) {
+            return 0;
+        }
+        let torch = this.world.getWorldObjectByName<Sprite>('torch');
+        return torch.x + torch.offset.x;
+    }
+
+    get torchLightY() {
+        if (!this.world.hasWorldObject('torch')) {
+            return 0;
+        }
+        let torch = this.world.getWorldObjectByName<Sprite>('torch');
+        return torch.y + torch.offset.y;
+    }
+
+    get torchLightRadius() {
+        if (!this.world.hasWorldObject('torch') || this.world.getWorldObjectByType(Campfire).hitEffect || global.theater.storyManager.currentNodeName === 'lose') {
+            return 0;
+        }
+        return Math.pow(this.torchFuel, 0.7) * 40 + this.torchRadiusNoise;
+    }
+    get torchLightBuffer() { return Math.pow(this.torchFuel, 0.7) * 10; }
 
     constructor(config: WorldObject.Config) {
         super(config);
         this.torchFuel = 0;
+        this.torchRadiusNoise = 0;
     }
 
     update(delta: number) {
-        if (this.world.containsWorldObject('torch')) {
+        if (this.world.hasWorldObject('torch')) {
             let torch = this.world.getWorldObjectByName<Sprite>('torch');
-            let campfire = this.world.getWorldObjectByName<Campfire>('campfire');
+            let campfire = this.world.getWorldObjectByType(Campfire);
 
             let oldTorchFuel = this.torchFuel;
             this.torchFuel -= 0.03*delta;
@@ -38,6 +64,10 @@ class TorchLightManager extends WorldObject {
                     }
                 });
             }
+        }
+
+        if (Random.boolean(10*delta)) {
+            this.torchRadiusNoise = Random.float(-1, 1);
         }
 
         super.update(delta);
