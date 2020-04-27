@@ -76,7 +76,8 @@ class ItemGround extends Sprite {
             type: this.type,
         });
 
-        handItem.addChildren(this.world.removeWorldObjects(this.children));
+
+        handItem.addChildren(this.children.map(child => child.removeFromWorld()));
 
         return handItem;
     }
@@ -84,6 +85,10 @@ class ItemGround extends Sprite {
 
 class ItemHand extends Sprite {
     type: Item.Type;
+
+    get usable() {
+        return this.type !== Item.Type.KEY;
+    }
 
     get cutsTrees() {
         return this.type === Item.Type.AXE || this.type === Item.Type.MONSTERAXE;
@@ -116,7 +121,7 @@ class ItemHand extends Sprite {
             type: this.type,
         });
 
-        groundItem.addChildren(this.world.removeWorldObjects(this.children));
+        groundItem.addChildren(this.children.map(child => child.removeFromWorld()));
 
         return groundItem;
     }

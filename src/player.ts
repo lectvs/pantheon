@@ -1,29 +1,16 @@
-class Player extends Sprite {
-    direction: Direction2D;
+/// <reference path="human.ts" />
+
+class Player extends Human {
     test: boolean;
 
-    private speed: number = 40;
-    private throwSpeed: number = 80;
-    private hurtDropSpeed: number = 40;
-    private swingTime: number = 0.15;
+    get isHoldingKey() { return this.heldItem && this.heldItem.type === Item.Type.KEY; }
 
-    private itemOffsetY: number = 20;
-    private itemFullSwingOffsetX: number = 10;
-
-    heldItem: ItemHand;
-    private swingScript: Script;
-
-    get swinging() { return this.swingScript && this.swingScript.running; }
-    get heldItemName() { return this.heldItem ? this.heldItem.name : undefined; }
-
-    get moving() { return Math.abs(this.vx) > 1 || Math.abs(this.vy) > 1;}
-
-    private hurtScript: Script;
-    get hurt() { return this.hurtScript && !this.hurtScript.done; }
-
-    constructor(config: Sprite.Config) {
+    constructor(config: Human.Config) {
         super(config, {
-            bounds: { x: -4, y: -2, width: 8, height: 4 },
+            speed: 40,
+            preSwingWait: 0,
+            postSwingWait: 0,
+            itemGrabDistance: 16,
             animations: [
                 Animations.fromTextureList({ name: 'idle_empty', texturePrefix: 'player_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
                 Animations.fromTextureList({ name: 'run_empty', texturePrefix: 'player_', textures: [4, 5, 6, 7], frameRate: 16, count: -1 }),
@@ -45,220 +32,48 @@ class Player extends Sprite {
             useItem: () => Input.justDown('useItem'),
             pickupDropItem: () => Input.justDown('pickupDropItem'),
         };
-
-        this.direction = Direction2D.RIGHT;
-        this.test = false;
     }
 
     update(delta: number) {
-        let haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
-        let vaxis = (this.controller.down ? 1 : 0) - (this.controller.up ? 1 : 0);
-
-        this.updateMovement(haxis, vaxis);
         super.update(delta);
-
-        if (this.heldItem) {
-            this.heldItem.flipX = this.flipX;
-        }
-
-        if (this.controller.useItem) {
-            this.handleItemUse();
-        }
-        this.handleItemPickupDrop();
-
-        // Handle animation.
-        let anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'run';
-        let holding = this.heldItem ? 'holding' : 'empty';
-
-        this.playAnimation(`${anim_state}_${holding}`);
+        this.updateItemOutlines();
     }
 
-    render(screen: Texture) {
-        super.render(screen);
-
-        if (this.debugBounds) {
-            let shb = this.getSwingHitbox();
-            Draw.brush.color = 0x00FF00;
-            Draw.rectangleOutline(screen, shb.x, shb.y, shb.width, shb.height);
+    private updateItemOutlines() {
+        let overlappingItem = this.getOverlappingItem();
+        if (!this.test) {
+            this.world.getWorldObjectsByType(ItemGround).map(item => item.effects.outline.enabled = false);
         }
-    }
-
-    hit() {
-        this.playAnimation('hurt', 0, true);
-        if (this.swingScript) this.swingScript.done = true;
-        if (this.heldItem) this.dropHeldItem();
-        this.hurtScript = this.world.runScript(S.chain(
-            S.call(() => {
-                this.controllable = false;
-            }),
-            S.doOverTime(0.5, t => {
-                this.offset.y = -16 * Math.exp(-4*t)*Math.abs(Math.sin(4*Math.PI*t*t));
-            }),
-            S.wait(0.5),
-            S.call(() => {
-                this.alpha = 1;
-                this.controllable = true;
-            })
-        ));
-    }
-
-    private updateMovement(haxis: number, vaxis: number) {
-        if (haxis < 0) {
-            this.vx = -this.speed;
-            this.direction.h = Direction.LEFT;
-            if (vaxis == 0) this.direction.v = Direction.NONE;
-            this.flipX = true;
-        } else if (haxis > 0) {
-            this.vx = this.speed;
-            this.direction.h = Direction.RIGHT;
-            if (vaxis == 0) this.direction.v = Direction.NONE;
-            this.flipX = false;
-        } else {
-            this.vx = 0;
-        }
-
-        if (vaxis < 0) {
-            this.vy = -this.speed;
-            this.direction.v = Direction.UP;
-            if (haxis == 0) this.direction.h = Direction.NONE;
-        } else if (vaxis > 0) {
-            this.vy = this.speed;
-            this.direction.v = Direction.DOWN;
-            if (haxis == 0) this.direction.h = Direction.NONE;
-        } else {
-            this.vy = 0;
-        }
-    }
-
-    private handleItemPickupDrop() {
-        let overlappingItemDistance = Infinity;
-        let overlappingItem: ItemGround;
-        for (let item of this.world.getWorldObjectsByType<ItemGround>(ItemGround)) {
-            let distance = M.distance(this.x, this.y, item.x, item.y);
-            if (distance < 16 && distance < overlappingItemDistance && !item.beingConsumed) {
-                overlappingItem = item;
-                overlappingItemDistance = distance;
-            }
-            if (!this.test) item.effects.outline.enabled = false;
-        }
-
         if (overlappingItem) {
             overlappingItem.effects.outline.color = 0xFFFF00;
             overlappingItem.effects.outline.enabled = true;
-            
-            if (this.controller.pickupDropItem && !this.swinging) {
-                if (this.heldItem) {
-                    this.dropHeldItem();
-                    if (!this.moving) this.pickupItem(overlappingItem);
-                } else {
-                    this.pickupItem(overlappingItem);
-                }
-            }
-
-            return;
-        }
-
-        if (this.heldItem) {
-            if (this.controller.pickupDropItem && !this.swinging) {
-                this.dropHeldItem();
-            }            
-            return;
         }
     }
 
-    private handleItemUse() {
-        if (!this.heldItem) return;
-        if (this.heldItem.type === Item.Type.KEY) return;
-        this.swingItem();
-    }
-
-    private dropHeldItem() {
-        if (!this.heldItem) return;
-        let droppedItem = this.heldItem.asGroundItem(this.x, this.y, this.layer, 'items');
-        droppedItem.flipX = this.heldItem.flipX;
-        World.Actions.removeWorldObjectFromWorld(this.heldItem);
-        World.Actions.addWorldObjectToWorld(droppedItem, this.world);
-        World.Actions.setName(droppedItem, this.heldItem.name);
-        this.heldItem = null;
-
-        if (this.getCurrentAnimationName() === 'hurt') {
-            // toss randomly
-            droppedItem.offset.x = 0;
-            droppedItem.offset.y = -this.itemOffsetY;
-            let v = Random.onCircle(this.hurtDropSpeed);
-            droppedItem.vx = v.x;
-            droppedItem.vy = v.y;
-            return;
-        }
-
-        if (this.moving) {
-            // throw instead of drop
-            droppedItem.offset.x = 0;
-            droppedItem.offset.y = -this.itemOffsetY;
-            droppedItem.vx = this.throwSpeed * Math.sign(this.vx);
-            droppedItem.vy = this.throwSpeed * Math.sign(this.vy);
-            this.playAnimation('throw', 0, true);
-            return;
-        }
-    }
-
-    removeHeldItem() {
-        World.Actions.removeWorldObjectFromWorld(this.heldItem);
-        this.heldItem = null;
-    }
-
-    private pickupItem(item: ItemGround) {
-        if (!item) return;
-        this.heldItem = item.asHandItem(0, -this.itemOffsetY, this.layer);
-        World.Actions.addChildToParent(this.heldItem, this);
-        World.Actions.removeWorldObjectFromWorld(item);
-        World.Actions.setName(this.heldItem, item.name);
-
-        if (this.world.getLayerByName('above')) {
+    protected pickupItem(item: ItemGround) {
+        super.pickupItem(item);
+        if (this.world && this.world.getLayerByName('above')) {
             let itemName = new ItemName({ text: item.type, font: Assets.fonts.DELUXE16, life: 1, layer: 'above' });
             itemName.x = -itemName.getTextWidth()/2;
             itemName.y = -32;
-            World.Actions.addChildToParent(itemName, this);
+            this.addChild(itemName);
         }
     }
 
-    private swingItem() {
-        if (!this.swingScript || this.swingScript.done) {
-            this.swingScript = this.world.runScript(S.chain(
-                S.simul(
-                    S.doOverTime(this.swingTime, t => {
-                        if (!this.heldItem) return;
-                        let angle = (this.flipX ? -1 : 1) * 90 * Math.sin(Math.PI * Math.pow(t, 0.5));
-                        this.heldItem.offset.x = this.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
-                        this.heldItem.offset.y = this.itemOffsetY * -Math.cos(M.degToRad(angle));
-                        this.heldItem.angle = angle;
-                    }),
-                    S.chain(
-                        S.call(() => this.playAnimation('swing', 0, true)),
-                        S.wait(this.swingTime * 0.25),
-                        S.call(() => {
-                            this.hitStuff(this.heldItem);
-                        })
-                    )
-                ),
-            ));
-        }
-    }
-
-    private hitStuff(item: ItemHand) {
-        if (!item) return;
+    protected hitStuff() {
+        if (!this.heldItem) return;
         let swingHitbox = this.getSwingHitbox();
         for (let obj of this.world.worldObjects) {
-            if (item.cutsTrees && obj instanceof Tree && obj.isOverlappingRect(swingHitbox)) {
+            if (this.heldItem.cutsTrees && obj instanceof Tree && obj.isOverlappingRect(swingHitbox)) {
                 obj.hit();
             }
-            if (item.hurtsMonster && obj instanceof Monster && obj.isOverlappingRect(swingHitbox)) {
+            if (this.heldItem.hurtsMonster && obj instanceof Monster && obj.isOverlappingRect(swingHitbox)) {
                 obj.hit();
             }
         }
     }
 
-    private getSwingHitbox(): Rect {
+    protected getSwingHitbox(): Rect {
         return {
             x: this.x - 10 + (this.flipX ? -1 : 1)*10,
             y: this.y - 8 - 18,

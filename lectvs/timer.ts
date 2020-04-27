@@ -10,6 +10,7 @@ class Timer {
     get running() { return !this.done && !this.paused; }
     get done() { return !this.repeat && this.progress >= 1; }
     get progress() {
+        if (this.duration === 0) return 1;
         return Math.min(this.time / this.duration, 1);
     }
 

@@ -68,12 +68,24 @@ class AnimationManager {
         return animation[frame];
     }
 
+    hasAnimation(name: string) {
+        return !!this.animations[name];
+    }
+
+    isAnimationEmpty(name: string) {
+        return _.isEmpty(this.animations[name]);
+    }
+
     get isPlaying() {
         return !!this.currentFrame;
     }
 
     playAnimation(name: string, startFrame: number = 0, force: boolean = false) {
         if (!force && (this.forceRequired || this.getCurrentAnimationName() == name)) {
+            return;
+        }
+        if (this.hasAnimation(name) && this.isAnimationEmpty(name)) {
+            this.setCurrentFrame(null, true, force);
             return;
         }
         this.setCurrentFrame(`${name}/${startFrame}`, true, force);

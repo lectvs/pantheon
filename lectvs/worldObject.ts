@@ -66,8 +66,8 @@ class WorldObject {
 
     get isControlled() { return this.controllable && !global.theater.isCutscenePlaying; }
 
-    constructor(config: WorldObject.Config, defaults: WorldObject.Config = {}) {
-        config = O.withDefaults(config, defaults);
+    constructor(config: WorldObject.Config, defaults?: WorldObject.Config) {
+        config = WorldObject.resolveConfig(config, defaults);
         this.localx = O.getOrDefault(config.x, 0);
         this.localy = O.getOrDefault(config.y, 0);
         this.visible = O.getOrDefault(config.visible, true);
@@ -184,6 +184,10 @@ class WorldObject {
         return undefined;
     }
 
+    removeAllChildren<T extends WorldObject>(): T[] {
+        return this.removeChildren(<ReadonlyArray<T>>this.children);
+    }
+
     removeChild<T extends WorldObject>(child: T | string): T {
         if (!child) return undefined;
         if (_.isString(child)) {
@@ -202,8 +206,9 @@ class WorldObject {
         return children.map(child => this.removeChild(child)).filter(child => child);
     }
 
-    removeAllChildren<T extends WorldObject>(): T[] {
-        return this.removeChildren(<ReadonlyArray<T>>this.children);
+    removeFromWorld(): this {
+        if (!this.world) return this;
+        return World.Actions.removeWorldObjectFromWorld(this);
     }
 
     // For use with World.Actions.addWorldObjectToWorld
@@ -254,7 +259,19 @@ class WorldObject {
 }
 
 namespace WorldObject {
-    export function resolveConfig(config: WorldObject.Config): WorldObject.Config {
+    export function resolveConfig<T extends WorldObject.Config>(config: T, ...parents: T[]): T {
+        let result = resolveConfigParent(config);
+        if (_.isEmpty(parents)) return <T>result;
+
+        for (let parent of parents) {
+            result.parent = parent;
+            result = WorldObject.resolveConfig(result);
+        }
+
+        return <T>result;
+    }
+
+    function resolveConfigParent(config: WorldObject.Config): WorldObject.Config {
         if (!config.parent) return _.clone(config);
 
         let result = WorldObject.resolveConfig(config.parent);

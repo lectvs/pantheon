@@ -60,8 +60,8 @@ class World extends WorldObject {
     private debugCameraX: number;
     private debugCameraY: number;
 
-    constructor(config: World.Config, defaults: World.Config = {}) {
-        config = O.withDefaults(config, defaults);
+    constructor(config: World.Config, defaults?: World.Config) {
+        config = WorldObject.resolveConfig<World.Config>(config, defaults);
         super(config);
 
         this.width = O.getOrDefault(config.width, global.gameWidth);

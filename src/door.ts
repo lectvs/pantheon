@@ -13,7 +13,7 @@ class Door extends Sprite {
             World.Actions.removeWorldObjectFromWorld(other);
         }
 
-        if (other instanceof Player && other.heldItem && other.heldItem.type === Item.Type.KEY) {
+        if (other instanceof Player && other.isHoldingKey) {
             World.Actions.removeWorldObjectFromWorld(this);
             other.removeHeldItem();
         }

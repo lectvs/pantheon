@@ -109,11 +109,11 @@ class ControlsMenu extends Menu {
         ]);
 
         let player_move = this.getWorldObjectByName<Player>('player_move');
-        player_move.test = true;
+        //player_move.test = true;
         let player_pickup = this.getWorldObjectByName<Player>('player_pickup');
-        player_pickup.test = true;
+        //player_pickup.test = true;
         let player_attack = this.getWorldObjectByName<Player>('player_attack');
-        player_attack.test = true;
+        //player_attack.test = true;
         let tree = this.getWorldObjectByName<Tree>('tree');
 
         tree.setTexture('blacktree');

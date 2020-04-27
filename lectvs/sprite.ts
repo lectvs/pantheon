@@ -33,8 +33,8 @@ class Sprite extends PhysicsWorldObject {
 
     effects: Effects;
 
-    constructor(config: Sprite.Config, defaults: Sprite.Config = {}) {
-        config = O.withDefaults(config, defaults);
+    constructor(config: Sprite.Config, defaults?: Sprite.Config) {
+        config = WorldObject.resolveConfig<Sprite.Config>(config, defaults);
         super(config);
 
         this.setTexture(config.texture);
@@ -49,7 +49,7 @@ class Sprite extends PhysicsWorldObject {
         if (config.animations) {
             for (let animation of config.animations) {
                 _.defaults(animation, {
-                    duration: 0,
+                    frames: [],
                 });
                 this.animationManager.addAnimation(animation.name, animation.frames);
             }

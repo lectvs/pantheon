@@ -33,8 +33,8 @@ class PhysicsWorldObject extends WorldObject {
     preMovementX: number;
     preMovementY: number;
 
-    constructor(config: PhysicsWorldObject.Config, defaults: PhysicsWorldObject.Config = {}) {
-        config = O.withDefaults(config, defaults);
+    constructor(config: PhysicsWorldObject.Config, defaults?: PhysicsWorldObject.Config) {
+        config = WorldObject.resolveConfig<PhysicsWorldObject.Config>(config, defaults);
         super(config);
         this.vx = O.getOrDefault(config.vx, 0);
         this.vy = O.getOrDefault(config.vy, 0);

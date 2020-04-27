@@ -129,6 +129,12 @@ var AnimationManager = /** @class */ (function () {
         }
         return animation[frame];
     };
+    AnimationManager.prototype.hasAnimation = function (name) {
+        return !!this.animations[name];
+    };
+    AnimationManager.prototype.isAnimationEmpty = function (name) {
+        return _.isEmpty(this.animations[name]);
+    };
     Object.defineProperty(AnimationManager.prototype, "isPlaying", {
         get: function () {
             return !!this.currentFrame;
@@ -140,6 +146,10 @@ var AnimationManager = /** @class */ (function () {
         if (startFrame === void 0) { startFrame = 0; }
         if (force === void 0) { force = false; }
         if (!force && (this.forceRequired || this.getCurrentAnimationName() == name)) {
+            return;
+        }
+        if (this.hasAnimation(name) && this.isAnimationEmpty(name)) {
+            this.setCurrentFrame(null, true, force);
             return;
         }
         this.setCurrentFrame(name + "/" + startFrame, true, force);
@@ -303,6 +313,15 @@ var A;
 var Animations = /** @class */ (function () {
     function Animations() {
     }
+    Animations.emptyList = function () {
+        var names = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            names[_i] = arguments[_i];
+        }
+        if (_.isEmpty(names))
+            return [];
+        return names.map(function (name) { return { name: name, frames: [] }; });
+    };
     Animations.fromTextureList = function (config) {
         _.defaults(config, {
             texturePrefix: "",
@@ -1223,9 +1242,8 @@ function get(name) {
 }
 var WorldObject = /** @class */ (function () {
     function WorldObject(config, defaults) {
-        if (defaults === void 0) { defaults = {}; }
         var _this = this;
-        config = O.withDefaults(config, defaults);
+        config = WorldObject.resolveConfig(config, defaults);
         this.localx = O.getOrDefault(config.x, 0);
         this.localy = O.getOrDefault(config.y, 0);
         this.visible = O.getOrDefault(config.visible, true);
@@ -1377,6 +1395,9 @@ var WorldObject = /** @class */ (function () {
         debug("Cannot find child named " + name + " on parent:", this);
         return undefined;
     };
+    WorldObject.prototype.removeAllChildren = function () {
+        return this.removeChildren(this.children);
+    };
     WorldObject.prototype.removeChild = function (child) {
         if (!child)
             return undefined;
@@ -1397,8 +1418,10 @@ var WorldObject = /** @class */ (function () {
             return [];
         return children.map(function (child) { return _this.removeChild(child); }).filter(function (child) { return child; });
     };
-    WorldObject.prototype.removeAllChildren = function () {
-        return this.removeChildren(this.children);
+    WorldObject.prototype.removeFromWorld = function () {
+        if (!this.world)
+            return this;
+        return World.Actions.removeWorldObjectFromWorld(this);
     };
     // For use with World.Actions.addWorldObjectToWorld
     WorldObject.prototype.internalAddWorldObjectToWorldWorldObject = function (world) {
@@ -1442,6 +1465,32 @@ var WorldObject = /** @class */ (function () {
 }());
 (function (WorldObject) {
     function resolveConfig(config) {
+        var parents = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            parents[_i - 1] = arguments[_i];
+        }
+        var e_5, _a;
+        var result = resolveConfigParent(config);
+        if (_.isEmpty(parents))
+            return result;
+        try {
+            for (var parents_1 = __values(parents), parents_1_1 = parents_1.next(); !parents_1_1.done; parents_1_1 = parents_1.next()) {
+                var parent_1 = parents_1_1.value;
+                result.parent = parent_1;
+                result = WorldObject.resolveConfig(result);
+            }
+        }
+        catch (e_5_1) { e_5 = { error: e_5_1 }; }
+        finally {
+            try {
+                if (parents_1_1 && !parents_1_1.done && (_a = parents_1.return)) _a.call(parents_1);
+            }
+            finally { if (e_5) throw e_5.error; }
+        }
+        return result;
+    }
+    WorldObject.resolveConfig = resolveConfig;
+    function resolveConfigParent(config) {
         if (!config.parent)
             return _.clone(config);
         var result = WorldObject.resolveConfig(config.parent);
@@ -1479,7 +1528,6 @@ var WorldObject = /** @class */ (function () {
         }
         return result;
     }
-    WorldObject.resolveConfig = resolveConfig;
     function fromConfig(config) {
         config = WorldObject.resolveConfig(config);
         var result = new config.constructor(config);
@@ -1493,9 +1541,8 @@ var WorldObject = /** @class */ (function () {
 var PhysicsWorldObject = /** @class */ (function (_super) {
     __extends(PhysicsWorldObject, _super);
     function PhysicsWorldObject(config, defaults) {
-        if (defaults === void 0) { defaults = {}; }
         var _this = this;
-        config = O.withDefaults(config, defaults);
+        config = WorldObject.resolveConfig(config, defaults);
         _this = _super.call(this, config) || this;
         _this.vx = O.getOrDefault(config.vx, 0);
         _this.vy = O.getOrDefault(config.vy, 0);
@@ -1573,10 +1620,9 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
 var Sprite = /** @class */ (function (_super) {
     __extends(Sprite, _super);
     function Sprite(config, defaults) {
-        var e_5, _a;
-        if (defaults === void 0) { defaults = {}; }
+        var e_6, _a;
         var _this = this;
-        config = O.withDefaults(config, defaults);
+        config = WorldObject.resolveConfig(config, defaults);
         _this = _super.call(this, config) || this;
         _this.setTexture(config.texture);
         if (config.bounds === undefined) {
@@ -1589,17 +1635,17 @@ var Sprite = /** @class */ (function (_super) {
                 for (var _b = __values(config.animations), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var animation = _c.value;
                     _.defaults(animation, {
-                        duration: 0,
+                        frames: [],
                     });
                     _this.animationManager.addAnimation(animation.name, animation.frames);
                 }
             }
-            catch (e_5_1) { e_5 = { error: e_5_1 }; }
+            catch (e_6_1) { e_6 = { error: e_6_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_5) throw e_5.error; }
+                finally { if (e_6) throw e_6.error; }
             }
         }
         if (config.defaultAnimation) {
@@ -2378,7 +2424,7 @@ var Input = /** @class */ (function () {
     function Input() {
     }
     Input.setKeys = function (keyCodesByName) {
-        var e_6, _a;
+        var e_7, _a;
         this.keyCodesByName = _.clone(keyCodesByName);
         this.isDownByKeyCode = {};
         this.keysByKeycode = {};
@@ -2390,12 +2436,12 @@ var Input = /** @class */ (function () {
                     this.setupKeyCode(keyCode);
                 }
             }
-            catch (e_6_1) { e_6 = { error: e_6_1 }; }
+            catch (e_7_1) { e_7 = { error: e_7_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_6) throw e_6.error; }
+                finally { if (e_7) throw e_7.error; }
             }
         }
     };
@@ -2407,19 +2453,19 @@ var Input = /** @class */ (function () {
         this.updateMousePosition();
     };
     Input.consume = function (key) {
-        var e_7, _a;
+        var e_8, _a;
         try {
             for (var _b = __values(this.keyCodesByName[key] || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var keyCode = _c.value;
                 this.keysByKeycode[keyCode].consume();
             }
         }
-        catch (e_7_1) { e_7 = { error: e_7_1 }; }
+        catch (e_8_1) { e_8 = { error: e_8_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_7) throw e_7.error; }
+            finally { if (e_8) throw e_8.error; }
         }
     };
     Input.debugKeyDown = function (name) {
@@ -2652,7 +2698,7 @@ var InteractionManager = /** @class */ (function () {
         this._interactRequested = null;
     };
     InteractionManager.prototype.getInteractableObjects = function () {
-        var e_8, _a;
+        var e_9, _a;
         var interactableObjects = this.theater.storyManager.getInteractableObjects(this.theater.storyManager.currentNode);
         var result = new Set();
         try {
@@ -2663,12 +2709,12 @@ var InteractionManager = /** @class */ (function () {
                 result.add(name_3);
             }
         }
-        catch (e_8_1) { e_8 = { error: e_8_1 }; }
+        catch (e_9_1) { e_9 = { error: e_9_1 }; }
         finally {
             try {
                 if (interactableObjects_1_1 && !interactableObjects_1_1.done && (_a = interactableObjects_1.return)) _a.call(interactableObjects_1);
             }
-            finally { if (e_8) throw e_8.error; }
+            finally { if (e_9) throw e_9.error; }
         }
         return result;
     };
@@ -2699,10 +2745,9 @@ var InteractionManager = /** @class */ (function () {
 var World = /** @class */ (function (_super) {
     __extends(World, _super);
     function World(config, defaults) {
-        var e_9, _a;
-        if (defaults === void 0) { defaults = {}; }
+        var e_10, _a;
         var _this = this;
-        config = O.withDefaults(config, defaults);
+        config = WorldObject.resolveConfig(config, defaults);
         _this = _super.call(this, config) || this;
         _this.width = O.getOrDefault(config.width, global.gameWidth);
         _this.height = O.getOrDefault(config.height, global.gameHeight);
@@ -2729,19 +2774,19 @@ var World = /** @class */ (function (_super) {
                 World.Actions.addWorldObjectToWorld(WorldObject.fromConfig(worldObjectConfig), _this);
             }
         }
-        catch (e_9_1) { e_9 = { error: e_9_1 }; }
+        catch (e_10_1) { e_10 = { error: e_10_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_9) throw e_9.error; }
+            finally { if (e_10) throw e_10.error; }
         }
         _this.debugCameraX = 0;
         _this.debugCameraY = 0;
         return _this;
     }
     World.prototype.update = function (delta) {
-        var e_10, _a, e_11, _b, e_12, _c;
+        var e_11, _a, e_12, _b, e_13, _c;
         _super.prototype.update.call(this, delta);
         this.scriptManager.update(this, delta);
         try {
@@ -2751,12 +2796,12 @@ var World = /** @class */ (function (_super) {
                     worldObject.preUpdate();
             }
         }
-        catch (e_10_1) { e_10 = { error: e_10_1 }; }
+        catch (e_11_1) { e_11 = { error: e_11_1 }; }
         finally {
             try {
                 if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
             }
-            finally { if (e_10) throw e_10.error; }
+            finally { if (e_11) throw e_11.error; }
         }
         try {
             for (var _f = __values(this.worldObjects), _g = _f.next(); !_g.done; _g = _f.next()) {
@@ -2765,12 +2810,12 @@ var World = /** @class */ (function (_super) {
                     worldObject.update(delta);
             }
         }
-        catch (e_11_1) { e_11 = { error: e_11_1 }; }
+        catch (e_12_1) { e_12 = { error: e_12_1 }; }
         finally {
             try {
                 if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
             }
-            finally { if (e_11) throw e_11.error; }
+            finally { if (e_12) throw e_12.error; }
         }
         this.handleCollisions();
         try {
@@ -2780,12 +2825,12 @@ var World = /** @class */ (function (_super) {
                     worldObject.postUpdate();
             }
         }
-        catch (e_12_1) { e_12 = { error: e_12_1 }; }
+        catch (e_13_1) { e_13 = { error: e_13_1 }; }
         finally {
             try {
                 if (_j && !_j.done && (_c = _h.return)) _c.call(_h);
             }
-            finally { if (e_12) throw e_12.error; }
+            finally { if (e_13) throw e_13.error; }
         }
         if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
             if (Input.isDown('debugMoveCameraLeft'))
@@ -2800,7 +2845,7 @@ var World = /** @class */ (function (_super) {
         this.camera.update(this, delta);
     };
     World.prototype.render = function (screen) {
-        var e_13, _a;
+        var e_14, _a;
         var oldCameraX = this.camera.x;
         var oldCameraY = this.camera.y;
         if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
@@ -2817,12 +2862,12 @@ var World = /** @class */ (function (_super) {
                 this.renderLayer(layer, this.layerTexture, this.screen);
             }
         }
-        catch (e_13_1) { e_13 = { error: e_13_1 }; }
+        catch (e_14_1) { e_14 = { error: e_14_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_13) throw e_13.error; }
+            finally { if (e_14) throw e_14.error; }
         }
         this.camera.x = oldCameraX;
         this.camera.y = oldCameraY;
@@ -2830,7 +2875,7 @@ var World = /** @class */ (function (_super) {
         _super.prototype.render.call(this, screen);
     };
     World.prototype.renderLayer = function (layer, layerTexture, screen) {
-        var e_14, _a;
+        var e_15, _a;
         layerTexture.clear();
         layer.sort();
         try {
@@ -2841,12 +2886,12 @@ var World = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_14_1) { e_14 = { error: e_14_1 }; }
+        catch (e_15_1) { e_15 = { error: e_15_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_14) throw e_14.error; }
+            finally { if (e_15) throw e_15.error; }
         }
         screen.render(layerTexture, {
             filters: layer.effects.getFilterList()
@@ -2868,7 +2913,7 @@ var World = /** @class */ (function (_super) {
         return this.entryPoints[entryPointKey];
     };
     World.prototype.getLayer = function (obj) {
-        var e_15, _a;
+        var e_16, _a;
         if (_.isString(obj))
             obj = this.getWorldObjectByName(obj);
         try {
@@ -2878,17 +2923,17 @@ var World = /** @class */ (function (_super) {
                     return layer.name;
             }
         }
-        catch (e_15_1) { e_15 = { error: e_15_1 }; }
+        catch (e_16_1) { e_16 = { error: e_16_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_15) throw e_15.error; }
+            finally { if (e_16) throw e_16.error; }
         }
         return undefined;
     };
     World.prototype.getLayerByName = function (name) {
-        var e_16, _a;
+        var e_17, _a;
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var layer = _c.value;
@@ -2896,12 +2941,12 @@ var World = /** @class */ (function (_super) {
                     return layer;
             }
         }
-        catch (e_16_1) { e_16 = { error: e_16_1 }; }
+        catch (e_17_1) { e_17 = { error: e_17_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_16) throw e_16.error; }
+            finally { if (e_17) throw e_17.error; }
         }
         return undefined;
     };
@@ -2957,7 +3002,7 @@ var World = /** @class */ (function (_super) {
     };
     World.prototype.handleCollisions = function () {
         var _this = this;
-        var e_17, _a, e_18, _b, e_19, _c;
+        var e_18, _a, e_19, _b, e_20, _c;
         try {
             for (var _d = __values(this.collisionOrder), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var collision = _e.value;
@@ -2977,30 +3022,30 @@ var World = /** @class */ (function (_super) {
                                 });
                             }
                         }
-                        catch (e_19_1) { e_19 = { error: e_19_1 }; }
+                        catch (e_20_1) { e_20 = { error: e_20_1 }; }
                         finally {
                             try {
                                 if (group_1_1 && !group_1_1.done && (_c = group_1.return)) _c.call(group_1);
                             }
-                            finally { if (e_19) throw e_19.error; }
+                            finally { if (e_20) throw e_20.error; }
                         }
                     }
                 }
-                catch (e_18_1) { e_18 = { error: e_18_1 }; }
+                catch (e_19_1) { e_19 = { error: e_19_1 }; }
                 finally {
                     try {
                         if (move_1_1 && !move_1_1.done && (_b = move_1.return)) _b.call(move_1);
                     }
-                    finally { if (e_18) throw e_18.error; }
+                    finally { if (e_19) throw e_19.error; }
                 }
             }
         }
-        catch (e_17_1) { e_17 = { error: e_17_1 }; }
+        catch (e_18_1) { e_18 = { error: e_18_1 }; }
         finally {
             try {
                 if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
             }
-            finally { if (e_17) throw e_17.error; }
+            finally { if (e_18) throw e_18.error; }
         }
     };
     World.prototype.hasWorldObject = function (obj) {
@@ -3044,7 +3089,7 @@ var World = /** @class */ (function (_super) {
         return screen;
     };
     World.prototype.createLayers = function (layers) {
-        var e_20, _a;
+        var e_21, _a;
         if (_.isEmpty(layers))
             layers = [];
         layers.push({ name: World.DEFAULT_LAYER });
@@ -3058,12 +3103,12 @@ var World = /** @class */ (function (_super) {
                 result.push(new World.Layer(layer.name, layer, this.width, this.height));
             }
         }
-        catch (e_20_1) { e_20 = { error: e_20_1 }; }
+        catch (e_21_1) { e_21 = { error: e_21_1 }; }
         finally {
             try {
                 if (layers_1_1 && !layers_1_1.done && (_a = layers_1.return)) _a.call(layers_1);
             }
-            finally { if (e_20) throw e_20.error; }
+            finally { if (e_21) throw e_21.error; }
         }
         return result;
     };
@@ -3109,7 +3154,7 @@ var World = /** @class */ (function (_super) {
     };
     // For use with World.Actions.setLayer
     World.prototype.internalSetLayerWorld = function (obj, layerName) {
-        var e_21, _a;
+        var e_22, _a;
         this.removeFromAllLayers(obj);
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -3120,12 +3165,12 @@ var World = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_21_1) { e_21 = { error: e_21_1 }; }
+        catch (e_22_1) { e_22 = { error: e_22_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_21) throw e_21.error; }
+            finally { if (e_22) throw e_22.error; }
         }
     };
     // For use with World.Actions.setPhysicsGroup
@@ -3150,19 +3195,19 @@ var World = /** @class */ (function (_super) {
         }
     };
     World.prototype.removeFromAllLayers = function (obj) {
-        var e_22, _a;
+        var e_23, _a;
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var layer = _c.value;
                 A.removeAll(layer.worldObjects, obj);
             }
         }
-        catch (e_22_1) { e_22 = { error: e_22_1 }; }
+        catch (e_23_1) { e_23 = { error: e_23_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_22) throw e_22.error; }
+            finally { if (e_23) throw e_23.error; }
         }
     };
     World.prototype.removeFromAllPhysicsGroups = function (obj) {
@@ -3206,7 +3251,7 @@ var World = /** @class */ (function (_super) {
          * Adds a WorldObject to the world. Returns the object added.
          */
         function addWorldObjectToWorld(obj, world) {
-            var e_23, _a;
+            var e_24, _a;
             if (!obj || !world)
                 return obj;
             if (obj.world) {
@@ -3227,12 +3272,12 @@ var World = /** @class */ (function (_super) {
                     World.Actions.addWorldObjectToWorld(child, world);
                 }
             }
-            catch (e_23_1) { e_23 = { error: e_23_1 }; }
+            catch (e_24_1) { e_24 = { error: e_24_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_23) throw e_23.error; }
+                finally { if (e_24) throw e_24.error; }
             }
             obj.onAdd();
             return obj;
@@ -3251,7 +3296,7 @@ var World = /** @class */ (function (_super) {
          * Removes a WorldObject from its containing world. Returns the object removed.
          */
         function removeWorldObjectFromWorld(obj) {
-            var e_24, _a;
+            var e_25, _a;
             if (!obj)
                 return obj;
             if (!obj.world) {
@@ -3270,12 +3315,12 @@ var World = /** @class */ (function (_super) {
                     World.Actions.removeWorldObjectFromWorld(child);
                 }
             }
-            catch (e_24_1) { e_24 = { error: e_24_1 }; }
+            catch (e_25_1) { e_25 = { error: e_25_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_24) throw e_24.error; }
+                finally { if (e_25) throw e_25.error; }
             }
             if (obj.parent) {
                 World.Actions.removeChildFromParent(obj);
@@ -3445,7 +3490,7 @@ var SpriteText = /** @class */ (function (_super) {
         return _this;
     }
     SpriteText.prototype.render = function (screen) {
-        var e_25, _a;
+        var e_26, _a;
         var filters = this.mask ? [new TextureFilter.Mask({ type: TextureFilter.Mask.Type.GLOBAL, mask: this.mask })] : [];
         try {
             for (var _b = __values(this.chars), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -3465,12 +3510,12 @@ var SpriteText = /** @class */ (function (_super) {
                 });
             }
         }
-        catch (e_25_1) { e_25 = { error: e_25_1 }; }
+        catch (e_26_1) { e_26 = { error: e_26_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_25) throw e_25.error; }
+            finally { if (e_26) throw e_26.error; }
         }
         _super.prototype.render.call(this, screen);
     };
@@ -3841,7 +3886,7 @@ var Physics = /** @class */ (function () {
     };
     Physics.collide = function (obj, from, options) {
         if (options === void 0) { options = {}; }
-        var e_26, _a;
+        var e_27, _a;
         if (_.isEmpty(from))
             return;
         if (!obj.colliding)
@@ -3876,12 +3921,12 @@ var Physics = /** @class */ (function () {
                     }
                 }
             }
-            catch (e_26_1) { e_26 = { error: e_26_1 }; }
+            catch (e_27_1) { e_27 = { error: e_27_1 }; }
             finally {
                 try {
                     if (collisions_1_1 && !collisions_1_1.done && (_a = collisions_1.return)) _a.call(collisions_1);
                 }
-                finally { if (e_26) throw e_26.error; }
+                finally { if (e_27) throw e_27.error; }
             }
             collidingWith = collidingWith.filter(function (other) { return obj.isOverlapping(other); });
             iters++;
@@ -4284,7 +4329,7 @@ var Preload = /** @class */ (function () {
         PIXI.Loader.shared.add(key + this.TILEMAP_KEY_SUFFIX, url);
     };
     Preload.loadPyxelTilemap = function (key, tilemap) {
-        var e_27, _a;
+        var e_28, _a;
         var tilemapJson = PIXI.Loader.shared.resources[key + this.TILEMAP_KEY_SUFFIX].data;
         var tilemapForCache = {
             tileset: tilemap.tileset,
@@ -4300,12 +4345,12 @@ var Preload = /** @class */ (function () {
                     };
                 }
             }
-            catch (e_27_1) { e_27 = { error: e_27_1 }; }
+            catch (e_28_1) { e_28 = { error: e_28_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_27) throw e_27.error; }
+                finally { if (e_28) throw e_28.error; }
             }
             tilemapForCache.layers.push(tilemapLayer);
         }
@@ -4519,7 +4564,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_28, _a;
+        var e_29, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -4533,12 +4578,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_28_1) { e_28 = { error: e_28_1 }; }
+            catch (e_29_1) { e_29 = { error: e_29_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_28) throw e_28.error; }
+                finally { if (e_29) throw e_29.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -4829,7 +4874,7 @@ var StoryManager = /** @class */ (function () {
         this.storyConfig.execute();
     };
     StoryManager.prototype.getInteractableObjects = function (node, stageName) {
-        var e_29, _a;
+        var e_30, _a;
         var result = new Set();
         if (!node)
             return result;
@@ -4846,12 +4891,12 @@ var StoryManager = /** @class */ (function () {
                 result.add(transition.with);
             }
         }
-        catch (e_29_1) { e_29 = { error: e_29_1 }; }
+        catch (e_30_1) { e_30 = { error: e_30_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_29) throw e_29.error; }
+            finally { if (e_30) throw e_30.error; }
         }
         return result;
     };
@@ -4874,7 +4919,7 @@ var StoryManager = /** @class */ (function () {
         this._currentNodeName = _.last(path);
     };
     StoryManager.prototype.getFirstValidTransition = function (node) {
-        var e_30, _a;
+        var e_31, _a;
         try {
             for (var _b = __values(node.transitions), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -4898,12 +4943,12 @@ var StoryManager = /** @class */ (function () {
                 }
             }
         }
-        catch (e_30_1) { e_30 = { error: e_30_1 }; }
+        catch (e_31_1) { e_31 = { error: e_31_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_30) throw e_30.error; }
+            finally { if (e_31) throw e_31.error; }
         }
         return null;
     };
@@ -4914,7 +4959,7 @@ var StoryManager = /** @class */ (function () {
         return this.storyboard[name];
     };
     StoryManager.prototype.updateParty = function (party) {
-        var e_31, _a, e_32, _b;
+        var e_32, _a, e_33, _b;
         if (party.setLeader !== undefined) {
             this.theater.partyManager.leader = party.setLeader;
         }
@@ -4925,12 +4970,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberActive(m);
                 }
             }
-            catch (e_31_1) { e_31 = { error: e_31_1 }; }
+            catch (e_32_1) { e_32 = { error: e_32_1 }; }
             finally {
                 try {
                     if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                 }
-                finally { if (e_31) throw e_31.error; }
+                finally { if (e_32) throw e_32.error; }
             }
         }
         if (!_.isEmpty(party.setMembersInactive)) {
@@ -4940,12 +4985,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberInactive(m);
                 }
             }
-            catch (e_32_1) { e_32 = { error: e_32_1 }; }
+            catch (e_33_1) { e_33 = { error: e_33_1 }; }
             finally {
                 try {
                     if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
                 }
-                finally { if (e_32) throw e_32.error; }
+                finally { if (e_33) throw e_33.error; }
             }
         }
     };
@@ -5159,7 +5204,7 @@ var Tilemap = /** @class */ (function (_super) {
         configurable: true
     });
     Tilemap.prototype.postUpdate = function () {
-        var e_33, _a;
+        var e_34, _a;
         if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
             try {
                 for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -5168,12 +5213,12 @@ var Tilemap = /** @class */ (function (_super) {
                     box.y = this.y;
                 }
             }
-            catch (e_33_1) { e_33 = { error: e_33_1 }; }
+            catch (e_34_1) { e_34 = { error: e_34_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_33) throw e_33.error; }
+                finally { if (e_34) throw e_34.error; }
             }
         }
         _super.prototype.postUpdate.call(this);
@@ -5191,7 +5236,7 @@ var Tilemap = /** @class */ (function (_super) {
         _super.prototype.render.call(this, screen);
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_34, _a;
+        var e_35, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -5209,12 +5254,12 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_34_1) { e_34 = { error: e_34_1 }; }
+        catch (e_35_1) { e_35 = { error: e_35_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_34) throw e_34.error; }
+            finally { if (e_35) throw e_35.error; }
         }
         World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };
@@ -5343,6 +5388,8 @@ var Timer = /** @class */ (function () {
     });
     Object.defineProperty(Timer.prototype, "progress", {
         get: function () {
+            if (this.duration === 0)
+                return 1;
             return Math.min(this.time / this.duration, 1);
         },
         enumerable: true,
@@ -5447,7 +5494,7 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
         }
     };
     ZOrderedTilemap.prototype.postUpdate = function () {
-        var e_35, _a;
+        var e_36, _a;
         if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
             try {
                 for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -5456,19 +5503,19 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
                     box.y = this.y;
                 }
             }
-            catch (e_35_1) { e_35 = { error: e_35_1 }; }
+            catch (e_36_1) { e_36 = { error: e_36_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_35) throw e_35.error; }
+                finally { if (e_36) throw e_36.error; }
             }
         }
         _super.prototype.postUpdate.call(this);
     };
     ZOrderedTilemap.prototype.createCollisionBoxes = function (debugBounds) {
         if (debugBounds === void 0) { debugBounds = false; }
-        var e_36, _a;
+        var e_37, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -5481,12 +5528,12 @@ var ZOrderedTilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_36_1) { e_36 = { error: e_36_1 }; }
+        catch (e_37_1) { e_37 = { error: e_37_1 }; }
         finally {
             try {
                 if (collisionRects_2_1 && !collisionRects_2_1.done && (_a = collisionRects_2.return)) _a.call(collisionRects_2);
             }
-            finally { if (e_36) throw e_36.error; }
+            finally { if (e_37) throw e_37.error; }
         }
         World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };
@@ -6230,7 +6277,7 @@ var Campfire = /** @class */ (function (_super) {
         this.fireRadius.win();
     };
     Campfire.prototype.consumeItems = function () {
-        var e_37, _a;
+        var e_38, _a;
         var items = this.world.getWorldObjectsByType(ItemGround).filter(function (item) { return item.consumable; });
         try {
             for (var items_1 = __values(items), items_1_1 = items_1.next(); !items_1_1.done; items_1_1 = items_1.next()) {
@@ -6244,12 +6291,12 @@ var Campfire = /** @class */ (function (_super) {
                 this.consumeItem(item);
             }
         }
-        catch (e_37_1) { e_37 = { error: e_37_1 }; }
+        catch (e_38_1) { e_38 = { error: e_38_1 }; }
         finally {
             try {
                 if (items_1_1 && !items_1_1.done && (_a = items_1.return)) _a.call(items_1);
             }
-            finally { if (e_37) throw e_37.error; }
+            finally { if (e_38) throw e_38.error; }
         }
     };
     Campfire.prototype.consumeItem = function (item) {
@@ -6292,7 +6339,7 @@ var Door = /** @class */ (function (_super) {
             World.Actions.removeWorldObjectFromWorld(this);
             World.Actions.removeWorldObjectFromWorld(other);
         }
-        if (other instanceof Player && other.heldItem && other.heldItem.type === Item.Type.KEY) {
+        if (other instanceof Player && other.isHoldingKey) {
             World.Actions.removeWorldObjectFromWorld(this);
             other.removeHeldItem();
         }
@@ -6365,45 +6412,22 @@ var FireRadius = /** @class */ (function () {
 }());
 var Human = /** @class */ (function (_super) {
     __extends(Human, _super);
-    function Human(config) {
-        var _this = _super.call(this, config, {
+    function Human(config, defaults) {
+        var _this = this;
+        config = WorldObject.resolveConfig(config, defaults);
+        _this = _super.call(this, config, {
             bounds: { x: -4, y: -2, width: 8, height: 4 },
-            animations: [
-                Animations.fromTextureList({ name: 'idle_empty', texturePrefix: config.texturePrefix, textures: [0, 1, 2], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'run_empty', texturePrefix: config.texturePrefix, textures: [4, 5, 6, 7], frameRate: 16, count: -1 }),
-                Animations.fromTextureList({ name: 'idle_holding', texturePrefix: config.texturePrefix, textures: [8, 9, 10], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'run_holding', texturePrefix: config.texturePrefix, textures: [12, 13, 14, 15], frameRate: 16, count: -1 }),
-                Animations.fromTextureList({ name: 'throw', texturePrefix: config.texturePrefix, textures: [16, 17, 17, 17, 17], frameRate: 24, count: 1, forceRequired: true }),
-                Animations.fromTextureList({ name: 'swing', texturePrefix: config.texturePrefix, textures: [16, 17, 17, 17, 16], frameRate: 24, count: 1, forceRequired: true }),
-                Animations.fromTextureList({ name: 'hurt', texturePrefix: config.texturePrefix, textures: [20, 20, 20, 20, 20, 20, 20, 20,
-                        21, 22, 23, 22, 21, 22, 23, 22], frameRate: 16, count: 1, forceRequired: true }),
-                Animations.fromTextureList({ name: 'intro_idle', texturePrefix: config.texturePrefix, textures: [0, 1, 2], frameRate: 2, count: 3, forceRequired: true }),
-            ]
+            animations: Animations.emptyList('idle_empty', 'run_empty', 'idle_holding', 'run_holding', 'throw', 'swing', 'hurt'),
         }) || this;
-        _this.speed = 40;
-        _this.throwSpeed = 80;
-        _this.hurtDropSpeed = 40;
-        _this.swingTime = 0.15;
-        _this.itemOffsetY = 20;
-        _this.itemFullSwingOffsetX = 10;
-        _this.controllerSchema = {
-            left: function () { return Input.isDown('left'); },
-            right: function () { return Input.isDown('right'); },
-            up: function () { return Input.isDown('up'); },
-            down: function () { return Input.isDown('down'); },
-            useItem: function () { return Input.justDown('useItem'); },
-            pickupDropItem: function () { return Input.justDown('pickupDropItem'); },
-        };
+        _this.speed = O.getOrDefault(config.speed, 40);
+        _this.preSwingWait = O.getOrDefault(config.preSwingWait, 0);
+        _this.postSwingWait = O.getOrDefault(config.postSwingWait, 0);
+        _this.itemGrabDistance = O.getOrDefault(config.itemGrabDistance, 16);
         _this.direction = Direction2D.RIGHT;
         return _this;
     }
     Object.defineProperty(Human.prototype, "swinging", {
         get: function () { return this.swingScript && this.swingScript.running; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Human.prototype, "heldItemName", {
-        get: function () { return this.heldItem ? this.heldItem.name : undefined; },
         enumerable: true,
         configurable: true
     });
@@ -6417,6 +6441,17 @@ var Human = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(Human.prototype, "immobile", {
+        get: function () { return this.stunned; },
+        enumerable: true,
+        configurable: true
+    });
+    Human.prototype.onRemove = function () {
+        if (this.swingScript)
+            this.swingScript.done = true;
+        if (this.hurtScript)
+            this.hurtScript.done = true;
+    };
     Human.prototype.update = function (delta) {
         var haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
         var vaxis = (this.controller.down ? 1 : 0) - (this.controller.up ? 1 : 0);
@@ -6428,7 +6463,9 @@ var Human = /** @class */ (function (_super) {
         if (this.controller.useItem) {
             this.handleItemUse();
         }
-        this.handleItemPickupDrop();
+        if (this.controller.pickupDropItem) {
+            this.handleItemPickupDrop();
+        }
         // Handle animation.
         var anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'run';
         var holding = this.heldItem ? 'holding' : 'empty';
@@ -6444,21 +6481,26 @@ var Human = /** @class */ (function (_super) {
     };
     Human.prototype.hit = function () {
         var _this = this;
+        if (this.hurt)
+            return;
         this.playAnimation('hurt', 0, true);
         if (this.swingScript)
             this.swingScript.done = true;
         if (this.heldItem)
             this.dropHeldItem();
-        this.hurtScript = this.world.runScript(S.chain(S.call(function () {
-            _this.controllable = false;
-        }), S.doOverTime(0.5, function (t) {
+        this.stunned = true;
+        this.hurtScript = this.world.runScript(S.chain(S.doOverTime(0.5, function (t) {
             _this.offset.y = -16 * Math.exp(-4 * t) * Math.abs(Math.sin(4 * Math.PI * t * t));
-        }), S.wait(0.5), S.call(function () {
+        }), S.waitUntil(function () { return !_this.getCurrentAnimationName().startsWith('hurt'); }), S.call(function () {
             _this.alpha = 1;
-            _this.controllable = true;
+            _this.stunned = false;
         })));
     };
     Human.prototype.updateMovement = function (haxis, vaxis) {
+        if (this.immobile) {
+            haxis = 0;
+            vaxis = 0;
+        }
         if (haxis < 0) {
             this.vx = -this.speed;
             this.direction.h = Direction.LEFT;
@@ -6492,130 +6534,17 @@ var Human = /** @class */ (function (_super) {
             this.vy = 0;
         }
     };
-    Human.prototype.handleItemPickupDrop = function () {
-        var e_38, _a;
+    Human.prototype.getOverlappingItem = function () {
+        var e_39, _a;
         var overlappingItemDistance = Infinity;
-        var overlappingItem;
+        var overlappingItem = undefined;
         try {
             for (var _b = __values(this.world.getWorldObjectsByType(ItemGround)), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var item = _c.value;
                 var distance = M.distance(this.x, this.y, item.x, item.y);
-                if (distance < 16 && distance < overlappingItemDistance && !item.beingConsumed) {
+                if (distance < this.itemGrabDistance && distance < overlappingItemDistance && !item.beingConsumed) {
                     overlappingItem = item;
                     overlappingItemDistance = distance;
-                }
-            }
-        }
-        catch (e_38_1) { e_38 = { error: e_38_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_38) throw e_38.error; }
-        }
-        if (overlappingItem) {
-            overlappingItem.effects.outline.color = 0xFFFF00;
-            overlappingItem.effects.outline.enabled = true;
-            if (this.controller.pickupDropItem && !this.swinging) {
-                if (this.heldItem) {
-                    this.dropHeldItem();
-                    if (!this.moving)
-                        this.pickupItem(overlappingItem);
-                }
-                else {
-                    this.pickupItem(overlappingItem);
-                }
-            }
-            return;
-        }
-        if (this.heldItem) {
-            if (this.controller.pickupDropItem && !this.swinging) {
-                this.dropHeldItem();
-            }
-            return;
-        }
-    };
-    Human.prototype.handleItemUse = function () {
-        if (!this.heldItem)
-            return;
-        if (this.heldItem.type === Item.Type.KEY)
-            return;
-        this.swingItem();
-    };
-    Human.prototype.dropHeldItem = function () {
-        if (!this.heldItem)
-            return;
-        var droppedItem = this.heldItem.asGroundItem(this.x, this.y, this.layer, 'items');
-        droppedItem.flipX = this.heldItem.flipX;
-        World.Actions.removeWorldObjectFromWorld(this.heldItem);
-        World.Actions.addWorldObjectToWorld(droppedItem, this.world);
-        World.Actions.setName(droppedItem, this.heldItem.name);
-        this.heldItem = null;
-        if (this.getCurrentAnimationName() === 'hurt') {
-            // toss randomly
-            droppedItem.offset.x = 0;
-            droppedItem.offset.y = -this.itemOffsetY;
-            var v = Random.onCircle(this.hurtDropSpeed);
-            droppedItem.vx = v.x;
-            droppedItem.vy = v.y;
-            return;
-        }
-        if (this.moving) {
-            // throw instead of drop
-            droppedItem.offset.x = 0;
-            droppedItem.offset.y = -this.itemOffsetY;
-            droppedItem.vx = this.throwSpeed * Math.sign(this.vx);
-            droppedItem.vy = this.throwSpeed * Math.sign(this.vy);
-            this.playAnimation('throw', 0, true);
-            return;
-        }
-    };
-    Human.prototype.removeHeldItem = function () {
-        World.Actions.removeWorldObjectFromWorld(this.heldItem);
-        this.heldItem = null;
-    };
-    Human.prototype.pickupItem = function (item) {
-        if (!item)
-            return;
-        this.heldItem = item.asHandItem(0, -this.itemOffsetY, this.layer);
-        World.Actions.addChildToParent(this.heldItem, this);
-        World.Actions.removeWorldObjectFromWorld(item);
-        World.Actions.setName(this.heldItem, item.name);
-        if (this.world.getLayerByName('above')) {
-            var itemName = new ItemName({ text: item.type, font: Assets.fonts.DELUXE16, life: 1, layer: 'above' });
-            itemName.x = -itemName.getTextWidth() / 2;
-            itemName.y = -32;
-            World.Actions.addChildToParent(itemName, this);
-        }
-    };
-    Human.prototype.swingItem = function () {
-        var _this = this;
-        if (!this.swingScript || this.swingScript.done) {
-            this.swingScript = this.world.runScript(S.chain(S.simul(S.doOverTime(this.swingTime, function (t) {
-                if (!_this.heldItem)
-                    return;
-                var angle = (_this.flipX ? -1 : 1) * 90 * Math.sin(Math.PI * Math.pow(t, 0.5));
-                _this.heldItem.offset.x = _this.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
-                _this.heldItem.offset.y = _this.itemOffsetY * -Math.cos(M.degToRad(angle));
-                _this.heldItem.angle = angle;
-            }), S.chain(S.call(function () { return _this.playAnimation('swing', 0, true); }), S.wait(this.swingTime * 0.25), S.call(function () {
-                _this.hitStuff(_this.heldItem);
-            })))));
-        }
-    };
-    Human.prototype.hitStuff = function (item) {
-        var e_39, _a;
-        if (!item)
-            return;
-        var swingHitbox = this.getSwingHitbox();
-        try {
-            for (var _b = __values(this.world.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var obj = _c.value;
-                if (item.cutsTrees && obj instanceof Tree && obj.isOverlappingRect(swingHitbox)) {
-                    obj.hit();
-                }
-                if (item.hurtsMonster && obj instanceof Monster && obj.isOverlappingRect(swingHitbox)) {
-                    obj.hit();
                 }
             }
         }
@@ -6626,15 +6555,101 @@ var Human = /** @class */ (function (_super) {
             }
             finally { if (e_39) throw e_39.error; }
         }
+        return overlappingItem;
+    };
+    Human.prototype.handleItemPickupDrop = function () {
+        if (this.swinging)
+            return;
+        if (this.immobile)
+            return;
+        var overlappingItem = this.getOverlappingItem();
+        if (this.heldItem) {
+            this.dropHeldItem();
+            if (this.moving)
+                return;
+        }
+        if (overlappingItem) {
+            this.pickupItem(overlappingItem);
+        }
+    };
+    Human.prototype.handleItemUse = function () {
+        if (!this.heldItem)
+            return;
+        if (!this.heldItem.usable)
+            return;
+        if (this.immobile)
+            return;
+        this.swingItem();
+    };
+    Human.prototype.dropHeldItem = function () {
+        if (!this.heldItem)
+            return;
+        var droppedItem = this.heldItem.asGroundItem(this.x, this.y, this.layer, 'items');
+        droppedItem.flipX = this.heldItem.flipX;
+        var heldItemName = this.heldItem.name;
+        this.removeHeldItem();
+        this.world.addWorldObject(droppedItem);
+        World.Actions.setName(droppedItem, heldItemName);
+        if (this.getCurrentAnimationName() === 'hurt') {
+            // toss randomly
+            droppedItem.offset.x = 0;
+            droppedItem.offset.y = -Human.itemOffsetY;
+            var v = Random.onCircle(Human.hurtDropSpeed);
+            droppedItem.vx = v.x;
+            droppedItem.vy = v.y;
+            return;
+        }
+        if (this.moving) {
+            // throw instead of drop
+            droppedItem.offset.x = 0;
+            droppedItem.offset.y = -Human.itemOffsetY;
+            droppedItem.vx = Human.throwSpeed * Math.sign(this.vx);
+            droppedItem.vy = Human.throwSpeed * Math.sign(this.vy);
+            this.playAnimation('throw', 0, true);
+            return;
+        }
+    };
+    Human.prototype.removeHeldItem = function () {
+        this.heldItem.removeFromWorld();
+        this.heldItem = null;
+    };
+    Human.prototype.pickupItem = function (item) {
+        if (!item)
+            return;
+        this.heldItem = item.asHandItem(0, -Human.itemOffsetY, this.layer);
+        this.addChild(this.heldItem);
+        item.removeFromWorld();
+        World.Actions.setName(this.heldItem, item.name);
+    };
+    Human.prototype.swingItem = function () {
+        var _this = this;
+        if (!this.world)
+            return;
+        if (!this.swingScript || this.swingScript.done) {
+            this.swingScript = this.world.runScript(S.chain(S.wait(this.preSwingWait), S.simul(S.doOverTime(Human.swingTime, function (t) {
+                if (!_this.heldItem)
+                    return;
+                var angle = (_this.flipX ? -1 : 1) * 90 * Math.sin(Math.PI * Math.pow(t, 0.5));
+                _this.heldItem.offset.x = Human.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
+                _this.heldItem.offset.y = Human.itemOffsetY * -Math.cos(M.degToRad(angle));
+                _this.heldItem.angle = angle;
+                if (t === 1)
+                    _this.heldItem.angle = 0;
+            }), S.chain(S.call(function () { return _this.playAnimation('swing', 0, true); }), S.wait(Human.swingTime * 0.25), S.call(function () {
+                _this.hitStuff();
+            }))), S.wait(this.postSwingWait)));
+        }
+    };
+    Human.prototype.hitStuff = function () {
     };
     Human.prototype.getSwingHitbox = function () {
-        return {
-            x: this.x - 10 + (this.flipX ? -1 : 1) * 10,
-            y: this.y - 8 - 18,
-            width: 20,
-            height: 36
-        };
+        return { x: this.x, y: this.y, width: 0, height: 0 };
     };
+    Human.throwSpeed = 80;
+    Human.hurtDropSpeed = 40;
+    Human.swingTime = 0.15;
+    Human.itemOffsetY = 20;
+    Human.itemFullSwingOffsetX = 10;
     return Human;
 }(Sprite));
 var Item;
@@ -6704,7 +6719,7 @@ var ItemGround = /** @class */ (function (_super) {
             offset: { x: x, y: y },
             type: this.type,
         });
-        handItem.addChildren(this.world.removeWorldObjects(this.children));
+        handItem.addChildren(this.children.map(function (child) { return child.removeFromWorld(); }));
         return handItem;
     };
     return ItemGround;
@@ -6718,6 +6733,13 @@ var ItemHand = /** @class */ (function (_super) {
         _this.type = config.type;
         return _this;
     }
+    Object.defineProperty(ItemHand.prototype, "usable", {
+        get: function () {
+            return this.type !== Item.Type.KEY;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(ItemHand.prototype, "cutsTrees", {
         get: function () {
             return this.type === Item.Type.AXE || this.type === Item.Type.MONSTERAXE;
@@ -6746,7 +6768,7 @@ var ItemHand = /** @class */ (function (_super) {
             physicsGroup: physicsGroup,
             type: this.type,
         });
-        groundItem.addChildren(this.world.removeWorldObjects(this.children));
+        groundItem.addChildren(this.children.map(function (child) { return child.removeFromWorld(); }));
         return groundItem;
     };
     return ItemHand;
@@ -6883,11 +6905,11 @@ var ControlsMenu = /** @class */ (function (_super) {
             }),
         ]) || this;
         var player_move = _this.getWorldObjectByName('player_move');
-        player_move.test = true;
+        //player_move.test = true;
         var player_pickup = _this.getWorldObjectByName('player_pickup');
-        player_pickup.test = true;
+        //player_pickup.test = true;
         var player_attack = _this.getWorldObjectByName('player_attack');
-        player_attack.test = true;
+        //player_attack.test = true;
         var tree = _this.getWorldObjectByName('tree');
         tree.setTexture('blacktree');
         _this.runScript(S.simul(S.loopFor(Infinity, S.chain(S.doOverTime(0.8, function (t) { player_move.controller.right = true; }), S.doOverTime(0.8, function (t) { player_move.controller.left = true; }))), S.loopFor(Infinity, S.chain(S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.simul(S.doOverTime(1.5, function (t) { player_pickup.controller.right = true; }), S.chain(S.wait(0.2), S.call(function () { player_pickup.controller.pickupDropItem = true; }))), S.call(function () { player_pickup.flipX = true; }), S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.simul(S.doOverTime(1.5, function (t) { player_pickup.controller.left = true; }), S.chain(S.wait(0.2), S.call(function () { player_pickup.controller.pickupDropItem = true; }))), S.call(function () { player_pickup.flipX = false; }))), S.loopFor(Infinity, S.chain(S.call(function () {
@@ -7069,176 +7091,114 @@ var Monster = /** @class */ (function (_super) {
     __extends(Monster, _super);
     function Monster(config) {
         var _this = _super.call(this, config, {
-            bounds: { x: -4, y: -2, width: 8, height: 4 },
+            speed: 10,
+            preSwingWait: 0.3,
+            postSwingWait: 2,
+            itemGrabDistance: 8,
             animations: [
-                Animations.fromTextureList({ name: 'idle_holding', texturePrefix: 'monster_', textures: [0, 1, 2], frameRate: 4, count: -1 }),
-                Animations.fromTextureList({ name: 'walk_holding', texturePrefix: 'monster_', textures: [4, 5, 6, 7], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'swing', texturePrefix: 'monster_', textures: [9, 9, 9, 8], frameRate: 8, count: 1, forceRequired: true }),
-                Animations.fromTextureList({ name: 'hurt', texturePrefix: 'monster_', textures: [12, 12, 12, 12, 12, 12, 12, 12,
-                        13, 14, 15, 14, 13, 14, 15, 14], frameRate: 8, count: 1, forceRequired: true }),
+                Animations.fromTextureList({ name: 'idle_empty', texturePrefix: 'monster_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'run_empty', texturePrefix: 'monster_', textures: [4, 5, 6, 7], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'idle_holding', texturePrefix: 'monster_', textures: [8, 9, 10], frameRate: 4, count: -1 }),
+                Animations.fromTextureList({ name: 'run_holding', texturePrefix: 'monster_', textures: [12, 13, 14, 15], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'swing', texturePrefix: 'monster_', textures: [16, 17, 17, 17, 16], frameRate: 8, count: 1, forceRequired: true }),
+                Animations.fromTextureList({ name: 'hurt', texturePrefix: 'monster_', textures: [24], frameRate: 1 / 6, count: 1, forceRequired: true, nextFrameRef: 'hurt_shake/0' }),
+                Animations.fromTextureList({ name: 'hurt_shake', texturePrefix: 'monster_', textures: [20, 20, 20, 20, 20, 20, 20, 20,
+                        21, 22, 23, 22, 21, 22, 23, 22], frameRate: 8, count: 1, forceRequired: true }),
+                Animations.fromTextureList({ name: 'pickup', texturePrefix: 'monster_', textures: [25], frameRate: 2, count: 1, forceRequired: true, nextFrameRef: 'idle_holding/0' }),
             ]
         }) || this;
-        _this.speed = 10;
-        _this.attackDistance = 16;
-        _this.swingTime = 0.3;
-        _this.itemOffsetY = 20;
-        _this.itemFullSwingOffsetX = 10;
-        _this.direction = Direction2D.RIGHT;
         _this.attackdx = 0;
         _this.attackdy = 0;
-        _this.heldItem = WorldObject.fromConfig({
-            constructor: ItemHand,
-            type: Item.Type.MONSTERAXE,
-            offset: { x: 0, y: -_this.itemOffsetY },
+        _this.pickupItem(new ItemGround({
+            name: 'monsteraxe',
+            constructor: ItemGround,
+            type: Item.Type.AXE,
             layer: _this.layer,
-        });
-        World.Actions.addChildToParent(_this.heldItem, _this);
+        }));
         return _this;
     }
-    Object.defineProperty(Monster.prototype, "immobile", {
-        get: function () { return this.stunned || (this.swingScript && this.swingScript.running); },
+    Object.defineProperty(Monster.prototype, "pickingUp", {
+        get: function () { return this.pickupScript && !this.pickupScript.done; },
         enumerable: true,
         configurable: true
     });
-    Monster.prototype.onRemove = function () {
-        if (this.swingScript)
-            this.swingScript.done = true;
-    };
+    Object.defineProperty(Monster.prototype, "immobile", {
+        get: function () { return this.stunned || this.swinging || this.pickingUp; },
+        enumerable: true,
+        configurable: true
+    });
     Monster.prototype.update = function (delta) {
-        var player = this.world.getWorldObjectByName('player');
+        var player = this.world.getWorldObjectByType(Player);
+        var axe = this.getClosestAxe();
+        this.setControllerInput(this.heldItem ? player : axe);
+        _super.prototype.update.call(this, delta);
+        this.handlePickup();
+        this.setAttackD(player);
+        this.handleAttacking(player);
+    };
+    Monster.prototype.getClosestAxe = function () {
+        var _this = this;
+        var axes = this.world.getWorldObjectsByType(ItemGround).filter(function (item) { return item.type === Item.Type.AXE; });
+        return M.argmin(axes, function (axe) { return M.distance(_this.x, _this.y, axe.x, axe.y); });
+    };
+    Monster.prototype.handleAttacking = function (target) {
+        if (!this.world)
+            return;
+        if (this.immobile)
+            return;
+        if (!this.heldItem)
+            return;
+        if (M.distance(this.x, this.y, target.x, target.y) < Monster.attackDistance) {
+            this.swingItem();
+        }
+    };
+    Monster.prototype.handlePickup = function () {
+        var _this = this;
+        if (this.heldItem || this.pickingUp)
+            return;
+        var overlappingItem = this.getOverlappingItem();
+        if (overlappingItem && overlappingItem.type === Item.Type.AXE) {
+            this.pickupScript = this.world.runScript(S.chain(S.call(function () {
+                _this.playAnimation('pickup');
+            }), S.waitUntil(function () { return _this.getCurrentAnimationName() !== 'pickup'; }), S.call(function () {
+                _this.controller.pickupDropItem = true;
+            })));
+        }
+    };
+    Monster.prototype.setControllerInput = function (target) {
         var haxis = 0;
         var vaxis = 0;
         if (!this.immobile) {
-            haxis = player.x - this.x;
-            vaxis = player.y - this.y;
+            haxis = target.x - this.x;
+            vaxis = target.y - this.y;
             if (-2 < haxis && haxis < 2)
                 haxis = 0;
             if (-2 < vaxis && vaxis < 2)
                 vaxis = 0;
         }
-        this.updateMovement(haxis, vaxis);
-        _super.prototype.update.call(this, delta);
-        this.attackdx = player.x - this.x;
-        this.attackdy = player.y - this.y;
+        this.controller.left = haxis < 0;
+        this.controller.right = haxis > 0;
+        this.controller.up = vaxis < 0;
+        this.controller.down = vaxis > 0;
+    };
+    Monster.prototype.setAttackD = function (target) {
+        if (this.immobile)
+            return;
+        this.attackdx = target.x - this.x;
+        this.attackdy = target.y - this.y;
         var mag = M.magnitude(this.attackdx, this.attackdy);
         if (mag !== 0) {
             this.attackdx /= mag;
             this.attackdy /= mag;
         }
-        if (this.heldItem) {
-            this.heldItem.flipX = this.flipX;
-        }
-        this.handleAttacking();
-        // Handle animation.
-        var anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'walk';
-        var holding = this.heldItem ? 'holding' : 'empty';
-        //let anim_dir = this.direction.v == Direction.UP ? 'up' : (this.direction.h == Direction.NONE ? 'down' : 'side');
-        this.playAnimation(anim_state + "_" + holding);
     };
-    Monster.prototype.render = function (screen) {
-        _super.prototype.render.call(this, screen);
-        if (this.debugBounds) {
-            var shb = this.getSwingHitbox();
-            Draw.brush.color = 0x00FF00;
-            Draw.rectangleOutline(screen, shb.x, shb.y, shb.width, shb.height);
-        }
-    };
-    Monster.prototype.hit = function () {
-        var _this = this;
-        this.playAnimation('hurt', 0, true);
-        this.world.runScript(S.chain(S.call(function () {
-            _this.stunned = true;
-            if (_this.swingScript) {
-                _this.swingScript.done = true;
-            }
-            if (_this.heldItem)
-                _this.heldItem.visible = false;
-        }), S.doOverTime(0.5, function (t) {
-            _this.offset.y = -16 * Math.exp(-4 * t) * Math.abs(Math.sin(4 * Math.PI * t * t));
-        }), S.wait(1.5), S.call(function () {
-            _this.alpha = 1;
-            _this.stunned = false;
-            if (_this.heldItem)
-                _this.heldItem.visible = true;
-        })));
-    };
-    Monster.prototype.updateMovement = function (haxis, vaxis) {
-        if (this.swingScript && this.swingScript.running) {
-            this.vx = 0;
-            this.vy = 0;
-            return;
-        }
-        var player = this.world.getWorldObjectByName('player');
-        if (player.x < this.x) {
-            this.vx = -this.speed;
-        }
-        if (haxis < 0) {
-            this.vx = -this.speed;
-            this.direction.h = Direction.LEFT;
-            if (vaxis == 0)
-                this.direction.v = Direction.NONE;
-            this.flipX = true;
-        }
-        else if (haxis > 0) {
-            this.vx = this.speed;
-            this.direction.h = Direction.RIGHT;
-            if (vaxis == 0)
-                this.direction.v = Direction.NONE;
-            this.flipX = false;
-        }
-        else {
-            this.vx = 0;
-        }
-        if (vaxis < 0) {
-            this.vy = -this.speed;
-            this.direction.v = Direction.UP;
-            if (haxis == 0)
-                this.direction.h = Direction.NONE;
-        }
-        else if (vaxis > 0) {
-            this.vy = this.speed;
-            this.direction.v = Direction.DOWN;
-            if (haxis == 0)
-                this.direction.h = Direction.NONE;
-        }
-        else {
-            this.vy = 0;
-        }
-    };
-    Monster.prototype.handleAttacking = function () {
+    Monster.prototype.hitStuff = function () {
         if (!this.world)
             return;
-        if (this.immobile)
+        if (!this.heldItem)
             return;
-        var player = this.world.getWorldObjectByName('player');
-        if (M.distance(this.x, this.y, player.x, player.y) < this.attackDistance) {
-            this.swingItem();
-        }
-    };
-    Monster.prototype.swingItem = function () {
-        var _this = this;
-        if (!this.world)
-            return;
-        if (!this.swingScript || this.swingScript.done) {
-            var swingHitbox_1 = this.getSwingHitbox();
-            this.swingScript = this.world.runScript(S.chain(S.wait(0.3), S.simul(S.doOverTime(this.swingTime, function (t) {
-                if (!_this.heldItem)
-                    return;
-                var angle = (_this.flipX ? -1 : 1) * 90 * Math.pow(Math.sin(Math.PI * Math.pow(t, 0.5)), 0.1);
-                _this.heldItem.offset.x = _this.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
-                _this.heldItem.offset.y = _this.itemOffsetY * -Math.cos(M.degToRad(angle));
-                _this.heldItem.angle = angle;
-                if (t == 1)
-                    _this.heldItem.angle = 0;
-            }), S.chain(S.playAnimation(this, 'swing', 0, true, false), S.wait(this.swingTime * 0.25), S.call(function () {
-                _this.hitPlayer(swingHitbox_1);
-            }))), S.wait(2)));
-        }
-    };
-    Monster.prototype.hitPlayer = function (swingHitbox) {
-        if (!this.world)
-            return;
-        var player = this.world.getWorldObjectByName('player');
+        var player = this.world.getWorldObjectByType(Player);
+        var swingHitbox = this.getSwingHitbox();
         if (player.isOverlappingRect(swingHitbox)) {
             player.hit();
         }
@@ -7251,13 +7211,18 @@ var Monster = /** @class */ (function (_super) {
             height: 16
         };
     };
+    Monster.attackDistance = 16;
     return Monster;
-}(Sprite));
+}(Human));
+/// <reference path="human.ts" />
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player(config) {
         var _this = _super.call(this, config, {
-            bounds: { x: -4, y: -2, width: 8, height: 4 },
+            speed: 40,
+            preSwingWait: 0,
+            postSwingWait: 0,
+            itemGrabDistance: 16,
             animations: [
                 Animations.fromTextureList({ name: 'idle_empty', texturePrefix: 'player_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
                 Animations.fromTextureList({ name: 'run_empty', texturePrefix: 'player_', textures: [4, 5, 6, 7], frameRate: 16, count: -1 }),
@@ -7270,12 +7235,6 @@ var Player = /** @class */ (function (_super) {
                 Animations.fromTextureList({ name: 'intro_idle', texturePrefix: 'player_', textures: [0, 1, 2], frameRate: 2, count: 3, forceRequired: true }),
             ]
         }) || this;
-        _this.speed = 40;
-        _this.throwSpeed = 80;
-        _this.hurtDropSpeed = 40;
-        _this.swingTime = 0.15;
-        _this.itemOffsetY = 20;
-        _this.itemFullSwingOffsetX = 10;
         _this.controllerSchema = {
             left: function () { return Input.isDown('left'); },
             right: function () { return Input.isDown('right'); },
@@ -7284,119 +7243,50 @@ var Player = /** @class */ (function (_super) {
             useItem: function () { return Input.justDown('useItem'); },
             pickupDropItem: function () { return Input.justDown('pickupDropItem'); },
         };
-        _this.direction = Direction2D.RIGHT;
-        _this.test = false;
         return _this;
     }
-    Object.defineProperty(Player.prototype, "swinging", {
-        get: function () { return this.swingScript && this.swingScript.running; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Player.prototype, "heldItemName", {
-        get: function () { return this.heldItem ? this.heldItem.name : undefined; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Player.prototype, "moving", {
-        get: function () { return Math.abs(this.vx) > 1 || Math.abs(this.vy) > 1; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Player.prototype, "hurt", {
-        get: function () { return this.hurtScript && !this.hurtScript.done; },
+    Object.defineProperty(Player.prototype, "isHoldingKey", {
+        get: function () { return this.heldItem && this.heldItem.type === Item.Type.KEY; },
         enumerable: true,
         configurable: true
     });
     Player.prototype.update = function (delta) {
-        var haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
-        var vaxis = (this.controller.down ? 1 : 0) - (this.controller.up ? 1 : 0);
-        this.updateMovement(haxis, vaxis);
         _super.prototype.update.call(this, delta);
-        if (this.heldItem) {
-            this.heldItem.flipX = this.flipX;
-        }
-        if (this.controller.useItem) {
-            this.handleItemUse();
-        }
-        this.handleItemPickupDrop();
-        // Handle animation.
-        var anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'run';
-        var holding = this.heldItem ? 'holding' : 'empty';
-        this.playAnimation(anim_state + "_" + holding);
+        this.updateItemOutlines();
     };
-    Player.prototype.render = function (screen) {
-        _super.prototype.render.call(this, screen);
-        if (this.debugBounds) {
-            var shb = this.getSwingHitbox();
-            Draw.brush.color = 0x00FF00;
-            Draw.rectangleOutline(screen, shb.x, shb.y, shb.width, shb.height);
+    Player.prototype.updateItemOutlines = function () {
+        var overlappingItem = this.getOverlappingItem();
+        if (!this.test) {
+            this.world.getWorldObjectsByType(ItemGround).map(function (item) { return item.effects.outline.enabled = false; });
+        }
+        if (overlappingItem) {
+            overlappingItem.effects.outline.color = 0xFFFF00;
+            overlappingItem.effects.outline.enabled = true;
         }
     };
-    Player.prototype.hit = function () {
-        var _this = this;
-        this.playAnimation('hurt', 0, true);
-        if (this.swingScript)
-            this.swingScript.done = true;
-        if (this.heldItem)
-            this.dropHeldItem();
-        this.hurtScript = this.world.runScript(S.chain(S.call(function () {
-            _this.controllable = false;
-        }), S.doOverTime(0.5, function (t) {
-            _this.offset.y = -16 * Math.exp(-4 * t) * Math.abs(Math.sin(4 * Math.PI * t * t));
-        }), S.wait(0.5), S.call(function () {
-            _this.alpha = 1;
-            _this.controllable = true;
-        })));
-    };
-    Player.prototype.updateMovement = function (haxis, vaxis) {
-        if (haxis < 0) {
-            this.vx = -this.speed;
-            this.direction.h = Direction.LEFT;
-            if (vaxis == 0)
-                this.direction.v = Direction.NONE;
-            this.flipX = true;
-        }
-        else if (haxis > 0) {
-            this.vx = this.speed;
-            this.direction.h = Direction.RIGHT;
-            if (vaxis == 0)
-                this.direction.v = Direction.NONE;
-            this.flipX = false;
-        }
-        else {
-            this.vx = 0;
-        }
-        if (vaxis < 0) {
-            this.vy = -this.speed;
-            this.direction.v = Direction.UP;
-            if (haxis == 0)
-                this.direction.h = Direction.NONE;
-        }
-        else if (vaxis > 0) {
-            this.vy = this.speed;
-            this.direction.v = Direction.DOWN;
-            if (haxis == 0)
-                this.direction.h = Direction.NONE;
-        }
-        else {
-            this.vy = 0;
+    Player.prototype.pickupItem = function (item) {
+        _super.prototype.pickupItem.call(this, item);
+        if (this.world && this.world.getLayerByName('above')) {
+            var itemName = new ItemName({ text: item.type, font: Assets.fonts.DELUXE16, life: 1, layer: 'above' });
+            itemName.x = -itemName.getTextWidth() / 2;
+            itemName.y = -32;
+            this.addChild(itemName);
         }
     };
-    Player.prototype.handleItemPickupDrop = function () {
+    Player.prototype.hitStuff = function () {
         var e_40, _a;
-        var overlappingItemDistance = Infinity;
-        var overlappingItem;
+        if (!this.heldItem)
+            return;
+        var swingHitbox = this.getSwingHitbox();
         try {
-            for (var _b = __values(this.world.getWorldObjectsByType(ItemGround)), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var item = _c.value;
-                var distance = M.distance(this.x, this.y, item.x, item.y);
-                if (distance < 16 && distance < overlappingItemDistance && !item.beingConsumed) {
-                    overlappingItem = item;
-                    overlappingItemDistance = distance;
+            for (var _b = __values(this.world.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var obj = _c.value;
+                if (this.heldItem.cutsTrees && obj instanceof Tree && obj.isOverlappingRect(swingHitbox)) {
+                    obj.hit();
                 }
-                if (!this.test)
-                    item.effects.outline.enabled = false;
+                if (this.heldItem.hurtsMonster && obj instanceof Monster && obj.isOverlappingRect(swingHitbox)) {
+                    obj.hit();
+                }
             }
         }
         catch (e_40_1) { e_40 = { error: e_40_1 }; }
@@ -7405,119 +7295,6 @@ var Player = /** @class */ (function (_super) {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
             finally { if (e_40) throw e_40.error; }
-        }
-        if (overlappingItem) {
-            overlappingItem.effects.outline.color = 0xFFFF00;
-            overlappingItem.effects.outline.enabled = true;
-            if (this.controller.pickupDropItem && !this.swinging) {
-                if (this.heldItem) {
-                    this.dropHeldItem();
-                    if (!this.moving)
-                        this.pickupItem(overlappingItem);
-                }
-                else {
-                    this.pickupItem(overlappingItem);
-                }
-            }
-            return;
-        }
-        if (this.heldItem) {
-            if (this.controller.pickupDropItem && !this.swinging) {
-                this.dropHeldItem();
-            }
-            return;
-        }
-    };
-    Player.prototype.handleItemUse = function () {
-        if (!this.heldItem)
-            return;
-        if (this.heldItem.type === Item.Type.KEY)
-            return;
-        this.swingItem();
-    };
-    Player.prototype.dropHeldItem = function () {
-        if (!this.heldItem)
-            return;
-        var droppedItem = this.heldItem.asGroundItem(this.x, this.y, this.layer, 'items');
-        droppedItem.flipX = this.heldItem.flipX;
-        World.Actions.removeWorldObjectFromWorld(this.heldItem);
-        World.Actions.addWorldObjectToWorld(droppedItem, this.world);
-        World.Actions.setName(droppedItem, this.heldItem.name);
-        this.heldItem = null;
-        if (this.getCurrentAnimationName() === 'hurt') {
-            // toss randomly
-            droppedItem.offset.x = 0;
-            droppedItem.offset.y = -this.itemOffsetY;
-            var v = Random.onCircle(this.hurtDropSpeed);
-            droppedItem.vx = v.x;
-            droppedItem.vy = v.y;
-            return;
-        }
-        if (this.moving) {
-            // throw instead of drop
-            droppedItem.offset.x = 0;
-            droppedItem.offset.y = -this.itemOffsetY;
-            droppedItem.vx = this.throwSpeed * Math.sign(this.vx);
-            droppedItem.vy = this.throwSpeed * Math.sign(this.vy);
-            this.playAnimation('throw', 0, true);
-            return;
-        }
-    };
-    Player.prototype.removeHeldItem = function () {
-        World.Actions.removeWorldObjectFromWorld(this.heldItem);
-        this.heldItem = null;
-    };
-    Player.prototype.pickupItem = function (item) {
-        if (!item)
-            return;
-        this.heldItem = item.asHandItem(0, -this.itemOffsetY, this.layer);
-        World.Actions.addChildToParent(this.heldItem, this);
-        World.Actions.removeWorldObjectFromWorld(item);
-        World.Actions.setName(this.heldItem, item.name);
-        if (this.world.getLayerByName('above')) {
-            var itemName = new ItemName({ text: item.type, font: Assets.fonts.DELUXE16, life: 1, layer: 'above' });
-            itemName.x = -itemName.getTextWidth() / 2;
-            itemName.y = -32;
-            World.Actions.addChildToParent(itemName, this);
-        }
-    };
-    Player.prototype.swingItem = function () {
-        var _this = this;
-        if (!this.swingScript || this.swingScript.done) {
-            this.swingScript = this.world.runScript(S.chain(S.simul(S.doOverTime(this.swingTime, function (t) {
-                if (!_this.heldItem)
-                    return;
-                var angle = (_this.flipX ? -1 : 1) * 90 * Math.sin(Math.PI * Math.pow(t, 0.5));
-                _this.heldItem.offset.x = _this.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
-                _this.heldItem.offset.y = _this.itemOffsetY * -Math.cos(M.degToRad(angle));
-                _this.heldItem.angle = angle;
-            }), S.chain(S.call(function () { return _this.playAnimation('swing', 0, true); }), S.wait(this.swingTime * 0.25), S.call(function () {
-                _this.hitStuff(_this.heldItem);
-            })))));
-        }
-    };
-    Player.prototype.hitStuff = function (item) {
-        var e_41, _a;
-        if (!item)
-            return;
-        var swingHitbox = this.getSwingHitbox();
-        try {
-            for (var _b = __values(this.world.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var obj = _c.value;
-                if (item.cutsTrees && obj instanceof Tree && obj.isOverlappingRect(swingHitbox)) {
-                    obj.hit();
-                }
-                if (item.hurtsMonster && obj instanceof Monster && obj.isOverlappingRect(swingHitbox)) {
-                    obj.hit();
-                }
-            }
-        }
-        catch (e_41_1) { e_41 = { error: e_41_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_41) throw e_41.error; }
         }
     };
     Player.prototype.getSwingHitbox = function () {
@@ -7529,7 +7306,7 @@ var Player = /** @class */ (function (_super) {
         };
     };
     return Player;
-}(Sprite));
+}(Human));
 var TorchLightManager = /** @class */ (function (_super) {
     __extends(TorchLightManager, _super);
     function TorchLightManager(config) {

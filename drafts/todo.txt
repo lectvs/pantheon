@@ -25,14 +25,18 @@ juice
 - /turn the star into gasoline
 - /torch put out animation
 - /hints after death
-- animated flowers
 - monster chase after axe
 - door unlock animation
 - dynamic radius buffer
 - player thinking about key when near door
 - random noise on fire lighting
 - animated leaves
+- animated flowers
 - smooth camera follow
 - trees falling the other way
 - logs getting pulled into the fire
 - sound??
+
+postjam
+- investigate printing stack trace on error instead of just debug()
+- refactor debug system

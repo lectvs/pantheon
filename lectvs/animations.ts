@@ -28,7 +28,12 @@ namespace Animation {
 }
 
 class Animations {
-    static fromTextureList(config: Animation.Configs.FromTextureList) {
+    static emptyList(...names: string[]): Animation.Config[] {
+        if (_.isEmpty(names)) return [];
+        return names.map(name => { return { name: name, frames: [] }; })
+    }
+
+    static fromTextureList(config: Animation.Configs.FromTextureList): Animation.Config {
         _.defaults(config, {
             texturePrefix: "",
             count: 1,
