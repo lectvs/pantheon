@@ -1,4 +1,4 @@
-namespace S {
+namespace St {
     export function padLeft(text: string, minLength: number, padString: string = ' ') {
         while (text.length < minLength) {
             text = padString + text;

@@ -53,7 +53,6 @@ class World extends WorldObject {
     backgroundAlpha: number;
 
     camera: Camera;
-    private scriptManager: ScriptManager;
     private screen: Texture;
     private layerTexture: Texture;
 
@@ -83,8 +82,6 @@ class World extends WorldObject {
         });
         this.camera = new Camera(cameraConfig);
 
-        this.scriptManager = new ScriptManager();
-
         this.screen = new Texture(this.width, this.height);
         this.layerTexture = new Texture(this.width, this.height);
 
@@ -101,9 +98,6 @@ class World extends WorldObject {
     update(delta: number) {
         super.update(delta);
 
-        this.scriptManager.update(this, delta);
-        
-
         for (let worldObject of this.worldObjects) {
             if (worldObject.active) worldObject.preUpdate();
         }
@@ -118,6 +112,8 @@ class World extends WorldObject {
             if (worldObject.active) worldObject.postUpdate();
         }
 
+        this.removeDeadWorldObjects();
+
         if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
             if (Input.isDown('debugMoveCameraLeft'))  this.debugCameraX -= 1;
             if (Input.isDown('debugMoveCameraRight')) this.debugCameraX += 1;
@@ -125,6 +121,10 @@ class World extends WorldObject {
             if (Input.isDown('debugMoveCameraDown'))  this.debugCameraY += 1;
         }
         this.camera.update(this, delta);
+    }
+
+    protected updateScriptManager(delta: number) {
+        this.scriptManager.update(this, delta);
     }
 
     render(screen: Texture) {
@@ -172,6 +172,10 @@ class World extends WorldObject {
     addWorldObjects<T extends WorldObject>(objs: (T | WorldObject)[]): T[] {
         let worldObjects: T[] = _.isEmpty(objs) ? [] : objs.map(obj => obj instanceof WorldObject ? <T>obj : WorldObject.fromConfig<T>(obj));
         return World.Actions.addWorldObjectsToWorld(worldObjects, this);
+    }
+
+    getDeadWorldObjects() {
+        return this.worldObjects.filter(obj => !obj.alive);
     }
 
     getEntryPoint(entryPointKey: string) {
@@ -295,10 +299,6 @@ class World extends WorldObject {
         return objs.map(obj => this.removeWorldObject(obj)).filter(obj => obj);
     }
 
-    runScript(script: Script | Script.Function) {
-        return this.scriptManager.runScript(script);
-    }
-
     takeSnapshot() {
         let screen = new Texture(this.camera.width, this.camera.height);
         let lastx = this.x;
@@ -338,6 +338,10 @@ class World extends WorldObject {
             result[name] = new World.PhysicsGroup(name, physicsGroups[name]);
         }
         return result;
+    }
+    
+    private removeDeadWorldObjects() {
+        this.removeWorldObjects(this.getDeadWorldObjects());
     }
 
     // For use with World.Actions.addWorldObjectToWorld

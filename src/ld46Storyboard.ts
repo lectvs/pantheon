@@ -125,7 +125,7 @@ namespace S { export const storyboard: Storyboard = {
                 texture: 'smoke',
                 layer: 'above',
                 life: 2,
-                updateCallback: (delta, smoke: Sprite) => {
+                updateCallback: (smoke: Sprite, delta) => {
                     let t = smoke.life.progress;
                     smoke.offset.x = 4 * Math.exp(-t) * Math.sin(4*Math.PI*t);
                     smoke.offset.y = -32 * t;

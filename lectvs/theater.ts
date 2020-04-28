@@ -74,7 +74,7 @@ class Theater extends World {
         this.stageManager.loadStageIfQueued();
 
         if (Debug.SHOW_MOUSE_POSITION) {
-            this.debugMousePosition.setText(`${S.padLeft(this.currentWorld.getWorldMouseX().toString(), 3)} ${S.padLeft(this.currentWorld.getWorldMouseY().toString(), 3)}`);
+            this.debugMousePosition.setText(`${St.padLeft(this.currentWorld.getWorldMouseX().toString(), 3)} ${St.padLeft(this.currentWorld.getWorldMouseY().toString(), 3)}`);
         }
     }
 

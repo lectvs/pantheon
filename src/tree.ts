@@ -9,8 +9,6 @@ class Tree extends Sprite {
     private hitScript: Script;
     hp: number;
 
-    get alive() { return this.hp > 0; }
-
     constructor(config: Tree.Config) {
         super(config, {
             texture: Random.boolean() ? 'blacktree' : 'whitetree',
@@ -22,14 +20,14 @@ class Tree extends Sprite {
     }
 
     hit() {
-        if (!this.alive) return;
+        if (this.hp <= 0) return;
 
         if (this.hitScript) {
             this.hitScript.done = true;
         }
 
         this.hp--;
-        if (this.alive) {
+        if (this.hp > 0) {
             this.hitScript = this.world.runScript(S.doOverTime(0.5, t => { this.angle = 30*Math.exp(5*-t)*Math.cos(5*t); }));
         } else {
             this.hitScript = this.world.runScript(S.chain(
@@ -41,16 +39,14 @@ class Tree extends Sprite {
                 S.call(() => {
                     this.spawnLog();
                     if (this.spawnsTorch) this.spawnTorch();
-                    World.Actions.removeWorldObjectFromWorld(this);
+                    this.kill();
                 })
             ));
         }
-
-        //this.world.runScript(screenShake(this.world));
     }
 
     private spawnLog() {
-        let log = WorldObject.fromConfig(<Item.Config>{
+        this.world.addWorldObject(<Item.Config>{
             constructor: ItemGround,
             x: this.x + 16, y: this.y,
             layer: 'main',
@@ -58,11 +54,10 @@ class Tree extends Sprite {
             physicsGroup: 'items',
             type: Item.Type.LOG,
         });
-        World.Actions.addWorldObjectToWorld(log, this.world);
     }
 
     private spawnTorch() {
-        let log = WorldObject.fromConfig(<Item.Config>{
+        this.world.addWorldObject(<Item.Config>{
             name: 'torch',
             constructor: ItemGround,
             x: this.x, y: this.y,
@@ -70,12 +65,11 @@ class Tree extends Sprite {
             offset: { x: 0, y: -12 },
             physicsGroup: 'items',
             type: Item.Type.TORCH,
+            children: [{
+                name: 'torchFire',
+                parent: fireSpriteConfig(),
+                layer: 'main'
+            }],
         });
-        log.addChild({
-            name: 'torchFire',
-            parent: fireSpriteConfig(),
-            layer: 'main'
-        });
-        World.Actions.addWorldObjectToWorld(log, this.world);
     }
 }

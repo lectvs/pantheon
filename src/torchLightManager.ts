@@ -56,7 +56,7 @@ class TorchLightManager extends WorldObject {
                     scaleX: 0.5, scaleY: 0.5,
                     layer: 'above',
                     life: 2,
-                    updateCallback: (delta, smoke: Sprite) => {
+                    updateCallback: (smoke: Sprite, delta) => {
                         let t = smoke.life.progress;
                         let torchFire = <Sprite>smoke.parent;
                         smoke.offset.x = torchFire.offset.x + 2 * Math.exp(-t) * Math.sin(4*Math.PI*t);

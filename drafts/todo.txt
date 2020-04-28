@@ -40,3 +40,4 @@ juice
 postjam
 - investigate printing stack trace on error instead of just debug()
 - refactor debug system
+- physics based on lastx/y instead of lastmovementx/y?

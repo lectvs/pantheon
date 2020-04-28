@@ -11,13 +11,15 @@ namespace WorldObject {
         active?: boolean;
         life?: number;
         ignoreCamera?: boolean;
+        states?: Dict<StateMachine.State>;
+        startState?: string;
         data?: any;
         controllable?: boolean;
         children?: WorldObject.Config[];
         updateCallback?: UpdateCallback;
     }
 
-    export type UpdateCallback = (delta: number, obj: WorldObject) => any;
+    export type UpdateCallback = (obj: WorldObject, delta: number) => any;
 }
 
 class WorldObject {
@@ -33,6 +35,8 @@ class WorldObject {
     get y() { return this.localy + (this.parent ? this.parent.y : 0); }
     set x(value: number) { this.localx = value - (this.parent ? this.parent.x : 0); }
     set y(value: number) { this.localy = value - (this.parent ? this.parent.y : 0); }
+
+    alive: boolean;
 
     // World data
     private _world: World;
@@ -56,15 +60,16 @@ class WorldObject {
     controllable: boolean;
     controller: Controller;
     protected controllerSchema: Controller.Schema;
+    get isControlled() { return this.controllable && !global.theater.isCutscenePlaying; }
 
     mask: Texture;
-
     private preRenderStoredX: number;
     private preRenderStoredY: number;
 
-    private updateCallback: WorldObject.UpdateCallback;
+    protected scriptManager: ScriptManager;
+    protected stateMachine: StateMachine;
 
-    get isControlled() { return this.controllable && !global.theater.isCutscenePlaying; }
+    private updateCallback: WorldObject.UpdateCallback;
 
     constructor(config: WorldObject.Config, defaults?: WorldObject.Config) {
         config = WorldObject.resolveConfig(config, defaults);
@@ -72,9 +77,11 @@ class WorldObject {
         this.localy = O.getOrDefault(config.y, 0);
         this.visible = O.getOrDefault(config.visible, true);
         this.active = O.getOrDefault(config.active, true);
-        this.life = new Timer(O.getOrDefault(config.life, Infinity), () => World.Actions.removeWorldObjectFromWorld(this));
+        this.life = new Timer(O.getOrDefault(config.life, Infinity), () => this.kill());
         this.ignoreCamera = O.getOrDefault(config.ignoreCamera, false);
         this.data = _.clone(O.getOrDefault(config.data, {}));
+
+        this.alive = true;
 
         this.lastx = this.x;
         this.lasty = this.y;
@@ -92,13 +99,17 @@ class WorldObject {
         this.internalSetPhysicsGroupWorldObject(config.physicsGroup);
         this._children = [];
         this._parent = null;
+        this.addChildren(config.children);
 
-        if (!_.isEmpty(config.children)) {
-            World.Actions.addChildrenToParent(config.children.map(WorldObject.fromConfig), this);
-        }
+        this.scriptManager = new ScriptManager();
+        this.stateMachine = new StateMachine(O.getOrDefault(config.states, {}));
+        if (config.startState) this.stateMachine.setState(config.startState);
 
-        this.updateCallback = O.getOrDefault(config.updateCallback, (delta, obj) => null);
+        this.updateCallback = config.updateCallback;
     }
+
+    onAdd() {}
+    onRemove() {}
 
     preUpdate() {
         this.lastx = this.x;
@@ -109,8 +120,20 @@ class WorldObject {
     }
 
     update(delta: number) {
-        this.updateCallback(delta, this);
+        this.updateScriptManager(delta);
+        this.stateMachine.update(this.world, delta);
+        if (this.updateCallback) this.updateCallback(this, delta);
         this.life.update(delta);
+    }
+
+    protected updateScriptManager(delta: number) {
+        if (!this.world) return;
+        this.scriptManager.update(this.world, delta);
+    }
+
+    protected updateStateMachine(delta: number) {
+        if (!this.world) return;
+        this.stateMachine.update(this.world, delta);
     }
 
     postUpdate() {
@@ -151,21 +174,6 @@ class WorldObject {
         this.postRender();
     }
 
-    resetController() {
-        for (let key in this.controller) {
-            this.controller[key] = false;
-        }
-    }
-
-    updateControllerFromSchema() {
-        for (let key in this.controllerSchema) {
-            this.controller[key] = this.controllerSchema[key]();
-        }
-    }
-
-    onAdd() {}
-    onRemove() {}
-
     addChild<T extends WorldObject>(child: T | WorldObject.Config): T {
         let worldObject: T = child instanceof WorldObject ? child : WorldObject.fromConfig(child);
         return World.Actions.addChildToParent(worldObject, this);
@@ -182,6 +190,10 @@ class WorldObject {
         }
         debug(`Cannot find child named ${name} on parent:`, this);
         return undefined;
+    }
+
+    kill() {
+        this.alive = false;
     }
 
     removeAllChildren<T extends WorldObject>(): T[] {
@@ -209,6 +221,22 @@ class WorldObject {
     removeFromWorld(): this {
         if (!this.world) return this;
         return World.Actions.removeWorldObjectFromWorld(this);
+    }
+
+    resetController() {
+        for (let key in this.controller) {
+            this.controller[key] = false;
+        }
+    }
+
+    runScript(script: Script | Script.Function) {
+        return this.scriptManager.runScript(script);
+    }
+
+    updateControllerFromSchema() {
+        for (let key in this.controllerSchema) {
+            this.controller[key] = this.controllerSchema[key]();
+        }
     }
 
     // For use with World.Actions.addWorldObjectToWorld
@@ -282,6 +310,8 @@ namespace WorldObject {
                 result[key] = config[key];
             } else if (key === 'animations') {
                 result[key] = A.mergeArray(config[key], result[key], (e: Animation.Config) => e.name);
+            } else if (key === 'states') {
+                result[key] = O.mergeObject(config[key], result[key]);
             } else if (key === 'data') {
                 result[key] = O.withOverrides(result[key], config[key]);
             } else if (key === 'entryPoints') {
@@ -294,7 +324,7 @@ namespace WorldObject {
                         return WorldObject.resolveConfig(e);
                     });
             } else if (key === 'layers') {
-                // TODO: what does it mean to merge LayerConfig objects? what's the use case?
+                // merge layerconfig objects to add effects, for example
                 result[key] = A.mergeArray(config[key], result[key], (e: World.LayerConfig) => e.name,
                     (e: World.LayerConfig, into: World.LayerConfig) => {
                         return O.mergeObject(e, into);

@@ -69,7 +69,7 @@ class SpriteTextConverter {
     }
 
     private static parseTag(tag: string) {
-        let result = S.splitOnWhitespace(tag);
+        let result = St.splitOnWhitespace(tag);
         if (_.isEmpty(result)) {
             debug(`Tag ${tag} must have the tag part specified.`);
             return [SpriteText.NOOP_TAG];

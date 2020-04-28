@@ -13,6 +13,8 @@ namespace O {
             return result;
         }
 
+        if (_.isFunction(obj)) return obj;
+
         if (_.isObject(obj)) {
             if (_.isEmpty(obj)) return {};
             let result = {};

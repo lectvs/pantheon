@@ -27,7 +27,7 @@ namespace S {
         }
     }
 
-    export function loopFor(count: number, scriptFunction: Script.Function) {
+    export function loopFor(count: number, scriptFunction: Script.Function): Script.Function {
         return function*() {
             for (let i = 0; i < count; i++) {
                 yield* scriptFunction();
@@ -35,12 +35,16 @@ namespace S {
         }
     }
 
-    export function loopUntil(condition: () => any, scriptFunction: Script.Function) {
+    export function loopUntil(condition: () => any, scriptFunction: Script.Function): Script.Function {
         return function*() {
             while (!condition()) {
                 yield* scriptFunction();
             }
         }
+    }
+
+    export function noop(): Script.Function {
+        return function*() {}
     }
 
     export function simul(...scriptFunctions: Script.Function[]): Script.Function {
@@ -74,6 +78,12 @@ namespace S {
             while (!condition()) {
                 yield;
             }
+        }
+    }
+
+    export function yield(): Script.Function {
+        return function*() {
+            yield;
         }
     }
 }
