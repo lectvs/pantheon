@@ -1288,9 +1288,7 @@ var WorldObject = /** @class */ (function () {
         this._parent = null;
         this.addChildren(config.children);
         this.scriptManager = new ScriptManager();
-        this.stateMachine = new StateMachine(this, O.getOrDefault(config.states, {}));
-        if (config.startState)
-            this.stateMachine.setState(config.startState);
+        this.stateMachine = new StateMachine();
         this.updateCallback = config.updateCallback;
     }
     Object.defineProperty(WorldObject.prototype, "x", {
@@ -4745,10 +4743,12 @@ var StageManager = /** @class */ (function () {
     return StageManager;
 }());
 var StateMachine = /** @class */ (function () {
-    function StateMachine(context, states) {
-        this.context = context;
-        this.states = O.deepClone(states);
+    function StateMachine() {
+        this.states = {};
     }
+    StateMachine.prototype.addState = function (name, state) {
+        this.states[name] = state;
+    };
     StateMachine.prototype.setState = function (name) {
         var _this = this;
         if (this.script)
@@ -4758,8 +4758,8 @@ var StateMachine = /** @class */ (function () {
             return;
         this.currentState = state;
         if (state.callback)
-            state.callback(this.context);
-        var stateScript = O.getOrDefault(state.script, function (context) { return S.noop(); })(this.context);
+            state.callback();
+        var stateScript = O.getOrDefault(state.script, S.noop());
         this.script = new Script(S.chain(stateScript, S.loopFor(Infinity, S.chain(S.call(function () {
             var transition = _this.getValidTransition(_this.currentState);
             if (transition) {
@@ -4789,7 +4789,7 @@ var StateMachine = /** @class */ (function () {
     StateMachine.prototype.getValidTransition = function (state) {
         var e_30, _a;
         try {
-            for (var _b = __values(state.transitions), _c = _b.next(); !_c.done; _c = _b.next()) {
+            for (var _b = __values(state.transitions || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
                 if (transition.type === 'instant')
                     return transition;
@@ -6542,43 +6542,40 @@ var Human = /** @class */ (function (_super) {
         _this = _super.call(this, config, {
             bounds: { x: -4, y: -2, width: 8, height: 4 },
             animations: Animations.emptyList('idle_empty', 'run_empty', 'idle_holding', 'run_holding', 'throw', 'swing', 'hurt'),
-            states: {
-                'normal': {
-                    transitions: []
-                },
-                'swinging': {
-                    script: function (human) { return S.chain(S.wait(O.getOrDefault(config.preSwingWait, 0)), S.simul(S.doOverTime(Human.swingTime, function (t) {
-                        if (!human.heldItem)
-                            return;
-                        var angle = (human.flipX ? -1 : 1) * 90 * Math.sin(Math.PI * Math.pow(t, 0.5));
-                        human.heldItem.offset.x = Human.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
-                        human.heldItem.offset.y = Human.itemOffsetY * -Math.cos(M.degToRad(angle));
-                        human.heldItem.angle = angle;
-                        if (t === 1)
-                            human.heldItem.angle = 0;
-                    }), S.chain(S.call(function () { return human.playAnimation('swing', 0, true); }), S.wait(Human.swingTime * 0.25), S.call(function () {
-                        human.hitStuff();
-                    }))), S.wait(O.getOrDefault(config.postSwingWait, 0))); },
-                    transitions: [
-                        { type: 'instant', toState: 'normal' }
-                    ]
-                },
-                'hurt': {
-                    callback: function (human) {
-                        human.playAnimation('hurt', 0, true);
-                        human.dropHeldItem();
-                    },
-                    script: function (human) { return S.chain(S.doOverTime(0.5, function (t) {
-                        human.offset.y = -16 * Math.exp(-4 * t) * Math.abs(Math.sin(4 * Math.PI * t * t));
-                    }), S.waitUntil(function () { return !human.getCurrentAnimationName().startsWith('hurt'); }), S.call(function () {
-                        human.alpha = 1;
-                    })); },
-                    transitions: [
-                        { type: 'instant', toState: 'normal' }
-                    ]
-                },
-            },
         }) || this;
+        _this.stateMachine.addState('normal', {});
+        _this.stateMachine.addState('swinging', {
+            script: S.chain(S.wait(O.getOrDefault(config.preSwingWait, 0)), S.simul(S.doOverTime(Human.swingTime, function (t) {
+                if (!_this.heldItem)
+                    return;
+                var angle = (_this.flipX ? -1 : 1) * 90 * Math.sin(Math.PI * Math.pow(t, 0.5));
+                _this.heldItem.offset.x = Human.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
+                _this.heldItem.offset.y = Human.itemOffsetY * -Math.cos(M.degToRad(angle));
+                _this.heldItem.angle = angle;
+                if (t === 1)
+                    _this.heldItem.angle = 0;
+            }), S.chain(S.call(function () { return _this.playAnimation('swing', 0, true); }), S.wait(Human.swingTime * 0.25), S.call(function () {
+                _this.hitStuff();
+            }))), S.wait(O.getOrDefault(config.postSwingWait, 0))),
+            transitions: [
+                { type: 'instant', toState: 'normal' }
+            ]
+        });
+        _this.stateMachine.addState('hurt', {
+            callback: function () {
+                _this.playAnimation('hurt', 0, true);
+                _this.dropHeldItem();
+            },
+            script: S.chain(S.doOverTime(0.5, function (t) {
+                _this.offset.y = -16 * Math.exp(-4 * t) * Math.abs(Math.sin(4 * Math.PI * t * t));
+            }), S.waitUntil(function () { return !_this.getCurrentAnimationName().startsWith('hurt'); }), S.call(function () {
+                _this.alpha = 1;
+            })),
+            transitions: [
+                { type: 'instant', toState: 'normal' }
+            ]
+        });
+        _this.setState('normal');
         _this.speed = O.getOrDefault(config.speed, 40);
         _this.itemGrabDistance = O.getOrDefault(config.itemGrabDistance, 16);
         _this.direction = Direction2D.RIGHT;
@@ -6753,7 +6750,7 @@ var Human = /** @class */ (function (_super) {
         this.setState('hurt');
     };
     Human.prototype.swingItem = function () {
-        if (this.state === 'hurt')
+        if (this.state === 'hurt' || this.state === 'swinging')
             return;
         this.setState('swinging');
     };

@@ -11,8 +11,6 @@ namespace WorldObject {
         active?: boolean;
         life?: number;
         ignoreCamera?: boolean;
-        states?: Dict<StateMachine.State>;
-        startState?: string;
         data?: any;
         controllable?: boolean;
         children?: WorldObject.Config[];
@@ -67,7 +65,7 @@ class WorldObject {
     private preRenderStoredY: number;
 
     protected scriptManager: ScriptManager;
-    private stateMachine: StateMachine;
+    protected stateMachine: StateMachine;
     get state() { return this.stateMachine.getCurrentStateName(); }
 
     private updateCallback: WorldObject.UpdateCallback;
@@ -103,8 +101,7 @@ class WorldObject {
         this.addChildren(config.children);
 
         this.scriptManager = new ScriptManager();
-        this.stateMachine = new StateMachine(this, O.getOrDefault(config.states, {}));
-        if (config.startState) this.stateMachine.setState(config.startState);
+        this.stateMachine = new StateMachine();
 
         this.updateCallback = config.updateCallback;
     }

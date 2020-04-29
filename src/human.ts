@@ -28,58 +28,54 @@ class Human extends Sprite {
         super(config, {
             bounds: { x: -4, y: -2, width: 8, height: 4 },
             animations: Animations.emptyList('idle_empty', 'run_empty', 'idle_holding', 'run_holding', 'throw', 'swing', 'hurt'),
-            states: {
-                'normal': {
-                    transitions: [
-
-                    ]
-                },
-                'swinging': {
-                    script: (human: Human) => S.chain(
-                        S.wait(O.getOrDefault(config.preSwingWait, 0)),
-                        S.simul(
-                            S.doOverTime(Human.swingTime, t => {
-                                if (!human.heldItem) return;
-                                let angle = (human.flipX ? -1 : 1) * 90 * Math.sin(Math.PI * Math.pow(t, 0.5));
-                                human.heldItem.offset.x = Human.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
-                                human.heldItem.offset.y = Human.itemOffsetY * -Math.cos(M.degToRad(angle));
-                                human.heldItem.angle = angle;
-                                if (t === 1) human.heldItem.angle = 0;
-                            }),
-                            S.chain(
-                                S.call(() => human.playAnimation('swing', 0, true)),
-                                S.wait(Human.swingTime * 0.25),
-                                S.call(() => {
-                                    human.hitStuff();
-                                })
-                            )
-                        ),
-                        S.wait(O.getOrDefault(config.postSwingWait, 0)),
-                    ),
-                    transitions: [
-                        { type: 'instant', toState: 'normal' }
-                    ]
-                },
-                'hurt': {
-                    callback: (human: Human) => {
-                        human.playAnimation('hurt', 0, true);
-                        human.dropHeldItem();
-                    },
-                    script: (human: Human) => S.chain(
-                        S.doOverTime(0.5, t => {
-                            human.offset.y = -16 * Math.exp(-4*t)*Math.abs(Math.sin(4*Math.PI*t*t));
-                        }),
-                        S.waitUntil(() => !human.getCurrentAnimationName().startsWith('hurt')),
-                        S.call(() => {
-                            human.alpha = 1;
-                        })
-                    ),
-                    transitions: [
-                        { type: 'instant', toState: 'normal' }
-                    ]
-                },
-            },
         });
+
+        this.stateMachine.addState('normal', {});
+        this.stateMachine.addState('swinging', {
+            script: S.chain(
+                S.wait(O.getOrDefault(config.preSwingWait, 0)),
+                S.simul(
+                    S.doOverTime(Human.swingTime, t => {
+                        if (!this.heldItem) return;
+                        let angle = (this.flipX ? -1 : 1) * 90 * Math.sin(Math.PI * Math.pow(t, 0.5));
+                        this.heldItem.offset.x = Human.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
+                        this.heldItem.offset.y = Human.itemOffsetY * -Math.cos(M.degToRad(angle));
+                        this.heldItem.angle = angle;
+                        if (t === 1) this.heldItem.angle = 0;
+                    }),
+                    S.chain(
+                        S.call(() => this.playAnimation('swing', 0, true)),
+                        S.wait(Human.swingTime * 0.25),
+                        S.call(() => {
+                            this.hitStuff();
+                        })
+                    )
+                ),
+                S.wait(O.getOrDefault(config.postSwingWait, 0)),
+            ),
+            transitions: [
+                { type: 'instant', toState: 'normal' }
+            ]
+        });
+        this.stateMachine.addState('hurt', {
+            callback: () => {
+                this.playAnimation('hurt', 0, true);
+                this.dropHeldItem();
+            },
+            script: S.chain(
+                S.doOverTime(0.5, t => {
+                    this.offset.y = -16 * Math.exp(-4*t)*Math.abs(Math.sin(4*Math.PI*t*t));
+                }),
+                S.waitUntil(() => !this.getCurrentAnimationName().startsWith('hurt')),
+                S.call(() => {
+                    this.alpha = 1;
+                })
+            ),
+            transitions: [
+                { type: 'instant', toState: 'normal' }
+            ]
+        });
+        this.setState('normal');
 
         this.speed = O.getOrDefault(config.speed, 40);
         this.itemGrabDistance = O.getOrDefault(config.itemGrabDistance, 16);
@@ -239,7 +235,7 @@ class Human extends Sprite {
     }
 
     protected swingItem() {
-        if (this.state === 'hurt') return;
+        if (this.state === 'hurt' || this.state === 'swinging') return;
         this.setState('swinging');
     }
 

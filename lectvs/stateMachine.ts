@@ -1,9 +1,9 @@
 
 namespace StateMachine {
     export type State = {
-        callback?: (context: any) => any;
-        script?: (context: any) => Script.Function;
-        transitions: Transition[];
+        callback?: () => any;
+        script?: Script.Function;
+        transitions?: Transition[];
     }
 
     export type Transition = (Transitions.Instant) & {
@@ -18,15 +18,17 @@ namespace StateMachine {
 }
 
 class StateMachine {
-    private context: any;
     private states: Dict<StateMachine.State>;
     private currentState: StateMachine.State;
     
     private script: Script;
 
-    constructor(context: any, states: Dict<StateMachine.State>) {
-        this.context = context;
-        this.states = O.deepClone(states);
+    constructor() {
+        this.states = {};
+    }
+
+    addState(name: string, state: StateMachine.State) {
+        this.states[name] = state;
     }
 
     setState(name: string) {
@@ -35,9 +37,9 @@ class StateMachine {
         if (!state) return;
         this.currentState = state;
 
-        if (state.callback) state.callback(this.context);
+        if (state.callback) state.callback();
 
-        let stateScript = O.getOrDefault(state.script, (context) => S.noop())(this.context);
+        let stateScript = O.getOrDefault(state.script, S.noop());
 
         this.script = new Script(S.chain(
             stateScript,
@@ -76,7 +78,7 @@ class StateMachine {
     }
 
     private getValidTransition(state: StateMachine.State) {
-        for (let transition of state.transitions) {
+        for (let transition of state.transitions || []) {
             if (transition.type === 'instant') return transition;
             else debug(`Invalid transition type ${transition.type} for transition`, transition);
         }
