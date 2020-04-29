@@ -55,10 +55,8 @@ class StateMachine {
         ));
     }
 
-    update(world: World, worldObject: WorldObject, delta: number) {
-        if (this.script && world && worldObject) {
-            this.script.update(world, worldObject, delta);
-        }
+    update(delta: number) {
+        if (this.script) this.script.update(delta);
     }
 
     getCurrentStateName() {

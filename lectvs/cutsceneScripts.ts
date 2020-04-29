@@ -2,12 +2,12 @@ namespace S {
     export function dialog(p1: string, p2?: string): Script.Function {
         return function*() {
             if (p2) {
-                global.script.theater.dialogBox.showPortrait(p1);
-                global.script.theater.dialogBox.showDialog(p2);
+                global.theater.dialogBox.showPortrait(p1);
+                global.theater.dialogBox.showDialog(p2);
             } else {
-                global.script.theater.dialogBox.showDialog(p1);
+                global.theater.dialogBox.showDialog(p1);
             }
-            while (!global.script.theater.dialogBox.done) {
+            while (!global.theater.dialogBox.done) {
                 yield;
             }
         }
@@ -15,20 +15,20 @@ namespace S {
 
     export function fadeSlides(duration: number): Script.Function {
         return function*() {
-            if (_.isEmpty(global.script.theater.slides)) return;
+            if (_.isEmpty(global.theater.slides)) return;
 
-            let slideAlphas = global.script.theater.slides.map(slide => slide.alpha);
+            let slideAlphas = global.theater.slides.map(slide => slide.alpha);
 
             let timer = new Timer(duration);
             while (!timer.done) {
-                for (let i = 0; i < global.script.theater.slides.length; i++) {
-                    global.script.theater.slides[i].alpha = slideAlphas[i] * (1 - timer.progress);
+                for (let i = 0; i < global.theater.slides.length; i++) {
+                    global.theater.slides[i].alpha = slideAlphas[i] * (1 - timer.progress);
                 }
                 timer.update(global.script.delta);
                 yield;
             }
 
-            global.script.theater.clearSlides();
+            global.theater.clearSlides();
         }
     }
 
@@ -124,7 +124,7 @@ namespace S {
 
     export function runInCurrentWorld(script: Script.Function): Script.Function {
         return function*() {
-            let scr = global.script.theater.currentWorld.runScript(script);
+            let scr = global.theater.currentWorld.runScript(script);
             while (!scr.done) {
                 yield;
             }
@@ -133,20 +133,20 @@ namespace S {
 
     export function shake(intensity: number, time: number): Script.Function {
         return runInCurrentWorld(function*() {
-            global.script.world.camera.shakeIntensity += intensity;
+            global.world.camera.shakeIntensity += intensity;
             let timer = new Timer(time);
             while (!timer.done) {
                 timer.update(global.script.delta);
                 yield;
             }
-            global.script.world.camera.shakeIntensity -= intensity;
+            global.world.camera.shakeIntensity -= intensity;
         })
     }
 
     export function showSlide(config: Slide.Config, waitForCompletion: boolean = true): Script.Function {
         let slide: Slide;
         return function*() {
-            slide = global.script.theater.addSlideByConfig(config);
+            slide = global.theater.addSlideByConfig(config);
             if (waitForCompletion) {
                 while (!slide.fullyLoaded) {
                     yield;

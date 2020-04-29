@@ -519,7 +519,7 @@ var S;
                     case 1:
                         if (!!_.isEmpty(scripts)) return [3 /*break*/, 4];
                         scripts = scripts.filter(function (script) {
-                            script.update(global.script.world, global.script.worldObject, global.script.delta);
+                            script.update(global.script.delta);
                             return !script.done;
                         });
                         if (!!_.isEmpty(scripts)) return [3 /*break*/, 3];
@@ -840,7 +840,7 @@ var CutsceneManager = /** @class */ (function () {
                         _a.label = 2;
                     case 2:
                         if (!!script.done) return [3 /*break*/, 4];
-                        script.update(global.script.theater, global.script.theater, global.script.delta);
+                        script.update(global.script.delta);
                         if (script.done)
                             return [3 /*break*/, 4];
                         return [4 /*yield*/];
@@ -865,7 +865,7 @@ var CutsceneManager = /** @class */ (function () {
     };
     CutsceneManager.prototype.update = function (delta) {
         if (this.current) {
-            this.current.script.update(this.theater, this.theater, delta);
+            this.current.script.update(delta);
             if (this.current.script.done) {
                 this.finishCurrentCutscene();
             }
@@ -936,15 +936,15 @@ var S;
                 switch (_a.label) {
                     case 0:
                         if (p2) {
-                            global.script.theater.dialogBox.showPortrait(p1);
-                            global.script.theater.dialogBox.showDialog(p2);
+                            global.theater.dialogBox.showPortrait(p1);
+                            global.theater.dialogBox.showDialog(p2);
                         }
                         else {
-                            global.script.theater.dialogBox.showDialog(p1);
+                            global.theater.dialogBox.showDialog(p1);
                         }
                         _a.label = 1;
                     case 1:
-                        if (!!global.script.theater.dialogBox.done) return [3 /*break*/, 3];
+                        if (!!global.theater.dialogBox.done) return [3 /*break*/, 3];
                         return [4 /*yield*/];
                     case 2:
                         _a.sent();
@@ -961,15 +961,15 @@ var S;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        if (_.isEmpty(global.script.theater.slides))
+                        if (_.isEmpty(global.theater.slides))
                             return [2 /*return*/];
-                        slideAlphas = global.script.theater.slides.map(function (slide) { return slide.alpha; });
+                        slideAlphas = global.theater.slides.map(function (slide) { return slide.alpha; });
                         timer = new Timer(duration);
                         _a.label = 1;
                     case 1:
                         if (!!timer.done) return [3 /*break*/, 3];
-                        for (i = 0; i < global.script.theater.slides.length; i++) {
-                            global.script.theater.slides[i].alpha = slideAlphas[i] * (1 - timer.progress);
+                        for (i = 0; i < global.theater.slides.length; i++) {
+                            global.theater.slides[i].alpha = slideAlphas[i] * (1 - timer.progress);
                         }
                         timer.update(global.script.delta);
                         return [4 /*yield*/];
@@ -977,7 +977,7 @@ var S;
                         _a.sent();
                         return [3 /*break*/, 1];
                     case 3:
-                        global.script.theater.clearSlides();
+                        global.theater.clearSlides();
                         return [2 /*return*/];
                 }
             });
@@ -1131,7 +1131,7 @@ var S;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        scr = global.script.theater.currentWorld.runScript(script);
+                        scr = global.theater.currentWorld.runScript(script);
                         _a.label = 1;
                     case 1:
                         if (!!scr.done) return [3 /*break*/, 3];
@@ -1151,7 +1151,7 @@ var S;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        global.script.world.camera.shakeIntensity += intensity;
+                        global.world.camera.shakeIntensity += intensity;
                         timer = new Timer(time);
                         _a.label = 1;
                     case 1:
@@ -1162,7 +1162,7 @@ var S;
                         _a.sent();
                         return [3 /*break*/, 1];
                     case 3:
-                        global.script.world.camera.shakeIntensity -= intensity;
+                        global.world.camera.shakeIntensity -= intensity;
                         return [2 /*return*/];
                 }
             });
@@ -1176,7 +1176,7 @@ var S;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        slide = global.script.theater.addSlideByConfig(config);
+                        slide = global.theater.addSlideByConfig(config);
                         if (!waitForCompletion) return [3 /*break*/, 3];
                         _a.label = 1;
                     case 1:
@@ -1365,14 +1365,10 @@ var WorldObject = /** @class */ (function () {
         this.life.update(delta);
     };
     WorldObject.prototype.updateScriptManager = function (delta) {
-        if (!this.world)
-            return;
-        this.scriptManager.update(this.world, this, delta);
+        this.scriptManager.update(delta);
     };
     WorldObject.prototype.updateStateMachine = function (delta) {
-        if (!this.world)
-            return;
-        this.stateMachine.update(this.world, this, delta);
+        this.stateMachine.update(delta);
     };
     WorldObject.prototype.postUpdate = function () {
         this.resetController();
@@ -2440,7 +2436,7 @@ var Game = /** @class */ (function () {
         this.theater = new this.theaterClass(this.theaterConfig);
         global.theater = this.theater;
         // fade out since the cutscene can't do this in 1 frame
-        global.theater.runScript(S.fadeOut(0)).finishImmediately(global.theater, global.theater);
+        global.theater.runScript(S.fadeOut(0)).finishImmediately();
     };
     Game.prototype.pauseGame = function () {
         this.menuSystem.loadMenu(this.pauseMenuClass);
@@ -2901,7 +2897,7 @@ var World = /** @class */ (function (_super) {
         this.camera.update(this, delta);
     };
     World.prototype.updateScriptManager = function (delta) {
-        this.scriptManager.update(this, this, delta);
+        this.scriptManager.update(delta);
     };
     World.prototype.render = function (screen) {
         var e_14, _a;
@@ -4444,13 +4440,10 @@ var Script = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Script.prototype.update = function (world, worldObject, delta) {
+    Script.prototype.update = function (delta) {
         if (!this.running)
             return;
         global.pushScript(this);
-        this.world = world;
-        this.worldObject = worldObject;
-        this.theater = global.theater;
         this.delta = delta;
         var result = this.iterator.next();
         if (result.done) {
@@ -4458,10 +4451,10 @@ var Script = /** @class */ (function () {
         }
         global.popScript();
     };
-    Script.prototype.finishImmediately = function (world, worldObject, maxIters) {
+    Script.prototype.finishImmediately = function (maxIters) {
         if (maxIters === void 0) { maxIters = Script.FINISH_IMMEDIATELY_MAX_ITERS; }
         for (var i = 0; i < maxIters && !this.done; i++) {
-            this.update(world, worldObject, 0.01);
+            this.update(0.01);
         }
         this.done = true;
     };
@@ -4472,9 +4465,9 @@ var ScriptManager = /** @class */ (function () {
     function ScriptManager() {
         this.activeScripts = [];
     }
-    ScriptManager.prototype.update = function (world, worldObject, delta) {
+    ScriptManager.prototype.update = function (delta) {
         for (var i = this.activeScripts.length - 1; i >= 0; i--) {
-            this.activeScripts[i].update(world, worldObject, delta);
+            this.activeScripts[i].update(delta);
             if (this.activeScripts[i].done) {
                 this.activeScripts.splice(i, 1);
             }
@@ -4772,10 +4765,9 @@ var StateMachine = /** @class */ (function () {
             }
         }), S.yield()))));
     };
-    StateMachine.prototype.update = function (world, worldObject, delta) {
-        if (this.script && world && worldObject) {
-            this.script.update(world, worldObject, delta);
-        }
+    StateMachine.prototype.update = function (delta) {
+        if (this.script)
+            this.script.update(delta);
     };
     StateMachine.prototype.getCurrentStateName = function () {
         for (var name_9 in this.states) {
@@ -4858,7 +4850,7 @@ var StoryEventManager = /** @class */ (function () {
                         _a.label = 2;
                     case 2:
                         if (!!script.done) return [3 /*break*/, 4];
-                        script.update(global.script.theater, global.script.theater, global.script.delta);
+                        script.update(global.script.delta);
                         if (script.done)
                             return [3 /*break*/, 4];
                         return [4 /*yield*/];
@@ -7821,7 +7813,7 @@ var S;
                         case 0: return [4 /*yield*/, S.wait(1)];
                         case 1:
                             _a.sent();
-                            global.script.theater.currentWorld.camera.setModeFollow('player');
+                            global.theater.currentWorld.camera.setModeFollow('player');
                             return [2 /*return*/];
                     }
                 });

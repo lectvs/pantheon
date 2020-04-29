@@ -49,7 +49,7 @@ namespace S { export const storyboard: Storyboard = {
         type: 'cutscene',
         script: function*() {
             yield S.wait(1);
-            global.script.theater.currentWorld.camera.setModeFollow('player');
+            global.theater.currentWorld.camera.setModeFollow('player');
         },
         transitions: [{ type: 'instant', toNode: 'gameplay' }]
     },

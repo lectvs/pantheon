@@ -125,13 +125,11 @@ class WorldObject {
     }
 
     protected updateScriptManager(delta: number) {
-        if (!this.world) return;
-        this.scriptManager.update(this.world, this, delta);
+        this.scriptManager.update(delta);
     }
 
     protected updateStateMachine(delta: number) {
-        if (!this.world) return;
-        this.stateMachine.update(this.world, this, delta);
+        this.stateMachine.update(delta);
     }
 
     postUpdate() {

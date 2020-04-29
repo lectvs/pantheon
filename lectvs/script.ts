@@ -9,9 +9,6 @@ class Script {
     done: boolean;
 
     // Global data for use in scripts
-    world: World;
-    worldObject: WorldObject;
-    theater: Theater;
     delta: number;
     data: any;
 
@@ -24,13 +21,10 @@ class Script {
         return !this.paused && !this.done;
     }
 
-    update(world: World, worldObject: WorldObject, delta: number) {
+    update(delta: number) {
         if (!this.running) return;
 
         global.pushScript(this);
-        this.world = world;
-        this.worldObject = worldObject;
-        this.theater = global.theater;
         this.delta = delta
 
         let result = this.iterator.next();
@@ -41,9 +35,9 @@ class Script {
         global.popScript();
     }
 
-    finishImmediately(world: World, worldObject: WorldObject, maxIters: number = Script.FINISH_IMMEDIATELY_MAX_ITERS) {
+    finishImmediately(maxIters: number = Script.FINISH_IMMEDIATELY_MAX_ITERS) {
         for (let i = 0; i < maxIters && !this.done; i++) {
-            this.update(world, worldObject, 0.01);
+            this.update(0.01);
         }
         this.done = true;
     }

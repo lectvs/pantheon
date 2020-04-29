@@ -52,7 +52,7 @@ namespace S {
             let scripts: Script[] = scriptFunctions.map(sfn => new Script(sfn));
             while (!_.isEmpty(scripts)) {
                 scripts = scripts.filter(script => {
-                    script.update(global.script.world, global.script.worldObject, global.script.delta);
+                    script.update(global.script.delta);
                     return !script.done;
                 });
                 if (!_.isEmpty(scripts)) yield;

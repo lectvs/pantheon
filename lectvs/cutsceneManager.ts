@@ -31,7 +31,7 @@ class CutsceneManager {
                     }
                     let script = new Script(result.value);
                     while (!script.done) {
-                        script.update(global.script.theater, global.script.theater, global.script.delta);
+                        script.update(global.script.delta);
                         if (script.done) break;
                         yield;
                     }
@@ -45,7 +45,7 @@ class CutsceneManager {
 
     update(delta: number) {
         if (this.current) {
-            this.current.script.update(this.theater, this.theater, delta);
+            this.current.script.update(delta);
             if (this.current.script.done) {
                 this.finishCurrentCutscene();
             }
