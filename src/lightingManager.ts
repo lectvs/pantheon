@@ -84,7 +84,7 @@ class LightingManager extends WorldObject {
         if (global.theater.storyManager.currentNodeName === 'win') {
             this.fireRadius.goal = Math.min(this.fireRadius.goal, 40);
         }
-        if (player.hurt) {
+        if (player.state === 'hurt') {
             this.fireRadius.goal = 0;
             this.fireBuffer.goal = campfire.getRadius() + campfire.getBuffer();
         }

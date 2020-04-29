@@ -1,22 +1,16 @@
-namespace Tree {
-    export type Config = Sprite.Config & {
-        spawnsTorch?: boolean;
-    }
-}
-
 class Tree extends Sprite {
     private spawnsTorch: boolean;
     private hitScript: Script;
     hp: number;
 
-    constructor(config: Tree.Config) {
+    constructor(config: Sprite.Config) {
         super(config, {
             texture: Random.boolean() ? 'blacktree' : 'whitetree',
             flipX: Random.boolean(),
             bounds: { x: -4, y: -2, width: 8, height: 3 },
         });
         this.hp = 3;
-        this.spawnsTorch = O.getOrDefault(config.spawnsTorch, false);
+        this.spawnsTorch = O.getOrDefault(config.data.spawnsTorch, false);
     }
 
     hit() {

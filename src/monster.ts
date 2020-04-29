@@ -7,7 +7,7 @@ class Monster extends Human {
     private pickupScript: Script;
     get pickingUp() { return this.pickupScript && !this.pickupScript.done; }
 
-    get immobile() { return this.stunned || this.swinging || this.pickingUp; }
+    get immobile() { return this.state === 'hurt' || this.state === 'swinging' || this.pickingUp; }
 
     constructor(config: Human.Config) {
         super(config, {
@@ -72,7 +72,7 @@ class Monster extends Human {
 
         let overlappingItem = this.getOverlappingItem();
         if (overlappingItem && overlappingItem.type === Item.Type.AXE) {
-            this.pickupScript = this.world.runScript(S.chain(
+            this.pickupScript = this.runScript(S.chain(
                 S.call(() => {
                     this.playAnimation('pickup');
                 }),

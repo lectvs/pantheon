@@ -32,6 +32,7 @@ juice
 - random noise on fire lighting
 - animated leaves
 - animated flowers
+- fix rightmost tree below leaves
 - smooth camera follow
 - trees falling the other way
 - logs getting pulled into the fire

@@ -15,7 +15,7 @@ class Door extends Sprite {
 
         if (other instanceof Player && other.isHoldingKey) {
             World.Actions.removeWorldObjectFromWorld(this);
-            other.removeHeldItem();
+            other.deleteHeldItem();
         }
     }
 }

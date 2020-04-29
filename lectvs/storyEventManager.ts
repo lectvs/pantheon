@@ -33,7 +33,7 @@ class StoryEventManager {
                     }
                     let script = new Script(result.value);
                     while (!script.done) {
-                        script.update(global.script.theater, global.script.delta);
+                        script.update(global.script.theater, global.script.theater, global.script.delta);
                         if (script.done) break;
                         yield;
                     }

@@ -22,23 +22,6 @@ class Player extends Human {
                                                                                                 21, 22, 23, 22, 21, 22, 23, 22], frameRate: 16, count: 1, forceRequired: true }),
                 Animations.fromTextureList({ name: 'intro_idle', texturePrefix: 'player_', textures: [0, 1, 2], frameRate: 2, count: 3, forceRequired: true }),
             ],
-            states: {
-                'a': {
-                    type: 'normal',
-                    callback: () => debug('hi a'),
-                    script: S.doOverTime(1, t => debug(t)),
-                    transitions: [{
-                        type: 'instant',
-                        toState: 'b'
-                    }],
-                },
-                'b': {
-                    type: 'normal',
-                    callback: () => debug('hi b player'),
-                    transitions: [],
-                },
-            },
-            startState: 'a',
         });
 
         this.controllerSchema = {

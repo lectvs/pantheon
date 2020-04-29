@@ -67,7 +67,8 @@ class WorldObject {
     private preRenderStoredY: number;
 
     protected scriptManager: ScriptManager;
-    protected stateMachine: StateMachine;
+    private stateMachine: StateMachine;
+    get state() { return this.stateMachine.getCurrentStateName(); }
 
     private updateCallback: WorldObject.UpdateCallback;
 
@@ -102,7 +103,7 @@ class WorldObject {
         this.addChildren(config.children);
 
         this.scriptManager = new ScriptManager();
-        this.stateMachine = new StateMachine(O.getOrDefault(config.states, {}));
+        this.stateMachine = new StateMachine(this, O.getOrDefault(config.states, {}));
         if (config.startState) this.stateMachine.setState(config.startState);
 
         this.updateCallback = config.updateCallback;
@@ -121,19 +122,19 @@ class WorldObject {
 
     update(delta: number) {
         this.updateScriptManager(delta);
-        this.stateMachine.update(this.world, delta);
+        this.updateStateMachine(delta);
         if (this.updateCallback) this.updateCallback(this, delta);
         this.life.update(delta);
     }
 
     protected updateScriptManager(delta: number) {
         if (!this.world) return;
-        this.scriptManager.update(this.world, delta);
+        this.scriptManager.update(this.world, this, delta);
     }
 
     protected updateStateMachine(delta: number) {
         if (!this.world) return;
-        this.stateMachine.update(this.world, delta);
+        this.stateMachine.update(this.world, this, delta);
     }
 
     postUpdate() {
@@ -231,6 +232,10 @@ class WorldObject {
 
     runScript(script: Script | Script.Function) {
         return this.scriptManager.runScript(script);
+    }
+
+    setState(state: string) {
+        this.stateMachine.setState(state);
     }
 
     updateControllerFromSchema() {

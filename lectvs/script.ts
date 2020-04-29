@@ -10,6 +10,7 @@ class Script {
 
     // Global data for use in scripts
     world: World;
+    worldObject: WorldObject;
     theater: Theater;
     delta: number;
     data: any;
@@ -23,11 +24,12 @@ class Script {
         return !this.paused && !this.done;
     }
 
-    update(world: World, delta: number) {
+    update(world: World, worldObject: WorldObject, delta: number) {
         if (!this.running) return;
 
         global.pushScript(this);
         this.world = world;
+        this.worldObject = worldObject;
         this.theater = global.theater;
         this.delta = delta
 
@@ -39,9 +41,9 @@ class Script {
         global.popScript();
     }
 
-    finishImmediately(world: World, maxIters: number = Script.FINISH_IMMEDIATELY_MAX_ITERS) {
+    finishImmediately(world: World, worldObject: WorldObject, maxIters: number = Script.FINISH_IMMEDIATELY_MAX_ITERS) {
         for (let i = 0; i < maxIters && !this.done; i++) {
-            this.update(world, 0.01);
+            this.update(world, worldObject, 0.01);
         }
         this.done = true;
     }

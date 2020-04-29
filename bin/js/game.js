@@ -835,7 +835,7 @@ var CutsceneManager = /** @class */ (function () {
                         _a.label = 2;
                     case 2:
                         if (!!script.done) return [3 /*break*/, 4];
-                        script.update(global.script.theater, global.script.delta);
+                        script.update(global.script.theater, global.script.theater, global.script.delta);
                         if (script.done)
                             return [3 /*break*/, 4];
                         return [4 /*yield*/];
@@ -860,7 +860,7 @@ var CutsceneManager = /** @class */ (function () {
     };
     CutsceneManager.prototype.update = function (delta) {
         if (this.current) {
-            this.current.script.update(this.theater, delta);
+            this.current.script.update(this.theater, this.theater, delta);
             if (this.current.script.done) {
                 this.finishCurrentCutscene();
             }
@@ -1288,7 +1288,7 @@ var WorldObject = /** @class */ (function () {
         this._parent = null;
         this.addChildren(config.children);
         this.scriptManager = new ScriptManager();
-        this.stateMachine = new StateMachine(O.getOrDefault(config.states, {}));
+        this.stateMachine = new StateMachine(this, O.getOrDefault(config.states, {}));
         if (config.startState)
             this.stateMachine.setState(config.startState);
         this.updateCallback = config.updateCallback;
@@ -1340,6 +1340,11 @@ var WorldObject = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(WorldObject.prototype, "state", {
+        get: function () { return this.stateMachine.getCurrentStateName(); },
+        enumerable: true,
+        configurable: true
+    });
     WorldObject.prototype.onAdd = function () { };
     WorldObject.prototype.onRemove = function () { };
     WorldObject.prototype.preUpdate = function () {
@@ -1351,7 +1356,7 @@ var WorldObject = /** @class */ (function () {
     };
     WorldObject.prototype.update = function (delta) {
         this.updateScriptManager(delta);
-        this.stateMachine.update(this.world, delta);
+        this.updateStateMachine(delta);
         if (this.updateCallback)
             this.updateCallback(this, delta);
         this.life.update(delta);
@@ -1359,12 +1364,12 @@ var WorldObject = /** @class */ (function () {
     WorldObject.prototype.updateScriptManager = function (delta) {
         if (!this.world)
             return;
-        this.scriptManager.update(this.world, delta);
+        this.scriptManager.update(this.world, this, delta);
     };
     WorldObject.prototype.updateStateMachine = function (delta) {
         if (!this.world)
             return;
-        this.stateMachine.update(this.world, delta);
+        this.stateMachine.update(this.world, this, delta);
     };
     WorldObject.prototype.postUpdate = function () {
         this.resetController();
@@ -1460,6 +1465,9 @@ var WorldObject = /** @class */ (function () {
     };
     WorldObject.prototype.runScript = function (script) {
         return this.scriptManager.runScript(script);
+    };
+    WorldObject.prototype.setState = function (state) {
+        this.stateMachine.setState(state);
     };
     WorldObject.prototype.updateControllerFromSchema = function () {
         for (var key in this.controllerSchema) {
@@ -2429,7 +2437,7 @@ var Game = /** @class */ (function () {
         this.theater = new this.theaterClass(this.theaterConfig);
         global.theater = this.theater;
         // fade out since the cutscene can't do this in 1 frame
-        global.theater.runScript(S.fadeOut(0)).finishImmediately(global.theater);
+        global.theater.runScript(S.fadeOut(0)).finishImmediately(global.theater, global.theater);
     };
     Game.prototype.pauseGame = function () {
         this.menuSystem.loadMenu(this.pauseMenuClass);
@@ -2890,7 +2898,7 @@ var World = /** @class */ (function (_super) {
         this.camera.update(this, delta);
     };
     World.prototype.updateScriptManager = function (delta) {
-        this.scriptManager.update(this, delta);
+        this.scriptManager.update(this, this, delta);
     };
     World.prototype.render = function (screen) {
         var e_14, _a;
@@ -4433,11 +4441,12 @@ var Script = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Script.prototype.update = function (world, delta) {
+    Script.prototype.update = function (world, worldObject, delta) {
         if (!this.running)
             return;
         global.pushScript(this);
         this.world = world;
+        this.worldObject = worldObject;
         this.theater = global.theater;
         this.delta = delta;
         var result = this.iterator.next();
@@ -4446,10 +4455,10 @@ var Script = /** @class */ (function () {
         }
         global.popScript();
     };
-    Script.prototype.finishImmediately = function (world, maxIters) {
+    Script.prototype.finishImmediately = function (world, worldObject, maxIters) {
         if (maxIters === void 0) { maxIters = Script.FINISH_IMMEDIATELY_MAX_ITERS; }
         for (var i = 0; i < maxIters && !this.done; i++) {
-            this.update(world, 0.01);
+            this.update(world, worldObject, 0.01);
         }
         this.done = true;
     };
@@ -4460,9 +4469,9 @@ var ScriptManager = /** @class */ (function () {
     function ScriptManager() {
         this.activeScripts = [];
     }
-    ScriptManager.prototype.update = function (world, delta) {
+    ScriptManager.prototype.update = function (world, worldObject, delta) {
         for (var i = this.activeScripts.length - 1; i >= 0; i--) {
-            this.activeScripts[i].update(world, delta);
+            this.activeScripts[i].update(world, worldObject, delta);
             if (this.activeScripts[i].done) {
                 this.activeScripts.splice(i, 1);
             }
@@ -4736,7 +4745,8 @@ var StageManager = /** @class */ (function () {
     return StageManager;
 }());
 var StateMachine = /** @class */ (function () {
-    function StateMachine(states) {
+    function StateMachine(context, states) {
+        this.context = context;
         this.states = O.deepClone(states);
     }
     StateMachine.prototype.setState = function (name) {
@@ -4748,8 +4758,8 @@ var StateMachine = /** @class */ (function () {
             return;
         this.currentState = state;
         if (state.callback)
-            state.callback();
-        var stateScript = O.getOrDefault(state.script, S.noop());
+            state.callback(this.context);
+        var stateScript = O.getOrDefault(state.script, function (context) { return S.noop(); })(this.context);
         this.script = new Script(S.chain(stateScript, S.loopFor(Infinity, S.chain(S.call(function () {
             var transition = _this.getValidTransition(_this.currentState);
             if (transition) {
@@ -4757,9 +4767,9 @@ var StateMachine = /** @class */ (function () {
             }
         }), S.yield()))));
     };
-    StateMachine.prototype.update = function (world, delta) {
+    StateMachine.prototype.update = function (world, worldObject, delta) {
         if (this.script && world) {
-            this.script.update(world, delta);
+            this.script.update(world, worldObject, delta);
         }
     };
     StateMachine.prototype.getCurrentStateName = function () {
@@ -4843,7 +4853,7 @@ var StoryEventManager = /** @class */ (function () {
                         _a.label = 2;
                     case 2:
                         if (!!script.done) return [3 /*break*/, 4];
-                        script.update(global.script.theater, global.script.delta);
+                        script.update(global.script.theater, global.script.theater, global.script.delta);
                         if (script.done)
                             return [3 /*break*/, 4];
                         return [4 /*yield*/];
@@ -6234,7 +6244,7 @@ var LightingManager = /** @class */ (function (_super) {
         if (global.theater.storyManager.currentNodeName === 'win') {
             this.fireRadius.goal = Math.min(this.fireRadius.goal, 40);
         }
-        if (player.hurt) {
+        if (player.state === 'hurt') {
             this.fireRadius.goal = 0;
             this.fireBuffer.goal = campfire.getRadius() + campfire.getBuffer();
         }
@@ -6455,7 +6465,7 @@ var Door = /** @class */ (function (_super) {
         }
         if (other instanceof Player && other.isHoldingKey) {
             World.Actions.removeWorldObjectFromWorld(this);
-            other.removeHeldItem();
+            other.deleteHeldItem();
         }
     };
     return Door;
@@ -6532,40 +6542,58 @@ var Human = /** @class */ (function (_super) {
         _this = _super.call(this, config, {
             bounds: { x: -4, y: -2, width: 8, height: 4 },
             animations: Animations.emptyList('idle_empty', 'run_empty', 'idle_holding', 'run_holding', 'throw', 'swing', 'hurt'),
+            states: {
+                'normal': {
+                    transitions: []
+                },
+                'swinging': {
+                    script: function (human) { return S.chain(S.wait(O.getOrDefault(config.preSwingWait, 0)), S.simul(S.doOverTime(Human.swingTime, function (t) {
+                        if (!human.heldItem)
+                            return;
+                        var angle = (human.flipX ? -1 : 1) * 90 * Math.sin(Math.PI * Math.pow(t, 0.5));
+                        human.heldItem.offset.x = Human.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
+                        human.heldItem.offset.y = Human.itemOffsetY * -Math.cos(M.degToRad(angle));
+                        human.heldItem.angle = angle;
+                        if (t === 1)
+                            human.heldItem.angle = 0;
+                    }), S.chain(S.call(function () { return human.playAnimation('swing', 0, true); }), S.wait(Human.swingTime * 0.25), S.call(function () {
+                        human.hitStuff();
+                    }))), S.wait(O.getOrDefault(config.postSwingWait, 0))); },
+                    transitions: [
+                        { type: 'instant', toState: 'normal' }
+                    ]
+                },
+                'hurt': {
+                    callback: function (human) {
+                        human.playAnimation('hurt', 0, true);
+                        human.dropHeldItem();
+                    },
+                    script: function (human) { return S.chain(S.doOverTime(0.5, function (t) {
+                        human.offset.y = -16 * Math.exp(-4 * t) * Math.abs(Math.sin(4 * Math.PI * t * t));
+                    }), S.waitUntil(function () { return !human.getCurrentAnimationName().startsWith('hurt'); }), S.call(function () {
+                        human.alpha = 1;
+                    })); },
+                    transitions: [
+                        { type: 'instant', toState: 'normal' }
+                    ]
+                },
+            },
         }) || this;
         _this.speed = O.getOrDefault(config.speed, 40);
-        _this.preSwingWait = O.getOrDefault(config.preSwingWait, 0);
-        _this.postSwingWait = O.getOrDefault(config.postSwingWait, 0);
         _this.itemGrabDistance = O.getOrDefault(config.itemGrabDistance, 16);
         _this.direction = Direction2D.RIGHT;
         return _this;
     }
-    Object.defineProperty(Human.prototype, "swinging", {
-        get: function () { return this.swingScript && this.swingScript.running; },
-        enumerable: true,
-        configurable: true
-    });
     Object.defineProperty(Human.prototype, "moving", {
         get: function () { return Math.abs(this.vx) > 1 || Math.abs(this.vy) > 1; },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(Human.prototype, "hurt", {
-        get: function () { return this.hurtScript && !this.hurtScript.done; },
-        enumerable: true,
-        configurable: true
-    });
     Object.defineProperty(Human.prototype, "immobile", {
-        get: function () { return this.stunned; },
+        get: function () { return this.state === 'hurt'; },
         enumerable: true,
         configurable: true
     });
-    Human.prototype.onRemove = function () {
-        if (this.swingScript)
-            this.swingScript.done = true;
-        if (this.hurtScript)
-            this.hurtScript.done = true;
-    };
     Human.prototype.update = function (delta) {
         var haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
         var vaxis = (this.controller.down ? 1 : 0) - (this.controller.up ? 1 : 0);
@@ -6592,23 +6620,6 @@ var Human = /** @class */ (function (_super) {
             Draw.brush.color = 0x00FF00;
             Draw.rectangleOutline(screen, shb.x, shb.y, shb.width, shb.height);
         }
-    };
-    Human.prototype.hit = function () {
-        var _this = this;
-        if (this.hurt)
-            return;
-        this.playAnimation('hurt', 0, true);
-        if (this.swingScript)
-            this.swingScript.done = true;
-        if (this.heldItem)
-            this.dropHeldItem();
-        this.stunned = true;
-        this.hurtScript = this.world.runScript(S.chain(S.doOverTime(0.5, function (t) {
-            _this.offset.y = -16 * Math.exp(-4 * t) * Math.abs(Math.sin(4 * Math.PI * t * t));
-        }), S.waitUntil(function () { return !_this.getCurrentAnimationName().startsWith('hurt'); }), S.call(function () {
-            _this.alpha = 1;
-            _this.stunned = false;
-        })));
     };
     Human.prototype.updateMovement = function (haxis, vaxis) {
         if (this.immobile) {
@@ -6672,7 +6683,7 @@ var Human = /** @class */ (function (_super) {
         return overlappingItem;
     };
     Human.prototype.handleItemPickupDrop = function () {
-        if (this.swinging)
+        if (this.state === 'swinging')
             return;
         if (this.immobile)
             return;
@@ -6695,13 +6706,22 @@ var Human = /** @class */ (function (_super) {
             return;
         this.swingItem();
     };
+    Human.prototype.pickupItem = function (item) {
+        if (!item)
+            return;
+        this.heldItem = item.asHandItem(0, -Human.itemOffsetY, this.layer);
+        this.addChild(this.heldItem);
+        item.removeFromWorld();
+        World.Actions.setName(this.heldItem, item.name);
+    };
     Human.prototype.dropHeldItem = function () {
         if (!this.heldItem)
             return;
         var droppedItem = this.heldItem.asGroundItem(this.x, this.y, this.layer, 'items');
         droppedItem.flipX = this.heldItem.flipX;
         var heldItemName = this.heldItem.name;
-        this.removeHeldItem();
+        this.heldItem.removeFromWorld();
+        this.heldItem = null;
         this.world.addWorldObject(droppedItem);
         World.Actions.setName(droppedItem, heldItemName);
         if (this.getCurrentAnimationName() === 'hurt') {
@@ -6723,39 +6743,21 @@ var Human = /** @class */ (function (_super) {
             return;
         }
     };
-    Human.prototype.removeHeldItem = function () {
+    Human.prototype.deleteHeldItem = function () {
+        if (!this.heldItem)
+            return;
         this.heldItem.removeFromWorld();
         this.heldItem = null;
     };
-    Human.prototype.pickupItem = function (item) {
-        if (!item)
-            return;
-        this.heldItem = item.asHandItem(0, -Human.itemOffsetY, this.layer);
-        this.addChild(this.heldItem);
-        item.removeFromWorld();
-        World.Actions.setName(this.heldItem, item.name);
+    Human.prototype.hit = function () {
+        this.setState('hurt');
     };
     Human.prototype.swingItem = function () {
-        var _this = this;
-        if (!this.world)
+        if (this.state === 'hurt')
             return;
-        if (!this.swingScript || this.swingScript.done) {
-            this.swingScript = this.world.runScript(S.chain(S.wait(this.preSwingWait), S.simul(S.doOverTime(Human.swingTime, function (t) {
-                if (!_this.heldItem)
-                    return;
-                var angle = (_this.flipX ? -1 : 1) * 90 * Math.sin(Math.PI * Math.pow(t, 0.5));
-                _this.heldItem.offset.x = Human.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
-                _this.heldItem.offset.y = Human.itemOffsetY * -Math.cos(M.degToRad(angle));
-                _this.heldItem.angle = angle;
-                if (t === 1)
-                    _this.heldItem.angle = 0;
-            }), S.chain(S.call(function () { return _this.playAnimation('swing', 0, true); }), S.wait(Human.swingTime * 0.25), S.call(function () {
-                _this.hitStuff();
-            }))), S.wait(this.postSwingWait)));
-        }
+        this.setState('swinging');
     };
-    Human.prototype.hitStuff = function () {
-    };
+    Human.prototype.hitStuff = function () { };
     Human.prototype.getSwingHitbox = function () {
         return { x: this.x, y: this.y, width: 0, height: 0 };
     };
@@ -7237,7 +7239,7 @@ var Monster = /** @class */ (function (_super) {
         configurable: true
     });
     Object.defineProperty(Monster.prototype, "immobile", {
-        get: function () { return this.stunned || this.swinging || this.pickingUp; },
+        get: function () { return this.state === 'hurt' || this.state === 'swinging' || this.pickingUp; },
         enumerable: true,
         configurable: true
     });
@@ -7272,7 +7274,7 @@ var Monster = /** @class */ (function (_super) {
             return;
         var overlappingItem = this.getOverlappingItem();
         if (overlappingItem && overlappingItem.type === Item.Type.AXE) {
-            this.pickupScript = this.world.runScript(S.chain(S.call(function () {
+            this.pickupScript = this.runScript(S.chain(S.call(function () {
                 _this.playAnimation('pickup');
             }), S.waitUntil(function () { return _this.getCurrentAnimationName() !== 'pickup'; }), S.call(function () {
                 _this.controller.pickupDropItem = true;
@@ -7348,23 +7350,6 @@ var Player = /** @class */ (function (_super) {
                         21, 22, 23, 22, 21, 22, 23, 22], frameRate: 16, count: 1, forceRequired: true }),
                 Animations.fromTextureList({ name: 'intro_idle', texturePrefix: 'player_', textures: [0, 1, 2], frameRate: 2, count: 3, forceRequired: true }),
             ],
-            states: {
-                'a': {
-                    type: 'normal',
-                    callback: function () { return debug('hi a'); },
-                    script: S.doOverTime(1, function (t) { return debug(t); }),
-                    transitions: [{
-                            type: 'instant',
-                            toState: 'b'
-                        }],
-                },
-                'b': {
-                    type: 'normal',
-                    callback: function () { return debug('hi b player'); },
-                    transitions: [],
-                },
-            },
-            startState: 'a',
         }) || this;
         _this.controllerSchema = {
             left: function () { return Input.isDown('left'); },
@@ -7531,7 +7516,7 @@ var Tree = /** @class */ (function (_super) {
             bounds: { x: -4, y: -2, width: 8, height: 3 },
         }) || this;
         _this.hp = 3;
-        _this.spawnsTorch = O.getOrDefault(config.spawnsTorch, false);
+        _this.spawnsTorch = O.getOrDefault(config.data.spawnsTorch, false);
         return _this;
     }
     Tree.prototype.hit = function () {
@@ -7671,10 +7656,12 @@ var stages = {
         ].map(function (pos) { return ({
             constructor: Tree,
             x: pos.x, y: pos.y,
-            spawnsTorch: pos.x === 328 && pos.y === 440,
             layer: 'main',
             physicsGroup: 'props',
             immovable: true,
+            data: {
+                spawnsTorch: pos.x === 328 && pos.y === 440,
+            }
         }); }), [
             {
                 name: 'start_log',

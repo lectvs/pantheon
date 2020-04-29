@@ -1,15 +1,9 @@
 
 namespace StateMachine {
-    export type State = (States.Normal) & {
+    export type State = {
+        callback?: (context: any) => any;
+        script?: (context: any) => Script.Function;
         transitions: Transition[];
-    }
-
-    namespace States {
-        export type Normal = {
-            type: 'normal';
-            callback?: () => any;
-            script?: Script.Function;
-        }
     }
 
     export type Transition = (Transitions.Instant) & {
@@ -24,12 +18,14 @@ namespace StateMachine {
 }
 
 class StateMachine {
+    private context: any;
     private states: Dict<StateMachine.State>;
     private currentState: StateMachine.State;
     
     private script: Script;
 
-    constructor(states: Dict<StateMachine.State>) {
+    constructor(context: any, states: Dict<StateMachine.State>) {
+        this.context = context;
         this.states = O.deepClone(states);
     }
 
@@ -39,9 +35,9 @@ class StateMachine {
         if (!state) return;
         this.currentState = state;
 
-        if (state.callback) state.callback();
+        if (state.callback) state.callback(this.context);
 
-        let stateScript = O.getOrDefault(state.script, S.noop());
+        let stateScript = O.getOrDefault(state.script, (context) => S.noop())(this.context);
 
         this.script = new Script(S.chain(
             stateScript,
@@ -57,9 +53,9 @@ class StateMachine {
         ));
     }
 
-    update(world: World, delta: number) {
+    update(world: World, worldObject: WorldObject, delta: number) {
         if (this.script && world) {
-            this.script.update(world, delta);
+            this.script.update(world, worldObject, delta);
         }
     }
 

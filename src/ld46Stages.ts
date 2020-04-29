@@ -84,13 +84,15 @@ const stages: Dict<World.Config> = {
                 { x: 376, y: 472 },
                 { x: 408, y: 488 },
                 { x: 584, y: 408 },
-            ].map(pos => <Tree.Config>{
+            ].map(pos => <Sprite.Config>{
                 constructor: Tree,
                 x: pos.x, y: pos.y,
-                spawnsTorch: pos.x === 328 && pos.y === 440,
                 layer: 'main',
                 physicsGroup: 'props',
                 immovable: true,
+                data: {
+                    spawnsTorch: pos.x === 328 && pos.y === 440,
+                }
             }),
             <Item.Config>{
                 name: 'start_log',

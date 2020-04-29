@@ -124,7 +124,7 @@ class World extends WorldObject {
     }
 
     protected updateScriptManager(delta: number) {
-        this.scriptManager.update(this, delta);
+        this.scriptManager.update(this, this, delta);
     }
 
     render(screen: Texture) {
