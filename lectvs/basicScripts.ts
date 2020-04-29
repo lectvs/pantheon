@@ -49,10 +49,13 @@ namespace S {
 
     export function simul(...scriptFunctions: Script.Function[]): Script.Function {
         return function*() {
-            let scripts: Script[] = scriptFunctions.map(sfn => global.script.world.runScript(sfn));
+            let scripts: Script[] = scriptFunctions.map(sfn => new Script(sfn));
             while (!_.isEmpty(scripts)) {
-                scripts = scripts.filter(script => !script.done);
-                yield;
+                scripts = scripts.filter(script => {
+                    script.update(global.script.world, global.script.worldObject, global.script.delta);
+                    return !script.done;
+                });
+                if (!_.isEmpty(scripts)) yield;
             }
         }
     }

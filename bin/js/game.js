@@ -514,16 +514,21 @@ var S;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        scripts = scriptFunctions.map(function (sfn) { return global.script.world.runScript(sfn); });
+                        scripts = scriptFunctions.map(function (sfn) { return new Script(sfn); });
                         _a.label = 1;
                     case 1:
+                        if (!!_.isEmpty(scripts)) return [3 /*break*/, 4];
+                        scripts = scripts.filter(function (script) {
+                            script.update(global.script.world, global.script.worldObject, global.script.delta);
+                            return !script.done;
+                        });
                         if (!!_.isEmpty(scripts)) return [3 /*break*/, 3];
-                        scripts = scripts.filter(function (script) { return !script.done; });
                         return [4 /*yield*/];
                     case 2:
                         _a.sent();
-                        return [3 /*break*/, 1];
-                    case 3: return [2 /*return*/];
+                        _a.label = 3;
+                    case 3: return [3 /*break*/, 1];
+                    case 4: return [2 /*return*/];
                 }
             });
         };
@@ -4768,7 +4773,7 @@ var StateMachine = /** @class */ (function () {
         }), S.yield()))));
     };
     StateMachine.prototype.update = function (world, worldObject, delta) {
-        if (this.script && world) {
+        if (this.script && world && worldObject) {
             this.script.update(world, worldObject, delta);
         }
     };
