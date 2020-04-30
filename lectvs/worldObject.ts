@@ -287,13 +287,22 @@ class WorldObject {
 }
 
 namespace WorldObject {
+    export function fromConfig<T extends WorldObject>(config: WorldObject.Config): T {
+        config = WorldObject.resolveConfig(config);
+
+        let result = new config.constructor(config);
+        if (result === config) result = new WorldObject(config);  // Default constructor to WorldObject
+
+        return <T>result;
+    }
+
     export function resolveConfig<T extends WorldObject.Config>(config: T, ...parents: T[]): T {
         let result = resolveConfigParent(config);
         if (_.isEmpty(parents)) return <T>result;
 
         for (let parent of parents) {
             result.parent = parent;
-            result = WorldObject.resolveConfig(result);
+            result = resolveConfig(result);
         }
 
         return <T>result;
@@ -302,7 +311,7 @@ namespace WorldObject {
     function resolveConfigParent(config: WorldObject.Config): WorldObject.Config {
         if (!config.parent) return _.clone(config);
 
-        let result = WorldObject.resolveConfig(config.parent);
+        let result = resolveConfig(config.parent);
 
         for (let key in config) {
             if (key === 'parent') continue;
@@ -314,35 +323,11 @@ namespace WorldObject {
                 result[key] = O.mergeObject(config[key], result[key]);
             } else if (key === 'data') {
                 result[key] = O.withOverrides(result[key], config[key]);
-            } else if (key === 'entryPoints') {
-                result[key] = O.mergeObject(config[key], result[key]);
-            } else if (key === 'worldObjects') {
-                result[key] = A.mergeArray(config[key], result[key], (e: WorldObject.Config) => e.name,
-                    (e: WorldObject.Config, into: WorldObject.Config) => {
-                        e = WorldObject.resolveConfig(e);
-                        e.parent = into;
-                        return WorldObject.resolveConfig(e);
-                    });
-            } else if (key === 'layers') {
-                // merge layerconfig objects to add effects, for example
-                result[key] = A.mergeArray(config[key], result[key], (e: World.LayerConfig) => e.name,
-                    (e: World.LayerConfig, into: World.LayerConfig) => {
-                        return O.mergeObject(e, into);
-                    });
             } else {
                 result[key] = config[key];
             }
         }
 
         return result;
-    }
-
-    export function fromConfig<T extends WorldObject>(config: WorldObject.Config): T {
-        config = WorldObject.resolveConfig(config);
-
-        let result = new config.constructor(config);
-        if (result === config) result = new WorldObject(config);  // Default constructor to WorldObject
-
-        return <T>result;
     }
 }

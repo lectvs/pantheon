@@ -1,7 +1,10 @@
 /// <reference path="./worldObject.ts" />
 
 namespace World {
-    export type Config = WorldObject.Config & {
+    export type Config = {
+        parent?: World.Config;
+        constructor?: any;
+
         physicsGroups?: Dict<World.PhysicsGroupConfig>;
         collisionOrder?: CollisionConfig[];
         layers?: World.LayerConfig[];
@@ -38,7 +41,7 @@ namespace World {
     export type EntryPoint = string | Pt;
 }
 
-class World extends WorldObject {
+class World {
     width: number;
     height: number;
     entryPoints: Dict<Pt>;
@@ -59,9 +62,12 @@ class World extends WorldObject {
     private debugCameraX: number;
     private debugCameraY: number;
 
+    protected scriptManager: ScriptManager;
+
     constructor(config: World.Config, defaults?: World.Config) {
         config = WorldObject.resolveConfig<World.Config>(config, defaults);
-        super(config);
+        
+        this.scriptManager = new ScriptManager();
 
         this.width = O.getOrDefault(config.width, global.gameWidth);
         this.height = O.getOrDefault(config.height, global.gameHeight);
@@ -96,8 +102,8 @@ class World extends WorldObject {
     }
 
     update(delta: number) {
-        super.update(delta);
-
+        this.updateScriptManager(delta);
+        
         for (let worldObject of this.worldObjects) {
             if (worldObject.active) worldObject.preUpdate();
         }
@@ -148,7 +154,6 @@ class World extends WorldObject {
         this.camera.y = oldCameraY;
         
         screen.render(this.screen);
-        super.render(screen);
     }
 
     renderLayer(layer: World.Layer, layerTexture: Texture, screen: Texture) {
@@ -299,15 +304,13 @@ class World extends WorldObject {
         return objs.map(obj => this.removeWorldObject(obj)).filter(obj => obj);
     }
 
+    runScript(script: Script | Script.Function) {
+        return this.scriptManager.runScript(script);
+    }
+
     takeSnapshot() {
         let screen = new Texture(this.camera.width, this.camera.height);
-        let lastx = this.x;
-        let lasty = this.y;
-        this.x = 0;
-        this.y = 0;
         this.render(screen);
-        this.x = lastx;
-        this.y = lasty;
         return screen;
     }
 
@@ -678,5 +681,86 @@ namespace World {
             if (children[0].parent && children === children[0].parent.children) children = A.clone(<T[]>children);
             return children.filter(child => removeChildFromParent(child));
         }
+    }
+}
+
+namespace World {
+    export class WorldAsWorldObject extends Sprite {
+        containedWorld: World;
+
+        private worldTexture: Texture;
+
+        constructor(containedWorld: World) {
+            let texture = new Texture(containedWorld.width, containedWorld.height);
+            super({ texture: texture });
+            this.containedWorld = containedWorld;
+            this.worldTexture = texture;
+        }
+
+        update(delta: number) {
+            super.update(delta);
+            this.containedWorld.update(delta);
+        }
+
+        render(screen: Texture) {
+            this.worldTexture.clear();
+            this.containedWorld.render(this.worldTexture);
+            super.render(screen);
+        }
+    }
+}
+
+namespace World {
+    export function fromConfig<T extends World>(config: World.Config): T {
+        config = World.resolveConfig(config);
+
+        let result = new config.constructor(config);
+        if (result === config) result = new World(config);  // Default constructor to World
+
+        return <T>result;
+    }
+
+    export function resolveConfig<T extends World.Config>(config: T, ...parents: T[]): T {
+        let result = resolveConfigParent(config);
+        if (_.isEmpty(parents)) return <T>result;
+
+        for (let parent of parents) {
+            result.parent = parent;
+            result = resolveConfig(result);
+        }
+
+        return <T>result;
+    }
+
+    function resolveConfigParent(config: WorldObject.Config): WorldObject.Config {
+        if (!config.parent) return _.clone(config);
+
+        let result = resolveConfig(config.parent);
+
+        for (let key in config) {
+            if (key === 'parent') continue;
+            if (!result[key]) {
+                result[key] = config[key];
+            } else if (key === 'entryPoints') {
+                result[key] = O.mergeObject(config[key], result[key]);
+            } else if (key === 'worldObjects') {
+                result[key] = A.mergeArray(config[key], result[key], (e: WorldObject.Config) => e.name,
+                    (e: WorldObject.Config, into: WorldObject.Config) => {
+                        e = resolveConfig(e);
+                        e.parent = into;
+                        return resolveConfig(e);
+                    });
+            } else if (key === 'layers') {
+                // merge layerconfig objects to add effects, for example
+                result[key] = A.mergeArray(config[key], result[key], (e: World.LayerConfig) => e.name,
+                    (e: World.LayerConfig, into: World.LayerConfig) => {
+                        return O.mergeObject(e, into);
+                    });
+            } else {
+                result[key] = config[key];
+            }
+        }
+
+        return result;
     }
 }

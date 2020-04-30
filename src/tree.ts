@@ -22,9 +22,9 @@ class Tree extends Sprite {
 
         this.hp--;
         if (this.hp > 0) {
-            this.hitScript = this.world.runScript(S.doOverTime(0.5, t => { this.angle = 30*Math.exp(5*-t)*Math.cos(5*t); }));
+            this.hitScript = this.runScript(S.doOverTime(0.5, t => { this.angle = 30*Math.exp(5*-t)*Math.cos(5*t); }));
         } else {
-            this.hitScript = this.world.runScript(S.chain(
+            this.hitScript = this.runScript(S.chain(
                 S.doOverTime(0.5, t => { this.angle = 30*Math.exp(5*-t)*Math.cos(5*t); }),
                 S.call(() => {
                     this.colliding = false;
