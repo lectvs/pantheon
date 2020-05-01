@@ -1195,6 +1195,17 @@ var S;
 var DebugValues = /** @class */ (function () {
     function DebugValues() {
     }
+    DebugValues.prototype.init = function (config) {
+        Debug.DEBUG = true;
+        Debug.ALL_PHYSICS_BOUNDS = false;
+        Debug.MOVE_CAMERA_WITH_ARROWS = true;
+        Debug.SHOW_MOUSE_POSITION = true;
+        Debug.MOUSE_POSITION_FONT = config.mousePositionFont;
+        Debug.SKIP_RATE = 1;
+        Debug.PROGRAMMATIC_INPUT = false;
+        Debug.AUTOPLAY = true;
+        Debug.SKIP_MAIN_MENU = true;
+    };
     Object.defineProperty(DebugValues.prototype, "DEBUG", {
         get: function () { return this._DEBUG; },
         set: function (value) { this._DEBUG = value; },
@@ -1246,14 +1257,6 @@ var DebugValues = /** @class */ (function () {
     return DebugValues;
 }());
 var Debug = new DebugValues();
-Debug.DEBUG = true;
-Debug.ALL_PHYSICS_BOUNDS = false;
-Debug.MOVE_CAMERA_WITH_ARROWS = true;
-Debug.SHOW_MOUSE_POSITION = true;
-Debug.SKIP_RATE = 1;
-Debug.PROGRAMMATIC_INPUT = false;
-Debug.AUTOPLAY = true;
-Debug.SKIP_MAIN_MENU = true;
 var debug = console.info;
 // function debug(message?: any, ...optionalParams: any[]) {
 //     if (DEBUG) {
@@ -2817,9 +2820,19 @@ var World = /** @class */ (function () {
         }
         this.debugCameraX = 0;
         this.debugCameraY = 0;
+        this.debugMousePositionText = this.addWorldObject({
+            constructor: SpriteText,
+            x: 0, y: 0,
+            font: Debug.MOUSE_POSITION_FONT,
+            style: { color: 0x008800 },
+            ignoreCamera: true,
+            visible: false,
+            active: false,
+        });
     }
     World.prototype.update = function (delta) {
         var e_11, _a, e_12, _b, e_13, _c;
+        this.updateDebugMousePosition();
         this.updateScriptManager(delta);
         try {
             for (var _d = __values(this.worldObjects), _e = _d.next(); !_e.done; _e = _d.next()) {
@@ -2876,6 +2889,13 @@ var World = /** @class */ (function () {
                 this.debugCameraY += 1;
         }
         this.camera.update(this, delta);
+    };
+    World.prototype.updateDebugMousePosition = function () {
+        this.debugMousePositionText.active = Debug.SHOW_MOUSE_POSITION;
+        this.debugMousePositionText.visible = Debug.SHOW_MOUSE_POSITION;
+        if (Debug.SHOW_MOUSE_POSITION) {
+            this.debugMousePositionText.setText(St.padLeft(this.getWorldMouseX().toString(), 3) + " " + St.padLeft(this.getWorldMouseY().toString(), 3));
+        }
     };
     World.prototype.updateScriptManager = function (delta) {
         this.scriptManager.update(delta);
@@ -5300,10 +5320,6 @@ var Theater = /** @class */ (function (_super) {
         _this.interactionManager = new InteractionManager(_this);
         _this.slideManager = new SlideManager(_this);
         _this.stageManager.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
-        if (Debug.SHOW_MOUSE_POSITION && config.debugMousePositionFont) {
-            _this.debugMousePosition = new SpriteText({ x: 0, y: 0, font: config.debugMousePositionFont, style: { color: 0x008800 } });
-            World.Actions.addWorldObjectToWorld(_this.debugMousePosition, _this);
-        }
         if (Debug.AUTOPLAY && config.autoPlayScript) {
             _this.runScript(config.autoPlayScript);
         }
@@ -5338,9 +5354,6 @@ var Theater = /** @class */ (function (_super) {
     Theater.prototype.update = function (delta) {
         _super.prototype.update.call(this, delta);
         this.stageManager.loadStageIfQueued();
-        if (Debug.SHOW_MOUSE_POSITION) {
-            this.debugMousePosition.setText(St.padLeft(this.currentWorld.getWorldMouseX().toString(), 3) + " " + St.padLeft(this.currentWorld.getWorldMouseY().toString(), 3));
-        }
     };
     // Theater cannot have preRender or postRender because it doesn't have a parent world
     Theater.prototype.render = function (screen) {
@@ -5361,6 +5374,9 @@ var Theater = /** @class */ (function (_super) {
     };
     Theater.prototype.onStageLoad = function () {
         this.storyManager.onStageLoad();
+    };
+    Theater.prototype.updateDebugMousePosition = function () {
+        // Override to do nothing since we don't want to display the theater's mouse position
     };
     Theater.prototype.loadDialogBox = function (config) {
         this.dialogBox = WorldObject.fromConfig(config);
@@ -7203,6 +7219,9 @@ var Main = /** @class */ (function () {
         window.addEventListener("mousedown", function (event) { return Input.handleMouseDownEvent(event); }, false);
         window.addEventListener("mouseup", function (event) { return Input.handleMouseUpEvent(event); }, false);
         window.addEventListener("contextmenu", function (event) { return event.preventDefault(); }, false);
+        Debug.init({
+            mousePositionFont: Assets.fonts.DELUXE16,
+        });
         this.game = new Game({
             mainMenuClass: IntroMenu,
             pauseMenuClass: PauseMenu,
@@ -7228,7 +7247,6 @@ var Main = /** @class */ (function () {
                     portraitPosition: { x: 78, y: 0 },
                     advanceKey: 'advanceDialog',
                 },
-                debugMousePositionFont: Assets.fonts.DELUXE16,
             },
         });
         global.game = Main.game;

@@ -77,6 +77,10 @@ class Main {
         window.addEventListener("mouseup", event => Input.handleMouseUpEvent(event), false);
         window.addEventListener("contextmenu", event => event.preventDefault(), false);
 
+        Debug.init({
+            mousePositionFont: Assets.fonts.DELUXE16,
+        });
+
         this.game = new Game({
             mainMenuClass: IntroMenu,
             pauseMenuClass: PauseMenu,
@@ -102,7 +106,6 @@ class Main {
                     portraitPosition: { x: 78, y: 0 },
                     advanceKey: 'advanceDialog',
                 },
-                debugMousePositionFont: Assets.fonts.DELUXE16,
             },
         });
         global.game = Main.game;

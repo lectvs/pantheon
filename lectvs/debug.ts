@@ -1,4 +1,22 @@
+namespace Debug {
+    export type Config = {
+        mousePositionFont: SpriteText.Font;
+    }
+}
+
 class DebugValues {
+    init(config: Debug.Config) {
+        Debug.DEBUG = true;
+        Debug.ALL_PHYSICS_BOUNDS = false;
+        Debug.MOVE_CAMERA_WITH_ARROWS = true;
+        Debug.SHOW_MOUSE_POSITION = true;
+        Debug.MOUSE_POSITION_FONT = config.mousePositionFont;
+        Debug.SKIP_RATE = 1;
+        Debug.PROGRAMMATIC_INPUT = false;
+        Debug.AUTOPLAY = true;
+        Debug.SKIP_MAIN_MENU = true;
+    }
+
     private _DEBUG: boolean;
     get DEBUG() { return this._DEBUG; }
     set DEBUG(value: boolean) { this._DEBUG = value; }
@@ -14,6 +32,7 @@ class DebugValues {
     private _SHOW_MOUSE_POSITION: boolean;
     get SHOW_MOUSE_POSITION() { return this.DEBUG && this._SHOW_MOUSE_POSITION; }
     set SHOW_MOUSE_POSITION(value: boolean) { this._SHOW_MOUSE_POSITION = value; }
+    MOUSE_POSITION_FONT: SpriteText.Font;
 
     private _SKIP_RATE: number;
     get SKIP_RATE() { return this.DEBUG ? this._SKIP_RATE : 1; }
@@ -33,14 +52,6 @@ class DebugValues {
 }
 
 var Debug = new DebugValues();
-Debug.DEBUG = true;
-Debug.ALL_PHYSICS_BOUNDS = false;
-Debug.MOVE_CAMERA_WITH_ARROWS = true;
-Debug.SHOW_MOUSE_POSITION = true;
-Debug.SKIP_RATE = 1;
-Debug.PROGRAMMATIC_INPUT = false;
-Debug.AUTOPLAY = true;
-Debug.SKIP_MAIN_MENU = true;
 
 var debug = console.info;
 // function debug(message?: any, ...optionalParams: any[]) {

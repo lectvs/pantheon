@@ -59,10 +59,11 @@ class World {
     private screen: Texture;
     private layerTexture: Texture;
 
+    protected scriptManager: ScriptManager;
+
     private debugCameraX: number;
     private debugCameraY: number;
-
-    protected scriptManager: ScriptManager;
+    private debugMousePositionText: SpriteText;
 
     constructor(config: World.Config, defaults?: World.Config) {
         config = WorldObject.resolveConfig<World.Config>(config, defaults);
@@ -99,9 +100,20 @@ class World {
         
         this.debugCameraX = 0;
         this.debugCameraY = 0;
+
+        this.debugMousePositionText = this.addWorldObject<SpriteText>(<SpriteText.Config>{
+            constructor: SpriteText,
+            x: 0, y: 0,
+            font: Debug.MOUSE_POSITION_FONT,
+            style: { color: 0x008800 },
+            ignoreCamera: true,
+            visible: false,
+            active: false,
+        });
     }
 
     update(delta: number) {
+        this.updateDebugMousePosition();
         this.updateScriptManager(delta);
         
         for (let worldObject of this.worldObjects) {
@@ -127,6 +139,15 @@ class World {
             if (Input.isDown('debugMoveCameraDown'))  this.debugCameraY += 1;
         }
         this.camera.update(this, delta);
+    }
+
+    protected updateDebugMousePosition() {
+        this.debugMousePositionText.active = Debug.SHOW_MOUSE_POSITION;
+        this.debugMousePositionText.visible = Debug.SHOW_MOUSE_POSITION;
+
+        if (Debug.SHOW_MOUSE_POSITION) {
+            this.debugMousePositionText.setText(`${St.padLeft(this.getWorldMouseX().toString(), 3)} ${St.padLeft(this.getWorldMouseY().toString(), 3)}`);
+        }
     }
 
     protected updateScriptManager(delta: number) {
@@ -257,7 +278,7 @@ class World {
         return <T>results[0];
     }
 
-    getWorldObjectsByType<T extends WorldObject>(type: new (...args) => T) {
+    getWorldObjectsByType<T extends WorldObject>(type: new (...args: any[]) => T) {
         return <T[]>this.worldObjects.filter(obj => obj instanceof type);
     }
 

@@ -15,7 +15,6 @@ namespace Theater {
         party: Party.Config;
         dialogBox: DialogBox.Config;
         autoPlayScript?: () => IterableIterator<any>;
-        debugMousePositionFont?: SpriteText.Font;
     }
 }
 
@@ -27,8 +26,6 @@ class Theater extends World {
     stageManager: StageManager;
     interactionManager: InteractionManager;
     slideManager: SlideManager;
-
-    private debugMousePosition;
 
     get currentStageName() { return this.stageManager ? this.stageManager.currentStageName : undefined; }
     get currentWorld() { return this.stageManager ? this.stageManager.currentWorld : undefined; }
@@ -56,11 +53,6 @@ class Theater extends World {
 
         this.stageManager.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
 
-        if (Debug.SHOW_MOUSE_POSITION && config.debugMousePositionFont) {
-            this.debugMousePosition = new SpriteText({ x: 0, y: 0, font: config.debugMousePositionFont, style: { color: 0x008800 } });
-            World.Actions.addWorldObjectToWorld(this.debugMousePosition, this);
-        }
-
         if (Debug.AUTOPLAY && config.autoPlayScript) {
             this.runScript(config.autoPlayScript);
         }
@@ -70,12 +62,7 @@ class Theater extends World {
 
     update(delta: number) {
         super.update(delta);
-
         this.stageManager.loadStageIfQueued();
-
-        if (Debug.SHOW_MOUSE_POSITION) {
-            this.debugMousePosition.setText(`${St.padLeft(this.currentWorld.getWorldMouseX().toString(), 3)} ${St.padLeft(this.currentWorld.getWorldMouseY().toString(), 3)}`);
-        }
     }
 
     // Theater cannot have preRender or postRender because it doesn't have a parent world
@@ -100,6 +87,10 @@ class Theater extends World {
 
     onStageLoad() {
         this.storyManager.onStageLoad();
+    }
+
+    protected updateDebugMousePosition() {
+        // Override to do nothing since we don't want to display the theater's mouse position
     }
     
     private loadDialogBox(config: DialogBox.Config) {
