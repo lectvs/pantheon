@@ -96,14 +96,14 @@ const stages: Dict<World.Config> = {
             }),
             <Item.Config>{
                 name: 'start_log',
-                constructor: ItemGround,
+                constructor: Item,
                 type: Item.Type.LOG,
                 x: 425, y: 408,
                 layer: 'main',
                 physicsGroup: 'items',
             },
             <Item.Config>{
-                constructor: ItemGround,
+                constructor: Item,
                 type: Item.Type.AXE,
                 x: 447, y: 436,
                 angle: -90,
@@ -111,7 +111,7 @@ const stages: Dict<World.Config> = {
                 physicsGroup: 'items',
             },
             <Item.Config>{
-                constructor: ItemGround,
+                constructor: Item,
                 type: Item.Type.KEY,
                 x: 688, y: 400,
                 layer: 'main',
@@ -119,7 +119,7 @@ const stages: Dict<World.Config> = {
             },
             <Item.Config>{
                 name: 'gasoline',
-                constructor: ItemGround,
+                constructor: Item,
                 type: Item.Type.GASOLINE,
                 x: 528, y: 84,
                 layer: 'main',

@@ -398,7 +398,9 @@ class World {
     // For use with World.Actions.setName
     private internalSetNameWorld(obj: WorldObject, name: string) {
         this.removeName(obj);
-        this.worldObjectsByName[name] = obj;
+        if (!_.isEmpty(name)) {
+            this.worldObjectsByName[name] = obj;
+        }
     }
 
     // For use with World.Actions.setLayer
@@ -416,7 +418,9 @@ class World {
     // For use with World.Actions.setPhysicsGroup
     private internalSetPhysicsGroupWorld(obj: PhysicsWorldObject, physicsGroupName: string) {
         this.removeFromAllPhysicsGroups(obj);
-        this.getPhysicsGroupByName(physicsGroupName).worldObjects.push(obj);
+        if (!_.isEmpty(physicsGroupName)) {
+            this.getPhysicsGroupByName(physicsGroupName).worldObjects.push(obj);
+        }
     }
 
     // For use with World.Actions.addChildToParent
@@ -616,7 +620,7 @@ namespace World {
         export function setPhysicsGroup(obj: PhysicsWorldObject, physicsGroupName: string): string {
             if (!obj) return undefined;
 
-            if (obj.world && !obj.world.getPhysicsGroupByName(physicsGroupName)) {
+            if (obj.world && !_.isEmpty(physicsGroupName) && !obj.world.getPhysicsGroupByName(physicsGroupName)) {
                 debug(`Cannot set physicsGroup on object '${obj.name}' as no physicsGroup named ${physicsGroupName} exists in world!`, obj.world);
                 return obj.physicsGroup;
             }

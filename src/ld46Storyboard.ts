@@ -12,7 +12,7 @@ namespace S { export const storyboard: Storyboard = {
 
             let player = global.world.getWorldObjectByType(Player);
             let campfire = global.world.getWorldObjectByType(Campfire);
-            let startLog = global.world.getWorldObjectByName<ItemGround>('start_log');
+            let startLog = global.world.getWorldObjectByName<Item>('start_log');
             global.world.camera.setModeFocus(campfire.x, campfire.y);
             
             if (!SKIP) {

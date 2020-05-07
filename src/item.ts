@@ -2,18 +2,9 @@ namespace Item {
     export type Config = Sprite.Config & {
         type: Item.Type;
     };
-
-    export enum Type {
-        LOG = 'log',
-        AXE = 'axe',
-        MONSTERAXE = 'monsteraxe',
-        KEY = 'key',
-        TORCH = 'torch',
-        GASOLINE = 'gasoline',
-    }
 }
 
-class ItemGround extends Sprite {
+class Item extends Sprite {
     type: Item.Type;
 
     beingConsumed: boolean;
@@ -23,9 +14,23 @@ class ItemGround extends Sprite {
     private friction: number = 20000;
     private zGravity: number = 100;
 
+    get usable() {
+        return this.type !== Item.Type.KEY && this.type !== Item.Type.GASOLINE;
+    }
+
+    get cutsTrees() {
+        return this.type === Item.Type.AXE || this.type === Item.Type.MONSTERAXE;
+    }
+
+    get hurtsMonster() {
+        return this.type === Item.Type.AXE || this.type === Item.Type.MONSTERAXE || this.type === Item.Type.LOG;
+    }
+
     get consumable() {
         return this.type === Item.Type.LOG || this.type === Item.Type.GASOLINE;
     }
+
+    get held() { return !!this.parent; }
 
     constructor(config: Item.Config) {
         super(config, {
@@ -39,7 +44,10 @@ class ItemGround extends Sprite {
     }
 
     update(delta: number) {
-        this.updateMovement(delta);
+        if (!this.held) {
+            this.updateMovement(delta);
+        }
+
         super.update(delta);
 
         if (this.type === Item.Type.TORCH) {
@@ -67,63 +75,16 @@ class ItemGround extends Sprite {
             }
         }
     }
-
-    asHandItem(x: number, y: number, layer: string) {
-        let handItem = WorldObject.fromConfig<ItemHand>(<Item.Config>{
-            constructor: ItemHand,
-            layer: layer,
-            offset: { x: x, y: y },
-            type: this.type,
-        });
-
-
-        handItem.addChildren(this.children.map(child => child.removeFromWorld()));
-
-        return handItem;
-    }
 }
 
-class ItemHand extends Sprite {
-    type: Item.Type;
-
-    get usable() {
-        return this.type !== Item.Type.KEY;
-    }
-
-    get cutsTrees() {
-        return this.type === Item.Type.AXE || this.type === Item.Type.MONSTERAXE;
-    }
-
-    get hurtsMonster() {
-        return this.type === Item.Type.AXE || this.type === Item.Type.MONSTERAXE || this.type === Item.Type.LOG;
-    }
-
-    constructor(config: Item.Config) {
-        super(config, {
-            texture: config.type,
-        });
-        this.type = config.type;
-    }
-
-    update(delta: number) {
-        super.update(delta);
-        if (this.type === Item.Type.TORCH) {
-            Item.updateTorchFireSprite(this);
-        }
-    }
-
-    asGroundItem(x: number, y: number, layer: string, physicsGroup: string) {
-        let groundItem = WorldObject.fromConfig<ItemGround>(<Item.Config>{
-            constructor: ItemGround,
-            x: x, y: y,
-            layer: layer,
-            physicsGroup: physicsGroup,
-            type: this.type,
-        });
-
-        groundItem.addChildren(this.children.map(child => child.removeFromWorld()));
-
-        return groundItem;
+namespace Item {
+    export enum Type {
+        LOG = 'log',
+        AXE = 'axe',
+        MONSTERAXE = 'monsteraxe',
+        KEY = 'key',
+        TORCH = 'torch',
+        GASOLINE = 'gasoline',
     }
 }
 

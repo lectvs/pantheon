@@ -3205,7 +3205,9 @@ var World = /** @class */ (function () {
     // For use with World.Actions.setName
     World.prototype.internalSetNameWorld = function (obj, name) {
         this.removeName(obj);
-        this.worldObjectsByName[name] = obj;
+        if (!_.isEmpty(name)) {
+            this.worldObjectsByName[name] = obj;
+        }
     };
     // For use with World.Actions.setLayer
     World.prototype.internalSetLayerWorld = function (obj, layerName) {
@@ -3231,7 +3233,9 @@ var World = /** @class */ (function () {
     // For use with World.Actions.setPhysicsGroup
     World.prototype.internalSetPhysicsGroupWorld = function (obj, physicsGroupName) {
         this.removeFromAllPhysicsGroups(obj);
-        this.getPhysicsGroupByName(physicsGroupName).worldObjects.push(obj);
+        if (!_.isEmpty(physicsGroupName)) {
+            this.getPhysicsGroupByName(physicsGroupName).worldObjects.push(obj);
+        }
     };
     // For use with World.Actions.addChildToParent
     World.prototype.internalAddChildToParentWorld = function (child, obj) {
@@ -3436,7 +3440,7 @@ var World = /** @class */ (function () {
         function setPhysicsGroup(obj, physicsGroupName) {
             if (!obj)
                 return undefined;
-            if (obj.world && !obj.world.getPhysicsGroupByName(physicsGroupName)) {
+            if (obj.world && !_.isEmpty(physicsGroupName) && !obj.world.getPhysicsGroupByName(physicsGroupName)) {
                 debug("Cannot set physicsGroup on object '" + obj.name + "' as no physicsGroup named " + physicsGroupName + " exists in world!", obj.world);
                 return obj.physicsGroup;
             }
@@ -5666,9 +5670,9 @@ var Warp = /** @class */ (function (_super) {
     __extends(Warp, _super);
     function Warp(config) {
         var _this = _super.call(this, config) || this;
-        _this.stage = config.data.stage;
-        _this.entryPoint = config.data.entryPoint;
-        _this.transition = O.getOrDefault(config.data.transition, Transition.INSTANT);
+        _this.stage = _this.data.stage;
+        _this.entryPoint = _this.data.entryPoint;
+        _this.transition = O.getOrDefault(_this.data.transition, Transition.INSTANT);
         return _this;
     }
     Warp.prototype.warp = function () {
@@ -6438,7 +6442,7 @@ var Campfire = /** @class */ (function (_super) {
         var _this = _super.call(this, config, {
             texture: 'campfire',
         }) || this;
-        _this.logConsumptionRadius = 16;
+        _this.logConsumptionRadius = 20;
         _this.fireSprite = _this.addChild({
             name: 'fire',
             parent: fireSpriteConfig(),
@@ -6486,13 +6490,13 @@ var Campfire = /** @class */ (function (_super) {
     };
     Campfire.prototype.consumeItems = function () {
         var e_40, _a;
-        var items = this.world.getWorldObjectsByType(ItemGround).filter(function (item) { return item.consumable; });
+        var items = this.world.getWorldObjectsByType(Item).filter(function (item) { return item.consumable && !item.held; });
         try {
             for (var items_1 = __values(items), items_1_1 = items_1.next(); !items_1_1.done; items_1_1 = items_1.next()) {
                 var item = items_1_1.value;
                 if (_.contains(this.currentlyConsumedItems, item))
                     continue;
-                if (item.offset.y < -4)
+                if (item.offset.y < -5)
                     continue;
                 if (M.distance(item.x, item.y, this.x, this.y) > this.logConsumptionRadius)
                     continue;
@@ -6527,7 +6531,10 @@ var Campfire = /** @class */ (function (_super) {
             A.removeAll(_this.currentlyConsumedItems, item);
             if (!_this.hasConsumedGasoline) {
                 _this.fireRadius.increaseTime();
-                _this.fireBuffer.increaseBuffer();
+                if (item.name !== 'start_log') {
+                    // Don't increase the buffer for the first log (helps make the intro cutscene look good)
+                    _this.fireBuffer.increaseBuffer();
+                }
             }
         })));
     };
@@ -6543,7 +6550,7 @@ var Door = /** @class */ (function (_super) {
         }) || this;
     }
     Door.prototype.onCollide = function (other) {
-        if (other instanceof ItemGround && other.type === Item.Type.KEY) {
+        if (other instanceof Item && other.type === Item.Type.KEY) {
             World.Actions.removeWorldObjectFromWorld(this);
             World.Actions.removeWorldObjectFromWorld(other);
         }
@@ -6745,8 +6752,10 @@ var Human = /** @class */ (function (_super) {
         var overlappingItemDistance = Infinity;
         var overlappingItem = undefined;
         try {
-            for (var _b = __values(this.world.getWorldObjectsByType(ItemGround)), _c = _b.next(); !_c.done; _c = _b.next()) {
+            for (var _b = __values(this.world.getWorldObjectsByType(Item)), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var item = _c.value;
+                if (item.held)
+                    continue;
                 var distance = M.distance(this.x, this.y, item.x, item.y);
                 if (distance < this.itemGrabDistance && distance < overlappingItemDistance && !item.beingConsumed) {
                     overlappingItem = item;
@@ -6790,21 +6799,27 @@ var Human = /** @class */ (function (_super) {
     Human.prototype.pickupItem = function (item) {
         if (!item)
             return;
-        this.heldItem = item.asHandItem(0, -Human.itemOffsetY, this.layer);
-        this.addChild(this.heldItem);
-        item.removeFromWorld();
-        World.Actions.setName(this.heldItem, item.name);
+        this.heldItem = this.addChild(item);
+        this.heldItem.localx = 0;
+        this.heldItem.localy = 0;
+        this.heldItem.vx = 0;
+        this.heldItem.vy = 0;
+        this.heldItem.angle = 0;
+        this.heldItem.offset.x = 0;
+        this.heldItem.offset.y = -Human.itemOffsetY;
+        World.Actions.setPhysicsGroup(this.heldItem, null);
     };
     Human.prototype.dropHeldItem = function () {
         if (!this.heldItem)
             return;
-        var droppedItem = this.heldItem.asGroundItem(this.x, this.y, this.layer, 'items');
+        var droppedItem = this.removeChild(this.heldItem);
+        droppedItem.x = this.x;
+        droppedItem.y = this.y;
+        droppedItem.offset.x = 0;
+        droppedItem.offset.y = 0;
         droppedItem.flipX = this.heldItem.flipX;
-        var heldItemName = this.heldItem.name;
-        this.heldItem.removeFromWorld();
+        World.Actions.setPhysicsGroup(droppedItem, 'items');
         this.heldItem = null;
-        this.world.addWorldObject(droppedItem);
-        World.Actions.setName(droppedItem, heldItemName);
         if (this.getCurrentAnimationName() === 'hurt') {
             // toss randomly
             droppedItem.offset.x = 0;
@@ -6849,21 +6864,9 @@ var Human = /** @class */ (function (_super) {
     Human.itemFullSwingOffsetX = 10;
     return Human;
 }(Sprite));
-var Item;
-(function (Item) {
-    var Type;
-    (function (Type) {
-        Type["LOG"] = "log";
-        Type["AXE"] = "axe";
-        Type["MONSTERAXE"] = "monsteraxe";
-        Type["KEY"] = "key";
-        Type["TORCH"] = "torch";
-        Type["GASOLINE"] = "gasoline";
-    })(Type = Item.Type || (Item.Type = {}));
-})(Item || (Item = {}));
-var ItemGround = /** @class */ (function (_super) {
-    __extends(ItemGround, _super);
-    function ItemGround(config) {
+var Item = /** @class */ (function (_super) {
+    __extends(Item, _super);
+    function Item(config) {
         var _this = _super.call(this, config, {
             texture: config.type,
             bounds: { x: 0, y: 0, width: 0, height: 0 },
@@ -6876,21 +6879,49 @@ var ItemGround = /** @class */ (function (_super) {
         _this.beingConsumed = false;
         return _this;
     }
-    Object.defineProperty(ItemGround.prototype, "consumable", {
+    Object.defineProperty(Item.prototype, "usable", {
+        get: function () {
+            return this.type !== Item.Type.KEY && this.type !== Item.Type.GASOLINE;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Item.prototype, "cutsTrees", {
+        get: function () {
+            return this.type === Item.Type.AXE || this.type === Item.Type.MONSTERAXE;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Item.prototype, "hurtsMonster", {
+        get: function () {
+            return this.type === Item.Type.AXE || this.type === Item.Type.MONSTERAXE || this.type === Item.Type.LOG;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Item.prototype, "consumable", {
         get: function () {
             return this.type === Item.Type.LOG || this.type === Item.Type.GASOLINE;
         },
         enumerable: true,
         configurable: true
     });
-    ItemGround.prototype.update = function (delta) {
-        this.updateMovement(delta);
+    Object.defineProperty(Item.prototype, "held", {
+        get: function () { return !!this.parent; },
+        enumerable: true,
+        configurable: true
+    });
+    Item.prototype.update = function (delta) {
+        if (!this.held) {
+            this.updateMovement(delta);
+        }
         _super.prototype.update.call(this, delta);
         if (this.type === Item.Type.TORCH) {
             Item.updateTorchFireSprite(this);
         }
     };
-    ItemGround.prototype.updateMovement = function (delta) {
+    Item.prototype.updateMovement = function (delta) {
         this.offset.y = Math.min(0, this.offset.y + this.vz * delta);
         this.vz += this.zGravity * delta;
         if (this.offset.y == 0) {
@@ -6909,67 +6940,19 @@ var ItemGround = /** @class */ (function (_super) {
             }
         }
     };
-    ItemGround.prototype.asHandItem = function (x, y, layer) {
-        var handItem = WorldObject.fromConfig({
-            constructor: ItemHand,
-            layer: layer,
-            offset: { x: x, y: y },
-            type: this.type,
-        });
-        handItem.addChildren(this.children.map(function (child) { return child.removeFromWorld(); }));
-        return handItem;
-    };
-    return ItemGround;
+    return Item;
 }(Sprite));
-var ItemHand = /** @class */ (function (_super) {
-    __extends(ItemHand, _super);
-    function ItemHand(config) {
-        var _this = _super.call(this, config, {
-            texture: config.type,
-        }) || this;
-        _this.type = config.type;
-        return _this;
-    }
-    Object.defineProperty(ItemHand.prototype, "usable", {
-        get: function () {
-            return this.type !== Item.Type.KEY;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ItemHand.prototype, "cutsTrees", {
-        get: function () {
-            return this.type === Item.Type.AXE || this.type === Item.Type.MONSTERAXE;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ItemHand.prototype, "hurtsMonster", {
-        get: function () {
-            return this.type === Item.Type.AXE || this.type === Item.Type.MONSTERAXE || this.type === Item.Type.LOG;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    ItemHand.prototype.update = function (delta) {
-        _super.prototype.update.call(this, delta);
-        if (this.type === Item.Type.TORCH) {
-            Item.updateTorchFireSprite(this);
-        }
-    };
-    ItemHand.prototype.asGroundItem = function (x, y, layer, physicsGroup) {
-        var groundItem = WorldObject.fromConfig({
-            constructor: ItemGround,
-            x: x, y: y,
-            layer: layer,
-            physicsGroup: physicsGroup,
-            type: this.type,
-        });
-        groundItem.addChildren(this.children.map(function (child) { return child.removeFromWorld(); }));
-        return groundItem;
-    };
-    return ItemHand;
-}(Sprite));
+(function (Item) {
+    var Type;
+    (function (Type) {
+        Type["LOG"] = "log";
+        Type["AXE"] = "axe";
+        Type["MONSTERAXE"] = "monsteraxe";
+        Type["KEY"] = "key";
+        Type["TORCH"] = "torch";
+        Type["GASOLINE"] = "gasoline";
+    })(Type = Item.Type || (Item.Type = {}));
+})(Item || (Item = {}));
 var ItemName = /** @class */ (function (_super) {
     __extends(ItemName, _super);
     function ItemName(config) {
@@ -7002,13 +6985,15 @@ var IntroMenu = /** @class */ (function (_super) {
     function IntroMenu(menuSystem) {
         var _this = _super.call(this, menuSystem, {
             backgroundColor: 0x000000,
-        }, [
-            new SpriteText({
-                name: 'introtext',
-                x: 20, y: 80, text: "- a game by hayden mccraw -",
-                font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-            }),
-        ]) || this;
+            worldObjects: [
+                {
+                    constructor: SpriteText,
+                    name: 'introtext',
+                    x: 20, y: 80, text: "- a game by hayden mccraw -",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                },
+            ]
+        }) || this;
         var introtext = _this.getWorldObjectByName('introtext');
         introtext.x = Main.width / 2 - introtext.getTextWidth() / 2;
         introtext.y = Main.height / 2 - introtext.getTextHeight() / 2;
@@ -7026,22 +7011,26 @@ var MainMenu = /** @class */ (function (_super) {
     function MainMenu(menuSystem) {
         return _super.call(this, menuSystem, {
             backgroundColor: 0x000000,
-        }, [
-            new SpriteText({
-                x: 20, y: 20, text: "- a night in the dark -",
-                font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-            }),
-            new MenuTextButton({
-                x: 20, y: 50, text: "start game",
-                font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                onClick: function () { return menuSystem.game.startGame(); },
-            }),
-            new MenuTextButton({
-                x: 20, y: 68, text: "controls",
-                font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                onClick: function () { return menuSystem.loadMenu(ControlsMenu); },
-            }),
-        ]) || this;
+            worldObjects: [
+                {
+                    constructor: SpriteText,
+                    x: 20, y: 20, text: "- a night in the dark -",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                },
+                {
+                    constructor: MenuTextButton,
+                    x: 20, y: 50, text: "start game",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                    onClick: function () { return menuSystem.game.startGame(); },
+                },
+                {
+                    constructor: MenuTextButton,
+                    x: 20, y: 68, text: "controls",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                    onClick: function () { return menuSystem.loadMenu(ControlsMenu); },
+                },
+            ]
+        }) || this;
     }
     return MainMenu;
 }(Menu));
@@ -7050,66 +7039,76 @@ var ControlsMenu = /** @class */ (function (_super) {
     function ControlsMenu(menuSystem) {
         var _this = _super.call(this, menuSystem, {
             backgroundColor: 0x000000,
-            physicsGroups: { 'items': {} }
-        }, [
-            new SpriteText({
-                x: 20, y: 15, text: "controls",
-                font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-            }),
-            new SpriteText({
-                x: 20, y: 42, text: "arrows <^> - move\n\n" +
-                    "c - pickup\n" +
-                    "    drop\n" +
-                    "    throw\n\n" +
-                    "x - attack",
-                font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-            }),
-            new Player({
-                name: 'player_move',
-                x: 180, y: 53,
-                effects: { outline: { color: 0xFFFFFF } }
-            }),
-            new Player({
-                name: 'player_pickup',
-                x: 140, y: 90,
-                effects: { outline: { color: 0xFFFFFF } }
-            }),
-            new ItemGround({
-                name: 'log',
-                x: 140, y: 90,
-                type: Item.Type.LOG,
-            }),
-            new Player({
-                name: 'player_attack',
-                x: 140, y: 154,
-                effects: { outline: { color: 0xFFFFFF } }
-            }),
-            new ItemGround({
-                name: 'axe',
-                x: 140, y: 156,
-                type: Item.Type.AXE,
-                effects: { outline: { color: 0xFFFFFF } }
-            }),
-            new Tree({
-                name: 'tree',
-                x: 160, y: 156,
-                effects: { outline: { color: 0xFFFFFF } }
-            }),
-            new MenuTextButton({
-                x: 20, y: 160, text: "back",
-                font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                onClick: function () { return menuSystem.back(); },
-            }),
-        ]) || this;
+            physicsGroups: { 'items': {} },
+            worldObjects: [
+                {
+                    constructor: SpriteText,
+                    x: 20, y: 15, text: "controls",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                },
+                {
+                    constructor: SpriteText,
+                    x: 20, y: 42, text: "arrows <^> - move\n\n" +
+                        "c - pickup\n" +
+                        "    drop\n" +
+                        "    throw\n\n" +
+                        "x - attack",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                },
+                {
+                    constructor: Player,
+                    name: 'player_move',
+                    x: 180, y: 53,
+                    effects: { outline: { color: 0xFFFFFF } }
+                },
+                {
+                    constructor: Player,
+                    name: 'player_pickup',
+                    x: 140, y: 90,
+                    effects: { outline: { color: 0xFFFFFF } }
+                },
+                {
+                    constructor: Item,
+                    name: 'log',
+                    x: 140, y: 90,
+                    type: Item.Type.LOG,
+                },
+                {
+                    constructor: Player,
+                    name: 'player_attack',
+                    x: 140, y: 154,
+                    effects: { outline: { color: 0xFFFFFF } }
+                },
+                {
+                    constructor: Item,
+                    name: 'axe',
+                    x: 140, y: 156,
+                    type: Item.Type.AXE,
+                    effects: { outline: { color: 0xFFFFFF } }
+                },
+                {
+                    constructor: Tree,
+                    name: 'tree',
+                    x: 160, y: 156,
+                    effects: { outline: { color: 0xFFFFFF } }
+                },
+                {
+                    constructor: MenuTextButton,
+                    x: 20, y: 160, text: "back",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                    onClick: function () { return menuSystem.back(); },
+                },
+            ]
+        }) || this;
         var player_move = _this.getWorldObjectByName('player_move');
-        //player_move.test = true;
+        player_move.test = true;
         var player_pickup = _this.getWorldObjectByName('player_pickup');
-        //player_pickup.test = true;
+        player_pickup.test = true;
         var player_attack = _this.getWorldObjectByName('player_attack');
-        //player_attack.test = true;
+        player_attack.test = true;
         var tree = _this.getWorldObjectByName('tree');
         tree.setTexture('blacktree');
-        _this.runScript(S.simul(S.loopFor(Infinity, S.chain(S.doOverTime(0.8, function (t) { player_move.controller.right = true; }), S.doOverTime(0.8, function (t) { player_move.controller.left = true; }))), S.loopFor(Infinity, S.chain(S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.simul(S.doOverTime(1.5, function (t) { player_pickup.controller.right = true; }), S.chain(S.wait(0.2), S.call(function () { player_pickup.controller.pickupDropItem = true; }))), S.call(function () { player_pickup.flipX = true; }), S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.simul(S.doOverTime(1.5, function (t) { player_pickup.controller.left = true; }), S.chain(S.wait(0.2), S.call(function () { player_pickup.controller.pickupDropItem = true; }))), S.call(function () { player_pickup.flipX = false; }))), S.loopFor(Infinity, S.chain(S.call(function () {
+        _this.runScript(S.simul(S.loopFor(Infinity, S.chain(S.doOverTime(0.8, function (t) { player_move.controller.right = true; }), S.doOverTime(0.8, function (t) { player_move.controller.left = true; }))), S.loopFor(Infinity, S.chain(S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.simul(S.doOverTime(1.5, function (t) { player_pickup.controller.right = true; }), S.chain(S.wait(0.2), S.call(function () { player_pickup.controller.pickupDropItem = true; }))), S.yield(), S.call(function () { player_pickup.flipX = true; }), S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.simul(S.doOverTime(1.5, function (t) { player_pickup.controller.left = true; }), S.chain(S.wait(0.2), S.call(function () { player_pickup.controller.pickupDropItem = true; }))), S.yield(), S.call(function () { player_pickup.flipX = false; }))), S.loopFor(Infinity, S.chain(S.call(function () {
             var log = _this.getWorldObjectByName('log');
             log.effects.outline.enabled = true;
             log.effects.outline.color = 0xFFFFFF;
@@ -7117,7 +7116,7 @@ var ControlsMenu = /** @class */ (function (_super) {
             var axe = _this.getWorldObjectByName('axe');
             axe.effects.outline.enabled = true;
             axe.effects.outline.color = 0xFFFFFF;
-        }), S.wait(0.01))), S.chain(S.call(function () { player_attack.controller.pickupDropItem = true; }), S.loopFor(Infinity, S.chain(S.wait(0.5), S.call(function () { player_attack.controller.useItem = true; }), S.call(function () { tree.hp = 3; }))))));
+        }), S.wait(0.01))), S.chain(S.call(function () { player_attack.controller.pickupDropItem = true; }), S.loopFor(Infinity, S.chain(S.wait(0.5), S.call(function () { player_attack.controller.useItem = true; }), S.call(function () { tree.heal(); }))))));
         return _this;
     }
     return ControlsMenu;
@@ -7127,17 +7126,20 @@ var PauseMenu = /** @class */ (function (_super) {
     function PauseMenu(menuSystem) {
         return _super.call(this, menuSystem, {
             backgroundColor: 0x000000,
-        }, [
-            new SpriteText({
-                x: 20, y: 20, text: "- paused -",
-                font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-            }),
-            new MenuTextButton({
-                x: 20, y: 50, text: "resume",
-                font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                onClick: function () { return menuSystem.game.unpauseGame(); },
-            }),
-        ]) || this;
+            worldObjects: [
+                {
+                    constructor: SpriteText,
+                    x: 20, y: 20, text: "- paused -",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                },
+                {
+                    constructor: MenuTextButton,
+                    x: 20, y: 50, text: "resume",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                    onClick: function () { return menuSystem.game.unpauseGame(); },
+                }
+            ]
+        }) || this;
     }
     return PauseMenu;
 }(Menu));
@@ -7308,9 +7310,9 @@ var Monster = /** @class */ (function (_super) {
         }) || this;
         _this.attackdx = 0;
         _this.attackdy = 0;
-        _this.pickupItem(new ItemGround({
+        _this.pickupItem(new Item({
             name: 'monsteraxe',
-            constructor: ItemGround,
+            constructor: Item,
             type: Item.Type.AXE,
             layer: _this.layer,
         }));
@@ -7329,7 +7331,8 @@ var Monster = /** @class */ (function (_super) {
     Monster.prototype.update = function (delta) {
         var player = this.world.getWorldObjectByType(Player);
         var axe = this.getClosestAxe();
-        this.setControllerInput(this.heldItem ? player : axe);
+        var target = this.heldItem ? player : axe;
+        this.setControllerInput(target);
         _super.prototype.update.call(this, delta);
         this.handlePickup();
         this.setAttackD(player);
@@ -7337,7 +7340,7 @@ var Monster = /** @class */ (function (_super) {
     };
     Monster.prototype.getClosestAxe = function () {
         var _this = this;
-        var axes = this.world.getWorldObjectsByType(ItemGround).filter(function (item) { return item.type === Item.Type.AXE; });
+        var axes = this.world.getWorldObjectsByType(Item).filter(function (item) { return item.type === Item.Type.AXE; });
         return M.argmin(axes, function (axe) { return M.distance(_this.x, _this.y, axe.x, axe.y); });
     };
     Monster.prototype.handleAttacking = function (target) {
@@ -7456,7 +7459,7 @@ var Player = /** @class */ (function (_super) {
     Player.prototype.updateItemOutlines = function () {
         var overlappingItem = this.getOverlappingItem();
         if (!this.test) {
-            this.world.getWorldObjectsByType(ItemGround).map(function (item) { return item.effects.outline.enabled = false; });
+            this.world.getWorldObjectsByType(Item).map(function (item) { return item.effects.outline.enabled = false; });
         }
         if (overlappingItem) {
             overlappingItem.effects.outline.color = 0xFFFF00;
@@ -7598,35 +7601,43 @@ var Tree = /** @class */ (function (_super) {
             flipX: Random.boolean(),
             bounds: { x: -4, y: -2, width: 8, height: 3 },
         }) || this;
-        _this.hp = 3;
-        _this.spawnsTorch = O.getOrDefault(config.data.spawnsTorch, false);
-        return _this;
-    }
-    Tree.prototype.hit = function () {
-        var _this = this;
-        if (this.hp <= 0)
-            return;
-        if (this.hitScript) {
-            this.hitScript.done = true;
-        }
-        this.hp--;
-        if (this.hp > 0) {
-            this.hitScript = this.runScript(S.doOverTime(0.5, function (t) { _this.angle = 30 * Math.exp(5 * -t) * Math.cos(5 * t); }));
-        }
-        else {
-            this.hitScript = this.runScript(S.chain(S.doOverTime(0.5, function (t) { _this.angle = 30 * Math.exp(5 * -t) * Math.cos(5 * t); }), S.call(function () {
+        _this.maxhp = 3;
+        _this.stateMachine.addState('normal', {});
+        _this.stateMachine.addState('hurt', {
+            script: S.doOverTime(0.5, function (t) { _this.angle = 30 * Math.exp(5 * -t) * Math.cos(5 * t); }),
+            transitions: [{ type: 'instant', toState: 'normal' }]
+        });
+        _this.stateMachine.addState('die', {
+            script: S.chain(S.doOverTime(0.5, function (t) { _this.angle = 30 * Math.exp(5 * -t) * Math.cos(5 * t); }), S.call(function () {
                 _this.colliding = false;
             }), S.doOverTime(1, function (t) { _this.angle = 90 * (t + t * t) / 2; }), S.call(function () {
                 _this.spawnLog();
                 if (_this.spawnsTorch)
                     _this.spawnTorch();
                 _this.kill();
-            })));
+            }))
+        });
+        _this.hp = _this.maxhp;
+        _this.spawnsTorch = O.getOrDefault(_this.data.spawnsTorch, false);
+        return _this;
+    }
+    Tree.prototype.hit = function () {
+        if (this.state === 'die')
+            return;
+        this.hp--;
+        if (this.hp > 0) {
+            this.setState('hurt');
         }
+        else {
+            this.setState('die');
+        }
+    };
+    Tree.prototype.heal = function () {
+        this.hp = this.maxhp;
     };
     Tree.prototype.spawnLog = function () {
         this.world.addWorldObject({
-            constructor: ItemGround,
+            constructor: Item,
             x: this.x + 16, y: this.y,
             layer: 'main',
             offset: { x: 0, y: -8 },
@@ -7637,7 +7648,7 @@ var Tree = /** @class */ (function (_super) {
     Tree.prototype.spawnTorch = function () {
         this.world.addWorldObject({
             name: 'torch',
-            constructor: ItemGround,
+            constructor: Item,
             x: this.x, y: this.y,
             layer: 'main',
             offset: { x: 0, y: -12 },
@@ -7748,14 +7759,14 @@ var stages = {
         }); }), [
             {
                 name: 'start_log',
-                constructor: ItemGround,
+                constructor: Item,
                 type: Item.Type.LOG,
                 x: 425, y: 408,
                 layer: 'main',
                 physicsGroup: 'items',
             },
             {
-                constructor: ItemGround,
+                constructor: Item,
                 type: Item.Type.AXE,
                 x: 447, y: 436,
                 angle: -90,
@@ -7763,7 +7774,7 @@ var stages = {
                 physicsGroup: 'items',
             },
             {
-                constructor: ItemGround,
+                constructor: Item,
                 type: Item.Type.KEY,
                 x: 688, y: 400,
                 layer: 'main',
@@ -7771,7 +7782,7 @@ var stages = {
             },
             {
                 name: 'gasoline',
-                constructor: ItemGround,
+                constructor: Item,
                 type: Item.Type.GASOLINE,
                 x: 528, y: 84,
                 layer: 'main',

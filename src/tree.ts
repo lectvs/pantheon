@@ -1,7 +1,8 @@
 class Tree extends Sprite {
+    private readonly maxhp = 3;
+
     private spawnsTorch: boolean;
-    private hitScript: Script;
-    hp: number;
+    private hp: number;
 
     constructor(config: Sprite.Config) {
         super(config, {
@@ -9,22 +10,14 @@ class Tree extends Sprite {
             flipX: Random.boolean(),
             bounds: { x: -4, y: -2, width: 8, height: 3 },
         });
-        this.hp = 3;
-        this.spawnsTorch = O.getOrDefault(config.data.spawnsTorch, false);
-    }
 
-    hit() {
-        if (this.hp <= 0) return;
-
-        if (this.hitScript) {
-            this.hitScript.done = true;
-        }
-
-        this.hp--;
-        if (this.hp > 0) {
-            this.hitScript = this.runScript(S.doOverTime(0.5, t => { this.angle = 30*Math.exp(5*-t)*Math.cos(5*t); }));
-        } else {
-            this.hitScript = this.runScript(S.chain(
+        this.stateMachine.addState('normal', {});
+        this.stateMachine.addState('hurt', {
+            script: S.doOverTime(0.5, t => { this.angle = 30*Math.exp(5*-t)*Math.cos(5*t); }),
+            transitions: [{ type: 'instant', toState: 'normal' }]
+        });
+        this.stateMachine.addState('die', {
+            script: S.chain(
                 S.doOverTime(0.5, t => { this.angle = 30*Math.exp(5*-t)*Math.cos(5*t); }),
                 S.call(() => {
                     this.colliding = false;
@@ -35,13 +28,31 @@ class Tree extends Sprite {
                     if (this.spawnsTorch) this.spawnTorch();
                     this.kill();
                 })
-            ));
+            )
+        });
+
+        this.hp = this.maxhp;
+        this.spawnsTorch = O.getOrDefault(this.data.spawnsTorch, false);
+    }
+
+    hit() {
+        if (this.state === 'die') return;
+
+        this.hp--;
+        if (this.hp > 0) {
+            this.setState('hurt');
+        } else {
+            this.setState('die');
         }
+    }
+
+    heal() {
+        this.hp = this.maxhp;
     }
 
     private spawnLog() {
         this.world.addWorldObject(<Item.Config>{
-            constructor: ItemGround,
+            constructor: Item,
             x: this.x + 16, y: this.y,
             layer: 'main',
             offset: { x: 0, y: -8 },
@@ -53,7 +64,7 @@ class Tree extends Sprite {
     private spawnTorch() {
         this.world.addWorldObject(<Item.Config>{
             name: 'torch',
-            constructor: ItemGround,
+            constructor: Item,
             x: this.x, y: this.y,
             layer: 'main',
             offset: { x: 0, y: -12 },

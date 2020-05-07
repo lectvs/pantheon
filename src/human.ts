@@ -19,7 +19,7 @@ class Human extends Sprite {
     private itemGrabDistance: number;
     private direction: Direction2D;
 
-    protected heldItem: ItemHand;
+    protected heldItem: Item;
     get moving() { return Math.abs(this.vx) > 1 || Math.abs(this.vy) > 1;}
     get immobile() { return this.state === 'hurt'; }
 
@@ -152,8 +152,9 @@ class Human extends Sprite {
 
     protected getOverlappingItem() {
         let overlappingItemDistance = Infinity;
-        let overlappingItem: ItemGround = undefined;
-        for (let item of this.world.getWorldObjectsByType(ItemGround)) {
+        let overlappingItem: Item = undefined;
+        for (let item of this.world.getWorldObjectsByType(Item)) {
+            if (item.held) continue;
             let distance = M.distance(this.x, this.y, item.x, item.y);
             if (distance < this.itemGrabDistance && distance < overlappingItemDistance && !item.beingConsumed) {
                 overlappingItem = item;
@@ -185,23 +186,29 @@ class Human extends Sprite {
         this.swingItem();
     }
 
-    protected pickupItem(item: ItemGround) {
+    protected pickupItem(item: Item) {
         if (!item) return;
-        this.heldItem = item.asHandItem(0, -Human.itemOffsetY, this.layer);
-        this.addChild(this.heldItem);
-        item.removeFromWorld();
-        World.Actions.setName(this.heldItem, item.name);
+        this.heldItem = this.addChild(item);
+        this.heldItem.localx = 0;
+        this.heldItem.localy = 0;
+        this.heldItem.vx = 0;
+        this.heldItem.vy = 0;
+        this.heldItem.angle = 0;
+        this.heldItem.offset.x = 0;
+        this.heldItem.offset.y = -Human.itemOffsetY;
+        World.Actions.setPhysicsGroup(this.heldItem, null);
     }
 
     private dropHeldItem() {
         if (!this.heldItem) return;
-        let droppedItem = this.heldItem.asGroundItem(this.x, this.y, this.layer, 'items');
+        let droppedItem = this.removeChild(this.heldItem);
+        droppedItem.x = this.x;
+        droppedItem.y = this.y;
+        droppedItem.offset.x = 0;
+        droppedItem.offset.y = 0;
         droppedItem.flipX = this.heldItem.flipX;
-        let heldItemName = this.heldItem.name;
-        this.heldItem.removeFromWorld();
+        World.Actions.setPhysicsGroup(droppedItem, 'items');
         this.heldItem = null;
-        this.world.addWorldObject(droppedItem);
-        World.Actions.setName(droppedItem, heldItemName);
 
         if (this.getCurrentAnimationName() === 'hurt') {
             // toss randomly

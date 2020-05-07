@@ -32,9 +32,9 @@ class Monster extends Human {
         this.attackdx = 0;
         this.attackdy = 0;
 
-        this.pickupItem(new ItemGround(<Item.Config>{
+        this.pickupItem(new Item(<Item.Config>{
             name: 'monsteraxe',
-            constructor: ItemGround,
+            constructor: Item,
             type: Item.Type.AXE,
             layer: this.layer,
         }));
@@ -44,7 +44,9 @@ class Monster extends Human {
         let player = this.world.getWorldObjectByType(Player);
         let axe = this.getClosestAxe();
 
-        this.setControllerInput(this.heldItem ? player : axe);
+        let target = this.heldItem ? player : axe;
+        this.setControllerInput(target);
+
         super.update(delta);
 
         this.handlePickup();
@@ -53,7 +55,7 @@ class Monster extends Human {
     }
 
     private getClosestAxe() {
-        let axes = this.world.getWorldObjectsByType(ItemGround).filter(item => item.type === Item.Type.AXE);
+        let axes = this.world.getWorldObjectsByType(Item).filter(item => item.type === Item.Type.AXE);
         return M.argmin(axes, axe => M.distance(this.x, this.y, axe.x, axe.y));
     }
 

@@ -42,7 +42,7 @@ class Player extends Human {
     private updateItemOutlines() {
         let overlappingItem = this.getOverlappingItem();
         if (!this.test) {
-            this.world.getWorldObjectsByType(ItemGround).map(item => item.effects.outline.enabled = false);
+            this.world.getWorldObjectsByType(Item).map(item => item.effects.outline.enabled = false);
         }
         if (overlappingItem) {
             overlappingItem.effects.outline.color = 0xFFFF00;
@@ -50,7 +50,7 @@ class Player extends Human {
         }
     }
 
-    protected pickupItem(item: ItemGround) {
+    protected pickupItem(item: Item) {
         super.pickupItem(item);
         if (this.world && this.world.getLayerByName('above')) {
             let itemName = new ItemName({ text: item.type, font: Assets.fonts.DELUXE16, life: 1, layer: 'above' });

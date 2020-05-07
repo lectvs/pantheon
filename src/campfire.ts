@@ -4,8 +4,8 @@ class Campfire extends Sprite {
     private fireRadius: FireRadius;
     private fireBuffer: FireBuffer;
 
-    private readonly logConsumptionRadius = 16;
-    private currentlyConsumedItems: ItemGround[];
+    private readonly logConsumptionRadius = 20;
+    private currentlyConsumedItems: Item[];
 
     get isOut() { return this.fireRadius.getRadiusPercent() === 0; }
     hasConsumedGasoline: boolean;
@@ -67,17 +67,17 @@ class Campfire extends Sprite {
     }
 
     private consumeItems() {
-        let items = this.world.getWorldObjectsByType(ItemGround).filter(item => item.consumable);
+        let items = this.world.getWorldObjectsByType(Item).filter(item => item.consumable && !item.held);
 
         for (let item of items) {
             if (_.contains(this.currentlyConsumedItems, item)) continue;
-            if (item.offset.y < -4) continue;
+            if (item.offset.y < -5) continue;
             if (M.distance(item.x, item.y, this.x, this.y) > this.logConsumptionRadius) continue;
             this.consumeItem(item);
         }
     }
 
-    private consumeItem(item: ItemGround) {
+    private consumeItem(item: Item) {
         this.currentlyConsumedItems.push(item);
         item.beingConsumed = true;
         if (item.type === Item.Type.GASOLINE) {
@@ -98,7 +98,10 @@ class Campfire extends Sprite {
                 A.removeAll(this.currentlyConsumedItems, item);
                 if (!this.hasConsumedGasoline) {
                     this.fireRadius.increaseTime();
-                    this.fireBuffer.increaseBuffer();
+                    if (item.name !== 'start_log') {
+                        // Don't increase the buffer for the first log (helps make the intro cutscene look good)
+                        this.fireBuffer.increaseBuffer();
+                    }
                 }
             })
         ));

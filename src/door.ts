@@ -8,7 +8,7 @@ class Door extends Sprite {
     }
 
     onCollide(other: WorldObject) {
-        if (other instanceof ItemGround && other.type === Item.Type.KEY) {
+        if (other instanceof Item && other.type === Item.Type.KEY) {
             World.Actions.removeWorldObjectFromWorld(this);
             World.Actions.removeWorldObjectFromWorld(other);
         }

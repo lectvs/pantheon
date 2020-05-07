@@ -1,9 +1,15 @@
 /// <reference path="spriteText.ts" />
 
+namespace MenuTextButton {
+    export type Config = SpriteText.Config & {
+        onClick?: () => any;
+    }
+}
+
 class MenuTextButton extends SpriteText {
     onClick: () => any;
 
-    constructor(config: SpriteText.Config & { onClick?: () => any }) {
+    constructor(config: MenuTextButton.Config) {
         super(config);
         this.onClick = O.getOrDefault(config.onClick, () => null);
     }
