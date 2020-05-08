@@ -26,6 +26,7 @@ juice
 - /torch put out animation
 - /hints after death
 - /monster chase after axe
+- /rotated/flipped tiles
 - door unlock animation
 - /dynamic radius buffer
 - player thinking about key when near door

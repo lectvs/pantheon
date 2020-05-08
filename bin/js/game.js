@@ -4493,6 +4493,8 @@ var Preload = /** @class */ (function () {
                     var tile = _c.value;
                     tilemapLayer[tile.y][tile.x] = {
                         index: Math.max(tile.tile, -1),
+                        angle: tile.rot * 90,
+                        flipX: tile.flipX,
                     };
                 }
             }
@@ -5488,7 +5490,12 @@ var Tilemap = /** @class */ (function (_super) {
             return;
         var textureKey = this.tilemap.tileset.tiles[tile.index];
         var texture = AssetCache.getTexture(textureKey);
-        renderTexture.render(texture, { x: tileX * this.tilemap.tileset.tileWidth, y: tileY * this.tilemap.tileset.tileHeight });
+        renderTexture.render(texture, {
+            x: (tileX + 0.5) * this.tilemap.tileset.tileWidth,
+            y: (tileY + 0.5) * this.tilemap.tileset.tileHeight,
+            angle: tile.angle,
+            scaleX: tile.flipX ? -1 : 1,
+        });
     };
     return Tilemap;
 }(WorldObject));
@@ -6230,6 +6237,7 @@ var Assets;
         },
         // Scenery
         'world': {
+            defaultAnchor: { x: 0.5, y: 0.5 },
             spritesheet: { frameWidth: 16, frameHeight: 16 }
         },
         'ground': {

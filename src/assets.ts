@@ -60,6 +60,7 @@ namespace Assets {
 
         // Scenery
         'world': {
+            defaultAnchor: { x: 0.5, y: 0.5 },
             spritesheet: { frameWidth: 16, frameHeight: 16 }
         },
         'ground': {

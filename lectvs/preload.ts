@@ -167,6 +167,8 @@ class Preload {
             for (let tile of tilemapJson.layers[i].tiles) {
                 tilemapLayer[tile.y][tile.x] = {
                     index: Math.max(tile.tile, -1),
+                    angle: tile.rot * 90,
+                    flipX: tile.flipX,
                 };
             }
             tilemapForCache.layers.push(tilemapLayer);

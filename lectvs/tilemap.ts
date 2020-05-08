@@ -8,6 +8,8 @@ namespace Tilemap {
 
     export type Tile = {
         index: number;
+        angle: number;
+        flipX: boolean;
     }
 
     export type Tilemap = {
@@ -116,7 +118,12 @@ class Tilemap extends WorldObject {
         if (!tile || tile.index < 0) return;
         let textureKey = this.tilemap.tileset.tiles[tile.index];
         let texture = AssetCache.getTexture(textureKey);
-        renderTexture.render(texture, { x: tileX * this.tilemap.tileset.tileWidth, y: tileY * this.tilemap.tileset.tileHeight });
+        renderTexture.render(texture, {
+            x: (tileX + 0.5) * this.tilemap.tileset.tileWidth,
+            y: (tileY + 0.5) * this.tilemap.tileset.tileHeight,
+            angle: tile.angle,
+            scaleX: tile.flipX ? -1 : 1,
+        });
     }
 }
 
