@@ -6216,7 +6216,8 @@ var Assets;
             }
         },
         'door': {
-            anchor: { x: 0.5, y: 1 }
+            defaultAnchor: { x: 0.5, y: 1 },
+            spritesheet: { frameWidth: 32, frameHeight: 35 },
         },
         'monster': {
             defaultAnchor: { x: 0.5, y: 1 },
@@ -6561,20 +6562,27 @@ var Door = /** @class */ (function (_super) {
     __extends(Door, _super);
     function Door(config) {
         return _super.call(this, config, {
-            texture: 'door',
+            texture: 'door_0',
             bounds: { x: -16, y: -4, width: 32, height: 4 },
             immovable: true,
+            animations: [
+                Animations.fromTextureList({ name: 'open', texturePrefix: 'door_', textures: [1, 2], frameRate: 8 })
+            ]
         }) || this;
     }
     Door.prototype.onCollide = function (other) {
         if (other instanceof Item && other.type === Item.Type.KEY) {
-            World.Actions.removeWorldObjectFromWorld(this);
+            this.open();
             World.Actions.removeWorldObjectFromWorld(other);
         }
         if (other instanceof Player && other.isHoldingKey) {
-            World.Actions.removeWorldObjectFromWorld(this);
+            this.open();
             other.deleteHeldItem();
         }
+    };
+    Door.prototype.open = function () {
+        this.colliding = false;
+        this.playAnimation('open');
     };
     return Door;
 }(Sprite));

@@ -19,7 +19,8 @@ namespace Assets {
             }
         },
         'door': {
-            anchor: { x: 0.5, y: 1 }
+            defaultAnchor: { x: 0.5, y: 1 },
+            spritesheet: { frameWidth: 32, frameHeight: 35 },
         },
         'monster': {
             defaultAnchor: { x: 0.5, y: 1 },

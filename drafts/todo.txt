@@ -27,9 +27,9 @@ juice
 - /hints after death
 - /monster chase after axe
 - /rotated/flipped tiles
-- door unlock animation
+- /door unlock animation
 - /dynamic radius buffer
-- player thinking about key when near door
+- /player thinking about key when near door (decided not to do)
 - /random noise on fire lighting (decided not to do)
 - animated leaves
 - animated flowers
