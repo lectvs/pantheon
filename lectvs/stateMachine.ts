@@ -6,13 +6,18 @@ namespace StateMachine {
         transitions?: Transition[];
     }
 
-    export type Transition = (Transitions.Instant) & {
+    export type Transition = (Transitions.Instant | Transitions.Condition) & {
         toState: string;
     }
 
     namespace Transitions {
         export type Instant = {
             type: 'instant';
+        }
+
+        export type Condition = {
+            type: 'condition';
+            condition: () => any;
         }
     }
 }
@@ -77,8 +82,14 @@ class StateMachine {
 
     private getValidTransition(state: StateMachine.State) {
         for (let transition of state.transitions || []) {
-            if (transition.type === 'instant') return transition;
-            else debug(`Invalid transition type ${transition.type} for transition`, transition);
+            if (transition.type === 'instant') {
+                return transition;
+            } else if (transition.type === 'condition') {
+                if (transition.condition()) return transition;
+            } else {
+                /// @ts-ignore
+                debug(`Invalid transition type ${transition.type} for transition`, transition);
+            }
         }
         return undefined;
     }

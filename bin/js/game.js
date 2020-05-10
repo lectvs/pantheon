@@ -504,6 +504,15 @@ var S;
         }); };
     }
     S.noop = noop;
+    function setData(prop, value) {
+        return function () {
+            return __generator(this, function (_a) {
+                global.script.data[prop] = value;
+                return [2 /*return*/];
+            });
+        };
+    }
+    S.setData = setData;
     function simul() {
         var scriptFunctions = [];
         for (var _i = 0; _i < arguments.length; _i++) {
@@ -4885,10 +4894,17 @@ var StateMachine = /** @class */ (function () {
         try {
             for (var _b = __values(state.transitions || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
-                if (transition.type === 'instant')
+                if (transition.type === 'instant') {
                     return transition;
-                else
+                }
+                else if (transition.type === 'condition') {
+                    if (transition.condition())
+                        return transition;
+                }
+                else {
+                    /// @ts-ignore
                     debug("Invalid transition type " + transition.type + " for transition", transition);
+                }
             }
         }
         catch (e_31_1) { e_31 = { error: e_31_1 }; }
@@ -5320,9 +5336,9 @@ var Theater = /** @class */ (function (_super) {
             ],
         }) || this;
         _this.loadDialogBox(config.dialogBox);
-        _this.partyManager = new PartyManager(_this, config.party);
-        _this.storyManager = new StoryManager(_this, config.story.storyboard, config.story.storyboardPath, config.story.storyEvents, config.story.storyConfig);
-        _this.stageManager = new StageManager(_this, config.stages);
+        _this.partyManager = new PartyManager(_this, config.getParty());
+        _this.storyManager = new StoryManager(_this, config.story.getStoryboard(), config.story.storyboardPath, config.story.getStoryEvents(), config.story.getStoryConfig());
+        _this.stageManager = new StageManager(_this, config.getStages());
         _this.interactionManager = new InteractionManager(_this);
         _this.slideManager = new SlideManager(_this);
         _this.stageManager.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
@@ -6192,11 +6208,12 @@ var Assets;
             defaultAnchor: { x: 0.5, y: 1 },
             spritesheet: { frameWidth: 16, frameHeight: 16 },
         },
-        'blacktree': {
-            anchor: { x: 0.5, y: 1 }
-        },
-        'whitetree': {
-            anchor: { x: 0.5, y: 1 }
+        'trees': {
+            defaultAnchor: { x: 0.5, y: 1 },
+            frames: {
+                'blacktree': { rect: { x: 0 * 32, y: 0, width: 32, height: 52 } },
+                'whitetree': { rect: { x: 1 * 32, y: 0, width: 32, height: 52 } },
+            }
         },
         'door': {
             anchor: { x: 0.5, y: 1 }
@@ -6206,23 +6223,15 @@ var Assets;
             spritesheet: { frameWidth: 16, frameHeight: 16 },
         },
         // Items
-        'log': {
-            anchor: { x: 0.5, y: 0.5 }
-        },
-        'axe': {
-            anchor: { x: 0.5, y: 0.5 }
-        },
-        'monsteraxe': {
-            anchor: { x: 0.5, y: 0.5 }
-        },
-        'key': {
-            anchor: { x: 0.5, y: 0.5 }
-        },
-        'torch': {
-            anchor: { x: 0.5, y: 0.5 }
-        },
-        'gasoline': {
-            anchor: { x: 0.5, y: 0.5 }
+        'items': {
+            defaultAnchor: { x: 0.5, y: 0.5 },
+            frames: {
+                'log': { rect: { x: 0 * 16, y: 0, width: 16, height: 16 } },
+                'axe': { rect: { x: 1 * 16, y: 0, width: 16, height: 16 } },
+                'key': { rect: { x: 2 * 16, y: 0, width: 16, height: 16 } },
+                'torch': { rect: { x: 3 * 16, y: 0, width: 16, height: 16 } },
+                'gasoline': { rect: { x: 4 * 16, y: 0, width: 16, height: 16 } },
+            }
         },
         // Props
         'campfire': {
@@ -6854,6 +6863,8 @@ var Human = /** @class */ (function (_super) {
         this.heldItem = null;
     };
     Human.prototype.hit = function () {
+        if (this.state === 'hurt')
+            return;
         this.setState('hurt');
     };
     Human.prototype.swingItem = function () {
@@ -7237,16 +7248,16 @@ var Main = /** @class */ (function () {
             pauseMenuClass: PauseMenu,
             theaterClass: Theater,
             theaterConfig: {
-                stages: stages,
+                getStages: getStages,
                 stageToLoad: 'game',
                 stageEntryPoint: 'main',
                 story: {
-                    storyboard: storyboard,
+                    getStoryboard: getStoryboard,
                     storyboardPath: ['start'],
-                    storyEvents: storyEvents,
-                    storyConfig: storyConfig,
+                    getStoryEvents: getStoryEvents,
+                    getStoryConfig: getStoryConfig,
                 },
-                party: party,
+                getParty: getParty,
                 dialogBox: {
                     constructor: DialogBox,
                     x: Main.width / 2, y: Main.height - 32,
@@ -7281,21 +7292,23 @@ var Main = /** @class */ (function () {
 // Actually load the game
 Main.preload();
 /// <reference path="main.ts" />
-var party = {
-    leader: 'sai',
-    activeMembers: ['sai', 'dad'],
-    members: {
-        'player': {
-            config: {
-                name: 'player',
-                constructor: Sprite,
-                x: Main.width / 2 - 8, y: Main.height / 2 - 8,
-                texture: 'debug',
+function getParty() {
+    return {
+        leader: 'sai',
+        activeMembers: ['sai', 'dad'],
+        members: {
+            'player': {
+                config: {
+                    name: 'player',
+                    constructor: Sprite,
+                    x: Main.width / 2 - 8, y: Main.height / 2 - 8,
+                    texture: 'debug',
+                },
+                stage: 'none',
             },
-            stage: 'none',
-        },
-    }
-};
+        }
+    };
+}
 var Monster = /** @class */ (function (_super) {
     __extends(Monster, _super);
     function Monster(config) {
@@ -7492,7 +7505,7 @@ var Player = /** @class */ (function (_super) {
             for (var _b = __values(this.world.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var obj = _c.value;
                 if (this.heldItem.cutsTrees && obj instanceof Tree && obj.isOverlappingRect(swingHitbox)) {
-                    obj.hit();
+                    obj.hit(obj.x - this.x);
                 }
                 if (this.heldItem.hurtsMonster && obj instanceof Monster && obj.isOverlappingRect(swingHitbox)) {
                     obj.hit();
@@ -7610,15 +7623,20 @@ var Tree = /** @class */ (function (_super) {
             bounds: { x: -4, y: -2, width: 8, height: 3 },
         }) || this;
         _this.maxhp = 3;
-        _this.stateMachine.addState('normal', {});
+        _this.stateMachine.addState('normal', {
+            transitions: [
+                { type: 'condition', condition: function () { return _this.hp <= 0; }, toState: 'die' },
+            ]
+        });
         _this.stateMachine.addState('hurt', {
-            script: S.doOverTime(0.5, function (t) { _this.angle = 30 * Math.exp(5 * -t) * Math.cos(5 * t); }),
-            transitions: [{ type: 'instant', toState: 'normal' }]
+            script: S.doOverTime(0.5, function (t) { _this.angle = _this.hitDir * 30 * Math.exp(5 * -t) * Math.cos(5 * t); }),
+            transitions: [
+                { type: 'instant', toState: 'normal' }
+            ]
         });
         _this.stateMachine.addState('die', {
-            script: S.chain(S.doOverTime(0.5, function (t) { _this.angle = 30 * Math.exp(5 * -t) * Math.cos(5 * t); }), S.call(function () {
-                _this.colliding = false;
-            }), S.doOverTime(1, function (t) { _this.angle = 90 * (t + t * t) / 2; }), S.call(function () {
+            callback: function () { _this.colliding = false; },
+            script: S.chain(S.doOverTime(1, function (t) { _this.angle = _this.hitDir * 90 * (t + t * t) / 2; }), S.call(function () {
                 _this.spawnLog();
                 if (_this.spawnsTorch)
                     _this.spawnTorch();
@@ -7629,16 +7647,15 @@ var Tree = /** @class */ (function (_super) {
         _this.spawnsTorch = O.getOrDefault(_this.data.spawnsTorch, false);
         return _this;
     }
-    Tree.prototype.hit = function () {
-        if (this.state === 'die')
+    Tree.prototype.hit = function (dir) {
+        if (this.hp <= 0)
             return;
+        this.hitDir = Math.sign(dir);
+        if (this.hitDir === 0) {
+            this.hitDir = Random.sign();
+        }
         this.hp--;
-        if (this.hp > 0) {
-            this.setState('hurt');
-        }
-        else {
-            this.setState('die');
-        }
+        this.setState('hurt');
     };
     Tree.prototype.heal = function () {
         this.hp = this.maxhp;
@@ -7646,7 +7663,7 @@ var Tree = /** @class */ (function (_super) {
     Tree.prototype.spawnLog = function () {
         this.world.addWorldObject({
             constructor: Item,
-            x: this.x + 16, y: this.y,
+            x: this.x + 16 * this.hitDir, y: this.y,
             layer: 'main',
             offset: { x: 0, y: -8 },
             physicsGroup: 'items',
@@ -7681,133 +7698,136 @@ var Tree = /** @class */ (function (_super) {
 /// <reference path="player.ts" />
 /// <reference path="torchLightManager.ts" />
 /// <reference path="tree.ts" />
-var stages = {
-    'game': {
-        parent: BASE_STAGE(),
-        camera: {
-            movement: { type: 'smooth', speed: 0, deadZoneWidth: 0, deadZoneHeight: 0 },
-            mode: Camera.Mode.FOLLOW('player', 0, -8),
-        },
-        entryPoints: {
-            'main': { x: Main.width / 2, y: Main.height / 2 },
-        },
-        worldObjects: __spread([
-            WORLD_BOUNDS(0, 0, Main.width, Main.height),
-            {
-                constructor: LightingManager,
+function getStages() {
+    return {
+        'game': {
+            parent: BASE_STAGE(),
+            camera: {
+                movement: { type: 'smooth', speed: 0, deadZoneWidth: 0, deadZoneHeight: 0 },
+                mode: Camera.Mode.FOLLOW('player', 0, -8),
             },
-            {
-                constructor: TorchLightManager,
+            entryPoints: {
+                'main': { x: Main.width / 2, y: Main.height / 2 },
             },
-            {
-                constructor: Tilemap,
-                x: 0, y: 0,
-                tilemap: 'world',
-                tilemapLayer: 1,
-                layer: 'bg',
-            },
-            {
-                constructor: Tilemap,
-                x: 0, y: 0,
-                tilemap: 'world',
-                tilemapLayer: 0,
-                layer: 'fg',
-                physicsGroup: 'walls',
-            },
-            {
-                name: 'ground',
-                constructor: Sprite,
-                x: 400, y: 400,
-                texture: 'ground',
-                layer: 'bg',
-            },
-            {
-                name: 'campfire',
-                constructor: Campfire,
-                x: 400, y: 400,
-                layer: 'main',
-            },
-            {
-                name: 'player',
-                constructor: Player,
-                controllable: true,
-                x: 387, y: 394,
-                flipX: false,
-                layer: 'main',
-                physicsGroup: 'player',
-            },
-            {
-                name: 'door',
-                constructor: Door,
-                x: 400, y: 240,
+            worldObjects: __spread([
+                WORLD_BOUNDS(0, 0, Main.width, Main.height),
+                {
+                    constructor: LightingManager,
+                },
+                {
+                    constructor: TorchLightManager,
+                },
+                {
+                    constructor: Tilemap,
+                    x: 0, y: 0,
+                    tilemap: 'world',
+                    tilemapLayer: 1,
+                    layer: 'bg',
+                },
+                {
+                    constructor: Tilemap,
+                    x: 0, y: 0,
+                    tilemap: 'world',
+                    tilemapLayer: 0,
+                    layer: 'fg',
+                    physicsGroup: 'walls',
+                },
+                {
+                    name: 'ground',
+                    constructor: Sprite,
+                    x: 400, y: 400,
+                    texture: 'ground',
+                    layer: 'bg',
+                },
+                {
+                    name: 'campfire',
+                    constructor: Campfire,
+                    x: 400, y: 400,
+                    layer: 'main',
+                },
+                {
+                    name: 'player',
+                    constructor: Player,
+                    controllable: true,
+                    x: 387, y: 394,
+                    flipX: false,
+                    layer: 'main',
+                    physicsGroup: 'player',
+                },
+                {
+                    name: 'door',
+                    constructor: Door,
+                    x: 400, y: 240,
+                    layer: 'main',
+                    physicsGroup: 'props',
+                }
+            ], [
+                { x: 424, y: 296 },
+                { x: 344, y: 344 },
+                { x: 392, y: 328 },
+                { x: 472, y: 360 },
+                { x: 312, y: 408 },
+                { x: 504, y: 408 },
+                { x: 328, y: 440 },
+                { x: 472, y: 440 },
+                { x: 376, y: 472 },
+                { x: 408, y: 488 },
+                { x: 584, y: 408 },
+            ].map(function (pos) { return ({
+                constructor: Tree,
+                x: pos.x, y: pos.y,
                 layer: 'main',
                 physicsGroup: 'props',
-            }
-        ], [
-            { x: 424, y: 296 },
-            { x: 344, y: 344 },
-            { x: 392, y: 328 },
-            { x: 472, y: 360 },
-            { x: 312, y: 408 },
-            { x: 504, y: 408 },
-            { x: 328, y: 440 },
-            { x: 472, y: 440 },
-            { x: 376, y: 472 },
-            { x: 408, y: 488 },
-            { x: 584, y: 408 },
-        ].map(function (pos) { return ({
-            constructor: Tree,
-            x: pos.x, y: pos.y,
-            layer: 'main',
-            physicsGroup: 'props',
-            immovable: true,
-            data: {
-                spawnsTorch: pos.x === 328 && pos.y === 440,
-            }
-        }); }), [
-            {
-                name: 'start_log',
-                constructor: Item,
-                type: Item.Type.LOG,
-                x: 425, y: 408,
-                layer: 'main',
-                physicsGroup: 'items',
-            },
-            {
-                constructor: Item,
-                type: Item.Type.AXE,
-                x: 447, y: 436,
-                angle: -90,
-                layer: 'main',
-                physicsGroup: 'items',
-            },
-            {
-                constructor: Item,
-                type: Item.Type.KEY,
-                x: 688, y: 400,
-                layer: 'main',
-                physicsGroup: 'items',
-            },
-            {
-                name: 'gasoline',
-                constructor: Item,
-                type: Item.Type.GASOLINE,
-                x: 528, y: 84,
-                layer: 'main',
-                physicsGroup: 'items',
-            },
-        ])
-    },
-};
+                immovable: true,
+                data: {
+                    spawnsTorch: pos.x === 328 && pos.y === 440,
+                }
+            }); }), [
+                {
+                    name: 'start_log',
+                    constructor: Item,
+                    type: Item.Type.LOG,
+                    x: 425, y: 408,
+                    layer: 'main',
+                    physicsGroup: 'items',
+                },
+                {
+                    constructor: Item,
+                    type: Item.Type.AXE,
+                    x: 447, y: 436,
+                    angle: -90,
+                    layer: 'main',
+                    physicsGroup: 'items',
+                },
+                {
+                    constructor: Item,
+                    type: Item.Type.KEY,
+                    x: 688, y: 400,
+                    layer: 'main',
+                    physicsGroup: 'items',
+                },
+                {
+                    name: 'gasoline',
+                    constructor: Item,
+                    type: Item.Type.GASOLINE,
+                    x: 528, y: 84,
+                    layer: 'main',
+                    physicsGroup: 'items',
+                },
+            ])
+        },
+    };
+}
 /// <reference path="./main.ts"/>
-var storyConfig = {
-    initialConfig: {},
-    executeFn: function (sc) {
-    }
-};
-var S;
-(function (S) {
-    S.storyEvents = {
+function getStoryConfig() {
+    return {
+        initialConfig: {},
+        executeFn: function (sc) {
+        }
+    };
+}
+function getStoryEvents() {
+    return {
         'spawn_monster': {
             stage: 'game',
             script: function () {
@@ -7830,12 +7850,10 @@ var S;
             }
         }
     };
-})(S || (S = {}));
-var storyEvents = S.storyEvents;
+}
 /// <reference path="player.ts" />
-var S;
-(function (S) {
-    S.storyboard = {
+function getStoryboard() {
+    return {
         'start': {
             type: 'start',
             transitions: [{ type: 'onStage', stage: 'game', toNode: 'intro' }]
@@ -8087,8 +8105,7 @@ var S;
             transitions: []
         }
     };
-})(S || (S = {}));
-var storyboard = S.storyboard;
+}
 var LerpingValueWithNoise = /** @class */ (function () {
     function LerpingValueWithNoise(initialValue, speed, noiseFactor, noiseIntensity) {
         this.speed = speed;

@@ -9,7 +9,7 @@
 /// <reference path="torchLightManager.ts" />
 /// <reference path="tree.ts" />
 
-const stages: Dict<World.Config> = {
+function getStages(): Dict<World.Config> { return {
 
     'game': {
         parent: BASE_STAGE(),
@@ -127,4 +127,4 @@ const stages: Dict<World.Config> = {
             },
         ]
     },
-}
+}}

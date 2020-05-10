@@ -65,7 +65,7 @@ class Player extends Human {
         let swingHitbox = this.getSwingHitbox();
         for (let obj of this.world.worldObjects) {
             if (this.heldItem.cutsTrees && obj instanceof Tree && obj.isOverlappingRect(swingHitbox)) {
-                obj.hit();
+                obj.hit(obj.x - this.x);
             }
             if (this.heldItem.hurtsMonster && obj instanceof Monster && obj.isOverlappingRect(swingHitbox)) {
                 obj.hit();

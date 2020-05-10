@@ -1,10 +1,10 @@
 /// <reference path="./main.ts"/>
 
-var storyConfig: StoryConfig.Config = {
+function getStoryConfig(): StoryConfig.Config { return {
     initialConfig: {
 
     },
     executeFn: sc => {
         
     }
-}
+}}

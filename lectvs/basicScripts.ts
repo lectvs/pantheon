@@ -47,6 +47,12 @@ namespace S {
         return function*() {}
     }
 
+    export function setData(prop: string, value: any): Script.Function {
+        return function*() {
+            global.script.data[prop] = value;
+        }
+    }
+
     export function simul(...scriptFunctions: Script.Function[]): Script.Function {
         return function*() {
             let scripts: Script[] = scriptFunctions.map(sfn => new Script(sfn));

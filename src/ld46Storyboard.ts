@@ -1,6 +1,6 @@
 /// <reference path="player.ts" />
 
-namespace S { export const storyboard: Storyboard = {
+function getStoryboard(): Storyboard { return {
     'start': {
         type: 'start',
         transitions: [{ type: 'onStage', stage: 'game', toNode: 'intro' }]
@@ -181,4 +181,4 @@ namespace S { export const storyboard: Storyboard = {
         },
         transitions: []
     }
-}} const storyboard = S.storyboard;
+}}

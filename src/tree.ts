@@ -3,6 +3,7 @@ class Tree extends Sprite {
 
     private spawnsTorch: boolean;
     private hp: number;
+    private hitDir: number;
 
     constructor(config: Sprite.Config) {
         super(config, {
@@ -11,18 +12,21 @@ class Tree extends Sprite {
             bounds: { x: -4, y: -2, width: 8, height: 3 },
         });
 
-        this.stateMachine.addState('normal', {});
+        this.stateMachine.addState('normal', {
+            transitions: [
+                { type: 'condition', condition: () => this.hp <= 0, toState: 'die' },
+            ]
+        });
         this.stateMachine.addState('hurt', {
-            script: S.doOverTime(0.5, t => { this.angle = 30*Math.exp(5*-t)*Math.cos(5*t); }),
-            transitions: [{ type: 'instant', toState: 'normal' }]
+            script: S.doOverTime(0.5, t => { this.angle = this.hitDir * 30*Math.exp(5*-t)*Math.cos(5*t); }),
+            transitions: [
+                { type: 'instant', toState: 'normal' }
+            ]
         });
         this.stateMachine.addState('die', {
+            callback: () => { this.colliding = false },
             script: S.chain(
-                S.doOverTime(0.5, t => { this.angle = 30*Math.exp(5*-t)*Math.cos(5*t); }),
-                S.call(() => {
-                    this.colliding = false;
-                }),
-                S.doOverTime(1, t => { this.angle = 90 * (t + t*t)/2; }),
+                S.doOverTime(1, t => { this.angle = this.hitDir * 90 * (t + t*t)/2; }),
                 S.call(() => {
                     this.spawnLog();
                     if (this.spawnsTorch) this.spawnTorch();
@@ -35,15 +39,16 @@ class Tree extends Sprite {
         this.spawnsTorch = O.getOrDefault(this.data.spawnsTorch, false);
     }
 
-    hit() {
-        if (this.state === 'die') return;
+    hit(dir: number) {
+        if (this.hp <= 0) return;
+
+        this.hitDir = Math.sign(dir);
+        if (this.hitDir === 0) {
+            this.hitDir = Random.sign();
+        }
 
         this.hp--;
-        if (this.hp > 0) {
-            this.setState('hurt');
-        } else {
-            this.setState('die');
-        }
+        this.setState('hurt');
     }
 
     heal() {
@@ -53,7 +58,7 @@ class Tree extends Sprite {
     private spawnLog() {
         this.world.addWorldObject(<Item.Config>{
             constructor: Item,
-            x: this.x + 16, y: this.y,
+            x: this.x + 16*this.hitDir, y: this.y,
             layer: 'main',
             offset: { x: 0, y: -8 },
             physicsGroup: 'items',

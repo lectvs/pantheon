@@ -86,16 +86,16 @@ class Main {
             pauseMenuClass: PauseMenu,
             theaterClass: Theater,
             theaterConfig: {
-                stages: stages,
+                getStages: getStages,
                 stageToLoad: 'game',
                 stageEntryPoint: 'main',
                 story: {
-                    storyboard: storyboard,
+                    getStoryboard: getStoryboard,
                     storyboardPath: ['start'],
-                    storyEvents: storyEvents,
-                    storyConfig: storyConfig,
+                    getStoryEvents: getStoryEvents,
+                    getStoryConfig: getStoryConfig,
                 },
-                party: party,
+                getParty: getParty,
                 dialogBox: {
                     constructor: DialogBox,
                     x: Main.width/2, y: Main.height - 32,

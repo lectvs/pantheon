@@ -1,5 +1,5 @@
 
-namespace S { export const storyEvents: StoryEvent.Map = {
+function getStoryEvents(): StoryEvent.Map { return {
 
     'spawn_monster': {
         stage: 'game',
@@ -15,4 +15,4 @@ namespace S { export const storyEvents: StoryEvent.Map = {
         }
     }
 
-}} const storyEvents = S.storyEvents;
+}}

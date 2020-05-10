@@ -11,11 +11,12 @@ namespace Assets {
             defaultAnchor: { x: 0.5, y: 1 },
             spritesheet: { frameWidth: 16, frameHeight: 16 },
         },
-        'blacktree': {
-            anchor: { x: 0.5, y: 1 }
-        },
-        'whitetree': {
-            anchor: { x: 0.5, y: 1 }
+        'trees': {
+            defaultAnchor: { x: 0.5, y: 1 },
+            frames: {
+                'blacktree': { rect: { x: 0*32, y: 0, width: 32, height: 52 } },
+                'whitetree': { rect: { x: 1*32, y: 0, width: 32, height: 52 } },
+            }
         },
         'door': {
             anchor: { x: 0.5, y: 1 }
@@ -26,23 +27,15 @@ namespace Assets {
         },
 
         // Items
-        'log': {
-            anchor: { x: 0.5, y: 0.5 }
-        },
-        'axe': {
-            anchor: { x: 0.5, y: 0.5 }
-        },
-        'monsteraxe': {
-            anchor: { x: 0.5, y: 0.5 }
-        },
-        'key': {
-            anchor: { x: 0.5, y: 0.5 }
-        },
-        'torch': {
-            anchor: { x: 0.5, y: 0.5 }
-        },
-        'gasoline': {
-            anchor: { x: 0.5, y: 0.5 }
+        'items': {
+            defaultAnchor: { x: 0.5, y: 0.5 },
+            frames: {
+                'log': { rect: { x: 0*16, y: 0, width: 16, height: 16 } },
+                'axe': { rect: { x: 1*16, y: 0, width: 16, height: 16 } },
+                'key': { rect: { x: 2*16, y: 0, width: 16, height: 16 } },
+                'torch': { rect: { x: 3*16, y: 0, width: 16, height: 16 } },
+                'gasoline': { rect: { x: 4*16, y: 0, width: 16, height: 16 } },
+            }
         },
 
         // Props

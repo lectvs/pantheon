@@ -1,6 +1,6 @@
 /// <reference path="main.ts" />
 
-const party: Party.Config = {
+function getParty(): Party.Config { return {
     leader: 'sai',
     activeMembers: ['sai', 'dad'],
     members: {
@@ -14,4 +14,4 @@ const party: Party.Config = {
             stage: 'none',
         },
     }
-};
+}}

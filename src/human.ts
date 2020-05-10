@@ -238,6 +238,7 @@ class Human extends Sprite {
     }
 
     hit() {
+        if (this.state === 'hurt') return;
         this.setState('hurt');
     }
 
