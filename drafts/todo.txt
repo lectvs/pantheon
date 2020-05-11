@@ -37,7 +37,7 @@ juice
 - smooth camera follow
 - /trees falling the other way
 - logs consumption animation
-- rounding error on world objects camera
+- /rounding error on world objects camera
 - problem of highlighting an object with an outline
 - sound
 

@@ -1393,10 +1393,14 @@ var WorldObject = /** @class */ (function () {
     WorldObject.prototype.preRender = function () {
         this.preRenderStoredX = this.x;
         this.preRenderStoredY = this.y;
+        // Snap object to pixel in world-space
+        this.x = Math.round(this.x);
+        this.y = Math.round(this.y);
         if (!this.ignoreCamera) {
             this.x -= this.world.camera.worldOffsetX;
             this.y -= this.world.camera.worldOffsetY;
         }
+        // Snap object to pixel in screen-space
         this.x = Math.round(this.x);
         this.y = Math.round(this.y);
     };
