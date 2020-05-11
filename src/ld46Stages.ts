@@ -40,8 +40,9 @@ function getStages(): Dict<World.Config> { return {
                 x: 0, y: 0,
                 tilemap: 'world',
                 tilemapLayer: 0,
-                layer: 'fg',
+                layer: 'main',
                 physicsGroup: 'walls',
+                zMap: { 1: 2, 7: 2, 8: 2, 9: 2 },
             },
             <Sprite.Config>{
                 name: 'ground',
@@ -83,7 +84,7 @@ function getStages(): Dict<World.Config> { return {
                 { x: 472, y: 440 },
                 { x: 376, y: 472 },
                 { x: 408, y: 488 },
-                { x: 584, y: 408 },
+                { x: 576, y: 418 },
             ].map(pos => <Sprite.Config>{
                 constructor: Tree,
                 x: pos.x, y: pos.y,

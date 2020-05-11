@@ -5412,7 +5412,6 @@ var Theater = /** @class */ (function (_super) {
     Theater.LAYER_DIALOG = 'dialog';
     return Theater;
 }(World));
-// TODO: convert this to a sprite?
 var Tilemap = /** @class */ (function (_super) {
     __extends(Tilemap, _super);
     function Tilemap(config) {
@@ -5422,10 +5421,9 @@ var Tilemap = /** @class */ (function (_super) {
         var tilemapDimens = A.get2DArrayDimensions(_this.currentTilemapLayer);
         _this.numTilesX = tilemapDimens.width;
         _this.numTilesY = tilemapDimens.height;
-        _this.renderTexture = new Texture(_this.numTilesX * _this.tilemap.tileset.tileWidth, _this.numTilesY * _this.tilemap.tileset.tileHeight);
         _this.createCollisionBoxes(O.getOrDefault(config.debugBounds, false));
-        _this.tint = O.getOrDefault(config.tint, 0xFFFFFF);
         _this.dirty = true;
+        _this.zMap = O.getOrDefault(config.zMap, {});
         return _this;
     }
     Object.defineProperty(Tilemap.prototype, "currentTilemapLayer", {
@@ -5433,40 +5431,14 @@ var Tilemap = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Tilemap.prototype.postUpdate = function () {
-        var e_36, _a;
-        if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
-            try {
-                for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
-                    var box = _c.value;
-                    box.x = this.x;
-                    box.y = this.y;
-                }
-            }
-            catch (e_36_1) { e_36 = { error: e_36_1 }; }
-            finally {
-                try {
-                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-                }
-                finally { if (e_36) throw e_36.error; }
-            }
-        }
-        _super.prototype.postUpdate.call(this);
-    };
-    Tilemap.prototype.render = function (screen) {
+    Tilemap.prototype.update = function (delta) {
         if (this.dirty) {
             this.drawRenderTexture();
             this.dirty = false;
         }
-        screen.render(this.renderTexture, {
-            x: this.x,
-            y: this.y,
-            tint: this.tint
-        });
-        _super.prototype.render.call(this, screen);
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_37, _a;
+        var e_36, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -5484,20 +5456,25 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_37_1) { e_37 = { error: e_37_1 }; }
+        catch (e_36_1) { e_36 = { error: e_36_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_37) throw e_37.error; }
+            finally { if (e_36) throw e_36.error; }
         }
         World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };
     Tilemap.prototype.drawRenderTexture = function () {
-        this.renderTexture.clear();
+        this.clearZTextures();
+        var zTileIndices = Tilemap.createZTileIndicies(this.currentTilemapLayer, this.zMap);
+        var zTextures = this.createZTextures(zTileIndices);
         for (var y = 0; y < this.currentTilemapLayer.length; y++) {
             for (var x = 0; x < this.currentTilemapLayer[y].length; x++) {
-                this.drawTile(this.currentTilemapLayer[y][x], x, y, this.renderTexture);
+                var zValue = Tilemap.getZValue(zTileIndices, y, x);
+                if (!zTextures[zValue])
+                    continue;
+                this.drawTile(this.currentTilemapLayer[y][x], x - zTextures[zValue].tileBounds.left, y - zTextures[zValue].tileBounds.top, zTextures[zValue].texture);
             }
         }
     };
@@ -5513,6 +5490,25 @@ var Tilemap = /** @class */ (function (_super) {
             scaleX: tile.flipX ? -1 : 1,
         });
     };
+    Tilemap.prototype.createZTextures = function (zTileIndices) {
+        var texturesByZ = Tilemap.createEmptyZTextures(zTileIndices, this.tilemap.tileset);
+        for (var zValue in texturesByZ) {
+            var zHeight = texturesByZ[zValue].zHeight * this.tilemap.tileset.tileHeight;
+            var zTexture = World.Actions.addChildToParent(new Sprite({
+                layer: this.layer,
+                x: this.x + texturesByZ[zValue].bounds.x,
+                y: this.y + texturesByZ[zValue].bounds.y + zHeight,
+                texture: texturesByZ[zValue].texture,
+                offset: { x: 0, y: -zHeight },
+            }), this);
+            this.zTextures.push(zTexture);
+        }
+        return texturesByZ;
+    };
+    Tilemap.prototype.clearZTextures = function () {
+        World.Actions.removeWorldObjectsFromWorld(this.zTextures);
+        this.zTextures = [];
+    };
     return Tilemap;
 }(WorldObject));
 (function (Tilemap) {
@@ -5527,6 +5523,48 @@ var Tilemap = /** @class */ (function (_super) {
         return result;
     }
     Tilemap.cloneTilemap = cloneTilemap;
+    function createZTileIndicies(layer, zMap) {
+        var zTileIndices = getInitialZTileIndicies(layer, zMap);
+        fillZTileIndicies(zTileIndices);
+        return zTileIndices;
+    }
+    Tilemap.createZTileIndicies = createZTileIndicies;
+    function createEmptyZTextures(zTileIndices, tileset) {
+        var zTextureSlots = {};
+        for (var y = 0; y < zTileIndices.length; y++) {
+            for (var x = 0; x < zTileIndices[y].length; x++) {
+                if (isFinite(zTileIndices[y][x])) {
+                    var zValue = getZValue(zTileIndices, y, x);
+                    if (!zTextureSlots[zValue])
+                        zTextureSlots[zValue] = {
+                            texture: null,
+                            bounds: { x: 0, y: 0, width: 0, height: 0 },
+                            tileBounds: { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity },
+                            zHeight: -Infinity,
+                        };
+                    if (x < zTextureSlots[zValue].tileBounds.left)
+                        zTextureSlots[zValue].tileBounds.left = x;
+                    if (x > zTextureSlots[zValue].tileBounds.right)
+                        zTextureSlots[zValue].tileBounds.right = x;
+                    if (y < zTextureSlots[zValue].tileBounds.top)
+                        zTextureSlots[zValue].tileBounds.top = y;
+                    if (y > zTextureSlots[zValue].tileBounds.bottom)
+                        zTextureSlots[zValue].tileBounds.bottom = y;
+                    if (zTileIndices[y][x] > zTextureSlots[zValue].zHeight)
+                        zTextureSlots[zValue].zHeight = zTileIndices[y][x];
+                }
+            }
+        }
+        for (var zValue in zTextureSlots) {
+            zTextureSlots[zValue].bounds.x = zTextureSlots[zValue].tileBounds.left * tileset.tileWidth;
+            zTextureSlots[zValue].bounds.y = zTextureSlots[zValue].tileBounds.top * tileset.tileHeight;
+            zTextureSlots[zValue].bounds.width = (zTextureSlots[zValue].tileBounds.right - zTextureSlots[zValue].tileBounds.left + 1) * tileset.tileWidth;
+            zTextureSlots[zValue].bounds.height = (zTextureSlots[zValue].tileBounds.bottom - zTextureSlots[zValue].tileBounds.top + 1) * tileset.tileHeight;
+            zTextureSlots[zValue].texture = new Texture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height);
+        }
+        return zTextureSlots;
+    }
+    Tilemap.createEmptyZTextures = createEmptyZTextures;
     function getCollisionRects(tilemapLayer, tileset) {
         if (_.isEmpty(tileset.collisionIndices))
             return [];
@@ -5548,6 +5586,14 @@ var Tilemap = /** @class */ (function (_super) {
         return result;
     }
     Tilemap.getCollisionRects = getCollisionRects;
+    function getZValue(zTileIndices, y, x) {
+        return y + zTileIndices[y][x];
+    }
+    Tilemap.getZValue = getZValue;
+    function lookupZMapValue(tile, zMap) {
+        return zMap[tile.index];
+    }
+    Tilemap.lookupZMapValue = lookupZMapValue;
     function optimizeCollisionRects(rects, all) {
         if (all === void 0) { all = !Tilemap.OPTIMIZE_ALL; }
         var i = 0;
@@ -5599,6 +5645,45 @@ var Tilemap = /** @class */ (function (_super) {
             }
         }
         return false;
+    }
+    function getInitialZTileIndicies(layer, zMap) {
+        var zTileIndices = A.filledArray2D(layer.length, layer[0].length, undefined);
+        if (_.isEmpty(zMap)) {
+            for (var x = 0; x < layer[0].length; x++) {
+                zTileIndices[0][x] = 0;
+            }
+            return zTileIndices;
+        }
+        for (var y = 0; y < layer.length; y++) {
+            for (var x = 0; x < layer[y].length; x++) {
+                var tile = layer[y][x];
+                zTileIndices[y][x] = tile.index === -1 ? -Infinity : lookupZMapValue(tile, zMap);
+            }
+        }
+        return zTileIndices;
+    }
+    function fillZTileIndicies(zTileIndices) {
+        for (var y = 1; y < zTileIndices.length; y++) {
+            for (var x = 0; x < zTileIndices[y].length; x++) {
+                if (zTileIndices[y][x] === undefined && isFinite(zTileIndices[y - 1][x])) {
+                    zTileIndices[y][x] = zTileIndices[y - 1][x] - 1;
+                }
+            }
+        }
+        for (var y = zTileIndices.length - 2; y >= 0; y--) {
+            for (var x = 0; x < zTileIndices[y].length; x++) {
+                if (zTileIndices[y][x] === undefined && isFinite(zTileIndices[y + 1][x])) {
+                    zTileIndices[y][x] = zTileIndices[y + 1][x] + 1;
+                }
+            }
+        }
+        for (var y = 0; y < zTileIndices.length; y++) {
+            for (var x = 0; x < zTileIndices[y].length; x++) {
+                if (zTileIndices[y][x] === undefined) {
+                    zTileIndices[y][x] = 0;
+                }
+            }
+        }
     }
 })(Tilemap || (Tilemap = {}));
 var Timer = /** @class */ (function () {
@@ -5703,195 +5788,6 @@ var Warp = /** @class */ (function (_super) {
     };
     return Warp;
 }(PhysicsWorldObject));
-var ZOrderedTilemap = /** @class */ (function (_super) {
-    __extends(ZOrderedTilemap, _super);
-    function ZOrderedTilemap(config) {
-        var _this = _super.call(this, config) || this;
-        _this.tilemap = Tilemap.cloneTilemap(AssetCache.getTilemap(config.tilemap));
-        _this.tilemapLayer = O.getOrDefault(config.tilemapLayer, 0);
-        var tilemapDimens = A.get2DArrayDimensions(_this.currentTilemapLayer);
-        _this.numTilesX = tilemapDimens.width;
-        _this.numTilesY = tilemapDimens.height;
-        _this.createCollisionBoxes(O.getOrDefault(config.debugBounds, false));
-        _this.dirty = true;
-        _this.zMap = config.zMap;
-        return _this;
-    }
-    Object.defineProperty(ZOrderedTilemap.prototype, "currentTilemapLayer", {
-        get: function () { return this.tilemap.layers[this.tilemapLayer]; },
-        enumerable: true,
-        configurable: true
-    });
-    ZOrderedTilemap.prototype.update = function (delta) {
-        if (this.dirty) {
-            this.drawRenderTexture();
-            this.dirty = false;
-        }
-    };
-    ZOrderedTilemap.prototype.postUpdate = function () {
-        var e_38, _a;
-        if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
-            try {
-                for (var _b = __values(this.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
-                    var box = _c.value;
-                    box.x = this.x;
-                    box.y = this.y;
-                }
-            }
-            catch (e_38_1) { e_38 = { error: e_38_1 }; }
-            finally {
-                try {
-                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-                }
-                finally { if (e_38) throw e_38.error; }
-            }
-        }
-        _super.prototype.postUpdate.call(this);
-    };
-    ZOrderedTilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        if (debugBounds === void 0) { debugBounds = false; }
-        var e_39, _a;
-        this.collisionBoxes = [];
-        var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
-        Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
-        Tilemap.optimizeCollisionRects(collisionRects, Tilemap.OPTIMIZE_ALL);
-        try {
-            for (var collisionRects_2 = __values(collisionRects), collisionRects_2_1 = collisionRects_2.next(); !collisionRects_2_1.done; collisionRects_2_1 = collisionRects_2.next()) {
-                var rect = collisionRects_2_1.value;
-                var box = new PhysicsWorldObject({ x: this.x, y: this.y, bounds: rect, physicsGroup: this.physicsGroup });
-                box.debugBounds = debugBounds;
-                this.collisionBoxes.push(box);
-            }
-        }
-        catch (e_39_1) { e_39 = { error: e_39_1 }; }
-        finally {
-            try {
-                if (collisionRects_2_1 && !collisionRects_2_1.done && (_a = collisionRects_2.return)) _a.call(collisionRects_2);
-            }
-            finally { if (e_39) throw e_39.error; }
-        }
-        World.Actions.addChildrenToParent(this.collisionBoxes, this);
-    };
-    ZOrderedTilemap.prototype.drawRenderTexture = function () {
-        this.clearZTextures();
-        var zTileIndices = ZOrderedTilemap.createZTileIndicies(this.currentTilemapLayer, this.zMap);
-        var zTextures = this.createZTextures(zTileIndices);
-        for (var y = 0; y < this.currentTilemapLayer.length; y++) {
-            for (var x = 0; x < this.currentTilemapLayer[y].length; x++) {
-                var zValue = ZOrderedTilemap.getZValue(zTileIndices, y, x);
-                if (!zTextures[zValue])
-                    continue;
-                this.drawTile(this.currentTilemapLayer[y][x], x - zTextures[zValue].tileBounds.left, y - zTextures[zValue].tileBounds.top, zTextures[zValue].texture);
-            }
-        }
-    };
-    ZOrderedTilemap.prototype.drawTile = function (tile, tileX, tileY, renderTexture) {
-        if (!tile || tile.index < 0)
-            return;
-        var textureKey = this.tilemap.tileset.tiles[tile.index];
-        var texture = AssetCache.getTexture(textureKey);
-        renderTexture.render(texture, { x: tileX * this.tilemap.tileset.tileWidth, y: tileY * this.tilemap.tileset.tileHeight });
-    };
-    ZOrderedTilemap.prototype.createZTextures = function (zTileIndices) {
-        var texturesByZ = ZOrderedTilemap.createEmptyZTextures(zTileIndices, this.tilemap.tileset);
-        for (var zValue in texturesByZ) {
-            var zHeight = texturesByZ[zValue].zHeight * this.tilemap.tileset.tileHeight;
-            World.Actions.addChildToParent(new Sprite({
-                layer: this.layer,
-                x: this.x + texturesByZ[zValue].bounds.x,
-                y: this.y + texturesByZ[zValue].bounds.y + zHeight,
-                texture: texturesByZ[zValue].texture,
-                offset: { x: 0, y: -zHeight },
-            }), this);
-        }
-        return texturesByZ;
-    };
-    ZOrderedTilemap.prototype.clearZTextures = function () {
-        World.Actions.removeWorldObjectsFromWorld(this.children);
-    };
-    return ZOrderedTilemap;
-}(WorldObject));
-(function (ZOrderedTilemap) {
-    function createZTileIndicies(layer, zMap) {
-        var zTileIndices = getInitialZTileIndicies(layer, zMap);
-        fillZTileIndicies(zTileIndices);
-        return zTileIndices;
-    }
-    ZOrderedTilemap.createZTileIndicies = createZTileIndicies;
-    function createEmptyZTextures(zTileIndices, tileset) {
-        var zTextureSlots = {};
-        for (var y = 0; y < zTileIndices.length; y++) {
-            for (var x = 0; x < zTileIndices[y].length; x++) {
-                if (isFinite(zTileIndices[y][x])) {
-                    var zValue = getZValue(zTileIndices, y, x);
-                    if (!zTextureSlots[zValue])
-                        zTextureSlots[zValue] = {
-                            texture: null,
-                            bounds: { x: 0, y: 0, width: 0, height: 0 },
-                            tileBounds: { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity },
-                            zHeight: -Infinity,
-                        };
-                    if (x < zTextureSlots[zValue].tileBounds.left)
-                        zTextureSlots[zValue].tileBounds.left = x;
-                    if (x > zTextureSlots[zValue].tileBounds.right)
-                        zTextureSlots[zValue].tileBounds.right = x;
-                    if (y < zTextureSlots[zValue].tileBounds.top)
-                        zTextureSlots[zValue].tileBounds.top = y;
-                    if (y > zTextureSlots[zValue].tileBounds.bottom)
-                        zTextureSlots[zValue].tileBounds.bottom = y;
-                    if (zTileIndices[y][x] > zTextureSlots[zValue].zHeight)
-                        zTextureSlots[zValue].zHeight = zTileIndices[y][x];
-                }
-            }
-        }
-        for (var zValue in zTextureSlots) {
-            zTextureSlots[zValue].bounds.x = zTextureSlots[zValue].tileBounds.left * tileset.tileWidth;
-            zTextureSlots[zValue].bounds.y = zTextureSlots[zValue].tileBounds.top * tileset.tileHeight;
-            zTextureSlots[zValue].bounds.width = (zTextureSlots[zValue].tileBounds.right - zTextureSlots[zValue].tileBounds.left + 1) * tileset.tileWidth;
-            zTextureSlots[zValue].bounds.height = (zTextureSlots[zValue].tileBounds.bottom - zTextureSlots[zValue].tileBounds.top + 1) * tileset.tileHeight;
-            zTextureSlots[zValue].texture = new Texture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height);
-        }
-        return zTextureSlots;
-    }
-    ZOrderedTilemap.createEmptyZTextures = createEmptyZTextures;
-    function getZValue(zTileIndices, y, x) {
-        return y + zTileIndices[y][x];
-    }
-    ZOrderedTilemap.getZValue = getZValue;
-    function getInitialZTileIndicies(layer, zMap) {
-        var zTileIndices = A.filledArray2D(layer.length, layer[0].length, undefined);
-        for (var y = 0; y < layer.length; y++) {
-            for (var x = 0; x < layer[y].length; x++) {
-                var tileIndex = layer[y][x].index;
-                zTileIndices[y][x] = tileIndex === -1 ? -Infinity : zMap[tileIndex];
-            }
-        }
-        return zTileIndices;
-    }
-    function fillZTileIndicies(zTileIndices) {
-        for (var y = 1; y < zTileIndices.length; y++) {
-            for (var x = 0; x < zTileIndices[y].length; x++) {
-                if (zTileIndices[y][x] === undefined && isFinite(zTileIndices[y - 1][x])) {
-                    zTileIndices[y][x] = zTileIndices[y - 1][x] - 1;
-                }
-            }
-        }
-        for (var y = zTileIndices.length - 2; y >= 0; y--) {
-            for (var x = 0; x < zTileIndices[y].length; x++) {
-                if (zTileIndices[y][x] === undefined && isFinite(zTileIndices[y + 1][x])) {
-                    zTileIndices[y][x] = zTileIndices[y + 1][x] + 1;
-                }
-            }
-        }
-        for (var y = 0; y < zTileIndices.length; y++) {
-            for (var x = 0; x < zTileIndices[y].length; x++) {
-                if (zTileIndices[y][x] === undefined) {
-                    zTileIndices[y][x] = 0;
-                }
-            }
-        }
-    }
-})(ZOrderedTilemap || (ZOrderedTilemap = {}));
 var G;
 (function (G) {
     function distance(pt1, pt2) {
@@ -6383,7 +6279,7 @@ function BASE_STAGE() {
         layers: [
             { name: 'bg', effects: { post: { filters: [firelightFilter] } } },
             { name: 'main', sortKey: 'y', effects: { post: { filters: [firelightFilter] } } },
-            { name: 'fg', effects: { post: { filters: [firelightFilter] } } },
+            { name: 'fg', sortKey: 'y', effects: { post: { filters: [firelightFilter] } } },
             { name: 'above' },
         ],
         physicsGroups: {
@@ -6507,7 +6403,7 @@ var Campfire = /** @class */ (function (_super) {
         this.fireRadius.win();
     };
     Campfire.prototype.consumeItems = function () {
-        var e_40, _a;
+        var e_37, _a;
         var items = this.world.getWorldObjectsByType(Item).filter(function (item) { return item.consumable && !item.held; });
         try {
             for (var items_1 = __values(items), items_1_1 = items_1.next(); !items_1_1.done; items_1_1 = items_1.next()) {
@@ -6521,12 +6417,12 @@ var Campfire = /** @class */ (function (_super) {
                 this.consumeItem(item);
             }
         }
-        catch (e_40_1) { e_40 = { error: e_40_1 }; }
+        catch (e_37_1) { e_37 = { error: e_37_1 }; }
         finally {
             try {
                 if (items_1_1 && !items_1_1.done && (_a = items_1.return)) _a.call(items_1);
             }
-            finally { if (e_40) throw e_40.error; }
+            finally { if (e_37) throw e_37.error; }
         }
     };
     Campfire.prototype.consumeItem = function (item) {
@@ -6773,7 +6669,7 @@ var Human = /** @class */ (function (_super) {
         }
     };
     Human.prototype.getOverlappingItem = function () {
-        var e_41, _a;
+        var e_38, _a;
         var overlappingItemDistance = Infinity;
         var overlappingItem = undefined;
         try {
@@ -6788,12 +6684,12 @@ var Human = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_41_1) { e_41 = { error: e_41_1 }; }
+        catch (e_38_1) { e_38 = { error: e_38_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_41) throw e_41.error; }
+            finally { if (e_38) throw e_38.error; }
         }
         return overlappingItem;
     };
@@ -7505,7 +7401,7 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.hitStuff = function () {
-        var e_42, _a;
+        var e_39, _a;
         if (!this.heldItem)
             return;
         var swingHitbox = this.getSwingHitbox();
@@ -7520,12 +7416,12 @@ var Player = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_42_1) { e_42 = { error: e_42_1 }; }
+        catch (e_39_1) { e_39 = { error: e_39_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_42) throw e_42.error; }
+            finally { if (e_39) throw e_39.error; }
         }
     };
     Player.prototype.getSwingHitbox = function () {
@@ -7737,8 +7633,9 @@ function getStages() {
                     x: 0, y: 0,
                     tilemap: 'world',
                     tilemapLayer: 0,
-                    layer: 'fg',
+                    layer: 'main',
                     physicsGroup: 'walls',
+                    zMap: { 1: 2, 7: 2, 8: 2, 9: 2 },
                 },
                 {
                     name: 'ground',
@@ -7780,7 +7677,7 @@ function getStages() {
                 { x: 472, y: 440 },
                 { x: 376, y: 472 },
                 { x: 408, y: 488 },
-                { x: 584, y: 408 },
+                { x: 576, y: 418 },
             ].map(function (pos) { return ({
                 constructor: Tree,
                 x: pos.x, y: pos.y,
@@ -7842,7 +7739,7 @@ function getStoryEvents() {
                 var player;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.wait(Debug.DEBUG ? 3 : 60)];
+                        case 0: return [4 /*yield*/, S.wait(Debug.DEBUG ? 60 : 60)];
                         case 1:
                             _a.sent();
                             player = global.world.getWorldObjectByType(Player);

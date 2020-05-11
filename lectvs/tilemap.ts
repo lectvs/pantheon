@@ -1,11 +1,10 @@
 namespace Tilemap {
     export type Config = WorldObject.Config & {
         tilemap: string;
-        tint?: number;
         tilemapLayer?: number;
         debugBounds?: boolean;
-    }
-
+        zMap?: Tilemap.ZMap
+    };
     export type Tile = {
         index: number;
         angle: number;
@@ -25,28 +24,33 @@ namespace Tilemap {
         tileHeight: number;
         collisionIndices?: number[];
     }
+    export type ZMap = {[key: number]: number};
+    export type ZTexture = {
+        texture: Texture;
+        bounds: Rect;
+        tileBounds: Bounds;
+        zHeight: number;
+    }
+    export type ZTextureMap = {[key: number]: ZTexture};
 }
 
-// TODO: convert this to a sprite?
 class Tilemap extends WorldObject {
     tilemap: Tilemap.Tilemap;
 
     numTilesX: number;
     numTilesY: number;
 
-    renderTexture: Texture;
     collisionBoxes: PhysicsWorldObject[];
-
-    tint: number;
     
     private tilemapLayer: number;
     private dirty: boolean;
+    private zMap: Tilemap.ZMap;
+    private zTextures: Sprite[];
 
     get currentTilemapLayer() { return this.tilemap.layers[this.tilemapLayer]; }
 
     constructor(config: Tilemap.Config) {
         super(config);
-
         this.tilemap = Tilemap.cloneTilemap(AssetCache.getTilemap(config.tilemap));
         this.tilemapLayer = O.getOrDefault(config.tilemapLayer, 0);
 
@@ -54,36 +58,17 @@ class Tilemap extends WorldObject {
         this.numTilesX = tilemapDimens.width;
         this.numTilesY = tilemapDimens.height;
 
-        this.renderTexture = new Texture(this.numTilesX * this.tilemap.tileset.tileWidth, this.numTilesY * this.tilemap.tileset.tileHeight);
         this.createCollisionBoxes(O.getOrDefault(config.debugBounds, false));
 
-        this.tint = O.getOrDefault(config.tint, 0xFFFFFF);
         this.dirty = true;
+        this.zMap = O.getOrDefault(config.zMap, {});
     }
 
-    postUpdate() {
-        if (!_.isEmpty(this.collisionBoxes) && (this.collisionBoxes[0].x !== this.x || this.collisionBoxes[0].y !== this.y)) {
-            for (let box of this.collisionBoxes) {
-                box.x = this.x;
-                box.y = this.y;
-            }
-        }
-        super.postUpdate();
-    }
-
-    render(screen: Texture) {
+    update(delta: number) {
         if (this.dirty) {
             this.drawRenderTexture();
             this.dirty = false;
         }
-        
-        screen.render(this.renderTexture, {
-            x: this.x,
-            y: this.y,
-            tint: this.tint
-        });
-
-        super.render(screen);
     }
 
     createCollisionBoxes(debugBounds: boolean) {
@@ -106,10 +91,17 @@ class Tilemap extends WorldObject {
     }
 
     drawRenderTexture() {
-        this.renderTexture.clear();
+        this.clearZTextures();
+
+        let zTileIndices = Tilemap.createZTileIndicies(this.currentTilemapLayer, this.zMap);
+        
+        let zTextures = this.createZTextures(zTileIndices);
+
         for (let y = 0; y < this.currentTilemapLayer.length; y++) {
             for (let x = 0; x < this.currentTilemapLayer[y].length; x++) {
-                this.drawTile(this.currentTilemapLayer[y][x], x, y, this.renderTexture);
+                let zValue = Tilemap.getZValue(zTileIndices, y, x);
+                if (!zTextures[zValue]) continue;
+                this.drawTile(this.currentTilemapLayer[y][x], x - zTextures[zValue].tileBounds.left, y - zTextures[zValue].tileBounds.top, zTextures[zValue].texture);
             }
         }
     }
@@ -125,6 +117,29 @@ class Tilemap extends WorldObject {
             scaleX: tile.flipX ? -1 : 1,
         });
     }
+
+    private createZTextures(zTileIndices: number[][]) {
+        let texturesByZ = Tilemap.createEmptyZTextures(zTileIndices, this.tilemap.tileset);
+
+        for (let zValue in texturesByZ) {
+            let zHeight = texturesByZ[zValue].zHeight * this.tilemap.tileset.tileHeight;
+            let zTexture = World.Actions.addChildToParent(new Sprite({
+                layer: this.layer,
+                x: this.x + texturesByZ[zValue].bounds.x,
+                y: this.y + texturesByZ[zValue].bounds.y + zHeight,
+                texture: texturesByZ[zValue].texture,
+                offset: { x: 0, y: -zHeight },
+            }), this);
+            this.zTextures.push(zTexture);
+        }
+
+        return texturesByZ;
+    }
+
+    private clearZTextures() {
+        World.Actions.removeWorldObjectsFromWorld(this.zTextures);
+        this.zTextures = [];
+    }
 }
 
 namespace Tilemap {
@@ -139,6 +154,44 @@ namespace Tilemap {
         }
 
         return result;
+    }
+
+    export function createZTileIndicies(layer: Tilemap.TilemapLayer, zMap: Tilemap.ZMap) {
+        let zTileIndices = getInitialZTileIndicies(layer, zMap);
+        fillZTileIndicies(zTileIndices);
+        return zTileIndices;
+    }
+
+    export function createEmptyZTextures(zTileIndices: number[][], tileset: Tilemap.Tileset): Tilemap.ZTextureMap {
+        let zTextureSlots: Tilemap.ZTextureMap = {};
+        for (let y = 0; y < zTileIndices.length; y++) {
+            for (let x = 0; x < zTileIndices[y].length; x++) {
+                if (isFinite(zTileIndices[y][x])) {
+                    let zValue = getZValue(zTileIndices, y, x);
+                    if (!zTextureSlots[zValue]) zTextureSlots[zValue] = {
+                        texture: null,
+                        bounds: { x: 0, y: 0, width: 0, height: 0 },
+                        tileBounds: { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity },
+                        zHeight: -Infinity,
+                    };
+                    if (x < zTextureSlots[zValue].tileBounds.left) zTextureSlots[zValue].tileBounds.left = x;
+                    if (x > zTextureSlots[zValue].tileBounds.right) zTextureSlots[zValue].tileBounds.right = x;
+                    if (y < zTextureSlots[zValue].tileBounds.top) zTextureSlots[zValue].tileBounds.top = y;
+                    if (y > zTextureSlots[zValue].tileBounds.bottom) zTextureSlots[zValue].tileBounds.bottom = y;
+                    if (zTileIndices[y][x] > zTextureSlots[zValue].zHeight) zTextureSlots[zValue].zHeight = zTileIndices[y][x];
+                }
+            }
+        }
+
+        for (let zValue in zTextureSlots) {
+            zTextureSlots[zValue].bounds.x = zTextureSlots[zValue].tileBounds.left * tileset.tileWidth;
+            zTextureSlots[zValue].bounds.y = zTextureSlots[zValue].tileBounds.top * tileset.tileHeight;
+            zTextureSlots[zValue].bounds.width = (zTextureSlots[zValue].tileBounds.right - zTextureSlots[zValue].tileBounds.left + 1) * tileset.tileWidth;
+            zTextureSlots[zValue].bounds.height = (zTextureSlots[zValue].tileBounds.bottom - zTextureSlots[zValue].tileBounds.top + 1) * tileset.tileHeight;
+            zTextureSlots[zValue].texture = new Texture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height);
+        }
+
+        return zTextureSlots;
     }
 
     export function getCollisionRects(tilemapLayer: Tilemap.TilemapLayer, tileset: Tileset) {
@@ -159,6 +212,14 @@ namespace Tilemap {
             }
         }
         return result;
+    }
+
+    export function getZValue(zTileIndices: number[][], y: number, x: number) {
+        return y + zTileIndices[y][x];
+    }
+
+    export function lookupZMapValue(tile: Tilemap.Tile, zMap: Tilemap.ZMap) {
+        return zMap[tile.index];
     }
 
     export function optimizeCollisionRects(rects: Rect[], all: boolean = !OPTIMIZE_ALL) {
@@ -208,5 +269,50 @@ namespace Tilemap {
             }
         }
         return false;
+    }
+
+    function getInitialZTileIndicies(layer: Tilemap.TilemapLayer, zMap: Tilemap.ZMap) {
+        let zTileIndices = A.filledArray2D<number>(layer.length, layer[0].length, undefined);
+
+        if (_.isEmpty(zMap)) {
+            for (let x = 0; x < layer[0].length; x++) {
+                zTileIndices[0][x] = 0;
+            }
+            return zTileIndices;
+        }
+
+        for (let y = 0; y < layer.length; y++) {
+            for (let x = 0; x < layer[y].length; x++) {
+                let tile = layer[y][x];
+                zTileIndices[y][x] = tile.index === -1 ? -Infinity : lookupZMapValue(tile, zMap);
+            }
+        }
+        return zTileIndices;
+    }
+
+    function fillZTileIndicies(zTileIndices: number[][]) {
+        for (let y = 1; y < zTileIndices.length; y++) {
+            for (let x = 0; x < zTileIndices[y].length; x++) {
+                if (zTileIndices[y][x] === undefined && isFinite(zTileIndices[y-1][x])) {
+                    zTileIndices[y][x] = zTileIndices[y-1][x] - 1;
+                }
+            }
+        }
+
+        for (let y = zTileIndices.length-2; y >= 0; y--) {
+            for (let x = 0; x < zTileIndices[y].length; x++) {
+                if (zTileIndices[y][x] === undefined && isFinite(zTileIndices[y+1][x])) {
+                    zTileIndices[y][x] = zTileIndices[y+1][x] + 1;
+                }
+            }
+        }
+
+        for (let y = 0; y < zTileIndices.length; y++) {
+            for (let x = 0; x < zTileIndices[y].length; x++) {
+                if (zTileIndices[y][x] === undefined) {
+                    zTileIndices[y][x] = 0;
+                }
+            }
+        }
     }
 }
