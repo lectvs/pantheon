@@ -39,6 +39,7 @@ juice
 - logs consumption animation
 - /rounding error on world objects camera
 - problem of highlighting an object with an outline
+- problem with multiple of the same effect on a single object
 - sound
 
 postjam
@@ -47,3 +48,4 @@ postjam
 - physics based on lastx/y instead of lastmovementx/y?
 - boundless textures
 - controls remapping
+- fix spritetext tags
