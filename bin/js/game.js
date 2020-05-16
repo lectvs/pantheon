@@ -1,12 +1,13 @@
-var __values = (this && this.__values) || function (o) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+var __values = (this && this.__values) || function(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
     if (m) return m.call(o);
-    return {
+    if (o && typeof o.length === "number") return {
         next: function () {
             if (o && i >= o.length) o = void 0;
             return { value: o && o[i++], done: !o };
         }
     };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
 var __read = (this && this.__read) || function (o, n) {
     var m = typeof Symbol === "function" && o[Symbol.iterator];
@@ -61,7 +62,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -229,8 +230,8 @@ var A;
     }
     A.map2D = map2D;
     function mergeArray(array, into, key, combine) {
-        if (combine === void 0) { combine = (function (e, into) { return e; }); }
         var e_1, _a;
+        if (combine === void 0) { combine = (function (e, into) { return e; }); }
         var result = A.clone(into);
         try {
             for (var array_1 = __values(array), array_1_1 = array_1.next(); !array_1_1.done; array_1_1 = array_1.next()) {
@@ -401,7 +402,8 @@ var S;
             scriptFunctions[_i] = arguments[_i];
         }
         return function () {
-            var e_2, _a, scriptFunctions_1, scriptFunctions_1_1, scriptFunction, e_2_1;
+            var scriptFunctions_1, scriptFunctions_1_1, scriptFunction, e_2_1;
+            var e_2, _a;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -1539,11 +1541,11 @@ var WorldObject = /** @class */ (function () {
     }
     WorldObject.fromConfig = fromConfig;
     function resolveConfig(config) {
+        var e_5, _a;
         var parents = [];
         for (var _i = 1; _i < arguments.length; _i++) {
             parents[_i - 1] = arguments[_i];
         }
-        var e_5, _a;
         var result = resolveConfigParent(config);
         if (_.isEmpty(parents))
             return result;
@@ -2484,7 +2486,7 @@ var Input = /** @class */ (function () {
         for (var name_2 in keyCodesByName) {
             this.keyCodesByName[name_2].push(this.debugKeyCode(name_2));
             try {
-                for (var _b = __values(keyCodesByName[name_2]), _c = _b.next(); !_c.done; _c = _b.next()) {
+                for (var _b = (e_7 = void 0, __values(keyCodesByName[name_2])), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var keyCode = _c.value;
                     this.setupKeyCode(keyCode);
                 }
@@ -3072,8 +3074,8 @@ var World = /** @class */ (function () {
         return this.worldObjects.filter(function (obj) { return obj instanceof type; });
     };
     World.prototype.handleCollisions = function () {
-        var _this = this;
         var e_18, _a, e_19, _b, e_20, _c;
+        var _this = this;
         try {
             for (var _d = __values(this.collisionOrder), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var collision = _e.value;
@@ -3081,11 +3083,11 @@ var World = /** @class */ (function () {
                 var from = _.isArray(collision.from) ? collision.from : [collision.from];
                 var fromObjects = _.flatten(from.map(function (name) { return _this.physicsGroups[name].worldObjects; }));
                 try {
-                    for (var move_1 = __values(move), move_1_1 = move_1.next(); !move_1_1.done; move_1_1 = move_1.next()) {
+                    for (var move_1 = (e_19 = void 0, __values(move)), move_1_1 = move_1.next(); !move_1_1.done; move_1_1 = move_1.next()) {
                         var moveGroup = move_1_1.value;
                         var group = this.physicsGroups[moveGroup].worldObjects;
                         try {
-                            for (var group_1 = __values(group), group_1_1 = group_1.next(); !group_1_1.done; group_1_1 = group_1.next()) {
+                            for (var group_1 = (e_20 = void 0, __values(group)), group_1_1 = group_1.next(); !group_1_1.done; group_1_1 = group_1.next()) {
                                 var obj = group_1_1.value;
                                 Physics.collide(obj, fromObjects, {
                                     callback: collision.callback,
@@ -3569,11 +3571,11 @@ var World = /** @class */ (function () {
     }
     World.fromConfig = fromConfig;
     function resolveConfig(config) {
+        var e_26, _a;
         var parents = [];
         for (var _i = 1; _i < arguments.length; _i++) {
             parents[_i - 1] = arguments[_i];
         }
-        var e_26, _a;
         var result = resolveConfigParent(config);
         if (_.isEmpty(parents))
             return result;
@@ -4049,8 +4051,8 @@ var Physics = /** @class */ (function () {
         return result;
     };
     Physics.collide = function (obj, from, options) {
-        if (options === void 0) { options = {}; }
         var e_28, _a;
+        if (options === void 0) { options = {}; }
         if (_.isEmpty(from))
             return;
         if (!obj.colliding)
@@ -4068,7 +4070,7 @@ var Physics = /** @class */ (function () {
             var collisions = collidingWith.map(function (other) { return Physics.getCollision(obj, other); });
             collisions.sort(function (a, b) { return a.t - b.t; });
             try {
-                for (var collisions_1 = __values(collisions), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
+                for (var collisions_1 = (e_28 = void 0, __values(collisions)), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
                     var collision = collisions_1_1.value;
                     var d = Physics.separate(collision);
                     if (d !== 0 && options.transferMomentum) {
@@ -4502,7 +4504,7 @@ var Preload = /** @class */ (function () {
         for (var i = 0; i < tilemapJson.layers.length; i++) {
             var tilemapLayer = A.filledArray2D(tilemapJson.tileshigh, tilemapJson.tileswide);
             try {
-                for (var _b = __values(tilemapJson.layers[i].tiles), _c = _b.next(); !_c.done; _c = _b.next()) {
+                for (var _b = (e_29 = void 0, __values(tilemapJson.layers[i].tiles)), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var tile = _c.value;
                     tilemapLayer[tile.y][tile.x] = {
                         index: Math.max(tile.tile, -1),
@@ -6414,7 +6416,7 @@ var Campfire = /** @class */ (function (_super) {
                 var item = items_1_1.value;
                 if (_.contains(this.currentlyConsumedItems, item))
                     continue;
-                if (item.offset.y < -5)
+                if (item.offset.y < -15)
                     continue;
                 if (M.distance(item.x, item.y, this.x, this.y) > this.logConsumptionRadius)
                     continue;
@@ -6431,30 +6433,32 @@ var Campfire = /** @class */ (function (_super) {
     };
     Campfire.prototype.consumeItem = function (item) {
         var _this = this;
-        this.currentlyConsumedItems.push(item);
-        item.beingConsumed = true;
-        if (item.type === Item.Type.GASOLINE) {
-            this.hasConsumedGasoline = true;
-        }
-        this.world.runScript(S.chain(item.type !== Item.Type.GASOLINE
-            ? S.doOverTime(0.5, function (t) { item.alpha = 1 - t; })
-            : S.doOverTime(4, function (t) {
-                if (Random.boolean(1 - t)) {
-                    item.alpha = 1 - item.alpha;
-                }
-                if (t == 1)
-                    item.alpha = 0;
-            }), S.call(function () {
-            item.world.removeWorldObject(item);
-            A.removeAll(_this.currentlyConsumedItems, item);
-            if (!_this.hasConsumedGasoline) {
-                _this.fireRadius.increaseTime();
-                if (item.name !== 'start_log') {
-                    // Don't increase the buffer for the first log (helps make the intro cutscene look good)
-                    _this.fireBuffer.increaseBuffer();
-                }
+        if (item.type === Item.Type.LOG) {
+            this.world.addWorldObjects(LogPiece.getLogPieces(item));
+            this.world.removeWorldObject(item);
+            this.fireRadius.increaseTime();
+            if (item.name !== 'start_log') {
+                // Don't increase the buffer for the first log (helps make the intro cutscene look good)
+                this.fireBuffer.increaseBuffer();
             }
-        })));
+        }
+        if (item.type === Item.Type.GASOLINE) {
+            this.currentlyConsumedItems.push(item);
+            item.beingConsumed = true;
+            this.hasConsumedGasoline = true;
+            this.world.runScript(S.chain(item.type !== Item.Type.GASOLINE
+                ? S.doOverTime(0.5, function (t) { item.alpha = 1 - t; })
+                : S.doOverTime(4, function (t) {
+                    if (Random.boolean(1 - t)) {
+                        item.alpha = 1 - item.alpha;
+                    }
+                    if (t == 1)
+                        item.alpha = 0;
+                }), S.call(function () {
+                item.world.removeWorldObject(item);
+                A.removeAll(_this.currentlyConsumedItems, item);
+            })));
+        }
     };
     return Campfire;
 }(Sprite));
@@ -8042,3 +8046,68 @@ var LerpingValueWithNoise = /** @class */ (function () {
     };
     return LerpingValueWithNoise;
 }());
+var LogPiece = /** @class */ (function (_super) {
+    __extends(LogPiece, _super);
+    function LogPiece(config) {
+        var _this = _super.call(this, config) || this;
+        _this.zGravity = 100;
+        _this.vz = O.getOrDefault(_this.data.vz, 0);
+        return _this;
+    }
+    LogPiece.prototype.update = function (delta) {
+        this.updateMovement(delta);
+        _super.prototype.update.call(this, delta);
+    };
+    LogPiece.prototype.updateMovement = function (delta) {
+        this.offset.y = Math.min(0, this.offset.y + this.vz * delta);
+        this.vz += this.zGravity * delta;
+    };
+    return LogPiece;
+}(Sprite));
+(function (LogPiece) {
+    function getLogPieces(log) {
+        var e_40, _a;
+        var logPieces = [];
+        try {
+            for (var _b = __values([{ x: log.flipX ? 4 : 8, y: 1 },
+                { x: 0, y: 5 },
+                { x: 4, y: 5 },
+                { x: 8, y: 5 },
+                { x: 12, y: 5 },
+                { x: 0, y: 9 },
+                { x: 4, y: 9 },
+                { x: 8, y: 9 },
+                { x: 12, y: 9 }]), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var pos = _c.value;
+                var texture = new Texture(4, 4);
+                texture.render(AssetCache.getTexture('log'), {
+                    x: 8 - pos.x,
+                    y: 8 - pos.y,
+                    scaleX: log.flipX ? -1 : 1,
+                });
+                logPieces.push(new LogPiece({
+                    x: log.x, y: log.y,
+                    texture: texture,
+                    offset: {
+                        x: log.offset.x - 8 + pos.x,
+                        y: log.offset.y - 8 + pos.y,
+                    },
+                    vx: log.vx, vy: log.vy,
+                    layer: log.layer,
+                    data: {
+                        vz: log.vz,
+                    }
+                }));
+            }
+        }
+        catch (e_40_1) { e_40 = { error: e_40_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_40) throw e_40.error; }
+        }
+        return logPieces;
+    }
+    LogPiece.getLogPieces = getLogPieces;
+})(LogPiece || (LogPiece = {}));

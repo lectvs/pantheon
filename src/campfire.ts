@@ -71,39 +71,41 @@ class Campfire extends Sprite {
 
         for (let item of items) {
             if (_.contains(this.currentlyConsumedItems, item)) continue;
-            if (item.offset.y < -5) continue;
+            if (item.offset.y < -15) continue;
             if (M.distance(item.x, item.y, this.x, this.y) > this.logConsumptionRadius) continue;
             this.consumeItem(item);
         }
     }
 
     private consumeItem(item: Item) {
-        this.currentlyConsumedItems.push(item);
-        item.beingConsumed = true;
-        if (item.type === Item.Type.GASOLINE) {
-            this.hasConsumedGasoline = true;
+        if (item.type === Item.Type.LOG) {
+            this.world.addWorldObjects(LogPiece.getLogPieces(item));
+            this.world.removeWorldObject(item);
+            this.fireRadius.increaseTime();
+            if (item.name !== 'start_log') {
+                // Don't increase the buffer for the first log (helps make the intro cutscene look good)
+                this.fireBuffer.increaseBuffer();
+            }
         }
 
-        this.world.runScript(S.chain(
-            item.type !== Item.Type.GASOLINE
-                ? S.doOverTime(0.5, t => { item.alpha = 1 - t; })
-                : S.doOverTime(4, t => {
-                    if (Random.boolean(1-t)) {
-                        item.alpha = 1 - item.alpha;
-                    }
-                    if (t == 1) item.alpha = 0;
-                }),
-            S.call(() => {
-                item.world.removeWorldObject(item);
-                A.removeAll(this.currentlyConsumedItems, item);
-                if (!this.hasConsumedGasoline) {
-                    this.fireRadius.increaseTime();
-                    if (item.name !== 'start_log') {
-                        // Don't increase the buffer for the first log (helps make the intro cutscene look good)
-                        this.fireBuffer.increaseBuffer();
-                    }
-                }
-            })
-        ));
+        if (item.type === Item.Type.GASOLINE) {
+            this.currentlyConsumedItems.push(item);
+            item.beingConsumed = true;
+            this.hasConsumedGasoline = true;
+            this.world.runScript(S.chain(
+                item.type !== Item.Type.GASOLINE
+                    ? S.doOverTime(0.5, t => { item.alpha = 1 - t; })
+                    : S.doOverTime(4, t => {
+                        if (Random.boolean(1-t)) {
+                            item.alpha = 1 - item.alpha;
+                        }
+                        if (t == 1) item.alpha = 0;
+                    }),
+                S.call(() => {
+                    item.world.removeWorldObject(item);
+                    A.removeAll(this.currentlyConsumedItems, item);
+                })
+            ));
+        }
     }
 }

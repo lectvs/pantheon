@@ -9,7 +9,7 @@ class Item extends Sprite {
 
     beingConsumed: boolean;
 
-    private vz: number;
+    vz: number;
 
     private friction: number = 20000;
     private zGravity: number = 100;
