@@ -36,6 +36,7 @@ namespace Assets {
                 'key': { rect: { x: 2*16, y: 0, width: 16, height: 16 } },
                 'torch': { rect: { x: 3*16, y: 0, width: 16, height: 16 } },
                 'gasoline': { rect: { x: 4*16, y: 0, width: 16, height: 16 } },
+                'test': { rect: { x: 0, y: 0, width: 16, height: 16 } },
             }
         },
 

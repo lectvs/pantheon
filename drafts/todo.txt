@@ -36,7 +36,7 @@ juice
 - /fix rightmost tree below leaves
 - smooth camera follow
 - /trees falling the other way
-- logs consumption animation
+- /logs consumption animation
 - /rounding error on world objects camera
 - problem of highlighting an object with an outline
 - problem with multiple of the same effect on a single object
@@ -49,3 +49,8 @@ postjam
 - boundless textures
 - controls remapping
 - fix spritetext tags
+- option for child objects to inherit parent offset
+- entity uids
+- test resolveconfig for children
+- child name prefix?
+- move anchor off of texture

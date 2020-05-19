@@ -1,13 +1,12 @@
-var __values = (this && this.__values) || function(o) {
-    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+var __values = (this && this.__values) || function (o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
     if (m) return m.call(o);
-    if (o && typeof o.length === "number") return {
+    return {
         next: function () {
             if (o && i >= o.length) o = void 0;
             return { value: o && o[i++], done: !o };
         }
     };
-    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
 var __read = (this && this.__read) || function (o, n) {
     var m = typeof Symbol === "function" && o[Symbol.iterator];
@@ -62,7 +61,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    };
+    }
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -230,8 +229,8 @@ var A;
     }
     A.map2D = map2D;
     function mergeArray(array, into, key, combine) {
-        var e_1, _a;
         if (combine === void 0) { combine = (function (e, into) { return e; }); }
+        var e_1, _a;
         var result = A.clone(into);
         try {
             for (var array_1 = __values(array), array_1_1 = array_1.next(); !array_1_1.done; array_1_1 = array_1.next()) {
@@ -402,8 +401,7 @@ var S;
             scriptFunctions[_i] = arguments[_i];
         }
         return function () {
-            var scriptFunctions_1, scriptFunctions_1_1, scriptFunction, e_2_1;
-            var e_2, _a;
+            var e_2, _a, scriptFunctions_1, scriptFunctions_1_1, scriptFunction, e_2_1;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -1541,11 +1539,11 @@ var WorldObject = /** @class */ (function () {
     }
     WorldObject.fromConfig = fromConfig;
     function resolveConfig(config) {
-        var e_5, _a;
         var parents = [];
         for (var _i = 1; _i < arguments.length; _i++) {
             parents[_i - 1] = arguments[_i];
         }
+        var e_5, _a;
         var result = resolveConfigParent(config);
         if (_.isEmpty(parents))
             return result;
@@ -1584,6 +1582,9 @@ var WorldObject = /** @class */ (function () {
             }
             else if (key === 'data') {
                 result[key] = O.withOverrides(result[key], config[key]);
+            }
+            else if (key === 'children') {
+                result[key] = A.mergeArray(config[key], result[key], function (e) { return e.name; }, resolveConfig);
             }
             else {
                 result[key] = config[key];
@@ -2486,7 +2487,7 @@ var Input = /** @class */ (function () {
         for (var name_2 in keyCodesByName) {
             this.keyCodesByName[name_2].push(this.debugKeyCode(name_2));
             try {
-                for (var _b = (e_7 = void 0, __values(keyCodesByName[name_2])), _c = _b.next(); !_c.done; _c = _b.next()) {
+                for (var _b = __values(keyCodesByName[name_2]), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var keyCode = _c.value;
                     this.setupKeyCode(keyCode);
                 }
@@ -3074,8 +3075,8 @@ var World = /** @class */ (function () {
         return this.worldObjects.filter(function (obj) { return obj instanceof type; });
     };
     World.prototype.handleCollisions = function () {
-        var e_18, _a, e_19, _b, e_20, _c;
         var _this = this;
+        var e_18, _a, e_19, _b, e_20, _c;
         try {
             for (var _d = __values(this.collisionOrder), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var collision = _e.value;
@@ -3083,11 +3084,11 @@ var World = /** @class */ (function () {
                 var from = _.isArray(collision.from) ? collision.from : [collision.from];
                 var fromObjects = _.flatten(from.map(function (name) { return _this.physicsGroups[name].worldObjects; }));
                 try {
-                    for (var move_1 = (e_19 = void 0, __values(move)), move_1_1 = move_1.next(); !move_1_1.done; move_1_1 = move_1.next()) {
+                    for (var move_1 = __values(move), move_1_1 = move_1.next(); !move_1_1.done; move_1_1 = move_1.next()) {
                         var moveGroup = move_1_1.value;
                         var group = this.physicsGroups[moveGroup].worldObjects;
                         try {
-                            for (var group_1 = (e_20 = void 0, __values(group)), group_1_1 = group_1.next(); !group_1_1.done; group_1_1 = group_1.next()) {
+                            for (var group_1 = __values(group), group_1_1 = group_1.next(); !group_1_1.done; group_1_1 = group_1.next()) {
                                 var obj = group_1_1.value;
                                 Physics.collide(obj, fromObjects, {
                                     callback: collision.callback,
@@ -3571,11 +3572,11 @@ var World = /** @class */ (function () {
     }
     World.fromConfig = fromConfig;
     function resolveConfig(config) {
-        var e_26, _a;
         var parents = [];
         for (var _i = 1; _i < arguments.length; _i++) {
             parents[_i - 1] = arguments[_i];
         }
+        var e_26, _a;
         var result = resolveConfigParent(config);
         if (_.isEmpty(parents))
             return result;
@@ -4051,8 +4052,8 @@ var Physics = /** @class */ (function () {
         return result;
     };
     Physics.collide = function (obj, from, options) {
-        var e_28, _a;
         if (options === void 0) { options = {}; }
+        var e_28, _a;
         if (_.isEmpty(from))
             return;
         if (!obj.colliding)
@@ -4070,7 +4071,7 @@ var Physics = /** @class */ (function () {
             var collisions = collidingWith.map(function (other) { return Physics.getCollision(obj, other); });
             collisions.sort(function (a, b) { return a.t - b.t; });
             try {
-                for (var collisions_1 = (e_28 = void 0, __values(collisions)), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
+                for (var collisions_1 = __values(collisions), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
                     var collision = collisions_1_1.value;
                     var d = Physics.separate(collision);
                     if (d !== 0 && options.transferMomentum) {
@@ -4272,7 +4273,32 @@ var Texture = /** @class */ (function () {
     };
     Texture.prototype.clone = function () {
         var result = new Texture(this.width, this.height);
-        result.render(this, { x: this.anchorX * this.width, y: this.anchorY * this.height });
+        result.render(this, {
+            x: this.anchorX * this.width,
+            y: this.anchorY * this.height,
+        });
+        result.anchorX = this.anchorX;
+        result.anchorY = this.anchorY;
+        return result;
+    };
+    Texture.prototype.flipX = function () {
+        var result = new Texture(this.width, this.height);
+        result.render(this, {
+            x: (1 - this.anchorX) * this.width,
+            y: this.anchorY * this.height,
+            scaleX: -1,
+        });
+        result.anchorX = this.anchorX;
+        result.anchorY = this.anchorY;
+        return result;
+    };
+    Texture.prototype.flipY = function () {
+        var result = new Texture(this.width, this.height);
+        result.render(this, {
+            x: this.anchorX * this.width,
+            y: (1 - this.anchorY) * this.height,
+            scaleY: -1,
+        });
         result.anchorX = this.anchorX;
         result.anchorY = this.anchorY;
         return result;
@@ -4296,6 +4322,48 @@ var Texture = /** @class */ (function () {
             return;
         }
         global.renderer.render(displayObject, this.renderTextureSprite.renderTexture, false);
+    };
+    Texture.prototype.subdivide = function (h, v, anchorX, anchorY) {
+        if (anchorX === void 0) { anchorX = 0; }
+        if (anchorY === void 0) { anchorY = 0; }
+        if (h <= 0 || v <= 0)
+            return [];
+        var result = [];
+        var framew = Math.floor(this.width / h);
+        var frameh = Math.floor(this.height / v);
+        var lastframew = this.width - (h - 1) * framew;
+        var lastframeh = this.height - (v - 1) * frameh;
+        for (var y = 0; y < v; y++) {
+            for (var x = 0; x < h; x++) {
+                var tx = x * framew;
+                var ty = y * frameh;
+                var tw = x === h - 1 ? lastframew : framew;
+                var th = y === v - 1 ? lastframeh : frameh;
+                var texture = new Texture(tw, th);
+                texture.render(this, {
+                    x: this.anchorX * this.width - tx,
+                    y: this.anchorY * this.height - ty,
+                });
+                texture.anchorX = anchorX;
+                texture.anchorY = anchorY;
+                result.push({
+                    x: tx, y: ty,
+                    texture: texture
+                });
+            }
+        }
+        return result;
+    };
+    Texture.prototype.tint = function (tint) {
+        var result = new Texture(this.width, this.height);
+        result.render(this, {
+            x: this.anchorX * this.width,
+            y: this.anchorY * this.height,
+            tint: tint,
+        });
+        result.anchorX = this.anchorX;
+        result.anchorY = this.anchorY;
+        return result;
     };
     Texture.prototype.toMaskTexture = function () {
         return this.renderTextureSprite.renderTexture;
@@ -4504,7 +4572,7 @@ var Preload = /** @class */ (function () {
         for (var i = 0; i < tilemapJson.layers.length; i++) {
             var tilemapLayer = A.filledArray2D(tilemapJson.tileshigh, tilemapJson.tileswide);
             try {
-                for (var _b = (e_29 = void 0, __values(tilemapJson.layers[i].tiles)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                for (var _b = __values(tilemapJson.layers[i].tiles), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var tile = _c.value;
                     tilemapLayer[tile.y][tile.x] = {
                         index: Math.max(tile.tile, -1),
@@ -6134,6 +6202,7 @@ var Assets;
                 'key': { rect: { x: 2 * 16, y: 0, width: 16, height: 16 } },
                 'torch': { rect: { x: 3 * 16, y: 0, width: 16, height: 16 } },
                 'gasoline': { rect: { x: 4 * 16, y: 0, width: 16, height: 16 } },
+                'test': { rect: { x: 0, y: 0, width: 16, height: 16 } },
             }
         },
         // Props
@@ -6436,11 +6505,13 @@ var Campfire = /** @class */ (function (_super) {
         if (item.type === Item.Type.LOG) {
             this.world.addWorldObjects(LogPiece.getLogPieces(item));
             this.world.removeWorldObject(item);
-            this.fireRadius.increaseTime();
-            if (item.name !== 'start_log') {
-                // Don't increase the buffer for the first log (helps make the intro cutscene look good)
-                this.fireBuffer.increaseBuffer();
-            }
+            this.runScript(S.chain(S.wait(0.5), S.call(function () {
+                _this.fireRadius.increaseTime();
+                if (item.name !== 'start_log') {
+                    // Don't increase the buffer for the first log (helps make the intro cutscene look good)
+                    _this.fireBuffer.increaseBuffer();
+                }
+            })));
         }
         if (item.type === Item.Type.GASOLINE) {
             this.currentlyConsumedItems.push(item);
@@ -8050,8 +8121,35 @@ var LogPiece = /** @class */ (function (_super) {
     __extends(LogPiece, _super);
     function LogPiece(config) {
         var _this = _super.call(this, config) || this;
+        _this.friction = 20000;
         _this.zGravity = 100;
+        _this.timeToStartBurning = Random.float(0, 0.2);
+        _this.burnTime = 0.3;
         _this.vz = O.getOrDefault(_this.data.vz, 0);
+        _this.stateMachine.addState('normal', {
+            script: S.wait(_this.timeToStartBurning),
+            transitions: [{ type: 'instant', toState: 'burning' }]
+        });
+        _this.stateMachine.addState('burning', {
+            callback: function () {
+                _this.addChild({
+                    parent: fireSpriteConfig(),
+                    offset: {
+                        x: _this.offset.x,
+                        y: _this.offset.y
+                    },
+                    layer: _this.layer,
+                    scaleX: 0.3,
+                    scaleY: 0.3,
+                });
+            },
+            script: S.chain(S.doOverTime(_this.burnTime, function (t) {
+                var fire = _this.children[0];
+                fire.offset.x = _this.offset.x;
+                fire.offset.y = _this.offset.y;
+            }), S.call(function () { return _this.kill(); }))
+        });
+        _this.stateMachine.setState('normal');
         return _this;
     }
     LogPiece.prototype.update = function (delta) {
@@ -8061,6 +8159,21 @@ var LogPiece = /** @class */ (function (_super) {
     LogPiece.prototype.updateMovement = function (delta) {
         this.offset.y = Math.min(0, this.offset.y + this.vz * delta);
         this.vz += this.zGravity * delta;
+        if (this.offset.y == 0) {
+            this.vz = 0;
+            if (this.vx > 0) {
+                this.vx = Math.max(0, this.vx - this.friction * delta);
+            }
+            else if (this.vx < 0) {
+                this.vx = Math.min(0, this.vx + this.friction * delta);
+            }
+            if (this.vy > 0) {
+                this.vy = Math.max(0, this.vy - this.friction * delta);
+            }
+            else if (this.vy < 0) {
+                this.vy = Math.min(0, this.vy + this.friction * delta);
+            }
+        }
     };
     return LogPiece;
 }(Sprite));
@@ -8068,29 +8181,22 @@ var LogPiece = /** @class */ (function (_super) {
     function getLogPieces(log) {
         var e_40, _a;
         var logPieces = [];
+        var stemx = log.flipX ? 4 : 8;
+        var logTexture = AssetCache.getTexture('log');
+        if (log.flipX)
+            logTexture = logTexture.flipX();
+        var subdivisions = logTexture.subdivide(4, 4, 0.5, 0.5).filter(function (sub) {
+            return (sub.y !== 0 || sub.x === stemx) && (sub.y !== 12);
+        });
         try {
-            for (var _b = __values([{ x: log.flipX ? 4 : 8, y: 1 },
-                { x: 0, y: 5 },
-                { x: 4, y: 5 },
-                { x: 8, y: 5 },
-                { x: 12, y: 5 },
-                { x: 0, y: 9 },
-                { x: 4, y: 9 },
-                { x: 8, y: 9 },
-                { x: 12, y: 9 }]), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var pos = _c.value;
-                var texture = new Texture(4, 4);
-                texture.render(AssetCache.getTexture('log'), {
-                    x: 8 - pos.x,
-                    y: 8 - pos.y,
-                    scaleX: log.flipX ? -1 : 1,
-                });
+            for (var subdivisions_1 = __values(subdivisions), subdivisions_1_1 = subdivisions_1.next(); !subdivisions_1_1.done; subdivisions_1_1 = subdivisions_1.next()) {
+                var subdivision = subdivisions_1_1.value;
                 logPieces.push(new LogPiece({
                     x: log.x, y: log.y,
-                    texture: texture,
+                    texture: subdivision.texture,
                     offset: {
-                        x: log.offset.x - 8 + pos.x,
-                        y: log.offset.y - 8 + pos.y,
+                        x: log.offset.x - 8 + subdivision.x,
+                        y: log.offset.y - 8 + subdivision.y,
                     },
                     vx: log.vx, vy: log.vy,
                     layer: log.layer,
@@ -8103,7 +8209,7 @@ var LogPiece = /** @class */ (function (_super) {
         catch (e_40_1) { e_40 = { error: e_40_1 }; }
         finally {
             try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                if (subdivisions_1_1 && !subdivisions_1_1.done && (_a = subdivisions_1.return)) _a.call(subdivisions_1);
             }
             finally { if (e_40) throw e_40.error; }
         }

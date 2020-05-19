@@ -12,6 +12,12 @@ namespace Texture {
         slice?: Rect;
         filters?: TextureFilter[];
     }
+
+    export type Subdivision = {
+        x: number;
+        y: number;
+        texture: Texture;
+    }
 }
 
 class Texture {
@@ -40,7 +46,34 @@ class Texture {
 
     clone() {
         let result = new Texture(this.width, this.height);
-        result.render(this, { x: this.anchorX * this.width, y: this.anchorY * this.height });
+        result.render(this, {
+            x: this.anchorX * this.width,
+            y: this.anchorY * this.height,
+        });
+        result.anchorX = this.anchorX;
+        result.anchorY = this.anchorY;
+        return result;
+    }
+
+    flipX() {
+        let result = new Texture(this.width, this.height);
+        result.render(this, {
+            x: (1-this.anchorX) * this.width,
+            y: this.anchorY * this.height,
+            scaleX: -1,
+        });
+        result.anchorX = this.anchorX;
+        result.anchorY = this.anchorY;
+        return result;
+    }
+
+    flipY() {
+        let result = new Texture(this.width, this.height);
+        result.render(this, {
+            x: this.anchorX * this.width,
+            y: (1-this.anchorY) * this.height,
+            scaleY: -1,
+        });
         result.anchorX = this.anchorX;
         result.anchorY = this.anchorY;
         return result;
@@ -66,6 +99,50 @@ class Texture {
             return;
         }
         global.renderer.render(displayObject, this.renderTextureSprite.renderTexture, false);
+    }
+
+    subdivide(h: number, v: number, anchorX: number = 0, anchorY: number = 0): Texture.Subdivision[] {
+        if (h <= 0 || v <= 0) return [];
+
+        let result: Texture.Subdivision[] = [];
+
+        let framew = Math.floor(this.width/h);
+        let frameh = Math.floor(this.height/v);
+        let lastframew = this.width - (h-1)*framew;
+        let lastframeh = this.height - (v-1)*frameh;
+
+        for (let y = 0; y < v; y++) {
+            for (let x = 0; x < h; x++) {
+                let tx = x * framew;
+                let ty = y * frameh;
+                let tw = x === h-1 ? lastframew : framew;
+                let th = y === v-1 ? lastframeh : frameh;
+                let texture = new Texture(tw, th);
+                texture.render(this, {
+                    x: this.anchorX * this.width - tx,
+                    y: this.anchorY * this.height - ty,
+                });
+                texture.anchorX = anchorX;
+                texture.anchorY = anchorY;
+                result.push({
+                    x: tx, y: ty,
+                    texture: texture
+                });
+            }
+        }
+        return result;
+    }
+
+    tint(tint: number) {
+        let result = new Texture(this.width, this.height);
+        result.render(this, {
+            x: this.anchorX * this.width,
+            y: this.anchorY * this.height,
+            tint: tint,
+        });
+        result.anchorX = this.anchorX;
+        result.anchorY = this.anchorY;
+        return result;
     }
 
     toMaskTexture() {

@@ -1,19 +1,68 @@
 class LogPiece extends Sprite {
-    private zGravity: number = 100;
+    private readonly friction = 20000;
+    private readonly zGravity = 100;
+    private readonly timeToStartBurning = Random.float(0, 0.2);
+    private readonly burnTime = 0.3;
+
     vz: number;
+
     constructor(config: Sprite.Config) {
         super(config);
         this.vz = O.getOrDefault(this.data.vz, 0);
+
+        this.stateMachine.addState('normal', {
+            script: S.wait(this.timeToStartBurning),
+            transitions: [{ type: 'instant', toState: 'burning' }]
+        });
+        this.stateMachine.addState('burning', {
+            callback: () => {
+                this.addChild(<Sprite.Config>{
+                    parent: fireSpriteConfig(),
+                    offset: {
+                        x: this.offset.x,
+                        y: this.offset.y
+                    },
+                    layer: this.layer,
+                    scaleX: 0.3,
+                    scaleY: 0.3,
+                });
+            },
+            script: S.chain(
+                S.doOverTime(this.burnTime, t => {
+                    let fire = <Sprite>this.children[0];
+                    fire.offset.x = this.offset.x;
+                    fire.offset.y = this.offset.y;
+                }),
+                S.call(() => this.kill()),
+            )
+        });
+        this.stateMachine.setState('normal');
     }
 
     update(delta: number) {
         this.updateMovement(delta);
         super.update(delta);
-    }        
+    }
 
     private updateMovement(delta: number) {
         this.offset.y = Math.min(0, this.offset.y + this.vz*delta);
         this.vz += this.zGravity*delta;
+
+        if (this.offset.y == 0) {
+            this.vz = 0;
+
+            if (this.vx > 0) {
+                this.vx = Math.max(0, this.vx - this.friction*delta);
+            } else if (this.vx < 0) {
+                this.vx = Math.min(0, this.vx + this.friction*delta);
+            }
+
+            if (this.vy > 0) {
+                this.vy = Math.max(0, this.vy - this.friction*delta);
+            } else if (this.vy < 0) {
+                this.vy = Math.min(0, this.vy + this.friction*delta);
+            }
+        }
     }
 }
 
@@ -21,34 +70,27 @@ namespace LogPiece {
     export function getLogPieces(log: Item) {
         let logPieces: LogPiece[] = [];
 
-        for (let pos of [{x: log.flipX ? 4 : 8, y: 1},
-                         {x: 0,  y: 5},
-                         {x: 4,  y: 5},
-                         {x: 8,  y: 5},
-                         {x: 12, y: 5},
-                         {x: 0,  y: 9},
-                         {x: 4,  y: 9},
-                         {x: 8,  y: 9},
-                         {x: 12, y: 9}]) {
-            let texture = new Texture(4, 4);
-            texture.render(AssetCache.getTexture('log'), {
-                x: 8 - pos.x,
-                y: 8 - pos.y,
-                scaleX: log.flipX ? -1 : 1,
-            });
-            logPieces.push(new LogPiece({
-                x: log.x, y: log.y,
-                texture: texture,
-                offset: {
-                    x: log.offset.x - 8 + pos.x,
-                    y: log.offset.y - 8 + pos.y,
-                },
-                vx: log.vx, vy: log.vy,
-                layer: log.layer,
-                data: {
-                    vz: log.vz,
-                }
-            }));
+        let stemx = log.flipX ? 4 : 8;
+        let logTexture = AssetCache.getTexture('log');
+        if (log.flipX) logTexture = logTexture.flipX();
+        let subdivisions = logTexture.subdivide(4, 4, 0.5, 0.5).filter(sub =>
+            (sub.y !== 0 || sub.x === stemx) && (sub.y !== 12)
+        );
+
+        for (let subdivision of subdivisions) {
+           logPieces.push(new LogPiece({
+               x: log.x, y: log.y,
+               texture: subdivision.texture,
+               offset: {
+                   x: log.offset.x - 8 + subdivision.x,
+                   y: log.offset.y - 8 + subdivision.y,
+               },
+               vx: log.vx, vy: log.vy,
+               layer: log.layer,
+               data: {
+                   vz: log.vz,
+               }
+           }));
         }
 
         return logPieces;

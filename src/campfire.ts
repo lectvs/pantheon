@@ -81,11 +81,16 @@ class Campfire extends Sprite {
         if (item.type === Item.Type.LOG) {
             this.world.addWorldObjects(LogPiece.getLogPieces(item));
             this.world.removeWorldObject(item);
-            this.fireRadius.increaseTime();
-            if (item.name !== 'start_log') {
-                // Don't increase the buffer for the first log (helps make the intro cutscene look good)
-                this.fireBuffer.increaseBuffer();
-            }
+            this.runScript(S.chain(
+                S.wait(0.5),
+                S.call(() => {
+                    this.fireRadius.increaseTime();
+                    if (item.name !== 'start_log') {
+                        // Don't increase the buffer for the first log (helps make the intro cutscene look good)
+                        this.fireBuffer.increaseBuffer();
+                    }
+                })
+            ));
         }
 
         if (item.type === Item.Type.GASOLINE) {

@@ -328,6 +328,8 @@ namespace WorldObject {
                 result[key] = O.mergeObject(config[key], result[key]);
             } else if (key === 'data') {
                 result[key] = O.withOverrides(result[key], config[key]);
+            } else if (key === 'children') {
+                result[key] = A.mergeArray(config[key], result[key], (e: WorldObject.Config) => e.name, resolveConfig);
             } else {
                 result[key] = config[key];
             }
