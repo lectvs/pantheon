@@ -105,7 +105,7 @@ class ControlsMenu extends Menu {
                 <Item.Config>{
                     constructor: Item,
                     name: 'axe',
-                    x: 140, y: 156,
+                    x: 140, y: 140,
                     type: Item.Type.AXE,
                     effects: { outline: { color: 0xFFFFFF } }
                 },
@@ -131,7 +131,7 @@ class ControlsMenu extends Menu {
         let player_attack = this.getWorldObjectByName<Player>('player_attack');
         player_attack.test = true;
         let tree = this.getWorldObjectByName<Tree>('tree');
-        tree.setTexture('blacktree');
+        tree.playAnimation('black');
 
         this.runScript(S.simul(
             S.loopFor(Infinity, S.chain(

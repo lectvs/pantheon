@@ -91,7 +91,10 @@ var AnimationManager = /** @class */ (function () {
             debug("Cannot add animation '" + name + "' to sprite", this.sprite, "since it already exists");
             return;
         }
-        this.animations[name] = frames;
+        this.animations[name] = _.defaults(frames, {
+            duration: 0,
+            forceRequired: false,
+        });
     };
     Object.defineProperty(AnimationManager.prototype, "forceRequired", {
         get: function () {
@@ -196,6 +199,10 @@ var A;
         return array.map(function (line) { return clone(line); });
     }
     A.clone2D = clone2D;
+    function emptyArray(n) {
+        return filledArray(n);
+    }
+    A.emptyArray = emptyArray;
     function filledArray(n, fillWith) {
         var result = [];
         for (var i = 0; i < n; i++) {
@@ -258,6 +265,10 @@ var A;
         return result;
     }
     A.mergeArray = mergeArray;
+    function range(n) {
+        return __spread(Array(n).keys());
+    }
+    A.range = range;
     function removeAll(array, obj, startingAt) {
         if (startingAt === void 0) { startingAt = 0; }
         if (!array)
@@ -343,7 +354,7 @@ var Animations = /** @class */ (function () {
         for (var i = 0; i < textures.length; i++) {
             var animationFrame = {
                 duration: frameDuration,
-                texture: "" + config.texturePrefix + textures[i],
+                texture: textures[i] instanceof Texture ? textures[i] : "" + config.texturePrefix + textures[i],
                 nextFrameRef: config.name + "/" + (i + 1),
                 forceRequired: config.forceRequired,
             };
@@ -1722,6 +1733,7 @@ var Sprite = /** @class */ (function (_super) {
     Sprite.prototype.update = function (delta) {
         _super.prototype.update.call(this, delta);
         this.animationManager.update(delta);
+        this.effects.updateEffects(delta);
     };
     Sprite.prototype.render = function (screen) {
         screen.render(this.texture, {
@@ -2095,9 +2107,12 @@ var Draw = /** @class */ (function () {
 ///<reference path="./debug.ts"/>
 var TextureFilter = /** @class */ (function () {
     function TextureFilter(config) {
-        this.pixiFilter = this.constructPixiFilterCached(config.code, config.uniforms);
+        var code = O.getOrDefault(config.code, '');
+        var vertCode = O.getOrDefault(config.vertCode, '');
+        this.pixiFilter = this.constructPixiFilterCached(code, vertCode, config.uniforms);
         this.uniforms = this.constructUniforms(config.uniforms);
         this.setUniforms(config.defaultUniforms);
+        this.setUniform('t', 0);
         this.enabled = true;
     }
     TextureFilter.prototype.getPixiFilter = function () {
@@ -2126,6 +2141,9 @@ var TextureFilter = /** @class */ (function () {
             this.uniforms[key] = uniforms[key];
         }
     };
+    TextureFilter.prototype.updateTime = function (delta) {
+        this.setUniform('t', this.getUniform('t') + delta);
+    };
     TextureFilter.prototype.constructUniforms = function (uniformDeclarations) {
         if (_.isEmpty(uniformDeclarations))
             return {};
@@ -2136,20 +2154,22 @@ var TextureFilter = /** @class */ (function () {
             .forEach(function (decl) { return (uniformMap[decl] = undefined); });
         return uniformMap;
     };
-    TextureFilter.prototype.constructPixiFilterCached = function (code, uniforms) {
+    TextureFilter.prototype.constructPixiFilterCached = function (code, vertCode, uniforms) {
         var uniformsCode = (uniforms || []).map(function (uniform) { return "uniform " + uniform + ";"; }).join('');
-        var cacheKey = uniformsCode + code;
+        var cacheKey = uniformsCode + code + vertCode;
         if (!TextureFilter.cache[cacheKey]) {
-            var vert = TextureFilter.vert;
+            var vert = TextureFilter.vertPreUniforms + uniformsCode + TextureFilter.vertStartFunc + vertCode + TextureFilter.vertEndFunc;
             var frag = TextureFilter.fragPreUniforms + uniformsCode + TextureFilter.fragStartFunc + code + TextureFilter.fragEndFunc;
             var result = new PIXI.Filter(vert, frag, {});
             TextureFilter.cache[cacheKey] = result;
         }
         return TextureFilter.cache[cacheKey];
     };
-    TextureFilter.vert = "\n        attribute vec2 aVertexPosition;\n        uniform mat3 projectionMatrix;\n        varying vec2 vTextureCoord;\n        uniform vec4 inputSize;\n        uniform vec4 outputFrame;\n        varying vec4 is;\n        \n        vec4 filterVertexPosition(void) {\n            vec2 position = aVertexPosition * max(outputFrame.zw, vec2(0.)) + outputFrame.xy;\n            return vec4((projectionMatrix * vec3(position, 1.0)).xy, 0.0, 1.0);\n        }\n        \n        vec2 filterTextureCoord(void) {\n            return aVertexPosition * (outputFrame.zw * inputSize.zw);\n        }\n        \n        void main(void) {\n            gl_Position = filterVertexPosition();\n            vTextureCoord = filterTextureCoord();\n            is = inputSize;\n        }\n    ";
-    TextureFilter.fragPreUniforms = "\n        varying vec2 vTextureCoord;\n        varying vec4 is;\n        uniform sampler2D uSampler;\n        uniform float posx;\n        uniform float posy;\n\n        float width;\n        float height;\n    ";
-    TextureFilter.fragStartFunc = "\n        vec4 getColor(float localx, float localy) {\n            float tx = (localx + posx) / width;\n            float ty = (localy + posy) / height;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        vec4 getWorldColor(float worldx, float worldy) {\n            float tx = worldx / width;\n            float ty = worldy / height;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        void main(void) {\n            width = is.x;\n            height = is.y;\n            float worldx = vTextureCoord.x * width;\n            float worldy = vTextureCoord.y * height;\n            float x = worldx - posx;\n            float y = worldy - posy;\n            vec4 inp = texture2D(uSampler, vTextureCoord);\n            // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.\n            if (inp.a > 0.0) {\n                inp.rgb /= inp.a;\n            }\n            vec4 outp = vec4(inp.r, inp.g, inp.b, inp.a);\n    ";
+    TextureFilter.vertPreUniforms = "\n        precision highp float;\n        attribute vec2 aVertexPosition;\n        uniform mat3 projectionMatrix;\n        varying vec2 vTextureCoord;\n        uniform vec4 inputSize;\n        uniform vec4 outputFrame;\n\n        uniform float posx;\n        uniform float posy;\n        uniform float t;\n\n        float width;\n        float height;\n    ";
+    TextureFilter.vertStartFunc = "\n        vec4 filterVertexPosition(void) {\n            width = inputSize.x;\n            height = inputSize.y;\n            vec2 position = aVertexPosition * max(outputFrame.zw, vec2(0.)) + outputFrame.xy;\n            vec2 inp = position - vec2(posx, posy);\n            vec2 outp = vec2(inp.x, inp.y);\n    ";
+    TextureFilter.vertEndFunc = "\n            position = outp + vec2(posx, posy);\n            return vec4((projectionMatrix * vec3(position, 1.0)).xy, 0.0, 1.0);\n        }\n\n        vec2 filterTextureCoord(void) {\n            return aVertexPosition * (outputFrame.zw * inputSize.zw);\n        }\n\n        void main(void) {\n            gl_Position = filterVertexPosition();\n            vTextureCoord = filterTextureCoord();\n        }\n    ";
+    TextureFilter.fragPreUniforms = "\n        precision highp float;\n        varying vec2 vTextureCoord;\n        uniform vec4 inputSize;\n        uniform sampler2D uSampler;\n\n        uniform float posx;\n        uniform float posy;\n        uniform float t;\n\n        float width;\n        float height;\n    ";
+    TextureFilter.fragStartFunc = "\n        vec4 getColor(float localx, float localy) {\n            float tx = (localx + posx) / width;\n            float ty = (localy + posy) / height;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        vec4 getWorldColor(float worldx, float worldy) {\n            float tx = worldx / width;\n            float ty = worldy / height;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        void main(void) {\n            width = inputSize.x;\n            height = inputSize.y;\n            float worldx = vTextureCoord.x * width;\n            float worldy = vTextureCoord.y * height;\n            float x = worldx - posx;\n            float y = worldy - posy;\n            vec4 inp = texture2D(uSampler, vTextureCoord);\n            // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.\n            if (inp.a > 0.0) {\n                inp.rgb /= inp.a;\n            }\n            vec4 outp = vec4(inp.r, inp.g, inp.b, inp.a);\n    ";
     TextureFilter.fragEndFunc = "\n            // Premultiply alpha again.\n            outp.rgb *= outp.a;\n            gl_FragColor = outp;\n        }\n    ";
     return TextureFilter;
 }());
@@ -2279,6 +2299,39 @@ var Effects = /** @class */ (function () {
     });
     Effects.prototype.getFilterList = function () {
         return this.pre.filters.concat(this.effects).concat(this.post.filters);
+    };
+    Effects.prototype.updateEffects = function (delta) {
+        var e_7, _a, e_8, _b;
+        if (this.effects[Effects.SILHOUETTE_I])
+            this.effects[Effects.SILHOUETTE_I].updateTime(delta);
+        if (this.effects[Effects.OUTLINE_I])
+            this.effects[Effects.OUTLINE_I].updateTime(delta);
+        try {
+            for (var _c = __values(this.pre.filters), _d = _c.next(); !_d.done; _d = _c.next()) {
+                var filter = _d.value;
+                filter.updateTime(delta);
+            }
+        }
+        catch (e_7_1) { e_7 = { error: e_7_1 }; }
+        finally {
+            try {
+                if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
+            }
+            finally { if (e_7) throw e_7.error; }
+        }
+        try {
+            for (var _e = __values(this.post.filters), _f = _e.next(); !_f.done; _f = _e.next()) {
+                var filter = _f.value;
+                filter.updateTime(delta);
+            }
+        }
+        catch (e_8_1) { e_8 = { error: e_8_1 }; }
+        finally {
+            try {
+                if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
+            }
+            finally { if (e_8) throw e_8.error; }
+        }
     };
     Effects.prototype.updateFromConfig = function (config) {
         if (!config)
@@ -2480,7 +2533,7 @@ var Input = /** @class */ (function () {
     function Input() {
     }
     Input.setKeys = function (keyCodesByName) {
-        var e_7, _a;
+        var e_9, _a;
         this.keyCodesByName = _.clone(keyCodesByName);
         this.isDownByKeyCode = {};
         this.keysByKeycode = {};
@@ -2492,12 +2545,12 @@ var Input = /** @class */ (function () {
                     this.setupKeyCode(keyCode);
                 }
             }
-            catch (e_7_1) { e_7 = { error: e_7_1 }; }
+            catch (e_9_1) { e_9 = { error: e_9_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_7) throw e_7.error; }
+                finally { if (e_9) throw e_9.error; }
             }
         }
     };
@@ -2509,19 +2562,19 @@ var Input = /** @class */ (function () {
         this.updateMousePosition();
     };
     Input.consume = function (key) {
-        var e_8, _a;
+        var e_10, _a;
         try {
             for (var _b = __values(this.keyCodesByName[key] || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var keyCode = _c.value;
                 this.keysByKeycode[keyCode].consume();
             }
         }
-        catch (e_8_1) { e_8 = { error: e_8_1 }; }
+        catch (e_10_1) { e_10 = { error: e_10_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_8) throw e_8.error; }
+            finally { if (e_10) throw e_10.error; }
         }
     };
     Input.debugKeyDown = function (name) {
@@ -2754,7 +2807,7 @@ var InteractionManager = /** @class */ (function () {
         this._interactRequested = null;
     };
     InteractionManager.prototype.getInteractableObjects = function () {
-        var e_9, _a;
+        var e_11, _a;
         var interactableObjects = this.theater.storyManager.getInteractableObjects(this.theater.storyManager.currentNode);
         var result = new Set();
         try {
@@ -2765,12 +2818,12 @@ var InteractionManager = /** @class */ (function () {
                 result.add(name_3);
             }
         }
-        catch (e_9_1) { e_9 = { error: e_9_1 }; }
+        catch (e_11_1) { e_11 = { error: e_11_1 }; }
         finally {
             try {
                 if (interactableObjects_1_1 && !interactableObjects_1_1.done && (_a = interactableObjects_1.return)) _a.call(interactableObjects_1);
             }
-            finally { if (e_9) throw e_9.error; }
+            finally { if (e_11) throw e_11.error; }
         }
         return result;
     };
@@ -2800,7 +2853,7 @@ var InteractionManager = /** @class */ (function () {
 /// <reference path="./worldObject.ts" />
 var World = /** @class */ (function () {
     function World(config, defaults) {
-        var e_10, _a;
+        var e_12, _a;
         config = WorldObject.resolveConfig(config, defaults);
         this.scriptManager = new ScriptManager();
         this.width = O.getOrDefault(config.width, global.gameWidth);
@@ -2827,12 +2880,12 @@ var World = /** @class */ (function () {
                 World.Actions.addWorldObjectToWorld(WorldObject.fromConfig(worldObjectConfig), this);
             }
         }
-        catch (e_10_1) { e_10 = { error: e_10_1 }; }
+        catch (e_12_1) { e_12 = { error: e_12_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_10) throw e_10.error; }
+            finally { if (e_12) throw e_12.error; }
         }
         this.debugCameraX = 0;
         this.debugCameraY = 0;
@@ -2847,7 +2900,7 @@ var World = /** @class */ (function () {
         });
     }
     World.prototype.update = function (delta) {
-        var e_11, _a, e_12, _b, e_13, _c;
+        var e_13, _a, e_14, _b, e_15, _c;
         this.updateDebugMousePosition();
         this.updateScriptManager(delta);
         try {
@@ -2857,12 +2910,12 @@ var World = /** @class */ (function () {
                     worldObject.preUpdate();
             }
         }
-        catch (e_11_1) { e_11 = { error: e_11_1 }; }
+        catch (e_13_1) { e_13 = { error: e_13_1 }; }
         finally {
             try {
                 if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
             }
-            finally { if (e_11) throw e_11.error; }
+            finally { if (e_13) throw e_13.error; }
         }
         try {
             for (var _f = __values(this.worldObjects), _g = _f.next(); !_g.done; _g = _f.next()) {
@@ -2871,12 +2924,12 @@ var World = /** @class */ (function () {
                     worldObject.update(delta);
             }
         }
-        catch (e_12_1) { e_12 = { error: e_12_1 }; }
+        catch (e_14_1) { e_14 = { error: e_14_1 }; }
         finally {
             try {
                 if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
             }
-            finally { if (e_12) throw e_12.error; }
+            finally { if (e_14) throw e_14.error; }
         }
         this.handleCollisions();
         try {
@@ -2886,12 +2939,12 @@ var World = /** @class */ (function () {
                     worldObject.postUpdate();
             }
         }
-        catch (e_13_1) { e_13 = { error: e_13_1 }; }
+        catch (e_15_1) { e_15 = { error: e_15_1 }; }
         finally {
             try {
                 if (_j && !_j.done && (_c = _h.return)) _c.call(_h);
             }
-            finally { if (e_13) throw e_13.error; }
+            finally { if (e_15) throw e_15.error; }
         }
         this.removeDeadWorldObjects();
         if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
@@ -2917,7 +2970,7 @@ var World = /** @class */ (function () {
         this.scriptManager.update(delta);
     };
     World.prototype.render = function (screen) {
-        var e_14, _a;
+        var e_16, _a;
         var oldCameraX = this.camera.x;
         var oldCameraY = this.camera.y;
         if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
@@ -2934,19 +2987,19 @@ var World = /** @class */ (function () {
                 this.renderLayer(layer, this.layerTexture, this.screen);
             }
         }
-        catch (e_14_1) { e_14 = { error: e_14_1 }; }
+        catch (e_16_1) { e_16 = { error: e_16_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_14) throw e_14.error; }
+            finally { if (e_16) throw e_16.error; }
         }
         this.camera.x = oldCameraX;
         this.camera.y = oldCameraY;
         screen.render(this.screen);
     };
     World.prototype.renderLayer = function (layer, layerTexture, screen) {
-        var e_15, _a;
+        var e_17, _a;
         layerTexture.clear();
         layer.sort();
         try {
@@ -2957,12 +3010,12 @@ var World = /** @class */ (function () {
                 }
             }
         }
-        catch (e_15_1) { e_15 = { error: e_15_1 }; }
+        catch (e_17_1) { e_17 = { error: e_17_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_15) throw e_15.error; }
+            finally { if (e_17) throw e_17.error; }
         }
         screen.render(layerTexture, {
             filters: layer.effects.getFilterList()
@@ -2987,7 +3040,7 @@ var World = /** @class */ (function () {
         return this.entryPoints[entryPointKey];
     };
     World.prototype.getLayer = function (obj) {
-        var e_16, _a;
+        var e_18, _a;
         if (_.isString(obj))
             obj = this.getWorldObjectByName(obj);
         try {
@@ -2997,17 +3050,17 @@ var World = /** @class */ (function () {
                     return layer.name;
             }
         }
-        catch (e_16_1) { e_16 = { error: e_16_1 }; }
+        catch (e_18_1) { e_18 = { error: e_18_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_16) throw e_16.error; }
+            finally { if (e_18) throw e_18.error; }
         }
         return undefined;
     };
     World.prototype.getLayerByName = function (name) {
-        var e_17, _a;
+        var e_19, _a;
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var layer = _c.value;
@@ -3015,12 +3068,12 @@ var World = /** @class */ (function () {
                     return layer;
             }
         }
-        catch (e_17_1) { e_17 = { error: e_17_1 }; }
+        catch (e_19_1) { e_19 = { error: e_19_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_17) throw e_17.error; }
+            finally { if (e_19) throw e_19.error; }
         }
         return undefined;
     };
@@ -3076,7 +3129,7 @@ var World = /** @class */ (function () {
     };
     World.prototype.handleCollisions = function () {
         var _this = this;
-        var e_18, _a, e_19, _b, e_20, _c;
+        var e_20, _a, e_21, _b, e_22, _c;
         try {
             for (var _d = __values(this.collisionOrder), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var collision = _e.value;
@@ -3096,30 +3149,30 @@ var World = /** @class */ (function () {
                                 });
                             }
                         }
-                        catch (e_20_1) { e_20 = { error: e_20_1 }; }
+                        catch (e_22_1) { e_22 = { error: e_22_1 }; }
                         finally {
                             try {
                                 if (group_1_1 && !group_1_1.done && (_c = group_1.return)) _c.call(group_1);
                             }
-                            finally { if (e_20) throw e_20.error; }
+                            finally { if (e_22) throw e_22.error; }
                         }
                     }
                 }
-                catch (e_19_1) { e_19 = { error: e_19_1 }; }
+                catch (e_21_1) { e_21 = { error: e_21_1 }; }
                 finally {
                     try {
                         if (move_1_1 && !move_1_1.done && (_b = move_1.return)) _b.call(move_1);
                     }
-                    finally { if (e_19) throw e_19.error; }
+                    finally { if (e_21) throw e_21.error; }
                 }
             }
         }
-        catch (e_18_1) { e_18 = { error: e_18_1 }; }
+        catch (e_20_1) { e_20 = { error: e_20_1 }; }
         finally {
             try {
                 if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
             }
-            finally { if (e_18) throw e_18.error; }
+            finally { if (e_20) throw e_20.error; }
         }
     };
     World.prototype.hasWorldObject = function (obj) {
@@ -3157,7 +3210,7 @@ var World = /** @class */ (function () {
         return screen;
     };
     World.prototype.createLayers = function (layers) {
-        var e_21, _a;
+        var e_23, _a;
         if (_.isEmpty(layers))
             layers = [];
         layers.push({ name: World.DEFAULT_LAYER });
@@ -3171,12 +3224,12 @@ var World = /** @class */ (function () {
                 result.push(new World.Layer(layer.name, layer, this.width, this.height));
             }
         }
-        catch (e_21_1) { e_21 = { error: e_21_1 }; }
+        catch (e_23_1) { e_23 = { error: e_23_1 }; }
         finally {
             try {
                 if (layers_1_1 && !layers_1_1.done && (_a = layers_1.return)) _a.call(layers_1);
             }
-            finally { if (e_21) throw e_21.error; }
+            finally { if (e_23) throw e_23.error; }
         }
         return result;
     };
@@ -3227,7 +3280,7 @@ var World = /** @class */ (function () {
     };
     // For use with World.Actions.setLayer
     World.prototype.internalSetLayerWorld = function (obj, layerName) {
-        var e_22, _a;
+        var e_24, _a;
         this.removeFromAllLayers(obj);
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -3238,12 +3291,12 @@ var World = /** @class */ (function () {
                 }
             }
         }
-        catch (e_22_1) { e_22 = { error: e_22_1 }; }
+        catch (e_24_1) { e_24 = { error: e_24_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_22) throw e_22.error; }
+            finally { if (e_24) throw e_24.error; }
         }
     };
     // For use with World.Actions.setPhysicsGroup
@@ -3270,19 +3323,19 @@ var World = /** @class */ (function () {
         }
     };
     World.prototype.removeFromAllLayers = function (obj) {
-        var e_23, _a;
+        var e_25, _a;
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var layer = _c.value;
                 A.removeAll(layer.worldObjects, obj);
             }
         }
-        catch (e_23_1) { e_23 = { error: e_23_1 }; }
+        catch (e_25_1) { e_25 = { error: e_25_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_23) throw e_23.error; }
+            finally { if (e_25) throw e_25.error; }
         }
     };
     World.prototype.removeFromAllPhysicsGroups = function (obj) {
@@ -3326,7 +3379,7 @@ var World = /** @class */ (function () {
          * Adds a WorldObject to the world. Returns the object added.
          */
         function addWorldObjectToWorld(obj, world) {
-            var e_24, _a;
+            var e_26, _a;
             if (!obj || !world)
                 return obj;
             if (obj.world) {
@@ -3347,12 +3400,12 @@ var World = /** @class */ (function () {
                     World.Actions.addWorldObjectToWorld(child, world);
                 }
             }
-            catch (e_24_1) { e_24 = { error: e_24_1 }; }
+            catch (e_26_1) { e_26 = { error: e_26_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_24) throw e_24.error; }
+                finally { if (e_26) throw e_26.error; }
             }
             obj.onAdd();
             return obj;
@@ -3371,7 +3424,7 @@ var World = /** @class */ (function () {
          * Removes a WorldObject from its containing world. Returns the object removed.
          */
         function removeWorldObjectFromWorld(obj) {
-            var e_25, _a;
+            var e_27, _a;
             if (!obj)
                 return obj;
             if (!obj.world) {
@@ -3390,12 +3443,12 @@ var World = /** @class */ (function () {
                     World.Actions.removeWorldObjectFromWorld(child);
                 }
             }
-            catch (e_25_1) { e_25 = { error: e_25_1 }; }
+            catch (e_27_1) { e_27 = { error: e_27_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_25) throw e_25.error; }
+                finally { if (e_27) throw e_27.error; }
             }
             if (obj.parent) {
                 World.Actions.removeChildFromParent(obj);
@@ -3576,7 +3629,7 @@ var World = /** @class */ (function () {
         for (var _i = 1; _i < arguments.length; _i++) {
             parents[_i - 1] = arguments[_i];
         }
-        var e_26, _a;
+        var e_28, _a;
         var result = resolveConfigParent(config);
         if (_.isEmpty(parents))
             return result;
@@ -3587,12 +3640,12 @@ var World = /** @class */ (function () {
                 result = resolveConfig(result);
             }
         }
-        catch (e_26_1) { e_26 = { error: e_26_1 }; }
+        catch (e_28_1) { e_28 = { error: e_28_1 }; }
         finally {
             try {
                 if (parents_2_1 && !parents_2_1.done && (_a = parents_2.return)) _a.call(parents_2);
             }
-            finally { if (e_26) throw e_26.error; }
+            finally { if (e_28) throw e_28.error; }
         }
         return result;
     }
@@ -3657,7 +3710,7 @@ var SpriteText = /** @class */ (function (_super) {
         return _this;
     }
     SpriteText.prototype.render = function (screen) {
-        var e_27, _a;
+        var e_29, _a;
         var filters = this.mask ? [new TextureFilter.Mask({ type: TextureFilter.Mask.Type.GLOBAL, mask: this.mask })] : [];
         try {
             for (var _b = __values(this.chars), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -3677,12 +3730,12 @@ var SpriteText = /** @class */ (function (_super) {
                 });
             }
         }
-        catch (e_27_1) { e_27 = { error: e_27_1 }; }
+        catch (e_29_1) { e_29 = { error: e_29_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_27) throw e_27.error; }
+            finally { if (e_29) throw e_29.error; }
         }
         _super.prototype.render.call(this, screen);
     };
@@ -4053,7 +4106,7 @@ var Physics = /** @class */ (function () {
     };
     Physics.collide = function (obj, from, options) {
         if (options === void 0) { options = {}; }
-        var e_28, _a;
+        var e_30, _a;
         if (_.isEmpty(from))
             return;
         if (!obj.colliding)
@@ -4088,12 +4141,12 @@ var Physics = /** @class */ (function () {
                     }
                 }
             }
-            catch (e_28_1) { e_28 = { error: e_28_1 }; }
+            catch (e_30_1) { e_30 = { error: e_30_1 }; }
             finally {
                 try {
                     if (collisions_1_1 && !collisions_1_1.done && (_a = collisions_1.return)) _a.call(collisions_1);
                 }
-                finally { if (e_28) throw e_28.error; }
+                finally { if (e_30) throw e_30.error; }
             }
             collidingWith = collidingWith.filter(function (other) { return obj.isOverlapping(other); });
             iters++;
@@ -4563,7 +4616,7 @@ var Preload = /** @class */ (function () {
         PIXI.Loader.shared.add(key + this.TILEMAP_KEY_SUFFIX, url);
     };
     Preload.loadPyxelTilemap = function (key, tilemap) {
-        var e_29, _a;
+        var e_31, _a;
         var tilemapJson = PIXI.Loader.shared.resources[key + this.TILEMAP_KEY_SUFFIX].data;
         var tilemapForCache = {
             tileset: tilemap.tileset,
@@ -4581,12 +4634,12 @@ var Preload = /** @class */ (function () {
                     };
                 }
             }
-            catch (e_29_1) { e_29 = { error: e_29_1 }; }
+            catch (e_31_1) { e_31 = { error: e_31_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_29) throw e_29.error; }
+                finally { if (e_31) throw e_31.error; }
             }
             tilemapForCache.layers.push(tilemapLayer);
         }
@@ -4597,7 +4650,7 @@ var Preload = /** @class */ (function () {
 }());
 (function (Preload) {
     function allTilesWithPrefix(prefix, count) {
-        if (count === void 0) { count = 100; }
+        if (count === void 0) { count = 1000; }
         var result = [];
         for (var i = 0; i < count; i++) {
             result.push("" + prefix + i);
@@ -4667,6 +4720,7 @@ var ScriptManager = /** @class */ (function () {
     };
     return ScriptManager;
 }());
+var shaderMatrixMethods = "\n    float determinant(float m) {\n        return m;\n    }\n\n    float determinant(mat2 m) {\n        return m[0][0] * m[1][1] - m[0][1] * m[1][0]; \n    }\n\n    float determinant(mat3 m) {\n        return m[0][0] * (m[2][2]*m[1][1] - m[1][2]*m[2][1])\n            + m[0][1] * (m[1][2]*m[2][0] - m[2][2]*m[1][0])\n            + m[0][2] * (m[2][1]*m[1][0] - m[1][1]*m[2][0]);\n    }\n\n    float determinant(mat4 m) {\n        float\n            b00 = m[0][0] * m[1][1] - m[0][1] * m[1][0],\n            b01 = m[0][0] * m[1][2] - m[0][2] * m[1][0],\n            b02 = m[0][0] * m[1][3] - m[0][3] * m[1][0],\n            b03 = m[0][1] * m[1][2] - m[0][2] * m[1][1],\n            b04 = m[0][1] * m[1][3] - m[0][3] * m[1][1],\n            b05 = m[0][2] * m[1][3] - m[0][3] * m[1][2],\n            b06 = m[2][0] * m[3][1] - m[2][1] * m[3][0],\n            b07 = m[2][0] * m[3][2] - m[2][2] * m[3][0],\n            b08 = m[2][0] * m[3][3] - m[2][3] * m[3][0],\n            b09 = m[2][1] * m[3][2] - m[2][2] * m[3][1],\n            b10 = m[2][1] * m[3][3] - m[2][3] * m[3][1],\n            b11 = m[2][2] * m[3][3] - m[2][3] * m[3][2];\n        return b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;\n    }\n\n    mat4 transpose(mat4 m) {\n        return mat4(\n            m[0][0], m[1][0], m[2][0], m[3][0],\n            m[0][1], m[1][1], m[2][1], m[3][1],\n            m[0][2], m[1][2], m[2][2], m[3][2],\n            m[0][3], m[1][3], m[2][3], m[3][3]\n        );\n    }\n\n    mat4 inverse(mat4 inp) {\n        mat4 cofactors = mat4(\n            determinant(mat3( inp[1].yzw, inp[2].yzw, inp[3].yzw)), \n            -determinant(mat3(inp[1].xzw, inp[2].xzw, inp[3].xzw)),\n            determinant(mat3( inp[1].xyw, inp[2].xyw, inp[3].xyw)),\n            -determinant(mat3(inp[1].xyz, inp[2].xyz, inp[3].xyz)),\n            \n            -determinant(mat3(inp[0].yzw, inp[2].yzw, inp[3].yzw)),\n            determinant(mat3( inp[0].xzw, inp[2].xzw, inp[3].xzw)),\n            -determinant(mat3(inp[0].xyw, inp[2].xyw, inp[3].xyw)),\n            determinant(mat3( inp[0].xyz, inp[2].xyz, inp[3].xyz)),\n            \n            determinant(mat3( inp[0].yzw, inp[1].yzw, inp[3].yzw)),\n            -determinant(mat3(inp[0].xzw, inp[1].xzw, inp[3].xzw)),\n            determinant(mat3( inp[0].xyw, inp[1].xyw, inp[3].xyw)),\n            -determinant(mat3(inp[0].xyz, inp[1].xyz, inp[3].xyz)),\n\n            -determinant(mat3(inp[0].yzw, inp[1].yzw, inp[2].yzw)),\n            determinant(mat3( inp[0].xzw, inp[1].xzw, inp[2].xzw)),\n            -determinant(mat3(inp[0].xyw, inp[1].xyw, inp[2].xyw)),\n            determinant(mat3( inp[0].xyz, inp[1].xyz, inp[2].xyz))\n        );\n        return transpose(cofactors) / determinant(inp);\n    }\n";
 var Slide = /** @class */ (function (_super) {
     __extends(Slide, _super);
     function Slide(config) {
@@ -4798,7 +4852,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_30, _a;
+        var e_32, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -4812,12 +4866,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_30_1) { e_30 = { error: e_30_1 }; }
+            catch (e_32_1) { e_32 = { error: e_32_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_30) throw e_30.error; }
+                finally { if (e_32) throw e_32.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -4964,7 +5018,7 @@ var StateMachine = /** @class */ (function () {
         return this.states[name];
     };
     StateMachine.prototype.getValidTransition = function (state) {
-        var e_31, _a;
+        var e_33, _a;
         try {
             for (var _b = __values(state.transitions || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -4981,12 +5035,12 @@ var StateMachine = /** @class */ (function () {
                 }
             }
         }
-        catch (e_31_1) { e_31 = { error: e_31_1 }; }
+        catch (e_33_1) { e_33 = { error: e_33_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_31) throw e_31.error; }
+            finally { if (e_33) throw e_33.error; }
         }
         return undefined;
     };
@@ -5182,7 +5236,7 @@ var StoryManager = /** @class */ (function () {
         this.storyConfig.execute();
     };
     StoryManager.prototype.getInteractableObjects = function (node, stageName) {
-        var e_32, _a;
+        var e_34, _a;
         var result = new Set();
         if (!node)
             return result;
@@ -5199,12 +5253,12 @@ var StoryManager = /** @class */ (function () {
                 result.add(transition.with);
             }
         }
-        catch (e_32_1) { e_32 = { error: e_32_1 }; }
+        catch (e_34_1) { e_34 = { error: e_34_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_32) throw e_32.error; }
+            finally { if (e_34) throw e_34.error; }
         }
         return result;
     };
@@ -5227,7 +5281,7 @@ var StoryManager = /** @class */ (function () {
         this._currentNodeName = _.last(path);
     };
     StoryManager.prototype.getFirstValidTransition = function (node) {
-        var e_33, _a;
+        var e_35, _a;
         try {
             for (var _b = __values(node.transitions), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -5251,12 +5305,12 @@ var StoryManager = /** @class */ (function () {
                 }
             }
         }
-        catch (e_33_1) { e_33 = { error: e_33_1 }; }
+        catch (e_35_1) { e_35 = { error: e_35_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_33) throw e_33.error; }
+            finally { if (e_35) throw e_35.error; }
         }
         return null;
     };
@@ -5267,7 +5321,7 @@ var StoryManager = /** @class */ (function () {
         return this.storyboard[name];
     };
     StoryManager.prototype.updateParty = function (party) {
-        var e_34, _a, e_35, _b;
+        var e_36, _a, e_37, _b;
         if (party.setLeader !== undefined) {
             this.theater.partyManager.leader = party.setLeader;
         }
@@ -5278,12 +5332,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberActive(m);
                 }
             }
-            catch (e_34_1) { e_34 = { error: e_34_1 }; }
+            catch (e_36_1) { e_36 = { error: e_36_1 }; }
             finally {
                 try {
                     if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                 }
-                finally { if (e_34) throw e_34.error; }
+                finally { if (e_36) throw e_36.error; }
             }
         }
         if (!_.isEmpty(party.setMembersInactive)) {
@@ -5293,12 +5347,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberInactive(m);
                 }
             }
-            catch (e_35_1) { e_35 = { error: e_35_1 }; }
+            catch (e_37_1) { e_37 = { error: e_37_1 }; }
             finally {
                 try {
                     if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
                 }
-                finally { if (e_35) throw e_35.error; }
+                finally { if (e_37) throw e_37.error; }
             }
         }
     };
@@ -5512,7 +5566,7 @@ var Tilemap = /** @class */ (function (_super) {
         }
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_36, _a;
+        var e_38, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -5530,12 +5584,12 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_36_1) { e_36 = { error: e_36_1 }; }
+        catch (e_38_1) { e_38 = { error: e_38_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_36) throw e_36.error; }
+            finally { if (e_38) throw e_38.error; }
         }
         World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };
@@ -5548,21 +5602,24 @@ var Tilemap = /** @class */ (function (_super) {
                 var zValue = Tilemap.getZValue(zTileIndices, y, x);
                 if (!zTextures[zValue])
                     continue;
-                this.drawTile(this.currentTilemapLayer[y][x], x - zTextures[zValue].tileBounds.left, y - zTextures[zValue].tileBounds.top, zTextures[zValue].texture);
+                this.drawTile(this.currentTilemapLayer[y][x], x - zTextures[zValue].tileBounds.left, y - zTextures[zValue].tileBounds.top, zTextures[zValue].frames);
             }
         }
     };
-    Tilemap.prototype.drawTile = function (tile, tileX, tileY, renderTexture) {
+    Tilemap.prototype.drawTile = function (tile, tileX, tileY, renderTextures) {
         if (!tile || tile.index < 0)
             return;
-        var textureKey = this.tilemap.tileset.tiles[tile.index];
-        var texture = AssetCache.getTexture(textureKey);
-        renderTexture.render(texture, {
-            x: (tileX + 0.5) * this.tilemap.tileset.tileWidth,
-            y: (tileY + 0.5) * this.tilemap.tileset.tileHeight,
-            angle: tile.angle,
-            scaleX: tile.flipX ? -1 : 1,
-        });
+        for (var i = 0; i < renderTextures.length; i++) {
+            var textureKeyIndex = this.tilemap.tileset.animation ? i * this.tilemap.tileset.animation.tilesPerFrame + tile.index : tile.index;
+            var textureKey = this.tilemap.tileset.tiles[textureKeyIndex];
+            var texture = AssetCache.getTexture(textureKey);
+            renderTextures[i].render(texture, {
+                x: (tileX + 0.5) * this.tilemap.tileset.tileWidth,
+                y: (tileY + 0.5) * this.tilemap.tileset.tileHeight,
+                angle: tile.angle,
+                scaleX: tile.flipX ? -1 : 1,
+            });
+        }
     };
     Tilemap.prototype.createZTextures = function (zTileIndices) {
         var texturesByZ = Tilemap.createEmptyZTextures(zTileIndices, this.tilemap.tileset);
@@ -5572,7 +5629,11 @@ var Tilemap = /** @class */ (function (_super) {
                 layer: this.layer,
                 x: this.x + texturesByZ[zValue].bounds.x,
                 y: this.y + texturesByZ[zValue].bounds.y + zHeight,
-                texture: texturesByZ[zValue].texture,
+                texture: this.tilemap.tileset.animation ? undefined : texturesByZ[zValue].frames[0],
+                animations: this.tilemap.tileset.animation ? [
+                    Animations.fromTextureList({ name: 'play', textures: texturesByZ[zValue].frames, frameRate: this.tilemap.tileset.animation.frameRate, count: -1 })
+                ] : undefined,
+                defaultAnimation: this.tilemap.tileset.animation ? 'play' : undefined,
                 offset: { x: 0, y: -zHeight },
             }), this);
             this.zTextures.push(zTexture);
@@ -5611,7 +5672,7 @@ var Tilemap = /** @class */ (function (_super) {
                     var zValue = getZValue(zTileIndices, y, x);
                     if (!zTextureSlots[zValue])
                         zTextureSlots[zValue] = {
-                            texture: null,
+                            frames: null,
                             bounds: { x: 0, y: 0, width: 0, height: 0 },
                             tileBounds: { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity },
                             zHeight: -Infinity,
@@ -5629,12 +5690,16 @@ var Tilemap = /** @class */ (function (_super) {
                 }
             }
         }
-        for (var zValue in zTextureSlots) {
+        var _loop_1 = function (zValue) {
             zTextureSlots[zValue].bounds.x = zTextureSlots[zValue].tileBounds.left * tileset.tileWidth;
             zTextureSlots[zValue].bounds.y = zTextureSlots[zValue].tileBounds.top * tileset.tileHeight;
             zTextureSlots[zValue].bounds.width = (zTextureSlots[zValue].tileBounds.right - zTextureSlots[zValue].tileBounds.left + 1) * tileset.tileWidth;
             zTextureSlots[zValue].bounds.height = (zTextureSlots[zValue].tileBounds.bottom - zTextureSlots[zValue].tileBounds.top + 1) * tileset.tileHeight;
-            zTextureSlots[zValue].texture = new Texture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height);
+            var numFrames = tileset.animation ? tileset.animation.frames : 1;
+            zTextureSlots[zValue].frames = A.range(numFrames).map(function (i) { return new Texture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height); });
+        };
+        for (var zValue in zTextureSlots) {
+            _loop_1(zValue);
         }
         return zTextureSlots;
     }
@@ -6180,10 +6245,7 @@ var Assets;
         },
         'trees': {
             defaultAnchor: { x: 0.5, y: 1 },
-            frames: {
-                'blacktree': { rect: { x: 0 * 32, y: 0, width: 32, height: 52 } },
-                'whitetree': { rect: { x: 1 * 32, y: 0, width: 32, height: 52 } },
-            }
+            spritesheet: { frameWidth: 32, frameHeight: 52 },
         },
         'door': {
             defaultAnchor: { x: 0.5, y: 1 },
@@ -6232,6 +6294,11 @@ var Assets;
             tiles: Preload.allTilesWithPrefix('world_'),
             tileWidth: 16,
             tileHeight: 16,
+            animation: {
+                frames: 3,
+                tilesPerFrame: 16,
+                frameRate: 3,
+            },
             collisionIndices: [1],
         },
     };
@@ -6478,7 +6545,7 @@ var Campfire = /** @class */ (function (_super) {
         this.fireRadius.win();
     };
     Campfire.prototype.consumeItems = function () {
-        var e_37, _a;
+        var e_39, _a;
         var items = this.world.getWorldObjectsByType(Item).filter(function (item) { return item.consumable && !item.held; });
         try {
             for (var items_1 = __values(items), items_1_1 = items_1.next(); !items_1_1.done; items_1_1 = items_1.next()) {
@@ -6492,12 +6559,12 @@ var Campfire = /** @class */ (function (_super) {
                 this.consumeItem(item);
             }
         }
-        catch (e_37_1) { e_37 = { error: e_37_1 }; }
+        catch (e_39_1) { e_39 = { error: e_39_1 }; }
         finally {
             try {
                 if (items_1_1 && !items_1_1.done && (_a = items_1.return)) _a.call(items_1);
             }
-            finally { if (e_37) throw e_37.error; }
+            finally { if (e_39) throw e_39.error; }
         }
     };
     Campfire.prototype.consumeItem = function (item) {
@@ -6748,7 +6815,7 @@ var Human = /** @class */ (function (_super) {
         }
     };
     Human.prototype.getOverlappingItem = function () {
-        var e_38, _a;
+        var e_40, _a;
         var overlappingItemDistance = Infinity;
         var overlappingItem = undefined;
         try {
@@ -6763,12 +6830,12 @@ var Human = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_38_1) { e_38 = { error: e_38_1 }; }
+        catch (e_40_1) { e_40 = { error: e_40_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_38) throw e_38.error; }
+            finally { if (e_40) throw e_40.error; }
         }
         return overlappingItem;
     };
@@ -7084,7 +7151,7 @@ var ControlsMenu = /** @class */ (function (_super) {
                 {
                     constructor: Item,
                     name: 'axe',
-                    x: 140, y: 156,
+                    x: 140, y: 140,
                     type: Item.Type.AXE,
                     effects: { outline: { color: 0xFFFFFF } }
                 },
@@ -7109,7 +7176,7 @@ var ControlsMenu = /** @class */ (function (_super) {
         var player_attack = _this.getWorldObjectByName('player_attack');
         player_attack.test = true;
         var tree = _this.getWorldObjectByName('tree');
-        tree.setTexture('blacktree');
+        tree.playAnimation('black');
         _this.runScript(S.simul(S.loopFor(Infinity, S.chain(S.doOverTime(0.8, function (t) { player_move.controller.right = true; }), S.doOverTime(0.8, function (t) { player_move.controller.left = true; }))), S.loopFor(Infinity, S.chain(S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.simul(S.doOverTime(1.5, function (t) { player_pickup.controller.right = true; }), S.chain(S.wait(0.2), S.call(function () { player_pickup.controller.pickupDropItem = true; }))), S.yield(), S.call(function () { player_pickup.flipX = true; }), S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.simul(S.doOverTime(1.5, function (t) { player_pickup.controller.left = true; }), S.chain(S.wait(0.2), S.call(function () { player_pickup.controller.pickupDropItem = true; }))), S.yield(), S.call(function () { player_pickup.flipX = false; }))), S.loopFor(Infinity, S.chain(S.call(function () {
             var log = _this.getWorldObjectByName('log');
             log.effects.outline.enabled = true;
@@ -7480,7 +7547,7 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.hitStuff = function () {
-        var e_39, _a;
+        var e_41, _a;
         if (!this.heldItem)
             return;
         var swingHitbox = this.getSwingHitbox();
@@ -7495,12 +7562,12 @@ var Player = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_39_1) { e_39 = { error: e_39_1 }; }
+        catch (e_41_1) { e_41 = { error: e_41_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_39) throw e_39.error; }
+            finally { if (e_41) throw e_41.error; }
         }
     };
     Player.prototype.getSwingHitbox = function () {
@@ -7601,11 +7668,21 @@ var Tree = /** @class */ (function (_super) {
     __extends(Tree, _super);
     function Tree(config) {
         var _this = _super.call(this, config, {
-            texture: Random.boolean() ? 'blacktree' : 'whitetree',
             flipX: Random.boolean(),
             bounds: { x: -4, y: -2, width: 8, height: 3 },
+            animations: [
+                Animations.fromTextureList({ name: 'black', texturePrefix: 'trees_', textures: [0, 1, 2], frameRate: 3, count: -1 }),
+                Animations.fromTextureList({ name: 'white', texturePrefix: 'trees_', textures: [3, 4, 5], frameRate: 3, count: -1 }),
+            ],
+            defaultAnimation: Random.boolean() ? 'black' : 'white',
         }) || this;
         _this.maxhp = 3;
+        _this.effects.post.filters.push(new TextureFilter({
+            uniforms: [],
+            defaultUniforms: {},
+            vertCode: "\n                    float tt = t*3.0;\n                    float amount = (2.7 - 2.0*sin(tt+2.4) - cos(tt)*cos(tt))/4.5;\n                    outp.x -= 2.6 * (1.0 - inp.y/52.0) * amount;\n                    outp.y -= 1.0 * (inp.x/32.0 * 2.0 - 1.0) * amount;\n                "
+        }));
+        _this.effects.post.filters[0].setUniform('t', Random.float(0, 100));
         _this.stateMachine.addState('normal', {
             transitions: [
                 { type: 'condition', condition: function () { return _this.hp <= 0; }, toState: 'die' },
@@ -8179,7 +8256,7 @@ var LogPiece = /** @class */ (function (_super) {
 }(Sprite));
 (function (LogPiece) {
     function getLogPieces(log) {
-        var e_40, _a;
+        var e_42, _a;
         var logPieces = [];
         var stemx = log.flipX ? 4 : 8;
         var logTexture = AssetCache.getTexture('log');
@@ -8206,12 +8283,12 @@ var LogPiece = /** @class */ (function (_super) {
                 }));
             }
         }
-        catch (e_40_1) { e_40 = { error: e_40_1 }; }
+        catch (e_42_1) { e_42 = { error: e_42_1 }; }
         finally {
             try {
                 if (subdivisions_1_1 && !subdivisions_1_1.done && (_a = subdivisions_1.return)) _a.call(subdivisions_1);
             }
-            finally { if (e_40) throw e_40.error; }
+            finally { if (e_42) throw e_42.error; }
         }
         return logPieces;
     }

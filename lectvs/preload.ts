@@ -180,7 +180,7 @@ class Preload {
 }
 
 namespace Preload {
-    export function allTilesWithPrefix(prefix: string, count: number = 100) {
+    export function allTilesWithPrefix(prefix: string, count: number = 1000) {
         let result: string[] = [];
         for (let i = 0; i < count; i++) {
             result.push(`${prefix}${i}`);

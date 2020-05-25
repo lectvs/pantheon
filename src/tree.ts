@@ -7,10 +7,28 @@ class Tree extends Sprite {
 
     constructor(config: Sprite.Config) {
         super(config, {
-            texture: Random.boolean() ? 'blacktree' : 'whitetree',
             flipX: Random.boolean(),
             bounds: { x: -4, y: -2, width: 8, height: 3 },
+            animations: [
+                Animations.fromTextureList({ name: 'black', texturePrefix: 'trees_', textures: [0, 1, 2], frameRate: 3, count: -1 }),
+                Animations.fromTextureList({ name: 'white', texturePrefix: 'trees_', textures: [3, 4, 5], frameRate: 3, count: -1 }),
+            ],
+            defaultAnimation: Random.boolean() ? 'black' : 'white',
         });
+
+        this.effects.post.filters.push(
+            new TextureFilter({
+                uniforms: [],
+                defaultUniforms: {},
+                vertCode: `
+                    float tt = t*3.0;
+                    float amount = (2.7 - 2.0*sin(tt+2.4) - cos(tt)*cos(tt))/4.5;
+                    outp.x -= 2.6 * (1.0 - inp.y/52.0) * amount;
+                    outp.y -= 1.0 * (inp.x/32.0 * 2.0 - 1.0) * amount;
+                `
+            })
+        );
+        this.effects.post.filters[0].setUniform('t', Random.float(0, 100));
 
         this.stateMachine.addState('normal', {
             transitions: [

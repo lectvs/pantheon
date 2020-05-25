@@ -50,6 +50,13 @@ class Effects {
         return this.pre.filters.concat(this.effects).concat(this.post.filters);
     }
 
+    updateEffects(delta: number) {
+        if (this.effects[Effects.SILHOUETTE_I]) this.effects[Effects.SILHOUETTE_I].updateTime(delta);
+        if (this.effects[Effects.OUTLINE_I]) this.effects[Effects.OUTLINE_I].updateTime(delta);
+        for (let filter of this.pre.filters) filter.updateTime(delta);
+        for (let filter of this.post.filters) filter.updateTime(delta);
+    }
+
     updateFromConfig(config: Effects.Config) {
         if (!config) return;
 

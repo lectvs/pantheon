@@ -13,10 +13,7 @@ namespace Assets {
         },
         'trees': {
             defaultAnchor: { x: 0.5, y: 1 },
-            frames: {
-                'blacktree': { rect: { x: 0*32, y: 0, width: 32, height: 52 } },
-                'whitetree': { rect: { x: 1*32, y: 0, width: 32, height: 52 } },
-            }
+            spritesheet: { frameWidth: 32, frameHeight: 52 },
         },
         'door': {
             defaultAnchor: { x: 0.5, y: 1 },
@@ -71,6 +68,11 @@ namespace Assets {
             tiles: Preload.allTilesWithPrefix('world_'),
             tileWidth: 16,
             tileHeight: 16,
+            animation: {
+                frames: 3,
+                tilesPerFrame: 16,
+                frameRate: 3,
+            },
             collisionIndices: [1],
         },
     }

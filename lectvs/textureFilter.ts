@@ -1,10 +1,19 @@
 ///<reference path="./debug.ts"/>
 
 namespace TextureFilter {
+    /**
+     * Texture filter config.
+     * 
+     * @property uniforms
+     * @property defaultUniforms
+     * @property code hi
+     * @property vertCode hi
+     */
     export type Config = {
         uniforms?: string[];
         defaultUniforms?: Dict<any>;
-        code: string;
+        code?: string;
+        vertCode?: string;
     }
 }
 
@@ -15,9 +24,14 @@ class TextureFilter {
     private pixiFilter: PIXI.Filter;
 
     constructor(config: TextureFilter.Config) {
-        this.pixiFilter = this.constructPixiFilterCached(config.code, config.uniforms);
+        let code = O.getOrDefault(config.code, '');
+        let vertCode = O.getOrDefault(config.vertCode, '');
+        this.pixiFilter = this.constructPixiFilterCached(code, vertCode, config.uniforms);
         this.uniforms = this.constructUniforms(config.uniforms);
         this.setUniforms(config.defaultUniforms);
+
+        this.setUniform('t', 0);
+
         this.enabled = true;
     }
 
@@ -53,6 +67,10 @@ class TextureFilter {
         }
     }
 
+    updateTime(delta: number) {
+        this.setUniform('t', this.getUniform('t') + delta);
+    }
+
     private constructUniforms(uniformDeclarations: string[]) {
         if (_.isEmpty(uniformDeclarations)) return {};
         let uniformMap = {};
@@ -63,12 +81,12 @@ class TextureFilter {
         return uniformMap;
     }
 
-    private constructPixiFilterCached(code: string, uniforms: string[]) {
+    protected constructPixiFilterCached(code: string, vertCode: string, uniforms: string[]) {
         let uniformsCode = (uniforms || []).map(uniform => `uniform ${uniform};`).join('');
-        let cacheKey = uniformsCode + code;
+        let cacheKey = uniformsCode + code + vertCode;
 
         if (!TextureFilter.cache[cacheKey]) {
-            let vert = TextureFilter.vert;
+            let vert = TextureFilter.vertPreUniforms + uniformsCode + TextureFilter.vertStartFunc + vertCode + TextureFilter.vertEndFunc;
             let frag = TextureFilter.fragPreUniforms + uniformsCode + TextureFilter.fragStartFunc + code + TextureFilter.fragEndFunc;
             let result = new PIXI.Filter(vert, frag, {});
             TextureFilter.cache[cacheKey] = result;
@@ -77,36 +95,55 @@ class TextureFilter {
         return TextureFilter.cache[cacheKey];
     }
 
-    private static vert = `
+    private static vertPreUniforms = `
+        precision highp float;
         attribute vec2 aVertexPosition;
         uniform mat3 projectionMatrix;
         varying vec2 vTextureCoord;
         uniform vec4 inputSize;
         uniform vec4 outputFrame;
-        varying vec4 is;
-        
+
+        uniform float posx;
+        uniform float posy;
+        uniform float t;
+
+        float width;
+        float height;
+    `;
+
+    private static vertStartFunc = `
         vec4 filterVertexPosition(void) {
+            width = inputSize.x;
+            height = inputSize.y;
             vec2 position = aVertexPosition * max(outputFrame.zw, vec2(0.)) + outputFrame.xy;
+            vec2 inp = position - vec2(posx, posy);
+            vec2 outp = vec2(inp.x, inp.y);
+    `;
+
+    private static vertEndFunc = `
+            position = outp + vec2(posx, posy);
             return vec4((projectionMatrix * vec3(position, 1.0)).xy, 0.0, 1.0);
         }
-        
+
         vec2 filterTextureCoord(void) {
             return aVertexPosition * (outputFrame.zw * inputSize.zw);
         }
-        
+
         void main(void) {
             gl_Position = filterVertexPosition();
             vTextureCoord = filterTextureCoord();
-            is = inputSize;
         }
     `;
 
     private static fragPreUniforms = `
+        precision highp float;
         varying vec2 vTextureCoord;
-        varying vec4 is;
+        uniform vec4 inputSize;
         uniform sampler2D uSampler;
+
         uniform float posx;
         uniform float posy;
+        uniform float t;
 
         float width;
         float height;
@@ -126,8 +163,8 @@ class TextureFilter {
         }
 
         void main(void) {
-            width = is.x;
-            height = is.y;
+            width = inputSize.x;
+            height = inputSize.y;
             float worldx = vTextureCoord.x * width;
             float worldy = vTextureCoord.y * height;
             float x = worldx - posx;

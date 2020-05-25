@@ -22,11 +22,16 @@ namespace Tilemap {
         tiles: string[];
         tileWidth: number;
         tileHeight: number;
+        animation?: {
+            frames: number;
+            tilesPerFrame: number;
+            frameRate: number;
+        };
         collisionIndices?: number[];
     }
     export type ZMap = {[key: number]: number};
     export type ZTexture = {
-        texture: Texture;
+        frames: Texture[];
         bounds: Rect;
         tileBounds: Bounds;
         zHeight: number;
@@ -101,21 +106,25 @@ class Tilemap extends WorldObject {
             for (let x = 0; x < this.currentTilemapLayer[y].length; x++) {
                 let zValue = Tilemap.getZValue(zTileIndices, y, x);
                 if (!zTextures[zValue]) continue;
-                this.drawTile(this.currentTilemapLayer[y][x], x - zTextures[zValue].tileBounds.left, y - zTextures[zValue].tileBounds.top, zTextures[zValue].texture);
+                this.drawTile(this.currentTilemapLayer[y][x], x - zTextures[zValue].tileBounds.left, y - zTextures[zValue].tileBounds.top, zTextures[zValue].frames);
             }
         }
     }
 
-    drawTile(tile: Tilemap.Tile, tileX: number, tileY: number, renderTexture: Texture) {
+    drawTile(tile: Tilemap.Tile, tileX: number, tileY: number, renderTextures: Texture[]) {
         if (!tile || tile.index < 0) return;
-        let textureKey = this.tilemap.tileset.tiles[tile.index];
-        let texture = AssetCache.getTexture(textureKey);
-        renderTexture.render(texture, {
-            x: (tileX + 0.5) * this.tilemap.tileset.tileWidth,
-            y: (tileY + 0.5) * this.tilemap.tileset.tileHeight,
-            angle: tile.angle,
-            scaleX: tile.flipX ? -1 : 1,
-        });
+
+        for (let i = 0; i < renderTextures.length; i++) {
+            let textureKeyIndex = this.tilemap.tileset.animation ? i*this.tilemap.tileset.animation.tilesPerFrame + tile.index : tile.index;
+            let textureKey = this.tilemap.tileset.tiles[textureKeyIndex];
+            let texture = AssetCache.getTexture(textureKey);
+            renderTextures[i].render(texture, {
+                x: (tileX + 0.5) * this.tilemap.tileset.tileWidth,
+                y: (tileY + 0.5) * this.tilemap.tileset.tileHeight,
+                angle: tile.angle,
+                scaleX: tile.flipX ? -1 : 1,
+            });
+        }
     }
 
     private createZTextures(zTileIndices: number[][]) {
@@ -127,7 +136,11 @@ class Tilemap extends WorldObject {
                 layer: this.layer,
                 x: this.x + texturesByZ[zValue].bounds.x,
                 y: this.y + texturesByZ[zValue].bounds.y + zHeight,
-                texture: texturesByZ[zValue].texture,
+                texture: this.tilemap.tileset.animation ? undefined : texturesByZ[zValue].frames[0],
+                animations: this.tilemap.tileset.animation ? [
+                    Animations.fromTextureList({ name: 'play', textures: texturesByZ[zValue].frames, frameRate: this.tilemap.tileset.animation.frameRate, count: -1 })
+                ] : undefined,
+                defaultAnimation: this.tilemap.tileset.animation ? 'play' : undefined,
                 offset: { x: 0, y: -zHeight },
             }), this);
             this.zTextures.push(zTexture);
@@ -169,7 +182,7 @@ namespace Tilemap {
                 if (isFinite(zTileIndices[y][x])) {
                     let zValue = getZValue(zTileIndices, y, x);
                     if (!zTextureSlots[zValue]) zTextureSlots[zValue] = {
-                        texture: null,
+                        frames: null,
                         bounds: { x: 0, y: 0, width: 0, height: 0 },
                         tileBounds: { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity },
                         zHeight: -Infinity,
@@ -188,7 +201,8 @@ namespace Tilemap {
             zTextureSlots[zValue].bounds.y = zTextureSlots[zValue].tileBounds.top * tileset.tileHeight;
             zTextureSlots[zValue].bounds.width = (zTextureSlots[zValue].tileBounds.right - zTextureSlots[zValue].tileBounds.left + 1) * tileset.tileWidth;
             zTextureSlots[zValue].bounds.height = (zTextureSlots[zValue].tileBounds.bottom - zTextureSlots[zValue].tileBounds.top + 1) * tileset.tileHeight;
-            zTextureSlots[zValue].texture = new Texture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height);
+            let numFrames = tileset.animation ? tileset.animation.frames : 1;
+            zTextureSlots[zValue].frames = A.range(numFrames).map(i => new Texture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height));
         }
 
         return zTextureSlots;

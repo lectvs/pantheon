@@ -11,13 +11,13 @@ namespace Animation {
         nextFrameRef?: string;
         forceRequired?: boolean;
     
-        texture?: string;
+        texture?: string | Texture;
     }
 
     export namespace Configs {
         export type FromTextureList = {
             name: string;
-            textures: (string | number)[];
+            textures: (string | Texture | number)[];
             texturePrefix?: string;
             frameRate: number;
             nextFrameRef?: string;
@@ -59,7 +59,7 @@ class Animations {
         for (let i = 0; i < textures.length; i++) {
             let animationFrame: Animation.Frame = {
                 duration: frameDuration,
-                texture: `${config.texturePrefix}${textures[i]}`,
+                texture: textures[i] instanceof Texture ? <Texture>textures[i] : `${config.texturePrefix}${textures[i]}`,
                 nextFrameRef: `${config.name}/${i+1}`,
                 forceRequired: config.forceRequired,
             };

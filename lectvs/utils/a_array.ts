@@ -9,6 +9,10 @@ namespace A {
         return array.map(line => clone(line));
     }
 
+    export function emptyArray<T>(n: number) {
+        return filledArray<T>(n);
+    }
+
     export function filledArray<T>(n: number, fillWith?: T) {
         let result: T[] = [];
         for (let i = 0; i < n; i++) {
@@ -55,6 +59,10 @@ namespace A {
             }
         }
         return result;
+    }
+
+    export function range(n: number) {
+        return [...Array(n).keys()];
     }
 
     export function removeAll<T>(array: T[], obj: T, startingAt: number = 0) {

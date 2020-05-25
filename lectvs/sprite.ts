@@ -77,6 +77,7 @@ class Sprite extends PhysicsWorldObject {
     update(delta: number) {
         super.update(delta);
         this.animationManager.update(delta);
+        this.effects.updateEffects(delta);
     }
 
     render(screen: Texture) {

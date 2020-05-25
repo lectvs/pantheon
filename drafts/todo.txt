@@ -31,8 +31,10 @@ juice
 - /dynamic radius buffer
 - /player thinking about key when near door (decided not to do)
 - /random noise on fire lighting (decided not to do)
-- animated leaves
-- animated flowers
+- /animated leaves
+- /animated flowers
+- animated trees
+- leaves fall to ground
 - /fix rightmost tree below leaves
 - smooth camera follow
 - /trees falling the other way
@@ -40,9 +42,13 @@ juice
 - /rounding error on world objects camera
 - problem of highlighting an object with an outline
 - problem with multiple of the same effect on a single object
+    - suggestion: remove pixiFilter field (get from cache when needed)
+- fix player random flickering (rounding error)
+    - suggestion: snap camera to world units
 - sound
 
-postjam
+postpostjam
+- Anchor.MIDDLE, etc
 - investigate printing stack trace on error instead of just debug()
 - refactor debug system
 - physics based on lastx/y instead of lastmovementx/y?
@@ -53,4 +59,9 @@ postjam
 - entity uids
 - test resolveconfig for children
 - child name prefix?
-- move anchor off of texture
+- slopes/sloped bounds
+- single "transform" method for textures
+- find out how to "erase" parts of a texture
+- metrics/analysis on update, render, etc. timing
+- unit tests? :)
+- rename World => Stage, WorldObject => Entity, PhysicsWorldObject => PhysicsEntity

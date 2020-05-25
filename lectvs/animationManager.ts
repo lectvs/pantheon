@@ -29,7 +29,10 @@ class AnimationManager {
             debug(`Cannot add animation '${name}' to sprite`, this.sprite, "since it already exists");
             return;
         }
-        this.animations[name] = frames;
+        this.animations[name] = _.defaults(frames, {
+            duration: 0,
+            forceRequired: false,
+        });
     }
 
     get forceRequired() {
