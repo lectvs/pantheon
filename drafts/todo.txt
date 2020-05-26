@@ -40,15 +40,19 @@ juice
 - /trees falling the other way
 - /logs consumption animation
 - /rounding error on world objects camera
+- make monster's eyes appear over foreground
 - problem of highlighting an object with an outline
+    - suggestion: need prerender logic
 - problem with multiple of the same effect on a single object
     - suggestion: remove pixiFilter field (get from cache when needed)
 - fix player random flickering (rounding error)
     - suggestion: snap camera to world units
+- add a z component to position/physics
+    - change layer sort to a function instead of a sortKey
 - sound
 
 postpostjam
-- Anchor.MIDDLE, etc
+- /Anchor.MIDDLE, etc
 - investigate printing stack trace on error instead of just debug()
 - refactor debug system
 - physics based on lastx/y instead of lastmovementx/y?
@@ -64,4 +68,5 @@ postpostjam
 - find out how to "erase" parts of a texture
 - metrics/analysis on update, render, etc. timing
 - unit tests? :)
-- rename World => Stage, WorldObject => Entity, PhysicsWorldObject => PhysicsEntity
+- rename World => Stage, WorldObject => Entity, PhysicsWorldObject => PhysicsEntity (i dunno about these...)
+- onboard storyboard with StateMachine

@@ -4,10 +4,22 @@ namespace TextureFilter {
     /**
      * Texture filter config.
      * 
-     * @property uniforms
-     * @property defaultUniforms
-     * @property code hi
-     * @property vertCode hi
+     * @property uniforms Uniform definitions for the filter. Of the form ["float rx", "vec2 position"]
+     * @property defaultUniforms Map of uniform name => value to initialize the filter. Of the form {"rx": 5, "position": [1,4]}
+     * @property code The fragment shader code. Set the color in `outp`.
+     *           Available for use are the following variables and methods:
+     *               vec4 inp - the input color
+     *               float width/height - the width and height of the filter
+     *               float x/y - the local x/y coordinates in pixels
+     *               float worldx/y - the x/y coordinates in world/screenspace(?)
+     *               float t - time in seconds
+     *               vec4 getColor(float x, float y) - get the color at local x/y
+     *               vec4 getWorldColor(float worldx, float worldy) - get the color at world x/y
+     * @property vertCode The vertex shader code. Set the vertex in `outp`.
+*                Available for use are the following variables and methods:
+*                    vec2 inp - the input vertex
+*                    float width/height - the width and height of the filter(?)
+*                    float t - time in seconds
      */
     export type Config = {
         uniforms?: string[];

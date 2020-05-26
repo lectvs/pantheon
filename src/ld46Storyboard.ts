@@ -49,7 +49,7 @@ function getStoryboard(): Storyboard { return {
         type: 'cutscene',
         script: function*() {
             yield S.wait(1);
-            global.theater.currentWorld.camera.setModeFollow('player');
+            global.theater.currentWorld.camera.setModeFollow('player', 0, -8);
         },
         transitions: [{ type: 'instant', toNode: 'gameplay' }]
     },

@@ -8,25 +8,25 @@ namespace Assets {
 
         // Entities
         'player': {
-            defaultAnchor: { x: 0.5, y: 1 },
+            defaultAnchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 16, frameHeight: 16 },
         },
         'trees': {
-            defaultAnchor: { x: 0.5, y: 1 },
+            defaultAnchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 32, frameHeight: 52 },
         },
         'door': {
-            defaultAnchor: { x: 0.5, y: 1 },
+            defaultAnchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 32, frameHeight: 35 },
         },
         'monster': {
-            defaultAnchor: { x: 0.5, y: 1 },
+            defaultAnchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 16, frameHeight: 16 },
         },
 
         // Items
         'items': {
-            defaultAnchor: { x: 0.5, y: 0.5 },
+            defaultAnchor: Anchor.CENTER,
             frames: {
                 'log': { rect: { x: 0*16, y: 0, width: 16, height: 16 } },
                 'axe': { rect: { x: 1*16, y: 0, width: 16, height: 16 } },
@@ -39,7 +39,7 @@ namespace Assets {
 
         // Props
         'campfire': {
-            anchor: { x: 0.5, y: 0.5 }
+            anchor: Anchor.CENTER
         },
         'fire': {
             defaultAnchor: { x: 0.5, y: 1 },
@@ -47,7 +47,7 @@ namespace Assets {
 
         },
         'smoke': {
-            anchor: { x: 0.5, y: 1 }
+            anchor: Anchor.BOTTOM
         },
 
         // Scenery
@@ -56,7 +56,7 @@ namespace Assets {
             spritesheet: { frameWidth: 16, frameHeight: 16 }
         },
         'ground': {
-            anchor: { x: 0.5, y: 0.5 }
+            anchor: Anchor.CENTER
         },
 
         // Fonts

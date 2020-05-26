@@ -70,6 +70,71 @@ var __extends = (this && this.__extends) || (function () {
 })();
 var Point = PIXI.Point;
 var Rectangle = PIXI.Rectangle;
+var Anchor = /** @class */ (function () {
+    function Anchor() {
+    }
+    Object.defineProperty(Anchor, "TOP_LEFT", {
+        get: function () { return { x: 0, y: 0 }; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Anchor, "TOP_CENTER", {
+        get: function () { return { x: 0.5, y: 0 }; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Anchor, "TOP_RIGHT", {
+        get: function () { return { x: 1, y: 0 }; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Anchor, "CENTER_LEFT", {
+        get: function () { return { x: 0, y: 0.5 }; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Anchor, "CENTER_CENTER", {
+        get: function () { return { x: 0.5, y: 0.5 }; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Anchor, "CENTER_RIGHT", {
+        get: function () { return { x: 1, y: 0.5 }; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Anchor, "BOTTOM_LEFT", {
+        get: function () { return { x: 0, y: 1 }; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Anchor, "BOTTOM_CENTER", {
+        get: function () { return { x: 0.5, y: 1 }; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Anchor, "BOTTOM_RIGHT", {
+        get: function () { return { x: 1, y: 1 }; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Anchor, "TOP", {
+        get: function () { return this.TOP_CENTER; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Anchor, "CENTER", {
+        get: function () { return this.CENTER_CENTER; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Anchor, "BOTTOM", {
+        get: function () { return this.BOTTOM_CENTER; },
+        enumerable: true,
+        configurable: true
+    });
+    return Anchor;
+}());
 var AnimationManager = /** @class */ (function () {
     function AnimationManager(sprite) {
         this.sprite = sprite;
@@ -6240,24 +6305,24 @@ var Assets;
         'debug': {},
         // Entities
         'player': {
-            defaultAnchor: { x: 0.5, y: 1 },
+            defaultAnchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 16, frameHeight: 16 },
         },
         'trees': {
-            defaultAnchor: { x: 0.5, y: 1 },
+            defaultAnchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 32, frameHeight: 52 },
         },
         'door': {
-            defaultAnchor: { x: 0.5, y: 1 },
+            defaultAnchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 32, frameHeight: 35 },
         },
         'monster': {
-            defaultAnchor: { x: 0.5, y: 1 },
+            defaultAnchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 16, frameHeight: 16 },
         },
         // Items
         'items': {
-            defaultAnchor: { x: 0.5, y: 0.5 },
+            defaultAnchor: Anchor.CENTER,
             frames: {
                 'log': { rect: { x: 0 * 16, y: 0, width: 16, height: 16 } },
                 'axe': { rect: { x: 1 * 16, y: 0, width: 16, height: 16 } },
@@ -6269,14 +6334,14 @@ var Assets;
         },
         // Props
         'campfire': {
-            anchor: { x: 0.5, y: 0.5 }
+            anchor: Anchor.CENTER
         },
         'fire': {
             defaultAnchor: { x: 0.5, y: 1 },
             spritesheet: { frameWidth: 16, frameHeight: 16 }
         },
         'smoke': {
-            anchor: { x: 0.5, y: 1 }
+            anchor: Anchor.BOTTOM
         },
         // Scenery
         'world': {
@@ -6284,7 +6349,7 @@ var Assets;
             spritesheet: { frameWidth: 16, frameHeight: 16 }
         },
         'ground': {
-            anchor: { x: 0.5, y: 0.5 }
+            anchor: Anchor.CENTER
         },
         // Fonts
         'deluxe16': {},
@@ -7764,7 +7829,6 @@ function getStages() {
             parent: BASE_STAGE(),
             camera: {
                 movement: { type: 'smooth', speed: 0, deadZoneWidth: 0, deadZoneHeight: 0 },
-                mode: Camera.Mode.FOLLOW('player', 0, -8),
             },
             entryPoints: {
                 'main': { x: Main.width / 2, y: Main.height / 2 },
@@ -8000,7 +8064,7 @@ function getStoryboard() {
                         case 0: return [4 /*yield*/, S.wait(1)];
                         case 1:
                             _a.sent();
-                            global.theater.currentWorld.camera.setModeFollow('player');
+                            global.theater.currentWorld.camera.setModeFollow('player', 0, -8);
                             return [2 /*return*/];
                     }
                 });

@@ -15,7 +15,6 @@ function getStages(): Dict<World.Config> { return {
         parent: BASE_STAGE(),
         camera: {
             movement: { type: 'smooth', speed: 0, deadZoneWidth: 0, deadZoneHeight: 0 },
-            mode: Camera.Mode.FOLLOW('player', 0, -8),
         },
         entryPoints: {
             'main': { x: Main.width/2, y: Main.height/2 },
