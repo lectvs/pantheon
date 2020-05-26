@@ -1,5 +1,6 @@
 class Tree extends Sprite {
     private readonly maxhp = 3;
+    private readonly leavesSpawnedPerHit = 3;
 
     private spawnsTorch: boolean;
     private hp: number;
@@ -36,6 +37,12 @@ class Tree extends Sprite {
             ]
         });
         this.stateMachine.addState('hurt', {
+            callback: () => {
+                this.hp--;
+                for (let i = 0; i < this.leavesSpawnedPerHit; i++) {
+                    this.spawnLeaf();
+                }
+            },
             script: S.doOverTime(0.5, t => { this.angle = this.hitDir * 30*Math.exp(5*-t)*Math.cos(5*t); }),
             transitions: [
                 { type: 'instant', toState: 'normal' }
@@ -57,6 +64,10 @@ class Tree extends Sprite {
         this.spawnsTorch = O.getOrDefault(this.data.spawnsTorch, false);
     }
 
+    getColor() {
+        return this.getCurrentAnimationName() === 'black' ? 'black' : 'white';
+    }
+
     hit(dir: number) {
         if (this.hp <= 0) return;
 
@@ -65,12 +76,23 @@ class Tree extends Sprite {
             this.hitDir = Random.sign();
         }
 
-        this.hp--;
         this.setState('hurt');
     }
 
     heal() {
         this.hp = this.maxhp;
+    }
+
+    private spawnLeaf() {
+        this.world.addWorldObject(<Sprite.Config>{
+            constructor: Leaf,
+            x: this.x + Random.float(-14, 14),
+            y: this.y + Random.float(-4, 4),
+            texture: this.getColor() === 'black' ? 'blacktreeleaf' : 'whitetreeleaf',
+            offset: { x: 0, y: Random.float(-48, -26) },
+            flipX: Random.boolean(),
+            layer: this.layer,
+        });
     }
 
     private spawnLog() {

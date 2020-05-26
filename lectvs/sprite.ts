@@ -99,6 +99,10 @@ class Sprite extends PhysicsWorldObject {
         return this.animationManager.getCurrentAnimationName();
     }
 
+    getTexture() {
+        return this.texture;
+    }
+
     playAnimation(name: string, startFrame: number = 0, force: boolean = false) {
         this.animationManager.playAnimation(name, startFrame, force);
     }

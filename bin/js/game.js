@@ -1499,6 +1499,13 @@ var WorldObject = /** @class */ (function () {
         var worldObjects = _.isEmpty(children) ? [] : children.map(function (child) { return child instanceof WorldObject ? child : WorldObject.fromConfig(child); });
         return World.Actions.addChildrenToParent(worldObjects, this);
     };
+    WorldObject.prototype.getChildByIndex = function (index) {
+        if (this.children.length < index) {
+            debug("Parent has no child at index " + index + ":", this);
+            return undefined;
+        }
+        return this.children[index];
+    };
     WorldObject.prototype.getChildByName = function (name) {
         var e_4, _a;
         try {
@@ -1815,6 +1822,9 @@ var Sprite = /** @class */ (function (_super) {
     };
     Sprite.prototype.getCurrentAnimationName = function () {
         return this.animationManager.getCurrentAnimationName();
+    };
+    Sprite.prototype.getTexture = function () {
+        return this.texture;
     };
     Sprite.prototype.playAnimation = function (name, startFrame, force) {
         if (startFrame === void 0) { startFrame = 0; }
@@ -6133,6 +6143,12 @@ var RandomNumberGenerator = /** @class */ (function () {
         configurable: true
     });
     /**
+     * Random angle from 0 to 360.
+     */
+    RandomNumberGenerator.prototype.angle = function () {
+        return this.float(0, 360);
+    };
+    /**
      * Random boolean, true or false.
      * @param trueChance Default: 0.5
      */
@@ -6312,6 +6328,17 @@ var Assets;
             defaultAnchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 32, frameHeight: 52 },
         },
+        'leaves': {
+            defaultAnchor: Anchor.BOTTOM,
+            frames: {
+                'blacktreeleaf': {
+                    rect: { x: 0, y: 0, width: 6, height: 4 }
+                },
+                'whitetreeleaf': {
+                    rect: { x: 0, y: 4, width: 6, height: 4 }
+                },
+            }
+        },
         'door': {
             defaultAnchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 32, frameHeight: 35 },
@@ -6485,6 +6512,7 @@ function BASE_STAGE() {
         constructor: World,
         layers: [
             { name: 'bg', effects: { post: { filters: [firelightFilter] } } },
+            { name: 'ground', effects: { post: { filters: [firelightFilter] } } },
             { name: 'main', sortKey: 'y', effects: { post: { filters: [firelightFilter] } } },
             { name: 'fg', sortKey: 'y', effects: { post: { filters: [firelightFilter] } } },
             { name: 'above' },
@@ -7742,6 +7770,7 @@ var Tree = /** @class */ (function (_super) {
             defaultAnimation: Random.boolean() ? 'black' : 'white',
         }) || this;
         _this.maxhp = 3;
+        _this.leavesSpawnedPerHit = 3;
         _this.effects.post.filters.push(new TextureFilter({
             uniforms: [],
             defaultUniforms: {},
@@ -7754,6 +7783,12 @@ var Tree = /** @class */ (function (_super) {
             ]
         });
         _this.stateMachine.addState('hurt', {
+            callback: function () {
+                _this.hp--;
+                for (var i = 0; i < _this.leavesSpawnedPerHit; i++) {
+                    _this.spawnLeaf();
+                }
+            },
             script: S.doOverTime(0.5, function (t) { _this.angle = _this.hitDir * 30 * Math.exp(5 * -t) * Math.cos(5 * t); }),
             transitions: [
                 { type: 'instant', toState: 'normal' }
@@ -7772,6 +7807,9 @@ var Tree = /** @class */ (function (_super) {
         _this.spawnsTorch = O.getOrDefault(_this.data.spawnsTorch, false);
         return _this;
     }
+    Tree.prototype.getColor = function () {
+        return this.getCurrentAnimationName() === 'black' ? 'black' : 'white';
+    };
     Tree.prototype.hit = function (dir) {
         if (this.hp <= 0)
             return;
@@ -7779,11 +7817,21 @@ var Tree = /** @class */ (function (_super) {
         if (this.hitDir === 0) {
             this.hitDir = Random.sign();
         }
-        this.hp--;
         this.setState('hurt');
     };
     Tree.prototype.heal = function () {
         this.hp = this.maxhp;
+    };
+    Tree.prototype.spawnLeaf = function () {
+        this.world.addWorldObject({
+            constructor: Leaf,
+            x: this.x + Random.float(-14, 14),
+            y: this.y + Random.float(-4, 4),
+            texture: this.getColor() === 'black' ? 'blacktreeleaf' : 'whitetreeleaf',
+            offset: { x: 0, y: Random.float(-48, -26) },
+            flipX: Random.boolean(),
+            layer: this.layer,
+        });
     };
     Tree.prototype.spawnLog = function () {
         this.world.addWorldObject({
@@ -7834,7 +7882,6 @@ function getStages() {
                 'main': { x: Main.width / 2, y: Main.height / 2 },
             },
             worldObjects: __spread([
-                WORLD_BOUNDS(0, 0, Main.width, Main.height),
                 {
                     constructor: LightingManager,
                 },
@@ -7859,6 +7906,12 @@ function getStages() {
                 },
                 {
                     name: 'ground',
+                    constructor: Sprite,
+                    x: 0, y: 0,
+                    texture: new Texture(800, 800),
+                    layer: 'ground',
+                },
+                {
                     constructor: Sprite,
                     x: 400, y: 400,
                     texture: 'ground',
@@ -8231,6 +8284,36 @@ function getStoryboard() {
         }
     };
 }
+var Leaf = /** @class */ (function (_super) {
+    __extends(Leaf, _super);
+    function Leaf(config) {
+        var _this = _super.call(this, config) || this;
+        _this.zGravity = 16;
+        _this.vz = Random.float(0, 16);
+        _this.life.time = Random.float(0, 6.28);
+        return _this;
+    }
+    Leaf.prototype.update = function (delta) {
+        _super.prototype.update.call(this, delta);
+        this.vx = 32 * Math.sin(4 * this.life.time);
+        this.vz += this.zGravity * delta;
+        this.offset.y += this.vz * delta;
+        if (this.offset.y >= 0) {
+            this.drawOnGround();
+            this.kill();
+        }
+        this.flipX = this.vx > 0;
+    };
+    Leaf.prototype.drawOnGround = function () {
+        var groundTexture = this.world.getWorldObjectByName('ground').getTexture();
+        groundTexture.render(this.getTexture(), {
+            x: this.x,
+            y: this.y,
+            scaleX: this.flipX ? -1 : 1,
+        });
+    };
+    return Leaf;
+}(Sprite));
 var LerpingValueWithNoise = /** @class */ (function () {
     function LerpingValueWithNoise(initialValue, speed, noiseFactor, noiseIntensity) {
         this.speed = speed;

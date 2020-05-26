@@ -13,6 +13,13 @@ class RandomNumberGenerator {
     }
 
     /**
+     * Random angle from 0 to 360.
+     */
+    angle() {
+        return this.float(0, 360);
+    }
+
+    /**
      * Random boolean, true or false.
      * @param trueChance Default: 0.5
      */

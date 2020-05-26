@@ -24,6 +24,8 @@ class Texture {
     renderTextureSprite: Texture.PIXIRenderTextureSprite;
     get width() { return this.renderTextureSprite.width; }
     get height() { return this.renderTextureSprite.height; }
+
+    // Note: if the anchor lies in the middle of a pixel, the texture will draw slightly weird.
     anchorX: number;
     anchorY: number;
 

@@ -185,6 +185,14 @@ class WorldObject {
         return World.Actions.addChildrenToParent(worldObjects, this);
     }
 
+    getChildByIndex<T extends WorldObject>(index: number) {
+        if (this.children.length < index) {
+            debug(`Parent has no child at index ${index}:`, this);
+            return undefined;
+        }
+        return <T>this.children[index];
+    }
+
     getChildByName<T extends WorldObject>(name: string): T {
         for (let child of this.children) {
             if (child.name === name) return <T>child;

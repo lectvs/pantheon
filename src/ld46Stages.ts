@@ -20,7 +20,6 @@ function getStages(): Dict<World.Config> { return {
             'main': { x: Main.width/2, y: Main.height/2 },
         },
         worldObjects: [
-            WORLD_BOUNDS(0, 0, Main.width, Main.height),
             {
                 constructor: LightingManager,
             },
@@ -45,6 +44,12 @@ function getStages(): Dict<World.Config> { return {
             },
             <Sprite.Config>{
                 name: 'ground',
+                constructor: Sprite,
+                x: 0, y: 0,
+                texture: new Texture(800, 800),
+                layer: 'ground',
+            },
+            <Sprite.Config>{
                 constructor: Sprite,
                 x: 400, y: 400,
                 texture: 'ground',

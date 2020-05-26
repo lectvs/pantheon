@@ -15,6 +15,17 @@ namespace Assets {
             defaultAnchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 32, frameHeight: 52 },
         },
+        'leaves': {
+            defaultAnchor: Anchor.BOTTOM,
+            frames: {
+                'blacktreeleaf': {
+                    rect: { x: 0, y: 0, width: 6, height: 4 }
+                },
+                'whitetreeleaf': {
+                    rect: { x: 0, y: 4, width: 6, height: 4 }
+                },
+            }
+        },
         'door': {
             defaultAnchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 32, frameHeight: 35 },
