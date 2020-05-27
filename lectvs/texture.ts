@@ -91,8 +91,11 @@ class Texture {
             debug('Cannot render to immutable texture!');
             return;
         }
-        this.setRenderTextureSpriteProperties(texture, properties);
+
+        properties = this.setRenderTextureSpriteProperties(texture, properties);
+        let allFilters = this.setRenderTextureSpriteFilters(texture, properties);
         this.renderDisplayObject(texture.renderTextureSprite);
+        this.returnTextureFilters(allFilters);
     }
 
     renderDisplayObject(displayObject: PIXI.DisplayObject) {
@@ -151,6 +154,34 @@ class Texture {
         return this.renderTextureSprite.renderTexture;
     }
 
+    private getAllTextureFilters(texture: Texture, properties: Texture.Properties) {
+        let allFilters: TextureFilter[] = [];
+        let sliceRect = this.getSliceRect(texture, properties);
+
+        if (properties.slice) {
+            let sliceFilterPosX = texture.renderTextureSprite.x - texture.anchorX*sliceRect.width;
+            let sliceFilterPosY = texture.renderTextureSprite.y - texture.anchorY*sliceRect.height;
+            let sliceFilter = TextureFilter.SLICE(properties.slice);
+            Texture.setFilterProperties(sliceFilter, sliceFilterPosX, sliceFilterPosY);
+            allFilters.push(sliceFilter);
+        }
+
+        let filterPosX = properties.x - texture.anchorX*sliceRect.width;
+        let filterPosY = properties.y - texture.anchorY*sliceRect.height;
+        properties.filters.forEach(filter => filter && Texture.setFilterProperties(filter, filterPosX, filterPosY));
+        allFilters.push(...properties.filters);
+
+        return allFilters.filter(filter => filter && filter.enabled);
+    }
+
+    private getSliceRect(texture: Texture, properties: Texture.Properties) {
+        return properties.slice || { x: 0, y: 0, width: texture.width, height: texture.height };
+    }
+
+    private returnTextureFilters(allFilters: TextureFilter[]) {
+        allFilters.forEach(filter => filter.returnPixiFilter());
+    }
+
     private setRenderTextureSpriteProperties(texture: Texture, properties: Texture.Properties) {
         if (!properties) properties = {};
 
@@ -166,7 +197,7 @@ class Texture {
             filters: [],
         });
 
-        let sliceRect = properties.slice || { x: 0, y: 0, width: texture.width, height: texture.height };
+        let sliceRect = this.getSliceRect(texture, properties);
 
         // Position
         let afterSliceX = properties.x + texture.anchorX * texture.width - (sliceRect.x + texture.anchorX * sliceRect.width);
@@ -181,34 +212,22 @@ class Texture {
         texture.renderTextureSprite.tint = properties.tint;
         texture.renderTextureSprite.alpha = properties.alpha;
 
-        // Filter values
-        let allFilters: TextureFilter[] = [];
-
-        if (properties.slice) {
-            let sliceFilterPosX = texture.renderTextureSprite.x - texture.anchorX*sliceRect.width;
-            let sliceFilterPosY = texture.renderTextureSprite.y - texture.anchorY*sliceRect.height;
-            let sliceFilter = TextureFilter.SLICE(properties.slice);
-            Texture.setFilterProperties(sliceFilter, this.width, this.height, sliceFilterPosX, sliceFilterPosY);
-            allFilters.push(sliceFilter);
-        }
-
-        let filterPosX = properties.x - texture.anchorX*sliceRect.width;
-        let filterPosY = properties.y - texture.anchorY*sliceRect.height;
-        properties.filters.forEach(filter => filter && Texture.setFilterProperties(filter, this.width, this.height, filterPosX, filterPosY));
-        allFilters.push(...properties.filters);
-
-        texture.renderTextureSprite.filters = allFilters.filter(filter => filter && filter.enabled).map(filter => filter.getPixiFilter());
-        texture.renderTextureSprite.filterArea = new PIXI.Rectangle(0, 0, this.width, this.height);
-
         // Anchor
         texture.renderTextureSprite.anchor.x = texture.anchorX;
         texture.renderTextureSprite.anchor.y = texture.anchorY;
+
+        return properties;
     }
 
-    private static setFilterProperties(filter: TextureFilter, width: number, height: number, posx: number, posy: number) {
-        filter.setDimensions(width, height);
+    private setRenderTextureSpriteFilters(texture: Texture, properties: Texture.Properties) {
+        let allFilters = this.getAllTextureFilters(texture, properties);
+        texture.renderTextureSprite.filters = allFilters.map(filter => filter.borrowPixiFilter());
+        texture.renderTextureSprite.filterArea = new PIXI.Rectangle(0, 0, this.width, this.height);
+        return allFilters;
+    }
+
+    private static setFilterProperties(filter: TextureFilter, posx: number, posy: number) {
         filter.setTexturePosition(posx, posy);
-        filter.setPixiUniforms();
     }
 }
 

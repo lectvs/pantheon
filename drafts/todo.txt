@@ -43,8 +43,8 @@ juice
 - make monster's eyes appear over foreground
 - problem of highlighting an object with an outline
     - suggestion: need prerender logic
-- problem with multiple of the same effect on a single object
-    - suggestion: remove pixiFilter field (get from cache when needed)
+- /problem with multiple of the same effect on a single object
+    - /suggestion: remove pixiFilter field (get from cache when needed)
 - fix player random flickering (rounding error)
     - suggestion: snap camera to world units
 - add a z component to position/physics
@@ -53,6 +53,7 @@ juice
 
 postpostjam
 - /Anchor.MIDDLE, etc
+- combine texture uniforms/defaultUniforms?
 - investigate printing stack trace on error instead of just debug()
     - think there's console.error() built in
 - refactor debug system

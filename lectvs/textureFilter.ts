@@ -1,3 +1,4 @@
+///<reference path="./cache.ts"/>
 ///<reference path="./debug.ts"/>
 
 namespace TextureFilter {
@@ -32,40 +33,61 @@ namespace TextureFilter {
 class TextureFilter {
     enabled: boolean;
 
+    private code: string;
+    private vertCode: string;
+    private uniformCode: string;
     private uniforms: Dict<any>;
-    private pixiFilter: PIXI.Filter;
+
+    private borrowedPixiFilter: PIXI.Filter;
 
     constructor(config: TextureFilter.Config) {
-        let code = O.getOrDefault(config.code, '');
-        let vertCode = O.getOrDefault(config.vertCode, '');
-        this.pixiFilter = this.constructPixiFilterCached(code, vertCode, config.uniforms);
+        this.code = O.getOrDefault(config.code, '');
+        this.vertCode = O.getOrDefault(config.vertCode, '');
+        this.uniformCode = (config.uniforms|| []).map(uniform => `uniform ${uniform};`).join('');;
         this.uniforms = this.constructUniforms(config.uniforms);
-        this.setUniforms(config.defaultUniforms);
 
+        this.setUniforms(config.defaultUniforms);
+        this.setUniform('posx', 0);
+        this.setUniform('posy', 0);
         this.setUniform('t', 0);
 
         this.enabled = true;
+        this.borrowedPixiFilter = null;
     }
 
-    getPixiFilter() {
-        return this.pixiFilter;
+    borrowPixiFilter() {
+        this.borrowedPixiFilter = TextureFilter.cache.borrow(this, this);
+        for (let uniform in this.uniforms) {
+            this.borrowedPixiFilter.uniforms[uniform] = this.uniforms[uniform];
+        }
+        return this.borrowedPixiFilter;
+    }
+
+    returnPixiFilter() {
+        if (!this.borrowedPixiFilter) return;
+        TextureFilter.cache.return(this, this.borrowedPixiFilter);
+        this.borrowedPixiFilter = null;
+    }
+
+    getCode() {
+        return this.code;
     }
 
     getUniform(uniform: string) {
         return this.uniforms[uniform];
     }
 
-    setPixiUniforms() {
-        for (let uniform in this.uniforms) {
-            this.pixiFilter.uniforms[uniform] = this.uniforms[uniform];
-        }
+    getUniformCode() {
+        return this.uniformCode;
     }
 
-    setDimensions(width: number, height: number) { }
+    getVertCode() {
+        return this.vertCode;
+    }
 
     setTexturePosition(posx: number, posy: number) {
-        this.pixiFilter.uniforms['posx'] = posx;
-        this.pixiFilter.uniforms['posy'] = posy;
+        this.uniforms['posx'] = posx;
+        this.uniforms['posy'] = posy;
     }
 
     setUniform(uniform: string, value: any) {
@@ -92,113 +114,19 @@ class TextureFilter {
             .forEach(decl => (uniformMap[decl] = undefined));
         return uniformMap;
     }
-
-    protected constructPixiFilterCached(code: string, vertCode: string, uniforms: string[]) {
-        let uniformsCode = (uniforms || []).map(uniform => `uniform ${uniform};`).join('');
-        let cacheKey = uniformsCode + code + vertCode;
-
-        if (!TextureFilter.cache[cacheKey]) {
-            let vert = TextureFilter.vertPreUniforms + uniformsCode + TextureFilter.vertStartFunc + vertCode + TextureFilter.vertEndFunc;
-            let frag = TextureFilter.fragPreUniforms + uniformsCode + TextureFilter.fragStartFunc + code + TextureFilter.fragEndFunc;
-            let result = new PIXI.Filter(vert, frag, {});
-            TextureFilter.cache[cacheKey] = result;
-        }
-        
-        return TextureFilter.cache[cacheKey];
-    }
-
-    private static vertPreUniforms = `
-        precision highp float;
-        attribute vec2 aVertexPosition;
-        uniform mat3 projectionMatrix;
-        varying vec2 vTextureCoord;
-        uniform vec4 inputSize;
-        uniform vec4 outputFrame;
-
-        uniform float posx;
-        uniform float posy;
-        uniform float t;
-
-        float width;
-        float height;
-    `;
-
-    private static vertStartFunc = `
-        vec4 filterVertexPosition(void) {
-            width = inputSize.x;
-            height = inputSize.y;
-            vec2 position = aVertexPosition * max(outputFrame.zw, vec2(0.)) + outputFrame.xy;
-            vec2 inp = position - vec2(posx, posy);
-            vec2 outp = vec2(inp.x, inp.y);
-    `;
-
-    private static vertEndFunc = `
-            position = outp + vec2(posx, posy);
-            return vec4((projectionMatrix * vec3(position, 1.0)).xy, 0.0, 1.0);
-        }
-
-        vec2 filterTextureCoord(void) {
-            return aVertexPosition * (outputFrame.zw * inputSize.zw);
-        }
-
-        void main(void) {
-            gl_Position = filterVertexPosition();
-            vTextureCoord = filterTextureCoord();
-        }
-    `;
-
-    private static fragPreUniforms = `
-        precision highp float;
-        varying vec2 vTextureCoord;
-        uniform vec4 inputSize;
-        uniform sampler2D uSampler;
-
-        uniform float posx;
-        uniform float posy;
-        uniform float t;
-
-        float width;
-        float height;
-    `;
-
-    private static fragStartFunc = `
-        vec4 getColor(float localx, float localy) {
-            float tx = (localx + posx) / width;
-            float ty = (localy + posy) / height;
-            return texture2D(uSampler, vec2(tx, ty));
-        }
-
-        vec4 getWorldColor(float worldx, float worldy) {
-            float tx = worldx / width;
-            float ty = worldy / height;
-            return texture2D(uSampler, vec2(tx, ty));
-        }
-
-        void main(void) {
-            width = inputSize.x;
-            height = inputSize.y;
-            float worldx = vTextureCoord.x * width;
-            float worldy = vTextureCoord.y * height;
-            float x = worldx - posx;
-            float y = worldy - posy;
-            vec4 inp = texture2D(uSampler, vTextureCoord);
-            // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.
-            if (inp.a > 0.0) {
-                inp.rgb /= inp.a;
-            }
-            vec4 outp = vec4(inp.r, inp.g, inp.b, inp.a);
-    `;
-
-    private static fragEndFunc = `
-            // Premultiply alpha again.
-            outp.rgb *= outp.a;
-            gl_FragColor = outp;
-        }
-    `;
 }
 
 namespace TextureFilter {
-    export const cache: Dict<PIXI.Filter> = {};
+    export const cache = new SingleKeyCache(
+        (filter: TextureFilter) => {
+            let vert = vertPreUniforms + filter.getUniformCode() + vertStartFunc + filter.getVertCode() + vertEndFunc;
+            let frag = fragPreUniforms + filter.getUniformCode() + fragStartFunc + filter.getCode() + fragEndFunc;
+            return new PIXI.Filter(vert, frag, {});
+        },
+        (filter: TextureFilter) => {
+            return filter.getUniformCode() + filter.getVertCode() + filter.getCode();
+        }
+    );
 
     export class Static extends TextureFilter {
         constructor(code: string) {
@@ -304,4 +232,93 @@ namespace TextureFilter {
         _sliceFilter.setSlice(rect);
         return _sliceFilter;
     }
+
+    const vertPreUniforms = `
+        precision highp float;
+        attribute vec2 aVertexPosition;
+        uniform mat3 projectionMatrix;
+        varying vec2 vTextureCoord;
+        uniform vec4 inputSize;
+        uniform vec4 outputFrame;
+
+        uniform float posx;
+        uniform float posy;
+        uniform float t;
+
+        float width;
+        float height;
+    `;
+
+    const vertStartFunc = `
+        vec4 filterVertexPosition(void) {
+            width = inputSize.x;
+            height = inputSize.y;
+            vec2 position = aVertexPosition * max(outputFrame.zw, vec2(0.)) + outputFrame.xy;
+            vec2 inp = position - vec2(posx, posy);
+            vec2 outp = vec2(inp.x, inp.y);
+    `;
+
+    const vertEndFunc = `
+            position = outp + vec2(posx, posy);
+            return vec4((projectionMatrix * vec3(position, 1.0)).xy, 0.0, 1.0);
+        }
+
+        vec2 filterTextureCoord(void) {
+            return aVertexPosition * (outputFrame.zw * inputSize.zw);
+        }
+
+        void main(void) {
+            gl_Position = filterVertexPosition();
+            vTextureCoord = filterTextureCoord();
+        }
+    `;
+
+    const fragPreUniforms = `
+        precision highp float;
+        varying vec2 vTextureCoord;
+        uniform vec4 inputSize;
+        uniform sampler2D uSampler;
+
+        uniform float posx;
+        uniform float posy;
+        uniform float t;
+
+        float width;
+        float height;
+    `;
+
+    const fragStartFunc = `
+        vec4 getColor(float localx, float localy) {
+            float tx = (localx + posx) / width;
+            float ty = (localy + posy) / height;
+            return texture2D(uSampler, vec2(tx, ty));
+        }
+
+        vec4 getWorldColor(float worldx, float worldy) {
+            float tx = worldx / width;
+            float ty = worldy / height;
+            return texture2D(uSampler, vec2(tx, ty));
+        }
+
+        void main(void) {
+            width = inputSize.x;
+            height = inputSize.y;
+            float worldx = vTextureCoord.x * width;
+            float worldy = vTextureCoord.y * height;
+            float x = worldx - posx;
+            float y = worldy - posy;
+            vec4 inp = texture2D(uSampler, vTextureCoord);
+            // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.
+            if (inp.a > 0.0) {
+                inp.rgb /= inp.a;
+            }
+            vec4 outp = vec4(inp.r, inp.g, inp.b, inp.a);
+    `;
+
+    const fragEndFunc = `
+            // Premultiply alpha again.
+            outp.rgb *= outp.a;
+            gl_FragColor = outp;
+        }
+    `;
 }

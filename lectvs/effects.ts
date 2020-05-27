@@ -15,7 +15,6 @@ namespace Effects {
 }
 
 
-// TODO: major issue where the same two filter types cannot be applied to a texture at the same time (due to caching issues)
 class Effects {
     private effects: [Effects.Filters.Silhouette, Effects.Filters.Outline];
     private static SILHOUETTE_I: number = 0;
