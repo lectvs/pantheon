@@ -38,6 +38,11 @@ class Monster extends Human {
             type: Item.Type.AXE,
             layer: this.layer,
         }));
+
+        this.addChild({
+            constructor: MonsterEyes,
+            layer: 'above',
+        });
     }
 
     update(delta: number) {

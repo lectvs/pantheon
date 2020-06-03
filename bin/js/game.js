@@ -7531,6 +7531,10 @@ var Monster = /** @class */ (function (_super) {
             type: Item.Type.AXE,
             layer: _this.layer,
         }));
+        _this.addChild({
+            constructor: MonsterEyes,
+            layer: 'above',
+        });
         return _this;
     }
     Object.defineProperty(Monster.prototype, "pickingUp", {
@@ -8063,7 +8067,7 @@ function getStoryEvents() {
                 var player;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.wait(Debug.DEBUG ? 60 : 60)];
+                        case 0: return [4 /*yield*/, S.wait(Debug.DEBUG ? 6 : 60)];
                         case 1:
                             _a.sent();
                             player = global.world.getWorldObjectByType(Player);
@@ -8492,3 +8496,30 @@ var LogPiece = /** @class */ (function (_super) {
     }
     LogPiece.getLogPieces = getLogPieces;
 })(LogPiece || (LogPiece = {}));
+var MonsterEyes = /** @class */ (function (_super) {
+    __extends(MonsterEyes, _super);
+    function MonsterEyes(config) {
+        return _super.call(this, config) || this;
+    }
+    Object.defineProperty(MonsterEyes.prototype, "parentMonster", {
+        get: function () {
+            if (!this.parent)
+                return undefined;
+            return this.parent;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    MonsterEyes.prototype.render = function (screen) {
+        if (this.parentMonster) {
+            this.parentMonster.effects.post.filters.push(MonsterEyes.eyesFilter);
+            this.parentMonster.fullRender(screen);
+            this.parentMonster.effects.post.filters.pop();
+        }
+        _super.prototype.render.call(this, screen);
+    };
+    MonsterEyes.eyesFilter = new TextureFilter({
+        code: "if (outp.rgb != vec3(1.0, 0.0, 0.0)) outp.a = 0.0;"
+    });
+    return MonsterEyes;
+}(Sprite));

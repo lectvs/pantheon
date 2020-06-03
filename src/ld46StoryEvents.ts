@@ -4,7 +4,7 @@ function getStoryEvents(): StoryEvent.Map { return {
     'spawn_monster': {
         stage: 'game',
         script: function*() {
-            yield S.wait(Debug.DEBUG ? 60 : 60);
+            yield S.wait(Debug.DEBUG ? 6 : 60);
             let player = global.world.getWorldObjectByType(Player);
             global.world.addWorldObject({
                 name: 'monster',

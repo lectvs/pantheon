@@ -116,4 +116,3 @@ class Sprite extends PhysicsWorldObject {
         this.texture = key;
     }
 }
-

@@ -40,7 +40,7 @@ juice
 - /trees falling the other way
 - /logs consumption animation
 - /rounding error on world objects camera
-- make monster's eyes appear over foreground
+- /make monster's eyes appear over foreground
 - problem of highlighting an object with an outline
     - suggestion: need prerender logic
 - /problem with multiple of the same effect on a single object
@@ -68,6 +68,8 @@ postpostjam
 - test resolveconfig for children
 - child name prefix?
 - slopes/sloped bounds
+- moving platforms
+- implement metroid-style transitions
 - single "transform" method for textures
 - find out how to "erase" parts of a texture
 - metrics/analysis on update, render, etc. timing
