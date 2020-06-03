@@ -14,6 +14,7 @@ function getStoryboard(): Storyboard { return {
             let campfire = global.world.getWorldObjectByType(Campfire);
             let startLog = global.world.getWorldObjectByName<Item>('start_log');
             global.world.camera.setModeFocus(campfire.x, campfire.y);
+            global.world.camera.setMovementSmooth(0, 0, 0);
             
             if (!SKIP) {
                 yield S.wait(2);
@@ -50,6 +51,7 @@ function getStoryboard(): Storyboard { return {
         script: function*() {
             yield S.wait(1);
             global.theater.currentWorld.camera.setModeFollow('player', 0, -8);
+            global.theater.currentWorld.camera.setMovementSmooth(0, 40, 30);
         },
         transitions: [{ type: 'instant', toNode: 'gameplay' }]
     },

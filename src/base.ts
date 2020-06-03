@@ -10,8 +10,8 @@ function BASE_STAGE(): World.Config {
         layers: [
             { name: 'bg', effects: { post: { filters: [firelightFilter] } } },
             { name: 'ground', effects: { post: { filters: [firelightFilter] } } },
-            { name: 'main', sortKey: 'y', effects: { post: { filters: [firelightFilter] } } },
-            { name: 'fg', sortKey: 'y', effects: { post: { filters: [firelightFilter] } } },
+            { name: 'main', sortKey: obj => obj.y, effects: { post: { filters: [firelightFilter] } } },
+            { name: 'fg', sortKey: obj => obj.y, effects: { post: { filters: [firelightFilter] } } },
             { name: 'above' },
         ],
         physicsGroups: {

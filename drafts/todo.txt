@@ -36,7 +36,7 @@ juice
 - /animated trees
 - /leaves fall to ground
 - /fix rightmost tree below leaves
-- smooth camera follow
+- /smooth camera follow
 - /trees falling the other way
 - /logs consumption animation
 - /rounding error on world objects camera
@@ -49,7 +49,7 @@ juice
     - suggestion: snap camera to world units
     - can we just snap everything to world units and not camera units?
 - add a z component to position/physics
-    - change layer sort to a function instead of a sortKey
+    - /change layer sort to a function instead of a sortKey
 - sound
 
 postpostjam
@@ -76,3 +76,4 @@ postpostjam
 - unit tests? :)
 - rename World => Stage, WorldObject => Entity, PhysicsWorldObject => PhysicsEntity (i dunno about these...)
 - onboard storyboard with StateMachine
+- refactor the Main class

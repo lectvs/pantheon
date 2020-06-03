@@ -254,6 +254,12 @@ namespace Texture {
         return new Texture(0, 0);
     }
 
+    export function outlineRect(width: number, height: number, outlineColor: number, outlineAlpha: number = 1, outlineThickness = 1) {
+        let result = new Texture(width, height);
+        Draw.rectangleOutline(result, 0, 0, width, height, Draw.ALIGNMENT_INNER, { color: outlineColor, alpha: outlineAlpha, thickness: outlineThickness });
+        return result;
+    }
+
     export class PIXIRenderTextureSprite extends PIXI.Sprite {
         _renderTexture: PIXI.RenderTexture;
         get renderTexture() { return this._renderTexture; }

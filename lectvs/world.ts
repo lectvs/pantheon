@@ -30,7 +30,7 @@ namespace World {
 
     export type LayerConfig = {
         name: string;
-        sortKey?: string;
+        sortKey?: (worldObject: WorldObject) => number;
         reverseSort?: boolean;
         effects?: Effects.Config;
     }
@@ -462,7 +462,7 @@ namespace World {
     export class Layer {
         name: string;
         worldObjects: WorldObject[];
-        sortKey: string;
+        sortKey: (worldObject: WorldObject) => number;
         reverseSort: boolean;
 
         effects: Effects;
@@ -479,7 +479,7 @@ namespace World {
         sort() {
             if (!this.sortKey) return;
             let r = this.reverseSort ? -1 : 1;
-            this.worldObjects.sort((a, b) => r*(a[this.sortKey] - b[this.sortKey]));
+            this.worldObjects.sort((a, b) => r*(this.sortKey(a) - this.sortKey(b)));
         }
     }
 

@@ -867,9 +867,21 @@ var Camera = /** @class */ (function () {
             this.y = y;
         }
         else if (this.movement.type === 'smooth') {
-            // TODO: implement smooth movement
-            this.x = M.lerp(this.x, x, 0.25);
-            this.y = M.lerp(this.y, y, 0.25);
+            // TODO: implement speed
+            var hw = this.movement.deadZoneWidth / 2;
+            var hh = this.movement.deadZoneHeight / 2;
+            var dx = x - this.x;
+            var dy = y - this.y;
+            if (Math.abs(dx) <= hw && Math.abs(dy) <= hh) {
+                return;
+            }
+            var tx = Math.abs(hw / dx);
+            var ty = Math.abs(hh / dy);
+            var t = Math.min(tx, ty);
+            var targetx = this.x + (1 - t) * dx;
+            var targety = this.y + (1 - t) * dy;
+            this.x = M.lerp(this.x, targetx, 0.25);
+            this.y = M.lerp(this.y, targety, 0.25);
         }
     };
     Camera.prototype.setMode = function (mode) {
@@ -897,6 +909,8 @@ var Camera = /** @class */ (function () {
         });
     };
     Camera.prototype.setMovementSmooth = function (speed, deadZoneWidth, deadZoneHeight) {
+        if (deadZoneWidth === void 0) { deadZoneWidth = 0; }
+        if (deadZoneHeight === void 0) { deadZoneHeight = 0; }
         this.setMovement({
             type: 'smooth',
             speed: speed,
@@ -3473,7 +3487,7 @@ var World = /** @class */ (function () {
             if (!this.sortKey)
                 return;
             var r = this.reverseSort ? -1 : 1;
-            this.worldObjects.sort(function (a, b) { return r * (a[_this.sortKey] - b[_this.sortKey]); });
+            this.worldObjects.sort(function (a, b) { return r * (_this.sortKey(a) - _this.sortKey(b)); });
         };
         return Layer;
     }());
@@ -4624,6 +4638,14 @@ var Texture = /** @class */ (function () {
         return new Texture(0, 0);
     }
     Texture.none = none;
+    function outlineRect(width, height, outlineColor, outlineAlpha, outlineThickness) {
+        if (outlineAlpha === void 0) { outlineAlpha = 1; }
+        if (outlineThickness === void 0) { outlineThickness = 1; }
+        var result = new Texture(width, height);
+        Draw.rectangleOutline(result, 0, 0, width, height, Draw.ALIGNMENT_INNER, { color: outlineColor, alpha: outlineAlpha, thickness: outlineThickness });
+        return result;
+    }
+    Texture.outlineRect = outlineRect;
     var PIXIRenderTextureSprite = /** @class */ (function (_super) {
         __extends(PIXIRenderTextureSprite, _super);
         function PIXIRenderTextureSprite(width, height) {
@@ -6564,8 +6586,8 @@ function BASE_STAGE() {
         layers: [
             { name: 'bg', effects: { post: { filters: [firelightFilter] } } },
             { name: 'ground', effects: { post: { filters: [firelightFilter] } } },
-            { name: 'main', sortKey: 'y', effects: { post: { filters: [firelightFilter] } } },
-            { name: 'fg', sortKey: 'y', effects: { post: { filters: [firelightFilter] } } },
+            { name: 'main', sortKey: function (obj) { return obj.y; }, effects: { post: { filters: [firelightFilter] } } },
+            { name: 'fg', sortKey: function (obj) { return obj.y; }, effects: { post: { filters: [firelightFilter] } } },
             { name: 'above' },
         ],
         physicsGroups: {
@@ -8103,6 +8125,7 @@ function getStoryboard() {
                             campfire = global.world.getWorldObjectByType(Campfire);
                             startLog = global.world.getWorldObjectByName('start_log');
                             global.world.camera.setModeFocus(campfire.x, campfire.y);
+                            global.world.camera.setMovementSmooth(0, 0, 0);
                             if (!!SKIP) return [3 /*break*/, 5];
                             return [4 /*yield*/, S.wait(2)];
                         case 1:
@@ -8173,6 +8196,7 @@ function getStoryboard() {
                         case 1:
                             _a.sent();
                             global.theater.currentWorld.camera.setModeFollow('player', 0, -8);
+                            global.theater.currentWorld.camera.setMovementSmooth(0, 40, 30);
                             return [2 /*return*/];
                     }
                 });
