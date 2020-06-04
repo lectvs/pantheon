@@ -12,6 +12,12 @@ type Pt = {
     y: number;
 }
 
+type Pt3 = {
+    x: number;
+    y: number;
+    z: number;
+}
+
 type Rectangle = PIXI.Rectangle;
 const Rectangle = PIXI.Rectangle;
 type Rect = {

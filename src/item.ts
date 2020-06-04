@@ -9,10 +9,7 @@ class Item extends Sprite {
 
     beingConsumed: boolean;
 
-    vz: number;
-
     private friction: number = 20000;
-    private zGravity: number = 100;
 
     get usable() {
         return this.type !== Item.Type.KEY && this.type !== Item.Type.GASOLINE;
@@ -40,6 +37,7 @@ class Item extends Sprite {
         });
         this.type = config.type;
         this.vz = 0;
+        this.gravity.z = -100;
         this.beingConsumed = false;
     }
 
@@ -48,7 +46,15 @@ class Item extends Sprite {
             this.updateMovement(delta);
         }
 
+        this.vz = this.held ? 0 : this.vz;
+        this.gravity.z = this.held ? 0 : -100;
+
         super.update(delta);
+
+        if (this.z <= 0) {
+            this.z = 0;
+            this.vz = 0;
+        }
 
         if (this.type === Item.Type.TORCH) {
             Item.updateTorchFireSprite(this);
@@ -56,12 +62,7 @@ class Item extends Sprite {
     }
 
     private updateMovement(delta: number) {
-        this.offset.y = Math.min(0, this.offset.y + this.vz*delta);
-        this.vz += this.zGravity*delta;
-
-        if (this.offset.y == 0) {
-            this.vz = 0;
-
+        if (this.z <= 0) {
             if (this.vx > 0) {
                 this.vx = Math.max(0, this.vx - this.friction*delta);
             } else if (this.vx < 0) {

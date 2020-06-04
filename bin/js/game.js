@@ -1400,9 +1400,11 @@ var WorldObject = /** @class */ (function () {
         config = WorldObject.resolveConfig(config, defaults);
         this.localx = O.getOrDefault(config.x, 0);
         this.localy = O.getOrDefault(config.y, 0);
+        this.localz = O.getOrDefault(config.z, 0);
         this.visible = O.getOrDefault(config.visible, true);
         this.active = O.getOrDefault(config.active, true);
         this.life = new Timer(O.getOrDefault(config.life, Infinity), function () { return _this.kill(); });
+        this.zBehavior = O.getOrDefault(config.zBehavior, WorldObject.DEFAULT_Z_BEHAVIOR);
         this.ignoreCamera = O.getOrDefault(config.ignoreCamera, false);
         this.data = _.clone(O.getOrDefault(config.data, {}));
         this.alive = true;
@@ -1433,6 +1435,12 @@ var WorldObject = /** @class */ (function () {
     Object.defineProperty(WorldObject.prototype, "y", {
         get: function () { return this.localy + (this.parent ? this.parent.y : 0); },
         set: function (value) { this.localy = value - (this.parent ? this.parent.y : 0); },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WorldObject.prototype, "z", {
+        get: function () { return this.localz + (this.parent ? this.parent.z : 0); },
+        set: function (value) { this.localz = value - (this.parent ? this.parent.z : 0); },
         enumerable: true,
         configurable: true
     });
@@ -1509,6 +1517,9 @@ var WorldObject = /** @class */ (function () {
     WorldObject.prototype.preRender = function () {
         this.preRenderStoredX = this.x;
         this.preRenderStoredY = this.y;
+        if (this.zBehavior === 'threequarters') {
+            this.y -= this.z;
+        }
         // Snap object to pixel in world-space
         this.x = Math.round(this.x);
         this.y = Math.round(this.y);
@@ -1526,7 +1537,7 @@ var WorldObject = /** @class */ (function () {
         this.x = this.preRenderStoredX;
         this.y = this.preRenderStoredY;
     };
-    WorldObject.prototype.fullRender = function (screen) {
+    WorldObject.prototype.worldRender = function (screen) {
         this.preRender();
         this.render(screen);
         this.postRender();
@@ -1650,6 +1661,7 @@ var WorldObject = /** @class */ (function () {
     WorldObject.prototype.internalRemoveChildFromParentWorldObjectParent = function (child) {
         A.removeAll(this._children, child);
     };
+    WorldObject.DEFAULT_Z_BEHAVIOR = 'noop';
     return WorldObject;
 }());
 (function (WorldObject) {
@@ -1725,10 +1737,11 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         _this = _super.call(this, config) || this;
         _this.vx = O.getOrDefault(config.vx, 0);
         _this.vy = O.getOrDefault(config.vy, 0);
+        _this.vz = O.getOrDefault(config.vz, 0);
         _this.mass = O.getOrDefault(config.mass, 1);
-        _this.gravity = config.gravity || { x: 0, y: 0 };
+        _this.gravity = config.gravity ? _.clone(config.gravity) : { x: 0, y: 0, z: 0 };
         _this.bounce = O.getOrDefault(config.bounce, 0);
-        _this.bounds = config.bounds || { x: 0, y: 0, width: 0, height: 0 };
+        _this.bounds = config.bounds ? _.clone(config.bounds) : { x: 0, y: 0, width: 0, height: 0 };
         _this.immovable = O.getOrDefault(config.immovable, false);
         _this.colliding = O.getOrDefault(config.colliding, true);
         _this.debugBounds = O.getOrDefault(config.debugBounds, false);
@@ -1757,6 +1770,7 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
     PhysicsWorldObject.prototype.applyGravity = function (delta) {
         this.vx += this.gravity.x * delta;
         this.vy += this.gravity.y * delta;
+        this.vz += this.gravity.z * delta;
     };
     PhysicsWorldObject.prototype.isOverlapping = function (other) {
         this.bounds.x += this.x;
@@ -1788,6 +1802,7 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         this.preMovementY = this.y;
         this.x += this.vx * delta;
         this.y += this.vy * delta;
+        this.z += this.vz * delta;
     };
     PhysicsWorldObject.prototype.simulate = function (delta) {
         this.applyGravity(delta);
@@ -3133,7 +3148,7 @@ var World = /** @class */ (function () {
             for (var _b = __values(layer.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var worldObject = _c.value;
                 if (worldObject.visible) {
-                    worldObject.fullRender(layerTexture);
+                    worldObject.worldRender(layerTexture);
                 }
             }
         }
@@ -6718,7 +6733,7 @@ var Campfire = /** @class */ (function (_super) {
                 var item = items_1_1.value;
                 if (_.contains(this.currentlyConsumedItems, item))
                     continue;
-                if (item.offset.y < -15)
+                if (item.z > 15)
                     continue;
                 if (M.distance(item.x, item.y, this.x, this.y) > this.logConsumptionRadius)
                     continue;
@@ -6874,7 +6889,7 @@ var Human = /** @class */ (function (_super) {
                     return;
                 var angle = (_this.flipX ? -1 : 1) * 90 * Math.sin(Math.PI * Math.pow(t, 0.5));
                 _this.heldItem.offset.x = Human.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
-                _this.heldItem.offset.y = Human.itemOffsetY * -Math.cos(M.degToRad(angle));
+                _this.heldItem.z = Human.itemOffsetY * Math.cos(M.degToRad(angle));
                 _this.heldItem.angle = angle;
                 if (t === 1)
                     _this.heldItem.angle = 0;
@@ -6891,7 +6906,7 @@ var Human = /** @class */ (function (_super) {
                 _this.dropHeldItem();
             },
             script: S.chain(S.doOverTime(0.5, function (t) {
-                _this.offset.y = -16 * Math.exp(-4 * t) * Math.abs(Math.sin(4 * Math.PI * t * t));
+                _this.z = 16 * Math.exp(-4 * t) * Math.abs(Math.sin(4 * Math.PI * t * t));
             }), S.waitUntil(function () { return !_this.getCurrentAnimationName().startsWith('hurt'); }), S.call(function () {
                 _this.alpha = 1;
             })),
@@ -7039,7 +7054,8 @@ var Human = /** @class */ (function (_super) {
         this.heldItem.vy = 0;
         this.heldItem.angle = 0;
         this.heldItem.offset.x = 0;
-        this.heldItem.offset.y = -Human.itemOffsetY;
+        this.heldItem.offset.y = 0;
+        this.heldItem.z = Human.itemOffsetY;
         World.Actions.setPhysicsGroup(this.heldItem, null);
     };
     Human.prototype.dropHeldItem = function () {
@@ -7050,13 +7066,15 @@ var Human = /** @class */ (function (_super) {
         droppedItem.y = this.y;
         droppedItem.offset.x = 0;
         droppedItem.offset.y = 0;
+        droppedItem.z = 0;
         droppedItem.flipX = this.heldItem.flipX;
         World.Actions.setPhysicsGroup(droppedItem, 'items');
         this.heldItem = null;
         if (this.getCurrentAnimationName() === 'hurt') {
             // toss randomly
             droppedItem.offset.x = 0;
-            droppedItem.offset.y = -Human.itemOffsetY;
+            droppedItem.offset.y = 0;
+            droppedItem.z = Human.itemOffsetY;
             var v = Random.onCircle(Human.hurtDropSpeed);
             droppedItem.vx = v.x;
             droppedItem.vy = v.y;
@@ -7065,7 +7083,8 @@ var Human = /** @class */ (function (_super) {
         if (this.moving) {
             // throw instead of drop
             droppedItem.offset.x = 0;
-            droppedItem.offset.y = -Human.itemOffsetY;
+            droppedItem.offset.y = 0;
+            droppedItem.z = Human.itemOffsetY;
             droppedItem.vx = Human.throwSpeed * Math.sign(this.vx);
             droppedItem.vy = Human.throwSpeed * Math.sign(this.vy);
             this.playAnimation('throw', 0, true);
@@ -7108,9 +7127,9 @@ var Item = /** @class */ (function (_super) {
             bounce: 1,
         }) || this;
         _this.friction = 20000;
-        _this.zGravity = 100;
         _this.type = config.type;
         _this.vz = 0;
+        _this.gravity.z = -100;
         _this.beingConsumed = false;
         return _this;
     }
@@ -7151,16 +7170,19 @@ var Item = /** @class */ (function (_super) {
         if (!this.held) {
             this.updateMovement(delta);
         }
+        this.vz = this.held ? 0 : this.vz;
+        this.gravity.z = this.held ? 0 : -100;
         _super.prototype.update.call(this, delta);
+        if (this.z <= 0) {
+            this.z = 0;
+            this.vz = 0;
+        }
         if (this.type === Item.Type.TORCH) {
             Item.updateTorchFireSprite(this);
         }
     };
     Item.prototype.updateMovement = function (delta) {
-        this.offset.y = Math.min(0, this.offset.y + this.vz * delta);
-        this.vz += this.zGravity * delta;
-        if (this.offset.y == 0) {
-            this.vz = 0;
+        if (this.z <= 0) {
             if (this.vx > 0) {
                 this.vx = Math.max(0, this.vx - this.friction * delta);
             }
@@ -7402,6 +7424,7 @@ var Main = /** @class */ (function () {
     Main.preload = function () {
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+        WorldObject.DEFAULT_Z_BEHAVIOR = 'threequarters';
         global.gameWidth = Main.width;
         global.gameHeight = Main.height;
         global.backgroundColor = Main.backgroundColor;
@@ -7904,8 +7927,8 @@ var Tree = /** @class */ (function (_super) {
             constructor: Leaf,
             x: this.x + Random.float(-14, 14),
             y: this.y + Random.float(-4, 4),
+            z: this.z + Random.float(26, 48),
             texture: this.getColor() === 'black' ? 'blacktreeleaf' : 'whitetreeleaf',
-            offset: { x: 0, y: Random.float(-48, -26) },
             flipX: Random.boolean(),
             layer: this.layer,
         });
@@ -7914,8 +7937,8 @@ var Tree = /** @class */ (function (_super) {
         this.world.addWorldObject({
             constructor: Item,
             x: this.x + 16 * this.hitDir, y: this.y,
+            z: 8,
             layer: 'main',
-            offset: { x: 0, y: -8 },
             physicsGroup: 'items',
             type: Item.Type.LOG,
         });
@@ -7925,8 +7948,8 @@ var Tree = /** @class */ (function (_super) {
             name: 'torch',
             constructor: Item,
             x: this.x, y: this.y,
+            z: 12,
             layer: 'main',
-            offset: { x: 0, y: -12 },
             physicsGroup: 'items',
             type: Item.Type.TORCH,
             children: [{
@@ -8367,21 +8390,19 @@ var Leaf = /** @class */ (function (_super) {
     __extends(Leaf, _super);
     function Leaf(config) {
         var _this = _super.call(this, config) || this;
-        _this.zGravity = 16;
-        _this.vz = Random.float(0, 16);
+        _this.vz = Random.float(0, -16);
+        _this.gravity.z = -16;
         _this.life.time = Random.float(0, 6.28);
         return _this;
     }
     Leaf.prototype.update = function (delta) {
         _super.prototype.update.call(this, delta);
         this.vx = 32 * Math.sin(4 * this.life.time);
-        this.vz += this.zGravity * delta;
-        this.offset.y += this.vz * delta;
-        if (this.offset.y >= 0) {
+        this.flipX = this.vx > 0;
+        if (this.z <= 0) {
             this.drawOnGround();
             this.kill();
         }
-        this.flipX = this.vx > 0;
     };
     Leaf.prototype.drawOnGround = function () {
         var groundTexture = this.world.getWorldObjectByName('ground').getTexture();
@@ -8537,7 +8558,7 @@ var MonsterEyes = /** @class */ (function (_super) {
     MonsterEyes.prototype.render = function (screen) {
         if (this.parentMonster) {
             this.parentMonster.effects.post.filters.push(MonsterEyes.eyesFilter);
-            this.parentMonster.fullRender(screen);
+            this.parentMonster.worldRender(screen);
             this.parentMonster.effects.post.filters.pop();
         }
         _super.prototype.render.call(this, screen);

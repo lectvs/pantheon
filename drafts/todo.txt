@@ -48,7 +48,7 @@ juice
 - fix player random flickering (rounding error)
     - suggestion: snap camera to world units
     - can we just snap everything to world units and not camera units?
-- add a z component to position/physics
+- /add a z component to position/physics
     - /change layer sort to a function instead of a sortKey
 - sound
 
@@ -77,3 +77,4 @@ postpostjam
 - rename World => Stage, WorldObject => Entity, PhysicsWorldObject => PhysicsEntity (i dunno about these...)
 - onboard storyboard with StateMachine
 - refactor the Main class
+- loading screen/progress bar

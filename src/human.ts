@@ -39,7 +39,7 @@ class Human extends Sprite {
                         if (!this.heldItem) return;
                         let angle = (this.flipX ? -1 : 1) * 90 * Math.sin(Math.PI * Math.pow(t, 0.5));
                         this.heldItem.offset.x = Human.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
-                        this.heldItem.offset.y = Human.itemOffsetY * -Math.cos(M.degToRad(angle));
+                        this.heldItem.z = Human.itemOffsetY * Math.cos(M.degToRad(angle));
                         this.heldItem.angle = angle;
                         if (t === 1) this.heldItem.angle = 0;
                     }),
@@ -64,7 +64,7 @@ class Human extends Sprite {
             },
             script: S.chain(
                 S.doOverTime(0.5, t => {
-                    this.offset.y = -16 * Math.exp(-4*t)*Math.abs(Math.sin(4*Math.PI*t*t));
+                    this.z = 16 * Math.exp(-4*t)*Math.abs(Math.sin(4*Math.PI*t*t));
                 }),
                 S.waitUntil(() => !this.getCurrentAnimationName().startsWith('hurt')),
                 S.call(() => {
@@ -195,7 +195,8 @@ class Human extends Sprite {
         this.heldItem.vy = 0;
         this.heldItem.angle = 0;
         this.heldItem.offset.x = 0;
-        this.heldItem.offset.y = -Human.itemOffsetY;
+        this.heldItem.offset.y = 0;
+        this.heldItem.z = Human.itemOffsetY;
         World.Actions.setPhysicsGroup(this.heldItem, null);
     }
 
@@ -206,6 +207,7 @@ class Human extends Sprite {
         droppedItem.y = this.y;
         droppedItem.offset.x = 0;
         droppedItem.offset.y = 0;
+        droppedItem.z = 0;
         droppedItem.flipX = this.heldItem.flipX;
         World.Actions.setPhysicsGroup(droppedItem, 'items');
         this.heldItem = null;
@@ -213,7 +215,8 @@ class Human extends Sprite {
         if (this.getCurrentAnimationName() === 'hurt') {
             // toss randomly
             droppedItem.offset.x = 0;
-            droppedItem.offset.y = -Human.itemOffsetY;
+            droppedItem.offset.y = 0;
+            droppedItem.z = Human.itemOffsetY;
             let v = Random.onCircle(Human.hurtDropSpeed);
             droppedItem.vx = v.x;
             droppedItem.vy = v.y;
@@ -223,7 +226,8 @@ class Human extends Sprite {
         if (this.moving) {
             // throw instead of drop
             droppedItem.offset.x = 0;
-            droppedItem.offset.y = -Human.itemOffsetY;
+            droppedItem.offset.y = 0;
+            droppedItem.z = Human.itemOffsetY;
             droppedItem.vx = Human.throwSpeed * Math.sign(this.vx);
             droppedItem.vy = Human.throwSpeed * Math.sign(this.vy);
             this.playAnimation('throw', 0, true);

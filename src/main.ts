@@ -17,6 +17,8 @@ class Main {
 
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
+        WorldObject.DEFAULT_Z_BEHAVIOR = 'threequarters';
+
         global.gameWidth = Main.width;
         global.gameHeight = Main.height;
         global.backgroundColor = Main.backgroundColor;

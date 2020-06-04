@@ -88,8 +88,8 @@ class Tree extends Sprite {
             constructor: Leaf,
             x: this.x + Random.float(-14, 14),
             y: this.y + Random.float(-4, 4),
+            z: this.z + Random.float(26, 48),
             texture: this.getColor() === 'black' ? 'blacktreeleaf' : 'whitetreeleaf',
-            offset: { x: 0, y: Random.float(-48, -26) },
             flipX: Random.boolean(),
             layer: this.layer,
         });
@@ -99,8 +99,8 @@ class Tree extends Sprite {
         this.world.addWorldObject(<Item.Config>{
             constructor: Item,
             x: this.x + 16*this.hitDir, y: this.y,
+            z: 8,
             layer: 'main',
-            offset: { x: 0, y: -8 },
             physicsGroup: 'items',
             type: Item.Type.LOG,
         });
@@ -111,8 +111,8 @@ class Tree extends Sprite {
             name: 'torch',
             constructor: Item,
             x: this.x, y: this.y,
+            z: 12,
             layer: 'main',
-            offset: { x: 0, y: -12 },
             physicsGroup: 'items',
             type: Item.Type.TORCH,
             children: [{

@@ -71,7 +71,7 @@ class Campfire extends Sprite {
 
         for (let item of items) {
             if (_.contains(this.currentlyConsumedItems, item)) continue;
-            if (item.offset.y < -15) continue;
+            if (item.z > 15) continue;
             if (M.distance(item.x, item.y, this.x, this.y) > this.logConsumptionRadius) continue;
             this.consumeItem(item);
         }

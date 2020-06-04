@@ -15,7 +15,7 @@ class MonsterEyes extends Sprite {
     render(screen: Texture) {
         if (this.parentMonster) {
             this.parentMonster.effects.post.filters.push(MonsterEyes.eyesFilter);
-            this.parentMonster.fullRender(screen);
+            this.parentMonster.worldRender(screen);
             this.parentMonster.effects.post.filters.pop();
         }
         super.render(screen);

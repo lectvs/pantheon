@@ -182,7 +182,7 @@ class World {
         layer.sort();
         for (let worldObject of layer.worldObjects) {
             if (worldObject.visible) {
-                worldObject.fullRender(layerTexture);
+                worldObject.worldRender(layerTexture);
             }
         }
         screen.render(layerTexture, {

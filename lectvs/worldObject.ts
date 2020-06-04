@@ -7,15 +7,18 @@ namespace WorldObject {
         physicsGroup?: string;
         x?: number;
         y?: number;
+        z?: number;
         visible?: boolean;
         active?: boolean;
         life?: number;
         ignoreCamera?: boolean;
+        zBehavior?: ZBehavior;
         data?: any;
         controllable?: boolean;
         children?: WorldObject.Config[];
         updateCallback?: UpdateCallback;
     }
+    export type ZBehavior = 'noop' | 'threequarters';
 
     export type UpdateCallback = (obj: WorldObject, delta: number) => any;
 }
@@ -23,16 +26,20 @@ namespace WorldObject {
 class WorldObject {
     localx: number;
     localy: number;
+    localz: number;
     visible: boolean;
     active: boolean;
     life: Timer;
     ignoreCamera: boolean;
+    zBehavior: WorldObject.ZBehavior;
     data: any;
 
     get x() { return this.localx + (this.parent ? this.parent.x : 0); }
     get y() { return this.localy + (this.parent ? this.parent.y : 0); }
+    get z() { return this.localz + (this.parent ? this.parent.z : 0); }
     set x(value: number) { this.localx = value - (this.parent ? this.parent.x : 0); }
     set y(value: number) { this.localy = value - (this.parent ? this.parent.y : 0); }
+    set z(value: number) { this.localz = value - (this.parent ? this.parent.z : 0); }
 
     alive: boolean;
 
@@ -74,9 +81,11 @@ class WorldObject {
         config = WorldObject.resolveConfig(config, defaults);
         this.localx = O.getOrDefault(config.x, 0);
         this.localy = O.getOrDefault(config.y, 0);
+        this.localz = O.getOrDefault(config.z, 0);
         this.visible = O.getOrDefault(config.visible, true);
         this.active = O.getOrDefault(config.active, true);
         this.life = new Timer(O.getOrDefault(config.life, Infinity), () => this.kill());
+        this.zBehavior = O.getOrDefault(config.zBehavior, WorldObject.DEFAULT_Z_BEHAVIOR);
         this.ignoreCamera = O.getOrDefault(config.ignoreCamera, false);
         this.data = _.clone(O.getOrDefault(config.data, {}));
 
@@ -146,6 +155,10 @@ class WorldObject {
         this.preRenderStoredX = this.x;
         this.preRenderStoredY = this.y;
 
+        if (this.zBehavior === 'threequarters') {
+            this.y -= this.z;
+        }
+
         // Snap object to pixel in world-space
         this.x = Math.round(this.x);
         this.y = Math.round(this.y);
@@ -169,7 +182,7 @@ class WorldObject {
         this.y = this.preRenderStoredY;
     }
 
-    fullRender(screen: Texture) {
+    worldRender(screen: Texture) {
         this.preRender();
         this.render(screen);
         this.postRender();
@@ -297,6 +310,8 @@ class WorldObject {
     private internalRemoveChildFromParentWorldObjectParent(child: WorldObject) {
         A.removeAll(this._children, child);
     }
+
+    static DEFAULT_Z_BEHAVIOR: WorldObject.ZBehavior = 'noop';
 }
 
 namespace WorldObject {
