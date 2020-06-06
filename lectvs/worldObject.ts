@@ -164,13 +164,9 @@ class WorldObject {
         this.y = Math.round(this.y);
 
         if (!this.ignoreCamera) {
-            this.x -= this.world.camera.worldOffsetX;
-            this.y -= this.world.camera.worldOffsetY;
+            this.x -= Math.round(this.world.camera.worldOffsetX);
+            this.y -= Math.round(this.world.camera.worldOffsetY);
         }
-
-        // Snap object to pixel in screen-space
-        this.x = Math.round(this.x);
-        this.y = Math.round(this.y);
     }
 
     render(screen: Texture) {

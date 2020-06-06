@@ -61,8 +61,6 @@ class World {
 
     protected scriptManager: ScriptManager;
 
-    private debugCameraX: number;
-    private debugCameraY: number;
     private debugMousePositionText: SpriteText;
 
     constructor(config: World.Config, defaults?: World.Config) {
@@ -98,9 +96,6 @@ class World {
             World.Actions.addWorldObjectToWorld(WorldObject.fromConfig(worldObjectConfig), this);
         }
         
-        this.debugCameraX = 0;
-        this.debugCameraY = 0;
-
         this.debugMousePositionText = this.addWorldObject<SpriteText>(<SpriteText.Config>{
             constructor: SpriteText,
             x: 0, y: 0,
@@ -132,12 +127,6 @@ class World {
 
         this.removeDeadWorldObjects();
 
-        if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
-            if (Input.isDown('debugMoveCameraLeft'))  this.debugCameraX -= 1;
-            if (Input.isDown('debugMoveCameraRight')) this.debugCameraX += 1;
-            if (Input.isDown('debugMoveCameraUp'))    this.debugCameraY -= 1;
-            if (Input.isDown('debugMoveCameraDown'))  this.debugCameraY += 1;
-        }
         this.camera.update(this, delta);
     }
 
@@ -155,12 +144,7 @@ class World {
     }
 
     render(screen: Texture) {
-        let oldCameraX = this.camera.x;
-        let oldCameraY = this.camera.y;
-        if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
-            this.camera.x += this.debugCameraX;
-            this.camera.y += this.debugCameraY;
-        }
+        this.camera.preRender(this);
 
         // Render background color.
         Draw.brush.color = this.backgroundColor;
@@ -171,8 +155,7 @@ class World {
             this.renderLayer(layer, this.layerTexture, this.screen);
         }
 
-        this.camera.x = oldCameraX;
-        this.camera.y = oldCameraY;
+        this.camera.postRender();
         
         screen.render(this.screen);
     }

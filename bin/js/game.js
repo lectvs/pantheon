@@ -814,14 +814,16 @@ var Camera = /** @class */ (function () {
         this.shakeIntensity = 0;
         this._shakeX = 0;
         this._shakeY = 0;
+        this.debugOffsetX = 0;
+        this.debugOffsetY = 0;
     }
     Object.defineProperty(Camera.prototype, "worldOffsetX", {
-        get: function () { return this.x + this._shakeX - this.width / 2; },
+        get: function () { return this.x - this.width / 2; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(Camera.prototype, "worldOffsetY", {
-        get: function () { return this.y + this._shakeY - this.height / 2; },
+        get: function () { return this.y - this.height / 2; },
         enumerable: true,
         configurable: true
     });
@@ -846,6 +848,32 @@ var Camera = /** @class */ (function () {
             this._shakeY = 0;
         }
         this.clampToBounds();
+        if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && world === global.theater.currentWorld) {
+            if (Input.isDown('debugMoveCameraLeft'))
+                this.debugOffsetX -= 1;
+            if (Input.isDown('debugMoveCameraRight'))
+                this.debugOffsetX += 1;
+            if (Input.isDown('debugMoveCameraUp'))
+                this.debugOffsetY -= 1;
+            if (Input.isDown('debugMoveCameraDown'))
+                this.debugOffsetY += 1;
+        }
+    };
+    Camera.prototype.preRender = function (world) {
+        this.preRenderStoredX = this.x;
+        this.preRenderStoredY = this.y;
+        this.x += this._shakeX;
+        this.y += this._shakeY;
+        if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && world === global.theater.currentWorld) {
+            this.x += this.debugOffsetX;
+            this.y += this.debugOffsetY;
+        }
+        this.x = Math.round(this.x);
+        this.y = Math.round(this.y);
+    };
+    Camera.prototype.postRender = function () {
+        this.x = this.preRenderStoredX;
+        this.y = this.preRenderStoredY;
     };
     Camera.prototype.clampToBounds = function () {
         if (this.bounds.left > -Infinity && this.x - this.width / 2 < this.bounds.left) {
@@ -1524,12 +1552,9 @@ var WorldObject = /** @class */ (function () {
         this.x = Math.round(this.x);
         this.y = Math.round(this.y);
         if (!this.ignoreCamera) {
-            this.x -= this.world.camera.worldOffsetX;
-            this.y -= this.world.camera.worldOffsetY;
+            this.x -= Math.round(this.world.camera.worldOffsetX);
+            this.y -= Math.round(this.world.camera.worldOffsetY);
         }
-        // Snap object to pixel in screen-space
-        this.x = Math.round(this.x);
-        this.y = Math.round(this.y);
     };
     WorldObject.prototype.render = function (screen) {
     };
@@ -2974,16 +2999,22 @@ var InteractionManager = /** @class */ (function () {
             this.highlightedObject = null;
             return;
         }
-        var worldObject = this.theater.currentWorld.getWorldObjectByName(obj);
-        if (!(worldObject instanceof Sprite)) {
-            debug("Cannot highlight object " + obj + " because it is not a Sprite");
-            return;
+        var worldObject;
+        if (obj instanceof Sprite) {
+            worldObject = obj;
+        }
+        else {
+            worldObject = this.theater.currentWorld.getWorldObjectByName(obj);
+            if (!(worldObject instanceof Sprite)) {
+                debug("Cannot highlight object " + obj + " because it is not a Sprite");
+                return;
+            }
         }
         this.highlightedObject = worldObject;
     };
     InteractionManager.prototype.interact = function (obj) {
         if (obj === void 0) { obj = this.highlightedObject.name; }
-        this._interactRequested = obj;
+        this._interactRequested = (obj instanceof Sprite) ? obj.name : obj;
     };
     InteractionManager.prototype.reset = function () {
         this.highlightedObject = null;
@@ -3029,8 +3060,6 @@ var World = /** @class */ (function () {
             }
             finally { if (e_12) throw e_12.error; }
         }
-        this.debugCameraX = 0;
-        this.debugCameraY = 0;
         this.debugMousePositionText = this.addWorldObject({
             constructor: SpriteText,
             x: 0, y: 0,
@@ -3089,16 +3118,6 @@ var World = /** @class */ (function () {
             finally { if (e_15) throw e_15.error; }
         }
         this.removeDeadWorldObjects();
-        if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
-            if (Input.isDown('debugMoveCameraLeft'))
-                this.debugCameraX -= 1;
-            if (Input.isDown('debugMoveCameraRight'))
-                this.debugCameraX += 1;
-            if (Input.isDown('debugMoveCameraUp'))
-                this.debugCameraY -= 1;
-            if (Input.isDown('debugMoveCameraDown'))
-                this.debugCameraY += 1;
-        }
         this.camera.update(this, delta);
     };
     World.prototype.updateDebugMousePosition = function () {
@@ -3113,12 +3132,7 @@ var World = /** @class */ (function () {
     };
     World.prototype.render = function (screen) {
         var e_16, _a;
-        var oldCameraX = this.camera.x;
-        var oldCameraY = this.camera.y;
-        if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && this === global.theater.currentWorld) {
-            this.camera.x += this.debugCameraX;
-            this.camera.y += this.debugCameraY;
-        }
+        this.camera.preRender(this);
         // Render background color.
         Draw.brush.color = this.backgroundColor;
         Draw.brush.alpha = this.backgroundAlpha;
@@ -3136,8 +3150,7 @@ var World = /** @class */ (function () {
             }
             finally { if (e_16) throw e_16.error; }
         }
-        this.camera.x = oldCameraX;
-        this.camera.y = oldCameraY;
+        this.camera.postRender();
         screen.render(this.screen);
     };
     World.prototype.renderLayer = function (layer, layerTexture, screen) {
@@ -7723,11 +7736,7 @@ var Player = /** @class */ (function (_super) {
     Player.prototype.updateItemOutlines = function () {
         var overlappingItem = this.getOverlappingItem();
         if (!this.test) {
-            this.world.getWorldObjectsByType(Item).map(function (item) { return item.effects.outline.enabled = false; });
-        }
-        if (overlappingItem) {
-            overlappingItem.effects.outline.color = 0xFFFF00;
-            overlappingItem.effects.outline.enabled = true;
+            global.theater.interactionManager.highlight(overlappingItem);
         }
     };
     Player.prototype.pickupItem = function (item) {
@@ -8076,6 +8085,11 @@ function getStages() {
                     angle: -90,
                     layer: 'main',
                     physicsGroup: 'items',
+                    effects: {
+                        outline: {
+                            color: 0x0000FF
+                        }
+                    }
                 },
                 {
                     constructor: Item,

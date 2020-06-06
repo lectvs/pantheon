@@ -50,8 +50,13 @@ class Camera {
     private _shakeX: number;
     private _shakeY: number;
 
-    get worldOffsetX() { return this.x + this._shakeX - this.width/2; }
-    get worldOffsetY() { return this.y + this._shakeY - this.height/2; }
+    private debugOffsetX: number;
+    private debugOffsetY: number;
+    private preRenderStoredX: number;
+    private preRenderStoredY: number;
+
+    get worldOffsetX() { return this.x - this.width/2; }
+    get worldOffsetY() { return this.y - this.height/2; }
 
     constructor(config: Camera.Config) {
         _.defaults(config, {
@@ -79,6 +84,8 @@ class Camera {
         this.shakeIntensity = 0;
         this._shakeX = 0;
         this._shakeY = 0;
+        this.debugOffsetX = 0;
+        this.debugOffsetY = 0;
     }
 
     update(world: World, delta: number) {
@@ -102,6 +109,34 @@ class Camera {
         }
 
         this.clampToBounds();
+
+        if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && world === global.theater.currentWorld) {
+            if (Input.isDown('debugMoveCameraLeft'))  this.debugOffsetX -= 1;
+            if (Input.isDown('debugMoveCameraRight')) this.debugOffsetX += 1;
+            if (Input.isDown('debugMoveCameraUp'))    this.debugOffsetY -= 1;
+            if (Input.isDown('debugMoveCameraDown'))  this.debugOffsetY += 1;
+        }
+    }
+
+    preRender(world: World) {
+        this.preRenderStoredX = this.x;
+        this.preRenderStoredY = this.y;
+
+        this.x += this._shakeX;
+        this.y += this._shakeY;
+
+        if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && world === global.theater.currentWorld) {
+            this.x += this.debugOffsetX;
+            this.y += this.debugOffsetY;
+        }
+
+        this.x = Math.round(this.x);
+        this.y = Math.round(this.y);
+    }
+
+    postRender() {
+        this.x = this.preRenderStoredX;
+        this.y = this.preRenderStoredY;
     }
 
     clampToBounds() {

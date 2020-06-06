@@ -114,6 +114,11 @@ function getStages(): Dict<World.Config> { return {
                 angle: -90,
                 layer: 'main',
                 physicsGroup: 'items',
+                effects: {
+                    outline: {
+                        color: 0x0000FF
+                    }
+                }
             },
             <Item.Config>{
                 constructor: Item,

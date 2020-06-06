@@ -41,13 +41,13 @@ juice
 - /logs consumption animation
 - /rounding error on world objects camera
 - /make monster's eyes appear over foreground
-- problem of highlighting an object with an outline
-    - suggestion: need prerender logic
+- /problem of highlighting an object with an outline
+    - /suggestion: need prerender logic
 - /problem with multiple of the same effect on a single object
     - /suggestion: remove pixiFilter field (get from cache when needed)
-- fix player random flickering (rounding error)
-    - suggestion: snap camera to world units
-    - can we just snap everything to world units and not camera units?
+- fix player random flickering (rounding error or smooth movement artifact?)
+    - /suggestion: snap camera to world units
+    - /can we just snap everything to world units and not camera units?
 - /add a z component to position/physics
     - /change layer sort to a function instead of a sortKey
 - sound
@@ -78,3 +78,4 @@ postpostjam
 - onboard storyboard with StateMachine
 - refactor the Main class
 - loading screen/progress bar
+- get rid of Pt3

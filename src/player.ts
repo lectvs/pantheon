@@ -42,11 +42,7 @@ class Player extends Human {
     private updateItemOutlines() {
         let overlappingItem = this.getOverlappingItem();
         if (!this.test) {
-            this.world.getWorldObjectsByType(Item).map(item => item.effects.outline.enabled = false);
-        }
-        if (overlappingItem) {
-            overlappingItem.effects.outline.color = 0xFFFF00;
-            overlappingItem.effects.outline.enabled = true;
+            global.theater.interactionManager.highlight(overlappingItem);
         }
     }
 

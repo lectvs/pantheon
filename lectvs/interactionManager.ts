@@ -55,23 +55,29 @@ class InteractionManager {
         return result;
     }
 
-    highlight(obj: string) {
+    highlight(obj: string | Sprite) {
         if (!obj) {
             this.highlightedObject = null;
             return;
         }
 
-        let worldObject = this.theater.currentWorld.getWorldObjectByName(obj);
-        if (!(worldObject instanceof Sprite)) {
-            debug(`Cannot highlight object ${obj} because it is not a Sprite`);
-            return;
+        let worldObject: Sprite;
+        
+        if (obj instanceof Sprite) {
+            worldObject = obj;
+        } else {
+            worldObject = this.theater.currentWorld.getWorldObjectByName(obj);
+            if (!(worldObject instanceof Sprite)) {
+                debug(`Cannot highlight object ${obj} because it is not a Sprite`);
+                return;
+            }
         }
 
         this.highlightedObject = worldObject;
     }
 
-    interact(obj: string = this.highlightedObject.name) {
-        this._interactRequested = obj;
+    interact(obj: string | Sprite = this.highlightedObject.name) {
+        this._interactRequested = (obj instanceof Sprite) ? obj.name : obj;
     }
 
     reset() {
