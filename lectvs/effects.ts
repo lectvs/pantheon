@@ -94,7 +94,10 @@ namespace Effects {
 
             constructor(color: number, alpha: number) {
                 super({
-                    uniforms: [ "vec3 color", "float alpha" ],
+                    uniforms: {
+                        "vec3 color": M.colorToVec3(0x000000),
+                        "float alpha": 1.0
+                    },
                     code: `
                         if (inp.a > 0.0) {
                             outp = vec4(color, alpha);
@@ -114,7 +117,10 @@ namespace Effects {
 
             constructor(color: number, alpha: number) {
                 super({
-                    uniforms: [ "vec3 color", "float alpha" ],
+                    uniforms: {
+                        "vec3 color": M.colorToVec3(0x000000),
+                        "float alpha": 1.0
+                    },
                     code: `
                         if (inp.a == 0.0 && (getColor(x-1.0, y).a > 0.0 || getColor(x+1.0, y).a > 0.0 || getColor(x, y-1.0).a > 0.0 || getColor(x, y+1.0).a > 0.0)) {
                             outp = vec4(color, alpha);

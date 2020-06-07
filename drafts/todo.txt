@@ -30,7 +30,7 @@ juice
 - /door unlock animation
 - /dynamic radius buffer
 - /player thinking about key when near door (decided not to do)
-- /random noise on fire lighting (decided not to do)
+- random noise on fire lighting (decided not to do)
 - /animated leaves
 - /animated flowers
 - /animated trees
@@ -54,7 +54,7 @@ juice
 
 postpostjam
 - /Anchor.MIDDLE, etc
-- combine texture uniforms/defaultUniforms?
+- /combine texture filter uniforms/defaultUniforms?
 - investigate printing stack trace on error instead of just debug()
     - think there's console.error() built in
 - refactor debug system

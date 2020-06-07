@@ -19,8 +19,6 @@ class Tree extends Sprite {
 
         this.effects.post.filters.push(
             new TextureFilter({
-                uniforms: [],
-                defaultUniforms: {},
                 vertCode: `
                     float tt = t*3.0;
                     float amount = (2.7 - 2.0*sin(tt+2.4) - cos(tt)*cos(tt))/4.5;

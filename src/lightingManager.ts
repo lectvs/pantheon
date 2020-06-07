@@ -1,20 +1,15 @@
 namespace Lighting {
     export class FirelightFilter extends TextureFilter {
         constructor(numLights: number) {
-            let uniforms = [];
-            let defaultUniforms = {};
+            let uniforms = {};
             let distanceCalculations = "";
             let lightCalculations = "";
             let maxCalculations = "";
             for (let i = 0; i < numLights; i++) {
-                uniforms.push(`float light_${i}_x`);
-                uniforms.push(`float light_${i}_y`);
-                uniforms.push(`float light_${i}_radius`);
-                uniforms.push(`float light_${i}_buffer`);
-                defaultUniforms[`light_${i}_x`] = 0;
-                defaultUniforms[`light_${i}_y`] = 0;
-                defaultUniforms[`light_${i}_radius`] = 0;
-                defaultUniforms[`light_${i}_buffer`] = 0;
+                uniforms[`float light_${i}_x`] = 0;
+                uniforms[`float light_${i}_y`] = 0;
+                uniforms[`float light_${i}_radius`] = 0;
+                uniforms[`float light_${i}_buffer`] = 0;
                 distanceCalculations += `float light_${i}_distance = sqrt((worldx - light_${i}_x) * (worldx - light_${i}_x) + (worldy - light_${i}_y) * (worldy - light_${i}_y));\n`;
                 lightCalculations += `float light_${i}_light = 1.0;
                                     if (light_${i}_distance > light_${i}_radius) light_${i}_light = 0.5;
@@ -23,7 +18,6 @@ namespace Lighting {
             }
             super({
                 uniforms: uniforms,
-                defaultUniforms: defaultUniforms,
                 code: `
                     float light = 0.0;
 

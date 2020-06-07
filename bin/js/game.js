@@ -2265,10 +2265,8 @@ var TextureFilter = /** @class */ (function () {
     function TextureFilter(config) {
         this.code = O.getOrDefault(config.code, '');
         this.vertCode = O.getOrDefault(config.vertCode, '');
-        this.uniformCode = (config.uniforms || []).map(function (uniform) { return "uniform " + uniform + ";"; }).join('');
-        ;
+        this.uniformCode = this.constructUniformCode(config.uniforms);
         this.uniforms = this.constructUniforms(config.uniforms);
-        this.setUniforms(config.defaultUniforms);
         this.setUniform('posx', 0);
         this.setUniform('posy', 0);
         this.setUniform('t', 0);
@@ -2317,14 +2315,23 @@ var TextureFilter = /** @class */ (function () {
     TextureFilter.prototype.updateTime = function (delta) {
         this.setUniform('t', this.getUniform('t') + delta);
     };
+    TextureFilter.prototype.constructUniformCode = function (uniformDeclarations) {
+        if (_.isEmpty(uniformDeclarations))
+            return '';
+        var uniformCode = '';
+        for (var decl in uniformDeclarations) {
+            uniformCode += "uniform " + decl + ";";
+        }
+        return uniformCode;
+    };
     TextureFilter.prototype.constructUniforms = function (uniformDeclarations) {
         if (_.isEmpty(uniformDeclarations))
             return {};
         var uniformMap = {};
-        uniformDeclarations
-            .map(function (decl) { return decl.trim(); })
-            .map(function (decl) { return decl.substring(decl.lastIndexOf(' ') + 1); })
-            .forEach(function (decl) { return (uniformMap[decl] = undefined); });
+        for (var decl in uniformDeclarations) {
+            var uniformName = decl.trim().substring(decl.lastIndexOf(' ') + 1);
+            uniformMap[uniformName] = uniformDeclarations[decl];
+        }
         return uniformMap;
     };
     return TextureFilter;
@@ -2349,7 +2356,14 @@ var TextureFilter = /** @class */ (function () {
         __extends(Mask, _super);
         function Mask(config) {
             var _this = _super.call(this, {
-                uniforms: ["sampler2D mask", "float maskWidth", "float maskHeight", "float maskX", "float maskY", "bool invert"],
+                uniforms: {
+                    "sampler2D mask": undefined,
+                    "float maskWidth": 0,
+                    "float maskHeight": 0,
+                    "float maskX": 0,
+                    "float maskY": 0,
+                    "bool invert": false
+                },
                 code: "\n                    vec2 vTextureCoordMask = vTextureCoord * is.xy / vec2(maskWidth, maskHeight) - vec2(maskX, maskY) / vec2(maskWidth, maskHeight);\n                    if (vTextureCoordMask.x >= 0.0 && vTextureCoordMask.x < 1.0 && vTextureCoordMask.y >= 0.0 && vTextureCoordMask.y < 1.0) {\n                        float a = texture2D(mask, vTextureCoordMask).a;\n                        outp *= invert ? 1.0-a : a;\n                    } else {\n                        outp.a = invert ? inp.a : 0.0;\n                    }\n                "
             }) || this;
             _this.type = config.type;
@@ -2399,12 +2413,11 @@ var TextureFilter = /** @class */ (function () {
         __extends(Slice, _super);
         function Slice(rect) {
             return _super.call(this, {
-                uniforms: ["float sliceX", "float sliceY", "float sliceWidth", "float sliceHeight"],
-                defaultUniforms: {
-                    'sliceX': rect.x,
-                    'sliceY': rect.y,
-                    'sliceWidth': rect.width,
-                    'sliceHeight': rect.height,
+                uniforms: {
+                    'float sliceX': rect.x,
+                    'float sliceY': rect.y,
+                    'float sliceWidth': rect.width,
+                    'float sliceHeight': rect.height,
                 },
                 code: "\n                    if (x < sliceX || x >= sliceX + sliceWidth || y < sliceY || y >= sliceY + sliceHeight) {\n                        outp.a = 0.0;\n                    }\n                "
             }) || this;
@@ -2534,7 +2547,10 @@ var Effects = /** @class */ (function () {
             __extends(Silhouette, _super);
             function Silhouette(color, alpha) {
                 var _this = _super.call(this, {
-                    uniforms: ["vec3 color", "float alpha"],
+                    uniforms: {
+                        "vec3 color": M.colorToVec3(0x000000),
+                        "float alpha": 1.0
+                    },
                     code: "\n                        if (inp.a > 0.0) {\n                            outp = vec4(color, alpha);\n                        }\n                    "
                 }) || this;
                 _this.color = color;
@@ -2560,7 +2576,10 @@ var Effects = /** @class */ (function () {
             __extends(Outline, _super);
             function Outline(color, alpha) {
                 var _this = _super.call(this, {
-                    uniforms: ["vec3 color", "float alpha"],
+                    uniforms: {
+                        "vec3 color": M.colorToVec3(0x000000),
+                        "float alpha": 1.0
+                    },
                     code: "\n                        if (inp.a == 0.0 && (getColor(x-1.0, y).a > 0.0 || getColor(x+1.0, y).a > 0.0 || getColor(x, y-1.0).a > 0.0 || getColor(x, y+1.0).a > 0.0)) {\n                            outp = vec4(color, alpha);\n                        }\n                    "
                 }) || this;
                 _this.color = color;
@@ -6522,27 +6541,21 @@ var Lighting;
         __extends(FirelightFilter, _super);
         function FirelightFilter(numLights) {
             var _this = this;
-            var uniforms = [];
-            var defaultUniforms = {};
+            var uniforms = {};
             var distanceCalculations = "";
             var lightCalculations = "";
             var maxCalculations = "";
             for (var i = 0; i < numLights; i++) {
-                uniforms.push("float light_" + i + "_x");
-                uniforms.push("float light_" + i + "_y");
-                uniforms.push("float light_" + i + "_radius");
-                uniforms.push("float light_" + i + "_buffer");
-                defaultUniforms["light_" + i + "_x"] = 0;
-                defaultUniforms["light_" + i + "_y"] = 0;
-                defaultUniforms["light_" + i + "_radius"] = 0;
-                defaultUniforms["light_" + i + "_buffer"] = 0;
+                uniforms["float light_" + i + "_x"] = 0;
+                uniforms["float light_" + i + "_y"] = 0;
+                uniforms["float light_" + i + "_radius"] = 0;
+                uniforms["float light_" + i + "_buffer"] = 0;
                 distanceCalculations += "float light_" + i + "_distance = sqrt((worldx - light_" + i + "_x) * (worldx - light_" + i + "_x) + (worldy - light_" + i + "_y) * (worldy - light_" + i + "_y));\n";
                 lightCalculations += "float light_" + i + "_light = 1.0;\n                                    if (light_" + i + "_distance > light_" + i + "_radius) light_" + i + "_light = 0.5;\n                                    if (light_" + i + "_distance > light_" + i + "_radius + light_" + i + "_buffer) light_" + i + "_light = 0.0;\n";
                 maxCalculations += "light = max(light, light_" + i + "_light);\n";
             }
             _this = _super.call(this, {
                 uniforms: uniforms,
-                defaultUniforms: defaultUniforms,
                 code: "\n                    float light = 0.0;\n\n                    " + distanceCalculations + "\n                    " + lightCalculations + "\n                    " + maxCalculations + "\n\n                    if (light == 0.5) {\n                        if (outp.rgb == vec3(1.0, 1.0, 1.0)) {\n                            outp.rgb = vec3(0.0, 0.0, 0.0);\n                        } else if (outp.rgb == vec3(0.0, 0.0, 0.0)) {\n                            outp.rgb = vec3(1.0, 1.0, 1.0);\n                        }\n                    } else if (light == 0.0 && inp.rgb != vec3(1.0, 0.0, 0.0)) {\n                        outp.r = 0.0;\n                        outp.g = 0.0;\n                        outp.b = 0.0;\n                    }\n                "
             }) || this;
             return _this;
@@ -7881,8 +7894,6 @@ var Tree = /** @class */ (function (_super) {
         _this.maxhp = 3;
         _this.leavesSpawnedPerHit = 3;
         _this.effects.post.filters.push(new TextureFilter({
-            uniforms: [],
-            defaultUniforms: {},
             vertCode: "\n                    float tt = t*3.0;\n                    float amount = (2.7 - 2.0*sin(tt+2.4) - cos(tt)*cos(tt))/4.5;\n                    outp.x -= 2.6 * (1.0 - inp.y/52.0) * amount;\n                    outp.y -= 1.0 * (inp.x/32.0 * 2.0 - 1.0) * amount;\n                "
         }));
         _this.effects.post.filters[0].setUniform('t', Random.float(0, 100));

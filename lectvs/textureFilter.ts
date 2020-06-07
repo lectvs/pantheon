@@ -23,8 +23,7 @@ namespace TextureFilter {
 *                    float t - time in seconds
      */
     export type Config = {
-        uniforms?: string[];
-        defaultUniforms?: Dict<any>;
+        uniforms?: Dict<any>;
         code?: string;
         vertCode?: string;
     }
@@ -43,10 +42,9 @@ class TextureFilter {
     constructor(config: TextureFilter.Config) {
         this.code = O.getOrDefault(config.code, '');
         this.vertCode = O.getOrDefault(config.vertCode, '');
-        this.uniformCode = (config.uniforms|| []).map(uniform => `uniform ${uniform};`).join('');;
+        this.uniformCode = this.constructUniformCode(config.uniforms);
         this.uniforms = this.constructUniforms(config.uniforms);
 
-        this.setUniforms(config.defaultUniforms);
         this.setUniform('posx', 0);
         this.setUniform('posy', 0);
         this.setUniform('t', 0);
@@ -105,13 +103,22 @@ class TextureFilter {
         this.setUniform('t', this.getUniform('t') + delta);
     }
 
-    private constructUniforms(uniformDeclarations: string[]) {
+    private constructUniformCode(uniformDeclarations: Dict<any>) {
+        if (_.isEmpty(uniformDeclarations)) return '';
+        let uniformCode = '';
+        for (let decl in uniformDeclarations) {
+            uniformCode += `uniform ${decl};`;
+        }
+        return uniformCode;
+    }
+
+    private constructUniforms(uniformDeclarations: Dict<any>) {
         if (_.isEmpty(uniformDeclarations)) return {};
         let uniformMap = {};
-        uniformDeclarations
-            .map(decl => decl.trim())
-            .map(decl => decl.substring(decl.lastIndexOf(' ') + 1))
-            .forEach(decl => (uniformMap[decl] = undefined));
+        for (let decl in uniformDeclarations) {
+            let uniformName = decl.trim().substring(decl.lastIndexOf(' ') + 1);
+            uniformMap[uniformName] = uniformDeclarations[decl];
+        }
         return uniformMap;
     }
 }
@@ -144,7 +151,14 @@ namespace TextureFilter {
 
         constructor(config: Mask.Config) {
             super({
-                uniforms: [ "sampler2D mask", "float maskWidth", "float maskHeight", "float maskX", "float maskY", "bool invert" ],
+                uniforms: {
+                    "sampler2D mask": undefined,
+                    "float maskWidth": 0,
+                    "float maskHeight": 0,
+                    "float maskX": 0,
+                    "float maskY": 0,
+                    "bool invert": false
+                },
                 code: `
                     vec2 vTextureCoordMask = vTextureCoord * is.xy / vec2(maskWidth, maskHeight) - vec2(maskX, maskY) / vec2(maskWidth, maskHeight);
                     if (vTextureCoordMask.x >= 0.0 && vTextureCoordMask.x < 1.0 && vTextureCoordMask.y >= 0.0 && vTextureCoordMask.y < 1.0) {
@@ -202,12 +216,11 @@ namespace TextureFilter {
     export class Slice extends TextureFilter {
         constructor(rect: Rect) {
             super({
-                uniforms: [ "float sliceX", "float sliceY", "float sliceWidth", "float sliceHeight" ],
-                defaultUniforms: {
-                    'sliceX': rect.x,
-                    'sliceY': rect.y,
-                    'sliceWidth': rect.width,
-                    'sliceHeight': rect.height,
+                uniforms: {
+                    'float sliceX': rect.x,
+                    'float sliceY': rect.y,
+                    'float sliceWidth': rect.width,
+                    'float sliceHeight': rect.height,
                 },
                 code: `
                     if (x < sliceX || x >= sliceX + sliceWidth || y < sliceY || y >= sliceY + sliceHeight) {
