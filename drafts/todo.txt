@@ -78,4 +78,4 @@ postpostjam
 - onboard storyboard with StateMachine
 - refactor the Main class
 - loading screen/progress bar
-- get rid of Pt3
+- /get rid of Pt3

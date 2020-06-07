@@ -3,7 +3,7 @@ class Leaf extends Sprite {
     constructor(config: Sprite.Config) {
         super(config);
         this.vz = Random.float(0, -16);
-        this.gravity.z = -16;
+        this.gravityz = -16;
         this.life.time = Random.float(0, 6.28);
     }
 

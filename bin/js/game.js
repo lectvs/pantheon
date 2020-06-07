@@ -1758,7 +1758,9 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         _this.vy = O.getOrDefault(config.vy, 0);
         _this.vz = O.getOrDefault(config.vz, 0);
         _this.mass = O.getOrDefault(config.mass, 1);
-        _this.gravity = config.gravity ? _.clone(config.gravity) : { x: 0, y: 0, z: 0 };
+        _this.gravityx = O.getOrDefault(config.gravityx, 0);
+        _this.gravityy = O.getOrDefault(config.gravityy, 0);
+        _this.gravityz = O.getOrDefault(config.gravityz, 0);
         _this.bounce = O.getOrDefault(config.bounce, 0);
         _this.bounds = config.bounds ? _.clone(config.bounds) : { x: 0, y: 0, width: 0, height: 0 };
         _this.immovable = O.getOrDefault(config.immovable, false);
@@ -1787,9 +1789,9 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
     PhysicsWorldObject.prototype.onCollide = function (other) {
     };
     PhysicsWorldObject.prototype.applyGravity = function (delta) {
-        this.vx += this.gravity.x * delta;
-        this.vy += this.gravity.y * delta;
-        this.vz += this.gravity.z * delta;
+        this.vx += this.gravityx * delta;
+        this.vy += this.gravityy * delta;
+        this.vz += this.gravityz * delta;
     };
     PhysicsWorldObject.prototype.isOverlapping = function (other) {
         this.bounds.x += this.x;
@@ -7164,7 +7166,7 @@ var Item = /** @class */ (function (_super) {
         _this.friction = 20000;
         _this.type = config.type;
         _this.vz = 0;
-        _this.gravity.z = -100;
+        _this.gravityz = -100;
         _this.beingConsumed = false;
         return _this;
     }
@@ -7206,7 +7208,7 @@ var Item = /** @class */ (function (_super) {
             this.updateMovement(delta);
         }
         this.vz = this.held ? 0 : this.vz;
-        this.gravity.z = this.held ? 0 : -100;
+        this.gravityz = this.held ? 0 : -100;
         _super.prototype.update.call(this, delta);
         if (this.z <= 0) {
             this.z = 0;
@@ -8428,7 +8430,7 @@ var Leaf = /** @class */ (function (_super) {
     function Leaf(config) {
         var _this = _super.call(this, config) || this;
         _this.vz = Random.float(0, -16);
-        _this.gravity.z = -16;
+        _this.gravityz = -16;
         _this.life.time = Random.float(0, 6.28);
         return _this;
     }
@@ -8483,10 +8485,9 @@ var LogPiece = /** @class */ (function (_super) {
     function LogPiece(config) {
         var _this = _super.call(this, config) || this;
         _this.friction = 20000;
-        _this.zGravity = 100;
         _this.timeToStartBurning = Random.float(0, 0.2);
         _this.burnTime = 0.3;
-        _this.vz = O.getOrDefault(_this.data.vz, 0);
+        _this.gravityz = -100;
         _this.stateMachine.addState('normal', {
             script: S.wait(_this.timeToStartBurning),
             transitions: [{ type: 'instant', toState: 'burning' }]
@@ -8516,12 +8517,13 @@ var LogPiece = /** @class */ (function (_super) {
     LogPiece.prototype.update = function (delta) {
         this.updateMovement(delta);
         _super.prototype.update.call(this, delta);
+        if (this.z <= 0) {
+            this.z = 0;
+            this.vz = 0;
+        }
     };
     LogPiece.prototype.updateMovement = function (delta) {
-        this.offset.y = Math.min(0, this.offset.y + this.vz * delta);
-        this.vz += this.zGravity * delta;
-        if (this.offset.y == 0) {
-            this.vz = 0;
+        if (this.z <= 0) {
             if (this.vx > 0) {
                 this.vx = Math.max(0, this.vx - this.friction * delta);
             }
@@ -8553,17 +8555,14 @@ var LogPiece = /** @class */ (function (_super) {
             for (var subdivisions_1 = __values(subdivisions), subdivisions_1_1 = subdivisions_1.next(); !subdivisions_1_1.done; subdivisions_1_1 = subdivisions_1.next()) {
                 var subdivision = subdivisions_1_1.value;
                 logPieces.push(new LogPiece({
-                    x: log.x, y: log.y,
+                    x: log.x, y: log.y, z: log.z,
                     texture: subdivision.texture,
                     offset: {
                         x: log.offset.x - 8 + subdivision.x,
                         y: log.offset.y - 8 + subdivision.y,
                     },
-                    vx: log.vx, vy: log.vy,
+                    vx: log.vx, vy: log.vy, vz: log.vz,
                     layer: log.layer,
-                    data: {
-                        vz: log.vz,
-                    }
                 }));
             }
         }

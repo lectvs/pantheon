@@ -6,7 +6,9 @@ namespace PhysicsWorldObject {
         vy?: number;
         vz?: number;
         mass?: number;
-        gravity?: Pt3;
+        gravityx?: number;
+        gravityy?: number;
+        gravityz?: number;
         bounce?: number;
         bounds?: Rect;
         immovable?: boolean;
@@ -22,7 +24,9 @@ class PhysicsWorldObject extends WorldObject {
     vy: number;
     vz: number;
     mass: number;
-    gravity: Pt3;
+    gravityx: number;
+    gravityy: number;
+    gravityz: number;
     bounce: number;
     bounds: Rect;
     immovable: boolean;
@@ -42,7 +46,9 @@ class PhysicsWorldObject extends WorldObject {
         this.vy = O.getOrDefault(config.vy, 0);
         this.vz = O.getOrDefault(config.vz, 0);
         this.mass = O.getOrDefault(config.mass, 1);
-        this.gravity = config.gravity ? _.clone(config.gravity) : { x: 0, y: 0, z: 0 };
+        this.gravityx = O.getOrDefault(config.gravityx, 0);
+        this.gravityy = O.getOrDefault(config.gravityy, 0);
+        this.gravityz = O.getOrDefault(config.gravityz, 0);
         this.bounce = O.getOrDefault(config.bounce, 0);
         this.bounds = config.bounds ? _.clone(config.bounds) : { x: 0, y: 0, width: 0, height: 0 };
         this.immovable = O.getOrDefault(config.immovable, false);
@@ -77,9 +83,9 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     applyGravity(delta: number) {
-        this.vx += this.gravity.x * delta;
-        this.vy += this.gravity.y * delta;
-        this.vz += this.gravity.z * delta;
+        this.vx += this.gravityx * delta;
+        this.vy += this.gravityy * delta;
+        this.vz += this.gravityz * delta;
     }
 
     isOverlapping(other: PhysicsWorldObject) {

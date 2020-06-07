@@ -37,7 +37,7 @@ class Item extends Sprite {
         });
         this.type = config.type;
         this.vz = 0;
-        this.gravity.z = -100;
+        this.gravityz = -100;
         this.beingConsumed = false;
     }
 
@@ -47,7 +47,7 @@ class Item extends Sprite {
         }
 
         this.vz = this.held ? 0 : this.vz;
-        this.gravity.z = this.held ? 0 : -100;
+        this.gravityz = this.held ? 0 : -100;
 
         super.update(delta);
 

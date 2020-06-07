@@ -1,14 +1,11 @@
 class LogPiece extends Sprite {
     private readonly friction = 20000;
-    private readonly zGravity = 100;
     private readonly timeToStartBurning = Random.float(0, 0.2);
     private readonly burnTime = 0.3;
 
-    vz: number;
-
     constructor(config: Sprite.Config) {
         super(config);
-        this.vz = O.getOrDefault(this.data.vz, 0);
+        this.gravityz = -100;
 
         this.stateMachine.addState('normal', {
             script: S.wait(this.timeToStartBurning),
@@ -42,15 +39,15 @@ class LogPiece extends Sprite {
     update(delta: number) {
         this.updateMovement(delta);
         super.update(delta);
+
+        if (this.z <= 0) {
+            this.z = 0;
+            this.vz = 0;
+        }
     }
 
     private updateMovement(delta: number) {
-        this.offset.y = Math.min(0, this.offset.y + this.vz*delta);
-        this.vz += this.zGravity*delta;
-
-        if (this.offset.y == 0) {
-            this.vz = 0;
-
+        if (this.z <= 0) {
             if (this.vx > 0) {
                 this.vx = Math.max(0, this.vx - this.friction*delta);
             } else if (this.vx < 0) {
@@ -79,17 +76,14 @@ namespace LogPiece {
 
         for (let subdivision of subdivisions) {
            logPieces.push(new LogPiece({
-               x: log.x, y: log.y,
+               x: log.x, y: log.y, z: log.z,
                texture: subdivision.texture,
                offset: {
                    x: log.offset.x - 8 + subdivision.x,
                    y: log.offset.y - 8 + subdivision.y,
                },
-               vx: log.vx, vy: log.vy,
+               vx: log.vx, vy: log.vy, vz: log.vz,
                layer: log.layer,
-               data: {
-                   vz: log.vz,
-               }
            }));
         }
 
