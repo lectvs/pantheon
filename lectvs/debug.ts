@@ -1,20 +1,28 @@
 namespace Debug {
     export type Config = {
+        debug: boolean;
+        allPhysicsBounds: boolean;
+        moveCameraWithArrows: boolean; 
+        showMousePosition: boolean;
         mousePositionFont: SpriteText.Font;
+        skipRate: number;
+        programmaticInput: boolean;
+        autoplay: boolean;
+        skipMainMenu: boolean;
     }
 }
 
 class DebugValues {
     init(config: Debug.Config) {
-        Debug.DEBUG = true;
-        Debug.ALL_PHYSICS_BOUNDS = false;
-        Debug.MOVE_CAMERA_WITH_ARROWS = true;
-        Debug.SHOW_MOUSE_POSITION = true;
+        Debug.DEBUG = config.debug;
+        Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
+        Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
+        Debug.SHOW_MOUSE_POSITION = config.showMousePosition;
         Debug.MOUSE_POSITION_FONT = config.mousePositionFont;
-        Debug.SKIP_RATE = 1;
-        Debug.PROGRAMMATIC_INPUT = false;
-        Debug.AUTOPLAY = true;
-        Debug.SKIP_MAIN_MENU = true;
+        Debug.SKIP_RATE = config.skipRate;
+        Debug.PROGRAMMATIC_INPUT = config.programmaticInput;
+        Debug.AUTOPLAY = config.autoplay;
+        Debug.SKIP_MAIN_MENU = config.skipMainMenu;
     }
 
     private _DEBUG: boolean;

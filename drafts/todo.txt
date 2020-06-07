@@ -55,9 +55,9 @@ juice
 postpostjam
 - /Anchor.MIDDLE, etc
 - /combine texture filter uniforms/defaultUniforms?
-- investigate printing stack trace on error instead of just debug()
-    - think there's console.error() built in
-- refactor debug system
+- /investigate printing stack trace on error instead of just debug()
+    - /think there's console.error() built in
+- /refactor debug system
 - physics based on lastx/y instead of lastmovementx/y?
 - boundless textures
 - controls remapping

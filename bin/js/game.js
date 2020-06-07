@@ -1349,15 +1349,15 @@ var DebugValues = /** @class */ (function () {
     function DebugValues() {
     }
     DebugValues.prototype.init = function (config) {
-        Debug.DEBUG = true;
-        Debug.ALL_PHYSICS_BOUNDS = false;
-        Debug.MOVE_CAMERA_WITH_ARROWS = true;
-        Debug.SHOW_MOUSE_POSITION = true;
+        Debug.DEBUG = config.debug;
+        Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
+        Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
+        Debug.SHOW_MOUSE_POSITION = config.showMousePosition;
         Debug.MOUSE_POSITION_FONT = config.mousePositionFont;
-        Debug.SKIP_RATE = 1;
-        Debug.PROGRAMMATIC_INPUT = false;
-        Debug.AUTOPLAY = true;
-        Debug.SKIP_MAIN_MENU = true;
+        Debug.SKIP_RATE = config.skipRate;
+        Debug.PROGRAMMATIC_INPUT = config.programmaticInput;
+        Debug.AUTOPLAY = config.autoplay;
+        Debug.SKIP_MAIN_MENU = config.skipMainMenu;
     };
     Object.defineProperty(DebugValues.prototype, "DEBUG", {
         get: function () { return this._DEBUG; },
@@ -7515,7 +7515,15 @@ var Main = /** @class */ (function () {
         window.addEventListener("mouseup", function (event) { return Input.handleMouseUpEvent(event); }, false);
         window.addEventListener("contextmenu", function (event) { return event.preventDefault(); }, false);
         Debug.init({
+            debug: true,
+            allPhysicsBounds: false,
+            moveCameraWithArrows: true,
+            showMousePosition: true,
             mousePositionFont: Assets.fonts.DELUXE16,
+            skipRate: 1,
+            programmaticInput: false,
+            autoplay: true,
+            skipMainMenu: true,
         });
         this.game = new Game({
             mainMenuClass: IntroMenu,

@@ -80,7 +80,15 @@ class Main {
         window.addEventListener("contextmenu", event => event.preventDefault(), false);
 
         Debug.init({
+            debug: true,
+            allPhysicsBounds: false,
+            moveCameraWithArrows: true,
+            showMousePosition: true,
             mousePositionFont: Assets.fonts.DELUXE16,
+            skipRate: 1,
+            programmaticInput: false,
+            autoplay: true,
+            skipMainMenu: true,
         });
 
         this.game = new Game({
