@@ -1,5 +1,4 @@
 ///<reference path="./cache.ts"/>
-///<reference path="./debug.ts"/>
 
 namespace TextureFilter {
     /**

@@ -40,7 +40,7 @@ class Texture {
 
     clear() {
         if (this.immutable) {
-            debug('Cannot clear immutable texture!');
+            error('Cannot clear immutable texture!');
             return;
         }
         this.renderTextureSprite.clear();
@@ -88,7 +88,7 @@ class Texture {
     render(texture: Texture, properties?: Texture.Properties) {
         if (!texture) return;
         if (this.immutable) {
-            debug('Cannot render to immutable texture!');
+            error('Cannot render to immutable texture!');
             return;
         }
 
@@ -100,7 +100,7 @@ class Texture {
 
     renderDisplayObject(displayObject: PIXI.DisplayObject) {
         if (this.immutable) {
-            debug('Cannot render to immutable texture!');
+            error('Cannot render to immutable texture!');
             return;
         }
         global.renderer.render(displayObject, this.renderTextureSprite.renderTexture, false);

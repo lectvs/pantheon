@@ -189,7 +189,7 @@ class World {
 
     getEntryPoint(entryPointKey: string) {
         if (!this.entryPoints || !this.entryPoints[entryPointKey]) {
-            debug(`World does not have an entry point named '${entryPointKey}':`, this);
+            error(`World does not have an entry point named '${entryPointKey}':`, this);
             return undefined;
         }
         return this.entryPoints[entryPointKey];
@@ -244,7 +244,7 @@ class World {
 
     getWorldObjectByName<T extends WorldObject>(name: string): T {
         if (!this.worldObjectsByName[name]) {   
-            debug(`No object with name '${name}' exists in world`, this);
+            error(`No object with name '${name}' exists in world`, this);
         }
         return <T>this.worldObjectsByName[name];
     }
@@ -252,7 +252,7 @@ class World {
     getWorldObjectByType<T extends WorldObject>(type: new (...args) => T) {
         let results = this.getWorldObjectsByType<T>(type);
         if (_.isEmpty(results)) {
-            debug(`No object of type ${type.name} exists in world`, this);
+            error(`No object of type ${type.name} exists in world`, this);
             return undefined;
         }
         if (results.length > 1) {
@@ -297,7 +297,7 @@ class World {
             if (!obj) return;
         }
         if (obj.world !== this) {
-            debug(`Cannot remove object ${obj.name} from world because it does not exist in the world. World:`, this);
+            error(`Cannot remove object ${obj.name} from world because it does not exist in the world. World:`, this);
             return undefined;
         }
         return World.Actions.removeWorldObjectFromWorld(obj);
@@ -484,12 +484,12 @@ namespace World {
             if (!obj || !world) return obj;
 
             if (obj.world) {
-                debug(`Cannot add object ${obj.name} to world because it aleady exists in another world! You must remove object from previous world first. World:`, world, 'Previous world:', obj.world);
+                error(`Cannot add object ${obj.name} to world because it aleady exists in another world! You must remove object from previous world first. World:`, world, 'Previous world:', obj.world);
                 return undefined;
             }
 
             if (obj.name && world.hasWorldObject(obj.name)) {
-                debug(`Cannot add object ${obj.name} to world because an object already exists with that name! World:`, world);
+                error(`Cannot add object ${obj.name} to world because an object already exists with that name! World:`, world);
                 return undefined;
             }
 
@@ -560,7 +560,7 @@ namespace World {
             if (!obj) return undefined;
 
             if (obj.world && obj.world.hasWorldObject(name)) {
-                debug(`Cannot name object '${name}' as that name already exists in world!`, obj.world);
+                error(`Cannot name object '${name}' as that name already exists in world!`, obj.world);
                 return obj.name;
             }
 
@@ -582,7 +582,7 @@ namespace World {
             if (!obj) return undefined;
 
             if (obj.world && !obj.world.getLayerByName(layerName)) {
-                debug(`Cannot set layer on object '${obj.name}' as no layer named ${layerName} exists in world!`, obj.world);
+                error(`Cannot set layer on object '${obj.name}' as no layer named ${layerName} exists in world!`, obj.world);
                 return obj.layer;
             }
 
@@ -604,7 +604,7 @@ namespace World {
             if (!obj) return undefined;
 
             if (obj.world && !_.isEmpty(physicsGroupName) && !obj.world.getPhysicsGroupByName(physicsGroupName)) {
-                debug(`Cannot set physicsGroup on object '${obj.name}' as no physicsGroup named ${physicsGroupName} exists in world!`, obj.world);
+                error(`Cannot set physicsGroup on object '${obj.name}' as no physicsGroup named ${physicsGroupName} exists in world!`, obj.world);
                 return obj.physicsGroup;
             }
 
@@ -626,12 +626,12 @@ namespace World {
             if (!child || !obj) return child;
 
             if (child.parent) {
-                debug(`Cannot add child ${child.name} to parent ${obj.name} becase the child is already the child of another parent!`, child.parent);
+                error(`Cannot add child ${child.name} to parent ${obj.name} becase the child is already the child of another parent!`, child.parent);
                 return undefined;
             }
 
             if (child.world && child.world !== obj.world) {
-                debug(`Cannot add child ${child.name} to parent ${obj.name} becase the child exists in a different world!`, child.world);
+                error(`Cannot add child ${child.name} to parent ${obj.name} becase the child exists in a different world!`, child.world);
                 return undefined;
             }
 

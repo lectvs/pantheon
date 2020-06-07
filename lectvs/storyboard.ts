@@ -69,7 +69,7 @@ namespace Storyboard {
 
     export function arbitraryPathToNode(storyboard: Storyboard, endNode: string) {
         if (!storyboard[endNode]) {
-            debug(`Cannot make path to end node ${endNode} since it doesn't exist in storyboard`, storyboard);
+            error(`Cannot make path to end node ${endNode} since it doesn't exist in storyboard`, storyboard);
             return [];
         }
 
@@ -90,7 +90,7 @@ namespace Storyboard {
                 result.unshift(foundNode);
                 currentNode = foundNode;
             } else {
-                debug(`Could not find a path to ${endNode} in storyboard`, storyboard);
+                error(`Could not find a path to ${endNode} in storyboard`, storyboard);
                 return [];
             }
         }

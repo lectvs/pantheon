@@ -19,7 +19,7 @@ class SpriteTextConverter {
             } else if (text[i] === '[') {
                 let closingBracketIndex = text.indexOf(']', i); 
                 if (closingBracketIndex < i+1) {
-                    debug(`Text '${text}' has an unclosed tag bracket.`);
+                    error(`Text '${text}' has an unclosed tag bracket.`);
                     continue;
                 }
 
@@ -71,7 +71,7 @@ class SpriteTextConverter {
     private static parseTag(tag: string) {
         let result = St.splitOnWhitespace(tag);
         if (_.isEmpty(result)) {
-            debug(`Tag ${tag} must have the tag part specified.`);
+            error(`Tag ${tag} must have the tag part specified.`);
             return [SpriteText.NOOP_TAG];
         }
         return result;

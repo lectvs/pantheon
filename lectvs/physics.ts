@@ -53,7 +53,7 @@ class Physics {
         result.direction = direction;
 
         if (!result.isVertical && !result.isHorizontal) {
-            debug('collision was neither vertical nor horizontal:', result);
+            error('collision was neither vertical nor horizontal:', result);
         }
 
         return result;

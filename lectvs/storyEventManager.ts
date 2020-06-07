@@ -88,7 +88,7 @@ class StoryEventManager {
     private getEventByName(name: string) {
         let event = this.storyEvents[name];
         if (!event) {
-            debug(`Cannot get event ${name} because it does not exist:`, this.storyEvents);
+            error(`Cannot get event ${name} because it does not exist:`, this.storyEvents);
             return undefined;
         }
         return event;

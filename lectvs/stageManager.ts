@@ -22,7 +22,7 @@ class StageManager {
 
     loadStage(name: string, transitionConfig: Transition.Config, entryPoint?: World.EntryPoint) {
         if (!this.stages[name]) {
-            debug(`Cannot load world '${name}' because it does not exist:`, this.stages);
+            error(`Cannot load world '${name}' because it does not exist:`, this.stages);
             return;
         }
         if (!entryPoint) entryPoint = { x: this.theater.width/2, y: this.theater.height/2 };

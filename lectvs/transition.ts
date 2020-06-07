@@ -38,7 +38,7 @@ namespace Transition {
         }
 
         // @ts-ignore
-        debug(`Transition type ${config.type} not found.`);
+        error(`Transition type ${config.type} not found.`);
         return undefined;
     }
 

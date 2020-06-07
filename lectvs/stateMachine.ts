@@ -75,7 +75,7 @@ class StateMachine {
 
     private getState(name: string) {
         if (!this.states[name]) {
-            debug(`No state named ${name} exists on state machine`, this);
+            error(`No state named ${name} exists on state machine`, this);
         }
         return this.states[name];
     }
@@ -88,7 +88,7 @@ class StateMachine {
                 if (transition.condition()) return transition;
             } else {
                 /// @ts-ignore
-                debug(`Invalid transition type ${transition.type} for transition`, transition);
+                error(`Invalid transition type ${transition.type} for transition`, transition);
             }
         }
         return undefined;

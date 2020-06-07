@@ -196,7 +196,7 @@ class WorldObject {
 
     getChildByIndex<T extends WorldObject>(index: number) {
         if (this.children.length < index) {
-            debug(`Parent has no child at index ${index}:`, this);
+            error(`Parent has no child at index ${index}:`, this);
             return undefined;
         }
         return <T>this.children[index];
@@ -206,7 +206,7 @@ class WorldObject {
         for (let child of this.children) {
             if (child.name === name) return <T>child;
         }
-        debug(`Cannot find child named ${name} on parent:`, this);
+        error(`Cannot find child named ${name} on parent:`, this);
         return undefined;
     }
 
@@ -225,7 +225,7 @@ class WorldObject {
             if (!child) return;
         }
         if (child.parent !== this) {
-            debug(`Cannot remove child ${child.name} from parent ${this.name}, but no such relationship exists`);
+            error(`Cannot remove child ${child.name} from parent ${this.name}, but no such relationship exists`);
             return undefined;
         }
         return World.Actions.removeChildFromParent(child);

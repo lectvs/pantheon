@@ -53,13 +53,6 @@ class DebugValues {
 
 var Debug = new DebugValues();
 
-var debug = console.info;
-// function debug(message?: any, ...optionalParams: any[]) {
-//     if (DEBUG) {
-//         console.log(message, ...optionalParams);
-//     }
-// }
-
 function get(name: string) {
     let worldObject = global.game.theater.currentWorld.getWorldObjectByName(name);
     if (worldObject) return worldObject;

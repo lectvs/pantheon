@@ -46,7 +46,7 @@ class PartyManager {
     getMember(name: string) {
         let member = this.members[name];
         if (!member) {
-            debug(`No party member named '${name}':`, this);
+            error(`No party member named '${name}':`, this);
         }
         return member;
     }
@@ -90,7 +90,7 @@ class PartyManager {
 
         let stage = this.theater.stageManager.stages[stageName];
         if (!stage) {
-            debug(`Cannot move party member ${memberName} to stage ${stageName} because the stage does not exist`);
+            error(`Cannot move party member ${memberName} to stage ${stageName} because the stage does not exist`);
             return;
         }
 

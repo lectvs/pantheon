@@ -6,14 +6,14 @@ class AssetCache {
 
     static getPixiTexture(key: string) {
         if (!this.pixiTextures[key]) {
-            debug(`Texture '${key}' does not exist.`);
+            error(`Texture '${key}' does not exist.`);
         }
         return this.pixiTextures[key];
     }
 
     static getTexture(key: string) {
         if (!this.textures[key]) {
-            debug(`Texture '${key}' does not exist.`);
+            error(`Texture '${key}' does not exist.`);
             return Texture.none();
         }
         return this.textures[key];
@@ -21,7 +21,7 @@ class AssetCache {
 
     static getTilemap(key: string) {
         if (!this.tilemaps[key]) {
-            debug(`Tilemap '${key}' does not exist.`);
+            error(`Tilemap '${key}' does not exist.`);
         }
         return this.tilemaps[key];
     }

@@ -82,7 +82,7 @@ class CutsceneManager {
         if (!cutscene) return;
 
         if (this.current) {
-            debug(`Cannot play cutscene ${name} because a cutscene is already playing:`, this.current);
+            error(`Cannot play cutscene ${name} because a cutscene is already playing:`, this.current);
             return;
         }
 
@@ -102,11 +102,11 @@ class CutsceneManager {
     private getCutsceneByName(name: string) {
         let node = this.storyboard[name];
         if (!node) {
-            debug(`Cannot get cutscene ${name} because it does not exist on storyboard:`, this.storyboard);
+            error(`Cannot get cutscene ${name} because it does not exist on storyboard:`, this.storyboard);
             return undefined;
         }
         if (node.type !== 'cutscene') {
-            debug(`Tried to play node ${name} as a cutscene when it is not one`, node);
+            error(`Tried to play node ${name} as a cutscene when it is not one`, node);
             return undefined;
         }
         return node;

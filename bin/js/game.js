@@ -153,7 +153,7 @@ var AnimationManager = /** @class */ (function () {
     };
     AnimationManager.prototype.addAnimation = function (name, frames) {
         if (this.animations[name]) {
-            debug("Cannot add animation '" + name + "' to sprite", this.sprite, "since it already exists");
+            error("Cannot add animation '" + name + "' to sprite", this.sprite, "since it already exists");
             return;
         }
         this.animations[name] = _.defaults(frames, {
@@ -182,17 +182,17 @@ var AnimationManager = /** @class */ (function () {
     AnimationManager.prototype.getFrameByRef = function (ref) {
         var parts = ref.split('/');
         if (parts.length != 2) {
-            debug("Cannot get frame '" + name + "' on sprite", this.sprite, "as it does not fit the form '[animation]/[frame]'");
+            error("Cannot get frame '" + name + "' on sprite", this.sprite, "as it does not fit the form '[animation]/[frame]'");
             return null;
         }
         var animation = this.animations[parts[0]];
         if (!animation) {
-            debug("Cannot get frame '" + name + "' on sprite", this.sprite, "as animation '" + parts[0] + "' does not exist");
+            error("Cannot get frame '" + name + "' on sprite", this.sprite, "as animation '" + parts[0] + "' does not exist");
             return null;
         }
         var frame = parseInt(parts[1]);
         if (!isFinite(frame) || frame < 0 || frame >= animation.length) {
-            debug("Cannot get frame '" + name + "' on sprite", this.sprite, "as animation '" + parts[0] + " does not have frame '" + parts[1] + "'");
+            error("Cannot get frame '" + name + "' on sprite", this.sprite, "as animation '" + parts[0] + " does not have frame '" + parts[1] + "'");
             return null;
         }
         return animation[frame];
@@ -436,20 +436,20 @@ var AssetCache = /** @class */ (function () {
     }
     AssetCache.getPixiTexture = function (key) {
         if (!this.pixiTextures[key]) {
-            debug("Texture '" + key + "' does not exist.");
+            error("Texture '" + key + "' does not exist.");
         }
         return this.pixiTextures[key];
     };
     AssetCache.getTexture = function (key) {
         if (!this.textures[key]) {
-            debug("Texture '" + key + "' does not exist.");
+            error("Texture '" + key + "' does not exist.");
             return Texture.none();
         }
         return this.textures[key];
     };
     AssetCache.getTilemap = function (key) {
         if (!this.tilemaps[key]) {
-            debug("Tilemap '" + key + "' does not exist.");
+            error("Tilemap '" + key + "' does not exist.");
         }
         return this.tilemaps[key];
     };
@@ -1053,7 +1053,7 @@ var CutsceneManager = /** @class */ (function () {
         if (!cutscene)
             return;
         if (this.current) {
-            debug("Cannot play cutscene " + name + " because a cutscene is already playing:", this.current);
+            error("Cannot play cutscene " + name + " because a cutscene is already playing:", this.current);
             return;
         }
         this.current = {
@@ -1070,11 +1070,11 @@ var CutsceneManager = /** @class */ (function () {
     CutsceneManager.prototype.getCutsceneByName = function (name) {
         var node = this.storyboard[name];
         if (!node) {
-            debug("Cannot get cutscene " + name + " because it does not exist on storyboard:", this.storyboard);
+            error("Cannot get cutscene " + name + " because it does not exist on storyboard:", this.storyboard);
             return undefined;
         }
         if (node.type !== 'cutscene') {
-            debug("Tried to play node " + name + " as a cutscene when it is not one", node);
+            error("Tried to play node " + name + " as a cutscene when it is not one", node);
             return undefined;
         }
         return node;
@@ -1410,12 +1410,6 @@ var DebugValues = /** @class */ (function () {
     return DebugValues;
 }());
 var Debug = new DebugValues();
-var debug = console.info;
-// function debug(message?: any, ...optionalParams: any[]) {
-//     if (DEBUG) {
-//         console.log(message, ...optionalParams);
-//     }
-// }
 function get(name) {
     var worldObject = global.game.theater.currentWorld.getWorldObjectByName(name);
     if (worldObject)
@@ -1577,7 +1571,7 @@ var WorldObject = /** @class */ (function () {
     };
     WorldObject.prototype.getChildByIndex = function (index) {
         if (this.children.length < index) {
-            debug("Parent has no child at index " + index + ":", this);
+            error("Parent has no child at index " + index + ":", this);
             return undefined;
         }
         return this.children[index];
@@ -1598,7 +1592,7 @@ var WorldObject = /** @class */ (function () {
             }
             finally { if (e_4) throw e_4.error; }
         }
-        debug("Cannot find child named " + name + " on parent:", this);
+        error("Cannot find child named " + name + " on parent:", this);
         return undefined;
     };
     WorldObject.prototype.kill = function () {
@@ -1616,7 +1610,7 @@ var WorldObject = /** @class */ (function () {
                 return;
         }
         if (child.parent !== this) {
-            debug("Cannot remove child " + child.name + " from parent " + this.name + ", but no such relationship exists");
+            error("Cannot remove child " + child.name + " from parent " + this.name + ", but no such relationship exists");
             return undefined;
         }
         return World.Actions.removeChildFromParent(child);
@@ -2260,7 +2254,6 @@ var Draw = /** @class */ (function () {
 }());
 "\n\nDraw.pixel(texture, 34, 56, 0xFFF000, 0.5);\n\nDraw.color = 0xFFF000;\nDraw.alpha = 1;\nDraw.pixel(texture, 34, 56);\n\n";
 ///<reference path="./cache.ts"/>
-///<reference path="./debug.ts"/>
 var TextureFilter = /** @class */ (function () {
     function TextureFilter(config) {
         this.code = O.getOrDefault(config.code, '');
@@ -3025,7 +3018,7 @@ var InteractionManager = /** @class */ (function () {
         else {
             worldObject = this.theater.currentWorld.getWorldObjectByName(obj);
             if (!(worldObject instanceof Sprite)) {
-                debug("Cannot highlight object " + obj + " because it is not a Sprite");
+                error("Cannot highlight object " + obj + " because it is not a Sprite");
                 return;
             }
         }
@@ -3042,6 +3035,22 @@ var InteractionManager = /** @class */ (function () {
     };
     return InteractionManager;
 }());
+function debug(message) {
+    var optionalParams = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        optionalParams[_i - 1] = arguments[_i];
+    }
+    if (Debug.DEBUG) {
+        console.log.apply(console, __spread([message], optionalParams));
+    }
+}
+function error(message) {
+    var optionalParams = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        optionalParams[_i - 1] = arguments[_i];
+    }
+    console.error.apply(console, __spread([message], optionalParams));
+}
 /// <reference path="./worldObject.ts" />
 var World = /** @class */ (function () {
     function World(config, defaults) {
@@ -3208,7 +3217,7 @@ var World = /** @class */ (function () {
     };
     World.prototype.getEntryPoint = function (entryPointKey) {
         if (!this.entryPoints || !this.entryPoints[entryPointKey]) {
-            debug("World does not have an entry point named '" + entryPointKey + "':", this);
+            error("World does not have an entry point named '" + entryPointKey + "':", this);
             return undefined;
         }
         return this.entryPoints[entryPointKey];
@@ -3283,14 +3292,14 @@ var World = /** @class */ (function () {
     };
     World.prototype.getWorldObjectByName = function (name) {
         if (!this.worldObjectsByName[name]) {
-            debug("No object with name '" + name + "' exists in world", this);
+            error("No object with name '" + name + "' exists in world", this);
         }
         return this.worldObjectsByName[name];
     };
     World.prototype.getWorldObjectByType = function (type) {
         var results = this.getWorldObjectsByType(type);
         if (_.isEmpty(results)) {
-            debug("No object of type " + type.name + " exists in world", this);
+            error("No object of type " + type.name + " exists in world", this);
             return undefined;
         }
         if (results.length > 1) {
@@ -3364,7 +3373,7 @@ var World = /** @class */ (function () {
                 return;
         }
         if (obj.world !== this) {
-            debug("Cannot remove object " + obj.name + " from world because it does not exist in the world. World:", this);
+            error("Cannot remove object " + obj.name + " from world because it does not exist in the world. World:", this);
             return undefined;
         }
         return World.Actions.removeWorldObjectFromWorld(obj);
@@ -3557,11 +3566,11 @@ var World = /** @class */ (function () {
             if (!obj || !world)
                 return obj;
             if (obj.world) {
-                debug("Cannot add object " + obj.name + " to world because it aleady exists in another world! You must remove object from previous world first. World:", world, 'Previous world:', obj.world);
+                error("Cannot add object " + obj.name + " to world because it aleady exists in another world! You must remove object from previous world first. World:", world, 'Previous world:', obj.world);
                 return undefined;
             }
             if (obj.name && world.hasWorldObject(obj.name)) {
-                debug("Cannot add object " + obj.name + " to world because an object already exists with that name! World:", world);
+                error("Cannot add object " + obj.name + " to world because an object already exists with that name! World:", world);
                 return undefined;
             }
             /// @ts-ignore
@@ -3646,7 +3655,7 @@ var World = /** @class */ (function () {
             if (!obj)
                 return undefined;
             if (obj.world && obj.world.hasWorldObject(name)) {
-                debug("Cannot name object '" + name + "' as that name already exists in world!", obj.world);
+                error("Cannot name object '" + name + "' as that name already exists in world!", obj.world);
                 return obj.name;
             }
             /// @ts-ignore
@@ -3665,7 +3674,7 @@ var World = /** @class */ (function () {
             if (!obj)
                 return undefined;
             if (obj.world && !obj.world.getLayerByName(layerName)) {
-                debug("Cannot set layer on object '" + obj.name + "' as no layer named " + layerName + " exists in world!", obj.world);
+                error("Cannot set layer on object '" + obj.name + "' as no layer named " + layerName + " exists in world!", obj.world);
                 return obj.layer;
             }
             /// @ts-ignore
@@ -3684,7 +3693,7 @@ var World = /** @class */ (function () {
             if (!obj)
                 return undefined;
             if (obj.world && !_.isEmpty(physicsGroupName) && !obj.world.getPhysicsGroupByName(physicsGroupName)) {
-                debug("Cannot set physicsGroup on object '" + obj.name + "' as no physicsGroup named " + physicsGroupName + " exists in world!", obj.world);
+                error("Cannot set physicsGroup on object '" + obj.name + "' as no physicsGroup named " + physicsGroupName + " exists in world!", obj.world);
                 return obj.physicsGroup;
             }
             /// @ts-ignore
@@ -3703,11 +3712,11 @@ var World = /** @class */ (function () {
             if (!child || !obj)
                 return child;
             if (child.parent) {
-                debug("Cannot add child " + child.name + " to parent " + obj.name + " becase the child is already the child of another parent!", child.parent);
+                error("Cannot add child " + child.name + " to parent " + obj.name + " becase the child is already the child of another parent!", child.parent);
                 return undefined;
             }
             if (child.world && child.world !== obj.world) {
-                debug("Cannot add child " + child.name + " to parent " + obj.name + " becase the child exists in a different world!", child.world);
+                error("Cannot add child " + child.name + " to parent " + obj.name + " becase the child exists in a different world!", child.world);
                 return undefined;
             }
             /// @ts-ignore
@@ -4165,7 +4174,7 @@ var PartyManager = /** @class */ (function () {
     PartyManager.prototype.getMember = function (name) {
         var member = this.members[name];
         if (!member) {
-            debug("No party member named '" + name + "':", this);
+            error("No party member named '" + name + "':", this);
         }
         return member;
     };
@@ -4207,7 +4216,7 @@ var PartyManager = /** @class */ (function () {
         }
         var stage = this.theater.stageManager.stages[stageName];
         if (!stage) {
-            debug("Cannot move party member " + memberName + " to stage " + stageName + " because the stage does not exist");
+            error("Cannot move party member " + memberName + " to stage " + stageName + " because the stage does not exist");
             return;
         }
         member.stage = stageName;
@@ -4274,7 +4283,7 @@ var Physics = /** @class */ (function () {
         result.t = min_t;
         result.direction = direction;
         if (!result.isVertical && !result.isHorizontal) {
-            debug('collision was neither vertical nor horizontal:', result);
+            error('collision was neither vertical nor horizontal:', result);
         }
         return result;
     };
@@ -4493,7 +4502,7 @@ var Texture = /** @class */ (function () {
     });
     Texture.prototype.clear = function () {
         if (this.immutable) {
-            debug('Cannot clear immutable texture!');
+            error('Cannot clear immutable texture!');
             return;
         }
         this.renderTextureSprite.clear();
@@ -4537,7 +4546,7 @@ var Texture = /** @class */ (function () {
         if (!texture)
             return;
         if (this.immutable) {
-            debug('Cannot render to immutable texture!');
+            error('Cannot render to immutable texture!');
             return;
         }
         properties = this.setRenderTextureSpriteProperties(texture, properties);
@@ -4547,7 +4556,7 @@ var Texture = /** @class */ (function () {
     };
     Texture.prototype.renderDisplayObject = function (displayObject) {
         if (this.immutable) {
-            debug('Cannot render to immutable texture!');
+            error('Cannot render to immutable texture!');
             return;
         }
         global.renderer.render(displayObject, this.renderTextureSprite.renderTexture, false);
@@ -4994,7 +5003,7 @@ var SpriteTextConverter = /** @class */ (function () {
             else if (text[i] === '[') {
                 var closingBracketIndex = text.indexOf(']', i);
                 if (closingBracketIndex < i + 1) {
-                    debug("Text '" + text + "' has an unclosed tag bracket.");
+                    error("Text '" + text + "' has an unclosed tag bracket.");
                     continue;
                 }
                 var parts = this.parseTag(text.substring(i + 1, closingBracketIndex));
@@ -5041,7 +5050,7 @@ var SpriteTextConverter = /** @class */ (function () {
     SpriteTextConverter.parseTag = function (tag) {
         var result = St.splitOnWhitespace(tag);
         if (_.isEmpty(result)) {
-            debug("Tag " + tag + " must have the tag part specified.");
+            error("Tag " + tag + " must have the tag part specified.");
             return [SpriteText.NOOP_TAG];
         }
         return result;
@@ -5094,7 +5103,7 @@ var StageManager = /** @class */ (function () {
     });
     StageManager.prototype.loadStage = function (name, transitionConfig, entryPoint) {
         if (!this.stages[name]) {
-            debug("Cannot load world '" + name + "' because it does not exist:", this.stages);
+            error("Cannot load world '" + name + "' because it does not exist:", this.stages);
             return;
         }
         if (!entryPoint)
@@ -5208,7 +5217,7 @@ var StateMachine = /** @class */ (function () {
     };
     StateMachine.prototype.getState = function (name) {
         if (!this.states[name]) {
-            debug("No state named " + name + " exists on state machine", this);
+            error("No state named " + name + " exists on state machine", this);
         }
         return this.states[name];
     };
@@ -5226,7 +5235,7 @@ var StateMachine = /** @class */ (function () {
                 }
                 else {
                     /// @ts-ignore
-                    debug("Invalid transition type " + transition.type + " for transition", transition);
+                    error("Invalid transition type " + transition.type + " for transition", transition);
                 }
             }
         }
@@ -5349,7 +5358,7 @@ var StoryEventManager = /** @class */ (function () {
     StoryEventManager.prototype.getEventByName = function (name) {
         var event = this.storyEvents[name];
         if (!event) {
-            debug("Cannot get event " + name + " because it does not exist:", this.storyEvents);
+            error("Cannot get event " + name + " because it does not exist:", this.storyEvents);
             return undefined;
         }
         return event;
@@ -5511,7 +5520,7 @@ var StoryManager = /** @class */ (function () {
     };
     StoryManager.prototype.getNodeByName = function (name) {
         if (!this.storyboard[name]) {
-            debug("No storyboard node exists with name " + name);
+            error("No storyboard node exists with name " + name);
         }
         return this.storyboard[name];
     };
@@ -5557,7 +5566,7 @@ var Storyboard;
 (function (Storyboard) {
     function arbitraryPathToNode(storyboard, endNode) {
         if (!storyboard[endNode]) {
-            debug("Cannot make path to end node " + endNode + " since it doesn't exist in storyboard", storyboard);
+            error("Cannot make path to end node " + endNode + " since it doesn't exist in storyboard", storyboard);
             return [];
         }
         var result = [endNode];
@@ -5576,7 +5585,7 @@ var Storyboard;
                 currentNode = foundNode;
             }
             else {
-                debug("Could not find a path to " + endNode + " in storyboard", storyboard);
+                error("Could not find a path to " + endNode + " in storyboard", storyboard);
                 return [];
             }
         }
@@ -5610,7 +5619,7 @@ var Transition = /** @class */ (function (_super) {
             return new Fade(oldSnapshot, newSnapshot, config.preTime, config.time, config.postTime);
         }
         // @ts-ignore
-        debug("Transition type " + config.type + " not found.");
+        error("Transition type " + config.type + " not found.");
         return undefined;
     }
     Transition.fromConfigAndSnapshots = fromConfigAndSnapshots;
@@ -8096,11 +8105,6 @@ function getStages() {
                     angle: -90,
                     layer: 'main',
                     physicsGroup: 'items',
-                    effects: {
-                        outline: {
-                            color: 0x0000FF
-                        }
-                    }
                 },
                 {
                     constructor: Item,

@@ -117,7 +117,7 @@ class StoryManager {
 
     private getNodeByName(name: string) {
         if (!this.storyboard[name]) {
-            debug(`No storyboard node exists with name ${name}`);
+            error(`No storyboard node exists with name ${name}`);
         }
         return this.storyboard[name];
     }
