@@ -1545,7 +1545,7 @@ var WorldObject = /** @class */ (function () {
         // Snap object to pixel in world-space
         this.x = Math.round(this.x);
         this.y = Math.round(this.y);
-        if (!this.ignoreCamera) {
+        if (!this.shouldIgnoreCamera()) {
             this.x -= Math.round(this.world.camera.worldOffsetX);
             this.y -= Math.round(this.world.camera.worldOffsetY);
         }
@@ -1641,6 +1641,13 @@ var WorldObject = /** @class */ (function () {
         for (var key in this.controllerSchema) {
             this.controller[key] = this.controllerSchema[key]();
         }
+    };
+    WorldObject.prototype.shouldIgnoreCamera = function () {
+        if (this.ignoreCamera)
+            return true;
+        if (this.parent)
+            return this.parent.shouldIgnoreCamera();
+        return false;
     };
     // For use with World.Actions.addWorldObjectToWorld
     WorldObject.prototype.internalAddWorldObjectToWorldWorldObject = function (world) {
@@ -4551,10 +4558,17 @@ var Texture = /** @class */ (function () {
             error('Cannot render to immutable texture!');
             return;
         }
+        var oldAnchorX = texture.anchorX;
+        var oldAnchorY = texture.anchorY;
+        // Snap the anchor of the texture to draw to the pixel.
+        texture.anchorX = Math.floor(texture.anchorX * texture.width) / texture.width;
+        texture.anchorY = Math.floor(texture.anchorY * texture.height) / texture.height;
         properties = this.setRenderTextureSpriteProperties(texture, properties);
         var allFilters = this.setRenderTextureSpriteFilters(texture, properties);
         this.renderDisplayObject(texture.renderTextureSprite);
         this.returnTextureFilters(allFilters);
+        texture.anchorX = oldAnchorX;
+        texture.anchorY = oldAnchorY;
     };
     Texture.prototype.renderDisplayObject = function (displayObject) {
         if (this.immutable) {
@@ -6463,10 +6477,10 @@ var Assets;
             defaultAnchor: Anchor.BOTTOM,
             frames: {
                 'blacktreeleaf': {
-                    rect: { x: 0, y: 0, width: 6, height: 4 }
+                    rect: { x: 0, y: 0, width: 5, height: 4 }
                 },
                 'whitetreeleaf': {
-                    rect: { x: 0, y: 4, width: 6, height: 4 }
+                    rect: { x: 0, y: 4, width: 5, height: 4 }
                 },
             }
         },
@@ -6487,7 +6501,6 @@ var Assets;
                 'key': { rect: { x: 2 * 16, y: 0, width: 16, height: 16 } },
                 'torch': { rect: { x: 3 * 16, y: 0, width: 16, height: 16 } },
                 'gasoline': { rect: { x: 4 * 16, y: 0, width: 16, height: 16 } },
-                'test': { rect: { x: 0, y: 0, width: 16, height: 16 } },
             }
         },
         // Props
@@ -7649,7 +7662,7 @@ var Monster = /** @class */ (function (_super) {
     };
     Monster.prototype.getClosestAxe = function () {
         var _this = this;
-        var axes = this.world.getWorldObjectsByType(Item).filter(function (item) { return item.type === Item.Type.AXE; });
+        var axes = this.world.getWorldObjectsByType(Item).filter(function (item) { return item.type === Item.Type.AXE && !item.held; });
         return M.argmin(axes, function (axe) { return M.distance(_this.x, _this.y, axe.x, axe.y); });
     };
     Monster.prototype.handleAttacking = function (target) {
@@ -8445,11 +8458,7 @@ var Leaf = /** @class */ (function (_super) {
     };
     Leaf.prototype.drawOnGround = function () {
         var groundTexture = this.world.getWorldObjectByName('ground').getTexture();
-        groundTexture.render(this.getTexture(), {
-            x: this.x,
-            y: this.y,
-            scaleX: this.flipX ? -1 : 1,
-        });
+        this.render(groundTexture);
     };
     return Leaf;
 }(Sprite));

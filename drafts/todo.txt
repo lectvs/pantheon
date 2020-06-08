@@ -31,6 +31,7 @@ juice
 - /dynamic radius buffer
 - /player thinking about key when near door (decided not to do)
 - random noise on fire lighting (decided not to do)
+    - perlin noise??
 - /animated leaves
 - /animated flowers
 - /animated trees
@@ -62,19 +63,22 @@ postpostjam
 - boundless textures
 - controls remapping
 - fix spritetext tags
-- fix issue where textures with anchors in the middle of a pixel are drawn weird
+- /fix issue where textures with anchors in the middle of a pixel are drawn weird
 - option for child objects to inherit parent offset
 - entity uids
-- test resolveconfig for children
+- /test resolveconfig for children
 - child name prefix?
-- slopes/sloped bounds
-- moving platforms
-- implement metroid-style transitions
+- platformer stuff
+    - slopes/sloped bounds
+    - one-way platforms
+    - moving platforms
+    - implement metroid-style transitions
 - single "transform" method for textures
 - find out how to "erase" parts of a texture
+    - looks like mask only
 - metrics/analysis on update, render, etc. timing
 - unit tests? :)
-- rename World => Stage, WorldObject => Entity, PhysicsWorldObject => PhysicsEntity (i dunno about these...)
+- /rename World => Stage, WorldObject => Entity, PhysicsWorldObject => PhysicsEntity (decided not to do)
 - onboard storyboard with StateMachine
 - refactor the Main class
 - loading screen/progress bar

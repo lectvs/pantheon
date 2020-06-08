@@ -163,7 +163,7 @@ class WorldObject {
         this.x = Math.round(this.x);
         this.y = Math.round(this.y);
 
-        if (!this.ignoreCamera) {
+        if (!this.shouldIgnoreCamera()) {
             this.x -= Math.round(this.world.camera.worldOffsetX);
             this.y -= Math.round(this.world.camera.worldOffsetY);
         }
@@ -259,6 +259,12 @@ class WorldObject {
         for (let key in this.controllerSchema) {
             this.controller[key] = this.controllerSchema[key]();
         }
+    }
+
+    private shouldIgnoreCamera() {
+        if (this.ignoreCamera) return true;
+        if (this.parent) return this.parent.shouldIgnoreCamera();
+        return false;
     }
 
     // For use with World.Actions.addWorldObjectToWorld

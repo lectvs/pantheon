@@ -21,10 +21,6 @@ class Leaf extends Sprite {
 
     drawOnGround() {
         let groundTexture = this.world.getWorldObjectByName<Sprite>('ground').getTexture();
-        groundTexture.render(this.getTexture(), {
-            x: this.x,
-            y: this.y,
-            scaleX: this.flipX ? -1 : 1,
-        });
+        this.render(groundTexture);
     }
 }

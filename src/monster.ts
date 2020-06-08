@@ -60,7 +60,7 @@ class Monster extends Human {
     }
 
     private getClosestAxe() {
-        let axes = this.world.getWorldObjectsByType(Item).filter(item => item.type === Item.Type.AXE);
+        let axes = this.world.getWorldObjectsByType(Item).filter(item => item.type === Item.Type.AXE && !item.held);
         return M.argmin(axes, axe => M.distance(this.x, this.y, axe.x, axe.y));
     }
 

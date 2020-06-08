@@ -92,10 +92,20 @@ class Texture {
             return;
         }
 
+        let oldAnchorX = texture.anchorX;
+        let oldAnchorY = texture.anchorY;
+        
+        // Snap the anchor of the texture to draw to the pixel.
+        texture.anchorX = Math.floor(texture.anchorX * texture.width) / texture.width;
+        texture.anchorY = Math.floor(texture.anchorY * texture.height) / texture.height;
+
         properties = this.setRenderTextureSpriteProperties(texture, properties);
         let allFilters = this.setRenderTextureSpriteFilters(texture, properties);
         this.renderDisplayObject(texture.renderTextureSprite);
         this.returnTextureFilters(allFilters);
+
+        texture.anchorX = oldAnchorX;
+        texture.anchorY = oldAnchorY;
     }
 
     renderDisplayObject(displayObject: PIXI.DisplayObject) {
