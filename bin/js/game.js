@@ -4621,36 +4621,7 @@ var Texture = /** @class */ (function () {
         this.renderTextureSprite.clear();
     };
     Texture.prototype.clone = function () {
-        var result = new Texture(this.width, this.height);
-        result.render(this, {
-            x: this.anchorX * this.width,
-            y: this.anchorY * this.height,
-        });
-        result.anchorX = this.anchorX;
-        result.anchorY = this.anchorY;
-        return result;
-    };
-    Texture.prototype.flipX = function () {
-        var result = new Texture(this.width, this.height);
-        result.render(this, {
-            x: (1 - this.anchorX) * this.width,
-            y: this.anchorY * this.height,
-            scaleX: -1,
-        });
-        result.anchorX = this.anchorX;
-        result.anchorY = this.anchorY;
-        return result;
-    };
-    Texture.prototype.flipY = function () {
-        var result = new Texture(this.width, this.height);
-        result.render(this, {
-            x: this.anchorX * this.width,
-            y: (1 - this.anchorY) * this.height,
-            scaleY: -1,
-        });
-        result.anchorX = this.anchorX;
-        result.anchorY = this.anchorY;
-        return result;
+        return this.transform();
     };
     Texture.prototype.free = function () {
         this.renderTextureSprite.renderTexture.destroy(true);
@@ -4712,19 +4683,34 @@ var Texture = /** @class */ (function () {
         }
         return result;
     };
-    Texture.prototype.tint = function (tint) {
-        var result = new Texture(this.width, this.height);
+    Texture.prototype.toMaskTexture = function () {
+        return this.renderTextureSprite.renderTexture;
+    };
+    /**
+     * Returns a NEW texture which is transformed from the original.
+     */
+    Texture.prototype.transform = function (properties) {
+        if (properties === void 0) { properties = {}; }
+        _.defaults(properties, {
+            scaleX: 1,
+            scaleY: 1,
+            tint: 0xFFFFFF,
+            alpha: 1,
+            filters: [],
+        });
+        var result = new Texture(this.width * Math.abs(properties.scaleX), this.height * Math.abs(properties.scaleY));
         result.render(this, {
-            x: this.anchorX * this.width,
-            y: this.anchorY * this.height,
-            tint: tint,
+            x: this.anchorX * this.width * properties.scaleX + this.width / 2 * (Math.abs(properties.scaleX) - properties.scaleX),
+            y: this.anchorY * this.height * properties.scaleY + this.height / 2 * (Math.abs(properties.scaleY) - properties.scaleY),
+            scaleX: properties.scaleX,
+            scaleY: properties.scaleY,
+            tint: properties.tint,
+            alpha: properties.alpha,
+            filters: properties.filters,
         });
         result.anchorX = this.anchorX;
         result.anchorY = this.anchorY;
         return result;
-    };
-    Texture.prototype.toMaskTexture = function () {
-        return this.renderTextureSprite.renderTexture;
     };
     Texture.prototype.getAllTextureFilters = function (texture, properties) {
         var allFilters = [];
@@ -8148,6 +8134,13 @@ function getStages() {
                     layer: 'main',
                     physicsGroup: 'items',
                 },
+                {
+                    name: 'test',
+                    constructor: Sprite,
+                    x: 64, y: 64,
+                    texture: AssetCache.getTexture('debug').transform({ scaleX: 3, scaleY: -5, tint: 0xFF0000, alpha: 0.5 }),
+                    ignoreCamera: true,
+                }
             ])
         },
     };
@@ -8560,7 +8553,7 @@ var LogPiece = /** @class */ (function (_super) {
         var stemx = log.flipX ? 4 : 8;
         var logTexture = AssetCache.getTexture('log');
         if (log.flipX)
-            logTexture = logTexture.flipX();
+            logTexture = logTexture.transform({ scaleX: -1 });
         var subdivisions = logTexture.subdivide(4, 4, 0.5, 0.5).filter(function (sub) {
             return (sub.y !== 0 || sub.x === stemx) && (sub.y !== 12);
         });

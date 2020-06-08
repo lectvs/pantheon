@@ -130,6 +130,13 @@ function getStages(): Dict<World.Config> { return {
                 layer: 'main',
                 physicsGroup: 'items',
             },
+            <Sprite.Config>{
+                name: 'test',
+                constructor: Sprite,
+                x: 64, y: 64,
+                texture: AssetCache.getTexture('debug').transform({ scaleX: 3, scaleY: -5, tint: 0xFF0000, alpha: 0.5 }),
+                ignoreCamera: true,
+            }
         ]
     },
 }}

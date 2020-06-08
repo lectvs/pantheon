@@ -73,7 +73,7 @@ postpostjam
     - one-way platforms
     - moving platforms
     - implement metroid-style transitions
-- single "transform" method for textures
+- /single "transform" method for textures
 - find out how to "erase" parts of a texture
     - looks like mask only
 - metrics/analysis on update, render, etc. timing

@@ -18,6 +18,14 @@ namespace Texture {
         y: number;
         texture: Texture;
     }
+
+    export type TransformProperties = {
+        scaleX?: number;
+        scaleY?: number;
+        tint?: number;
+        alpha?: number;
+        filters?: TextureFilter[];
+    }
 }
 
 class Texture {
@@ -47,38 +55,7 @@ class Texture {
     }
 
     clone() {
-        let result = new Texture(this.width, this.height);
-        result.render(this, {
-            x: this.anchorX * this.width,
-            y: this.anchorY * this.height,
-        });
-        result.anchorX = this.anchorX;
-        result.anchorY = this.anchorY;
-        return result;
-    }
-
-    flipX() {
-        let result = new Texture(this.width, this.height);
-        result.render(this, {
-            x: (1-this.anchorX) * this.width,
-            y: this.anchorY * this.height,
-            scaleX: -1,
-        });
-        result.anchorX = this.anchorX;
-        result.anchorY = this.anchorY;
-        return result;
-    }
-
-    flipY() {
-        let result = new Texture(this.width, this.height);
-        result.render(this, {
-            x: this.anchorX * this.width,
-            y: (1-this.anchorY) * this.height,
-            scaleY: -1,
-        });
-        result.anchorX = this.anchorX;
-        result.anchorY = this.anchorY;
-        return result;
+        return this.transform();
     }
 
     free() {
@@ -148,20 +125,35 @@ class Texture {
         return result;
     }
 
-    tint(tint: number) {
-        let result = new Texture(this.width, this.height);
+    toMaskTexture() {
+        return this.renderTextureSprite.renderTexture;
+    }
+
+    /**
+     * Returns a NEW texture which is transformed from the original.
+     */
+    transform(properties: Texture.TransformProperties = {}) {
+        _.defaults(properties, {
+            scaleX: 1,
+            scaleY: 1,
+            tint: 0xFFFFFF,
+            alpha: 1,
+            filters: [],
+        });
+
+        let result = new Texture(this.width * Math.abs(properties.scaleX), this.height * Math.abs(properties.scaleY));
         result.render(this, {
-            x: this.anchorX * this.width,
-            y: this.anchorY * this.height,
-            tint: tint,
+            x: this.anchorX * this.width * properties.scaleX + this.width/2 * (Math.abs(properties.scaleX) - properties.scaleX),
+            y: this.anchorY * this.height * properties.scaleY + this.height/2 * (Math.abs(properties.scaleY) - properties.scaleY),
+            scaleX: properties.scaleX,
+            scaleY: properties.scaleY,
+            tint: properties.tint,
+            alpha: properties.alpha,
+            filters: properties.filters,
         });
         result.anchorX = this.anchorX;
         result.anchorY = this.anchorY;
         return result;
-    }
-
-    toMaskTexture() {
-        return this.renderTextureSprite.renderTexture;
     }
 
     private getAllTextureFilters(texture: Texture, properties: Texture.Properties) {

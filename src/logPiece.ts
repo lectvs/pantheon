@@ -69,7 +69,7 @@ namespace LogPiece {
 
         let stemx = log.flipX ? 4 : 8;
         let logTexture = AssetCache.getTexture('log');
-        if (log.flipX) logTexture = logTexture.flipX();
+        if (log.flipX) logTexture = logTexture.transform({ scaleX: -1 });
         let subdivisions = logTexture.subdivide(4, 4, 0.5, 0.5).filter(sub =>
             (sub.y !== 0 || sub.x === stemx) && (sub.y !== 12)
         );
