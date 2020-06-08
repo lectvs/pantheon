@@ -1,4 +1,4 @@
-///<reference path="./cache.ts"/>
+///<reference path="./utils/cache.ts"/>
 
 namespace TextureFilter {
     /**

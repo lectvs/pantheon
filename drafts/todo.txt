@@ -59,16 +59,16 @@ postpostjam
 - /investigate printing stack trace on error instead of just debug()
     - /think there's console.error() built in
 - /refactor debug system
-- physics based on lastx/y instead of lastmovementx/y?
 - boundless textures
 - controls remapping
 - fix spritetext tags
 - /fix issue where textures with anchors in the middle of a pixel are drawn weird
-- option for child objects to inherit parent offset
-- entity uids
+- /option for child objects to inherit parent offset (decided not to do)
+- /entity uids
 - /test resolveconfig for children
-- child name prefix?
+- /allow multiple names in lookup table
 - platformer stuff
+    - physics based on lastx/y instead of lastmovementx/y?
     - slopes/sloped bounds
     - one-way platforms
     - moving platforms

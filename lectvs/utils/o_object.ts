@@ -39,6 +39,10 @@ namespace O {
         }
     }
 
+    export function getClass(obj: Object) {
+        return obj.constructor;
+    }
+
     export function getOrDefault<T>(obj: T, def: T) {
         return obj === undefined ? def : obj;
     }

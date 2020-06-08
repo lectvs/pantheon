@@ -96,6 +96,7 @@ class RandomNumberGenerator {
      * @param seed
      */
     seed(seed: any) {
+        // seeded random generator from seedrandom.min.js
         // @ts-ignore
         this.generate = new Math.seedrandom(seed);
     }

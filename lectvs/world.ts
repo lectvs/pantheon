@@ -49,7 +49,7 @@ class World {
 
     physicsGroups: Dict<World.PhysicsGroup>;
     collisionOrder: World.CollisionConfig[];
-    worldObjectsByName: Dict<WorldObject>;
+    worldObjectsByName: Dict<WorldObject[]>;
     layers: World.Layer[];
 
     backgroundColor: number;
@@ -195,33 +195,9 @@ class World {
         return this.entryPoints[entryPointKey];
     }
 
-    getLayer(obj: string | WorldObject) {
-        if (_.isString(obj)) obj = this.getWorldObjectByName(obj);
-        for (let layer of this.layers) {
-            if (_.contains(layer.worldObjects, obj)) return layer.name;
-        }
-        return undefined;
-    }
-
     getLayerByName(name: string) {
         for (let layer of this.layers) {
             if (layer.name === name) return layer;
-        }
-        return undefined;
-    }
-
-    getName(obj: string | WorldObject) {
-        if (_.isString(obj)) return obj;
-        for (let name in this.worldObjectsByName) {
-            if (this.worldObjectsByName[name] === obj) return name;
-        }
-        return undefined;
-    }
-
-    getPhysicsGroup(obj: string | WorldObject) {
-        if (_.isString(obj)) obj = this.getWorldObjectByName(obj);
-        for (let name in this.physicsGroups) {
-            if (_.contains(this.physicsGroups[name].worldObjects, obj)) return name;
         }
         return undefined;
     }
@@ -243,10 +219,19 @@ class World {
     }
 
     getWorldObjectByName<T extends WorldObject>(name: string): T {
-        if (!this.worldObjectsByName[name]) {   
-            error(`No object with name '${name}' exists in world`, this);
+        let results = this.getWorldObjectsByName<T>(name);
+        if (_.isEmpty(results)) {
+            error(`No object with name ${name} exists in world`, this);
+            return undefined;
         }
-        return <T>this.worldObjectsByName[name];
+        if (results.length > 1) {
+            debug(`Multiple objects with name ${name} exist in world. Returning one of them. World:`, this);
+        }
+        return results[0];
+    }
+
+    getWorldObjectsByName<T extends WorldObject>(name: string): T[] {
+        return <T[]>A.clone(this.worldObjectsByName[name]);
     }
 
     getWorldObjectByType<T extends WorldObject>(type: new (...args) => T) {
@@ -258,7 +243,7 @@ class World {
         if (results.length > 1) {
             debug(`Multiple objects of type ${type.name} exist in world. Returning one of them. World:`, this);
         }
-        return <T>results[0];
+        return results[0];
     }
 
     getWorldObjectsByType<T extends WorldObject>(type: new (...args: any[]) => T) {
@@ -284,7 +269,7 @@ class World {
 
     hasWorldObject(obj: string | WorldObject) {
         if (_.isString(obj)) {
-            return !!this.worldObjectsByName[obj];
+            return !_.isEmpty(this.worldObjectsByName[obj]);
         }
         return _.contains(this.worldObjects, obj);
     }
@@ -382,7 +367,10 @@ class World {
     private internalSetNameWorld(obj: WorldObject, name: string) {
         this.removeName(obj);
         if (!_.isEmpty(name)) {
-            this.worldObjectsByName[name] = obj;
+            if (!(name in this.worldObjectsByName)) {
+                this.worldObjectsByName[name] = [];
+            }
+            this.worldObjectsByName[name].push(obj);
         }
     }
 
@@ -420,7 +408,8 @@ class World {
 
     private removeName(obj: WorldObject) {
         for (let name in this.worldObjectsByName) {
-            if (this.worldObjectsByName[name] === obj) {
+            A.removeAll(this.worldObjectsByName[name], obj);
+            if (_.isEmpty(this.worldObjectsByName[name])) {
                 delete this.worldObjectsByName[name];
             }
         }
@@ -485,11 +474,6 @@ namespace World {
 
             if (obj.world) {
                 error(`Cannot add object ${obj.name} to world because it aleady exists in another world! You must remove object from previous world first. World:`, world, 'Previous world:', obj.world);
-                return undefined;
-            }
-
-            if (obj.name && world.hasWorldObject(obj.name)) {
-                error(`Cannot add object ${obj.name} to world because an object already exists with that name! World:`, world);
                 return undefined;
             }
 
@@ -558,11 +542,6 @@ namespace World {
          */
         export function setName(obj: WorldObject, name: string): string {
             if (!obj) return undefined;
-
-            if (obj.world && obj.world.hasWorldObject(name)) {
-                error(`Cannot name object '${name}' as that name already exists in world!`, obj.world);
-                return obj.name;
-            }
 
             /// @ts-ignore
             obj.internalSetNameWorldObject(name);

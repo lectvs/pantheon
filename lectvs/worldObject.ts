@@ -1,3 +1,5 @@
+/// <reference path="utils/uid.ts" />
+
 namespace WorldObject {
     export type Config = {
         parent?: WorldObject.Config;
@@ -71,6 +73,8 @@ class WorldObject {
     private preRenderStoredX: number;
     private preRenderStoredY: number;
 
+    readonly uid: string;
+
     protected scriptManager: ScriptManager;
     protected stateMachine: StateMachine;
     get state() { return this.stateMachine.getCurrentStateName(); }
@@ -100,6 +104,8 @@ class WorldObject {
 
         this.preRenderStoredX = this.x;
         this.preRenderStoredY = this.y;
+
+        this.uid = WorldObject.UID.generate();
 
         this._world = null;
         this.internalSetNameWorldObject(config.name);
@@ -362,4 +368,6 @@ namespace WorldObject {
 
         return result;
     }
+
+    export const UID = new UIDGenerator();
 }
