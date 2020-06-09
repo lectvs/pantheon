@@ -4,6 +4,7 @@ namespace Preload {
     export type Options = {
         textures?: Dict<Preload.Texture>;
         pyxelTilemaps?: Dict<Preload.PyxelTilemap>;
+        spriteTextTags?: Dict<SpriteText.TagFunction>;
         onLoad?: Function;
     }
 
@@ -79,6 +80,10 @@ class Preload {
             for (let key in options.pyxelTilemaps) {
                 this.loadPyxelTilemap(key, options.pyxelTilemaps[key]);
             }
+        }
+
+        if (options.spriteTextTags) {
+            SpriteText.addTags(options.spriteTextTags);
         }
 
         if (options.onLoad) {

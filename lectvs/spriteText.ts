@@ -143,6 +143,15 @@ namespace SpriteText {
         }
     }
 
+    export function addTags(tags: Dict<TagFunction>) {
+        for (let key in tags) {
+            if (key in SpriteText.TAGS) {
+                debug(`A SpriteText tag already exists with name ${key}:`, SpriteText.TAGS[key]);
+            }
+            SpriteText.TAGS[key] = tags[key];
+        }
+    }
+
     export function getWidthOfCharList(list: SpriteText.Character[]) {
         if (_.isEmpty(list)) return 0;
         return M.max(list, char => char.x + char.width);
@@ -154,7 +163,7 @@ namespace SpriteText {
     }
 
     export const NOOP_TAG = 'noop';
-    export const DEFAULT_TAGS: Dict<TagFunction> = {
+    export const TAGS: Dict<TagFunction> = {
         [NOOP_TAG]: (params) => {
             return {};
         },
@@ -164,10 +173,6 @@ namespace SpriteText {
         'o': (params) => {
             return { offset: getInt(params[0], 0) };
         },
-        // can't define custom tags in Assets...
-        'e': (params) => {
-            return { color: 0x424242 };
-        }
     }
 
     function getInt(text: string, def: number) {

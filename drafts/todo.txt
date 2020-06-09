@@ -61,7 +61,7 @@ postpostjam
 - /refactor debug system
 - boundless textures
 - controls remapping
-- fix spritetext tags
+- /fix spritetext tags
 - /fix issue where textures with anchors in the middle of a pixel are drawn weird
 - /option for child objects to inherit parent offset (decided not to do)
 - /entity uids

@@ -104,7 +104,9 @@ namespace Assets {
         }
     }
 
-    export const tags: Dict<SpriteText.TagFunction> = {
-
+    export const spriteTextTags: Dict<SpriteText.TagFunction> = {
+        'e': (params) => {
+            return { color: 0x424242 };
+        },
     }
 }

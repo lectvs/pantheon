@@ -482,9 +482,7 @@ namespace World {
             /// @ts-ignore
             world.internalAddWorldObjectToWorldWorld(obj);
 
-            for (let child of obj.children) {
-                World.Actions.addWorldObjectToWorld(child, world);
-            }
+            World.Actions.addWorldObjectsToWorld(obj.children, world);
 
             obj.onAdd();
             return obj;
@@ -518,13 +516,12 @@ namespace World {
             /// @ts-ignore
             world.internalRemoveWorldObjectFromWorldWorld(obj);
             
-            for (let child of obj.children) {
-                World.Actions.removeWorldObjectFromWorld(child);
-            }
+            World.Actions.removeWorldObjectsFromWorld(obj.children);
 
-            if (obj.parent) {
-                World.Actions.removeChildFromParent(obj);
-            }
+            /* No longer unlinking child from parent due to self-mutating iterator issue*/
+            // if (obj.parent) {
+            //     World.Actions.removeChildFromParent(obj);
+            // }
             
             return obj;
         }

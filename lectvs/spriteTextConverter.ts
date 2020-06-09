@@ -64,7 +64,7 @@ class SpriteTextConverter {
     }
 
     private static getStyleFromTag(tag: string, params: string[]) {
-        let tagFunction = SpriteText.DEFAULT_TAGS[tag] || SpriteText.DEFAULT_TAGS[SpriteText.NOOP_TAG];
+        let tagFunction = SpriteText.TAGS[tag] || SpriteText.TAGS[SpriteText.NOOP_TAG];
         return tagFunction(params);
     }
 

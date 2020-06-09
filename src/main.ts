@@ -33,6 +33,7 @@ class Main {
         Preload.preload({
             textures: Assets.textures,
             pyxelTilemaps: Assets.pyxelTilemaps,
+            spriteTextTags: Assets.spriteTextTags,
             onLoad: () => {
                 Main.load();
                 Main.play();

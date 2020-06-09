@@ -3683,7 +3683,6 @@ var World = /** @class */ (function () {
          * Adds a WorldObject to the world. Returns the object added.
          */
         function addWorldObjectToWorld(obj, world) {
-            var e_25, _a;
             if (!obj || !world)
                 return obj;
             if (obj.world) {
@@ -3694,19 +3693,7 @@ var World = /** @class */ (function () {
             obj.internalAddWorldObjectToWorldWorldObject(world);
             /// @ts-ignore
             world.internalAddWorldObjectToWorldWorld(obj);
-            try {
-                for (var _b = __values(obj.children), _c = _b.next(); !_c.done; _c = _b.next()) {
-                    var child = _c.value;
-                    World.Actions.addWorldObjectToWorld(child, world);
-                }
-            }
-            catch (e_25_1) { e_25 = { error: e_25_1 }; }
-            finally {
-                try {
-                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-                }
-                finally { if (e_25) throw e_25.error; }
-            }
+            World.Actions.addWorldObjectsToWorld(obj.children, world);
             obj.onAdd();
             return obj;
         }
@@ -3724,7 +3711,6 @@ var World = /** @class */ (function () {
          * Removes a WorldObject from its containing world. Returns the object removed.
          */
         function removeWorldObjectFromWorld(obj) {
-            var e_26, _a;
             if (!obj)
                 return obj;
             if (!obj.world) {
@@ -3737,22 +3723,11 @@ var World = /** @class */ (function () {
             obj.internalRemoveWorldObjectFromWorldWorldObject(world);
             /// @ts-ignore
             world.internalRemoveWorldObjectFromWorldWorld(obj);
-            try {
-                for (var _b = __values(obj.children), _c = _b.next(); !_c.done; _c = _b.next()) {
-                    var child = _c.value;
-                    World.Actions.removeWorldObjectFromWorld(child);
-                }
-            }
-            catch (e_26_1) { e_26 = { error: e_26_1 }; }
-            finally {
-                try {
-                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-                }
-                finally { if (e_26) throw e_26.error; }
-            }
-            if (obj.parent) {
-                World.Actions.removeChildFromParent(obj);
-            }
+            World.Actions.removeWorldObjectsFromWorld(obj.children);
+            /* No longer unlinking child from parent due to self-mutating iterator issue*/
+            // if (obj.parent) {
+            //     World.Actions.removeChildFromParent(obj);
+            // }
             return obj;
         }
         Actions.removeWorldObjectFromWorld = removeWorldObjectFromWorld;
@@ -3925,7 +3900,7 @@ var World = /** @class */ (function () {
         for (var _i = 1; _i < arguments.length; _i++) {
             parents[_i - 1] = arguments[_i];
         }
-        var e_27, _a;
+        var e_25, _a;
         var result = resolveConfigParent(config);
         if (_.isEmpty(parents))
             return result;
@@ -3936,12 +3911,12 @@ var World = /** @class */ (function () {
                 result = resolveConfig(result);
             }
         }
-        catch (e_27_1) { e_27 = { error: e_27_1 }; }
+        catch (e_25_1) { e_25 = { error: e_25_1 }; }
         finally {
             try {
                 if (parents_2_1 && !parents_2_1.done && (_a = parents_2.return)) _a.call(parents_2);
             }
-            finally { if (e_27) throw e_27.error; }
+            finally { if (e_25) throw e_25.error; }
         }
         return result;
     }
@@ -4006,7 +3981,7 @@ var SpriteText = /** @class */ (function (_super) {
         return _this;
     }
     SpriteText.prototype.render = function (screen) {
-        var e_28, _a;
+        var e_26, _a;
         var filters = this.mask ? [new TextureFilter.Mask({ type: TextureFilter.Mask.Type.GLOBAL, mask: this.mask })] : [];
         try {
             for (var _b = __values(this.chars), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -4026,12 +4001,12 @@ var SpriteText = /** @class */ (function (_super) {
                 });
             }
         }
-        catch (e_28_1) { e_28 = { error: e_28_1 }; }
+        catch (e_26_1) { e_26 = { error: e_26_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_28) throw e_28.error; }
+            finally { if (e_26) throw e_26.error; }
         }
         _super.prototype.render.call(this, screen);
     };
@@ -4128,6 +4103,15 @@ var SpriteText = /** @class */ (function (_super) {
         return Character;
     }());
     SpriteText.Character = Character;
+    function addTags(tags) {
+        for (var key in tags) {
+            if (key in SpriteText.TAGS) {
+                debug("A SpriteText tag already exists with name " + key + ":", SpriteText.TAGS[key]);
+            }
+            SpriteText.TAGS[key] = tags[key];
+        }
+    }
+    SpriteText.addTags = addTags;
     function getWidthOfCharList(list) {
         if (_.isEmpty(list))
             return 0;
@@ -4141,7 +4125,7 @@ var SpriteText = /** @class */ (function (_super) {
     }
     SpriteText.getHeightOfCharList = getHeightOfCharList;
     SpriteText.NOOP_TAG = 'noop';
-    SpriteText.DEFAULT_TAGS = (_a = {},
+    SpriteText.TAGS = (_a = {},
         _a[SpriteText.NOOP_TAG] = function (params) {
             return {};
         },
@@ -4150,10 +4134,6 @@ var SpriteText = /** @class */ (function (_super) {
         },
         _a['o'] = function (params) {
             return { offset: getInt(params[0], 0) };
-        },
-        // can't define custom tags in Assets...
-        _a['e'] = function (params) {
-            return { color: 0x424242 };
         },
         _a);
     function getInt(text, def) {
@@ -4402,7 +4382,7 @@ var Physics = /** @class */ (function () {
     };
     Physics.collide = function (obj, from, options) {
         if (options === void 0) { options = {}; }
-        var e_29, _a;
+        var e_27, _a;
         if (_.isEmpty(from))
             return;
         if (!obj.colliding)
@@ -4437,12 +4417,12 @@ var Physics = /** @class */ (function () {
                     }
                 }
             }
-            catch (e_29_1) { e_29 = { error: e_29_1 }; }
+            catch (e_27_1) { e_27 = { error: e_27_1 }; }
             finally {
                 try {
                     if (collisions_1_1 && !collisions_1_1.done && (_a = collisions_1.return)) _a.call(collisions_1);
                 }
-                finally { if (e_29) throw e_29.error; }
+                finally { if (e_27) throw e_27.error; }
             }
             collidingWith = collidingWith.filter(function (other) { return obj.isOverlapping(other); });
             iters++;
@@ -4861,6 +4841,9 @@ var Preload = /** @class */ (function () {
                 this.loadPyxelTilemap(key, options.pyxelTilemaps[key]);
             }
         }
+        if (options.spriteTextTags) {
+            SpriteText.addTags(options.spriteTextTags);
+        }
         if (options.onLoad) {
             options.onLoad();
         }
@@ -4926,7 +4909,7 @@ var Preload = /** @class */ (function () {
         PIXI.Loader.shared.add(key + this.TILEMAP_KEY_SUFFIX, url);
     };
     Preload.loadPyxelTilemap = function (key, tilemap) {
-        var e_30, _a;
+        var e_28, _a;
         var tilemapJson = PIXI.Loader.shared.resources[key + this.TILEMAP_KEY_SUFFIX].data;
         var tilemapForCache = {
             tileset: tilemap.tileset,
@@ -4944,12 +4927,12 @@ var Preload = /** @class */ (function () {
                     };
                 }
             }
-            catch (e_30_1) { e_30 = { error: e_30_1 }; }
+            catch (e_28_1) { e_28 = { error: e_28_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_30) throw e_30.error; }
+                finally { if (e_28) throw e_28.error; }
             }
             tilemapForCache.layers.push(tilemapLayer);
         }
@@ -5150,7 +5133,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return _.extend.apply(_, __spread([{}], styleStack));
     };
     SpriteTextConverter.getStyleFromTag = function (tag, params) {
-        var tagFunction = SpriteText.DEFAULT_TAGS[tag] || SpriteText.DEFAULT_TAGS[SpriteText.NOOP_TAG];
+        var tagFunction = SpriteText.TAGS[tag] || SpriteText.TAGS[SpriteText.NOOP_TAG];
         return tagFunction(params);
     };
     SpriteTextConverter.parseTag = function (tag) {
@@ -5162,7 +5145,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_31, _a;
+        var e_29, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -5176,12 +5159,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_31_1) { e_31 = { error: e_31_1 }; }
+            catch (e_29_1) { e_29 = { error: e_29_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_31) throw e_31.error; }
+                finally { if (e_29) throw e_29.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -5328,7 +5311,7 @@ var StateMachine = /** @class */ (function () {
         return this.states[name];
     };
     StateMachine.prototype.getValidTransition = function (state) {
-        var e_32, _a;
+        var e_30, _a;
         try {
             for (var _b = __values(state.transitions || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -5345,12 +5328,12 @@ var StateMachine = /** @class */ (function () {
                 }
             }
         }
-        catch (e_32_1) { e_32 = { error: e_32_1 }; }
+        catch (e_30_1) { e_30 = { error: e_30_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_32) throw e_32.error; }
+            finally { if (e_30) throw e_30.error; }
         }
         return undefined;
     };
@@ -5546,7 +5529,7 @@ var StoryManager = /** @class */ (function () {
         this.storyConfig.execute();
     };
     StoryManager.prototype.getInteractableObjects = function (node, stageName) {
-        var e_33, _a;
+        var e_31, _a;
         var result = new Set();
         if (!node)
             return result;
@@ -5563,12 +5546,12 @@ var StoryManager = /** @class */ (function () {
                 result.add(transition.with);
             }
         }
-        catch (e_33_1) { e_33 = { error: e_33_1 }; }
+        catch (e_31_1) { e_31 = { error: e_31_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_33) throw e_33.error; }
+            finally { if (e_31) throw e_31.error; }
         }
         return result;
     };
@@ -5591,7 +5574,7 @@ var StoryManager = /** @class */ (function () {
         this._currentNodeName = _.last(path);
     };
     StoryManager.prototype.getFirstValidTransition = function (node) {
-        var e_34, _a;
+        var e_32, _a;
         try {
             for (var _b = __values(node.transitions), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -5615,12 +5598,12 @@ var StoryManager = /** @class */ (function () {
                 }
             }
         }
-        catch (e_34_1) { e_34 = { error: e_34_1 }; }
+        catch (e_32_1) { e_32 = { error: e_32_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_34) throw e_34.error; }
+            finally { if (e_32) throw e_32.error; }
         }
         return null;
     };
@@ -5631,7 +5614,7 @@ var StoryManager = /** @class */ (function () {
         return this.storyboard[name];
     };
     StoryManager.prototype.updateParty = function (party) {
-        var e_35, _a, e_36, _b;
+        var e_33, _a, e_34, _b;
         if (party.setLeader !== undefined) {
             this.theater.partyManager.leader = party.setLeader;
         }
@@ -5642,12 +5625,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberActive(m);
                 }
             }
-            catch (e_35_1) { e_35 = { error: e_35_1 }; }
+            catch (e_33_1) { e_33 = { error: e_33_1 }; }
             finally {
                 try {
                     if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                 }
-                finally { if (e_35) throw e_35.error; }
+                finally { if (e_33) throw e_33.error; }
             }
         }
         if (!_.isEmpty(party.setMembersInactive)) {
@@ -5657,12 +5640,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberInactive(m);
                 }
             }
-            catch (e_36_1) { e_36 = { error: e_36_1 }; }
+            catch (e_34_1) { e_34 = { error: e_34_1 }; }
             finally {
                 try {
                     if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
                 }
-                finally { if (e_36) throw e_36.error; }
+                finally { if (e_34) throw e_34.error; }
             }
         }
     };
@@ -5876,7 +5859,7 @@ var Tilemap = /** @class */ (function (_super) {
         }
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_37, _a;
+        var e_35, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -5894,12 +5877,12 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_37_1) { e_37 = { error: e_37_1 }; }
+        catch (e_35_1) { e_35 = { error: e_35_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_37) throw e_37.error; }
+            finally { if (e_35) throw e_35.error; }
         }
         World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };
@@ -6547,7 +6530,11 @@ var Assets;
         return fonts;
     }());
     Assets.fonts = fonts;
-    Assets.tags = {};
+    Assets.spriteTextTags = {
+        'e': function (params) {
+            return { color: 0x424242 };
+        },
+    };
 })(Assets || (Assets = {}));
 var Lighting;
 (function (Lighting) {
@@ -6766,7 +6753,7 @@ var Campfire = /** @class */ (function (_super) {
         this.fireRadius.win();
     };
     Campfire.prototype.consumeItems = function () {
-        var e_38, _a;
+        var e_36, _a;
         var items = this.world.getWorldObjectsByType(Item).filter(function (item) { return item.consumable && !item.held; });
         try {
             for (var items_1 = __values(items), items_1_1 = items_1.next(); !items_1_1.done; items_1_1 = items_1.next()) {
@@ -6780,12 +6767,12 @@ var Campfire = /** @class */ (function (_super) {
                 this.consumeItem(item);
             }
         }
-        catch (e_38_1) { e_38 = { error: e_38_1 }; }
+        catch (e_36_1) { e_36 = { error: e_36_1 }; }
         finally {
             try {
                 if (items_1_1 && !items_1_1.done && (_a = items_1.return)) _a.call(items_1);
             }
-            finally { if (e_38) throw e_38.error; }
+            finally { if (e_36) throw e_36.error; }
         }
     };
     Campfire.prototype.consumeItem = function (item) {
@@ -7036,7 +7023,7 @@ var Human = /** @class */ (function (_super) {
         }
     };
     Human.prototype.getOverlappingItem = function () {
-        var e_39, _a;
+        var e_37, _a;
         var overlappingItemDistance = Infinity;
         var overlappingItem = undefined;
         try {
@@ -7051,12 +7038,12 @@ var Human = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_39_1) { e_39 = { error: e_39_1 }; }
+        catch (e_37_1) { e_37 = { error: e_37_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_39) throw e_39.error; }
+            finally { if (e_37) throw e_37.error; }
         }
         return overlappingItem;
     };
@@ -7478,6 +7465,7 @@ var Main = /** @class */ (function () {
         Preload.preload({
             textures: Assets.textures,
             pyxelTilemaps: Assets.pyxelTilemaps,
+            spriteTextTags: Assets.spriteTextTags,
             onLoad: function () {
                 Main.load();
                 Main.play();
@@ -7784,7 +7772,7 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.hitStuff = function () {
-        var e_40, _a;
+        var e_38, _a;
         if (!this.heldItem)
             return;
         var swingHitbox = this.getSwingHitbox();
@@ -7799,12 +7787,12 @@ var Player = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_40_1) { e_40 = { error: e_40_1 }; }
+        catch (e_38_1) { e_38 = { error: e_38_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_40) throw e_40.error; }
+            finally { if (e_38) throw e_38.error; }
         }
     };
     Player.prototype.getSwingHitbox = function () {
@@ -8136,9 +8124,10 @@ function getStages() {
                 },
                 {
                     name: 'test',
-                    constructor: Sprite,
+                    constructor: SpriteText,
                     x: 64, y: 64,
-                    texture: AssetCache.getTexture('debug').transform({ scaleX: 3, scaleY: -5, tint: 0xFF0000, alpha: 0.5 }),
+                    text: '[ty]hi![/ty]',
+                    font: Assets.fonts.DELUXE16,
                     ignoreCamera: true,
                 }
             ])
@@ -8548,7 +8537,7 @@ var LogPiece = /** @class */ (function (_super) {
 }(Sprite));
 (function (LogPiece) {
     function getLogPieces(log) {
-        var e_41, _a;
+        var e_39, _a;
         var logPieces = [];
         var stemx = log.flipX ? 4 : 8;
         var logTexture = AssetCache.getTexture('log');
@@ -8572,12 +8561,12 @@ var LogPiece = /** @class */ (function (_super) {
                 }));
             }
         }
-        catch (e_41_1) { e_41 = { error: e_41_1 }; }
+        catch (e_39_1) { e_39 = { error: e_39_1 }; }
         finally {
             try {
                 if (subdivisions_1_1 && !subdivisions_1_1.done && (_a = subdivisions_1.return)) _a.call(subdivisions_1);
             }
-            finally { if (e_41) throw e_41.error; }
+            finally { if (e_39) throw e_39.error; }
         }
         return logPieces;
     }
