@@ -76,3 +76,9 @@ function screenShake(world: World) {
         world.camera.shakeIntensity -= 1;
     }
 }
+
+function getDebugWithHole() {
+    let result = AssetCache.getTexture('debug').clone();
+    Draw.eraseRect(result, 4, 2, 8, 12);
+    return result;
+}

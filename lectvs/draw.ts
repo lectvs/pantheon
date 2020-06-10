@@ -25,6 +25,26 @@ class Draw {
         texture.renderDisplayObject(this.graphics);
     }
 
+    static eraseRect(texture: Texture, x: number, y: number, width: number, height: number) {
+        let newTexture = texture.clone();
+        newTexture.anchorX = 0;
+        newTexture.anchorY = 0;
+
+        let maskTexture = Texture.filledRect(width, height, 0xFFFFFF);
+        let mask = new TextureFilter.Mask({
+            type: TextureFilter.Mask.Type.LOCAL,
+            mask: maskTexture,
+            offsetX: x, offsetY: y,
+            invert: true,
+        });
+
+        texture.clear();
+        texture.render(newTexture, {
+            x: 0, y: 0,
+            filters: [mask],
+        });
+    }
+
     static pixel(texture: Texture, x: number, y: number, brush: Draw.Brush = Draw.brush) {
         this.graphics.lineStyle(1, brush.color, brush.alpha, this.ALIGNMENT_INNER);
         this.graphics.clear();

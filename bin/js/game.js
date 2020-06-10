@@ -2334,6 +2334,23 @@ var Draw = /** @class */ (function () {
         texture.clear();
         texture.renderDisplayObject(this.graphics);
     };
+    Draw.eraseRect = function (texture, x, y, width, height) {
+        var newTexture = texture.clone();
+        newTexture.anchorX = 0;
+        newTexture.anchorY = 0;
+        var maskTexture = Texture.filledRect(width, height, 0xFFFFFF);
+        var mask = new TextureFilter.Mask({
+            type: TextureFilter.Mask.Type.LOCAL,
+            mask: maskTexture,
+            offsetX: x, offsetY: y,
+            invert: true,
+        });
+        texture.clear();
+        texture.render(newTexture, {
+            x: 0, y: 0,
+            filters: [mask],
+        });
+    };
     Draw.pixel = function (texture, x, y, brush) {
         if (brush === void 0) { brush = Draw.brush; }
         this.graphics.lineStyle(1, brush.color, brush.alpha, this.ALIGNMENT_INNER);
@@ -2504,7 +2521,7 @@ var TextureFilter = /** @class */ (function () {
                     "float maskY": 0,
                     "bool invert": false
                 },
-                code: "\n                    vec2 vTextureCoordMask = vTextureCoord * is.xy / vec2(maskWidth, maskHeight) - vec2(maskX, maskY) / vec2(maskWidth, maskHeight);\n                    if (vTextureCoordMask.x >= 0.0 && vTextureCoordMask.x < 1.0 && vTextureCoordMask.y >= 0.0 && vTextureCoordMask.y < 1.0) {\n                        float a = texture2D(mask, vTextureCoordMask).a;\n                        outp *= invert ? 1.0-a : a;\n                    } else {\n                        outp.a = invert ? inp.a : 0.0;\n                    }\n                "
+                code: "\n                    vec2 vTextureCoordMask = vTextureCoord * inputSize.xy / vec2(maskWidth, maskHeight) - vec2(maskX, maskY) / vec2(maskWidth, maskHeight);\n                    if (vTextureCoordMask.x >= 0.0 && vTextureCoordMask.x < 1.0 && vTextureCoordMask.y >= 0.0 && vTextureCoordMask.y < 1.0) {\n                        float a = texture2D(mask, vTextureCoordMask).a;\n                        outp *= invert ? 1.0-a : a;\n                    } else {\n                        outp.a = invert ? inp.a : 0.0;\n                    }\n                "
             }) || this;
             _this.type = config.type;
             _this.offsetX = O.getOrDefault(config.offsetX, 0);
@@ -6700,6 +6717,11 @@ function screenShake(world) {
         });
     };
 }
+function getDebugWithHole() {
+    var result = AssetCache.getTexture('debug').clone();
+    Draw.eraseRect(result, 4, 2, 8, 12);
+    return result;
+}
 var Campfire = /** @class */ (function (_super) {
     __extends(Campfire, _super);
     function Campfire(config) {
@@ -8124,10 +8146,9 @@ function getStages() {
                 },
                 {
                     name: 'test',
-                    constructor: SpriteText,
+                    constructor: Sprite,
                     x: 64, y: 64,
-                    text: '[ty]hi![/ty]',
-                    font: Assets.fonts.DELUXE16,
+                    texture: getDebugWithHole(),
                     ignoreCamera: true,
                 }
             ])
