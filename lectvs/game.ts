@@ -25,7 +25,6 @@ class Game {
         this.theaterClass = config.theaterClass;
         this.theaterConfig = config.theaterConfig;
 
-        this.fpsMetricManager = new FPSMetricManager(1);
         this.menuSystem = new MenuSystem(this);
 
         this.loadMainMenu();
@@ -36,8 +35,6 @@ class Game {
     }
 
     update(delta: number) {
-        this.fpsMetricManager.update(delta);
-
         this.updatePause();
 
         if (this.menuSystem.inMenu) {
@@ -61,9 +58,14 @@ class Game {
 
     render(screen: Texture) {
         if (this.menuSystem.inMenu) {
+            global.metrics.startTime('menu.render.time');
             this.menuSystem.render(screen);
+            global.metrics.endTime('menu.render.time');
+
         } else {
+            global.metrics.startTime('theater.render.time');
             this.theater.render(screen);
+            global.metrics.endTime('theater.render.time');
         }
     }
 

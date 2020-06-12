@@ -112,17 +112,23 @@ class World {
         this.updateScriptManager(delta);
         
         for (let worldObject of this.worldObjects) {
-            if (worldObject.active) worldObject.preUpdate();
+            if (worldObject.active) {
+                worldObject.preUpdate();
+            }
         }
 
         for (let worldObject of this.worldObjects) {
-            if (worldObject.active) worldObject.update(delta);
+            if (worldObject.active) {
+                worldObject.update(delta);
+            }
         }
 
         this.handleCollisions();
 
         for (let worldObject of this.worldObjects) {
-            if (worldObject.active) worldObject.postUpdate();
+            if (worldObject.active) {
+                worldObject.postUpdate();
+            }
         }
 
         this.removeDeadWorldObjects();
@@ -165,7 +171,17 @@ class World {
         layer.sort();
         for (let worldObject of layer.worldObjects) {
             if (worldObject.visible) {
-                worldObject.worldRender(layerTexture);
+                global.metrics.startWorldObjectTime(worldObject, 'preRender.time');
+                worldObject.preRender();
+                global.metrics.endWorldObjectTime(worldObject, 'preRender.time');
+
+                global.metrics.startWorldObjectTime(worldObject, 'render.time');
+                worldObject.render(layerTexture);
+                global.metrics.endWorldObjectTime(worldObject, 'render.time');
+
+                global.metrics.startWorldObjectTime(worldObject, 'postRender.time');
+                worldObject.postRender();
+                global.metrics.endWorldObjectTime(worldObject, 'postRender.time');
             }
         }
         screen.render(layerTexture, {

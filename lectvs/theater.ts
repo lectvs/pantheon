@@ -71,6 +71,9 @@ class Theater extends World {
         this.interactionManager.preRender();
         super.render(screen);
         this.interactionManager.postRender();
+
+        let worldRenderTime = global.metrics.getCurrentFrameWorldObjectMetric(this.stageManager.currentWorldAsWorldObject, 'render.time');
+        global.metrics.setMetric('world.render.time', worldRenderTime);
     }
 
     addSlideByConfig(config: Slide.Config) {

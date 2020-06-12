@@ -1,3 +1,5 @@
+/// <reference path="metrics.ts"/>
+
 class global {
     static clearStacks() {
         this.scriptStack = [];
@@ -13,6 +15,8 @@ class global {
     static game: Game;
     static theater: Theater;
     static get world(): World { return this.theater ? this.theater.currentWorld : undefined; }
+
+    static metrics: Metrics = new Metrics();
 
     static gameWidth: number;
     static gameHeight: number;

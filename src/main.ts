@@ -125,6 +125,8 @@ class Main {
     // no need to modify
     private static play() {
         PIXI.Ticker.shared.add(frameDelta => {
+            global.metrics.startFrame();
+
             Main.delta = frameDelta/60;
 
             global.clearStacks();
@@ -134,11 +136,18 @@ class Main {
                 Main.game.update(Main.delta);
             }
 
+            global.metrics.startTime('render.time');
             Main.screen.clear();
+
+            global.metrics.startTime('game.render.time');
             Main.game.render(Main.screen);
+            global.metrics.endTime('game.render.time');
 
             Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
             Main.renderer.render(Main.screen.renderTextureSprite);
+            global.metrics.endTime('render.time');
+
+            global.metrics.endFrame();
         });
     }
 }

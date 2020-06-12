@@ -78,6 +78,7 @@ postpostjam
     - /looks like mask only
 - metrics/analysis on update, render, etc. timing
 - unit tests? :)
+- consider moving texture's anchorX/Y to a Sprite property
 - /rename World => Stage, WorldObject => Entity, PhysicsWorldObject => PhysicsEntity (decided not to do)
 - onboard storyboard with StateMachine
 - refactor the Main class

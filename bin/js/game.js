@@ -2786,7 +2786,6 @@ var Game = /** @class */ (function () {
         this.pauseMenuClass = config.pauseMenuClass;
         this.theaterClass = config.theaterClass;
         this.theaterConfig = config.theaterConfig;
-        this.fpsMetricManager = new FPSMetricManager(1);
         this.menuSystem = new MenuSystem(this);
         this.loadMainMenu();
         if (Debug.SKIP_MAIN_MENU) {
@@ -2799,7 +2798,6 @@ var Game = /** @class */ (function () {
         configurable: true
     });
     Game.prototype.update = function (delta) {
-        this.fpsMetricManager.update(delta);
         this.updatePause();
         if (this.menuSystem.inMenu) {
             this.menuSystem.update(delta);
@@ -2822,10 +2820,14 @@ var Game = /** @class */ (function () {
     };
     Game.prototype.render = function (screen) {
         if (this.menuSystem.inMenu) {
+            global.metrics.startTime('menu.render.time');
             this.menuSystem.render(screen);
+            global.metrics.endTime('menu.render.time');
         }
         else {
+            global.metrics.startTime('theater.render.time');
             this.theater.render(screen);
+            global.metrics.endTime('theater.render.time');
         }
     };
     Game.prototype.loadMainMenu = function () {
@@ -2849,6 +2851,59 @@ var Game = /** @class */ (function () {
     };
     return Game;
 }());
+var Metrics = /** @class */ (function () {
+    function Metrics() {
+        this.frames = [];
+        this.currentStartTimes = {};
+    }
+    Metrics.prototype.startFrame = function () {
+        this.currentFrame = {};
+        this.startTime('time');
+    };
+    Metrics.prototype.endFrame = function () {
+        this.endTime('time');
+        this.frames.push(this.currentFrame);
+        this.currentFrame = null;
+    };
+    Metrics.prototype.getCurrentFrameMetric = function (metric) {
+        return this.currentFrame[metric];
+    };
+    Metrics.prototype.getCurrentFrameWorldObjectMetric = function (worldObject, metric) {
+        return this.getCurrentFrameMetric(worldObject.uid + "." + metric);
+    };
+    Metrics.prototype.setMetric = function (metric, value) {
+        this.currentFrame[metric] = value;
+    };
+    Metrics.prototype.setWorldObjectMetric = function (worldObject, metric, value) {
+        this.setMetric(worldObject.uid + "." + metric, value);
+    };
+    Metrics.prototype.startTime = function (metric) {
+        if (metric in this.currentStartTimes) {
+            debug("Metric " + metric + " has started twice. Ignoring second start.");
+            return;
+        }
+        this.currentStartTimes[metric] = this.getCurrentTime();
+    };
+    Metrics.prototype.startWorldObjectTime = function (worldObject, metric) {
+        this.startTime(worldObject.uid + "." + metric);
+    };
+    Metrics.prototype.endTime = function (metric) {
+        if (!(metric in this.currentStartTimes)) {
+            debug("Metric " + metric + " has ended without starting. Ignoring.");
+            return;
+        }
+        this.setMetric(metric, (this.getCurrentTime() - this.currentStartTimes[metric]) / 1000);
+        delete this.currentStartTimes[metric];
+    };
+    Metrics.prototype.endWorldObjectTime = function (worldObject, metric) {
+        this.endTime(worldObject.uid + "." + metric);
+    };
+    Metrics.prototype.getCurrentTime = function () {
+        return performance.now();
+    };
+    return Metrics;
+}());
+/// <reference path="metrics.ts"/>
 var global = /** @class */ (function () {
     function global() {
     }
@@ -2870,6 +2925,7 @@ var global = /** @class */ (function () {
         configurable: true
     });
     global.scriptStack = [];
+    global.metrics = new Metrics();
     return global;
 }());
 var Input = /** @class */ (function () {
@@ -3269,8 +3325,9 @@ var World = /** @class */ (function () {
         try {
             for (var _d = __values(this.worldObjects), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var worldObject = _e.value;
-                if (worldObject.active)
+                if (worldObject.active) {
                     worldObject.preUpdate();
+                }
             }
         }
         catch (e_13_1) { e_13 = { error: e_13_1 }; }
@@ -3283,8 +3340,9 @@ var World = /** @class */ (function () {
         try {
             for (var _f = __values(this.worldObjects), _g = _f.next(); !_g.done; _g = _f.next()) {
                 var worldObject = _g.value;
-                if (worldObject.active)
+                if (worldObject.active) {
                     worldObject.update(delta);
+                }
             }
         }
         catch (e_14_1) { e_14 = { error: e_14_1 }; }
@@ -3298,8 +3356,9 @@ var World = /** @class */ (function () {
         try {
             for (var _h = __values(this.worldObjects), _j = _h.next(); !_j.done; _j = _h.next()) {
                 var worldObject = _j.value;
-                if (worldObject.active)
+                if (worldObject.active) {
                     worldObject.postUpdate();
+                }
             }
         }
         catch (e_15_1) { e_15 = { error: e_15_1 }; }
@@ -3353,7 +3412,15 @@ var World = /** @class */ (function () {
             for (var _b = __values(layer.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var worldObject = _c.value;
                 if (worldObject.visible) {
-                    worldObject.worldRender(layerTexture);
+                    global.metrics.startWorldObjectTime(worldObject, 'preRender.time');
+                    worldObject.preRender();
+                    global.metrics.endWorldObjectTime(worldObject, 'preRender.time');
+                    global.metrics.startWorldObjectTime(worldObject, 'render.time');
+                    worldObject.render(layerTexture);
+                    global.metrics.endWorldObjectTime(worldObject, 'render.time');
+                    global.metrics.startWorldObjectTime(worldObject, 'postRender.time');
+                    worldObject.postRender();
+                    global.metrics.endWorldObjectTime(worldObject, 'postRender.time');
                 }
             }
         }
@@ -5820,6 +5887,8 @@ var Theater = /** @class */ (function (_super) {
         this.interactionManager.preRender();
         _super.prototype.render.call(this, screen);
         this.interactionManager.postRender();
+        var worldRenderTime = global.metrics.getCurrentFrameWorldObjectMetric(this.stageManager.currentWorldAsWorldObject, 'render.time');
+        global.metrics.setMetric('world.render.time', worldRenderTime);
     };
     Theater.prototype.addSlideByConfig = function (config) {
         return this.slideManager.addSlideByConfig(config);
@@ -7572,16 +7641,22 @@ var Main = /** @class */ (function () {
     // no need to modify
     Main.play = function () {
         PIXI.Ticker.shared.add(function (frameDelta) {
+            global.metrics.startFrame();
             Main.delta = frameDelta / 60;
             global.clearStacks();
             for (var i = 0; i < Debug.SKIP_RATE; i++) {
                 Input.update();
                 Main.game.update(Main.delta);
             }
+            global.metrics.startTime('render.time');
             Main.screen.clear();
+            global.metrics.startTime('game.render.time');
             Main.game.render(Main.screen);
+            global.metrics.endTime('game.render.time');
             Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true); // Clear the renderer
             Main.renderer.render(Main.screen.renderTextureSprite);
+            global.metrics.endTime('render.time');
+            global.metrics.endFrame();
         });
     };
     return Main;
