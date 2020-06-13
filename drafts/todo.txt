@@ -61,6 +61,8 @@ postpostjam
 - /refactor debug system
 - boundless textures
 - controls remapping
+- uncapped fps?
+- allow multiple menus to pause the game
 - /fix spritetext tags
 - /fix issue where textures with anchors in the middle of a pixel are drawn weird
 - /option for child objects to inherit parent offset (decided not to do)
@@ -77,6 +79,7 @@ postpostjam
 - /find out how to "erase" parts of a texture
     - /looks like mask only
 - metrics/analysis on update, render, etc. timing
+    - move metrics recording out of main class
 - unit tests? :)
 - consider moving texture's anchorX/Y to a Sprite property
 - /rename World => Stage, WorldObject => Entity, PhysicsWorldObject => PhysicsEntity (decided not to do)
@@ -84,3 +87,4 @@ postpostjam
 - refactor the Main class
 - loading screen/progress bar
 - /get rid of Pt3
+- unlink child from parent on removal

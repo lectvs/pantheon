@@ -67,18 +67,3 @@ function fireSpriteConfig(): Sprite.Config {
         defaultAnimation: 'blaze'
     };
 }
-
-function screenShake(world: World) {
-    return function*() {
-        if (!global.theater || global.theater.currentWorld !== world) return;
-        world.camera.shakeIntensity += 1;
-        yield* S.wait(0.1)();
-        world.camera.shakeIntensity -= 1;
-    }
-}
-
-function getDebugWithHole() {
-    let result = AssetCache.getTexture('debug').clone();
-    Draw.eraseRect(result, 4, 2, 8, 12);
-    return result;
-}

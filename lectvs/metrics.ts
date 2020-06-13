@@ -1,71 +1,108 @@
 namespace Metrics {
-    export type Frame = Dict<number>;
+    export type Span = {
+        name: string;
+        start: number;
+        end: number;
+        time: number;
+        // To be uncommented when a use case is found.
+        //metrics: Dict<number>;
+        subspans?: Span[];
+    }
 }
 
 class Metrics {
-    private frames: Metrics.Frame[];
-    private currentFrame: Metrics.Frame;
-
-    private currentStartTimes: Dict<number>;
+    private recordings: Metrics.Span[];
+    private spanStack: Metrics.Span[];
+    
+    get isRecording() { return !_.isEmpty(this.spanStack); }
+    private get currentRecording() { return this.spanStack[0]; }
+    private get currentSpan() { return _.last(this.spanStack); }
 
     constructor() {
-        this.frames = [];
-        this.currentStartTimes = {};
+        this.reset();
     }
 
-    startFrame() {
-        this.currentFrame = {};
-        this.startTime('time');
+    reset() {
+        this.recordings = [];
+        this.spanStack = [];
     }
 
-    endFrame() {
-        this.endTime('time');
-        this.frames.push(this.currentFrame);
-        this.currentFrame = null;
-    }
-
-    getCurrentFrameMetric(metric: string) {
-        return this.currentFrame[metric];
-    }
-
-    getCurrentFrameWorldObjectMetric(worldObject: WorldObject, metric: string) {
-        return this.getCurrentFrameMetric(`${worldObject.uid}.${metric}`);
-    }
-
-    setMetric(metric: string, value: number) {
-        this.currentFrame[metric] = value;
-    }
-
-    setWorldObjectMetric(worldObject: WorldObject, metric: string, value: number) {
-        this.setMetric(`${worldObject.uid}.${metric}`, value);
-    }
-
-    startTime(metric: string) {
-        if (metric in this.currentStartTimes) {
-            debug(`Metric ${metric} has started twice. Ignoring second start.`);
+    startRecording(recordingName: string) {
+        if (this.isRecording) {
+            error(`Tried to start recording ${name} when recording ${this.currentRecording.name} was already started.`);
             return;
         }
-        this.currentStartTimes[metric] = this.getCurrentTime();
+        this.startSpan(recordingName, true);
     }
 
-    startWorldObjectTime(worldObject: WorldObject, metric: string) {
-        this.startTime(`${worldObject.uid}.${metric}`);
-    }
-
-    endTime(metric: string) {
-        if (!(metric in this.currentStartTimes)) {
-            debug(`Metric ${metric} has ended without starting. Ignoring.`);
+    endRecording() {
+        if (!this.isRecording) {
+            error(`Tried to end recording ${name} but no recording was happening.`);
             return;
         }
-        this.setMetric(metric, (this.getCurrentTime() - this.currentStartTimes[metric])/1000);
-        delete this.currentStartTimes[metric];
+        this.recordings.push(this.currentRecording);
+        this.endSpan(this.currentRecording.name, true);
     }
 
-    endWorldObjectTime(worldObject: WorldObject, metric: string) {
-        this.endTime(`${worldObject.uid}.${metric}`);
+    startSpan(name: string | WorldObject, force: boolean = false) {
+        if (!this.isRecording && !force) return;
+        if (name instanceof WorldObject) {
+            name = this.getWorldObjectSpanName(name);
+        }
+        let span: Metrics.Span = {
+            name: name,
+            start: this.getCurrentTimeMilliseconds(),
+            end: undefined,
+            time: undefined,
+            //metrics: {},
+            subspans: [],
+        };
+
+        if (this.currentSpan) {
+            this.currentSpan.subspans.push(span);
+        }
+        this.spanStack.push(span);
     }
 
-    private getCurrentTime() {
-        return performance.now();
+    endSpan(name: string | WorldObject, force: boolean = false) {
+        if (!this.isRecording && !force) return;
+        if (name instanceof WorldObject) {
+            name = this.getWorldObjectSpanName(name);
+        }
+        if (!this.currentSpan) {
+            error(`Tried to end span ${name} but there was no span to end! Span stack:`, this.spanStack);
+            return;
+        }
+        if (this.currentSpan.name !== name) {
+            error(`Tried to end span ${name} but the current span is named ${this.currentSpan.name}! Span stack:`, this.spanStack);
+            return;
+        }
+        this.currentSpan.end = this.getCurrentTimeMilliseconds();
+        this.currentSpan.time = this.currentSpan.end - this.currentSpan.start;
+        this.spanStack.pop();
+    }
+
+    recordMetric(metric: string, value: number) {
+        //this.currentSpan.metrics[metric] = value;
+        error("Metrics have not been implemented yet! Uncomment the lines in metrics.ts");
+    }
+
+    getLastRecording() {
+        return _.last(this.recordings);
+    }
+
+    plotLastRecording(width: number = global.gameWidth, height: number = global.gameHeight) {
+        return MetricsPlot.plotRecording(this.getLastRecording(), width, height);
+    }
+
+    private getCurrentTimeMilliseconds() {
+        return performance.now()
+    }
+
+    private getWorldObjectSpanName(worldObject: WorldObject) {
+        if (worldObject.name) {
+            return `${worldObject.name}.${worldObject.uid}`;
+        }
+        return worldObject.uid;
     }
 }

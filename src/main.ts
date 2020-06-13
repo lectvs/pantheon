@@ -125,29 +125,47 @@ class Main {
     // no need to modify
     private static play() {
         PIXI.Ticker.shared.add(frameDelta => {
-            global.metrics.startFrame();
+            if (Input.justDown('0')) {
+                if (!global.metrics.isRecording) {
+                    global.metrics.startRecording('recording');
+                    debug("Started recording");
+                } else {
+                    global.metrics.endRecording();
+                    debug(`Ended recording (${global.metrics.getLastRecording().time.toFixed(0)} ms)`);
+                }
+            }
+
+            if (Input.justDown('9')) {
+                global.game.menuSystem.loadMenu(MetricsMenu);
+            }
+
+            global.metrics.startSpan('frame');
 
             Main.delta = frameDelta/60;
 
             global.clearStacks();
 
+            global.metrics.startSpan('update');
             for (let i = 0; i < Debug.SKIP_RATE; i++) {
                 Input.update();
+                global.metrics.startSpan('game');
                 Main.game.update(Main.delta);
+                global.metrics.endSpan('game');
             }
+            global.metrics.endSpan('update');
 
-            global.metrics.startTime('render.time');
+            global.metrics.startSpan('render');
             Main.screen.clear();
 
-            global.metrics.startTime('game.render.time');
+            global.metrics.startSpan('game');
             Main.game.render(Main.screen);
-            global.metrics.endTime('game.render.time');
+            global.metrics.endSpan('game');
 
             Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
             Main.renderer.render(Main.screen.renderTextureSprite);
-            global.metrics.endTime('render.time');
+            global.metrics.endSpan('render');
 
-            global.metrics.endFrame();
+            global.metrics.endSpan('frame');
         });
     }
 }

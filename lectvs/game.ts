@@ -38,9 +38,13 @@ class Game {
         this.updatePause();
 
         if (this.menuSystem.inMenu) {
+            global.metrics.startSpan('menu');
             this.menuSystem.update(delta);
+            global.metrics.endSpan('menu');
         } else {
+            global.metrics.startSpan('theater');
             this.theater.update(delta);
+            global.metrics.endSpan('theater');
         }
     }
 
@@ -58,14 +62,14 @@ class Game {
 
     render(screen: Texture) {
         if (this.menuSystem.inMenu) {
-            global.metrics.startTime('menu.render.time');
+            global.metrics.startSpan('menu');
             this.menuSystem.render(screen);
-            global.metrics.endTime('menu.render.time');
+            global.metrics.endSpan('menu');
 
         } else {
-            global.metrics.startTime('theater.render.time');
+            global.metrics.startSpan('theater');
             this.theater.render(screen);
-            global.metrics.endTime('theater.render.time');
+            global.metrics.endSpan('theater');
         }
     }
 

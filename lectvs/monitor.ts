@@ -1,5 +1,5 @@
 class Monitor {
-    points: number[];
+    private points: number[];
 
     constructor() {
         this.points = [];
@@ -35,5 +35,9 @@ class Monitor {
             sum += this.points[i];
         }
         return sum / count;
+    }
+
+    isEmpty() {
+        return _.isEmpty(this.points);
     }
 }

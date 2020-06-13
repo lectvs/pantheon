@@ -19,6 +19,8 @@ namespace World {
 
         entryPoints?: Dict<Pt>;
         worldObjects?: WorldObject.Config[];
+
+        showDebugMousePosition?: boolean;
     }
 
     export type CollisionConfig = {
@@ -46,6 +48,7 @@ class World {
     height: number;
     entryPoints: Dict<Pt>;
     worldObjects: WorldObject[];
+    showDebugMousePosition: boolean;
 
     physicsGroups: Dict<World.PhysicsGroup>;
     collisionOrder: World.CollisionConfig[];
@@ -71,6 +74,7 @@ class World {
         this.width = O.getOrDefault(config.width, global.gameWidth);
         this.height = O.getOrDefault(config.height, global.gameHeight);
         this.worldObjects = [];
+        this.showDebugMousePosition = O.getOrDefault(config.showDebugMousePosition, false);
 
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
         this.collisionOrder = O.getOrDefault(config.collisionOrder, []);
@@ -111,25 +115,39 @@ class World {
         this.updateDebugMousePosition();
         this.updateScriptManager(delta);
         
+        global.metrics.startSpan('preUpdate');
         for (let worldObject of this.worldObjects) {
             if (worldObject.active) {
+                global.metrics.startSpan(worldObject);
                 worldObject.preUpdate();
+                global.metrics.endSpan(worldObject);
             }
         }
+        global.metrics.endSpan('preUpdate');
 
+        global.metrics.startSpan('update');
         for (let worldObject of this.worldObjects) {
             if (worldObject.active) {
+                global.metrics.startSpan(worldObject);
                 worldObject.update(delta);
+                global.metrics.endSpan(worldObject);
             }
         }
+        global.metrics.endSpan('update');
 
+        global.metrics.startSpan('handleCollisions');
         this.handleCollisions();
+        global.metrics.endSpan('handleCollisions');
 
+        global.metrics.startSpan('postUpdate');
         for (let worldObject of this.worldObjects) {
             if (worldObject.active) {
+                global.metrics.startSpan(worldObject);
                 worldObject.postUpdate();
+                global.metrics.endSpan(worldObject);
             }
         }
+        global.metrics.endSpan('postUpdate');
 
         this.removeDeadWorldObjects();
 
@@ -137,10 +155,11 @@ class World {
     }
 
     protected updateDebugMousePosition() {
-        this.debugMousePositionText.active = Debug.SHOW_MOUSE_POSITION;
-        this.debugMousePositionText.visible = Debug.SHOW_MOUSE_POSITION;
+        let showMousePosition = Debug.SHOW_MOUSE_POSITION && this.showDebugMousePosition;
+        this.debugMousePositionText.active = showMousePosition;
+        this.debugMousePositionText.visible = showMousePosition;
 
-        if (Debug.SHOW_MOUSE_POSITION) {
+        if (showMousePosition) {
             this.debugMousePositionText.setText(`${St.padLeft(this.getWorldMouseX().toString(), 3)} ${St.padLeft(this.getWorldMouseY().toString(), 3)}`);
         }
     }
@@ -171,17 +190,9 @@ class World {
         layer.sort();
         for (let worldObject of layer.worldObjects) {
             if (worldObject.visible) {
-                global.metrics.startWorldObjectTime(worldObject, 'preRender.time');
-                worldObject.preRender();
-                global.metrics.endWorldObjectTime(worldObject, 'preRender.time');
-
-                global.metrics.startWorldObjectTime(worldObject, 'render.time');
-                worldObject.render(layerTexture);
-                global.metrics.endWorldObjectTime(worldObject, 'render.time');
-
-                global.metrics.startWorldObjectTime(worldObject, 'postRender.time');
-                worldObject.postRender();
-                global.metrics.endWorldObjectTime(worldObject, 'postRender.time');
+                global.metrics.startSpan(worldObject);
+                worldObject.worldRender(layerTexture);
+                global.metrics.endSpan(worldObject);
             }
         }
         screen.render(layerTexture, {

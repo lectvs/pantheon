@@ -81,8 +81,10 @@ class StageManager {
         // Create new stuff
         this.currentStageName = name;
         this.currentWorld = World.fromConfig<World>(this.stages[name]);
+        this.currentWorld.showDebugMousePosition = true;
         this.currentWorldAsWorldObject = new World.WorldAsWorldObject(this.currentWorld);
         this.addPartyToWorld(this.currentWorld, name, entryPoint);
+        World.Actions.setName(this.currentWorldAsWorldObject, 'world');
         World.Actions.setLayer(this.currentWorldAsWorldObject, Theater.LAYER_WORLD);
         World.Actions.addWorldObjectToWorld(this.currentWorldAsWorldObject, this.theater);
 

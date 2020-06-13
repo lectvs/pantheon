@@ -2800,10 +2800,14 @@ var Game = /** @class */ (function () {
     Game.prototype.update = function (delta) {
         this.updatePause();
         if (this.menuSystem.inMenu) {
+            global.metrics.startSpan('menu');
             this.menuSystem.update(delta);
+            global.metrics.endSpan('menu');
         }
         else {
+            global.metrics.startSpan('theater');
             this.theater.update(delta);
+            global.metrics.endSpan('theater');
         }
     };
     Game.prototype.updatePause = function () {
@@ -2820,14 +2824,14 @@ var Game = /** @class */ (function () {
     };
     Game.prototype.render = function (screen) {
         if (this.menuSystem.inMenu) {
-            global.metrics.startTime('menu.render.time');
+            global.metrics.startSpan('menu');
             this.menuSystem.render(screen);
-            global.metrics.endTime('menu.render.time');
+            global.metrics.endSpan('menu');
         }
         else {
-            global.metrics.startTime('theater.render.time');
+            global.metrics.startSpan('theater');
             this.theater.render(screen);
-            global.metrics.endTime('theater.render.time');
+            global.metrics.endSpan('theater');
         }
     };
     Game.prototype.loadMainMenu = function () {
@@ -2853,53 +2857,101 @@ var Game = /** @class */ (function () {
 }());
 var Metrics = /** @class */ (function () {
     function Metrics() {
-        this.frames = [];
-        this.currentStartTimes = {};
+        this.reset();
     }
-    Metrics.prototype.startFrame = function () {
-        this.currentFrame = {};
-        this.startTime('time');
+    Object.defineProperty(Metrics.prototype, "isRecording", {
+        get: function () { return !_.isEmpty(this.spanStack); },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Metrics.prototype, "currentRecording", {
+        get: function () { return this.spanStack[0]; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Metrics.prototype, "currentSpan", {
+        get: function () { return _.last(this.spanStack); },
+        enumerable: true,
+        configurable: true
+    });
+    Metrics.prototype.reset = function () {
+        this.recordings = [];
+        this.spanStack = [];
     };
-    Metrics.prototype.endFrame = function () {
-        this.endTime('time');
-        this.frames.push(this.currentFrame);
-        this.currentFrame = null;
-    };
-    Metrics.prototype.getCurrentFrameMetric = function (metric) {
-        return this.currentFrame[metric];
-    };
-    Metrics.prototype.getCurrentFrameWorldObjectMetric = function (worldObject, metric) {
-        return this.getCurrentFrameMetric(worldObject.uid + "." + metric);
-    };
-    Metrics.prototype.setMetric = function (metric, value) {
-        this.currentFrame[metric] = value;
-    };
-    Metrics.prototype.setWorldObjectMetric = function (worldObject, metric, value) {
-        this.setMetric(worldObject.uid + "." + metric, value);
-    };
-    Metrics.prototype.startTime = function (metric) {
-        if (metric in this.currentStartTimes) {
-            debug("Metric " + metric + " has started twice. Ignoring second start.");
+    Metrics.prototype.startRecording = function (recordingName) {
+        if (this.isRecording) {
+            error("Tried to start recording " + name + " when recording " + this.currentRecording.name + " was already started.");
             return;
         }
-        this.currentStartTimes[metric] = this.getCurrentTime();
+        this.startSpan(recordingName, true);
     };
-    Metrics.prototype.startWorldObjectTime = function (worldObject, metric) {
-        this.startTime(worldObject.uid + "." + metric);
-    };
-    Metrics.prototype.endTime = function (metric) {
-        if (!(metric in this.currentStartTimes)) {
-            debug("Metric " + metric + " has ended without starting. Ignoring.");
+    Metrics.prototype.endRecording = function () {
+        if (!this.isRecording) {
+            error("Tried to end recording " + name + " but no recording was happening.");
             return;
         }
-        this.setMetric(metric, (this.getCurrentTime() - this.currentStartTimes[metric]) / 1000);
-        delete this.currentStartTimes[metric];
+        this.recordings.push(this.currentRecording);
+        this.endSpan(this.currentRecording.name, true);
     };
-    Metrics.prototype.endWorldObjectTime = function (worldObject, metric) {
-        this.endTime(worldObject.uid + "." + metric);
+    Metrics.prototype.startSpan = function (name, force) {
+        if (force === void 0) { force = false; }
+        if (!this.isRecording && !force)
+            return;
+        if (name instanceof WorldObject) {
+            name = this.getWorldObjectSpanName(name);
+        }
+        var span = {
+            name: name,
+            start: this.getCurrentTimeMilliseconds(),
+            end: undefined,
+            time: undefined,
+            //metrics: {},
+            subspans: [],
+        };
+        if (this.currentSpan) {
+            this.currentSpan.subspans.push(span);
+        }
+        this.spanStack.push(span);
     };
-    Metrics.prototype.getCurrentTime = function () {
+    Metrics.prototype.endSpan = function (name, force) {
+        if (force === void 0) { force = false; }
+        if (!this.isRecording && !force)
+            return;
+        if (name instanceof WorldObject) {
+            name = this.getWorldObjectSpanName(name);
+        }
+        if (!this.currentSpan) {
+            error("Tried to end span " + name + " but there was no span to end! Span stack:", this.spanStack);
+            return;
+        }
+        if (this.currentSpan.name !== name) {
+            error("Tried to end span " + name + " but the current span is named " + this.currentSpan.name + "! Span stack:", this.spanStack);
+            return;
+        }
+        this.currentSpan.end = this.getCurrentTimeMilliseconds();
+        this.currentSpan.time = this.currentSpan.end - this.currentSpan.start;
+        this.spanStack.pop();
+    };
+    Metrics.prototype.recordMetric = function (metric, value) {
+        //this.currentSpan.metrics[metric] = value;
+        error("Metrics have not been implemented yet! Uncomment the lines in metrics.ts");
+    };
+    Metrics.prototype.getLastRecording = function () {
+        return _.last(this.recordings);
+    };
+    Metrics.prototype.plotLastRecording = function (width, height) {
+        if (width === void 0) { width = global.gameWidth; }
+        if (height === void 0) { height = global.gameHeight; }
+        return MetricsPlot.plotRecording(this.getLastRecording(), width, height);
+    };
+    Metrics.prototype.getCurrentTimeMilliseconds = function () {
         return performance.now();
+    };
+    Metrics.prototype.getWorldObjectSpanName = function (worldObject) {
+        if (worldObject.name) {
+            return worldObject.name + "." + worldObject.uid;
+        }
+        return worldObject.uid;
     };
     return Metrics;
 }());
@@ -3280,6 +3332,7 @@ var World = /** @class */ (function () {
         this.width = O.getOrDefault(config.width, global.gameWidth);
         this.height = O.getOrDefault(config.height, global.gameHeight);
         this.worldObjects = [];
+        this.showDebugMousePosition = O.getOrDefault(config.showDebugMousePosition, false);
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
         this.collisionOrder = O.getOrDefault(config.collisionOrder, []);
         this.worldObjectsByName = {};
@@ -3322,11 +3375,14 @@ var World = /** @class */ (function () {
         var e_13, _a, e_14, _b, e_15, _c;
         this.updateDebugMousePosition();
         this.updateScriptManager(delta);
+        global.metrics.startSpan('preUpdate');
         try {
             for (var _d = __values(this.worldObjects), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var worldObject = _e.value;
                 if (worldObject.active) {
+                    global.metrics.startSpan(worldObject);
                     worldObject.preUpdate();
+                    global.metrics.endSpan(worldObject);
                 }
             }
         }
@@ -3337,11 +3393,15 @@ var World = /** @class */ (function () {
             }
             finally { if (e_13) throw e_13.error; }
         }
+        global.metrics.endSpan('preUpdate');
+        global.metrics.startSpan('update');
         try {
             for (var _f = __values(this.worldObjects), _g = _f.next(); !_g.done; _g = _f.next()) {
                 var worldObject = _g.value;
                 if (worldObject.active) {
+                    global.metrics.startSpan(worldObject);
                     worldObject.update(delta);
+                    global.metrics.endSpan(worldObject);
                 }
             }
         }
@@ -3352,12 +3412,18 @@ var World = /** @class */ (function () {
             }
             finally { if (e_14) throw e_14.error; }
         }
+        global.metrics.endSpan('update');
+        global.metrics.startSpan('handleCollisions');
         this.handleCollisions();
+        global.metrics.endSpan('handleCollisions');
+        global.metrics.startSpan('postUpdate');
         try {
             for (var _h = __values(this.worldObjects), _j = _h.next(); !_j.done; _j = _h.next()) {
                 var worldObject = _j.value;
                 if (worldObject.active) {
+                    global.metrics.startSpan(worldObject);
                     worldObject.postUpdate();
+                    global.metrics.endSpan(worldObject);
                 }
             }
         }
@@ -3368,13 +3434,15 @@ var World = /** @class */ (function () {
             }
             finally { if (e_15) throw e_15.error; }
         }
+        global.metrics.endSpan('postUpdate');
         this.removeDeadWorldObjects();
         this.camera.update(this, delta);
     };
     World.prototype.updateDebugMousePosition = function () {
-        this.debugMousePositionText.active = Debug.SHOW_MOUSE_POSITION;
-        this.debugMousePositionText.visible = Debug.SHOW_MOUSE_POSITION;
-        if (Debug.SHOW_MOUSE_POSITION) {
+        var showMousePosition = Debug.SHOW_MOUSE_POSITION && this.showDebugMousePosition;
+        this.debugMousePositionText.active = showMousePosition;
+        this.debugMousePositionText.visible = showMousePosition;
+        if (showMousePosition) {
             this.debugMousePositionText.setText(St.padLeft(this.getWorldMouseX().toString(), 3) + " " + St.padLeft(this.getWorldMouseY().toString(), 3));
         }
     };
@@ -3412,15 +3480,9 @@ var World = /** @class */ (function () {
             for (var _b = __values(layer.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var worldObject = _c.value;
                 if (worldObject.visible) {
-                    global.metrics.startWorldObjectTime(worldObject, 'preRender.time');
-                    worldObject.preRender();
-                    global.metrics.endWorldObjectTime(worldObject, 'preRender.time');
-                    global.metrics.startWorldObjectTime(worldObject, 'render.time');
-                    worldObject.render(layerTexture);
-                    global.metrics.endWorldObjectTime(worldObject, 'render.time');
-                    global.metrics.startWorldObjectTime(worldObject, 'postRender.time');
-                    worldObject.postRender();
-                    global.metrics.endWorldObjectTime(worldObject, 'postRender.time');
+                    global.metrics.startSpan(worldObject);
+                    worldObject.worldRender(layerTexture);
+                    global.metrics.endSpan(worldObject);
                 }
             }
         }
@@ -4291,6 +4353,58 @@ var MenuSystem = /** @class */ (function () {
     };
     return MenuSystem;
 }());
+var MetricsPlot;
+(function (MetricsPlot) {
+    function plotRecording(recording, width, height) {
+        var plot = {
+            texture: Texture.filledRect(width, height, 0xFFFFFF),
+            dataPoints: {},
+            graphBounds: { left: 0, right: width, bottom: 0, top: height },
+        };
+        if (!recording || _.isEmpty(recording.subspans))
+            return plot;
+        var frames = recording.subspans;
+        var monitor = new Monitor();
+        plot.graphBounds = { left: Infinity, right: -Infinity, bottom: Infinity, top: -Infinity };
+        for (var x = 0; x < width; x++) {
+            var percentLow = x / width;
+            var percentHigh = (x + 1) / width;
+            for (var frame_i = 0; frame_i < frames.length; frame_i++) {
+                var framePercent = frame_i / frames.length;
+                if (percentLow <= framePercent && framePercent < percentHigh) {
+                    monitor.addPoint(frames[frame_i].time);
+                }
+            }
+            if (monitor.isEmpty())
+                continue;
+            var y = monitor.getAvg();
+            plot.dataPoints[x] = { x: x, y: y };
+            plot.graphBounds.left = Math.min(plot.graphBounds.left, x);
+            plot.graphBounds.right = Math.max(plot.graphBounds.right, x);
+            plot.graphBounds.bottom = Math.min(plot.graphBounds.bottom, y);
+            plot.graphBounds.top = Math.max(plot.graphBounds.top, y);
+        }
+        plot.graphBounds.top = Math.max(plot.graphBounds.top, 11);
+        plot.graphBounds.bottom = Math.min(plot.graphBounds.bottom, -1);
+        Draw.brush.color = 0xFF0000;
+        Draw.brush.alpha = 1;
+        for (var x in plot.dataPoints) {
+            var dataPoint = plot.dataPoints[x];
+            Draw.pixel(plot.texture, getPlotPixelX(plot, dataPoint.x), getPlotPixelY(plot, dataPoint.y));
+        }
+        Draw.brush.color = 0x000000;
+        Draw.rectangleSolid(plot.texture, 0, getPlotPixelY(plot, 0), width, 1);
+        Draw.rectangleSolid(plot.texture, 0, getPlotPixelY(plot, 10), width, 1);
+        return plot;
+    }
+    MetricsPlot.plotRecording = plotRecording;
+    function getPlotPixelX(plot, x) {
+        return plot.texture.width * (x - plot.graphBounds.left) / (plot.graphBounds.right - plot.graphBounds.left);
+    }
+    function getPlotPixelY(plot, y) {
+        return plot.texture.height - plot.texture.height * (y - plot.graphBounds.bottom) / (plot.graphBounds.top - plot.graphBounds.bottom);
+    }
+})(MetricsPlot || (MetricsPlot = {}));
 var Monitor = /** @class */ (function () {
     function Monitor() {
         this.points = [];
@@ -4321,6 +4435,9 @@ var Monitor = /** @class */ (function () {
             sum += this.points[i];
         }
         return sum / count;
+    };
+    Monitor.prototype.isEmpty = function () {
+        return _.isEmpty(this.points);
     };
     return Monitor;
 }());
@@ -5336,8 +5453,10 @@ var StageManager = /** @class */ (function () {
         // Create new stuff
         this.currentStageName = name;
         this.currentWorld = World.fromConfig(this.stages[name]);
+        this.currentWorld.showDebugMousePosition = true;
         this.currentWorldAsWorldObject = new World.WorldAsWorldObject(this.currentWorld);
         this.addPartyToWorld(this.currentWorld, name, entryPoint);
+        World.Actions.setName(this.currentWorldAsWorldObject, 'world');
         World.Actions.setLayer(this.currentWorldAsWorldObject, Theater.LAYER_WORLD);
         World.Actions.addWorldObjectToWorld(this.currentWorldAsWorldObject, this.theater);
         this.theater.onStageLoad();
@@ -5887,8 +6006,6 @@ var Theater = /** @class */ (function (_super) {
         this.interactionManager.preRender();
         _super.prototype.render.call(this, screen);
         this.interactionManager.postRender();
-        var worldRenderTime = global.metrics.getCurrentFrameWorldObjectMetric(this.stageManager.currentWorldAsWorldObject, 'render.time');
-        global.metrics.setMetric('world.render.time', worldRenderTime);
     };
     Theater.prototype.addSlideByConfig = function (config) {
         return this.slideManager.addSlideByConfig(config);
@@ -6769,28 +6886,6 @@ function fireSpriteConfig() {
         defaultAnimation: 'blaze'
     };
 }
-function screenShake(world) {
-    return function () {
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    if (!global.theater || global.theater.currentWorld !== world)
-                        return [2 /*return*/];
-                    world.camera.shakeIntensity += 1;
-                    return [5 /*yield**/, __values(S.wait(0.1)())];
-                case 1:
-                    _a.sent();
-                    world.camera.shakeIntensity -= 1;
-                    return [2 /*return*/];
-            }
-        });
-    };
-}
-function getDebugWithHole() {
-    var result = AssetCache.getTexture('debug').clone();
-    Draw.eraseRect(result, 4, 2, 8, 12);
-    return result;
-}
 var Campfire = /** @class */ (function (_super) {
     __extends(Campfire, _super);
     function Campfire(config) {
@@ -7518,6 +7613,42 @@ var PauseMenu = /** @class */ (function (_super) {
     }
     return PauseMenu;
 }(Menu));
+var MetricsMenu = /** @class */ (function (_super) {
+    __extends(MetricsMenu, _super);
+    function MetricsMenu(menuSystem) {
+        var _this = _super.call(this, menuSystem, {
+            backgroundColor: 0x000000,
+            worldObjects: []
+        }) || this;
+        _this.plot = global.metrics.plotLastRecording();
+        _this.addWorldObject({
+            constructor: Sprite,
+            texture: _this.plot.texture,
+        });
+        _this.addWorldObject({
+            name: 'graphxy',
+            constructor: SpriteText,
+            font: Assets.fonts.DELUXE16,
+            style: { color: 0x00FF00 },
+        });
+        return _this;
+    }
+    MetricsMenu.prototype.update = function (delta) {
+        _super.prototype.update.call(this, delta);
+        if (Input.justDown('pause')) {
+            this.menuSystem.game.unpauseGame();
+        }
+        this.getWorldObjectByName('graphxy')
+            .setText(this.getPlotY().toFixed(2) + " ms");
+    };
+    MetricsMenu.prototype.getPlotX = function () {
+        return this.plot.graphBounds.left + Input.mouseX / global.gameWidth * (this.plot.graphBounds.right - this.plot.graphBounds.left);
+    };
+    MetricsMenu.prototype.getPlotY = function () {
+        return this.plot.graphBounds.bottom + (1 - Input.mouseY / global.gameHeight) * (this.plot.graphBounds.top - this.plot.graphBounds.bottom);
+    };
+    return MetricsMenu;
+}(Menu));
 /// <reference path="../lectvs/preload.ts" />
 /// <reference path="./assets.ts" />
 var Main = /** @class */ (function () {
@@ -7641,22 +7772,39 @@ var Main = /** @class */ (function () {
     // no need to modify
     Main.play = function () {
         PIXI.Ticker.shared.add(function (frameDelta) {
-            global.metrics.startFrame();
+            if (Input.justDown('0')) {
+                if (!global.metrics.isRecording) {
+                    global.metrics.startRecording('recording');
+                    debug("Started recording");
+                }
+                else {
+                    global.metrics.endRecording();
+                    debug("Ended recording (" + global.metrics.getLastRecording().time.toFixed(0) + " ms)");
+                }
+            }
+            if (Input.justDown('9')) {
+                global.game.menuSystem.loadMenu(MetricsMenu);
+            }
+            global.metrics.startSpan('frame');
             Main.delta = frameDelta / 60;
             global.clearStacks();
+            global.metrics.startSpan('update');
             for (var i = 0; i < Debug.SKIP_RATE; i++) {
                 Input.update();
+                global.metrics.startSpan('game');
                 Main.game.update(Main.delta);
+                global.metrics.endSpan('game');
             }
-            global.metrics.startTime('render.time');
+            global.metrics.endSpan('update');
+            global.metrics.startSpan('render');
             Main.screen.clear();
-            global.metrics.startTime('game.render.time');
+            global.metrics.startSpan('game');
             Main.game.render(Main.screen);
-            global.metrics.endTime('game.render.time');
+            global.metrics.endSpan('game');
             Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true); // Clear the renderer
             Main.renderer.render(Main.screen.renderTextureSprite);
-            global.metrics.endTime('render.time');
-            global.metrics.endFrame();
+            global.metrics.endSpan('render');
+            global.metrics.endSpan('frame');
         });
     };
     return Main;
@@ -8219,13 +8367,6 @@ function getStages() {
                     layer: 'main',
                     physicsGroup: 'items',
                 },
-                {
-                    name: 'test',
-                    constructor: Sprite,
-                    x: 64, y: 64,
-                    texture: getDebugWithHole(),
-                    ignoreCamera: true,
-                }
             ])
         },
     };

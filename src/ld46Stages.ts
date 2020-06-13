@@ -130,13 +130,6 @@ function getStages(): Dict<World.Config> { return {
                 layer: 'main',
                 physicsGroup: 'items',
             },
-            <Sprite.Config>{
-                name: 'test',
-                constructor: Sprite,
-                x: 64, y: 64,
-                texture: getDebugWithHole(),
-                ignoreCamera: true,
-            }
         ]
     },
 }}
