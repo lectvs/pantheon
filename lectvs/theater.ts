@@ -85,8 +85,22 @@ class Theater extends World {
         this.stageManager.loadStage(name, transition, entryPoint);
     }
 
+    onPause() {
+        super.onPause();
+        if (this.hasWorldObject('world')) {
+            this.getWorldObjectByName<World.WorldAsWorldObject>('world').containedWorld.onPause();
+        }
+    }
+
     onStageLoad() {
         this.storyManager.onStageLoad();
+    }
+
+    onUnpause() {
+        super.onUnpause();
+        if (this.hasWorldObject('world')) {
+            this.getWorldObjectByName<World.WorldAsWorldObject>('world').containedWorld.onUnpause();
+        }
     }
 
     protected updateDebugMousePosition() {

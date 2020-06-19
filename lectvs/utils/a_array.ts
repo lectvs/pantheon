@@ -1,5 +1,5 @@
 namespace A {
-    export function clone<T>(array: T[]) {
+    export function clone<T>(array: ReadonlyArray<T>) {
         if (_.isEmpty(array)) return [];
         return Array.from(array);
     }

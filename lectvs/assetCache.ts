@@ -2,6 +2,7 @@
 class AssetCache {
     static pixiTextures: Dict<PIXI.Texture> = {};
     static textures: Dict<Texture> = {};
+    static sounds: Dict<SoundAsset> = {};
     static tilemaps: Dict<Tilemap.Tilemap> = {};
 
     static getPixiTexture(key: string) {
@@ -19,12 +20,18 @@ class AssetCache {
         return this.textures[key];
     }
 
+    static getSound(key: string) {
+        if (!this.sounds[key]) {
+            error(`Sound '${key}' does not exist.`);
+            return SoundAsset.none();
+        }
+        return this.sounds[key];
+    }
+
     static getTilemap(key: string) {
         if (!this.tilemaps[key]) {
             error(`Tilemap '${key}' does not exist.`);
         }
         return this.tilemaps[key];
     }
-
-    static DEFAULT_ANCHOR: Pt = { x: 0, y: 0 };
 }

@@ -447,6 +447,13 @@ var AssetCache = /** @class */ (function () {
         }
         return this.textures[key];
     };
+    AssetCache.getSound = function (key) {
+        if (!this.sounds[key]) {
+            error("Sound '" + key + "' does not exist.");
+            return SoundAsset.none();
+        }
+        return this.sounds[key];
+    };
     AssetCache.getTilemap = function (key) {
         if (!this.tilemaps[key]) {
             error("Tilemap '" + key + "' does not exist.");
@@ -455,8 +462,8 @@ var AssetCache = /** @class */ (function () {
     };
     AssetCache.pixiTextures = {};
     AssetCache.textures = {};
+    AssetCache.sounds = {};
     AssetCache.tilemaps = {};
-    AssetCache.DEFAULT_ANCHOR = { x: 0, y: 0 };
     return AssetCache;
 }());
 var S;
@@ -2786,14 +2793,16 @@ var Game = /** @class */ (function () {
         this.pauseMenuClass = config.pauseMenuClass;
         this.theaterClass = config.theaterClass;
         this.theaterConfig = config.theaterConfig;
+        this._paused = true;
+        this.soundManager = new SoundManager();
         this.menuSystem = new MenuSystem(this);
         this.loadMainMenu();
         if (Debug.SKIP_MAIN_MENU) {
             this.startGame();
         }
     }
-    Object.defineProperty(Game.prototype, "isPaused", {
-        get: function () { return this.menuSystem.inMenu && this.menuSystem.currentMenu instanceof this.pauseMenuClass; },
+    Object.defineProperty(Game.prototype, "paused", {
+        get: function () { return this._paused; },
         enumerable: true,
         configurable: true
     });
@@ -2809,16 +2818,23 @@ var Game = /** @class */ (function () {
             this.theater.update(delta);
             global.metrics.endSpan('theater');
         }
+        this.soundManager.update();
     };
     Game.prototype.updatePause = function () {
+        if (Input.justDown('pause') && !this.menuSystem.inMenu) {
+            Input.consume('pause');
+            this.pauseGame();
+        }
         if (this.menuSystem.inMenu) {
-            if (Input.justDown('pause') && this.isPaused) {
-                this.unpauseGame();
+            if (!this._paused) {
+                this._paused = true;
+                this.onPause();
             }
         }
         else {
-            if (Input.justDown('pause')) {
-                this.pauseGame();
+            if (this._paused) {
+                this._paused = false;
+                this.onUnpause();
             }
         }
     };
@@ -2842,6 +2858,14 @@ var Game = /** @class */ (function () {
         global.theater = this.theater;
         // fade out since the cutscene can't do this in 1 frame
         global.theater.runScript(S.fadeOut(0)).finishImmediately();
+    };
+    Game.prototype.onPause = function () {
+        if (this.theater)
+            this.theater.onPause();
+    };
+    Game.prototype.onUnpause = function () {
+        if (this.theater)
+            this.theater.onUnpause();
     };
     Game.prototype.pauseGame = function () {
         this.menuSystem.loadMenu(this.pauseMenuClass);
@@ -3371,6 +3395,11 @@ var World = /** @class */ (function () {
             active: false,
         });
     }
+    Object.defineProperty(World.prototype, "paused", {
+        get: function () { return global.game.paused; },
+        enumerable: true,
+        configurable: true
+    });
     World.prototype.update = function (delta) {
         var e_13, _a, e_14, _b, e_15, _c;
         this.updateDebugMousePosition();
@@ -3627,6 +3656,13 @@ var World = /** @class */ (function () {
         }
         return _.contains(this.worldObjects, obj);
     };
+    World.prototype.onPause = function () {
+    };
+    World.prototype.onUnpause = function () {
+    };
+    World.prototype.playSound = function (sound) {
+        return global.game.soundManager.playSound(sound, this);
+    };
     World.prototype.removeWorldObject = function (obj) {
         if (!obj)
             return undefined;
@@ -3871,9 +3907,9 @@ var World = /** @class */ (function () {
             world.internalRemoveWorldObjectFromWorldWorld(obj);
             World.Actions.removeWorldObjectsFromWorld(obj.children);
             /* No longer unlinking child from parent due to self-mutating iterator issue*/
-            // if (obj.parent) {
-            //     World.Actions.removeChildFromParent(obj);
-            // }
+            if (obj.parent) {
+                World.Actions.removeChildFromParent(obj);
+            }
             return obj;
         }
         Actions.removeWorldObjectFromWorld = removeWorldObjectFromWorld;
@@ -3883,7 +3919,7 @@ var World = /** @class */ (function () {
         function removeWorldObjectsFromWorld(objs) {
             if (_.isEmpty(objs))
                 return [];
-            return objs.filter(function (obj) { return removeWorldObjectFromWorld(obj); });
+            return A.clone(objs).filter(function (obj) { return removeWorldObjectFromWorld(obj); });
         }
         Actions.removeWorldObjectsFromWorld = removeWorldObjectsFromWorld;
         /**
@@ -4000,10 +4036,7 @@ var World = /** @class */ (function () {
         function removeChildrenFromParent(children) {
             if (_.isEmpty(children))
                 return [];
-            // Protect against iterating against the same list you're removing from.
-            if (children[0].parent && children === children[0].parent.children)
-                children = A.clone(children);
-            return children.filter(function (child) { return removeChildFromParent(child); });
+            return A.clone(children).filter(function (child) { return removeChildFromParent(child); });
         }
         Actions.removeChildrenFromParent = removeChildrenFromParent;
     })(Actions = World.Actions || (World.Actions = {}));
@@ -5024,17 +5057,50 @@ var Preload = /** @class */ (function () {
                 this.preloadTexture(key, options.textures[key]);
             }
         }
+        if (options.sounds) {
+            for (var key in options.sounds) {
+                this.preloadSound(key, options.sounds[key]);
+            }
+        }
         if (options.pyxelTilemaps) {
             for (var key in options.pyxelTilemaps) {
                 this.preloadPyxelTilemap(key, options.pyxelTilemaps[key]);
             }
         }
+        // https://github.com/seleb/HowlerPixiLoaderMiddleware/blob/master/index.js
+        PIXI.Loader.shared.use(function (resource, next) {
+            if (resource && _.contains(["wav", "ogg", "mp3", "mpeg"], resource.extension)) {
+                /// @ts-ignore
+                //resource._setFlag(PIXI.LoaderResource.STATUS_FLAGS.LOADING, true);
+                var options_1 = JSON.parse(JSON.stringify(resource.metadata));
+                options_1.src = [resource.url];
+                options_1.onload = function () {
+                    //resource.complete();
+                    next();
+                };
+                options_1.onloaderror = function (id, message) {
+                    console.error(resource);
+                    resource.abort(message);
+                    next();
+                };
+                /// @ts-ignore
+                resource.data = new Howl(options_1);
+            }
+            else {
+                next();
+            }
+        });
         PIXI.Loader.shared.load(function () { return _this.load(options); });
     };
     Preload.load = function (options) {
         if (options.textures) {
             for (var key in options.textures) {
                 this.loadTexture(key, options.textures[key]);
+            }
+        }
+        if (options.sounds) {
+            for (var key in options.sounds) {
+                this.loadSound(key, options.sounds[key]);
             }
         }
         if (options.pyxelTilemaps) {
@@ -5104,6 +5170,14 @@ var Preload = /** @class */ (function () {
             AssetCache.pixiTextures[frame] = frameTexture;
             AssetCache.textures[frame] = Texture.fromPixiTexture(frameTexture);
         }
+    };
+    Preload.preloadSound = function (key, sound) {
+        var url = sound.url || "assets/" + key + ".wav";
+        PIXI.Loader.shared.add(key, url);
+    };
+    Preload.loadSound = function (key, sound) {
+        var howl = PIXI.Loader.shared.resources[key].data;
+        AssetCache.sounds[key] = new SoundAsset(howl);
     };
     Preload.preloadPyxelTilemap = function (key, tilemap) {
         var url = tilemap.url || "assets/" + key + ".json";
@@ -5268,6 +5342,93 @@ var SlideManager = /** @class */ (function () {
         this.slides.splice(0, deleteCount);
     };
     return SlideManager;
+}());
+var Sound = /** @class */ (function () {
+    function Sound(howl, id, parentWorld) {
+        var _this = this;
+        this.howl = howl;
+        this.id = id;
+        this.parentWorld = parentWorld;
+        this._done = false;
+        this.paused = false;
+        this.howl.on("end", function () {
+            debug('done');
+            _this._done = true;
+        }, this.id);
+    }
+    Object.defineProperty(Sound.prototype, "volume", {
+        get: function () { return this.howl.volume(this.id); },
+        set: function (value) { this.howl.volume(value, this.id); },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Sound.prototype, "done", {
+        get: function () { return this._done; },
+        enumerable: true,
+        configurable: true
+    });
+    Sound.prototype.update = function () {
+        if (this.paused
+            || (this.parentWorld && this.parentWorld.paused)) {
+            this.howl.pause(this.id);
+        }
+        else {
+            this.howl.play(this.id);
+        }
+    };
+    return Sound;
+}());
+var SoundAsset = /** @class */ (function () {
+    function SoundAsset(howl) {
+        this.howl = howl;
+        this.init();
+    }
+    SoundAsset.prototype.play = function (parentWorld) {
+        debug(this.howl);
+        var id = this.howl.play();
+        debug(id);
+        return new Sound(this.howl, id, parentWorld);
+    };
+    SoundAsset.prototype.init = function () {
+        // For some reason, when a Howl is told to "play" a sound, and there is exactly 1 paused sound in the bank,
+        // it will attempt to play that sound... I don't know why they decided to do it that way, but to get around it
+        // we'll just start up 2 sounds and immediately pause them.
+        var id1 = this.howl.play();
+        var id2 = this.howl.play();
+        this.howl.pause(id1);
+        this.howl.pause(id2);
+    };
+    return SoundAsset;
+}());
+(function (SoundAsset) {
+    function none() {
+        return new SoundAsset(undefined);
+    }
+    SoundAsset.none = none;
+})(SoundAsset || (SoundAsset = {}));
+var SoundManager = /** @class */ (function () {
+    function SoundManager() {
+        this.activeSounds = [];
+    }
+    SoundManager.prototype.update = function () {
+        for (var i = this.activeSounds.length - 1; i >= 0; i--) {
+            this.activeSounds[i].update();
+            if (this.activeSounds[i].done) {
+                this.activeSounds.splice(i, 1);
+            }
+        }
+    };
+    SoundManager.prototype.playSound = function (sound, parentWorld) {
+        if (_.isString(sound)) {
+            sound = AssetCache.getSound(sound);
+            if (!sound)
+                return;
+        }
+        var soundInstance = sound.play(parentWorld);
+        this.activeSounds.push(soundInstance);
+        return soundInstance;
+    };
+    return SoundManager;
 }());
 var SpriteTextConverter = /** @class */ (function () {
     function SpriteTextConverter() {
@@ -6018,8 +6179,20 @@ var Theater = /** @class */ (function (_super) {
         if (transition === void 0) { transition = Transition.INSTANT; }
         this.stageManager.loadStage(name, transition, entryPoint);
     };
+    Theater.prototype.onPause = function () {
+        _super.prototype.onPause.call(this);
+        if (this.hasWorldObject('world')) {
+            this.getWorldObjectByName('world').containedWorld.onPause();
+        }
+    };
     Theater.prototype.onStageLoad = function () {
         this.storyManager.onStageLoad();
+    };
+    Theater.prototype.onUnpause = function () {
+        _super.prototype.onUnpause.call(this);
+        if (this.hasWorldObject('world')) {
+            this.getWorldObjectByName('world').containedWorld.onUnpause();
+        }
     };
     Theater.prototype.updateDebugMousePosition = function () {
         // Override to do nothing since we don't want to display the theater's mouse position
@@ -6700,6 +6873,10 @@ var Assets;
         },
         // Fonts
         'deluxe16': {},
+    };
+    Assets.sounds = {
+        'test': {},
+        'pew': {},
     };
     Assets.tilesets = {
         'world': {
@@ -7468,7 +7645,7 @@ var IntroMenu = /** @class */ (function (_super) {
         introtext.x = Main.width / 2 - introtext.getTextWidth() / 2;
         introtext.y = Main.height / 2 - introtext.getTextHeight() / 2;
         _this.runScript(S.chain(S.wait(1.5), S.call(function () {
-            introtext.setText("- made in 48 hours\n  for ludum dare 46 -");
+            introtext.setText("  - originally made\n  for ludum dare 46 -");
             introtext.x = Main.width / 2 - introtext.getTextWidth() / 2;
             introtext.y = Main.height / 2 - introtext.getTextHeight() / 2;
         }), S.wait(1.5), S.call(function () { menuSystem.loadMenu(MainMenu); })));
@@ -7611,6 +7788,13 @@ var PauseMenu = /** @class */ (function (_super) {
             ]
         }) || this;
     }
+    PauseMenu.prototype.update = function (delta) {
+        _super.prototype.update.call(this, delta);
+        if (Input.justDown('pause')) {
+            Input.consume('pause');
+            this.menuSystem.game.unpauseGame();
+        }
+    };
     return PauseMenu;
 }(Menu));
 var MetricsMenu = /** @class */ (function (_super) {
@@ -7686,6 +7870,7 @@ var Main = /** @class */ (function () {
         global.renderer = Main.renderer;
         Preload.preload({
             textures: Assets.textures,
+            sounds: Assets.sounds,
             pyxelTilemaps: Assets.pyxelTilemaps,
             spriteTextTags: Assets.spriteTextTags,
             onLoad: function () {
@@ -7733,7 +7918,7 @@ var Main = /** @class */ (function () {
             debug: true,
             allPhysicsBounds: false,
             moveCameraWithArrows: true,
-            showMousePosition: true,
+            showMousePosition: false,
             mousePositionFont: Assets.fonts.DELUXE16,
             skipRate: 1,
             programmaticInput: false,
@@ -7784,6 +7969,12 @@ var Main = /** @class */ (function () {
             }
             if (Input.justDown('9')) {
                 global.game.menuSystem.loadMenu(MetricsMenu);
+            }
+            if (Input.justDown('1')) {
+                global.world.playSound('pew');
+            }
+            if (Input.justDown('2')) {
+                global.game.soundManager.playSound('pew');
             }
             global.metrics.startSpan('frame');
             Main.delta = frameDelta / 60;
@@ -8680,8 +8871,10 @@ var Leaf = /** @class */ (function (_super) {
         }
     };
     Leaf.prototype.drawOnGround = function () {
-        var groundTexture = this.world.getWorldObjectByName('ground').getTexture();
-        this.render(groundTexture);
+        if (this.world.hasWorldObject('ground')) {
+            var groundTexture = this.world.getWorldObjectByName('ground').getTexture();
+            this.render(groundTexture);
+        }
     };
     return Leaf;
 }(Sprite));

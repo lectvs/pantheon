@@ -3,6 +3,7 @@
 namespace Preload {
     export type Options = {
         textures?: Dict<Preload.Texture>;
+        sounds? : Dict<Preload.Sound>;
         pyxelTilemaps?: Dict<Preload.PyxelTilemap>;
         spriteTextTags?: Dict<SpriteText.TagFunction>;
         onLoad?: Function;
@@ -18,6 +19,10 @@ namespace Preload {
     export type TextureFrame = {
         rect?: Rect;
         anchor?: Pt;
+    }
+
+    export type Sound = {
+        url?: string;
     }
 
     export type TextureSpritesheet = {
@@ -60,12 +65,40 @@ class Preload {
             }
         }
 
+        if (options.sounds) {
+            for (let key in options.sounds) {
+                this.preloadSound(key, options.sounds[key]);
+            }
+        }
+
         if (options.pyxelTilemaps) {
             for (let key in options.pyxelTilemaps) {
                 this.preloadPyxelTilemap(key, options.pyxelTilemaps[key]);
             }
         }
 
+        // https://github.com/seleb/HowlerPixiLoaderMiddleware/blob/master/index.js
+        PIXI.Loader.shared.use((resource: PIXI.LoaderResource, next: (...params: any[]) => any) => {
+            if (resource && _.contains(["wav", "ogg", "mp3", "mpeg"], resource.extension)) {
+                /// @ts-ignore
+                //resource._setFlag(PIXI.LoaderResource.STATUS_FLAGS.LOADING, true);
+                const options = JSON.parse(JSON.stringify(resource.metadata));
+                options.src = [resource.url];
+                options.onload = function () {
+                  //resource.complete();
+                  next();
+                };
+                options.onloaderror = function (id, message) {
+                  console.error(resource);
+                  resource.abort(message);
+                  next();
+                }
+                /// @ts-ignore
+                resource.data = new Howl(options);
+            } else {
+                next();
+            }
+        });
         PIXI.Loader.shared.load(() => this.load(options));
     }
 
@@ -73,6 +106,12 @@ class Preload {
         if (options.textures) {
             for (let key in options.textures) {
                 this.loadTexture(key, options.textures[key]);
+            }
+        }
+
+        if (options.sounds) {
+            for (let key in options.sounds) {
+                this.loadSound(key, options.sounds[key]);
             }
         }
 
@@ -153,6 +192,16 @@ class Preload {
             AssetCache.pixiTextures[frame] = frameTexture;
             AssetCache.textures[frame] = Texture.fromPixiTexture(frameTexture);
         }
+    }
+
+    static preloadSound(key: string, sound: Preload.Sound) {
+        let url = sound.url || `assets/${key}.wav`;
+        PIXI.Loader.shared.add(key, url);
+    }
+
+    static loadSound(key: string, sound: Preload.Sound) {
+        let howl: Howler.Howl = PIXI.Loader.shared.resources[key].data;
+        AssetCache.sounds[key] = new SoundAsset(howl);
     }
 
     static preloadPyxelTilemap(key: string, tilemap: Preload.PyxelTilemap) {

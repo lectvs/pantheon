@@ -66,6 +66,8 @@ class World {
 
     private debugMousePositionText: SpriteText;
 
+    get paused() { return global.game.paused; }
+
     constructor(config: World.Config, defaults?: World.Config) {
         config = WorldObject.resolveConfig<World.Config>(config, defaults);
         
@@ -301,6 +303,17 @@ class World {
         return _.contains(this.worldObjects, obj);
     }
 
+    onPause() {
+
+    }
+
+    onUnpause() {
+
+    }
+
+    playSound(sound: string | SoundAsset) {
+        return global.game.soundManager.playSound(sound, this);
+    }
     
     removeWorldObject<T extends WorldObject>(obj: T | string): T {
         if (!obj) return undefined;
@@ -546,9 +559,9 @@ namespace World {
             World.Actions.removeWorldObjectsFromWorld(obj.children);
 
             /* No longer unlinking child from parent due to self-mutating iterator issue*/
-            // if (obj.parent) {
-            //     World.Actions.removeChildFromParent(obj);
-            // }
+            if (obj.parent) {
+                World.Actions.removeChildFromParent(obj);
+            }
             
             return obj;
         }
@@ -558,7 +571,7 @@ namespace World {
          */
         export function removeWorldObjectsFromWorld<T extends WorldObject>(objs: ReadonlyArray<T>): T[] {
             if (_.isEmpty(objs)) return [];
-            return objs.filter(obj => removeWorldObjectFromWorld(obj));
+            return A.clone(objs).filter(obj => removeWorldObjectFromWorld(obj));
         }
 
         /**
@@ -688,9 +701,7 @@ namespace World {
          */
         export function removeChildrenFromParent<T extends WorldObject>(children: ReadonlyArray<T>): T[] {
             if (_.isEmpty(children)) return [];
-            // Protect against iterating against the same list you're removing from.
-            if (children[0].parent && children === children[0].parent.children) children = A.clone(<T[]>children);
-            return children.filter(child => removeChildFromParent(child));
+            return A.clone(children).filter(child => removeChildFromParent(child));
         }
     }
 }

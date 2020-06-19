@@ -51,6 +51,8 @@ juice
     - /can we just snap everything to world units and not camera units?
 - random noise on fire lighting
     - perlin noise??
+- fix flickering fire
+- /unlink child from parent on removal
 - sound
 
 postpostjam
@@ -62,7 +64,7 @@ postpostjam
 - boundless textures
 - controls remapping
 - uncapped fps?
-- allow multiple menus to pause the game
+- allow multiple menus to pause the game (or change definition of "paused")
 - /fix spritetext tags
 - /fix issue where textures with anchors in the middle of a pixel are drawn weird
 - /option for child objects to inherit parent offset (decided not to do)
@@ -87,4 +89,4 @@ postpostjam
 - refactor the Main class
 - loading screen/progress bar
 - /get rid of Pt3
-- unlink child from parent on removal
+- move tileset animation fields from Assets to Tilemap.Config

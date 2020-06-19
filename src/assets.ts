@@ -73,6 +73,11 @@ namespace Assets {
         'deluxe16': {},
     }
 
+    export const sounds: Dict<Preload.Sound> = {
+        'test': {},
+        'pew': {},
+    }
+
     export const tilesets: Dict<Tilemap.Tileset> = {
         'world': {
             tiles: Preload.allTilesWithPrefix('world_'),

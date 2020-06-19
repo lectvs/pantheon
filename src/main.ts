@@ -32,6 +32,7 @@ class Main {
 
         Preload.preload({
             textures: Assets.textures,
+            sounds: Assets.sounds,
             pyxelTilemaps: Assets.pyxelTilemaps,
             spriteTextTags: Assets.spriteTextTags,
             onLoad: () => {
@@ -84,7 +85,7 @@ class Main {
             debug: true,
             allPhysicsBounds: false,
             moveCameraWithArrows: true,
-            showMousePosition: true,
+            showMousePosition: false,
             mousePositionFont: Assets.fonts.DELUXE16,
             skipRate: 1,
             programmaticInput: false,
@@ -137,6 +138,13 @@ class Main {
 
             if (Input.justDown('9')) {
                 global.game.menuSystem.loadMenu(MetricsMenu);
+            }
+
+            if (Input.justDown('1')) {
+                global.world.playSound('pew');
+            }
+            if (Input.justDown('2')) {
+                global.game.soundManager.playSound('pew');
             }
 
             global.metrics.startSpan('frame');

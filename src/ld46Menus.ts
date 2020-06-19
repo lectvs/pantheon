@@ -21,7 +21,7 @@ class IntroMenu extends Menu {
         this.runScript(S.chain(
             S.wait(1.5),
             S.call(() => {
-                introtext.setText("- made in 48 hours\n  for ludum dare 46 -");
+                introtext.setText("  - originally made\n  for ludum dare 46 -");
                 introtext.x = Main.width/2 - introtext.getTextWidth()/2;
                 introtext.y = Main.height/2 - introtext.getTextHeight()/2;
             }),
@@ -211,6 +211,15 @@ class PauseMenu extends Menu {
                 }
             ]
         });
+    }
+
+    update(delta: number) {
+        super.update(delta);
+
+        if (Input.justDown('pause')) {
+            Input.consume('pause');
+            this.menuSystem.game.unpauseGame();
+        }
     }
 }
 
