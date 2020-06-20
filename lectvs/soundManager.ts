@@ -1,27 +1,42 @@
 class SoundManager {
     private activeSounds: Sound[];
 
+    private webAudioStarted: boolean;
+
     constructor() {
         this.activeSounds = [];
+        this.webAudioStarted = false;
     }
 
     update() {
+        if (!this.webAudioStarted) {
+            if (WebAudio.started) {
+                this.onWebAudioStart();
+                this.webAudioStarted = true;
+            }
+        }
+
         for (let i = this.activeSounds.length-1; i >= 0; i--) {
-            this.activeSounds[i].update();
             if (this.activeSounds[i].done) {
                 this.activeSounds.splice(i, 1);
             }
         }
     }
 
-    playSound(sound: string | SoundAsset, parentWorld?: World) {
+    playSound(sound: string | Sound.Asset, soundType: Sound.Type = Sound.Type.GLOBAL) {
         if (_.isString(sound)) {
-            sound = AssetCache.getSound(sound);
+            sound = AssetCache.getSoundAsset(sound);
             if (!sound) return;
         }
 
-        let soundInstance = sound.play(parentWorld);
+        let soundInstance = new Sound(sound, soundType);
         this.activeSounds.push(soundInstance);
         return soundInstance;
+    }
+
+    onWebAudioStart() {
+        for (let sound of this.activeSounds) {
+            sound.onWebAudioStart();
+        }
     }
 }

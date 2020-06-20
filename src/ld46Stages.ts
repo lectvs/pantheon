@@ -52,8 +52,8 @@ function getStages(): Dict<World.Config> { return {
             <Sprite.Config>{
                 constructor: Sprite,
                 x: 400, y: 400,
-                texture: 'ground',
-                layer: 'bg',
+                texture: 'campfirering',
+                layer: 'ground',
             },
             <Sprite.Config>{
                 name: 'campfire',

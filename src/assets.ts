@@ -65,7 +65,7 @@ namespace Assets {
             defaultAnchor: { x: 0.5, y: 0.5 },
             spritesheet: { frameWidth: 16, frameHeight: 16 }
         },
-        'ground': {
+        'campfirering': {
             anchor: Anchor.CENTER
         },
 
@@ -76,6 +76,7 @@ namespace Assets {
     export const sounds: Dict<Preload.Sound> = {
         'test': {},
         'pew': {},
+        'music': {},
     }
 
     export const tilesets: Dict<Tilemap.Tileset> = {

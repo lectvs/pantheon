@@ -447,10 +447,10 @@ var AssetCache = /** @class */ (function () {
         }
         return this.textures[key];
     };
-    AssetCache.getSound = function (key) {
+    AssetCache.getSoundAsset = function (key) {
         if (!this.sounds[key]) {
             error("Sound '" + key + "' does not exist.");
-            return SoundAsset.none();
+            return undefined;
         }
         return this.sounds[key];
     };
@@ -2862,10 +2862,12 @@ var Game = /** @class */ (function () {
     Game.prototype.onPause = function () {
         if (this.theater)
             this.theater.onPause();
+        WebAudio.worldContext.suspend();
     };
     Game.prototype.onUnpause = function () {
         if (this.theater)
             this.theater.onUnpause();
+        WebAudio.worldContext.resume();
     };
     Game.prototype.pauseGame = function () {
         this.menuSystem.loadMenu(this.pauseMenuClass);
@@ -3661,7 +3663,7 @@ var World = /** @class */ (function () {
     World.prototype.onUnpause = function () {
     };
     World.prototype.playSound = function (sound) {
-        return global.game.soundManager.playSound(sound, this);
+        return global.game.soundManager.playSound(sound, Sound.Type.WORLD);
     };
     World.prototype.removeWorldObject = function (obj) {
         if (!obj)
@@ -5051,7 +5053,8 @@ var Preload = /** @class */ (function () {
     function Preload() {
     }
     Preload.preload = function (options) {
-        var _this = this;
+        this.preloadOptions = options;
+        this.resources = [];
         if (options.textures) {
             for (var key in options.textures) {
                 this.preloadTexture(key, options.textures[key]);
@@ -5067,30 +5070,7 @@ var Preload = /** @class */ (function () {
                 this.preloadPyxelTilemap(key, options.pyxelTilemaps[key]);
             }
         }
-        // https://github.com/seleb/HowlerPixiLoaderMiddleware/blob/master/index.js
-        PIXI.Loader.shared.use(function (resource, next) {
-            if (resource && _.contains(["wav", "ogg", "mp3", "mpeg"], resource.extension)) {
-                /// @ts-ignore
-                //resource._setFlag(PIXI.LoaderResource.STATUS_FLAGS.LOADING, true);
-                var options_1 = JSON.parse(JSON.stringify(resource.metadata));
-                options_1.src = [resource.url];
-                options_1.onload = function () {
-                    //resource.complete();
-                    next();
-                };
-                options_1.onloaderror = function (id, message) {
-                    console.error(resource);
-                    resource.abort(message);
-                    next();
-                };
-                /// @ts-ignore
-                resource.data = new Howl(options_1);
-            }
-            else {
-                next();
-            }
-        });
-        PIXI.Loader.shared.load(function () { return _this.load(options); });
+        PIXI.Loader.shared.load();
     };
     Preload.load = function (options) {
         if (options.textures) {
@@ -5116,11 +5096,22 @@ var Preload = /** @class */ (function () {
         }
     };
     Preload.preloadTexture = function (key, texture) {
+        var _this = this;
         var url = texture.url || "assets/" + key + ".png";
-        PIXI.Loader.shared.add(key, url);
+        var resource = {
+            name: key,
+            src: url,
+            done: false
+        };
+        this.resources.push(resource);
+        PIXI.Loader.shared.add(key, url, undefined, function () { return _this.onLoadResource(resource); });
     };
     Preload.loadTexture = function (key, texture) {
         var baseTexture = PIXI.utils.TextureCache[key];
+        if (!baseTexture) {
+            error("Failed to preload texture " + key);
+            return;
+        }
         var mainTexture = new PIXI.Texture(baseTexture);
         var rect = texture.rect;
         var anchor = texture.anchor;
@@ -5172,19 +5163,44 @@ var Preload = /** @class */ (function () {
         }
     };
     Preload.preloadSound = function (key, sound) {
+        var _this = this;
         var url = sound.url || "assets/" + key + ".wav";
-        PIXI.Loader.shared.add(key, url);
+        var resource = {
+            name: key,
+            src: url,
+            done: false
+        };
+        this.resources.push(resource);
+        WebAudio.preloadSound(key, url, function () { return _this.onLoadResource(resource); });
     };
     Preload.loadSound = function (key, sound) {
-        var howl = PIXI.Loader.shared.resources[key].data;
-        AssetCache.sounds[key] = new SoundAsset(howl);
+        var preloadedSound = WebAudio.preloadedSounds[key];
+        if (!preloadedSound) {
+            error("Failed to preload sound " + key);
+            return;
+        }
+        AssetCache.sounds[key] = {
+            buffer: preloadedSound.buffer,
+        };
     };
     Preload.preloadPyxelTilemap = function (key, tilemap) {
+        var _this = this;
         var url = tilemap.url || "assets/" + key + ".json";
-        PIXI.Loader.shared.add(key + this.TILEMAP_KEY_SUFFIX, url);
+        var resource = {
+            name: key,
+            src: url,
+            done: false
+        };
+        this.resources.push(resource);
+        PIXI.Loader.shared.add(key + this.TILEMAP_KEY_SUFFIX, url, function () { return _this.onLoadResource(resource); });
     };
     Preload.loadPyxelTilemap = function (key, tilemap) {
         var e_28, _a;
+        var tilemapResource = PIXI.Loader.shared.resources[key + this.TILEMAP_KEY_SUFFIX];
+        if (!tilemapResource || !tilemapResource.data) {
+            error("Failed to preload PyxelTilemap " + key);
+            return;
+        }
         var tilemapJson = PIXI.Loader.shared.resources[key + this.TILEMAP_KEY_SUFFIX].data;
         var tilemapForCache = {
             tileset: tilemap.tileset,
@@ -5212,6 +5228,12 @@ var Preload = /** @class */ (function () {
             tilemapForCache.layers.push(tilemapLayer);
         }
         AssetCache.tilemaps[key] = tilemapForCache;
+    };
+    Preload.onLoadResource = function (resource) {
+        resource.done = true;
+        if (this.resources.every(function (r) { return r.done; })) {
+            this.load(this.preloadOptions);
+        }
     };
     Preload.TILEMAP_KEY_SUFFIX = '_tilemap_';
     return Preload;
@@ -5344,21 +5366,18 @@ var SlideManager = /** @class */ (function () {
     return SlideManager;
 }());
 var Sound = /** @class */ (function () {
-    function Sound(howl, id, parentWorld) {
-        var _this = this;
-        this.howl = howl;
-        this.id = id;
-        this.parentWorld = parentWorld;
+    function Sound(asset, type) {
+        if (type === void 0) { type = Sound.Type.GLOBAL; }
+        this.asset = asset;
+        this.type = type;
         this._done = false;
-        this.paused = false;
-        this.howl.on("end", function () {
-            debug('done');
-            _this._done = true;
-        }, this.id);
+        this.pausedPosition = undefined;
+        if (!WebAudio.started)
+            this.preWebAudioStartStartTime = performance.now();
+        this.start();
     }
-    Object.defineProperty(Sound.prototype, "volume", {
-        get: function () { return this.howl.volume(this.id); },
-        set: function (value) { this.howl.volume(value, this.id); },
+    Object.defineProperty(Sound.prototype, "context", {
+        get: function () { return this.type === Sound.Type.WORLD ? WebAudio.worldContext : WebAudio.globalContext; },
         enumerable: true,
         configurable: true
     });
@@ -5367,66 +5386,104 @@ var Sound = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Sound.prototype.update = function () {
-        if (this.paused
-            || (this.parentWorld && this.parentWorld.paused)) {
-            this.howl.pause(this.id);
+    Object.defineProperty(Sound.prototype, "paused", {
+        get: function () { return this.pausedPosition !== undefined; },
+        set: function (value) { value ? this.pause() : this.unpause(); },
+        enumerable: true,
+        configurable: true
+    });
+    ;
+    Sound.prototype.pause = function () {
+        this.pausedPosition = this.context.currentTime - this.startTime;
+        this.webAudioSound.onended = undefined;
+        this.stop();
+        debug(this.pausedPosition);
+    };
+    Sound.prototype.unpause = function () {
+        this.start(this.pausedPosition);
+    };
+    Sound.prototype.onWebAudioStart = function () {
+        var pos = (performance.now() - this.preWebAudioStartStartTime) / 1000;
+        if (this.paused) {
+            this.pausedPosition += pos;
         }
         else {
-            this.howl.play(this.id);
+            this.pause();
+            this.pausedPosition += pos;
+            this.unpause();
+        }
+    };
+    Sound.prototype.start = function (offset) {
+        var _this = this;
+        if (offset === void 0) { offset = 0; }
+        this.webAudioSound = this.context.createBufferSource();
+        this.webAudioSound.buffer = this.asset.buffer;
+        this.webAudioSound.connect(this.context.destination);
+        this.webAudioSound.onended = function () {
+            _this._done = true;
+        };
+        this.webAudioSound.start(0, offset);
+        this.startTime = this.context.currentTime - offset;
+        this.pausedPosition = undefined;
+    };
+    Sound.prototype.stop = function () {
+        if (this.webAudioSound) {
+            this.webAudioSound.stop();
         }
     };
     return Sound;
 }());
-var SoundAsset = /** @class */ (function () {
-    function SoundAsset(howl) {
-        this.howl = howl;
-        this.init();
-    }
-    SoundAsset.prototype.play = function (parentWorld) {
-        debug(this.howl);
-        var id = this.howl.play();
-        debug(id);
-        return new Sound(this.howl, id, parentWorld);
-    };
-    SoundAsset.prototype.init = function () {
-        // For some reason, when a Howl is told to "play" a sound, and there is exactly 1 paused sound in the bank,
-        // it will attempt to play that sound... I don't know why they decided to do it that way, but to get around it
-        // we'll just start up 2 sounds and immediately pause them.
-        var id1 = this.howl.play();
-        var id2 = this.howl.play();
-        this.howl.pause(id1);
-        this.howl.pause(id2);
-    };
-    return SoundAsset;
-}());
-(function (SoundAsset) {
-    function none() {
-        return new SoundAsset(undefined);
-    }
-    SoundAsset.none = none;
-})(SoundAsset || (SoundAsset = {}));
+(function (Sound) {
+    var Type;
+    (function (Type) {
+        Type[Type["GLOBAL"] = 0] = "GLOBAL";
+        Type[Type["WORLD"] = 1] = "WORLD";
+    })(Type = Sound.Type || (Sound.Type = {}));
+})(Sound || (Sound = {}));
 var SoundManager = /** @class */ (function () {
     function SoundManager() {
         this.activeSounds = [];
+        this.webAudioStarted = false;
     }
     SoundManager.prototype.update = function () {
+        if (!this.webAudioStarted) {
+            if (WebAudio.started) {
+                this.onWebAudioStart();
+                this.webAudioStarted = true;
+            }
+        }
         for (var i = this.activeSounds.length - 1; i >= 0; i--) {
-            this.activeSounds[i].update();
             if (this.activeSounds[i].done) {
                 this.activeSounds.splice(i, 1);
             }
         }
     };
-    SoundManager.prototype.playSound = function (sound, parentWorld) {
+    SoundManager.prototype.playSound = function (sound, soundType) {
+        if (soundType === void 0) { soundType = Sound.Type.GLOBAL; }
         if (_.isString(sound)) {
-            sound = AssetCache.getSound(sound);
+            sound = AssetCache.getSoundAsset(sound);
             if (!sound)
                 return;
         }
-        var soundInstance = sound.play(parentWorld);
+        var soundInstance = new Sound(sound, soundType);
         this.activeSounds.push(soundInstance);
         return soundInstance;
+    };
+    SoundManager.prototype.onWebAudioStart = function () {
+        var e_29, _a;
+        try {
+            for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var sound = _c.value;
+                sound.onWebAudioStart();
+            }
+        }
+        catch (e_29_1) { e_29 = { error: e_29_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_29) throw e_29.error; }
+        }
     };
     return SoundManager;
 }());
@@ -5507,7 +5564,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_29, _a;
+        var e_30, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -5521,12 +5578,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_29_1) { e_29 = { error: e_29_1 }; }
+            catch (e_30_1) { e_30 = { error: e_30_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_29) throw e_29.error; }
+                finally { if (e_30) throw e_30.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -5675,7 +5732,7 @@ var StateMachine = /** @class */ (function () {
         return this.states[name];
     };
     StateMachine.prototype.getValidTransition = function (state) {
-        var e_30, _a;
+        var e_31, _a;
         try {
             for (var _b = __values(state.transitions || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -5692,12 +5749,12 @@ var StateMachine = /** @class */ (function () {
                 }
             }
         }
-        catch (e_30_1) { e_30 = { error: e_30_1 }; }
+        catch (e_31_1) { e_31 = { error: e_31_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_30) throw e_30.error; }
+            finally { if (e_31) throw e_31.error; }
         }
         return undefined;
     };
@@ -5893,7 +5950,7 @@ var StoryManager = /** @class */ (function () {
         this.storyConfig.execute();
     };
     StoryManager.prototype.getInteractableObjects = function (node, stageName) {
-        var e_31, _a;
+        var e_32, _a;
         var result = new Set();
         if (!node)
             return result;
@@ -5910,12 +5967,12 @@ var StoryManager = /** @class */ (function () {
                 result.add(transition.with);
             }
         }
-        catch (e_31_1) { e_31 = { error: e_31_1 }; }
+        catch (e_32_1) { e_32 = { error: e_32_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_31) throw e_31.error; }
+            finally { if (e_32) throw e_32.error; }
         }
         return result;
     };
@@ -5938,7 +5995,7 @@ var StoryManager = /** @class */ (function () {
         this._currentNodeName = _.last(path);
     };
     StoryManager.prototype.getFirstValidTransition = function (node) {
-        var e_32, _a;
+        var e_33, _a;
         try {
             for (var _b = __values(node.transitions), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -5962,12 +6019,12 @@ var StoryManager = /** @class */ (function () {
                 }
             }
         }
-        catch (e_32_1) { e_32 = { error: e_32_1 }; }
+        catch (e_33_1) { e_33 = { error: e_33_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_32) throw e_32.error; }
+            finally { if (e_33) throw e_33.error; }
         }
         return null;
     };
@@ -5978,7 +6035,7 @@ var StoryManager = /** @class */ (function () {
         return this.storyboard[name];
     };
     StoryManager.prototype.updateParty = function (party) {
-        var e_33, _a, e_34, _b;
+        var e_34, _a, e_35, _b;
         if (party.setLeader !== undefined) {
             this.theater.partyManager.leader = party.setLeader;
         }
@@ -5989,12 +6046,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberActive(m);
                 }
             }
-            catch (e_33_1) { e_33 = { error: e_33_1 }; }
+            catch (e_34_1) { e_34 = { error: e_34_1 }; }
             finally {
                 try {
                     if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                 }
-                finally { if (e_33) throw e_33.error; }
+                finally { if (e_34) throw e_34.error; }
             }
         }
         if (!_.isEmpty(party.setMembersInactive)) {
@@ -6004,12 +6061,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberInactive(m);
                 }
             }
-            catch (e_34_1) { e_34 = { error: e_34_1 }; }
+            catch (e_35_1) { e_35 = { error: e_35_1 }; }
             finally {
                 try {
                     if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
                 }
-                finally { if (e_34) throw e_34.error; }
+                finally { if (e_35) throw e_35.error; }
             }
         }
     };
@@ -6235,7 +6292,7 @@ var Tilemap = /** @class */ (function (_super) {
         }
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_35, _a;
+        var e_36, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -6253,12 +6310,12 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_35_1) { e_35 = { error: e_35_1 }; }
+        catch (e_36_1) { e_36 = { error: e_36_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_35) throw e_35.error; }
+            finally { if (e_36) throw e_36.error; }
         }
         World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };
@@ -6596,6 +6653,53 @@ var Warp = /** @class */ (function (_super) {
     };
     return Warp;
 }(PhysicsWorldObject));
+var WebAudio = /** @class */ (function () {
+    function WebAudio() {
+    }
+    Object.defineProperty(WebAudio, "started", {
+        get: function () { return this._started || this.globalContext.state === 'running'; },
+        enumerable: true,
+        configurable: true
+    });
+    WebAudio.start = function () {
+        if (this.started)
+            return;
+        this.globalContext.resume();
+        this.worldContext.resume();
+        this._started = true;
+    };
+    WebAudio.initContext = function () {
+        try {
+            // @ts-ignore
+            window.AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.globalContext = new AudioContext();
+            this.worldContext = new AudioContext();
+        }
+        catch (e) {
+            error('Web Audio API is not supported in this browser. Sounds will not be able to play.');
+        }
+    };
+    WebAudio.preloadSound = function (key, url, cb) {
+        var request = new XMLHttpRequest();
+        request.open('GET', url, true);
+        request.responseType = 'arraybuffer';
+        request.onload = function () {
+            WebAudio.globalContext.decodeAudioData(request.response, function (buffer) {
+                WebAudio.preloadedSounds[key] = {
+                    buffer: buffer,
+                };
+                if (cb)
+                    cb();
+            }, function (e) {
+                error("Could not decode sound " + key + ":", e);
+            });
+        };
+        request.send();
+    };
+    WebAudio.preloadedSounds = {};
+    WebAudio._started = false;
+    return WebAudio;
+}());
 var G;
 (function (G) {
     function distance(pt1, pt2) {
@@ -6868,7 +6972,7 @@ var Assets;
             defaultAnchor: { x: 0.5, y: 0.5 },
             spritesheet: { frameWidth: 16, frameHeight: 16 }
         },
-        'ground': {
+        'campfirering': {
             anchor: Anchor.CENTER
         },
         // Fonts
@@ -6877,6 +6981,7 @@ var Assets;
     Assets.sounds = {
         'test': {},
         'pew': {},
+        'music': {},
     };
     Assets.tilesets = {
         'world': {
@@ -7116,7 +7221,7 @@ var Campfire = /** @class */ (function (_super) {
         this.fireRadius.win();
     };
     Campfire.prototype.consumeItems = function () {
-        var e_36, _a;
+        var e_37, _a;
         var items = this.world.getWorldObjectsByType(Item).filter(function (item) { return item.consumable && !item.held; });
         try {
             for (var items_1 = __values(items), items_1_1 = items_1.next(); !items_1_1.done; items_1_1 = items_1.next()) {
@@ -7130,12 +7235,12 @@ var Campfire = /** @class */ (function (_super) {
                 this.consumeItem(item);
             }
         }
-        catch (e_36_1) { e_36 = { error: e_36_1 }; }
+        catch (e_37_1) { e_37 = { error: e_37_1 }; }
         finally {
             try {
                 if (items_1_1 && !items_1_1.done && (_a = items_1.return)) _a.call(items_1);
             }
-            finally { if (e_36) throw e_36.error; }
+            finally { if (e_37) throw e_37.error; }
         }
     };
     Campfire.prototype.consumeItem = function (item) {
@@ -7386,7 +7491,7 @@ var Human = /** @class */ (function (_super) {
         }
     };
     Human.prototype.getOverlappingItem = function () {
-        var e_37, _a;
+        var e_38, _a;
         var overlappingItemDistance = Infinity;
         var overlappingItem = undefined;
         try {
@@ -7401,12 +7506,12 @@ var Human = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_37_1) { e_37 = { error: e_37_1 }; }
+        catch (e_38_1) { e_38 = { error: e_38_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_37) throw e_37.error; }
+            finally { if (e_38) throw e_38.error; }
         }
         return overlappingItem;
     };
@@ -7856,6 +7961,17 @@ var Main = /** @class */ (function () {
     // no need to modify
     Main.preload = function () {
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
+        Debug.init({
+            debug: true,
+            allPhysicsBounds: false,
+            moveCameraWithArrows: true,
+            showMousePosition: false,
+            mousePositionFont: Assets.fonts.DELUXE16,
+            skipRate: 1,
+            programmaticInput: false,
+            autoplay: true,
+            skipMainMenu: true,
+        });
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
         WorldObject.DEFAULT_Z_BEHAVIOR = 'threequarters';
         global.gameWidth = Main.width;
@@ -7868,6 +7984,7 @@ var Main = /** @class */ (function () {
             backgroundColor: global.backgroundColor,
         });
         global.renderer = Main.renderer;
+        WebAudio.initContext();
         Preload.preload({
             textures: Assets.textures,
             sounds: Assets.sounds,
@@ -7914,17 +8031,9 @@ var Main = /** @class */ (function () {
         window.addEventListener("mousedown", function (event) { return Input.handleMouseDownEvent(event); }, false);
         window.addEventListener("mouseup", function (event) { return Input.handleMouseUpEvent(event); }, false);
         window.addEventListener("contextmenu", function (event) { return event.preventDefault(); }, false);
-        Debug.init({
-            debug: true,
-            allPhysicsBounds: false,
-            moveCameraWithArrows: true,
-            showMousePosition: false,
-            mousePositionFont: Assets.fonts.DELUXE16,
-            skipRate: 1,
-            programmaticInput: false,
-            autoplay: true,
-            skipMainMenu: true,
-        });
+        Main.renderer.view.onclick = function () {
+            WebAudio.start();
+        };
         this.game = new Game({
             mainMenuClass: IntroMenu,
             pauseMenuClass: PauseMenu,
@@ -8208,7 +8317,7 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.hitStuff = function () {
-        var e_38, _a;
+        var e_39, _a;
         if (!this.heldItem)
             return;
         var swingHitbox = this.getSwingHitbox();
@@ -8223,12 +8332,12 @@ var Player = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_38_1) { e_38 = { error: e_38_1 }; }
+        catch (e_39_1) { e_39 = { error: e_39_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_38) throw e_38.error; }
+            finally { if (e_39) throw e_39.error; }
         }
     };
     Player.prototype.getSwingHitbox = function () {
@@ -8480,8 +8589,8 @@ function getStages() {
                 {
                     constructor: Sprite,
                     x: 400, y: 400,
-                    texture: 'ground',
-                    layer: 'bg',
+                    texture: 'campfirering',
+                    layer: 'ground',
                 },
                 {
                     name: 'campfire',
@@ -8967,7 +9076,7 @@ var LogPiece = /** @class */ (function (_super) {
 }(Sprite));
 (function (LogPiece) {
     function getLogPieces(log) {
-        var e_39, _a;
+        var e_40, _a;
         var logPieces = [];
         var stemx = log.flipX ? 4 : 8;
         var logTexture = AssetCache.getTexture('log');
@@ -8991,12 +9100,12 @@ var LogPiece = /** @class */ (function (_super) {
                 }));
             }
         }
-        catch (e_39_1) { e_39 = { error: e_39_1 }; }
+        catch (e_40_1) { e_40 = { error: e_40_1 }; }
         finally {
             try {
                 if (subdivisions_1_1 && !subdivisions_1_1.done && (_a = subdivisions_1.return)) _a.call(subdivisions_1);
             }
-            finally { if (e_39) throw e_39.error; }
+            finally { if (e_40) throw e_40.error; }
         }
         return logPieces;
     }

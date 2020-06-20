@@ -102,10 +102,12 @@ class Game {
 
     onPause() {
         if (this.theater) this.theater.onPause();
+        WebAudio.worldContext.suspend();
     }
 
     onUnpause() {
         if (this.theater) this.theater.onUnpause();
+        WebAudio.worldContext.resume();
     }
 
     pauseGame() {

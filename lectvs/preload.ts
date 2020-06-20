@@ -1,6 +1,12 @@
 /// <reference path="texture.ts"/>
 
 namespace Preload {
+    export type Resource = {
+        name: string;
+        src: string;
+        done: boolean;
+    }
+
     export type Options = {
         textures?: Dict<Preload.Texture>;
         sounds? : Dict<Preload.Sound>;
@@ -58,7 +64,13 @@ namespace Preload {
 }
 
 class Preload {
+    private static preloadOptions: Preload.Options;
+    private static resources: Preload.Resource[];
+
     static preload(options: Preload.Options) {
+        this.preloadOptions = options;
+        this.resources = [];
+
         if (options.textures) {
             for (let key in options.textures) {
                 this.preloadTexture(key, options.textures[key]);
@@ -77,29 +89,7 @@ class Preload {
             }
         }
 
-        // https://github.com/seleb/HowlerPixiLoaderMiddleware/blob/master/index.js
-        PIXI.Loader.shared.use((resource: PIXI.LoaderResource, next: (...params: any[]) => any) => {
-            if (resource && _.contains(["wav", "ogg", "mp3", "mpeg"], resource.extension)) {
-                /// @ts-ignore
-                //resource._setFlag(PIXI.LoaderResource.STATUS_FLAGS.LOADING, true);
-                const options = JSON.parse(JSON.stringify(resource.metadata));
-                options.src = [resource.url];
-                options.onload = function () {
-                  //resource.complete();
-                  next();
-                };
-                options.onloaderror = function (id, message) {
-                  console.error(resource);
-                  resource.abort(message);
-                  next();
-                }
-                /// @ts-ignore
-                resource.data = new Howl(options);
-            } else {
-                next();
-            }
-        });
-        PIXI.Loader.shared.load(() => this.load(options));
+        PIXI.Loader.shared.load();
     }
 
     static load(options: Preload.Options) {
@@ -132,11 +122,21 @@ class Preload {
 
     static preloadTexture(key: string, texture: Preload.Texture) {
         let url = texture.url || `assets/${key}.png`;
-        PIXI.Loader.shared.add(key, url);
+        let resource = {
+            name: key,
+            src: url,
+            done: false
+        };
+        this.resources.push(resource);
+        PIXI.Loader.shared.add(key, url, undefined, () => this.onLoadResource(resource));
     }
 
     static loadTexture(key: string, texture: Preload.Texture) {
         let baseTexture: PIXI.BaseTexture = PIXI.utils.TextureCache[key];
+        if (!baseTexture) {
+            error(`Failed to preload texture ${key}`);
+            return;
+        }
 
         let mainTexture = new PIXI.Texture(baseTexture);
         let rect = texture.rect;
@@ -196,20 +196,44 @@ class Preload {
 
     static preloadSound(key: string, sound: Preload.Sound) {
         let url = sound.url || `assets/${key}.wav`;
-        PIXI.Loader.shared.add(key, url);
+        let resource = {
+            name: key,
+            src: url,
+            done: false
+        };
+        this.resources.push(resource);
+        WebAudio.preloadSound(key, url, () => this.onLoadResource(resource));
     }
 
     static loadSound(key: string, sound: Preload.Sound) {
-        let howl: Howler.Howl = PIXI.Loader.shared.resources[key].data;
-        AssetCache.sounds[key] = new SoundAsset(howl);
+        let preloadedSound = WebAudio.preloadedSounds[key];
+        if (!preloadedSound) {
+            error(`Failed to preload sound ${key}`);
+            return;
+        }
+        AssetCache.sounds[key] = {
+            buffer: preloadedSound.buffer,
+        };
     }
 
     static preloadPyxelTilemap(key: string, tilemap: Preload.PyxelTilemap) {
         let url = tilemap.url || `assets/${key}.json`;
-        PIXI.Loader.shared.add(key + this.TILEMAP_KEY_SUFFIX, url);
+        let resource = {
+            name: key,
+            src: url,
+            done: false
+        };
+        this.resources.push(resource);
+        PIXI.Loader.shared.add(key + this.TILEMAP_KEY_SUFFIX, url, () => this.onLoadResource(resource));
     }
 
     static loadPyxelTilemap(key: string, tilemap: Preload.PyxelTilemap) {
+        let tilemapResource = PIXI.Loader.shared.resources[key + this.TILEMAP_KEY_SUFFIX];
+        if (!tilemapResource || !tilemapResource.data) {
+            error(`Failed to preload PyxelTilemap ${key}`);
+            return;
+        }
+
         let tilemapJson: Preload.PyxelTilemapJson = PIXI.Loader.shared.resources[key + this.TILEMAP_KEY_SUFFIX].data;
 
         let tilemapForCache: Tilemap.Tilemap = {
@@ -228,6 +252,13 @@ class Preload {
             tilemapForCache.layers.push(tilemapLayer);
         }
         AssetCache.tilemaps[key] = tilemapForCache;
+    }
+
+    static onLoadResource(resource: Preload.Resource) {
+        resource.done = true;
+        if (this.resources.every(r => r.done)) {
+            this.load(this.preloadOptions);
+        }
     }
 
     private static TILEMAP_KEY_SUFFIX = '_tilemap_';

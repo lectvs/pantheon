@@ -87,6 +87,8 @@ postpostjam
 - /rename World => Stage, WorldObject => Entity, PhysicsWorldObject => PhysicsEntity (decided not to do)
 - onboard storyboard with StateMachine
 - refactor the Main class
-- loading screen/progress bar
+- preloading improvements
+    - loading screen/progress bar
+    - timeout on preloading
 - /get rid of Pt3
 - move tileset animation fields from Assets to Tilemap.Config

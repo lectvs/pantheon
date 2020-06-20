@@ -311,8 +311,8 @@ class World {
 
     }
 
-    playSound(sound: string | SoundAsset) {
-        return global.game.soundManager.playSound(sound, this);
+    playSound(sound: string | Sound.Asset) {
+        return global.game.soundManager.playSound(sound, Sound.Type.WORLD);
     }
     
     removeWorldObject<T extends WorldObject>(obj: T | string): T {

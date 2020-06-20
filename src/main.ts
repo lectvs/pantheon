@@ -15,6 +15,18 @@ class Main {
     static preload() {
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
 
+        Debug.init({
+            debug: true,
+            allPhysicsBounds: false,
+            moveCameraWithArrows: true,
+            showMousePosition: false,
+            mousePositionFont: Assets.fonts.DELUXE16,
+            skipRate: 1,
+            programmaticInput: false,
+            autoplay: true,
+            skipMainMenu: true,
+        });
+
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
         WorldObject.DEFAULT_Z_BEHAVIOR = 'threequarters';
@@ -29,6 +41,8 @@ class Main {
             backgroundColor: global.backgroundColor,
         });
         global.renderer = Main.renderer;
+        
+        WebAudio.initContext();
 
         Preload.preload({
             textures: Assets.textures,
@@ -81,17 +95,9 @@ class Main {
         window.addEventListener("mouseup", event => Input.handleMouseUpEvent(event), false);
         window.addEventListener("contextmenu", event => event.preventDefault(), false);
 
-        Debug.init({
-            debug: true,
-            allPhysicsBounds: false,
-            moveCameraWithArrows: true,
-            showMousePosition: false,
-            mousePositionFont: Assets.fonts.DELUXE16,
-            skipRate: 1,
-            programmaticInput: false,
-            autoplay: true,
-            skipMainMenu: true,
-        });
+        Main.renderer.view.onclick = () => {
+            WebAudio.start();
+        }
 
         this.game = new Game({
             mainMenuClass: IntroMenu,
