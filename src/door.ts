@@ -25,5 +25,6 @@ class Door extends Sprite {
     open() {
         this.colliding = false;
         this.playAnimation('open');
+        this.world.playSound('dooropen');
     }
 }

@@ -46,14 +46,18 @@ juice
     - /suggestion: remove pixiFilter field (get from cache when needed)
 - /add a z component to position/physics
     - /change layer sort to a function instead of a sortKey
+- /unlink child from parent on removal
+- /sound effects
 - fix player random flickering (rounding error or smooth movement artifact?)
     - /suggestion: snap camera to world units
     - /can we just snap everything to world units and not camera units?
 - random noise on fire lighting
     - perlin noise??
 - fix flickering fire
-- /unlink child from parent on removal
-- sound
+- fix fade out in Game's loadTheater()
+- adjust sound effects
+- make sound attached to game/world/objects
+    - require update to continue playing?
 
 postpostjam
 - /Anchor.MIDDLE, etc
@@ -92,3 +96,4 @@ postpostjam
     - timeout on preloading
 - /get rid of Pt3
 - move tileset animation fields from Assets to Tilemap.Config
+- cheats system (console only for now)

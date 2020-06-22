@@ -34,6 +34,13 @@ class SoundManager {
         return soundInstance;
     }
 
+    clearSounds() {
+        for (let sound of this.activeSounds) {
+            sound.pause();
+        }
+        this.activeSounds = [];
+    }
+
     onWebAudioStart() {
         for (let sound of this.activeSounds) {
             sound.onWebAudioStart();

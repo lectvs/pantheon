@@ -52,6 +52,9 @@ class Item extends Sprite {
         super.update(delta);
 
         if (this.z <= 0) {
+            if (this.lastz > 0) {
+                this.world.playSound('land');
+            }
             this.z = 0;
             this.vz = 0;
         }

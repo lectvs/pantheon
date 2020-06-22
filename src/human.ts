@@ -4,6 +4,7 @@ namespace Human {
         preSwingWait?: number;
         postSwingWait?: number;
         itemGrabDistance?: number;
+        playSoundOnPickup?: boolean;
     }
 }
 
@@ -17,6 +18,7 @@ class Human extends Sprite {
 
     private speed: number;
     private itemGrabDistance: number;
+    private playSoundOnPickup: boolean;
     private direction: Direction2D;
 
     protected heldItem: Item;
@@ -44,7 +46,10 @@ class Human extends Sprite {
                         if (t === 1) this.heldItem.angle = 0;
                     }),
                     S.chain(
-                        S.call(() => this.playAnimation('swing', 0, true)),
+                        S.call(() => {
+                            this.playAnimation('swing', 0, true);
+                            this.world.playSound('swing');
+                        }),
                         S.wait(Human.swingTime * 0.25),
                         S.call(() => {
                             this.hitStuff();
@@ -61,6 +66,7 @@ class Human extends Sprite {
             callback: () => {
                 this.playAnimation('hurt', 0, true);
                 this.dropHeldItem();
+                this.world.playSound('hit');
             },
             script: S.chain(
                 S.doOverTime(0.5, t => {
@@ -79,6 +85,7 @@ class Human extends Sprite {
 
         this.speed = O.getOrDefault(config.speed, 40);
         this.itemGrabDistance = O.getOrDefault(config.itemGrabDistance, 16);
+        this.playSoundOnPickup = O.getOrDefault(config.playSoundOnPickup, true);
         this.direction = Direction2D.RIGHT;
     }
 
@@ -198,6 +205,9 @@ class Human extends Sprite {
         this.heldItem.offset.y = 0;
         this.heldItem.z = Human.itemOffsetY;
         World.Actions.setPhysicsGroup(this.heldItem, null);
+        if (this.playSoundOnPickup) {
+            global.world.playSound('pickup');
+        }
     }
 
     private dropHeldItem() {
@@ -231,6 +241,7 @@ class Human extends Sprite {
             droppedItem.vx = Human.throwSpeed * Math.sign(this.vx);
             droppedItem.vy = Human.throwSpeed * Math.sign(this.vy);
             this.playAnimation('throw', 0, true);
+            this.world.playSound('throw');
             return;
         }
     }

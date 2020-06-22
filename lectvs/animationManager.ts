@@ -118,6 +118,11 @@ class AnimationManager {
         if (this.currentFrame.texture) {
             this.sprite.setTexture(this.currentFrame.texture);
         }
+
+        // Call the callback
+        if (this.currentFrame.callback) {
+            this.currentFrame.callback();
+        }
     }
 
     stop() {

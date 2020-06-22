@@ -74,9 +74,25 @@ namespace Assets {
     }
 
     export const sounds: Dict<Preload.Sound> = {
-        'test': {},
-        'pew': {},
-        'music': {},
+        // Debug
+        'debug': {},
+
+        // SFX
+        'click': {},
+        'chop': {},
+        'swing': { url: 'assets/swing.mp3' },
+        'hit': { url: 'assets/hit.mp3' },
+        'walk': { url: 'assets/walk.mp3' },
+        'pickup': {},
+        'throw': { url: 'assets/throw.mp3' },
+        'land': {},
+
+        'fire': {},
+        'itemburn': {},
+        'fireout': {},
+        'fireroar': {},
+
+        'dooropen': { url: 'assets/dooropen.mp3' },
     }
 
     export const tilesets: Dict<Tilemap.Tileset> = {

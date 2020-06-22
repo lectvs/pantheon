@@ -4,6 +4,8 @@ class TorchLightManager extends WorldObject {
     torchRefuelDistance = 16;
     torchFuelEmptyThreshold = 0.1;
 
+    torchSound: Sound;
+
     get torchLightX() {
         if (!this.world.hasWorldObject('torch')) {
             return 0;
@@ -64,7 +66,10 @@ class TorchLightManager extends WorldObject {
                         smoke.alpha = 1-t;
                     }
                 });
+                this.world.playSound('fireout');
             }
+
+            this.updateTorchSound();
         }
 
         if (Random.boolean(10*delta)) {
@@ -72,5 +77,25 @@ class TorchLightManager extends WorldObject {
         }
 
         super.update(delta);
+    }
+
+    updateTorchSound() {
+        if (!this.torchSound) {
+            this.torchSound = this.world.playSound('fire');
+            this.torchSound.loop = true;
+        }
+
+        let torchBaseVolume = this.getTorchSoundVolume();
+        let player = this.world.getWorldObjectByType(Player);
+        let distance = M.distance(player.x, player.y, this.x, this.y);
+        let volume = torchBaseVolume*Math.max(1 - distance/100, 0);
+        this.torchSound.volume = volume;
+    }
+
+    getTorchSoundVolume() {
+        if (this.torchFuel <= 0) {
+            return 0;
+        }
+        return 0.7;
     }
 }

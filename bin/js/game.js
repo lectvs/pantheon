@@ -244,6 +244,10 @@ var AnimationManager = /** @class */ (function () {
         if (this.currentFrame.texture) {
             this.sprite.setTexture(this.currentFrame.texture);
         }
+        // Call the callback
+        if (this.currentFrame.callback) {
+            this.currentFrame.callback();
+        }
     };
     AnimationManager.prototype.stop = function () {
         this.setCurrentFrame(null, true, true);
@@ -426,7 +430,16 @@ var Animations = /** @class */ (function () {
             result.frames.push(animationFrame);
         }
         result.frames[result.frames.length - 1].nextFrameRef = config.nextFrameRef;
+        if (config.overrides) {
+            for (var key in config.overrides) {
+                var frame = key;
+                result.frames[frame] = this.overrideFrame(result.frames[frame], config.overrides[key]);
+            }
+        }
         return result;
+    };
+    Animations.overrideFrame = function (frame, override) {
+        return O.withOverrides(frame, override);
     };
     return Animations;
 }());
@@ -1330,11 +1343,12 @@ var S;
     }
     S.showSlide = showSlide;
 })(S || (S = {}));
-var DebugValues = /** @class */ (function () {
-    function DebugValues() {
+var Debug = /** @class */ (function () {
+    function Debug() {
     }
-    DebugValues.prototype.init = function (config) {
+    Debug.init = function (config) {
         Debug.DEBUG = config.debug;
+        Debug.CHEATS_ENABLED = config.cheatsEnabled;
         Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
         Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
         Debug.SHOW_MOUSE_POSITION = config.showMousePosition;
@@ -1344,57 +1358,62 @@ var DebugValues = /** @class */ (function () {
         Debug.AUTOPLAY = config.autoplay;
         Debug.SKIP_MAIN_MENU = config.skipMainMenu;
     };
-    Object.defineProperty(DebugValues.prototype, "DEBUG", {
+    Object.defineProperty(Debug, "DEBUG", {
         get: function () { return this._DEBUG; },
         set: function (value) { this._DEBUG = value; },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(DebugValues.prototype, "ALL_PHYSICS_BOUNDS", {
+    Object.defineProperty(Debug, "CHEATS_ENABLED", {
+        get: function () { return this.DEBUG && this._CHEATS_ENABLED; },
+        set: function (value) { this._CHEATS_ENABLED = value; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Debug, "ALL_PHYSICS_BOUNDS", {
         get: function () { return this.DEBUG && this._ALL_PHYSICS_BOUNDS; },
         set: function (value) { this._ALL_PHYSICS_BOUNDS = value; },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(DebugValues.prototype, "MOVE_CAMERA_WITH_ARROWS", {
+    Object.defineProperty(Debug, "MOVE_CAMERA_WITH_ARROWS", {
         get: function () { return this.DEBUG && this._MOVE_CAMERA_WITH_ARROWS; },
         set: function (value) { this._MOVE_CAMERA_WITH_ARROWS = value; },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(DebugValues.prototype, "SHOW_MOUSE_POSITION", {
+    Object.defineProperty(Debug, "SHOW_MOUSE_POSITION", {
         get: function () { return this.DEBUG && this._SHOW_MOUSE_POSITION; },
         set: function (value) { this._SHOW_MOUSE_POSITION = value; },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(DebugValues.prototype, "SKIP_RATE", {
+    Object.defineProperty(Debug, "SKIP_RATE", {
         get: function () { return this.DEBUG ? this._SKIP_RATE : 1; },
         set: function (value) { this._SKIP_RATE = value; },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(DebugValues.prototype, "PROGRAMMATIC_INPUT", {
+    Object.defineProperty(Debug, "PROGRAMMATIC_INPUT", {
         get: function () { return this.DEBUG && this._PROGRAMMATIC_INPUT; },
         set: function (value) { this._PROGRAMMATIC_INPUT = value; },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(DebugValues.prototype, "AUTOPLAY", {
+    Object.defineProperty(Debug, "AUTOPLAY", {
         get: function () { return this.DEBUG && this._AUTOPLAY; },
         set: function (value) { this._AUTOPLAY = value; },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(DebugValues.prototype, "SKIP_MAIN_MENU", {
+    Object.defineProperty(Debug, "SKIP_MAIN_MENU", {
         get: function () { return this.DEBUG && this._SKIP_MAIN_MENU; },
         set: function (value) { this._SKIP_MAIN_MENU = value; },
         enumerable: true,
         configurable: true
     });
-    return DebugValues;
+    return Debug;
 }());
-var Debug = new DebugValues();
 function get(name) {
     var worldObject = global.game.theater.currentWorld.getWorldObjectByName(name);
     if (worldObject)
@@ -1549,6 +1568,7 @@ var WorldObject = /** @class */ (function () {
         this.alive = true;
         this.lastx = this.x;
         this.lasty = this.y;
+        this.lastz = this.z;
         this.controllable = O.getOrDefault(config.controllable, false);
         this.controller = {};
         this.controllerSchema = {};
@@ -1629,6 +1649,7 @@ var WorldObject = /** @class */ (function () {
     WorldObject.prototype.preUpdate = function () {
         this.lastx = this.x;
         this.lasty = this.y;
+        this.lastz = this.z;
         if (this.isControlled) {
             this.updateControllerFromSchema();
         }
@@ -2854,6 +2875,7 @@ var Game = /** @class */ (function () {
         this.menuSystem.loadMenu(this.mainMenuClass);
     };
     Game.prototype.loadTheater = function () {
+        this.soundManager.clearSounds();
         this.theater = new this.theaterClass(this.theaterConfig);
         global.theater = this.theater;
         // fade out since the cutscene can't do this in 1 frame
@@ -3387,6 +3409,7 @@ var World = /** @class */ (function () {
             }
             finally { if (e_12) throw e_12.error; }
         }
+        this.useGlobalSound = O.getOrDefault(config.useGlobalSound, false);
         this.debugMousePositionText = this.addWorldObject({
             constructor: SpriteText,
             x: 0, y: 0,
@@ -3663,6 +3686,9 @@ var World = /** @class */ (function () {
     World.prototype.onUnpause = function () {
     };
     World.prototype.playSound = function (sound) {
+        if (this.useGlobalSound) {
+            return global.game.soundManager.playSound(sound);
+        }
         return global.game.soundManager.playSound(sound, Sound.Type.WORLD);
     };
     World.prototype.removeWorldObject = function (obj) {
@@ -5370,14 +5396,44 @@ var Sound = /** @class */ (function () {
         if (type === void 0) { type = Sound.Type.GLOBAL; }
         this.asset = asset;
         this.type = type;
-        this._done = false;
-        this.pausedPosition = undefined;
         if (!WebAudio.started)
             this.preWebAudioStartStartTime = performance.now();
+        this.gainNode = this.context.createGain();
+        this.gainNode.connect(this.context.destination);
+        this._speed = 1;
+        this._loop = false;
         this.start();
     }
     Object.defineProperty(Sound.prototype, "context", {
         get: function () { return this.type === Sound.Type.WORLD ? WebAudio.worldContext : WebAudio.globalContext; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Sound.prototype, "volume", {
+        get: function () { return this.gainNode.gain.value; },
+        set: function (value) { this.gainNode.gain.value = value; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Sound.prototype, "speed", {
+        get: function () {
+            return this.webAudioSound ? this.webAudioSound.playbackRate.value : this._speed;
+        },
+        set: function (value) {
+            this._speed = value;
+            if (this.webAudioSound)
+                this.webAudioSound.playbackRate.value = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Sound.prototype, "loop", {
+        get: function () { return this.webAudioSound ? this.webAudioSound.loop : this._loop; },
+        set: function (value) {
+            this._loop = value;
+            if (this.webAudioSound)
+                this.webAudioSound.loop = value;
+        },
         enumerable: true,
         configurable: true
     });
@@ -5397,17 +5453,13 @@ var Sound = /** @class */ (function () {
         this.pausedPosition = this.context.currentTime - this.startTime;
         this.webAudioSound.onended = undefined;
         this.stop();
-        debug(this.pausedPosition);
     };
     Sound.prototype.unpause = function () {
         this.start(this.pausedPosition);
     };
     Sound.prototype.onWebAudioStart = function () {
         var pos = (performance.now() - this.preWebAudioStartStartTime) / 1000;
-        if (this.paused) {
-            this.pausedPosition += pos;
-        }
-        else {
+        if (!this.paused) {
             this.pause();
             this.pausedPosition += pos;
             this.unpause();
@@ -5418,13 +5470,16 @@ var Sound = /** @class */ (function () {
         if (offset === void 0) { offset = 0; }
         this.webAudioSound = this.context.createBufferSource();
         this.webAudioSound.buffer = this.asset.buffer;
-        this.webAudioSound.connect(this.context.destination);
+        this.webAudioSound.connect(this.gainNode);
         this.webAudioSound.onended = function () {
             _this._done = true;
         };
+        this.webAudioSound.playbackRate.value = this._speed;
+        this.webAudioSound.loop = this._loop;
         this.webAudioSound.start(0, offset);
         this.startTime = this.context.currentTime - offset;
         this.pausedPosition = undefined;
+        this._done = false;
     };
     Sound.prototype.stop = function () {
         if (this.webAudioSound) {
@@ -5469,12 +5524,12 @@ var SoundManager = /** @class */ (function () {
         this.activeSounds.push(soundInstance);
         return soundInstance;
     };
-    SoundManager.prototype.onWebAudioStart = function () {
+    SoundManager.prototype.clearSounds = function () {
         var e_29, _a;
         try {
             for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var sound = _c.value;
-                sound.onWebAudioStart();
+                sound.pause();
             }
         }
         catch (e_29_1) { e_29 = { error: e_29_1 }; }
@@ -5483,6 +5538,23 @@ var SoundManager = /** @class */ (function () {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
             finally { if (e_29) throw e_29.error; }
+        }
+        this.activeSounds = [];
+    };
+    SoundManager.prototype.onWebAudioStart = function () {
+        var e_30, _a;
+        try {
+            for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var sound = _c.value;
+                sound.onWebAudioStart();
+            }
+        }
+        catch (e_30_1) { e_30 = { error: e_30_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_30) throw e_30.error; }
         }
     };
     return SoundManager;
@@ -5564,7 +5636,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_30, _a;
+        var e_31, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -5578,12 +5650,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_30_1) { e_30 = { error: e_30_1 }; }
+            catch (e_31_1) { e_31 = { error: e_31_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_30) throw e_30.error; }
+                finally { if (e_31) throw e_31.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -5732,7 +5804,7 @@ var StateMachine = /** @class */ (function () {
         return this.states[name];
     };
     StateMachine.prototype.getValidTransition = function (state) {
-        var e_31, _a;
+        var e_32, _a;
         try {
             for (var _b = __values(state.transitions || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -5749,12 +5821,12 @@ var StateMachine = /** @class */ (function () {
                 }
             }
         }
-        catch (e_31_1) { e_31 = { error: e_31_1 }; }
+        catch (e_32_1) { e_32 = { error: e_32_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_31) throw e_31.error; }
+            finally { if (e_32) throw e_32.error; }
         }
         return undefined;
     };
@@ -5950,7 +6022,7 @@ var StoryManager = /** @class */ (function () {
         this.storyConfig.execute();
     };
     StoryManager.prototype.getInteractableObjects = function (node, stageName) {
-        var e_32, _a;
+        var e_33, _a;
         var result = new Set();
         if (!node)
             return result;
@@ -5967,12 +6039,12 @@ var StoryManager = /** @class */ (function () {
                 result.add(transition.with);
             }
         }
-        catch (e_32_1) { e_32 = { error: e_32_1 }; }
+        catch (e_33_1) { e_33 = { error: e_33_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_32) throw e_32.error; }
+            finally { if (e_33) throw e_33.error; }
         }
         return result;
     };
@@ -5995,7 +6067,7 @@ var StoryManager = /** @class */ (function () {
         this._currentNodeName = _.last(path);
     };
     StoryManager.prototype.getFirstValidTransition = function (node) {
-        var e_33, _a;
+        var e_34, _a;
         try {
             for (var _b = __values(node.transitions), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -6019,12 +6091,12 @@ var StoryManager = /** @class */ (function () {
                 }
             }
         }
-        catch (e_33_1) { e_33 = { error: e_33_1 }; }
+        catch (e_34_1) { e_34 = { error: e_34_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_33) throw e_33.error; }
+            finally { if (e_34) throw e_34.error; }
         }
         return null;
     };
@@ -6035,7 +6107,7 @@ var StoryManager = /** @class */ (function () {
         return this.storyboard[name];
     };
     StoryManager.prototype.updateParty = function (party) {
-        var e_34, _a, e_35, _b;
+        var e_35, _a, e_36, _b;
         if (party.setLeader !== undefined) {
             this.theater.partyManager.leader = party.setLeader;
         }
@@ -6046,12 +6118,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberActive(m);
                 }
             }
-            catch (e_34_1) { e_34 = { error: e_34_1 }; }
+            catch (e_35_1) { e_35 = { error: e_35_1 }; }
             finally {
                 try {
                     if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                 }
-                finally { if (e_34) throw e_34.error; }
+                finally { if (e_35) throw e_35.error; }
             }
         }
         if (!_.isEmpty(party.setMembersInactive)) {
@@ -6061,12 +6133,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberInactive(m);
                 }
             }
-            catch (e_35_1) { e_35 = { error: e_35_1 }; }
+            catch (e_36_1) { e_36 = { error: e_36_1 }; }
             finally {
                 try {
                     if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
                 }
-                finally { if (e_35) throw e_35.error; }
+                finally { if (e_36) throw e_36.error; }
             }
         }
     };
@@ -6292,7 +6364,7 @@ var Tilemap = /** @class */ (function (_super) {
         }
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_36, _a;
+        var e_37, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -6310,12 +6382,12 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_36_1) { e_36 = { error: e_36_1 }; }
+        catch (e_37_1) { e_37 = { error: e_37_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_36) throw e_36.error; }
+            finally { if (e_37) throw e_37.error; }
         }
         World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };
@@ -6979,9 +7051,22 @@ var Assets;
         'deluxe16': {},
     };
     Assets.sounds = {
-        'test': {},
-        'pew': {},
-        'music': {},
+        // Debug
+        'debug': {},
+        // SFX
+        'click': {},
+        'chop': {},
+        'swing': { url: 'assets/swing.mp3' },
+        'hit': { url: 'assets/hit.mp3' },
+        'walk': { url: 'assets/walk.mp3' },
+        'pickup': {},
+        'throw': { url: 'assets/throw.mp3' },
+        'land': {},
+        'fire': {},
+        'itemburn': {},
+        'fireout': {},
+        'fireroar': {},
+        'dooropen': { url: 'assets/dooropen.mp3' },
     };
     Assets.tilesets = {
         'world': {
@@ -7129,6 +7214,13 @@ function BASE_STAGE() {
         ],
     };
 }
+function MENU_BASE_STAGE() {
+    return {
+        constructor: World,
+        backgroundColor: 0x000000,
+        useGlobalSound: true,
+    };
+}
 function WORLD_BOUNDS(left, top, right, bottom) {
     var thickness = 12;
     var width = right - left;
@@ -7184,6 +7276,7 @@ var Campfire = /** @class */ (function (_super) {
         _this.fireBuffer = new FireBuffer();
         _this.currentlyConsumedItems = [];
         _this.hasConsumedGasoline = false;
+        _this.fireSoundVolume = 1;
         return _this;
     }
     Object.defineProperty(Campfire.prototype, "isOut", {
@@ -7193,6 +7286,7 @@ var Campfire = /** @class */ (function (_super) {
     });
     Campfire.prototype.update = function (delta) {
         _super.prototype.update.call(this, delta);
+        this.updateSound();
         this.consumeItems();
         this.fireRadius.update(delta);
         var fireScale = 0.2 + this.fireRadius.getRadiusPercent();
@@ -7201,6 +7295,16 @@ var Campfire = /** @class */ (function (_super) {
         if (Random.boolean(5 * delta)) {
             this.fireSprite.offset.y = Random.int(0, 1);
         }
+    };
+    Campfire.prototype.updateSound = function () {
+        if (!this.fireSound) {
+            this.fireSound = this.world.playSound('fire');
+            this.fireSound.loop = true;
+        }
+        var player = this.world.getWorldObjectByType(Player);
+        var distance = M.distance(player.x, player.y, this.x, this.y);
+        var volume = this.fireSoundVolume * Math.max(1 - distance / 200, 0);
+        this.fireSound.volume = volume;
     };
     Campfire.prototype.extinguish = function () {
         this.fireSprite.alpha = 0;
@@ -7217,11 +7321,14 @@ var Campfire = /** @class */ (function (_super) {
     Campfire.prototype.stopBurn = function () {
         this.fireRadius.stopBurn();
     };
+    Campfire.prototype.stopFireBurnSound = function () {
+        this.fireSoundVolume = 0;
+    };
     Campfire.prototype.win = function () {
         this.fireRadius.win();
     };
     Campfire.prototype.consumeItems = function () {
-        var e_37, _a;
+        var e_38, _a;
         var items = this.world.getWorldObjectsByType(Item).filter(function (item) { return item.consumable && !item.held; });
         try {
             for (var items_1 = __values(items), items_1_1 = items_1.next(); !items_1_1.done; items_1_1 = items_1.next()) {
@@ -7235,12 +7342,12 @@ var Campfire = /** @class */ (function (_super) {
                 this.consumeItem(item);
             }
         }
-        catch (e_37_1) { e_37 = { error: e_37_1 }; }
+        catch (e_38_1) { e_38 = { error: e_38_1 }; }
         finally {
             try {
                 if (items_1_1 && !items_1_1.done && (_a = items_1.return)) _a.call(items_1);
             }
-            finally { if (e_37) throw e_37.error; }
+            finally { if (e_38) throw e_38.error; }
         }
     };
     Campfire.prototype.consumeItem = function (item) {
@@ -7248,6 +7355,7 @@ var Campfire = /** @class */ (function (_super) {
         if (item.type === Item.Type.LOG) {
             this.world.addWorldObjects(LogPiece.getLogPieces(item));
             this.world.removeWorldObject(item);
+            this.world.playSound('itemburn');
             this.runScript(S.chain(S.wait(0.5), S.call(function () {
                 _this.fireRadius.increaseTime();
                 if (item.name !== 'start_log') {
@@ -7276,6 +7384,26 @@ var Campfire = /** @class */ (function (_super) {
     };
     return Campfire;
 }(Sprite));
+var cheat;
+(function (cheat) {
+    function lose() {
+        if (!Debug.CHEATS_ENABLED)
+            return;
+        /// @ts-ignore
+        global.world.getWorldObjectByType(Campfire).fireRadius.timer.time = 100;
+    }
+    cheat.lose = lose;
+    function win() {
+        if (!Debug.CHEATS_ENABLED)
+            return;
+        var gasoline = global.world.getWorldObjectsByType(Item).filter(function (item) { return item.type === Item.Type.GASOLINE; })[0];
+        var campfire = global.world.getWorldObjectByType(Campfire);
+        gasoline.x = campfire.x;
+        gasoline.y = campfire.y;
+        gasoline.z = 0;
+    }
+    cheat.win = win;
+})(cheat || (cheat = {}));
 var Door = /** @class */ (function (_super) {
     __extends(Door, _super);
     function Door(config) {
@@ -7301,6 +7429,7 @@ var Door = /** @class */ (function (_super) {
     Door.prototype.open = function () {
         this.colliding = false;
         this.playAnimation('open');
+        this.world.playSound('dooropen');
     };
     return Door;
 }(Sprite));
@@ -7388,7 +7517,10 @@ var Human = /** @class */ (function (_super) {
                 _this.heldItem.angle = angle;
                 if (t === 1)
                     _this.heldItem.angle = 0;
-            }), S.chain(S.call(function () { return _this.playAnimation('swing', 0, true); }), S.wait(Human.swingTime * 0.25), S.call(function () {
+            }), S.chain(S.call(function () {
+                _this.playAnimation('swing', 0, true);
+                _this.world.playSound('swing');
+            }), S.wait(Human.swingTime * 0.25), S.call(function () {
                 _this.hitStuff();
             }))), S.wait(O.getOrDefault(config.postSwingWait, 0))),
             transitions: [
@@ -7399,6 +7531,7 @@ var Human = /** @class */ (function (_super) {
             callback: function () {
                 _this.playAnimation('hurt', 0, true);
                 _this.dropHeldItem();
+                _this.world.playSound('hit');
             },
             script: S.chain(S.doOverTime(0.5, function (t) {
                 _this.z = 16 * Math.exp(-4 * t) * Math.abs(Math.sin(4 * Math.PI * t * t));
@@ -7412,6 +7545,7 @@ var Human = /** @class */ (function (_super) {
         _this.setState('normal');
         _this.speed = O.getOrDefault(config.speed, 40);
         _this.itemGrabDistance = O.getOrDefault(config.itemGrabDistance, 16);
+        _this.playSoundOnPickup = O.getOrDefault(config.playSoundOnPickup, true);
         _this.direction = Direction2D.RIGHT;
         return _this;
     }
@@ -7491,7 +7625,7 @@ var Human = /** @class */ (function (_super) {
         }
     };
     Human.prototype.getOverlappingItem = function () {
-        var e_38, _a;
+        var e_39, _a;
         var overlappingItemDistance = Infinity;
         var overlappingItem = undefined;
         try {
@@ -7506,12 +7640,12 @@ var Human = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_38_1) { e_38 = { error: e_38_1 }; }
+        catch (e_39_1) { e_39 = { error: e_39_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_38) throw e_38.error; }
+            finally { if (e_39) throw e_39.error; }
         }
         return overlappingItem;
     };
@@ -7552,6 +7686,9 @@ var Human = /** @class */ (function (_super) {
         this.heldItem.offset.y = 0;
         this.heldItem.z = Human.itemOffsetY;
         World.Actions.setPhysicsGroup(this.heldItem, null);
+        if (this.playSoundOnPickup) {
+            global.world.playSound('pickup');
+        }
     };
     Human.prototype.dropHeldItem = function () {
         if (!this.heldItem)
@@ -7583,6 +7720,7 @@ var Human = /** @class */ (function (_super) {
             droppedItem.vx = Human.throwSpeed * Math.sign(this.vx);
             droppedItem.vy = Human.throwSpeed * Math.sign(this.vy);
             this.playAnimation('throw', 0, true);
+            this.world.playSound('throw');
             return;
         }
     };
@@ -7669,6 +7807,9 @@ var Item = /** @class */ (function (_super) {
         this.gravityz = this.held ? 0 : -100;
         _super.prototype.update.call(this, delta);
         if (this.z <= 0) {
+            if (this.lastz > 0) {
+                this.world.playSound('land');
+            }
             this.z = 0;
             this.vz = 0;
         }
@@ -7736,7 +7877,7 @@ var IntroMenu = /** @class */ (function (_super) {
     __extends(IntroMenu, _super);
     function IntroMenu(menuSystem) {
         var _this = _super.call(this, menuSystem, {
-            backgroundColor: 0x000000,
+            parent: MENU_BASE_STAGE(),
             worldObjects: [
                 {
                     constructor: SpriteText,
@@ -7761,8 +7902,8 @@ var IntroMenu = /** @class */ (function (_super) {
 var MainMenu = /** @class */ (function (_super) {
     __extends(MainMenu, _super);
     function MainMenu(menuSystem) {
-        return _super.call(this, menuSystem, {
-            backgroundColor: 0x000000,
+        var _this = _super.call(this, menuSystem, {
+            parent: MENU_BASE_STAGE(),
             worldObjects: [
                 {
                     constructor: SpriteText,
@@ -7773,16 +7914,23 @@ var MainMenu = /** @class */ (function (_super) {
                     constructor: MenuTextButton,
                     x: 20, y: 50, text: "start game",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                    onClick: function () { return menuSystem.game.startGame(); },
+                    onClick: function () {
+                        _this.playSound('click');
+                        menuSystem.game.startGame();
+                    },
                 },
                 {
                     constructor: MenuTextButton,
                     x: 20, y: 68, text: "controls",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                    onClick: function () { return menuSystem.loadMenu(ControlsMenu); },
+                    onClick: function () {
+                        _this.playSound('click');
+                        menuSystem.loadMenu(ControlsMenu);
+                    },
                 },
             ]
         }) || this;
+        return _this;
     }
     return MainMenu;
 }(Menu));
@@ -7790,7 +7938,7 @@ var ControlsMenu = /** @class */ (function (_super) {
     __extends(ControlsMenu, _super);
     function ControlsMenu(menuSystem) {
         var _this = _super.call(this, menuSystem, {
-            backgroundColor: 0x000000,
+            parent: MENU_BASE_STAGE(),
             physicsGroups: { 'items': {} },
             worldObjects: [
                 {
@@ -7848,7 +7996,10 @@ var ControlsMenu = /** @class */ (function (_super) {
                     constructor: MenuTextButton,
                     x: 20, y: 160, text: "back",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                    onClick: function () { return menuSystem.back(); },
+                    onClick: function () {
+                        _this.playSound('click');
+                        menuSystem.back();
+                    },
                 },
             ]
         }) || this;
@@ -7876,8 +8027,8 @@ var ControlsMenu = /** @class */ (function (_super) {
 var PauseMenu = /** @class */ (function (_super) {
     __extends(PauseMenu, _super);
     function PauseMenu(menuSystem) {
-        return _super.call(this, menuSystem, {
-            backgroundColor: 0x000000,
+        var _this = _super.call(this, menuSystem, {
+            parent: MENU_BASE_STAGE(),
             worldObjects: [
                 {
                     constructor: SpriteText,
@@ -7888,10 +8039,14 @@ var PauseMenu = /** @class */ (function (_super) {
                     constructor: MenuTextButton,
                     x: 20, y: 50, text: "resume",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                    onClick: function () { return menuSystem.game.unpauseGame(); },
+                    onClick: function () {
+                        _this.playSound('click');
+                        menuSystem.game.unpauseGame();
+                    },
                 }
             ]
         }) || this;
+        return _this;
     }
     PauseMenu.prototype.update = function (delta) {
         _super.prototype.update.call(this, delta);
@@ -7963,6 +8118,7 @@ var Main = /** @class */ (function () {
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
         Debug.init({
             debug: true,
+            cheatsEnabled: true,
             allPhysicsBounds: false,
             moveCameraWithArrows: true,
             showMousePosition: false,
@@ -8031,9 +8187,8 @@ var Main = /** @class */ (function () {
         window.addEventListener("mousedown", function (event) { return Input.handleMouseDownEvent(event); }, false);
         window.addEventListener("mouseup", function (event) { return Input.handleMouseUpEvent(event); }, false);
         window.addEventListener("contextmenu", function (event) { return event.preventDefault(); }, false);
-        Main.renderer.view.onclick = function () {
-            WebAudio.start();
-        };
+        Main.renderer.view.onclick = function () { WebAudio.start(); };
+        Main.renderer.view.onkeypress = function () { WebAudio.start(); };
         this.game = new Game({
             mainMenuClass: IntroMenu,
             pauseMenuClass: PauseMenu,
@@ -8137,6 +8292,7 @@ var Monster = /** @class */ (function (_super) {
             preSwingWait: 0.3,
             postSwingWait: 2,
             itemGrabDistance: 8,
+            playSoundOnPickup: false,
             animations: [
                 Animations.fromTextureList({ name: 'idle_empty', texturePrefix: 'monster_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
                 Animations.fromTextureList({ name: 'run_empty', texturePrefix: 'monster_', textures: [4, 5, 6, 7], frameRate: 8, count: -1 }),
@@ -8272,9 +8428,17 @@ var Player = /** @class */ (function (_super) {
             itemGrabDistance: 16,
             animations: [
                 Animations.fromTextureList({ name: 'idle_empty', texturePrefix: 'player_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'run_empty', texturePrefix: 'player_', textures: [4, 5, 6, 7], frameRate: 16, count: -1 }),
+                Animations.fromTextureList({ name: 'run_empty', texturePrefix: 'player_', textures: [4, 5, 6, 7], frameRate: 16, count: -1,
+                    overrides: {
+                        2: { callback: function () { _this.world.playSound('walk'); } }
+                    }
+                }),
                 Animations.fromTextureList({ name: 'idle_holding', texturePrefix: 'player_', textures: [8, 9, 10], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'run_holding', texturePrefix: 'player_', textures: [12, 13, 14, 15], frameRate: 16, count: -1 }),
+                Animations.fromTextureList({ name: 'run_holding', texturePrefix: 'player_', textures: [12, 13, 14, 15], frameRate: 16, count: -1,
+                    overrides: {
+                        2: { callback: function () { _this.world.playSound('walk'); } }
+                    }
+                }),
                 Animations.fromTextureList({ name: 'throw', texturePrefix: 'player_', textures: [16, 17, 17, 17, 17], frameRate: 24, count: 1, forceRequired: true }),
                 Animations.fromTextureList({ name: 'swing', texturePrefix: 'player_', textures: [16, 17, 17, 17, 16], frameRate: 24, count: 1, forceRequired: true }),
                 Animations.fromTextureList({ name: 'hurt', texturePrefix: 'player_', textures: [20, 20, 20, 20, 20, 20, 20, 20,
@@ -8317,7 +8481,7 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.hitStuff = function () {
-        var e_39, _a;
+        var e_40, _a;
         if (!this.heldItem)
             return;
         var swingHitbox = this.getSwingHitbox();
@@ -8332,12 +8496,12 @@ var Player = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_39_1) { e_39 = { error: e_39_1 }; }
+        catch (e_40_1) { e_40 = { error: e_40_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_39) throw e_39.error; }
+            finally { if (e_40) throw e_40.error; }
         }
     };
     Player.prototype.getSwingHitbox = function () {
@@ -8425,12 +8589,31 @@ var TorchLightManager = /** @class */ (function (_super) {
                         smoke.alpha = 1 - t;
                     }
                 });
+                this.world.playSound('fireout');
             }
+            this.updateTorchSound();
         }
         if (Random.boolean(10 * delta)) {
             this.torchRadiusNoise = Random.float(-1, 1);
         }
         _super.prototype.update.call(this, delta);
+    };
+    TorchLightManager.prototype.updateTorchSound = function () {
+        if (!this.torchSound) {
+            this.torchSound = this.world.playSound('fire');
+            this.torchSound.loop = true;
+        }
+        var torchBaseVolume = this.getTorchSoundVolume();
+        var player = this.world.getWorldObjectByType(Player);
+        var distance = M.distance(player.x, player.y, this.x, this.y);
+        var volume = torchBaseVolume * Math.max(1 - distance / 100, 0);
+        this.torchSound.volume = volume;
+    };
+    TorchLightManager.prototype.getTorchSoundVolume = function () {
+        if (this.torchFuel <= 0) {
+            return 0;
+        }
+        return 0.7;
     };
     return TorchLightManager;
 }(WorldObject));
@@ -8463,6 +8646,7 @@ var Tree = /** @class */ (function (_super) {
                 for (var i = 0; i < _this.leavesSpawnedPerHit; i++) {
                     _this.spawnLeaf();
                 }
+                _this.world.playSound('chop');
             },
             script: S.doOverTime(0.5, function (t) { _this.angle = _this.hitDir * 30 * Math.exp(5 * -t) * Math.cos(5 * t); }),
             transitions: [
@@ -8472,6 +8656,7 @@ var Tree = /** @class */ (function (_super) {
         _this.stateMachine.addState('die', {
             callback: function () { _this.colliding = false; },
             script: S.chain(S.doOverTime(1, function (t) { _this.angle = _this.hitDir * 90 * (t + t * t) / 2; }), S.call(function () {
+                _this.world.playSound('land');
                 _this.spawnLog();
                 if (_this.spawnsTorch)
                     _this.spawnTorch();
@@ -8811,7 +8996,7 @@ function getStoryboard() {
         'win': {
             type: 'cutscene',
             script: function () {
-                var campfire, lightingManager;
+                var campfire, lightingManager, fireWinSound;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -8823,15 +9008,20 @@ function getStoryboard() {
                                 global.world.removeWorldObject('monster');
                             }
                             campfire.stopBurn();
+                            campfire.stopFireBurnSound();
                             return [4 /*yield*/, S.wait(4)];
                         case 1:
                             _a.sent();
                             campfire.win();
+                            fireWinSound = global.world.playSound('fireroar');
+                            fireWinSound.volume = 0;
                             return [4 /*yield*/, S.doOverTime(3, function (t) {
                                     lightingManager.winRadius += 400 * global.script.delta;
+                                    fireWinSound.volume = t;
                                 })];
                         case 2:
                             _a.sent();
+                            fireWinSound.pause();
                             global.world.addWorldObject({
                                 constructor: Sprite,
                                 texture: Texture.filledRect(Main.width, Main.height, 0xFFFFFF),
@@ -8885,6 +9075,7 @@ function getStoryboard() {
                         case 1:
                             _a.sent();
                             campfire.extinguish();
+                            campfire.stopFireBurnSound();
                             global.world.addWorldObject({
                                 name: 'fireout',
                                 constructor: Sprite,
@@ -8899,6 +9090,7 @@ function getStoryboard() {
                                     smoke.alpha = 1 - t;
                                 }
                             });
+                            global.world.playSound('fireout');
                             return [4 /*yield*/, S.waitUntil(function () { return !global.world.hasWorldObject('fireout'); })];
                         case 2:
                             _a.sent();
@@ -9076,7 +9268,7 @@ var LogPiece = /** @class */ (function (_super) {
 }(Sprite));
 (function (LogPiece) {
     function getLogPieces(log) {
-        var e_40, _a;
+        var e_41, _a;
         var logPieces = [];
         var stemx = log.flipX ? 4 : 8;
         var logTexture = AssetCache.getTexture('log');
@@ -9100,12 +9292,12 @@ var LogPiece = /** @class */ (function (_super) {
                 }));
             }
         }
-        catch (e_40_1) { e_40 = { error: e_40_1 }; }
+        catch (e_41_1) { e_41 = { error: e_41_1 }; }
         finally {
             try {
                 if (subdivisions_1_1 && !subdivisions_1_1.done && (_a = subdivisions_1.return)) _a.call(subdivisions_1);
             }
-            finally { if (e_40) throw e_40.error; }
+            finally { if (e_41) throw e_41.error; }
         }
         return logPieces;
     }

@@ -1,6 +1,7 @@
 namespace Debug {
     export type Config = {
         debug: boolean;
+        cheatsEnabled: boolean;
         allPhysicsBounds: boolean;
         moveCameraWithArrows: boolean; 
         showMousePosition: boolean;
@@ -12,9 +13,10 @@ namespace Debug {
     }
 }
 
-class DebugValues {
-    init(config: Debug.Config) {
+class Debug {
+    static init(config: Debug.Config) {
         Debug.DEBUG = config.debug;
+        Debug.CHEATS_ENABLED = config.cheatsEnabled;
         Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
         Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
         Debug.SHOW_MOUSE_POSITION = config.showMousePosition;
@@ -25,41 +27,43 @@ class DebugValues {
         Debug.SKIP_MAIN_MENU = config.skipMainMenu;
     }
 
-    private _DEBUG: boolean;
-    get DEBUG() { return this._DEBUG; }
-    set DEBUG(value: boolean) { this._DEBUG = value; }
+    private static _DEBUG: boolean;
+    static get DEBUG() { return this._DEBUG; }
+    static set DEBUG(value: boolean) { this._DEBUG = value; }
 
-    private _ALL_PHYSICS_BOUNDS: boolean;
-    get ALL_PHYSICS_BOUNDS() { return this.DEBUG && this._ALL_PHYSICS_BOUNDS; }
-    set ALL_PHYSICS_BOUNDS(value: boolean) { this._ALL_PHYSICS_BOUNDS = value; }
+    private static _CHEATS_ENABLED: boolean;
+    static get CHEATS_ENABLED() { return this.DEBUG && this._CHEATS_ENABLED; }
+    static set CHEATS_ENABLED(value: boolean) { this._CHEATS_ENABLED = value; }
 
-    private _MOVE_CAMERA_WITH_ARROWS: boolean;
-    get MOVE_CAMERA_WITH_ARROWS() { return this.DEBUG && this._MOVE_CAMERA_WITH_ARROWS; }
-    set MOVE_CAMERA_WITH_ARROWS(value: boolean) { this._MOVE_CAMERA_WITH_ARROWS = value; }
+    private static _ALL_PHYSICS_BOUNDS: boolean;
+    static get ALL_PHYSICS_BOUNDS() { return this.DEBUG && this._ALL_PHYSICS_BOUNDS; }
+    static set ALL_PHYSICS_BOUNDS(value: boolean) { this._ALL_PHYSICS_BOUNDS = value; }
 
-    private _SHOW_MOUSE_POSITION: boolean;
-    get SHOW_MOUSE_POSITION() { return this.DEBUG && this._SHOW_MOUSE_POSITION; }
-    set SHOW_MOUSE_POSITION(value: boolean) { this._SHOW_MOUSE_POSITION = value; }
-    MOUSE_POSITION_FONT: SpriteText.Font;
+    private static _MOVE_CAMERA_WITH_ARROWS: boolean;
+    static get MOVE_CAMERA_WITH_ARROWS() { return this.DEBUG && this._MOVE_CAMERA_WITH_ARROWS; }
+    static set MOVE_CAMERA_WITH_ARROWS(value: boolean) { this._MOVE_CAMERA_WITH_ARROWS = value; }
 
-    private _SKIP_RATE: number;
-    get SKIP_RATE() { return this.DEBUG ? this._SKIP_RATE : 1; }
-    set SKIP_RATE(value: number) { this._SKIP_RATE = value; }
+    private static _SHOW_MOUSE_POSITION: boolean;
+    static get SHOW_MOUSE_POSITION() { return this.DEBUG && this._SHOW_MOUSE_POSITION; }
+    static set SHOW_MOUSE_POSITION(value: boolean) { this._SHOW_MOUSE_POSITION = value; }
+    static MOUSE_POSITION_FONT: SpriteText.Font;
 
-    private _PROGRAMMATIC_INPUT: boolean;
-    get PROGRAMMATIC_INPUT() { return this.DEBUG && this._PROGRAMMATIC_INPUT; }
-    set PROGRAMMATIC_INPUT(value: boolean) { this._PROGRAMMATIC_INPUT = value; }
+    private static _SKIP_RATE: number;
+    static get SKIP_RATE() { return this.DEBUG ? this._SKIP_RATE : 1; }
+    static set SKIP_RATE(value: number) { this._SKIP_RATE = value; }
 
-    private _AUTOPLAY: boolean;
-    get AUTOPLAY() { return this.DEBUG && this._AUTOPLAY; }
-    set AUTOPLAY(value: boolean) { this._AUTOPLAY = value; }
+    private static _PROGRAMMATIC_INPUT: boolean;
+    static get PROGRAMMATIC_INPUT() { return this.DEBUG && this._PROGRAMMATIC_INPUT; }
+    static set PROGRAMMATIC_INPUT(value: boolean) { this._PROGRAMMATIC_INPUT = value; }
 
-    private _SKIP_MAIN_MENU: boolean;
-    get SKIP_MAIN_MENU() { return this.DEBUG && this._SKIP_MAIN_MENU; }
-    set SKIP_MAIN_MENU(value: boolean) { this._SKIP_MAIN_MENU = value; }
+    private static _AUTOPLAY: boolean;
+    static get AUTOPLAY() { return this.DEBUG && this._AUTOPLAY; }
+    static set AUTOPLAY(value: boolean) { this._AUTOPLAY = value; }
+
+    private static _SKIP_MAIN_MENU: boolean;
+    static get SKIP_MAIN_MENU() { return this.DEBUG && this._SKIP_MAIN_MENU; }
+    static set SKIP_MAIN_MENU(value: boolean) { this._SKIP_MAIN_MENU = value; }
 }
-
-var Debug = new DebugValues();
 
 function get(name: string) {
     let worldObject = global.game.theater.currentWorld.getWorldObjectByName(name);

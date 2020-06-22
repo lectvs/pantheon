@@ -75,11 +75,16 @@ function getStoryboard(): Storyboard { return {
             }
 
             campfire.stopBurn();
+            campfire.stopFireBurnSound();
             yield S.wait(4);
             campfire.win();
+            let fireWinSound = global.world.playSound('fireroar');
+            fireWinSound.volume = 0;
             yield S.doOverTime(3, t => {
                 lightingManager.winRadius += 400*global.script.delta;
+                fireWinSound.volume = t;
             });
+            fireWinSound.pause();
 
             global.world.addWorldObject(<Sprite.Config>{
                 constructor: Sprite,
@@ -120,6 +125,7 @@ function getStoryboard(): Storyboard { return {
             yield S.wait(2);
 
             campfire.extinguish();
+            campfire.stopFireBurnSound();
             global.world.addWorldObject(<Sprite.Config>{
                 name: 'fireout',
                 constructor: Sprite,
@@ -134,6 +140,7 @@ function getStoryboard(): Storyboard { return {
                     smoke.alpha = 1-t;
                 }
             });
+            global.world.playSound('fireout');
 
             yield S.waitUntil(() => !global.world.hasWorldObject('fireout'));
             yield S.wait(1);

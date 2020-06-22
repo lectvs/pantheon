@@ -15,6 +15,7 @@ class Monster extends Human {
             preSwingWait: 0.3,
             postSwingWait: 2,
             itemGrabDistance: 8,
+            playSoundOnPickup: false,
             animations: [
                 Animations.fromTextureList({ name: 'idle_empty', texturePrefix: 'monster_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
                 Animations.fromTextureList({ name: 'run_empty', texturePrefix: 'monster_', textures: [4, 5, 6, 7], frameRate: 8, count: -1 }),

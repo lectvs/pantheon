@@ -27,6 +27,14 @@ function BASE_STAGE(): World.Config {
     };
 }
 
+function MENU_BASE_STAGE(): World.Config {
+    return {
+        constructor: World,
+        backgroundColor: 0x000000,
+        useGlobalSound: true,
+    };
+}
+
 function WORLD_BOUNDS(left: number, top: number, right: number, bottom: number): WorldObject.Config {
     let thickness = 12;
     let width = right-left;

@@ -20,6 +20,7 @@ namespace World {
         entryPoints?: Dict<Pt>;
         worldObjects?: WorldObject.Config[];
 
+        useGlobalSound?: boolean;
         showDebugMousePosition?: boolean;
     }
 
@@ -64,6 +65,7 @@ class World {
 
     protected scriptManager: ScriptManager;
 
+    private useGlobalSound: boolean;
     private debugMousePositionText: SpriteText;
 
     get paused() { return global.game.paused; }
@@ -102,6 +104,7 @@ class World {
             World.Actions.addWorldObjectToWorld(WorldObject.fromConfig(worldObjectConfig), this);
         }
         
+        this.useGlobalSound = O.getOrDefault(config.useGlobalSound, false);
         this.debugMousePositionText = this.addWorldObject<SpriteText>(<SpriteText.Config>{
             constructor: SpriteText,
             x: 0, y: 0,
@@ -312,6 +315,9 @@ class World {
     }
 
     playSound(sound: string | Sound.Asset) {
+        if (this.useGlobalSound) {
+            return global.game.soundManager.playSound(sound);
+        }
         return global.game.soundManager.playSound(sound, Sound.Type.WORLD);
     }
     

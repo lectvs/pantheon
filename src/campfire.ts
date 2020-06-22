@@ -1,5 +1,7 @@
 class Campfire extends Sprite {
     private fireSprite: Sprite;
+    private fireSound: Sound;
+    private fireSoundVolume: number;
 
     private fireRadius: FireRadius;
     private fireBuffer: FireBuffer;
@@ -25,10 +27,12 @@ class Campfire extends Sprite {
         this.fireBuffer = new FireBuffer();
         this.currentlyConsumedItems = [];
         this.hasConsumedGasoline = false;
+        this.fireSoundVolume = 1;
     }
 
     update(delta: number) {
         super.update(delta);
+        this.updateSound();
         this.consumeItems();
 
         this.fireRadius.update(delta);
@@ -40,6 +44,18 @@ class Campfire extends Sprite {
         if (Random.boolean(5*delta)) {
             this.fireSprite.offset.y = Random.int(0, 1);
         }
+    }
+
+    updateSound() {
+        if (!this.fireSound) {
+            this.fireSound = this.world.playSound('fire');
+            this.fireSound.loop = true;
+        }
+
+        let player = this.world.getWorldObjectByType(Player);
+        let distance = M.distance(player.x, player.y, this.x, this.y);
+        let volume = this.fireSoundVolume * Math.max(1 - distance/200, 0);
+        this.fireSound.volume = volume;
     }
 
     extinguish() {
@@ -62,6 +78,10 @@ class Campfire extends Sprite {
         this.fireRadius.stopBurn();
     }
 
+    stopFireBurnSound() {
+        this.fireSoundVolume = 0;
+    }
+
     win() {
         this.fireRadius.win();
     }
@@ -81,6 +101,7 @@ class Campfire extends Sprite {
         if (item.type === Item.Type.LOG) {
             this.world.addWorldObjects(LogPiece.getLogPieces(item));
             this.world.removeWorldObject(item);
+            this.world.playSound('itemburn');
             this.runScript(S.chain(
                 S.wait(0.5),
                 S.call(() => {

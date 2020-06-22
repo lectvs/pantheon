@@ -63,6 +63,7 @@ class WorldObject {
 
     lastx: number;
     lasty: number;
+    lastz: number;
 
     controllable: boolean;
     controller: Controller;
@@ -97,6 +98,7 @@ class WorldObject {
 
         this.lastx = this.x;
         this.lasty = this.y;
+        this.lastz = this.z;
 
         this.controllable = O.getOrDefault(config.controllable, false);
         this.controller = {};
@@ -127,6 +129,7 @@ class WorldObject {
     preUpdate() {
         this.lastx = this.x;
         this.lasty = this.y;
+        this.lastz = this.z;
         if (this.isControlled) {
             this.updateControllerFromSchema();
         }

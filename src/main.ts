@@ -17,6 +17,7 @@ class Main {
 
         Debug.init({
             debug: true,
+            cheatsEnabled: true,
             allPhysicsBounds: false,
             moveCameraWithArrows: true,
             showMousePosition: false,
@@ -95,9 +96,8 @@ class Main {
         window.addEventListener("mouseup", event => Input.handleMouseUpEvent(event), false);
         window.addEventListener("contextmenu", event => event.preventDefault(), false);
 
-        Main.renderer.view.onclick = () => {
-            WebAudio.start();
-        }
+        Main.renderer.view.onclick = () => { WebAudio.start(); }
+        Main.renderer.view.onkeypress = () => { WebAudio.start(); }
 
         this.game = new Game({
             mainMenuClass: IntroMenu,

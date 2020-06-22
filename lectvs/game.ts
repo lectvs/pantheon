@@ -93,6 +93,7 @@ class Game {
     }
 
     loadTheater() {
+        this.soundManager.clearSounds();
         this.theater = new this.theaterClass(this.theaterConfig);
         global.theater = this.theater;
 

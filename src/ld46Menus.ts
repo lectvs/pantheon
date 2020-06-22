@@ -3,7 +3,7 @@
 class IntroMenu extends Menu {
     constructor(menuSystem: MenuSystem) {
         super(menuSystem, {
-            backgroundColor: 0x000000,
+            parent: MENU_BASE_STAGE(),
             worldObjects: [
                 <SpriteText.Config>{
                     constructor: SpriteText,
@@ -34,7 +34,7 @@ class IntroMenu extends Menu {
 class MainMenu extends Menu {
     constructor(menuSystem: MenuSystem) {
         super(menuSystem, {
-            backgroundColor: 0x000000,
+            parent: MENU_BASE_STAGE(),
             worldObjects: [
                 <SpriteText.Config>{
                     constructor: SpriteText,
@@ -45,13 +45,19 @@ class MainMenu extends Menu {
                     constructor: MenuTextButton,
                     x: 20, y: 50, text: "start game",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                    onClick: () => menuSystem.game.startGame(),
+                    onClick: () => {
+                        this.playSound('click');
+                        menuSystem.game.startGame();
+                    },
                 },
                 <MenuTextButton.Config>{
                     constructor: MenuTextButton,
                     x: 20, y: 68, text: "controls",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                    onClick: () => menuSystem.loadMenu(ControlsMenu),
+                    onClick: () => {
+                        this.playSound('click');
+                        menuSystem.loadMenu(ControlsMenu);
+                    },
                 },
             ]
         });
@@ -61,7 +67,7 @@ class MainMenu extends Menu {
 class ControlsMenu extends Menu {
     constructor(menuSystem: MenuSystem) {
         super(menuSystem, {
-            backgroundColor: 0x000000,
+            parent: MENU_BASE_STAGE(),
             physicsGroups: { 'items': {} },
             worldObjects: [
                 <SpriteText.Config>{
@@ -119,7 +125,10 @@ class ControlsMenu extends Menu {
                     constructor: MenuTextButton,
                     x: 20, y: 160, text: "back",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                    onClick: () => menuSystem.back(),
+                    onClick: () => {
+                        this.playSound('click');
+                        menuSystem.back();
+                    },
                 },
             ]
         });
@@ -196,7 +205,7 @@ class ControlsMenu extends Menu {
 class PauseMenu extends Menu {
     constructor(menuSystem: MenuSystem) {
         super(menuSystem, {
-            backgroundColor: 0x000000,
+            parent: MENU_BASE_STAGE(),
             worldObjects: [
                 <SpriteText.Config>{
                     constructor: SpriteText,
@@ -207,7 +216,10 @@ class PauseMenu extends Menu {
                     constructor: MenuTextButton,
                     x: 20, y: 50, text: "resume",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                    onClick: () => menuSystem.game.unpauseGame(),
+                    onClick: () => {
+                        this.playSound('click');
+                        menuSystem.game.unpauseGame();
+                    },
                 }
             ]
         });

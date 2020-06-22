@@ -10,6 +10,7 @@ namespace Animation {
         duration?: number;
         nextFrameRef?: string;
         forceRequired?: boolean;
+        callback?: () => any;
     
         texture?: string | Texture;
     }
@@ -23,6 +24,7 @@ namespace Animation {
             nextFrameRef?: string;
             count?: number;
             forceRequired?: boolean;
+            overrides?: {[frame: number]: Frame};
         }
     }
 }
@@ -69,6 +71,17 @@ class Animations {
 
         result.frames[result.frames.length - 1].nextFrameRef = config.nextFrameRef;
 
+        if (config.overrides) {
+            for (let key in config.overrides) {
+                let frame = <number><any>key;
+                result.frames[frame] = this.overrideFrame(result.frames[frame], config.overrides[key]);
+            }
+        }
+
         return result;
+    }
+
+    private static overrideFrame(frame: Animation.Frame, override: Animation.Frame) {
+        return O.withOverrides(frame, override);
     }
 }

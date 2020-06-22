@@ -40,6 +40,7 @@ class Tree extends Sprite {
                 for (let i = 0; i < this.leavesSpawnedPerHit; i++) {
                     this.spawnLeaf();
                 }
+                this.world.playSound('chop');
             },
             script: S.doOverTime(0.5, t => { this.angle = this.hitDir * 30*Math.exp(5*-t)*Math.cos(5*t); }),
             transitions: [
@@ -51,6 +52,7 @@ class Tree extends Sprite {
             script: S.chain(
                 S.doOverTime(1, t => { this.angle = this.hitDir * 90 * (t + t*t)/2; }),
                 S.call(() => {
+                    this.world.playSound('land');
                     this.spawnLog();
                     if (this.spawnsTorch) this.spawnTorch();
                     this.kill();
