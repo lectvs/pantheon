@@ -84,7 +84,7 @@ function getStoryboard(): Storyboard { return {
                 lightingManager.winRadius += 400*global.script.delta;
                 fireWinSound.volume = t;
             });
-            fireWinSound.pause();
+            fireWinSound.paused = true;
 
             global.world.addWorldObject(<Sprite.Config>{
                 constructor: Sprite,

@@ -48,6 +48,9 @@ juice
     - /change layer sort to a function instead of a sortKey
 - /unlink child from parent on removal
 - /sound effects
+- /make sound attached to game/world/objects
+    - /require update to continue playing?
+- don't create sounds before audio context starts
 - fix player random flickering (rounding error or smooth movement artifact?)
     - /suggestion: snap camera to world units
     - /can we just snap everything to world units and not camera units?
@@ -56,8 +59,7 @@ juice
 - fix flickering fire
 - fix fade out in Game's loadTheater()
 - adjust sound effects
-- make sound attached to game/world/objects
-    - require update to continue playing?
+
 
 postpostjam
 - /Anchor.MIDDLE, etc

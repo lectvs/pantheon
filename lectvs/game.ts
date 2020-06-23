@@ -12,11 +12,6 @@ class Game {
     menuSystem: MenuSystem;
     theater: Theater;
 
-    soundManager: SoundManager;
-
-    private _paused: boolean;
-    get paused() { return this._paused; }
-
     private mainMenuClass: any;
     private pauseMenuClass: any;
     private theaterClass: any;
@@ -27,10 +22,6 @@ class Game {
         this.pauseMenuClass = config.pauseMenuClass;
         this.theaterClass = config.theaterClass;
         this.theaterConfig = config.theaterConfig;
-
-        this._paused = true;
-
-        this.soundManager = new SoundManager();
 
         this.menuSystem = new MenuSystem(this);
         this.loadMainMenu();
@@ -52,26 +43,12 @@ class Game {
             this.theater.update(delta);
             global.metrics.endSpan('theater');
         }
-
-        this.soundManager.update();
     }
 
     updatePause() {
         if (Input.justDown('pause') && !this.menuSystem.inMenu) {
             Input.consume('pause');
             this.pauseGame();
-        }
-
-        if (this.menuSystem.inMenu) {
-            if (!this._paused) {
-                this._paused = true;
-                this.onPause();
-            }
-        } else {
-            if (this._paused) {
-                this._paused = false;
-                this.onUnpause();
-            }
         }
     }
 
@@ -93,22 +70,11 @@ class Game {
     }
 
     loadTheater() {
-        this.soundManager.clearSounds();
         this.theater = new this.theaterClass(this.theaterConfig);
         global.theater = this.theater;
 
         // fade out since the cutscene can't do this in 1 frame
         global.theater.runScript(S.fadeOut(0)).finishImmediately();
-    }
-
-    onPause() {
-        if (this.theater) this.theater.onPause();
-        WebAudio.worldContext.suspend();
-    }
-
-    onUnpause() {
-        if (this.theater) this.theater.onUnpause();
-        WebAudio.worldContext.resume();
     }
 
     pauseGame() {

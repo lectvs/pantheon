@@ -6,16 +6,14 @@ namespace WebAudio {
 
 class WebAudio {
     static preloadedSounds: Dict<WebAudio.PreloadedSound> = {};
-    static globalContext: AudioContext;
-    static worldContext: AudioContext;
+    static context: AudioContext;
 
     private static _started: boolean = false;
-    static get started() { return this._started || this.globalContext.state === 'running'; }
+    static get started() { return this._started || this.context.state === 'running'; }
 
     static start() {
         if (this.started) return;
-        this.globalContext.resume();
-        this.worldContext.resume();
+        this.context.resume();
         this._started = true;
     }
 
@@ -23,8 +21,7 @@ class WebAudio {
         try {
             // @ts-ignore
             window.AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.globalContext = new AudioContext();
-            this.worldContext = new AudioContext();
+            this.context = new AudioContext();
         } catch(e) {
             error('Web Audio API is not supported in this browser. Sounds will not be able to play.');
         }
@@ -36,7 +33,7 @@ class WebAudio {
         request.responseType = 'arraybuffer';
 
         request.onload = function() {
-            WebAudio.globalContext.decodeAudioData(request.response,
+            WebAudio.context.decodeAudioData(request.response,
                 (buffer: AudioBuffer) => {
                     WebAudio.preloadedSounds[key] = {
                         buffer: buffer,

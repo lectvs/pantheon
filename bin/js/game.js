@@ -463,7 +463,7 @@ var AssetCache = /** @class */ (function () {
     AssetCache.getSoundAsset = function (key) {
         if (!this.sounds[key]) {
             error("Sound '" + key + "' does not exist.");
-            return undefined;
+            return { buffer: new AudioBuffer({ length: 0, sampleRate: 8000 }) };
         }
         return this.sounds[key];
     };
@@ -2814,19 +2814,12 @@ var Game = /** @class */ (function () {
         this.pauseMenuClass = config.pauseMenuClass;
         this.theaterClass = config.theaterClass;
         this.theaterConfig = config.theaterConfig;
-        this._paused = true;
-        this.soundManager = new SoundManager();
         this.menuSystem = new MenuSystem(this);
         this.loadMainMenu();
         if (Debug.SKIP_MAIN_MENU) {
             this.startGame();
         }
     }
-    Object.defineProperty(Game.prototype, "paused", {
-        get: function () { return this._paused; },
-        enumerable: true,
-        configurable: true
-    });
     Game.prototype.update = function (delta) {
         this.updatePause();
         if (this.menuSystem.inMenu) {
@@ -2839,24 +2832,11 @@ var Game = /** @class */ (function () {
             this.theater.update(delta);
             global.metrics.endSpan('theater');
         }
-        this.soundManager.update();
     };
     Game.prototype.updatePause = function () {
         if (Input.justDown('pause') && !this.menuSystem.inMenu) {
             Input.consume('pause');
             this.pauseGame();
-        }
-        if (this.menuSystem.inMenu) {
-            if (!this._paused) {
-                this._paused = true;
-                this.onPause();
-            }
-        }
-        else {
-            if (this._paused) {
-                this._paused = false;
-                this.onUnpause();
-            }
         }
     };
     Game.prototype.render = function (screen) {
@@ -2875,21 +2855,10 @@ var Game = /** @class */ (function () {
         this.menuSystem.loadMenu(this.mainMenuClass);
     };
     Game.prototype.loadTheater = function () {
-        this.soundManager.clearSounds();
         this.theater = new this.theaterClass(this.theaterConfig);
         global.theater = this.theater;
         // fade out since the cutscene can't do this in 1 frame
         global.theater.runScript(S.fadeOut(0)).finishImmediately();
-    };
-    Game.prototype.onPause = function () {
-        if (this.theater)
-            this.theater.onPause();
-        WebAudio.worldContext.suspend();
-    };
-    Game.prototype.onUnpause = function () {
-        if (this.theater)
-            this.theater.onUnpause();
-        WebAudio.worldContext.resume();
     };
     Game.prototype.pauseGame = function () {
         this.menuSystem.loadMenu(this.pauseMenuClass);
@@ -3379,6 +3348,7 @@ var World = /** @class */ (function () {
         this.scriptManager = new ScriptManager();
         this.width = O.getOrDefault(config.width, global.gameWidth);
         this.height = O.getOrDefault(config.height, global.gameHeight);
+        this.sounds = [];
         this.worldObjects = [];
         this.showDebugMousePosition = O.getOrDefault(config.showDebugMousePosition, false);
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
@@ -3409,7 +3379,6 @@ var World = /** @class */ (function () {
             }
             finally { if (e_12) throw e_12.error; }
         }
-        this.useGlobalSound = O.getOrDefault(config.useGlobalSound, false);
         this.debugMousePositionText = this.addWorldObject({
             constructor: SpriteText,
             x: 0, y: 0,
@@ -3420,11 +3389,6 @@ var World = /** @class */ (function () {
             active: false,
         });
     }
-    Object.defineProperty(World.prototype, "paused", {
-        get: function () { return global.game.paused; },
-        enumerable: true,
-        configurable: true
-    });
     World.prototype.update = function (delta) {
         var e_13, _a, e_14, _b, e_15, _c;
         this.updateDebugMousePosition();
@@ -3491,6 +3455,7 @@ var World = /** @class */ (function () {
         global.metrics.endSpan('postUpdate');
         this.removeDeadWorldObjects();
         this.camera.update(this, delta);
+        this.updateSounds(delta);
     };
     World.prototype.updateDebugMousePosition = function () {
         var showMousePosition = Debug.SHOW_MOUSE_POSITION && this.showDebugMousePosition;
@@ -3498,6 +3463,16 @@ var World = /** @class */ (function () {
         this.debugMousePositionText.visible = showMousePosition;
         if (showMousePosition) {
             this.debugMousePositionText.setText(St.padLeft(this.getWorldMouseX().toString(), 3) + " " + St.padLeft(this.getWorldMouseY().toString(), 3));
+        }
+    };
+    World.prototype.updateSounds = function (delta) {
+        for (var i = this.sounds.length - 1; i >= 0; i--) {
+            if (!this.sounds[i].paused) {
+                this.sounds[i].update(delta);
+            }
+            if (this.sounds[i].done) {
+                this.sounds.splice(i, 1);
+            }
         }
     };
     World.prototype.updateScriptManager = function (delta) {
@@ -3681,15 +3656,10 @@ var World = /** @class */ (function () {
         }
         return _.contains(this.worldObjects, obj);
     };
-    World.prototype.onPause = function () {
-    };
-    World.prototype.onUnpause = function () {
-    };
-    World.prototype.playSound = function (sound) {
-        if (this.useGlobalSound) {
-            return global.game.soundManager.playSound(sound);
-        }
-        return global.game.soundManager.playSound(sound, Sound.Type.WORLD);
+    World.prototype.playSound = function (key) {
+        var sound = new Sound(key);
+        this.sounds.push(sound);
+        return sound;
     };
     World.prototype.removeWorldObject = function (obj) {
         if (!obj)
@@ -5392,144 +5362,77 @@ var SlideManager = /** @class */ (function () {
     return SlideManager;
 }());
 var Sound = /** @class */ (function () {
-    function Sound(asset, type) {
-        if (type === void 0) { type = Sound.Type.GLOBAL; }
-        this.asset = asset;
-        this.type = type;
-        if (!WebAudio.started)
-            this.preWebAudioStartStartTime = performance.now();
-        this.gainNode = this.context.createGain();
-        this.gainNode.connect(this.context.destination);
-        this._speed = 1;
-        this._loop = false;
-        this.start();
+    function Sound(key) {
+        this.webAudioSound = new WebAudioSound(AssetCache.getSoundAsset(key));
+        this.webAudioSound.pause(); // Start paused to avoid playing for one frame when not updating
+        this.markedForDisable = false;
+        this.paused = false;
     }
-    Object.defineProperty(Sound.prototype, "context", {
-        get: function () { return this.type === Sound.Type.WORLD ? WebAudio.worldContext : WebAudio.globalContext; },
+    Object.defineProperty(Sound.prototype, "soundManager", {
+        get: function () { return global.soundManager; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Sound.prototype, "isMarkedForDisable", {
+        get: function () { return this.markedForDisable; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(Sound.prototype, "volume", {
-        get: function () { return this.gainNode.gain.value; },
-        set: function (value) { this.gainNode.gain.value = value; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Sound.prototype, "speed", {
-        get: function () {
-            return this.webAudioSound ? this.webAudioSound.playbackRate.value : this._speed;
-        },
-        set: function (value) {
-            this._speed = value;
-            if (this.webAudioSound)
-                this.webAudioSound.playbackRate.value = value;
-        },
+        get: function () { return this.webAudioSound.volume; },
+        set: function (value) { this.webAudioSound.volume = value; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(Sound.prototype, "loop", {
-        get: function () { return this.webAudioSound ? this.webAudioSound.loop : this._loop; },
-        set: function (value) {
-            this._loop = value;
-            if (this.webAudioSound)
-                this.webAudioSound.loop = value;
-        },
+        get: function () { return this.webAudioSound.loop; },
+        set: function (value) { this.webAudioSound.loop = value; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(Sound.prototype, "done", {
-        get: function () { return this._done; },
+        get: function () { return this.webAudioSound.done; },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(Sound.prototype, "paused", {
-        get: function () { return this.pausedPosition !== undefined; },
-        set: function (value) { value ? this.pause() : this.unpause(); },
-        enumerable: true,
-        configurable: true
-    });
-    ;
-    Sound.prototype.pause = function () {
-        this.pausedPosition = this.context.currentTime - this.startTime;
-        this.webAudioSound.onended = undefined;
-        this.stop();
+    Sound.prototype.markForDisable = function () {
+        this.markedForDisable = true;
     };
-    Sound.prototype.unpause = function () {
-        this.start(this.pausedPosition);
+    Sound.prototype.unmarkForDisable = function () {
+        this.markedForDisable = false;
     };
+    Sound.prototype.ensureDisabled = function () {
+        this.webAudioSound.pause();
+    };
+    Sound.prototype.ensureEnabled = function () {
+        this.webAudioSound.unpause();
+    };
+    Sound.prototype.update = function (delta) {
+        this.soundManager.ensureSoundEnabled(this);
+    };
+    // TODO: get rid of this
     Sound.prototype.onWebAudioStart = function () {
-        var pos = (performance.now() - this.preWebAudioStartStartTime) / 1000;
-        if (!this.paused) {
-            this.pause();
-            this.pausedPosition += pos;
-            this.unpause();
-        }
-    };
-    Sound.prototype.start = function (offset) {
-        var _this = this;
-        if (offset === void 0) { offset = 0; }
-        this.webAudioSound = this.context.createBufferSource();
-        this.webAudioSound.buffer = this.asset.buffer;
-        this.webAudioSound.connect(this.gainNode);
-        this.webAudioSound.onended = function () {
-            _this._done = true;
-        };
-        this.webAudioSound.playbackRate.value = this._speed;
-        this.webAudioSound.loop = this._loop;
-        this.webAudioSound.start(0, offset);
-        this.startTime = this.context.currentTime - offset;
-        this.pausedPosition = undefined;
-        this._done = false;
-    };
-    Sound.prototype.stop = function () {
-        if (this.webAudioSound) {
-            this.webAudioSound.stop();
-        }
+        this.webAudioSound.onWebAudioStart();
     };
     return Sound;
 }());
-(function (Sound) {
-    var Type;
-    (function (Type) {
-        Type[Type["GLOBAL"] = 0] = "GLOBAL";
-        Type[Type["WORLD"] = 1] = "WORLD";
-    })(Type = Sound.Type || (Sound.Type = {}));
-})(Sound || (Sound = {}));
 var SoundManager = /** @class */ (function () {
     function SoundManager() {
         this.activeSounds = [];
         this.webAudioStarted = false;
     }
-    SoundManager.prototype.update = function () {
+    SoundManager.prototype.preGameUpdate = function () {
+        var e_29, _a;
         if (!this.webAudioStarted) {
             if (WebAudio.started) {
                 this.onWebAudioStart();
                 this.webAudioStarted = true;
             }
         }
-        for (var i = this.activeSounds.length - 1; i >= 0; i--) {
-            if (this.activeSounds[i].done) {
-                this.activeSounds.splice(i, 1);
-            }
-        }
-    };
-    SoundManager.prototype.playSound = function (sound, soundType) {
-        if (soundType === void 0) { soundType = Sound.Type.GLOBAL; }
-        if (_.isString(sound)) {
-            sound = AssetCache.getSoundAsset(sound);
-            if (!sound)
-                return;
-        }
-        var soundInstance = new Sound(sound, soundType);
-        this.activeSounds.push(soundInstance);
-        return soundInstance;
-    };
-    SoundManager.prototype.clearSounds = function () {
-        var e_29, _a;
         try {
             for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var sound = _c.value;
-                sound.pause();
+                sound.markForDisable();
             }
         }
         catch (e_29_1) { e_29 = { error: e_29_1 }; }
@@ -5539,14 +5442,15 @@ var SoundManager = /** @class */ (function () {
             }
             finally { if (e_29) throw e_29.error; }
         }
-        this.activeSounds = [];
     };
-    SoundManager.prototype.onWebAudioStart = function () {
+    SoundManager.prototype.postGameUpdate = function () {
         var e_30, _a;
         try {
             for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var sound = _c.value;
-                sound.onWebAudioStart();
+                if (sound.isMarkedForDisable) {
+                    this.ensureSoundDisabled(sound);
+                }
             }
         }
         catch (e_30_1) { e_30 = { error: e_30_1 }; }
@@ -5555,6 +5459,33 @@ var SoundManager = /** @class */ (function () {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
             finally { if (e_30) throw e_30.error; }
+        }
+    };
+    SoundManager.prototype.ensureSoundDisabled = function (sound) {
+        sound.ensureDisabled();
+        A.removeAll(this.activeSounds, sound);
+    };
+    SoundManager.prototype.ensureSoundEnabled = function (sound) {
+        if (!_.contains(this.activeSounds, sound)) {
+            this.activeSounds.push(sound);
+        }
+        sound.unmarkForDisable();
+        sound.ensureEnabled();
+    };
+    SoundManager.prototype.onWebAudioStart = function () {
+        var e_31, _a;
+        try {
+            for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var sound = _c.value;
+                sound.onWebAudioStart();
+            }
+        }
+        catch (e_31_1) { e_31 = { error: e_31_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_31) throw e_31.error; }
         }
     };
     return SoundManager;
@@ -5636,7 +5567,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_31, _a;
+        var e_32, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -5650,12 +5581,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_31_1) { e_31 = { error: e_31_1 }; }
+            catch (e_32_1) { e_32 = { error: e_32_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_31) throw e_31.error; }
+                finally { if (e_32) throw e_32.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -5804,7 +5735,7 @@ var StateMachine = /** @class */ (function () {
         return this.states[name];
     };
     StateMachine.prototype.getValidTransition = function (state) {
-        var e_32, _a;
+        var e_33, _a;
         try {
             for (var _b = __values(state.transitions || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -5821,12 +5752,12 @@ var StateMachine = /** @class */ (function () {
                 }
             }
         }
-        catch (e_32_1) { e_32 = { error: e_32_1 }; }
+        catch (e_33_1) { e_33 = { error: e_33_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_32) throw e_32.error; }
+            finally { if (e_33) throw e_33.error; }
         }
         return undefined;
     };
@@ -6022,7 +5953,7 @@ var StoryManager = /** @class */ (function () {
         this.storyConfig.execute();
     };
     StoryManager.prototype.getInteractableObjects = function (node, stageName) {
-        var e_33, _a;
+        var e_34, _a;
         var result = new Set();
         if (!node)
             return result;
@@ -6039,12 +5970,12 @@ var StoryManager = /** @class */ (function () {
                 result.add(transition.with);
             }
         }
-        catch (e_33_1) { e_33 = { error: e_33_1 }; }
+        catch (e_34_1) { e_34 = { error: e_34_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_33) throw e_33.error; }
+            finally { if (e_34) throw e_34.error; }
         }
         return result;
     };
@@ -6067,7 +5998,7 @@ var StoryManager = /** @class */ (function () {
         this._currentNodeName = _.last(path);
     };
     StoryManager.prototype.getFirstValidTransition = function (node) {
-        var e_34, _a;
+        var e_35, _a;
         try {
             for (var _b = __values(node.transitions), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -6091,12 +6022,12 @@ var StoryManager = /** @class */ (function () {
                 }
             }
         }
-        catch (e_34_1) { e_34 = { error: e_34_1 }; }
+        catch (e_35_1) { e_35 = { error: e_35_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_34) throw e_34.error; }
+            finally { if (e_35) throw e_35.error; }
         }
         return null;
     };
@@ -6107,7 +6038,7 @@ var StoryManager = /** @class */ (function () {
         return this.storyboard[name];
     };
     StoryManager.prototype.updateParty = function (party) {
-        var e_35, _a, e_36, _b;
+        var e_36, _a, e_37, _b;
         if (party.setLeader !== undefined) {
             this.theater.partyManager.leader = party.setLeader;
         }
@@ -6118,12 +6049,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberActive(m);
                 }
             }
-            catch (e_35_1) { e_35 = { error: e_35_1 }; }
+            catch (e_36_1) { e_36 = { error: e_36_1 }; }
             finally {
                 try {
                     if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                 }
-                finally { if (e_35) throw e_35.error; }
+                finally { if (e_36) throw e_36.error; }
             }
         }
         if (!_.isEmpty(party.setMembersInactive)) {
@@ -6133,12 +6064,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberInactive(m);
                 }
             }
-            catch (e_36_1) { e_36 = { error: e_36_1 }; }
+            catch (e_37_1) { e_37 = { error: e_37_1 }; }
             finally {
                 try {
                     if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
                 }
-                finally { if (e_36) throw e_36.error; }
+                finally { if (e_37) throw e_37.error; }
             }
         }
     };
@@ -6308,20 +6239,8 @@ var Theater = /** @class */ (function (_super) {
         if (transition === void 0) { transition = Transition.INSTANT; }
         this.stageManager.loadStage(name, transition, entryPoint);
     };
-    Theater.prototype.onPause = function () {
-        _super.prototype.onPause.call(this);
-        if (this.hasWorldObject('world')) {
-            this.getWorldObjectByName('world').containedWorld.onPause();
-        }
-    };
     Theater.prototype.onStageLoad = function () {
         this.storyManager.onStageLoad();
-    };
-    Theater.prototype.onUnpause = function () {
-        _super.prototype.onUnpause.call(this);
-        if (this.hasWorldObject('world')) {
-            this.getWorldObjectByName('world').containedWorld.onUnpause();
-        }
     };
     Theater.prototype.updateDebugMousePosition = function () {
         // Override to do nothing since we don't want to display the theater's mouse position
@@ -6364,7 +6283,7 @@ var Tilemap = /** @class */ (function (_super) {
         }
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_37, _a;
+        var e_38, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -6382,12 +6301,12 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_37_1) { e_37 = { error: e_37_1 }; }
+        catch (e_38_1) { e_38 = { error: e_38_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_37) throw e_37.error; }
+            finally { if (e_38) throw e_38.error; }
         }
         World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };
@@ -6729,23 +6648,21 @@ var WebAudio = /** @class */ (function () {
     function WebAudio() {
     }
     Object.defineProperty(WebAudio, "started", {
-        get: function () { return this._started || this.globalContext.state === 'running'; },
+        get: function () { return this._started || this.context.state === 'running'; },
         enumerable: true,
         configurable: true
     });
     WebAudio.start = function () {
         if (this.started)
             return;
-        this.globalContext.resume();
-        this.worldContext.resume();
+        this.context.resume();
         this._started = true;
     };
     WebAudio.initContext = function () {
         try {
             // @ts-ignore
             window.AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.globalContext = new AudioContext();
-            this.worldContext = new AudioContext();
+            this.context = new AudioContext();
         }
         catch (e) {
             error('Web Audio API is not supported in this browser. Sounds will not be able to play.');
@@ -6756,7 +6673,7 @@ var WebAudio = /** @class */ (function () {
         request.open('GET', url, true);
         request.responseType = 'arraybuffer';
         request.onload = function () {
-            WebAudio.globalContext.decodeAudioData(request.response, function (buffer) {
+            WebAudio.context.decodeAudioData(request.response, function (buffer) {
                 WebAudio.preloadedSounds[key] = {
                     buffer: buffer,
                 };
@@ -6771,6 +6688,101 @@ var WebAudio = /** @class */ (function () {
     WebAudio.preloadedSounds = {};
     WebAudio._started = false;
     return WebAudio;
+}());
+var WebAudioSound = /** @class */ (function () {
+    function WebAudioSound(asset) {
+        this.asset = asset;
+        if (!WebAudio.started)
+            this.preWebAudioStartStartTime = performance.now();
+        this.gainNode = this.context.createGain();
+        this.gainNode.connect(this.context.destination);
+        this._speed = 1;
+        this._loop = false;
+        this.start();
+    }
+    Object.defineProperty(WebAudioSound.prototype, "context", {
+        get: function () { return WebAudio.context; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WebAudioSound.prototype, "volume", {
+        get: function () { return this.gainNode.gain.value; },
+        set: function (value) { this.gainNode.gain.value = value; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WebAudioSound.prototype, "speed", {
+        get: function () {
+            return this.webAudioSound ? this.webAudioSound.playbackRate.value : this._speed;
+        },
+        set: function (value) {
+            this._speed = value;
+            if (this.webAudioSound)
+                this.webAudioSound.playbackRate.value = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WebAudioSound.prototype, "loop", {
+        get: function () { return this.webAudioSound ? this.webAudioSound.loop : this._loop; },
+        set: function (value) {
+            this._loop = value;
+            if (this.webAudioSound)
+                this.webAudioSound.loop = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WebAudioSound.prototype, "done", {
+        get: function () { return this._done; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WebAudioSound.prototype, "paused", {
+        get: function () { return this.pausedPosition !== undefined; },
+        set: function (value) { value ? this.pause() : this.unpause(); },
+        enumerable: true,
+        configurable: true
+    });
+    ;
+    WebAudioSound.prototype.pause = function () {
+        if (this.paused)
+            return;
+        this.pausedPosition = this.context.currentTime - this.startTime;
+        this.webAudioSound.onended = undefined;
+        this.webAudioSound.stop();
+    };
+    WebAudioSound.prototype.unpause = function () {
+        if (!this.paused || this.done)
+            return;
+        this.start(this.pausedPosition);
+    };
+    WebAudioSound.prototype.onWebAudioStart = function () {
+        var pos = (performance.now() - this.preWebAudioStartStartTime) / 1000;
+        if (!this.paused) {
+            this.pausedPosition = this.context.currentTime - this.startTime + pos;
+            this.webAudioSound.onended = undefined;
+            this.webAudioSound.stop();
+            this.start(this.pausedPosition);
+        }
+    };
+    WebAudioSound.prototype.start = function (offset) {
+        var _this = this;
+        if (offset === void 0) { offset = 0; }
+        this.webAudioSound = this.context.createBufferSource();
+        this.webAudioSound.buffer = this.asset.buffer;
+        this.webAudioSound.connect(this.gainNode);
+        this.webAudioSound.onended = function () {
+            _this._done = true;
+        };
+        this.webAudioSound.playbackRate.value = this._speed;
+        this.webAudioSound.loop = this._loop;
+        this.webAudioSound.start(0, offset);
+        this.startTime = this.context.currentTime - offset;
+        this.pausedPosition = undefined;
+        this._done = false;
+    };
+    return WebAudioSound;
 }());
 var G;
 (function (G) {
@@ -7218,7 +7230,6 @@ function MENU_BASE_STAGE() {
     return {
         constructor: World,
         backgroundColor: 0x000000,
-        useGlobalSound: true,
     };
 }
 function WORLD_BOUNDS(left, top, right, bottom) {
@@ -7328,7 +7339,7 @@ var Campfire = /** @class */ (function (_super) {
         this.fireRadius.win();
     };
     Campfire.prototype.consumeItems = function () {
-        var e_38, _a;
+        var e_39, _a;
         var items = this.world.getWorldObjectsByType(Item).filter(function (item) { return item.consumable && !item.held; });
         try {
             for (var items_1 = __values(items), items_1_1 = items_1.next(); !items_1_1.done; items_1_1 = items_1.next()) {
@@ -7342,12 +7353,12 @@ var Campfire = /** @class */ (function (_super) {
                 this.consumeItem(item);
             }
         }
-        catch (e_38_1) { e_38 = { error: e_38_1 }; }
+        catch (e_39_1) { e_39 = { error: e_39_1 }; }
         finally {
             try {
                 if (items_1_1 && !items_1_1.done && (_a = items_1.return)) _a.call(items_1);
             }
-            finally { if (e_38) throw e_38.error; }
+            finally { if (e_39) throw e_39.error; }
         }
     };
     Campfire.prototype.consumeItem = function (item) {
@@ -7625,7 +7636,7 @@ var Human = /** @class */ (function (_super) {
         }
     };
     Human.prototype.getOverlappingItem = function () {
-        var e_39, _a;
+        var e_40, _a;
         var overlappingItemDistance = Infinity;
         var overlappingItem = undefined;
         try {
@@ -7640,12 +7651,12 @@ var Human = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_39_1) { e_39 = { error: e_39_1 }; }
+        catch (e_40_1) { e_40 = { error: e_40_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_39) throw e_39.error; }
+            finally { if (e_40) throw e_40.error; }
         }
         return overlappingItem;
     };
@@ -8140,6 +8151,7 @@ var Main = /** @class */ (function () {
             backgroundColor: global.backgroundColor,
         });
         global.renderer = Main.renderer;
+        global.soundManager = new SoundManager();
         WebAudio.initContext();
         Preload.preload({
             textures: Assets.textures,
@@ -8234,21 +8246,17 @@ var Main = /** @class */ (function () {
             if (Input.justDown('9')) {
                 global.game.menuSystem.loadMenu(MetricsMenu);
             }
-            if (Input.justDown('1')) {
-                global.world.playSound('pew');
-            }
-            if (Input.justDown('2')) {
-                global.game.soundManager.playSound('pew');
-            }
             global.metrics.startSpan('frame');
             Main.delta = frameDelta / 60;
             global.clearStacks();
             global.metrics.startSpan('update');
             for (var i = 0; i < Debug.SKIP_RATE; i++) {
                 Input.update();
+                global.soundManager.preGameUpdate();
                 global.metrics.startSpan('game');
                 Main.game.update(Main.delta);
                 global.metrics.endSpan('game');
+                global.soundManager.postGameUpdate();
             }
             global.metrics.endSpan('update');
             global.metrics.startSpan('render');
@@ -8481,7 +8489,7 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.hitStuff = function () {
-        var e_40, _a;
+        var e_41, _a;
         if (!this.heldItem)
             return;
         var swingHitbox = this.getSwingHitbox();
@@ -8496,12 +8504,12 @@ var Player = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_40_1) { e_40 = { error: e_40_1 }; }
+        catch (e_41_1) { e_41 = { error: e_41_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_40) throw e_40.error; }
+            finally { if (e_41) throw e_41.error; }
         }
     };
     Player.prototype.getSwingHitbox = function () {
@@ -9021,7 +9029,7 @@ function getStoryboard() {
                                 })];
                         case 2:
                             _a.sent();
-                            fireWinSound.pause();
+                            fireWinSound.paused = true;
                             global.world.addWorldObject({
                                 constructor: Sprite,
                                 texture: Texture.filledRect(Main.width, Main.height, 0xFFFFFF),
@@ -9268,7 +9276,7 @@ var LogPiece = /** @class */ (function (_super) {
 }(Sprite));
 (function (LogPiece) {
     function getLogPieces(log) {
-        var e_41, _a;
+        var e_42, _a;
         var logPieces = [];
         var stemx = log.flipX ? 4 : 8;
         var logTexture = AssetCache.getTexture('log');
@@ -9292,12 +9300,12 @@ var LogPiece = /** @class */ (function (_super) {
                 }));
             }
         }
-        catch (e_41_1) { e_41 = { error: e_41_1 }; }
+        catch (e_42_1) { e_42 = { error: e_42_1 }; }
         finally {
             try {
                 if (subdivisions_1_1 && !subdivisions_1_1.done && (_a = subdivisions_1.return)) _a.call(subdivisions_1);
             }
-            finally { if (e_41) throw e_41.error; }
+            finally { if (e_42) throw e_42.error; }
         }
         return logPieces;
     }

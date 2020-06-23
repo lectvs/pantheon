@@ -8,7 +8,7 @@ class SoundManager {
         this.webAudioStarted = false;
     }
 
-    update() {
+    preGameUpdate() {
         if (!this.webAudioStarted) {
             if (WebAudio.started) {
                 this.onWebAudioStart();
@@ -16,29 +16,30 @@ class SoundManager {
             }
         }
 
-        for (let i = this.activeSounds.length-1; i >= 0; i--) {
-            if (this.activeSounds[i].done) {
-                this.activeSounds.splice(i, 1);
+        for (let sound of this.activeSounds) {
+            sound.markForDisable();
+        }
+    }
+
+    postGameUpdate() {
+        for (let sound of this.activeSounds) {
+            if (sound.isMarkedForDisable) {
+                this.ensureSoundDisabled(sound);
             }
         }
     }
 
-    playSound(sound: string | Sound.Asset, soundType: Sound.Type = Sound.Type.GLOBAL) {
-        if (_.isString(sound)) {
-            sound = AssetCache.getSoundAsset(sound);
-            if (!sound) return;
-        }
-
-        let soundInstance = new Sound(sound, soundType);
-        this.activeSounds.push(soundInstance);
-        return soundInstance;
+    ensureSoundDisabled(sound: Sound) {
+        sound.ensureDisabled();
+        A.removeAll(this.activeSounds, sound);
     }
 
-    clearSounds() {
-        for (let sound of this.activeSounds) {
-            sound.pause();
+    ensureSoundEnabled(sound: Sound) {
+        if (!_.contains(this.activeSounds, sound)) {
+            this.activeSounds.push(sound);
         }
-        this.activeSounds = [];
+        sound.unmarkForDisable();
+        sound.ensureEnabled();
     }
 
     onWebAudioStart() {

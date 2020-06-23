@@ -20,7 +20,6 @@ namespace World {
         entryPoints?: Dict<Pt>;
         worldObjects?: WorldObject.Config[];
 
-        useGlobalSound?: boolean;
         showDebugMousePosition?: boolean;
     }
 
@@ -49,6 +48,7 @@ class World {
     height: number;
     entryPoints: Dict<Pt>;
     worldObjects: WorldObject[];
+    sounds: Sound[];
     showDebugMousePosition: boolean;
 
     physicsGroups: Dict<World.PhysicsGroup>;
@@ -65,10 +65,7 @@ class World {
 
     protected scriptManager: ScriptManager;
 
-    private useGlobalSound: boolean;
     private debugMousePositionText: SpriteText;
-
-    get paused() { return global.game.paused; }
 
     constructor(config: World.Config, defaults?: World.Config) {
         config = WorldObject.resolveConfig<World.Config>(config, defaults);
@@ -77,6 +74,7 @@ class World {
 
         this.width = O.getOrDefault(config.width, global.gameWidth);
         this.height = O.getOrDefault(config.height, global.gameHeight);
+        this.sounds = [];
         this.worldObjects = [];
         this.showDebugMousePosition = O.getOrDefault(config.showDebugMousePosition, false);
 
@@ -104,7 +102,6 @@ class World {
             World.Actions.addWorldObjectToWorld(WorldObject.fromConfig(worldObjectConfig), this);
         }
         
-        this.useGlobalSound = O.getOrDefault(config.useGlobalSound, false);
         this.debugMousePositionText = this.addWorldObject<SpriteText>(<SpriteText.Config>{
             constructor: SpriteText,
             x: 0, y: 0,
@@ -157,6 +154,7 @@ class World {
         this.removeDeadWorldObjects();
 
         this.camera.update(this, delta);
+        this.updateSounds(delta);
     }
 
     protected updateDebugMousePosition() {
@@ -166,6 +164,17 @@ class World {
 
         if (showMousePosition) {
             this.debugMousePositionText.setText(`${St.padLeft(this.getWorldMouseX().toString(), 3)} ${St.padLeft(this.getWorldMouseY().toString(), 3)}`);
+        }
+    }
+
+    protected updateSounds(delta: number) {
+        for (let i = this.sounds.length-1; i >= 0; i--) {
+            if (!this.sounds[i].paused) {
+                this.sounds[i].update(delta);
+            }
+            if (this.sounds[i].done) {
+                this.sounds.splice(i, 1);
+            }
         }
     }
 
@@ -306,19 +315,10 @@ class World {
         return _.contains(this.worldObjects, obj);
     }
 
-    onPause() {
-
-    }
-
-    onUnpause() {
-
-    }
-
-    playSound(sound: string | Sound.Asset) {
-        if (this.useGlobalSound) {
-            return global.game.soundManager.playSound(sound);
-        }
-        return global.game.soundManager.playSound(sound, Sound.Type.WORLD);
+    playSound(key: string) {
+        let sound = new Sound(key);
+        this.sounds.push(sound);
+        return sound;
     }
     
     removeWorldObject<T extends WorldObject>(obj: T | string): T {

@@ -42,6 +42,7 @@ class Main {
             backgroundColor: global.backgroundColor,
         });
         global.renderer = Main.renderer;
+        global.soundManager = new SoundManager();
         
         WebAudio.initContext();
 
@@ -146,13 +147,6 @@ class Main {
                 global.game.menuSystem.loadMenu(MetricsMenu);
             }
 
-            if (Input.justDown('1')) {
-                global.world.playSound('pew');
-            }
-            if (Input.justDown('2')) {
-                global.game.soundManager.playSound('pew');
-            }
-
             global.metrics.startSpan('frame');
 
             Main.delta = frameDelta/60;
@@ -162,9 +156,11 @@ class Main {
             global.metrics.startSpan('update');
             for (let i = 0; i < Debug.SKIP_RATE; i++) {
                 Input.update();
+                global.soundManager.preGameUpdate();
                 global.metrics.startSpan('game');
                 Main.game.update(Main.delta);
                 global.metrics.endSpan('game');
+                global.soundManager.postGameUpdate();
             }
             global.metrics.endSpan('update');
 
