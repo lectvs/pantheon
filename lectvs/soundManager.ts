@@ -1,21 +1,11 @@
 class SoundManager {
     private activeSounds: Sound[];
 
-    private webAudioStarted: boolean;
-
     constructor() {
         this.activeSounds = [];
-        this.webAudioStarted = false;
     }
 
     preGameUpdate() {
-        if (!this.webAudioStarted) {
-            if (WebAudio.started) {
-                this.onWebAudioStart();
-                this.webAudioStarted = true;
-            }
-        }
-
         for (let sound of this.activeSounds) {
             sound.markForDisable();
         }
@@ -40,11 +30,5 @@ class SoundManager {
         }
         sound.unmarkForDisable();
         sound.ensureEnabled();
-    }
-
-    onWebAudioStart() {
-        for (let sound of this.activeSounds) {
-            sound.onWebAudioStart();
-        }
     }
 }

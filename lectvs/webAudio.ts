@@ -8,13 +8,10 @@ class WebAudio {
     static preloadedSounds: Dict<WebAudio.PreloadedSound> = {};
     static context: AudioContext;
 
-    private static _started: boolean = false;
-    static get started() { return this._started || this.context.state === 'running'; }
+    static get started() { return this.context && this.context.state === 'running'; }
 
     static start() {
-        if (this.started) return;
         this.context.resume();
-        this._started = true;
     }
 
     static initContext() {

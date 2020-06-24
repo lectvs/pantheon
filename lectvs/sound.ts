@@ -1,5 +1,5 @@
 class Sound {
-    private webAudioSound: WebAudioSound;
+    private webAudioSound: WebAudioSoundI;
     private get soundManager() { return global.soundManager; }
 
     private markedForDisable: boolean;
@@ -13,11 +13,20 @@ class Sound {
 
     get done() { return this.webAudioSound.done; }
 
+    pos: number;
+    get duration() { return this.webAudioSound.duration; }
+
     constructor(key: string) {
-        this.webAudioSound = new WebAudioSound(AssetCache.getSoundAsset(key));
+        let asset = AssetCache.getSoundAsset(key);
+        if (WebAudio.started) {
+            this.webAudioSound = new WebAudioSound(asset);
+        } else {
+            this.webAudioSound = new WebAudioSoundDummy(asset);
+        }
         this.webAudioSound.pause();  // Start paused to avoid playing for one frame when not updating
         this.markedForDisable = false;
         this.paused = false;
+        this.pos = 0;
     }
 
     markForDisable() {
@@ -38,10 +47,13 @@ class Sound {
 
     update(delta: number) {
         this.soundManager.ensureSoundEnabled(this);
-    }
-
-    // TODO: get rid of this
-    onWebAudioStart() {
-        this.webAudioSound.onWebAudioStart();
+        this.pos += delta;
+        
+        if (WebAudio.started && this.webAudioSound instanceof WebAudioSoundDummy) {
+            if (this.pos < this.duration) {
+                this.webAudioSound = new WebAudioSound(this.webAudioSound.asset);
+            }
+            this.webAudioSound.seek(this.pos);
+        }
     }
 }

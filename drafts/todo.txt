@@ -50,7 +50,7 @@ juice
 - /sound effects
 - /make sound attached to game/world/objects
     - /require update to continue playing?
-- don't create sounds before audio context starts
+- /don't create sounds before audio context starts
 - fix player random flickering (rounding error or smooth movement artifact?)
     - /suggestion: snap camera to world units
     - /can we just snap everything to world units and not camera units?

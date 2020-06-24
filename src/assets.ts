@@ -93,6 +93,9 @@ namespace Assets {
         'fireroar': {},
 
         'dooropen': { url: 'assets/dooropen.mp3' },
+
+        // Music
+        'music': {},
     }
 
     export const tilesets: Dict<Tilemap.Tileset> = {

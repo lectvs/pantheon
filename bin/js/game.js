@@ -5363,10 +5363,17 @@ var SlideManager = /** @class */ (function () {
 }());
 var Sound = /** @class */ (function () {
     function Sound(key) {
-        this.webAudioSound = new WebAudioSound(AssetCache.getSoundAsset(key));
+        var asset = AssetCache.getSoundAsset(key);
+        if (WebAudio.started) {
+            this.webAudioSound = new WebAudioSound(asset);
+        }
+        else {
+            this.webAudioSound = new WebAudioSoundDummy(asset);
+        }
         this.webAudioSound.pause(); // Start paused to avoid playing for one frame when not updating
         this.markedForDisable = false;
         this.paused = false;
+        this.pos = 0;
     }
     Object.defineProperty(Sound.prototype, "soundManager", {
         get: function () { return global.soundManager; },
@@ -5395,6 +5402,11 @@ var Sound = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(Sound.prototype, "duration", {
+        get: function () { return this.webAudioSound.duration; },
+        enumerable: true,
+        configurable: true
+    });
     Sound.prototype.markForDisable = function () {
         this.markedForDisable = true;
     };
@@ -5409,26 +5421,22 @@ var Sound = /** @class */ (function () {
     };
     Sound.prototype.update = function (delta) {
         this.soundManager.ensureSoundEnabled(this);
-    };
-    // TODO: get rid of this
-    Sound.prototype.onWebAudioStart = function () {
-        this.webAudioSound.onWebAudioStart();
+        this.pos += delta;
+        if (WebAudio.started && this.webAudioSound instanceof WebAudioSoundDummy) {
+            if (this.pos < this.duration) {
+                this.webAudioSound = new WebAudioSound(this.webAudioSound.asset);
+            }
+            this.webAudioSound.seek(this.pos);
+        }
     };
     return Sound;
 }());
 var SoundManager = /** @class */ (function () {
     function SoundManager() {
         this.activeSounds = [];
-        this.webAudioStarted = false;
     }
     SoundManager.prototype.preGameUpdate = function () {
         var e_29, _a;
-        if (!this.webAudioStarted) {
-            if (WebAudio.started) {
-                this.onWebAudioStart();
-                this.webAudioStarted = true;
-            }
-        }
         try {
             for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var sound = _c.value;
@@ -5471,22 +5479,6 @@ var SoundManager = /** @class */ (function () {
         }
         sound.unmarkForDisable();
         sound.ensureEnabled();
-    };
-    SoundManager.prototype.onWebAudioStart = function () {
-        var e_31, _a;
-        try {
-            for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var sound = _c.value;
-                sound.onWebAudioStart();
-            }
-        }
-        catch (e_31_1) { e_31 = { error: e_31_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_31) throw e_31.error; }
-        }
     };
     return SoundManager;
 }());
@@ -5567,7 +5559,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_32, _a;
+        var e_31, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -5581,12 +5573,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_32_1) { e_32 = { error: e_32_1 }; }
+            catch (e_31_1) { e_31 = { error: e_31_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_32) throw e_32.error; }
+                finally { if (e_31) throw e_31.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -5735,7 +5727,7 @@ var StateMachine = /** @class */ (function () {
         return this.states[name];
     };
     StateMachine.prototype.getValidTransition = function (state) {
-        var e_33, _a;
+        var e_32, _a;
         try {
             for (var _b = __values(state.transitions || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -5752,12 +5744,12 @@ var StateMachine = /** @class */ (function () {
                 }
             }
         }
-        catch (e_33_1) { e_33 = { error: e_33_1 }; }
+        catch (e_32_1) { e_32 = { error: e_32_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_33) throw e_33.error; }
+            finally { if (e_32) throw e_32.error; }
         }
         return undefined;
     };
@@ -5953,7 +5945,7 @@ var StoryManager = /** @class */ (function () {
         this.storyConfig.execute();
     };
     StoryManager.prototype.getInteractableObjects = function (node, stageName) {
-        var e_34, _a;
+        var e_33, _a;
         var result = new Set();
         if (!node)
             return result;
@@ -5970,12 +5962,12 @@ var StoryManager = /** @class */ (function () {
                 result.add(transition.with);
             }
         }
-        catch (e_34_1) { e_34 = { error: e_34_1 }; }
+        catch (e_33_1) { e_33 = { error: e_33_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_34) throw e_34.error; }
+            finally { if (e_33) throw e_33.error; }
         }
         return result;
     };
@@ -5998,7 +5990,7 @@ var StoryManager = /** @class */ (function () {
         this._currentNodeName = _.last(path);
     };
     StoryManager.prototype.getFirstValidTransition = function (node) {
-        var e_35, _a;
+        var e_34, _a;
         try {
             for (var _b = __values(node.transitions), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -6022,12 +6014,12 @@ var StoryManager = /** @class */ (function () {
                 }
             }
         }
-        catch (e_35_1) { e_35 = { error: e_35_1 }; }
+        catch (e_34_1) { e_34 = { error: e_34_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_35) throw e_35.error; }
+            finally { if (e_34) throw e_34.error; }
         }
         return null;
     };
@@ -6038,7 +6030,7 @@ var StoryManager = /** @class */ (function () {
         return this.storyboard[name];
     };
     StoryManager.prototype.updateParty = function (party) {
-        var e_36, _a, e_37, _b;
+        var e_35, _a, e_36, _b;
         if (party.setLeader !== undefined) {
             this.theater.partyManager.leader = party.setLeader;
         }
@@ -6049,12 +6041,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberActive(m);
                 }
             }
-            catch (e_36_1) { e_36 = { error: e_36_1 }; }
+            catch (e_35_1) { e_35 = { error: e_35_1 }; }
             finally {
                 try {
                     if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                 }
-                finally { if (e_36) throw e_36.error; }
+                finally { if (e_35) throw e_35.error; }
             }
         }
         if (!_.isEmpty(party.setMembersInactive)) {
@@ -6064,12 +6056,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberInactive(m);
                 }
             }
-            catch (e_37_1) { e_37 = { error: e_37_1 }; }
+            catch (e_36_1) { e_36 = { error: e_36_1 }; }
             finally {
                 try {
                     if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
                 }
-                finally { if (e_37) throw e_37.error; }
+                finally { if (e_36) throw e_36.error; }
             }
         }
     };
@@ -6283,7 +6275,7 @@ var Tilemap = /** @class */ (function (_super) {
         }
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_38, _a;
+        var e_37, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -6301,12 +6293,12 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_38_1) { e_38 = { error: e_38_1 }; }
+        catch (e_37_1) { e_37 = { error: e_37_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_38) throw e_38.error; }
+            finally { if (e_37) throw e_37.error; }
         }
         World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };
@@ -6648,15 +6640,12 @@ var WebAudio = /** @class */ (function () {
     function WebAudio() {
     }
     Object.defineProperty(WebAudio, "started", {
-        get: function () { return this._started || this.context.state === 'running'; },
+        get: function () { return this.context && this.context.state === 'running'; },
         enumerable: true,
         configurable: true
     });
     WebAudio.start = function () {
-        if (this.started)
-            return;
         this.context.resume();
-        this._started = true;
     };
     WebAudio.initContext = function () {
         try {
@@ -6686,14 +6675,11 @@ var WebAudio = /** @class */ (function () {
         request.send();
     };
     WebAudio.preloadedSounds = {};
-    WebAudio._started = false;
     return WebAudio;
 }());
 var WebAudioSound = /** @class */ (function () {
     function WebAudioSound(asset) {
         this.asset = asset;
-        if (!WebAudio.started)
-            this.preWebAudioStartStartTime = performance.now();
         this.gainNode = this.context.createGain();
         this.gainNode.connect(this.context.destination);
         this._speed = 1;
@@ -6713,23 +6699,28 @@ var WebAudioSound = /** @class */ (function () {
     });
     Object.defineProperty(WebAudioSound.prototype, "speed", {
         get: function () {
-            return this.webAudioSound ? this.webAudioSound.playbackRate.value : this._speed;
+            return this.sourceNode ? this.sourceNode.playbackRate.value : this._speed;
         },
         set: function (value) {
             this._speed = value;
-            if (this.webAudioSound)
-                this.webAudioSound.playbackRate.value = value;
+            if (this.sourceNode)
+                this.sourceNode.playbackRate.value = value;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebAudioSound.prototype, "loop", {
-        get: function () { return this.webAudioSound ? this.webAudioSound.loop : this._loop; },
+        get: function () { return this.sourceNode ? this.sourceNode.loop : this._loop; },
         set: function (value) {
             this._loop = value;
-            if (this.webAudioSound)
-                this.webAudioSound.loop = value;
+            if (this.sourceNode)
+                this.sourceNode.loop = value;
         },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WebAudioSound.prototype, "duration", {
+        get: function () { return this.sourceNode ? this.sourceNode.buffer.duration : 0; },
         enumerable: true,
         configurable: true
     });
@@ -6749,40 +6740,76 @@ var WebAudioSound = /** @class */ (function () {
         if (this.paused)
             return;
         this.pausedPosition = this.context.currentTime - this.startTime;
-        this.webAudioSound.onended = undefined;
-        this.webAudioSound.stop();
+        this.sourceNode.onended = undefined;
+        this.sourceNode.stop();
     };
     WebAudioSound.prototype.unpause = function () {
         if (!this.paused || this.done)
             return;
         this.start(this.pausedPosition);
     };
-    WebAudioSound.prototype.onWebAudioStart = function () {
-        var pos = (performance.now() - this.preWebAudioStartStartTime) / 1000;
-        if (!this.paused) {
-            this.pausedPosition = this.context.currentTime - this.startTime + pos;
-            this.webAudioSound.onended = undefined;
-            this.webAudioSound.stop();
-            this.start(this.pausedPosition);
+    WebAudioSound.prototype.seek = function (pos) {
+        if (pos >= this.duration) {
+            this.stop();
+            return;
         }
+        if (this.paused) {
+            this.pausedPosition = pos;
+        }
+        else {
+            this.sourceNode.onended = undefined;
+            this.sourceNode.stop();
+            this.start(pos);
+        }
+    };
+    WebAudioSound.prototype.stop = function () {
+        this.sourceNode.stop();
+        debug(this.done);
     };
     WebAudioSound.prototype.start = function (offset) {
         var _this = this;
         if (offset === void 0) { offset = 0; }
-        this.webAudioSound = this.context.createBufferSource();
-        this.webAudioSound.buffer = this.asset.buffer;
-        this.webAudioSound.connect(this.gainNode);
-        this.webAudioSound.onended = function () {
+        this.sourceNode = this.context.createBufferSource();
+        this.sourceNode.buffer = this.asset.buffer;
+        this.sourceNode.connect(this.gainNode);
+        this.sourceNode.onended = function () {
             _this._done = true;
         };
-        this.webAudioSound.playbackRate.value = this._speed;
-        this.webAudioSound.loop = this._loop;
-        this.webAudioSound.start(0, offset);
+        this.sourceNode.playbackRate.value = this._speed;
+        this.sourceNode.loop = this._loop;
+        this.sourceNode.start(0, offset);
         this.startTime = this.context.currentTime - offset;
         this.pausedPosition = undefined;
         this._done = false;
     };
     return WebAudioSound;
+}());
+var WebAudioSoundDummy = /** @class */ (function () {
+    function WebAudioSoundDummy(asset) {
+        this.asset = asset;
+        this.volume = 1;
+        this.speed = 1;
+        this.loop = false;
+        this.duration = asset.buffer.duration;
+        this.done = false;
+        this.paused = false;
+    }
+    WebAudioSoundDummy.prototype.pause = function () {
+        this.paused = true;
+    };
+    WebAudioSoundDummy.prototype.unpause = function () {
+        this.paused = false;
+    };
+    WebAudioSoundDummy.prototype.seek = function (pos) {
+        if (pos >= this.duration) {
+            this.stop();
+            return;
+        }
+    };
+    WebAudioSoundDummy.prototype.stop = function () {
+        this.done = true;
+    };
+    return WebAudioSoundDummy;
 }());
 var G;
 (function (G) {
@@ -7079,6 +7106,8 @@ var Assets;
         'fireout': {},
         'fireroar': {},
         'dooropen': { url: 'assets/dooropen.mp3' },
+        // Music
+        'music': {},
     };
     Assets.tilesets = {
         'world': {
@@ -7339,7 +7368,7 @@ var Campfire = /** @class */ (function (_super) {
         this.fireRadius.win();
     };
     Campfire.prototype.consumeItems = function () {
-        var e_39, _a;
+        var e_38, _a;
         var items = this.world.getWorldObjectsByType(Item).filter(function (item) { return item.consumable && !item.held; });
         try {
             for (var items_1 = __values(items), items_1_1 = items_1.next(); !items_1_1.done; items_1_1 = items_1.next()) {
@@ -7353,12 +7382,12 @@ var Campfire = /** @class */ (function (_super) {
                 this.consumeItem(item);
             }
         }
-        catch (e_39_1) { e_39 = { error: e_39_1 }; }
+        catch (e_38_1) { e_38 = { error: e_38_1 }; }
         finally {
             try {
                 if (items_1_1 && !items_1_1.done && (_a = items_1.return)) _a.call(items_1);
             }
-            finally { if (e_39) throw e_39.error; }
+            finally { if (e_38) throw e_38.error; }
         }
     };
     Campfire.prototype.consumeItem = function (item) {
@@ -7636,7 +7665,7 @@ var Human = /** @class */ (function (_super) {
         }
     };
     Human.prototype.getOverlappingItem = function () {
-        var e_40, _a;
+        var e_39, _a;
         var overlappingItemDistance = Infinity;
         var overlappingItem = undefined;
         try {
@@ -7651,12 +7680,12 @@ var Human = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_40_1) { e_40 = { error: e_40_1 }; }
+        catch (e_39_1) { e_39 = { error: e_39_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_40) throw e_40.error; }
+            finally { if (e_39) throw e_39.error; }
         }
         return overlappingItem;
     };
@@ -8489,7 +8518,7 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.hitStuff = function () {
-        var e_41, _a;
+        var e_40, _a;
         if (!this.heldItem)
             return;
         var swingHitbox = this.getSwingHitbox();
@@ -8504,12 +8533,12 @@ var Player = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_41_1) { e_41 = { error: e_41_1 }; }
+        catch (e_40_1) { e_40 = { error: e_40_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_41) throw e_41.error; }
+            finally { if (e_40) throw e_40.error; }
         }
     };
     Player.prototype.getSwingHitbox = function () {
@@ -9276,7 +9305,7 @@ var LogPiece = /** @class */ (function (_super) {
 }(Sprite));
 (function (LogPiece) {
     function getLogPieces(log) {
-        var e_42, _a;
+        var e_41, _a;
         var logPieces = [];
         var stemx = log.flipX ? 4 : 8;
         var logTexture = AssetCache.getTexture('log');
@@ -9300,12 +9329,12 @@ var LogPiece = /** @class */ (function (_super) {
                 }));
             }
         }
-        catch (e_42_1) { e_42 = { error: e_42_1 }; }
+        catch (e_41_1) { e_41 = { error: e_41_1 }; }
         finally {
             try {
                 if (subdivisions_1_1 && !subdivisions_1_1.done && (_a = subdivisions_1.return)) _a.call(subdivisions_1);
             }
-            finally { if (e_42) throw e_42.error; }
+            finally { if (e_41) throw e_41.error; }
         }
         return logPieces;
     }
