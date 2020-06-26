@@ -86,13 +86,6 @@ class World {
         this.backgroundColor = O.getOrDefault(config.backgroundColor, global.backgroundColor);
         this.backgroundAlpha = O.getOrDefault(config.backgroundAlpha, 1);
 
-        let cameraConfig = O.getOrDefault(config.camera, {});
-        _.defaults(cameraConfig, {
-            width: this.width,
-            height: this.height,
-        });
-        this.camera = new Camera(cameraConfig);
-
         this.screen = new Texture(this.width, this.height);
         this.layerTexture = new Texture(this.width, this.height);
 
@@ -101,6 +94,8 @@ class World {
         for (let worldObjectConfig of config.worldObjects || []) {
             World.Actions.addWorldObjectToWorld(WorldObject.fromConfig(worldObjectConfig), this);
         }
+
+        this.camera = new Camera(O.getOrDefault(config.camera, {}), this);
         
         this.debugMousePositionText = this.addWorldObject<SpriteText>(<SpriteText.Config>{
             constructor: SpriteText,

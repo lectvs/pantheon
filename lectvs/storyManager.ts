@@ -50,7 +50,10 @@ class StoryManager {
             sm._currentNodeName = transition.toNode;
 
             if (sm.currentNode) {
-                sm.theater.runScript(sm.script());
+                let newScript = sm.theater.runScript(sm.script());
+                // Hack to make sure instantaneous transitions happen instantaneously.
+                // Should not be needed once we onboard this with StateMachine.
+                newScript.update(global.script.delta);
             }
         }
     }

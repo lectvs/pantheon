@@ -16,7 +16,7 @@ class Main {
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
 
         Debug.init({
-            debug: true,
+            debug: false,
             cheatsEnabled: true,
             allPhysicsBounds: false,
             moveCameraWithArrows: true,

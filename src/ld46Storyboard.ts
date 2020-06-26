@@ -15,6 +15,8 @@ function getStoryboard(): Storyboard { return {
             let startLog = global.world.getWorldObjectByName<Item>('start_log');
             global.world.camera.setModeFocus(campfire.x, campfire.y);
             global.world.camera.setMovementSmooth(0, 0, 0);
+
+            Script.instant(S.fadeOut());
             
             if (!SKIP) {
                 yield S.wait(2);

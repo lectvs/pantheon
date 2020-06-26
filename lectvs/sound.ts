@@ -51,7 +51,8 @@ class Sound {
         
         if (WebAudio.started && this.webAudioSound instanceof WebAudioSoundDummy) {
             if (this.pos < this.duration) {
-                this.webAudioSound = new WebAudioSound(this.webAudioSound.asset);
+                // Generate WebAudioSound from dummy
+                this.webAudioSound = this.webAudioSound.toWebAudioSound();
             }
             this.webAudioSound.seek(this.pos);
         }

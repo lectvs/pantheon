@@ -58,17 +58,18 @@ class Camera {
     get worldOffsetX() { return this.x - this.width/2; }
     get worldOffsetY() { return this.y - this.height/2; }
 
-    constructor(config: Camera.Config) {
+    constructor(config: Camera.Config, world: World) {
         _.defaults(config, {
             width: global.gameWidth,
             height: global.gameHeight,
             bounds: { x: -Infinity, y: -Infinity, width: Infinity, height: Infinity },
-            mode: { type: 'focus', point: { x: config.width/2, y: config.height/2 } },
             movement: { type: 'snap' },
         });
-
-        this.x = config.width/2;
-        this.y = config.height/2;
+        _.defaults(config, {
+            // Needs to use new values for config
+            mode: { type: 'focus', point: { x: config.width/2, y: config.height/2 } },
+        });
+        
         this.width = config.width;
         this.height = config.height;
 
@@ -86,6 +87,8 @@ class Camera {
         this._shakeY = 0;
         this.debugOffsetX = 0;
         this.debugOffsetY = 0;
+
+        this.initPosition(world);
     }
 
     update(world: World, delta: number) {
@@ -151,6 +154,20 @@ class Camera {
         }
         if (this.bounds.bottom < Infinity && this.y + this.height/2 > this.bounds.bottom) {
             this.y = this.bounds.bottom - this.height/2;
+        }
+    }
+
+    initPosition(world: World) {
+        if (this.mode.type === 'follow') {
+            let target = this.mode.target;
+            if (_.isString(target)) {
+                target = world.getWorldObjectByName(target);
+            }
+            this.x = target.x + this.mode.offset.x;
+            this.y = target.y + this.mode.offset.y;
+        } else if (this.mode.type === 'focus') {
+            this.x = this.mode.point.x;
+            this.y = this.mode.point.y;
         }
     }
 

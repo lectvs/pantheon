@@ -32,7 +32,7 @@ namespace S {
         }
     }
 
-    export function fadeOut(duration: number, tint: number = 0x000000): Script.Function {
+    export function fadeOut(duration: number = 0, tint: number = 0x000000): Script.Function {
         return showSlide({
             x: 0, y: 0,
             texture: Texture.filledRect(global.gameWidth, global.gameHeight, tint),

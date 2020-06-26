@@ -152,4 +152,13 @@ class WebAudioSoundDummy implements WebAudioSoundI {
     stop() {
         this.done = true;
     }
+
+    toWebAudioSound() {
+        let sound = new WebAudioSound(this.asset);
+        sound.volume = this.volume;
+        sound.speed = this.speed;
+        sound.loop = this.loop;
+        sound.paused = this.paused;
+        return sound;
+    }
 }

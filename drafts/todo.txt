@@ -51,13 +51,13 @@ juice
 - /make sound attached to game/world/objects
     - /require update to continue playing?
 - /don't create sounds before audio context starts
+- /fix fade out in Game's loadTheater()
 - fix player random flickering (rounding error or smooth movement artifact?)
     - /suggestion: snap camera to world units
     - /can we just snap everything to world units and not camera units?
 - random noise on fire lighting
     - perlin noise??
 - fix flickering fire
-- fix fade out in Game's loadTheater()
 - adjust sound effects
 
 
@@ -93,6 +93,8 @@ postpostjam
 - /rename World => Stage, WorldObject => Entity, PhysicsWorldObject => PhysicsEntity (decided not to do)
 - onboard storyboard with StateMachine
 - refactor the Main class
+- make theater not a world? (again)
+- replace all O.getOrDefault with ?. and ??
 - preloading improvements
     - loading screen/progress bar
     - timeout on preloading

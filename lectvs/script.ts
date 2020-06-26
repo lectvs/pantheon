@@ -44,3 +44,9 @@ class Script {
 
     static FINISH_IMMEDIATELY_MAX_ITERS = 1000000;
 }
+
+namespace Script {
+    export function instant(scriptFunction: Script.Function, maxIters?: number) {
+        new Script(scriptFunction).finishImmediately(maxIters);
+    }
+}
