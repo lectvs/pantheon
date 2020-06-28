@@ -52,13 +52,16 @@ juice
     - /require update to continue playing?
 - /don't create sounds before audio context starts
 - /fix fade out in Game's loadTheater()
-- fix player random flickering (rounding error or smooth movement artifact?)
+- /fix player random flickering (rounding error or smooth movement artifact?)
     - /suggestion: snap camera to world units
     - /can we just snap everything to world units and not camera units?
-- random noise on fire lighting
-    - perlin noise??
-- fix flickering fire
+- /fix flickering fire
+- /add official support for frame-stepping debug
+- /move metrics recording out of main class
+- /random noise on fire lighting
+    - /perlin noise??
 - adjust sound effects
+
 
 
 postpostjam
@@ -86,8 +89,7 @@ postpostjam
 - /single "transform" method for textures
 - /find out how to "erase" parts of a texture
     - /looks like mask only
-- metrics/analysis on update, render, etc. timing
-    - move metrics recording out of main class
+- /metrics/analysis on update, render, etc. timing
 - unit tests? :)
 - consider moving texture's anchorX/Y to a Sprite property
 - /rename World => Stage, WorldObject => Entity, PhysicsWorldObject => PhysicsEntity (decided not to do)

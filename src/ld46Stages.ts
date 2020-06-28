@@ -14,7 +14,7 @@ function getStages(): Dict<World.Config> { return {
     'game': {
         parent: BASE_STAGE(),
         camera: {
-            movement: { type: 'smooth', speed: 0, deadZoneWidth: 0, deadZoneHeight: 0 },
+            movement: { type: 'smooth', deadZoneWidth: 0, deadZoneHeight: 0 },
             mode: Camera.Mode.FOCUS(400, 400),
         },
         entryPoints: {
@@ -130,7 +130,7 @@ function getStages(): Dict<World.Config> { return {
                 x: 528, y: 84,
                 layer: 'main',
                 physicsGroup: 'items',
-            },
+            }
         ]
     },
 }}

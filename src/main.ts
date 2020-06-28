@@ -3,6 +3,7 @@
 
 class Main {
     private static game: Game;
+    private static metricsManager: MetricsManager;
     static renderer: PIXI.Renderer;
     static screen: Texture;
     static delta: number;
@@ -16,16 +17,19 @@ class Main {
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
 
         Debug.init({
-            debug: false,
+            debug: true,
+            font: Assets.fonts.DELUXE16,
             cheatsEnabled: true,
             allPhysicsBounds: false,
             moveCameraWithArrows: true,
             showMousePosition: false,
-            mousePositionFont: Assets.fonts.DELUXE16,
             skipRate: 1,
             programmaticInput: false,
             autoplay: true,
             skipMainMenu: true,
+            frameStepEnabled: false,
+            frameStepStepKey: '1',
+            frameStepRunKey: '2',
         });
 
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
@@ -91,19 +95,47 @@ class Main {
             'lmb':                  ['MouseLeft'],
         });
 
-        window.addEventListener("keydown", event => Input.handleKeyDownEvent(event), false);
-        window.addEventListener("keyup", event => Input.handleKeyUpEvent(event), false);
-        window.addEventListener("mousedown", event => Input.handleMouseDownEvent(event), false);
-        window.addEventListener("mouseup", event => Input.handleMouseUpEvent(event), false);
-        window.addEventListener("contextmenu", event => event.preventDefault(), false);
+        window.addEventListener("keypress", event => {
+            WebAudio.start();
+        });
+        window.addEventListener("keydown", event => {
+            WebAudio.start();
+            Input.handleKeyDownEvent(event);
+            if (event.key == 'Tab') {
+                event.preventDefault();
+            }
+        }, false);
+        window.addEventListener("keyup", event => {
+            WebAudio.start();
+            Input.handleKeyUpEvent(event);
+        }, false);
+        window.addEventListener("mousedown", event => {
+            WebAudio.start();
+            Input.handleMouseDownEvent(event);
+        }, false);
+        window.addEventListener("mouseup", event => {
+            WebAudio.start();
+            Input.handleMouseUpEvent(event);
+        }, false);
+        window.addEventListener("contextmenu", event => {
+            WebAudio.start();
+            event.preventDefault();
+        }, false);
 
-        Main.renderer.view.onclick = () => { WebAudio.start(); }
-        Main.renderer.view.onkeypress = () => { WebAudio.start(); }
+        // AccessibilityManager causes game to crash when Tab is pressed.
+        // Deleting it as per https://github.com/pixijs/pixi.js/issues/5111#issuecomment-420047824
+        Main.renderer.plugins.accessibility.destroy();
+        delete Main.renderer.plugins.accessibility;
+
+        this.metricsManager = new MetricsManager({
+            recordKey: '0',
+        });
 
         this.game = new Game({
             mainMenuClass: IntroMenu,
             pauseMenuClass: PauseMenu,
             theaterClass: Theater,
+            showMetricsMenuKey: '9',
             theaterConfig: {
                 getStages: getStages,
                 stageToLoad: 'game',
@@ -133,19 +165,7 @@ class Main {
     // no need to modify
     private static play() {
         PIXI.Ticker.shared.add(frameDelta => {
-            if (Input.justDown('0')) {
-                if (!global.metrics.isRecording) {
-                    global.metrics.startRecording('recording');
-                    debug("Started recording");
-                } else {
-                    global.metrics.endRecording();
-                    debug(`Ended recording (${global.metrics.getLastRecording().time.toFixed(0)} ms)`);
-                }
-            }
-
-            if (Input.justDown('9')) {
-                global.game.menuSystem.loadMenu(MetricsMenu);
-            }
+            this.metricsManager.update();
 
             global.metrics.startSpan('frame');
 
@@ -156,6 +176,7 @@ class Main {
             global.metrics.startSpan('update');
             for (let i = 0; i < Debug.SKIP_RATE; i++) {
                 Input.update();
+                if (Debug.frameStepSkipFrame()) break;
                 global.soundManager.preGameUpdate();
                 global.metrics.startSpan('game');
                 Main.game.update(Main.delta);

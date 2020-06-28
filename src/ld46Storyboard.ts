@@ -14,7 +14,7 @@ function getStoryboard(): Storyboard { return {
             let campfire = global.world.getWorldObjectByType(Campfire);
             let startLog = global.world.getWorldObjectByName<Item>('start_log');
             global.world.camera.setModeFocus(campfire.x, campfire.y);
-            global.world.camera.setMovementSmooth(0, 0, 0);
+            global.world.camera.setMovementSmooth();
 
             Script.instant(S.fadeOut());
             
@@ -53,7 +53,7 @@ function getStoryboard(): Storyboard { return {
         script: function*() {
             yield S.wait(1);
             global.theater.currentWorld.camera.setModeFollow('player', 0, -8);
-            global.theater.currentWorld.camera.setMovementSmooth(0, 40, 30);
+            global.theater.currentWorld.camera.setMovementSmooth(40, 30);
         },
         transitions: [{ type: 'instant', toNode: 'gameplay' }]
     },
@@ -71,7 +71,7 @@ function getStoryboard(): Storyboard { return {
             let lightingManager = global.world.getWorldObjectByType(LightingManager);
 
             global.world.camera.setModeFocus(campfire.x, campfire.y);
-            global.world.camera.setMovementSmooth(0, 0, 0);
+            global.world.camera.setMovementSmooth();
             if (global.world.hasWorldObject('monster')) {
                 global.world.removeWorldObject('monster');
             }
@@ -119,7 +119,7 @@ function getStoryboard(): Storyboard { return {
             let campfire = global.world.getWorldObjectByType(Campfire);
 
             global.world.camera.setModeFocus(campfire.x, campfire.y);
-            global.world.camera.setMovementSmooth(0, 0, 0);
+            global.world.camera.setMovementSmooth();
             if (global.world.hasWorldObject('monster')) {
                 global.world.removeWorldObject('monster');
             }

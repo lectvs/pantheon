@@ -911,21 +911,20 @@ var Camera = /** @class */ (function () {
             this.y = y;
         }
         else if (this.movement.type === 'smooth') {
-            // TODO: implement speed
             var hw = this.movement.deadZoneWidth / 2;
             var hh = this.movement.deadZoneHeight / 2;
             var dx = x - this.x;
             var dy = y - this.y;
-            if (Math.abs(dx) <= hw && Math.abs(dy) <= hh) {
-                return;
+            if (Math.abs(dx) > hw) {
+                var tx = Math.abs(hw / dx);
+                var targetx = this.x + (1 - tx) * dx;
+                this.x = M.lerp(this.x, targetx, 0.25);
             }
-            var tx = Math.abs(hw / dx);
-            var ty = Math.abs(hh / dy);
-            var t = Math.min(tx, ty);
-            var targetx = this.x + (1 - t) * dx;
-            var targety = this.y + (1 - t) * dy;
-            this.x = M.lerp(this.x, targetx, 0.25);
-            this.y = M.lerp(this.y, targety, 0.25);
+            if (Math.abs(dy) > hh) {
+                var ty = Math.abs(hh / dy);
+                var targety = this.y + (1 - ty) * dy;
+                this.y = M.lerp(this.y, targety, 0.25);
+            }
         }
     };
     Camera.prototype.setMode = function (mode) {
@@ -952,12 +951,11 @@ var Camera = /** @class */ (function () {
             type: 'snap',
         });
     };
-    Camera.prototype.setMovementSmooth = function (speed, deadZoneWidth, deadZoneHeight) {
+    Camera.prototype.setMovementSmooth = function (deadZoneWidth, deadZoneHeight) {
         if (deadZoneWidth === void 0) { deadZoneWidth = 0; }
         if (deadZoneHeight === void 0) { deadZoneHeight = 0; }
         this.setMovement({
             type: 'smooth',
-            speed: speed,
             deadZoneWidth: deadZoneWidth,
             deadZoneHeight: deadZoneHeight,
         });
@@ -1367,15 +1365,18 @@ var Debug = /** @class */ (function () {
     }
     Debug.init = function (config) {
         Debug.DEBUG = config.debug;
+        Debug.FONT = config.font;
         Debug.CHEATS_ENABLED = config.cheatsEnabled;
         Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
         Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
         Debug.SHOW_MOUSE_POSITION = config.showMousePosition;
-        Debug.MOUSE_POSITION_FONT = config.mousePositionFont;
         Debug.SKIP_RATE = config.skipRate;
         Debug.PROGRAMMATIC_INPUT = config.programmaticInput;
         Debug.AUTOPLAY = config.autoplay;
         Debug.SKIP_MAIN_MENU = config.skipMainMenu;
+        Debug.FRAME_STEP_ENABLED = config.frameStepEnabled;
+        Debug.FRAME_STEP_STEP_KEY = config.frameStepStepKey;
+        Debug.FRAME_STEP_RUN_KEY = config.frameStepRunKey;
     };
     Object.defineProperty(Debug, "DEBUG", {
         get: function () { return this._DEBUG; },
@@ -1431,6 +1432,15 @@ var Debug = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
+    Object.defineProperty(Debug, "FRAME_STEP_ENABLED", {
+        get: function () { return this.DEBUG && this._FRAME_STEP_ENABLED; },
+        set: function (value) { this._FRAME_STEP_ENABLED = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Debug.frameStepSkipFrame = function () {
+        return this.FRAME_STEP_ENABLED && !(Input.justDown(this.FRAME_STEP_STEP_KEY) || Input.isDown(this.FRAME_STEP_RUN_KEY));
+    };
     return Debug;
 }());
 function get(name) {
@@ -2368,76 +2378,6 @@ var Direction = /** @class */ (function () {
     };
     return Direction;
 }());
-var Draw = /** @class */ (function () {
-    function Draw() {
-    }
-    Draw.fill = function (texture, brush) {
-        if (brush === void 0) { brush = Draw.brush; }
-        this.graphics.lineStyle(0, 0, 0);
-        this.graphics.clear();
-        this.graphics.beginFill(brush.color, brush.alpha);
-        this.graphics.drawRect(0, 0, texture.width, texture.height);
-        this.graphics.endFill();
-        texture.clear();
-        texture.renderDisplayObject(this.graphics);
-    };
-    Draw.eraseRect = function (texture, x, y, width, height) {
-        var newTexture = texture.clone();
-        newTexture.anchorX = 0;
-        newTexture.anchorY = 0;
-        var maskTexture = Texture.filledRect(width, height, 0xFFFFFF);
-        var mask = new TextureFilter.Mask({
-            type: TextureFilter.Mask.Type.LOCAL,
-            mask: maskTexture,
-            offsetX: x, offsetY: y,
-            invert: true,
-        });
-        texture.clear();
-        texture.render(newTexture, {
-            x: 0, y: 0,
-            filters: [mask],
-        });
-    };
-    Draw.pixel = function (texture, x, y, brush) {
-        if (brush === void 0) { brush = Draw.brush; }
-        this.graphics.lineStyle(1, brush.color, brush.alpha, this.ALIGNMENT_INNER);
-        this.graphics.clear();
-        this.graphics.beginFill(0, 0);
-        this.graphics.drawRect(x, y, 1, 1);
-        this.graphics.endFill();
-        texture.renderDisplayObject(this.graphics);
-    };
-    Draw.rectangleOutline = function (texture, x, y, width, height, alignment, brush) {
-        if (alignment === void 0) { alignment = this.ALIGNMENT_INNER; }
-        if (brush === void 0) { brush = Draw.brush; }
-        this.graphics.lineStyle(brush.thickness, brush.color, brush.alpha, alignment);
-        this.graphics.clear();
-        this.graphics.beginFill(0, 0);
-        this.graphics.drawRect(x, y, width, height);
-        this.graphics.endFill();
-        texture.renderDisplayObject(this.graphics);
-    };
-    Draw.rectangleSolid = function (texture, x, y, width, height, brush) {
-        if (brush === void 0) { brush = Draw.brush; }
-        this.graphics.lineStyle(0, 0, 0);
-        this.graphics.clear();
-        this.graphics.beginFill(brush.color, brush.alpha);
-        this.graphics.drawRect(x, y, width, height);
-        this.graphics.endFill();
-        texture.renderDisplayObject(this.graphics);
-    };
-    Draw.brush = {
-        color: 0x000000,
-        alpha: 1,
-        thickness: 1
-    };
-    Draw.graphics = new PIXI.Graphics();
-    Draw.ALIGNMENT_INNER = 0;
-    Draw.ALIGNMENT_MIDDLE = 0.5;
-    Draw.ALIGNMENT_OUTER = 1;
-    return Draw;
-}());
-"\n\nDraw.pixel(texture, 34, 56, 0xFFF000, 0.5);\n\nDraw.color = 0xFFF000;\nDraw.alpha = 1;\nDraw.pixel(texture, 34, 56);\n\n";
 var SingleKeyCache = /** @class */ (function () {
     function SingleKeyCache(factory, keyToStringFn) {
         this.factory = factory;
@@ -2464,7 +2404,92 @@ var SingleKeyCache = /** @class */ (function () {
     };
     return SingleKeyCache;
 }());
+var Perlin = /** @class */ (function () {
+    function Perlin(seed) {
+        this.random = new RandomNumberGenerator(seed);
+    }
+    // Algorithm taken from https://adrianb.io/2014/08/09/perlinnoise.html
+    Perlin.prototype.get = function (x, y, z) {
+        if (y === void 0) { y = 0; }
+        if (z === void 0) { z = 0; }
+        var xi = Math.floor(x) & 255;
+        var yi = Math.floor(y) & 255;
+        var zi = Math.floor(z) & 255;
+        var xf = x - Math.floor(x);
+        var yf = y - Math.floor(y);
+        var zf = z - Math.floor(z);
+        var u = this.fade(xf);
+        var v = this.fade(yf);
+        var w = this.fade(zf);
+        var aaa = this.hash(xi, yi, zi);
+        var aba = this.hash(xi, yi + 1, zi);
+        var aab = this.hash(xi, yi, zi + 1);
+        var abb = this.hash(xi, yi + 1, zi + 1);
+        var baa = this.hash(xi + 1, yi, zi);
+        var bba = this.hash(xi + 1, yi + 1, zi);
+        var bab = this.hash(xi + 1, yi, zi + 1);
+        var bbb = this.hash(xi + 1, yi + 1, zi + 1);
+        var x11 = M.lerp(this.grad(aaa, xf, yf, zf), this.grad(baa, xf - 1, yf, zf), u);
+        var x12 = M.lerp(this.grad(aba, xf, yf - 1, zf), this.grad(bba, xf - 1, yf - 1, zf), u);
+        var x21 = M.lerp(this.grad(aab, xf, yf, zf - 1), this.grad(bab, xf - 1, yf, zf - 1), u);
+        var x22 = M.lerp(this.grad(abb, xf, yf - 1, zf - 1), this.grad(bbb, xf - 1, yf - 1, zf - 1), u);
+        var y1 = M.lerp(x11, x12, v);
+        var y2 = M.lerp(x21, x22, v);
+        return (M.lerp(y1, y2, w) + 1) / 2;
+    };
+    Perlin.prototype.seed = function (seed) {
+        this.random.seed(seed);
+    };
+    Perlin.prototype.fade = function (t) {
+        // 6t^5 - 15t^4 + 10t^3
+        return t * t * t * (t * (t * 6 - 15) + 10);
+    };
+    Perlin.prototype.grad = function (hash, x, y, z) {
+        switch (hash & 0xF) {
+            case 0x0: return x + y;
+            case 0x1: return -x + y;
+            case 0x2: return x - y;
+            case 0x3: return -x - y;
+            case 0x4: return x + z;
+            case 0x5: return -x + z;
+            case 0x6: return x - z;
+            case 0x7: return -x - z;
+            case 0x8: return y + z;
+            case 0x9: return -y + z;
+            case 0xA: return y - z;
+            case 0xB: return -y - z;
+            case 0xC: return y + x;
+            case 0xD: return -y + z;
+            case 0xE: return y - x;
+            case 0xF: return -y - z;
+            default: return 0;
+        }
+    };
+    Perlin.prototype.hash = function (x, y, z) {
+        return Perlin.PERMUTATION[Perlin.PERMUTATION[Perlin.PERMUTATION[x] + y] + z];
+    };
+    // Hash lookup table as defined by Ken Perlin.  This is a randomly
+    // arranged array of all numbers from 0-255 inclusive.
+    // TODO: get rid of the repeat
+    Perlin.PERMUTATION = A.repeat([151, 160, 137, 91, 90, 15,
+        131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23,
+        190, 6, 148, 247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32, 57, 177, 33,
+        88, 237, 149, 56, 87, 174, 20, 125, 136, 171, 168, 68, 175, 74, 165, 71, 134, 139, 48, 27, 166,
+        77, 146, 158, 231, 83, 111, 229, 122, 60, 211, 133, 230, 220, 105, 92, 41, 55, 46, 245, 40, 244,
+        102, 143, 54, 65, 25, 63, 161, 1, 216, 80, 73, 209, 76, 132, 187, 208, 89, 18, 169, 200, 196,
+        135, 130, 116, 188, 159, 86, 164, 100, 109, 198, 173, 186, 3, 64, 52, 217, 226, 250, 124, 123,
+        5, 202, 38, 147, 118, 126, 255, 82, 85, 212, 207, 206, 59, 227, 47, 16, 58, 17, 182, 189, 28, 42,
+        223, 183, 170, 213, 119, 248, 152, 2, 44, 154, 163, 70, 221, 153, 101, 155, 167, 43, 172, 9,
+        129, 22, 39, 253, 19, 98, 108, 110, 79, 113, 224, 232, 178, 185, 112, 104, 218, 246, 97, 228,
+        251, 34, 242, 193, 238, 210, 144, 12, 191, 179, 162, 241, 81, 51, 145, 235, 249, 14, 239, 107,
+        49, 192, 214, 31, 181, 199, 106, 157, 184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254,
+        138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180
+    ], 2);
+    Perlin.SHADER_SOURCE = "\n        vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}\n        vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}\n        vec3 fade(vec3 t) {return t*t*t*(t*(t*6.0-15.0)+10.0);}\n\n        float cnoise(vec3 P){\n            vec3 Pi0 = floor(P); // Integer part for indexing\n            vec3 Pi1 = Pi0 + vec3(1.0); // Integer part + 1\n            Pi0 = mod(Pi0, 289.0);\n            Pi1 = mod(Pi1, 289.0);\n            vec3 Pf0 = fract(P); // Fractional part for interpolation\n            vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n            vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n            vec4 iy = vec4(Pi0.yy, Pi1.yy);\n            vec4 iz0 = Pi0.zzzz;\n            vec4 iz1 = Pi1.zzzz;\n\n            vec4 ixy = permute(permute(ix) + iy);\n            vec4 ixy0 = permute(ixy + iz0);\n            vec4 ixy1 = permute(ixy + iz1);\n\n            vec4 gx0 = ixy0 / 7.0;\n            vec4 gy0 = fract(floor(gx0) / 7.0) - 0.5;\n            gx0 = fract(gx0);\n            vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n            vec4 sz0 = step(gz0, vec4(0.0));\n            gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n            gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n\n            vec4 gx1 = ixy1 / 7.0;\n            vec4 gy1 = fract(floor(gx1) / 7.0) - 0.5;\n            gx1 = fract(gx1);\n            vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n            vec4 sz1 = step(gz1, vec4(0.0));\n            gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n            gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n\n            vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n            vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n            vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n            vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n            vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n            vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n            vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n            vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n\n            vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n            g000 *= norm0.x;\n            g010 *= norm0.y;\n            g100 *= norm0.z;\n            g110 *= norm0.w;\n            vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n            g001 *= norm1.x;\n            g011 *= norm1.y;\n            g101 *= norm1.z;\n            g111 *= norm1.w;\n\n            float n000 = dot(g000, Pf0);\n            float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n            float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n            float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n            float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n            float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n            float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n            float n111 = dot(g111, Pf1);\n\n            vec3 fade_xyz = fade(Pf0);\n            vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n            vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n            float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); \n            return 2.2 * n_xyz;\n        }\n    ";
+    return Perlin;
+}());
 ///<reference path="./utils/cache.ts"/>
+///<reference path="./utils/perlin.ts"/>
 var TextureFilter = /** @class */ (function () {
     function TextureFilter(config) {
         this.code = O.getOrDefault(config.code, '');
@@ -2647,9 +2672,328 @@ var TextureFilter = /** @class */ (function () {
     var vertStartFunc = "\n        vec4 filterVertexPosition(void) {\n            width = inputSize.x;\n            height = inputSize.y;\n            vec2 position = aVertexPosition * max(outputFrame.zw, vec2(0.)) + outputFrame.xy;\n            vec2 inp = position - vec2(posx, posy);\n            vec2 outp = vec2(inp.x, inp.y);\n    ";
     var vertEndFunc = "\n            position = outp + vec2(posx, posy);\n            return vec4((projectionMatrix * vec3(position, 1.0)).xy, 0.0, 1.0);\n        }\n\n        vec2 filterTextureCoord(void) {\n            return aVertexPosition * (outputFrame.zw * inputSize.zw);\n        }\n\n        void main(void) {\n            gl_Position = filterVertexPosition();\n            vTextureCoord = filterTextureCoord();\n        }\n    ";
     var fragPreUniforms = "\n        precision highp float;\n        varying vec2 vTextureCoord;\n        uniform vec4 inputSize;\n        uniform sampler2D uSampler;\n\n        uniform float posx;\n        uniform float posy;\n        uniform float t;\n\n        float width;\n        float height;\n    ";
-    var fragStartFunc = "\n        vec4 getColor(float localx, float localy) {\n            float tx = (localx + posx) / width;\n            float ty = (localy + posy) / height;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        vec4 getWorldColor(float worldx, float worldy) {\n            float tx = worldx / width;\n            float ty = worldy / height;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        void main(void) {\n            width = inputSize.x;\n            height = inputSize.y;\n            float worldx = vTextureCoord.x * width;\n            float worldy = vTextureCoord.y * height;\n            float x = worldx - posx;\n            float y = worldy - posy;\n            vec4 inp = texture2D(uSampler, vTextureCoord);\n            // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.\n            if (inp.a > 0.0) {\n                inp.rgb /= inp.a;\n            }\n            vec4 outp = vec4(inp.r, inp.g, inp.b, inp.a);\n    ";
+    var fragStartFunc = "\n        vec4 getColor(float localx, float localy) {\n            float tx = (localx + posx) / width;\n            float ty = (localy + posy) / height;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        vec4 getWorldColor(float worldx, float worldy) {\n            float tx = worldx / width;\n            float ty = worldy / height;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        " + Perlin.SHADER_SOURCE + "\n\n        void main(void) {\n            width = inputSize.x;\n            height = inputSize.y;\n            float worldx = vTextureCoord.x * width;\n            float worldy = vTextureCoord.y * height;\n            float x = worldx - posx;\n            float y = worldy - posy;\n            vec4 inp = texture2D(uSampler, vTextureCoord);\n            // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.\n            if (inp.a > 0.0) {\n                inp.rgb /= inp.a;\n            }\n            vec4 outp = vec4(inp.r, inp.g, inp.b, inp.a);\n    ";
     var fragEndFunc = "\n            // Premultiply alpha again.\n            outp.rgb *= outp.a;\n            gl_FragColor = outp;\n        }\n    ";
 })(TextureFilter || (TextureFilter = {}));
+/// <reference path="textureFilter.ts"/>
+var Texture = /** @class */ (function () {
+    function Texture(width, height, immutable) {
+        if (immutable === void 0) { immutable = false; }
+        this.renderTextureSprite = new Texture.PIXIRenderTextureSprite(width, height);
+        this.anchorX = 0;
+        this.anchorY = 0;
+        this.immutable = immutable;
+    }
+    Object.defineProperty(Texture.prototype, "width", {
+        get: function () { return this.renderTextureSprite.width; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Texture.prototype, "height", {
+        get: function () { return this.renderTextureSprite.height; },
+        enumerable: false,
+        configurable: true
+    });
+    Texture.prototype.clear = function () {
+        if (this.immutable) {
+            error('Cannot clear immutable texture!');
+            return;
+        }
+        this.renderTextureSprite.clear();
+    };
+    Texture.prototype.clone = function () {
+        return this.transform();
+    };
+    Texture.prototype.free = function () {
+        this.renderTextureSprite.renderTexture.destroy(true);
+    };
+    Texture.prototype.render = function (texture, properties) {
+        if (!texture)
+            return;
+        if (this.immutable) {
+            error('Cannot render to immutable texture!');
+            return;
+        }
+        var oldAnchorX = texture.anchorX;
+        var oldAnchorY = texture.anchorY;
+        // Snap the anchor of the texture to draw to the pixel.
+        // Disabled due to flickering fire issue in A Night in the Dark.
+        // To re-enable, simply uncomment the lines below.
+        //texture.anchorX = Math.floor(texture.anchorX * texture.width) / texture.width;
+        //texture.anchorY = Math.floor(texture.anchorY * texture.height) / texture.height;
+        properties = this.setRenderTextureSpriteProperties(texture, properties);
+        var allFilters = this.setRenderTextureSpriteFilters(texture, properties);
+        this.renderPIXIDisplayObject(texture.renderTextureSprite);
+        this.returnTextureFilters(allFilters);
+        texture.anchorX = oldAnchorX;
+        texture.anchorY = oldAnchorY;
+    };
+    Texture.prototype.renderPIXIDisplayObject = function (displayObject) {
+        if (this.immutable) {
+            error('Cannot render to immutable texture!');
+            return;
+        }
+        global.renderer.render(displayObject, this.renderTextureSprite.renderTexture, false);
+    };
+    Texture.prototype.subdivide = function (h, v, anchorX, anchorY) {
+        if (anchorX === void 0) { anchorX = 0; }
+        if (anchorY === void 0) { anchorY = 0; }
+        if (h <= 0 || v <= 0)
+            return [];
+        var result = [];
+        var framew = Math.floor(this.width / h);
+        var frameh = Math.floor(this.height / v);
+        var lastframew = this.width - (h - 1) * framew;
+        var lastframeh = this.height - (v - 1) * frameh;
+        for (var y = 0; y < v; y++) {
+            for (var x = 0; x < h; x++) {
+                var tx = x * framew;
+                var ty = y * frameh;
+                var tw = x === h - 1 ? lastframew : framew;
+                var th = y === v - 1 ? lastframeh : frameh;
+                var texture = new Texture(tw, th);
+                texture.render(this, {
+                    x: this.anchorX * this.width - tx,
+                    y: this.anchorY * this.height - ty,
+                });
+                texture.anchorX = anchorX;
+                texture.anchorY = anchorY;
+                result.push({
+                    x: tx, y: ty,
+                    texture: texture
+                });
+            }
+        }
+        return result;
+    };
+    Texture.prototype.toMaskTexture = function () {
+        return this.renderTextureSprite.renderTexture;
+    };
+    /**
+     * Returns a NEW texture which is transformed from the original.
+     */
+    Texture.prototype.transform = function (properties) {
+        if (properties === void 0) { properties = {}; }
+        _.defaults(properties, {
+            scaleX: 1,
+            scaleY: 1,
+            tint: 0xFFFFFF,
+            alpha: 1,
+            filters: [],
+        });
+        var result = new Texture(this.width * Math.abs(properties.scaleX), this.height * Math.abs(properties.scaleY));
+        result.render(this, {
+            x: this.anchorX * this.width * properties.scaleX + this.width / 2 * (Math.abs(properties.scaleX) - properties.scaleX),
+            y: this.anchorY * this.height * properties.scaleY + this.height / 2 * (Math.abs(properties.scaleY) - properties.scaleY),
+            scaleX: properties.scaleX,
+            scaleY: properties.scaleY,
+            tint: properties.tint,
+            alpha: properties.alpha,
+            filters: properties.filters,
+        });
+        result.anchorX = this.anchorX;
+        result.anchorY = this.anchorY;
+        return result;
+    };
+    Texture.prototype.getAllTextureFilters = function (texture, properties) {
+        var allFilters = [];
+        var sliceRect = this.getSliceRect(texture, properties);
+        if (properties.slice) {
+            var sliceFilterPosX = texture.renderTextureSprite.x - texture.anchorX * sliceRect.width;
+            var sliceFilterPosY = texture.renderTextureSprite.y - texture.anchorY * sliceRect.height;
+            var sliceFilter = TextureFilter.SLICE(properties.slice);
+            Texture.setFilterProperties(sliceFilter, sliceFilterPosX, sliceFilterPosY);
+            allFilters.push(sliceFilter);
+        }
+        var filterPosX = properties.x - texture.anchorX * sliceRect.width;
+        var filterPosY = properties.y - texture.anchorY * sliceRect.height;
+        properties.filters.forEach(function (filter) { return filter && Texture.setFilterProperties(filter, filterPosX, filterPosY); });
+        allFilters.push.apply(allFilters, __spread(properties.filters));
+        return allFilters.filter(function (filter) { return filter && filter.enabled; });
+    };
+    Texture.prototype.getSliceRect = function (texture, properties) {
+        return properties.slice || { x: 0, y: 0, width: texture.width, height: texture.height };
+    };
+    Texture.prototype.returnTextureFilters = function (allFilters) {
+        allFilters.forEach(function (filter) { return filter.returnPixiFilter(); });
+    };
+    Texture.prototype.setRenderTextureSpriteProperties = function (texture, properties) {
+        if (!properties)
+            properties = {};
+        _.defaults(properties, {
+            x: 0,
+            y: 0,
+            scaleX: 1,
+            scaleY: 1,
+            angle: 0,
+            tint: 0xFFFFFF,
+            alpha: 1,
+            slice: undefined,
+            filters: [],
+        });
+        var sliceRect = this.getSliceRect(texture, properties);
+        // Position
+        var afterSliceX = properties.x + texture.anchorX * texture.width - (sliceRect.x + texture.anchorX * sliceRect.width);
+        var afterSliceY = properties.y + texture.anchorY * texture.height - (sliceRect.y + texture.anchorY * sliceRect.height);
+        texture.renderTextureSprite.x = afterSliceX;
+        texture.renderTextureSprite.y = afterSliceY;
+        // Other values
+        texture.renderTextureSprite.scale.x = properties.scaleX;
+        texture.renderTextureSprite.scale.y = properties.scaleY;
+        texture.renderTextureSprite.angle = properties.angle;
+        texture.renderTextureSprite.tint = properties.tint;
+        texture.renderTextureSprite.alpha = properties.alpha;
+        // Anchor
+        texture.renderTextureSprite.anchor.x = texture.anchorX;
+        texture.renderTextureSprite.anchor.y = texture.anchorY;
+        return properties;
+    };
+    Texture.prototype.setRenderTextureSpriteFilters = function (texture, properties) {
+        var allFilters = this.getAllTextureFilters(texture, properties);
+        texture.renderTextureSprite.filters = allFilters.map(function (filter) { return filter.borrowPixiFilter(); });
+        texture.renderTextureSprite.filterArea = new PIXI.Rectangle(0, 0, this.width, this.height);
+        return allFilters;
+    };
+    Texture.setFilterProperties = function (filter, posx, posy) {
+        filter.setTexturePosition(posx, posy);
+    };
+    return Texture;
+}());
+(function (Texture) {
+    function filledRect(width, height, fillColor, fillAlpha) {
+        if (fillAlpha === void 0) { fillAlpha = 1; }
+        var result = new Texture(width, height);
+        Draw.fill(result, { color: fillColor, alpha: fillAlpha, thickness: 0 });
+        return result;
+    }
+    Texture.filledRect = filledRect;
+    function fromPixiTexture(pixiTexture) {
+        var sprite = new PIXI.Sprite(pixiTexture);
+        var texture = new Texture(pixiTexture.width, pixiTexture.height);
+        texture.anchorX = pixiTexture.defaultAnchor.x;
+        texture.anchorY = pixiTexture.defaultAnchor.y;
+        sprite.x = texture.anchorX * texture.width;
+        sprite.y = texture.anchorY * texture.height;
+        texture.renderPIXIDisplayObject(sprite);
+        texture.immutable = true;
+        return texture;
+    }
+    Texture.fromPixiTexture = fromPixiTexture;
+    function none() {
+        return new Texture(0, 0);
+    }
+    Texture.none = none;
+    function outlineRect(width, height, outlineColor, outlineAlpha, outlineThickness) {
+        if (outlineAlpha === void 0) { outlineAlpha = 1; }
+        if (outlineThickness === void 0) { outlineThickness = 1; }
+        var result = new Texture(width, height);
+        Draw.rectangleOutline(result, 0, 0, width, height, Draw.ALIGNMENT_INNER, { color: outlineColor, alpha: outlineAlpha, thickness: outlineThickness });
+        return result;
+    }
+    Texture.outlineRect = outlineRect;
+    var PIXIRenderTextureSprite = /** @class */ (function (_super) {
+        __extends(PIXIRenderTextureSprite, _super);
+        function PIXIRenderTextureSprite(width, height) {
+            var _this = this;
+            var renderTexture = PIXI.RenderTexture.create({ width: width, height: height });
+            _this = _super.call(this, renderTexture) || this;
+            _this._renderTexture = renderTexture;
+            return _this;
+        }
+        Object.defineProperty(PIXIRenderTextureSprite.prototype, "renderTexture", {
+            get: function () { return this._renderTexture; },
+            enumerable: false,
+            configurable: true
+        });
+        PIXIRenderTextureSprite.prototype.clear = function () {
+            global.renderer.render(Utils.NOOP_DISPLAYOBJECT, this._renderTexture, true);
+        };
+        PIXIRenderTextureSprite.prototype.resize = function (width, height) {
+            this._renderTexture.resize(width, height);
+        };
+        return PIXIRenderTextureSprite;
+    }(PIXI.Sprite));
+    Texture.PIXIRenderTextureSprite = PIXIRenderTextureSprite;
+})(Texture || (Texture = {}));
+/// <reference path="./texture.ts"/>
+var Draw = /** @class */ (function () {
+    function Draw() {
+    }
+    Draw.fill = function (texture, brush) {
+        if (brush === void 0) { brush = Draw.brush; }
+        this.graphics.lineStyle(0, 0, 0);
+        this.graphics.clear();
+        this.graphics.beginFill(brush.color, brush.alpha);
+        this.graphics.drawRect(0, 0, texture.width, texture.height);
+        this.graphics.endFill();
+        texture.clear();
+        texture.renderPIXIDisplayObject(this.graphics);
+    };
+    Draw.eraseRect = function (texture, x, y, width, height) {
+        var newTexture = texture.clone();
+        newTexture.anchorX = 0;
+        newTexture.anchorY = 0;
+        var maskTexture = Texture.filledRect(width, height, 0xFFFFFF);
+        var mask = new TextureFilter.Mask({
+            type: TextureFilter.Mask.Type.LOCAL,
+            mask: maskTexture,
+            offsetX: x, offsetY: y,
+            invert: true,
+        });
+        texture.clear();
+        texture.render(newTexture, {
+            x: 0, y: 0,
+            filters: [mask],
+        });
+    };
+    Draw.pixel = function (texture, x, y, brush) {
+        if (brush === void 0) { brush = Draw.brush; }
+        texture.render(Draw.PIXEL_TEXTURE, {
+            x: x, y: y,
+            tint: brush.color,
+            alpha: brush.alpha,
+        });
+    };
+    Draw.rectangleOutline = function (texture, x, y, width, height, alignment, brush) {
+        if (alignment === void 0) { alignment = this.ALIGNMENT_INNER; }
+        if (brush === void 0) { brush = Draw.brush; }
+        this.graphics.lineStyle(brush.thickness, brush.color, brush.alpha, alignment);
+        this.graphics.clear();
+        this.graphics.beginFill(0, 0);
+        this.graphics.drawRect(x, y, width, height);
+        this.graphics.endFill();
+        texture.renderPIXIDisplayObject(this.graphics);
+    };
+    Draw.rectangleSolid = function (texture, x, y, width, height, brush) {
+        if (brush === void 0) { brush = Draw.brush; }
+        this.graphics.lineStyle(0, 0, 0);
+        this.graphics.clear();
+        this.graphics.beginFill(brush.color, brush.alpha);
+        this.graphics.drawRect(x, y, width, height);
+        this.graphics.endFill();
+        texture.renderPIXIDisplayObject(this.graphics);
+    };
+    Object.defineProperty(Draw, "PIXEL_TEXTURE", {
+        get: function () {
+            if (!this._PIXEL_TEXTURE)
+                this._PIXEL_TEXTURE = Texture.filledRect(1, 1, 0xFFFFFF);
+            return this._PIXEL_TEXTURE;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Draw.brush = {
+        color: 0x000000,
+        alpha: 1,
+        thickness: 1
+    };
+    Draw.graphics = new PIXI.Graphics();
+    Draw.ALIGNMENT_INNER = 0;
+    Draw.ALIGNMENT_MIDDLE = 0.5;
+    Draw.ALIGNMENT_OUTER = 1;
+    return Draw;
+}());
+"\n\nDraw.pixel(texture, 34, 56, 0xFFF000, 0.5);\n\nDraw.color = 0xFFF000;\nDraw.alpha = 1;\nDraw.pixel(texture, 34, 56);\n\n";
 /// <reference path="./textureFilter.ts" />
 var Effects = /** @class */ (function () {
     function Effects(config) {
@@ -2833,6 +3177,7 @@ var Game = /** @class */ (function () {
         this.pauseMenuClass = config.pauseMenuClass;
         this.theaterClass = config.theaterClass;
         this.theaterConfig = config.theaterConfig;
+        this.showMetricsMenuKey = config.showMetricsMenuKey;
         this.menuSystem = new MenuSystem(this);
         this.loadMainMenu();
         if (Debug.SKIP_MAIN_MENU) {
@@ -2841,6 +3186,7 @@ var Game = /** @class */ (function () {
     }
     Game.prototype.update = function (delta) {
         this.updatePause();
+        this.updateMetrics();
         if (this.menuSystem.inMenu) {
             global.metrics.startSpan('menu');
             this.menuSystem.update(delta);
@@ -2856,6 +3202,11 @@ var Game = /** @class */ (function () {
         if (Input.justDown('pause') && !this.menuSystem.inMenu) {
             Input.consume('pause');
             this.pauseGame();
+        }
+    };
+    Game.prototype.updateMetrics = function () {
+        if (Debug.DEBUG && Input.justDown(this.showMetricsMenuKey)) {
+            global.game.menuSystem.loadMenu(MetricsMenu);
         }
     };
     Game.prototype.render = function (screen) {
@@ -3396,7 +3747,7 @@ var World = /** @class */ (function () {
         this.debugMousePositionText = this.addWorldObject({
             constructor: SpriteText,
             x: 0, y: 0,
-            font: Debug.MOUSE_POSITION_FONT,
+            font: Debug.FONT,
             style: { color: 0x008800 },
             ignoreCamera: true,
             visible: false,
@@ -4398,6 +4749,24 @@ var MenuSystem = /** @class */ (function () {
     };
     return MenuSystem;
 }());
+var MetricsManager = /** @class */ (function () {
+    function MetricsManager(config) {
+        this.recordKey = config.recordKey;
+    }
+    MetricsManager.prototype.update = function () {
+        if (Debug.DEBUG && Input.justDown(this.recordKey)) {
+            if (!global.metrics.isRecording) {
+                global.metrics.startRecording('recording');
+                debug("Started recording");
+            }
+            else {
+                global.metrics.endRecording();
+                debug("Ended recording (" + global.metrics.getLastRecording().time.toFixed(0) + " ms)");
+            }
+        }
+    };
+    return MetricsManager;
+}());
 var MetricsPlot;
 (function (MetricsPlot) {
     function plotRecording(recording, width, height) {
@@ -4820,244 +5189,6 @@ var Physics = /** @class */ (function () {
         })(Direction = Collision.Direction || (Collision.Direction = {}));
     })(Collision = Physics.Collision || (Physics.Collision = {}));
 })(Physics || (Physics = {}));
-/// <reference path="textureFilter.ts"/>
-var Texture = /** @class */ (function () {
-    function Texture(width, height, immutable) {
-        if (immutable === void 0) { immutable = false; }
-        this.renderTextureSprite = new Texture.PIXIRenderTextureSprite(width, height);
-        this.anchorX = 0;
-        this.anchorY = 0;
-        this.immutable = immutable;
-    }
-    Object.defineProperty(Texture.prototype, "width", {
-        get: function () { return this.renderTextureSprite.width; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Texture.prototype, "height", {
-        get: function () { return this.renderTextureSprite.height; },
-        enumerable: false,
-        configurable: true
-    });
-    Texture.prototype.clear = function () {
-        if (this.immutable) {
-            error('Cannot clear immutable texture!');
-            return;
-        }
-        this.renderTextureSprite.clear();
-    };
-    Texture.prototype.clone = function () {
-        return this.transform();
-    };
-    Texture.prototype.free = function () {
-        this.renderTextureSprite.renderTexture.destroy(true);
-    };
-    Texture.prototype.render = function (texture, properties) {
-        if (!texture)
-            return;
-        if (this.immutable) {
-            error('Cannot render to immutable texture!');
-            return;
-        }
-        var oldAnchorX = texture.anchorX;
-        var oldAnchorY = texture.anchorY;
-        // Snap the anchor of the texture to draw to the pixel.
-        texture.anchorX = Math.floor(texture.anchorX * texture.width) / texture.width;
-        texture.anchorY = Math.floor(texture.anchorY * texture.height) / texture.height;
-        properties = this.setRenderTextureSpriteProperties(texture, properties);
-        var allFilters = this.setRenderTextureSpriteFilters(texture, properties);
-        this.renderDisplayObject(texture.renderTextureSprite);
-        this.returnTextureFilters(allFilters);
-        texture.anchorX = oldAnchorX;
-        texture.anchorY = oldAnchorY;
-    };
-    Texture.prototype.renderDisplayObject = function (displayObject) {
-        if (this.immutable) {
-            error('Cannot render to immutable texture!');
-            return;
-        }
-        global.renderer.render(displayObject, this.renderTextureSprite.renderTexture, false);
-    };
-    Texture.prototype.subdivide = function (h, v, anchorX, anchorY) {
-        if (anchorX === void 0) { anchorX = 0; }
-        if (anchorY === void 0) { anchorY = 0; }
-        if (h <= 0 || v <= 0)
-            return [];
-        var result = [];
-        var framew = Math.floor(this.width / h);
-        var frameh = Math.floor(this.height / v);
-        var lastframew = this.width - (h - 1) * framew;
-        var lastframeh = this.height - (v - 1) * frameh;
-        for (var y = 0; y < v; y++) {
-            for (var x = 0; x < h; x++) {
-                var tx = x * framew;
-                var ty = y * frameh;
-                var tw = x === h - 1 ? lastframew : framew;
-                var th = y === v - 1 ? lastframeh : frameh;
-                var texture = new Texture(tw, th);
-                texture.render(this, {
-                    x: this.anchorX * this.width - tx,
-                    y: this.anchorY * this.height - ty,
-                });
-                texture.anchorX = anchorX;
-                texture.anchorY = anchorY;
-                result.push({
-                    x: tx, y: ty,
-                    texture: texture
-                });
-            }
-        }
-        return result;
-    };
-    Texture.prototype.toMaskTexture = function () {
-        return this.renderTextureSprite.renderTexture;
-    };
-    /**
-     * Returns a NEW texture which is transformed from the original.
-     */
-    Texture.prototype.transform = function (properties) {
-        if (properties === void 0) { properties = {}; }
-        _.defaults(properties, {
-            scaleX: 1,
-            scaleY: 1,
-            tint: 0xFFFFFF,
-            alpha: 1,
-            filters: [],
-        });
-        var result = new Texture(this.width * Math.abs(properties.scaleX), this.height * Math.abs(properties.scaleY));
-        result.render(this, {
-            x: this.anchorX * this.width * properties.scaleX + this.width / 2 * (Math.abs(properties.scaleX) - properties.scaleX),
-            y: this.anchorY * this.height * properties.scaleY + this.height / 2 * (Math.abs(properties.scaleY) - properties.scaleY),
-            scaleX: properties.scaleX,
-            scaleY: properties.scaleY,
-            tint: properties.tint,
-            alpha: properties.alpha,
-            filters: properties.filters,
-        });
-        result.anchorX = this.anchorX;
-        result.anchorY = this.anchorY;
-        return result;
-    };
-    Texture.prototype.getAllTextureFilters = function (texture, properties) {
-        var allFilters = [];
-        var sliceRect = this.getSliceRect(texture, properties);
-        if (properties.slice) {
-            var sliceFilterPosX = texture.renderTextureSprite.x - texture.anchorX * sliceRect.width;
-            var sliceFilterPosY = texture.renderTextureSprite.y - texture.anchorY * sliceRect.height;
-            var sliceFilter = TextureFilter.SLICE(properties.slice);
-            Texture.setFilterProperties(sliceFilter, sliceFilterPosX, sliceFilterPosY);
-            allFilters.push(sliceFilter);
-        }
-        var filterPosX = properties.x - texture.anchorX * sliceRect.width;
-        var filterPosY = properties.y - texture.anchorY * sliceRect.height;
-        properties.filters.forEach(function (filter) { return filter && Texture.setFilterProperties(filter, filterPosX, filterPosY); });
-        allFilters.push.apply(allFilters, __spread(properties.filters));
-        return allFilters.filter(function (filter) { return filter && filter.enabled; });
-    };
-    Texture.prototype.getSliceRect = function (texture, properties) {
-        return properties.slice || { x: 0, y: 0, width: texture.width, height: texture.height };
-    };
-    Texture.prototype.returnTextureFilters = function (allFilters) {
-        allFilters.forEach(function (filter) { return filter.returnPixiFilter(); });
-    };
-    Texture.prototype.setRenderTextureSpriteProperties = function (texture, properties) {
-        if (!properties)
-            properties = {};
-        _.defaults(properties, {
-            x: 0,
-            y: 0,
-            scaleX: 1,
-            scaleY: 1,
-            angle: 0,
-            tint: 0xFFFFFF,
-            alpha: 1,
-            slice: undefined,
-            filters: [],
-        });
-        var sliceRect = this.getSliceRect(texture, properties);
-        // Position
-        var afterSliceX = properties.x + texture.anchorX * texture.width - (sliceRect.x + texture.anchorX * sliceRect.width);
-        var afterSliceY = properties.y + texture.anchorY * texture.height - (sliceRect.y + texture.anchorY * sliceRect.height);
-        texture.renderTextureSprite.x = afterSliceX;
-        texture.renderTextureSprite.y = afterSliceY;
-        // Other values
-        texture.renderTextureSprite.scale.x = properties.scaleX;
-        texture.renderTextureSprite.scale.y = properties.scaleY;
-        texture.renderTextureSprite.angle = properties.angle;
-        texture.renderTextureSprite.tint = properties.tint;
-        texture.renderTextureSprite.alpha = properties.alpha;
-        // Anchor
-        texture.renderTextureSprite.anchor.x = texture.anchorX;
-        texture.renderTextureSprite.anchor.y = texture.anchorY;
-        return properties;
-    };
-    Texture.prototype.setRenderTextureSpriteFilters = function (texture, properties) {
-        var allFilters = this.getAllTextureFilters(texture, properties);
-        texture.renderTextureSprite.filters = allFilters.map(function (filter) { return filter.borrowPixiFilter(); });
-        texture.renderTextureSprite.filterArea = new PIXI.Rectangle(0, 0, this.width, this.height);
-        return allFilters;
-    };
-    Texture.setFilterProperties = function (filter, posx, posy) {
-        filter.setTexturePosition(posx, posy);
-    };
-    return Texture;
-}());
-(function (Texture) {
-    function filledRect(width, height, fillColor, fillAlpha) {
-        if (fillAlpha === void 0) { fillAlpha = 1; }
-        var result = new Texture(width, height);
-        Draw.fill(result, { color: fillColor, alpha: fillAlpha, thickness: 0 });
-        return result;
-    }
-    Texture.filledRect = filledRect;
-    function fromPixiTexture(pixiTexture) {
-        var sprite = new PIXI.Sprite(pixiTexture);
-        var texture = new Texture(pixiTexture.width, pixiTexture.height);
-        texture.anchorX = pixiTexture.defaultAnchor.x;
-        texture.anchorY = pixiTexture.defaultAnchor.y;
-        sprite.x = texture.anchorX * texture.width;
-        sprite.y = texture.anchorY * texture.height;
-        texture.renderDisplayObject(sprite);
-        texture.immutable = true;
-        return texture;
-    }
-    Texture.fromPixiTexture = fromPixiTexture;
-    function none() {
-        return new Texture(0, 0);
-    }
-    Texture.none = none;
-    function outlineRect(width, height, outlineColor, outlineAlpha, outlineThickness) {
-        if (outlineAlpha === void 0) { outlineAlpha = 1; }
-        if (outlineThickness === void 0) { outlineThickness = 1; }
-        var result = new Texture(width, height);
-        Draw.rectangleOutline(result, 0, 0, width, height, Draw.ALIGNMENT_INNER, { color: outlineColor, alpha: outlineAlpha, thickness: outlineThickness });
-        return result;
-    }
-    Texture.outlineRect = outlineRect;
-    var PIXIRenderTextureSprite = /** @class */ (function (_super) {
-        __extends(PIXIRenderTextureSprite, _super);
-        function PIXIRenderTextureSprite(width, height) {
-            var _this = this;
-            var renderTexture = PIXI.RenderTexture.create({ width: width, height: height });
-            _this = _super.call(this, renderTexture) || this;
-            _this._renderTexture = renderTexture;
-            return _this;
-        }
-        Object.defineProperty(PIXIRenderTextureSprite.prototype, "renderTexture", {
-            get: function () { return this._renderTexture; },
-            enumerable: false,
-            configurable: true
-        });
-        PIXIRenderTextureSprite.prototype.clear = function () {
-            global.renderer.render(Utils.NOOP_DISPLAYOBJECT, this._renderTexture, true);
-        };
-        PIXIRenderTextureSprite.prototype.resize = function (width, height) {
-            this._renderTexture.resize(width, height);
-        };
-        return PIXIRenderTextureSprite;
-    }(PIXI.Sprite));
-    Texture.PIXIRenderTextureSprite = PIXIRenderTextureSprite;
-})(Texture || (Texture = {}));
 /// <reference path="texture.ts"/>
 var Preload = /** @class */ (function () {
     function Preload() {
@@ -7074,10 +7205,10 @@ var Assets;
             defaultAnchor: Anchor.BOTTOM,
             frames: {
                 'blacktreeleaf': {
-                    rect: { x: 0, y: 0, width: 5, height: 4 }
+                    rect: { x: 0, y: 0, width: 8, height: 4 }
                 },
                 'whitetreeleaf': {
-                    rect: { x: 0, y: 4, width: 5, height: 4 }
+                    rect: { x: 0, y: 4, width: 8, height: 4 }
                 },
             }
         },
@@ -7188,6 +7319,7 @@ var Lighting;
             var _this = this;
             var uniforms = {};
             var distanceCalculations = "";
+            var perlinCalculations = "";
             var lightCalculations = "";
             var maxCalculations = "";
             for (var i = 0; i < numLights; i++) {
@@ -7196,12 +7328,13 @@ var Lighting;
                 uniforms["float light_" + i + "_radius"] = 0;
                 uniforms["float light_" + i + "_buffer"] = 0;
                 distanceCalculations += "float light_" + i + "_distance = sqrt((worldx - light_" + i + "_x) * (worldx - light_" + i + "_x) + (worldy - light_" + i + "_y) * (worldy - light_" + i + "_y));\n";
-                lightCalculations += "float light_" + i + "_light = 1.0;\n                                    if (light_" + i + "_distance > light_" + i + "_radius) light_" + i + "_light = 0.5;\n                                    if (light_" + i + "_distance > light_" + i + "_radius + light_" + i + "_buffer) light_" + i + "_light = 0.0;\n";
+                perlinCalculations += "float light_" + i + "_perlin = cnoise(light_" + i + "_radius/5.0*vec3(normalize(vec2(worldx - light_" + i + "_x, worldy - light_" + i + "_y)), 0.5*t));";
+                lightCalculations += "float light_" + i + "_light = 1.0;\n                                    if (light_" + i + "_distance > light_" + i + "_radius + light_" + i + "_perlin) light_" + i + "_light = 0.5;\n                                    if (light_" + i + "_distance > light_" + i + "_radius + light_" + i + "_buffer) light_" + i + "_light = 0.0;\n";
                 maxCalculations += "light = max(light, light_" + i + "_light);\n";
             }
             _this = _super.call(this, {
                 uniforms: uniforms,
-                code: "\n                    float light = 0.0;\n\n                    " + distanceCalculations + "\n                    " + lightCalculations + "\n                    " + maxCalculations + "\n\n                    if (light == 0.5) {\n                        if (outp.rgb == vec3(1.0, 1.0, 1.0)) {\n                            outp.rgb = vec3(0.0, 0.0, 0.0);\n                        } else if (outp.rgb == vec3(0.0, 0.0, 0.0)) {\n                            outp.rgb = vec3(1.0, 1.0, 1.0);\n                        }\n                    } else if (light == 0.0 && inp.rgb != vec3(1.0, 0.0, 0.0)) {\n                        outp.r = 0.0;\n                        outp.g = 0.0;\n                        outp.b = 0.0;\n                    }\n                "
+                code: "\n                    float light = 0.0;\n\n                    " + distanceCalculations + "\n                    " + perlinCalculations + "\n                    " + lightCalculations + "\n                    " + maxCalculations + "\n\n                    if (light == 0.5) {\n                        if (outp.rgb == vec3(1.0, 1.0, 1.0)) {\n                            outp.rgb = vec3(0.0, 0.0, 0.0);\n                        } else if (outp.rgb == vec3(0.0, 0.0, 0.0)) {\n                            outp.rgb = vec3(1.0, 1.0, 1.0);\n                        }\n                    } else if (light == 0.0 && inp.rgb != vec3(1.0, 0.0, 0.0)) {\n                        outp.r = 0.0;\n                        outp.g = 0.0;\n                        outp.b = 0.0;\n                    }\n                "
             }) || this;
             return _this;
         }
@@ -7259,6 +7392,7 @@ var LightingManager = /** @class */ (function (_super) {
         this.firelightFilter.setLightUniform(2, 'y', campfire.y - this.world.camera.worldOffsetY);
         this.firelightFilter.setLightUniform(2, 'radius', this.winRadius);
         this.firelightFilter.setLightUniform(2, 'buffer', 0);
+        this.firelightFilter.updateTime(delta);
         _super.prototype.update.call(this, delta);
     };
     return LightingManager;
@@ -8190,16 +8324,19 @@ var Main = /** @class */ (function () {
     Main.preload = function () {
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
         Debug.init({
-            debug: false,
+            debug: true,
+            font: Assets.fonts.DELUXE16,
             cheatsEnabled: true,
             allPhysicsBounds: false,
             moveCameraWithArrows: true,
             showMousePosition: false,
-            mousePositionFont: Assets.fonts.DELUXE16,
             skipRate: 1,
             programmaticInput: false,
             autoplay: true,
             skipMainMenu: true,
+            frameStepEnabled: false,
+            frameStepStepKey: '1',
+            frameStepRunKey: '2',
         });
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
         WorldObject.DEFAULT_Z_BEHAVIOR = 'threequarters';
@@ -8256,17 +8393,44 @@ var Main = /** @class */ (function () {
             '0': ['0'],
             'lmb': ['MouseLeft'],
         });
-        window.addEventListener("keydown", function (event) { return Input.handleKeyDownEvent(event); }, false);
-        window.addEventListener("keyup", function (event) { return Input.handleKeyUpEvent(event); }, false);
-        window.addEventListener("mousedown", function (event) { return Input.handleMouseDownEvent(event); }, false);
-        window.addEventListener("mouseup", function (event) { return Input.handleMouseUpEvent(event); }, false);
-        window.addEventListener("contextmenu", function (event) { return event.preventDefault(); }, false);
-        Main.renderer.view.onclick = function () { WebAudio.start(); };
-        Main.renderer.view.onkeypress = function () { WebAudio.start(); };
+        window.addEventListener("keypress", function (event) {
+            WebAudio.start();
+        });
+        window.addEventListener("keydown", function (event) {
+            WebAudio.start();
+            Input.handleKeyDownEvent(event);
+            if (event.key == 'Tab') {
+                event.preventDefault();
+            }
+        }, false);
+        window.addEventListener("keyup", function (event) {
+            WebAudio.start();
+            Input.handleKeyUpEvent(event);
+        }, false);
+        window.addEventListener("mousedown", function (event) {
+            WebAudio.start();
+            Input.handleMouseDownEvent(event);
+        }, false);
+        window.addEventListener("mouseup", function (event) {
+            WebAudio.start();
+            Input.handleMouseUpEvent(event);
+        }, false);
+        window.addEventListener("contextmenu", function (event) {
+            WebAudio.start();
+            event.preventDefault();
+        }, false);
+        // AccessibilityManager causes game to crash when Tab is pressed.
+        // Deleting it as per https://github.com/pixijs/pixi.js/issues/5111#issuecomment-420047824
+        Main.renderer.plugins.accessibility.destroy();
+        delete Main.renderer.plugins.accessibility;
+        this.metricsManager = new MetricsManager({
+            recordKey: '0',
+        });
         this.game = new Game({
             mainMenuClass: IntroMenu,
             pauseMenuClass: PauseMenu,
             theaterClass: Theater,
+            showMetricsMenuKey: '9',
             theaterConfig: {
                 getStages: getStages,
                 stageToLoad: 'game',
@@ -8294,26 +8458,17 @@ var Main = /** @class */ (function () {
     };
     // no need to modify
     Main.play = function () {
+        var _this = this;
         PIXI.Ticker.shared.add(function (frameDelta) {
-            if (Input.justDown('0')) {
-                if (!global.metrics.isRecording) {
-                    global.metrics.startRecording('recording');
-                    debug("Started recording");
-                }
-                else {
-                    global.metrics.endRecording();
-                    debug("Ended recording (" + global.metrics.getLastRecording().time.toFixed(0) + " ms)");
-                }
-            }
-            if (Input.justDown('9')) {
-                global.game.menuSystem.loadMenu(MetricsMenu);
-            }
+            _this.metricsManager.update();
             global.metrics.startSpan('frame');
             Main.delta = frameDelta / 60;
             global.clearStacks();
             global.metrics.startSpan('update');
             for (var i = 0; i < Debug.SKIP_RATE; i++) {
                 Input.update();
+                if (Debug.frameStepSkipFrame())
+                    break;
                 global.soundManager.preGameUpdate();
                 global.metrics.startSpan('game');
                 Main.game.update(Main.delta);
@@ -8753,9 +8908,9 @@ var Tree = /** @class */ (function (_super) {
     Tree.prototype.spawnLeaf = function () {
         this.world.addWorldObject({
             constructor: Leaf,
-            x: this.x + Random.float(-14, 14),
-            y: this.y + Random.float(-4, 4),
-            z: this.z + Random.float(26, 48),
+            x: this.x + Random.float(-12, 12),
+            y: this.y + Random.float(-6, 6),
+            z: this.z + Random.float(26, 40),
             texture: this.getColor() === 'black' ? 'blacktreeleaf' : 'whitetreeleaf',
             flipX: Random.boolean(),
             layer: this.layer,
@@ -8804,7 +8959,7 @@ function getStages() {
         'game': {
             parent: BASE_STAGE(),
             camera: {
-                movement: { type: 'smooth', speed: 0, deadZoneWidth: 0, deadZoneHeight: 0 },
+                movement: { type: 'smooth', deadZoneWidth: 0, deadZoneHeight: 0 },
                 mode: Camera.Mode.FOCUS(400, 400),
             },
             entryPoints: {
@@ -8920,7 +9075,7 @@ function getStages() {
                     x: 528, y: 84,
                     layer: 'main',
                     physicsGroup: 'items',
-                },
+                }
             ])
         },
     };
@@ -8977,7 +9132,7 @@ function getStoryboard() {
                             campfire = global.world.getWorldObjectByType(Campfire);
                             startLog = global.world.getWorldObjectByName('start_log');
                             global.world.camera.setModeFocus(campfire.x, campfire.y);
-                            global.world.camera.setMovementSmooth(0, 0, 0);
+                            global.world.camera.setMovementSmooth();
                             Script.instant(S.fadeOut());
                             if (!!SKIP) return [3 /*break*/, 5];
                             return [4 /*yield*/, S.wait(2)];
@@ -9049,7 +9204,7 @@ function getStoryboard() {
                         case 1:
                             _a.sent();
                             global.theater.currentWorld.camera.setModeFollow('player', 0, -8);
-                            global.theater.currentWorld.camera.setMovementSmooth(0, 40, 30);
+                            global.theater.currentWorld.camera.setMovementSmooth(40, 30);
                             return [2 /*return*/];
                     }
                 });
@@ -9073,7 +9228,7 @@ function getStoryboard() {
                             campfire = global.world.getWorldObjectByType(Campfire);
                             lightingManager = global.world.getWorldObjectByType(LightingManager);
                             global.world.camera.setModeFocus(campfire.x, campfire.y);
-                            global.world.camera.setMovementSmooth(0, 0, 0);
+                            global.world.camera.setMovementSmooth();
                             if (global.world.hasWorldObject('monster')) {
                                 global.world.removeWorldObject('monster');
                             }
@@ -9137,7 +9292,7 @@ function getStoryboard() {
                         case 0:
                             campfire = global.world.getWorldObjectByType(Campfire);
                             global.world.camera.setModeFocus(campfire.x, campfire.y);
-                            global.world.camera.setMovementSmooth(0, 0, 0);
+                            global.world.camera.setMovementSmooth();
                             if (global.world.hasWorldObject('monster')) {
                                 global.world.removeWorldObject('monster');
                             }

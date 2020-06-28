@@ -86,9 +86,9 @@ class Tree extends Sprite {
     private spawnLeaf() {
         this.world.addWorldObject(<Sprite.Config>{
             constructor: Leaf,
-            x: this.x + Random.float(-14, 14),
-            y: this.y + Random.float(-4, 4),
-            z: this.z + Random.float(26, 48),
+            x: this.x + Random.float(-12, 12),
+            y: this.y + Random.float(-6, 6),
+            z: this.z + Random.float(26, 40),
             texture: this.getColor() === 'black' ? 'blacktreeleaf' : 'whitetreeleaf',
             flipX: Random.boolean(),
             layer: this.layer,

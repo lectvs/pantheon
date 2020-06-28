@@ -19,10 +19,10 @@ namespace Assets {
             defaultAnchor: Anchor.BOTTOM,
             frames: {
                 'blacktreeleaf': {
-                    rect: { x: 0, y: 0, width: 5, height: 4 }
+                    rect: { x: 0, y: 0, width: 8, height: 4 }
                 },
                 'whitetreeleaf': {
-                    rect: { x: 0, y: 4, width: 5, height: 4 }
+                    rect: { x: 0, y: 4, width: 8, height: 4 }
                 },
             }
         },

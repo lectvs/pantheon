@@ -30,7 +30,6 @@ namespace Camera {
 
     export type SmoothMovement = {
         type: 'smooth';
-        speed: number;
         deadZoneWidth: number;
         deadZoneHeight: number;
     }
@@ -176,24 +175,22 @@ class Camera {
             this.x = x;
             this.y = y;
         } else if (this.movement.type === 'smooth') {
-            // TODO: implement speed
             let hw = this.movement.deadZoneWidth/2;
             let hh = this.movement.deadZoneHeight/2;
             let dx = x - this.x;
             let dy = y - this.y;
-            if (Math.abs(dx) <= hw && Math.abs(dy) <= hh) {
-                return;
-            }
-            
-            let tx = Math.abs(hw / dx);
-            let ty = Math.abs(hh / dy);
-            let t = Math.min(tx, ty);
-            
-            let targetx = this.x + (1-t)*dx;
-            let targety = this.y + (1-t)*dy;
 
-            this.x = M.lerp(this.x, targetx, 0.25);
-            this.y = M.lerp(this.y, targety, 0.25);
+            if (Math.abs(dx) > hw) {
+                let tx = Math.abs(hw / dx);
+                let targetx = this.x + (1-tx)*dx;
+                this.x = M.lerp(this.x, targetx, 0.25);
+            }
+
+            if (Math.abs(dy) > hh) {
+                let ty = Math.abs(hh / dy);
+                let targety = this.y + (1-ty)*dy;
+                this.y = M.lerp(this.y, targety, 0.25);
+            }
         }
     }
 
@@ -226,10 +223,9 @@ class Camera {
         });
     }
 
-    setMovementSmooth(speed: number, deadZoneWidth: number = 0, deadZoneHeight: number = 0) {
+    setMovementSmooth(deadZoneWidth: number = 0, deadZoneHeight: number = 0) {
         this.setMovement({
             type: 'smooth',
-            speed: speed,
             deadZoneWidth: deadZoneWidth,
             deadZoneHeight: deadZoneHeight,
         });

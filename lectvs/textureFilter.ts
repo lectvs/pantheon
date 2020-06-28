@@ -1,4 +1,5 @@
 ///<reference path="./utils/cache.ts"/>
+///<reference path="./utils/perlin.ts"/>
 
 namespace TextureFilter {
     /**
@@ -311,6 +312,8 @@ namespace TextureFilter {
             float ty = worldy / height;
             return texture2D(uSampler, vec2(tx, ty));
         }
+
+        ${Perlin.SHADER_SOURCE}
 
         void main(void) {
             width = inputSize.x;

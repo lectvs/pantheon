@@ -100,7 +100,7 @@ class World {
         this.debugMousePositionText = this.addWorldObject<SpriteText>(<SpriteText.Config>{
             constructor: SpriteText,
             x: 0, y: 0,
-            font: Debug.MOUSE_POSITION_FONT,
+            font: Debug.FONT,
             style: { color: 0x008800 },
             ignoreCamera: true,
             visible: false,

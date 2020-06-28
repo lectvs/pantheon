@@ -3,6 +3,7 @@ namespace Lighting {
         constructor(numLights: number) {
             let uniforms = {};
             let distanceCalculations = "";
+            let perlinCalculations = "";
             let lightCalculations = "";
             let maxCalculations = "";
             for (let i = 0; i < numLights; i++) {
@@ -11,8 +12,9 @@ namespace Lighting {
                 uniforms[`float light_${i}_radius`] = 0;
                 uniforms[`float light_${i}_buffer`] = 0;
                 distanceCalculations += `float light_${i}_distance = sqrt((worldx - light_${i}_x) * (worldx - light_${i}_x) + (worldy - light_${i}_y) * (worldy - light_${i}_y));\n`;
+                perlinCalculations += `float light_${i}_perlin = cnoise(light_${i}_radius/5.0*vec3(normalize(vec2(worldx - light_${i}_x, worldy - light_${i}_y)), 0.5*t));`;
                 lightCalculations += `float light_${i}_light = 1.0;
-                                    if (light_${i}_distance > light_${i}_radius) light_${i}_light = 0.5;
+                                    if (light_${i}_distance > light_${i}_radius + light_${i}_perlin) light_${i}_light = 0.5;
                                     if (light_${i}_distance > light_${i}_radius + light_${i}_buffer) light_${i}_light = 0.0;\n`;
                 maxCalculations += `light = max(light, light_${i}_light);\n`;
             }
@@ -22,6 +24,7 @@ namespace Lighting {
                     float light = 0.0;
 
                     ${distanceCalculations}
+                    ${perlinCalculations}
                     ${lightCalculations}
                     ${maxCalculations}
 
@@ -101,6 +104,8 @@ class LightingManager extends WorldObject {
         this.firelightFilter.setLightUniform(2, 'y', campfire.y - this.world.camera.worldOffsetY);
         this.firelightFilter.setLightUniform(2, 'radius', this.winRadius);
         this.firelightFilter.setLightUniform(2, 'buffer', 0);
+
+        this.firelightFilter.updateTime(delta);
 
         super.update(delta);
     }

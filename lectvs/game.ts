@@ -4,6 +4,7 @@ namespace Game {
         pauseMenuClass: any;
         theaterClass: any;
         theaterConfig: Theater.Config;
+        showMetricsMenuKey: string;
     }
 }
 
@@ -17,11 +18,15 @@ class Game {
     private theaterClass: any;
     private theaterConfig: Theater.Config;
 
+    private showMetricsMenuKey: string;
+
     constructor(config: Game.Config) {
         this.mainMenuClass = config.mainMenuClass;
         this.pauseMenuClass = config.pauseMenuClass;
         this.theaterClass = config.theaterClass;
         this.theaterConfig = config.theaterConfig;
+
+        this.showMetricsMenuKey = config.showMetricsMenuKey;
 
         this.menuSystem = new MenuSystem(this);
         this.loadMainMenu();
@@ -33,6 +38,7 @@ class Game {
 
     update(delta: number) {
         this.updatePause();
+        this.updateMetrics();
 
         if (this.menuSystem.inMenu) {
             global.metrics.startSpan('menu');
@@ -49,6 +55,12 @@ class Game {
         if (Input.justDown('pause') && !this.menuSystem.inMenu) {
             Input.consume('pause');
             this.pauseGame();
+        }
+    }
+
+    updateMetrics() {
+        if (Debug.DEBUG && Input.justDown(this.showMetricsMenuKey)) {
+            global.game.menuSystem.loadMenu(MetricsMenu);
         }
     }
 

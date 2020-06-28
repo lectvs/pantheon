@@ -73,19 +73,21 @@ class Texture {
         let oldAnchorY = texture.anchorY;
         
         // Snap the anchor of the texture to draw to the pixel.
-        texture.anchorX = Math.floor(texture.anchorX * texture.width) / texture.width;
-        texture.anchorY = Math.floor(texture.anchorY * texture.height) / texture.height;
+        // Disabled due to flickering fire issue in A Night in the Dark.
+        // To re-enable, simply uncomment the lines below.
+        //texture.anchorX = Math.floor(texture.anchorX * texture.width) / texture.width;
+        //texture.anchorY = Math.floor(texture.anchorY * texture.height) / texture.height;
 
         properties = this.setRenderTextureSpriteProperties(texture, properties);
         let allFilters = this.setRenderTextureSpriteFilters(texture, properties);
-        this.renderDisplayObject(texture.renderTextureSprite);
+        this.renderPIXIDisplayObject(texture.renderTextureSprite);
         this.returnTextureFilters(allFilters);
 
         texture.anchorX = oldAnchorX;
         texture.anchorY = oldAnchorY;
     }
 
-    renderDisplayObject(displayObject: PIXI.DisplayObject) {
+    renderPIXIDisplayObject(displayObject: PIXI.DisplayObject) {
         if (this.immutable) {
             error('Cannot render to immutable texture!');
             return;
@@ -247,7 +249,7 @@ namespace Texture {
         texture.anchorY = pixiTexture.defaultAnchor.y;
         sprite.x = texture.anchorX * texture.width;
         sprite.y = texture.anchorY * texture.height;
-        texture.renderDisplayObject(sprite);
+        texture.renderPIXIDisplayObject(sprite);
         texture.immutable = true;
         return texture;
     }

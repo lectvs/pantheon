@@ -1,35 +1,43 @@
 namespace Debug {
     export type Config = {
         debug: boolean;
+        font: SpriteText.Font;
         cheatsEnabled: boolean;
         allPhysicsBounds: boolean;
         moveCameraWithArrows: boolean; 
         showMousePosition: boolean;
-        mousePositionFont: SpriteText.Font;
         skipRate: number;
         programmaticInput: boolean;
         autoplay: boolean;
         skipMainMenu: boolean;
+        frameStepEnabled: boolean;
+        frameStepStepKey: string;
+        frameStepRunKey: string;
     }
 }
 
 class Debug {
     static init(config: Debug.Config) {
         Debug.DEBUG = config.debug;
+        Debug.FONT = config.font;
         Debug.CHEATS_ENABLED = config.cheatsEnabled;
         Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
         Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
         Debug.SHOW_MOUSE_POSITION = config.showMousePosition;
-        Debug.MOUSE_POSITION_FONT = config.mousePositionFont;
         Debug.SKIP_RATE = config.skipRate;
         Debug.PROGRAMMATIC_INPUT = config.programmaticInput;
         Debug.AUTOPLAY = config.autoplay;
         Debug.SKIP_MAIN_MENU = config.skipMainMenu;
+        Debug.FRAME_STEP_ENABLED = config.frameStepEnabled;
+        Debug.FRAME_STEP_STEP_KEY = config.frameStepStepKey;
+        Debug.FRAME_STEP_RUN_KEY = config.frameStepRunKey;
     }
 
     private static _DEBUG: boolean;
     static get DEBUG() { return this._DEBUG; }
     static set DEBUG(value: boolean) { this._DEBUG = value; }
+    
+    static FONT: SpriteText.Font;
 
     private static _CHEATS_ENABLED: boolean;
     static get CHEATS_ENABLED() { return this.DEBUG && this._CHEATS_ENABLED; }
@@ -46,7 +54,6 @@ class Debug {
     private static _SHOW_MOUSE_POSITION: boolean;
     static get SHOW_MOUSE_POSITION() { return this.DEBUG && this._SHOW_MOUSE_POSITION; }
     static set SHOW_MOUSE_POSITION(value: boolean) { this._SHOW_MOUSE_POSITION = value; }
-    static MOUSE_POSITION_FONT: SpriteText.Font;
 
     private static _SKIP_RATE: number;
     static get SKIP_RATE() { return this.DEBUG ? this._SKIP_RATE : 1; }
@@ -63,6 +70,15 @@ class Debug {
     private static _SKIP_MAIN_MENU: boolean;
     static get SKIP_MAIN_MENU() { return this.DEBUG && this._SKIP_MAIN_MENU; }
     static set SKIP_MAIN_MENU(value: boolean) { this._SKIP_MAIN_MENU = value; }
+
+    private static _FRAME_STEP_ENABLED: boolean;
+    static get FRAME_STEP_ENABLED() { return this.DEBUG && this._FRAME_STEP_ENABLED; }
+    static set FRAME_STEP_ENABLED(value: boolean) { this._FRAME_STEP_ENABLED = value; }
+    static FRAME_STEP_STEP_KEY: string;
+    static FRAME_STEP_RUN_KEY: string;
+    static frameStepSkipFrame() {
+        return this.FRAME_STEP_ENABLED && !(Input.justDown(this.FRAME_STEP_STEP_KEY) || Input.isDown(this.FRAME_STEP_RUN_KEY));
+    }
 }
 
 function get(name: string) {
