@@ -6,10 +6,8 @@ class Sound {
     get isMarkedForDisable() { return this.markedForDisable; }
 
     paused: boolean;
-    get volume() { return this.webAudioSound.volume; }
-    set volume(value: number) { this.webAudioSound.volume = value; }
-    get loop() { return this.webAudioSound.loop; }
-    set loop(value: boolean) { this.webAudioSound.loop = value; }
+    volume: number;
+    loop: boolean;
 
     get done() { return this.webAudioSound.done; }
 
@@ -27,6 +25,9 @@ class Sound {
         this.markedForDisable = false;
         this.paused = false;
         this.pos = 0;
+
+        this.volume = 1;
+        this.loop = false;
     }
 
     markForDisable() {
@@ -56,5 +57,8 @@ class Sound {
             }
             this.webAudioSound.seek(this.pos);
         }
+
+        if (this.webAudioSound.volume !== this.volume) this.webAudioSound.volume = this.volume;
+        if (this.webAudioSound.loop !== this.loop) this.webAudioSound.loop = this.loop;
     }
 }

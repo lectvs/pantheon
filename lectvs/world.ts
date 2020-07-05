@@ -20,6 +20,8 @@ namespace World {
         entryPoints?: Dict<Pt>;
         worldObjects?: WorldObject.Config[];
 
+        playingAudio?: boolean;
+
         showDebugMousePosition?: boolean;
     }
 
@@ -49,6 +51,7 @@ class World {
     entryPoints: Dict<Pt>;
     worldObjects: WorldObject[];
     sounds: Sound[];
+    playingAudio: boolean;
     showDebugMousePosition: boolean;
 
     physicsGroups: Dict<World.PhysicsGroup>;
@@ -75,6 +78,7 @@ class World {
         this.width = O.getOrDefault(config.width, global.gameWidth);
         this.height = O.getOrDefault(config.height, global.gameHeight);
         this.sounds = [];
+        this.playingAudio = O.getOrDefault(config.playingAudio, true);
         this.worldObjects = [];
         this.showDebugMousePosition = O.getOrDefault(config.showDebugMousePosition, false);
 
@@ -149,7 +153,10 @@ class World {
         this.removeDeadWorldObjects();
 
         this.camera.update(this, delta);
-        this.updateSounds(delta);
+
+        if (this.playingAudio) {
+            this.updateSounds(delta);
+        }
     }
 
     protected updateDebugMousePosition() {
@@ -208,7 +215,6 @@ class World {
             filters: layer.effects.getFilterList()
         });
     }
-
     addWorldObject<T extends WorldObject>(obj: T | WorldObject.Config): T {
         let worldObject: T = obj instanceof WorldObject ? obj : WorldObject.fromConfig<T>(obj);
         return World.Actions.addWorldObjectToWorld(worldObject, this);

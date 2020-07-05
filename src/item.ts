@@ -53,7 +53,7 @@ class Item extends Sprite {
 
         if (this.z <= 0) {
             if (this.lastz > 0) {
-                this.world.playSound('land');
+                this.world.playSound('pickupland');
             }
             this.z = 0;
             this.vz = 0;

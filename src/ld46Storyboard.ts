@@ -77,7 +77,7 @@ function getStoryboard(): Storyboard { return {
             }
 
             campfire.stopBurn();
-            campfire.stopFireBurnSound();
+            global.world.getWorldObjectByName('ambience').data.ambience.paused = true;
             yield S.wait(4);
             campfire.win();
             let fireWinSound = global.world.playSound('fireroar');
@@ -87,6 +87,7 @@ function getStoryboard(): Storyboard { return {
                 fireWinSound.volume = t;
             });
             fireWinSound.paused = true;
+            campfire.stopFireBurnSound();
 
             global.world.addWorldObject(<Sprite.Config>{
                 constructor: Sprite,

@@ -17,12 +17,12 @@ class Main {
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
 
         Debug.init({
-            debug: true,
+            debug: false,
             font: Assets.fonts.DELUXE16,
             cheatsEnabled: true,
             allPhysicsBounds: false,
             moveCameraWithArrows: true,
-            showMousePosition: false,
+            showMousePosition: true,
             skipRate: 1,
             programmaticInput: false,
             autoplay: true,

@@ -60,7 +60,9 @@ juice
 - /move metrics recording out of main class
 - /random noise on fire lighting
     - /perlin noise??
-- adjust sound effects
+- /global sound effects
+- /adjust sound effects
+- /ambience
 
 
 

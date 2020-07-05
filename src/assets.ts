@@ -79,23 +79,21 @@ namespace Assets {
 
         // SFX
         'click': {},
-        'chop': {},
-        'swing': { url: 'assets/swing.mp3' },
-        'hit': { url: 'assets/hit.mp3' },
-        'walk': { url: 'assets/walk.mp3' },
-        'pickup': {},
-        'throw': { url: 'assets/throw.mp3' },
-        'land': {},
+        'hit': {},
+        'treeshake': {},
+        'swing': {},
+        'walk': {},
+        'throw': {},
+        'pickupland': {},
 
         'fire': {},
         'itemburn': {},
         'fireout': {},
         'fireroar': {},
 
-        'dooropen': { url: 'assets/dooropen.mp3' },
+        'dooropen': {},
 
-        // Music
-        'music': {},
+        'ambience': {},
     }
 
     export const tilesets: Dict<Tilemap.Tileset> = {

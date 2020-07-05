@@ -89,6 +89,7 @@ class Perlin {
         138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180
     ], 2);
 
+    // From https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
     static readonly SHADER_SOURCE = `
         vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
         vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}

@@ -2485,6 +2485,7 @@ var Perlin = /** @class */ (function () {
         49, 192, 214, 31, 181, 199, 106, 157, 184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254,
         138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180
     ], 2);
+    // From https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
     Perlin.SHADER_SOURCE = "\n        vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}\n        vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}\n        vec3 fade(vec3 t) {return t*t*t*(t*(t*6.0-15.0)+10.0);}\n\n        float cnoise(vec3 P){\n            vec3 Pi0 = floor(P); // Integer part for indexing\n            vec3 Pi1 = Pi0 + vec3(1.0); // Integer part + 1\n            Pi0 = mod(Pi0, 289.0);\n            Pi1 = mod(Pi1, 289.0);\n            vec3 Pf0 = fract(P); // Fractional part for interpolation\n            vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n            vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n            vec4 iy = vec4(Pi0.yy, Pi1.yy);\n            vec4 iz0 = Pi0.zzzz;\n            vec4 iz1 = Pi1.zzzz;\n\n            vec4 ixy = permute(permute(ix) + iy);\n            vec4 ixy0 = permute(ixy + iz0);\n            vec4 ixy1 = permute(ixy + iz1);\n\n            vec4 gx0 = ixy0 / 7.0;\n            vec4 gy0 = fract(floor(gx0) / 7.0) - 0.5;\n            gx0 = fract(gx0);\n            vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n            vec4 sz0 = step(gz0, vec4(0.0));\n            gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n            gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n\n            vec4 gx1 = ixy1 / 7.0;\n            vec4 gy1 = fract(floor(gx1) / 7.0) - 0.5;\n            gx1 = fract(gx1);\n            vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n            vec4 sz1 = step(gz1, vec4(0.0));\n            gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n            gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n\n            vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n            vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n            vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n            vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n            vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n            vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n            vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n            vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n\n            vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n            g000 *= norm0.x;\n            g010 *= norm0.y;\n            g100 *= norm0.z;\n            g110 *= norm0.w;\n            vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n            g001 *= norm1.x;\n            g011 *= norm1.y;\n            g101 *= norm1.z;\n            g111 *= norm1.w;\n\n            float n000 = dot(g000, Pf0);\n            float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n            float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n            float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n            float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n            float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n            float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n            float n111 = dot(g111, Pf1);\n\n            vec3 fade_xyz = fade(Pf0);\n            vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n            vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n            float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); \n            return 2.2 * n_xyz;\n        }\n    ";
     return Perlin;
 }());
@@ -3173,6 +3174,7 @@ var FPSMetricManager = /** @class */ (function () {
 }());
 var Game = /** @class */ (function () {
     function Game(config) {
+        this.sounds = [];
         this.mainMenuClass = config.mainMenuClass;
         this.pauseMenuClass = config.pauseMenuClass;
         this.theaterClass = config.theaterClass;
@@ -3197,6 +3199,7 @@ var Game = /** @class */ (function () {
             this.theater.update(delta);
             global.metrics.endSpan('theater');
         }
+        this.updateSounds(delta);
     };
     Game.prototype.updatePause = function () {
         if (Input.justDown('pause') && !this.menuSystem.inMenu) {
@@ -3207,6 +3210,16 @@ var Game = /** @class */ (function () {
     Game.prototype.updateMetrics = function () {
         if (Debug.DEBUG && Input.justDown(this.showMetricsMenuKey)) {
             global.game.menuSystem.loadMenu(MetricsMenu);
+        }
+    };
+    Game.prototype.updateSounds = function (delta) {
+        for (var i = this.sounds.length - 1; i >= 0; i--) {
+            if (!this.sounds[i].paused) {
+                this.sounds[i].update(delta);
+            }
+            if (this.sounds[i].done) {
+                this.sounds.splice(i, 1);
+            }
         }
     };
     Game.prototype.render = function (screen) {
@@ -3232,6 +3245,11 @@ var Game = /** @class */ (function () {
     };
     Game.prototype.pauseGame = function () {
         this.menuSystem.loadMenu(this.pauseMenuClass);
+    };
+    Game.prototype.playSound = function (key) {
+        var sound = new Sound(key);
+        this.sounds.push(sound);
+        return sound;
     };
     Game.prototype.startGame = function () {
         this.loadTheater();
@@ -3719,6 +3737,7 @@ var World = /** @class */ (function () {
         this.width = O.getOrDefault(config.width, global.gameWidth);
         this.height = O.getOrDefault(config.height, global.gameHeight);
         this.sounds = [];
+        this.playingAudio = O.getOrDefault(config.playingAudio, true);
         this.worldObjects = [];
         this.showDebugMousePosition = O.getOrDefault(config.showDebugMousePosition, false);
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
@@ -3820,7 +3839,9 @@ var World = /** @class */ (function () {
         global.metrics.endSpan('postUpdate');
         this.removeDeadWorldObjects();
         this.camera.update(this, delta);
-        this.updateSounds(delta);
+        if (this.playingAudio) {
+            this.updateSounds(delta);
+        }
     };
     World.prototype.updateDebugMousePosition = function () {
         var showMousePosition = Debug.SHOW_MOUSE_POSITION && this.showDebugMousePosition;
@@ -4508,6 +4529,42 @@ var Menu = /** @class */ (function (_super) {
     }
     return Menu;
 }(World));
+var MetricsMenu = /** @class */ (function (_super) {
+    __extends(MetricsMenu, _super);
+    function MetricsMenu(menuSystem) {
+        var _this = _super.call(this, menuSystem, {
+            backgroundColor: 0x000000,
+            worldObjects: []
+        }) || this;
+        _this.plot = global.metrics.plotLastRecording();
+        _this.addWorldObject({
+            constructor: Sprite,
+            texture: _this.plot.texture,
+        });
+        _this.addWorldObject({
+            name: 'graphxy',
+            constructor: SpriteText,
+            font: Assets.fonts.DELUXE16,
+            style: { color: 0x00FF00 },
+        });
+        return _this;
+    }
+    MetricsMenu.prototype.update = function (delta) {
+        _super.prototype.update.call(this, delta);
+        if (Input.justDown('pause')) {
+            this.menuSystem.game.unpauseGame();
+        }
+        this.getWorldObjectByName('graphxy')
+            .setText(this.getPlotY().toFixed(2) + " ms");
+    };
+    MetricsMenu.prototype.getPlotX = function () {
+        return this.plot.graphBounds.left + Input.mouseX / global.gameWidth * (this.plot.graphBounds.right - this.plot.graphBounds.left);
+    };
+    MetricsMenu.prototype.getPlotY = function () {
+        return this.plot.graphBounds.bottom + (1 - Input.mouseY / global.gameHeight) * (this.plot.graphBounds.top - this.plot.graphBounds.bottom);
+    };
+    return MetricsMenu;
+}(Menu));
 var SpriteText = /** @class */ (function (_super) {
     __extends(SpriteText, _super);
     function SpriteText(config) {
@@ -5525,6 +5582,8 @@ var Sound = /** @class */ (function () {
         this.markedForDisable = false;
         this.paused = false;
         this.pos = 0;
+        this.volume = 1;
+        this.loop = false;
     }
     Object.defineProperty(Sound.prototype, "soundManager", {
         get: function () { return global.soundManager; },
@@ -5533,18 +5592,6 @@ var Sound = /** @class */ (function () {
     });
     Object.defineProperty(Sound.prototype, "isMarkedForDisable", {
         get: function () { return this.markedForDisable; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Sound.prototype, "volume", {
-        get: function () { return this.webAudioSound.volume; },
-        set: function (value) { this.webAudioSound.volume = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Sound.prototype, "loop", {
-        get: function () { return this.webAudioSound.loop; },
-        set: function (value) { this.webAudioSound.loop = value; },
         enumerable: false,
         configurable: true
     });
@@ -5580,6 +5627,10 @@ var Sound = /** @class */ (function () {
             }
             this.webAudioSound.seek(this.pos);
         }
+        if (this.webAudioSound.volume !== this.volume)
+            this.webAudioSound.volume = this.volume;
+        if (this.webAudioSound.loop !== this.loop)
+            this.webAudioSound.loop = this.loop;
     };
     return Sound;
 }());
@@ -7258,20 +7309,18 @@ var Assets;
         'debug': {},
         // SFX
         'click': {},
-        'chop': {},
-        'swing': { url: 'assets/swing.mp3' },
-        'hit': { url: 'assets/hit.mp3' },
-        'walk': { url: 'assets/walk.mp3' },
-        'pickup': {},
-        'throw': { url: 'assets/throw.mp3' },
-        'land': {},
+        'hit': {},
+        'treeshake': {},
+        'swing': {},
+        'walk': {},
+        'throw': {},
+        'pickupland': {},
         'fire': {},
         'itemburn': {},
         'fireout': {},
         'fireroar': {},
-        'dooropen': { url: 'assets/dooropen.mp3' },
-        // Music
-        'music': {},
+        'dooropen': {},
+        'ambience': {},
     };
     Assets.tilesets = {
         'world': {
@@ -7426,6 +7475,7 @@ function MENU_BASE_STAGE() {
     return {
         constructor: World,
         backgroundColor: 0x000000,
+        playingAudio: false,
     };
 }
 function WORLD_BOUNDS(left, top, right, bottom) {
@@ -7894,7 +7944,7 @@ var Human = /** @class */ (function (_super) {
         this.heldItem.z = Human.itemOffsetY;
         World.Actions.setPhysicsGroup(this.heldItem, null);
         if (this.playSoundOnPickup) {
-            global.world.playSound('pickup');
+            this.world.playSound('pickupland');
         }
     };
     Human.prototype.dropHeldItem = function () {
@@ -8015,7 +8065,7 @@ var Item = /** @class */ (function (_super) {
         _super.prototype.update.call(this, delta);
         if (this.z <= 0) {
             if (this.lastz > 0) {
-                this.world.playSound('land');
+                this.world.playSound('pickupland');
             }
             this.z = 0;
             this.vz = 0;
@@ -8098,7 +8148,7 @@ var IntroMenu = /** @class */ (function (_super) {
         introtext.x = Main.width / 2 - introtext.getTextWidth() / 2;
         introtext.y = Main.height / 2 - introtext.getTextHeight() / 2;
         _this.runScript(S.chain(S.wait(1.5), S.call(function () {
-            introtext.setText("  - originally made\n  for ludum dare 46 -");
+            introtext.setText("- originally made  \n  for ludum dare 46 -");
             introtext.x = Main.width / 2 - introtext.getTextWidth() / 2;
             introtext.y = Main.height / 2 - introtext.getTextHeight() / 2;
         }), S.wait(1.5), S.call(function () { menuSystem.loadMenu(MainMenu); })));
@@ -8122,7 +8172,7 @@ var MainMenu = /** @class */ (function (_super) {
                     x: 20, y: 50, text: "start game",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
                     onClick: function () {
-                        _this.playSound('click');
+                        _this.menuSystem.game.playSound('click');
                         menuSystem.game.startGame();
                     },
                 },
@@ -8131,7 +8181,7 @@ var MainMenu = /** @class */ (function (_super) {
                     x: 20, y: 68, text: "controls",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
                     onClick: function () {
-                        _this.playSound('click');
+                        _this.menuSystem.game.playSound('click');
                         menuSystem.loadMenu(ControlsMenu);
                     },
                 },
@@ -8204,7 +8254,7 @@ var ControlsMenu = /** @class */ (function (_super) {
                     x: 20, y: 160, text: "back",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
                     onClick: function () {
-                        _this.playSound('click');
+                        _this.menuSystem.game.playSound('click');
                         menuSystem.back();
                     },
                 },
@@ -8247,7 +8297,7 @@ var PauseMenu = /** @class */ (function (_super) {
                     x: 20, y: 50, text: "resume",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
                     onClick: function () {
-                        _this.playSound('click');
+                        _this.menuSystem.game.playSound('click');
                         menuSystem.game.unpauseGame();
                     },
                 }
@@ -8263,42 +8313,6 @@ var PauseMenu = /** @class */ (function (_super) {
         }
     };
     return PauseMenu;
-}(Menu));
-var MetricsMenu = /** @class */ (function (_super) {
-    __extends(MetricsMenu, _super);
-    function MetricsMenu(menuSystem) {
-        var _this = _super.call(this, menuSystem, {
-            backgroundColor: 0x000000,
-            worldObjects: []
-        }) || this;
-        _this.plot = global.metrics.plotLastRecording();
-        _this.addWorldObject({
-            constructor: Sprite,
-            texture: _this.plot.texture,
-        });
-        _this.addWorldObject({
-            name: 'graphxy',
-            constructor: SpriteText,
-            font: Assets.fonts.DELUXE16,
-            style: { color: 0x00FF00 },
-        });
-        return _this;
-    }
-    MetricsMenu.prototype.update = function (delta) {
-        _super.prototype.update.call(this, delta);
-        if (Input.justDown('pause')) {
-            this.menuSystem.game.unpauseGame();
-        }
-        this.getWorldObjectByName('graphxy')
-            .setText(this.getPlotY().toFixed(2) + " ms");
-    };
-    MetricsMenu.prototype.getPlotX = function () {
-        return this.plot.graphBounds.left + Input.mouseX / global.gameWidth * (this.plot.graphBounds.right - this.plot.graphBounds.left);
-    };
-    MetricsMenu.prototype.getPlotY = function () {
-        return this.plot.graphBounds.bottom + (1 - Input.mouseY / global.gameHeight) * (this.plot.graphBounds.top - this.plot.graphBounds.bottom);
-    };
-    return MetricsMenu;
 }(Menu));
 /// <reference path="../lectvs/preload.ts" />
 /// <reference path="./assets.ts" />
@@ -8324,12 +8338,12 @@ var Main = /** @class */ (function () {
     Main.preload = function () {
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
         Debug.init({
-            debug: true,
+            debug: false,
             font: Assets.fonts.DELUXE16,
             cheatsEnabled: true,
             allPhysicsBounds: false,
             moveCameraWithArrows: true,
-            showMousePosition: false,
+            showMousePosition: true,
             skipRate: 1,
             programmaticInput: false,
             autoplay: true,
@@ -8869,7 +8883,8 @@ var Tree = /** @class */ (function (_super) {
                 for (var i = 0; i < _this.leavesSpawnedPerHit; i++) {
                     _this.spawnLeaf();
                 }
-                _this.world.playSound('chop');
+                _this.world.playSound('hit');
+                _this.world.playSound('treeshake');
             },
             script: S.doOverTime(0.5, function (t) { _this.angle = _this.hitDir * 30 * Math.exp(5 * -t) * Math.cos(5 * t); }),
             transitions: [
@@ -8879,7 +8894,8 @@ var Tree = /** @class */ (function (_super) {
         _this.stateMachine.addState('die', {
             callback: function () { _this.colliding = false; },
             script: S.chain(S.doOverTime(1, function (t) { _this.angle = _this.hitDir * 90 * (t + t * t) / 2; }), S.call(function () {
-                _this.world.playSound('land');
+                _this.world.playSound('pickupland');
+                _this.world.playSound('treeshake').volume = 0.5;
                 _this.spawnLog();
                 if (_this.spawnsTorch)
                     _this.spawnTorch();
@@ -9075,6 +9091,17 @@ function getStages() {
                     x: 528, y: 84,
                     layer: 'main',
                     physicsGroup: 'items',
+                },
+                {
+                    name: 'ambience',
+                    updateCallback: function (obj, delta) {
+                        if (!obj.data.ambience) {
+                            var ambience = obj.world.playSound('ambience');
+                            ambience.volume = 1.5;
+                            ambience.loop = true;
+                            obj.data.ambience = ambience;
+                        }
+                    }
                 }
             ])
         },
@@ -9233,7 +9260,7 @@ function getStoryboard() {
                                 global.world.removeWorldObject('monster');
                             }
                             campfire.stopBurn();
-                            campfire.stopFireBurnSound();
+                            global.world.getWorldObjectByName('ambience').data.ambience.paused = true;
                             return [4 /*yield*/, S.wait(4)];
                         case 1:
                             _a.sent();
@@ -9247,6 +9274,7 @@ function getStoryboard() {
                         case 2:
                             _a.sent();
                             fireWinSound.paused = true;
+                            campfire.stopFireBurnSound();
                             global.world.addWorldObject({
                                 constructor: Sprite,
                                 texture: Texture.filledRect(Main.width, Main.height, 0xFFFFFF),

@@ -206,7 +206,7 @@ class Human extends Sprite {
         this.heldItem.z = Human.itemOffsetY;
         World.Actions.setPhysicsGroup(this.heldItem, null);
         if (this.playSoundOnPickup) {
-            global.world.playSound('pickup');
+            this.world.playSound('pickupland');
         }
     }
 

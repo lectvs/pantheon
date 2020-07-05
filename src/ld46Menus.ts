@@ -21,7 +21,7 @@ class IntroMenu extends Menu {
         this.runScript(S.chain(
             S.wait(1.5),
             S.call(() => {
-                introtext.setText("  - originally made\n  for ludum dare 46 -");
+                introtext.setText("- originally made  \n  for ludum dare 46 -");
                 introtext.x = Main.width/2 - introtext.getTextWidth()/2;
                 introtext.y = Main.height/2 - introtext.getTextHeight()/2;
             }),
@@ -46,7 +46,7 @@ class MainMenu extends Menu {
                     x: 20, y: 50, text: "start game",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
                     onClick: () => {
-                        this.playSound('click');
+                        this.menuSystem.game.playSound('click');
                         menuSystem.game.startGame();
                     },
                 },
@@ -55,7 +55,7 @@ class MainMenu extends Menu {
                     x: 20, y: 68, text: "controls",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
                     onClick: () => {
-                        this.playSound('click');
+                        this.menuSystem.game.playSound('click');
                         menuSystem.loadMenu(ControlsMenu);
                     },
                 },
@@ -126,7 +126,7 @@ class ControlsMenu extends Menu {
                     x: 20, y: 160, text: "back",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
                     onClick: () => {
-                        this.playSound('click');
+                        this.menuSystem.game.playSound('click');
                         menuSystem.back();
                     },
                 },
@@ -217,7 +217,7 @@ class PauseMenu extends Menu {
                     x: 20, y: 50, text: "resume",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
                     onClick: () => {
-                        this.playSound('click');
+                        this.menuSystem.game.playSound('click');
                         menuSystem.game.unpauseGame();
                     },
                 }
@@ -232,48 +232,5 @@ class PauseMenu extends Menu {
             Input.consume('pause');
             this.menuSystem.game.unpauseGame();
         }
-    }
-}
-
-class MetricsMenu extends Menu {
-    private plot: MetricsPlot.Plot;
-
-    constructor(menuSystem: MenuSystem) {
-        super(menuSystem, {
-            backgroundColor: 0x000000,
-            worldObjects: [
-            ]
-        });
-
-        this.plot = global.metrics.plotLastRecording();
-        this.addWorldObject(<Sprite.Config>{
-            constructor: Sprite,
-            texture: this.plot.texture,
-        });
-        this.addWorldObject(<SpriteText.Config>{
-            name: 'graphxy',
-            constructor: SpriteText,
-            font: Assets.fonts.DELUXE16,
-            style: { color: 0x00FF00 },
-        });
-    }
-
-    update(delta: number) {
-        super.update(delta);
-
-        if (Input.justDown('pause')) {
-            this.menuSystem.game.unpauseGame();
-        }
-
-        this.getWorldObjectByName<SpriteText>('graphxy')
-                .setText(`${this.getPlotY().toFixed(2)} ms`);
-    }
-
-    private getPlotX() {
-        return this.plot.graphBounds.left + Input.mouseX / global.gameWidth * (this.plot.graphBounds.right - this.plot.graphBounds.left);
-    }
-
-    private getPlotY() {
-        return this.plot.graphBounds.bottom + (1 - Input.mouseY / global.gameHeight) * (this.plot.graphBounds.top - this.plot.graphBounds.bottom);
     }
 }

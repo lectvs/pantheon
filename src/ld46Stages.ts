@@ -130,6 +130,17 @@ function getStages(): Dict<World.Config> { return {
                 x: 528, y: 84,
                 layer: 'main',
                 physicsGroup: 'items',
+            },
+            {
+                name: 'ambience',
+                updateCallback: (obj, delta) => {
+                    if (!obj.data.ambience) {
+                        let ambience = obj.world.playSound('ambience');
+                        ambience.volume = 1.5;
+                        ambience.loop = true;
+                        obj.data.ambience = ambience;
+                    }
+                }
             }
         ]
     },
