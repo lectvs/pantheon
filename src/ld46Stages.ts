@@ -141,7 +141,7 @@ function getStages(): Dict<World.Config> { return {
                         obj.data.ambience = ambience;
                     }
                 }
-            }
+            },
         ]
     },
 }}

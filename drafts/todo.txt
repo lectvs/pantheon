@@ -102,6 +102,8 @@ postpostjam
 - preloading improvements
     - loading screen/progress bar
     - timeout on preloading
+- 1x scaled up graphics
+- improve World audio functionality (e.g. playingAudio)
 - /get rid of Pt3
 - move tileset animation fields from Assets to Tilemap.Config
 - cheats system (console only for now)

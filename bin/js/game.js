@@ -9102,7 +9102,7 @@ function getStages() {
                             obj.data.ambience = ambience;
                         }
                     }
-                }
+                },
             ])
         },
     };
