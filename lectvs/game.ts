@@ -1,6 +1,6 @@
 namespace Game {
     export type Config = {
-        mainMenuClass: any;
+        entryPointMenuClass: any;
         pauseMenuClass: any;
         theaterClass: any;
         theaterConfig: Theater.Config;
@@ -14,7 +14,7 @@ class Game {
     theater: Theater;
     sounds: Sound[];
 
-    private mainMenuClass: any;
+    private entryPointMenuClass: any;
     private pauseMenuClass: any;
     private theaterClass: any;
     private theaterConfig: Theater.Config;
@@ -24,7 +24,7 @@ class Game {
     constructor(config: Game.Config) {
         this.sounds = [];
 
-        this.mainMenuClass = config.mainMenuClass;
+        this.entryPointMenuClass = config.entryPointMenuClass;
         this.pauseMenuClass = config.pauseMenuClass;
         this.theaterClass = config.theaterClass;
         this.theaterConfig = config.theaterConfig;
@@ -94,7 +94,7 @@ class Game {
     }
 
     loadMainMenu() {
-        this.menuSystem.loadMenu(this.mainMenuClass);
+        this.menuSystem.loadMenu(this.entryPointMenuClass);
     }
 
     loadTheater() {

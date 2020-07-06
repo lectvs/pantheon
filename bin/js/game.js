@@ -3175,7 +3175,7 @@ var FPSMetricManager = /** @class */ (function () {
 var Game = /** @class */ (function () {
     function Game(config) {
         this.sounds = [];
-        this.mainMenuClass = config.mainMenuClass;
+        this.entryPointMenuClass = config.entryPointMenuClass;
         this.pauseMenuClass = config.pauseMenuClass;
         this.theaterClass = config.theaterClass;
         this.theaterConfig = config.theaterConfig;
@@ -3235,7 +3235,7 @@ var Game = /** @class */ (function () {
         }
     };
     Game.prototype.loadMainMenu = function () {
-        this.menuSystem.loadMenu(this.mainMenuClass);
+        this.menuSystem.loadMenu(this.entryPointMenuClass);
     };
     Game.prototype.loadTheater = function () {
         this.theater = new this.theaterClass(this.theaterConfig);
@@ -3745,7 +3745,6 @@ var World = /** @class */ (function () {
         this.worldObjectsByName = {};
         this.layers = this.createLayers(config.layers);
         this.backgroundColor = O.getOrDefault(config.backgroundColor, global.backgroundColor);
-        this.backgroundAlpha = O.getOrDefault(config.backgroundAlpha, 1);
         this.screen = new Texture(this.width, this.height);
         this.layerTexture = new Texture(this.width, this.height);
         this.entryPoints = O.getOrDefault(config.entryPoints, {});
@@ -3869,7 +3868,6 @@ var World = /** @class */ (function () {
         this.camera.preRender(this);
         // Render background color.
         Draw.brush.color = this.backgroundColor;
-        Draw.brush.alpha = this.backgroundAlpha;
         Draw.fill(this.screen);
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -5078,14 +5076,10 @@ var Physics = /** @class */ (function () {
                     if (d !== 0 && options.transferMomentum) {
                         Physics.transferMomentum(collision);
                     }
+                    collision.move.onCollide(collision.from);
+                    collision.from.onCollide(collision.move);
                     if (options.callback) {
-                        if (_.isFunction(options.callback)) {
-                            options.callback(collision.move, collision.from);
-                        }
-                        else {
-                            collision.move.onCollide(collision.from);
-                            collision.from.onCollide(collision.move);
-                        }
+                        options.callback(collision.move, collision.from);
                     }
                 }
             }
@@ -7243,64 +7237,6 @@ var Assets;
         'blank': {},
         // Debug
         'debug': {},
-        // Entities
-        'player': {
-            defaultAnchor: Anchor.BOTTOM,
-            spritesheet: { frameWidth: 16, frameHeight: 16 },
-        },
-        'trees': {
-            defaultAnchor: Anchor.BOTTOM,
-            spritesheet: { frameWidth: 32, frameHeight: 52 },
-        },
-        'leaves': {
-            defaultAnchor: Anchor.BOTTOM,
-            frames: {
-                'blacktreeleaf': {
-                    rect: { x: 0, y: 0, width: 8, height: 4 }
-                },
-                'whitetreeleaf': {
-                    rect: { x: 0, y: 4, width: 8, height: 4 }
-                },
-            }
-        },
-        'door': {
-            defaultAnchor: Anchor.BOTTOM,
-            spritesheet: { frameWidth: 32, frameHeight: 35 },
-        },
-        'monster': {
-            defaultAnchor: Anchor.BOTTOM,
-            spritesheet: { frameWidth: 16, frameHeight: 16 },
-        },
-        // Items
-        'items': {
-            defaultAnchor: Anchor.CENTER,
-            frames: {
-                'log': { rect: { x: 0 * 16, y: 0, width: 16, height: 16 } },
-                'axe': { rect: { x: 1 * 16, y: 0, width: 16, height: 16 } },
-                'key': { rect: { x: 2 * 16, y: 0, width: 16, height: 16 } },
-                'torch': { rect: { x: 3 * 16, y: 0, width: 16, height: 16 } },
-                'gasoline': { rect: { x: 4 * 16, y: 0, width: 16, height: 16 } },
-            }
-        },
-        // Props
-        'campfire': {
-            anchor: Anchor.CENTER
-        },
-        'fire': {
-            defaultAnchor: { x: 0.5, y: 1 },
-            spritesheet: { frameWidth: 16, frameHeight: 16 }
-        },
-        'smoke': {
-            anchor: Anchor.BOTTOM
-        },
-        // Scenery
-        'world': {
-            defaultAnchor: { x: 0.5, y: 0.5 },
-            spritesheet: { frameWidth: 16, frameHeight: 16 }
-        },
-        'campfirering': {
-            anchor: Anchor.CENTER
-        },
         // Fonts
         'deluxe16': {},
     };
@@ -7309,38 +7245,9 @@ var Assets;
         'debug': {},
         // SFX
         'click': {},
-        'hit': {},
-        'treeshake': {},
-        'swing': {},
-        'walk': {},
-        'throw': {},
-        'pickupland': {},
-        'fire': {},
-        'itemburn': {},
-        'fireout': {},
-        'fireroar': {},
-        'dooropen': {},
-        'ambience': {},
     };
-    Assets.tilesets = {
-        'world': {
-            tiles: Preload.allTilesWithPrefix('world_'),
-            tileWidth: 16,
-            tileHeight: 16,
-            animation: {
-                frames: 3,
-                tilesPerFrame: 16,
-                frameRate: 3,
-            },
-            collisionIndices: [1],
-        },
-    };
-    Assets.pyxelTilemaps = {
-        'world': {
-            url: 'assets/world.json',
-            tileset: Assets.tilesets['world']
-        }
-    };
+    Assets.tilesets = {};
+    Assets.pyxelTilemaps = {};
     var fonts = /** @class */ (function () {
         function fonts() {
         }
@@ -7354,120 +7261,26 @@ var Assets;
         return fonts;
     }());
     Assets.fonts = fonts;
-    Assets.spriteTextTags = {
-        'e': function (params) {
-            return { color: 0x424242 };
-        },
-    };
+    Assets.spriteTextTags = {};
 })(Assets || (Assets = {}));
-var Lighting;
-(function (Lighting) {
-    var FirelightFilter = /** @class */ (function (_super) {
-        __extends(FirelightFilter, _super);
-        function FirelightFilter(numLights) {
-            var _this = this;
-            var uniforms = {};
-            var distanceCalculations = "";
-            var perlinCalculations = "";
-            var lightCalculations = "";
-            var maxCalculations = "";
-            for (var i = 0; i < numLights; i++) {
-                uniforms["float light_" + i + "_x"] = 0;
-                uniforms["float light_" + i + "_y"] = 0;
-                uniforms["float light_" + i + "_radius"] = 0;
-                uniforms["float light_" + i + "_buffer"] = 0;
-                distanceCalculations += "float light_" + i + "_distance = sqrt((worldx - light_" + i + "_x) * (worldx - light_" + i + "_x) + (worldy - light_" + i + "_y) * (worldy - light_" + i + "_y));\n";
-                perlinCalculations += "float light_" + i + "_perlin = cnoise(light_" + i + "_radius/5.0*vec3(normalize(vec2(worldx - light_" + i + "_x, worldy - light_" + i + "_y)), 0.5*t));";
-                lightCalculations += "float light_" + i + "_light = 1.0;\n                                    if (light_" + i + "_distance > light_" + i + "_radius + light_" + i + "_perlin) light_" + i + "_light = 0.5;\n                                    if (light_" + i + "_distance > light_" + i + "_radius + light_" + i + "_buffer) light_" + i + "_light = 0.0;\n";
-                maxCalculations += "light = max(light, light_" + i + "_light);\n";
-            }
-            _this = _super.call(this, {
-                uniforms: uniforms,
-                code: "\n                    float light = 0.0;\n\n                    " + distanceCalculations + "\n                    " + perlinCalculations + "\n                    " + lightCalculations + "\n                    " + maxCalculations + "\n\n                    if (light == 0.5) {\n                        if (outp.rgb == vec3(1.0, 1.0, 1.0)) {\n                            outp.rgb = vec3(0.0, 0.0, 0.0);\n                        } else if (outp.rgb == vec3(0.0, 0.0, 0.0)) {\n                            outp.rgb = vec3(1.0, 1.0, 1.0);\n                        }\n                    } else if (light == 0.0 && inp.rgb != vec3(1.0, 0.0, 0.0)) {\n                        outp.r = 0.0;\n                        outp.g = 0.0;\n                        outp.b = 0.0;\n                    }\n                "
-            }) || this;
-            return _this;
-        }
-        FirelightFilter.prototype.setLightUniform = function (i, uniform, value) {
-            this.setUniform("light_" + i + "_" + uniform, value);
-        };
-        return FirelightFilter;
-    }(TextureFilter));
-    Lighting.FirelightFilter = FirelightFilter;
-})(Lighting || (Lighting = {}));
-var LightingManager = /** @class */ (function (_super) {
-    __extends(LightingManager, _super);
-    function LightingManager(config) {
-        var _this = _super.call(this, config) || this;
-        _this.fireRadius = new LerpingValueWithNoise(0, 600, 10, 1);
-        _this.fireBuffer = new LerpingValueWithNoise(0, 600, 0, 0);
-        _this.winRadius = 0;
-        return _this;
-    }
-    Object.defineProperty(LightingManager.prototype, "firelightFilter", {
-        get: function () { return this.world.getLayerByName('main').effects.post.filters[0]; },
-        enumerable: false,
-        configurable: true
-    });
-    LightingManager.prototype.update = function (delta) {
-        var player = this.world.getWorldObjectByType(Player);
-        var campfire = this.world.getWorldObjectByType(Campfire);
-        var torchLightManager = this.world.getWorldObjectByType(TorchLightManager);
-        // Update fire light
-        this.fireRadius.goal = campfire.getRadius();
-        this.fireBuffer.goal = campfire.getBuffer();
-        if (global.theater.storyManager.currentNodeName === 'intro') {
-            this.fireRadius.goal = 40;
-        }
-        if (global.theater.storyManager.currentNodeName === 'win') {
-            this.fireRadius.goal = Math.min(this.fireRadius.goal, 40);
-        }
-        if (player.state === 'hurt') {
-            this.fireRadius.goal = 0;
-            this.fireBuffer.goal = campfire.getRadius() + campfire.getBuffer();
-        }
-        this.fireRadius.update(delta);
-        this.fireBuffer.update(delta);
-        this.firelightFilter.setLightUniform(0, 'x', campfire.x - this.world.camera.worldOffsetX);
-        this.firelightFilter.setLightUniform(0, 'y', campfire.y - this.world.camera.worldOffsetY);
-        this.firelightFilter.setLightUniform(0, 'radius', this.fireRadius.value);
-        this.firelightFilter.setLightUniform(0, 'buffer', this.fireBuffer.value);
-        // Update torch light
-        this.firelightFilter.setLightUniform(1, 'x', torchLightManager.torchLightX - this.world.camera.worldOffsetX);
-        this.firelightFilter.setLightUniform(1, 'y', torchLightManager.torchLightY - this.world.camera.worldOffsetY);
-        this.firelightFilter.setLightUniform(1, 'radius', torchLightManager.torchLightRadius);
-        this.firelightFilter.setLightUniform(1, 'buffer', torchLightManager.torchLightBuffer);
-        // Update win light
-        this.firelightFilter.setLightUniform(2, 'x', campfire.x - this.world.camera.worldOffsetX);
-        this.firelightFilter.setLightUniform(2, 'y', campfire.y - this.world.camera.worldOffsetY);
-        this.firelightFilter.setLightUniform(2, 'radius', this.winRadius);
-        this.firelightFilter.setLightUniform(2, 'buffer', 0);
-        this.firelightFilter.updateTime(delta);
-        _super.prototype.update.call(this, delta);
-    };
-    return LightingManager;
-}(WorldObject));
-/// <reference path="lightingManager.ts" />
-var DEFAULT_SCREEN_TRANSITION = Transition.FADE(0.2, 0.5, 0.2);
 function BASE_STAGE() {
-    var firelightFilter = new Lighting.FirelightFilter(3);
     return {
         constructor: World,
+        backgroundColor: 0xFFFFFF,
         layers: [
-            { name: 'bg', effects: { post: { filters: [firelightFilter] } } },
-            { name: 'ground', effects: { post: { filters: [firelightFilter] } } },
-            { name: 'main', sortKey: function (obj) { return obj.y; }, effects: { post: { filters: [firelightFilter] } } },
-            { name: 'fg', sortKey: function (obj) { return obj.y; }, effects: { post: { filters: [firelightFilter] } } },
+            { name: 'bg' },
+            { name: 'ground' },
+            { name: 'main', sortKey: function (obj) { return obj.y; } },
+            { name: 'fg', sortKey: function (obj) { return obj.y; } },
             { name: 'above' },
         ],
         physicsGroups: {
             'player': {},
             'props': {},
-            'items': {},
             'walls': {},
         },
         collisionOrder: [
-            { move: 'player', from: ['props', 'walls'], callback: true },
-            { move: 'items', from: ['props', 'walls'], callback: true, transferMomentum: true },
+            { move: 'player', from: ['props', 'walls'] },
         ],
     };
 }
@@ -7508,824 +7321,31 @@ function WORLD_BOUNDS(left, top, right, bottom) {
         ]
     };
 }
-function fireSpriteConfig() {
-    return {
-        constructor: Sprite,
-        animations: [
-            Animations.fromTextureList({ name: 'blaze', texturePrefix: 'fire_', textures: [0, 1, 2, 3, 4, 5, 6, 7], frameRate: 16, count: -1 }),
-        ],
-        defaultAnimation: 'blaze'
-    };
-}
-var Campfire = /** @class */ (function (_super) {
-    __extends(Campfire, _super);
-    function Campfire(config) {
-        var _this = _super.call(this, config, {
-            texture: 'campfire',
-        }) || this;
-        _this.logConsumptionRadius = 20;
-        _this.fireSprite = _this.addChild({
-            name: 'fire',
-            parent: fireSpriteConfig(),
-            layer: _this.layer,
-        });
-        _this.fireRadius = new FireRadius();
-        _this.fireBuffer = new FireBuffer();
-        _this.currentlyConsumedItems = [];
-        _this.hasConsumedGasoline = false;
-        _this.fireSoundVolume = 1;
-        return _this;
-    }
-    Object.defineProperty(Campfire.prototype, "isOut", {
-        get: function () { return this.fireRadius.getRadiusPercent() === 0; },
-        enumerable: false,
-        configurable: true
-    });
-    Campfire.prototype.update = function (delta) {
-        _super.prototype.update.call(this, delta);
-        this.updateSound();
-        this.consumeItems();
-        this.fireRadius.update(delta);
-        var fireScale = 0.2 + this.fireRadius.getRadiusPercent();
-        this.fireSprite.scaleX = fireScale;
-        this.fireSprite.scaleY = fireScale;
-        if (Random.boolean(5 * delta)) {
-            this.fireSprite.offset.y = Random.int(0, 1);
-        }
-    };
-    Campfire.prototype.updateSound = function () {
-        if (!this.fireSound) {
-            this.fireSound = this.world.playSound('fire');
-            this.fireSound.loop = true;
-        }
-        var player = this.world.getWorldObjectByType(Player);
-        var distance = M.distance(player.x, player.y, this.x, this.y);
-        var volume = this.fireSoundVolume * Math.max(1 - distance / 200, 0);
-        this.fireSound.volume = volume;
-    };
-    Campfire.prototype.extinguish = function () {
-        this.fireSprite.alpha = 0;
-    };
-    Campfire.prototype.getBuffer = function () {
-        return this.fireBuffer.getBuffer();
-    };
-    Campfire.prototype.getRadius = function () {
-        return this.fireRadius.getRadius();
-    };
-    Campfire.prototype.startBurn = function () {
-        this.fireRadius.startBurn();
-    };
-    Campfire.prototype.stopBurn = function () {
-        this.fireRadius.stopBurn();
-    };
-    Campfire.prototype.stopFireBurnSound = function () {
-        this.fireSoundVolume = 0;
-    };
-    Campfire.prototype.win = function () {
-        this.fireRadius.win();
-    };
-    Campfire.prototype.consumeItems = function () {
-        var e_38, _a;
-        var items = this.world.getWorldObjectsByType(Item).filter(function (item) { return item.consumable && !item.held; });
-        try {
-            for (var items_1 = __values(items), items_1_1 = items_1.next(); !items_1_1.done; items_1_1 = items_1.next()) {
-                var item = items_1_1.value;
-                if (_.contains(this.currentlyConsumedItems, item))
-                    continue;
-                if (item.z > 15)
-                    continue;
-                if (M.distance(item.x, item.y, this.x, this.y) > this.logConsumptionRadius)
-                    continue;
-                this.consumeItem(item);
-            }
-        }
-        catch (e_38_1) { e_38 = { error: e_38_1 }; }
-        finally {
-            try {
-                if (items_1_1 && !items_1_1.done && (_a = items_1.return)) _a.call(items_1);
-            }
-            finally { if (e_38) throw e_38.error; }
-        }
-    };
-    Campfire.prototype.consumeItem = function (item) {
-        var _this = this;
-        if (item.type === Item.Type.LOG) {
-            this.world.addWorldObjects(LogPiece.getLogPieces(item));
-            this.world.removeWorldObject(item);
-            this.world.playSound('itemburn');
-            this.runScript(S.chain(S.wait(0.5), S.call(function () {
-                _this.fireRadius.increaseTime();
-                if (item.name !== 'start_log') {
-                    // Don't increase the buffer for the first log (helps make the intro cutscene look good)
-                    _this.fireBuffer.increaseBuffer();
-                }
-            })));
-        }
-        if (item.type === Item.Type.GASOLINE) {
-            this.currentlyConsumedItems.push(item);
-            item.beingConsumed = true;
-            this.hasConsumedGasoline = true;
-            this.world.runScript(S.chain(item.type !== Item.Type.GASOLINE
-                ? S.doOverTime(0.5, function (t) { item.alpha = 1 - t; })
-                : S.doOverTime(4, function (t) {
-                    if (Random.boolean(1 - t)) {
-                        item.alpha = 1 - item.alpha;
-                    }
-                    if (t == 1)
-                        item.alpha = 0;
-                }), S.call(function () {
-                item.world.removeWorldObject(item);
-                A.removeAll(_this.currentlyConsumedItems, item);
-            })));
-        }
-    };
-    return Campfire;
-}(Sprite));
 var cheat;
 (function (cheat) {
     function lose() {
         if (!Debug.CHEATS_ENABLED)
             return;
-        /// @ts-ignore
-        global.world.getWorldObjectByType(Campfire).fireRadius.timer.time = 100;
     }
     cheat.lose = lose;
     function win() {
         if (!Debug.CHEATS_ENABLED)
             return;
-        var gasoline = global.world.getWorldObjectsByType(Item).filter(function (item) { return item.type === Item.Type.GASOLINE; })[0];
-        var campfire = global.world.getWorldObjectByType(Campfire);
-        gasoline.x = campfire.x;
-        gasoline.y = campfire.y;
-        gasoline.z = 0;
     }
     cheat.win = win;
 })(cheat || (cheat = {}));
-var Door = /** @class */ (function (_super) {
-    __extends(Door, _super);
-    function Door(config) {
-        return _super.call(this, config, {
-            texture: 'door_0',
-            bounds: { x: -16, y: -4, width: 32, height: 4 },
-            immovable: true,
-            animations: [
-                Animations.fromTextureList({ name: 'open', texturePrefix: 'door_', textures: [1, 2], frameRate: 8 })
-            ]
-        }) || this;
-    }
-    Door.prototype.onCollide = function (other) {
-        if (other instanceof Item && other.type === Item.Type.KEY) {
-            this.open();
-            World.Actions.removeWorldObjectFromWorld(other);
-        }
-        if (other instanceof Player && other.isHoldingKey) {
-            this.open();
-            other.deleteHeldItem();
-        }
-    };
-    Door.prototype.open = function () {
-        this.colliding = false;
-        this.playAnimation('open');
-        this.world.playSound('dooropen');
-    };
-    return Door;
-}(Sprite));
-var FireBuffer = /** @class */ (function () {
-    function FireBuffer() {
-        this.bufferAtFull = 20;
-        this.bufferIncrease = 16;
-        this.decaySpeed = 4;
-        this.buffer = this.bufferAtFull;
-    }
-    Object.defineProperty(FireBuffer.prototype, "baseBuffer", {
-        get: function () { return this.buffer; },
-        enumerable: false,
-        configurable: true
-    });
-    FireBuffer.prototype.update = function (delta) {
-        this.buffer -= this.decaySpeed * delta;
-        this.buffer = M.clamp(this.buffer, this.bufferAtFull, Infinity);
-    };
-    FireBuffer.prototype.getBuffer = function () {
-        return this.baseBuffer;
-    };
-    FireBuffer.prototype.increaseBuffer = function () {
-        this.buffer += this.bufferIncrease;
-    };
-    return FireBuffer;
-}());
-var FireRadius = /** @class */ (function () {
-    function FireRadius() {
-        this.fullTime = 60;
-        this.radiusAtFullTime = 200;
-        this.timeGainedOnLogConsumptionAtZero = 25;
-        this.timeGainedOnLogConsumptionAtFull = 10;
-        this.timer = new Timer(this.fullTime);
-        this.timer.time = this.fullTime / 2;
-        this.timer.paused = true;
-    }
-    Object.defineProperty(FireRadius.prototype, "baseRadius", {
-        get: function () { return this.radiusAtFullTime * (1 - this.timer.progress); },
-        enumerable: false,
-        configurable: true
-    });
-    FireRadius.prototype.update = function (delta) {
-        this.timer.update(delta);
-    };
-    FireRadius.prototype.getRadius = function () {
-        return this.baseRadius;
-    };
-    FireRadius.prototype.getRadiusPercent = function () {
-        return this.getRadius() / this.radiusAtFullTime;
-    };
-    FireRadius.prototype.increaseTime = function () {
-        var timeGainedOnLogConsumption = M.lerp(this.timeGainedOnLogConsumptionAtFull, this.timeGainedOnLogConsumptionAtZero, this.timer.progress);
-        this.timer.time -= timeGainedOnLogConsumption;
-    };
-    FireRadius.prototype.startBurn = function () {
-        this.timer.paused = false;
-    };
-    FireRadius.prototype.stopBurn = function () {
-        this.timer.paused = true;
-    };
-    FireRadius.prototype.win = function () {
-        this.timer.paused = false;
-        this.timer.speed = -200;
-    };
-    return FireRadius;
-}());
-var Human = /** @class */ (function (_super) {
-    __extends(Human, _super);
-    function Human(config, defaults) {
-        var _this = this;
-        config = WorldObject.resolveConfig(config, defaults);
-        _this = _super.call(this, config, {
-            bounds: { x: -4, y: -2, width: 8, height: 4 },
-            animations: Animations.emptyList('idle_empty', 'run_empty', 'idle_holding', 'run_holding', 'throw', 'swing', 'hurt'),
-        }) || this;
-        _this.stateMachine.addState('normal', {});
-        _this.stateMachine.addState('swinging', {
-            script: S.chain(S.wait(O.getOrDefault(config.preSwingWait, 0)), S.simul(S.doOverTime(Human.swingTime, function (t) {
-                if (!_this.heldItem)
-                    return;
-                var angle = (_this.flipX ? -1 : 1) * 90 * Math.sin(Math.PI * Math.pow(t, 0.5));
-                _this.heldItem.offset.x = Human.itemFullSwingOffsetX * Math.sin(M.degToRad(angle));
-                _this.heldItem.z = Human.itemOffsetY * Math.cos(M.degToRad(angle));
-                _this.heldItem.angle = angle;
-                if (t === 1)
-                    _this.heldItem.angle = 0;
-            }), S.chain(S.call(function () {
-                _this.playAnimation('swing', 0, true);
-                _this.world.playSound('swing');
-            }), S.wait(Human.swingTime * 0.25), S.call(function () {
-                _this.hitStuff();
-            }))), S.wait(O.getOrDefault(config.postSwingWait, 0))),
-            transitions: [
-                { type: 'instant', toState: 'normal' }
-            ]
-        });
-        _this.stateMachine.addState('hurt', {
-            callback: function () {
-                _this.playAnimation('hurt', 0, true);
-                _this.dropHeldItem();
-                _this.world.playSound('hit');
-            },
-            script: S.chain(S.doOverTime(0.5, function (t) {
-                _this.z = 16 * Math.exp(-4 * t) * Math.abs(Math.sin(4 * Math.PI * t * t));
-            }), S.waitUntil(function () { return !_this.getCurrentAnimationName().startsWith('hurt'); }), S.call(function () {
-                _this.alpha = 1;
-            })),
-            transitions: [
-                { type: 'instant', toState: 'normal' }
-            ]
-        });
-        _this.setState('normal');
-        _this.speed = O.getOrDefault(config.speed, 40);
-        _this.itemGrabDistance = O.getOrDefault(config.itemGrabDistance, 16);
-        _this.playSoundOnPickup = O.getOrDefault(config.playSoundOnPickup, true);
-        _this.direction = Direction2D.RIGHT;
-        return _this;
-    }
-    Object.defineProperty(Human.prototype, "moving", {
-        get: function () { return Math.abs(this.vx) > 1 || Math.abs(this.vy) > 1; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Human.prototype, "immobile", {
-        get: function () { return this.state === 'hurt'; },
-        enumerable: false,
-        configurable: true
-    });
-    Human.prototype.update = function (delta) {
-        var haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
-        var vaxis = (this.controller.down ? 1 : 0) - (this.controller.up ? 1 : 0);
-        this.updateMovement(haxis, vaxis);
-        _super.prototype.update.call(this, delta);
-        if (this.heldItem) {
-            this.heldItem.flipX = this.flipX;
-        }
-        if (this.controller.useItem) {
-            this.handleItemUse();
-        }
-        if (this.controller.pickupDropItem) {
-            this.handleItemPickupDrop();
-        }
-        // Handle animation.
-        var anim_state = (haxis == 0 && vaxis == 0) ? 'idle' : 'run';
-        var holding = this.heldItem ? 'holding' : 'empty';
-        this.playAnimation(anim_state + "_" + holding);
-    };
-    Human.prototype.render = function (screen) {
-        _super.prototype.render.call(this, screen);
-        if (this.debugBounds) {
-            var shb = this.getSwingHitbox();
-            Draw.brush.color = 0x00FF00;
-            Draw.rectangleOutline(screen, shb.x, shb.y, shb.width, shb.height);
-        }
-    };
-    Human.prototype.updateMovement = function (haxis, vaxis) {
-        if (this.immobile) {
-            haxis = 0;
-            vaxis = 0;
-        }
-        if (haxis < 0) {
-            this.vx = -this.speed;
-            this.direction.h = Direction.LEFT;
-            if (vaxis == 0)
-                this.direction.v = Direction.NONE;
-            this.flipX = true;
-        }
-        else if (haxis > 0) {
-            this.vx = this.speed;
-            this.direction.h = Direction.RIGHT;
-            if (vaxis == 0)
-                this.direction.v = Direction.NONE;
-            this.flipX = false;
-        }
-        else {
-            this.vx = 0;
-        }
-        if (vaxis < 0) {
-            this.vy = -this.speed;
-            this.direction.v = Direction.UP;
-            if (haxis == 0)
-                this.direction.h = Direction.NONE;
-        }
-        else if (vaxis > 0) {
-            this.vy = this.speed;
-            this.direction.v = Direction.DOWN;
-            if (haxis == 0)
-                this.direction.h = Direction.NONE;
-        }
-        else {
-            this.vy = 0;
-        }
-    };
-    Human.prototype.getOverlappingItem = function () {
-        var e_39, _a;
-        var overlappingItemDistance = Infinity;
-        var overlappingItem = undefined;
-        try {
-            for (var _b = __values(this.world.getWorldObjectsByType(Item)), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var item = _c.value;
-                if (item.held)
-                    continue;
-                var distance = M.distance(this.x, this.y, item.x, item.y);
-                if (distance < this.itemGrabDistance && distance < overlappingItemDistance && !item.beingConsumed) {
-                    overlappingItem = item;
-                    overlappingItemDistance = distance;
-                }
-            }
-        }
-        catch (e_39_1) { e_39 = { error: e_39_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_39) throw e_39.error; }
-        }
-        return overlappingItem;
-    };
-    Human.prototype.handleItemPickupDrop = function () {
-        if (this.state === 'swinging')
-            return;
-        if (this.immobile)
-            return;
-        var overlappingItem = this.getOverlappingItem();
-        if (this.heldItem) {
-            this.dropHeldItem();
-            if (this.moving)
-                return;
-        }
-        if (overlappingItem) {
-            this.pickupItem(overlappingItem);
-        }
-    };
-    Human.prototype.handleItemUse = function () {
-        if (!this.heldItem)
-            return;
-        if (!this.heldItem.usable)
-            return;
-        if (this.immobile)
-            return;
-        this.swingItem();
-    };
-    Human.prototype.pickupItem = function (item) {
-        if (!item)
-            return;
-        this.heldItem = this.addChild(item);
-        this.heldItem.localx = 0;
-        this.heldItem.localy = 0;
-        this.heldItem.vx = 0;
-        this.heldItem.vy = 0;
-        this.heldItem.angle = 0;
-        this.heldItem.offset.x = 0;
-        this.heldItem.offset.y = 0;
-        this.heldItem.z = Human.itemOffsetY;
-        World.Actions.setPhysicsGroup(this.heldItem, null);
-        if (this.playSoundOnPickup) {
-            this.world.playSound('pickupland');
-        }
-    };
-    Human.prototype.dropHeldItem = function () {
-        if (!this.heldItem)
-            return;
-        var droppedItem = this.removeChild(this.heldItem);
-        droppedItem.x = this.x;
-        droppedItem.y = this.y;
-        droppedItem.offset.x = 0;
-        droppedItem.offset.y = 0;
-        droppedItem.z = 0;
-        droppedItem.flipX = this.heldItem.flipX;
-        World.Actions.setPhysicsGroup(droppedItem, 'items');
-        this.heldItem = null;
-        if (this.getCurrentAnimationName() === 'hurt') {
-            // toss randomly
-            droppedItem.offset.x = 0;
-            droppedItem.offset.y = 0;
-            droppedItem.z = Human.itemOffsetY;
-            var v = Random.onCircle(Human.hurtDropSpeed);
-            droppedItem.vx = v.x;
-            droppedItem.vy = v.y;
-            return;
-        }
-        if (this.moving) {
-            // throw instead of drop
-            droppedItem.offset.x = 0;
-            droppedItem.offset.y = 0;
-            droppedItem.z = Human.itemOffsetY;
-            droppedItem.vx = Human.throwSpeed * Math.sign(this.vx);
-            droppedItem.vy = Human.throwSpeed * Math.sign(this.vy);
-            this.playAnimation('throw', 0, true);
-            this.world.playSound('throw');
-            return;
-        }
-    };
-    Human.prototype.deleteHeldItem = function () {
-        if (!this.heldItem)
-            return;
-        this.heldItem.removeFromWorld();
-        this.heldItem = null;
-    };
-    Human.prototype.hit = function () {
-        if (this.state === 'hurt')
-            return;
-        this.setState('hurt');
-    };
-    Human.prototype.swingItem = function () {
-        if (this.state === 'hurt' || this.state === 'swinging')
-            return;
-        this.setState('swinging');
-    };
-    Human.prototype.hitStuff = function () { };
-    Human.prototype.getSwingHitbox = function () {
-        return { x: this.x, y: this.y, width: 0, height: 0 };
-    };
-    Human.throwSpeed = 80;
-    Human.hurtDropSpeed = 40;
-    Human.swingTime = 0.15;
-    Human.itemOffsetY = 20;
-    Human.itemFullSwingOffsetX = 10;
-    return Human;
-}(Sprite));
-var Item = /** @class */ (function (_super) {
-    __extends(Item, _super);
-    function Item(config) {
-        var _this = _super.call(this, config, {
-            texture: config.type,
-            bounds: { x: 0, y: 0, width: 0, height: 0 },
-            bounce: 1,
-        }) || this;
-        _this.friction = 20000;
-        _this.type = config.type;
-        _this.vz = 0;
-        _this.gravityz = -100;
-        _this.beingConsumed = false;
-        return _this;
-    }
-    Object.defineProperty(Item.prototype, "usable", {
-        get: function () {
-            return this.type !== Item.Type.KEY && this.type !== Item.Type.GASOLINE;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Item.prototype, "cutsTrees", {
-        get: function () {
-            return this.type === Item.Type.AXE || this.type === Item.Type.MONSTERAXE;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Item.prototype, "hurtsMonster", {
-        get: function () {
-            return this.type === Item.Type.AXE || this.type === Item.Type.MONSTERAXE || this.type === Item.Type.LOG;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Item.prototype, "consumable", {
-        get: function () {
-            return this.type === Item.Type.LOG || this.type === Item.Type.GASOLINE;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Item.prototype, "held", {
-        get: function () { return !!this.parent; },
-        enumerable: false,
-        configurable: true
-    });
-    Item.prototype.update = function (delta) {
-        if (!this.held) {
-            this.updateMovement(delta);
-        }
-        this.vz = this.held ? 0 : this.vz;
-        this.gravityz = this.held ? 0 : -100;
-        _super.prototype.update.call(this, delta);
-        if (this.z <= 0) {
-            if (this.lastz > 0) {
-                this.world.playSound('pickupland');
-            }
-            this.z = 0;
-            this.vz = 0;
-        }
-        if (this.type === Item.Type.TORCH) {
-            Item.updateTorchFireSprite(this);
-        }
-    };
-    Item.prototype.updateMovement = function (delta) {
-        if (this.z <= 0) {
-            if (this.vx > 0) {
-                this.vx = Math.max(0, this.vx - this.friction * delta);
-            }
-            else if (this.vx < 0) {
-                this.vx = Math.min(0, this.vx + this.friction * delta);
-            }
-            if (this.vy > 0) {
-                this.vy = Math.max(0, this.vy - this.friction * delta);
-            }
-            else if (this.vy < 0) {
-                this.vy = Math.min(0, this.vy + this.friction * delta);
-            }
-        }
-    };
-    return Item;
-}(Sprite));
-(function (Item) {
-    var Type;
-    (function (Type) {
-        Type["LOG"] = "log";
-        Type["AXE"] = "axe";
-        Type["MONSTERAXE"] = "monsteraxe";
-        Type["KEY"] = "key";
-        Type["TORCH"] = "torch";
-        Type["GASOLINE"] = "gasoline";
-    })(Type = Item.Type || (Item.Type = {}));
-})(Item || (Item = {}));
-var ItemName = /** @class */ (function (_super) {
-    __extends(ItemName, _super);
-    function ItemName(config) {
-        var _this = _super.call(this, config) || this;
-        _this.style.color = 0x555555;
-        return _this;
-    }
-    ItemName.prototype.update = function (delta) {
-        _super.prototype.update.call(this, delta);
-        this.localy -= 16 * delta;
-        this.style.alpha = 1 - Math.pow(this.life.progress, 2);
-    };
-    return ItemName;
-}(SpriteText));
-(function (Item) {
-    function updateTorchFireSprite(item) {
-        var torchFire = item.getChildByName('torchFire');
-        var torchLightManager = item.world.getWorldObjectByType(TorchLightManager);
-        var torchScale = torchLightManager.torchFuel;
-        torchFire.scaleX = 0.7 * torchScale;
-        torchFire.scaleY = 0.7 * torchScale;
-        torchFire.offset.x = item.offset.x;
-        torchFire.offset.y = item.offset.y - 4;
-    }
-    Item.updateTorchFireSprite = updateTorchFireSprite;
-})(Item || (Item = {}));
-/// <reference path="../lectvs/menu.ts" />
-var IntroMenu = /** @class */ (function (_super) {
-    __extends(IntroMenu, _super);
-    function IntroMenu(menuSystem) {
-        var _this = _super.call(this, menuSystem, {
-            parent: MENU_BASE_STAGE(),
-            worldObjects: [
-                {
-                    constructor: SpriteText,
-                    name: 'introtext',
-                    x: 20, y: 80, text: "- a game by hayden mccraw -",
-                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                },
-            ]
-        }) || this;
-        var introtext = _this.getWorldObjectByName('introtext');
-        introtext.x = Main.width / 2 - introtext.getTextWidth() / 2;
-        introtext.y = Main.height / 2 - introtext.getTextHeight() / 2;
-        _this.runScript(S.chain(S.wait(1.5), S.call(function () {
-            introtext.setText("- originally made  \n  for ludum dare 46 -");
-            introtext.x = Main.width / 2 - introtext.getTextWidth() / 2;
-            introtext.y = Main.height / 2 - introtext.getTextHeight() / 2;
-        }), S.wait(1.5), S.call(function () { menuSystem.loadMenu(MainMenu); })));
-        return _this;
-    }
-    return IntroMenu;
-}(Menu));
-var MainMenu = /** @class */ (function (_super) {
-    __extends(MainMenu, _super);
-    function MainMenu(menuSystem) {
-        var _this = _super.call(this, menuSystem, {
-            parent: MENU_BASE_STAGE(),
-            worldObjects: [
-                {
-                    constructor: SpriteText,
-                    x: 20, y: 20, text: "- a night in the dark -",
-                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                },
-                {
-                    constructor: MenuTextButton,
-                    x: 20, y: 50, text: "start game",
-                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                    onClick: function () {
-                        _this.menuSystem.game.playSound('click');
-                        menuSystem.game.startGame();
-                    },
-                },
-                {
-                    constructor: MenuTextButton,
-                    x: 20, y: 68, text: "controls",
-                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                    onClick: function () {
-                        _this.menuSystem.game.playSound('click');
-                        menuSystem.loadMenu(ControlsMenu);
-                    },
-                },
-            ]
-        }) || this;
-        return _this;
-    }
-    return MainMenu;
-}(Menu));
-var ControlsMenu = /** @class */ (function (_super) {
-    __extends(ControlsMenu, _super);
-    function ControlsMenu(menuSystem) {
-        var _this = _super.call(this, menuSystem, {
-            parent: MENU_BASE_STAGE(),
-            physicsGroups: { 'items': {} },
-            worldObjects: [
-                {
-                    constructor: SpriteText,
-                    x: 20, y: 15, text: "controls",
-                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                },
-                {
-                    constructor: SpriteText,
-                    x: 20, y: 42, text: "arrows <^> - move\n\n" +
-                        "c - pickup\n" +
-                        "    drop\n" +
-                        "    throw\n\n" +
-                        "x - attack",
-                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                },
-                {
-                    constructor: Player,
-                    name: 'player_move',
-                    x: 180, y: 53,
-                    effects: { outline: { color: 0xFFFFFF } }
-                },
-                {
-                    constructor: Player,
-                    name: 'player_pickup',
-                    x: 140, y: 90,
-                    effects: { outline: { color: 0xFFFFFF } }
-                },
-                {
-                    constructor: Item,
-                    name: 'log',
-                    x: 140, y: 90,
-                    type: Item.Type.LOG,
-                },
-                {
-                    constructor: Player,
-                    name: 'player_attack',
-                    x: 140, y: 154,
-                    effects: { outline: { color: 0xFFFFFF } }
-                },
-                {
-                    constructor: Item,
-                    name: 'axe',
-                    x: 140, y: 140,
-                    type: Item.Type.AXE,
-                    effects: { outline: { color: 0xFFFFFF } }
-                },
-                {
-                    constructor: Tree,
-                    name: 'tree',
-                    x: 160, y: 156,
-                    effects: { outline: { color: 0xFFFFFF } }
-                },
-                {
-                    constructor: MenuTextButton,
-                    x: 20, y: 160, text: "back",
-                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                    onClick: function () {
-                        _this.menuSystem.game.playSound('click');
-                        menuSystem.back();
-                    },
-                },
-            ]
-        }) || this;
-        var player_move = _this.getWorldObjectByName('player_move');
-        player_move.test = true;
-        var player_pickup = _this.getWorldObjectByName('player_pickup');
-        player_pickup.test = true;
-        var player_attack = _this.getWorldObjectByName('player_attack');
-        player_attack.test = true;
-        var tree = _this.getWorldObjectByName('tree');
-        tree.playAnimation('black');
-        _this.runScript(S.simul(S.loopFor(Infinity, S.chain(S.doOverTime(0.8, function (t) { player_move.controller.right = true; }), S.doOverTime(0.8, function (t) { player_move.controller.left = true; }))), S.loopFor(Infinity, S.chain(S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.simul(S.doOverTime(1.5, function (t) { player_pickup.controller.right = true; }), S.chain(S.wait(0.2), S.call(function () { player_pickup.controller.pickupDropItem = true; }))), S.yield(), S.call(function () { player_pickup.flipX = true; }), S.wait(0.5), S.call(function () { player_pickup.controller.pickupDropItem = true; }), S.wait(0.5), S.simul(S.doOverTime(1.5, function (t) { player_pickup.controller.left = true; }), S.chain(S.wait(0.2), S.call(function () { player_pickup.controller.pickupDropItem = true; }))), S.yield(), S.call(function () { player_pickup.flipX = false; }))), S.loopFor(Infinity, S.chain(S.call(function () {
-            var log = _this.getWorldObjectByName('log');
-            log.effects.outline.enabled = true;
-            log.effects.outline.color = 0xFFFFFF;
-        }), S.call(function () {
-            var axe = _this.getWorldObjectByName('axe');
-            axe.effects.outline.enabled = true;
-            axe.effects.outline.color = 0xFFFFFF;
-        }), S.wait(0.01))), S.chain(S.call(function () { player_attack.controller.pickupDropItem = true; }), S.loopFor(Infinity, S.chain(S.wait(0.5), S.call(function () { player_attack.controller.useItem = true; }), S.call(function () { tree.heal(); }))))));
-        return _this;
-    }
-    return ControlsMenu;
-}(Menu));
-var PauseMenu = /** @class */ (function (_super) {
-    __extends(PauseMenu, _super);
-    function PauseMenu(menuSystem) {
-        var _this = _super.call(this, menuSystem, {
-            parent: MENU_BASE_STAGE(),
-            worldObjects: [
-                {
-                    constructor: SpriteText,
-                    x: 20, y: 20, text: "- paused -",
-                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                },
-                {
-                    constructor: MenuTextButton,
-                    x: 20, y: 50, text: "resume",
-                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                    onClick: function () {
-                        _this.menuSystem.game.playSound('click');
-                        menuSystem.game.unpauseGame();
-                    },
-                }
-            ]
-        }) || this;
-        return _this;
-    }
-    PauseMenu.prototype.update = function (delta) {
-        _super.prototype.update.call(this, delta);
-        if (Input.justDown('pause')) {
-            Input.consume('pause');
-            this.menuSystem.game.unpauseGame();
-        }
-    };
-    return PauseMenu;
-}(Menu));
 /// <reference path="../lectvs/preload.ts" />
 /// <reference path="./assets.ts" />
 var Main = /** @class */ (function () {
     function Main() {
     }
     Object.defineProperty(Main, "width", {
-        get: function () { return 240; },
+        get: function () { return 960; },
         enumerable: false,
         configurable: true
     });
     Object.defineProperty(Main, "height", {
-        get: function () { return 180; },
+        get: function () { return 720; },
         enumerable: false,
         configurable: true
     });
@@ -8338,7 +7358,7 @@ var Main = /** @class */ (function () {
     Main.preload = function () {
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
         Debug.init({
-            debug: false,
+            debug: true,
             font: Assets.fonts.DELUXE16,
             cheatsEnabled: true,
             allPhysicsBounds: false,
@@ -8360,7 +7380,7 @@ var Main = /** @class */ (function () {
         Main.renderer = PIXI.autoDetectRenderer({
             width: global.gameWidth,
             height: global.gameHeight,
-            resolution: 4,
+            resolution: 1,
             backgroundColor: global.backgroundColor,
         });
         global.renderer = Main.renderer;
@@ -8441,7 +7461,7 @@ var Main = /** @class */ (function () {
             recordKey: '0',
         });
         this.game = new Game({
-            mainMenuClass: IntroMenu,
+            entryPointMenuClass: MainMenu,
             pauseMenuClass: PauseMenu,
             theaterClass: Theater,
             showMetricsMenuKey: '9',
@@ -8505,605 +7525,86 @@ var Main = /** @class */ (function () {
 }());
 // Actually load the game
 Main.preload();
+/// <reference path="../lectvs/menu.ts" />
+var MainMenu = /** @class */ (function (_super) {
+    __extends(MainMenu, _super);
+    function MainMenu(menuSystem) {
+        var _this = _super.call(this, menuSystem, {
+            parent: MENU_BASE_STAGE(),
+            worldObjects: [
+                {
+                    constructor: SpriteText,
+                    x: 20, y: 20, text: "- platformer test -",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                },
+                {
+                    constructor: MenuTextButton,
+                    x: 20, y: 50, text: "start",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                    onClick: function () {
+                        _this.menuSystem.game.playSound('click');
+                        menuSystem.game.startGame();
+                    },
+                },
+            ]
+        }) || this;
+        return _this;
+    }
+    return MainMenu;
+}(Menu));
+var PauseMenu = /** @class */ (function (_super) {
+    __extends(PauseMenu, _super);
+    function PauseMenu(menuSystem) {
+        var _this = _super.call(this, menuSystem, {
+            parent: MENU_BASE_STAGE(),
+            worldObjects: [
+                {
+                    constructor: SpriteText,
+                    x: 20, y: 20, text: "- paused -",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                },
+                {
+                    constructor: MenuTextButton,
+                    x: 20, y: 50, text: "resume",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                    onClick: function () {
+                        _this.menuSystem.game.playSound('click');
+                        menuSystem.game.unpauseGame();
+                    },
+                }
+            ]
+        }) || this;
+        return _this;
+    }
+    PauseMenu.prototype.update = function (delta) {
+        _super.prototype.update.call(this, delta);
+        if (Input.justDown('pause')) {
+            Input.consume('pause');
+            this.menuSystem.game.unpauseGame();
+        }
+    };
+    return PauseMenu;
+}(Menu));
 /// <reference path="main.ts" />
 function getParty() {
     return {
-        leader: 'sai',
-        activeMembers: ['sai', 'dad'],
-        members: {
-            'player': {
-                config: {
-                    name: 'player',
-                    constructor: Sprite,
-                    x: Main.width / 2 - 8, y: Main.height / 2 - 8,
-                    texture: 'debug',
-                },
-                stage: 'none',
-            },
-        }
+        leader: 'none',
+        activeMembers: ['none'],
+        members: {}
     };
 }
-var Monster = /** @class */ (function (_super) {
-    __extends(Monster, _super);
-    function Monster(config) {
-        var _this = _super.call(this, config, {
-            speed: 10,
-            preSwingWait: 0.3,
-            postSwingWait: 2,
-            itemGrabDistance: 8,
-            playSoundOnPickup: false,
-            animations: [
-                Animations.fromTextureList({ name: 'idle_empty', texturePrefix: 'monster_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'run_empty', texturePrefix: 'monster_', textures: [4, 5, 6, 7], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'idle_holding', texturePrefix: 'monster_', textures: [8, 9, 10], frameRate: 4, count: -1 }),
-                Animations.fromTextureList({ name: 'run_holding', texturePrefix: 'monster_', textures: [12, 13, 14, 15], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'swing', texturePrefix: 'monster_', textures: [16, 17, 17, 17, 16], frameRate: 8, count: 1, forceRequired: true }),
-                Animations.fromTextureList({ name: 'hurt', texturePrefix: 'monster_', textures: [24], frameRate: 1 / 6, count: 1, forceRequired: true, nextFrameRef: 'hurt_shake/0' }),
-                Animations.fromTextureList({ name: 'hurt_shake', texturePrefix: 'monster_', textures: [20, 20, 20, 20, 20, 20, 20, 20,
-                        21, 22, 23, 22, 21, 22, 23, 22], frameRate: 8, count: 1, forceRequired: true }),
-                Animations.fromTextureList({ name: 'pickup', texturePrefix: 'monster_', textures: [25], frameRate: 2, count: 1, forceRequired: true, nextFrameRef: 'idle_holding/0' }),
-            ]
-        }) || this;
-        _this.attackdx = 0;
-        _this.attackdy = 0;
-        _this.pickupItem(new Item({
-            name: 'monsteraxe',
-            constructor: Item,
-            type: Item.Type.AXE,
-            layer: _this.layer,
-        }));
-        _this.addChild({
-            constructor: MonsterEyes,
-            layer: 'above',
-        });
-        return _this;
-    }
-    Object.defineProperty(Monster.prototype, "pickingUp", {
-        get: function () { return this.pickupScript && !this.pickupScript.done; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Monster.prototype, "immobile", {
-        get: function () { return this.state === 'hurt' || this.state === 'swinging' || this.pickingUp; },
-        enumerable: false,
-        configurable: true
-    });
-    Monster.prototype.update = function (delta) {
-        var player = this.world.getWorldObjectByType(Player);
-        var axe = this.getClosestAxe();
-        var target = this.heldItem ? player : axe;
-        this.setControllerInput(target);
-        _super.prototype.update.call(this, delta);
-        this.handlePickup();
-        this.setAttackD(player);
-        this.handleAttacking(player);
-    };
-    Monster.prototype.getClosestAxe = function () {
-        var _this = this;
-        var axes = this.world.getWorldObjectsByType(Item).filter(function (item) { return item.type === Item.Type.AXE && !item.held; });
-        return M.argmin(axes, function (axe) { return M.distance(_this.x, _this.y, axe.x, axe.y); });
-    };
-    Monster.prototype.handleAttacking = function (target) {
-        if (!this.world)
-            return;
-        if (this.immobile)
-            return;
-        if (!this.heldItem)
-            return;
-        if (M.distance(this.x, this.y, target.x, target.y) < Monster.attackDistance) {
-            this.swingItem();
-        }
-    };
-    Monster.prototype.handlePickup = function () {
-        var _this = this;
-        if (this.heldItem || this.pickingUp)
-            return;
-        var overlappingItem = this.getOverlappingItem();
-        if (overlappingItem && overlappingItem.type === Item.Type.AXE) {
-            this.pickupScript = this.runScript(S.chain(S.call(function () {
-                _this.playAnimation('pickup');
-            }), S.waitUntil(function () { return _this.getCurrentAnimationName() !== 'pickup'; }), S.call(function () {
-                _this.controller.pickupDropItem = true;
-            })));
-        }
-    };
-    Monster.prototype.setControllerInput = function (target) {
-        var haxis = 0;
-        var vaxis = 0;
-        if (!this.immobile) {
-            haxis = target.x - this.x;
-            vaxis = target.y - this.y;
-            if (-2 < haxis && haxis < 2)
-                haxis = 0;
-            if (-2 < vaxis && vaxis < 2)
-                vaxis = 0;
-        }
-        this.controller.left = haxis < 0;
-        this.controller.right = haxis > 0;
-        this.controller.up = vaxis < 0;
-        this.controller.down = vaxis > 0;
-    };
-    Monster.prototype.setAttackD = function (target) {
-        if (this.immobile)
-            return;
-        this.attackdx = target.x - this.x;
-        this.attackdy = target.y - this.y;
-        var mag = M.magnitude(this.attackdx, this.attackdy);
-        if (mag !== 0) {
-            this.attackdx /= mag;
-            this.attackdy /= mag;
-        }
-    };
-    Monster.prototype.hitStuff = function () {
-        if (!this.world)
-            return;
-        if (!this.heldItem)
-            return;
-        var player = this.world.getWorldObjectByType(Player);
-        var swingHitbox = this.getSwingHitbox();
-        if (player.isOverlappingRect(swingHitbox)) {
-            player.hit();
-        }
-    };
-    Monster.prototype.getSwingHitbox = function () {
-        return {
-            x: this.x - 8 + this.attackdx * 8,
-            y: this.y - 8 + this.attackdy * 8,
-            width: 16,
-            height: 16
-        };
-    };
-    Monster.attackDistance = 16;
-    return Monster;
-}(Human));
-/// <reference path="human.ts" />
-var Player = /** @class */ (function (_super) {
-    __extends(Player, _super);
-    function Player(config) {
-        var _this = _super.call(this, config, {
-            speed: 40,
-            preSwingWait: 0,
-            postSwingWait: 0,
-            itemGrabDistance: 16,
-            animations: [
-                Animations.fromTextureList({ name: 'idle_empty', texturePrefix: 'player_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'run_empty', texturePrefix: 'player_', textures: [4, 5, 6, 7], frameRate: 16, count: -1, overrides: {
-                        2: { callback: function () { _this.world.playSound('walk'); } }
-                    }
-                }),
-                Animations.fromTextureList({ name: 'idle_holding', texturePrefix: 'player_', textures: [8, 9, 10], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'run_holding', texturePrefix: 'player_', textures: [12, 13, 14, 15], frameRate: 16, count: -1, overrides: {
-                        2: { callback: function () { _this.world.playSound('walk'); } }
-                    }
-                }),
-                Animations.fromTextureList({ name: 'throw', texturePrefix: 'player_', textures: [16, 17, 17, 17, 17], frameRate: 24, count: 1, forceRequired: true }),
-                Animations.fromTextureList({ name: 'swing', texturePrefix: 'player_', textures: [16, 17, 17, 17, 16], frameRate: 24, count: 1, forceRequired: true }),
-                Animations.fromTextureList({ name: 'hurt', texturePrefix: 'player_', textures: [20, 20, 20, 20, 20, 20, 20, 20,
-                        21, 22, 23, 22, 21, 22, 23, 22], frameRate: 16, count: 1, forceRequired: true }),
-                Animations.fromTextureList({ name: 'intro_idle', texturePrefix: 'player_', textures: [0, 1, 2], frameRate: 2, count: 3, forceRequired: true }),
-            ],
-        }) || this;
-        _this.controllerSchema = {
-            left: function () { return Input.isDown('left'); },
-            right: function () { return Input.isDown('right'); },
-            up: function () { return Input.isDown('up'); },
-            down: function () { return Input.isDown('down'); },
-            useItem: function () { return Input.justDown('useItem'); },
-            pickupDropItem: function () { return Input.justDown('pickupDropItem'); },
-        };
-        return _this;
-    }
-    Object.defineProperty(Player.prototype, "isHoldingKey", {
-        get: function () { return this.heldItem && this.heldItem.type === Item.Type.KEY; },
-        enumerable: false,
-        configurable: true
-    });
-    Player.prototype.update = function (delta) {
-        _super.prototype.update.call(this, delta);
-        this.updateItemOutlines();
-    };
-    Player.prototype.updateItemOutlines = function () {
-        var overlappingItem = this.getOverlappingItem();
-        if (!this.test) {
-            global.theater.interactionManager.highlight(overlappingItem);
-        }
-    };
-    Player.prototype.pickupItem = function (item) {
-        _super.prototype.pickupItem.call(this, item);
-        if (this.world && this.world.getLayerByName('above')) {
-            var itemName = new ItemName({ text: item.type, font: Assets.fonts.DELUXE16, life: 1, layer: 'above' });
-            itemName.x = -itemName.getTextWidth() / 2;
-            itemName.y = -32;
-            this.addChild(itemName);
-        }
-    };
-    Player.prototype.hitStuff = function () {
-        var e_40, _a;
-        if (!this.heldItem)
-            return;
-        var swingHitbox = this.getSwingHitbox();
-        try {
-            for (var _b = __values(this.world.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var obj = _c.value;
-                if (this.heldItem.cutsTrees && obj instanceof Tree && obj.isOverlappingRect(swingHitbox)) {
-                    obj.hit(obj.x - this.x);
-                }
-                if (this.heldItem.hurtsMonster && obj instanceof Monster && obj.isOverlappingRect(swingHitbox)) {
-                    obj.hit();
-                }
-            }
-        }
-        catch (e_40_1) { e_40 = { error: e_40_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_40) throw e_40.error; }
-        }
-    };
-    Player.prototype.getSwingHitbox = function () {
-        return {
-            x: this.x - 10 + (this.flipX ? -1 : 1) * 10,
-            y: this.y - 8 - 18,
-            width: 20,
-            height: 36
-        };
-    };
-    return Player;
-}(Human));
-var TorchLightManager = /** @class */ (function (_super) {
-    __extends(TorchLightManager, _super);
-    function TorchLightManager(config) {
-        var _this = _super.call(this, config) || this;
-        _this.torchRefuelDistance = 16;
-        _this.torchFuelEmptyThreshold = 0.1;
-        _this.torchFuel = 0;
-        _this.torchRadiusNoise = 0;
-        return _this;
-    }
-    Object.defineProperty(TorchLightManager.prototype, "torchLightX", {
-        get: function () {
-            if (!this.world.hasWorldObject('torch')) {
-                return 0;
-            }
-            var torch = this.world.getWorldObjectByName('torch');
-            return torch.x + torch.offset.x;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(TorchLightManager.prototype, "torchLightY", {
-        get: function () {
-            if (!this.world.hasWorldObject('torch')) {
-                return 0;
-            }
-            var torch = this.world.getWorldObjectByName('torch');
-            return torch.y + torch.offset.y;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(TorchLightManager.prototype, "torchLightRadius", {
-        get: function () {
-            if (!this.world.hasWorldObject('torch') || /*this.world.getWorldObjectByType(Campfire).hitEffect ||*/ global.theater.storyManager.currentNodeName === 'lose') {
-                return 0;
-            }
-            var radius = Math.pow(this.torchFuel, 0.7) * 40;
-            return radius === 0 ? 0 : radius + this.torchRadiusNoise;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(TorchLightManager.prototype, "torchLightBuffer", {
-        get: function () { return Math.pow(this.torchFuel, 0.7) * 10; },
-        enumerable: false,
-        configurable: true
-    });
-    TorchLightManager.prototype.update = function (delta) {
-        if (this.world.hasWorldObject('torch')) {
-            var torch = this.world.getWorldObjectByName('torch');
-            var campfire = this.world.getWorldObjectByType(Campfire);
-            var oldTorchFuel = this.torchFuel;
-            this.torchFuel -= 0.03 * delta;
-            if (M.distance(campfire.x, campfire.y, torch.x, torch.y) < this.torchRefuelDistance) {
-                this.torchFuel += 1 * delta;
-            }
-            this.torchFuel = M.clamp(this.torchFuel, 0, 1);
-            if (this.torchFuel <= this.torchFuelEmptyThreshold && oldTorchFuel > this.torchFuelEmptyThreshold) {
-                this.torchFuel = 0;
-                this.world.getWorldObjectByName('torchFire').addChild({
-                    constructor: Sprite,
-                    x: 0, y: 0,
-                    texture: 'smoke',
-                    scaleX: 0.5, scaleY: 0.5,
-                    layer: 'above',
-                    life: 2,
-                    updateCallback: function (smoke, delta) {
-                        var t = smoke.life.progress;
-                        var torchFire = smoke.parent;
-                        smoke.offset.x = torchFire.offset.x + 2 * Math.exp(-t) * Math.sin(4 * Math.PI * t);
-                        smoke.offset.y = torchFire.offset.y + -16 * t;
-                        smoke.alpha = 1 - t;
-                    }
-                });
-                this.world.playSound('fireout');
-            }
-            this.updateTorchSound();
-        }
-        if (Random.boolean(10 * delta)) {
-            this.torchRadiusNoise = Random.float(-1, 1);
-        }
-        _super.prototype.update.call(this, delta);
-    };
-    TorchLightManager.prototype.updateTorchSound = function () {
-        if (!this.torchSound) {
-            this.torchSound = this.world.playSound('fire');
-            this.torchSound.loop = true;
-        }
-        var torchBaseVolume = this.getTorchSoundVolume();
-        var player = this.world.getWorldObjectByType(Player);
-        var distance = M.distance(player.x, player.y, this.x, this.y);
-        var volume = torchBaseVolume * Math.max(1 - distance / 100, 0);
-        this.torchSound.volume = volume;
-    };
-    TorchLightManager.prototype.getTorchSoundVolume = function () {
-        if (this.torchFuel <= 0) {
-            return 0;
-        }
-        return 0.7;
-    };
-    return TorchLightManager;
-}(WorldObject));
-var Tree = /** @class */ (function (_super) {
-    __extends(Tree, _super);
-    function Tree(config) {
-        var _this = _super.call(this, config, {
-            flipX: Random.boolean(),
-            bounds: { x: -4, y: -2, width: 8, height: 3 },
-            animations: [
-                Animations.fromTextureList({ name: 'black', texturePrefix: 'trees_', textures: [0, 1, 2], frameRate: 3, count: -1 }),
-                Animations.fromTextureList({ name: 'white', texturePrefix: 'trees_', textures: [3, 4, 5], frameRate: 3, count: -1 }),
-            ],
-            defaultAnimation: Random.boolean() ? 'black' : 'white',
-        }) || this;
-        _this.maxhp = 3;
-        _this.leavesSpawnedPerHit = 3;
-        _this.effects.post.filters.push(new TextureFilter({
-            vertCode: "\n                    float tt = t*3.0;\n                    float amount = (2.7 - 2.0*sin(tt+2.4) - cos(tt)*cos(tt))/4.5;\n                    outp.x -= 2.6 * (1.0 - inp.y/52.0) * amount;\n                    outp.y -= 1.0 * (inp.x/32.0 * 2.0 - 1.0) * amount;\n                "
-        }));
-        _this.effects.post.filters[0].setUniform('t', Random.float(0, 100));
-        _this.stateMachine.addState('normal', {
-            transitions: [
-                { type: 'condition', condition: function () { return _this.hp <= 0; }, toState: 'die' },
-            ]
-        });
-        _this.stateMachine.addState('hurt', {
-            callback: function () {
-                _this.hp--;
-                for (var i = 0; i < _this.leavesSpawnedPerHit; i++) {
-                    _this.spawnLeaf();
-                }
-                _this.world.playSound('hit');
-                _this.world.playSound('treeshake');
-            },
-            script: S.doOverTime(0.5, function (t) { _this.angle = _this.hitDir * 30 * Math.exp(5 * -t) * Math.cos(5 * t); }),
-            transitions: [
-                { type: 'instant', toState: 'normal' }
-            ]
-        });
-        _this.stateMachine.addState('die', {
-            callback: function () { _this.colliding = false; },
-            script: S.chain(S.doOverTime(1, function (t) { _this.angle = _this.hitDir * 90 * (t + t * t) / 2; }), S.call(function () {
-                _this.world.playSound('pickupland');
-                _this.world.playSound('treeshake').volume = 0.5;
-                _this.spawnLog();
-                if (_this.spawnsTorch)
-                    _this.spawnTorch();
-                _this.kill();
-            }))
-        });
-        _this.hp = _this.maxhp;
-        _this.spawnsTorch = O.getOrDefault(_this.data.spawnsTorch, false);
-        return _this;
-    }
-    Tree.prototype.getColor = function () {
-        return this.getCurrentAnimationName() === 'black' ? 'black' : 'white';
-    };
-    Tree.prototype.hit = function (dir) {
-        if (this.hp <= 0)
-            return;
-        this.hitDir = Math.sign(dir);
-        if (this.hitDir === 0) {
-            this.hitDir = Random.sign();
-        }
-        this.setState('hurt');
-    };
-    Tree.prototype.heal = function () {
-        this.hp = this.maxhp;
-    };
-    Tree.prototype.spawnLeaf = function () {
-        this.world.addWorldObject({
-            constructor: Leaf,
-            x: this.x + Random.float(-12, 12),
-            y: this.y + Random.float(-6, 6),
-            z: this.z + Random.float(26, 40),
-            texture: this.getColor() === 'black' ? 'blacktreeleaf' : 'whitetreeleaf',
-            flipX: Random.boolean(),
-            layer: this.layer,
-        });
-    };
-    Tree.prototype.spawnLog = function () {
-        this.world.addWorldObject({
-            constructor: Item,
-            x: this.x + 16 * this.hitDir, y: this.y,
-            z: 8,
-            layer: 'main',
-            physicsGroup: 'items',
-            type: Item.Type.LOG,
-        });
-    };
-    Tree.prototype.spawnTorch = function () {
-        this.world.addWorldObject({
-            name: 'torch',
-            constructor: Item,
-            x: this.x, y: this.y,
-            z: 12,
-            layer: 'main',
-            physicsGroup: 'items',
-            type: Item.Type.TORCH,
-            children: [{
-                    name: 'torchFire',
-                    parent: fireSpriteConfig(),
-                    layer: 'main'
-                }],
-        });
-    };
-    return Tree;
-}(Sprite));
-/// <reference path="base.ts" />
-/// <reference path="campfire.ts" />
-/// <reference path="door.ts" />
-/// <reference path="item.ts" />
-/// <reference path="lightingManager.ts" />
-/// <reference path="main.ts" />
-/// <reference path="monster.ts" />
-/// <reference path="player.ts" />
-/// <reference path="torchLightManager.ts" />
-/// <reference path="tree.ts" />
 function getStages() {
     return {
         'game': {
             parent: BASE_STAGE(),
             camera: {
-                movement: { type: 'smooth', deadZoneWidth: 0, deadZoneHeight: 0 },
-                mode: Camera.Mode.FOCUS(400, 400),
+                movement: { type: 'snap' },
+                mode: Camera.Mode.FOCUS(Main.width / 2, Main.height / 2),
             },
             entryPoints: {
                 'main': { x: Main.width / 2, y: Main.height / 2 },
             },
-            worldObjects: __spread([
-                {
-                    constructor: LightingManager,
-                },
-                {
-                    constructor: TorchLightManager,
-                },
-                {
-                    constructor: Tilemap,
-                    x: 0, y: 0,
-                    tilemap: 'world',
-                    tilemapLayer: 1,
-                    layer: 'bg',
-                },
-                {
-                    constructor: Tilemap,
-                    x: 0, y: 0,
-                    tilemap: 'world',
-                    tilemapLayer: 0,
-                    layer: 'main',
-                    physicsGroup: 'walls',
-                    zMap: { 1: 2, 7: 2, 8: 2, 9: 2 },
-                },
-                {
-                    name: 'ground',
-                    constructor: Sprite,
-                    x: 0, y: 0,
-                    texture: new Texture(800, 800),
-                    layer: 'ground',
-                },
-                {
-                    constructor: Sprite,
-                    x: 400, y: 400,
-                    texture: 'campfirering',
-                    layer: 'ground',
-                },
-                {
-                    name: 'campfire',
-                    constructor: Campfire,
-                    x: 400, y: 400,
-                    layer: 'main',
-                },
-                {
-                    name: 'player',
-                    constructor: Player,
-                    controllable: true,
-                    x: 387, y: 394,
-                    flipX: false,
-                    layer: 'main',
-                    physicsGroup: 'player',
-                },
-                {
-                    name: 'door',
-                    constructor: Door,
-                    x: 400, y: 240,
-                    layer: 'main',
-                    physicsGroup: 'props',
-                }
-            ], [
-                { x: 424, y: 296 },
-                { x: 344, y: 344 },
-                { x: 392, y: 328 },
-                { x: 472, y: 360 },
-                { x: 312, y: 408 },
-                { x: 504, y: 408 },
-                { x: 328, y: 440 },
-                { x: 472, y: 440 },
-                { x: 376, y: 472 },
-                { x: 408, y: 488 },
-                { x: 576, y: 418 },
-            ].map(function (pos) { return ({
-                constructor: Tree,
-                x: pos.x, y: pos.y,
-                layer: 'main',
-                physicsGroup: 'props',
-                immovable: true,
-                data: {
-                    spawnsTorch: pos.x === 328 && pos.y === 440,
-                }
-            }); }), [
-                {
-                    name: 'start_log',
-                    constructor: Item,
-                    type: Item.Type.LOG,
-                    x: 425, y: 408,
-                    layer: 'main',
-                    physicsGroup: 'items',
-                },
-                {
-                    constructor: Item,
-                    type: Item.Type.AXE,
-                    x: 447, y: 436,
-                    angle: -90,
-                    layer: 'main',
-                    physicsGroup: 'items',
-                },
-                {
-                    constructor: Item,
-                    type: Item.Type.KEY,
-                    x: 688, y: 400,
-                    layer: 'main',
-                    physicsGroup: 'items',
-                },
-                {
-                    name: 'gasoline',
-                    constructor: Item,
-                    type: Item.Type.GASOLINE,
-                    x: 528, y: 84,
-                    layer: 'main',
-                    physicsGroup: 'items',
-                },
-                {
-                    name: 'ambience',
-                    updateCallback: function (obj, delta) {
-                        if (!obj.data.ambience) {
-                            var ambience = obj.world.playSound('ambience');
-                            ambience.volume = 1.5;
-                            ambience.loop = true;
-                            obj.data.ambience = ambience;
-                        }
-                    }
-                },
-            ])
+            worldObjects: []
         },
     };
 }
@@ -9116,470 +7617,17 @@ function getStoryConfig() {
     };
 }
 function getStoryEvents() {
-    return {
-        'spawn_monster': {
-            stage: 'game',
-            script: function () {
-                var player;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.wait(Debug.DEBUG ? 6 : 60)];
-                        case 1:
-                            _a.sent();
-                            player = global.world.getWorldObjectByType(Player);
-                            global.world.addWorldObject({
-                                name: 'monster',
-                                constructor: Monster,
-                                x: player.x + 200, y: player.y + 200,
-                                layer: 'main',
-                            });
-                            return [2 /*return*/];
-                    }
-                });
-            }
-        }
-    };
+    return {};
 }
-/// <reference path="player.ts" />
 function getStoryboard() {
     return {
         'start': {
             type: 'start',
-            transitions: [{ type: 'onStage', stage: 'game', toNode: 'intro' }]
-        },
-        'intro': {
-            type: 'cutscene',
-            script: function () {
-                var SKIP, player, campfire, startLog;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            SKIP = Debug.DEBUG && true;
-                            player = global.world.getWorldObjectByType(Player);
-                            campfire = global.world.getWorldObjectByType(Campfire);
-                            startLog = global.world.getWorldObjectByName('start_log');
-                            global.world.camera.setModeFocus(campfire.x, campfire.y);
-                            global.world.camera.setMovementSmooth();
-                            Script.instant(S.fadeOut());
-                            if (!!SKIP) return [3 /*break*/, 5];
-                            return [4 /*yield*/, S.wait(2)];
-                        case 1:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog("Don't let the fire burn out...")];
-                        case 2:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog("It's the only light you have in this world.")];
-                        case 3:
-                            _a.sent();
-                            return [4 /*yield*/, S.wait(0.5)];
-                        case 4:
-                            _a.sent();
-                            _a.label = 5;
-                        case 5:
-                            if (SKIP)
-                                Debug.SKIP_RATE = 100;
-                            return [4 /*yield*/, S.simul(S.fadeSlides(1), S.playAnimation(player, 'intro_idle'))];
-                        case 6:
-                            _a.sent();
-                            return [4 /*yield*/, S.moveToX(player, startLog.x)];
-                        case 7:
-                            _a.sent();
-                            player.flipX = true;
-                            return [4 /*yield*/, S.wait(0.5)];
-                        case 8:
-                            _a.sent();
-                            return [4 /*yield*/, S.moveToY(player, startLog.y - 2)];
-                        case 9:
-                            _a.sent();
-                            return [4 /*yield*/, S.wait(0.5)];
-                        case 10:
-                            _a.sent();
-                            player.controller.pickupDropItem = true;
-                            return [4 /*yield*/];
-                        case 11:
-                            _a.sent();
-                            return [4 /*yield*/, S.wait(0.5)];
-                        case 12:
-                            _a.sent();
-                            return [4 /*yield*/, S.moveToX(player, player.x - 12)];
-                        case 13:
-                            _a.sent();
-                            return [4 /*yield*/, S.wait(0.5)];
-                        case 14:
-                            _a.sent();
-                            player.controller.pickupDropItem = true;
-                            return [4 /*yield*/];
-                        case 15:
-                            _a.sent();
-                            return [4 /*yield*/, S.wait(1)];
-                        case 16:
-                            _a.sent();
-                            campfire.startBurn();
-                            Debug.SKIP_RATE = 1;
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [{ type: 'instant', toNode: 'post_intro_wait' }]
-        },
-        'post_intro_wait': {
-            type: 'cutscene',
-            script: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.wait(1)];
-                        case 1:
-                            _a.sent();
-                            global.theater.currentWorld.camera.setModeFollow('player', 0, -8);
-                            global.theater.currentWorld.camera.setMovementSmooth(40, 30);
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [{ type: 'instant', toNode: 'gameplay' }]
+            transitions: [{ type: 'onStage', stage: 'game', toNode: 'gameplay' }]
         },
         'gameplay': {
             type: 'gameplay',
-            transitions: [
-                { type: 'onCondition', condition: function () { return global.world.getWorldObjectByType(Campfire).hasConsumedGasoline; }, toNode: 'win' },
-                { type: 'onCondition', condition: function () { return global.world.getWorldObjectByType(Campfire).isOut; }, toNode: 'lose' },
-            ]
-        },
-        'win': {
-            type: 'cutscene',
-            script: function () {
-                var campfire, lightingManager, fireWinSound;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            campfire = global.world.getWorldObjectByType(Campfire);
-                            lightingManager = global.world.getWorldObjectByType(LightingManager);
-                            global.world.camera.setModeFocus(campfire.x, campfire.y);
-                            global.world.camera.setMovementSmooth();
-                            if (global.world.hasWorldObject('monster')) {
-                                global.world.removeWorldObject('monster');
-                            }
-                            campfire.stopBurn();
-                            global.world.getWorldObjectByName('ambience').data.ambience.paused = true;
-                            return [4 /*yield*/, S.wait(4)];
-                        case 1:
-                            _a.sent();
-                            campfire.win();
-                            fireWinSound = global.world.playSound('fireroar');
-                            fireWinSound.volume = 0;
-                            return [4 /*yield*/, S.doOverTime(3, function (t) {
-                                    lightingManager.winRadius += 400 * global.script.delta;
-                                    fireWinSound.volume = t;
-                                })];
-                        case 2:
-                            _a.sent();
-                            fireWinSound.paused = true;
-                            campfire.stopFireBurnSound();
-                            global.world.addWorldObject({
-                                constructor: Sprite,
-                                texture: Texture.filledRect(Main.width, Main.height, 0xFFFFFF),
-                                layer: 'above',
-                                ignoreCamera: true,
-                            });
-                            global.world.addWorldObject({
-                                constructor: SpriteText,
-                                font: Assets.fonts.DELUXE16,
-                                x: 61, y: 72,
-                                text: "your fire lives\nanother day...",
-                                style: { color: 0x000000, },
-                                ignoreCamera: true,
-                            });
-                            return [4 /*yield*/, S.wait(2)];
-                        case 3:
-                            _a.sent();
-                            return [4 /*yield*/, S.fadeOut(3, 0xFFFFFF)];
-                        case 4:
-                            _a.sent();
-                            return [4 /*yield*/, S.wait(1)];
-                        case 5:
-                            _a.sent();
-                            return [4 /*yield*/, S.fadeOut(3)];
-                        case 6:
-                            _a.sent();
-                            return [4 /*yield*/, S.wait(1)];
-                        case 7:
-                            _a.sent();
-                            global.game.loadMainMenu();
-                            return [2 /*return*/];
-                    }
-                });
-            },
             transitions: []
         },
-        'lose': {
-            type: 'cutscene',
-            script: function () {
-                var campfire, losshint;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            campfire = global.world.getWorldObjectByType(Campfire);
-                            global.world.camera.setModeFocus(campfire.x, campfire.y);
-                            global.world.camera.setMovementSmooth();
-                            if (global.world.hasWorldObject('monster')) {
-                                global.world.removeWorldObject('monster');
-                            }
-                            return [4 /*yield*/, S.wait(2)];
-                        case 1:
-                            _a.sent();
-                            campfire.extinguish();
-                            campfire.stopFireBurnSound();
-                            global.world.addWorldObject({
-                                name: 'fireout',
-                                constructor: Sprite,
-                                x: campfire.x, y: campfire.y,
-                                texture: 'smoke',
-                                layer: 'above',
-                                life: 2,
-                                updateCallback: function (smoke, delta) {
-                                    var t = smoke.life.progress;
-                                    smoke.offset.x = 4 * Math.exp(-t) * Math.sin(4 * Math.PI * t);
-                                    smoke.offset.y = -32 * t;
-                                    smoke.alpha = 1 - t;
-                                }
-                            });
-                            global.world.playSound('fireout');
-                            return [4 /*yield*/, S.waitUntil(function () { return !global.world.hasWorldObject('fireout'); })];
-                        case 2:
-                            _a.sent();
-                            return [4 /*yield*/, S.wait(1)];
-                        case 3:
-                            _a.sent();
-                            global.world.addWorldObject({
-                                constructor: Sprite,
-                                texture: Texture.filledRect(Main.width, Main.height, 0x000000),
-                                ignoreCamera: true,
-                            });
-                            global.world.addWorldObject({
-                                name: 'losstext',
-                                constructor: SpriteText,
-                                font: Assets.fonts.DELUXE16,
-                                x: 30, y: 80,
-                                text: "you ran out of light...",
-                                style: { color: 0xFFFFFF, },
-                                ignoreCamera: true,
-                            });
-                            return [4 /*yield*/, S.wait(2)];
-                        case 4:
-                            _a.sent();
-                            losshint = global.world.addWorldObject({
-                                name: 'losshint',
-                                constructor: SpriteText,
-                                font: Assets.fonts.DELUXE16,
-                                x: 30, y: 160,
-                                text: Random.element([
-                                    "chop faster",
-                                    "[e]throw[/e] logs into the fire",
-                                    "did you find the [e]door[/e]?",
-                                    "did you find the [e]key[/e]?",
-                                    "did you find the [e]torch[/e]?",
-                                ]),
-                                style: { color: 0x333333, alpha: 0 },
-                                ignoreCamera: true,
-                            });
-                            return [4 /*yield*/, S.doOverTime(2, function (t) {
-                                    losshint.x = Main.width / 2 - losshint.getTextWidth() / 2;
-                                    losshint.style.alpha = t;
-                                })];
-                        case 5:
-                            _a.sent();
-                            return [4 /*yield*/, S.wait(2)];
-                        case 6:
-                            _a.sent();
-                            return [4 /*yield*/, S.fadeOut(3)];
-                        case 7:
-                            _a.sent();
-                            return [4 /*yield*/, S.wait(1)];
-                        case 8:
-                            _a.sent();
-                            global.game.loadMainMenu();
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: []
-        }
     };
 }
-var Leaf = /** @class */ (function (_super) {
-    __extends(Leaf, _super);
-    function Leaf(config) {
-        var _this = _super.call(this, config) || this;
-        _this.vz = Random.float(0, -16);
-        _this.gravityz = -16;
-        _this.life.time = Random.float(0, 6.28);
-        return _this;
-    }
-    Leaf.prototype.update = function (delta) {
-        _super.prototype.update.call(this, delta);
-        this.vx = 32 * Math.sin(4 * this.life.time);
-        this.flipX = this.vx > 0;
-        if (this.z <= 0) {
-            this.drawOnGround();
-            this.kill();
-        }
-    };
-    Leaf.prototype.drawOnGround = function () {
-        if (this.world.hasWorldObject('ground')) {
-            var groundTexture = this.world.getWorldObjectByName('ground').getTexture();
-            this.render(groundTexture);
-        }
-    };
-    return Leaf;
-}(Sprite));
-var LerpingValueWithNoise = /** @class */ (function () {
-    function LerpingValueWithNoise(initialValue, speed, noiseFactor, noiseIntensity) {
-        this.speed = speed;
-        this.noiseFactor = noiseFactor;
-        this.noiseIntensity = noiseIntensity;
-        this.baseValue = initialValue;
-        this.goal = initialValue;
-        this.noise = 0;
-    }
-    Object.defineProperty(LerpingValueWithNoise.prototype, "value", {
-        get: function () { return this.baseValue + this.noise; },
-        enumerable: false,
-        configurable: true
-    });
-    LerpingValueWithNoise.prototype.update = function (delta) {
-        if (this.baseValue > this.goal) {
-            this.baseValue = Math.max(this.baseValue - this.speed * delta, this.goal);
-        }
-        else if (this.baseValue < this.goal) {
-            this.baseValue = Math.min(this.baseValue + this.speed * delta, this.goal);
-        }
-        if (Random.boolean(this.noiseFactor * delta)) {
-            this.noise = Random.float(-this.noiseIntensity, this.noiseIntensity);
-        }
-    };
-    return LerpingValueWithNoise;
-}());
-var LogPiece = /** @class */ (function (_super) {
-    __extends(LogPiece, _super);
-    function LogPiece(config) {
-        var _this = _super.call(this, config) || this;
-        _this.friction = 20000;
-        _this.timeToStartBurning = Random.float(0, 0.2);
-        _this.burnTime = 0.3;
-        _this.gravityz = -100;
-        _this.stateMachine.addState('normal', {
-            script: S.wait(_this.timeToStartBurning),
-            transitions: [{ type: 'instant', toState: 'burning' }]
-        });
-        _this.stateMachine.addState('burning', {
-            callback: function () {
-                _this.addChild({
-                    parent: fireSpriteConfig(),
-                    offset: {
-                        x: _this.offset.x,
-                        y: _this.offset.y
-                    },
-                    layer: _this.layer,
-                    scaleX: 0.3,
-                    scaleY: 0.3,
-                });
-            },
-            script: S.chain(S.doOverTime(_this.burnTime, function (t) {
-                var fire = _this.children[0];
-                fire.offset.x = _this.offset.x;
-                fire.offset.y = _this.offset.y;
-            }), S.call(function () { return _this.kill(); }))
-        });
-        _this.stateMachine.setState('normal');
-        return _this;
-    }
-    LogPiece.prototype.update = function (delta) {
-        this.updateMovement(delta);
-        _super.prototype.update.call(this, delta);
-        if (this.z <= 0) {
-            this.z = 0;
-            this.vz = 0;
-        }
-    };
-    LogPiece.prototype.updateMovement = function (delta) {
-        if (this.z <= 0) {
-            if (this.vx > 0) {
-                this.vx = Math.max(0, this.vx - this.friction * delta);
-            }
-            else if (this.vx < 0) {
-                this.vx = Math.min(0, this.vx + this.friction * delta);
-            }
-            if (this.vy > 0) {
-                this.vy = Math.max(0, this.vy - this.friction * delta);
-            }
-            else if (this.vy < 0) {
-                this.vy = Math.min(0, this.vy + this.friction * delta);
-            }
-        }
-    };
-    return LogPiece;
-}(Sprite));
-(function (LogPiece) {
-    function getLogPieces(log) {
-        var e_41, _a;
-        var logPieces = [];
-        var stemx = log.flipX ? 4 : 8;
-        var logTexture = AssetCache.getTexture('log');
-        if (log.flipX)
-            logTexture = logTexture.transform({ scaleX: -1 });
-        var subdivisions = logTexture.subdivide(4, 4, 0.5, 0.5).filter(function (sub) {
-            return (sub.y !== 0 || sub.x === stemx) && (sub.y !== 12);
-        });
-        try {
-            for (var subdivisions_1 = __values(subdivisions), subdivisions_1_1 = subdivisions_1.next(); !subdivisions_1_1.done; subdivisions_1_1 = subdivisions_1.next()) {
-                var subdivision = subdivisions_1_1.value;
-                logPieces.push(new LogPiece({
-                    x: log.x, y: log.y, z: log.z,
-                    texture: subdivision.texture,
-                    offset: {
-                        x: log.offset.x - 8 + subdivision.x,
-                        y: log.offset.y - 8 + subdivision.y,
-                    },
-                    vx: log.vx, vy: log.vy, vz: log.vz,
-                    layer: log.layer,
-                }));
-            }
-        }
-        catch (e_41_1) { e_41 = { error: e_41_1 }; }
-        finally {
-            try {
-                if (subdivisions_1_1 && !subdivisions_1_1.done && (_a = subdivisions_1.return)) _a.call(subdivisions_1);
-            }
-            finally { if (e_41) throw e_41.error; }
-        }
-        return logPieces;
-    }
-    LogPiece.getLogPieces = getLogPieces;
-})(LogPiece || (LogPiece = {}));
-var MonsterEyes = /** @class */ (function (_super) {
-    __extends(MonsterEyes, _super);
-    function MonsterEyes(config) {
-        return _super.call(this, config) || this;
-    }
-    Object.defineProperty(MonsterEyes.prototype, "parentMonster", {
-        get: function () {
-            if (!this.parent)
-                return undefined;
-            return this.parent;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    MonsterEyes.prototype.render = function (screen) {
-        if (this.parentMonster) {
-            this.parentMonster.effects.post.filters.push(MonsterEyes.eyesFilter);
-            this.parentMonster.worldRender(screen);
-            this.parentMonster.effects.post.filters.pop();
-        }
-        _super.prototype.render.call(this, screen);
-    };
-    MonsterEyes.eyesFilter = new TextureFilter({
-        code: "if (outp.rgb != vec3(1.0, 0.0, 0.0)) outp.a = 0.0;"
-    });
-    return MonsterEyes;
-}(Sprite));

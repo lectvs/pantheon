@@ -15,7 +15,6 @@ namespace World {
         height?: number;
 
         backgroundColor?: number;
-        backgroundAlpha?: number;
 
         entryPoints?: Dict<Pt>;
         worldObjects?: WorldObject.Config[];
@@ -60,7 +59,6 @@ class World {
     layers: World.Layer[];
 
     backgroundColor: number;
-    backgroundAlpha: number;
 
     camera: Camera;
     private screen: Texture;
@@ -88,7 +86,6 @@ class World {
         this.layers = this.createLayers(config.layers);
 
         this.backgroundColor = O.getOrDefault(config.backgroundColor, global.backgroundColor);
-        this.backgroundAlpha = O.getOrDefault(config.backgroundAlpha, 1);
 
         this.screen = new Texture(this.width, this.height);
         this.layerTexture = new Texture(this.width, this.height);
@@ -189,7 +186,6 @@ class World {
 
         // Render background color.
         Draw.brush.color = this.backgroundColor;
-        Draw.brush.alpha = this.backgroundAlpha;
         Draw.fill(this.screen);
 
         for (let layer of this.layers) {

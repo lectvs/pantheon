@@ -85,13 +85,11 @@ class Physics {
                 if (d !== 0 && options.transferMomentum) {
                     Physics.transferMomentum(collision);
                 }
+
+                collision.move.onCollide(collision.from);
+                collision.from.onCollide(collision.move);
                 if (options.callback) {
-                    if (_.isFunction(options.callback)) {
-                        options.callback(collision.move, collision.from);
-                    } else {
-                        collision.move.onCollide(collision.from);
-                        collision.from.onCollide(collision.move);
-                    }
+                    options.callback(collision.move, collision.from);
                 }
             }
 
@@ -258,7 +256,7 @@ namespace Physics {
     }
 
     export namespace Collision {
-        export type Callback = boolean | ((move: PhysicsWorldObject, from: PhysicsWorldObject) => any);
+        export type Callback = (move: PhysicsWorldObject, from: PhysicsWorldObject) => any;
         export enum Direction {
             LEFT, RIGHT, UP, DOWN
         }

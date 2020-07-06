@@ -1,28 +1,22 @@
 
-/// <reference path="lightingManager.ts" />
-
-const DEFAULT_SCREEN_TRANSITION = Transition.FADE(0.2, 0.5, 0.2);
-
 function BASE_STAGE(): World.Config {
-    let firelightFilter = new Lighting.FirelightFilter(3);
     return {
         constructor: World,
+        backgroundColor: 0xFFFFFF,
         layers: [
-            { name: 'bg', effects: { post: { filters: [firelightFilter] } } },
-            { name: 'ground', effects: { post: { filters: [firelightFilter] } } },
-            { name: 'main', sortKey: obj => obj.y, effects: { post: { filters: [firelightFilter] } } },
-            { name: 'fg', sortKey: obj => obj.y, effects: { post: { filters: [firelightFilter] } } },
+            { name: 'bg' },
+            { name: 'ground' },
+            { name: 'main', sortKey: obj => obj.y },
+            { name: 'fg', sortKey: obj => obj.y },
             { name: 'above' },
         ],
         physicsGroups: {
             'player': {},
             'props': {},
-            'items': {},
             'walls': {},
         },
         collisionOrder: [
-            { move: 'player', from: ['props', 'walls'], callback: true },
-            { move: 'items', from: ['props', 'walls'], callback: true, transferMomentum: true },
+            { move: 'player', from: ['props', 'walls'] },
         ],
     };
 }
@@ -63,15 +57,5 @@ function WORLD_BOUNDS(left: number, top: number, right: number, bottom: number):
                 physicsGroup: 'walls',
             },
         ]
-    };
-}
-
-function fireSpriteConfig(): Sprite.Config {
-    return {
-        constructor: Sprite,
-        animations: [
-            Animations.fromTextureList({ name: 'blaze', texturePrefix: 'fire_', textures: [0, 1, 2, 3, 4, 5, 6, 7], frameRate: 16, count: -1 }),
-        ],
-        defaultAnimation: 'blaze'
     };
 }

@@ -8,8 +8,8 @@ class Main {
     static screen: Texture;
     static delta: number;
 
-    static get width() { return 240; }
-    static get height() { return 180; }
+    static get width() { return 960; }
+    static get height() { return 720; }
     static get backgroundColor() { return 0x000000; }
 
     // no need to modify
@@ -17,7 +17,7 @@ class Main {
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
 
         Debug.init({
-            debug: false,
+            debug: true,
             font: Assets.fonts.DELUXE16,
             cheatsEnabled: true,
             allPhysicsBounds: false,
@@ -42,7 +42,7 @@ class Main {
         Main.renderer = PIXI.autoDetectRenderer({
             width: global.gameWidth,
             height: global.gameHeight,
-            resolution: 4,
+            resolution: 1,
             backgroundColor: global.backgroundColor,
         });
         global.renderer = Main.renderer;
@@ -132,7 +132,7 @@ class Main {
         });
 
         this.game = new Game({
-            mainMenuClass: IntroMenu,
+            entryPointMenuClass: MainMenu,
             pauseMenuClass: PauseMenu,
             theaterClass: Theater,
             showMetricsMenuKey: '9',
