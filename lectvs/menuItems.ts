@@ -11,7 +11,7 @@ class MenuTextButton extends SpriteText {
 
     constructor(config: MenuTextButton.Config) {
         super(config);
-        this.onClick = O.getOrDefault(config.onClick, () => null);
+        this.onClick = config.onClick ?? Utils.NOOP;
     }
 
     update(delta: number) {

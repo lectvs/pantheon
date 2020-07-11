@@ -44,7 +44,7 @@ class StateMachine {
 
         if (state.callback) state.callback();
 
-        let stateScript = O.getOrDefault(state.script, S.noop());
+        let stateScript = state.script ?? S.noop();
 
         this.script = new Script(S.chain(
             stateScript,

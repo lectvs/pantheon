@@ -40,8 +40,8 @@ class TextureFilter {
     private borrowedPixiFilter: PIXI.Filter;
 
     constructor(config: TextureFilter.Config) {
-        this.code = O.getOrDefault(config.code, '');
-        this.vertCode = O.getOrDefault(config.vertCode, '');
+        this.code = config.code ?? '';
+        this.vertCode = config.vertCode ?? '';
         this.uniformCode = this.constructUniformCode(config.uniforms);
         this.uniforms = this.constructUniforms(config.uniforms);
 
@@ -170,9 +170,9 @@ namespace TextureFilter {
                 `
             });
             this.type = config.type;
-            this.offsetX = O.getOrDefault(config.offsetX, 0);
-            this.offsetY = O.getOrDefault(config.offsetY, 0);
-            this.invert = O.getOrDefault(config.invert, false);
+            this.offsetX = config.offsetX ?? 0;
+            this.offsetY = config.offsetY ?? 0;
+            this.invert = config.invert ?? false;
             this.setMask(config.mask);
         }
 

@@ -758,10 +758,6 @@ var O;
         return obj.constructor;
     }
     O.getClass = getClass;
-    function getOrDefault(obj, def) {
-        return obj === undefined ? def : obj;
-    }
-    O.getOrDefault = getOrDefault;
     function mergeObject(obj, into, combine) {
         if (combine === void 0) { combine = (function (e, into) { return e; }); }
         var result = _.clone(into);
@@ -966,7 +962,9 @@ var Camera = /** @class */ (function () {
     var Mode;
     (function (Mode) {
         function FOLLOW(target, offsetX, offsetY) {
-            return { type: 'follow', target: target, offset: { x: O.getOrDefault(offsetX, 0), y: O.getOrDefault(offsetY, 0) } };
+            if (offsetX === void 0) { offsetX = 0; }
+            if (offsetY === void 0) { offsetY = 0; }
+            return { type: 'follow', target: target, offset: { x: offsetX, y: offsetY } };
         }
         Mode.FOLLOW = FOLLOW;
         function FOCUS(x, y) {
@@ -1584,21 +1582,22 @@ var UIDGenerator = /** @class */ (function () {
 var WorldObject = /** @class */ (function () {
     function WorldObject(config, defaults) {
         var _this = this;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j;
         config = WorldObject.resolveConfig(config, defaults);
-        this.localx = O.getOrDefault(config.x, 0);
-        this.localy = O.getOrDefault(config.y, 0);
-        this.localz = O.getOrDefault(config.z, 0);
-        this.visible = O.getOrDefault(config.visible, true);
-        this.active = O.getOrDefault(config.active, true);
-        this.life = new Timer(O.getOrDefault(config.life, Infinity), function () { return _this.kill(); });
-        this.zBehavior = O.getOrDefault(config.zBehavior, WorldObject.DEFAULT_Z_BEHAVIOR);
-        this.ignoreCamera = O.getOrDefault(config.ignoreCamera, false);
-        this.data = _.clone(O.getOrDefault(config.data, {}));
+        this.localx = (_a = config.x) !== null && _a !== void 0 ? _a : 0;
+        this.localy = (_b = config.y) !== null && _b !== void 0 ? _b : 0;
+        this.localz = (_c = config.z) !== null && _c !== void 0 ? _c : 0;
+        this.visible = (_d = config.visible) !== null && _d !== void 0 ? _d : true;
+        this.active = (_e = config.active) !== null && _e !== void 0 ? _e : true;
+        this.life = new Timer((_f = config.life) !== null && _f !== void 0 ? _f : Infinity, function () { return _this.kill(); });
+        this.zBehavior = (_g = config.zBehavior) !== null && _g !== void 0 ? _g : WorldObject.DEFAULT_Z_BEHAVIOR;
+        this.ignoreCamera = (_h = config.ignoreCamera) !== null && _h !== void 0 ? _h : false;
+        this.data = config.data ? _.clone(config.data) : {};
         this.alive = true;
         this.lastx = this.x;
         this.lasty = this.y;
         this.lastz = this.z;
-        this.controllable = O.getOrDefault(config.controllable, false);
+        this.controllable = (_j = config.controllable) !== null && _j !== void 0 ? _j : false;
         this.controller = {};
         this.controllerSchema = {};
         this.uid = WorldObject.UID.generate();
@@ -1967,22 +1966,23 @@ var WorldObject = /** @class */ (function () {
 var PhysicsWorldObject = /** @class */ (function (_super) {
     __extends(PhysicsWorldObject, _super);
     function PhysicsWorldObject(config, defaults) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
         var _this = this;
         config = WorldObject.resolveConfig(config, defaults);
         _this = _super.call(this, config) || this;
-        _this.vx = O.getOrDefault(config.vx, 0);
-        _this.vy = O.getOrDefault(config.vy, 0);
-        _this.vz = O.getOrDefault(config.vz, 0);
-        _this.mass = O.getOrDefault(config.mass, 1);
-        _this.gravityx = O.getOrDefault(config.gravityx, 0);
-        _this.gravityy = O.getOrDefault(config.gravityy, 0);
-        _this.gravityz = O.getOrDefault(config.gravityz, 0);
-        _this.bounce = O.getOrDefault(config.bounce, 0);
+        _this.vx = (_a = config.vx) !== null && _a !== void 0 ? _a : 0;
+        _this.vy = (_b = config.vy) !== null && _b !== void 0 ? _b : 0;
+        _this.vz = (_c = config.vz) !== null && _c !== void 0 ? _c : 0;
+        _this.mass = (_d = config.mass) !== null && _d !== void 0 ? _d : 1;
+        _this.gravityx = (_e = config.gravityx) !== null && _e !== void 0 ? _e : 0;
+        _this.gravityy = (_f = config.gravityy) !== null && _f !== void 0 ? _f : 0;
+        _this.gravityz = (_g = config.gravityz) !== null && _g !== void 0 ? _g : 0;
+        _this.bounce = (_h = config.bounce) !== null && _h !== void 0 ? _h : 0;
         _this.bounds = config.bounds ? _.clone(config.bounds) : { x: 0, y: 0, width: 0, height: 0 };
-        _this.immovable = O.getOrDefault(config.immovable, false);
-        _this.colliding = O.getOrDefault(config.colliding, true);
-        _this.debugBounds = O.getOrDefault(config.debugBounds, false);
-        _this.simulating = O.getOrDefault(config.startSimulating, true);
+        _this.immovable = (_j = config.immovable) !== null && _j !== void 0 ? _j : false;
+        _this.colliding = (_k = config.colliding) !== null && _k !== void 0 ? _k : true;
+        _this.debugBounds = (_l = config.debugBounds) !== null && _l !== void 0 ? _l : false;
+        _this.simulating = (_m = config.startSimulating) !== null && _m !== void 0 ? _m : true;
         _this.preMovementX = _this.x;
         _this.preMovementY = _this.y;
         return _this;
@@ -2052,6 +2052,7 @@ var Sprite = /** @class */ (function (_super) {
     __extends(Sprite, _super);
     function Sprite(config, defaults) {
         var e_6, _a;
+        var _b, _c, _d, _e, _f, _g, _h;
         var _this = this;
         config = WorldObject.resolveConfig(config, defaults);
         _this = _super.call(this, config) || this;
@@ -2063,8 +2064,8 @@ var Sprite = /** @class */ (function (_super) {
         _this.animationManager = new AnimationManager(_this);
         if (config.animations) {
             try {
-                for (var _b = __values(config.animations), _c = _b.next(); !_c.done; _c = _b.next()) {
-                    var animation = _c.value;
+                for (var _j = __values(config.animations), _k = _j.next(); !_k.done; _k = _j.next()) {
+                    var animation = _k.value;
                     _.defaults(animation, {
                         frames: [],
                     });
@@ -2074,7 +2075,7 @@ var Sprite = /** @class */ (function (_super) {
             catch (e_6_1) { e_6 = { error: e_6_1 }; }
             finally {
                 try {
-                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                    if (_k && !_k.done && (_a = _j.return)) _a.call(_j);
                 }
                 finally { if (e_6) throw e_6.error; }
             }
@@ -2082,14 +2083,14 @@ var Sprite = /** @class */ (function (_super) {
         if (config.defaultAnimation) {
             _this.playAnimation(config.defaultAnimation, 0, true);
         }
-        _this.flipX = O.getOrDefault(config.flipX, false);
-        _this.flipY = O.getOrDefault(config.flipY, false);
+        _this.flipX = (_b = config.flipX) !== null && _b !== void 0 ? _b : false;
+        _this.flipY = (_c = config.flipY) !== null && _c !== void 0 ? _c : false;
         _this.offset = config.offset || { x: 0, y: 0 };
-        _this.angle = O.getOrDefault(config.angle, 0);
-        _this.scaleX = O.getOrDefault(config.scaleX, 1);
-        _this.scaleY = O.getOrDefault(config.scaleY, 1);
-        _this.tint = O.getOrDefault(config.tint, 0xFFFFFF);
-        _this.alpha = O.getOrDefault(config.alpha, 1);
+        _this.angle = (_d = config.angle) !== null && _d !== void 0 ? _d : 0;
+        _this.scaleX = (_e = config.scaleX) !== null && _e !== void 0 ? _e : 1;
+        _this.scaleY = (_f = config.scaleY) !== null && _f !== void 0 ? _f : 1;
+        _this.tint = (_g = config.tint) !== null && _g !== void 0 ? _g : 0xFFFFFF;
+        _this.alpha = (_h = config.alpha) !== null && _h !== void 0 ? _h : 1;
         _this.effects = new Effects();
         _this.effects.updateFromConfig(config.effects);
         return _this;
@@ -2533,8 +2534,9 @@ var Perlin = /** @class */ (function () {
 ///<reference path="./utils/perlin.ts"/>
 var TextureFilter = /** @class */ (function () {
     function TextureFilter(config) {
-        this.code = O.getOrDefault(config.code, '');
-        this.vertCode = O.getOrDefault(config.vertCode, '');
+        var _a, _b;
+        this.code = (_a = config.code) !== null && _a !== void 0 ? _a : '';
+        this.vertCode = (_b = config.vertCode) !== null && _b !== void 0 ? _b : '';
         this.uniformCode = this.constructUniformCode(config.uniforms);
         this.uniforms = this.constructUniforms(config.uniforms);
         this.setUniform('posx', 0);
@@ -2625,6 +2627,7 @@ var TextureFilter = /** @class */ (function () {
     var Mask = /** @class */ (function (_super) {
         __extends(Mask, _super);
         function Mask(config) {
+            var _a, _b, _c;
             var _this = _super.call(this, {
                 uniforms: {
                     "sampler2D mask": undefined,
@@ -2637,9 +2640,9 @@ var TextureFilter = /** @class */ (function () {
                 code: "\n                    vec2 vTextureCoordMask = vTextureCoord * inputSize.xy / vec2(maskWidth, maskHeight) - vec2(maskX, maskY) / vec2(maskWidth, maskHeight);\n                    if (vTextureCoordMask.x >= 0.0 && vTextureCoordMask.x < 1.0 && vTextureCoordMask.y >= 0.0 && vTextureCoordMask.y < 1.0) {\n                        float a = texture2D(mask, vTextureCoordMask).a;\n                        outp *= invert ? 1.0-a : a;\n                    } else {\n                        outp.a = invert ? inp.a : 0.0;\n                    }\n                "
             }) || this;
             _this.type = config.type;
-            _this.offsetX = O.getOrDefault(config.offsetX, 0);
-            _this.offsetY = O.getOrDefault(config.offsetY, 0);
-            _this.invert = O.getOrDefault(config.invert, false);
+            _this.offsetX = (_a = config.offsetX) !== null && _a !== void 0 ? _a : 0;
+            _this.offsetY = (_b = config.offsetY) !== null && _b !== void 0 ? _b : 0;
+            _this.invert = (_c = config.invert) !== null && _c !== void 0 ? _c : false;
             _this.setMask(config.mask);
             return _this;
         }
@@ -3103,26 +3106,26 @@ var Effects = /** @class */ (function () {
         }
     };
     Effects.prototype.updateFromConfig = function (config) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
         if (!config)
             return;
         if (config.pre) {
-            this.pre.filters = O.getOrDefault(config.pre.filters, []);
-            this.pre.enabled = O.getOrDefault(config.pre.enabled, true);
+            this.pre.filters = (_a = config.pre.filters) !== null && _a !== void 0 ? _a : [];
+            this.pre.enabled = (_b = config.pre.enabled) !== null && _b !== void 0 ? _b : true;
         }
         if (config.silhouette) {
-            this.silhouette.color = O.getOrDefault(config.silhouette.color, 0x000000);
-            this.silhouette.alpha = O.getOrDefault(config.silhouette.alpha, 1);
-            this.silhouette.enabled = O.getOrDefault(config.silhouette.enabled, true);
+            this.silhouette.color = (_c = config.silhouette.color) !== null && _c !== void 0 ? _c : 0x000000;
+            this.silhouette.alpha = (_d = config.silhouette.alpha) !== null && _d !== void 0 ? _d : 1;
+            this.silhouette.enabled = (_e = config.silhouette.enabled) !== null && _e !== void 0 ? _e : true;
         }
         if (config.outline) {
-            this.outline.color = O.getOrDefault(config.outline.color, 0x000000);
-            this.outline.alpha = O.getOrDefault(config.outline.alpha, 1);
-            this.outline.enabled = O.getOrDefault(config.outline.enabled, true);
-            ;
+            this.outline.color = (_f = config.outline.color) !== null && _f !== void 0 ? _f : 0x000000;
+            this.outline.alpha = (_g = config.outline.alpha) !== null && _g !== void 0 ? _g : 1;
+            this.outline.enabled = (_h = config.outline.enabled) !== null && _h !== void 0 ? _h : true;
         }
         if (config.post) {
-            this.post.filters = O.getOrDefault(config.post.filters, []);
-            this.post.enabled = O.getOrDefault(config.post.enabled, true);
+            this.post.filters = (_j = config.post.filters) !== null && _j !== void 0 ? _j : [];
+            this.post.enabled = (_k = config.post.enabled) !== null && _k !== void 0 ? _k : true;
         }
     };
     Effects.SILHOUETTE_I = 0;
@@ -3772,37 +3775,38 @@ function error(message) {
 var World = /** @class */ (function () {
     function World(config, defaults) {
         var e_12, _a;
+        var _b, _c, _d, _e, _f, _g, _h, _j, _k;
         config = WorldObject.resolveConfig(config, defaults);
         this.scriptManager = new ScriptManager();
-        this.width = O.getOrDefault(config.width, global.gameWidth);
-        this.height = O.getOrDefault(config.height, global.gameHeight);
+        this.width = (_b = config.width) !== null && _b !== void 0 ? _b : global.gameWidth;
+        this.height = (_c = config.height) !== null && _c !== void 0 ? _c : global.gameHeight;
         this.sounds = [];
-        this.playingAudio = O.getOrDefault(config.playingAudio, true);
+        this.playingAudio = (_d = config.playingAudio) !== null && _d !== void 0 ? _d : true;
         this.worldObjects = [];
-        this.showDebugMousePosition = O.getOrDefault(config.showDebugMousePosition, false);
+        this.showDebugMousePosition = (_e = config.showDebugMousePosition) !== null && _e !== void 0 ? _e : false;
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
-        this.collisionOrder = O.getOrDefault(config.collisionOrder, []);
-        this.collisionIterations = O.getOrDefault(config.collisionIterations, 1);
+        this.collisionOrder = (_f = config.collisionOrder) !== null && _f !== void 0 ? _f : [];
+        this.collisionIterations = (_g = config.collisionIterations) !== null && _g !== void 0 ? _g : 1;
         this.worldObjectsByName = {};
         this.layers = this.createLayers(config.layers);
-        this.backgroundColor = O.getOrDefault(config.backgroundColor, global.backgroundColor);
+        this.backgroundColor = (_h = config.backgroundColor) !== null && _h !== void 0 ? _h : global.backgroundColor;
         this.screen = new Texture(this.width, this.height);
         this.layerTexture = new Texture(this.width, this.height);
-        this.entryPoints = O.getOrDefault(config.entryPoints, {});
+        this.entryPoints = (_j = config.entryPoints) !== null && _j !== void 0 ? _j : {};
         try {
-            for (var _b = __values(config.worldObjects || []), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var worldObjectConfig = _c.value;
+            for (var _l = __values(config.worldObjects || []), _m = _l.next(); !_m.done; _m = _l.next()) {
+                var worldObjectConfig = _m.value;
                 World.Actions.addWorldObjectToWorld(WorldObject.fromConfig(worldObjectConfig), this);
             }
         }
         catch (e_12_1) { e_12 = { error: e_12_1 }; }
         finally {
             try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                if (_m && !_m.done && (_a = _l.return)) _a.call(_l);
             }
             finally { if (e_12) throw e_12.error; }
         }
-        this.camera = new Camera(O.getOrDefault(config.camera, {}), this);
+        this.camera = new Camera((_k = config.camera) !== null && _k !== void 0 ? _k : {}, this);
         this.debugMousePositionText = this.addWorldObject({
             constructor: SpriteText,
             x: 0, y: 0,
@@ -4680,15 +4684,16 @@ var SpriteText = /** @class */ (function (_super) {
     }
     SpriteText.prototype.render = function (screen) {
         var e_29, _a;
+        var _b, _c, _d;
         var filters = this.mask ? [new TextureFilter.Mask({ type: TextureFilter.Mask.Type.GLOBAL, mask: this.mask })] : [];
         try {
-            for (var _b = __values(this.chars), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var char = _c.value;
+            for (var _e = __values(this.chars), _f = _e.next(); !_f.done; _f = _e.next()) {
+                var char = _f.value;
                 screen.render(this.fontTexture, {
                     x: this.renderScreenX + char.x,
-                    y: this.renderScreenY + char.y + O.getOrDefault(char.style.offset, this.style.offset),
-                    tint: O.getOrDefault(char.style.color, this.style.color),
-                    alpha: O.getOrDefault(char.style.alpha, this.style.alpha),
+                    y: this.renderScreenY + char.y + ((_b = char.style.offset) !== null && _b !== void 0 ? _b : this.style.offset),
+                    tint: (_c = char.style.color) !== null && _c !== void 0 ? _c : this.style.color,
+                    alpha: (_d = char.style.alpha) !== null && _d !== void 0 ? _d : this.style.alpha,
                     slice: {
                         x: SpriteText.charCodes[char.char].x * this.font.charWidth,
                         y: SpriteText.charCodes[char.char].y * this.font.charHeight,
@@ -4702,7 +4707,7 @@ var SpriteText = /** @class */ (function (_super) {
         catch (e_29_1) { e_29 = { error: e_29_1 }; }
         finally {
             try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                if (_f && !_f.done && (_a = _e.return)) _a.call(_e);
             }
             finally { if (e_29) throw e_29.error; }
         }
@@ -4845,8 +4850,9 @@ var SpriteText = /** @class */ (function (_super) {
 var MenuTextButton = /** @class */ (function (_super) {
     __extends(MenuTextButton, _super);
     function MenuTextButton(config) {
+        var _a;
         var _this = _super.call(this, config) || this;
-        _this.onClick = O.getOrDefault(config.onClick, function () { return null; });
+        _this.onClick = (_a = config.onClick) !== null && _a !== void 0 ? _a : Utils.NOOP;
         return _this;
     }
     MenuTextButton.prototype.update = function (delta) {
@@ -5400,6 +5406,7 @@ var Preload = /** @class */ (function () {
         PIXI.Loader.shared.add(key, url, undefined, function () { return _this.onLoadResource(resource); });
     };
     Preload.loadTexture = function (key, texture) {
+        var _a;
         var baseTexture = PIXI.utils.TextureCache[key];
         if (!baseTexture) {
             error("Failed to preload texture " + key);
@@ -5422,7 +5429,7 @@ var Preload = /** @class */ (function () {
             var numFramesY = Math.floor(baseTexture.height / texture.spritesheet.frameHeight);
             for (var y = 0; y < numFramesY; y++) {
                 for (var x = 0; x < numFramesX; x++) {
-                    var frameKeyPrefix = O.getOrDefault(texture.spritesheet.prefix, key + "_");
+                    var frameKeyPrefix = (_a = texture.spritesheet.prefix) !== null && _a !== void 0 ? _a : key + "_";
                     var frameKey = "" + frameKeyPrefix + (x + y * numFramesX);
                     frames[frameKey] = {
                         rect: {
@@ -5614,11 +5621,12 @@ var shaderMatrixMethods = "\n    float determinant(float m) {\n        return m;
 var Slide = /** @class */ (function (_super) {
     __extends(Slide, _super);
     function Slide(config) {
+        var _a;
         var _this = _super.call(this, config, {
             x: global.gameWidth / 2,
             y: global.gameHeight / 2,
         }) || this;
-        _this.timer = new Timer(O.getOrDefault(config.timeToLoad, 0));
+        _this.timer = new Timer((_a = config.timeToLoad) !== null && _a !== void 0 ? _a : 0);
         if (config.fadeIn) {
             _this.targetAlpha = _this.alpha;
             _this.alpha = 0;
@@ -5991,6 +5999,7 @@ var StateMachine = /** @class */ (function () {
     };
     StateMachine.prototype.setState = function (name) {
         var _this = this;
+        var _a;
         if (this.script)
             this.script.done = true;
         var state = this.getState(name);
@@ -5999,7 +6008,7 @@ var StateMachine = /** @class */ (function () {
         this.currentState = state;
         if (state.callback)
             state.callback();
-        var stateScript = O.getOrDefault(state.script, S.noop());
+        var stateScript = (_a = state.script) !== null && _a !== void 0 ? _a : S.noop();
         this.script = new Script(S.chain(stateScript, S.loopFor(Infinity, S.chain(S.call(function () {
             var transition = _this.getValidTransition(_this.currentState);
             if (transition) {
@@ -6555,15 +6564,16 @@ var Theater = /** @class */ (function (_super) {
 var Tilemap = /** @class */ (function (_super) {
     __extends(Tilemap, _super);
     function Tilemap(config) {
+        var _a, _b, _c;
         var _this = _super.call(this, config) || this;
         _this.tilemap = Tilemap.cloneTilemap(AssetCache.getTilemap(config.tilemap));
-        _this.tilemapLayer = O.getOrDefault(config.tilemapLayer, 0);
+        _this.tilemapLayer = (_a = config.tilemapLayer) !== null && _a !== void 0 ? _a : 0;
         var tilemapDimens = A.get2DArrayDimensions(_this.currentTilemapLayer);
         _this.numTilesX = tilemapDimens.width;
         _this.numTilesY = tilemapDimens.height;
-        _this.createCollisionBoxes(O.getOrDefault(config.debugBounds, false));
+        _this.createCollisionBoxes((_b = config.debugBounds) !== null && _b !== void 0 ? _b : false);
         _this.dirty = true;
-        _this.zMap = O.getOrDefault(config.zMap, {});
+        _this.zMap = (_c = config.zMap) !== null && _c !== void 0 ? _c : {};
         return _this;
     }
     Object.defineProperty(Tilemap.prototype, "currentTilemapLayer", {
@@ -6928,10 +6938,11 @@ var Tween = /** @class */ (function () {
 var Warp = /** @class */ (function (_super) {
     __extends(Warp, _super);
     function Warp(config) {
+        var _a;
         var _this = _super.call(this, config) || this;
         _this.stage = _this.data.stage;
         _this.entryPoint = _this.data.entryPoint;
-        _this.transition = O.getOrDefault(_this.data.transition, Transition.INSTANT);
+        _this.transition = (_a = _this.data.transition) !== null && _a !== void 0 ? _a : Transition.INSTANT;
         return _this;
     }
     Warp.prototype.warp = function () {
@@ -7281,6 +7292,7 @@ var St;
 })(St || (St = {}));
 var Utils;
 (function (Utils) {
+    Utils.NOOP = function () { return null; };
     Utils.NOOP_DISPLAYOBJECT = new PIXI.DisplayObject();
 })(Utils || (Utils = {}));
 var V;

@@ -75,31 +75,31 @@ class World {
         
         this.scriptManager = new ScriptManager();
 
-        this.width = O.getOrDefault(config.width, global.gameWidth);
-        this.height = O.getOrDefault(config.height, global.gameHeight);
+        this.width = config.width ?? global.gameWidth;
+        this.height = config.height ?? global.gameHeight;
         this.sounds = [];
-        this.playingAudio = O.getOrDefault(config.playingAudio, true);
+        this.playingAudio = config.playingAudio ?? true;
         this.worldObjects = [];
-        this.showDebugMousePosition = O.getOrDefault(config.showDebugMousePosition, false);
+        this.showDebugMousePosition = config.showDebugMousePosition ?? false;
 
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
-        this.collisionOrder = O.getOrDefault(config.collisionOrder, []);
-        this.collisionIterations = O.getOrDefault(config.collisionIterations, 1);
+        this.collisionOrder = config.collisionOrder ?? [];
+        this.collisionIterations = config.collisionIterations ?? 1;
         this.worldObjectsByName = {};
         this.layers = this.createLayers(config.layers);
 
-        this.backgroundColor = O.getOrDefault(config.backgroundColor, global.backgroundColor);
+        this.backgroundColor = config.backgroundColor ?? global.backgroundColor;
 
         this.screen = new Texture(this.width, this.height);
         this.layerTexture = new Texture(this.width, this.height);
 
-        this.entryPoints = O.getOrDefault(config.entryPoints, {});
+        this.entryPoints = config.entryPoints ?? {};
 
         for (let worldObjectConfig of config.worldObjects || []) {
             World.Actions.addWorldObjectToWorld(WorldObject.fromConfig(worldObjectConfig), this);
         }
 
-        this.camera = new Camera(O.getOrDefault(config.camera, {}), this);
+        this.camera = new Camera(config.camera ?? {}, this);
         
         this.debugMousePositionText = this.addWorldObject<SpriteText>(<SpriteText.Config>{
             constructor: SpriteText,

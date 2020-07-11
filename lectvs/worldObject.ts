@@ -82,15 +82,15 @@ class WorldObject {
 
     constructor(config: WorldObject.Config, defaults?: WorldObject.Config) {
         config = WorldObject.resolveConfig(config, defaults);
-        this.localx = O.getOrDefault(config.x, 0);
-        this.localy = O.getOrDefault(config.y, 0);
-        this.localz = O.getOrDefault(config.z, 0);
-        this.visible = O.getOrDefault(config.visible, true);
-        this.active = O.getOrDefault(config.active, true);
-        this.life = new Timer(O.getOrDefault(config.life, Infinity), () => this.kill());
-        this.zBehavior = O.getOrDefault(config.zBehavior, WorldObject.DEFAULT_Z_BEHAVIOR);
-        this.ignoreCamera = O.getOrDefault(config.ignoreCamera, false);
-        this.data = _.clone(O.getOrDefault(config.data, {}));
+        this.localx = config.x ?? 0;
+        this.localy = config.y ?? 0;
+        this.localz = config.z ?? 0;
+        this.visible = config.visible ?? true;
+        this.active = config.active ?? true;
+        this.life = new Timer(config.life ?? Infinity, () => this.kill());
+        this.zBehavior = config.zBehavior ?? WorldObject.DEFAULT_Z_BEHAVIOR;
+        this.ignoreCamera = config.ignoreCamera ?? false;
+        this.data = config.data ? _.clone(config.data) : {};
 
         this.alive = true;
 
@@ -98,7 +98,7 @@ class WorldObject {
         this.lasty = this.y;
         this.lastz = this.z;
 
-        this.controllable = O.getOrDefault(config.controllable, false);
+        this.controllable = config.controllable ?? false;
         this.controller = {};
         this.controllerSchema = {};
 

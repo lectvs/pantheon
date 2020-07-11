@@ -57,16 +57,16 @@ class Tilemap extends WorldObject {
     constructor(config: Tilemap.Config) {
         super(config);
         this.tilemap = Tilemap.cloneTilemap(AssetCache.getTilemap(config.tilemap));
-        this.tilemapLayer = O.getOrDefault(config.tilemapLayer, 0);
+        this.tilemapLayer = config.tilemapLayer ?? 0;
 
         let tilemapDimens = A.get2DArrayDimensions(this.currentTilemapLayer);
         this.numTilesX = tilemapDimens.width;
         this.numTilesY = tilemapDimens.height;
 
-        this.createCollisionBoxes(O.getOrDefault(config.debugBounds, false));
+        this.createCollisionBoxes(config.debugBounds ?? false);
 
         this.dirty = true;
-        this.zMap = O.getOrDefault(config.zMap, {});
+        this.zMap = config.zMap ?? {};
     }
 
     update(delta: number) {

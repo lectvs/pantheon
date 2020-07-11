@@ -47,9 +47,9 @@ class SpriteText extends WorldObject {
         for (let char of this.chars) {
             screen.render(this.fontTexture, {
                 x: this.renderScreenX + char.x,
-                y: this.renderScreenY + char.y + O.getOrDefault(char.style.offset, this.style.offset),
-                tint: O.getOrDefault(char.style.color, this.style.color),
-                alpha: O.getOrDefault(char.style.alpha, this.style.alpha),
+                y: this.renderScreenY + char.y + (char.style.offset ?? this.style.offset),
+                tint: char.style.color ?? this.style.color,
+                alpha: char.style.alpha ?? this.style.alpha,
                 slice: {
                     x: SpriteText.charCodes[char.char].x * this.font.charWidth,
                     y: SpriteText.charCodes[char.char].y * this.font.charHeight,

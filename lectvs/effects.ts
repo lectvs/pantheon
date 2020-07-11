@@ -60,25 +60,25 @@ class Effects {
         if (!config) return;
 
         if (config.pre) {
-            this.pre.filters = O.getOrDefault(config.pre.filters, []);
-            this.pre.enabled = O.getOrDefault(config.pre.enabled, true);
+            this.pre.filters = config.pre.filters ?? [];
+            this.pre.enabled = config.pre.enabled ?? true;
         }
 
         if (config.silhouette) {
-            this.silhouette.color = O.getOrDefault(config.silhouette.color, 0x000000);
-            this.silhouette.alpha = O.getOrDefault(config.silhouette.alpha, 1);
-            this.silhouette.enabled = O.getOrDefault(config.silhouette.enabled, true);
+            this.silhouette.color = config.silhouette.color ?? 0x000000;
+            this.silhouette.alpha = config.silhouette.alpha ?? 1;
+            this.silhouette.enabled = config.silhouette.enabled ?? true;
         }
 
         if (config.outline) {
-            this.outline.color = O.getOrDefault(config.outline.color, 0x000000);
-            this.outline.alpha = O.getOrDefault(config.outline.alpha, 1);
-            this.outline.enabled = O.getOrDefault(config.outline.enabled, true);;
+            this.outline.color = config.outline.color ?? 0x000000;
+            this.outline.alpha = config.outline.alpha ?? 1;
+            this.outline.enabled = config.outline.enabled ?? true;
         }
 
         if (config.post) {
-            this.post.filters = O.getOrDefault(config.post.filters, []);
-            this.post.enabled = O.getOrDefault(config.post.enabled, true);
+            this.post.filters = config.post.filters ?? [];
+            this.post.enabled = config.post.enabled ?? true;
         }
     }
 }

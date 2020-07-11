@@ -43,10 +43,6 @@ namespace O {
         return obj.constructor;
     }
 
-    export function getOrDefault<T>(obj: T, def: T) {
-        return obj === undefined ? def : obj;
-    }
-
     export function mergeObject<T>(obj: T, into: T, combine: (e: any, into: any) => any = ((e, into) => e)) {
         let result = _.clone(into);
         for (let key in obj) {

@@ -59,16 +59,16 @@ class Sprite extends PhysicsWorldObject {
             this.playAnimation(config.defaultAnimation, 0, true);
         }
 
-        this.flipX = O.getOrDefault(config.flipX, false);
-        this.flipY = O.getOrDefault(config.flipY, false);
+        this.flipX = config.flipX ?? false;
+        this.flipY = config.flipY ?? false;
 
         this.offset = config.offset || { x: 0, y: 0 };
-        this.angle = O.getOrDefault(config.angle, 0);
-        this.scaleX = O.getOrDefault(config.scaleX, 1);
-        this.scaleY = O.getOrDefault(config.scaleY, 1);
+        this.angle = config.angle ?? 0;
+        this.scaleX = config.scaleX ??  1;
+        this.scaleY = config.scaleY ??  1;
 
-        this.tint = O.getOrDefault(config.tint, 0xFFFFFF);
-        this.alpha = O.getOrDefault(config.alpha, 1);
+        this.tint = config.tint ?? 0xFFFFFF;
+        this.alpha = config.alpha ?? 1;
 
         this.effects = new Effects();
         this.effects.updateFromConfig(config.effects);

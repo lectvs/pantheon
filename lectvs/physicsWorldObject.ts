@@ -42,20 +42,20 @@ class PhysicsWorldObject extends WorldObject {
     constructor(config: PhysicsWorldObject.Config, defaults?: PhysicsWorldObject.Config) {
         config = WorldObject.resolveConfig<PhysicsWorldObject.Config>(config, defaults);
         super(config);
-        this.vx = O.getOrDefault(config.vx, 0);
-        this.vy = O.getOrDefault(config.vy, 0);
-        this.vz = O.getOrDefault(config.vz, 0);
-        this.mass = O.getOrDefault(config.mass, 1);
-        this.gravityx = O.getOrDefault(config.gravityx, 0);
-        this.gravityy = O.getOrDefault(config.gravityy, 0);
-        this.gravityz = O.getOrDefault(config.gravityz, 0);
-        this.bounce = O.getOrDefault(config.bounce, 0);
+        this.vx = config.vx ?? 0;
+        this.vy = config.vy ?? 0;
+        this.vz = config.vz ?? 0;
+        this.mass = config.mass ?? 1;
+        this.gravityx = config.gravityx ?? 0;
+        this.gravityy = config.gravityy ?? 0;
+        this.gravityz = config.gravityz ?? 0;
+        this.bounce = config.bounce ?? 0;
         this.bounds = config.bounds ? _.clone(config.bounds) : { x: 0, y: 0, width: 0, height: 0 };
-        this.immovable = O.getOrDefault(config.immovable, false);
-        this.colliding = O.getOrDefault(config.colliding, true);
+        this.immovable = config.immovable ?? false;
+        this.colliding = config.colliding ?? true;
 
-        this.debugBounds = O.getOrDefault(config.debugBounds, false);
-        this.simulating = O.getOrDefault(config.startSimulating, true);
+        this.debugBounds = config.debugBounds ?? false;
+        this.simulating = config.startSimulating ?? true;
 
         this.preMovementX = this.x;
         this.preMovementY = this.y;

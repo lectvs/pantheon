@@ -7,7 +7,7 @@ class Warp extends PhysicsWorldObject {
         super(config);
         this.stage = this.data.stage;
         this.entryPoint = this.data.entryPoint;
-        this.transition = O.getOrDefault(this.data.transition, Transition.INSTANT);
+        this.transition = this.data.transition ?? Transition.INSTANT;
     }
 
     warp() {

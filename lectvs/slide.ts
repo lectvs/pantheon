@@ -17,7 +17,7 @@ class Slide extends Sprite {
             x: global.gameWidth/2,
             y: global.gameHeight/2,
         });
-        this.timer = new Timer(O.getOrDefault(config.timeToLoad, 0));
+        this.timer = new Timer(config.timeToLoad ?? 0);
 
         if (config.fadeIn) {
             this.targetAlpha = this.alpha;

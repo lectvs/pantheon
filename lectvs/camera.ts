@@ -234,8 +234,8 @@ class Camera {
 
 namespace Camera {
     export namespace Mode {
-        export function FOLLOW(target: string | WorldObject, offsetX?: number, offsetY?: number): FollowMode {
-            return { type: 'follow', target, offset: { x: O.getOrDefault(offsetX, 0), y: O.getOrDefault(offsetY, 0) } };
+        export function FOLLOW(target: string | WorldObject, offsetX: number = 0, offsetY: number = 0): FollowMode {
+            return { type: 'follow', target, offset: { x: offsetX, y: offsetY } };
         }
         export function FOCUS(x: number, y: number): FocusMode {
             return { type: 'focus', point: { x, y } };
