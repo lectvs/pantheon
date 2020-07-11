@@ -10,11 +10,11 @@ class Box extends Sprite {
             gravityy: 200,
             bounds: { x: 0, y: 0, width: 32, height: 32 },
         });
-        this.carrierModule = new CarrierModule();
+        this.carrierModule = new CarrierModule(this);
     }
 
     postUpdate() {
         super.postUpdate();
-        this.carrierModule.postUpdate(this);
+        this.carrierModule.postUpdate();
     }
 }

@@ -193,8 +193,20 @@ class World {
         Draw.brush.color = this.backgroundColor;
         Draw.fill(this.screen);
 
+        for (let worldObject of this.worldObjects) {
+            if (worldObject.visible) {
+                worldObject.preRender();
+            }
+        }
+
         for (let layer of this.layers) {
             this.renderLayer(layer, this.layerTexture, this.screen);
+        }
+
+        for (let worldObject of this.worldObjects) {
+            if (worldObject.visible) {
+                worldObject.postRender();
+            }
         }
 
         this.camera.postRender();
@@ -208,7 +220,7 @@ class World {
         for (let worldObject of layer.worldObjects) {
             if (worldObject.visible) {
                 global.metrics.startSpan(worldObject);
-                worldObject.worldRender(layerTexture);
+                worldObject.render(layerTexture);
                 global.metrics.endSpan(worldObject);
             }
         }
@@ -254,10 +266,6 @@ class World {
         for (let coll of this.collisionOrder) {
             let move = _.isString(coll.move) ? [coll.move] : coll.move;
             let from = _.isString(coll.from) ? [coll.from] : coll.from;
-
-            if (_.contains(move, physicsGroup)) {
-                result.push(...from);
-            }
 
             if (_.contains(from, physicsGroup)) {
                 result.push(...move);

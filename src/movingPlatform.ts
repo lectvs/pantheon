@@ -13,7 +13,8 @@ class MovingPlatform extends Sprite {
         this.y = this.pathStart.y;
 
         this.pathTimer = new Timer(Infinity);
-        this.carrierModule = new CarrierModule();
+        this.pathTimer.speed = 2;
+        this.carrierModule = new CarrierModule(this);
     }
 
     update(delta: number) {
@@ -25,6 +26,6 @@ class MovingPlatform extends Sprite {
 
     postUpdate() {
         super.postUpdate();
-        this.carrierModule.postUpdate(this);
+        this.carrierModule.postUpdate();
     }
 }

@@ -164,21 +164,15 @@ class WorldObject {
         this.preRenderStoredX = this.localx;
         this.preRenderStoredY = this.localy;
 
-        // Snap to pixel in parent-space. This prevents objects from jittering relative to their parents.
-        if (this.parent) {
-            this.x = Math.round(this.x - this.parent.x) + this.parent.x;
-            this.y = Math.round(this.y - this.parent.y) + this.parent.y;
-        }
-
         if (this.zBehavior === 'threequarters') {
-            this.y -= this.z;
+            this.localy -= this.z;
         }
 
-        // Snap object to pixel in world-space
-        this.x = Math.round(this.x);
-        this.y = Math.round(this.y);
+        // Snap object to pixel in local-space
+        this.localx = Math.round(this.localx);
+        this.localy = Math.round(this.localy);
 
-        if (!this.shouldIgnoreCamera()) {
+        if (!this.parent && !this.shouldIgnoreCamera()) {
             this.x -= Math.round(this.world.camera.worldOffsetX);
             this.y -= Math.round(this.world.camera.worldOffsetY);
         }

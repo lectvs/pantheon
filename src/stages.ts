@@ -10,14 +10,7 @@ function getStages(): Dict<World.Config> { return {
             'main': { x: Main.width/2, y: Main.height/2 },
         },
         worldObjects: [
-            <Tilemap.Config>{
-                name: 'tiles',
-                constructor: Tilemap,
-                x: 0, y: 0,
-                tilemap: 'main_tilemap',
-                layer: 'main',
-                physicsGroup: 'walls',
-            },
+            
             <Sprite.Config>{
                 name: 'player',
                 constructor: Player,
@@ -42,10 +35,18 @@ function getStages(): Dict<World.Config> { return {
                 physicsGroup: 'walls',
                 bounds: { x: 0, y: 0, width: 128, height: 16 },
                 data: {
-                    pathStart: { x: 192, y: 352 },
+                    pathStart: { x: 192, y: 402 },
                     pathEnd: { x: 320, y: 352 },
                 }
-            }
+            },
+            <Tilemap.Config>{
+                name: 'tiles',
+                constructor: Tilemap,
+                x: 0, y: 0,
+                tilemap: 'main_tilemap',
+                layer: 'main',
+                physicsGroup: 'walls',
+            },
         ]
     },
 }}
