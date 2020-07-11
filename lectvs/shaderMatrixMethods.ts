@@ -1,3 +1,4 @@
+// Unused for now
 let shaderMatrixMethods = `
     float determinant(float m) {
         return m;

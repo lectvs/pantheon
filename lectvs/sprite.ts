@@ -82,8 +82,8 @@ class Sprite extends PhysicsWorldObject {
 
     render(screen: Texture) {
         screen.render(this.texture, {
-            x: this.x + this.offset.x,
-            y: this.y + this.offset.y,
+            x: this.renderScreenX + this.offset.x,
+            y: this.renderScreenY + this.offset.y,
             scaleX: (this.flipX ? -1 : 1) * this.scaleX,
             scaleY: (this.flipY ? -1 : 1) * this.scaleY,
             angle: this.angle,

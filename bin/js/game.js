@@ -1601,8 +1601,6 @@ var WorldObject = /** @class */ (function () {
         this.controllable = O.getOrDefault(config.controllable, false);
         this.controller = {};
         this.controllerSchema = {};
-        this.preRenderStoredX = this.x;
-        this.preRenderStoredY = this.y;
         this.uid = WorldObject.UID.generate();
         this._world = null;
         this.internalSetNameWorldObject(config.name);
@@ -1689,6 +1687,9 @@ var WorldObject = /** @class */ (function () {
         if (this.updateCallback)
             this.updateCallback(this, delta);
         this.life.update(delta);
+        if (this.parent && this.ignoreCamera) {
+            debug("Warning: ignoraCamera is set to true on a child object. This will be ignored!");
+        }
     };
     WorldObject.prototype.updateScriptManager = function (delta) {
         this.scriptManager.update(delta);
@@ -1704,25 +1705,44 @@ var WorldObject = /** @class */ (function () {
         this.update(delta);
         this.postUpdate();
     };
+    Object.defineProperty(WorldObject.prototype, "renderScreenX", {
+        get: function () {
+            var result;
+            if (this.parent) {
+                result = this.parent.renderScreenX;
+            }
+            else {
+                result = this.shouldIgnoreCamera() ? 0 : -Math.round(this.world.camera.worldOffsetX);
+            }
+            result += Math.round(this.localx);
+            return result;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(WorldObject.prototype, "renderScreenY", {
+        get: function () {
+            var result;
+            if (this.parent) {
+                result = this.parent.renderScreenY;
+            }
+            else {
+                result = this.shouldIgnoreCamera() ? 0 : -Math.round(this.world.camera.worldOffsetY);
+            }
+            result += Math.round(this.localy);
+            if (this.zBehavior === 'threequarters') {
+                result -= this.z;
+            }
+            return result;
+        },
+        enumerable: false,
+        configurable: true
+    });
     WorldObject.prototype.preRender = function () {
-        this.preRenderStoredX = this.localx;
-        this.preRenderStoredY = this.localy;
-        if (this.zBehavior === 'threequarters') {
-            this.localy -= this.z;
-        }
-        // Snap object to pixel in local-space
-        this.localx = Math.round(this.localx);
-        this.localy = Math.round(this.localy);
-        if (!this.parent && !this.shouldIgnoreCamera()) {
-            this.x -= Math.round(this.world.camera.worldOffsetX);
-            this.y -= Math.round(this.world.camera.worldOffsetY);
-        }
     };
     WorldObject.prototype.render = function (screen) {
     };
     WorldObject.prototype.postRender = function () {
-        this.localx = this.preRenderStoredX;
-        this.localy = this.preRenderStoredY;
     };
     WorldObject.prototype.worldRender = function (screen) {
         this.preRender();
@@ -2081,8 +2101,8 @@ var Sprite = /** @class */ (function (_super) {
     };
     Sprite.prototype.render = function (screen) {
         screen.render(this.texture, {
-            x: this.x + this.offset.x,
-            y: this.y + this.offset.y,
+            x: this.renderScreenX + this.offset.x,
+            y: this.renderScreenY + this.offset.y,
             scaleX: (this.flipX ? -1 : 1) * this.scaleX,
             scaleY: (this.flipY ? -1 : 1) * this.scaleY,
             angle: this.angle,
@@ -4665,8 +4685,8 @@ var SpriteText = /** @class */ (function (_super) {
             for (var _b = __values(this.chars), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var char = _c.value;
                 screen.render(this.fontTexture, {
-                    x: this.x + char.x,
-                    y: this.y + char.y + O.getOrDefault(char.style.offset, this.style.offset),
+                    x: this.renderScreenX + char.x,
+                    y: this.renderScreenY + char.y + O.getOrDefault(char.style.offset, this.style.offset),
                     tint: O.getOrDefault(char.style.color, this.style.color),
                     alpha: O.getOrDefault(char.style.alpha, this.style.alpha),
                     slice: {
@@ -5589,6 +5609,7 @@ var ScriptManager = /** @class */ (function () {
     };
     return ScriptManager;
 }());
+// Unused for now
 var shaderMatrixMethods = "\n    float determinant(float m) {\n        return m;\n    }\n\n    float determinant(mat2 m) {\n        return m[0][0] * m[1][1] - m[0][1] * m[1][0]; \n    }\n\n    float determinant(mat3 m) {\n        return m[0][0] * (m[2][2]*m[1][1] - m[1][2]*m[2][1])\n            + m[0][1] * (m[1][2]*m[2][0] - m[2][2]*m[1][0])\n            + m[0][2] * (m[2][1]*m[1][0] - m[1][1]*m[2][0]);\n    }\n\n    float determinant(mat4 m) {\n        float\n            b00 = m[0][0] * m[1][1] - m[0][1] * m[1][0],\n            b01 = m[0][0] * m[1][2] - m[0][2] * m[1][0],\n            b02 = m[0][0] * m[1][3] - m[0][3] * m[1][0],\n            b03 = m[0][1] * m[1][2] - m[0][2] * m[1][1],\n            b04 = m[0][1] * m[1][3] - m[0][3] * m[1][1],\n            b05 = m[0][2] * m[1][3] - m[0][3] * m[1][2],\n            b06 = m[2][0] * m[3][1] - m[2][1] * m[3][0],\n            b07 = m[2][0] * m[3][2] - m[2][2] * m[3][0],\n            b08 = m[2][0] * m[3][3] - m[2][3] * m[3][0],\n            b09 = m[2][1] * m[3][2] - m[2][2] * m[3][1],\n            b10 = m[2][1] * m[3][3] - m[2][3] * m[3][1],\n            b11 = m[2][2] * m[3][3] - m[2][3] * m[3][2];\n        return b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;\n    }\n\n    mat4 transpose(mat4 m) {\n        return mat4(\n            m[0][0], m[1][0], m[2][0], m[3][0],\n            m[0][1], m[1][1], m[2][1], m[3][1],\n            m[0][2], m[1][2], m[2][2], m[3][2],\n            m[0][3], m[1][3], m[2][3], m[3][3]\n        );\n    }\n\n    mat4 inverse(mat4 inp) {\n        mat4 cofactors = mat4(\n            determinant(mat3( inp[1].yzw, inp[2].yzw, inp[3].yzw)), \n            -determinant(mat3(inp[1].xzw, inp[2].xzw, inp[3].xzw)),\n            determinant(mat3( inp[1].xyw, inp[2].xyw, inp[3].xyw)),\n            -determinant(mat3(inp[1].xyz, inp[2].xyz, inp[3].xyz)),\n            \n            -determinant(mat3(inp[0].yzw, inp[2].yzw, inp[3].yzw)),\n            determinant(mat3( inp[0].xzw, inp[2].xzw, inp[3].xzw)),\n            -determinant(mat3(inp[0].xyw, inp[2].xyw, inp[3].xyw)),\n            determinant(mat3( inp[0].xyz, inp[2].xyz, inp[3].xyz)),\n            \n            determinant(mat3( inp[0].yzw, inp[1].yzw, inp[3].yzw)),\n            -determinant(mat3(inp[0].xzw, inp[1].xzw, inp[3].xzw)),\n            determinant(mat3( inp[0].xyw, inp[1].xyw, inp[3].xyw)),\n            -determinant(mat3(inp[0].xyz, inp[1].xyz, inp[3].xyz)),\n\n            -determinant(mat3(inp[0].yzw, inp[1].yzw, inp[2].yzw)),\n            determinant(mat3( inp[0].xzw, inp[1].xzw, inp[2].xzw)),\n            -determinant(mat3(inp[0].xyw, inp[1].xyw, inp[2].xyw)),\n            determinant(mat3( inp[0].xyz, inp[1].xyz, inp[2].xyz))\n        );\n        return transpose(cofactors) / determinant(inp);\n    }\n";
 var Slide = /** @class */ (function (_super) {
     __extends(Slide, _super);

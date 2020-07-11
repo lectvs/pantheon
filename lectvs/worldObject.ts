@@ -71,8 +71,6 @@ class WorldObject {
     get isControlled() { return this.controllable && !global.theater.isCutscenePlaying; }
 
     mask: Texture;
-    private preRenderStoredX: number;
-    private preRenderStoredY: number;
 
     readonly uid: string;
 
@@ -103,9 +101,6 @@ class WorldObject {
         this.controllable = O.getOrDefault(config.controllable, false);
         this.controller = {};
         this.controllerSchema = {};
-
-        this.preRenderStoredX = this.x;
-        this.preRenderStoredY = this.y;
 
         this.uid = WorldObject.UID.generate();
 
@@ -140,6 +135,10 @@ class WorldObject {
         this.updateStateMachine(delta);
         if (this.updateCallback) this.updateCallback(this, delta);
         this.life.update(delta);
+
+        if (this.parent && this.ignoreCamera) {
+            debug(`Warning: ignoraCamera is set to true on a child object. This will be ignored!`);
+        }
     }
 
     protected updateScriptManager(delta: number) {
@@ -160,22 +159,40 @@ class WorldObject {
         this.postUpdate();
     }
 
-    preRender() {
-        this.preRenderStoredX = this.localx;
-        this.preRenderStoredY = this.localy;
+    get renderScreenX() {
+        let result: number;
+
+        if (this.parent) {
+            result = this.parent.renderScreenX;
+        } else {
+            result = this.shouldIgnoreCamera() ? 0 : -Math.round(this.world.camera.worldOffsetX);
+        }
+
+        result += Math.round(this.localx);
+
+        return result;
+    }
+
+    get renderScreenY() {
+        let result: number;
+
+        if (this.parent) {
+            result = this.parent.renderScreenY;
+        } else {
+            result = this.shouldIgnoreCamera() ? 0 : -Math.round(this.world.camera.worldOffsetY);
+        }
+
+        result += Math.round(this.localy);
 
         if (this.zBehavior === 'threequarters') {
-            this.localy -= this.z;
+            result -= this.z;
         }
 
-        // Snap object to pixel in local-space
-        this.localx = Math.round(this.localx);
-        this.localy = Math.round(this.localy);
+        return result;
+    }
 
-        if (!this.parent && !this.shouldIgnoreCamera()) {
-            this.x -= Math.round(this.world.camera.worldOffsetX);
-            this.y -= Math.round(this.world.camera.worldOffsetY);
-        }
+    preRender() {
+
     }
 
     render(screen: Texture) {
@@ -183,8 +200,7 @@ class WorldObject {
     }
 
     postRender() {
-        this.localx = this.preRenderStoredX;
-        this.localy = this.preRenderStoredY;
+
     }
 
     worldRender(screen: Texture) {

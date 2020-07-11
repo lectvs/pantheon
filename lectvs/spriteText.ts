@@ -46,8 +46,8 @@ class SpriteText extends WorldObject {
         let filters = this.mask ? [new TextureFilter.Mask({ type: TextureFilter.Mask.Type.GLOBAL, mask: this.mask})] : [];
         for (let char of this.chars) {
             screen.render(this.fontTexture, {
-                x: this.x + char.x,
-                y: this.y + char.y + O.getOrDefault(char.style.offset, this.style.offset),
+                x: this.renderScreenX + char.x,
+                y: this.renderScreenY + char.y + O.getOrDefault(char.style.offset, this.style.offset),
                 tint: O.getOrDefault(char.style.color, this.style.color),
                 alpha: O.getOrDefault(char.style.alpha, this.style.alpha),
                 slice: {
