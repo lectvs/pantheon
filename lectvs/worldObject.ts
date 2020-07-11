@@ -161,8 +161,14 @@ class WorldObject {
     }
 
     preRender() {
-        this.preRenderStoredX = this.x;
-        this.preRenderStoredY = this.y;
+        this.preRenderStoredX = this.localx;
+        this.preRenderStoredY = this.localy;
+
+        // Snap to pixel in parent-space. This prevents objects from jittering relative to their parents.
+        if (this.parent) {
+            this.x = Math.round(this.x - this.parent.x) + this.parent.x;
+            this.y = Math.round(this.y - this.parent.y) + this.parent.y;
+        }
 
         if (this.zBehavior === 'threequarters') {
             this.y -= this.z;
@@ -183,8 +189,8 @@ class WorldObject {
     }
 
     postRender() {
-        this.x = this.preRenderStoredX;
-        this.y = this.preRenderStoredY;
+        this.localx = this.preRenderStoredX;
+        this.localy = this.preRenderStoredY;
     }
 
     worldRender(screen: Texture) {
@@ -196,6 +202,17 @@ class WorldObject {
     addChild<T extends WorldObject>(child: T | WorldObject.Config): T {
         let worldObject: T = child instanceof WorldObject ? child : WorldObject.fromConfig(child);
         return World.Actions.addChildToParent(worldObject, this);
+    }
+
+    addChildKeepWorldPosition<T extends WorldObject>(child: T): T {
+        let x = child.x;
+        let y = child.y;
+        let z = child.z;
+        let result = this.addChild(child);
+        child.x = x;
+        child.y = y;
+        child.z = z;
+        return result;
     }
 
     addChildren<T extends WorldObject>(children: (T | WorldObject.Config)[]): T[] {
@@ -238,6 +255,17 @@ class WorldObject {
             return undefined;
         }
         return World.Actions.removeChildFromParent(child);
+    }
+
+    removeChildKeepWorldPosition<T extends WorldObject>(child: T): T {
+        let x = child.x;
+        let y = child.y;
+        let z = child.z;
+        let result = this.removeChild(child);
+        child.x = x;
+        child.y = y;
+        child.z = z;
+        return result;
     }
 
     removeChildren<T extends WorldObject>(children: ReadonlyArray<T>): T[] {

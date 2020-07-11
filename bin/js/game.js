@@ -1705,8 +1705,13 @@ var WorldObject = /** @class */ (function () {
         this.postUpdate();
     };
     WorldObject.prototype.preRender = function () {
-        this.preRenderStoredX = this.x;
-        this.preRenderStoredY = this.y;
+        this.preRenderStoredX = this.localx;
+        this.preRenderStoredY = this.localy;
+        // Snap to pixel in parent-space. This prevents objects from jittering relative to their parents.
+        if (this.parent) {
+            this.x = Math.round(this.x - this.parent.x) + this.parent.x;
+            this.y = Math.round(this.y - this.parent.y) + this.parent.y;
+        }
         if (this.zBehavior === 'threequarters') {
             this.y -= this.z;
         }
@@ -1721,8 +1726,8 @@ var WorldObject = /** @class */ (function () {
     WorldObject.prototype.render = function (screen) {
     };
     WorldObject.prototype.postRender = function () {
-        this.x = this.preRenderStoredX;
-        this.y = this.preRenderStoredY;
+        this.localx = this.preRenderStoredX;
+        this.localy = this.preRenderStoredY;
     };
     WorldObject.prototype.worldRender = function (screen) {
         this.preRender();
@@ -1732,6 +1737,16 @@ var WorldObject = /** @class */ (function () {
     WorldObject.prototype.addChild = function (child) {
         var worldObject = child instanceof WorldObject ? child : WorldObject.fromConfig(child);
         return World.Actions.addChildToParent(worldObject, this);
+    };
+    WorldObject.prototype.addChildKeepWorldPosition = function (child) {
+        var x = child.x;
+        var y = child.y;
+        var z = child.z;
+        var result = this.addChild(child);
+        child.x = x;
+        child.y = y;
+        child.z = z;
+        return result;
     };
     WorldObject.prototype.addChildren = function (children) {
         var worldObjects = _.isEmpty(children) ? [] : children.map(function (child) { return child instanceof WorldObject ? child : WorldObject.fromConfig(child); });
@@ -1782,6 +1797,16 @@ var WorldObject = /** @class */ (function () {
             return undefined;
         }
         return World.Actions.removeChildFromParent(child);
+    };
+    WorldObject.prototype.removeChildKeepWorldPosition = function (child) {
+        var x = child.x;
+        var y = child.y;
+        var z = child.z;
+        var result = this.removeChild(child);
+        child.x = x;
+        child.y = y;
+        child.z = z;
+        return result;
     };
     WorldObject.prototype.removeChildren = function (children) {
         var _this = this;
@@ -3742,6 +3767,7 @@ var World = /** @class */ (function () {
         this.showDebugMousePosition = O.getOrDefault(config.showDebugMousePosition, false);
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
         this.collisionOrder = O.getOrDefault(config.collisionOrder, []);
+        this.collisionIterations = O.getOrDefault(config.collisionIterations, 1);
         this.worldObjectsByName = {};
         this.layers = this.createLayers(config.layers);
         this.backgroundColor = O.getOrDefault(config.backgroundColor, global.backgroundColor);
@@ -3815,7 +3841,9 @@ var World = /** @class */ (function () {
         }
         global.metrics.endSpan('update');
         global.metrics.startSpan('handleCollisions');
-        this.handleCollisions();
+        for (var i = 0; i < this.collisionIterations; i++) {
+            this.handleCollisions();
+        }
         global.metrics.endSpan('handleCollisions');
         global.metrics.startSpan('postUpdate');
         try {
@@ -3949,6 +3977,37 @@ var World = /** @class */ (function () {
     World.prototype.getPhysicsGroupByName = function (name) {
         return this.physicsGroups[name];
     };
+    World.prototype.getPhysicsGroupsThatCollideWith = function (physicsGroup) {
+        var e_19, _a;
+        var _this = this;
+        var result = [];
+        try {
+            for (var _b = __values(this.collisionOrder), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var coll = _c.value;
+                var move = _.isString(coll.move) ? [coll.move] : coll.move;
+                var from = _.isString(coll.from) ? [coll.from] : coll.from;
+                if (_.contains(move, physicsGroup)) {
+                    result.push.apply(result, __spread(from));
+                }
+                if (_.contains(from, physicsGroup)) {
+                    result.push.apply(result, __spread(move));
+                }
+            }
+        }
+        catch (e_19_1) { e_19 = { error: e_19_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_19) throw e_19.error; }
+        }
+        return A.removeDuplicates(result.filter(function (group) { return _this.physicsGroups[group]; }));
+    };
+    World.prototype.getPhysicsObjectsThatCollideWith = function (physicsGroup) {
+        var _this = this;
+        var groups = this.getPhysicsGroupsThatCollideWith(physicsGroup);
+        return _.flatten(groups.map(function (group) { return _this.physicsGroups[group].worldObjects; }));
+    };
     World.prototype.getWorldMouseX = function () {
         return Input.mouseX + Math.floor(this.camera.x - this.camera.width / 2);
     };
@@ -3987,7 +4046,7 @@ var World = /** @class */ (function () {
         return this.worldObjects.filter(function (obj) { return obj instanceof type; });
     };
     World.prototype.handleCollisions = function () {
-        var e_19, _a, e_20, _b, e_21, _c;
+        var e_20, _a, e_21, _b, e_22, _c;
         var _this = this;
         try {
             for (var _d = __values(this.collisionOrder), _e = _d.next(); !_e.done; _e = _d.next()) {
@@ -3996,11 +4055,11 @@ var World = /** @class */ (function () {
                 var from = _.isArray(collision.from) ? collision.from : [collision.from];
                 var fromObjects = _.flatten(from.map(function (name) { return _this.physicsGroups[name].worldObjects; }));
                 try {
-                    for (var move_1 = (e_20 = void 0, __values(move)), move_1_1 = move_1.next(); !move_1_1.done; move_1_1 = move_1.next()) {
+                    for (var move_1 = (e_21 = void 0, __values(move)), move_1_1 = move_1.next(); !move_1_1.done; move_1_1 = move_1.next()) {
                         var moveGroup = move_1_1.value;
                         var group = this.physicsGroups[moveGroup].worldObjects;
                         try {
-                            for (var group_1 = (e_21 = void 0, __values(group)), group_1_1 = group_1.next(); !group_1_1.done; group_1_1 = group_1.next()) {
+                            for (var group_1 = (e_22 = void 0, __values(group)), group_1_1 = group_1.next(); !group_1_1.done; group_1_1 = group_1.next()) {
                                 var obj = group_1_1.value;
                                 Physics.collide(obj, fromObjects, {
                                     callback: collision.callback,
@@ -4008,30 +4067,30 @@ var World = /** @class */ (function () {
                                 });
                             }
                         }
-                        catch (e_21_1) { e_21 = { error: e_21_1 }; }
+                        catch (e_22_1) { e_22 = { error: e_22_1 }; }
                         finally {
                             try {
                                 if (group_1_1 && !group_1_1.done && (_c = group_1.return)) _c.call(group_1);
                             }
-                            finally { if (e_21) throw e_21.error; }
+                            finally { if (e_22) throw e_22.error; }
                         }
                     }
                 }
-                catch (e_20_1) { e_20 = { error: e_20_1 }; }
+                catch (e_21_1) { e_21 = { error: e_21_1 }; }
                 finally {
                     try {
                         if (move_1_1 && !move_1_1.done && (_b = move_1.return)) _b.call(move_1);
                     }
-                    finally { if (e_20) throw e_20.error; }
+                    finally { if (e_21) throw e_21.error; }
                 }
             }
         }
-        catch (e_19_1) { e_19 = { error: e_19_1 }; }
+        catch (e_20_1) { e_20 = { error: e_20_1 }; }
         finally {
             try {
                 if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
             }
-            finally { if (e_19) throw e_19.error; }
+            finally { if (e_20) throw e_20.error; }
         }
     };
     World.prototype.hasWorldObject = function (obj) {
@@ -4074,7 +4133,7 @@ var World = /** @class */ (function () {
         return screen;
     };
     World.prototype.createLayers = function (layers) {
-        var e_22, _a;
+        var e_23, _a;
         if (_.isEmpty(layers))
             layers = [];
         layers.push({ name: World.DEFAULT_LAYER });
@@ -4088,12 +4147,12 @@ var World = /** @class */ (function () {
                 result.push(new World.Layer(layer.name, layer, this.width, this.height));
             }
         }
-        catch (e_22_1) { e_22 = { error: e_22_1 }; }
+        catch (e_23_1) { e_23 = { error: e_23_1 }; }
         finally {
             try {
                 if (layers_1_1 && !layers_1_1.done && (_a = layers_1.return)) _a.call(layers_1);
             }
-            finally { if (e_22) throw e_22.error; }
+            finally { if (e_23) throw e_23.error; }
         }
         return result;
     };
@@ -4147,7 +4206,7 @@ var World = /** @class */ (function () {
     };
     // For use with World.Actions.setLayer
     World.prototype.internalSetLayerWorld = function (obj, layerName) {
-        var e_23, _a;
+        var e_24, _a;
         this.removeFromAllLayers(obj);
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -4158,12 +4217,12 @@ var World = /** @class */ (function () {
                 }
             }
         }
-        catch (e_23_1) { e_23 = { error: e_23_1 }; }
+        catch (e_24_1) { e_24 = { error: e_24_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_23) throw e_23.error; }
+            finally { if (e_24) throw e_24.error; }
         }
     };
     // For use with World.Actions.setPhysicsGroup
@@ -4191,19 +4250,19 @@ var World = /** @class */ (function () {
         }
     };
     World.prototype.removeFromAllLayers = function (obj) {
-        var e_24, _a;
+        var e_25, _a;
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var layer = _c.value;
                 A.removeAll(layer.worldObjects, obj);
             }
         }
-        catch (e_24_1) { e_24 = { error: e_24_1 }; }
+        catch (e_25_1) { e_25 = { error: e_25_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_24) throw e_24.error; }
+            finally { if (e_25) throw e_25.error; }
         }
     };
     World.prototype.removeFromAllPhysicsGroups = function (obj) {
@@ -4457,7 +4516,7 @@ var World = /** @class */ (function () {
     }
     World.fromConfig = fromConfig;
     function resolveConfig(config) {
-        var e_25, _a;
+        var e_26, _a;
         var parents = [];
         for (var _i = 1; _i < arguments.length; _i++) {
             parents[_i - 1] = arguments[_i];
@@ -4472,12 +4531,12 @@ var World = /** @class */ (function () {
                 result = resolveConfig(result);
             }
         }
-        catch (e_25_1) { e_25 = { error: e_25_1 }; }
+        catch (e_26_1) { e_26 = { error: e_26_1 }; }
         finally {
             try {
                 if (parents_2_1 && !parents_2_1.done && (_a = parents_2.return)) _a.call(parents_2);
             }
-            finally { if (e_25) throw e_25.error; }
+            finally { if (e_26) throw e_26.error; }
         }
         return result;
     }
@@ -4578,7 +4637,7 @@ var SpriteText = /** @class */ (function (_super) {
         return _this;
     }
     SpriteText.prototype.render = function (screen) {
-        var e_26, _a;
+        var e_27, _a;
         var filters = this.mask ? [new TextureFilter.Mask({ type: TextureFilter.Mask.Type.GLOBAL, mask: this.mask })] : [];
         try {
             for (var _b = __values(this.chars), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -4598,12 +4657,12 @@ var SpriteText = /** @class */ (function (_super) {
                 });
             }
         }
-        catch (e_26_1) { e_26 = { error: e_26_1 }; }
+        catch (e_27_1) { e_27 = { error: e_27_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_26) throw e_26.error; }
+            finally { if (e_27) throw e_27.error; }
         }
         _super.prototype.render.call(this, screen);
     };
@@ -5051,7 +5110,7 @@ var Physics = /** @class */ (function () {
         return result;
     };
     Physics.collide = function (obj, from, options) {
-        var e_27, _a;
+        var e_28, _a;
         if (options === void 0) { options = {}; }
         if (_.isEmpty(from))
             return;
@@ -5070,7 +5129,7 @@ var Physics = /** @class */ (function () {
             var collisions = collidingWith.map(function (other) { return Physics.getCollision(obj, other); });
             collisions.sort(function (a, b) { return a.t - b.t; });
             try {
-                for (var collisions_1 = (e_27 = void 0, __values(collisions)), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
+                for (var collisions_1 = (e_28 = void 0, __values(collisions)), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
                     var collision = collisions_1_1.value;
                     var d = Physics.separate(collision);
                     if (d !== 0 && options.transferMomentum) {
@@ -5083,12 +5142,12 @@ var Physics = /** @class */ (function () {
                     }
                 }
             }
-            catch (e_27_1) { e_27 = { error: e_27_1 }; }
+            catch (e_28_1) { e_28 = { error: e_28_1 }; }
             finally {
                 try {
                     if (collisions_1_1 && !collisions_1_1.done && (_a = collisions_1.return)) _a.call(collisions_1);
                 }
-                finally { if (e_27) throw e_27.error; }
+                finally { if (e_28) throw e_28.error; }
             }
             collidingWith = collidingWith.filter(function (other) { return obj.isOverlapping(other); });
             iters++;
@@ -5387,7 +5446,7 @@ var Preload = /** @class */ (function () {
         PIXI.Loader.shared.add(key + this.TILEMAP_KEY_SUFFIX, url, function () { return _this.onLoadResource(resource); });
     };
     Preload.loadPyxelTilemap = function (key, tilemap) {
-        var e_28, _a;
+        var e_29, _a;
         var tilemapResource = PIXI.Loader.shared.resources[key + this.TILEMAP_KEY_SUFFIX];
         if (!tilemapResource || !tilemapResource.data) {
             error("Failed to preload PyxelTilemap " + key);
@@ -5401,7 +5460,7 @@ var Preload = /** @class */ (function () {
         for (var i = 0; i < tilemapJson.layers.length; i++) {
             var tilemapLayer = A.filledArray2D(tilemapJson.tileshigh, tilemapJson.tileswide);
             try {
-                for (var _b = (e_28 = void 0, __values(tilemapJson.layers[i].tiles)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                for (var _b = (e_29 = void 0, __values(tilemapJson.layers[i].tiles)), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var tile = _c.value;
                     tilemapLayer[tile.y][tile.x] = {
                         index: Math.max(tile.tile, -1),
@@ -5410,12 +5469,12 @@ var Preload = /** @class */ (function () {
                     };
                 }
             }
-            catch (e_28_1) { e_28 = { error: e_28_1 }; }
+            catch (e_29_1) { e_29 = { error: e_29_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_28) throw e_28.error; }
+                finally { if (e_29) throw e_29.error; }
             }
             tilemapForCache.layers.push(tilemapLayer);
         }
@@ -5633,29 +5692,11 @@ var SoundManager = /** @class */ (function () {
         this.activeSounds = [];
     }
     SoundManager.prototype.preGameUpdate = function () {
-        var e_29, _a;
-        try {
-            for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var sound = _c.value;
-                sound.markForDisable();
-            }
-        }
-        catch (e_29_1) { e_29 = { error: e_29_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_29) throw e_29.error; }
-        }
-    };
-    SoundManager.prototype.postGameUpdate = function () {
         var e_30, _a;
         try {
             for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var sound = _c.value;
-                if (sound.isMarkedForDisable) {
-                    this.ensureSoundDisabled(sound);
-                }
+                sound.markForDisable();
             }
         }
         catch (e_30_1) { e_30 = { error: e_30_1 }; }
@@ -5664,6 +5705,24 @@ var SoundManager = /** @class */ (function () {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
             finally { if (e_30) throw e_30.error; }
+        }
+    };
+    SoundManager.prototype.postGameUpdate = function () {
+        var e_31, _a;
+        try {
+            for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var sound = _c.value;
+                if (sound.isMarkedForDisable) {
+                    this.ensureSoundDisabled(sound);
+                }
+            }
+        }
+        catch (e_31_1) { e_31 = { error: e_31_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_31) throw e_31.error; }
         }
     };
     SoundManager.prototype.ensureSoundDisabled = function (sound) {
@@ -5756,7 +5815,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_31, _a;
+        var e_32, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -5770,12 +5829,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_31_1) { e_31 = { error: e_31_1 }; }
+            catch (e_32_1) { e_32 = { error: e_32_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_31) throw e_31.error; }
+                finally { if (e_32) throw e_32.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -5924,7 +5983,7 @@ var StateMachine = /** @class */ (function () {
         return this.states[name];
     };
     StateMachine.prototype.getValidTransition = function (state) {
-        var e_32, _a;
+        var e_33, _a;
         try {
             for (var _b = __values(state.transitions || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -5941,12 +6000,12 @@ var StateMachine = /** @class */ (function () {
                 }
             }
         }
-        catch (e_32_1) { e_32 = { error: e_32_1 }; }
+        catch (e_33_1) { e_33 = { error: e_33_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_32) throw e_32.error; }
+            finally { if (e_33) throw e_33.error; }
         }
         return undefined;
     };
@@ -6145,7 +6204,7 @@ var StoryManager = /** @class */ (function () {
         this.storyConfig.execute();
     };
     StoryManager.prototype.getInteractableObjects = function (node, stageName) {
-        var e_33, _a;
+        var e_34, _a;
         var result = new Set();
         if (!node)
             return result;
@@ -6162,12 +6221,12 @@ var StoryManager = /** @class */ (function () {
                 result.add(transition.with);
             }
         }
-        catch (e_33_1) { e_33 = { error: e_33_1 }; }
+        catch (e_34_1) { e_34 = { error: e_34_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_33) throw e_33.error; }
+            finally { if (e_34) throw e_34.error; }
         }
         return result;
     };
@@ -6190,7 +6249,7 @@ var StoryManager = /** @class */ (function () {
         this._currentNodeName = _.last(path);
     };
     StoryManager.prototype.getFirstValidTransition = function (node) {
-        var e_34, _a;
+        var e_35, _a;
         try {
             for (var _b = __values(node.transitions), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -6214,12 +6273,12 @@ var StoryManager = /** @class */ (function () {
                 }
             }
         }
-        catch (e_34_1) { e_34 = { error: e_34_1 }; }
+        catch (e_35_1) { e_35 = { error: e_35_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_34) throw e_34.error; }
+            finally { if (e_35) throw e_35.error; }
         }
         return null;
     };
@@ -6230,7 +6289,7 @@ var StoryManager = /** @class */ (function () {
         return this.storyboard[name];
     };
     StoryManager.prototype.updateParty = function (party) {
-        var e_35, _a, e_36, _b;
+        var e_36, _a, e_37, _b;
         if (party.setLeader !== undefined) {
             this.theater.partyManager.leader = party.setLeader;
         }
@@ -6241,12 +6300,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberActive(m);
                 }
             }
-            catch (e_35_1) { e_35 = { error: e_35_1 }; }
+            catch (e_36_1) { e_36 = { error: e_36_1 }; }
             finally {
                 try {
                     if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                 }
-                finally { if (e_35) throw e_35.error; }
+                finally { if (e_36) throw e_36.error; }
             }
         }
         if (!_.isEmpty(party.setMembersInactive)) {
@@ -6256,12 +6315,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberInactive(m);
                 }
             }
-            catch (e_36_1) { e_36 = { error: e_36_1 }; }
+            catch (e_37_1) { e_37 = { error: e_37_1 }; }
             finally {
                 try {
                     if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
                 }
-                finally { if (e_36) throw e_36.error; }
+                finally { if (e_37) throw e_37.error; }
             }
         }
     };
@@ -6476,7 +6535,7 @@ var Tilemap = /** @class */ (function (_super) {
         }
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_37, _a;
+        var e_38, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -6494,12 +6553,12 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_37_1) { e_37 = { error: e_37_1 }; }
+        catch (e_38_1) { e_38 = { error: e_38_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_37) throw e_37.error; }
+            finally { if (e_38) throw e_38.error; }
         }
         World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };
@@ -7239,6 +7298,15 @@ var Assets;
         'debug': {},
         // Fonts
         'deluxe16': {},
+        // Tiles
+        'tiles': {
+            defaultAnchor: Anchor.CENTER,
+            spritesheet: { frameWidth: 32, frameHeight: 32 },
+        },
+        'player': {
+            anchor: Anchor.BOTTOM,
+        },
+        'platform': {},
     };
     Assets.sounds = {
         // Debug
@@ -7246,8 +7314,20 @@ var Assets;
         // SFX
         'click': {},
     };
-    Assets.tilesets = {};
-    Assets.pyxelTilemaps = {};
+    Assets.tilesets = {
+        'tiles': {
+            tiles: Preload.allTilesWithPrefix('tiles_'),
+            tileWidth: 32,
+            tileHeight: 32,
+            collisionIndices: [0, 1, 2, 3, 4, 5],
+        }
+    };
+    Assets.pyxelTilemaps = {
+        'main_tilemap': {
+            tileset: Assets.tilesets['tiles'],
+            url: 'assets/tiles.json'
+        }
+    };
     var fonts = /** @class */ (function () {
         function fonts() {
         }
@@ -7270,18 +7350,22 @@ function BASE_STAGE() {
         layers: [
             { name: 'bg' },
             { name: 'ground' },
-            { name: 'main', sortKey: function (obj) { return obj.y; } },
-            { name: 'fg', sortKey: function (obj) { return obj.y; } },
+            { name: 'main' },
+            { name: 'fg' },
             { name: 'above' },
         ],
         physicsGroups: {
             'player': {},
-            'props': {},
+            'boxes': {},
             'walls': {},
         },
         collisionOrder: [
-            { move: 'player', from: ['props', 'walls'] },
+            { move: 'boxes', from: ['player'] },
+            { move: 'boxes', from: ['walls'] },
+            { move: 'player', from: ['boxes'] },
+            { move: 'player', from: ['walls'] },
         ],
+        collisionIterations: 2,
     };
 }
 function MENU_BASE_STAGE() {
@@ -7321,6 +7405,70 @@ function WORLD_BOUNDS(left, top, right, bottom) {
         ]
     };
 }
+var Box = /** @class */ (function (_super) {
+    __extends(Box, _super);
+    function Box(config) {
+        var _this = _super.call(this, config, {
+            texture: 'debug',
+            tint: 0x00FF00,
+            scaleX: 2,
+            scaleY: 2,
+            gravityy: 200,
+            bounds: { x: 0, y: 0, width: 32, height: 32 },
+        }) || this;
+        _this.carrierModule = new CarrierModule();
+        return _this;
+    }
+    Box.prototype.postUpdate = function () {
+        _super.prototype.postUpdate.call(this);
+        this.carrierModule.postUpdate(this);
+    };
+    return Box;
+}(Sprite));
+var CarrierModule = /** @class */ (function () {
+    function CarrierModule() {
+        this.riders = [];
+    }
+    CarrierModule.prototype.postUpdate = function (obj) {
+        var e_39, _a;
+        var objBounds = obj.getWorldBounds();
+        var checkRect = {
+            x: objBounds.x,
+            y: objBounds.y - 1,
+            width: objBounds.width,
+            height: 1
+        };
+        try {
+            for (var _b = __values(obj.world.getPhysicsObjectsThatCollideWith(obj.physicsGroup)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var potentialRider = _c.value;
+                if (potentialRider.isOverlappingRect(checkRect)) {
+                    if (_.contains(this.riders, potentialRider))
+                        continue;
+                    if (_.contains(obj.children, potentialRider))
+                        continue; // Disallow an object's own child to ride it
+                    obj.addChildKeepWorldPosition(potentialRider);
+                    this.riders.push(potentialRider);
+                }
+                else {
+                    if (!_.contains(this.riders, potentialRider))
+                        continue;
+                    A.removeAll(this.riders, potentialRider);
+                    if (_.contains(obj.children, potentialRider)) {
+                        obj.removeChildKeepWorldPosition(potentialRider);
+                    }
+                }
+            }
+        }
+        catch (e_39_1) { e_39 = { error: e_39_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_39) throw e_39.error; }
+        }
+    };
+    return CarrierModule;
+}());
 var cheat;
 (function (cheat) {
     function lose() {
@@ -7345,7 +7493,7 @@ var Main = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(Main, "height", {
-        get: function () { return 720; },
+        get: function () { return 800; },
         enumerable: false,
         configurable: true
     });
@@ -7406,11 +7554,11 @@ var Main = /** @class */ (function () {
             'right': ['ArrowRight'],
             'up': ['ArrowUp'],
             'down': ['ArrowDown'],
-            'useItem': ['x'],
-            'pickupDropItem': ['c'],
             'interact': ['e'],
+            // Game
             'advanceDialog': ['MouseLeft', 'e', ' '],
             'pause': ['Escape', 'Backspace'],
+            // Debug
             'debugMoveCameraUp': ['i'],
             'debugMoveCameraDown': ['k'],
             'debugMoveCameraLeft': ['j'],
@@ -7425,7 +7573,6 @@ var Main = /** @class */ (function () {
             '8': ['8'],
             '9': ['9'],
             '0': ['0'],
-            'lmb': ['MouseLeft'],
         });
         window.addEventListener("keypress", function (event) {
             WebAudio.start();
@@ -7585,6 +7732,30 @@ var PauseMenu = /** @class */ (function (_super) {
     };
     return PauseMenu;
 }(Menu));
+var MovingPlatform = /** @class */ (function (_super) {
+    __extends(MovingPlatform, _super);
+    function MovingPlatform(config) {
+        var _this = _super.call(this, config) || this;
+        _this.pathStart = config.data.pathStart;
+        _this.pathEnd = config.data.pathEnd;
+        _this.x = _this.pathStart.x;
+        _this.y = _this.pathStart.y;
+        _this.pathTimer = new Timer(Infinity);
+        _this.carrierModule = new CarrierModule();
+        return _this;
+    }
+    MovingPlatform.prototype.update = function (delta) {
+        _super.prototype.update.call(this, delta);
+        this.pathTimer.update(delta);
+        this.x = M.lerp(this.pathStart.x, this.pathEnd.x, (1 - Math.cos(this.pathTimer.time)) / 2);
+        this.y = M.lerp(this.pathStart.y, this.pathEnd.y, (1 - Math.cos(this.pathTimer.time)) / 2);
+    };
+    MovingPlatform.prototype.postUpdate = function () {
+        _super.prototype.postUpdate.call(this);
+        this.carrierModule.postUpdate(this);
+    };
+    return MovingPlatform;
+}(Sprite));
 /// <reference path="main.ts" />
 function getParty() {
     return {
@@ -7593,6 +7764,42 @@ function getParty() {
         members: {}
     };
 }
+var Player = /** @class */ (function (_super) {
+    __extends(Player, _super);
+    function Player(config) {
+        var _this = _super.call(this, config, {
+            texture: 'player',
+            tint: 0xFF0000,
+            bounds: { x: -16, y: -64, width: 32, height: 64 },
+            gravityy: 512,
+        }) || this;
+        _this.speed = 128;
+        _this.jumpForce = 256;
+        _this.controllerSchema = {
+            left: function () { return Input.isDown('left'); },
+            right: function () { return Input.isDown('right'); },
+            jump: function () { return Input.justDown('up'); },
+        };
+        _this.addChild({
+            constructor: Sprite,
+            texture: 'debug',
+            x: 0, y: 0,
+        });
+        return _this;
+    }
+    Player.prototype.update = function (delta) {
+        var haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
+        this.updateMovement(haxis);
+        _super.prototype.update.call(this, delta);
+    };
+    Player.prototype.updateMovement = function (haxis) {
+        this.vx = haxis * this.speed;
+        if (this.controller.jump) {
+            this.vy = -this.jumpForce;
+        }
+    };
+    return Player;
+}(Sprite));
 function getStages() {
     return {
         'game': {
@@ -7604,7 +7811,43 @@ function getStages() {
             entryPoints: {
                 'main': { x: Main.width / 2, y: Main.height / 2 },
             },
-            worldObjects: []
+            worldObjects: [
+                {
+                    name: 'tiles',
+                    constructor: Tilemap,
+                    x: 0, y: 0,
+                    tilemap: 'main_tilemap',
+                    layer: 'main',
+                    physicsGroup: 'walls',
+                },
+                {
+                    name: 'player',
+                    constructor: Player,
+                    x: 180, y: 620,
+                    layer: 'main',
+                    physicsGroup: 'player',
+                    controllable: true,
+                },
+                {
+                    name: 'box',
+                    constructor: Box,
+                    x: 270, y: 226,
+                    layer: 'main',
+                    physicsGroup: 'boxes',
+                },
+                {
+                    name: 'platform',
+                    constructor: MovingPlatform,
+                    texture: 'platform',
+                    layer: 'main',
+                    physicsGroup: 'walls',
+                    bounds: { x: 0, y: 0, width: 128, height: 16 },
+                    data: {
+                        pathStart: { x: 192, y: 352 },
+                        pathEnd: { x: 320, y: 352 },
+                    }
+                }
+            ]
         },
     };
 }

@@ -9,7 +9,7 @@ class Main {
     static delta: number;
 
     static get width() { return 960; }
-    static get height() { return 720; }
+    static get height() { return 800; }
     static get backgroundColor() { return 0x000000; }
 
     // no need to modify
@@ -73,11 +73,13 @@ class Main {
             'right':                ['ArrowRight'],
             'up':                   ['ArrowUp'],
             'down':                 ['ArrowDown'],
-            'useItem':              ['x'],
-            'pickupDropItem':       ['c'],
             'interact':             ['e'],
+
+            // Game
             'advanceDialog':        ['MouseLeft', 'e', ' '],
             'pause':                ['Escape', 'Backspace'],
+
+            // Debug
             'debugMoveCameraUp':    ['i'],
             'debugMoveCameraDown':  ['k'],
             'debugMoveCameraLeft':  ['j'],
@@ -92,7 +94,6 @@ class Main {
             '8':                    ['8'],
             '9':                    ['9'],
             '0':                    ['0'],
-            'lmb':                  ['MouseLeft'],
         });
 
         window.addEventListener("keypress", event => {

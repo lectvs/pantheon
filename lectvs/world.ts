@@ -7,6 +7,7 @@ namespace World {
 
         physicsGroups?: Dict<World.PhysicsGroupConfig>;
         collisionOrder?: CollisionConfig[];
+        collisionIterations?: number;
         layers?: World.LayerConfig[];
 
         camera?: Camera.Config;
@@ -55,6 +56,7 @@ class World {
 
     physicsGroups: Dict<World.PhysicsGroup>;
     collisionOrder: World.CollisionConfig[];
+    collisionIterations: number;
     worldObjectsByName: Dict<WorldObject[]>;
     layers: World.Layer[];
 
@@ -82,6 +84,7 @@ class World {
 
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
         this.collisionOrder = O.getOrDefault(config.collisionOrder, []);
+        this.collisionIterations = O.getOrDefault(config.collisionIterations, 1);
         this.worldObjectsByName = {};
         this.layers = this.createLayers(config.layers);
 
@@ -134,7 +137,9 @@ class World {
         global.metrics.endSpan('update');
 
         global.metrics.startSpan('handleCollisions');
-        this.handleCollisions();
+        for (let i = 0; i < this.collisionIterations; i++) {
+            this.handleCollisions();
+        }
         global.metrics.endSpan('handleCollisions');
 
         global.metrics.startSpan('postUpdate');
@@ -242,6 +247,28 @@ class World {
 
     getPhysicsGroupByName(name: string) {
         return this.physicsGroups[name];
+    }
+
+    getPhysicsGroupsThatCollideWith(physicsGroup: string) {
+        let result: string[] = [];
+        for (let coll of this.collisionOrder) {
+            let move = _.isString(coll.move) ? [coll.move] : coll.move;
+            let from = _.isString(coll.from) ? [coll.from] : coll.from;
+
+            if (_.contains(move, physicsGroup)) {
+                result.push(...from);
+            }
+
+            if (_.contains(from, physicsGroup)) {
+                result.push(...move);
+            }
+        }
+        return A.removeDuplicates(result.filter(group => this.physicsGroups[group]));
+    }
+
+    getPhysicsObjectsThatCollideWith(physicsGroup: string) {
+        let groups = this.getPhysicsGroupsThatCollideWith(physicsGroup);
+        return <PhysicsWorldObject[]>_.flatten(groups.map(group => this.physicsGroups[group].worldObjects));
     }
 
     getWorldMouseX() {

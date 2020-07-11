@@ -6,18 +6,22 @@ function BASE_STAGE(): World.Config {
         layers: [
             { name: 'bg' },
             { name: 'ground' },
-            { name: 'main', sortKey: obj => obj.y },
-            { name: 'fg', sortKey: obj => obj.y },
+            { name: 'main' },
+            { name: 'fg' },
             { name: 'above' },
         ],
         physicsGroups: {
             'player': {},
-            'props': {},
+            'boxes': {},
             'walls': {},
         },
         collisionOrder: [
-            { move: 'player', from: ['props', 'walls'] },
+            { move: 'boxes', from: ['player'] },
+            { move: 'boxes', from: ['walls'] },
+            { move: 'player', from: ['boxes'] },
+            { move: 'player', from: ['walls'] },
         ],
+        collisionIterations: 2,
     };
 }
 

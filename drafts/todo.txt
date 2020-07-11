@@ -1,3 +1,4 @@
+- preRenders happen together
 - boundless textures
 - controls remapping
 - uncapped fps?
@@ -18,6 +19,9 @@
     - loading screen/progress bar
     - timeout on preloading
 - 1x scaled up graphics
+- remove delta from update?
 - improve World audio functionality (e.g. playingAudio)
 - move tileset animation fields from Assets to Tilemap.Config
 - cheats system (console only for now)
+- smart tilemaps
+- editing tilemaps
