@@ -35,9 +35,8 @@ class PhysicsWorldObject extends WorldObject {
     debugBounds: boolean;
     simulating: boolean;
 
-    // Used to store the position before simulated movement
-    preMovementX: number;
-    preMovementY: number;
+    physicslastx: number;
+    physicslasty: number;
 
     constructor(config: PhysicsWorldObject.Config, defaults?: PhysicsWorldObject.Config) {
         config = WorldObject.resolveConfig<PhysicsWorldObject.Config>(config, defaults);
@@ -57,8 +56,14 @@ class PhysicsWorldObject extends WorldObject {
         this.debugBounds = config.debugBounds ?? false;
         this.simulating = config.startSimulating ?? true;
 
-        this.preMovementX = this.x;
-        this.preMovementY = this.y;
+        this.physicslastx = this.x;
+        this.physicslasty = this.y;
+    }
+
+    preUpdate() {
+        super.preUpdate();
+        this.physicslastx = this.x;
+        this.physicslasty = this.y;
     }
 
     update(delta: number) {
@@ -82,10 +87,8 @@ class PhysicsWorldObject extends WorldObject {
 
     }
 
-    applyGravity(delta: number) {
-        this.vx += this.gravityx * delta;
-        this.vy += this.gravityy * delta;
-        this.vz += this.gravityz * delta;
+    getWorldBounds(newX: number = this.x, newY: number = this.y) {
+        return new Rectangle(newX + this.bounds.x, newY + this.bounds.y, this.bounds.width, this.bounds.height);
     }
 
     isOverlapping(other: PhysicsWorldObject) {
@@ -110,13 +113,20 @@ class PhysicsWorldObject extends WorldObject {
         return result;
     }
 
-    getWorldBounds(newX: number = this.x, newY: number = this.y) {
-        return new Rectangle(newX + this.bounds.x, newY + this.bounds.y, this.bounds.width, this.bounds.height);
+    teleport(x: number, y: number) {
+        this.x = x;
+        this.y = y;
+        this.physicslastx = x;
+        this.physicslasty = y;
+    }
+
+    applyGravity(delta: number) {
+        this.vx += this.gravityx * delta;
+        this.vy += this.gravityy * delta;
+        this.vz += this.gravityz * delta;
     }
 
     move(delta: number) {
-        this.preMovementX = this.x;
-        this.preMovementY = this.y;
         this.x += this.vx * delta;
         this.y += this.vy * delta;
         this.z += this.vz * delta;

@@ -1,12 +1,14 @@
 - /preRenders happen together
 - /replace all O.getOrDefault with ?. and ??
 - boundless textures
-- controls remapping
+- options
+    - saving/loading
+    - controls remapping
 - uncapped fps?
 - allow multiple menus to pause the game (or change definition of "paused")
 - platformer stuff
     - /moving platforms
-    - physics based on lastx/y instead of lastmovementx/y?
+    - /physics based on lastx/y instead of lastmovementx/y?
     - slopes/sloped bounds
     - one-way platforms
     - boxes colliding with other boxes

@@ -1983,10 +1983,15 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         _this.colliding = (_k = config.colliding) !== null && _k !== void 0 ? _k : true;
         _this.debugBounds = (_l = config.debugBounds) !== null && _l !== void 0 ? _l : false;
         _this.simulating = (_m = config.startSimulating) !== null && _m !== void 0 ? _m : true;
-        _this.preMovementX = _this.x;
-        _this.preMovementY = _this.y;
+        _this.physicslastx = _this.x;
+        _this.physicslasty = _this.y;
         return _this;
     }
+    PhysicsWorldObject.prototype.preUpdate = function () {
+        _super.prototype.preUpdate.call(this);
+        this.physicslastx = this.x;
+        this.physicslasty = this.y;
+    };
     PhysicsWorldObject.prototype.update = function (delta) {
         _super.prototype.update.call(this, delta);
         if (this.simulating) {
@@ -2004,10 +2009,10 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
     };
     PhysicsWorldObject.prototype.onCollide = function (other) {
     };
-    PhysicsWorldObject.prototype.applyGravity = function (delta) {
-        this.vx += this.gravityx * delta;
-        this.vy += this.gravityy * delta;
-        this.vz += this.gravityz * delta;
+    PhysicsWorldObject.prototype.getWorldBounds = function (newX, newY) {
+        if (newX === void 0) { newX = this.x; }
+        if (newY === void 0) { newY = this.y; }
+        return new Rectangle(newX + this.bounds.x, newY + this.bounds.y, this.bounds.width, this.bounds.height);
     };
     PhysicsWorldObject.prototype.isOverlapping = function (other) {
         this.bounds.x += this.x;
@@ -2029,14 +2034,18 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         this.bounds.y -= this.y;
         return result;
     };
-    PhysicsWorldObject.prototype.getWorldBounds = function (newX, newY) {
-        if (newX === void 0) { newX = this.x; }
-        if (newY === void 0) { newY = this.y; }
-        return new Rectangle(newX + this.bounds.x, newY + this.bounds.y, this.bounds.width, this.bounds.height);
+    PhysicsWorldObject.prototype.teleport = function (x, y) {
+        this.x = x;
+        this.y = y;
+        this.physicslastx = x;
+        this.physicslasty = y;
+    };
+    PhysicsWorldObject.prototype.applyGravity = function (delta) {
+        this.vx += this.gravityx * delta;
+        this.vy += this.gravityy * delta;
+        this.vz += this.gravityz * delta;
     };
     PhysicsWorldObject.prototype.move = function (delta) {
-        this.preMovementX = this.x;
-        this.preMovementY = this.y;
         this.x += this.vx * delta;
         this.y += this.vy * delta;
         this.z += this.vz * delta;
@@ -5110,12 +5119,12 @@ var Physics = /** @class */ (function () {
     }
     Physics.getCollision = function (obj, from) {
         var _a;
-        var dx1 = obj.x - obj.preMovementX;
-        var dy1 = obj.y - obj.preMovementY;
-        var dx2 = from.x - from.preMovementX;
-        var dy2 = from.y - from.preMovementY;
-        var b1 = obj.getWorldBounds(obj.preMovementX, obj.preMovementY);
-        var b2 = from.getWorldBounds(from.preMovementX, from.preMovementY);
+        var dx1 = obj.x - obj.physicslastx;
+        var dy1 = obj.y - obj.physicslasty;
+        var dx2 = from.x - from.physicslastx;
+        var dy2 = from.y - from.physicslasty;
+        var b1 = obj.getWorldBounds(obj.physicslastx, obj.physicslasty);
+        var b2 = from.getWorldBounds(from.physicslastx, from.physicslasty);
         var topbot_t = Infinity;
         var bottop_t = Infinity;
         var leftright_t = Infinity;
@@ -5221,7 +5230,7 @@ var Physics = /** @class */ (function () {
         }
         var leftdx = fromBounds.right - objBounds.left;
         var rightdx = fromBounds.left - objBounds.right;
-        var relativedx = (obj.x - obj.preMovementX) - (from.x - from.preMovementX);
+        var relativedx = (obj.x - obj.physicslastx) - (from.x - from.physicslastx);
         var dx = 0;
         if (relativedx < 0) {
             dx = leftdx;
@@ -5251,7 +5260,7 @@ var Physics = /** @class */ (function () {
         }
         var updy = fromBounds.bottom - objBounds.top;
         var downdy = fromBounds.top - objBounds.bottom;
-        var relativedy = (obj.y - obj.preMovementY) - (from.y - from.preMovementY);
+        var relativedy = (obj.y - obj.physicslasty) - (from.y - from.physicslasty);
         var dy = 0;
         if (relativedy < 0) {
             dy = updy;
@@ -5331,9 +5340,6 @@ var Physics = /** @class */ (function () {
             enumerable: false,
             configurable: true
         });
-        Collision.prototype.getOther = function (orig) {
-            return this.move !== orig ? this.move : this.from;
-        };
         return Collision;
     }());
     Physics.Collision = Collision;
@@ -7870,6 +7876,14 @@ function getStages() {
             },
             worldObjects: [
                 {
+                    name: 'tiles',
+                    constructor: Tilemap,
+                    x: 0, y: 0,
+                    tilemap: 'main_tilemap',
+                    layer: 'main',
+                    physicsGroup: 'walls',
+                },
+                {
                     name: 'player',
                     constructor: Player,
                     x: 180, y: 620,
@@ -7895,14 +7909,6 @@ function getStages() {
                         pathStart: { x: 192, y: 402 },
                         pathEnd: { x: 320, y: 352 },
                     }
-                },
-                {
-                    name: 'tiles',
-                    constructor: Tilemap,
-                    x: 0, y: 0,
-                    tilemap: 'main_tilemap',
-                    layer: 'main',
-                    physicsGroup: 'walls',
                 },
             ]
         },

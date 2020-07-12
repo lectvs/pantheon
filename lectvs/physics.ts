@@ -1,12 +1,12 @@
 class Physics {
     static getCollision(obj: PhysicsWorldObject, from: PhysicsWorldObject): Physics.Collision {
-        let dx1 = obj.x - obj.preMovementX;
-        let dy1 = obj.y - obj.preMovementY;
-        let dx2 = from.x - from.preMovementX;
-        let dy2 = from.y - from.preMovementY;
+        let dx1 = obj.x - obj.physicslastx;
+        let dy1 = obj.y - obj.physicslasty;
+        let dx2 = from.x - from.physicslastx;
+        let dy2 = from.y - from.physicslasty;
 
-        let b1 = obj.getWorldBounds(obj.preMovementX, obj.preMovementY);
-        let b2 = from.getWorldBounds(from.preMovementX, from.preMovementY);
+        let b1 = obj.getWorldBounds(obj.physicslastx, obj.physicslasty);
+        let b2 = from.getWorldBounds(from.physicslastx, from.physicslasty);
 
         let topbot_t = Infinity;
         let bottop_t = Infinity;
@@ -123,7 +123,7 @@ class Physics {
         let leftdx = fromBounds.right - objBounds.left;
         let rightdx = fromBounds.left - objBounds.right;
         
-        let relativedx = (obj.x - obj.preMovementX) - (from.x - from.preMovementX);
+        let relativedx = (obj.x - obj.physicslastx) - (from.x - from.physicslastx);
 
         let dx = 0;
 
@@ -157,7 +157,7 @@ class Physics {
         let updy = fromBounds.bottom - objBounds.top;
         let downdy = fromBounds.top - objBounds.bottom;
 
-        let relativedy = (obj.y - obj.preMovementY) - (from.y - from.preMovementY);
+        let relativedy = (obj.y - obj.physicslasty) - (from.y - from.physicslasty);
 
         let dy = 0;
 
@@ -248,10 +248,6 @@ namespace Physics {
 
         get isHorizontal() {
             return this.direction === Collision.Direction.LEFT || this.direction === Collision.Direction.RIGHT;
-        }
-
-        getOther(orig: Physics) {
-            return this.move !== orig ? this.move : this.from;
         }
     }
 
