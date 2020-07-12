@@ -1,5 +1,6 @@
 - /preRenders happen together
 - /replace all O.getOrDefault with ?. and ??
+- sort files and put platformer stuff in core engine
 - boundless textures
 - options
     - saving/loading
@@ -9,8 +10,8 @@
 - platformer stuff
     - /moving platforms
     - /physics based on lastx/y instead of lastmovementx/y?
+    - /one-way platforms
     - slopes/sloped bounds
-    - one-way platforms
     - boxes colliding with other boxes
     - implement metroid-style transitions
 - consider moving texture's anchorX/Y to a Sprite property

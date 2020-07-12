@@ -7,6 +7,10 @@ namespace S {
         }
     }
 
+    export function callAfterTime(time: number, func: () => any): Script.Function {
+        return S.chain(S.wait(time), S.call(func));
+    }
+
     export function chain(...scriptFunctions: Script.Function[]): Script.Function {
         return function*() {
             for (let scriptFunction of scriptFunctions) {

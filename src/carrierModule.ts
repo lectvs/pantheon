@@ -19,7 +19,7 @@ class CarrierModule {
         for (let potentialRider of this.obj.world.getPhysicsObjectsThatCollideWith(this.obj.physicsGroup)) {
             if (potentialRider.isOverlappingRect(checkRect)) {
                 if (_.contains(this.riders, potentialRider)) continue;
-                if (_.contains(this.obj.children, potentialRider)) continue;  // Disallow an object's own child to ride it
+                if (potentialRider.parent) continue;  // Disallow riding by any child object
                 this.obj.addChildKeepWorldPosition(potentialRider);
                 this.riders.push(potentialRider);
             } else {

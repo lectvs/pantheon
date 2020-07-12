@@ -13,9 +13,9 @@ namespace PhysicsWorldObject {
         bounds?: Rect;
         immovable?: boolean;
         colliding?: boolean;
+        simulating?: boolean;
 
         debugBounds?: boolean;
-        startSimulating?: boolean;
     }
 }
 
@@ -54,7 +54,7 @@ class PhysicsWorldObject extends WorldObject {
         this.colliding = config.colliding ?? true;
 
         this.debugBounds = config.debugBounds ?? false;
-        this.simulating = config.startSimulating ?? true;
+        this.simulating = config.simulating ?? true;
 
         this.physicslastx = this.x;
         this.physicslasty = this.y;
@@ -83,15 +83,11 @@ class PhysicsWorldObject extends WorldObject {
         super.render(screen);
     }
 
-    onCollide(other: PhysicsWorldObject) {
-
-    }
-
     getWorldBounds(newX: number = this.x, newY: number = this.y) {
         return new Rectangle(newX + this.bounds.x, newY + this.bounds.y, this.bounds.width, this.bounds.height);
     }
 
-    isOverlapping(other: PhysicsWorldObject) {
+    isCollidingWith(other: PhysicsWorldObject) {
         this.bounds.x += this.x;
         this.bounds.y += this.y;
         other.bounds.x += other.x;
@@ -111,6 +107,11 @@ class PhysicsWorldObject extends WorldObject {
         this.bounds.x -= this.x;
         this.bounds.y -= this.y;
         return result;
+    }
+
+    
+    onCollide(other: PhysicsWorldObject) {
+
     }
 
     teleport(x: number, y: number) {

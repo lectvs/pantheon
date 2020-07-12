@@ -1,4 +1,45 @@
 class Physics {
+    static collide(obj: PhysicsWorldObject, from: PhysicsWorldObject[], options: Physics.CollideOptions = {}): Pt {
+        if (_.isEmpty(from)) return;
+        if (!obj.colliding) return;
+
+        _.defaults(options, {
+            callback: false,
+            transferMomentum: true,
+            maxIters: Physics.MAX_ITERS,
+        });
+
+        let startX = obj.x;
+        let startY = obj.y;
+
+        let collidingWith = from.filter(other => obj !== other && other.colliding && obj.isCollidingWith(other) && other.isCollidingWith(obj));
+
+        let iters = 0;
+        while (!_.isEmpty(collidingWith) && iters < options.maxIters) {
+
+            let collisions = collidingWith.map(other => Physics.getCollision(obj, other))
+            collisions.sort((a,b) => a.t - b.t);
+
+            for (let collision of collisions) {
+                let d = Physics.separate(collision);
+                if (d !== 0 && options.transferMomentum) {
+                    Physics.transferMomentum(collision);
+                }
+
+                collision.move.onCollide(collision.from);
+                collision.from.onCollide(collision.move);
+                if (options.callback) {
+                    options.callback(collision.move, collision.from);
+                }
+            }
+
+            collidingWith = collidingWith.filter(other => obj.isCollidingWith(other));
+            iters++;
+        }
+
+        return { x: obj.x - startX, y: obj.y - startY };
+    }
+
     static getCollision(obj: PhysicsWorldObject, from: PhysicsWorldObject): Physics.Collision {
         let dx1 = obj.x - obj.physicslastx;
         let dy1 = obj.y - obj.physicslasty;
@@ -57,47 +98,6 @@ class Physics {
         }
 
         return result;
-    }
-
-    static collide(obj: PhysicsWorldObject, from: PhysicsWorldObject[], options: Physics.CollideOptions = {}): Pt {
-        if (_.isEmpty(from)) return;
-        if (!obj.colliding) return;
-
-        _.defaults(options, {
-            callback: false,
-            transferMomentum: true,
-            maxIters: Physics.MAX_ITERS,
-        });
-
-        let startX = obj.x;
-        let startY = obj.y;
-
-        let collidingWith = from.filter(other => obj !== other && other.colliding && obj.isOverlapping(other));
-
-        let iters = 0;
-        while (!_.isEmpty(collidingWith) && iters < options.maxIters) {
-
-            let collisions = collidingWith.map(other => Physics.getCollision(obj, other));
-            collisions.sort((a,b) => a.t - b.t);
-
-            for (let collision of collisions) {
-                let d = Physics.separate(collision);
-                if (d !== 0 && options.transferMomentum) {
-                    Physics.transferMomentum(collision);
-                }
-
-                collision.move.onCollide(collision.from);
-                collision.from.onCollide(collision.move);
-                if (options.callback) {
-                    options.callback(collision.move, collision.from);
-                }
-            }
-
-            collidingWith = collidingWith.filter(other => obj.isOverlapping(other));
-            iters++;
-        }
-
-        return { x: obj.x - startX, y: obj.y - startY };
     }
 
     static separate(collision: Physics.Collision, skipSeparation: boolean = false) {

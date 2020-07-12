@@ -46,6 +46,15 @@ function getStages(): Dict<World.Config> { return {
                     pathEnd: { x: 320, y: 352 },
                 }
             },
+            <Sprite.Config>{
+                name: 'oneway',
+                constructor: OneWayPlatform,
+                x: 250, y: 530,
+                texture: 'platform',
+                layer: 'main',
+                physicsGroup: 'walls',
+                bounds: { x: 0, y: 0, width: 128, height: 16 },
+            },
         ]
     },
 }}

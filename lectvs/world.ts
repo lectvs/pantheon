@@ -267,6 +267,10 @@ class World {
             let move = _.isString(coll.move) ? [coll.move] : coll.move;
             let from = _.isString(coll.from) ? [coll.from] : coll.from;
 
+            if (_.contains(move, physicsGroup)) {
+                result.push(...from);
+            }
+
             if (_.contains(from, physicsGroup)) {
                 result.push(...move);
             }
@@ -345,6 +349,19 @@ class World {
             return !_.isEmpty(this.worldObjectsByName[obj]);
         }
         return _.contains(this.worldObjects, obj);
+    }
+
+    // Returns a list of all physics objects in the world that overlap the given rect
+    overlapRect(rect: Rect, restrictToPhysicsGroups?: string[]) {
+        let result = [];
+        for (let physicsGroup in this.physicsGroups) {
+            if (restrictToPhysicsGroups && !_.contains(restrictToPhysicsGroups, physicsGroup)) continue;
+            for (let obj of this.physicsGroups[physicsGroup].worldObjects) {
+                if (!obj.isOverlappingRect(rect)) continue;
+                result.push(obj);
+            }
+        }
+        return result;
     }
 
     playSound(key: string) {
