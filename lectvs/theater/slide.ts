@@ -1,3 +1,5 @@
+/// <reference path="../worldObject/sprite/sprite.ts"/>
+
 namespace Slide {
     export type Config = Sprite.Config & {
         timeToLoad?: number;

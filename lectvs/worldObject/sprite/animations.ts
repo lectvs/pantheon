@@ -1,4 +1,4 @@
-/// <reference path="./utils/a_array.ts" />
+/// <reference path="../../utils/a_array.ts" />
 
 namespace Animation {
     export type Config = {

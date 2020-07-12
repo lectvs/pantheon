@@ -1,4 +1,4 @@
-/// <reference path="../lectvs/menu.ts" />
+/// <reference path="../lectvs/menu/menu.ts" />
 
 class MainMenu extends Menu {
     constructor(menuSystem: MenuSystem) {

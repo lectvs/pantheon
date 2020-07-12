@@ -1,4 +1,4 @@
-/// <reference path="./utils/o_object.ts"/>
+/// <reference path="../utils/o_object.ts"/>
 
 namespace Camera {
     export type Config = {

@@ -1,4 +1,4 @@
-/// <reference path="spriteText.ts" />
+/// <reference path="../worldObject/spriteText/spriteText.ts" />
 
 namespace MenuTextButton {
     export type Config = SpriteText.Config & {

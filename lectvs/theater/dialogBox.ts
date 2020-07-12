@@ -1,4 +1,4 @@
-/// <reference path="./sprite.ts" />
+/// <reference path="../worldObject/sprite/sprite.ts" />
 
 namespace DialogBox {
     export type Config = Sprite.Config & {

@@ -1,4 +1,4 @@
-/// <reference path="metrics.ts"/>
+/// <reference path="../metrics/metrics.ts"/>
 
 class global {
     static clearStacks() {

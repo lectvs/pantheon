@@ -1,4 +1,4 @@
-/// <reference path="./world.ts" />
+/// <reference path="../world/world.ts" />
 
 class Menu extends World {
     menuSystem: MenuSystem;

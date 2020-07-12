@@ -1,4 +1,4 @@
-/// <reference path="utils/uid.ts" />
+/// <reference path="../utils/uid.ts" />
 
 namespace WorldObject {
     export type Config = {

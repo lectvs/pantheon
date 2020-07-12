@@ -1,4 +1,4 @@
-/// <reference path="./textureFilter.ts" />
+/// <reference path="../texture/textureFilter.ts" />
 
 namespace Effects {
     export type Config = {

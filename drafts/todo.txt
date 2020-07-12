@@ -1,6 +1,6 @@
 - /preRenders happen together
 - /replace all O.getOrDefault with ?. and ??
-- sort files and put platformer stuff in core engine
+- /sort files
 - boundless textures
 - options
     - saving/loading

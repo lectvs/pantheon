@@ -1,3 +1,5 @@
+/// <reference path="../worldObject.ts" />
+
 namespace SpriteText {
     export type Config = WorldObject.Config & {
         font: Font;

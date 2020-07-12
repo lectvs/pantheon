@@ -1,4 +1,4 @@
-/// <reference path="../lectvs/preload.ts" />
+/// <reference path="../lectvs/core/preload.ts" />
 /// <reference path="./assets.ts" />
 
 class Main {

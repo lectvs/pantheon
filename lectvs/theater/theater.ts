@@ -1,5 +1,5 @@
 /// <reference path="./transition.ts"/>
-/// <reference path="./world.ts"/>
+/// <reference path="../world/world.ts"/>
 
 namespace Theater {
     export type Config = {

@@ -1,5 +1,5 @@
-///<reference path="./utils/cache.ts"/>
-///<reference path="./utils/perlin.ts"/>
+///<reference path="../utils/cache.ts"/>
+///<reference path="../utils/perlin.ts"/>
 
 namespace TextureFilter {
     /**

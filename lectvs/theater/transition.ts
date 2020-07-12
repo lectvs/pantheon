@@ -1,4 +1,4 @@
-/// <reference path="./worldObject.ts"/>
+/// <reference path="../worldObject/worldObject.ts"/>
 
 namespace Transition {
     export type Config = {

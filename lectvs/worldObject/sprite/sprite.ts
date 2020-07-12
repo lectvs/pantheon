@@ -1,4 +1,4 @@
-/// <reference path="./physicsWorldObject.ts" />
+/// <reference path="../physicsWorldObject.ts" />
 
 namespace Sprite {
     export type Config = PhysicsWorldObject.Config & {

@@ -1,4 +1,5 @@
-/// <reference path="./worldObject.ts" />
+/// <reference path="../worldObject/sprite/sprite.ts" />
+/// <reference path="../worldObject/worldObject.ts" />
 
 namespace World {
     export type Config = {
