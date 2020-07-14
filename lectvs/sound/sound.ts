@@ -1,3 +1,9 @@
+namespace Sound {
+    export type Controller = {
+        volume: number;
+    }
+}
+
 class Sound {
     private webAudioSound: WebAudioSoundI;
     private get soundManager() { return global.soundManager; }
@@ -14,7 +20,9 @@ class Sound {
     pos: number;
     get duration() { return this.webAudioSound.duration; }
 
-    constructor(key: string) {
+    controller: Sound.Controller;
+
+    constructor(key: string, controller?: Sound.Controller) {
         let asset = AssetCache.getSoundAsset(key);
         if (WebAudio.started) {
             this.webAudioSound = new WebAudioSound(asset);
@@ -28,6 +36,8 @@ class Sound {
 
         this.volume = 1;
         this.loop = false;
+
+        this.controller = controller;
     }
 
     markForDisable() {
@@ -58,7 +68,9 @@ class Sound {
             this.webAudioSound.seek(this.pos);
         }
 
-        if (this.webAudioSound.volume !== this.volume) this.webAudioSound.volume = this.volume;
+        let volume = this.volume * (this.controller ? this.controller.volume : 1);
+        if (this.webAudioSound.volume !== volume) this.webAudioSound.volume = volume;
+
         if (this.webAudioSound.loop !== this.loop) this.webAudioSound.loop = this.loop;
     }
 }

@@ -10,6 +10,14 @@ function getStages(): Dict<World.Config> { return {
             'main': { x: Main.width/2, y: Main.height/2 },
         },
         worldObjects: [
+            {
+                name: 'testSoundController',
+                updateCallback: (obj, delta) => {
+                    if (Input.justDown('1')) {
+                        obj.world.playSound('debug');
+                    }
+                }
+            },
             <Tilemap.Config>{
                 name: 'tiles',
                 constructor: Tilemap,
@@ -41,6 +49,7 @@ function getStages(): Dict<World.Config> { return {
                 layer: 'main',
                 physicsGroup: 'walls',
                 bounds: { x: 0, y: 0, width: 128, height: 16 },
+                immovable: true,
                 data: {
                     pathStart: { x: 192, y: 402 },
                     pathEnd: { x: 320, y: 352 },
@@ -54,6 +63,7 @@ function getStages(): Dict<World.Config> { return {
                 layer: 'main',
                 physicsGroup: 'walls',
                 bounds: { x: 0, y: 0, width: 128, height: 16 },
+                immovable: true,
             },
         ]
     },

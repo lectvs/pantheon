@@ -29,7 +29,7 @@ function MENU_BASE_STAGE(): World.Config {
     return {
         constructor: World,
         backgroundColor: 0x000000,
-        playingAudio: false,
+        volume: 0,
     };
 }
 

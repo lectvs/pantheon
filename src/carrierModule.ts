@@ -17,6 +17,7 @@ class CarrierModule {
         };
 
         for (let potentialRider of this.obj.world.getPhysicsObjectsThatCollideWith(this.obj.physicsGroup)) {
+            if (potentialRider instanceof OneWayPlatform || potentialRider instanceof MovingPlatform) continue;
             if (potentialRider.isOverlappingRect(checkRect)) {
                 if (_.contains(this.riders, potentialRider)) continue;
                 if (potentialRider.parent) continue;  // Disallow riding by any child object

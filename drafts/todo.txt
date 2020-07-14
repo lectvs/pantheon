@@ -1,12 +1,13 @@
 - /preRenders happen together
 - /replace all O.getOrDefault with ?. and ??
 - /sort files
-- boundless textures
+- /make theater not a world? (decided not to do. reason: dialogbox/slides/etc are all Sprites, which require a world. transitions are easier)
+- /allow multiple menus to pause the game (or change definition of "paused")
+- /improve World audio functionality (e.g. playingAudio)
 - options
     - saving/loading
     - controls remapping
 - uncapped fps?
-- allow multiple menus to pause the game (or change definition of "paused")
 - platformer stuff
     - /moving platforms
     - /physics based on lastx/y instead of lastmovementx/y?
@@ -17,14 +18,16 @@
 - consider moving texture's anchorX/Y to a Sprite property
 - onboard storyboard with StateMachine
 - refactor the Main class
-- make theater not a world? (again)
 - preloading improvements
     - loading screen/progress bar
     - timeout on preloading
-- 1x scaled up graphics
 - remove delta from update?
-- improve World audio functionality (e.g. playingAudio)
 - move tileset animation fields from Assets to Tilemap.Config
 - cheats system (console only for now)
 - smart tilemaps
 - editing tilemaps
+
+stretch
+- boundless textures
+- unit tests :)
+- 1x scaled up graphics

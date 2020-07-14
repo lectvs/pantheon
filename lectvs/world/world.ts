@@ -21,7 +21,7 @@ namespace World {
         entryPoints?: Dict<Pt>;
         worldObjects?: WorldObject.Config[];
 
-        playingAudio?: boolean;
+        volume?: number;
 
         showDebugMousePosition?: boolean;
     }
@@ -51,8 +51,6 @@ class World {
     height: number;
     entryPoints: Dict<Pt>;
     worldObjects: WorldObject[];
-    sounds: Sound[];
-    playingAudio: boolean;
     showDebugMousePosition: boolean;
 
     physicsGroups: Dict<World.PhysicsGroup>;
@@ -68,6 +66,9 @@ class World {
     private layerTexture: Texture;
 
     protected scriptManager: ScriptManager;
+    protected soundManager: SoundManager;
+    
+    volume: number;
 
     private debugMousePositionText: SpriteText;
 
@@ -75,11 +76,12 @@ class World {
         config = WorldObject.resolveConfig<World.Config>(config, defaults);
         
         this.scriptManager = new ScriptManager();
+        this.soundManager = new SoundManager();
+
+        this.volume = config.volume ?? 1;
 
         this.width = config.width ?? global.gameWidth;
         this.height = config.height ?? global.gameHeight;
-        this.sounds = [];
-        this.playingAudio = config.playingAudio ?? true;
         this.worldObjects = [];
         this.showDebugMousePosition = config.showDebugMousePosition ?? false;
 
@@ -157,9 +159,8 @@ class World {
 
         this.camera.update(this, delta);
 
-        if (this.playingAudio) {
-            this.updateSounds(delta);
-        }
+        this.soundManager.volume = this.volume * global.game.volume;
+        this.soundManager.update(delta);
     }
 
     protected updateDebugMousePosition() {
@@ -169,17 +170,6 @@ class World {
 
         if (showMousePosition) {
             this.debugMousePositionText.setText(`${St.padLeft(this.getWorldMouseX().toString(), 3)} ${St.padLeft(this.getWorldMouseY().toString(), 3)}`);
-        }
-    }
-
-    protected updateSounds(delta: number) {
-        for (let i = this.sounds.length-1; i >= 0; i--) {
-            if (!this.sounds[i].paused) {
-                this.sounds[i].update(delta);
-            }
-            if (this.sounds[i].done) {
-                this.sounds.splice(i, 1);
-            }
         }
     }
 
@@ -201,6 +191,7 @@ class World {
         }
 
         for (let layer of this.layers) {
+            this.layerTexture.clear();
             this.renderLayer(layer, this.layerTexture, this.screen);
         }
 
@@ -216,7 +207,6 @@ class World {
     }
 
     renderLayer(layer: World.Layer, layerTexture: Texture, screen: Texture) {
-        layerTexture.clear();
         layer.sort();
         for (let worldObject of layer.worldObjects) {
             if (worldObject.visible) {
@@ -229,6 +219,7 @@ class World {
             filters: layer.effects.getFilterList()
         });
     }
+
     addWorldObject<T extends WorldObject>(obj: T | WorldObject.Config): T {
         let worldObject: T = obj instanceof WorldObject ? obj : WorldObject.fromConfig<T>(obj);
         return World.Actions.addWorldObjectToWorld(worldObject, this);
@@ -366,9 +357,7 @@ class World {
     }
 
     playSound(key: string) {
-        let sound = new Sound(key);
-        this.sounds.push(sound);
-        return sound;
+        return this.soundManager.playSound(key);
     }
     
     removeWorldObject<T extends WorldObject>(obj: T | string): T {
@@ -707,6 +696,15 @@ namespace World {
                 return undefined;
             }
 
+            let cyclicCheckParent = obj.parent;
+            while (cyclicCheckParent) {
+                if (cyclicCheckParent === child) {
+                    error (`Cannot add child ${child.name} to parent ${obj.name} because this would result in a cyclic hierarchy`);
+                    return undefined;
+                }
+                cyclicCheckParent = cyclicCheckParent.parent;
+            }
+
             /// @ts-ignore
             child.internalAddChildToParentWorldObjectChild(obj);
             /// @ts-ignore
@@ -758,32 +756,6 @@ namespace World {
         export function removeChildrenFromParent<T extends WorldObject>(children: ReadonlyArray<T>): T[] {
             if (_.isEmpty(children)) return [];
             return A.clone(children).filter(child => removeChildFromParent(child));
-        }
-    }
-}
-
-namespace World {
-    export class WorldAsWorldObject extends Sprite {
-        containedWorld: World;
-
-        private worldTexture: Texture;
-
-        constructor(containedWorld: World) {
-            let texture = new Texture(containedWorld.width, containedWorld.height);
-            super({ texture: texture });
-            this.containedWorld = containedWorld;
-            this.worldTexture = texture;
-        }
-
-        update(delta: number) {
-            super.update(delta);
-            this.containedWorld.update(delta);
-        }
-
-        render(screen: Texture) {
-            this.worldTexture.clear();
-            this.containedWorld.render(this.worldTexture);
-            super.render(screen);
         }
     }
 }

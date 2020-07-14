@@ -13,6 +13,11 @@ class Box extends Sprite {
         this.carrierModule = new CarrierModule(this);
     }
 
+    update(delta: number) {
+        this.vx *= 0.98;
+        super.update(delta);
+    }
+
     postUpdate() {
         super.postUpdate();
         this.carrierModule.postUpdate();

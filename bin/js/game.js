@@ -425,12 +425,13 @@ function get(name) {
 }
 var Game = /** @class */ (function () {
     function Game(config) {
-        this.sounds = [];
         this.entryPointMenuClass = config.entryPointMenuClass;
         this.pauseMenuClass = config.pauseMenuClass;
         this.theaterClass = config.theaterClass;
         this.theaterConfig = config.theaterConfig;
         this.showMetricsMenuKey = config.showMetricsMenuKey;
+        this.soundManager = new SoundManager();
+        this.volume = 1;
         this.menuSystem = new MenuSystem(this);
         this.loadMainMenu();
         if (Debug.SKIP_MAIN_MENU) {
@@ -450,7 +451,8 @@ var Game = /** @class */ (function () {
             this.theater.update(delta);
             global.metrics.endSpan('theater');
         }
-        this.updateSounds(delta);
+        this.soundManager.volume = this.volume;
+        this.soundManager.update(delta);
     };
     Game.prototype.updatePause = function () {
         if (Input.justDown('pause') && !this.menuSystem.inMenu) {
@@ -461,16 +463,6 @@ var Game = /** @class */ (function () {
     Game.prototype.updateMetrics = function () {
         if (Debug.DEBUG && Input.justDown(this.showMetricsMenuKey)) {
             global.game.menuSystem.loadMenu(MetricsMenu);
-        }
-    };
-    Game.prototype.updateSounds = function (delta) {
-        for (var i = this.sounds.length - 1; i >= 0; i--) {
-            if (!this.sounds[i].paused) {
-                this.sounds[i].update(delta);
-            }
-            if (this.sounds[i].done) {
-                this.sounds.splice(i, 1);
-            }
         }
     };
     Game.prototype.render = function (screen) {
@@ -491,16 +483,12 @@ var Game = /** @class */ (function () {
     Game.prototype.loadTheater = function () {
         this.theater = new this.theaterClass(this.theaterConfig);
         global.theater = this.theater;
-        // fade out since the cutscene can't do this in 1 frame
-        //global.theater.runScript(S.fadeOut(0)).finishImmediately();
     };
     Game.prototype.pauseGame = function () {
         this.menuSystem.loadMenu(this.pauseMenuClass);
     };
     Game.prototype.playSound = function (key) {
-        var sound = new Sound(key);
-        this.sounds.push(sound);
-        return sound;
+        return this.soundManager.playSound(key);
     };
     Game.prototype.startGame = function () {
         this.loadTheater();
@@ -2903,10 +2891,10 @@ var World = /** @class */ (function () {
         var _b, _c, _d, _e, _f, _g, _h, _j, _k;
         config = WorldObject.resolveConfig(config, defaults);
         this.scriptManager = new ScriptManager();
-        this.width = (_b = config.width) !== null && _b !== void 0 ? _b : global.gameWidth;
-        this.height = (_c = config.height) !== null && _c !== void 0 ? _c : global.gameHeight;
-        this.sounds = [];
-        this.playingAudio = (_d = config.playingAudio) !== null && _d !== void 0 ? _d : true;
+        this.soundManager = new SoundManager();
+        this.volume = (_b = config.volume) !== null && _b !== void 0 ? _b : 1;
+        this.width = (_c = config.width) !== null && _c !== void 0 ? _c : global.gameWidth;
+        this.height = (_d = config.height) !== null && _d !== void 0 ? _d : global.gameHeight;
         this.worldObjects = [];
         this.showDebugMousePosition = (_e = config.showDebugMousePosition) !== null && _e !== void 0 ? _e : false;
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
@@ -3010,9 +2998,8 @@ var World = /** @class */ (function () {
         global.metrics.endSpan('postUpdate');
         this.removeDeadWorldObjects();
         this.camera.update(this, delta);
-        if (this.playingAudio) {
-            this.updateSounds(delta);
-        }
+        this.soundManager.volume = this.volume * global.game.volume;
+        this.soundManager.update(delta);
     };
     World.prototype.updateDebugMousePosition = function () {
         var showMousePosition = Debug.SHOW_MOUSE_POSITION && this.showDebugMousePosition;
@@ -3020,16 +3007,6 @@ var World = /** @class */ (function () {
         this.debugMousePositionText.visible = showMousePosition;
         if (showMousePosition) {
             this.debugMousePositionText.setText(St.padLeft(this.getWorldMouseX().toString(), 3) + " " + St.padLeft(this.getWorldMouseY().toString(), 3));
-        }
-    };
-    World.prototype.updateSounds = function (delta) {
-        for (var i = this.sounds.length - 1; i >= 0; i--) {
-            if (!this.sounds[i].paused) {
-                this.sounds[i].update(delta);
-            }
-            if (this.sounds[i].done) {
-                this.sounds.splice(i, 1);
-            }
         }
     };
     World.prototype.updateScriptManager = function (delta) {
@@ -3059,6 +3036,7 @@ var World = /** @class */ (function () {
         try {
             for (var _f = __values(this.layers), _g = _f.next(); !_g.done; _g = _f.next()) {
                 var layer = _g.value;
+                this.layerTexture.clear();
                 this.renderLayer(layer, this.layerTexture, this.screen);
             }
         }
@@ -3089,7 +3067,6 @@ var World = /** @class */ (function () {
     };
     World.prototype.renderLayer = function (layer, layerTexture, screen) {
         var e_15, _a;
-        layerTexture.clear();
         layer.sort();
         try {
             for (var _b = __values(layer.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -3299,9 +3276,7 @@ var World = /** @class */ (function () {
         return result;
     };
     World.prototype.playSound = function (key) {
-        var sound = new Sound(key);
-        this.sounds.push(sound);
-        return sound;
+        return this.soundManager.playSound(key);
     };
     World.prototype.removeWorldObject = function (obj) {
         if (!obj)
@@ -3629,6 +3604,14 @@ var World = /** @class */ (function () {
                 error("Cannot add child " + child.name + " to parent " + obj.name + " becase the child exists in a different world!", child.world);
                 return undefined;
             }
+            var cyclicCheckParent = obj.parent;
+            while (cyclicCheckParent) {
+                if (cyclicCheckParent === child) {
+                    error("Cannot add child " + child.name + " to parent " + obj.name + " because this would result in a cyclic hierarchy");
+                    return undefined;
+                }
+                cyclicCheckParent = cyclicCheckParent.parent;
+            }
             /// @ts-ignore
             child.internalAddChildToParentWorldObjectChild(obj);
             /// @ts-ignore
@@ -3680,30 +3663,6 @@ var World = /** @class */ (function () {
         }
         Actions.removeChildrenFromParent = removeChildrenFromParent;
     })(Actions = World.Actions || (World.Actions = {}));
-})(World || (World = {}));
-(function (World) {
-    var WorldAsWorldObject = /** @class */ (function (_super) {
-        __extends(WorldAsWorldObject, _super);
-        function WorldAsWorldObject(containedWorld) {
-            var _this = this;
-            var texture = new Texture(containedWorld.width, containedWorld.height);
-            _this = _super.call(this, { texture: texture }) || this;
-            _this.containedWorld = containedWorld;
-            _this.worldTexture = texture;
-            return _this;
-        }
-        WorldAsWorldObject.prototype.update = function (delta) {
-            _super.prototype.update.call(this, delta);
-            this.containedWorld.update(delta);
-        };
-        WorldAsWorldObject.prototype.render = function (screen) {
-            this.worldTexture.clear();
-            this.containedWorld.render(this.worldTexture);
-            _super.prototype.render.call(this, screen);
-        };
-        return WorldAsWorldObject;
-    }(Sprite));
-    World.WorldAsWorldObject = WorldAsWorldObject;
 })(World || (World = {}));
 (function (World) {
     function fromConfig(config) {
@@ -4482,8 +4441,59 @@ var ScriptManager = /** @class */ (function () {
     };
     return ScriptManager;
 }());
+var GlobalSoundManager = /** @class */ (function () {
+    function GlobalSoundManager() {
+        this.activeSounds = [];
+    }
+    GlobalSoundManager.prototype.preGameUpdate = function () {
+        var e_28, _a;
+        try {
+            for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var sound = _c.value;
+                sound.markForDisable();
+            }
+        }
+        catch (e_28_1) { e_28 = { error: e_28_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_28) throw e_28.error; }
+        }
+    };
+    GlobalSoundManager.prototype.postGameUpdate = function () {
+        var e_29, _a;
+        try {
+            for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var sound = _c.value;
+                if (sound.isMarkedForDisable) {
+                    this.ensureSoundDisabled(sound);
+                }
+            }
+        }
+        catch (e_29_1) { e_29 = { error: e_29_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_29) throw e_29.error; }
+        }
+    };
+    GlobalSoundManager.prototype.ensureSoundDisabled = function (sound) {
+        sound.ensureDisabled();
+        A.removeAll(this.activeSounds, sound);
+    };
+    GlobalSoundManager.prototype.ensureSoundEnabled = function (sound) {
+        if (!_.contains(this.activeSounds, sound)) {
+            this.activeSounds.push(sound);
+        }
+        sound.unmarkForDisable();
+        sound.ensureEnabled();
+    };
+    return GlobalSoundManager;
+}());
 var Sound = /** @class */ (function () {
-    function Sound(key) {
+    function Sound(key, controller) {
         var asset = AssetCache.getSoundAsset(key);
         if (WebAudio.started) {
             this.webAudioSound = new WebAudioSound(asset);
@@ -4497,6 +4507,7 @@ var Sound = /** @class */ (function () {
         this.pos = 0;
         this.volume = 1;
         this.loop = false;
+        this.controller = controller;
     }
     Object.defineProperty(Sound.prototype, "soundManager", {
         get: function () { return global.soundManager; },
@@ -4540,8 +4551,9 @@ var Sound = /** @class */ (function () {
             }
             this.webAudioSound.seek(this.pos);
         }
-        if (this.webAudioSound.volume !== this.volume)
-            this.webAudioSound.volume = this.volume;
+        var volume = this.volume * (this.controller ? this.controller.volume : 1);
+        if (this.webAudioSound.volume !== volume)
+            this.webAudioSound.volume = volume;
         if (this.webAudioSound.loop !== this.loop)
             this.webAudioSound.loop = this.loop;
     };
@@ -4549,52 +4561,23 @@ var Sound = /** @class */ (function () {
 }());
 var SoundManager = /** @class */ (function () {
     function SoundManager() {
-        this.activeSounds = [];
+        this.sounds = [];
+        this.volume = 1;
     }
-    SoundManager.prototype.preGameUpdate = function () {
-        var e_28, _a;
-        try {
-            for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var sound = _c.value;
-                sound.markForDisable();
+    SoundManager.prototype.update = function (delta) {
+        for (var i = this.sounds.length - 1; i >= 0; i--) {
+            if (!this.sounds[i].paused) {
+                this.sounds[i].update(delta);
             }
-        }
-        catch (e_28_1) { e_28 = { error: e_28_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            if (this.sounds[i].done) {
+                this.sounds.splice(i, 1);
             }
-            finally { if (e_28) throw e_28.error; }
         }
     };
-    SoundManager.prototype.postGameUpdate = function () {
-        var e_29, _a;
-        try {
-            for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var sound = _c.value;
-                if (sound.isMarkedForDisable) {
-                    this.ensureSoundDisabled(sound);
-                }
-            }
-        }
-        catch (e_29_1) { e_29 = { error: e_29_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_29) throw e_29.error; }
-        }
-    };
-    SoundManager.prototype.ensureSoundDisabled = function (sound) {
-        sound.ensureDisabled();
-        A.removeAll(this.activeSounds, sound);
-    };
-    SoundManager.prototype.ensureSoundEnabled = function (sound) {
-        if (!_.contains(this.activeSounds, sound)) {
-            this.activeSounds.push(sound);
-        }
-        sound.unmarkForDisable();
-        sound.ensureEnabled();
+    SoundManager.prototype.playSound = function (key) {
+        var sound = new Sound(key, this);
+        this.sounds.push(sound);
+        return sound;
     };
     return SoundManager;
 }());
@@ -5287,7 +5270,7 @@ var StageManager = /** @class */ (function () {
         this.currentStageName = name;
         this.currentWorld = World.fromConfig(this.stages[name]);
         this.currentWorld.showDebugMousePosition = true;
-        this.currentWorldAsWorldObject = new World.WorldAsWorldObject(this.currentWorld);
+        this.currentWorldAsWorldObject = new Theater.WorldAsWorldObject(this.currentWorld);
         this.addPartyToWorld(this.currentWorld, name, entryPoint);
         World.Actions.setName(this.currentWorldAsWorldObject, 'world');
         World.Actions.setLayer(this.currentWorldAsWorldObject, Theater.LAYER_WORLD);
@@ -5455,6 +5438,30 @@ var Theater = /** @class */ (function (_super) {
     Theater.LAYER_DIALOG = 'dialog';
     return Theater;
 }(World));
+(function (Theater) {
+    var WorldAsWorldObject = /** @class */ (function (_super) {
+        __extends(WorldAsWorldObject, _super);
+        function WorldAsWorldObject(containedWorld) {
+            var _this = this;
+            var texture = new Texture(containedWorld.width, containedWorld.height);
+            _this = _super.call(this, { texture: texture }) || this;
+            _this.containedWorld = containedWorld;
+            _this.worldTexture = texture;
+            return _this;
+        }
+        WorldAsWorldObject.prototype.update = function (delta) {
+            _super.prototype.update.call(this, delta);
+            this.containedWorld.update(delta);
+        };
+        WorldAsWorldObject.prototype.render = function (screen) {
+            this.worldTexture.clear();
+            this.containedWorld.render(this.worldTexture);
+            _super.prototype.render.call(this, screen);
+        };
+        return WorldAsWorldObject;
+    }(Sprite));
+    Theater.WorldAsWorldObject = WorldAsWorldObject;
+})(Theater || (Theater = {}));
 var StoryConfig = /** @class */ (function () {
     function StoryConfig(theater, config) {
         this.theater = theater;
@@ -6025,6 +6032,11 @@ var M;
         return a * (1 - t) + b * t;
     }
     M.lerp = lerp;
+    function lerpTime(a, b, speed, delta) {
+        // From https://www.gamasutra.com/blogs/ScottLembcke/20180404/316046/Improved_Lerp_Smoothing.php
+        return lerp(a, b, Math.pow(2, -speed * delta));
+    }
+    M.lerpTime = lerpTime;
     function magnitude(dx, dy) {
         return Math.sqrt(this.magnitudeSq(dx, dy));
     }
@@ -7481,7 +7493,7 @@ function MENU_BASE_STAGE() {
     return {
         constructor: World,
         backgroundColor: 0x000000,
-        playingAudio: false,
+        volume: 0,
     };
 }
 function WORLD_BOUNDS(left, top, right, bottom) {
@@ -7528,6 +7540,10 @@ var Box = /** @class */ (function (_super) {
         _this.carrierModule = new CarrierModule(_this);
         return _this;
     }
+    Box.prototype.update = function (delta) {
+        this.vx *= 0.98;
+        _super.prototype.update.call(this, delta);
+    };
     Box.prototype.postUpdate = function () {
         _super.prototype.postUpdate.call(this);
         this.carrierModule.postUpdate();
@@ -7551,6 +7567,8 @@ var CarrierModule = /** @class */ (function () {
         try {
             for (var _b = __values(this.obj.world.getPhysicsObjectsThatCollideWith(this.obj.physicsGroup)), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var potentialRider = _c.value;
+                if (potentialRider instanceof OneWayPlatform || potentialRider instanceof MovingPlatform)
+                    continue;
                 if (potentialRider.isOverlappingRect(checkRect)) {
                     if (_.contains(this.riders, potentialRider))
                         continue;
@@ -7642,7 +7660,7 @@ var Main = /** @class */ (function () {
             backgroundColor: global.backgroundColor,
         });
         global.renderer = Main.renderer;
-        global.soundManager = new SoundManager();
+        global.soundManager = new GlobalSoundManager();
         WebAudio.initContext();
         Preload.preload({
             textures: Assets.textures,
@@ -7668,6 +7686,7 @@ var Main = /** @class */ (function () {
             // Game
             'advanceDialog': ['MouseLeft', 'e', ' '],
             'pause': ['Escape', 'Backspace'],
+            'lmb': ['MouseLeft'],
             // Debug
             'debugMoveCameraUp': ['i'],
             'debugMoveCameraDown': ['k'],
@@ -7981,6 +8000,14 @@ function getStages() {
             },
             worldObjects: [
                 {
+                    name: 'testSoundController',
+                    updateCallback: function (obj, delta) {
+                        if (Input.justDown('1')) {
+                            obj.world.playSound('debug');
+                        }
+                    }
+                },
+                {
                     name: 'tiles',
                     constructor: Tilemap,
                     x: 0, y: 0,
@@ -8010,6 +8037,7 @@ function getStages() {
                     layer: 'main',
                     physicsGroup: 'walls',
                     bounds: { x: 0, y: 0, width: 128, height: 16 },
+                    immovable: true,
                     data: {
                         pathStart: { x: 192, y: 402 },
                         pathEnd: { x: 320, y: 352 },
@@ -8023,6 +8051,7 @@ function getStages() {
                     layer: 'main',
                     physicsGroup: 'walls',
                     bounds: { x: 0, y: 0, width: 128, height: 16 },
+                    immovable: true,
                 },
             ]
         },

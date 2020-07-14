@@ -12,24 +12,25 @@ class Game {
     fpsMetricManager: FPSMetricManager;
     menuSystem: MenuSystem;
     theater: Theater;
-    sounds: Sound[];
 
     private entryPointMenuClass: any;
     private pauseMenuClass: any;
     private theaterClass: any;
     private theaterConfig: Theater.Config;
-
     private showMetricsMenuKey: string;
 
-    constructor(config: Game.Config) {
-        this.sounds = [];
+    private soundManager: SoundManager;
+    volume: number;
 
+    constructor(config: Game.Config) {
         this.entryPointMenuClass = config.entryPointMenuClass;
         this.pauseMenuClass = config.pauseMenuClass;
         this.theaterClass = config.theaterClass;
         this.theaterConfig = config.theaterConfig;
-
         this.showMetricsMenuKey = config.showMetricsMenuKey;
+
+        this.soundManager = new SoundManager();
+        this.volume = 1;
 
         this.menuSystem = new MenuSystem(this);
         this.loadMainMenu();
@@ -53,7 +54,8 @@ class Game {
             global.metrics.endSpan('theater');
         }
 
-        this.updateSounds(delta);
+        this.soundManager.volume = this.volume;
+        this.soundManager.update(delta);
     }
 
     private updatePause() {
@@ -66,17 +68,6 @@ class Game {
     private updateMetrics() {
         if (Debug.DEBUG && Input.justDown(this.showMetricsMenuKey)) {
             global.game.menuSystem.loadMenu(MetricsMenu);
-        }
-    }
-
-    private updateSounds(delta: number) {
-        for (let i = this.sounds.length-1; i >= 0; i--) {
-            if (!this.sounds[i].paused) {
-                this.sounds[i].update(delta);
-            }
-            if (this.sounds[i].done) {
-                this.sounds.splice(i, 1);
-            }
         }
     }
 
@@ -100,9 +91,6 @@ class Game {
     loadTheater() {
         this.theater = new this.theaterClass(this.theaterConfig);
         global.theater = this.theater;
-
-        // fade out since the cutscene can't do this in 1 frame
-        //global.theater.runScript(S.fadeOut(0)).finishImmediately();
     }
 
     pauseGame() {
@@ -110,9 +98,7 @@ class Game {
     }
 
     playSound(key: string) {
-        let sound = new Sound(key);
-        this.sounds.push(sound);
-        return sound;
+        return this.soundManager.playSound(key);
     }
 
     startGame() {

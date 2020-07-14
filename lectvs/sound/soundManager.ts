@@ -1,34 +1,27 @@
 class SoundManager {
-    private activeSounds: Sound[];
+    private sounds: Sound[];
+
+    volume: number;
 
     constructor() {
-        this.activeSounds = [];
+        this.sounds = [];
+        this.volume = 1;
     }
 
-    preGameUpdate() {
-        for (let sound of this.activeSounds) {
-            sound.markForDisable();
-        }
-    }
-
-    postGameUpdate() {
-        for (let sound of this.activeSounds) {
-            if (sound.isMarkedForDisable) {
-                this.ensureSoundDisabled(sound);
+    update(delta: number) {
+        for (let i = this.sounds.length-1; i >= 0; i--) {
+            if (!this.sounds[i].paused) {
+                this.sounds[i].update(delta);
+            }
+            if (this.sounds[i].done) {
+                this.sounds.splice(i, 1);
             }
         }
     }
 
-    ensureSoundDisabled(sound: Sound) {
-        sound.ensureDisabled();
-        A.removeAll(this.activeSounds, sound);
-    }
-
-    ensureSoundEnabled(sound: Sound) {
-        if (!_.contains(this.activeSounds, sound)) {
-            this.activeSounds.push(sound);
-        }
-        sound.unmarkForDisable();
-        sound.ensureEnabled();
+    playSound(key: string) {
+        let sound = new Sound(key, this);
+        this.sounds.push(sound);
+        return sound;
     }
 }

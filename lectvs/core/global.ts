@@ -22,5 +22,5 @@ class global {
     static gameHeight: number;
     static backgroundColor: number;
     static renderer: PIXI.Renderer;
-    static soundManager: SoundManager;
+    static soundManager: GlobalSoundManager;
 }

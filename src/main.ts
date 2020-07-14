@@ -46,7 +46,7 @@ class Main {
             backgroundColor: global.backgroundColor,
         });
         global.renderer = Main.renderer;
-        global.soundManager = new SoundManager();
+        global.soundManager = new GlobalSoundManager();
         
         WebAudio.initContext();
 
@@ -78,6 +78,7 @@ class Main {
             // Game
             'advanceDialog':        ['MouseLeft', 'e', ' '],
             'pause':                ['Escape', 'Backspace'],
+            'lmb':                  ['MouseLeft'],
 
             // Debug
             'debugMoveCameraUp':    ['i'],

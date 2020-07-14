@@ -105,3 +105,29 @@ class Theater extends World {
     static LAYER_SLIDES = 'slides';
     static LAYER_DIALOG = 'dialog';
 }
+
+namespace Theater {
+    export class WorldAsWorldObject extends Sprite {
+        containedWorld: World;
+
+        private worldTexture: Texture;
+
+        constructor(containedWorld: World) {
+            let texture = new Texture(containedWorld.width, containedWorld.height);
+            super({ texture: texture });
+            this.containedWorld = containedWorld;
+            this.worldTexture = texture;
+        }
+
+        update(delta: number) {
+            super.update(delta);
+            this.containedWorld.update(delta);
+        }
+
+        render(screen: Texture) {
+            this.worldTexture.clear();
+            this.containedWorld.render(this.worldTexture);
+            super.render(screen);
+        }
+    }
+}
