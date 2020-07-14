@@ -1,9 +1,5 @@
-namespace cheat {
-    export function lose() {
-        if (!Debug.CHEATS_ENABLED) return;
-    }
+/// <reference path="../lectvs/debug/cheat.ts" />
 
-    export function win() {
-        if (!Debug.CHEATS_ENABLED) return;
-    }
-}
+Cheat.init({
+    'win': x => x*x,
+});

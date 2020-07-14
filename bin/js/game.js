@@ -334,95 +334,6 @@ var AssetCache = /** @class */ (function () {
     AssetCache.tilemaps = {};
     return AssetCache;
 }());
-var Debug = /** @class */ (function () {
-    function Debug() {
-    }
-    Debug.init = function (config) {
-        Debug.DEBUG = config.debug;
-        Debug.FONT = config.font;
-        Debug.CHEATS_ENABLED = config.cheatsEnabled;
-        Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
-        Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
-        Debug.SHOW_MOUSE_POSITION = config.showMousePosition;
-        Debug.SKIP_RATE = config.skipRate;
-        Debug.PROGRAMMATIC_INPUT = config.programmaticInput;
-        Debug.AUTOPLAY = config.autoplay;
-        Debug.SKIP_MAIN_MENU = config.skipMainMenu;
-        Debug.FRAME_STEP_ENABLED = config.frameStepEnabled;
-        Debug.FRAME_STEP_STEP_KEY = config.frameStepStepKey;
-        Debug.FRAME_STEP_RUN_KEY = config.frameStepRunKey;
-    };
-    Object.defineProperty(Debug, "DEBUG", {
-        get: function () { return this._DEBUG; },
-        set: function (value) { this._DEBUG = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Debug, "CHEATS_ENABLED", {
-        get: function () { return this.DEBUG && this._CHEATS_ENABLED; },
-        set: function (value) { this._CHEATS_ENABLED = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Debug, "ALL_PHYSICS_BOUNDS", {
-        get: function () { return this.DEBUG && this._ALL_PHYSICS_BOUNDS; },
-        set: function (value) { this._ALL_PHYSICS_BOUNDS = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Debug, "MOVE_CAMERA_WITH_ARROWS", {
-        get: function () { return this.DEBUG && this._MOVE_CAMERA_WITH_ARROWS; },
-        set: function (value) { this._MOVE_CAMERA_WITH_ARROWS = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Debug, "SHOW_MOUSE_POSITION", {
-        get: function () { return this.DEBUG && this._SHOW_MOUSE_POSITION; },
-        set: function (value) { this._SHOW_MOUSE_POSITION = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Debug, "SKIP_RATE", {
-        get: function () { return this.DEBUG ? this._SKIP_RATE : 1; },
-        set: function (value) { this._SKIP_RATE = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Debug, "PROGRAMMATIC_INPUT", {
-        get: function () { return this.DEBUG && this._PROGRAMMATIC_INPUT; },
-        set: function (value) { this._PROGRAMMATIC_INPUT = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Debug, "AUTOPLAY", {
-        get: function () { return this.DEBUG && this._AUTOPLAY; },
-        set: function (value) { this._AUTOPLAY = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Debug, "SKIP_MAIN_MENU", {
-        get: function () { return this.DEBUG && this._SKIP_MAIN_MENU; },
-        set: function (value) { this._SKIP_MAIN_MENU = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Debug, "FRAME_STEP_ENABLED", {
-        get: function () { return this.DEBUG && this._FRAME_STEP_ENABLED; },
-        set: function (value) { this._FRAME_STEP_ENABLED = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Debug.frameStepSkipFrame = function () {
-        return this.FRAME_STEP_ENABLED && !(Input.justDown(this.FRAME_STEP_STEP_KEY) || Input.isDown(this.FRAME_STEP_RUN_KEY));
-    };
-    return Debug;
-}());
-function get(name) {
-    var worldObject = global.game.theater.currentWorld.getWorldObjectByName(name);
-    if (worldObject)
-        return worldObject;
-    return undefined;
-}
 var Game = /** @class */ (function () {
     function Game(config) {
         this.entryPointMenuClass = config.entryPointMenuClass;
@@ -2186,6 +2097,116 @@ var S;
     }
     S.showSlide = showSlide;
 })(S || (S = {}));
+var Cheat = /** @class */ (function () {
+    function Cheat() {
+    }
+    Cheat.init = function (config) {
+        var _loop_1 = function (cheat) {
+            var fn = config[cheat];
+            Object.defineProperty(this_1, cheat, {
+                get: function () {
+                    if (!Debug.CHEATS_ENABLED)
+                        return undefined;
+                    return fn;
+                }
+            });
+        };
+        var this_1 = this;
+        for (var cheat in config) {
+            _loop_1(cheat);
+        }
+    };
+    return Cheat;
+}());
+var Debug = /** @class */ (function () {
+    function Debug() {
+    }
+    Debug.init = function (config) {
+        Debug.DEBUG = config.debug;
+        Debug.FONT = config.font;
+        Debug.CHEATS_ENABLED = config.cheatsEnabled;
+        Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
+        Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
+        Debug.SHOW_MOUSE_POSITION = config.showMousePosition;
+        Debug.SKIP_RATE = config.skipRate;
+        Debug.PROGRAMMATIC_INPUT = config.programmaticInput;
+        Debug.AUTOPLAY = config.autoplay;
+        Debug.SKIP_MAIN_MENU = config.skipMainMenu;
+        Debug.FRAME_STEP_ENABLED = config.frameStepEnabled;
+        Debug.FRAME_STEP_STEP_KEY = config.frameStepStepKey;
+        Debug.FRAME_STEP_RUN_KEY = config.frameStepRunKey;
+    };
+    Object.defineProperty(Debug, "DEBUG", {
+        get: function () { return this._DEBUG; },
+        set: function (value) { this._DEBUG = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Debug, "CHEATS_ENABLED", {
+        get: function () { return this.DEBUG && this._CHEATS_ENABLED; },
+        set: function (value) { this._CHEATS_ENABLED = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Debug, "ALL_PHYSICS_BOUNDS", {
+        get: function () { return this.DEBUG && this._ALL_PHYSICS_BOUNDS; },
+        set: function (value) { this._ALL_PHYSICS_BOUNDS = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Debug, "MOVE_CAMERA_WITH_ARROWS", {
+        get: function () { return this.DEBUG && this._MOVE_CAMERA_WITH_ARROWS; },
+        set: function (value) { this._MOVE_CAMERA_WITH_ARROWS = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Debug, "SHOW_MOUSE_POSITION", {
+        get: function () { return this.DEBUG && this._SHOW_MOUSE_POSITION; },
+        set: function (value) { this._SHOW_MOUSE_POSITION = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Debug, "SKIP_RATE", {
+        get: function () { return this.DEBUG ? this._SKIP_RATE : 1; },
+        set: function (value) { this._SKIP_RATE = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Debug, "PROGRAMMATIC_INPUT", {
+        get: function () { return this.DEBUG && this._PROGRAMMATIC_INPUT; },
+        set: function (value) { this._PROGRAMMATIC_INPUT = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Debug, "AUTOPLAY", {
+        get: function () { return this.DEBUG && this._AUTOPLAY; },
+        set: function (value) { this._AUTOPLAY = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Debug, "SKIP_MAIN_MENU", {
+        get: function () { return this.DEBUG && this._SKIP_MAIN_MENU; },
+        set: function (value) { this._SKIP_MAIN_MENU = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Debug, "FRAME_STEP_ENABLED", {
+        get: function () { return this.DEBUG && this._FRAME_STEP_ENABLED; },
+        set: function (value) { this._FRAME_STEP_ENABLED = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Debug.frameStepSkipFrame = function () {
+        return this.FRAME_STEP_ENABLED && !(Input.justDown(this.FRAME_STEP_STEP_KEY) || Input.isDown(this.FRAME_STEP_RUN_KEY));
+    };
+    return Debug;
+}());
+function get(name) {
+    var worldObject = global.game.theater.currentWorld.getWorldObjectByName(name);
+    if (worldObject)
+        return worldObject;
+    return undefined;
+}
 var RandomNumberGenerator = /** @class */ (function () {
     function RandomNumberGenerator(seed) {
         this.seed(seed);
@@ -7275,7 +7296,7 @@ var Tilemap = /** @class */ (function (_super) {
                 }
             }
         }
-        var _loop_1 = function (zValue) {
+        var _loop_2 = function (zValue) {
             zTextureSlots[zValue].bounds.x = zTextureSlots[zValue].tileBounds.left * tileset.tileWidth;
             zTextureSlots[zValue].bounds.y = zTextureSlots[zValue].tileBounds.top * tileset.tileHeight;
             zTextureSlots[zValue].bounds.width = (zTextureSlots[zValue].tileBounds.right - zTextureSlots[zValue].tileBounds.left + 1) * tileset.tileWidth;
@@ -7284,7 +7305,7 @@ var Tilemap = /** @class */ (function (_super) {
             zTextureSlots[zValue].frames = A.range(numFrames).map(function (i) { return new Texture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height); });
         };
         for (var zValue in zTextureSlots) {
-            _loop_1(zValue);
+            _loop_2(zValue);
         }
         return zTextureSlots;
     }
@@ -7597,19 +7618,26 @@ var CarrierModule = /** @class */ (function () {
     };
     return CarrierModule;
 }());
-var cheat;
-(function (cheat) {
-    function lose() {
-        if (!Debug.CHEATS_ENABLED)
-            return;
-    }
-    cheat.lose = lose;
-    function win() {
-        if (!Debug.CHEATS_ENABLED)
-            return;
-    }
-    cheat.win = win;
-})(cheat || (cheat = {}));
+/// <reference path="../lectvs/debug/cheat.ts" />
+Cheat.init({
+    'win': function (x) { return x * x; },
+});
+/// <reference path="../lectvs/debug/debug.ts" />
+Debug.init({
+    debug: true,
+    font: Assets.fonts.DELUXE16,
+    cheatsEnabled: true,
+    allPhysicsBounds: false,
+    moveCameraWithArrows: true,
+    showMousePosition: true,
+    skipRate: 1,
+    programmaticInput: false,
+    autoplay: true,
+    skipMainMenu: true,
+    frameStepEnabled: false,
+    frameStepStepKey: '1',
+    frameStepRunKey: '2',
+});
 /// <reference path="../lectvs/core/preload.ts" />
 /// <reference path="./assets.ts" />
 var Main = /** @class */ (function () {
@@ -7633,21 +7661,6 @@ var Main = /** @class */ (function () {
     // no need to modify
     Main.preload = function () {
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
-        Debug.init({
-            debug: true,
-            font: Assets.fonts.DELUXE16,
-            cheatsEnabled: true,
-            allPhysicsBounds: false,
-            moveCameraWithArrows: true,
-            showMousePosition: true,
-            skipRate: 1,
-            programmaticInput: false,
-            autoplay: true,
-            skipMainMenu: true,
-            frameStepEnabled: false,
-            frameStepStepKey: '1',
-            frameStepRunKey: '2',
-        });
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
         WorldObject.DEFAULT_Z_BEHAVIOR = 'threequarters';
         global.gameWidth = Main.width;

@@ -16,22 +16,6 @@ class Main {
     static preload() {
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
 
-        Debug.init({
-            debug: true,
-            font: Assets.fonts.DELUXE16,
-            cheatsEnabled: true,
-            allPhysicsBounds: false,
-            moveCameraWithArrows: true,
-            showMousePosition: true,
-            skipRate: 1,
-            programmaticInput: false,
-            autoplay: true,
-            skipMainMenu: true,
-            frameStepEnabled: false,
-            frameStepStepKey: '1',
-            frameStepRunKey: '2',
-        });
-
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
         WorldObject.DEFAULT_Z_BEHAVIOR = 'threequarters';

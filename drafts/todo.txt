@@ -4,6 +4,7 @@
 - /make theater not a world? (decided not to do. reason: dialogbox/slides/etc are all Sprites, which require a world. transitions are easier)
 - /allow multiple menus to pause the game (or change definition of "paused")
 - /improve World audio functionality (e.g. playingAudio)
+- /cheats system (console only for now)
 - options
     - saving/loading
     - controls remapping
@@ -23,7 +24,6 @@
     - timeout on preloading
 - remove delta from update?
 - move tileset animation fields from Assets to Tilemap.Config
-- cheats system (console only for now)
 - smart tilemaps
 - editing tilemaps
 
