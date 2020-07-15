@@ -16,6 +16,8 @@ namespace Theater {
         dialogBox: DialogBox.Config;
         autoPlayScript?: () => IterableIterator<any>;
     }
+    
+    export type TheaterClass = new (config: Theater.Config) => Theater;
 }
 
 class Theater extends World {

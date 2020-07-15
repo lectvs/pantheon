@@ -8,6 +8,7 @@ class Main {
     static screen: Texture;
     static delta: number;
 
+    static get gameCodeName() { return "PlatformerTest"; }
     static get width() { return 960; }
     static get height() { return 800; }
     static get backgroundColor() { return 0x000000; }
@@ -49,6 +50,8 @@ class Main {
     // modify this method
     private static load() {
         document.body.appendChild(Main.renderer.view);
+
+        Options.init(this.gameCodeName);
 
         Main.screen = new Texture(Main.width, Main.height);
 

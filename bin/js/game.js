@@ -342,13 +342,18 @@ var Game = /** @class */ (function () {
         this.theaterConfig = config.theaterConfig;
         this.showMetricsMenuKey = config.showMetricsMenuKey;
         this.soundManager = new SoundManager();
-        this.volume = 1;
         this.menuSystem = new MenuSystem(this);
         this.loadMainMenu();
         if (Debug.SKIP_MAIN_MENU) {
             this.startGame();
         }
     }
+    Object.defineProperty(Game.prototype, "volume", {
+        get: function () { return Options.volume; },
+        enumerable: false,
+        configurable: true
+    });
+    ;
     Game.prototype.update = function (delta) {
         this.updatePause();
         this.updateMetrics();
@@ -796,6 +801,46 @@ function error(message) {
     }
     console.error.apply(console, __spread([message], optionalParams));
 }
+var Options = /** @class */ (function () {
+    function Options() {
+    }
+    Object.defineProperty(Options, "volume", {
+        get: function () { return this.getOption('volume'); },
+        set: function (value) { this.updateOption('volume', value); },
+        enumerable: false,
+        configurable: true
+    });
+    Options.init = function (name) {
+        this.optionsName = name;
+        this.loadOptions();
+    };
+    Options.getOption = function (option) {
+        return this.options[option];
+    };
+    Options.updateOption = function (option, value) {
+        this.options[option] = value;
+        this.saveOptions();
+    };
+    Options.resetOptions = function () {
+        this.options = {
+            volume: 1,
+        };
+        this.saveOptions();
+    };
+    Options.loadOptions = function () {
+        this.options = JSON.parse(localStorage.getItem(this.getOptionsLocalStorageName()));
+        if (_.isEmpty(this.options)) {
+            this.resetOptions();
+        }
+    };
+    Options.saveOptions = function () {
+        localStorage.setItem(this.getOptionsLocalStorageName(), JSON.stringify(this.options));
+    };
+    Options.getOptionsLocalStorageName = function () {
+        return this.optionsName + "_options";
+    };
+    return Options;
+}());
 var SingleKeyCache = /** @class */ (function () {
     function SingleKeyCache(factory, keyToStringFn) {
         this.factory = factory;
@@ -7643,6 +7688,11 @@ Debug.init({
 var Main = /** @class */ (function () {
     function Main() {
     }
+    Object.defineProperty(Main, "gameCodeName", {
+        get: function () { return "PlatformerTest"; },
+        enumerable: false,
+        configurable: true
+    });
     Object.defineProperty(Main, "width", {
         get: function () { return 960; },
         enumerable: false,
@@ -7689,6 +7739,7 @@ var Main = /** @class */ (function () {
     // modify this method
     Main.load = function () {
         document.body.appendChild(Main.renderer.view);
+        Options.init(this.gameCodeName);
         Main.screen = new Texture(Main.width, Main.height);
         Input.setKeys({
             'left': ['ArrowLeft'],

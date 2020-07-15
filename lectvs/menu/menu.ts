@@ -1,5 +1,9 @@
 /// <reference path="../world/world.ts" />
 
+namespace Menu {
+    export type MenuClass = new (menuSystem: MenuSystem) => Menu;
+}
+
 class Menu extends World {
     menuSystem: MenuSystem;
 

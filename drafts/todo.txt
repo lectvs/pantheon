@@ -5,9 +5,9 @@
 - /allow multiple menus to pause the game (or change definition of "paused")
 - /improve World audio functionality (e.g. playingAudio)
 - /cheats system (console only for now)
-- options
-    - saving/loading
-    - controls remapping
+- /options
+    - /saving/loading
+- controls remapping
 - uncapped fps?
 - platformer stuff
     - /moving platforms
