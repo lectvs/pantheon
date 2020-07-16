@@ -5,7 +5,7 @@ namespace Debug {
         cheatsEnabled: boolean;
         allPhysicsBounds: boolean;
         moveCameraWithArrows: boolean; 
-        showMousePosition: boolean;
+        showInfo: boolean;
         skipRate: number;
         programmaticInput: boolean;
         autoplay: boolean;
@@ -23,7 +23,7 @@ class Debug {
         Debug.CHEATS_ENABLED = config.cheatsEnabled;
         Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
         Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
-        Debug.SHOW_MOUSE_POSITION = config.showMousePosition;
+        Debug.SHOW_INFO = config.showInfo;
         Debug.SKIP_RATE = config.skipRate;
         Debug.PROGRAMMATIC_INPUT = config.programmaticInput;
         Debug.AUTOPLAY = config.autoplay;
@@ -51,9 +51,9 @@ class Debug {
     static get MOVE_CAMERA_WITH_ARROWS() { return this.DEBUG && this._MOVE_CAMERA_WITH_ARROWS; }
     static set MOVE_CAMERA_WITH_ARROWS(value: boolean) { this._MOVE_CAMERA_WITH_ARROWS = value; }
 
-    private static _SHOW_MOUSE_POSITION: boolean;
-    static get SHOW_MOUSE_POSITION() { return this.DEBUG && this._SHOW_MOUSE_POSITION; }
-    static set SHOW_MOUSE_POSITION(value: boolean) { this._SHOW_MOUSE_POSITION = value; }
+    private static _SHOW_INFO: boolean;
+    static get SHOW_INFO() { return this.DEBUG && this._SHOW_INFO; }
+    static set SHOW_INFO(value: boolean) { this._SHOW_INFO = value; }
 
     private static _SKIP_RATE: number;
     static get SKIP_RATE() { return this.DEBUG ? this._SKIP_RATE : 1; }

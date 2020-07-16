@@ -8,10 +8,10 @@ class Main {
     static screen: Texture;
     static delta: number;
 
-    static get gameCodeName() { return "PlatformerTest"; }
-    static get width() { return 960; }
-    static get height() { return 800; }
-    static get backgroundColor() { return 0x000000; }
+    static readonly gameCodeName = "PlatformerTest";
+    static readonly width = 960;
+    static readonly height = 800;
+    static readonly backgroundColor = 0x000000;
 
     // no need to modify
     static preload() {
@@ -51,38 +51,39 @@ class Main {
     private static load() {
         document.body.appendChild(Main.renderer.view);
 
-        Options.init(this.gameCodeName);
-
-        Main.screen = new Texture(Main.width, Main.height);
-
-        Input.setKeys({
-            'left':                 ['ArrowLeft'],
-            'right':                ['ArrowRight'],
-            'up':                   ['ArrowUp'],
-            'down':                 ['ArrowDown'],
-            'interact':             ['e'],
-
-            // Game
-            'advanceDialog':        ['MouseLeft', 'e', ' '],
-            'pause':                ['Escape', 'Backspace'],
-            'lmb':                  ['MouseLeft'],
-
-            // Debug
-            'debugMoveCameraUp':    ['i'],
-            'debugMoveCameraDown':  ['k'],
-            'debugMoveCameraLeft':  ['j'],
-            'debugMoveCameraRight': ['l'],
-            '1':                    ['1'],
-            '2':                    ['2'],
-            '3':                    ['3'],
-            '4':                    ['4'],
-            '5':                    ['5'],
-            '6':                    ['6'],
-            '7':                    ['7'],
-            '8':                    ['8'],
-            '9':                    ['9'],
-            '0':                    ['0'],
+        Options.init(this.gameCodeName, {
+            volume: 1,
+            controls: {
+                'left':                 ['ArrowLeft'],
+                'right':                ['ArrowRight'],
+                'up':                   ['ArrowUp'],
+                'down':                 ['ArrowDown'],
+                'interact':             ['e'],
+    
+                // Game
+                'advanceDialog':        ['MouseLeft', 'e', ' '],
+                'pause':                ['Escape', 'Backspace'],
+                'lmb':                  ['MouseLeft'],
+    
+                // Debug
+                'debugMoveCameraUp':    ['i'],
+                'debugMoveCameraDown':  ['k'],
+                'debugMoveCameraLeft':  ['j'],
+                'debugMoveCameraRight': ['l'],
+                '1':                    ['1'],
+                '2':                    ['2'],
+                '3':                    ['3'],
+                '4':                    ['4'],
+                '5':                    ['5'],
+                '6':                    ['6'],
+                '7':                    ['7'],
+                '8':                    ['8'],
+                '9':                    ['9'],
+                '0':                    ['0'],
+            }
         });
+
+        Input.init();
 
         window.addEventListener("keypress", event => {
             WebAudio.start();
@@ -115,6 +116,8 @@ class Main {
         // Deleting it as per https://github.com/pixijs/pixi.js/issues/5111#issuecomment-420047824
         Main.renderer.plugins.accessibility.destroy();
         delete Main.renderer.plugins.accessibility;
+
+        Main.screen = new Texture(Main.width, Main.height);
 
         this.metricsManager = new MetricsManager({
             recordKey: '0',
@@ -157,6 +160,7 @@ class Main {
             this.metricsManager.update();
 
             global.metrics.startSpan('frame');
+            global.fpsCalculator.update();
 
             Main.delta = frameDelta/60;
 

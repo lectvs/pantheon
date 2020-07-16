@@ -1,0 +1,2 @@
+- World does NOT require a Theater to operate
+- WorldObject requires a World to update/render

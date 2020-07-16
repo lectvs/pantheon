@@ -415,6 +415,67 @@ var Game = /** @class */ (function () {
     };
     return Game;
 }());
+var Monitor = /** @class */ (function () {
+    function Monitor() {
+        this.points = [];
+    }
+    Monitor.prototype.addPoint = function (point) {
+        this.points.push(point);
+    };
+    Monitor.prototype.clear = function () {
+        this.points = [];
+    };
+    Monitor.prototype.getAvg = function () {
+        return A.sum(this.points) / this.points.length;
+    };
+    Monitor.prototype.getP = function (p) {
+        var count = (p === 100) ? 1 : Math.ceil(this.points.length * (100 - p) / 100);
+        var sum = 0;
+        A.sort(this.points);
+        for (var i = this.points.length - count; i < this.points.length; i++) {
+            sum += this.points[i];
+        }
+        return sum / count;
+    };
+    Monitor.prototype.getQ = function (q) {
+        var count = (q === 0) ? 1 : Math.ceil(this.points.length * q / 100);
+        var sum = 0;
+        A.sort(this.points);
+        for (var i = 0; i < count; i++) {
+            sum += this.points[i];
+        }
+        return sum / count;
+    };
+    Monitor.prototype.isEmpty = function () {
+        return _.isEmpty(this.points);
+    };
+    return Monitor;
+}());
+/// <reference path="./monitor.ts"/>
+var FPSCalculator = /** @class */ (function () {
+    function FPSCalculator(timePerReport) {
+        this.monitor = new Monitor();
+        this.timePerReport = timePerReport;
+        this.fpsAvg = 0;
+        this.fpsP = 0;
+        this.startFrameTime = 0;
+        this.totalTime = 0;
+    }
+    FPSCalculator.prototype.update = function () {
+        var currentTime = performance.now();
+        var delta = (currentTime - this.startFrameTime) / 1000;
+        this.monitor.addPoint(delta);
+        this.totalTime += delta;
+        if (this.totalTime >= this.timePerReport) {
+            this.fpsAvg = 1 / this.monitor.getAvg();
+            this.fpsP = 1 / this.monitor.getP(95);
+            this.monitor.clear();
+            this.totalTime = 0;
+        }
+        this.startFrameTime = currentTime;
+    };
+    return FPSCalculator;
+}());
 var Metrics = /** @class */ (function () {
     function Metrics() {
         this.reset();
@@ -515,6 +576,7 @@ var Metrics = /** @class */ (function () {
     };
     return Metrics;
 }());
+/// <reference path="../metrics/fps.ts"/>
 /// <reference path="../metrics/metrics.ts"/>
 var global = /** @class */ (function () {
     function global() {
@@ -538,20 +600,21 @@ var global = /** @class */ (function () {
     });
     global.scriptStack = [];
     global.metrics = new Metrics();
+    global.fpsCalculator = new FPSCalculator(1);
     return global;
 }());
 var Input = /** @class */ (function () {
     function Input() {
     }
-    Input.setKeys = function (keyCodesByName) {
+    Input.init = function () {
         var e_1, _a;
-        this.keyCodesByName = _.clone(keyCodesByName);
+        this.keyCodesByName = O.deepClone(Options.getOption('controls'));
         this.isDownByKeyCode = {};
         this.keysByKeycode = {};
-        for (var name_1 in keyCodesByName) {
+        for (var name_1 in this.keyCodesByName) {
             this.keyCodesByName[name_1].push(this.debugKeyCode(name_1));
             try {
-                for (var _b = (e_1 = void 0, __values(keyCodesByName[name_1])), _c = _b.next(); !_c.done; _c = _b.next()) {
+                for (var _b = (e_1 = void 0, __values(this.keyCodesByName[name_1])), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var keyCode = _c.value;
                     this.setupKeyCode(keyCode);
                 }
@@ -607,6 +670,49 @@ var Input = /** @class */ (function () {
         if (!Debug.PROGRAMMATIC_INPUT)
             return;
         this.keysByKeycode[this.debugKeyCode(name)].setJustUp();
+    };
+    Input.addControlBinding = function (controlName, keyCode) {
+        var controls = Options.getOption('controls');
+        var controlBindings = controls[controlName];
+        if (!controlBindings) {
+            error("Cannot add control binding for '" + controlName + "' since the control does not exist");
+            return;
+        }
+        if (!_.contains(controlBindings, keyCode)) {
+            controlBindings.push(keyCode);
+        }
+        Options.saveOptions();
+        this.init();
+    };
+    Input.removeControlBinding = function (controlName, keyCode) {
+        var controls = Options.getOption('controls');
+        var controlBindings = controls[controlName];
+        if (!controlBindings) {
+            error("Cannot remove control binding for '" + controlName + "' since the control does not exist");
+            return;
+        }
+        A.removeAll(controlBindings, keyCode);
+        Options.saveOptions();
+        this.init();
+    };
+    Input.updateControlBinding = function (controlName, oldKeyCode, newKeyCode) {
+        var controls = Options.getOption('controls');
+        var controlBindings = controls[controlName];
+        if (!controlBindings) {
+            error("Cannot update control binding for '" + controlName + "' since the control does not exist");
+            return;
+        }
+        if (!_.contains(controlBindings, oldKeyCode)) {
+            error("Cannot update control binding '" + oldKeyCode + "' for '" + controlName + "' since that key is not bound to that control");
+            return;
+        }
+        for (var i = 0; i < controlBindings.length; i++) {
+            if (controlBindings[i] === oldKeyCode) {
+                controlBindings[i] = newKeyCode;
+            }
+        }
+        Options.saveOptions();
+        this.init();
     };
     Input.debugKeyCode = function (name) {
         return this.DEBUG_PREFIX + name;
@@ -810,8 +916,9 @@ var Options = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
-    Options.init = function (name) {
+    Options.init = function (name, defaultOptions) {
         this.optionsName = name;
+        this.defaultOptions = defaultOptions;
         this.loadOptions();
     };
     Options.getOption = function (option) {
@@ -822,19 +929,17 @@ var Options = /** @class */ (function () {
         this.saveOptions();
     };
     Options.resetOptions = function () {
-        this.options = {
-            volume: 1,
-        };
+        this.options = O.deepClone(this.defaultOptions);
         this.saveOptions();
+    };
+    Options.saveOptions = function () {
+        localStorage.setItem(this.getOptionsLocalStorageName(), JSON.stringify(this.options));
     };
     Options.loadOptions = function () {
         this.options = JSON.parse(localStorage.getItem(this.getOptionsLocalStorageName()));
         if (_.isEmpty(this.options)) {
             this.resetOptions();
         }
-    };
-    Options.saveOptions = function () {
-        localStorage.setItem(this.getOptionsLocalStorageName(), JSON.stringify(this.options));
     };
     Options.getOptionsLocalStorageName = function () {
         return this.optionsName + "_options";
@@ -2172,7 +2277,7 @@ var Debug = /** @class */ (function () {
         Debug.CHEATS_ENABLED = config.cheatsEnabled;
         Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
         Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
-        Debug.SHOW_MOUSE_POSITION = config.showMousePosition;
+        Debug.SHOW_INFO = config.showInfo;
         Debug.SKIP_RATE = config.skipRate;
         Debug.PROGRAMMATIC_INPUT = config.programmaticInput;
         Debug.AUTOPLAY = config.autoplay;
@@ -2205,9 +2310,9 @@ var Debug = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
-    Object.defineProperty(Debug, "SHOW_MOUSE_POSITION", {
-        get: function () { return this.DEBUG && this._SHOW_MOUSE_POSITION; },
-        set: function (value) { this._SHOW_MOUSE_POSITION = value; },
+    Object.defineProperty(Debug, "SHOW_INFO", {
+        get: function () { return this.DEBUG && this._SHOW_INFO; },
+        set: function (value) { this._SHOW_INFO = value; },
         enumerable: false,
         configurable: true
     });
@@ -2962,7 +3067,7 @@ var World = /** @class */ (function () {
         this.width = (_c = config.width) !== null && _c !== void 0 ? _c : global.gameWidth;
         this.height = (_d = config.height) !== null && _d !== void 0 ? _d : global.gameHeight;
         this.worldObjects = [];
-        this.showDebugMousePosition = (_e = config.showDebugMousePosition) !== null && _e !== void 0 ? _e : false;
+        this.showDebugInfo = (_e = config.showDebugInfo) !== null && _e !== void 0 ? _e : false;
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
         this.collisionOrder = (_f = config.collisionOrder) !== null && _f !== void 0 ? _f : [];
         this.collisionIterations = (_g = config.collisionIterations) !== null && _g !== void 0 ? _g : 1;
@@ -2986,7 +3091,7 @@ var World = /** @class */ (function () {
             finally { if (e_8) throw e_8.error; }
         }
         this.camera = new Camera((_k = config.camera) !== null && _k !== void 0 ? _k : {}, this);
-        this.debugMousePositionText = this.addWorldObject({
+        this.debugInfoText = this.addWorldObject({
             constructor: SpriteText,
             x: 0, y: 0,
             font: Debug.FONT,
@@ -3068,11 +3173,13 @@ var World = /** @class */ (function () {
         this.soundManager.update(delta);
     };
     World.prototype.updateDebugMousePosition = function () {
-        var showMousePosition = Debug.SHOW_MOUSE_POSITION && this.showDebugMousePosition;
-        this.debugMousePositionText.active = showMousePosition;
-        this.debugMousePositionText.visible = showMousePosition;
+        var showMousePosition = Debug.SHOW_INFO && this.showDebugInfo;
+        this.debugInfoText.active = showMousePosition;
+        this.debugInfoText.visible = showMousePosition;
         if (showMousePosition) {
-            this.debugMousePositionText.setText(St.padLeft(this.getWorldMouseX().toString(), 3) + " " + St.padLeft(this.getWorldMouseY().toString(), 3));
+            var debugInfo = "mpos: " + St.padLeft(this.getWorldMouseX().toString(), 3) + " " + St.padLeft(this.getWorldMouseY().toString(), 3) + "\n";
+            debugInfo += "fps: " + global.fpsCalculator.fpsAvg.toFixed(0) + " (-" + (global.fpsCalculator.fpsAvg - global.fpsCalculator.fpsP).toFixed(0) + ")";
+            this.debugInfoText.setText(debugInfo);
         }
     };
     World.prototype.updateScriptManager = function (delta) {
@@ -4090,26 +4197,6 @@ var MenuSystem = /** @class */ (function () {
     };
     return MenuSystem;
 }());
-var FPSMetricManager = /** @class */ (function () {
-    function FPSMetricManager(timePerReport) {
-        this.monitor = new Monitor();
-        this.timePerReport = timePerReport;
-        this.time = 0;
-    }
-    FPSMetricManager.prototype.update = function (delta) {
-        this.monitor.addPoint(delta);
-        this.time += delta;
-        if (this.time >= this.timePerReport) {
-            this.report();
-            this.monitor.clear();
-            this.time = 0;
-        }
-    };
-    FPSMetricManager.prototype.report = function () {
-        //debug(`avg: ${1/this.monitor.getAvg()}, p50: ${1/this.monitor.getP(50)}`);
-    };
-    return FPSMetricManager;
-}());
 var MetricsManager = /** @class */ (function () {
     function MetricsManager(config) {
         this.recordKey = config.recordKey;
@@ -4180,42 +4267,6 @@ var MetricsPlot;
         return plot.texture.height - plot.texture.height * (y - plot.graphBounds.bottom) / (plot.graphBounds.top - plot.graphBounds.bottom);
     }
 })(MetricsPlot || (MetricsPlot = {}));
-var Monitor = /** @class */ (function () {
-    function Monitor() {
-        this.points = [];
-    }
-    Monitor.prototype.addPoint = function (point) {
-        this.points.push(point);
-    };
-    Monitor.prototype.clear = function () {
-        this.points = [];
-    };
-    Monitor.prototype.getAvg = function () {
-        return A.sum(this.points) / this.points.length;
-    };
-    Monitor.prototype.getP = function (p) {
-        var count = (p === 100) ? 1 : Math.ceil(this.points.length * (100 - p) / 100);
-        var sum = 0;
-        A.sort(this.points);
-        for (var i = this.points.length - count; i < this.points.length; i++) {
-            sum += this.points[i];
-        }
-        return sum / count;
-    };
-    Monitor.prototype.getQ = function (q) {
-        var count = (q === 0) ? 1 : Math.ceil(this.points.length * q / 100);
-        var sum = 0;
-        A.sort(this.points);
-        for (var i = 0; i < count; i++) {
-            sum += this.points[i];
-        }
-        return sum / count;
-    };
-    Monitor.prototype.isEmpty = function () {
-        return _.isEmpty(this.points);
-    };
-    return Monitor;
-}());
 var S;
 (function (S) {
     // There is no async function. Use global.script.world.runScript(scriptFunction) instead.
@@ -5335,7 +5386,7 @@ var StageManager = /** @class */ (function () {
         // Create new stuff
         this.currentStageName = name;
         this.currentWorld = World.fromConfig(this.stages[name]);
-        this.currentWorld.showDebugMousePosition = true;
+        this.currentWorld.showDebugInfo = true;
         this.currentWorldAsWorldObject = new Theater.WorldAsWorldObject(this.currentWorld);
         this.addPartyToWorld(this.currentWorld, name, entryPoint);
         World.Actions.setName(this.currentWorldAsWorldObject, 'world');
@@ -7674,7 +7725,7 @@ Debug.init({
     cheatsEnabled: true,
     allPhysicsBounds: false,
     moveCameraWithArrows: true,
-    showMousePosition: true,
+    showInfo: true,
     skipRate: 1,
     programmaticInput: false,
     autoplay: true,
@@ -7688,26 +7739,6 @@ Debug.init({
 var Main = /** @class */ (function () {
     function Main() {
     }
-    Object.defineProperty(Main, "gameCodeName", {
-        get: function () { return "PlatformerTest"; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Main, "width", {
-        get: function () { return 960; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Main, "height", {
-        get: function () { return 800; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Main, "backgroundColor", {
-        get: function () { return 0x000000; },
-        enumerable: false,
-        configurable: true
-    });
     // no need to modify
     Main.preload = function () {
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
@@ -7739,34 +7770,36 @@ var Main = /** @class */ (function () {
     // modify this method
     Main.load = function () {
         document.body.appendChild(Main.renderer.view);
-        Options.init(this.gameCodeName);
-        Main.screen = new Texture(Main.width, Main.height);
-        Input.setKeys({
-            'left': ['ArrowLeft'],
-            'right': ['ArrowRight'],
-            'up': ['ArrowUp'],
-            'down': ['ArrowDown'],
-            'interact': ['e'],
-            // Game
-            'advanceDialog': ['MouseLeft', 'e', ' '],
-            'pause': ['Escape', 'Backspace'],
-            'lmb': ['MouseLeft'],
-            // Debug
-            'debugMoveCameraUp': ['i'],
-            'debugMoveCameraDown': ['k'],
-            'debugMoveCameraLeft': ['j'],
-            'debugMoveCameraRight': ['l'],
-            '1': ['1'],
-            '2': ['2'],
-            '3': ['3'],
-            '4': ['4'],
-            '5': ['5'],
-            '6': ['6'],
-            '7': ['7'],
-            '8': ['8'],
-            '9': ['9'],
-            '0': ['0'],
+        Options.init(this.gameCodeName, {
+            volume: 1,
+            controls: {
+                'left': ['ArrowLeft'],
+                'right': ['ArrowRight'],
+                'up': ['ArrowUp'],
+                'down': ['ArrowDown'],
+                'interact': ['e'],
+                // Game
+                'advanceDialog': ['MouseLeft', 'e', ' '],
+                'pause': ['Escape', 'Backspace'],
+                'lmb': ['MouseLeft'],
+                // Debug
+                'debugMoveCameraUp': ['i'],
+                'debugMoveCameraDown': ['k'],
+                'debugMoveCameraLeft': ['j'],
+                'debugMoveCameraRight': ['l'],
+                '1': ['1'],
+                '2': ['2'],
+                '3': ['3'],
+                '4': ['4'],
+                '5': ['5'],
+                '6': ['6'],
+                '7': ['7'],
+                '8': ['8'],
+                '9': ['9'],
+                '0': ['0'],
+            }
         });
+        Input.init();
         window.addEventListener("keypress", function (event) {
             WebAudio.start();
         });
@@ -7797,6 +7830,7 @@ var Main = /** @class */ (function () {
         // Deleting it as per https://github.com/pixijs/pixi.js/issues/5111#issuecomment-420047824
         Main.renderer.plugins.accessibility.destroy();
         delete Main.renderer.plugins.accessibility;
+        Main.screen = new Texture(Main.width, Main.height);
         this.metricsManager = new MetricsManager({
             recordKey: '0',
         });
@@ -7836,6 +7870,7 @@ var Main = /** @class */ (function () {
         PIXI.Ticker.shared.add(function (frameDelta) {
             _this.metricsManager.update();
             global.metrics.startSpan('frame');
+            global.fpsCalculator.update();
             Main.delta = frameDelta / 60;
             global.clearStacks();
             global.metrics.startSpan('update');
@@ -7861,6 +7896,10 @@ var Main = /** @class */ (function () {
             global.metrics.endSpan('frame');
         });
     };
+    Main.gameCodeName = "PlatformerTest";
+    Main.width = 960;
+    Main.height = 800;
+    Main.backgroundColor = 0x000000;
     return Main;
 }());
 // Actually load the game

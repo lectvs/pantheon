@@ -23,7 +23,7 @@ namespace World {
 
         volume?: number;
 
-        showDebugMousePosition?: boolean;
+        showDebugInfo?: boolean;
     }
 
     export type CollisionConfig = {
@@ -51,7 +51,6 @@ class World {
     height: number;
     entryPoints: Dict<Pt>;
     worldObjects: WorldObject[];
-    showDebugMousePosition: boolean;
 
     physicsGroups: Dict<World.PhysicsGroup>;
     collisionOrder: World.CollisionConfig[];
@@ -70,7 +69,8 @@ class World {
     
     volume: number;
 
-    private debugMousePositionText: SpriteText;
+    showDebugInfo: boolean;
+    private debugInfoText: SpriteText;
 
     constructor(config: World.Config, defaults?: World.Config) {
         config = WorldObject.resolveConfig<World.Config>(config, defaults);
@@ -83,7 +83,7 @@ class World {
         this.width = config.width ?? global.gameWidth;
         this.height = config.height ?? global.gameHeight;
         this.worldObjects = [];
-        this.showDebugMousePosition = config.showDebugMousePosition ?? false;
+        this.showDebugInfo = config.showDebugInfo ?? false;
 
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
         this.collisionOrder = config.collisionOrder ?? [];
@@ -104,7 +104,7 @@ class World {
 
         this.camera = new Camera(config.camera ?? {}, this);
         
-        this.debugMousePositionText = this.addWorldObject<SpriteText>(<SpriteText.Config>{
+        this.debugInfoText = this.addWorldObject<SpriteText>(<SpriteText.Config>{
             constructor: SpriteText,
             x: 0, y: 0,
             font: Debug.FONT,
@@ -164,12 +164,14 @@ class World {
     }
 
     protected updateDebugMousePosition() {
-        let showMousePosition = Debug.SHOW_MOUSE_POSITION && this.showDebugMousePosition;
-        this.debugMousePositionText.active = showMousePosition;
-        this.debugMousePositionText.visible = showMousePosition;
+        let showMousePosition = Debug.SHOW_INFO && this.showDebugInfo;
+        this.debugInfoText.active = showMousePosition;
+        this.debugInfoText.visible = showMousePosition;
 
         if (showMousePosition) {
-            this.debugMousePositionText.setText(`${St.padLeft(this.getWorldMouseX().toString(), 3)} ${St.padLeft(this.getWorldMouseY().toString(), 3)}`);
+            let debugInfo = `mpos: ${St.padLeft(this.getWorldMouseX().toString(), 3)} ${St.padLeft(this.getWorldMouseY().toString(), 3)}\n`;
+            debugInfo += `fps: ${global.fpsCalculator.fpsAvg.toFixed(0)} (-${(global.fpsCalculator.fpsAvg - global.fpsCalculator.fpsP).toFixed(0)})`;
+            this.debugInfoText.setText(debugInfo);
         }
     }
 

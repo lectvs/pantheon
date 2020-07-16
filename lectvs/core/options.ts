@@ -1,18 +1,21 @@
 namespace Options {
     export type Options = {
         volume: number;
+        controls: Dict<string[]>;
     } & Dict<any>;
 }
 
 class Options {
     static optionsName: string;
-    private static options: Options;
+    private static options: Options.Options;
+    private static defaultOptions: Options.Options;
 
     static get volume() { return this.getOption('volume'); }
     static set volume(value: number) { this.updateOption('volume', value); }
 
-    static init(name: string) {
+    static init(name: string, defaultOptions: Options.Options) {
         this.optionsName = name;
+        this.defaultOptions = defaultOptions;
         this.loadOptions();
     }
 
@@ -26,10 +29,12 @@ class Options {
     }
 
     static resetOptions() {
-        this.options = {
-            volume: 1,
-        };
+        this.options = O.deepClone(this.defaultOptions);
         this.saveOptions();
+    }
+
+    static saveOptions() {
+        localStorage.setItem(this.getOptionsLocalStorageName(), JSON.stringify(this.options));
     }
 
     private static loadOptions() {
@@ -37,10 +42,6 @@ class Options {
         if (_.isEmpty(this.options)) {
             this.resetOptions();
         }
-    }
-
-    private static saveOptions() {
-        localStorage.setItem(this.getOptionsLocalStorageName(), JSON.stringify(this.options));
     }
 
     private static getOptionsLocalStorageName() {

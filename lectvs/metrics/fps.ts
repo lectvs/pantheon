@@ -1,27 +1,38 @@
-class FPSMetricManager {
+/// <reference path="./monitor.ts"/>
+
+class FPSCalculator {
     monitor: Monitor;
     timePerReport: number;
-    
-    private time: number;
+
+    fpsAvg: number;
+    fpsP: number;
+
+    private startFrameTime: number;
+    private totalTime: number;
 
     constructor(timePerReport: number) {
         this.monitor = new Monitor();
         this.timePerReport = timePerReport;
-        this.time = 0;
+        this.fpsAvg = 0;
+        this.fpsP = 0;
+        this.startFrameTime = 0;
+        this.totalTime = 0;
     }
 
-    update(delta: number) {
+    update() {
+        let currentTime = performance.now();
+        let delta = (currentTime - this.startFrameTime)/1000;
+
         this.monitor.addPoint(delta);
-        this.time += delta;
+        this.totalTime += delta;
 
-        if (this.time >= this.timePerReport) {
-            this.report();
+        if (this.totalTime >= this.timePerReport) {
+            this.fpsAvg = 1/this.monitor.getAvg();
+            this.fpsP = 1/this.monitor.getP(95);
             this.monitor.clear();
-            this.time = 0;
+            this.totalTime = 0;
         }
-    }
 
-    report() {
-        //debug(`avg: ${1/this.monitor.getAvg()}, p50: ${1/this.monitor.getP(50)}`);
+        this.startFrameTime = currentTime;
     }
 }

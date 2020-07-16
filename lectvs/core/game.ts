@@ -9,7 +9,6 @@ namespace Game {
 }
 
 class Game {
-    fpsMetricManager: FPSMetricManager;
     menuSystem: MenuSystem;
     theater: Theater;
 

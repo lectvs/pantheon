@@ -7,14 +7,14 @@ class Input {
     private static _canvasMouseX: number = 0;
     private static _canvasMouseY: number = 0;
 
-    static setKeys(keyCodesByName: {[name: string]: string[]}) {
-        this.keyCodesByName = _.clone(keyCodesByName);
+    static init() {
+        this.keyCodesByName = O.deepClone(Options.getOption('controls'));
         this.isDownByKeyCode = {};
         this.keysByKeycode = {};
 
-        for (let name in keyCodesByName) {
+        for (let name in this.keyCodesByName) {
             this.keyCodesByName[name].push(this.debugKeyCode(name));
-            for (let keyCode of keyCodesByName[name]) {
+            for (let keyCode of this.keyCodesByName[name]) {
                 this.setupKeyCode(keyCode);
             }
         }
@@ -52,6 +52,55 @@ class Input {
     static debugKeyJustUp(name: string) {
         if (!Debug.PROGRAMMATIC_INPUT) return;
         this.keysByKeycode[this.debugKeyCode(name)].setJustUp();
+    }
+
+    static addControlBinding(controlName: string, keyCode: string) {
+        let controls: Dict<string[]> = Options.getOption('controls');
+        let controlBindings = controls[controlName];
+        if (!controlBindings) {
+            error(`Cannot add control binding for '${controlName}' since the control does not exist`);
+            return;
+        }
+        if (!_.contains(controlBindings, keyCode)) {
+            controlBindings.push(keyCode);
+        }
+        Options.saveOptions();
+        this.init();
+    }
+
+    static removeControlBinding(controlName: string, keyCode: string) {
+        let controls: Dict<string[]> = Options.getOption('controls');
+        let controlBindings = controls[controlName];
+        if (!controlBindings) {
+            error(`Cannot remove control binding for '${controlName}' since the control does not exist`);
+            return;
+        }
+        A.removeAll(controlBindings, keyCode);
+        Options.saveOptions();
+        this.init();
+    }
+
+    static updateControlBinding(controlName: string, oldKeyCode: string, newKeyCode: string) {
+        let controls: Dict<string[]> = Options.getOption('controls');
+        let controlBindings = controls[controlName];
+        if (!controlBindings) {
+            error(`Cannot update control binding for '${controlName}' since the control does not exist`);
+            return;
+        }
+
+        if (!_.contains(controlBindings, oldKeyCode)) {
+            error(`Cannot update control binding '${oldKeyCode}' for '${controlName}' since that key is not bound to that control`);
+            return;
+        }
+
+        for (let i = 0; i < controlBindings.length; i++) {
+            if (controlBindings[i] === oldKeyCode) {
+                controlBindings[i] = newKeyCode;
+            }
+        }
+        
+        Options.saveOptions();
+        this.init();
     }
 
     private static debugKeyCode(name: string) {

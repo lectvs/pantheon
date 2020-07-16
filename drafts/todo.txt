@@ -7,8 +7,11 @@
 - /cheats system (console only for now)
 - /options
     - /saving/loading
-- controls remapping
-- uncapped fps?
+- /controls remapping
+- /uncapped fps?
+    - /this is capped by chrome, not PIXI... nothing we can do about it :(
+- onboard storyboard with StateMachine
+- refactor the Main class
 - platformer stuff
     - /moving platforms
     - /physics based on lastx/y instead of lastmovementx/y?
@@ -16,16 +19,16 @@
     - slopes/sloped bounds
     - boxes colliding with other boxes
     - implement metroid-style transitions
-- consider moving texture's anchorX/Y to a Sprite property
-- onboard storyboard with StateMachine
-- refactor the Main class
 - preloading improvements
     - loading screen/progress bar
     - timeout on preloading
-- remove delta from update?
 - move tileset animation fields from Assets to Tilemap.Config
 - smart tilemaps
 - editing tilemaps
+- options menu
+- consider moving texture's anchorX/Y to a Sprite property
+- remove delta from update?
+- documentation
 
 stretch
 - boundless textures

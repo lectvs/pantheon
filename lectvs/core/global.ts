@@ -1,3 +1,4 @@
+/// <reference path="../metrics/fps.ts"/>
 /// <reference path="../metrics/metrics.ts"/>
 
 class global {
@@ -17,6 +18,7 @@ class global {
     static get world(): World { return this.theater ? this.theater.currentWorld : undefined; }
 
     static metrics: Metrics = new Metrics();
+    static fpsCalculator: FPSCalculator = new FPSCalculator(1);
 
     static gameWidth: number;
     static gameHeight: number;

@@ -6,7 +6,7 @@ Debug.init({
     cheatsEnabled: true,
     allPhysicsBounds: false,
     moveCameraWithArrows: true,
-    showMousePosition: true,
+    showInfo: true,
     skipRate: 1,
     programmaticInput: false,
     autoplay: true,
