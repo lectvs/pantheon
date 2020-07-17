@@ -37,7 +37,7 @@ class Script {
 
     finishImmediately(maxIters: number = Script.FINISH_IMMEDIATELY_MAX_ITERS) {
         for (let i = 0; i < maxIters && !this.done; i++) {
-            this.update(0.01);
+            this.update(0.1);
         }
         this.done = true;
     }

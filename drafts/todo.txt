@@ -22,6 +22,7 @@
 - preloading improvements
     - loading screen/progress bar
     - timeout on preloading
+- move debug info from World -> Game
 - move tileset animation fields from Assets to Tilemap.Config
 - smart tilemaps
 - editing tilemaps

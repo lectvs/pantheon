@@ -4517,7 +4517,7 @@ var Script = /** @class */ (function () {
     Script.prototype.finishImmediately = function (maxIters) {
         if (maxIters === void 0) { maxIters = Script.FINISH_IMMEDIATELY_MAX_ITERS; }
         for (var i = 0; i < maxIters && !this.done; i++) {
-            this.update(0.01);
+            this.update(0.1);
         }
         this.done = true;
     };
@@ -5263,16 +5263,23 @@ var Slide = /** @class */ (function (_super) {
             x: global.gameWidth / 2,
             y: global.gameHeight / 2,
         }) || this;
-        _this.timer = new Timer((_a = config.timeToLoad) !== null && _a !== void 0 ? _a : 0);
+        var timeToLoad = (_a = config.timeToLoad) !== null && _a !== void 0 ? _a : 0;
+        _this.timer = new Timer(timeToLoad);
         if (config.fadeIn) {
             _this.targetAlpha = _this.alpha;
             _this.alpha = 0;
         }
         _this.fullyLoaded = false;
+        if (timeToLoad === 0) {
+            _this.finishLoading();
+        }
         return _this;
     }
     Slide.prototype.update = function (delta) {
         _super.prototype.update.call(this, delta);
+        this.updateLoading(delta);
+    };
+    Slide.prototype.updateLoading = function (delta) {
         if (this.fullyLoaded)
             return;
         this.timer.update(delta);
@@ -5285,6 +5292,7 @@ var Slide = /** @class */ (function (_super) {
     };
     Slide.prototype.finishLoading = function () {
         this.timer.finish();
+        this.updateLoading(0);
     };
     return Slide;
 }(Sprite));
@@ -8175,7 +8183,23 @@ function getStoryboard() {
     return {
         'start': {
             type: 'start',
-            transitions: [{ type: 'onStage', stage: 'game', toNode: 'gameplay' }]
+            transitions: [{ type: 'onStage', stage: 'game', toNode: 'intro' }]
+        },
+        'intro': {
+            type: 'cutscene',
+            script: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            Script.instant(S.fadeOut());
+                            return [4 /*yield*/, S.fadeSlides(1)];
+                        case 1:
+                            _a.sent();
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [{ type: 'instant', toNode: 'gameplay' }]
         },
         'gameplay': {
             type: 'gameplay',

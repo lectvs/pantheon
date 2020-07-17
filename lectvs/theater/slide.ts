@@ -19,7 +19,9 @@ class Slide extends Sprite {
             x: global.gameWidth/2,
             y: global.gameHeight/2,
         });
-        this.timer = new Timer(config.timeToLoad ?? 0);
+
+        let timeToLoad = config.timeToLoad ?? 0;
+        this.timer = new Timer(timeToLoad);
 
         if (config.fadeIn) {
             this.targetAlpha = this.alpha;
@@ -27,10 +29,18 @@ class Slide extends Sprite {
         }
 
         this.fullyLoaded = false;
+
+        if (timeToLoad === 0) {
+            this.finishLoading();
+        }
     }
 
     update(delta: number) {
         super.update(delta);
+        this.updateLoading(delta);
+    }
+
+    private updateLoading(delta: number) {
         if (this.fullyLoaded) return;
         
         this.timer.update(delta);
@@ -45,5 +55,6 @@ class Slide extends Sprite {
 
     finishLoading() {
         this.timer.finish();
+        this.updateLoading(0);
     }
 }
