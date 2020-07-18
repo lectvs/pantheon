@@ -398,7 +398,6 @@ var Game = /** @class */ (function () {
     };
     Game.prototype.loadTheater = function () {
         this.theater = new this.theaterClass(this.theaterConfig);
-        global.theater = this.theater;
     };
     Game.prototype.pauseGame = function () {
         this.menuSystem.loadMenu(this.pauseMenuClass);
@@ -593,6 +592,11 @@ var global = /** @class */ (function () {
     ;
     global.pushScript = function (script) { this.scriptStack.push(script); };
     global.popScript = function () { return this.scriptStack.pop(); };
+    Object.defineProperty(global, "theater", {
+        get: function () { return this.game.theater; },
+        enumerable: false,
+        configurable: true
+    });
     Object.defineProperty(global, "world", {
         get: function () { return this.theater ? this.theater.currentWorld : undefined; },
         enumerable: false,
@@ -1726,6 +1730,7 @@ var StateMachine = /** @class */ (function () {
                 _this.setState(transition.toState);
             }
         }), S.yield()))));
+        this.script.update(0);
     };
     StateMachine.prototype.update = function (delta) {
         if (this.script)
@@ -1918,6 +1923,9 @@ var CutsceneManager = /** @class */ (function () {
         };
     };
     CutsceneManager.prototype.update = function (delta) {
+        this.updateCurrentCutscene(delta);
+    };
+    CutsceneManager.prototype.updateCurrentCutscene = function (delta) {
         if (this.current) {
             this.current.script.update(delta);
             if (this.current.script.done) {
@@ -1961,6 +1969,7 @@ var CutsceneManager = /** @class */ (function () {
             name: name,
             script: new Script(this.toScript(cutscene.script))
         };
+        this.updateCurrentCutscene(0);
     };
     CutsceneManager.prototype.reset = function () {
         if (this.current) {
@@ -5118,7 +5127,7 @@ var InteractionManager = /** @class */ (function () {
     };
     InteractionManager.prototype.getInteractableObjects = function () {
         var e_30, _a;
-        var interactableObjects = this.theater.storyManager.getInteractableObjects(this.theater.storyManager.currentNode);
+        var interactableObjects = this.theater.storyManager.getCurrentInteractableObjects();
         var result = new Set();
         try {
             for (var interactableObjects_1 = __values(interactableObjects), interactableObjects_1_1 = interactableObjects_1.next(); !interactableObjects_1_1.done; interactableObjects_1_1 = interactableObjects_1.next()) {
@@ -5525,6 +5534,7 @@ var Theater = /** @class */ (function (_super) {
     });
     // Theater cannot have preUpdate or postUpdate because I say so
     Theater.prototype.update = function (delta) {
+        this.storyManager.update(delta);
         _super.prototype.update.call(this, delta);
         this.stageManager.loadStageIfQueued();
     };
@@ -5704,18 +5714,84 @@ var StoryEventManager = /** @class */ (function () {
 }());
 var StoryManager = /** @class */ (function () {
     function StoryManager(theater, storyboard, storyboardPath, events, storyConfig) {
+        var _this = this;
         this.theater = theater;
         this.storyboard = storyboard;
         this.cutsceneManager = new CutsceneManager(theater, storyboard);
         this.eventManager = new StoryEventManager(theater, events);
         this.storyConfig = new StoryConfig(theater, storyConfig);
-        this.fastForward(storyboardPath);
-        if (this.currentNode) {
-            this.theater.runScript(this.script());
+        this.stateMachine = new StateMachine();
+        var _loop_2 = function (storyNodeName) {
+            var storyNode = storyboard[storyNodeName];
+            var state = {};
+            if (storyNode.type === 'cutscene') {
+                var cutsceneName_1 = storyNodeName;
+                state.callback = function () {
+                    _this.cutsceneManager.playCutscene(cutsceneName_1);
+                };
+                state.script = S.waitUntil(function () { return !_this.cutsceneManager.isCutscenePlaying; });
+            }
+            else if (storyNode.type === 'party') {
+                var partyNode_1 = storyNode;
+                state.callback = function () {
+                    _this.updateParty(partyNode_1);
+                };
+            }
+            else if (storyNode.type === 'config') {
+                var config_1 = storyNode.config;
+                state.callback = function () {
+                    _this.storyConfig.updateConfig(config_1);
+                    _this.storyConfig.execute();
+                };
+            }
+            state.transitions = storyNode.transitions.map(function (transition) {
+                if (transition.type === 'instant') {
+                    return {
+                        type: 'instant',
+                        toState: transition.toNode,
+                    };
+                }
+                if (transition.type === 'onCondition') {
+                    return {
+                        type: 'condition',
+                        condition: transition.condition,
+                        toState: transition.toNode,
+                    };
+                }
+                if (transition.type === 'onStage') {
+                    return {
+                        type: 'condition',
+                        condition: function () { return _this.theater.currentStageName === transition.stage && !_this.theater.stageManager.transitioning; },
+                        toState: transition.toNode,
+                    };
+                }
+                if (transition.type === 'onInteract') {
+                    return {
+                        type: 'condition',
+                        condition: function () {
+                            if (_this.theater.interactionManager.interactRequested === transition.with) {
+                                _this.theater.interactionManager.consumeInteraction();
+                                return true;
+                            }
+                            return false;
+                        },
+                        toState: transition.toNode,
+                    };
+                }
+                error("Invalid transition type! Did you forget to add the transition to storyManager?");
+                return undefined;
+            });
+            this_2.stateMachine.addState(storyNodeName, state);
+        };
+        var this_2 = this;
+        for (var storyNodeName in storyboard) {
+            _loop_2(storyNodeName);
         }
+        var nodeToStartOn = this.fastForward(storyboardPath);
+        this.stateMachine.setState(nodeToStartOn);
     }
     Object.defineProperty(StoryManager.prototype, "currentNodeName", {
-        get: function () { return this._currentNodeName; },
+        get: function () { return this.stateMachine.getCurrentStateName(); },
         enumerable: false,
         configurable: true
     });
@@ -5724,62 +5800,38 @@ var StoryManager = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
-    StoryManager.prototype.script = function () {
-        var sm = this;
-        return function () {
-            var transition, newScript;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!(sm.currentNode.type === 'cutscene')) return [3 /*break*/, 4];
-                        sm.cutsceneManager.playCutscene(sm.currentNodeName);
-                        _a.label = 1;
-                    case 1:
-                        if (!sm.cutsceneManager.isCutscenePlaying) return [3 /*break*/, 3];
-                        sm.cutsceneManager.update(global.script.delta);
-                        return [4 /*yield*/];
-                    case 2:
-                        _a.sent();
-                        return [3 /*break*/, 1];
-                    case 3: return [3 /*break*/, 5];
-                    case 4:
-                        if (sm.currentNode.type === 'party') {
-                            sm.updateParty(sm.currentNode);
-                        }
-                        else if (sm.currentNode.type === 'config') {
-                            sm.storyConfig.updateConfig(sm.currentNode.config);
-                            sm.storyConfig.execute();
-                        }
-                        _a.label = 5;
-                    case 5:
-                        transition = sm.getFirstValidTransition(sm.currentNode);
-                        _a.label = 6;
-                    case 6:
-                        if (!!transition) return [3 /*break*/, 8];
-                        return [4 /*yield*/];
-                    case 7:
-                        _a.sent();
-                        transition = sm.getFirstValidTransition(sm.currentNode);
-                        return [3 /*break*/, 6];
-                    case 8:
-                        sm._currentNodeName = transition.toNode;
-                        if (sm.currentNode) {
-                            newScript = sm.theater.runScript(sm.script());
-                            // Hack to make sure instantaneous transitions happen instantaneously.
-                            // Should not be needed once we onboard this with StateMachine.
-                            newScript.update(global.script.delta);
-                        }
-                        return [2 /*return*/];
-                }
-            });
-        };
+    StoryManager.prototype.update = function (delta) {
+        this.cutsceneManager.update(delta);
+        this.stateMachine.update(delta);
     };
     StoryManager.prototype.onStageLoad = function () {
         this.cutsceneManager.onStageLoad();
         this.eventManager.onStageLoad();
         this.storyConfig.execute();
     };
-    StoryManager.prototype.getInteractableObjects = function (node, stageName) {
+    StoryManager.prototype.getCurrentInteractableObjects = function (stageName) {
+        return this.getInteractableObjectsForNode(this.currentNode, stageName);
+    };
+    StoryManager.prototype.fastForward = function (path) {
+        for (var i = 0; i < path.length - 1; i++) {
+            var node = this.getNodeByName(path[i]);
+            if (!node)
+                continue;
+            if (node.type === 'cutscene') {
+                this.cutsceneManager.fastForwardCutscene(path[i]);
+            }
+            else if (node.type === 'party') {
+                this.updateParty(node);
+            }
+            else if (node.type === 'config') {
+                this.storyConfig.updateConfig(node.config);
+                this.storyConfig.execute();
+            }
+        }
+        this.storyConfig.execute();
+        return _.last(path);
+    };
+    StoryManager.prototype.getInteractableObjectsForNode = function (node, stageName) {
         var e_31, _a;
         var result = new Set();
         if (!node)
@@ -5806,58 +5858,6 @@ var StoryManager = /** @class */ (function () {
         }
         return result;
     };
-    StoryManager.prototype.fastForward = function (path) {
-        for (var i = 0; i < path.length - 1; i++) {
-            var node = this.getNodeByName(path[i]);
-            if (!node)
-                continue;
-            if (node.type === 'cutscene') {
-                this.cutsceneManager.fastForwardCutscene(path[i]);
-            }
-            else if (node.type === 'party') {
-                this.updateParty(node);
-            }
-            else if (node.type === 'config') {
-                this.storyConfig.updateConfig(node.config);
-            }
-        }
-        this.storyConfig.execute();
-        this._currentNodeName = _.last(path);
-    };
-    StoryManager.prototype.getFirstValidTransition = function (node) {
-        var e_32, _a;
-        try {
-            for (var _b = __values(node.transitions), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var transition = _c.value;
-                if (transition.type === 'instant') {
-                    return transition;
-                }
-                else if (transition.type === 'onStage') {
-                    if (this.theater.currentStageName === transition.stage && !this.theater.stageManager.transitioning)
-                        return transition;
-                }
-                else if (transition.type === 'onInteract') {
-                    if (this.theater.interactionManager.interactRequested === transition.with) {
-                        this.theater.interactionManager.consumeInteraction();
-                        return transition;
-                    }
-                }
-                else if (transition.type === 'onCondition') {
-                    if (transition.condition()) {
-                        return transition;
-                    }
-                }
-            }
-        }
-        catch (e_32_1) { e_32 = { error: e_32_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_32) throw e_32.error; }
-        }
-        return null;
-    };
     StoryManager.prototype.getNodeByName = function (name) {
         if (!this.storyboard[name]) {
             error("No storyboard node exists with name " + name);
@@ -5865,7 +5865,7 @@ var StoryManager = /** @class */ (function () {
         return this.storyboard[name];
     };
     StoryManager.prototype.updateParty = function (party) {
-        var e_33, _a, e_34, _b;
+        var e_32, _a, e_33, _b;
         if (party.setLeader !== undefined) {
             this.theater.partyManager.leader = party.setLeader;
         }
@@ -5876,12 +5876,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberActive(m);
                 }
             }
-            catch (e_33_1) { e_33 = { error: e_33_1 }; }
+            catch (e_32_1) { e_32 = { error: e_32_1 }; }
             finally {
                 try {
                     if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                 }
-                finally { if (e_33) throw e_33.error; }
+                finally { if (e_32) throw e_32.error; }
             }
         }
         if (!_.isEmpty(party.setMembersInactive)) {
@@ -5891,12 +5891,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberInactive(m);
                 }
             }
-            catch (e_34_1) { e_34 = { error: e_34_1 }; }
+            catch (e_33_1) { e_33 = { error: e_33_1 }; }
             finally {
                 try {
                     if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
                 }
-                finally { if (e_34) throw e_34.error; }
+                finally { if (e_33) throw e_33.error; }
             }
         }
     };
@@ -5984,7 +5984,7 @@ var A;
     }
     A.map2D = map2D;
     function mergeArray(array, into, key, combine) {
-        var e_35, _a;
+        var e_34, _a;
         if (combine === void 0) { combine = (function (e, into) { return e; }); }
         var result = A.clone(into);
         try {
@@ -6003,12 +6003,12 @@ var A;
                 }
             }
         }
-        catch (e_35_1) { e_35 = { error: e_35_1 }; }
+        catch (e_34_1) { e_34 = { error: e_34_1 }; }
         finally {
             try {
                 if (array_1_1 && !array_1_1.done && (_a = array_1.return)) _a.call(array_1);
             }
-            finally { if (e_35) throw e_35.error; }
+            finally { if (e_34) throw e_34.error; }
         }
         return result;
     }
@@ -6206,7 +6206,7 @@ var O;
     }
     O.deepClone = deepClone;
     function deepCloneInternal(obj) {
-        var e_36, _a;
+        var e_35, _a;
         if (_.isArray(obj)) {
             if (_.isEmpty(obj))
                 return [];
@@ -6217,12 +6217,12 @@ var O;
                     result.push(deepCloneInternal(el));
                 }
             }
-            catch (e_36_1) { e_36 = { error: e_36_1 }; }
+            catch (e_35_1) { e_35 = { error: e_35_1 }; }
             finally {
                 try {
                     if (obj_1_1 && !obj_1_1.done && (_a = obj_1.return)) _a.call(obj_1);
                 }
-                finally { if (e_36) throw e_36.error; }
+                finally { if (e_35) throw e_35.error; }
             }
             return result;
         }
@@ -6561,7 +6561,7 @@ var Physics = /** @class */ (function () {
     function Physics() {
     }
     Physics.collide = function (obj, from, options) {
-        var e_37, _a;
+        var e_36, _a;
         if (options === void 0) { options = {}; }
         if (_.isEmpty(from))
             return;
@@ -6580,7 +6580,7 @@ var Physics = /** @class */ (function () {
             var collisions = collidingWith.map(function (other) { return Physics.getCollision(obj, other); });
             collisions.sort(function (a, b) { return a.t - b.t; });
             try {
-                for (var collisions_1 = (e_37 = void 0, __values(collisions)), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
+                for (var collisions_1 = (e_36 = void 0, __values(collisions)), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
                     var collision = collisions_1_1.value;
                     var d = Physics.separate(collision);
                     if (d !== 0 && options.transferMomentum) {
@@ -6593,12 +6593,12 @@ var Physics = /** @class */ (function () {
                     }
                 }
             }
-            catch (e_37_1) { e_37 = { error: e_37_1 }; }
+            catch (e_36_1) { e_36 = { error: e_36_1 }; }
             finally {
                 try {
                     if (collisions_1_1 && !collisions_1_1.done && (_a = collisions_1.return)) _a.call(collisions_1);
                 }
-                finally { if (e_37) throw e_37.error; }
+                finally { if (e_36) throw e_36.error; }
             }
             collidingWith = collidingWith.filter(function (other) { return obj.isCollidingWith(other); });
             iters++;
@@ -6831,7 +6831,7 @@ var Effects = /** @class */ (function () {
         return this.pre.filters.concat(this.effects).concat(this.post.filters);
     };
     Effects.prototype.updateEffects = function (delta) {
-        var e_38, _a, e_39, _b;
+        var e_37, _a, e_38, _b;
         if (this.effects[Effects.SILHOUETTE_I])
             this.effects[Effects.SILHOUETTE_I].updateTime(delta);
         if (this.effects[Effects.OUTLINE_I])
@@ -6842,12 +6842,12 @@ var Effects = /** @class */ (function () {
                 filter.updateTime(delta);
             }
         }
-        catch (e_38_1) { e_38 = { error: e_38_1 }; }
+        catch (e_37_1) { e_37 = { error: e_37_1 }; }
         finally {
             try {
                 if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
             }
-            finally { if (e_38) throw e_38.error; }
+            finally { if (e_37) throw e_37.error; }
         }
         try {
             for (var _e = __values(this.post.filters), _f = _e.next(); !_f.done; _f = _e.next()) {
@@ -6855,12 +6855,12 @@ var Effects = /** @class */ (function () {
                 filter.updateTime(delta);
             }
         }
-        catch (e_39_1) { e_39 = { error: e_39_1 }; }
+        catch (e_38_1) { e_38 = { error: e_38_1 }; }
         finally {
             try {
                 if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
             }
-            finally { if (e_39) throw e_39.error; }
+            finally { if (e_38) throw e_38.error; }
         }
     };
     Effects.prototype.updateFromConfig = function (config) {
@@ -7218,7 +7218,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_40, _a;
+        var e_39, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -7232,12 +7232,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_40_1) { e_40 = { error: e_40_1 }; }
+            catch (e_39_1) { e_39 = { error: e_39_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_40) throw e_40.error; }
+                finally { if (e_39) throw e_39.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -7260,8 +7260,9 @@ var Tilemap = /** @class */ (function (_super) {
         _this.numTilesX = tilemapDimens.width;
         _this.numTilesY = tilemapDimens.height;
         _this.createCollisionBoxes((_b = config.debugBounds) !== null && _b !== void 0 ? _b : false);
-        _this.dirty = true;
         _this.zMap = (_c = config.zMap) !== null && _c !== void 0 ? _c : {};
+        _this.drawRenderTexture();
+        _this.dirty = false;
         return _this;
     }
     Object.defineProperty(Tilemap.prototype, "currentTilemapLayer", {
@@ -7276,7 +7277,7 @@ var Tilemap = /** @class */ (function (_super) {
         }
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_41, _a;
+        var e_40, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -7294,12 +7295,12 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_41_1) { e_41 = { error: e_41_1 }; }
+        catch (e_40_1) { e_40 = { error: e_40_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_41) throw e_41.error; }
+            finally { if (e_40) throw e_40.error; }
         }
         World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };
@@ -7400,7 +7401,7 @@ var Tilemap = /** @class */ (function (_super) {
                 }
             }
         }
-        var _loop_2 = function (zValue) {
+        var _loop_3 = function (zValue) {
             zTextureSlots[zValue].bounds.x = zTextureSlots[zValue].tileBounds.left * tileset.tileWidth;
             zTextureSlots[zValue].bounds.y = zTextureSlots[zValue].tileBounds.top * tileset.tileHeight;
             zTextureSlots[zValue].bounds.width = (zTextureSlots[zValue].tileBounds.right - zTextureSlots[zValue].tileBounds.left + 1) * tileset.tileWidth;
@@ -7409,7 +7410,7 @@ var Tilemap = /** @class */ (function (_super) {
             zTextureSlots[zValue].frames = A.range(numFrames).map(function (i) { return new Texture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height); });
         };
         for (var zValue in zTextureSlots) {
-            _loop_2(zValue);
+            _loop_3(zValue);
         }
         return zTextureSlots;
     }
@@ -7681,7 +7682,7 @@ var CarrierModule = /** @class */ (function () {
         this.obj = obj;
     }
     CarrierModule.prototype.postUpdate = function () {
-        var e_42, _a;
+        var e_41, _a;
         var objBounds = this.obj.getWorldBounds();
         var checkRect = {
             x: objBounds.x,
@@ -7712,12 +7713,12 @@ var CarrierModule = /** @class */ (function () {
                 }
             }
         }
-        catch (e_42_1) { e_42 = { error: e_42_1 }; }
+        catch (e_41_1) { e_41 = { error: e_41_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_42) throw e_42.error; }
+            finally { if (e_41) throw e_41.error; }
         }
     };
     return CarrierModule;
@@ -7871,6 +7872,7 @@ var Main = /** @class */ (function () {
             },
         });
         global.game = Main.game;
+        this.game.update(0); // Update game once just to make sure everything is set up correctly.
     };
     // no need to modify
     Main.play = function () {
@@ -8111,14 +8113,6 @@ function getStages() {
             },
             worldObjects: [
                 {
-                    name: 'testSoundController',
-                    updateCallback: function (obj, delta) {
-                        if (Input.justDown('1')) {
-                            obj.world.playSound('debug');
-                        }
-                    }
-                },
-                {
                     name: 'tiles',
                     constructor: Tilemap,
                     x: 0, y: 0,
@@ -8137,7 +8131,7 @@ function getStages() {
                 {
                     name: 'box',
                     constructor: Box,
-                    x: 270, y: 226,
+                    x: 270, y: 220,
                     layer: 'main',
                     physicsGroup: 'boxes',
                 },

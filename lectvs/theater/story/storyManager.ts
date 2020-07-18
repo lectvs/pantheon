@@ -6,9 +6,10 @@ class StoryManager {
     eventManager: StoryEventManager;
     storyConfig: StoryConfig;
 
-    private _currentNodeName: string;
-    get currentNodeName() { return this._currentNodeName; }
+    get currentNodeName() { return this.stateMachine.getCurrentStateName(); }
     get currentNode() { return this.getNodeByName(this.currentNodeName); }
+
+    private stateMachine: StateMachine;
 
     constructor(theater: Theater, storyboard: Storyboard, storyboardPath: string[], events: StoryEvent.Map, storyConfig: StoryConfig.Config) {
         this.theater = theater;
@@ -18,44 +19,84 @@ class StoryManager {
         this.eventManager = new StoryEventManager(theater, events);
         this.storyConfig = new StoryConfig(theater, storyConfig);
 
-        this.fastForward(storyboardPath);
+        this.stateMachine = new StateMachine();
+        
+        for (let storyNodeName in storyboard) {
+            let storyNode = storyboard[storyNodeName];
+            
+            let state: StateMachine.State = {};
 
-        if (this.currentNode) {
-            this.theater.runScript(this.script());
+            if (storyNode.type === 'cutscene') {
+                let cutsceneName = storyNodeName;
+                state.callback = () => {
+                    this.cutsceneManager.playCutscene(cutsceneName);
+                }
+                state.script = S.waitUntil(() => !this.cutsceneManager.isCutscenePlaying);
+            } else if (storyNode.type === 'party') {
+                let partyNode = storyNode;
+                state.callback = () => {
+                    this.updateParty(partyNode);
+                }
+            } else if (storyNode.type === 'config') {
+                let config = storyNode.config;
+                state.callback = () => {
+                    this.storyConfig.updateConfig(config);
+                    this.storyConfig.execute();
+                }
+            }
+            
+            state.transitions = storyNode.transitions.map(transition => {
+                if (transition.type === 'instant') {
+                    return <StateMachine.Transition>{
+                        type: 'instant',
+                        toState: transition.toNode,
+                    };
+                }
+
+                if (transition.type === 'onCondition') {
+                    return <StateMachine.Transition>{
+                        type: 'condition',
+                        condition: transition.condition,
+                        toState: transition.toNode,
+                    };
+                }
+
+                if (transition.type === 'onStage') {
+                    return <StateMachine.Transition>{
+                        type: 'condition',
+                        condition: () => this.theater.currentStageName === transition.stage && !this.theater.stageManager.transitioning,
+                        toState: transition.toNode,
+                    };
+                }
+
+                if (transition.type === 'onInteract') {
+                    return <StateMachine.Transition>{
+                        type: 'condition',
+                        condition: () => {
+                            if (this.theater.interactionManager.interactRequested === transition.with) {
+                                this.theater.interactionManager.consumeInteraction();
+                                return true;
+                            }
+                            return false;
+                        },
+                        toState: transition.toNode,
+                    };
+                }
+
+                error("Invalid transition type! Did you forget to add the transition to storyManager?");
+                return undefined;
+            });
+
+            this.stateMachine.addState(storyNodeName, state);
         }
+
+        let nodeToStartOn = this.fastForward(storyboardPath);
+        this.stateMachine.setState(nodeToStartOn);
     }
 
-    script() {
-        let sm = this;
-        return function*() {
-            if (sm.currentNode.type === 'cutscene') {
-                sm.cutsceneManager.playCutscene(sm.currentNodeName);
-                while (sm.cutsceneManager.isCutscenePlaying) {
-                    sm.cutsceneManager.update(global.script.delta);
-                    yield;
-                }
-            } else if (sm.currentNode.type === 'party') {
-                sm.updateParty(sm.currentNode);
-            } else if (sm.currentNode.type === 'config') {
-                sm.storyConfig.updateConfig(sm.currentNode.config);
-                sm.storyConfig.execute();
-            }
-
-            let transition = sm.getFirstValidTransition(sm.currentNode);
-            while (!transition) {
-                yield;
-                transition = sm.getFirstValidTransition(sm.currentNode);
-            }
-
-            sm._currentNodeName = transition.toNode;
-
-            if (sm.currentNode) {
-                let newScript = sm.theater.runScript(sm.script());
-                // Hack to make sure instantaneous transitions happen instantaneously.
-                // Should not be needed once we onboard this with StateMachine.
-                newScript.update(global.script.delta);
-            }
-        }
+    update(delta: number) {
+        this.cutsceneManager.update(delta);
+        this.stateMachine.update(delta);
     }
 
     onStageLoad() {
@@ -64,7 +105,28 @@ class StoryManager {
         this.storyConfig.execute();
     }
 
-    getInteractableObjects(node: Storyboard.Node, stageName?: string) {
+    getCurrentInteractableObjects(stageName?: string) {
+        return this.getInteractableObjectsForNode(this.currentNode, stageName);
+    }
+
+    private fastForward(path: string[]) {
+        for (let i = 0; i < path.length-1; i++) {
+            let node = this.getNodeByName(path[i]);
+            if (!node) continue;
+            if (node.type === 'cutscene') {
+                this.cutsceneManager.fastForwardCutscene(path[i]);
+            } else if (node.type === 'party') {
+                this.updateParty(node);
+            } else if (node.type === 'config') {
+                this.storyConfig.updateConfig(node.config);
+                this.storyConfig.execute();
+            }
+        }
+        this.storyConfig.execute();
+        return _.last(path);
+    }
+
+    private getInteractableObjectsForNode(node: Storyboard.Node, stageName?: string) {
         let result = new Set<string>();
 
         if (!node) return result;
@@ -80,42 +142,6 @@ class StoryManager {
         }
 
         return result;
-    }
-
-    private fastForward(path: string[]) {
-        for (let i = 0; i < path.length-1; i++) {
-            let node = this.getNodeByName(path[i]);
-            if (!node) continue;
-            if (node.type === 'cutscene') {
-                this.cutsceneManager.fastForwardCutscene(path[i]);
-            } else if (node.type === 'party') {
-                this.updateParty(node);
-            } else if (node.type === 'config') {
-                this.storyConfig.updateConfig(node.config);
-            }
-        }
-        this.storyConfig.execute();
-        this._currentNodeName = _.last(path);
-    }
-
-    private getFirstValidTransition(node: Storyboard.Node) {
-        for (let transition of node.transitions) {
-            if (transition.type === 'instant') {
-                return transition;
-            } else if (transition.type === 'onStage') {
-                if (this.theater.currentStageName === transition.stage && !this.theater.stageManager.transitioning) return transition;
-            } else if (transition.type === 'onInteract') {
-                if (this.theater.interactionManager.interactRequested === transition.with) {
-                    this.theater.interactionManager.consumeInteraction();
-                    return transition;
-                }
-            } else if (transition.type === 'onCondition') {
-                if (transition.condition()) {
-                    return transition;
-                }
-            }
-        }
-        return null;
     }
 
     private getNodeByName(name: string) {

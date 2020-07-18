@@ -25,7 +25,7 @@ class Script {
         if (!this.running) return;
 
         global.pushScript(this);
-        this.delta = delta
+        this.delta = delta;
 
         let result = this.iterator.next();
         if (result.done) {

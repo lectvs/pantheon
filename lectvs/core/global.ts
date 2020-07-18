@@ -14,7 +14,7 @@ class global {
     static popScript() { return this.scriptStack.pop(); }
 
     static game: Game;
-    static theater: Theater;
+    static get theater(): Theater { return this.game.theater; }
     static get world(): World { return this.theater ? this.theater.currentWorld : undefined; }
 
     static metrics: Metrics = new Metrics();

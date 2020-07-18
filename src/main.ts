@@ -152,6 +152,7 @@ class Main {
             },
         });
         global.game = Main.game;
+        this.game.update(0); // Update game once just to make sure everything is set up correctly.
     }
 
     // no need to modify

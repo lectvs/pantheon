@@ -88,7 +88,6 @@ class Game {
 
     loadTheater() {
         this.theater = new this.theaterClass(this.theaterConfig);
-        global.theater = this.theater;
     }
 
     pauseGame() {

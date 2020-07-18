@@ -65,8 +65,10 @@ class Tilemap extends WorldObject {
 
         this.createCollisionBoxes(config.debugBounds ?? false);
 
-        this.dirty = true;
         this.zMap = config.zMap ?? {};
+
+        this.drawRenderTexture();
+        this.dirty = false;
     }
 
     update(delta: number) {

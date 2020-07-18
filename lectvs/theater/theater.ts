@@ -63,6 +63,7 @@ class Theater extends World {
     // Theater cannot have preUpdate or postUpdate because I say so
 
     update(delta: number) {
+        this.storyManager.update(delta);
         super.update(delta);
         this.stageManager.loadStageIfQueued();
     }

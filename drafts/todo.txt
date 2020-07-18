@@ -10,7 +10,7 @@
 - /controls remapping
 - /uncapped fps?
     - /this is capped by chrome, not PIXI... nothing we can do about it :(
-- onboard storyboard with StateMachine
+- /onboard storyboard with StateMachine
 - refactor the Main class
 - platformer stuff
     - /moving platforms
@@ -29,7 +29,7 @@
 - options menu
 - consider moving texture's anchorX/Y to a Sprite property
 - remove delta from update?
-- documentation
+- documentation and API cleanup
 
 stretch
 - boundless textures

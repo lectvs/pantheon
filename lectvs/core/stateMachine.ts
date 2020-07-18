@@ -58,6 +58,8 @@ class StateMachine {
                 S.yield(),
             ))
         ));
+
+        this.script.update(0);
     }
 
     update(delta: number) {

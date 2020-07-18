@@ -10,14 +10,6 @@ function getStages(): Dict<World.Config> { return {
             'main': { x: Main.width/2, y: Main.height/2 },
         },
         worldObjects: [
-            {
-                name: 'testSoundController',
-                updateCallback: (obj, delta) => {
-                    if (Input.justDown('1')) {
-                        obj.world.playSound('debug');
-                    }
-                }
-            },
             <Tilemap.Config>{
                 name: 'tiles',
                 constructor: Tilemap,
@@ -37,7 +29,7 @@ function getStages(): Dict<World.Config> { return {
             <Sprite.Config>{
                 name: 'box',
                 constructor: Box,
-                x: 270, y: 226,
+                x: 270, y: 220,
                 layer: 'main',
                 physicsGroup: 'boxes',
 

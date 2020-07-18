@@ -44,6 +44,10 @@ class CutsceneManager {
     }
 
     update(delta: number) {
+        this.updateCurrentCutscene(delta);
+    }
+
+    private updateCurrentCutscene(delta: number) {
         if (this.current) {
             this.current.script.update(delta);
             if (this.current.script.done) {
@@ -90,6 +94,8 @@ class CutsceneManager {
             name: name,
             script: new Script(this.toScript(cutscene.script))
         };
+
+        this.updateCurrentCutscene(0);
     }
 
     reset() {

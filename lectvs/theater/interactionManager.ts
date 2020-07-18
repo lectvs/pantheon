@@ -46,7 +46,7 @@ class InteractionManager {
     }
 
     getInteractableObjects(): Set<string> {
-        let interactableObjects = this.theater.storyManager.getInteractableObjects(this.theater.storyManager.currentNode);
+        let interactableObjects = this.theater.storyManager.getCurrentInteractableObjects();
         let result = new Set<string>();
         for (let name of interactableObjects) {
             if (!this.theater.currentWorld.hasWorldObject(name)) continue;
