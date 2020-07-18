@@ -12,7 +12,7 @@
     - /this is capped by chrome, not PIXI... nothing we can do about it :(
 - /onboard storyboard with StateMachine
 - /move debug info from World -> Game
-- refactor the Main class
+- /refactor the Main class
 - platformer stuff
     - /moving platforms
     - /physics based on lastx/y instead of lastmovementx/y?

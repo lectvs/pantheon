@@ -40,7 +40,8 @@ class MetricsMenu extends Menu {
     update(delta: number) {
         super.update(delta);
 
-        if (Input.justDown('pause')) {
+        if (Input.justDown(Input.GAME_CLOSE_MENU)) {
+            Input.consume(Input.GAME_CLOSE_MENU);
             this.menuSystem.game.unpauseGame();
         }
 

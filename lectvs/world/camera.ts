@@ -111,10 +111,10 @@ class Camera {
         this.clampToBounds();
 
         if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && world === global.theater.currentWorld) {
-            if (Input.isDown('debugMoveCameraLeft'))  this.debugOffsetX -= 1;
-            if (Input.isDown('debugMoveCameraRight')) this.debugOffsetX += 1;
-            if (Input.isDown('debugMoveCameraUp'))    this.debugOffsetY -= 1;
-            if (Input.isDown('debugMoveCameraDown'))  this.debugOffsetY += 1;
+            if (Input.isDown(Input.DEBUG_MOVE_CAMERA_LEFT))  this.debugOffsetX -= 1;
+            if (Input.isDown(Input.DEBUG_MOVE_CAMERA_RIGHT)) this.debugOffsetX += 1;
+            if (Input.isDown(Input.DEBUG_MOVE_CAMERA_UP))    this.debugOffsetY -= 1;
+            if (Input.isDown(Input.DEBUG_MOVE_CAMERA_DOWN))  this.debugOffsetY += 1;
         }
     }
 

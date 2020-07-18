@@ -1,199 +1,92 @@
-/// <reference path="../lectvs/core/preload.ts" />
-/// <reference path="./assets.ts" />
+/// <reference path="./menus.ts"/>
 
-class Main {
-    private static game: Game;
-    private static metricsManager: MetricsManager;
-    static renderer: PIXI.Renderer;
-    static screen: Texture;
-    static delta: number;
+Main.start({
+    gameCodeName: "PlatformerTest",
+    gameWidth: 960,
+    gameHeight: 800,
+    canvasScale: 1,
+    backgroundColor: 0x000000,
 
-    static readonly gameCodeName = "PlatformerTest";
-    static readonly width = 960;
-    static readonly height = 800;
-    static readonly backgroundColor = 0x000000;
+    textures: Assets.textures,
+    sounds: Assets.sounds,
+    pyxelTilemaps: Assets.pyxelTilemaps,
+    spriteTextTags: Assets.spriteTextTags,
 
-    // no need to modify
-    static preload() {
-        PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
+    defaultOptions: {
+        volume: 1,
+        controls: {
+            'left':                      ['ArrowLeft'],
+            'right':                     ['ArrowRight'],
+            'up':                        ['ArrowUp'],
+            'down':                      ['ArrowDown'],
+            'interact':                  ['e'],
 
-        PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+            'game_advanceDialog':        ['MouseLeft', 'e', ' '],
+            'game_pause':                ['Escape', 'Backspace'],
+            'game_closeMenu':            ['Escape', 'Backspace'],
+            'game_select':               ['MouseLeft'],
 
-        WorldObject.DEFAULT_Z_BEHAVIOR = 'threequarters';
+            'debug_moveCameraUp':        ['i'],
+            'debug_moveCameraDown':      ['k'],
+            'debug_moveCameraLeft':      ['j'],
+            'debug_moveCameraRight':     ['l'],
+            'debug_recordMetrics':       ['0'],
+            'debug_showMetricsMenu':     ['9'],
 
-        global.gameWidth = Main.width;
-        global.gameHeight = Main.height;
-        global.backgroundColor = Main.backgroundColor;
-        Main.renderer = PIXI.autoDetectRenderer({
-            width: global.gameWidth,
-            height: global.gameHeight,
-            resolution: 1,
-            backgroundColor: global.backgroundColor,
-        });
-        global.renderer = Main.renderer;
-        global.soundManager = new GlobalSoundManager();
-        
-        WebAudio.initContext();
+            // Debug
+            '1':                         ['1'],
+            '2':                         ['2'],
+            '3':                         ['3'],
+            '4':                         ['4'],
+            '5':                         ['5'],
+            '6':                         ['6'],
+            '7':                         ['7'],
+            '8':                         ['8'],
+            '9':                         ['9'],
+            '0':                         ['0'],
+        }
+    },
 
-        Preload.preload({
-            textures: Assets.textures,
-            sounds: Assets.sounds,
-            pyxelTilemaps: Assets.pyxelTilemaps,
-            spriteTextTags: Assets.spriteTextTags,
-            onLoad: () => {
-                Main.load();
-                Main.play();
-            }
-        });
-    }
-
-    // modify this method
-    private static load() {
-        document.body.appendChild(Main.renderer.view);
-
-        Options.init(this.gameCodeName, {
-            volume: 1,
-            controls: {
-                'left':                 ['ArrowLeft'],
-                'right':                ['ArrowRight'],
-                'up':                   ['ArrowUp'],
-                'down':                 ['ArrowDown'],
-                'interact':             ['e'],
-    
-                // Game
-                'advanceDialog':        ['MouseLeft', 'e', ' '],
-                'pause':                ['Escape', 'Backspace'],
-                'lmb':                  ['MouseLeft'],
-    
-                // Debug
-                'debugMoveCameraUp':    ['i'],
-                'debugMoveCameraDown':  ['k'],
-                'debugMoveCameraLeft':  ['j'],
-                'debugMoveCameraRight': ['l'],
-                '1':                    ['1'],
-                '2':                    ['2'],
-                '3':                    ['3'],
-                '4':                    ['4'],
-                '5':                    ['5'],
-                '6':                    ['6'],
-                '7':                    ['7'],
-                '8':                    ['8'],
-                '9':                    ['9'],
-                '0':                    ['0'],
-            }
-        });
-
-        Input.init();
-
-        window.addEventListener("keypress", event => {
-            WebAudio.start();
-        });
-        window.addEventListener("keydown", event => {
-            WebAudio.start();
-            Input.handleKeyDownEvent(event);
-            if (event.key == 'Tab') {
-                event.preventDefault();
-            }
-        }, false);
-        window.addEventListener("keyup", event => {
-            WebAudio.start();
-            Input.handleKeyUpEvent(event);
-        }, false);
-        window.addEventListener("mousedown", event => {
-            WebAudio.start();
-            Input.handleMouseDownEvent(event);
-        }, false);
-        window.addEventListener("mouseup", event => {
-            WebAudio.start();
-            Input.handleMouseUpEvent(event);
-        }, false);
-        window.addEventListener("contextmenu", event => {
-            WebAudio.start();
-            event.preventDefault();
-        }, false);
-
-        // AccessibilityManager causes game to crash when Tab is pressed.
-        // Deleting it as per https://github.com/pixijs/pixi.js/issues/5111#issuecomment-420047824
-        Main.renderer.plugins.accessibility.destroy();
-        delete Main.renderer.plugins.accessibility;
-
-        Main.screen = new Texture(Main.width, Main.height);
-
-        this.metricsManager = new MetricsManager({
-            recordKey: '0',
-        });
-
-        this.game = new Game({
-            entryPointMenuClass: MainMenu,
-            pauseMenuClass: PauseMenu,
-            theaterClass: Theater,
-            showMetricsMenuKey: '9',
-            theaterConfig: {
-                getStages: getStages,
-                stageToLoad: 'game',
-                stageEntryPoint: 'main',
-                story: {
-                    getStoryboard: getStoryboard,
-                    storyboardPath: ['start'],
-                    getStoryEvents: getStoryEvents,
-                    getStoryConfig: getStoryConfig,
-                },
-                getParty: getParty,
-                dialogBox: {
-                    constructor: DialogBox,
-                    x: Main.width/2, y: Main.height - 32,
-                    texture: 'none',
-                    spriteTextFont: Assets.fonts.DELUXE16,
-                    textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
-                    textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
-                    portraitPosition: { x: 78, y: 0 },
-                    advanceKey: 'advanceDialog',
-                },
+    game: {
+        entryPointMenuClass: MainMenu,
+        pauseMenuClass: PauseMenu,
+        theaterConfig: {
+            getStages: getStages,
+            stageToLoad: 'game',
+            stageEntryPoint: 'main',
+            story: {
+                getStoryboard: getStoryboard,
+                storyboardPath: ['start'],
+                getStoryEvents: getStoryEvents,
+                getStoryConfig: getStoryConfig,
             },
-        });
-        global.game = Main.game;
-        this.game.update(0); // Update game once just to make sure everything is set up correctly.
-    }
+            getParty: getParty,
+            dialogBox: {
+                constructor: DialogBox,
+                x: global.gameWidth/2, y: global.gameHeight - 32,
+                texture: 'none',
+                spriteTextFont: Assets.fonts.DELUXE16,
+                textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
+                textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
+                portraitPosition: { x: 78, y: 0 },
+            },
+        },
+    },
 
-    // no need to modify
-    private static play() {
-        PIXI.Ticker.shared.add(frameDelta => {
-            this.metricsManager.update();
-
-            global.metrics.startSpan('frame');
-            global.fpsCalculator.update();
-
-            Main.delta = frameDelta/60;
-
-            global.clearStacks();
-
-            global.metrics.startSpan('update');
-            for (let i = 0; i < Debug.SKIP_RATE; i++) {
-                Input.update();
-                if (Debug.frameStepSkipFrame()) break;
-                global.soundManager.preGameUpdate();
-                global.metrics.startSpan('game');
-                Main.game.update(Main.delta);
-                global.metrics.endSpan('game');
-                global.soundManager.postGameUpdate();
-            }
-            global.metrics.endSpan('update');
-
-            global.metrics.startSpan('render');
-            Main.screen.clear();
-
-            global.metrics.startSpan('game');
-            Main.game.render(Main.screen);
-            global.metrics.endSpan('game');
-
-            Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
-            Main.renderer.render(Main.screen.renderTextureSprite);
-            global.metrics.endSpan('render');
-
-            global.metrics.endSpan('frame');
-        });
-    }
-}
-
-// Actually load the game
-Main.preload();
+    debug: {
+        debug: true,
+        font: Assets.fonts.DELUXE16,
+        fontStyle: { color: 0x008800 },
+        cheatsEnabled: true,
+        allPhysicsBounds: false,
+        moveCameraWithArrows: true,
+        showInfo: true,
+        skipRate: 1,
+        programmaticInput: false,
+        autoplay: true,
+        skipMainMenu: true,
+        frameStepEnabled: false,
+        frameStepStepKey: '1',
+        frameStepRunKey: '2',
+    },
+});

@@ -50,8 +50,8 @@ class PauseMenu extends Menu {
     update(delta: number) {
         super.update(delta);
 
-        if (Input.justDown('pause')) {
-            Input.consume('pause');
+        if (Input.justDown(Input.GAME_PAUSE)) {
+            Input.consume(Input.GAME_PAUSE);
             this.menuSystem.game.unpauseGame();
         }
     }

@@ -1,3 +1,21 @@
+namespace Input {
+    export type KeyCodesByName = {
+        // Game
+        [Input.GAME_ADVANCE_DIALOG]: string[],
+        [Input.GAME_PAUSE]: string[],
+        [Input.GAME_CLOSE_MENU]: string[],
+        [Input.GAME_SELECT]: string[],
+
+        // Debug
+        [Input.DEBUG_MOVE_CAMERA_UP]: string[],
+        [Input.DEBUG_MOVE_CAMERA_DOWN]: string[],
+        [Input.DEBUG_MOVE_CAMERA_LEFT]: string[],
+        [Input.DEBUG_MOVE_CAMERA_RIGHT]: string[],
+        [Input.DEBUG_RECORD_METRICS]: string[],
+        [Input.DEBUG_SHOW_METRICS_MENU]: string[],
+    } & Dict<string[]>;
+}
+
 class Input {
     private static isDownByKeyCode: {[keyCode: string]: boolean};
     private static keysByKeycode: {[keyCode: string]: Input.Key};
@@ -214,6 +232,18 @@ class Input {
 }
 
 namespace Input {
+    export const GAME_ADVANCE_DIALOG = 'game_advanceDialog';
+    export const GAME_PAUSE = 'game_pause';
+    export const GAME_CLOSE_MENU = 'game_closeMenu';
+    export const GAME_SELECT = 'game_select';
+
+    export const DEBUG_MOVE_CAMERA_UP = 'debug_moveCameraUp';
+    export const DEBUG_MOVE_CAMERA_DOWN = 'debug_moveCameraDown';
+    export const DEBUG_MOVE_CAMERA_LEFT = 'debug_moveCameraLeft';
+    export const DEBUG_MOVE_CAMERA_RIGHT = 'debug_moveCameraRight';
+    export const DEBUG_RECORD_METRICS = 'debug_recordMetrics';
+    export const DEBUG_SHOW_METRICS_MENU = 'debug_showMetricsMenu';
+
     export class Key {
         private _isDown: boolean;
         private _lastDown: boolean;

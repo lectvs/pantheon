@@ -338,9 +338,7 @@ var Game = /** @class */ (function () {
     function Game(config) {
         this.entryPointMenuClass = config.entryPointMenuClass;
         this.pauseMenuClass = config.pauseMenuClass;
-        this.theaterClass = config.theaterClass;
         this.theaterConfig = config.theaterConfig;
-        this.showMetricsMenuKey = config.showMetricsMenuKey;
         this.soundManager = new SoundManager();
         this.menuSystem = new MenuSystem(this);
         this.loadMainMenu();
@@ -375,13 +373,13 @@ var Game = /** @class */ (function () {
         this.soundManager.update(delta);
     };
     Game.prototype.updatePause = function () {
-        if (Input.justDown('pause') && !this.menuSystem.inMenu) {
-            Input.consume('pause');
+        if (Input.justDown(Input.GAME_PAUSE) && !this.menuSystem.inMenu) {
+            Input.consume(Input.GAME_PAUSE);
             this.pauseGame();
         }
     };
     Game.prototype.updateMetrics = function () {
-        if (Debug.DEBUG && Input.justDown(this.showMetricsMenuKey)) {
+        if (Debug.DEBUG && Input.justDown(Input.DEBUG_SHOW_METRICS_MENU)) {
             global.game.menuSystem.loadMenu(MetricsMenu);
         }
     };
@@ -402,7 +400,8 @@ var Game = /** @class */ (function () {
         this.menuSystem.loadMenu(this.entryPointMenuClass);
     };
     Game.prototype.loadTheater = function () {
-        this.theater = new this.theaterClass(this.theaterConfig);
+        var _a;
+        this.theater = new ((_a = this.theaterConfig.theaterClass) !== null && _a !== void 0 ? _a : Theater)(this.theaterConfig);
     };
     Game.prototype.pauseGame = function () {
         this.menuSystem.loadMenu(this.pauseMenuClass);
@@ -597,6 +596,11 @@ var global = /** @class */ (function () {
     ;
     global.pushScript = function (script) { this.scriptStack.push(script); };
     global.popScript = function () { return this.scriptStack.pop(); };
+    Object.defineProperty(global, "game", {
+        get: function () { return Main.game; },
+        enumerable: false,
+        configurable: true
+    });
     Object.defineProperty(global, "theater", {
         get: function () { return this.game.theater; },
         enumerable: false,
@@ -604,6 +608,16 @@ var global = /** @class */ (function () {
     });
     Object.defineProperty(global, "world", {
         get: function () { return this.theater ? this.theater.currentWorld : undefined; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(global, "renderer", {
+        get: function () { return Main.renderer; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(global, "soundManager", {
+        get: function () { return Main.soundManager; },
         enumerable: false,
         configurable: true
     });
@@ -849,6 +863,16 @@ var Input = /** @class */ (function () {
     return Input;
 }());
 (function (Input) {
+    Input.GAME_ADVANCE_DIALOG = 'game_advanceDialog';
+    Input.GAME_PAUSE = 'game_pause';
+    Input.GAME_CLOSE_MENU = 'game_closeMenu';
+    Input.GAME_SELECT = 'game_select';
+    Input.DEBUG_MOVE_CAMERA_UP = 'debug_moveCameraUp';
+    Input.DEBUG_MOVE_CAMERA_DOWN = 'debug_moveCameraDown';
+    Input.DEBUG_MOVE_CAMERA_LEFT = 'debug_moveCameraLeft';
+    Input.DEBUG_MOVE_CAMERA_RIGHT = 'debug_moveCameraRight';
+    Input.DEBUG_RECORD_METRICS = 'debug_recordMetrics';
+    Input.DEBUG_SHOW_METRICS_MENU = 'debug_showMetricsMenu';
     var Key = /** @class */ (function () {
         function Key() {
             this._isDown = false;
@@ -916,45 +940,6 @@ function error(message) {
     }
     console.error.apply(console, __spread([message], optionalParams));
 }
-var Options = /** @class */ (function () {
-    function Options() {
-    }
-    Object.defineProperty(Options, "volume", {
-        get: function () { return this.getOption('volume'); },
-        set: function (value) { this.updateOption('volume', value); },
-        enumerable: false,
-        configurable: true
-    });
-    Options.init = function (name, defaultOptions) {
-        this.optionsName = name;
-        this.defaultOptions = defaultOptions;
-        this.loadOptions();
-    };
-    Options.getOption = function (option) {
-        return this.options[option];
-    };
-    Options.updateOption = function (option, value) {
-        this.options[option] = value;
-        this.saveOptions();
-    };
-    Options.resetOptions = function () {
-        this.options = O.deepClone(this.defaultOptions);
-        this.saveOptions();
-    };
-    Options.saveOptions = function () {
-        localStorage.setItem(this.getOptionsLocalStorageName(), JSON.stringify(this.options));
-    };
-    Options.loadOptions = function () {
-        this.options = JSON.parse(localStorage.getItem(this.getOptionsLocalStorageName()));
-        if (_.isEmpty(this.options)) {
-            this.resetOptions();
-        }
-    };
-    Options.getOptionsLocalStorageName = function () {
-        return this.optionsName + "_options";
-    };
-    return Options;
-}());
 var SingleKeyCache = /** @class */ (function () {
     function SingleKeyCache(factory, keyToStringFn) {
         this.factory = factory;
@@ -1710,6 +1695,174 @@ var Preload = /** @class */ (function () {
     }
     Preload.allTilesWithPrefix = allTilesWithPrefix;
 })(Preload || (Preload = {}));
+/// <reference path="../core/preload.ts" />
+var Main = /** @class */ (function () {
+    function Main() {
+    }
+    Main.start = function (config) {
+        this.preload(config);
+    };
+    Main.preload = function (config) {
+        var _a;
+        PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
+        PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+        Debug.init(config.debug);
+        global.gameCodeName = config.gameCodeName;
+        global.gameWidth = config.gameWidth;
+        global.gameHeight = config.gameHeight;
+        global.backgroundColor = config.backgroundColor;
+        WorldObject.DEFAULT_Z_BEHAVIOR = (_a = config.defaultZBehavior) !== null && _a !== void 0 ? _a : 'noop';
+        Main.renderer = PIXI.autoDetectRenderer({
+            width: global.gameWidth,
+            height: global.gameHeight,
+            resolution: config.canvasScale,
+            backgroundColor: global.backgroundColor,
+        });
+        this.soundManager = new GlobalSoundManager();
+        WebAudio.initContext();
+        Preload.preload({
+            textures: config.textures,
+            sounds: config.sounds,
+            pyxelTilemaps: config.pyxelTilemaps,
+            spriteTextTags: config.spriteTextTags,
+            onLoad: function () {
+                Main.load(config);
+                Main.play();
+            }
+        });
+    };
+    Main.load = function (config) {
+        document.body.appendChild(Main.renderer.view);
+        Options.updateCallbacks.push(function () { return Input.init(); });
+        Options.init(global.gameCodeName, config.defaultOptions);
+        window.addEventListener("keypress", function (event) {
+            WebAudio.start();
+        });
+        window.addEventListener("keydown", function (event) {
+            WebAudio.start();
+            Input.handleKeyDownEvent(event);
+            if (event.key == 'Tab') {
+                event.preventDefault();
+            }
+        }, false);
+        window.addEventListener("keyup", function (event) {
+            WebAudio.start();
+            Input.handleKeyUpEvent(event);
+        }, false);
+        window.addEventListener("mousedown", function (event) {
+            WebAudio.start();
+            Input.handleMouseDownEvent(event);
+        }, false);
+        window.addEventListener("mouseup", function (event) {
+            WebAudio.start();
+            Input.handleMouseUpEvent(event);
+        }, false);
+        window.addEventListener("contextmenu", function (event) {
+            WebAudio.start();
+            event.preventDefault();
+        }, false);
+        // AccessibilityManager causes game to crash when Tab is pressed.
+        // Deleting it as per https://github.com/pixijs/pixi.js/issues/5111#issuecomment-420047824
+        Main.renderer.plugins.accessibility.destroy();
+        delete Main.renderer.plugins.accessibility;
+        Main.screen = new Texture(global.gameWidth, global.gameHeight);
+        this.metricsManager = new MetricsManager();
+        this.game = new Game(config.game);
+        this.game.update(0); // Update game once just to make sure everything is set up correctly.
+    };
+    Main.play = function () {
+        var _this = this;
+        PIXI.Ticker.shared.add(function (frameDelta) {
+            _this.metricsManager.update();
+            global.metrics.startSpan('frame');
+            global.fpsCalculator.update();
+            Main.delta = frameDelta / 60;
+            global.clearStacks();
+            global.metrics.startSpan('update');
+            for (var i = 0; i < Debug.SKIP_RATE; i++) {
+                Input.update();
+                if (Debug.frameStepSkipFrame())
+                    break;
+                Main.soundManager.preGameUpdate();
+                global.metrics.startSpan('game');
+                Main.game.update(Main.delta);
+                global.metrics.endSpan('game');
+                Main.soundManager.postGameUpdate();
+            }
+            global.metrics.endSpan('update');
+            global.metrics.startSpan('render');
+            Main.screen.clear();
+            global.metrics.startSpan('game');
+            Main.game.render(Main.screen);
+            global.metrics.endSpan('game');
+            Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true); // Clear the renderer
+            Main.renderer.render(Main.screen.renderTextureSprite);
+            global.metrics.endSpan('render');
+            global.metrics.endSpan('frame');
+        });
+    };
+    return Main;
+}());
+var Options = /** @class */ (function () {
+    function Options() {
+    }
+    Object.defineProperty(Options, "volume", {
+        get: function () { return this.getOption('volume'); },
+        set: function (value) { this.updateOption('volume', value); },
+        enumerable: false,
+        configurable: true
+    });
+    Options.init = function (name, defaultOptions) {
+        this.optionsName = name;
+        this.defaultOptions = defaultOptions;
+        this.loadOptions();
+    };
+    Options.getOption = function (option) {
+        return this.options[option];
+    };
+    Options.updateOption = function (option, value) {
+        this.options[option] = value;
+        this.saveOptions();
+    };
+    Options.resetOptions = function () {
+        this.options = O.deepClone(this.defaultOptions);
+        this.saveOptions();
+    };
+    Options.saveOptions = function () {
+        localStorage.setItem(this.getOptionsLocalStorageName(), JSON.stringify(this.options));
+        this.onUpdate();
+    };
+    Options.loadOptions = function () {
+        this.options = JSON.parse(localStorage.getItem(this.getOptionsLocalStorageName()));
+        if (_.isEmpty(this.options)) {
+            this.resetOptions();
+        }
+        else {
+            this.onUpdate();
+        }
+    };
+    Options.onUpdate = function () {
+        var e_4, _a;
+        try {
+            for (var _b = __values(this.updateCallbacks), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var callback = _c.value;
+                callback();
+            }
+        }
+        catch (e_4_1) { e_4 = { error: e_4_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_4) throw e_4.error; }
+        }
+    };
+    Options.getOptionsLocalStorageName = function () {
+        return this.optionsName + "_options";
+    };
+    Options.updateCallbacks = [];
+    return Options;
+}());
 var StateMachine = /** @class */ (function () {
     function StateMachine() {
         this.states = {};
@@ -1756,7 +1909,7 @@ var StateMachine = /** @class */ (function () {
         return this.states[name];
     };
     StateMachine.prototype.getValidTransition = function (state) {
-        var e_4, _a;
+        var e_5, _a;
         try {
             for (var _b = __values(state.transitions || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -1773,12 +1926,12 @@ var StateMachine = /** @class */ (function () {
                 }
             }
         }
-        catch (e_4_1) { e_4 = { error: e_4_1 }; }
+        catch (e_5_1) { e_5 = { error: e_5_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_4) throw e_4.error; }
+            finally { if (e_5) throw e_5.error; }
         }
         return undefined;
     };
@@ -2699,7 +2852,7 @@ var WorldObject = /** @class */ (function () {
         return this.children[index];
     };
     WorldObject.prototype.getChildByName = function (name) {
-        var e_5, _a;
+        var e_6, _a;
         try {
             for (var _b = __values(this.children), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var child = _c.value;
@@ -2707,12 +2860,12 @@ var WorldObject = /** @class */ (function () {
                     return child;
             }
         }
-        catch (e_5_1) { e_5 = { error: e_5_1 }; }
+        catch (e_6_1) { e_6 = { error: e_6_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_5) throw e_5.error; }
+            finally { if (e_6) throw e_6.error; }
         }
         error("Cannot find child named " + name + " on parent:", this);
         return undefined;
@@ -2832,7 +2985,7 @@ var WorldObject = /** @class */ (function () {
     }
     WorldObject.fromConfig = fromConfig;
     function resolveConfig(config) {
-        var e_6, _a;
+        var e_7, _a;
         var parents = [];
         for (var _i = 1; _i < arguments.length; _i++) {
             parents[_i - 1] = arguments[_i];
@@ -2847,12 +3000,12 @@ var WorldObject = /** @class */ (function () {
                 result = resolveConfig(result);
             }
         }
-        catch (e_6_1) { e_6 = { error: e_6_1 }; }
+        catch (e_7_1) { e_7 = { error: e_7_1 }; }
         finally {
             try {
                 if (parents_1_1 && !parents_1_1.done && (_a = parents_1.return)) _a.call(parents_1);
             }
-            finally { if (e_6) throw e_6.error; }
+            finally { if (e_7) throw e_7.error; }
         }
         return result;
     }
@@ -2985,7 +3138,7 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
 var Sprite = /** @class */ (function (_super) {
     __extends(Sprite, _super);
     function Sprite(config, defaults) {
-        var e_7, _a;
+        var e_8, _a;
         var _b, _c, _d, _e, _f, _g, _h;
         var _this = this;
         config = WorldObject.resolveConfig(config, defaults);
@@ -3006,12 +3159,12 @@ var Sprite = /** @class */ (function (_super) {
                     _this.animationManager.addAnimation(animation.name, animation.frames);
                 }
             }
-            catch (e_7_1) { e_7 = { error: e_7_1 }; }
+            catch (e_8_1) { e_8 = { error: e_8_1 }; }
             finally {
                 try {
                     if (_k && !_k.done && (_a = _j.return)) _a.call(_j);
                 }
-                finally { if (e_7) throw e_7.error; }
+                finally { if (e_8) throw e_8.error; }
             }
         }
         if (config.defaultAnimation) {
@@ -3073,7 +3226,7 @@ var Sprite = /** @class */ (function (_super) {
 /// <reference path="../worldObject/worldObject.ts" />
 var World = /** @class */ (function () {
     function World(config, defaults) {
-        var e_8, _a;
+        var e_9, _a;
         var _b, _c, _d, _e, _f, _g, _h, _j, _k;
         config = WorldObject.resolveConfig(config, defaults);
         this.scriptManager = new ScriptManager();
@@ -3098,17 +3251,17 @@ var World = /** @class */ (function () {
                 World.Actions.addWorldObjectToWorld(WorldObject.fromConfig(worldObjectConfig), this);
             }
         }
-        catch (e_8_1) { e_8 = { error: e_8_1 }; }
+        catch (e_9_1) { e_9 = { error: e_9_1 }; }
         finally {
             try {
                 if (_m && !_m.done && (_a = _l.return)) _a.call(_l);
             }
-            finally { if (e_8) throw e_8.error; }
+            finally { if (e_9) throw e_9.error; }
         }
         this.camera = new Camera((_k = config.camera) !== null && _k !== void 0 ? _k : {}, this);
     }
     World.prototype.update = function (delta) {
-        var e_9, _a, e_10, _b, e_11, _c;
+        var e_10, _a, e_11, _b, e_12, _c;
         this.updateScriptManager(delta);
         global.metrics.startSpan('preUpdate');
         try {
@@ -3121,12 +3274,12 @@ var World = /** @class */ (function () {
                 }
             }
         }
-        catch (e_9_1) { e_9 = { error: e_9_1 }; }
+        catch (e_10_1) { e_10 = { error: e_10_1 }; }
         finally {
             try {
                 if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
             }
-            finally { if (e_9) throw e_9.error; }
+            finally { if (e_10) throw e_10.error; }
         }
         global.metrics.endSpan('preUpdate');
         global.metrics.startSpan('update');
@@ -3140,12 +3293,12 @@ var World = /** @class */ (function () {
                 }
             }
         }
-        catch (e_10_1) { e_10 = { error: e_10_1 }; }
+        catch (e_11_1) { e_11 = { error: e_11_1 }; }
         finally {
             try {
                 if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
             }
-            finally { if (e_10) throw e_10.error; }
+            finally { if (e_11) throw e_11.error; }
         }
         global.metrics.endSpan('update');
         global.metrics.startSpan('handleCollisions');
@@ -3164,12 +3317,12 @@ var World = /** @class */ (function () {
                 }
             }
         }
-        catch (e_11_1) { e_11 = { error: e_11_1 }; }
+        catch (e_12_1) { e_12 = { error: e_12_1 }; }
         finally {
             try {
                 if (_j && !_j.done && (_c = _h.return)) _c.call(_h);
             }
-            finally { if (e_11) throw e_11.error; }
+            finally { if (e_12) throw e_12.error; }
         }
         global.metrics.endSpan('postUpdate');
         this.removeDeadWorldObjects();
@@ -3181,7 +3334,7 @@ var World = /** @class */ (function () {
         this.scriptManager.update(delta);
     };
     World.prototype.render = function (screen) {
-        var e_12, _a, e_13, _b, e_14, _c;
+        var e_13, _a, e_14, _b, e_15, _c;
         // Render background color.
         Draw.brush.color = this.backgroundColor;
         Draw.brush.alpha = this.backgroundAlpha;
@@ -3194,12 +3347,12 @@ var World = /** @class */ (function () {
                 }
             }
         }
-        catch (e_12_1) { e_12 = { error: e_12_1 }; }
+        catch (e_13_1) { e_13 = { error: e_13_1 }; }
         finally {
             try {
                 if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
             }
-            finally { if (e_12) throw e_12.error; }
+            finally { if (e_13) throw e_13.error; }
         }
         try {
             for (var _f = __values(this.layers), _g = _f.next(); !_g.done; _g = _f.next()) {
@@ -3208,12 +3361,12 @@ var World = /** @class */ (function () {
                 this.renderLayer(layer, this.layerTexture, this.screen);
             }
         }
-        catch (e_13_1) { e_13 = { error: e_13_1 }; }
+        catch (e_14_1) { e_14 = { error: e_14_1 }; }
         finally {
             try {
                 if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
             }
-            finally { if (e_13) throw e_13.error; }
+            finally { if (e_14) throw e_14.error; }
         }
         try {
             for (var _h = __values(this.worldObjects), _j = _h.next(); !_j.done; _j = _h.next()) {
@@ -3223,17 +3376,17 @@ var World = /** @class */ (function () {
                 }
             }
         }
-        catch (e_14_1) { e_14 = { error: e_14_1 }; }
+        catch (e_15_1) { e_15 = { error: e_15_1 }; }
         finally {
             try {
                 if (_j && !_j.done && (_c = _h.return)) _c.call(_h);
             }
-            finally { if (e_14) throw e_14.error; }
+            finally { if (e_15) throw e_15.error; }
         }
         screen.render(this.screen);
     };
     World.prototype.renderLayer = function (layer, layerTexture, screen) {
-        var e_15, _a;
+        var e_16, _a;
         layer.sort();
         try {
             for (var _b = __values(layer.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -3245,12 +3398,12 @@ var World = /** @class */ (function () {
                 }
             }
         }
-        catch (e_15_1) { e_15 = { error: e_15_1 }; }
+        catch (e_16_1) { e_16 = { error: e_16_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_15) throw e_15.error; }
+            finally { if (e_16) throw e_16.error; }
         }
         screen.render(layerTexture, {
             filters: layer.effects.getFilterList()
@@ -3275,7 +3428,7 @@ var World = /** @class */ (function () {
         return this.entryPoints[entryPointKey];
     };
     World.prototype.getLayerByName = function (name) {
-        var e_16, _a;
+        var e_17, _a;
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var layer = _c.value;
@@ -3283,12 +3436,12 @@ var World = /** @class */ (function () {
                     return layer;
             }
         }
-        catch (e_16_1) { e_16 = { error: e_16_1 }; }
+        catch (e_17_1) { e_17 = { error: e_17_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_16) throw e_16.error; }
+            finally { if (e_17) throw e_17.error; }
         }
         return undefined;
     };
@@ -3296,7 +3449,7 @@ var World = /** @class */ (function () {
         return this.physicsGroups[name];
     };
     World.prototype.getPhysicsGroupsThatCollideWith = function (physicsGroup) {
-        var e_17, _a;
+        var e_18, _a;
         var _this = this;
         var result = [];
         try {
@@ -3312,12 +3465,12 @@ var World = /** @class */ (function () {
                 }
             }
         }
-        catch (e_17_1) { e_17 = { error: e_17_1 }; }
+        catch (e_18_1) { e_18 = { error: e_18_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_17) throw e_17.error; }
+            finally { if (e_18) throw e_18.error; }
         }
         return A.removeDuplicates(result.filter(function (group) { return _this.physicsGroups[group]; }));
     };
@@ -3364,7 +3517,7 @@ var World = /** @class */ (function () {
         return this.worldObjects.filter(function (obj) { return obj instanceof type; });
     };
     World.prototype.handleCollisions = function () {
-        var e_18, _a, e_19, _b, e_20, _c;
+        var e_19, _a, e_20, _b, e_21, _c;
         var _this = this;
         try {
             for (var _d = __values(this.collisionOrder), _e = _d.next(); !_e.done; _e = _d.next()) {
@@ -3373,11 +3526,11 @@ var World = /** @class */ (function () {
                 var from = _.isArray(collision.from) ? collision.from : [collision.from];
                 var fromObjects = _.flatten(from.map(function (name) { return _this.physicsGroups[name].worldObjects; }));
                 try {
-                    for (var move_1 = (e_19 = void 0, __values(move)), move_1_1 = move_1.next(); !move_1_1.done; move_1_1 = move_1.next()) {
+                    for (var move_1 = (e_20 = void 0, __values(move)), move_1_1 = move_1.next(); !move_1_1.done; move_1_1 = move_1.next()) {
                         var moveGroup = move_1_1.value;
                         var group = this.physicsGroups[moveGroup].worldObjects;
                         try {
-                            for (var group_1 = (e_20 = void 0, __values(group)), group_1_1 = group_1.next(); !group_1_1.done; group_1_1 = group_1.next()) {
+                            for (var group_1 = (e_21 = void 0, __values(group)), group_1_1 = group_1.next(); !group_1_1.done; group_1_1 = group_1.next()) {
                                 var obj = group_1_1.value;
                                 Physics.collide(obj, fromObjects, {
                                     callback: collision.callback,
@@ -3385,30 +3538,30 @@ var World = /** @class */ (function () {
                                 });
                             }
                         }
-                        catch (e_20_1) { e_20 = { error: e_20_1 }; }
+                        catch (e_21_1) { e_21 = { error: e_21_1 }; }
                         finally {
                             try {
                                 if (group_1_1 && !group_1_1.done && (_c = group_1.return)) _c.call(group_1);
                             }
-                            finally { if (e_20) throw e_20.error; }
+                            finally { if (e_21) throw e_21.error; }
                         }
                     }
                 }
-                catch (e_19_1) { e_19 = { error: e_19_1 }; }
+                catch (e_20_1) { e_20 = { error: e_20_1 }; }
                 finally {
                     try {
                         if (move_1_1 && !move_1_1.done && (_b = move_1.return)) _b.call(move_1);
                     }
-                    finally { if (e_19) throw e_19.error; }
+                    finally { if (e_20) throw e_20.error; }
                 }
             }
         }
-        catch (e_18_1) { e_18 = { error: e_18_1 }; }
+        catch (e_19_1) { e_19 = { error: e_19_1 }; }
         finally {
             try {
                 if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
             }
-            finally { if (e_18) throw e_18.error; }
+            finally { if (e_19) throw e_19.error; }
         }
     };
     World.prototype.hasWorldObject = function (obj) {
@@ -3419,25 +3572,25 @@ var World = /** @class */ (function () {
     };
     // Returns a list of all physics objects in the world that overlap the given rect
     World.prototype.overlapRect = function (rect, restrictToPhysicsGroups) {
-        var e_21, _a;
+        var e_22, _a;
         var result = [];
         for (var physicsGroup in this.physicsGroups) {
             if (restrictToPhysicsGroups && !_.contains(restrictToPhysicsGroups, physicsGroup))
                 continue;
             try {
-                for (var _b = (e_21 = void 0, __values(this.physicsGroups[physicsGroup].worldObjects)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                for (var _b = (e_22 = void 0, __values(this.physicsGroups[physicsGroup].worldObjects)), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var obj = _c.value;
                     if (!obj.isOverlappingRect(rect))
                         continue;
                     result.push(obj);
                 }
             }
-            catch (e_21_1) { e_21 = { error: e_21_1 }; }
+            catch (e_22_1) { e_22 = { error: e_22_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_21) throw e_21.error; }
+                finally { if (e_22) throw e_22.error; }
             }
         }
         return result;
@@ -3474,7 +3627,7 @@ var World = /** @class */ (function () {
         return screen;
     };
     World.prototype.createLayers = function (layers) {
-        var e_22, _a;
+        var e_23, _a;
         if (_.isEmpty(layers))
             layers = [];
         layers.push({ name: World.DEFAULT_LAYER });
@@ -3488,12 +3641,12 @@ var World = /** @class */ (function () {
                 result.push(new World.Layer(layer.name, layer, this.width, this.height));
             }
         }
-        catch (e_22_1) { e_22 = { error: e_22_1 }; }
+        catch (e_23_1) { e_23 = { error: e_23_1 }; }
         finally {
             try {
                 if (layers_1_1 && !layers_1_1.done && (_a = layers_1.return)) _a.call(layers_1);
             }
-            finally { if (e_22) throw e_22.error; }
+            finally { if (e_23) throw e_23.error; }
         }
         return result;
     };
@@ -3547,7 +3700,7 @@ var World = /** @class */ (function () {
     };
     // For use with World.Actions.setLayer
     World.prototype.internalSetLayerWorld = function (obj, layerName) {
-        var e_23, _a;
+        var e_24, _a;
         this.removeFromAllLayers(obj);
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -3558,12 +3711,12 @@ var World = /** @class */ (function () {
                 }
             }
         }
-        catch (e_23_1) { e_23 = { error: e_23_1 }; }
+        catch (e_24_1) { e_24 = { error: e_24_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_23) throw e_23.error; }
+            finally { if (e_24) throw e_24.error; }
         }
     };
     // For use with World.Actions.setPhysicsGroup
@@ -3591,19 +3744,19 @@ var World = /** @class */ (function () {
         }
     };
     World.prototype.removeFromAllLayers = function (obj) {
-        var e_24, _a;
+        var e_25, _a;
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var layer = _c.value;
                 A.removeAll(layer.worldObjects, obj);
             }
         }
-        catch (e_24_1) { e_24 = { error: e_24_1 }; }
+        catch (e_25_1) { e_25 = { error: e_25_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_24) throw e_24.error; }
+            finally { if (e_25) throw e_25.error; }
         }
     };
     World.prototype.removeFromAllPhysicsGroups = function (obj) {
@@ -3841,7 +3994,7 @@ var World = /** @class */ (function () {
     }
     World.fromConfig = fromConfig;
     function resolveConfig(config) {
-        var e_25, _a;
+        var e_26, _a;
         var parents = [];
         for (var _i = 1; _i < arguments.length; _i++) {
             parents[_i - 1] = arguments[_i];
@@ -3856,12 +4009,12 @@ var World = /** @class */ (function () {
                 result = resolveConfig(result);
             }
         }
-        catch (e_25_1) { e_25 = { error: e_25_1 }; }
+        catch (e_26_1) { e_26 = { error: e_26_1 }; }
         finally {
             try {
                 if (parents_2_1 && !parents_2_1.done && (_a = parents_2.return)) _a.call(parents_2);
             }
-            finally { if (e_25) throw e_25.error; }
+            finally { if (e_26) throw e_26.error; }
         }
         return result;
     }
@@ -3968,7 +4121,8 @@ var MetricsMenu = /** @class */ (function (_super) {
     }
     MetricsMenu.prototype.update = function (delta) {
         _super.prototype.update.call(this, delta);
-        if (Input.justDown('pause')) {
+        if (Input.justDown(Input.GAME_CLOSE_MENU)) {
+            Input.consume(Input.GAME_CLOSE_MENU);
             this.menuSystem.game.unpauseGame();
         }
         this.getWorldObjectByName('graphxy')
@@ -3998,7 +4152,7 @@ var SpriteText = /** @class */ (function (_super) {
         return _this;
     }
     SpriteText.prototype.render = function (screen) {
-        var e_26, _a;
+        var e_27, _a;
         var _b, _c, _d;
         var filters = this.mask ? [new TextureFilter.Mask({ type: TextureFilter.Mask.Type.GLOBAL, mask: this.mask })] : [];
         try {
@@ -4019,12 +4173,12 @@ var SpriteText = /** @class */ (function (_super) {
                 });
             }
         }
-        catch (e_26_1) { e_26 = { error: e_26_1 }; }
+        catch (e_27_1) { e_27 = { error: e_27_1 }; }
         finally {
             try {
                 if (_f && !_f.done && (_a = _e.return)) _a.call(_e);
             }
-            finally { if (e_26) throw e_26.error; }
+            finally { if (e_27) throw e_27.error; }
         }
         _super.prototype.render.call(this, screen);
     };
@@ -4174,8 +4328,8 @@ var MenuTextButton = /** @class */ (function (_super) {
         _super.prototype.update.call(this, delta);
         if (this.isHovered()) {
             this.style.alpha = 0.5;
-            if (Input.justDown('lmb')) {
-                Input.consume('lmb');
+            if (Input.justDown(Input.GAME_SELECT)) {
+                Input.consume(Input.GAME_SELECT);
                 this.onClick();
             }
         }
@@ -4227,11 +4381,10 @@ var MenuSystem = /** @class */ (function () {
     return MenuSystem;
 }());
 var MetricsManager = /** @class */ (function () {
-    function MetricsManager(config) {
-        this.recordKey = config.recordKey;
+    function MetricsManager() {
     }
     MetricsManager.prototype.update = function () {
-        if (Debug.DEBUG && Input.justDown(this.recordKey)) {
+        if (Debug.DEBUG && Input.justDown(Input.DEBUG_RECORD_METRICS)) {
             if (!global.metrics.isRecording) {
                 global.metrics.startRecording('recording');
                 debug("Started recording");
@@ -4318,8 +4471,8 @@ var S;
             scriptFunctions[_i] = arguments[_i];
         }
         return function () {
-            var scriptFunctions_1, scriptFunctions_1_1, scriptFunction, e_27_1;
-            var e_27, _a;
+            var scriptFunctions_1, scriptFunctions_1_1, scriptFunction, e_28_1;
+            var e_28, _a;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -4338,14 +4491,14 @@ var S;
                         return [3 /*break*/, 1];
                     case 4: return [3 /*break*/, 7];
                     case 5:
-                        e_27_1 = _b.sent();
-                        e_27 = { error: e_27_1 };
+                        e_28_1 = _b.sent();
+                        e_28 = { error: e_28_1 };
                         return [3 /*break*/, 7];
                     case 6:
                         try {
                             if (scriptFunctions_1_1 && !scriptFunctions_1_1.done && (_a = scriptFunctions_1.return)) _a.call(scriptFunctions_1);
                         }
-                        finally { if (e_27) throw e_27.error; }
+                        finally { if (e_28) throw e_28.error; }
                         return [7 /*endfinally*/];
                     case 7: return [2 /*return*/];
                 }
@@ -4592,29 +4745,11 @@ var GlobalSoundManager = /** @class */ (function () {
         this.activeSounds = [];
     }
     GlobalSoundManager.prototype.preGameUpdate = function () {
-        var e_28, _a;
-        try {
-            for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var sound = _c.value;
-                sound.markForDisable();
-            }
-        }
-        catch (e_28_1) { e_28 = { error: e_28_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_28) throw e_28.error; }
-        }
-    };
-    GlobalSoundManager.prototype.postGameUpdate = function () {
         var e_29, _a;
         try {
             for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var sound = _c.value;
-                if (sound.isMarkedForDisable) {
-                    this.ensureSoundDisabled(sound);
-                }
+                sound.markForDisable();
             }
         }
         catch (e_29_1) { e_29 = { error: e_29_1 }; }
@@ -4623,6 +4758,24 @@ var GlobalSoundManager = /** @class */ (function () {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
             finally { if (e_29) throw e_29.error; }
+        }
+    };
+    GlobalSoundManager.prototype.postGameUpdate = function () {
+        var e_30, _a;
+        try {
+            for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var sound = _c.value;
+                if (sound.isMarkedForDisable) {
+                    this.ensureSoundDisabled(sound);
+                }
+            }
+        }
+        catch (e_30_1) { e_30 = { error: e_30_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_30) throw e_30.error; }
         }
     };
     GlobalSoundManager.prototype.ensureSoundDisabled = function (sound) {
@@ -5000,7 +5153,6 @@ var DialogBox = /** @class */ (function (_super) {
         _this.textAreaFull = config.textAreaFull;
         _this.portraitPosition = config.portraitPosition;
         _this.textAreaPortrait = config.textAreaPortrait;
-        _this.advanceKey = config.advanceKey;
         _this.textArea = _this.textAreaFull;
         _this.done = true;
         _this.spriteText = new SpriteText({
@@ -5022,7 +5174,7 @@ var DialogBox = /** @class */ (function (_super) {
         if (this.done) {
             this.visible = false;
         }
-        if (Input.justDown(this.advanceKey)) {
+        if (Input.justDown(Input.GAME_ADVANCE_DIALOG)) {
             this.advanceDialog();
         }
     };
@@ -5146,7 +5298,7 @@ var InteractionManager = /** @class */ (function () {
         this._interactRequested = null;
     };
     InteractionManager.prototype.getInteractableObjects = function () {
-        var e_30, _a;
+        var e_31, _a;
         var interactableObjects = this.theater.storyManager.getCurrentInteractableObjects();
         var result = new Set();
         try {
@@ -5157,12 +5309,12 @@ var InteractionManager = /** @class */ (function () {
                 result.add(name_6);
             }
         }
-        catch (e_30_1) { e_30 = { error: e_30_1 }; }
+        catch (e_31_1) { e_31 = { error: e_31_1 }; }
         finally {
             try {
                 if (interactableObjects_1_1 && !interactableObjects_1_1.done && (_a = interactableObjects_1.return)) _a.call(interactableObjects_1);
             }
-            finally { if (e_30) throw e_30.error; }
+            finally { if (e_31) throw e_31.error; }
         }
         return result;
     };
@@ -5851,7 +6003,7 @@ var StoryManager = /** @class */ (function () {
         return _.last(path);
     };
     StoryManager.prototype.getInteractableObjectsForNode = function (node, stageName) {
-        var e_31, _a;
+        var e_32, _a;
         var result = new Set();
         if (!node)
             return result;
@@ -5868,12 +6020,12 @@ var StoryManager = /** @class */ (function () {
                 result.add(transition.with);
             }
         }
-        catch (e_31_1) { e_31 = { error: e_31_1 }; }
+        catch (e_32_1) { e_32 = { error: e_32_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_31) throw e_31.error; }
+            finally { if (e_32) throw e_32.error; }
         }
         return result;
     };
@@ -5884,7 +6036,7 @@ var StoryManager = /** @class */ (function () {
         return this.storyboard[name];
     };
     StoryManager.prototype.updateParty = function (party) {
-        var e_32, _a, e_33, _b;
+        var e_33, _a, e_34, _b;
         if (party.setLeader !== undefined) {
             this.theater.partyManager.leader = party.setLeader;
         }
@@ -5895,12 +6047,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberActive(m);
                 }
             }
-            catch (e_32_1) { e_32 = { error: e_32_1 }; }
+            catch (e_33_1) { e_33 = { error: e_33_1 }; }
             finally {
                 try {
                     if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                 }
-                finally { if (e_32) throw e_32.error; }
+                finally { if (e_33) throw e_33.error; }
             }
         }
         if (!_.isEmpty(party.setMembersInactive)) {
@@ -5910,12 +6062,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberInactive(m);
                 }
             }
-            catch (e_33_1) { e_33 = { error: e_33_1 }; }
+            catch (e_34_1) { e_34 = { error: e_34_1 }; }
             finally {
                 try {
                     if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
                 }
-                finally { if (e_33) throw e_33.error; }
+                finally { if (e_34) throw e_34.error; }
             }
         }
     };
@@ -6003,7 +6155,7 @@ var A;
     }
     A.map2D = map2D;
     function mergeArray(array, into, key, combine) {
-        var e_34, _a;
+        var e_35, _a;
         if (combine === void 0) { combine = (function (e, into) { return e; }); }
         var result = A.clone(into);
         try {
@@ -6022,12 +6174,12 @@ var A;
                 }
             }
         }
-        catch (e_34_1) { e_34 = { error: e_34_1 }; }
+        catch (e_35_1) { e_35 = { error: e_35_1 }; }
         finally {
             try {
                 if (array_1_1 && !array_1_1.done && (_a = array_1.return)) _a.call(array_1);
             }
-            finally { if (e_34) throw e_34.error; }
+            finally { if (e_35) throw e_35.error; }
         }
         return result;
     }
@@ -6225,7 +6377,7 @@ var O;
     }
     O.deepClone = deepClone;
     function deepCloneInternal(obj) {
-        var e_35, _a;
+        var e_36, _a;
         if (_.isArray(obj)) {
             if (_.isEmpty(obj))
                 return [];
@@ -6236,12 +6388,12 @@ var O;
                     result.push(deepCloneInternal(el));
                 }
             }
-            catch (e_35_1) { e_35 = { error: e_35_1 }; }
+            catch (e_36_1) { e_36 = { error: e_36_1 }; }
             finally {
                 try {
                     if (obj_1_1 && !obj_1_1.done && (_a = obj_1.return)) _a.call(obj_1);
                 }
-                finally { if (e_35) throw e_35.error; }
+                finally { if (e_36) throw e_36.error; }
             }
             return result;
         }
@@ -6450,13 +6602,13 @@ var Camera = /** @class */ (function () {
         }
         this.clampToBounds();
         if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && world === global.theater.currentWorld) {
-            if (Input.isDown('debugMoveCameraLeft'))
+            if (Input.isDown(Input.DEBUG_MOVE_CAMERA_LEFT))
                 this.debugOffsetX -= 1;
-            if (Input.isDown('debugMoveCameraRight'))
+            if (Input.isDown(Input.DEBUG_MOVE_CAMERA_RIGHT))
                 this.debugOffsetX += 1;
-            if (Input.isDown('debugMoveCameraUp'))
+            if (Input.isDown(Input.DEBUG_MOVE_CAMERA_UP))
                 this.debugOffsetY -= 1;
-            if (Input.isDown('debugMoveCameraDown'))
+            if (Input.isDown(Input.DEBUG_MOVE_CAMERA_DOWN))
                 this.debugOffsetY += 1;
         }
     };
@@ -6564,7 +6716,7 @@ var Physics = /** @class */ (function () {
     function Physics() {
     }
     Physics.collide = function (obj, from, options) {
-        var e_36, _a;
+        var e_37, _a;
         if (options === void 0) { options = {}; }
         if (_.isEmpty(from))
             return;
@@ -6583,7 +6735,7 @@ var Physics = /** @class */ (function () {
             var collisions = collidingWith.map(function (other) { return Physics.getCollision(obj, other); });
             collisions.sort(function (a, b) { return a.t - b.t; });
             try {
-                for (var collisions_1 = (e_36 = void 0, __values(collisions)), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
+                for (var collisions_1 = (e_37 = void 0, __values(collisions)), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
                     var collision = collisions_1_1.value;
                     var d = Physics.separate(collision);
                     if (d !== 0 && options.transferMomentum) {
@@ -6596,12 +6748,12 @@ var Physics = /** @class */ (function () {
                     }
                 }
             }
-            catch (e_36_1) { e_36 = { error: e_36_1 }; }
+            catch (e_37_1) { e_37 = { error: e_37_1 }; }
             finally {
                 try {
                     if (collisions_1_1 && !collisions_1_1.done && (_a = collisions_1.return)) _a.call(collisions_1);
                 }
-                finally { if (e_36) throw e_36.error; }
+                finally { if (e_37) throw e_37.error; }
             }
             collidingWith = collidingWith.filter(function (other) { return obj.isCollidingWith(other); });
             iters++;
@@ -6834,7 +6986,7 @@ var Effects = /** @class */ (function () {
         return this.pre.filters.concat(this.effects).concat(this.post.filters);
     };
     Effects.prototype.updateEffects = function (delta) {
-        var e_37, _a, e_38, _b;
+        var e_38, _a, e_39, _b;
         if (this.effects[Effects.SILHOUETTE_I])
             this.effects[Effects.SILHOUETTE_I].updateTime(delta);
         if (this.effects[Effects.OUTLINE_I])
@@ -6845,12 +6997,12 @@ var Effects = /** @class */ (function () {
                 filter.updateTime(delta);
             }
         }
-        catch (e_37_1) { e_37 = { error: e_37_1 }; }
+        catch (e_38_1) { e_38 = { error: e_38_1 }; }
         finally {
             try {
                 if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
             }
-            finally { if (e_37) throw e_37.error; }
+            finally { if (e_38) throw e_38.error; }
         }
         try {
             for (var _e = __values(this.post.filters), _f = _e.next(); !_f.done; _f = _e.next()) {
@@ -6858,12 +7010,12 @@ var Effects = /** @class */ (function () {
                 filter.updateTime(delta);
             }
         }
-        catch (e_38_1) { e_38 = { error: e_38_1 }; }
+        catch (e_39_1) { e_39 = { error: e_39_1 }; }
         finally {
             try {
                 if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
             }
-            finally { if (e_38) throw e_38.error; }
+            finally { if (e_39) throw e_39.error; }
         }
     };
     Effects.prototype.updateFromConfig = function (config) {
@@ -7221,7 +7373,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_39, _a;
+        var e_40, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -7235,12 +7387,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_39_1) { e_39 = { error: e_39_1 }; }
+            catch (e_40_1) { e_40 = { error: e_40_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_39) throw e_39.error; }
+                finally { if (e_40) throw e_40.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -7280,7 +7432,7 @@ var Tilemap = /** @class */ (function (_super) {
         }
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_40, _a;
+        var e_41, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -7298,12 +7450,12 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_40_1) { e_40 = { error: e_40_1 }; }
+        catch (e_41_1) { e_41 = { error: e_41_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_40) throw e_40.error; }
+            finally { if (e_41) throw e_41.error; }
         }
         World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };
@@ -7685,7 +7837,7 @@ var CarrierModule = /** @class */ (function () {
         this.obj = obj;
     }
     CarrierModule.prototype.postUpdate = function () {
-        var e_41, _a;
+        var e_42, _a;
         var objBounds = this.obj.getWorldBounds();
         var checkRect = {
             x: objBounds.x,
@@ -7716,12 +7868,12 @@ var CarrierModule = /** @class */ (function () {
                 }
             }
         }
-        catch (e_41_1) { e_41 = { error: e_41_1 }; }
+        catch (e_42_1) { e_42 = { error: e_42_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_41) throw e_41.error; }
+            finally { if (e_42) throw e_42.error; }
         }
     };
     return CarrierModule;
@@ -7730,194 +7882,6 @@ var CarrierModule = /** @class */ (function () {
 Cheat.init({
     'win': function (x) { return x * x; },
 });
-/// <reference path="../lectvs/debug/debug.ts" />
-Debug.init({
-    debug: true,
-    font: Assets.fonts.DELUXE16,
-    fontStyle: { color: 0x008800 },
-    cheatsEnabled: true,
-    allPhysicsBounds: false,
-    moveCameraWithArrows: true,
-    showInfo: true,
-    skipRate: 1,
-    programmaticInput: false,
-    autoplay: true,
-    skipMainMenu: true,
-    frameStepEnabled: false,
-    frameStepStepKey: '1',
-    frameStepRunKey: '2',
-});
-/// <reference path="../lectvs/core/preload.ts" />
-/// <reference path="./assets.ts" />
-var Main = /** @class */ (function () {
-    function Main() {
-    }
-    // no need to modify
-    Main.preload = function () {
-        PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
-        PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
-        WorldObject.DEFAULT_Z_BEHAVIOR = 'threequarters';
-        global.gameWidth = Main.width;
-        global.gameHeight = Main.height;
-        global.backgroundColor = Main.backgroundColor;
-        Main.renderer = PIXI.autoDetectRenderer({
-            width: global.gameWidth,
-            height: global.gameHeight,
-            resolution: 1,
-            backgroundColor: global.backgroundColor,
-        });
-        global.renderer = Main.renderer;
-        global.soundManager = new GlobalSoundManager();
-        WebAudio.initContext();
-        Preload.preload({
-            textures: Assets.textures,
-            sounds: Assets.sounds,
-            pyxelTilemaps: Assets.pyxelTilemaps,
-            spriteTextTags: Assets.spriteTextTags,
-            onLoad: function () {
-                Main.load();
-                Main.play();
-            }
-        });
-    };
-    // modify this method
-    Main.load = function () {
-        document.body.appendChild(Main.renderer.view);
-        Options.init(this.gameCodeName, {
-            volume: 1,
-            controls: {
-                'left': ['ArrowLeft'],
-                'right': ['ArrowRight'],
-                'up': ['ArrowUp'],
-                'down': ['ArrowDown'],
-                'interact': ['e'],
-                // Game
-                'advanceDialog': ['MouseLeft', 'e', ' '],
-                'pause': ['Escape', 'Backspace'],
-                'lmb': ['MouseLeft'],
-                // Debug
-                'debugMoveCameraUp': ['i'],
-                'debugMoveCameraDown': ['k'],
-                'debugMoveCameraLeft': ['j'],
-                'debugMoveCameraRight': ['l'],
-                '1': ['1'],
-                '2': ['2'],
-                '3': ['3'],
-                '4': ['4'],
-                '5': ['5'],
-                '6': ['6'],
-                '7': ['7'],
-                '8': ['8'],
-                '9': ['9'],
-                '0': ['0'],
-            }
-        });
-        Input.init();
-        window.addEventListener("keypress", function (event) {
-            WebAudio.start();
-        });
-        window.addEventListener("keydown", function (event) {
-            WebAudio.start();
-            Input.handleKeyDownEvent(event);
-            if (event.key == 'Tab') {
-                event.preventDefault();
-            }
-        }, false);
-        window.addEventListener("keyup", function (event) {
-            WebAudio.start();
-            Input.handleKeyUpEvent(event);
-        }, false);
-        window.addEventListener("mousedown", function (event) {
-            WebAudio.start();
-            Input.handleMouseDownEvent(event);
-        }, false);
-        window.addEventListener("mouseup", function (event) {
-            WebAudio.start();
-            Input.handleMouseUpEvent(event);
-        }, false);
-        window.addEventListener("contextmenu", function (event) {
-            WebAudio.start();
-            event.preventDefault();
-        }, false);
-        // AccessibilityManager causes game to crash when Tab is pressed.
-        // Deleting it as per https://github.com/pixijs/pixi.js/issues/5111#issuecomment-420047824
-        Main.renderer.plugins.accessibility.destroy();
-        delete Main.renderer.plugins.accessibility;
-        Main.screen = new Texture(Main.width, Main.height);
-        this.metricsManager = new MetricsManager({
-            recordKey: '0',
-        });
-        this.game = new Game({
-            entryPointMenuClass: MainMenu,
-            pauseMenuClass: PauseMenu,
-            theaterClass: Theater,
-            showMetricsMenuKey: '9',
-            theaterConfig: {
-                getStages: getStages,
-                stageToLoad: 'game',
-                stageEntryPoint: 'main',
-                story: {
-                    getStoryboard: getStoryboard,
-                    storyboardPath: ['start'],
-                    getStoryEvents: getStoryEvents,
-                    getStoryConfig: getStoryConfig,
-                },
-                getParty: getParty,
-                dialogBox: {
-                    constructor: DialogBox,
-                    x: Main.width / 2, y: Main.height - 32,
-                    texture: 'none',
-                    spriteTextFont: Assets.fonts.DELUXE16,
-                    textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
-                    textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
-                    portraitPosition: { x: 78, y: 0 },
-                    advanceKey: 'advanceDialog',
-                },
-            },
-        });
-        global.game = Main.game;
-        this.game.update(0); // Update game once just to make sure everything is set up correctly.
-    };
-    // no need to modify
-    Main.play = function () {
-        var _this = this;
-        PIXI.Ticker.shared.add(function (frameDelta) {
-            _this.metricsManager.update();
-            global.metrics.startSpan('frame');
-            global.fpsCalculator.update();
-            Main.delta = frameDelta / 60;
-            global.clearStacks();
-            global.metrics.startSpan('update');
-            for (var i = 0; i < Debug.SKIP_RATE; i++) {
-                Input.update();
-                if (Debug.frameStepSkipFrame())
-                    break;
-                global.soundManager.preGameUpdate();
-                global.metrics.startSpan('game');
-                Main.game.update(Main.delta);
-                global.metrics.endSpan('game');
-                global.soundManager.postGameUpdate();
-            }
-            global.metrics.endSpan('update');
-            global.metrics.startSpan('render');
-            Main.screen.clear();
-            global.metrics.startSpan('game');
-            Main.game.render(Main.screen);
-            global.metrics.endSpan('game');
-            Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true); // Clear the renderer
-            Main.renderer.render(Main.screen.renderTextureSprite);
-            global.metrics.endSpan('render');
-            global.metrics.endSpan('frame');
-        });
-    };
-    Main.gameCodeName = "PlatformerTest";
-    Main.width = 960;
-    Main.height = 800;
-    Main.backgroundColor = 0x000000;
-    return Main;
-}());
-// Actually load the game
-Main.preload();
 /// <reference path="../lectvs/menu/menu.ts" />
 var MainMenu = /** @class */ (function (_super) {
     __extends(MainMenu, _super);
@@ -7971,13 +7935,97 @@ var PauseMenu = /** @class */ (function (_super) {
     }
     PauseMenu.prototype.update = function (delta) {
         _super.prototype.update.call(this, delta);
-        if (Input.justDown('pause')) {
-            Input.consume('pause');
+        if (Input.justDown(Input.GAME_PAUSE)) {
+            Input.consume(Input.GAME_PAUSE);
             this.menuSystem.game.unpauseGame();
         }
     };
     return PauseMenu;
 }(Menu));
+/// <reference path="./menus.ts"/>
+Main.start({
+    gameCodeName: "PlatformerTest",
+    gameWidth: 960,
+    gameHeight: 800,
+    canvasScale: 1,
+    backgroundColor: 0x000000,
+    textures: Assets.textures,
+    sounds: Assets.sounds,
+    pyxelTilemaps: Assets.pyxelTilemaps,
+    spriteTextTags: Assets.spriteTextTags,
+    defaultOptions: {
+        volume: 1,
+        controls: {
+            'left': ['ArrowLeft'],
+            'right': ['ArrowRight'],
+            'up': ['ArrowUp'],
+            'down': ['ArrowDown'],
+            'interact': ['e'],
+            'game_advanceDialog': ['MouseLeft', 'e', ' '],
+            'game_pause': ['Escape', 'Backspace'],
+            'game_closeMenu': ['Escape', 'Backspace'],
+            'game_select': ['MouseLeft'],
+            'debug_moveCameraUp': ['i'],
+            'debug_moveCameraDown': ['k'],
+            'debug_moveCameraLeft': ['j'],
+            'debug_moveCameraRight': ['l'],
+            'debug_recordMetrics': ['0'],
+            'debug_showMetricsMenu': ['9'],
+            // Debug
+            '1': ['1'],
+            '2': ['2'],
+            '3': ['3'],
+            '4': ['4'],
+            '5': ['5'],
+            '6': ['6'],
+            '7': ['7'],
+            '8': ['8'],
+            '9': ['9'],
+            '0': ['0'],
+        }
+    },
+    game: {
+        entryPointMenuClass: MainMenu,
+        pauseMenuClass: PauseMenu,
+        theaterConfig: {
+            getStages: getStages,
+            stageToLoad: 'game',
+            stageEntryPoint: 'main',
+            story: {
+                getStoryboard: getStoryboard,
+                storyboardPath: ['start'],
+                getStoryEvents: getStoryEvents,
+                getStoryConfig: getStoryConfig,
+            },
+            getParty: getParty,
+            dialogBox: {
+                constructor: DialogBox,
+                x: global.gameWidth / 2, y: global.gameHeight - 32,
+                texture: 'none',
+                spriteTextFont: Assets.fonts.DELUXE16,
+                textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
+                textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
+                portraitPosition: { x: 78, y: 0 },
+            },
+        },
+    },
+    debug: {
+        debug: true,
+        font: Assets.fonts.DELUXE16,
+        fontStyle: { color: 0x008800 },
+        cheatsEnabled: true,
+        allPhysicsBounds: false,
+        moveCameraWithArrows: true,
+        showInfo: true,
+        skipRate: 1,
+        programmaticInput: false,
+        autoplay: true,
+        skipMainMenu: true,
+        frameStepEnabled: false,
+        frameStepStepKey: '1',
+        frameStepRunKey: '2',
+    },
+});
 var MovingPlatform = /** @class */ (function (_super) {
     __extends(MovingPlatform, _super);
     function MovingPlatform(config) {
@@ -8022,7 +8070,6 @@ var OneWayPlatform = /** @class */ (function (_super) {
     };
     return OneWayPlatform;
 }(Sprite));
-/// <reference path="main.ts" />
 function getParty() {
     return {
         leader: 'none',
@@ -8110,10 +8157,10 @@ function getStages() {
             parent: BASE_STAGE(),
             camera: {
                 movement: { type: 'snap' },
-                mode: Camera.Mode.FOCUS(Main.width / 2, Main.height / 2),
+                mode: Camera.Mode.FOCUS(global.gameWidth / 2, global.gameHeight / 2),
             },
             entryPoints: {
-                'main': { x: Main.width / 2, y: Main.height / 2 },
+                'main': { x: global.gameWidth / 2, y: global.gameHeight / 2 },
             },
             worldObjects: [
                 {
@@ -8166,7 +8213,6 @@ function getStages() {
         },
     };
 }
-/// <reference path="./main.ts"/>
 function getStoryConfig() {
     return {
         initialConfig: {},

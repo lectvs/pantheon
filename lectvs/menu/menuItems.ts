@@ -18,8 +18,8 @@ class MenuTextButton extends SpriteText {
         super.update(delta);
         if (this.isHovered()) {
             this.style.alpha = 0.5;
-            if (Input.justDown('lmb')) {
-                Input.consume('lmb');
+            if (Input.justDown(Input.GAME_SELECT)) {
+                Input.consume(Input.GAME_SELECT);
                 this.onClick();
             }
         } else {

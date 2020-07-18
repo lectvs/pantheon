@@ -3,6 +3,7 @@
 
 namespace Theater {
     export type Config = {
+        theaterClass?: TheaterClass;
         getStages: () => Dict<World.Config>;
         stageToLoad: string;
         stageEntryPoint?: World.EntryPoint;

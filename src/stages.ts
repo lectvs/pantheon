@@ -4,10 +4,10 @@ function getStages(): Dict<World.Config> { return {
         parent: BASE_STAGE(),
         camera: {
             movement: { type: 'snap' },
-            mode: Camera.Mode.FOCUS(Main.width/2, Main.height/2),
+            mode: Camera.Mode.FOCUS(global.gameWidth/2, global.gameHeight/2),
         },
         entryPoints: {
-            'main': { x: Main.width/2, y: Main.height/2 },
+            'main': { x: global.gameWidth/2, y: global.gameHeight/2 },
         },
         worldObjects: [
             <Tilemap.Config>{

@@ -1,18 +1,6 @@
-namespace MetricsManager {
-    export type Config = {
-        recordKey: string;
-    }
-}
-
 class MetricsManager {
-    recordKey: string;
-
-    constructor(config: MetricsManager.Config) {
-        this.recordKey = config.recordKey;
-    }
-
     update() {
-        if (Debug.DEBUG && Input.justDown(this.recordKey)) {
+        if (Debug.DEBUG && Input.justDown(Input.DEBUG_RECORD_METRICS)) {
             if (!global.metrics.isRecording) {
                 global.metrics.startRecording('recording');
                 debug("Started recording");

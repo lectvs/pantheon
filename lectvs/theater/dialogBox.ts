@@ -7,7 +7,6 @@ namespace DialogBox {
         textAreaFull: Rect;
         textAreaPortrait: Rect;
         portraitPosition: Pt;
-        advanceKey: string;
     }
 }
 
@@ -16,7 +15,6 @@ class DialogBox extends Sprite {
     textAreaFull: Rect;
     textAreaPortrait: Rect;
     portraitPosition: Pt;
-    advanceKey: string;
 
     textArea: Rect;
     done: boolean;
@@ -34,7 +32,6 @@ class DialogBox extends Sprite {
         this.textAreaFull = config.textAreaFull;
         this.portraitPosition = config.portraitPosition;
         this.textAreaPortrait = config.textAreaPortrait;
-        this.advanceKey = config.advanceKey;
 
         this.textArea = this.textAreaFull;
         this.done = true;
@@ -62,7 +59,7 @@ class DialogBox extends Sprite {
             this.visible = false;
         }
 
-        if (Input.justDown(this.advanceKey)) {
+        if (Input.justDown(Input.GAME_ADVANCE_DIALOG)) {
             this.advanceDialog();
         }
     }

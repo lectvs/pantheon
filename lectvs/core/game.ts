@@ -2,9 +2,7 @@ namespace Game {
     export type Config = {
         entryPointMenuClass: Menu.MenuClass;
         pauseMenuClass: Menu.MenuClass;
-        theaterClass: Theater.TheaterClass;
         theaterConfig: Theater.Config;
-        showMetricsMenuKey: string;
     }
 }
 
@@ -15,9 +13,7 @@ class Game {
 
     private entryPointMenuClass: Menu.MenuClass;
     private pauseMenuClass: Menu.MenuClass;
-    private theaterClass: Theater.TheaterClass;
     private theaterConfig: Theater.Config;
-    private showMetricsMenuKey: string;
 
     private soundManager: SoundManager;
     get volume(): number { return Options.volume; };
@@ -25,9 +21,7 @@ class Game {
     constructor(config: Game.Config) {
         this.entryPointMenuClass = config.entryPointMenuClass;
         this.pauseMenuClass = config.pauseMenuClass;
-        this.theaterClass = config.theaterClass;
         this.theaterConfig = config.theaterConfig;
-        this.showMetricsMenuKey = config.showMetricsMenuKey;
 
         this.soundManager = new SoundManager();
 
@@ -63,14 +57,14 @@ class Game {
     }
 
     private updatePause() {
-        if (Input.justDown('pause') && !this.menuSystem.inMenu) {
-            Input.consume('pause');
+        if (Input.justDown(Input.GAME_PAUSE) && !this.menuSystem.inMenu) {
+            Input.consume(Input.GAME_PAUSE);
             this.pauseGame();
         }
     }
 
     private updateMetrics() {
-        if (Debug.DEBUG && Input.justDown(this.showMetricsMenuKey)) {
+        if (Debug.DEBUG && Input.justDown(Input.DEBUG_SHOW_METRICS_MENU)) {
             global.game.menuSystem.loadMenu(MetricsMenu);
         }
     }
@@ -95,7 +89,7 @@ class Game {
     }
 
     loadTheater() {
-        this.theater = new this.theaterClass(this.theaterConfig);
+        this.theater = new (this.theaterConfig.theaterClass ?? Theater)(this.theaterConfig);
     }
 
     pauseGame() {
