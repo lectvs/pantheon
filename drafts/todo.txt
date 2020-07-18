@@ -11,6 +11,7 @@
 - /uncapped fps?
     - /this is capped by chrome, not PIXI... nothing we can do about it :(
 - /onboard storyboard with StateMachine
+- /move debug info from World -> Game
 - refactor the Main class
 - platformer stuff
     - /moving platforms
@@ -22,7 +23,6 @@
 - preloading improvements
     - loading screen/progress bar
     - timeout on preloading
-- move debug info from World -> Game
 - move tileset animation fields from Assets to Tilemap.Config
 - smart tilemaps
 - editing tilemaps

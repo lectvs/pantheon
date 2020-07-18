@@ -2,6 +2,7 @@ namespace Debug {
     export type Config = {
         debug: boolean;
         font: SpriteText.Font;
+        fontStyle: SpriteText.Style;
         cheatsEnabled: boolean;
         allPhysicsBounds: boolean;
         moveCameraWithArrows: boolean; 
@@ -20,6 +21,7 @@ class Debug {
     static init(config: Debug.Config) {
         Debug.DEBUG = config.debug;
         Debug.FONT = config.font;
+        Debug.FONT_STYLE = config.fontStyle;
         Debug.CHEATS_ENABLED = config.cheatsEnabled;
         Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
         Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
@@ -38,6 +40,7 @@ class Debug {
     static set DEBUG(value: boolean) { this._DEBUG = value; }
     
     static FONT: SpriteText.Font;
+    static FONT_STYLE: SpriteText.Style;
 
     private static _CHEATS_ENABLED: boolean;
     static get CHEATS_ENABLED() { return this.DEBUG && this._CHEATS_ENABLED; }

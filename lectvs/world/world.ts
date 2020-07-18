@@ -17,13 +17,12 @@ namespace World {
         height?: number;
 
         backgroundColor?: number;
+        backgroundAlpha?: number;
 
         entryPoints?: Dict<Pt>;
         worldObjects?: WorldObject.Config[];
 
         volume?: number;
-
-        showDebugInfo?: boolean;
     }
 
     export type CollisionConfig = {
@@ -59,6 +58,7 @@ class World {
     layers: World.Layer[];
 
     backgroundColor: number;
+    backgroundAlpha: number;
 
     camera: Camera;
     private screen: Texture;
@@ -68,9 +68,6 @@ class World {
     protected soundManager: SoundManager;
     
     volume: number;
-
-    showDebugInfo: boolean;
-    private debugInfoText: SpriteText;
 
     constructor(config: World.Config, defaults?: World.Config) {
         config = WorldObject.resolveConfig<World.Config>(config, defaults);
@@ -83,7 +80,6 @@ class World {
         this.width = config.width ?? global.gameWidth;
         this.height = config.height ?? global.gameHeight;
         this.worldObjects = [];
-        this.showDebugInfo = config.showDebugInfo ?? false;
 
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
         this.collisionOrder = config.collisionOrder ?? [];
@@ -92,6 +88,7 @@ class World {
         this.layers = this.createLayers(config.layers);
 
         this.backgroundColor = config.backgroundColor ?? global.backgroundColor;
+        this.backgroundAlpha = config.backgroundAlpha ?? 1;
 
         this.screen = new Texture(this.width, this.height);
         this.layerTexture = new Texture(this.width, this.height);
@@ -103,20 +100,9 @@ class World {
         }
 
         this.camera = new Camera(config.camera ?? {}, this);
-        
-        this.debugInfoText = this.addWorldObject<SpriteText>(<SpriteText.Config>{
-            constructor: SpriteText,
-            x: 0, y: 0,
-            font: Debug.FONT,
-            style: { color: 0x008800 },
-            ignoreCamera: true,
-            visible: false,
-            active: false,
-        });
     }
 
     update(delta: number) {
-        this.updateDebugMousePosition();
         this.updateScriptManager(delta);
         
         global.metrics.startSpan('preUpdate');
@@ -163,27 +149,14 @@ class World {
         this.soundManager.update(delta);
     }
 
-    protected updateDebugMousePosition() {
-        let showMousePosition = Debug.SHOW_INFO && this.showDebugInfo;
-        this.debugInfoText.active = showMousePosition;
-        this.debugInfoText.visible = showMousePosition;
-
-        if (showMousePosition) {
-            let debugInfo = `mpos: ${St.padLeft(this.getWorldMouseX().toString(), 3)} ${St.padLeft(this.getWorldMouseY().toString(), 3)}\n`;
-            debugInfo += `fps: ${global.fpsCalculator.fpsAvg.toFixed(0)} (-${(global.fpsCalculator.fpsAvg - global.fpsCalculator.fpsP).toFixed(0)})`;
-            this.debugInfoText.setText(debugInfo);
-        }
-    }
-
     protected updateScriptManager(delta: number) {
         this.scriptManager.update(delta);
     }
 
     render(screen: Texture) {
-        this.camera.preRender(this);
-
         // Render background color.
         Draw.brush.color = this.backgroundColor;
+        Draw.brush.alpha = this.backgroundAlpha;
         Draw.fill(this.screen);
 
         for (let worldObject of this.worldObjects) {
@@ -203,8 +176,6 @@ class World {
             }
         }
 
-        this.camera.postRender();
-        
         screen.render(this.screen);
     }
 
@@ -278,11 +249,11 @@ class World {
     }
 
     getWorldMouseX() {
-        return Input.mouseX + Math.floor(this.camera.x - this.camera.width/2);
+        return Input.mouseX + Math.floor(this.camera.worldOffsetX);
     }
 
     getWorldMouseY() {
-        return Input.mouseY + Math.floor(this.camera.y - this.camera.height/2);
+        return Input.mouseY + Math.floor(this.camera.worldOffsetY);
     }
 
     getWorldMousePosition(): Pt {

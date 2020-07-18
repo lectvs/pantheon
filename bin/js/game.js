@@ -344,6 +344,7 @@ var Game = /** @class */ (function () {
         this.soundManager = new SoundManager();
         this.menuSystem = new MenuSystem(this);
         this.loadMainMenu();
+        this.overlay = new DebugOverlay();
         if (Debug.SKIP_MAIN_MENU) {
             this.startGame();
         }
@@ -355,6 +356,7 @@ var Game = /** @class */ (function () {
     });
     ;
     Game.prototype.update = function (delta) {
+        var _a;
         this.updatePause();
         this.updateMetrics();
         if (this.menuSystem.inMenu) {
@@ -367,6 +369,8 @@ var Game = /** @class */ (function () {
             this.theater.update(delta);
             global.metrics.endSpan('theater');
         }
+        this.overlay.setCurrentWorldToDebug(this.menuSystem.inMenu ? this.menuSystem.currentMenu : (_a = this.theater) === null || _a === void 0 ? void 0 : _a.currentWorld);
+        this.overlay.update(delta);
         this.soundManager.volume = this.volume;
         this.soundManager.update(delta);
     };
@@ -392,6 +396,7 @@ var Game = /** @class */ (function () {
             this.theater.render(screen);
             global.metrics.endSpan('theater');
         }
+        this.overlay.render(screen);
     };
     Game.prototype.loadMainMenu = function () {
         this.menuSystem.loadMenu(this.entryPointMenuClass);
@@ -2283,6 +2288,7 @@ var Debug = /** @class */ (function () {
     Debug.init = function (config) {
         Debug.DEBUG = config.debug;
         Debug.FONT = config.font;
+        Debug.FONT_STYLE = config.fontStyle;
         Debug.CHEATS_ENABLED = config.cheatsEnabled;
         Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
         Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
@@ -3076,13 +3082,13 @@ var World = /** @class */ (function () {
         this.width = (_c = config.width) !== null && _c !== void 0 ? _c : global.gameWidth;
         this.height = (_d = config.height) !== null && _d !== void 0 ? _d : global.gameHeight;
         this.worldObjects = [];
-        this.showDebugInfo = (_e = config.showDebugInfo) !== null && _e !== void 0 ? _e : false;
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
-        this.collisionOrder = (_f = config.collisionOrder) !== null && _f !== void 0 ? _f : [];
-        this.collisionIterations = (_g = config.collisionIterations) !== null && _g !== void 0 ? _g : 1;
+        this.collisionOrder = (_e = config.collisionOrder) !== null && _e !== void 0 ? _e : [];
+        this.collisionIterations = (_f = config.collisionIterations) !== null && _f !== void 0 ? _f : 1;
         this.worldObjectsByName = {};
         this.layers = this.createLayers(config.layers);
-        this.backgroundColor = (_h = config.backgroundColor) !== null && _h !== void 0 ? _h : global.backgroundColor;
+        this.backgroundColor = (_g = config.backgroundColor) !== null && _g !== void 0 ? _g : global.backgroundColor;
+        this.backgroundAlpha = (_h = config.backgroundAlpha) !== null && _h !== void 0 ? _h : 1;
         this.screen = new Texture(this.width, this.height);
         this.layerTexture = new Texture(this.width, this.height);
         this.entryPoints = (_j = config.entryPoints) !== null && _j !== void 0 ? _j : {};
@@ -3100,19 +3106,9 @@ var World = /** @class */ (function () {
             finally { if (e_8) throw e_8.error; }
         }
         this.camera = new Camera((_k = config.camera) !== null && _k !== void 0 ? _k : {}, this);
-        this.debugInfoText = this.addWorldObject({
-            constructor: SpriteText,
-            x: 0, y: 0,
-            font: Debug.FONT,
-            style: { color: 0x008800 },
-            ignoreCamera: true,
-            visible: false,
-            active: false,
-        });
     }
     World.prototype.update = function (delta) {
         var e_9, _a, e_10, _b, e_11, _c;
-        this.updateDebugMousePosition();
         this.updateScriptManager(delta);
         global.metrics.startSpan('preUpdate');
         try {
@@ -3181,24 +3177,14 @@ var World = /** @class */ (function () {
         this.soundManager.volume = this.volume * global.game.volume;
         this.soundManager.update(delta);
     };
-    World.prototype.updateDebugMousePosition = function () {
-        var showMousePosition = Debug.SHOW_INFO && this.showDebugInfo;
-        this.debugInfoText.active = showMousePosition;
-        this.debugInfoText.visible = showMousePosition;
-        if (showMousePosition) {
-            var debugInfo = "mpos: " + St.padLeft(this.getWorldMouseX().toString(), 3) + " " + St.padLeft(this.getWorldMouseY().toString(), 3) + "\n";
-            debugInfo += "fps: " + global.fpsCalculator.fpsAvg.toFixed(0) + " (-" + (global.fpsCalculator.fpsAvg - global.fpsCalculator.fpsP).toFixed(0) + ")";
-            this.debugInfoText.setText(debugInfo);
-        }
-    };
     World.prototype.updateScriptManager = function (delta) {
         this.scriptManager.update(delta);
     };
     World.prototype.render = function (screen) {
         var e_12, _a, e_13, _b, e_14, _c;
-        this.camera.preRender(this);
         // Render background color.
         Draw.brush.color = this.backgroundColor;
+        Draw.brush.alpha = this.backgroundAlpha;
         Draw.fill(this.screen);
         try {
             for (var _d = __values(this.worldObjects), _e = _d.next(); !_e.done; _e = _d.next()) {
@@ -3244,7 +3230,6 @@ var World = /** @class */ (function () {
             }
             finally { if (e_14) throw e_14.error; }
         }
-        this.camera.postRender();
         screen.render(this.screen);
     };
     World.prototype.renderLayer = function (layer, layerTexture, screen) {
@@ -3342,10 +3327,10 @@ var World = /** @class */ (function () {
         return _.flatten(groups.map(function (group) { return _this.physicsGroups[group].worldObjects; }));
     };
     World.prototype.getWorldMouseX = function () {
-        return Input.mouseX + Math.floor(this.camera.x - this.camera.width / 2);
+        return Input.mouseX + Math.floor(this.camera.worldOffsetX);
     };
     World.prototype.getWorldMouseY = function () {
-        return Input.mouseY + Math.floor(this.camera.y - this.camera.height / 2);
+        return Input.mouseY + Math.floor(this.camera.worldOffsetY);
     };
     World.prototype.getWorldMousePosition = function () {
         return { x: this.getWorldMouseX(), y: this.getWorldMouseY() };
@@ -3914,6 +3899,41 @@ var World = /** @class */ (function () {
         return result;
     }
 })(World || (World = {}));
+/// <reference path="../world/world.ts" />
+var DebugOverlay = /** @class */ (function (_super) {
+    __extends(DebugOverlay, _super);
+    function DebugOverlay() {
+        var _this = _super.call(this, {
+            backgroundAlpha: 0,
+        }) || this;
+        _this.addWorldObject({
+            name: 'debuginfo',
+            constructor: SpriteText,
+            x: 0, y: 0,
+            font: Debug.FONT,
+            style: Debug.FONT_STYLE,
+            updateCallback: function (obj, delta) {
+                obj.setText(_this.getDebugInfo());
+            }
+        });
+        return _this;
+    }
+    DebugOverlay.prototype.setCurrentWorldToDebug = function (world) {
+        this.currentWorldToDebug = world;
+    };
+    DebugOverlay.prototype.getDebugInfo = function () {
+        if (!this.currentWorldToDebug)
+            return "";
+        var mousePositionText = "mpos: "
+            + St.padLeft(this.currentWorldToDebug.getWorldMouseX().toString(), 3) + " "
+            + St.padLeft(this.currentWorldToDebug.getWorldMouseY().toString(), 3);
+        var fpsText = "fps: "
+            + global.fpsCalculator.fpsAvg.toFixed(0) + " "
+            + "(-" + (global.fpsCalculator.fpsAvg - global.fpsCalculator.fpsP).toFixed(0) + ")";
+        return mousePositionText + "\n" + fpsText;
+    };
+    return DebugOverlay;
+}(World));
 /// <reference path="../world/world.ts" />
 var Menu = /** @class */ (function (_super) {
     __extends(Menu, _super);
@@ -5403,7 +5423,6 @@ var StageManager = /** @class */ (function () {
         // Create new stuff
         this.currentStageName = name;
         this.currentWorld = World.fromConfig(this.stages[name]);
-        this.currentWorld.showDebugInfo = true;
         this.currentWorldAsWorldObject = new Theater.WorldAsWorldObject(this.currentWorld);
         this.addPartyToWorld(this.currentWorld, name, entryPoint);
         World.Actions.setName(this.currentWorldAsWorldObject, 'world');
@@ -6400,12 +6419,12 @@ var Camera = /** @class */ (function () {
         this.initPosition(world);
     }
     Object.defineProperty(Camera.prototype, "worldOffsetX", {
-        get: function () { return this.x - this.width / 2; },
+        get: function () { return this.x - this.width / 2 + this._shakeX + this.debugOffsetX; },
         enumerable: false,
         configurable: true
     });
     Object.defineProperty(Camera.prototype, "worldOffsetY", {
-        get: function () { return this.y - this.height / 2; },
+        get: function () { return this.y - this.height / 2 + this._shakeY + this.debugOffsetY; },
         enumerable: false,
         configurable: true
     });
@@ -6440,22 +6459,6 @@ var Camera = /** @class */ (function () {
             if (Input.isDown('debugMoveCameraDown'))
                 this.debugOffsetY += 1;
         }
-    };
-    Camera.prototype.preRender = function (world) {
-        this.preRenderStoredX = this.x;
-        this.preRenderStoredY = this.y;
-        this.x += this._shakeX;
-        this.y += this._shakeY;
-        if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && world === global.theater.currentWorld) {
-            this.x += this.debugOffsetX;
-            this.y += this.debugOffsetY;
-        }
-        this.x = Math.round(this.x);
-        this.y = Math.round(this.y);
-    };
-    Camera.prototype.postRender = function () {
-        this.x = this.preRenderStoredX;
-        this.y = this.preRenderStoredY;
     };
     Camera.prototype.clampToBounds = function () {
         if (this.bounds.left > -Infinity && this.x - this.width / 2 < this.bounds.left) {
@@ -7731,6 +7734,7 @@ Cheat.init({
 Debug.init({
     debug: true,
     font: Assets.fonts.DELUXE16,
+    fontStyle: { color: 0x008800 },
     cheatsEnabled: true,
     allPhysicsBounds: false,
     moveCameraWithArrows: true,

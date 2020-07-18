@@ -11,6 +11,7 @@ namespace Game {
 class Game {
     menuSystem: MenuSystem;
     theater: Theater;
+    overlay: DebugOverlay;
 
     private entryPointMenuClass: Menu.MenuClass;
     private pauseMenuClass: Menu.MenuClass;
@@ -33,6 +34,8 @@ class Game {
         this.menuSystem = new MenuSystem(this);
         this.loadMainMenu();
 
+        this.overlay = new DebugOverlay();
+
         if (Debug.SKIP_MAIN_MENU) {
             this.startGame();
         }
@@ -51,6 +54,9 @@ class Game {
             this.theater.update(delta);
             global.metrics.endSpan('theater');
         }
+
+        this.overlay.setCurrentWorldToDebug(this.menuSystem.inMenu ? this.menuSystem.currentMenu : this.theater?.currentWorld);
+        this.overlay.update(delta);
 
         this.soundManager.volume = this.volume;
         this.soundManager.update(delta);
@@ -80,6 +86,8 @@ class Game {
             this.theater.render(screen);
             global.metrics.endSpan('theater');
         }
+
+        this.overlay.render(screen);
     }
 
     loadMainMenu() {

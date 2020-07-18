@@ -3,6 +3,7 @@
 Debug.init({
     debug: true,
     font: Assets.fonts.DELUXE16,
+    fontStyle: { color: 0x008800 },
     cheatsEnabled: true,
     allPhysicsBounds: false,
     moveCameraWithArrows: true,
