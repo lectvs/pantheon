@@ -1,11 +1,14 @@
 /// <reference path="./menus.ts"/>
 
-Main.start({
+Main.loadConfig({
     gameCodeName: "PlatformerTest",
     gameWidth: 960,
     gameHeight: 800,
     canvasScale: 1,
     backgroundColor: 0x000000,
+
+    preloadBackgroundColor: 0x000000,
+    preloadProgressBarColor: 0xFFFFFF,
 
     textures: Assets.textures,
     sounds: Assets.sounds,

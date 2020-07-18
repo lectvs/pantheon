@@ -30,6 +30,11 @@ class Options {
         this.saveOptions();
     }
 
+    static resetOption(option: string) {
+        this.options[option] = O.deepClone(this.defaultOptions[option]);
+        this.saveOptions();
+    }
+
     static resetOptions() {
         this.options = O.deepClone(this.defaultOptions);
         this.saveOptions();

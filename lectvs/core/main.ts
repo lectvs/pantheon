@@ -9,6 +9,9 @@ namespace Main {
         backgroundColor: number;
         defaultZBehavior?: WorldObject.ZBehavior;
 
+        preloadBackgroundColor: number;
+        preloadProgressBarColor: number;
+
         textures: Dict<Preload.Texture>;
         sounds: Dict<Preload.Sound>;
         pyxelTilemaps: Dict<Preload.PyxelTilemap>;
@@ -23,6 +26,8 @@ namespace Main {
 }
 
 class Main {
+    private static config: Main.Config;
+
     static game: Game;
     static soundManager: GlobalSoundManager;
     static metricsManager: MetricsManager;
@@ -30,49 +35,65 @@ class Main {
     static screen: Texture;
     static delta: number;
 
-    static start(config: Main.Config) {
-        this.preload(config);
+    static loadConfig(config: Main.Config) {
+        this.config = config;
     }
 
-    private static preload(config: Main.Config) {
+    private static start() {
+        if (!this.config) {
+            error('No main config loaded! Must load config by calling `Main.loadConfig(config);`');
+            return;
+        }
+        this.preload();
+    }
+
+    private static preload() {
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
-        Debug.init(config.debug);
+        Debug.init(this.config.debug);
 
-        global.gameCodeName = config.gameCodeName;
-        global.gameWidth = config.gameWidth;
-        global.gameHeight = config.gameHeight;
-        global.backgroundColor = config.backgroundColor;
-        WorldObject.DEFAULT_Z_BEHAVIOR = config.defaultZBehavior ?? 'noop';
+        global.gameCodeName = this.config.gameCodeName;
+        global.gameWidth = this.config.gameWidth;
+        global.gameHeight = this.config.gameHeight;
+        global.backgroundColor = this.config.backgroundColor;
+        WorldObject.DEFAULT_Z_BEHAVIOR = this.config.defaultZBehavior ?? 'noop';
 
         Main.renderer = PIXI.autoDetectRenderer({
             width: global.gameWidth,
             height: global.gameHeight,
-            resolution: config.canvasScale,
+            resolution: this.config.canvasScale,
             backgroundColor: global.backgroundColor,
         });
+        document.body.appendChild(Main.renderer.view);
+
+        // AccessibilityManager causes game to crash when Tab is pressed.
+        // Deleting it as per https://github.com/pixijs/pixi.js/issues/5111#issuecomment-420047824
+        Main.renderer.plugins.accessibility.destroy();
+        delete Main.renderer.plugins.accessibility;
+
+        Main.screen = new Texture(global.gameWidth, global.gameHeight);
+
         this.soundManager = new GlobalSoundManager();
         
         WebAudio.initContext();
 
         Preload.preload({
-            textures: config.textures,
-            sounds: config.sounds,
-            pyxelTilemaps: config.pyxelTilemaps,
-            spriteTextTags: config.spriteTextTags,
+            textures: this.config.textures,
+            sounds: this.config.sounds,
+            pyxelTilemaps: this.config.pyxelTilemaps,
+            spriteTextTags: this.config.spriteTextTags,
+            progressCallback: (progress) => this.renderPreloadProgress(progress),
             onLoad: () => {
-                Main.load(config);
+                Main.load();
                 Main.play();
             }
         });
     }
 
-    private static load(config: Main.Config) {
-        document.body.appendChild(Main.renderer.view);
-
+    private static load() {
         Options.updateCallbacks.push(() => Input.init());
-        Options.init(global.gameCodeName, config.defaultOptions);
+        Options.init(global.gameCodeName, this.config.defaultOptions);
 
         window.addEventListener("keypress", event => {
             WebAudio.start();
@@ -101,16 +122,9 @@ class Main {
             event.preventDefault();
         }, false);
 
-        // AccessibilityManager causes game to crash when Tab is pressed.
-        // Deleting it as per https://github.com/pixijs/pixi.js/issues/5111#issuecomment-420047824
-        Main.renderer.plugins.accessibility.destroy();
-        delete Main.renderer.plugins.accessibility;
-
-        Main.screen = new Texture(global.gameWidth, global.gameHeight);
-
         this.metricsManager = new MetricsManager();
 
-        this.game = new Game(config.game);
+        this.game = new Game(this.config.game);
         this.game.update(0); // Update game once just to make sure everything is set up correctly.
     }
 
@@ -144,11 +158,36 @@ class Main {
             Main.game.render(Main.screen);
             global.metrics.endSpan('game');
 
-            Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
-            Main.renderer.render(Main.screen.renderTextureSprite);
+            Main.renderScreenToCanvas();
             global.metrics.endSpan('render');
 
             global.metrics.endSpan('frame');
         });
+    }
+
+    private static renderScreenToCanvas() {
+        Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
+        Main.renderer.render(Main.screen.renderTextureSprite);
+    }
+
+    // For use in preload.
+    private static renderPreloadProgress(progress: number) {
+        Main.screen.clear();
+
+        Draw.brush.color = this.config.preloadBackgroundColor;
+        Draw.brush.alpha = 1;
+        Draw.fill(Main.screen);
+
+        let barw = global.gameWidth/2;
+        let barh = 16;
+        let barx = global.gameWidth/2 - barw/2;
+        let bary = global.gameHeight/2 - barh/2;
+
+        Draw.brush.color = this.config.preloadProgressBarColor;
+        Draw.brush.thickness = 1;
+        Draw.rectangleSolid(Main.screen, barx, bary, barw * progress, barh);
+        Draw.rectangleOutline(Main.screen, barx, bary, barw, barh, Draw.ALIGNMENT_INNER);
+
+        Main.renderScreenToCanvas();
     }
 }

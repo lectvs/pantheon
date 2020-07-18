@@ -21,7 +21,7 @@
     - boxes colliding with other boxes
     - implement metroid-style transitions
 - preloading improvements
-    - loading screen/progress bar
+    - /loading screen/progress bar
     - timeout on preloading
 - move tileset animation fields from Assets to Tilemap.Config
 - smart tilemaps
