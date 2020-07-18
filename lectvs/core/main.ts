@@ -12,10 +12,10 @@ namespace Main {
         preloadBackgroundColor: number;
         preloadProgressBarColor: number;
 
-        textures: Dict<Preload.Texture>;
-        sounds: Dict<Preload.Sound>;
-        pyxelTilemaps: Dict<Preload.PyxelTilemap>;
-        spriteTextTags: Dict<SpriteText.TagFunction>;
+        textures?: Dict<Preload.Texture>;
+        sounds?: Dict<Preload.Sound>;
+        pyxelTilemaps?: Dict<Preload.PyxelTilemap>;
+        spriteTextTags?: Dict<SpriteText.TagFunction>;
 
         defaultOptions: Options.Options;
 
@@ -58,6 +58,7 @@ class Main {
         global.gameHeight = this.config.gameHeight;
         global.backgroundColor = this.config.backgroundColor;
         WorldObject.DEFAULT_Z_BEHAVIOR = this.config.defaultZBehavior ?? 'noop';
+        SpriteText.addTags(this.config.spriteTextTags ?? {});
 
         Main.renderer = PIXI.autoDetectRenderer({
             width: global.gameWidth,
@@ -82,7 +83,6 @@ class Main {
             textures: this.config.textures,
             sounds: this.config.sounds,
             pyxelTilemaps: this.config.pyxelTilemaps,
-            spriteTextTags: this.config.spriteTextTags,
             progressCallback: (progress) => this.renderPreloadProgress(progress),
             onLoad: () => {
                 Main.load();

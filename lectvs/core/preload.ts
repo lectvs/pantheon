@@ -11,7 +11,6 @@ namespace Preload {
         textures?: Dict<Preload.Texture>;
         sounds? : Dict<Preload.Sound>;
         pyxelTilemaps?: Dict<Preload.PyxelTilemap>;
-        spriteTextTags?: Dict<SpriteText.TagFunction>;
         progressCallback?: (progress: number) => any;
         onLoad?: Function;
     }
@@ -111,10 +110,6 @@ class Preload {
             for (let key in options.pyxelTilemaps) {
                 this.loadPyxelTilemap(key, options.pyxelTilemaps[key]);
             }
-        }
-
-        if (options.spriteTextTags) {
-            SpriteText.addTags(options.spriteTextTags);
         }
 
         if (options.onLoad) {
@@ -257,6 +252,8 @@ class Preload {
     }
 
     private static onLoadResource(resource: Preload.Resource) {
+        let now = performance.now();
+        while (performance.now() - now < 1000) {}
         resource.done = true;
         if (this.preloadOptions.progressCallback) {
             this.preloadOptions.progressCallback(this.getPreloadProgress());

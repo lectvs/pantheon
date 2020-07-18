@@ -1533,9 +1533,6 @@ var Preload = /** @class */ (function () {
                 this.loadPyxelTilemap(key, options.pyxelTilemaps[key]);
             }
         }
-        if (options.spriteTextTags) {
-            SpriteText.addTags(options.spriteTextTags);
-        }
         if (options.onLoad) {
             options.onLoad();
         }
@@ -1676,6 +1673,8 @@ var Preload = /** @class */ (function () {
         AssetCache.tilemaps[key] = tilemapForCache;
     };
     Preload.onLoadResource = function (resource) {
+        var now = performance.now();
+        while (performance.now() - now < 1000) { }
         resource.done = true;
         if (this.preloadOptions.progressCallback) {
             this.preloadOptions.progressCallback(this.getPreloadProgress());
@@ -1717,7 +1716,7 @@ var Main = /** @class */ (function () {
     };
     Main.preload = function () {
         var _this = this;
-        var _a;
+        var _a, _b;
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
         Debug.init(this.config.debug);
@@ -1726,6 +1725,7 @@ var Main = /** @class */ (function () {
         global.gameHeight = this.config.gameHeight;
         global.backgroundColor = this.config.backgroundColor;
         WorldObject.DEFAULT_Z_BEHAVIOR = (_a = this.config.defaultZBehavior) !== null && _a !== void 0 ? _a : 'noop';
+        SpriteText.addTags((_b = this.config.spriteTextTags) !== null && _b !== void 0 ? _b : {});
         Main.renderer = PIXI.autoDetectRenderer({
             width: global.gameWidth,
             height: global.gameHeight,
@@ -1744,7 +1744,6 @@ var Main = /** @class */ (function () {
             textures: this.config.textures,
             sounds: this.config.sounds,
             pyxelTilemaps: this.config.pyxelTilemaps,
-            spriteTextTags: this.config.spriteTextTags,
             progressCallback: function (progress) { return _this.renderPreloadProgress(progress); },
             onLoad: function () {
                 Main.load();
@@ -7449,6 +7448,7 @@ var Tilemap = /** @class */ (function (_super) {
         var _this = _super.call(this, config) || this;
         _this.tilemap = Tilemap.cloneTilemap(AssetCache.getTilemap(config.tilemap));
         _this.tilemapLayer = (_a = config.tilemapLayer) !== null && _a !== void 0 ? _a : 0;
+        _this.animation = config.animation;
         var tilemapDimens = A.get2DArrayDimensions(_this.currentTilemapLayer);
         _this.numTilesX = tilemapDimens.width;
         _this.numTilesY = tilemapDimens.height;
@@ -7514,7 +7514,7 @@ var Tilemap = /** @class */ (function (_super) {
         if (!tile || tile.index < 0)
             return;
         for (var i = 0; i < renderTextures.length; i++) {
-            var textureKeyIndex = this.tilemap.tileset.animation ? i * this.tilemap.tileset.animation.tilesPerFrame + tile.index : tile.index;
+            var textureKeyIndex = this.animation ? i * this.animation.tilesPerFrame + tile.index : tile.index;
             var textureKey = this.tilemap.tileset.tiles[textureKeyIndex];
             var texture = AssetCache.getTexture(textureKey);
             renderTextures[i].render(texture, {
@@ -7526,18 +7526,18 @@ var Tilemap = /** @class */ (function (_super) {
         }
     };
     Tilemap.prototype.createZTextures = function (zTileIndices) {
-        var texturesByZ = Tilemap.createEmptyZTextures(zTileIndices, this.tilemap.tileset);
+        var texturesByZ = Tilemap.createEmptyZTextures(zTileIndices, this.tilemap.tileset, this.animation);
         for (var zValue in texturesByZ) {
             var zHeight = texturesByZ[zValue].zHeight * this.tilemap.tileset.tileHeight;
             var zTexture = World.Actions.addChildToParent(new Sprite({
                 layer: this.layer,
                 x: this.x + texturesByZ[zValue].bounds.x,
                 y: this.y + texturesByZ[zValue].bounds.y + zHeight,
-                texture: this.tilemap.tileset.animation ? undefined : texturesByZ[zValue].frames[0],
-                animations: this.tilemap.tileset.animation ? [
-                    Animations.fromTextureList({ name: 'play', textures: texturesByZ[zValue].frames, frameRate: this.tilemap.tileset.animation.frameRate, count: -1 })
+                texture: this.animation ? undefined : texturesByZ[zValue].frames[0],
+                animations: this.animation ? [
+                    Animations.fromTextureList({ name: 'play', textures: texturesByZ[zValue].frames, frameRate: this.animation.frameRate, count: -1 })
                 ] : undefined,
-                defaultAnimation: this.tilemap.tileset.animation ? 'play' : undefined,
+                defaultAnimation: this.animation ? 'play' : undefined,
                 offset: { x: 0, y: -zHeight },
             }), this);
             this.zTextures.push(zTexture);
@@ -7568,7 +7568,7 @@ var Tilemap = /** @class */ (function (_super) {
         return zTileIndices;
     }
     Tilemap.createZTileIndicies = createZTileIndicies;
-    function createEmptyZTextures(zTileIndices, tileset) {
+    function createEmptyZTextures(zTileIndices, tileset, animation) {
         var zTextureSlots = {};
         for (var y = 0; y < zTileIndices.length; y++) {
             for (var x = 0; x < zTileIndices[y].length; x++) {
@@ -7599,7 +7599,7 @@ var Tilemap = /** @class */ (function (_super) {
             zTextureSlots[zValue].bounds.y = zTextureSlots[zValue].tileBounds.top * tileset.tileHeight;
             zTextureSlots[zValue].bounds.width = (zTextureSlots[zValue].tileBounds.right - zTextureSlots[zValue].tileBounds.left + 1) * tileset.tileWidth;
             zTextureSlots[zValue].bounds.height = (zTextureSlots[zValue].tileBounds.bottom - zTextureSlots[zValue].tileBounds.top + 1) * tileset.tileHeight;
-            var numFrames = tileset.animation ? tileset.animation.frames : 1;
+            var numFrames = animation ? animation.frames : 1;
             zTextureSlots[zValue].frames = A.range(numFrames).map(function (i) { return new Texture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height); });
         };
         for (var zValue in zTextureSlots) {
