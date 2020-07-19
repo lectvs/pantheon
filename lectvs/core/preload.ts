@@ -252,8 +252,6 @@ class Preload {
     }
 
     private static onLoadResource(resource: Preload.Resource) {
-        let now = performance.now();
-        while (performance.now() - now < 1000) {}
         resource.done = true;
         if (this.preloadOptions.progressCallback) {
             this.preloadOptions.progressCallback(this.getPreloadProgress());

@@ -1673,8 +1673,6 @@ var Preload = /** @class */ (function () {
         AssetCache.tilemaps[key] = tilemapForCache;
     };
     Preload.onLoadResource = function (resource) {
-        var now = performance.now();
-        while (performance.now() - now < 1000) { }
         resource.done = true;
         if (this.preloadOptions.progressCallback) {
             this.preloadOptions.progressCallback(this.getPreloadProgress());
