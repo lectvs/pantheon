@@ -12,21 +12,24 @@ function getStages(): Dict<World.Config> { return {
         worldObjects: [
             <Tilemap.Config>{
                 name: 'tiles',
-                constructor: Tilemap,
+                constructor: SmartTilemap,
                 x: 0, y: 0,
-                tilemap: SmartTilemap.Util.getSmartTilemap('main_tilemap', {
-                    rules: SmartTilemap.Rule.oneBitRules({
-                        airIndex: -1,
-                        solidIndex: 0,
-                        edgeUpIndex: 1,
-                        cornerTopLeftIndex: 2,
-                        inverseCornerTopLeftIndex: 3,
-                        doubleEdgeHorizontalIndex: 4,
-                        peninsulaUpIndex: 5,
-                    }),
-                    outsideRule: { type: 'extend' },
-                    emptyRule: { type: 'noop' },
-                }),
+                tilemap: 'main_tilemap',
+                data: {
+                    smartConfig: <SmartTilemap.Util.SmartTilemapConfig>{
+                        rules: SmartTilemap.Rule.oneBitRules({
+                            airIndex: -1,
+                            solidIndex: 0,
+                            edgeUpIndex: 1,
+                            cornerTopLeftIndex: 2,
+                            inverseCornerTopLeftIndex: 3,
+                            doubleEdgeHorizontalIndex: 4,
+                            peninsulaUpIndex: 5,
+                        }),
+                        outsideRule: { type: 'extend' },
+                        emptyRule: { type: 'noop' },
+                    }
+                },
                 layer: 'main',
                 physicsGroup: 'walls',
             },
@@ -68,6 +71,24 @@ function getStages(): Dict<World.Config> { return {
                 physicsGroup: 'walls',
                 bounds: { x: 0, y: 0, width: 128, height: 16 },
                 immovable: true,
+            },
+            {
+                name: 'tilemapEditor',
+                updateCallback: (obj, delta) => {
+                    let tilemap = obj.world.getWorldObjectByType(Tilemap);
+                    let mouseX = obj.world.getWorldMouseX() - tilemap.x;
+                    let mouseY = obj.world.getWorldMouseY() - tilemap.y;
+                    let tileX = Math.floor(mouseX / tilemap.tileset.tileWidth);
+                    let tileY = Math.floor(mouseY / tilemap.tileset.tileHeight);
+
+                    if (Input.isDown('placeBlock')) {
+                        tilemap.setTile(tileX, tileY, { index: 0, angle: 0, flipX: false });
+                    }
+
+                    if (Input.isDown('destroyBlock')) {
+                        tilemap.setTile(tileX, tileY, { index: -1, angle: 0, flipX: false });
+                    }
+                }
             },
         ]
     },

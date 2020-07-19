@@ -43,20 +43,21 @@ namespace Tilemap {
 }
 
 class Tilemap extends WorldObject {
-    tilemap: Tilemap.Tilemap;
-    animation: Tilemap.Animation;
+    protected tilemap: Tilemap.Tilemap;
+    protected animation: Tilemap.Animation;
 
-    numTilesX: number;
-    numTilesY: number;
-
-    collisionBoxes: PhysicsWorldObject[];
+    protected collisionBoxes: PhysicsWorldObject[];
     
-    private tilemapLayer: number;
-    private dirty: boolean;
-    private zMap: Tilemap.ZMap;
-    private zTextures: Sprite[];
+    protected tilemapLayer: number;
+    protected dirty: boolean;
+    protected zMap: Tilemap.ZMap;
+    protected zTextures: Sprite[];
 
-    get currentTilemapLayer() { return this.tilemap.layers[this.tilemapLayer]; }
+    protected debugBounds: boolean;
+
+    protected get currentTilemapLayer() { return this.tilemap.layers[this.tilemapLayer]; }
+
+    get tileset() { return this.tilemap.tileset; }
 
     constructor(config: Tilemap.Config) {
         super(config);
@@ -65,28 +66,38 @@ class Tilemap extends WorldObject {
 
         this.animation = config.animation;
 
-        let tilemapDimens = A.get2DArrayDimensions(this.currentTilemapLayer);
-        this.numTilesX = tilemapDimens.width;
-        this.numTilesY = tilemapDimens.height;
-
-        this.createCollisionBoxes(config.debugBounds ?? false);
+        this.debugBounds = config.debugBounds ?? false;
 
         this.zMap = config.zMap ?? {};
 
-        this.drawRenderTexture();
-        this.dirty = false;
+        this.dirty = true;
     }
 
     update(delta: number) {
         if (this.dirty) {
-            this.drawRenderTexture();
+            this.createTilemap();
             this.dirty = false;
         }
     }
 
-    createCollisionBoxes(debugBounds: boolean) {
+    protected createTilemap() {
+        this.drawRenderTexture();
+        this.createCollisionBoxes();
+    }
+
+    getTile(x: number, y: number) {
+        return this.currentTilemapLayer[y][x];
+    }
+
+    setTile(x: number, y: number, tile: Tilemap.Tile) {
+        this.currentTilemapLayer[y][x] = O.deepClone(tile);
+        this.dirty = true;
+    }
+
+    private createCollisionBoxes() {
+        World.Actions.removeWorldObjectsFromWorld(this.collisionBoxes);
         this.collisionBoxes = [];
-        let collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
+        let collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tileset);
         Tilemap.optimizeCollisionRects(collisionRects);  // Not optimizing entire array first to save some cycles.
         Tilemap.optimizeCollisionRects(collisionRects, Tilemap.OPTIMIZE_ALL);
         for (let rect of collisionRects) {
@@ -96,14 +107,14 @@ class Tilemap extends WorldObject {
                 physicsGroup: this.physicsGroup,
                 immovable: true,
             });
-            box.debugBounds = debugBounds;
+            box.debugBounds = this.debugBounds;
             this.collisionBoxes.push(box);
         }
 
-        World.Actions.addChildrenToParent(this.collisionBoxes, this);
+        this.addChildren(this.collisionBoxes);
     }
 
-    drawRenderTexture() {
+    private drawRenderTexture() {
         this.clearZTextures();
 
         let zTileIndices = Tilemap.createZTileIndicies(this.currentTilemapLayer, this.zMap);
@@ -119,16 +130,16 @@ class Tilemap extends WorldObject {
         }
     }
 
-    drawTile(tile: Tilemap.Tile, tileX: number, tileY: number, renderTextures: Texture[]) {
+    private drawTile(tile: Tilemap.Tile, tileX: number, tileY: number, renderTextures: Texture[]) {
         if (!tile || tile.index < 0) return;
 
         for (let i = 0; i < renderTextures.length; i++) {
             let textureKeyIndex = this.animation ? i*this.animation.tilesPerFrame + tile.index : tile.index;
-            let textureKey = this.tilemap.tileset.tiles[textureKeyIndex];
+            let textureKey = this.tileset.tiles[textureKeyIndex];
             let texture = AssetCache.getTexture(textureKey);
             renderTextures[i].render(texture, {
-                x: (tileX + 0.5) * this.tilemap.tileset.tileWidth,
-                y: (tileY + 0.5) * this.tilemap.tileset.tileHeight,
+                x: (tileX + 0.5) * this.tileset.tileWidth,
+                y: (tileY + 0.5) * this.tileset.tileHeight,
                 angle: tile.angle,
                 scaleX: tile.flipX ? -1 : 1,
             });
@@ -136,10 +147,10 @@ class Tilemap extends WorldObject {
     }
 
     private createZTextures(zTileIndices: number[][]) {
-        let texturesByZ = Tilemap.createEmptyZTextures(zTileIndices, this.tilemap.tileset, this.animation);
+        let texturesByZ = Tilemap.createEmptyZTextures(zTileIndices, this.tileset, this.animation);
 
         for (let zValue in texturesByZ) {
-            let zHeight = texturesByZ[zValue].zHeight * this.tilemap.tileset.tileHeight;
+            let zHeight = texturesByZ[zValue].zHeight * this.tileset.tileHeight;
             let zTexture = World.Actions.addChildToParent(new Sprite({
                 layer: this.layer,
                 x: this.x + texturesByZ[zValue].bounds.x,

@@ -561,7 +561,6 @@ namespace World {
             if (!obj) return obj;
 
             if (!obj.world) {
-                debug(`Tried to remove object ${obj.name} from its containing world, but it does not belong to a world! Object:`, obj);
                 return obj;
             }
 

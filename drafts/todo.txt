@@ -18,6 +18,7 @@
     - /timeout on preloading (decided not to do for now)
 - /move tileset animation fields from Assets to Tilemap.Config
 - /smart tilemaps
+- /editing tilemaps
 - platformer stuff
     - /moving platforms
     - /physics based on lastx/y instead of lastmovementx/y?
@@ -25,7 +26,6 @@
     - slopes/sloped bounds
     - boxes colliding with other boxes
     - implement metroid-style transitions
-- editing tilemaps
 - prototype options menu
 - consider moving texture's anchorX/Y to a Sprite property, or create an "AnchorTexture" class with those properties
 - remove delta from update?
@@ -33,5 +33,6 @@
 
 stretch
 - boundless textures
+    - optimize tilemap editing with boundless textures
 - unit tests c:
 - 1x scaled up graphics

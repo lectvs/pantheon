@@ -23,6 +23,8 @@ Main.loadConfig({
             'up':                        ['ArrowUp'],
             'down':                      ['ArrowDown'],
             'interact':                  ['e'],
+            'placeBlock':                ['MouseRight'],
+            'destroyBlock':              ['MouseLeft'],
 
             'game_advanceDialog':        ['MouseLeft', 'e', ' '],
             'game_pause':                ['Escape', 'Backspace'],

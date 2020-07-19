@@ -3720,7 +3720,6 @@ var World = /** @class */ (function () {
             if (!obj)
                 return obj;
             if (!obj.world) {
-                debug("Tried to remove object " + obj.name + " from its containing world, but it does not belong to a world! Object:", obj);
                 return obj;
             }
             var world = obj.world;
@@ -7456,129 +7455,6 @@ var SpriteTextConverter = /** @class */ (function () {
     };
     return SpriteTextConverter;
 }());
-var SmartTilemap;
-(function (SmartTilemap) {
-    var Rule;
-    (function (Rule) {
-        // Rules for a tilemap with air=empty, solid=non-empty
-        function oneBitRules(config) {
-            var rules = [];
-            if (config.peninsulaUpIndex !== undefined) {
-                rules.push({ pattern: /. . \S .../, tile: { index: config.peninsulaUpIndex, angle: 0, flipX: false } }); // Peninsula up
-                rules.push({ pattern: /. ..\S . ./, tile: { index: config.peninsulaUpIndex, angle: 90, flipX: false } }); // Peninsula right
-                rules.push({ pattern: /... \S . ./, tile: { index: config.peninsulaUpIndex, angle: 180, flipX: false } }); // Peninsula down
-                rules.push({ pattern: /. . \S.. ./, tile: { index: config.peninsulaUpIndex, angle: 270, flipX: false } }); // Peninsula left
-            }
-            if (config.cornerTopLeftIndex !== undefined) {
-                rules.push({ pattern: /. . \S..../, tile: { index: config.cornerTopLeftIndex, angle: 0, flipX: false } }); // Corner top-left
-                rules.push({ pattern: /. ..\S .../, tile: { index: config.cornerTopLeftIndex, angle: 90, flipX: false } }); // Corner top-right
-                rules.push({ pattern: /....\S . ./, tile: { index: config.cornerTopLeftIndex, angle: 180, flipX: false } }); // Corner bottom-right
-                rules.push({ pattern: /... \S.. ./, tile: { index: config.cornerTopLeftIndex, angle: 270, flipX: false } }); // Corner bottom-left
-            }
-            if (config.doubleEdgeHorizontalIndex !== undefined) {
-                rules.push({ pattern: /. ..\S.. ./, tile: { index: config.doubleEdgeHorizontalIndex, angle: 0, flipX: false } }); // Double Edge horizontal
-                rules.push({ pattern: /... \S .../, tile: { index: config.doubleEdgeHorizontalIndex, angle: 90, flipX: false } }); // Double Edge vertical
-            }
-            if (config.edgeUpIndex !== undefined) {
-                rules.push({ pattern: /. ..\S..../, tile: { index: config.edgeUpIndex, angle: 0, flipX: false } }); // Edge up
-                rules.push({ pattern: /....\S .../, tile: { index: config.edgeUpIndex, angle: 90, flipX: false } }); // Edge right
-                rules.push({ pattern: /....\S.. ./, tile: { index: config.edgeUpIndex, angle: 180, flipX: false } }); // Edge down
-                rules.push({ pattern: /... \S..../, tile: { index: config.edgeUpIndex, angle: 270, flipX: false } }); // Edge left
-            }
-            if (config.inverseCornerTopLeftIndex !== undefined) {
-                rules.push({ pattern: / ...\S..../, tile: { index: config.inverseCornerTopLeftIndex, angle: 0, flipX: false } }); // Inverse Corner top-left
-                rules.push({ pattern: /.. .\S..../, tile: { index: config.inverseCornerTopLeftIndex, angle: 90, flipX: false } }); // Inverse Corner top-right
-                rules.push({ pattern: /....\S... /, tile: { index: config.inverseCornerTopLeftIndex, angle: 180, flipX: false } }); // Inverse Corner bottom-right
-                rules.push({ pattern: /....\S. ../, tile: { index: config.inverseCornerTopLeftIndex, angle: 270, flipX: false } }); // Inverse Corner bottom-left
-            }
-            rules.push({ pattern: /.... ..../, tile: { index: config.airIndex, angle: 0, flipX: false } }); // Air
-            rules.push({ pattern: /....\S..../, tile: { index: config.solidIndex, angle: 0, flipX: false } }); // Solid
-            return rules;
-        }
-        Rule.oneBitRules = oneBitRules;
-    })(Rule = SmartTilemap.Rule || (SmartTilemap.Rule = {}));
-})(SmartTilemap || (SmartTilemap = {}));
-(function (SmartTilemap) {
-    var Util;
-    (function (Util) {
-        function getSmartTilemap(tilemap, config) {
-            if (_.isString(tilemap)) {
-                tilemap = AssetCache.getTilemap(tilemap);
-                if (!tilemap)
-                    return;
-            }
-            return {
-                tileset: tilemap.tileset,
-                layers: tilemap.layers.map(function (layer) { return getSmartTilemapLayer(layer, config); }),
-            };
-        }
-        Util.getSmartTilemap = getSmartTilemap;
-        function getSmartTilemapLayer(tilemap, config) {
-            var result = [];
-            for (var y = 0; y < tilemap.length; y++) {
-                var line = [];
-                for (var x = 0; x < tilemap[y].length; x++) {
-                    line.push(getSmartTile(tilemap, x, y, config));
-                }
-                result.push(line);
-            }
-            return result;
-        }
-        Util.getSmartTilemapLayer = getSmartTilemapLayer;
-        function getSmartTile(tilemap, x, y, config) {
-            var e_41, _a;
-            var pattern = getTilePattern(tilemap, x, y, config);
-            try {
-                for (var _b = __values(config.rules), _c = _b.next(); !_c.done; _c = _b.next()) {
-                    var rule = _c.value;
-                    if (pattern.search(rule.pattern) > -1) {
-                        return rule.tile;
-                    }
-                }
-            }
-            catch (e_41_1) { e_41 = { error: e_41_1 }; }
-            finally {
-                try {
-                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-                }
-                finally { if (e_41) throw e_41.error; }
-            }
-            return tilemap[y][x];
-        }
-        Util.getSmartTile = getSmartTile;
-        function getTilePattern(tilemap, x, y, config) {
-            var pattern = '';
-            for (var j = y - 1; j <= y + 1; j++) {
-                for (var i = x - 1; i <= x + 1; i++) {
-                    var index = getTileIndex(tilemap, i, j, config.outsideRule, config.emptyRule);
-                    pattern += index >= 0 ? index : ' ';
-                }
-            }
-            return pattern;
-        }
-        function getTileIndex(tilemap, x, y, outsideRule, emptyRule) {
-            if (0 <= y && y < tilemap.length && 0 <= x && x < tilemap[y].length) {
-                if (tilemap[y][x].index >= 0) {
-                    return tilemap[y][x].index;
-                }
-                if (emptyRule.type === 'noop') {
-                    return tilemap[y][x].index;
-                }
-                if (emptyRule.type === 'constant') {
-                    return emptyRule.index;
-                }
-            }
-            if (outsideRule.type === 'constant') {
-                return outsideRule.index;
-            }
-            if (outsideRule.type === 'extend') {
-                var nearesty = M.clamp(y, 0, tilemap.length - 1);
-                var nearestx = M.clamp(x, 0, tilemap[nearesty].length - 1);
-                return tilemap[nearesty][nearestx].index;
-            }
-        }
-    })(Util = SmartTilemap.Util || (SmartTilemap.Util = {}));
-})(SmartTilemap || (SmartTilemap = {}));
 var Tilemap = /** @class */ (function (_super) {
     __extends(Tilemap, _super);
     function Tilemap(config) {
@@ -7587,13 +7463,9 @@ var Tilemap = /** @class */ (function (_super) {
         _this.tilemap = Tilemap.cloneTilemap(_.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap);
         _this.tilemapLayer = (_a = config.tilemapLayer) !== null && _a !== void 0 ? _a : 0;
         _this.animation = config.animation;
-        var tilemapDimens = A.get2DArrayDimensions(_this.currentTilemapLayer);
-        _this.numTilesX = tilemapDimens.width;
-        _this.numTilesY = tilemapDimens.height;
-        _this.createCollisionBoxes((_b = config.debugBounds) !== null && _b !== void 0 ? _b : false);
+        _this.debugBounds = (_b = config.debugBounds) !== null && _b !== void 0 ? _b : false;
         _this.zMap = (_c = config.zMap) !== null && _c !== void 0 ? _c : {};
-        _this.drawRenderTexture();
-        _this.dirty = false;
+        _this.dirty = true;
         return _this;
     }
     Object.defineProperty(Tilemap.prototype, "currentTilemapLayer", {
@@ -7601,16 +7473,33 @@ var Tilemap = /** @class */ (function (_super) {
         enumerable: false,
         configurable: true
     });
+    Object.defineProperty(Tilemap.prototype, "tileset", {
+        get: function () { return this.tilemap.tileset; },
+        enumerable: false,
+        configurable: true
+    });
     Tilemap.prototype.update = function (delta) {
         if (this.dirty) {
-            this.drawRenderTexture();
+            this.createTilemap();
             this.dirty = false;
         }
     };
-    Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_42, _a;
+    Tilemap.prototype.createTilemap = function () {
+        this.drawRenderTexture();
+        this.createCollisionBoxes();
+    };
+    Tilemap.prototype.getTile = function (x, y) {
+        return this.currentTilemapLayer[y][x];
+    };
+    Tilemap.prototype.setTile = function (x, y, tile) {
+        this.currentTilemapLayer[y][x] = O.deepClone(tile);
+        this.dirty = true;
+    };
+    Tilemap.prototype.createCollisionBoxes = function () {
+        var e_41, _a;
+        World.Actions.removeWorldObjectsFromWorld(this.collisionBoxes);
         this.collisionBoxes = [];
-        var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
+        var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
         Tilemap.optimizeCollisionRects(collisionRects, Tilemap.OPTIMIZE_ALL);
         try {
@@ -7622,18 +7511,18 @@ var Tilemap = /** @class */ (function (_super) {
                     physicsGroup: this.physicsGroup,
                     immovable: true,
                 });
-                box.debugBounds = debugBounds;
+                box.debugBounds = this.debugBounds;
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_42_1) { e_42 = { error: e_42_1 }; }
+        catch (e_41_1) { e_41 = { error: e_41_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_42) throw e_42.error; }
+            finally { if (e_41) throw e_41.error; }
         }
-        World.Actions.addChildrenToParent(this.collisionBoxes, this);
+        this.addChildren(this.collisionBoxes);
     };
     Tilemap.prototype.drawRenderTexture = function () {
         this.clearZTextures();
@@ -7653,20 +7542,20 @@ var Tilemap = /** @class */ (function (_super) {
             return;
         for (var i = 0; i < renderTextures.length; i++) {
             var textureKeyIndex = this.animation ? i * this.animation.tilesPerFrame + tile.index : tile.index;
-            var textureKey = this.tilemap.tileset.tiles[textureKeyIndex];
+            var textureKey = this.tileset.tiles[textureKeyIndex];
             var texture = AssetCache.getTexture(textureKey);
             renderTextures[i].render(texture, {
-                x: (tileX + 0.5) * this.tilemap.tileset.tileWidth,
-                y: (tileY + 0.5) * this.tilemap.tileset.tileHeight,
+                x: (tileX + 0.5) * this.tileset.tileWidth,
+                y: (tileY + 0.5) * this.tileset.tileHeight,
                 angle: tile.angle,
                 scaleX: tile.flipX ? -1 : 1,
             });
         }
     };
     Tilemap.prototype.createZTextures = function (zTileIndices) {
-        var texturesByZ = Tilemap.createEmptyZTextures(zTileIndices, this.tilemap.tileset, this.animation);
+        var texturesByZ = Tilemap.createEmptyZTextures(zTileIndices, this.tileset, this.animation);
         for (var zValue in texturesByZ) {
-            var zHeight = texturesByZ[zValue].zHeight * this.tilemap.tileset.tileHeight;
+            var zHeight = texturesByZ[zValue].zHeight * this.tileset.tileHeight;
             var zTexture = World.Actions.addChildToParent(new Sprite({
                 layer: this.layer,
                 x: this.x + texturesByZ[zValue].bounds.x,
@@ -7867,6 +7756,149 @@ var Tilemap = /** @class */ (function (_super) {
         }
     }
 })(Tilemap || (Tilemap = {}));
+/// <reference path="./tilemap.ts" />
+var SmartTilemap = /** @class */ (function (_super) {
+    __extends(SmartTilemap, _super);
+    function SmartTilemap(config) {
+        var _this = _super.call(this, config) || this;
+        _this.baseTilemap = _this.tilemap;
+        _this.smartConfig = config.data.smartConfig;
+        _this.tilemap = SmartTilemap.Util.getSmartTilemap(_this.baseTilemap, _this.smartConfig);
+        _this.dirty = true;
+        return _this;
+    }
+    SmartTilemap.prototype.getTile = function (x, y) {
+        return this.baseTilemap[y][x];
+    };
+    SmartTilemap.prototype.setTile = function (x, y, tile) {
+        this.baseTilemap.layers[this.tilemapLayer][y][x] = O.deepClone(tile);
+        this.tilemap = SmartTilemap.Util.getSmartTilemap(this.baseTilemap, this.smartConfig);
+        this.dirty = true;
+    };
+    return SmartTilemap;
+}(Tilemap));
+(function (SmartTilemap) {
+    var Rule;
+    (function (Rule) {
+        // Rules for a tilemap with air=empty, solid=non-empty
+        function oneBitRules(config) {
+            var rules = [];
+            if (config.peninsulaUpIndex !== undefined) {
+                rules.push({ pattern: /. . \S .../, tile: { index: config.peninsulaUpIndex, angle: 0, flipX: false } }); // Peninsula up
+                rules.push({ pattern: /. ..\S . ./, tile: { index: config.peninsulaUpIndex, angle: 90, flipX: false } }); // Peninsula right
+                rules.push({ pattern: /... \S . ./, tile: { index: config.peninsulaUpIndex, angle: 180, flipX: false } }); // Peninsula down
+                rules.push({ pattern: /. . \S.. ./, tile: { index: config.peninsulaUpIndex, angle: 270, flipX: false } }); // Peninsula left
+            }
+            if (config.cornerTopLeftIndex !== undefined) {
+                rules.push({ pattern: /. . \S..../, tile: { index: config.cornerTopLeftIndex, angle: 0, flipX: false } }); // Corner top-left
+                rules.push({ pattern: /. ..\S .../, tile: { index: config.cornerTopLeftIndex, angle: 90, flipX: false } }); // Corner top-right
+                rules.push({ pattern: /....\S . ./, tile: { index: config.cornerTopLeftIndex, angle: 180, flipX: false } }); // Corner bottom-right
+                rules.push({ pattern: /... \S.. ./, tile: { index: config.cornerTopLeftIndex, angle: 270, flipX: false } }); // Corner bottom-left
+            }
+            if (config.doubleEdgeHorizontalIndex !== undefined) {
+                rules.push({ pattern: /. ..\S.. ./, tile: { index: config.doubleEdgeHorizontalIndex, angle: 0, flipX: false } }); // Double Edge horizontal
+                rules.push({ pattern: /... \S .../, tile: { index: config.doubleEdgeHorizontalIndex, angle: 90, flipX: false } }); // Double Edge vertical
+            }
+            if (config.edgeUpIndex !== undefined) {
+                rules.push({ pattern: /. ..\S..../, tile: { index: config.edgeUpIndex, angle: 0, flipX: false } }); // Edge up
+                rules.push({ pattern: /....\S .../, tile: { index: config.edgeUpIndex, angle: 90, flipX: false } }); // Edge right
+                rules.push({ pattern: /....\S.. ./, tile: { index: config.edgeUpIndex, angle: 180, flipX: false } }); // Edge down
+                rules.push({ pattern: /... \S..../, tile: { index: config.edgeUpIndex, angle: 270, flipX: false } }); // Edge left
+            }
+            if (config.inverseCornerTopLeftIndex !== undefined) {
+                rules.push({ pattern: / ...\S..../, tile: { index: config.inverseCornerTopLeftIndex, angle: 0, flipX: false } }); // Inverse Corner top-left
+                rules.push({ pattern: /.. .\S..../, tile: { index: config.inverseCornerTopLeftIndex, angle: 90, flipX: false } }); // Inverse Corner top-right
+                rules.push({ pattern: /....\S... /, tile: { index: config.inverseCornerTopLeftIndex, angle: 180, flipX: false } }); // Inverse Corner bottom-right
+                rules.push({ pattern: /....\S. ../, tile: { index: config.inverseCornerTopLeftIndex, angle: 270, flipX: false } }); // Inverse Corner bottom-left
+            }
+            rules.push({ pattern: /.... ..../, tile: { index: config.airIndex, angle: 0, flipX: false } }); // Air
+            rules.push({ pattern: /....\S..../, tile: { index: config.solidIndex, angle: 0, flipX: false } }); // Solid
+            return rules;
+        }
+        Rule.oneBitRules = oneBitRules;
+    })(Rule = SmartTilemap.Rule || (SmartTilemap.Rule = {}));
+})(SmartTilemap || (SmartTilemap = {}));
+(function (SmartTilemap) {
+    var Util;
+    (function (Util) {
+        function getSmartTilemap(tilemap, config) {
+            if (_.isString(tilemap)) {
+                tilemap = AssetCache.getTilemap(tilemap);
+                if (!tilemap)
+                    return;
+            }
+            return {
+                tileset: tilemap.tileset,
+                layers: tilemap.layers.map(function (layer) { return getSmartTilemapLayer(layer, config); }),
+            };
+        }
+        Util.getSmartTilemap = getSmartTilemap;
+        function getSmartTilemapLayer(tilemap, config) {
+            var result = [];
+            for (var y = 0; y < tilemap.length; y++) {
+                var line = [];
+                for (var x = 0; x < tilemap[y].length; x++) {
+                    line.push(getSmartTile(tilemap, x, y, config));
+                }
+                result.push(line);
+            }
+            return result;
+        }
+        Util.getSmartTilemapLayer = getSmartTilemapLayer;
+        function getSmartTile(tilemap, x, y, config) {
+            var e_42, _a;
+            var pattern = getTilePattern(tilemap, x, y, config);
+            try {
+                for (var _b = __values(config.rules), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var rule = _c.value;
+                    if (pattern.search(rule.pattern) > -1) {
+                        return rule.tile;
+                    }
+                }
+            }
+            catch (e_42_1) { e_42 = { error: e_42_1 }; }
+            finally {
+                try {
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                }
+                finally { if (e_42) throw e_42.error; }
+            }
+            return tilemap[y][x];
+        }
+        Util.getSmartTile = getSmartTile;
+        function getTilePattern(tilemap, x, y, config) {
+            var pattern = '';
+            for (var j = y - 1; j <= y + 1; j++) {
+                for (var i = x - 1; i <= x + 1; i++) {
+                    var index = getTileIndex(tilemap, i, j, config.outsideRule, config.emptyRule);
+                    pattern += index >= 0 ? index : ' ';
+                }
+            }
+            return pattern;
+        }
+        function getTileIndex(tilemap, x, y, outsideRule, emptyRule) {
+            if (0 <= y && y < tilemap.length && 0 <= x && x < tilemap[y].length) {
+                if (tilemap[y][x].index >= 0) {
+                    return tilemap[y][x].index;
+                }
+                if (emptyRule.type === 'noop') {
+                    return tilemap[y][x].index;
+                }
+                if (emptyRule.type === 'constant') {
+                    return emptyRule.index;
+                }
+            }
+            if (outsideRule.type === 'constant') {
+                return outsideRule.index;
+            }
+            if (outsideRule.type === 'extend') {
+                var nearesty = M.clamp(y, 0, tilemap.length - 1);
+                var nearestx = M.clamp(x, 0, tilemap[nearesty].length - 1);
+                return tilemap[nearesty][nearestx].index;
+            }
+        }
+    })(Util = SmartTilemap.Util || (SmartTilemap.Util = {}));
+})(SmartTilemap || (SmartTilemap = {}));
 var Assets;
 (function (Assets) {
     Assets.textures = {
@@ -8139,6 +8171,8 @@ Main.loadConfig({
             'up': ['ArrowUp'],
             'down': ['ArrowDown'],
             'interact': ['e'],
+            'placeBlock': ['MouseRight'],
+            'destroyBlock': ['MouseLeft'],
             'game_advanceDialog': ['MouseLeft', 'e', ' '],
             'game_pause': ['Escape', 'Backspace'],
             'game_closeMenu': ['Escape', 'Backspace'],
@@ -8351,21 +8385,24 @@ function getStages() {
             worldObjects: [
                 {
                     name: 'tiles',
-                    constructor: Tilemap,
+                    constructor: SmartTilemap,
                     x: 0, y: 0,
-                    tilemap: SmartTilemap.Util.getSmartTilemap('main_tilemap', {
-                        rules: SmartTilemap.Rule.oneBitRules({
-                            airIndex: -1,
-                            solidIndex: 0,
-                            edgeUpIndex: 1,
-                            cornerTopLeftIndex: 2,
-                            inverseCornerTopLeftIndex: 3,
-                            doubleEdgeHorizontalIndex: 4,
-                            peninsulaUpIndex: 5,
-                        }),
-                        outsideRule: { type: 'extend' },
-                        emptyRule: { type: 'noop' },
-                    }),
+                    tilemap: 'main_tilemap',
+                    data: {
+                        smartConfig: {
+                            rules: SmartTilemap.Rule.oneBitRules({
+                                airIndex: -1,
+                                solidIndex: 0,
+                                edgeUpIndex: 1,
+                                cornerTopLeftIndex: 2,
+                                inverseCornerTopLeftIndex: 3,
+                                doubleEdgeHorizontalIndex: 4,
+                                peninsulaUpIndex: 5,
+                            }),
+                            outsideRule: { type: 'extend' },
+                            emptyRule: { type: 'noop' },
+                        }
+                    },
                     layer: 'main',
                     physicsGroup: 'walls',
                 },
@@ -8406,6 +8443,22 @@ function getStages() {
                     physicsGroup: 'walls',
                     bounds: { x: 0, y: 0, width: 128, height: 16 },
                     immovable: true,
+                },
+                {
+                    name: 'tilemapEditor',
+                    updateCallback: function (obj, delta) {
+                        var tilemap = obj.world.getWorldObjectByType(Tilemap);
+                        var mouseX = obj.world.getWorldMouseX() - tilemap.x;
+                        var mouseY = obj.world.getWorldMouseY() - tilemap.y;
+                        var tileX = Math.floor(mouseX / tilemap.tileset.tileWidth);
+                        var tileY = Math.floor(mouseY / tilemap.tileset.tileHeight);
+                        if (Input.isDown('placeBlock')) {
+                            tilemap.setTile(tileX, tileY, { index: 0, angle: 0, flipX: false });
+                        }
+                        if (Input.isDown('destroyBlock')) {
+                            tilemap.setTile(tileX, tileY, { index: -1, angle: 0, flipX: false });
+                        }
+                    }
                 },
             ]
         },

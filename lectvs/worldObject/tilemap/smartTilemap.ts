@@ -1,3 +1,30 @@
+/// <reference path="./tilemap.ts" />
+
+class SmartTilemap extends Tilemap {
+    baseTilemap: Tilemap.Tilemap;
+    smartConfig: SmartTilemap.Util.SmartTilemapConfig;
+
+    constructor(config: Tilemap.Config) {
+        super(config);
+
+        this.baseTilemap = this.tilemap;
+        this.smartConfig = config.data.smartConfig;
+
+        this.tilemap = SmartTilemap.Util.getSmartTilemap(this.baseTilemap, this.smartConfig);
+        this.dirty = true;
+    }
+
+    getTile(x: number, y: number) {
+        return this.baseTilemap[y][x];
+    }
+
+    setTile(x: number, y: number, tile: Tilemap.Tile) {
+        this.baseTilemap.layers[this.tilemapLayer][y][x] = O.deepClone(tile);
+        this.tilemap = SmartTilemap.Util.getSmartTilemap(this.baseTilemap, this.smartConfig);
+        this.dirty = true;
+    }
+}
+
 namespace SmartTilemap.Rule {
     export type Rule = {
         pattern: RegExp;
