@@ -6,7 +6,7 @@ namespace Debug {
         cheatsEnabled: boolean;
         allPhysicsBounds: boolean;
         moveCameraWithArrows: boolean; 
-        showInfo: boolean;
+        showOverlay: boolean;
         skipRate: number;
         programmaticInput: boolean;
         autoplay: boolean;
@@ -14,6 +14,7 @@ namespace Debug {
         frameStepEnabled: boolean;
         frameStepStepKey: string;
         frameStepRunKey: string;
+        resetOptionsAtStart: boolean;
     }
 }
 
@@ -25,7 +26,7 @@ class Debug {
         Debug.CHEATS_ENABLED = config.cheatsEnabled;
         Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
         Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
-        Debug.SHOW_INFO = config.showInfo;
+        Debug.SHOW_OVERLAY = config.showOverlay;
         Debug.SKIP_RATE = config.skipRate;
         Debug.PROGRAMMATIC_INPUT = config.programmaticInput;
         Debug.AUTOPLAY = config.autoplay;
@@ -33,6 +34,7 @@ class Debug {
         Debug.FRAME_STEP_ENABLED = config.frameStepEnabled;
         Debug.FRAME_STEP_STEP_KEY = config.frameStepStepKey;
         Debug.FRAME_STEP_RUN_KEY = config.frameStepRunKey;
+        Debug.RESET_OPTIONS_AT_START = config.resetOptionsAtStart;
     }
 
     private static _DEBUG: boolean;
@@ -54,9 +56,9 @@ class Debug {
     static get MOVE_CAMERA_WITH_ARROWS() { return this.DEBUG && this._MOVE_CAMERA_WITH_ARROWS; }
     static set MOVE_CAMERA_WITH_ARROWS(value: boolean) { this._MOVE_CAMERA_WITH_ARROWS = value; }
 
-    private static _SHOW_INFO: boolean;
-    static get SHOW_INFO() { return this.DEBUG && this._SHOW_INFO; }
-    static set SHOW_INFO(value: boolean) { this._SHOW_INFO = value; }
+    private static _SHOW_OVERLAY: boolean;
+    static get SHOW_OVERLAY() { return this.DEBUG && this._SHOW_OVERLAY; }
+    static set SHOW_OVERLAY(value: boolean) { this._SHOW_OVERLAY = value; }
 
     private static _SKIP_RATE: number;
     static get SKIP_RATE() { return this.DEBUG ? this._SKIP_RATE : 1; }
@@ -82,10 +84,8 @@ class Debug {
     static frameStepSkipFrame() {
         return this.FRAME_STEP_ENABLED && !(Input.justDown(this.FRAME_STEP_STEP_KEY) || Input.isDown(this.FRAME_STEP_RUN_KEY));
     }
-}
 
-function get(name: string) {
-    let worldObject = global.game.theater.currentWorld.getWorldObjectByName(name);
-    if (worldObject) return worldObject;
-    return undefined;
+    private static _RESET_OPTIONS_AT_START: boolean;
+    static get RESET_OPTIONS_AT_START() { return this.DEBUG && this._RESET_OPTIONS_AT_START; }
+    static set RESET_OPTIONS_AT_START(value: boolean) { this._RESET_OPTIONS_AT_START = value; }
 }

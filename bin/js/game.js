@@ -343,6 +343,7 @@ var Game = /** @class */ (function () {
         this.menuSystem = new MenuSystem(this);
         this.loadMainMenu();
         this.overlay = new DebugOverlay();
+        this.isShowingOverlay = true;
         if (Debug.SKIP_MAIN_MENU) {
             this.startGame();
         }
@@ -354,7 +355,6 @@ var Game = /** @class */ (function () {
     });
     ;
     Game.prototype.update = function (delta) {
-        var _a;
         this.updatePause();
         this.updateMetrics();
         if (this.menuSystem.inMenu) {
@@ -367,8 +367,7 @@ var Game = /** @class */ (function () {
             this.theater.update(delta);
             global.metrics.endSpan('theater');
         }
-        this.overlay.setCurrentWorldToDebug(this.menuSystem.inMenu ? this.menuSystem.currentMenu : (_a = this.theater) === null || _a === void 0 ? void 0 : _a.currentWorld);
-        this.overlay.update(delta);
+        this.updateOverlay(delta);
         this.soundManager.volume = this.volume;
         this.soundManager.update(delta);
     };
@@ -383,6 +382,16 @@ var Game = /** @class */ (function () {
             global.game.menuSystem.loadMenu(MetricsMenu);
         }
     };
+    Game.prototype.updateOverlay = function (delta) {
+        var _a;
+        if (Input.justDown(Input.DEBUG_TOGGLE_OVERLAY)) {
+            this.isShowingOverlay = !this.isShowingOverlay;
+        }
+        if (this.isShowingOverlay && Debug.SHOW_OVERLAY) {
+            this.overlay.setCurrentWorldToDebug(this.menuSystem.inMenu ? this.menuSystem.currentMenu : (_a = this.theater) === null || _a === void 0 ? void 0 : _a.currentWorld);
+            this.overlay.update(delta);
+        }
+    };
     Game.prototype.render = function (screen) {
         if (this.menuSystem.inMenu) {
             global.metrics.startSpan('menu');
@@ -394,7 +403,9 @@ var Game = /** @class */ (function () {
             this.theater.render(screen);
             global.metrics.endSpan('theater');
         }
-        this.overlay.render(screen);
+        if (this.isShowingOverlay && Debug.SHOW_OVERLAY) {
+            this.overlay.render(screen);
+        }
     };
     Game.prototype.loadMainMenu = function () {
         this.menuSystem.loadMenu(this.entryPointMenuClass);
@@ -873,6 +884,7 @@ var Input = /** @class */ (function () {
     Input.DEBUG_MOVE_CAMERA_RIGHT = 'debug_moveCameraRight';
     Input.DEBUG_RECORD_METRICS = 'debug_recordMetrics';
     Input.DEBUG_SHOW_METRICS_MENU = 'debug_showMetricsMenu';
+    Input.DEBUG_TOGGLE_OVERLAY = 'debug_toggleOverlay';
     var Key = /** @class */ (function () {
         function Key() {
             this._isDown = false;
@@ -1847,6 +1859,9 @@ var Options = /** @class */ (function () {
         this.optionsName = name;
         this.defaultOptions = defaultOptions;
         this.loadOptions();
+        if (Debug.RESET_OPTIONS_AT_START) {
+            this.resetOptions();
+        }
     };
     Options.getOption = function (option) {
         return this.options[option];
@@ -2318,7 +2333,7 @@ var Debug = /** @class */ (function () {
         Debug.CHEATS_ENABLED = config.cheatsEnabled;
         Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
         Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
-        Debug.SHOW_INFO = config.showInfo;
+        Debug.SHOW_OVERLAY = config.showOverlay;
         Debug.SKIP_RATE = config.skipRate;
         Debug.PROGRAMMATIC_INPUT = config.programmaticInput;
         Debug.AUTOPLAY = config.autoplay;
@@ -2326,6 +2341,7 @@ var Debug = /** @class */ (function () {
         Debug.FRAME_STEP_ENABLED = config.frameStepEnabled;
         Debug.FRAME_STEP_STEP_KEY = config.frameStepStepKey;
         Debug.FRAME_STEP_RUN_KEY = config.frameStepRunKey;
+        Debug.RESET_OPTIONS_AT_START = config.resetOptionsAtStart;
     };
     Object.defineProperty(Debug, "DEBUG", {
         get: function () { return this._DEBUG; },
@@ -2351,9 +2367,9 @@ var Debug = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
-    Object.defineProperty(Debug, "SHOW_INFO", {
-        get: function () { return this.DEBUG && this._SHOW_INFO; },
-        set: function (value) { this._SHOW_INFO = value; },
+    Object.defineProperty(Debug, "SHOW_OVERLAY", {
+        get: function () { return this.DEBUG && this._SHOW_OVERLAY; },
+        set: function (value) { this._SHOW_OVERLAY = value; },
         enumerable: false,
         configurable: true
     });
@@ -2390,14 +2406,14 @@ var Debug = /** @class */ (function () {
     Debug.frameStepSkipFrame = function () {
         return this.FRAME_STEP_ENABLED && !(Input.justDown(this.FRAME_STEP_STEP_KEY) || Input.isDown(this.FRAME_STEP_RUN_KEY));
     };
+    Object.defineProperty(Debug, "RESET_OPTIONS_AT_START", {
+        get: function () { return this.DEBUG && this._RESET_OPTIONS_AT_START; },
+        set: function (value) { this._RESET_OPTIONS_AT_START = value; },
+        enumerable: false,
+        configurable: true
+    });
     return Debug;
 }());
-function get(name) {
-    var worldObject = global.game.theater.currentWorld.getWorldObjectByName(name);
-    if (worldObject)
-        return worldObject;
-    return undefined;
-}
 var RandomNumberGenerator = /** @class */ (function () {
     function RandomNumberGenerator(seed) {
         this.seed(seed);
@@ -3956,7 +3972,8 @@ var DebugOverlay = /** @class */ (function (_super) {
         var fpsText = "fps: "
             + global.fpsCalculator.fpsAvg.toFixed(0) + " "
             + "(-" + (global.fpsCalculator.fpsAvg - global.fpsCalculator.fpsP).toFixed(0) + ")";
-        return mousePositionText + "\n" + fpsText;
+        var recordingText = global.metrics.isRecording ? "\nrecording" : "";
+        return mousePositionText + "\n" + fpsText + "\n" + recordingText;
     };
     return DebugOverlay;
 }(World));
@@ -7439,12 +7456,135 @@ var SpriteTextConverter = /** @class */ (function () {
     };
     return SpriteTextConverter;
 }());
+var SmartTilemap;
+(function (SmartTilemap) {
+    var Rule;
+    (function (Rule) {
+        // Rules for a tilemap with air=empty, solid=non-empty
+        function oneBitRules(config) {
+            var rules = [];
+            if (config.peninsulaUpIndex !== undefined) {
+                rules.push({ pattern: /. . \S .../, tile: { index: config.peninsulaUpIndex, angle: 0, flipX: false } }); // Peninsula up
+                rules.push({ pattern: /. ..\S . ./, tile: { index: config.peninsulaUpIndex, angle: 90, flipX: false } }); // Peninsula right
+                rules.push({ pattern: /... \S . ./, tile: { index: config.peninsulaUpIndex, angle: 180, flipX: false } }); // Peninsula down
+                rules.push({ pattern: /. . \S.. ./, tile: { index: config.peninsulaUpIndex, angle: 270, flipX: false } }); // Peninsula left
+            }
+            if (config.cornerTopLeftIndex !== undefined) {
+                rules.push({ pattern: /. . \S..../, tile: { index: config.cornerTopLeftIndex, angle: 0, flipX: false } }); // Corner top-left
+                rules.push({ pattern: /. ..\S .../, tile: { index: config.cornerTopLeftIndex, angle: 90, flipX: false } }); // Corner top-right
+                rules.push({ pattern: /....\S . ./, tile: { index: config.cornerTopLeftIndex, angle: 180, flipX: false } }); // Corner bottom-right
+                rules.push({ pattern: /... \S.. ./, tile: { index: config.cornerTopLeftIndex, angle: 270, flipX: false } }); // Corner bottom-left
+            }
+            if (config.doubleEdgeHorizontalIndex !== undefined) {
+                rules.push({ pattern: /. ..\S.. ./, tile: { index: config.doubleEdgeHorizontalIndex, angle: 0, flipX: false } }); // Double Edge horizontal
+                rules.push({ pattern: /... \S .../, tile: { index: config.doubleEdgeHorizontalIndex, angle: 90, flipX: false } }); // Double Edge vertical
+            }
+            if (config.edgeUpIndex !== undefined) {
+                rules.push({ pattern: /. ..\S..../, tile: { index: config.edgeUpIndex, angle: 0, flipX: false } }); // Edge up
+                rules.push({ pattern: /....\S .../, tile: { index: config.edgeUpIndex, angle: 90, flipX: false } }); // Edge right
+                rules.push({ pattern: /....\S.. ./, tile: { index: config.edgeUpIndex, angle: 180, flipX: false } }); // Edge down
+                rules.push({ pattern: /... \S..../, tile: { index: config.edgeUpIndex, angle: 270, flipX: false } }); // Edge left
+            }
+            if (config.inverseCornerTopLeftIndex !== undefined) {
+                rules.push({ pattern: / ...\S..../, tile: { index: config.inverseCornerTopLeftIndex, angle: 0, flipX: false } }); // Inverse Corner top-left
+                rules.push({ pattern: /.. .\S..../, tile: { index: config.inverseCornerTopLeftIndex, angle: 90, flipX: false } }); // Inverse Corner top-right
+                rules.push({ pattern: /....\S... /, tile: { index: config.inverseCornerTopLeftIndex, angle: 180, flipX: false } }); // Inverse Corner bottom-right
+                rules.push({ pattern: /....\S. ../, tile: { index: config.inverseCornerTopLeftIndex, angle: 270, flipX: false } }); // Inverse Corner bottom-left
+            }
+            rules.push({ pattern: /.... ..../, tile: { index: config.airIndex, angle: 0, flipX: false } }); // Air
+            rules.push({ pattern: /....\S..../, tile: { index: config.solidIndex, angle: 0, flipX: false } }); // Solid
+            return rules;
+        }
+        Rule.oneBitRules = oneBitRules;
+    })(Rule = SmartTilemap.Rule || (SmartTilemap.Rule = {}));
+})(SmartTilemap || (SmartTilemap = {}));
+(function (SmartTilemap) {
+    var Util;
+    (function (Util) {
+        function getSmartTilemap(tilemap, config) {
+            if (_.isString(tilemap)) {
+                tilemap = AssetCache.getTilemap(tilemap);
+                if (!tilemap)
+                    return;
+            }
+            return {
+                tileset: tilemap.tileset,
+                layers: tilemap.layers.map(function (layer) { return getSmartTilemapLayer(layer, config); }),
+            };
+        }
+        Util.getSmartTilemap = getSmartTilemap;
+        function getSmartTilemapLayer(tilemap, config) {
+            var result = [];
+            for (var y = 0; y < tilemap.length; y++) {
+                var line = [];
+                for (var x = 0; x < tilemap[y].length; x++) {
+                    line.push(getSmartTile(tilemap, x, y, config));
+                }
+                result.push(line);
+            }
+            return result;
+        }
+        Util.getSmartTilemapLayer = getSmartTilemapLayer;
+        function getSmartTile(tilemap, x, y, config) {
+            var e_41, _a;
+            var pattern = getTilePattern(tilemap, x, y, config);
+            try {
+                for (var _b = __values(config.rules), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var rule = _c.value;
+                    if (pattern.search(rule.pattern) > -1) {
+                        return rule.tile;
+                    }
+                }
+            }
+            catch (e_41_1) { e_41 = { error: e_41_1 }; }
+            finally {
+                try {
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                }
+                finally { if (e_41) throw e_41.error; }
+            }
+            return tilemap[y][x];
+        }
+        Util.getSmartTile = getSmartTile;
+        function getTilePattern(tilemap, x, y, config) {
+            var pattern = '';
+            for (var j = y - 1; j <= y + 1; j++) {
+                for (var i = x - 1; i <= x + 1; i++) {
+                    var index = getTileIndex(tilemap, i, j, config.outsideRule, config.emptyRule);
+                    pattern += index >= 0 ? index : ' ';
+                }
+            }
+            return pattern;
+        }
+        function getTileIndex(tilemap, x, y, outsideRule, emptyRule) {
+            if (0 <= y && y < tilemap.length && 0 <= x && x < tilemap[y].length) {
+                if (tilemap[y][x].index >= 0) {
+                    return tilemap[y][x].index;
+                }
+                if (emptyRule.type === 'noop') {
+                    return tilemap[y][x].index;
+                }
+                if (emptyRule.type === 'constant') {
+                    return emptyRule.index;
+                }
+            }
+            if (outsideRule.type === 'constant') {
+                return outsideRule.index;
+            }
+            if (outsideRule.type === 'extend') {
+                var nearesty = M.clamp(y, 0, tilemap.length - 1);
+                var nearestx = M.clamp(x, 0, tilemap[nearesty].length - 1);
+                return tilemap[nearesty][nearestx].index;
+            }
+        }
+    })(Util = SmartTilemap.Util || (SmartTilemap.Util = {}));
+})(SmartTilemap || (SmartTilemap = {}));
 var Tilemap = /** @class */ (function (_super) {
     __extends(Tilemap, _super);
     function Tilemap(config) {
         var _a, _b, _c;
         var _this = _super.call(this, config) || this;
-        _this.tilemap = Tilemap.cloneTilemap(AssetCache.getTilemap(config.tilemap));
+        _this.tilemap = Tilemap.cloneTilemap(_.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap);
         _this.tilemapLayer = (_a = config.tilemapLayer) !== null && _a !== void 0 ? _a : 0;
         _this.animation = config.animation;
         var tilemapDimens = A.get2DArrayDimensions(_this.currentTilemapLayer);
@@ -7468,7 +7608,7 @@ var Tilemap = /** @class */ (function (_super) {
         }
     };
     Tilemap.prototype.createCollisionBoxes = function (debugBounds) {
-        var e_41, _a;
+        var e_42, _a;
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tilemap.tileset);
         Tilemap.optimizeCollisionRects(collisionRects); // Not optimizing entire array first to save some cycles.
@@ -7486,12 +7626,12 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_41_1) { e_41 = { error: e_41_1 }; }
+        catch (e_42_1) { e_42 = { error: e_42_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_41) throw e_41.error; }
+            finally { if (e_42) throw e_42.error; }
         }
         World.Actions.addChildrenToParent(this.collisionBoxes, this);
     };
@@ -7873,7 +8013,7 @@ var CarrierModule = /** @class */ (function () {
         this.obj = obj;
     }
     CarrierModule.prototype.postUpdate = function () {
-        var e_42, _a;
+        var e_43, _a;
         var objBounds = this.obj.getWorldBounds();
         var checkRect = {
             x: objBounds.x,
@@ -7904,12 +8044,12 @@ var CarrierModule = /** @class */ (function () {
                 }
             }
         }
-        catch (e_42_1) { e_42 = { error: e_42_1 }; }
+        catch (e_43_1) { e_43 = { error: e_43_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_42) throw e_42.error; }
+            finally { if (e_43) throw e_43.error; }
         }
     };
     return CarrierModule;
@@ -8009,6 +8149,7 @@ Main.loadConfig({
             'debug_moveCameraRight': ['l'],
             'debug_recordMetrics': ['0'],
             'debug_showMetricsMenu': ['9'],
+            'debug_toggleOverlay': ['o'],
             // Debug
             '1': ['1'],
             '2': ['2'],
@@ -8054,7 +8195,7 @@ Main.loadConfig({
         cheatsEnabled: true,
         allPhysicsBounds: false,
         moveCameraWithArrows: true,
-        showInfo: true,
+        showOverlay: true,
         skipRate: 1,
         programmaticInput: false,
         autoplay: true,
@@ -8062,8 +8203,15 @@ Main.loadConfig({
         frameStepEnabled: false,
         frameStepStepKey: '1',
         frameStepRunKey: '2',
+        resetOptionsAtStart: true,
     },
 });
+function get(name) {
+    var worldObject = global.game.theater.currentWorld.getWorldObjectByName(name);
+    if (worldObject)
+        return worldObject;
+    return undefined;
+}
 var MovingPlatform = /** @class */ (function (_super) {
     __extends(MovingPlatform, _super);
     function MovingPlatform(config) {
@@ -8205,7 +8353,19 @@ function getStages() {
                     name: 'tiles',
                     constructor: Tilemap,
                     x: 0, y: 0,
-                    tilemap: 'main_tilemap',
+                    tilemap: SmartTilemap.Util.getSmartTilemap('main_tilemap', {
+                        rules: SmartTilemap.Rule.oneBitRules({
+                            airIndex: -1,
+                            solidIndex: 0,
+                            edgeUpIndex: 1,
+                            cornerTopLeftIndex: 2,
+                            inverseCornerTopLeftIndex: 3,
+                            doubleEdgeHorizontalIndex: 4,
+                            peninsulaUpIndex: 5,
+                        }),
+                        outsideRule: { type: 'extend' },
+                        emptyRule: { type: 'noop' },
+                    }),
                     layer: 'main',
                     physicsGroup: 'walls',
                 },

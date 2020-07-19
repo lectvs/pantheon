@@ -35,6 +35,7 @@ Main.loadConfig({
             'debug_moveCameraRight':     ['l'],
             'debug_recordMetrics':       ['0'],
             'debug_showMetricsMenu':     ['9'],
+            'debug_toggleOverlay':       ['o'],
 
             // Debug
             '1':                         ['1'],
@@ -83,7 +84,7 @@ Main.loadConfig({
         cheatsEnabled: true,
         allPhysicsBounds: false,
         moveCameraWithArrows: true,
-        showInfo: true,
+        showOverlay: true,
         skipRate: 1,
         programmaticInput: false,
         autoplay: true,
@@ -91,5 +92,12 @@ Main.loadConfig({
         frameStepEnabled: false,
         frameStepStepKey: '1',
         frameStepRunKey: '2',
+        resetOptionsAtStart: true,
     },
 });
+
+function get(name: string) {
+    let worldObject = global.game.theater.currentWorld.getWorldObjectByName(name);
+    if (worldObject) return worldObject;
+    return undefined;
+}

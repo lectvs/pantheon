@@ -19,6 +19,10 @@ class Options {
         this.optionsName = name;
         this.defaultOptions = defaultOptions;
         this.loadOptions();
+
+        if (Debug.RESET_OPTIONS_AT_START) {
+            this.resetOptions();
+        }
     }
 
     static getOption(option: string) {

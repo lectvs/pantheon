@@ -1,6 +1,6 @@
 namespace Tilemap {
     export type Config = WorldObject.Config & {
-        tilemap: string;
+        tilemap: string | Tilemap.Tilemap;
         tilemapLayer?: number;
         debugBounds?: boolean;
         zMap?: Tilemap.ZMap;
@@ -17,6 +17,7 @@ namespace Tilemap {
         layers: TilemapLayer[];
     }
 
+    // [y][x]-oriented array
     export type TilemapLayer = Tile[][];
 
     export type Tileset = {
@@ -59,7 +60,7 @@ class Tilemap extends WorldObject {
 
     constructor(config: Tilemap.Config) {
         super(config);
-        this.tilemap = Tilemap.cloneTilemap(AssetCache.getTilemap(config.tilemap));
+        this.tilemap = Tilemap.cloneTilemap(_.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap);
         this.tilemapLayer = config.tilemapLayer ?? 0;
 
         this.animation = config.animation;

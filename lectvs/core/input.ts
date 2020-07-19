@@ -13,6 +13,7 @@ namespace Input {
         [Input.DEBUG_MOVE_CAMERA_RIGHT]: string[],
         [Input.DEBUG_RECORD_METRICS]: string[],
         [Input.DEBUG_SHOW_METRICS_MENU]: string[],
+        [Input.DEBUG_TOGGLE_OVERLAY]: string[],
     } & Dict<string[]>;
 }
 
@@ -243,6 +244,7 @@ namespace Input {
     export const DEBUG_MOVE_CAMERA_RIGHT = 'debug_moveCameraRight';
     export const DEBUG_RECORD_METRICS = 'debug_recordMetrics';
     export const DEBUG_SHOW_METRICS_MENU = 'debug_showMetricsMenu';
+    export const DEBUG_TOGGLE_OVERLAY = 'debug_toggleOverlay';
 
     export class Key {
         private _isDown: boolean;

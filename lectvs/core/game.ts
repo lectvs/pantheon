@@ -9,7 +9,9 @@ namespace Game {
 class Game {
     menuSystem: MenuSystem;
     theater: Theater;
-    overlay: DebugOverlay;
+
+    private overlay: DebugOverlay;
+    private isShowingOverlay: boolean;
 
     private entryPointMenuClass: Menu.MenuClass;
     private pauseMenuClass: Menu.MenuClass;
@@ -29,6 +31,7 @@ class Game {
         this.loadMainMenu();
 
         this.overlay = new DebugOverlay();
+        this.isShowingOverlay = true;
 
         if (Debug.SKIP_MAIN_MENU) {
             this.startGame();
@@ -49,8 +52,7 @@ class Game {
             global.metrics.endSpan('theater');
         }
 
-        this.overlay.setCurrentWorldToDebug(this.menuSystem.inMenu ? this.menuSystem.currentMenu : this.theater?.currentWorld);
-        this.overlay.update(delta);
+        this.updateOverlay(delta);
 
         this.soundManager.volume = this.volume;
         this.soundManager.update(delta);
@@ -69,6 +71,17 @@ class Game {
         }
     }
 
+    private updateOverlay(delta: number) {
+        if (Input.justDown(Input.DEBUG_TOGGLE_OVERLAY)) {
+            this.isShowingOverlay = !this.isShowingOverlay;
+        }
+
+        if (this.isShowingOverlay && Debug.SHOW_OVERLAY) {
+            this.overlay.setCurrentWorldToDebug(this.menuSystem.inMenu ? this.menuSystem.currentMenu : this.theater?.currentWorld);
+            this.overlay.update(delta);
+        }
+    }
+
     render(screen: Texture) {
         if (this.menuSystem.inMenu) {
             global.metrics.startSpan('menu');
@@ -81,7 +94,9 @@ class Game {
             global.metrics.endSpan('theater');
         }
 
-        this.overlay.render(screen);
+        if (this.isShowingOverlay && Debug.SHOW_OVERLAY) {
+            this.overlay.render(screen);
+        }
     }
 
     loadMainMenu() {

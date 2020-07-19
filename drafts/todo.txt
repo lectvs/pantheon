@@ -9,7 +9,7 @@
     - /saving/loading
 - /controls remapping
 - /uncapped fps?
-    - /this is capped by chrome, not PIXI... nothing we can do about it :(
+    - /this is capped by chrome, not PIXI... nothing we can do about it :c
 - /onboard storyboard with StateMachine
 - /move debug info from World -> Game
 - /refactor the Main class
@@ -17,6 +17,7 @@
     - /loading screen/progress bar
     - /timeout on preloading (decided not to do for now)
 - /move tileset animation fields from Assets to Tilemap.Config
+- /smart tilemaps
 - platformer stuff
     - /moving platforms
     - /physics based on lastx/y instead of lastmovementx/y?
@@ -24,7 +25,6 @@
     - slopes/sloped bounds
     - boxes colliding with other boxes
     - implement metroid-style transitions
-- smart tilemaps
 - editing tilemaps
 - prototype options menu
 - consider moving texture's anchorX/Y to a Sprite property, or create an "AnchorTexture" class with those properties
@@ -33,5 +33,5 @@
 
 stretch
 - boundless textures
-- unit tests :)
+- unit tests c:
 - 1x scaled up graphics
