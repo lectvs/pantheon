@@ -18,10 +18,10 @@ Main.loadConfig({
     defaultOptions: {
         volume: 1,
         controls: {
-            'left':                      ['ArrowLeft'],
-            'right':                     ['ArrowRight'],
-            'up':                        ['ArrowUp'],
-            'down':                      ['ArrowDown'],
+            'left':                      ['ArrowLeft', 'a'],
+            'right':                     ['ArrowRight', 'd'],
+            'up':                        ['ArrowUp', 'w', ' '],
+            'down':                      ['ArrowDown', 's'],
             'interact':                  ['e'],
             'placeBlock':                ['MouseRight'],
             'destroyBlock':              ['MouseLeft'],

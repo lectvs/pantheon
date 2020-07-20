@@ -34,7 +34,7 @@ class SpriteText extends WorldObject {
     constructor(config: SpriteText.Config) {
         super(config);
         this.font = config.font;
-        this.style = _.defaults(config.style, {
+        this.style = O.withDefaults(config.style, {
             color: 0xFFFFFF,
             alpha: 1,
             offset: 0,
@@ -171,6 +171,9 @@ namespace SpriteText {
         },
         'y': (params) => {
             return { color: 0xFFFF00 };
+        },
+        'color': (params) => {
+            return { color: getInt(params[0], undefined) };
         },
         'o': (params) => {
             return { offset: getInt(params[0], 0) };

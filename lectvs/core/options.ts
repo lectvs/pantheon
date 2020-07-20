@@ -25,11 +25,11 @@ class Options {
         }
     }
 
-    static getOption(option: string) {
+    static getOption<T>(option: string): T {
         return this.options[option];
     }
 
-    static updateOption(option: string, value: any) {
+    static updateOption<T>(option: string, value: T) {
         this.options[option] = value;
         this.saveOptions();
     }

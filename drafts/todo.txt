@@ -19,6 +19,7 @@
 - /move tileset animation fields from Assets to Tilemap.Config
 - /smart tilemaps
 - /editing tilemaps
+- /prototype options menu
 - platformer stuff
     - /moving platforms
     - /physics based on lastx/y instead of lastmovementx/y?
@@ -26,7 +27,6 @@
     - slopes/sloped bounds
     - boxes colliding with other boxes
     - implement metroid-style transitions
-- prototype options menu
 - consider moving texture's anchorX/Y to a Sprite property, or create an "AnchorTexture" class with those properties
 - remove delta from update?
 - documentation and API cleanup

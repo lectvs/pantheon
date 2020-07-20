@@ -743,6 +743,7 @@ var Input = /** @class */ (function () {
         for (var i = 0; i < controlBindings.length; i++) {
             if (controlBindings[i] === oldKeyCode) {
                 controlBindings[i] = newKeyCode;
+                break;
             }
         }
         Options.saveOptions();
@@ -772,6 +773,12 @@ var Input = /** @class */ (function () {
     Input.setupKeyCode = function (keyCode) {
         this.isDownByKeyCode[keyCode] = false;
         this.keysByKeycode[keyCode] = this.keysByKeycode[keyCode] || new Input.Key();
+    };
+    Input.consumeEventKey = function () {
+        this.eventKey = undefined;
+    };
+    Input.getEventKey = function () {
+        return this.eventKey;
     };
     Input.isDown = function (key) {
         var _this = this;
@@ -840,12 +847,15 @@ var Input = /** @class */ (function () {
         configurable: true
     });
     Input.handleKeyDownEvent = function (event) {
+        this.eventKey = event.key;
         if (this.isDownByKeyCode[event.key] !== undefined) {
             this.isDownByKeyCode[event.key] = true;
             event.preventDefault();
         }
     };
     Input.handleKeyUpEvent = function (event) {
+        if (this.eventKey === event.key)
+            this.eventKey = undefined;
         if (this.isDownByKeyCode[event.key] !== undefined) {
             this.isDownByKeyCode[event.key] = false;
             event.preventDefault();
@@ -853,6 +863,7 @@ var Input = /** @class */ (function () {
     };
     Input.handleMouseDownEvent = function (event) {
         var keyCode = this.MOUSE_KEYCODES[event.button];
+        this.eventKey = keyCode;
         if (keyCode && this.isDownByKeyCode[keyCode] !== undefined) {
             this.isDownByKeyCode[keyCode] = true;
             event.preventDefault();
@@ -860,6 +871,8 @@ var Input = /** @class */ (function () {
     };
     Input.handleMouseUpEvent = function (event) {
         var keyCode = this.MOUSE_KEYCODES[event.button];
+        if (this.eventKey === keyCode)
+            this.eventKey = undefined;
         if (keyCode && this.isDownByKeyCode[keyCode] !== undefined) {
             this.isDownByKeyCode[keyCode] = false;
             event.preventDefault();
@@ -4031,7 +4044,7 @@ var SpriteText = /** @class */ (function (_super) {
     function SpriteText(config) {
         var _this = _super.call(this, config) || this;
         _this.font = config.font;
-        _this.style = _.defaults(config.style, {
+        _this.style = O.withDefaults(config.style, {
             color: 0xFFFFFF,
             alpha: 1,
             offset: 0,
@@ -4193,6 +4206,9 @@ var SpriteText = /** @class */ (function (_super) {
         _a['y'] = function (params) {
             return { color: 0xFFFF00 };
         },
+        _a['color'] = function (params) {
+            return { color: getInt(params[0], undefined) };
+        },
         _a['o'] = function (params) {
             return { offset: getInt(params[0], 0) };
         },
@@ -4230,6 +4246,161 @@ var MenuTextButton = /** @class */ (function (_super) {
         return G.rectContainsPt(this.getTextWorldBounds(), this.world.getWorldMousePosition());
     };
     return MenuTextButton;
+}(SpriteText));
+var MenuNumericSelector = /** @class */ (function (_super) {
+    __extends(MenuNumericSelector, _super);
+    function MenuNumericSelector(config) {
+        var _this = _super.call(this, config) || this;
+        _this.barLength = config.barLength;
+        _this.minValue = config.minValue;
+        _this.maxValue = config.maxValue;
+        _this.getValue = config.getValue;
+        _this.setValue = config.setValue;
+        _this.addChild({
+            constructor: MenuTextButton,
+            x: 0, y: 0, text: "<",
+            font: _this.font, style: _this.style,
+            onClick: function () {
+                global.game.playSound('click');
+                var bars = _this.getFullBarsForValue(_this.getValue());
+                if (bars > 0) {
+                    var newValue = _this.getValueForFullBars(bars - 1);
+                    _this.setValue(newValue);
+                }
+            },
+        });
+        _this.addChild({
+            constructor: MenuTextButton,
+            x: (_this.barLength + 3) * _this.font.charWidth, y: 0, text: ">",
+            font: _this.font, style: _this.style,
+            onClick: function () {
+                global.game.playSound('click');
+                var bars = _this.getFullBarsForValue(_this.getValue());
+                if (bars < _this.barLength) {
+                    var newValue = _this.getValueForFullBars(bars + 1);
+                    _this.setValue(newValue);
+                }
+            },
+        });
+        return _this;
+    }
+    MenuNumericSelector.prototype.update = function (delta) {
+        _super.prototype.update.call(this, delta);
+        var fullBars = this.getFullBarsForValue(this.getValue());
+        var text = "  " + "[color 0xCCCCCC]|[/color]".repeat(fullBars) + "[color 0x444444]|[/color]".repeat(this.barLength - fullBars);
+        this.setText(text);
+    };
+    MenuNumericSelector.prototype.getFullBarsForValue = function (value) {
+        var valueNormalized = M.clamp((value - this.minValue) / (this.maxValue - this.minValue), 0, 1);
+        return Math.floor(valueNormalized * this.barLength);
+    };
+    MenuNumericSelector.prototype.getValueForFullBars = function (fullBars) {
+        var fullBarsNormalized = fullBars / this.barLength;
+        return this.minValue + (this.maxValue - this.minValue) * fullBarsNormalized;
+    };
+    return MenuNumericSelector;
+}(SpriteText));
+var MenuControlMapper = /** @class */ (function (_super) {
+    __extends(MenuControlMapper, _super);
+    function MenuControlMapper(config) {
+        var _this = _super.call(this, config) || this;
+        _this.controlName = config.controlName;
+        _this.selectedBinding = undefined;
+        _this.setBindings();
+        return _this;
+    }
+    MenuControlMapper.prototype.update = function (delta) {
+        _super.prototype.update.call(this, delta);
+        if (this.selectedBinding && Input.justDown(Input.GAME_CLOSE_MENU)) {
+            Input.consume(Input.GAME_CLOSE_MENU);
+            this.unselectBinding();
+        }
+        if (this.selectedBinding) {
+            var pressedKey = Input.getEventKey();
+            if (pressedKey) {
+                var controls = Options.getOption('controls');
+                var pressedKeyAlreadyBound = _.contains(controls[this.controlName], pressedKey);
+                var pressedKeyIsSelect = _.contains(controls[Input.GAME_SELECT], pressedKey);
+                if (pressedKeyAlreadyBound) {
+                    Input.consumeEventKey();
+                }
+                else if (pressedKeyIsSelect && this.children.some(function (button) { return button.isHovered(); })) {
+                    // No-op, will fall through and select the other key
+                }
+                else {
+                    Input.updateControlBinding(this.controlName, this.selectedBinding, pressedKey);
+                    this.setBindings();
+                }
+            }
+        }
+    };
+    MenuControlMapper.prototype.setBindings = function () {
+        var e_27, _a;
+        var _this = this;
+        World.Actions.removeWorldObjectsFromWorld(this.children);
+        var controls = Options.getOption('controls');
+        var controlBindings = controls[this.controlName];
+        var bindingx = 0;
+        var text = "";
+        var _loop_2 = function (binding) {
+            var bindingId = binding;
+            var bindingName = this_2.getBindingName(binding);
+            this_2.addChild({
+                name: this_2.getBindingMappingObjectName(binding),
+                constructor: MenuTextButton,
+                x: bindingx, y: 0, text: bindingName,
+                font: this_2.font, style: this_2.style,
+                onClick: function () {
+                    global.game.playSound('click');
+                    _this.selectBinding(bindingId);
+                },
+            });
+            bindingx += (bindingName.length + 3) * this_2.font.charWidth;
+            text += " ".repeat(bindingName.length) + " / ";
+        };
+        var this_2 = this;
+        try {
+            for (var controlBindings_1 = __values(controlBindings), controlBindings_1_1 = controlBindings_1.next(); !controlBindings_1_1.done; controlBindings_1_1 = controlBindings_1.next()) {
+                var binding = controlBindings_1_1.value;
+                _loop_2(binding);
+            }
+        }
+        catch (e_27_1) { e_27 = { error: e_27_1 }; }
+        finally {
+            try {
+                if (controlBindings_1_1 && !controlBindings_1_1.done && (_a = controlBindings_1.return)) _a.call(controlBindings_1);
+            }
+            finally { if (e_27) throw e_27.error; }
+        }
+        this.setText(text.substr(0, text.length - 3));
+        this.selectedBinding = undefined;
+    };
+    MenuControlMapper.prototype.selectBinding = function (binding) {
+        if (this.selectedBinding)
+            this.unselectBinding();
+        this.selectedBinding = binding;
+        var bindingObject = this.getChildByName(this.getBindingMappingObjectName(binding));
+        bindingObject.style.color = 0xFFFF00;
+        Input.consumeEventKey();
+    };
+    MenuControlMapper.prototype.unselectBinding = function () {
+        var bindingObject = this.getChildByName(this.getBindingMappingObjectName(this.selectedBinding));
+        bindingObject.style.color = this.style.color;
+        this.selectedBinding = undefined;
+    };
+    MenuControlMapper.prototype.getBindingName = function (binding) {
+        if (_.isEmpty(binding))
+            return 'Empty';
+        if (binding === ' ')
+            return 'Space';
+        if (binding.length === 1)
+            return binding.toUpperCase();
+        return binding;
+    };
+    MenuControlMapper.prototype.getBindingMappingObjectName = function (binding) {
+        return "binding::" + this.controlName + "::" + binding;
+    };
+    return MenuControlMapper;
 }(SpriteText));
 var MenuSystem = /** @class */ (function () {
     function MenuSystem(game) {
@@ -4360,8 +4531,8 @@ var S;
             scriptFunctions[_i] = arguments[_i];
         }
         return function () {
-            var scriptFunctions_1, scriptFunctions_1_1, scriptFunction, e_27_1;
-            var e_27, _a;
+            var scriptFunctions_1, scriptFunctions_1_1, scriptFunction, e_28_1;
+            var e_28, _a;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -4380,14 +4551,14 @@ var S;
                         return [3 /*break*/, 1];
                     case 4: return [3 /*break*/, 7];
                     case 5:
-                        e_27_1 = _b.sent();
-                        e_27 = { error: e_27_1 };
+                        e_28_1 = _b.sent();
+                        e_28 = { error: e_28_1 };
                         return [3 /*break*/, 7];
                     case 6:
                         try {
                             if (scriptFunctions_1_1 && !scriptFunctions_1_1.done && (_a = scriptFunctions_1.return)) _a.call(scriptFunctions_1);
                         }
-                        finally { if (e_27) throw e_27.error; }
+                        finally { if (e_28) throw e_28.error; }
                         return [7 /*endfinally*/];
                     case 7: return [2 /*return*/];
                 }
@@ -4634,29 +4805,11 @@ var GlobalSoundManager = /** @class */ (function () {
         this.activeSounds = [];
     }
     GlobalSoundManager.prototype.preGameUpdate = function () {
-        var e_28, _a;
-        try {
-            for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var sound = _c.value;
-                sound.markForDisable();
-            }
-        }
-        catch (e_28_1) { e_28 = { error: e_28_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_28) throw e_28.error; }
-        }
-    };
-    GlobalSoundManager.prototype.postGameUpdate = function () {
         var e_29, _a;
         try {
             for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var sound = _c.value;
-                if (sound.isMarkedForDisable) {
-                    this.ensureSoundDisabled(sound);
-                }
+                sound.markForDisable();
             }
         }
         catch (e_29_1) { e_29 = { error: e_29_1 }; }
@@ -4665,6 +4818,24 @@ var GlobalSoundManager = /** @class */ (function () {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
             finally { if (e_29) throw e_29.error; }
+        }
+    };
+    GlobalSoundManager.prototype.postGameUpdate = function () {
+        var e_30, _a;
+        try {
+            for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var sound = _c.value;
+                if (sound.isMarkedForDisable) {
+                    this.ensureSoundDisabled(sound);
+                }
+            }
+        }
+        catch (e_30_1) { e_30 = { error: e_30_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_30) throw e_30.error; }
         }
     };
     GlobalSoundManager.prototype.ensureSoundDisabled = function (sound) {
@@ -5187,7 +5358,7 @@ var InteractionManager = /** @class */ (function () {
         this._interactRequested = null;
     };
     InteractionManager.prototype.getInteractableObjects = function () {
-        var e_30, _a;
+        var e_31, _a;
         var interactableObjects = this.theater.storyManager.getCurrentInteractableObjects();
         var result = new Set();
         try {
@@ -5198,12 +5369,12 @@ var InteractionManager = /** @class */ (function () {
                 result.add(name_5);
             }
         }
-        catch (e_30_1) { e_30 = { error: e_30_1 }; }
+        catch (e_31_1) { e_31 = { error: e_31_1 }; }
         finally {
             try {
                 if (interactableObjects_1_1 && !interactableObjects_1_1.done && (_a = interactableObjects_1.return)) _a.call(interactableObjects_1);
             }
-            finally { if (e_30) throw e_30.error; }
+            finally { if (e_31) throw e_31.error; }
         }
         return result;
     };
@@ -5781,7 +5952,7 @@ var StoryManager = /** @class */ (function () {
         this.eventManager = new StoryEventManager(theater, events);
         this.storyConfig = new StoryConfig(theater, storyConfig);
         this.stateMachine = new StateMachine();
-        var _loop_2 = function (storyNodeName) {
+        var _loop_3 = function (storyNodeName) {
             var storyNode = storyboard[storyNodeName];
             var state = {};
             if (storyNode.type === 'cutscene') {
@@ -5841,11 +6012,11 @@ var StoryManager = /** @class */ (function () {
                 error("Invalid transition type! Did you forget to add the transition to storyManager?");
                 return undefined;
             });
-            this_2.stateMachine.addState(storyNodeName, state);
+            this_3.stateMachine.addState(storyNodeName, state);
         };
-        var this_2 = this;
+        var this_3 = this;
         for (var storyNodeName in storyboard) {
-            _loop_2(storyNodeName);
+            _loop_3(storyNodeName);
         }
         var nodeToStartOn = this.fastForward(storyboardPath);
         this.stateMachine.setState(nodeToStartOn);
@@ -5892,7 +6063,7 @@ var StoryManager = /** @class */ (function () {
         return _.last(path);
     };
     StoryManager.prototype.getInteractableObjectsForNode = function (node, stageName) {
-        var e_31, _a;
+        var e_32, _a;
         var result = new Set();
         if (!node)
             return result;
@@ -5909,12 +6080,12 @@ var StoryManager = /** @class */ (function () {
                 result.add(transition.with);
             }
         }
-        catch (e_31_1) { e_31 = { error: e_31_1 }; }
+        catch (e_32_1) { e_32 = { error: e_32_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_31) throw e_31.error; }
+            finally { if (e_32) throw e_32.error; }
         }
         return result;
     };
@@ -5925,7 +6096,7 @@ var StoryManager = /** @class */ (function () {
         return this.storyboard[name];
     };
     StoryManager.prototype.updateParty = function (party) {
-        var e_32, _a, e_33, _b;
+        var e_33, _a, e_34, _b;
         if (party.setLeader !== undefined) {
             this.theater.partyManager.leader = party.setLeader;
         }
@@ -5936,12 +6107,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberActive(m);
                 }
             }
-            catch (e_32_1) { e_32 = { error: e_32_1 }; }
+            catch (e_33_1) { e_33 = { error: e_33_1 }; }
             finally {
                 try {
                     if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                 }
-                finally { if (e_32) throw e_32.error; }
+                finally { if (e_33) throw e_33.error; }
             }
         }
         if (!_.isEmpty(party.setMembersInactive)) {
@@ -5951,12 +6122,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberInactive(m);
                 }
             }
-            catch (e_33_1) { e_33 = { error: e_33_1 }; }
+            catch (e_34_1) { e_34 = { error: e_34_1 }; }
             finally {
                 try {
                     if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
                 }
-                finally { if (e_33) throw e_33.error; }
+                finally { if (e_34) throw e_34.error; }
             }
         }
     };
@@ -6044,7 +6215,7 @@ var A;
     }
     A.map2D = map2D;
     function mergeArray(array, into, key, combine) {
-        var e_34, _a;
+        var e_35, _a;
         if (combine === void 0) { combine = (function (e, into) { return e; }); }
         var result = A.clone(into);
         try {
@@ -6063,12 +6234,12 @@ var A;
                 }
             }
         }
-        catch (e_34_1) { e_34 = { error: e_34_1 }; }
+        catch (e_35_1) { e_35 = { error: e_35_1 }; }
         finally {
             try {
                 if (array_1_1 && !array_1_1.done && (_a = array_1.return)) _a.call(array_1);
             }
-            finally { if (e_34) throw e_34.error; }
+            finally { if (e_35) throw e_35.error; }
         }
         return result;
     }
@@ -6266,7 +6437,7 @@ var O;
     }
     O.deepClone = deepClone;
     function deepCloneInternal(obj) {
-        var e_35, _a;
+        var e_36, _a;
         if (_.isArray(obj)) {
             if (_.isEmpty(obj))
                 return [];
@@ -6277,12 +6448,12 @@ var O;
                     result.push(deepCloneInternal(el));
                 }
             }
-            catch (e_35_1) { e_35 = { error: e_35_1 }; }
+            catch (e_36_1) { e_36 = { error: e_36_1 }; }
             finally {
                 try {
                     if (obj_1_1 && !obj_1_1.done && (_a = obj_1.return)) _a.call(obj_1);
                 }
-                finally { if (e_35) throw e_35.error; }
+                finally { if (e_36) throw e_36.error; }
             }
             return result;
         }
@@ -6421,7 +6592,7 @@ var StateMachine = /** @class */ (function () {
         return this.states[name];
     };
     StateMachine.prototype.getValidTransition = function (state) {
-        var e_36, _a;
+        var e_37, _a;
         try {
             for (var _b = __values(state.transitions || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -6438,12 +6609,12 @@ var StateMachine = /** @class */ (function () {
                 }
             }
         }
-        catch (e_36_1) { e_36 = { error: e_36_1 }; }
+        catch (e_37_1) { e_37 = { error: e_37_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_36) throw e_36.error; }
+            finally { if (e_37) throw e_37.error; }
         }
         return undefined;
     };
@@ -6767,7 +6938,7 @@ var Physics = /** @class */ (function () {
     function Physics() {
     }
     Physics.collide = function (obj, from, options) {
-        var e_37, _a;
+        var e_38, _a;
         if (options === void 0) { options = {}; }
         if (_.isEmpty(from))
             return;
@@ -6786,7 +6957,7 @@ var Physics = /** @class */ (function () {
             var collisions = collidingWith.map(function (other) { return Physics.getCollision(obj, other); });
             collisions.sort(function (a, b) { return a.t - b.t; });
             try {
-                for (var collisions_1 = (e_37 = void 0, __values(collisions)), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
+                for (var collisions_1 = (e_38 = void 0, __values(collisions)), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
                     var collision = collisions_1_1.value;
                     var d = Physics.separate(collision);
                     if (d !== 0 && options.transferMomentum) {
@@ -6799,12 +6970,12 @@ var Physics = /** @class */ (function () {
                     }
                 }
             }
-            catch (e_37_1) { e_37 = { error: e_37_1 }; }
+            catch (e_38_1) { e_38 = { error: e_38_1 }; }
             finally {
                 try {
                     if (collisions_1_1 && !collisions_1_1.done && (_a = collisions_1.return)) _a.call(collisions_1);
                 }
-                finally { if (e_37) throw e_37.error; }
+                finally { if (e_38) throw e_38.error; }
             }
             collidingWith = collidingWith.filter(function (other) { return obj.isCollidingWith(other); });
             iters++;
@@ -7037,7 +7208,7 @@ var Effects = /** @class */ (function () {
         return this.pre.filters.concat(this.effects).concat(this.post.filters);
     };
     Effects.prototype.updateEffects = function (delta) {
-        var e_38, _a, e_39, _b;
+        var e_39, _a, e_40, _b;
         if (this.effects[Effects.SILHOUETTE_I])
             this.effects[Effects.SILHOUETTE_I].updateTime(delta);
         if (this.effects[Effects.OUTLINE_I])
@@ -7048,12 +7219,12 @@ var Effects = /** @class */ (function () {
                 filter.updateTime(delta);
             }
         }
-        catch (e_38_1) { e_38 = { error: e_38_1 }; }
+        catch (e_39_1) { e_39 = { error: e_39_1 }; }
         finally {
             try {
                 if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
             }
-            finally { if (e_38) throw e_38.error; }
+            finally { if (e_39) throw e_39.error; }
         }
         try {
             for (var _e = __values(this.post.filters), _f = _e.next(); !_f.done; _f = _e.next()) {
@@ -7061,12 +7232,12 @@ var Effects = /** @class */ (function () {
                 filter.updateTime(delta);
             }
         }
-        catch (e_39_1) { e_39 = { error: e_39_1 }; }
+        catch (e_40_1) { e_40 = { error: e_40_1 }; }
         finally {
             try {
                 if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
             }
-            finally { if (e_39) throw e_39.error; }
+            finally { if (e_40) throw e_40.error; }
         }
     };
     Effects.prototype.updateFromConfig = function (config) {
@@ -7424,7 +7595,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_40, _a;
+        var e_41, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -7438,12 +7609,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_40_1) { e_40 = { error: e_40_1 }; }
+            catch (e_41_1) { e_41 = { error: e_41_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_40) throw e_40.error; }
+                finally { if (e_41) throw e_41.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -7496,7 +7667,7 @@ var Tilemap = /** @class */ (function (_super) {
         this.dirty = true;
     };
     Tilemap.prototype.createCollisionBoxes = function () {
-        var e_41, _a;
+        var e_42, _a;
         World.Actions.removeWorldObjectsFromWorld(this.collisionBoxes);
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tileset);
@@ -7515,12 +7686,12 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_41_1) { e_41 = { error: e_41_1 }; }
+        catch (e_42_1) { e_42 = { error: e_42_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_41) throw e_41.error; }
+            finally { if (e_42) throw e_42.error; }
         }
         this.addChildren(this.collisionBoxes);
     };
@@ -7621,7 +7792,7 @@ var Tilemap = /** @class */ (function (_super) {
                 }
             }
         }
-        var _loop_3 = function (zValue) {
+        var _loop_4 = function (zValue) {
             zTextureSlots[zValue].bounds.x = zTextureSlots[zValue].tileBounds.left * tileset.tileWidth;
             zTextureSlots[zValue].bounds.y = zTextureSlots[zValue].tileBounds.top * tileset.tileHeight;
             zTextureSlots[zValue].bounds.width = (zTextureSlots[zValue].tileBounds.right - zTextureSlots[zValue].tileBounds.left + 1) * tileset.tileWidth;
@@ -7630,7 +7801,7 @@ var Tilemap = /** @class */ (function (_super) {
             zTextureSlots[zValue].frames = A.range(numFrames).map(function (i) { return new Texture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height); });
         };
         for (var zValue in zTextureSlots) {
-            _loop_3(zValue);
+            _loop_4(zValue);
         }
         return zTextureSlots;
     }
@@ -7846,7 +8017,7 @@ var SmartTilemap = /** @class */ (function (_super) {
         }
         Util.getSmartTilemapLayer = getSmartTilemapLayer;
         function getSmartTile(tilemap, x, y, config) {
-            var e_42, _a;
+            var e_43, _a;
             var pattern = getTilePattern(tilemap, x, y, config);
             try {
                 for (var _b = __values(config.rules), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -7856,12 +8027,12 @@ var SmartTilemap = /** @class */ (function (_super) {
                     }
                 }
             }
-            catch (e_42_1) { e_42 = { error: e_42_1 }; }
+            catch (e_43_1) { e_43 = { error: e_43_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_42) throw e_42.error; }
+                finally { if (e_43) throw e_43.error; }
             }
             return tilemap[y][x];
         }
@@ -8045,7 +8216,7 @@ var CarrierModule = /** @class */ (function () {
         this.obj = obj;
     }
     CarrierModule.prototype.postUpdate = function () {
-        var e_43, _a;
+        var e_44, _a;
         var objBounds = this.obj.getWorldBounds();
         var checkRect = {
             x: objBounds.x,
@@ -8076,12 +8247,12 @@ var CarrierModule = /** @class */ (function () {
                 }
             }
         }
-        catch (e_43_1) { e_43 = { error: e_43_1 }; }
+        catch (e_44_1) { e_44 = { error: e_44_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_43) throw e_43.error; }
+            finally { if (e_44) throw e_44.error; }
         }
     };
     return CarrierModule;
@@ -8136,7 +8307,16 @@ var PauseMenu = /** @class */ (function (_super) {
                         _this.menuSystem.game.playSound('click');
                         menuSystem.game.unpauseGame();
                     },
-                }
+                },
+                {
+                    constructor: MenuTextButton,
+                    x: 20, y: 80, text: "options",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                    onClick: function () {
+                        _this.menuSystem.game.playSound('click');
+                        menuSystem.loadMenu(OptionsMenu);
+                    },
+                },
             ]
         }) || this;
         return _this;
@@ -8149,6 +8329,65 @@ var PauseMenu = /** @class */ (function (_super) {
         }
     };
     return PauseMenu;
+}(Menu));
+var OptionsMenu = /** @class */ (function (_super) {
+    __extends(OptionsMenu, _super);
+    function OptionsMenu(menuSystem) {
+        var _this = _super.call(this, menuSystem, {
+            parent: MENU_BASE_STAGE(),
+            worldObjects: [
+                {
+                    constructor: SpriteText,
+                    x: 20, y: 20, text: "- options -",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                },
+                {
+                    constructor: SpriteText,
+                    x: 20, y: 50, text: "volume:",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                },
+                {
+                    constructor: MenuNumericSelector,
+                    x: 84, y: 50,
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                    barLength: 10,
+                    minValue: 0,
+                    maxValue: 1,
+                    getValue: function () { return Options.getOption('volume'); },
+                    setValue: function (v) { return Options.updateOption('volume', v); },
+                },
+                {
+                    constructor: SpriteText,
+                    x: 20, y: 80, text: "JUMP:",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                },
+                {
+                    constructor: MenuControlMapper,
+                    x: 68, y: 80,
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                    controlName: 'up',
+                },
+                {
+                    constructor: MenuTextButton,
+                    x: 20, y: 110, text: "back",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                    onClick: function () {
+                        _this.menuSystem.game.playSound('click');
+                        menuSystem.back();
+                    },
+                },
+            ]
+        }) || this;
+        return _this;
+    }
+    OptionsMenu.prototype.update = function (delta) {
+        _super.prototype.update.call(this, delta);
+        if (Input.justDown(Input.GAME_CLOSE_MENU)) {
+            Input.consume(Input.GAME_CLOSE_MENU);
+            this.menuSystem.back();
+        }
+    };
+    return OptionsMenu;
 }(Menu));
 /// <reference path="./menus.ts"/>
 Main.loadConfig({
@@ -8166,10 +8405,10 @@ Main.loadConfig({
     defaultOptions: {
         volume: 1,
         controls: {
-            'left': ['ArrowLeft'],
-            'right': ['ArrowRight'],
-            'up': ['ArrowUp'],
-            'down': ['ArrowDown'],
+            'left': ['ArrowLeft', 'a'],
+            'right': ['ArrowRight', 'd'],
+            'up': ['ArrowUp', 'w', ' '],
+            'down': ['ArrowDown', 's'],
             'interact': ['e'],
             'placeBlock': ['MouseRight'],
             'destroyBlock': ['MouseLeft'],

@@ -18,6 +18,7 @@ namespace Input {
 }
 
 class Input {
+    private static eventKey: string; // Mainly for use in control binding
     private static isDownByKeyCode: {[keyCode: string]: boolean};
     private static keysByKeycode: {[keyCode: string]: Input.Key};
     private static keyCodesByName: {[name: string]: string[]};
@@ -115,6 +116,7 @@ class Input {
         for (let i = 0; i < controlBindings.length; i++) {
             if (controlBindings[i] === oldKeyCode) {
                 controlBindings[i] = newKeyCode;
+                break;
             }
         }
         
@@ -150,6 +152,14 @@ class Input {
     private static setupKeyCode(keyCode: string) {
         this.isDownByKeyCode[keyCode] = false;
         this.keysByKeycode[keyCode] = this.keysByKeycode[keyCode] || new Input.Key();
+    }
+    
+    static consumeEventKey() {
+        this.eventKey = undefined;
+    }
+
+    static getEventKey() {
+        return this.eventKey;
     }
 
     static isDown(key: string) {
@@ -198,6 +208,7 @@ class Input {
     }
 
     static handleKeyDownEvent(event: KeyboardEvent) {
+        this.eventKey = event.key;
         if (this.isDownByKeyCode[event.key] !== undefined) {
             this.isDownByKeyCode[event.key] = true;
             event.preventDefault();
@@ -205,6 +216,7 @@ class Input {
     }
 
     static handleKeyUpEvent(event: KeyboardEvent) {
+        if (this.eventKey === event.key) this.eventKey = undefined;
         if (this.isDownByKeyCode[event.key] !== undefined) {
             this.isDownByKeyCode[event.key] = false;
             event.preventDefault();
@@ -213,6 +225,7 @@ class Input {
 
     static handleMouseDownEvent(event: MouseEvent) {
         let keyCode = this.MOUSE_KEYCODES[event.button];
+        this.eventKey = keyCode;
         if (keyCode && this.isDownByKeyCode[keyCode] !== undefined) {
             this.isDownByKeyCode[keyCode] = true;
             event.preventDefault();
@@ -221,6 +234,7 @@ class Input {
 
     static handleMouseUpEvent(event: MouseEvent) {
         let keyCode = this.MOUSE_KEYCODES[event.button];
+        if (this.eventKey === keyCode) this.eventKey = undefined;
         if (keyCode && this.isDownByKeyCode[keyCode] !== undefined) {
             this.isDownByKeyCode[keyCode] = false;
             event.preventDefault();
