@@ -90,8 +90,8 @@ class World {
         this.backgroundColor = config.backgroundColor ?? global.backgroundColor;
         this.backgroundAlpha = config.backgroundAlpha ?? 1;
 
-        this.screen = new Texture(this.width, this.height);
-        this.layerTexture = new Texture(this.width, this.height);
+        this.screen = new BasicTexture(this.width, this.height);
+        this.layerTexture = new BasicTexture(this.width, this.height);
 
         this.entryPoints = config.entryPoints ?? {};
 
@@ -176,7 +176,7 @@ class World {
             }
         }
 
-        screen.render(this.screen);
+        this.screen.renderTo(screen);
     }
 
     renderLayer(layer: World.Layer, layerTexture: Texture, screen: Texture) {
@@ -188,7 +188,7 @@ class World {
                 global.metrics.endSpan(worldObject);
             }
         }
-        screen.render(layerTexture, {
+        layerTexture.renderTo(screen, {
             filters: layer.effects.getFilterList()
         });
     }
@@ -356,7 +356,7 @@ class World {
     }
 
     takeSnapshot() {
-        let screen = new Texture(this.camera.width, this.camera.height);
+        let screen = new BasicTexture(this.camera.width, this.camera.height);
         this.render(screen);
         return screen;
     }

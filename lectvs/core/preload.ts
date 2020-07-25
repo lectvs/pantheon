@@ -1,4 +1,4 @@
-/// <reference path="../texture/texture.ts"/>
+/// <reference path="../texture/basicTexture.ts"/>
 
 namespace Preload {
     export type Resource = {

@@ -32,7 +32,7 @@ class Main {
     static soundManager: GlobalSoundManager;
     static metricsManager: MetricsManager;
     static renderer: PIXI.Renderer;
-    static screen: Texture;
+    static screen: BasicTexture;
     static delta: number;
 
     static loadConfig(config: Main.Config) {
@@ -73,7 +73,7 @@ class Main {
         Main.renderer.plugins.accessibility.destroy();
         delete Main.renderer.plugins.accessibility;
 
-        Main.screen = new Texture(global.gameWidth, global.gameHeight);
+        Main.screen = new BasicTexture(global.gameWidth, global.gameHeight);
 
         this.soundManager = new GlobalSoundManager();
         

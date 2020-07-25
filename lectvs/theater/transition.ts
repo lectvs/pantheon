@@ -72,8 +72,8 @@ namespace Transition {
 
         render(screen: Texture) {
             super.render(screen);
-            screen.render(this.oldSnapshot);
-            screen.render(this.newSnapshot, {
+            this.oldSnapshot.renderTo(screen);
+            this.newSnapshot.renderTo(screen, {
                 alpha: this.newAlpha
             });
         }

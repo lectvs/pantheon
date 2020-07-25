@@ -1,4 +1,4 @@
-/// <reference path="./texture.ts"/>
+/// <reference path="./basicTexture.ts"/>
 
 namespace Draw {
     export type Brush = {
@@ -29,8 +29,6 @@ class Draw {
 
     static eraseRect(texture: Texture, x: number, y: number, width: number, height: number) {
         let newTexture = texture.clone();
-        newTexture.anchorX = 0;
-        newTexture.anchorY = 0;
 
         let maskTexture = Texture.filledRect(width, height, 0xFFFFFF);
         let mask = new TextureFilter.Mask({
@@ -41,14 +39,14 @@ class Draw {
         });
 
         texture.clear();
-        texture.render(newTexture, {
+        newTexture.renderTo(texture, {
             x: 0, y: 0,
             filters: [mask],
         });
     }
 
     static pixel(texture: Texture, x: number, y: number, brush: Draw.Brush = Draw.brush) {
-        texture.render(Draw.PIXEL_TEXTURE, {
+        Draw.PIXEL_TEXTURE.renderTo(texture, {
             x: x, y: y,
             tint: brush.color,
             alpha: brush.alpha,

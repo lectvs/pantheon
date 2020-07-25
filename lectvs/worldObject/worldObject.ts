@@ -70,8 +70,6 @@ class WorldObject {
     protected controllerSchema: Controller.Schema;
     get isControlled() { return this.controllable && !global.theater.isCutscenePlaying; }
 
-    mask: Texture;
-
     readonly uid: string;
 
     protected scriptManager: ScriptManager;

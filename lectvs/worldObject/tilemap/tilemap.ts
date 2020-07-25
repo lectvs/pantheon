@@ -137,7 +137,7 @@ class Tilemap extends WorldObject {
             let textureKeyIndex = this.animation ? i*this.animation.tilesPerFrame + tile.index : tile.index;
             let textureKey = this.tileset.tiles[textureKeyIndex];
             let texture = AssetCache.getTexture(textureKey);
-            renderTextures[i].render(texture, {
+            texture.renderTo(renderTextures[i], {
                 x: (tileX + 0.5) * this.tileset.tileWidth,
                 y: (tileY + 0.5) * this.tileset.tileHeight,
                 angle: tile.angle,
@@ -221,7 +221,7 @@ namespace Tilemap {
             zTextureSlots[zValue].bounds.width = (zTextureSlots[zValue].tileBounds.right - zTextureSlots[zValue].tileBounds.left + 1) * tileset.tileWidth;
             zTextureSlots[zValue].bounds.height = (zTextureSlots[zValue].tileBounds.bottom - zTextureSlots[zValue].tileBounds.top + 1) * tileset.tileHeight;
             let numFrames = animation ? animation.frames : 1;
-            zTextureSlots[zValue].frames = A.range(numFrames).map(i => new Texture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height));
+            zTextureSlots[zValue].frames = A.range(numFrames).map(i => new BasicTexture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height));
         }
 
         return zTextureSlots;

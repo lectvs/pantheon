@@ -117,7 +117,7 @@ namespace Theater {
         private worldTexture: Texture;
 
         constructor(containedWorld: World) {
-            let texture = new Texture(containedWorld.width, containedWorld.height);
+            let texture = new BasicTexture(containedWorld.width, containedWorld.height);
             super({ texture: texture });
             this.containedWorld = containedWorld;
             this.worldTexture = texture;

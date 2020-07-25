@@ -29,6 +29,8 @@ class SpriteText extends WorldObject {
     style: SpriteText.Style;
     chars: SpriteText.Character[];
 
+    mask: Texture;
+
     private fontTexture: Texture;
 
     constructor(config: SpriteText.Config) {
@@ -47,7 +49,7 @@ class SpriteText extends WorldObject {
     render(screen: Texture) {
         let filters = this.mask ? [new TextureFilter.Mask({ type: TextureFilter.Mask.Type.GLOBAL, mask: this.mask})] : [];
         for (let char of this.chars) {
-            screen.render(this.fontTexture, {
+            this.fontTexture.renderTo(screen, {
                 x: this.renderScreenX + char.x,
                 y: this.renderScreenY + char.y + (char.style.offset ?? this.style.offset),
                 tint: char.style.color ?? this.style.color,

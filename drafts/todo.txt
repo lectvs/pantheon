@@ -27,8 +27,9 @@
     - slopes/sloped bounds
     - boxes colliding with other boxes
     - implement metroid-style transitions
-- consider moving texture's anchorX/Y to a Sprite property, or create an "AnchorTexture" class with those properties
+- /move anchor properties off base texture class
 - remove delta from update?
+- implement mask as a first-class texture feature
 - documentation and API cleanup
 
 stretch
