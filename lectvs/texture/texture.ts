@@ -7,8 +7,7 @@ namespace Texture {
         angle?: number;
         tint?: number;
         alpha?: number;
-        // Slice currently only works with unscaled, unrotated textures. Undefined behavior otherwise.
-        slice?: Rect;
+        slice?: Rect;  // Slice currently only works with unscaled, unrotated textures. Undefined behavior otherwise.
         mask?: MaskProperties;
         filters?: TextureFilter[];
     }

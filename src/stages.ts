@@ -90,22 +90,6 @@ function getStages(): Dict<World.Config> { return {
                     }
                 }
             },
-            <SpriteText.Config>{
-                name: 'test',
-                constructor: SpriteText,
-                text: 'hello world!',
-                font: Assets.fonts.DELUXE16,
-                style: { color: 0xFF0000 },
-                mask: {
-                    texture: AssetCache.getTexture('mask'),
-                    type: 'screen',
-                    offsetx: 0, offsety: 0,
-                    invert: true,
-                },
-                debug: {
-                    followMouse: true
-                }
-            },
         ]
     },
 }}

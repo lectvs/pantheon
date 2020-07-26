@@ -20,6 +20,8 @@
 - /smart tilemaps
 - /editing tilemaps
 - /prototype options menu
+- /move anchor properties off base texture class
+- /implement mask as a first-class texture feature
 - platformer stuff
     - /moving platforms
     - /physics based on lastx/y instead of lastmovementx/y?
@@ -27,9 +29,7 @@
     - slopes/sloped bounds
     - boxes colliding with other boxes
     - implement metroid-style transitions
-- /move anchor properties off base texture class
 - remove delta from update?
-- implement mask as a first-class texture feature
 - documentation and API cleanup
 
 stretch

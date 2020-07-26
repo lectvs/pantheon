@@ -19,8 +19,6 @@ namespace Assets {
             anchor: Anchor.BOTTOM,
         },
         'platform': {},
-
-        'mask': { anchor: Anchor.CENTER },
     }
 
     export const sounds: Dict<Preload.Sound> = {

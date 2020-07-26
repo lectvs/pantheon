@@ -8281,7 +8281,6 @@ var Assets;
             anchor: Anchor.BOTTOM,
         },
         'platform': {},
-        'mask': { anchor: Anchor.CENTER },
     };
     Assets.sounds = {
         // Debug
@@ -8891,22 +8890,6 @@ function getStages() {
                         if (Input.isDown('destroyBlock')) {
                             tilemap.setTile(tileX, tileY, { index: -1, angle: 0, flipX: false });
                         }
-                    }
-                },
-                {
-                    name: 'test',
-                    constructor: SpriteText,
-                    text: 'hello world!',
-                    font: Assets.fonts.DELUXE16,
-                    style: { color: 0xFF0000 },
-                    mask: {
-                        texture: AssetCache.getTexture('mask'),
-                        type: 'screen',
-                        offsetx: 0, offsety: 0,
-                        invert: true,
-                    },
-                    debug: {
-                        followMouse: true
                     }
                 },
             ]
