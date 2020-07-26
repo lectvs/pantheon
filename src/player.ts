@@ -24,11 +24,11 @@ class Player extends Sprite {
         this.ignoreOneWayCollision = false;
     }
 
-    update(delta: number) {
+    update() {
         let haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
         this.updateMovement(haxis);
         this.updateCrouch();
-        super.update(delta);
+        super.update();
     }
 
     updateCrouch() {

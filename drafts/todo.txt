@@ -22,6 +22,7 @@
 - /prototype options menu
 - /move anchor properties off base texture class
 - /implement mask as a first-class texture feature
+- /remove delta from update?
 - platformer stuff
     - /moving platforms
     - /physics based on lastx/y instead of lastmovementx/y?
@@ -29,11 +30,10 @@
     - slopes/sloped bounds
     - boxes colliding with other boxes
     - implement metroid-style transitions
-- remove delta from update?
 - documentation and API cleanup
 
 stretch
 - boundless textures
     - optimize tilemap editing with boundless textures
 - unit tests c:
-- 1x scaled up graphics
+- /1x scaled up graphics (decided not to do due to performance issues)

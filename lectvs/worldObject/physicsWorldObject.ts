@@ -69,10 +69,10 @@ class PhysicsWorldObject extends WorldObject {
         this.physicslasty = this.y;
     }
 
-    update(delta: number) {
-        super.update(delta);
+    update() {
+        super.update();
         if (this.simulating) {
-            this.simulate(delta);
+            this.simulate();
         }
     }
 
@@ -124,20 +124,20 @@ class PhysicsWorldObject extends WorldObject {
         this.physicslasty = y;
     }
 
-    applyGravity(delta: number) {
-        this.vx += this.gravityx * delta;
-        this.vy += this.gravityy * delta;
-        this.vz += this.gravityz * delta;
+    applyGravity() {
+        this.vx += this.gravityx * this.delta;
+        this.vy += this.gravityy * this.delta;
+        this.vz += this.gravityz * this.delta;
     }
 
-    move(delta: number) {
-        this.x += this.vx * delta;
-        this.y += this.vy * delta;
-        this.z += this.vz * delta;
+    move() {
+        this.x += this.vx * this.delta;
+        this.y += this.vy * this.delta;
+        this.z += this.vz * this.delta;
     }
 
-    simulate(delta: number) {
-        this.applyGravity(delta);
-        this.move(delta);
+    simulate() {
+        this.applyGravity();
+        this.move();
     }
 }

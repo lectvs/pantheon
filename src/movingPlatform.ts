@@ -17,9 +17,9 @@ class MovingPlatform extends Sprite {
         this.carrierModule = new CarrierModule(this);
     }
 
-    update(delta: number) {
-        super.update(delta);
-        this.pathTimer.update(delta);
+    update() {
+        super.update();
+        this.pathTimer.update(this.delta);
         this.x = M.lerp(this.pathStart.x, this.pathEnd.x, (1 - Math.cos(this.pathTimer.time))/2);
         this.y = M.lerp(this.pathStart.y, this.pathEnd.y, (1 - Math.cos(this.pathTimer.time))/2);
     }

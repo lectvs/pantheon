@@ -74,7 +74,7 @@ class Tilemap extends WorldObject {
         this.dirty = true;
     }
 
-    update(delta: number) {
+    update() {
         if (this.dirty) {
             this.createTilemap();
             this.dirty = false;

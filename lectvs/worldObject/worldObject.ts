@@ -28,7 +28,7 @@ namespace WorldObject {
 
     export type ZBehavior = 'noop' | 'threequarters';
 
-    export type UpdateCallback = (obj: WorldObject, delta: number) => any;
+    export type UpdateCallback = (obj: WorldObject) => any;
 }
 
 class WorldObject {
@@ -66,6 +66,8 @@ class WorldObject {
     get children() { return <ReadonlyArray<WorldObject>>this._children; }
     get parent() { return this._parent; }
     //
+
+    get delta() { return this.world ? this.world.delta : global.game.delta;}
 
     lastx: number;
     lasty: number;
@@ -138,11 +140,11 @@ class WorldObject {
         }
     }
 
-    update(delta: number) {
-        this.updateScriptManager(delta);
-        this.updateStateMachine(delta);
-        if (this.updateCallback) this.updateCallback(this, delta);
-        this.life.update(delta);
+    update() {
+        this.updateScriptManager();
+        this.updateStateMachine();
+        if (this.updateCallback) this.updateCallback(this);
+        this.life.update(this.delta);
 
         if (this.debugFollowMouse) {
             this.x = this.world.getWorldMouseX();
@@ -154,21 +156,21 @@ class WorldObject {
         }
     }
 
-    protected updateScriptManager(delta: number) {
-        this.scriptManager.update(delta);
+    protected updateScriptManager() {
+        this.scriptManager.update(this.delta);
     }
 
-    protected updateStateMachine(delta: number) {
-        this.stateMachine.update(delta);
+    protected updateStateMachine() {
+        this.stateMachine.update(this.delta);
     }
 
     postUpdate() {
         this.resetController();
     }
 
-    fullUpdate(delta: number) {
+    fullUpdate() {
         this.preUpdate();
-        this.update(delta);
+        this.update();
         this.postUpdate();
     }
 

@@ -74,7 +74,7 @@ function getStages(): Dict<World.Config> { return {
             },
             {
                 name: 'tilemapEditor',
-                updateCallback: (obj, delta) => {
+                updateCallback: obj => {
                     let tilemap = obj.world.getWorldObjectByType(Tilemap);
                     let mouseX = obj.world.getWorldMouseX() - tilemap.x;
                     let mouseY = obj.world.getWorldMouseY() - tilemap.y;

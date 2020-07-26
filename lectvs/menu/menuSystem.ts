@@ -10,9 +10,9 @@ class MenuSystem {
         this.menuStack = [];
     }
 
-    update(delta: number) {
+    update() {
         if (this.inMenu) {
-            this.currentMenu.update(delta);
+            this.currentMenu.update();
         }
     }
 

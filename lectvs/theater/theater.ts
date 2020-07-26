@@ -63,9 +63,9 @@ class Theater extends World {
 
     // Theater cannot have preUpdate or postUpdate because I say so
 
-    update(delta: number) {
-        this.storyManager.update(delta);
-        super.update(delta);
+    update() {
+        this.storyManager.update();
+        super.update();
         this.stageManager.loadStageIfQueued();
     }
 
@@ -123,9 +123,9 @@ namespace Theater {
             this.worldTexture = texture;
         }
 
-        update(delta: number) {
-            super.update(delta);
-            this.containedWorld.update(delta);
+        update() {
+            super.update();
+            this.containedWorld.update();
         }
 
         render(screen: Texture) {

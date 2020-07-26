@@ -43,13 +43,13 @@ class CutsceneManager {
         }
     }
 
-    update(delta: number) {
-        this.updateCurrentCutscene(delta);
+    update() {
+        this.updateCurrentCutscene();
     }
 
-    private updateCurrentCutscene(delta: number) {
+    private updateCurrentCutscene() {
         if (this.current) {
-            this.current.script.update(delta);
+            this.current.script.update(this.theater.delta);
             if (this.current.script.done) {
                 this.finishCurrentCutscene();
             }
@@ -95,7 +95,7 @@ class CutsceneManager {
             script: new Script(this.toScript(cutscene.script))
         };
 
-        this.updateCurrentCutscene(0);
+        this.updateCurrentCutscene();
     }
 
     reset() {

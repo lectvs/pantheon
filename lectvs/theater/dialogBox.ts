@@ -54,9 +54,9 @@ class DialogBox extends Sprite {
         this.characterTimer = new Timer(0.05, () => this.advanceCharacter(), true);
     }
 
-    update(delta: number) {
-        super.update(delta);
-        this.characterTimer.update(delta);
+    update() {
+        super.update();
+        this.characterTimer.update(this.delta);
 
         if (this.done) {
             this.visible = false;

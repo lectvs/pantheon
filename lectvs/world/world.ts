@@ -67,6 +67,8 @@ class World {
     protected scriptManager: ScriptManager;
     protected soundManager: SoundManager;
     
+    get delta() { return global.game.delta; }
+
     volume: number;
 
     constructor(config: World.Config, defaults?: World.Config) {
@@ -102,8 +104,8 @@ class World {
         this.camera = new Camera(config.camera ?? {}, this);
     }
 
-    update(delta: number) {
-        this.updateScriptManager(delta);
+    update() {
+        this.updateScriptManager();
         
         global.metrics.startSpan('preUpdate');
         for (let worldObject of this.worldObjects) {
@@ -119,7 +121,7 @@ class World {
         for (let worldObject of this.worldObjects) {
             if (worldObject.active) {
                 global.metrics.startSpan(worldObject);
-                worldObject.update(delta);
+                worldObject.update();
                 global.metrics.endSpan(worldObject);
             }
         }
@@ -143,14 +145,14 @@ class World {
 
         this.removeDeadWorldObjects();
 
-        this.camera.update(this, delta);
+        this.camera.update(this);
 
         this.soundManager.volume = this.volume * global.game.volume;
-        this.soundManager.update(delta);
+        this.soundManager.update(this.delta);
     }
 
-    protected updateScriptManager(delta: number) {
-        this.scriptManager.update(delta);
+    protected updateScriptManager() {
+        this.scriptManager.update(this.delta);
     }
 
     render(screen: Texture) {

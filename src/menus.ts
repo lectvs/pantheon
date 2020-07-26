@@ -56,8 +56,8 @@ class PauseMenu extends Menu {
         });
     }
 
-    update(delta: number) {
-        super.update(delta);
+    update() {
+        super.update();
 
         if (Input.justDown(Input.GAME_PAUSE)) {
             Input.consume(Input.GAME_PAUSE);
@@ -115,8 +115,8 @@ class OptionsMenu extends Menu {
         });
     }
 
-    update(delta: number) {
-        super.update(delta);
+    update() {
+        super.update();
 
         if (Input.justDown(Input.GAME_CLOSE_MENU)) {
             Input.consume(Input.GAME_CLOSE_MENU);

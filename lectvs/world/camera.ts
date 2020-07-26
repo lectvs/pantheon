@@ -88,15 +88,15 @@ class Camera {
         this.initPosition(world);
     }
 
-    update(world: World, delta: number) {
+    update(world: World) {
         if (this.mode.type === 'follow') {
             let target = this.mode.target;
             if (_.isString(target)) {
                 target = world.getWorldObjectByName(target);
             }
-            this.moveTowardsPoint(target.x + this.mode.offset.x, target.y + this.mode.offset.y, delta);
+            this.moveTowardsPoint(target.x + this.mode.offset.x, target.y + this.mode.offset.y, world.delta);
         } else if (this.mode.type === 'focus') {
-            this.moveTowardsPoint(this.mode.point.x, this.mode.point.y, delta);
+            this.moveTowardsPoint(this.mode.point.x, this.mode.point.y, world.delta);
         }
 
         if (this.shakeIntensity > 0) {

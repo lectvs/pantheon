@@ -77,10 +77,10 @@ class Sprite extends PhysicsWorldObject {
         this.mask = _.clone(config.mask);
     }
 
-    update(delta: number) {
-        super.update(delta);
-        this.animationManager.update(delta);
-        this.effects.updateEffects(delta);
+    update() {
+        super.update();
+        this.animationManager.update(this.delta);
+        this.effects.updateEffects(this.delta);
     }
 
     render(screen: Texture) {

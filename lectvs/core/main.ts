@@ -124,8 +124,9 @@ class Main {
 
         this.metricsManager = new MetricsManager();
 
+        this.delta = 0;
         this.game = new Game(this.config.game);
-        this.game.update(0); // Update game once just to make sure everything is set up correctly.
+        this.game.update(); // Update game once just to make sure everything is set up correctly.
     }
 
     private static play() {
@@ -145,7 +146,7 @@ class Main {
                 if (Debug.frameStepSkipFrame()) break;
                 Main.soundManager.preGameUpdate();
                 global.metrics.startSpan('game');
-                Main.game.update(Main.delta);
+                Main.game.update();
                 global.metrics.endSpan('game');
                 Main.soundManager.postGameUpdate();
             }

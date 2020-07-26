@@ -46,7 +46,7 @@ class StageManager {
         let oldSnapshot = oldWorld.takeSnapshot();
 
         this.setStage(name, entryPoint);
-        this.currentWorld.update(0);
+        this.currentWorld.update();
         
         let newSnapshot = this.currentWorld.takeSnapshot();
 

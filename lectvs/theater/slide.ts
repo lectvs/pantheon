@@ -35,15 +35,15 @@ class Slide extends Sprite {
         }
     }
 
-    update(delta: number) {
-        super.update(delta);
-        this.updateLoading(delta);
+    update() {
+        super.update();
+        this.updateLoading();
     }
 
-    private updateLoading(delta: number) {
+    private updateLoading() {
         if (this.fullyLoaded) return;
         
-        this.timer.update(delta);
+        this.timer.update(this.delta);
         if (this.targetAlpha !== undefined) {
             this.alpha = this.targetAlpha * this.timer.progress;
         }
@@ -55,6 +55,6 @@ class Slide extends Sprite {
 
     finishLoading() {
         this.timer.finish();
-        this.updateLoading(0);
+        this.updateLoading();
     }
 }

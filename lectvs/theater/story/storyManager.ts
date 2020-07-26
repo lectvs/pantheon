@@ -94,9 +94,9 @@ class StoryManager {
         this.stateMachine.setState(nodeToStartOn);
     }
 
-    update(delta: number) {
-        this.cutsceneManager.update(delta);
-        this.stateMachine.update(delta);
+    update() {
+        this.cutsceneManager.update();
+        this.stateMachine.update(this.theater.delta);
     }
 
     onStageLoad() {

@@ -20,6 +20,8 @@ class Game {
     private soundManager: SoundManager;
     get volume(): number { return Options.volume; };
 
+    get delta(): number { return Main.delta; }
+
     constructor(config: Game.Config) {
         this.entryPointMenuClass = config.entryPointMenuClass;
         this.pauseMenuClass = config.pauseMenuClass;
@@ -38,24 +40,24 @@ class Game {
         }
     }
 
-    update(delta: number) {
+    update() {
         this.updatePause();
         this.updateMetrics();
 
         if (this.menuSystem.inMenu) {
             global.metrics.startSpan('menu');
-            this.menuSystem.update(delta);
+            this.menuSystem.update();
             global.metrics.endSpan('menu');
         } else {
             global.metrics.startSpan('theater');
-            this.theater.update(delta);
+            this.theater.update();
             global.metrics.endSpan('theater');
         }
 
-        this.updateOverlay(delta);
+        this.updateOverlay();
 
         this.soundManager.volume = this.volume;
-        this.soundManager.update(delta);
+        this.soundManager.update(this.delta);
     }
 
     private updatePause() {
@@ -71,14 +73,14 @@ class Game {
         }
     }
 
-    private updateOverlay(delta: number) {
+    private updateOverlay() {
         if (Input.justDown(Input.DEBUG_TOGGLE_OVERLAY)) {
             this.isShowingOverlay = !this.isShowingOverlay;
         }
 
         if (this.isShowingOverlay && Debug.SHOW_OVERLAY) {
             this.overlay.setCurrentWorldToDebug(this.menuSystem.inMenu ? this.menuSystem.currentMenu : this.theater?.currentWorld);
-            this.overlay.update(delta);
+            this.overlay.update();
         }
     }
 

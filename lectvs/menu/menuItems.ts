@@ -14,8 +14,8 @@ class MenuTextButton extends SpriteText {
         this.onClick = config.onClick ?? Utils.NOOP;
     }
 
-    update(delta: number) {
-        super.update(delta);
+    update() {
+        super.update();
         if (this.isHovered()) {
             this.style.alpha = 0.5;
             if (Input.justDown(Input.GAME_SELECT)) {
@@ -86,8 +86,8 @@ class MenuNumericSelector extends SpriteText {
         });
     }
 
-    update(delta: number) {
-        super.update(delta);
+    update() {
+        super.update();
         
         let fullBars = this.getFullBarsForValue(this.getValue());
 
@@ -124,8 +124,8 @@ class MenuControlMapper extends SpriteText {
         this.setBindings();
     }
 
-    update(delta: number) {
-        super.update(delta);
+    update() {
+        super.update();
 
         if (this.selectedBinding && Input.justDown(Input.GAME_CLOSE_MENU)) {
             Input.consume(Input.GAME_CLOSE_MENU);
