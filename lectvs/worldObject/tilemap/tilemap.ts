@@ -2,9 +2,11 @@ namespace Tilemap {
     export type Config = WorldObject.Config & {
         tilemap: string | Tilemap.Tilemap;
         tilemapLayer?: number;
-        debugBounds?: boolean;
         zMap?: Tilemap.ZMap;
         animation?: Tilemap.Animation;
+        debug?: WorldObject.DebugConfig & {
+            drawBounds?: boolean;
+        };
     };
     export type Tile = {
         index: number;
@@ -53,7 +55,7 @@ class Tilemap extends WorldObject {
     protected zMap: Tilemap.ZMap;
     protected zTextures: Sprite[];
 
-    protected debugBounds: boolean;
+    protected debugDrawBounds: boolean;
 
     protected get currentTilemapLayer() { return this.tilemap.layers[this.tilemapLayer]; }
 
@@ -65,10 +67,9 @@ class Tilemap extends WorldObject {
         this.tilemapLayer = config.tilemapLayer ?? 0;
 
         this.animation = config.animation;
-
-        this.debugBounds = config.debugBounds ?? false;
-
         this.zMap = config.zMap ?? {};
+
+        this.debugDrawBounds = config.debug?.drawBounds ?? false;
 
         this.dirty = true;
     }
@@ -106,8 +107,10 @@ class Tilemap extends WorldObject {
                 bounds: rect,
                 physicsGroup: this.physicsGroup,
                 immovable: true,
+                debug: {
+                    drawBounds: this.debugDrawBounds,
+                },
             });
-            box.debugBounds = this.debugBounds;
             this.collisionBoxes.push(box);
         }
 

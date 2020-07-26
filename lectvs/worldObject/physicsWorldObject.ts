@@ -15,7 +15,9 @@ namespace PhysicsWorldObject {
         colliding?: boolean;
         simulating?: boolean;
 
-        debugBounds?: boolean;
+        debug?: WorldObject.DebugConfig & {
+            drawBounds?: boolean;
+        };
     }
 }
 
@@ -32,11 +34,12 @@ class PhysicsWorldObject extends WorldObject {
     immovable: boolean;
     colliding: boolean;
 
-    debugBounds: boolean;
     simulating: boolean;
 
     physicslastx: number;
     physicslasty: number;
+
+    debugDrawBounds: boolean;
 
     constructor(config: PhysicsWorldObject.Config, defaults?: PhysicsWorldObject.Config) {
         config = WorldObject.resolveConfig<PhysicsWorldObject.Config>(config, defaults);
@@ -53,7 +56,7 @@ class PhysicsWorldObject extends WorldObject {
         this.immovable = config.immovable ?? false;
         this.colliding = config.colliding ?? true;
 
-        this.debugBounds = config.debugBounds ?? false;
+        this.debugDrawBounds = config.debug?.drawBounds ?? false;
         this.simulating = config.simulating ?? true;
 
         this.physicslastx = this.x;
@@ -74,7 +77,7 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     render(screen: Texture) {
-        if (Debug.ALL_PHYSICS_BOUNDS || this.debugBounds) {
+        if (Debug.ALL_PHYSICS_BOUNDS || this.debugDrawBounds) {
             let worldBounds = this.getWorldBounds();
             Draw.brush.color = 0x00FF00;
             Draw.brush.alpha = 1;

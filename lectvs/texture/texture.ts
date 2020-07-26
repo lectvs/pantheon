@@ -9,7 +9,15 @@ namespace Texture {
         alpha?: number;
         // Slice currently only works with unscaled, unrotated textures. Undefined behavior otherwise.
         slice?: Rect;
+        mask?: MaskProperties;
         filters?: TextureFilter[];
+    }
+
+    export type MaskProperties = {
+        texture: Texture;
+        x: number;
+        y: number;
+        invert: boolean;
     }
 
     export type Subdivision = {
@@ -24,6 +32,12 @@ namespace Texture {
         tint?: number;
         alpha?: number;
         filters?: TextureFilter[];
+    }
+
+    export type TextureToMask = {
+        renderTexture: PIXI.RenderTexture;
+        offsetx: number;
+        offsety: number;
     }
 }
 
@@ -42,7 +56,7 @@ interface Texture {
 
     subdivide(h: number, v: number): Texture.Subdivision[];
 
-    toMaskTexture(): PIXI.RenderTexture;
+    toMask(): Texture.TextureToMask;
 
     transform(properties?: Texture.TransformProperties): Texture;
 }
@@ -67,7 +81,7 @@ namespace Texture {
     }
 
     export function none() {
-        return new BasicTexture(0, 0);
+        return new EmptyTexture();
     }
 
     export function outlineRect(width: number, height: number, outlineColor: number, outlineAlpha: number = 1, outlineThickness = 1) {

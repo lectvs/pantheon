@@ -1,5 +1,5 @@
-///<reference path="../utils/cache.ts"/>
-///<reference path="../utils/perlin.ts"/>
+///<reference path="../../utils/cache.ts"/>
+///<reference path="../../utils/perlin.ts"/>
 
 namespace TextureFilter {
     /**
@@ -135,84 +135,6 @@ namespace TextureFilter {
         }
     );
 
-    export class Static extends TextureFilter {
-        constructor(code: string) {
-            super({ code });
-        }
-    }
-
-    export class Mask extends TextureFilter {
-        private type: Mask.Type;
-        private offsetX: number;
-        private offsetY: number;
-
-        get invert() { return this.getUniform('invert'); }
-        set invert(value: boolean) { this.setUniform('invert', value); }
-
-        constructor(config: Mask.Config) {
-            super({
-                uniforms: {
-                    "sampler2D mask": undefined,
-                    "float maskWidth": 0,
-                    "float maskHeight": 0,
-                    "float maskX": 0,
-                    "float maskY": 0,
-                    "bool invert": false
-                },
-                code: `
-                    vec2 vTextureCoordMask = vTextureCoord * inputSize.xy / vec2(maskWidth, maskHeight) - vec2(maskX, maskY) / vec2(maskWidth, maskHeight);
-                    if (vTextureCoordMask.x >= 0.0 && vTextureCoordMask.x < 1.0 && vTextureCoordMask.y >= 0.0 && vTextureCoordMask.y < 1.0) {
-                        float a = texture2D(mask, vTextureCoordMask).a;
-                        outp *= invert ? 1.0-a : a;
-                    } else {
-                        outp.a = invert ? inp.a : 0.0;
-                    }
-                `
-            });
-            this.type = config.type;
-            this.offsetX = config.offsetX ?? 0;
-            this.offsetY = config.offsetY ?? 0;
-            this.invert = config.invert ?? false;
-            this.setMask(config.mask);
-        }
-
-        setMask(mask: Texture) {
-            this.setUniform('mask', mask.toMaskTexture());
-            this.setUniform('maskWidth', mask.width);
-            this.setUniform('maskHeight', mask.height);
-            this.setMaskPosition(0, 0);
-        }
-
-        setTexturePosition(posx: number, posy: number) {
-            super.setTexturePosition(posx, posy);
-            this.setMaskPosition(posx, posy);
-        }
-
-        private setMaskPosition(textureX: number, textureY: number) {
-            if (this.type === Mask.Type.GLOBAL) {
-                this.setUniform('maskX', this.offsetX);
-                this.setUniform('maskY', this.offsetY);
-            } else if (this.type === Mask.Type.LOCAL) {
-                this.setUniform('maskX', textureX + this.offsetX);
-                this.setUniform('maskY', textureY + this.offsetY);
-            }
-        }
-    }
-
-    export namespace Mask {
-        export type Config = {
-            mask: Texture;
-            type: Mask.Type;
-            offsetX?: number;
-            offsetY?: number;
-            invert?: boolean;
-        }
-
-        export enum Type {
-            GLOBAL = 'global', LOCAL = 'local',
-        }
-    }
-
     export class Slice extends TextureFilter {
         constructor(rect: Rect) {
             super({
@@ -240,9 +162,13 @@ namespace TextureFilter {
         }
     }
 
-    const _sliceFilter: Slice = new Slice({ x: 0, y: 0, width: 0, height: 0 });
+    var _sliceFilter: Slice;
     export function SLICE(rect: Rect) {
-        _sliceFilter.setSlice(rect);
+        if (!_sliceFilter) {
+            _sliceFilter = new Slice(rect);
+        } else {
+            _sliceFilter.setSlice(rect);
+        }
         return _sliceFilter;
     }
 

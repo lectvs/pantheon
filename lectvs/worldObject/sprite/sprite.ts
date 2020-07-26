@@ -14,6 +14,7 @@ namespace Sprite {
         tint?: number;
         alpha?: number;
         effects?: Effects.Config;
+        mask?: Mask.WorldObjectMaskConfig;
     }
 }
 
@@ -32,6 +33,7 @@ class Sprite extends PhysicsWorldObject {
     alpha: number;
 
     effects: Effects;
+    mask: Mask.WorldObjectMaskConfig;
 
     constructor(config: Sprite.Config, defaults?: Sprite.Config) {
         config = WorldObject.resolveConfig<Sprite.Config>(config, defaults);
@@ -72,6 +74,7 @@ class Sprite extends PhysicsWorldObject {
 
         this.effects = new Effects();
         this.effects.updateFromConfig(config.effects);
+        this.mask = _.clone(config.mask);
     }
 
     update(delta: number) {
@@ -90,6 +93,7 @@ class Sprite extends PhysicsWorldObject {
             tint: this.tint,
             alpha: this.alpha,
             filters: this.effects.getFilterList(),
+            mask: Mask.getTextureMaskForWorldObject(this.mask, this),
         });
         
         super.render(screen);

@@ -31,8 +31,8 @@ class Draw {
         let newTexture = texture.clone();
 
         let maskTexture = Texture.filledRect(width, height, 0xFFFFFF);
-        let mask = new TextureFilter.Mask({
-            type: TextureFilter.Mask.Type.LOCAL,
+        let mask = new MaskFilter({
+            type: 'local',
             mask: maskTexture,
             offsetX: x, offsetY: y,
             invert: true,

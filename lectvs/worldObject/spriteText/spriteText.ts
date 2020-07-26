@@ -5,6 +5,7 @@ namespace SpriteText {
         font: Font;
         text?: string;
         style?: Style;
+        mask?: Mask.WorldObjectMaskConfig;
     }
 
     export type Font = {
@@ -29,14 +30,14 @@ class SpriteText extends WorldObject {
     style: SpriteText.Style;
     chars: SpriteText.Character[];
 
-    mask: Texture;
+    mask: Mask.WorldObjectMaskConfig;
 
     private fontTexture: Texture;
 
     constructor(config: SpriteText.Config) {
         super(config);
         this.font = config.font;
-        this.style = O.withDefaults(config.style, {
+        this.style = O.withDefaults(config.style ?? {}, {
             color: 0xFFFFFF,
             alpha: 1,
             offset: 0,
@@ -44,10 +45,10 @@ class SpriteText extends WorldObject {
         this.setText(config.text);
 
         this.fontTexture = AssetCache.getTexture(this.font.texture);
+        this.mask = config.mask;
     }
 
     render(screen: Texture) {
-        let filters = this.mask ? [new TextureFilter.Mask({ type: TextureFilter.Mask.Type.GLOBAL, mask: this.mask})] : [];
         for (let char of this.chars) {
             this.fontTexture.renderTo(screen, {
                 x: this.renderScreenX + char.x,
@@ -60,7 +61,7 @@ class SpriteText extends WorldObject {
                     width: this.font.charWidth,
                     height: this.font.charHeight
                 },
-                filters: filters,
+                mask: Mask.getTextureMaskForWorldObject(this.mask, this),
             });
         }
         super.render(screen);

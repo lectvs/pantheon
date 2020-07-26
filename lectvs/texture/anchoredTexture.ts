@@ -56,8 +56,11 @@ class AnchoredTexture implements Texture {
         return result;
     }
 
-    toMaskTexture() {
-        return this.baseTexture.toMaskTexture();
+    toMask() {
+        let mask = this.baseTexture.toMask();
+        mask.offsetx = -Math.floor(this.anchorX*this.width);
+        mask.offsety = -Math.floor(this.anchorY*this.height);
+        return mask;
     }
 
     transform(properties?: Texture.TransformProperties) {

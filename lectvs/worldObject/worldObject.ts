@@ -19,7 +19,13 @@ namespace WorldObject {
         controllable?: boolean;
         children?: WorldObject.Config[];
         updateCallback?: UpdateCallback;
+        debug?: DebugConfig;
     }
+
+    export type DebugConfig = {
+        followMouse?: boolean;
+    }
+
     export type ZBehavior = 'noop' | 'threequarters';
 
     export type UpdateCallback = (obj: WorldObject, delta: number) => any;
@@ -78,6 +84,8 @@ class WorldObject {
 
     private updateCallback: WorldObject.UpdateCallback;
 
+    debugFollowMouse: boolean;
+
     constructor(config: WorldObject.Config, defaults?: WorldObject.Config) {
         config = WorldObject.resolveConfig(config, defaults);
         this.localx = config.x ?? 0;
@@ -114,6 +122,8 @@ class WorldObject {
         this.stateMachine = new StateMachine();
 
         this.updateCallback = config.updateCallback;
+
+        this.debugFollowMouse = config.debug?.followMouse ?? false;
     }
 
     onAdd() {}
@@ -133,6 +143,11 @@ class WorldObject {
         this.updateStateMachine(delta);
         if (this.updateCallback) this.updateCallback(this, delta);
         this.life.update(delta);
+
+        if (this.debugFollowMouse) {
+            this.x = this.world.getWorldMouseX();
+            this.y = this.world.getWorldMouseY();
+        }
 
         if (this.parent && this.ignoreCamera) {
             debug(`Warning: ignoraCamera is set to true on a child object. This will be ignored!`);

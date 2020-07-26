@@ -1089,8 +1089,8 @@ var Perlin = /** @class */ (function () {
     Perlin.SHADER_SOURCE = "\n        vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}\n        vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}\n        vec3 fade(vec3 t) {return t*t*t*(t*(t*6.0-15.0)+10.0);}\n\n        float cnoise(vec3 P){\n            vec3 Pi0 = floor(P); // Integer part for indexing\n            vec3 Pi1 = Pi0 + vec3(1.0); // Integer part + 1\n            Pi0 = mod(Pi0, 289.0);\n            Pi1 = mod(Pi1, 289.0);\n            vec3 Pf0 = fract(P); // Fractional part for interpolation\n            vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n            vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n            vec4 iy = vec4(Pi0.yy, Pi1.yy);\n            vec4 iz0 = Pi0.zzzz;\n            vec4 iz1 = Pi1.zzzz;\n\n            vec4 ixy = permute(permute(ix) + iy);\n            vec4 ixy0 = permute(ixy + iz0);\n            vec4 ixy1 = permute(ixy + iz1);\n\n            vec4 gx0 = ixy0 / 7.0;\n            vec4 gy0 = fract(floor(gx0) / 7.0) - 0.5;\n            gx0 = fract(gx0);\n            vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n            vec4 sz0 = step(gz0, vec4(0.0));\n            gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n            gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n\n            vec4 gx1 = ixy1 / 7.0;\n            vec4 gy1 = fract(floor(gx1) / 7.0) - 0.5;\n            gx1 = fract(gx1);\n            vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n            vec4 sz1 = step(gz1, vec4(0.0));\n            gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n            gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n\n            vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n            vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n            vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n            vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n            vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n            vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n            vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n            vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n\n            vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n            g000 *= norm0.x;\n            g010 *= norm0.y;\n            g100 *= norm0.z;\n            g110 *= norm0.w;\n            vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n            g001 *= norm1.x;\n            g011 *= norm1.y;\n            g101 *= norm1.z;\n            g111 *= norm1.w;\n\n            float n000 = dot(g000, Pf0);\n            float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n            float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n            float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n            float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n            float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n            float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n            float n111 = dot(g111, Pf1);\n\n            vec3 fade_xyz = fade(Pf0);\n            vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n            vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n            float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); \n            return 2.2 * n_xyz;\n        }\n    ";
     return Perlin;
 }());
-///<reference path="../utils/cache.ts"/>
-///<reference path="../utils/perlin.ts"/>
+///<reference path="../../utils/cache.ts"/>
+///<reference path="../../utils/perlin.ts"/>
 var TextureFilter = /** @class */ (function () {
     function TextureFilter(config) {
         var _a, _b;
@@ -1175,72 +1175,6 @@ var TextureFilter = /** @class */ (function () {
     }, function (filter) {
         return filter.getUniformCode() + filter.getVertCode() + filter.getCode();
     });
-    var Static = /** @class */ (function (_super) {
-        __extends(Static, _super);
-        function Static(code) {
-            return _super.call(this, { code: code }) || this;
-        }
-        return Static;
-    }(TextureFilter));
-    TextureFilter.Static = Static;
-    var Mask = /** @class */ (function (_super) {
-        __extends(Mask, _super);
-        function Mask(config) {
-            var _a, _b, _c;
-            var _this = _super.call(this, {
-                uniforms: {
-                    "sampler2D mask": undefined,
-                    "float maskWidth": 0,
-                    "float maskHeight": 0,
-                    "float maskX": 0,
-                    "float maskY": 0,
-                    "bool invert": false
-                },
-                code: "\n                    vec2 vTextureCoordMask = vTextureCoord * inputSize.xy / vec2(maskWidth, maskHeight) - vec2(maskX, maskY) / vec2(maskWidth, maskHeight);\n                    if (vTextureCoordMask.x >= 0.0 && vTextureCoordMask.x < 1.0 && vTextureCoordMask.y >= 0.0 && vTextureCoordMask.y < 1.0) {\n                        float a = texture2D(mask, vTextureCoordMask).a;\n                        outp *= invert ? 1.0-a : a;\n                    } else {\n                        outp.a = invert ? inp.a : 0.0;\n                    }\n                "
-            }) || this;
-            _this.type = config.type;
-            _this.offsetX = (_a = config.offsetX) !== null && _a !== void 0 ? _a : 0;
-            _this.offsetY = (_b = config.offsetY) !== null && _b !== void 0 ? _b : 0;
-            _this.invert = (_c = config.invert) !== null && _c !== void 0 ? _c : false;
-            _this.setMask(config.mask);
-            return _this;
-        }
-        Object.defineProperty(Mask.prototype, "invert", {
-            get: function () { return this.getUniform('invert'); },
-            set: function (value) { this.setUniform('invert', value); },
-            enumerable: false,
-            configurable: true
-        });
-        Mask.prototype.setMask = function (mask) {
-            this.setUniform('mask', mask.toMaskTexture());
-            this.setUniform('maskWidth', mask.width);
-            this.setUniform('maskHeight', mask.height);
-            this.setMaskPosition(0, 0);
-        };
-        Mask.prototype.setTexturePosition = function (posx, posy) {
-            _super.prototype.setTexturePosition.call(this, posx, posy);
-            this.setMaskPosition(posx, posy);
-        };
-        Mask.prototype.setMaskPosition = function (textureX, textureY) {
-            if (this.type === Mask.Type.GLOBAL) {
-                this.setUniform('maskX', this.offsetX);
-                this.setUniform('maskY', this.offsetY);
-            }
-            else if (this.type === Mask.Type.LOCAL) {
-                this.setUniform('maskX', textureX + this.offsetX);
-                this.setUniform('maskY', textureY + this.offsetY);
-            }
-        };
-        return Mask;
-    }(TextureFilter));
-    TextureFilter.Mask = Mask;
-    (function (Mask) {
-        var Type;
-        (function (Type) {
-            Type["GLOBAL"] = "global";
-            Type["LOCAL"] = "local";
-        })(Type = Mask.Type || (Mask.Type = {}));
-    })(Mask = TextureFilter.Mask || (TextureFilter.Mask = {}));
     var Slice = /** @class */ (function (_super) {
         __extends(Slice, _super);
         function Slice(rect) {
@@ -1265,9 +1199,14 @@ var TextureFilter = /** @class */ (function () {
         return Slice;
     }(TextureFilter));
     TextureFilter.Slice = Slice;
-    var _sliceFilter = new Slice({ x: 0, y: 0, width: 0, height: 0 });
+    var _sliceFilter;
     function SLICE(rect) {
-        _sliceFilter.setSlice(rect);
+        if (!_sliceFilter) {
+            _sliceFilter = new Slice(rect);
+        }
+        else {
+            _sliceFilter.setSlice(rect);
+        }
         return _sliceFilter;
     }
     TextureFilter.SLICE = SLICE;
@@ -1278,7 +1217,7 @@ var TextureFilter = /** @class */ (function () {
     var fragStartFunc = "\n        vec4 getColor(float localx, float localy) {\n            float tx = (localx + posx) / width;\n            float ty = (localy + posy) / height;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        vec4 getWorldColor(float worldx, float worldy) {\n            float tx = worldx / width;\n            float ty = worldy / height;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        " + Perlin.SHADER_SOURCE + "\n\n        void main(void) {\n            width = inputSize.x;\n            height = inputSize.y;\n            float worldx = vTextureCoord.x * width;\n            float worldy = vTextureCoord.y * height;\n            float x = worldx - posx;\n            float y = worldy - posy;\n            vec4 inp = texture2D(uSampler, vTextureCoord);\n            // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.\n            if (inp.a > 0.0) {\n                inp.rgb /= inp.a;\n            }\n            vec4 outp = vec4(inp.r, inp.g, inp.b, inp.a);\n    ";
     var fragEndFunc = "\n            // Premultiply alpha again.\n            outp.rgb *= outp.a;\n            gl_FragColor = outp;\n        }\n    ";
 })(TextureFilter || (TextureFilter = {}));
-/// <reference path="textureFilter.ts"/>
+/// <reference path="./filter/textureFilter.ts"/>
 var BasicTexture = /** @class */ (function () {
     function BasicTexture(width, height, immutable) {
         if (immutable === void 0) { immutable = false; }
@@ -1354,8 +1293,11 @@ var BasicTexture = /** @class */ (function () {
         }
         return result;
     };
-    BasicTexture.prototype.toMaskTexture = function () {
-        return this.renderTextureSprite.renderTexture;
+    BasicTexture.prototype.toMask = function () {
+        return {
+            renderTexture: this.renderTextureSprite.renderTexture,
+            offsetx: 0, offsety: 0,
+        };
     };
     /**
      * Returns a NEW texture which is transformed from the original.
@@ -1384,15 +1326,18 @@ var BasicTexture = /** @class */ (function () {
     BasicTexture.prototype.getAllTextureFilters = function (properties) {
         var allFilters = [];
         if (properties.slice) {
-            var sliceFilterPosX = this.renderTextureSprite.x;
-            var sliceFilterPosY = this.renderTextureSprite.y;
             var sliceFilter = TextureFilter.SLICE(properties.slice);
-            Texture.setFilterProperties(sliceFilter, sliceFilterPosX, sliceFilterPosY);
+            var sliceRect = this.getSliceRect(properties);
+            // Subtract sliceRect.xy because slice requires the shifted xy of the texture after slice
+            Texture.setFilterProperties(sliceFilter, properties.x - sliceRect.x, properties.y - sliceRect.y);
             allFilters.push(sliceFilter);
         }
-        var filterPosX = properties.x;
-        var filterPosY = properties.y;
-        properties.filters.forEach(function (filter) { return filter && Texture.setFilterProperties(filter, filterPosX, filterPosY); });
+        if (properties.mask && properties.mask.texture) {
+            var maskFilter = Mask.SHARED(properties.mask.texture, 'global', properties.mask.x, properties.mask.y, properties.mask.invert);
+            Texture.setFilterProperties(maskFilter, properties.x, properties.y);
+            allFilters.push(maskFilter);
+        }
+        properties.filters.forEach(function (filter) { return filter && Texture.setFilterProperties(filter, properties.x, properties.y); });
         allFilters.push.apply(allFilters, __spread(properties.filters));
         return allFilters.filter(function (filter) { return filter && filter.enabled; });
     };
@@ -1419,10 +1364,8 @@ var BasicTexture = /** @class */ (function () {
         });
         var sliceRect = this.getSliceRect(properties);
         // Position
-        var afterSliceX = properties.x - sliceRect.x;
-        var afterSliceY = properties.y - sliceRect.y;
-        this.renderTextureSprite.x = afterSliceX;
-        this.renderTextureSprite.y = afterSliceY;
+        this.renderTextureSprite.x = properties.x - sliceRect.x;
+        this.renderTextureSprite.y = properties.y - sliceRect.y;
         // Other values
         this.renderTextureSprite.scale.x = properties.scaleX;
         this.renderTextureSprite.scale.y = properties.scaleY;
@@ -2483,7 +2426,7 @@ var UIDGenerator = /** @class */ (function () {
 var WorldObject = /** @class */ (function () {
     function WorldObject(config, defaults) {
         var _this = this;
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
         config = WorldObject.resolveConfig(config, defaults);
         this.localx = (_a = config.x) !== null && _a !== void 0 ? _a : 0;
         this.localy = (_b = config.y) !== null && _b !== void 0 ? _b : 0;
@@ -2512,6 +2455,7 @@ var WorldObject = /** @class */ (function () {
         this.scriptManager = new ScriptManager();
         this.stateMachine = new StateMachine();
         this.updateCallback = config.updateCallback;
+        this.debugFollowMouse = (_l = (_k = config.debug) === null || _k === void 0 ? void 0 : _k.followMouse) !== null && _l !== void 0 ? _l : false;
     }
     Object.defineProperty(WorldObject.prototype, "x", {
         get: function () { return this.localx + (this.parent ? this.parent.x : 0); },
@@ -2587,6 +2531,10 @@ var WorldObject = /** @class */ (function () {
         if (this.updateCallback)
             this.updateCallback(this, delta);
         this.life.update(delta);
+        if (this.debugFollowMouse) {
+            this.x = this.world.getWorldMouseX();
+            this.y = this.world.getWorldMouseY();
+        }
         if (this.parent && this.ignoreCamera) {
             debug("Warning: ignoraCamera is set to true on a child object. This will be ignored!");
         }
@@ -2867,7 +2815,7 @@ var WorldObject = /** @class */ (function () {
 var PhysicsWorldObject = /** @class */ (function (_super) {
     __extends(PhysicsWorldObject, _super);
     function PhysicsWorldObject(config, defaults) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
         var _this = this;
         config = WorldObject.resolveConfig(config, defaults);
         _this = _super.call(this, config) || this;
@@ -2882,8 +2830,8 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         _this.bounds = config.bounds ? _.clone(config.bounds) : { x: 0, y: 0, width: 0, height: 0 };
         _this.immovable = (_j = config.immovable) !== null && _j !== void 0 ? _j : false;
         _this.colliding = (_k = config.colliding) !== null && _k !== void 0 ? _k : true;
-        _this.debugBounds = (_l = config.debugBounds) !== null && _l !== void 0 ? _l : false;
-        _this.simulating = (_m = config.simulating) !== null && _m !== void 0 ? _m : true;
+        _this.debugDrawBounds = (_m = (_l = config.debug) === null || _l === void 0 ? void 0 : _l.drawBounds) !== null && _m !== void 0 ? _m : false;
+        _this.simulating = (_o = config.simulating) !== null && _o !== void 0 ? _o : true;
         _this.physicslastx = _this.x;
         _this.physicslasty = _this.y;
         return _this;
@@ -2900,7 +2848,7 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         }
     };
     PhysicsWorldObject.prototype.render = function (screen) {
-        if (Debug.ALL_PHYSICS_BOUNDS || this.debugBounds) {
+        if (Debug.ALL_PHYSICS_BOUNDS || this.debugDrawBounds) {
             var worldBounds = this.getWorldBounds();
             Draw.brush.color = 0x00FF00;
             Draw.brush.alpha = 1;
@@ -3003,6 +2951,7 @@ var Sprite = /** @class */ (function (_super) {
         _this.alpha = (_h = config.alpha) !== null && _h !== void 0 ? _h : 1;
         _this.effects = new Effects();
         _this.effects.updateFromConfig(config.effects);
+        _this.mask = _.clone(config.mask);
         return _this;
     }
     Sprite.prototype.update = function (delta) {
@@ -3020,6 +2969,7 @@ var Sprite = /** @class */ (function (_super) {
             tint: this.tint,
             alpha: this.alpha,
             filters: this.effects.getFilterList(),
+            mask: Mask.getTextureMaskForWorldObject(this.mask, this),
         });
         _super.prototype.render.call(this, screen);
     };
@@ -3963,21 +3913,22 @@ var MetricsMenu = /** @class */ (function (_super) {
 var SpriteText = /** @class */ (function (_super) {
     __extends(SpriteText, _super);
     function SpriteText(config) {
+        var _a;
         var _this = _super.call(this, config) || this;
         _this.font = config.font;
-        _this.style = O.withDefaults(config.style, {
+        _this.style = O.withDefaults((_a = config.style) !== null && _a !== void 0 ? _a : {}, {
             color: 0xFFFFFF,
             alpha: 1,
             offset: 0,
         });
         _this.setText(config.text);
         _this.fontTexture = AssetCache.getTexture(_this.font.texture);
+        _this.mask = config.mask;
         return _this;
     }
     SpriteText.prototype.render = function (screen) {
         var e_26, _a;
         var _b, _c, _d;
-        var filters = this.mask ? [new TextureFilter.Mask({ type: TextureFilter.Mask.Type.GLOBAL, mask: this.mask })] : [];
         try {
             for (var _e = __values(this.chars), _f = _e.next(); !_f.done; _f = _e.next()) {
                 var char = _f.value;
@@ -3992,7 +3943,7 @@ var SpriteText = /** @class */ (function (_super) {
                         width: this.font.charWidth,
                         height: this.font.charHeight
                     },
-                    filters: filters,
+                    mask: Mask.getTextureMaskForWorldObject(this.mask, this),
                 });
             }
         }
@@ -5112,8 +5063,11 @@ var AnchoredTexture = /** @class */ (function () {
         }
         return result;
     };
-    AnchoredTexture.prototype.toMaskTexture = function () {
-        return this.baseTexture.toMaskTexture();
+    AnchoredTexture.prototype.toMask = function () {
+        var mask = this.baseTexture.toMask();
+        mask.offsetx = -Math.floor(this.anchorX * this.width);
+        mask.offsety = -Math.floor(this.anchorY * this.height);
+        return mask;
     };
     AnchoredTexture.prototype.transform = function (properties) {
         var transformedBaseTexture = this.baseTexture.transform(properties);
@@ -5163,8 +5117,8 @@ var Draw = /** @class */ (function () {
     Draw.eraseRect = function (texture, x, y, width, height) {
         var newTexture = texture.clone();
         var maskTexture = Texture.filledRect(width, height, 0xFFFFFF);
-        var mask = new TextureFilter.Mask({
-            type: TextureFilter.Mask.Type.LOCAL,
+        var mask = new MaskFilter({
+            type: 'local',
             mask: maskTexture,
             offsetX: x, offsetY: y,
             invert: true,
@@ -5223,8 +5177,54 @@ var Draw = /** @class */ (function () {
     return Draw;
 }());
 "\n\nDraw.pixel(texture, 34, 56, 0xFFF000, 0.5);\n\nDraw.color = 0xFFF000;\nDraw.alpha = 1;\nDraw.pixel(texture, 34, 56);\n\n";
-// Unused for now
-var shaderMatrixMethods = "\n    float determinant(float m) {\n        return m;\n    }\n\n    float determinant(mat2 m) {\n        return m[0][0] * m[1][1] - m[0][1] * m[1][0]; \n    }\n\n    float determinant(mat3 m) {\n        return m[0][0] * (m[2][2]*m[1][1] - m[1][2]*m[2][1])\n            + m[0][1] * (m[1][2]*m[2][0] - m[2][2]*m[1][0])\n            + m[0][2] * (m[2][1]*m[1][0] - m[1][1]*m[2][0]);\n    }\n\n    float determinant(mat4 m) {\n        float\n            b00 = m[0][0] * m[1][1] - m[0][1] * m[1][0],\n            b01 = m[0][0] * m[1][2] - m[0][2] * m[1][0],\n            b02 = m[0][0] * m[1][3] - m[0][3] * m[1][0],\n            b03 = m[0][1] * m[1][2] - m[0][2] * m[1][1],\n            b04 = m[0][1] * m[1][3] - m[0][3] * m[1][1],\n            b05 = m[0][2] * m[1][3] - m[0][3] * m[1][2],\n            b06 = m[2][0] * m[3][1] - m[2][1] * m[3][0],\n            b07 = m[2][0] * m[3][2] - m[2][2] * m[3][0],\n            b08 = m[2][0] * m[3][3] - m[2][3] * m[3][0],\n            b09 = m[2][1] * m[3][2] - m[2][2] * m[3][1],\n            b10 = m[2][1] * m[3][3] - m[2][3] * m[3][1],\n            b11 = m[2][2] * m[3][3] - m[2][3] * m[3][2];\n        return b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;\n    }\n\n    mat4 transpose(mat4 m) {\n        return mat4(\n            m[0][0], m[1][0], m[2][0], m[3][0],\n            m[0][1], m[1][1], m[2][1], m[3][1],\n            m[0][2], m[1][2], m[2][2], m[3][2],\n            m[0][3], m[1][3], m[2][3], m[3][3]\n        );\n    }\n\n    mat4 inverse(mat4 inp) {\n        mat4 cofactors = mat4(\n            determinant(mat3( inp[1].yzw, inp[2].yzw, inp[3].yzw)), \n            -determinant(mat3(inp[1].xzw, inp[2].xzw, inp[3].xzw)),\n            determinant(mat3( inp[1].xyw, inp[2].xyw, inp[3].xyw)),\n            -determinant(mat3(inp[1].xyz, inp[2].xyz, inp[3].xyz)),\n            \n            -determinant(mat3(inp[0].yzw, inp[2].yzw, inp[3].yzw)),\n            determinant(mat3( inp[0].xzw, inp[2].xzw, inp[3].xzw)),\n            -determinant(mat3(inp[0].xyw, inp[2].xyw, inp[3].xyw)),\n            determinant(mat3( inp[0].xyz, inp[2].xyz, inp[3].xyz)),\n            \n            determinant(mat3( inp[0].yzw, inp[1].yzw, inp[3].yzw)),\n            -determinant(mat3(inp[0].xzw, inp[1].xzw, inp[3].xzw)),\n            determinant(mat3( inp[0].xyw, inp[1].xyw, inp[3].xyw)),\n            -determinant(mat3(inp[0].xyz, inp[1].xyz, inp[3].xyz)),\n\n            -determinant(mat3(inp[0].yzw, inp[1].yzw, inp[2].yzw)),\n            determinant(mat3( inp[0].xzw, inp[1].xzw, inp[2].xzw)),\n            -determinant(mat3(inp[0].xyw, inp[1].xyw, inp[2].xyw)),\n            determinant(mat3( inp[0].xyz, inp[1].xyz, inp[2].xyz))\n        );\n        return transpose(cofactors) / determinant(inp);\n    }\n";
+var EmptyTexture = /** @class */ (function () {
+    function EmptyTexture() {
+    }
+    Object.defineProperty(EmptyTexture.prototype, "width", {
+        get: function () { return 0; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(EmptyTexture.prototype, "height", {
+        get: function () { return 0; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(EmptyTexture.prototype, "immutable", {
+        get: function () { return true; },
+        enumerable: false,
+        configurable: true
+    });
+    EmptyTexture.prototype.clear = function () { };
+    EmptyTexture.prototype.clone = function () {
+        return new EmptyTexture();
+    };
+    EmptyTexture.prototype.free = function () { };
+    EmptyTexture.prototype.renderTo = function (texture, properties) {
+        if (properties === void 0) { properties = {}; }
+    };
+    EmptyTexture.prototype.renderPIXIDisplayObject = function (displayObject) { };
+    EmptyTexture.prototype.subdivide = function (h, v) {
+        var result = [];
+        for (var i = 0; i < h * v; i++) {
+            result.push({
+                texture: new EmptyTexture(),
+                x: 0, y: 0,
+            });
+        }
+        return result;
+    };
+    EmptyTexture.prototype.toMask = function () {
+        return {
+            renderTexture: Utils.NOOP_RENDERTEXTURE,
+            offsetx: 0, offsety: 0,
+        };
+    };
+    EmptyTexture.prototype.transform = function (properties) {
+        return new EmptyTexture();
+    };
+    return EmptyTexture;
+}());
 var Texture;
 (function (Texture) {
     function filledRect(width, height, fillColor, fillAlpha) {
@@ -5247,7 +5247,7 @@ var Texture;
     }
     Texture.fromPixiTexture = fromPixiTexture;
     function none() {
-        return new BasicTexture(0, 0);
+        return new EmptyTexture();
     }
     Texture.none = none;
     function outlineRect(width, height, outlineColor, outlineAlpha, outlineThickness) {
@@ -5286,6 +5286,112 @@ var Texture;
     }(PIXI.Sprite));
     Texture.PIXIRenderTextureSprite = PIXIRenderTextureSprite;
 })(Texture || (Texture = {}));
+var MaskFilter = /** @class */ (function (_super) {
+    __extends(MaskFilter, _super);
+    function MaskFilter(config) {
+        var _a, _b, _c;
+        var _this = _super.call(this, {
+            uniforms: {
+                "sampler2D mask": undefined,
+                "float maskWidth": 0,
+                "float maskHeight": 0,
+                "float maskX": 0,
+                "float maskY": 0,
+                "bool invert": false
+            },
+            code: "\n                vec2 vTextureCoordMask = vTextureCoord * inputSize.xy / vec2(maskWidth, maskHeight) - vec2(maskX, maskY) / vec2(maskWidth, maskHeight);\n                if (vTextureCoordMask.x >= 0.0 && vTextureCoordMask.x < 1.0 && vTextureCoordMask.y >= 0.0 && vTextureCoordMask.y < 1.0) {\n                    float a = texture2D(mask, vTextureCoordMask).a;\n                    outp *= invert ? 1.0-a : a;\n                } else {\n                    outp.a = invert ? inp.a : 0.0;\n                }\n            "
+        }) || this;
+        _this.type = config.type;
+        _this.offsetX = (_a = config.offsetX) !== null && _a !== void 0 ? _a : 0;
+        _this.offsetY = (_b = config.offsetY) !== null && _b !== void 0 ? _b : 0;
+        _this.invert = (_c = config.invert) !== null && _c !== void 0 ? _c : false;
+        _this.setMask(config.mask);
+        return _this;
+    }
+    Object.defineProperty(MaskFilter.prototype, "invert", {
+        get: function () { return this.getUniform('invert'); },
+        set: function (value) { this.setUniform('invert', value); },
+        enumerable: false,
+        configurable: true
+    });
+    MaskFilter.prototype.setMask = function (texture) {
+        var mask = texture.toMask();
+        this.setUniform('mask', mask.renderTexture);
+        this.setUniform('maskWidth', mask.renderTexture.width);
+        this.setUniform('maskHeight', mask.renderTexture.height);
+        this.maskOffsetX = mask.offsetx;
+        this.maskOffsetY = mask.offsety;
+    };
+    // Used by Texture in render
+    MaskFilter.prototype.setTexturePosition = function (posx, posy) {
+        _super.prototype.setTexturePosition.call(this, posx, posy);
+        this.setMaskPosition(posx, posy);
+    };
+    MaskFilter.prototype.setMaskPosition = function (textureX, textureY) {
+        var totalOffsetX = this.offsetX + this.maskOffsetX;
+        var totalOffsetY = this.offsetY + this.maskOffsetY;
+        if (this.type === 'global') {
+            this.setUniform('maskX', totalOffsetX);
+            this.setUniform('maskY', totalOffsetY);
+        }
+        else if (this.type === 'local') {
+            this.setUniform('maskX', textureX + totalOffsetX);
+            this.setUniform('maskY', textureY + totalOffsetY);
+        }
+    };
+    return MaskFilter;
+}(TextureFilter));
+var Mask;
+(function (Mask) {
+    var _maskFilter;
+    function SHARED(mask, type, offsetX, offsetY, invert) {
+        if (type === void 0) { type = 'global'; }
+        if (offsetX === void 0) { offsetX = 0; }
+        if (offsetY === void 0) { offsetY = 0; }
+        if (invert === void 0) { invert = false; }
+        if (!_maskFilter) {
+            _maskFilter = new MaskFilter({ mask: mask, type: type, offsetX: offsetX, offsetY: offsetY, invert: invert });
+        }
+        else {
+            _maskFilter.setMask(mask);
+            _maskFilter.type = type;
+            _maskFilter.offsetX = offsetX;
+            _maskFilter.offsetY = offsetY;
+            _maskFilter.invert = invert;
+        }
+        return _maskFilter;
+    }
+    Mask.SHARED = SHARED;
+    function getTextureMaskForWorldObject(mask, worldObject) {
+        var _a;
+        if (!mask || !mask.texture)
+            return undefined;
+        var x = 0;
+        var y = 0;
+        if (mask.type === 'screen') {
+            x = mask.offsetx;
+            y = mask.offsety;
+        }
+        else if (mask.type === 'local') {
+            x = worldObject.renderScreenX + mask.offsetx;
+            y = worldObject.renderScreenY + mask.offsety;
+        }
+        else if (mask.type === 'world') {
+            var worldx = worldObject.world ? -Math.round(worldObject.world.camera.worldOffsetX) : 0;
+            var worldy = worldObject.world ? -Math.round(worldObject.world.camera.worldOffsetY) : 0;
+            x = worldx + mask.offsetx;
+            y = worldy + mask.offsety;
+        }
+        return {
+            texture: mask.texture,
+            x: x, y: y,
+            invert: (_a = mask.invert) !== null && _a !== void 0 ? _a : false,
+        };
+    }
+    Mask.getTextureMaskForWorldObject = getTextureMaskForWorldObject;
+})(Mask || (Mask = {}));
+// Unused for now
+var shaderMatrixMethods = "\n    float determinant(float m) {\n        return m;\n    }\n\n    float determinant(mat2 m) {\n        return m[0][0] * m[1][1] - m[0][1] * m[1][0]; \n    }\n\n    float determinant(mat3 m) {\n        return m[0][0] * (m[2][2]*m[1][1] - m[1][2]*m[2][1])\n            + m[0][1] * (m[1][2]*m[2][0] - m[2][2]*m[1][0])\n            + m[0][2] * (m[2][1]*m[1][0] - m[1][1]*m[2][0]);\n    }\n\n    float determinant(mat4 m) {\n        float\n            b00 = m[0][0] * m[1][1] - m[0][1] * m[1][0],\n            b01 = m[0][0] * m[1][2] - m[0][2] * m[1][0],\n            b02 = m[0][0] * m[1][3] - m[0][3] * m[1][0],\n            b03 = m[0][1] * m[1][2] - m[0][2] * m[1][1],\n            b04 = m[0][1] * m[1][3] - m[0][3] * m[1][1],\n            b05 = m[0][2] * m[1][3] - m[0][3] * m[1][2],\n            b06 = m[2][0] * m[3][1] - m[2][1] * m[3][0],\n            b07 = m[2][0] * m[3][2] - m[2][2] * m[3][0],\n            b08 = m[2][0] * m[3][3] - m[2][3] * m[3][0],\n            b09 = m[2][1] * m[3][2] - m[2][2] * m[3][1],\n            b10 = m[2][1] * m[3][3] - m[2][3] * m[3][1],\n            b11 = m[2][2] * m[3][3] - m[2][3] * m[3][2];\n        return b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;\n    }\n\n    mat4 transpose(mat4 m) {\n        return mat4(\n            m[0][0], m[1][0], m[2][0], m[3][0],\n            m[0][1], m[1][1], m[2][1], m[3][1],\n            m[0][2], m[1][2], m[2][2], m[3][2],\n            m[0][3], m[1][3], m[2][3], m[3][3]\n        );\n    }\n\n    mat4 inverse(mat4 inp) {\n        mat4 cofactors = mat4(\n            determinant(mat3( inp[1].yzw, inp[2].yzw, inp[3].yzw)), \n            -determinant(mat3(inp[1].xzw, inp[2].xzw, inp[3].xzw)),\n            determinant(mat3( inp[1].xyw, inp[2].xyw, inp[3].xyw)),\n            -determinant(mat3(inp[1].xyz, inp[2].xyz, inp[3].xyz)),\n            \n            -determinant(mat3(inp[0].yzw, inp[2].yzw, inp[3].yzw)),\n            determinant(mat3( inp[0].xzw, inp[2].xzw, inp[3].xzw)),\n            -determinant(mat3(inp[0].xyw, inp[2].xyw, inp[3].xyw)),\n            determinant(mat3( inp[0].xyz, inp[2].xyz, inp[3].xyz)),\n            \n            determinant(mat3( inp[0].yzw, inp[1].yzw, inp[3].yzw)),\n            -determinant(mat3(inp[0].xzw, inp[1].xzw, inp[3].xzw)),\n            determinant(mat3( inp[0].xyw, inp[1].xyw, inp[3].xyw)),\n            -determinant(mat3(inp[0].xyz, inp[1].xyz, inp[3].xyz)),\n\n            -determinant(mat3(inp[0].yzw, inp[1].yzw, inp[2].yzw)),\n            determinant(mat3( inp[0].xzw, inp[1].xzw, inp[2].xzw)),\n            -determinant(mat3(inp[0].xyw, inp[1].xyw, inp[2].xyw)),\n            determinant(mat3( inp[0].xyz, inp[1].xyz, inp[2].xyz))\n        );\n        return transpose(cofactors) / determinant(inp);\n    }\n";
 /// <reference path="../worldObject/sprite/sprite.ts" />
 var DialogBox = /** @class */ (function (_super) {
     __extends(DialogBox, _super);
@@ -5301,10 +5407,12 @@ var DialogBox = /** @class */ (function (_super) {
             font: config.spriteTextFont,
         });
         var textAreaWorldRect = _this.getTextAreaWorldRect();
-        _this.spriteText.mask = new BasicTexture(global.gameWidth, global.gameHeight);
-        Draw.brush.color = 0xFFFFFF;
-        Draw.brush.alpha = 1;
-        Draw.rectangleSolid(_this.spriteText.mask, textAreaWorldRect.x, textAreaWorldRect.y, textAreaWorldRect.width, textAreaWorldRect.height);
+        _this.spriteText.mask = {
+            texture: Texture.filledRect(textAreaWorldRect.width, textAreaWorldRect.height, 0xFFFFFF),
+            type: 'world',
+            offsetx: textAreaWorldRect.x,
+            offsety: textAreaWorldRect.y,
+        };
         _this.spriteTextOffset = 0;
         _this.portraitSprite = new Sprite({});
         _this.characterTimer = new Timer(0.05, function () { return _this.advanceCharacter(); }, true);
@@ -6794,6 +6902,7 @@ var Utils;
 (function (Utils) {
     Utils.NOOP = function () { return null; };
     Utils.NOOP_DISPLAYOBJECT = new PIXI.DisplayObject();
+    Utils.NOOP_RENDERTEXTURE = PIXI.RenderTexture.create({ width: 0, height: 0 });
 })(Utils || (Utils = {}));
 var V;
 (function (V) {
@@ -7255,7 +7364,7 @@ var Physics = /** @class */ (function () {
         })(Direction = Collision.Direction || (Collision.Direction = {}));
     })(Collision = Physics.Collision || (Physics.Collision = {}));
 })(Physics || (Physics = {}));
-/// <reference path="../texture/textureFilter.ts" />
+/// <reference path="../texture/filter/textureFilter.ts" />
 var Effects = /** @class */ (function () {
     function Effects(config) {
         if (config === void 0) { config = {}; }
@@ -7711,13 +7820,13 @@ var SpriteTextConverter = /** @class */ (function () {
 var Tilemap = /** @class */ (function (_super) {
     __extends(Tilemap, _super);
     function Tilemap(config) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
         var _this = _super.call(this, config) || this;
         _this.tilemap = Tilemap.cloneTilemap(_.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap);
         _this.tilemapLayer = (_a = config.tilemapLayer) !== null && _a !== void 0 ? _a : 0;
         _this.animation = config.animation;
-        _this.debugBounds = (_b = config.debugBounds) !== null && _b !== void 0 ? _b : false;
-        _this.zMap = (_c = config.zMap) !== null && _c !== void 0 ? _c : {};
+        _this.zMap = (_b = config.zMap) !== null && _b !== void 0 ? _b : {};
+        _this.debugDrawBounds = (_d = (_c = config.debug) === null || _c === void 0 ? void 0 : _c.drawBounds) !== null && _d !== void 0 ? _d : false;
         _this.dirty = true;
         return _this;
     }
@@ -7763,8 +7872,10 @@ var Tilemap = /** @class */ (function (_super) {
                     bounds: rect,
                     physicsGroup: this.physicsGroup,
                     immovable: true,
+                    debug: {
+                        drawBounds: this.debugDrawBounds,
+                    },
                 });
-                box.debugBounds = this.debugBounds;
                 this.collisionBoxes.push(box);
             }
         }
@@ -8170,6 +8281,7 @@ var Assets;
             anchor: Anchor.BOTTOM,
         },
         'platform': {},
+        'mask': { anchor: Anchor.CENTER },
     };
     Assets.sounds = {
         // Debug
@@ -8516,8 +8628,6 @@ Main.loadConfig({
             '8': ['8'],
             '9': ['9'],
             '0': ['0'],
-            'q': ['q'],
-            'e': ['e'],
         }
     },
     game: {
@@ -8781,6 +8891,22 @@ function getStages() {
                         if (Input.isDown('destroyBlock')) {
                             tilemap.setTile(tileX, tileY, { index: -1, angle: 0, flipX: false });
                         }
+                    }
+                },
+                {
+                    name: 'test',
+                    constructor: SpriteText,
+                    text: 'hello world!',
+                    font: Assets.fonts.DELUXE16,
+                    style: { color: 0xFF0000 },
+                    mask: {
+                        texture: AssetCache.getTexture('mask'),
+                        type: 'screen',
+                        offsetx: 0, offsety: 0,
+                        invert: true,
+                    },
+                    debug: {
+                        followMouse: true
                     }
                 },
             ]

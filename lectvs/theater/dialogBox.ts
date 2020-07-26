@@ -39,11 +39,14 @@ class DialogBox extends Sprite {
         this.spriteText = new SpriteText({
             font: config.spriteTextFont,
         });
+
         let textAreaWorldRect = this.getTextAreaWorldRect();
-        this.spriteText.mask = new BasicTexture(global.gameWidth, global.gameHeight);
-        Draw.brush.color = 0xFFFFFF;
-        Draw.brush.alpha = 1;
-        Draw.rectangleSolid(this.spriteText.mask, textAreaWorldRect.x, textAreaWorldRect.y, textAreaWorldRect.width, textAreaWorldRect.height);
+        this.spriteText.mask = {
+            texture: Texture.filledRect(textAreaWorldRect.width, textAreaWorldRect.height, 0xFFFFFF),
+            type: 'world',
+            offsetx: textAreaWorldRect.x,
+            offsety: textAreaWorldRect.y,
+        };
         this.spriteTextOffset = 0;
 
         this.portraitSprite = new Sprite({});

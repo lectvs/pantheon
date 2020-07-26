@@ -1,4 +1,4 @@
-/// <reference path="textureFilter.ts"/>
+/// <reference path="./filter/textureFilter.ts"/>
 
 class BasicTexture implements Texture {
     get width() { return this.renderTextureSprite._renderTexture.width; }
@@ -80,8 +80,11 @@ class BasicTexture implements Texture {
         return result;
     }
 
-    toMaskTexture() {
-        return this.renderTextureSprite.renderTexture;
+    toMask() {
+        return {
+            renderTexture: this.renderTextureSprite.renderTexture,
+            offsetx: 0, offsety: 0,
+        };
     }
 
     /**
@@ -113,16 +116,20 @@ class BasicTexture implements Texture {
         let allFilters: TextureFilter[] = [];
 
         if (properties.slice) {
-            let sliceFilterPosX = this.renderTextureSprite.x;
-            let sliceFilterPosY = this.renderTextureSprite.y;
             let sliceFilter = TextureFilter.SLICE(properties.slice);
-            Texture.setFilterProperties(sliceFilter, sliceFilterPosX, sliceFilterPosY);
+            let sliceRect = this.getSliceRect(properties);
+            // Subtract sliceRect.xy because slice requires the shifted xy of the texture after slice
+            Texture.setFilterProperties(sliceFilter, properties.x - sliceRect.x, properties.y - sliceRect.y);
             allFilters.push(sliceFilter);
         }
 
-        let filterPosX = properties.x;
-        let filterPosY = properties.y;
-        properties.filters.forEach(filter => filter && Texture.setFilterProperties(filter, filterPosX, filterPosY));
+        if (properties.mask && properties.mask.texture) {
+            let maskFilter = Mask.SHARED(properties.mask.texture, 'global', properties.mask.x, properties.mask.y, properties.mask.invert);
+            Texture.setFilterProperties(maskFilter, properties.x, properties.y);
+            allFilters.push(maskFilter);
+        }
+
+        properties.filters.forEach(filter => filter && Texture.setFilterProperties(filter, properties.x, properties.y));
         allFilters.push(...properties.filters);
 
         return allFilters.filter(filter => filter && filter.enabled);
@@ -154,10 +161,8 @@ class BasicTexture implements Texture {
         let sliceRect = this.getSliceRect(properties);
 
         // Position
-        let afterSliceX = properties.x - sliceRect.x;
-        let afterSliceY = properties.y - sliceRect.y;
-        this.renderTextureSprite.x = afterSliceX;
-        this.renderTextureSprite.y = afterSliceY;
+        this.renderTextureSprite.x = properties.x - sliceRect.x;
+        this.renderTextureSprite.y = properties.y - sliceRect.y;
 
         // Other values
         this.renderTextureSprite.scale.x = properties.scaleX;
