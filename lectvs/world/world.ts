@@ -8,6 +8,7 @@ namespace World {
 
         physicsGroups?: Dict<World.PhysicsGroupConfig>;
         collisionOrder?: CollisionConfig[];
+        collisions?: Dict<CollisionConfig2[]>;
         collisionIterations?: number;
         layers?: World.LayerConfig[];
 
@@ -26,8 +27,14 @@ namespace World {
     }
 
     export type CollisionConfig = {
-        move: string | string[];
-        from: string | string[];
+        move: string[];
+        from: string[];
+        callback?: Physics.Collision.Callback;
+        transferMomentum?: boolean;
+    }
+
+    export type CollisionConfig2 = {
+        collidingPhysicsGroup: string;
         callback?: Physics.Collision.Callback;
         transferMomentum?: boolean;
     }
@@ -53,6 +60,7 @@ class World {
 
     physicsGroups: Dict<World.PhysicsGroup>;
     collisionOrder: World.CollisionConfig[];
+    collisions: Dict<World.CollisionConfig2[]>;
     collisionIterations: number;
     worldObjectsByName: Dict<WorldObject[]>;
     layers: World.Layer[];
@@ -85,6 +93,7 @@ class World {
 
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
         this.collisionOrder = config.collisionOrder ?? [];
+        this.collisions = config.collisions ?? {};
         this.collisionIterations = config.collisionIterations ?? 1;
         this.worldObjectsByName = {};
         this.layers = this.createLayers(config.layers);
@@ -128,9 +137,7 @@ class World {
         global.metrics.endSpan('update');
 
         global.metrics.startSpan('handleCollisions');
-        for (let i = 0; i < this.collisionIterations; i++) {
-            this.handleCollisions();
-        }
+        this.handleCollisions();
         global.metrics.endSpan('handleCollisions');
 
         global.metrics.startSpan('postUpdate');
@@ -295,20 +302,23 @@ class World {
     }
 
     handleCollisions() {
-        for (let collision of this.collisionOrder) {
-            let move = _.isArray(collision.move) ? collision.move : [collision.move];
-            let from = _.isArray(collision.from) ? collision.from : [collision.from];
-            let fromObjects = <PhysicsWorldObject[]>_.flatten(from.map(name => this.physicsGroups[name].worldObjects));
-            for (let moveGroup of move) {
-                let group = this.physicsGroups[moveGroup].worldObjects;
-                for (let obj of group) {
-                    Physics.collide(obj, fromObjects, {
-                        callback: collision.callback,
-                        transferMomentum: collision.transferMomentum,
-                    });
-                }
-            }
-        }
+        if (_.isEmpty(this.collisions)) return;
+        // for (let collision of this.collisionOrder) {
+        //     let move = _.isArray(collision.move) ? collision.move : [collision.move];
+        //     let from = _.isArray(collision.from) ? collision.from : [collision.from];
+        //     let fromObjects = <PhysicsWorldObject[]>_.flatten(from.map(name => this.physicsGroups[name].worldObjects));
+        //     for (let moveGroup of move) {
+        //         let group = this.physicsGroups[moveGroup].worldObjects;
+        //         for (let obj of group) {
+        //             Physics.collide(obj, fromObjects, {
+        //                 callback: collision.callback,
+        //                 transferMomentum: collision.transferMomentum,
+        //             });
+        //         }
+        //     }
+        // }
+
+        Physics2.resolveCollisions(this);
     }
 
     hasWorldObject(obj: string | WorldObject) {
@@ -318,13 +328,13 @@ class World {
         return _.contains(this.worldObjects, obj);
     }
 
-    // Returns a list of all physics objects in the world that overlap the given rect
-    overlapRect(rect: Rect, restrictToPhysicsGroups?: string[]) {
+    // Returns a list of all physics objects in the world that overlap the given bounds
+    overlap(bounds: Bounds, restrictToPhysicsGroups?: string[]) {
         let result = [];
         for (let physicsGroup in this.physicsGroups) {
             if (restrictToPhysicsGroups && !_.contains(restrictToPhysicsGroups, physicsGroup)) continue;
             for (let obj of this.physicsGroups[physicsGroup].worldObjects) {
-                if (!obj.isOverlappingRect(rect)) continue;
+                if (!obj.isOverlapping(bounds)) continue;
                 result.push(obj);
             }
         }

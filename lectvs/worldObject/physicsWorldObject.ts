@@ -30,7 +30,7 @@ class PhysicsWorldObject extends WorldObject {
     gravityy: number;
     gravityz: number;
     bounce: number;
-    bounds: Rect;
+    bounds: Bounds;
     immovable: boolean;
     colliding: boolean;
 
@@ -52,7 +52,9 @@ class PhysicsWorldObject extends WorldObject {
         this.gravityy = config.gravityy ?? 0;
         this.gravityz = config.gravityz ?? 0;
         this.bounce = config.bounce ?? 0;
-        this.bounds = config.bounds ? _.clone(config.bounds) : { x: 0, y: 0, width: 0, height: 0 };
+
+        this.bounds = config.bounds ? new RectBounds(config.bounds.x, config.bounds.y, config.bounds.width, config.bounds.height, this) : new RectBounds(0, 0, 0, 0, this);
+
         this.immovable = config.immovable ?? false;
         this.colliding = config.colliding ?? true;
 
@@ -78,7 +80,7 @@ class PhysicsWorldObject extends WorldObject {
 
     render(screen: Texture) {
         if (Debug.ALL_PHYSICS_BOUNDS || this.debugDrawBounds) {
-            let worldBounds = this.getWorldBounds();
+            let worldBounds = this.bounds.getBoundingBox();
             Draw.brush.color = 0x00FF00;
             Draw.brush.alpha = 1;
             Draw.rectangleOutline(screen, worldBounds.x, worldBounds.y, worldBounds.width, worldBounds.height);
@@ -87,31 +89,16 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     getWorldBounds(newX: number = this.x, newY: number = this.y) {
-        return new Rectangle(newX + this.bounds.x, newY + this.bounds.y, this.bounds.width, this.bounds.height);
+        return this.bounds.getBoundingBox(newX, newY);
     }
 
     isCollidingWith(other: PhysicsWorldObject) {
-        this.bounds.x += this.x;
-        this.bounds.y += this.y;
-        other.bounds.x += other.x;
-        other.bounds.y += other.y;
-        let result = G.overlapRectangles(this.bounds, other.bounds);
-        this.bounds.x -= this.x;
-        this.bounds.y -= this.y;
-        other.bounds.x -= other.x;
-        other.bounds.y -= other.y;
-        return result;
+        return this.isOverlapping(other.bounds);
     }
 
-    isOverlappingRect(rect: Rect) {
-        this.bounds.x += this.x;
-        this.bounds.y += this.y;
-        let result = G.overlapRectangles(this.bounds, rect);
-        this.bounds.x -= this.x;
-        this.bounds.y -= this.y;
-        return result;
+    isOverlapping(bounds: Bounds) {
+        return this.bounds.isOverlapping(bounds);
     }
-
     
     onCollide(other: PhysicsWorldObject) {
 

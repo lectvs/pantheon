@@ -15,12 +15,26 @@ function BASE_STAGE(): World.Config {
             'boxes': {},
             'walls': {},
         },
-        collisionOrder: [
-            { move: 'boxes', from: ['player'] },
-            { move: 'boxes', from: ['walls'] },
-            { move: 'player', from: ['boxes'] },
-            { move: 'player', from: ['walls'] },
-        ],
+        collisions: {
+            'boxes': [
+                { collidingPhysicsGroup: 'player' },
+                { collidingPhysicsGroup: 'walls' },
+            ],
+            'player': [
+                { collidingPhysicsGroup: 'boxes' },
+                { collidingPhysicsGroup: 'walls' },
+            ],
+            'walls': [
+                { collidingPhysicsGroup: 'boxes' },
+                { collidingPhysicsGroup: 'player' },
+            ],
+        },
+        // collisionOrder: [
+        //     { move: ['boxes'], from: ['player'] },
+        //     { move: ['boxes'], from: ['walls'] },
+        //     { move: ['player'], from: ['boxes'] },
+        //     { move: ['player'], from: ['walls'] },
+        // ],
         collisionIterations: 2,
     };
 }

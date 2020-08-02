@@ -2,7 +2,7 @@ namespace MetricsPlot {
     export type Plot = {
         texture: Texture;
         dataPoints: {[x: number]: Pt};
-        graphBounds: Bounds;
+        graphBounds: Boundaries;
     }
 
     export function plotRecording(recording: Metrics.Span, width: number, height: number): Plot {

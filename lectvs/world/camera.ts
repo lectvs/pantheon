@@ -4,7 +4,7 @@ namespace Camera {
     export type Config = {
         width?: number;
         height?: number;
-        bounds?: Bounds;
+        bounds?: Boundaries;
         mode?: Mode;
         movement?: Movement;
     }
@@ -41,7 +41,7 @@ class Camera {
     width: number;
     height: number;
 
-    bounds: Bounds;
+    bounds: Boundaries;
     mode: Camera.Mode;
     movement: Camera.Movement;
 

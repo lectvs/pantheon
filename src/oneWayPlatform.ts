@@ -9,10 +9,10 @@ class OneWayPlatform extends Sprite {
         let otherdy = other.y - other.physicslasty;
         if (otherdy < 0) return false;
 
-        let thisWorldBounds = this.getWorldBounds();
-        let otherWorldBounds = other.getWorldBounds();
+        let thisWorldBounds = this.bounds.getBoundingBox();
+        let otherWorldBounds = other.bounds.getBoundingBox();
 
-        if (otherWorldBounds.bottom - otherdy > thisWorldBounds.top+1) return false;
+        if (otherWorldBounds.y + otherWorldBounds.height - otherdy > thisWorldBounds.y+1) return false;
         return true;
     }
 }

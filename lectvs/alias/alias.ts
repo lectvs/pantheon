@@ -21,7 +21,7 @@ type Rect = {
     height: number;
 }
 
-type Bounds = {
+type Boundaries = {
     top?: number;
     bottom?: number;
     left?: number;

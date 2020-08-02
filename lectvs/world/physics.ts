@@ -46,8 +46,8 @@ class Physics {
         let dx2 = from.x - from.physicslastx;
         let dy2 = from.y - from.physicslasty;
 
-        let b1 = obj.getWorldBounds(obj.physicslastx, obj.physicslasty);
-        let b2 = from.getWorldBounds(from.physicslastx, from.physicslasty);
+        let b1 = obj.bounds.getBoundingBox(obj.physicslastx, obj.physicslasty);
+        let b2 = from.bounds.getBoundingBox(from.physicslastx, from.physicslasty);
 
         let topbot_t = Infinity;
         let bottop_t = Infinity;
@@ -113,8 +113,8 @@ class Physics {
     }
 
     static separateFromX(obj: PhysicsWorldObject, from: PhysicsWorldObject, skipSeparation: boolean = false) {
-        let objBounds = obj.getWorldBounds();
-        let fromBounds = from.getWorldBounds();
+        let objBounds = obj.bounds.getBoundingBox();
+        let fromBounds = from.bounds.getBoundingBox();
 
         if (!G.overlapRectangles(objBounds, fromBounds)) {
             return 0;
@@ -147,8 +147,8 @@ class Physics {
     }
 
     static separateFromY(obj: PhysicsWorldObject, from: PhysicsWorldObject, skipSeparation: boolean = false) {
-        let objBounds = obj.getWorldBounds();
-        let fromBounds = from.getWorldBounds();
+        let objBounds = obj.bounds.getBoundingBox();
+        let fromBounds = from.bounds.getBoundingBox();
 
         if (!G.overlapRectangles(objBounds, fromBounds)) {
             return 0;

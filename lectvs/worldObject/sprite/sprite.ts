@@ -41,11 +41,6 @@ class Sprite extends PhysicsWorldObject {
 
         this.setTexture(config.texture);
 
-        if (config.bounds === undefined) {
-            // TODO: set this to texture's bounds (local)
-            this.bounds = { x: 0, y: 0, width: 0, height: 0 };
-        }
-
         this.animationManager = new AnimationManager(this);
 
         if (config.animations) {

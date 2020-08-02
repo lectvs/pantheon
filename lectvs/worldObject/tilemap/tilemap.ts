@@ -32,7 +32,7 @@ namespace Tilemap {
     export type ZTexture = {
         frames: Texture[];
         bounds: Rect;
-        tileBounds: Bounds;
+        tileBounds: Boundaries;
         zHeight: number;
     }
     export type ZTextureMap = {[key: number]: ZTexture};

@@ -2,6 +2,8 @@ class Player extends Sprite {
     private readonly speed: number = 128;
     private readonly jumpForce: number = 256;
 
+    bounds: RectBounds;
+
     private crouched: boolean;
     private ignoreOneWayCollision: boolean;
 
@@ -68,7 +70,7 @@ class Player extends Sprite {
 
     private canEndCrouch() {
         this.bounds.y -= 32;
-        let overlappingWalls = this.world.overlapRect(this.getWorldBounds(), this.world.getPhysicsGroupsThatCollideWith(this.physicsGroup))
+        let overlappingWalls = this.world.overlap(this.bounds, this.world.getPhysicsGroupsThatCollideWith(this.physicsGroup))
             .filter(obj => !(obj instanceof OneWayPlatform));
         this.bounds.y += 32;
         return _.isEmpty(overlappingWalls);

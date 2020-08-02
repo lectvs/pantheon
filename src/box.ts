@@ -14,7 +14,7 @@ class Box extends Sprite {
     }
 
     update() {
-        this.vx *= 0.98;
+        //this.vx *= 0.98;
         super.update();
     }
 

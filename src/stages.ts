@@ -47,8 +47,15 @@ function getStages(): Dict<World.Config> { return {
                 x: 270, y: 220,
                 layer: 'main',
                 physicsGroup: 'boxes',
-
+                mass: 1,
             },
+            // <Sprite.Config>{
+            //     name: 'box2',
+            //     constructor: Box,
+            //     x: 270, y: 18,
+            //     layer: 'main',
+            //     physicsGroup: 'boxes',
+            // },
             <Sprite.Config>{
                 name: 'platform',
                 constructor: MovingPlatform,

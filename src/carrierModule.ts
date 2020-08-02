@@ -8,17 +8,12 @@ class CarrierModule {
     }
 
     postUpdate() {
-        let objBounds = this.obj.getWorldBounds();
-        let checkRect: Rect = {
-            x: objBounds.x,
-            y: objBounds.y - 1,
-            width: objBounds.width,
-            height: 1
-        };
+        let objBounds = this.obj.bounds.getBoundingBox();
+        let checkBounds = new RectBounds(objBounds.x, objBounds.y-1, objBounds.width, 1);
 
         for (let potentialRider of this.obj.world.getPhysicsObjectsThatCollideWith(this.obj.physicsGroup)) {
             if (potentialRider instanceof OneWayPlatform || potentialRider instanceof MovingPlatform) continue;
-            if (potentialRider.isOverlappingRect(checkRect)) {
+            if (potentialRider.isOverlapping(checkBounds)) {
                 if (_.contains(this.riders, potentialRider)) continue;
                 if (potentialRider.parent) continue;  // Disallow riding by any child object
                 this.obj.addChildKeepWorldPosition(potentialRider);

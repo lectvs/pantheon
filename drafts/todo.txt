@@ -30,6 +30,7 @@
     - slopes/sloped bounds
     - boxes colliding with other boxes
     - implement metroid-style transitions
+- texture vertex filter
 - documentation and API cleanup
 
 stretch
