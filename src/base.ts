@@ -29,7 +29,7 @@ function BASE_STAGE(): World.Config {
                 { collidingPhysicsGroup: 'player', transferMomentum: false },
             ],
         },
-        collisionIterations: 2,
+        collisionIterations: 4,
         useRaycastDisplacementThreshold: 4,
     };
 }

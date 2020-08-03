@@ -7097,25 +7097,22 @@ var Physics;
             return;
         var displacementCollision = (M.magnitude(raycastCollision.collision.displacementX, raycastCollision.collision.displacementY) <= world.useRaycastDisplacementThreshold)
             ? {
-                move: collision.move,
-                from: collision.from,
+                move: raycastCollision.move,
+                from: raycastCollision.from,
                 collision: {
-                    bounds1: collision.move.bounds,
-                    bounds2: collision.from.bounds,
-                    displacementX: collision.collision.displacementX,
-                    displacementY: collision.collision.displacementY,
+                    bounds1: raycastCollision.move.bounds,
+                    bounds2: raycastCollision.from.bounds,
+                    displacementX: raycastCollision.collision.displacementX,
+                    displacementY: raycastCollision.collision.displacementY,
                 },
             }
             : {
-                move: collision.move,
-                from: collision.from,
-                collision: collision.move.bounds.getDisplacementCollision(collision.from.bounds),
+                move: raycastCollision.move,
+                from: raycastCollision.from,
+                collision: raycastCollision.move.bounds.getDisplacementCollision(raycastCollision.from.bounds),
             };
         if (!displacementCollision || !displacementCollision.collision)
             return;
-        if (collision.move === get('player') && collision.from === get('platform')) {
-            debug(collision.move.x - collision.move.physicslastx, collision.move.y - collision.move.physicslasty, collision.from.x - collision.from.physicslastx, collision.from.y - collision.from.physicslasty);
-        }
         applyDisplacementForCollision(displacementCollision);
         applyMomentumTransferForCollision(world.delta, displacementCollision, collision.transferMomentum);
         if (collision.callback)
@@ -7173,7 +7170,7 @@ var Physics;
                 finally { if (e_36) throw e_36.error; }
             }
         }
-        return raycastCollisions;
+        return raycastCollisions.filter(function (col) { return col && col.collision; });
     }
     function applyDisplacementForCollision(collision) {
         if (collision.move.immovable && collision.from.immovable)
@@ -8321,7 +8318,7 @@ function BASE_STAGE() {
                 { collidingPhysicsGroup: 'player', transferMomentum: false },
             ],
         },
-        collisionIterations: 2,
+        collisionIterations: 4,
         useRaycastDisplacementThreshold: 4,
     };
 }

@@ -46,26 +46,22 @@ namespace Physics {
         let displacementCollision: DisplacementCollision = 
             (M.magnitude(raycastCollision.collision.displacementX, raycastCollision.collision.displacementY) <= world.useRaycastDisplacementThreshold)
                 ? {
-                    move: collision.move,
-                    from: collision.from,
+                    move: raycastCollision.move,
+                    from: raycastCollision.from,
                     collision: {
-                        bounds1: collision.move.bounds,
-                        bounds2: collision.from.bounds,
-                        displacementX: collision.collision.displacementX,
-                        displacementY: collision.collision.displacementY,
+                        bounds1: raycastCollision.move.bounds,
+                        bounds2: raycastCollision.from.bounds,
+                        displacementX: raycastCollision.collision.displacementX,
+                        displacementY: raycastCollision.collision.displacementY,
                     },
                 }
                 : {
-                    move: collision.move,
-                    from: collision.from,
-                    collision: collision.move.bounds.getDisplacementCollision(collision.from.bounds),
+                    move: raycastCollision.move,
+                    from: raycastCollision.from,
+                    collision: raycastCollision.move.bounds.getDisplacementCollision(raycastCollision.from.bounds),
                 };
 
         if (!displacementCollision || !displacementCollision.collision) return;
-
-        if (collision.move === get('player') && collision.from === get('platform')) {
-            debug(collision.move.x-collision.move.physicslastx, collision.move.y-collision.move.physicslasty, collision.from.x-collision.from.physicslastx, collision.from.y-collision.from.physicslasty);
-        }
 
         applyDisplacementForCollision(displacementCollision);
         applyMomentumTransferForCollision(world.delta, displacementCollision, collision.transferMomentum);
@@ -92,7 +88,7 @@ namespace Physics {
                 }
             }
         }
-        return raycastCollisions;
+        return raycastCollisions.filter(col => col && col.collision);
     }
 
     function applyDisplacementForCollision(collision: Physics.DisplacementCollision) {
