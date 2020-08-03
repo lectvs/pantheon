@@ -6,6 +6,10 @@ namespace Bounds {
         // "Time" taken from the start of the raycast up to collision.
         // t=1 means the collision occured at the end of the full frame.
         t: number;
+
+        // Amount bounds1 would need to move to fully separate from bounds2.
+        displacementX: number;
+        displacementY: number;
     }
 
     export type DisplacementCollision = {

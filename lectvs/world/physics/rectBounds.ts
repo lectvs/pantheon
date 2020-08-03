@@ -35,10 +35,6 @@ class RectBounds implements Bounds {
 
         if (!(other instanceof RectBounds)) return undefined;
 
-        if (this.parent instanceof Box) {
-            //debug("d", dx, dy);
-        }
-
         let box = this.getBoundingBox();
         box.x -= dx;
         box.y -= dy;
@@ -95,27 +91,16 @@ class RectBounds implements Bounds {
             displacementX = currentOtherBox.left - currentBox.right;
         }
 
-        // if (min_t === topbot_t || min_t === bottop_t) {
-        //     displacementY = M.argmin([currentOtherBox.bottom - currentBox.top, currentOtherBox.top - currentBox.bottom], Math.abs);
-        // }
-        // if (min_t === leftright_t || min_t === rightleft_t) {
-        //     displacementX = M.argmin([currentOtherBox.right - currentBox.left, currentOtherBox.left - currentBox.right], Math.abs);
-        // }
-
         if (displacementX !== 0 && displacementY !== 0) {
             error("Warning: rect displacement in both axes");
         }
-
-        if (this.parent instanceof Box) {
-            //debug("disp", displacementX, displacementY);
-        }
-
-        //debug(min_t);
 
         return {
             bounds1: this,
             bounds2: other,
             t: min_t,
+            displacementX,
+            displacementY,
         };
     }
 
