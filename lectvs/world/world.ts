@@ -7,9 +7,10 @@ namespace World {
         constructor?: any;
 
         physicsGroups?: Dict<World.PhysicsGroupConfig>;
-        collisionOrder?: CollisionConfig[];
         collisions?: Dict<CollisionConfig2[]>;
         collisionIterations?: number;
+        useRaycastDisplacementThreshold?: number;
+
         layers?: World.LayerConfig[];
 
         camera?: Camera.Config;
@@ -29,13 +30,13 @@ namespace World {
     export type CollisionConfig = {
         move: string[];
         from: string[];
-        callback?: Physics.Collision.Callback;
+        callback?: Physics.CollisionCallback;
         transferMomentum?: boolean;
     }
 
     export type CollisionConfig2 = {
         collidingPhysicsGroup: string;
-        callback?: Physics.Collision.Callback;
+        callback?: Physics.CollisionCallback;
         transferMomentum?: boolean;
     }
 
@@ -59,9 +60,10 @@ class World {
     worldObjects: WorldObject[];
 
     physicsGroups: Dict<World.PhysicsGroup>;
-    collisionOrder: World.CollisionConfig[];
     collisions: Dict<World.CollisionConfig2[]>;
     collisionIterations: number;
+    useRaycastDisplacementThreshold: number;
+
     worldObjectsByName: Dict<WorldObject[]>;
     layers: World.Layer[];
 
@@ -92,9 +94,10 @@ class World {
         this.worldObjects = [];
 
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
-        this.collisionOrder = config.collisionOrder ?? [];
         this.collisions = config.collisions ?? {};
         this.collisionIterations = config.collisionIterations ?? 1;
+        this.useRaycastDisplacementThreshold = config.useRaycastDisplacementThreshold ?? 1;
+
         this.worldObjectsByName = {};
         this.layers = this.createLayers(config.layers);
 
@@ -236,20 +239,9 @@ class World {
     }
 
     getPhysicsGroupsThatCollideWith(physicsGroup: string) {
-        let result: string[] = [];
-        for (let coll of this.collisionOrder) {
-            let move = _.isString(coll.move) ? [coll.move] : coll.move;
-            let from = _.isString(coll.from) ? [coll.from] : coll.from;
-
-            if (_.contains(move, physicsGroup)) {
-                result.push(...from);
-            }
-
-            if (_.contains(from, physicsGroup)) {
-                result.push(...move);
-            }
-        }
-        return A.removeDuplicates(result.filter(group => this.physicsGroups[group]));
+        return _.isEmpty(this.collisions[physicsGroup])
+                    ? []
+                    : A.removeDuplicates(this.collisions[physicsGroup].map(collision => collision.collidingPhysicsGroup));
     }
 
     getPhysicsObjectsThatCollideWith(physicsGroup: string) {
@@ -303,22 +295,8 @@ class World {
 
     handleCollisions() {
         if (_.isEmpty(this.collisions)) return;
-        // for (let collision of this.collisionOrder) {
-        //     let move = _.isArray(collision.move) ? collision.move : [collision.move];
-        //     let from = _.isArray(collision.from) ? collision.from : [collision.from];
-        //     let fromObjects = <PhysicsWorldObject[]>_.flatten(from.map(name => this.physicsGroups[name].worldObjects));
-        //     for (let moveGroup of move) {
-        //         let group = this.physicsGroups[moveGroup].worldObjects;
-        //         for (let obj of group) {
-        //             Physics.collide(obj, fromObjects, {
-        //                 callback: collision.callback,
-        //                 transferMomentum: collision.transferMomentum,
-        //             });
-        //         }
-        //     }
-        // }
 
-        Physics2.resolveCollisions(this);
+        Physics.resolveCollisions(this);
     }
 
     hasWorldObject(obj: string | WorldObject) {

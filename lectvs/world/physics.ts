@@ -1,260 +1,152 @@
-class Physics {
-    static collide(obj: PhysicsWorldObject, from: PhysicsWorldObject[], options: Physics.CollideOptions = {}): Pt {
-        if (_.isEmpty(from)) return;
-        if (!obj.colliding) return;
-
-        _.defaults(options, {
-            callback: false,
-            transferMomentum: true,
-            maxIters: Physics.MAX_ITERS,
-        });
-
-        let startX = obj.x;
-        let startY = obj.y;
-
-        let collidingWith = from.filter(other => obj !== other && other.colliding && obj.isCollidingWith(other) && other.isCollidingWith(obj));
-
-        let iters = 0;
-        while (!_.isEmpty(collidingWith) && iters < options.maxIters) {
-
-            let collisions = collidingWith.map(other => Physics.getCollision(obj, other))
-            collisions.sort((a,b) => a.t - b.t);
-
-            for (let collision of collisions) {
-                let d = Physics.separate(collision);
-                if (d !== 0 && options.transferMomentum) {
-                    Physics.transferMomentum(collision);
-                }
-
-                collision.move.onCollide(collision.from);
-                collision.from.onCollide(collision.move);
-                if (options.callback) {
-                    options.callback(collision.move, collision.from);
-                }
-            }
-
-            collidingWith = collidingWith.filter(other => obj.isCollidingWith(other));
-            iters++;
-        }
-
-        return { x: obj.x - startX, y: obj.y - startY };
-    }
-
-    static getCollision(obj: PhysicsWorldObject, from: PhysicsWorldObject): Physics.Collision {
-        let dx1 = obj.x - obj.physicslastx;
-        let dy1 = obj.y - obj.physicslasty;
-        let dx2 = from.x - from.physicslastx;
-        let dy2 = from.y - from.physicslasty;
-
-        let b1 = obj.bounds.getBoundingBox(obj.physicslastx, obj.physicslasty);
-        let b2 = from.bounds.getBoundingBox(from.physicslastx, from.physicslasty);
-
-        let topbot_t = Infinity;
-        let bottop_t = Infinity;
-        let leftright_t = Infinity;
-        let rightleft_t = Infinity;
-
-        if (dy1 !== dy2) {
-            topbot_t = (b1.top - b2.bottom) / (dy2 - dy1);
-            if (b1.right + dx1*topbot_t <= b2.left + dx2*topbot_t || b1.left + dx1*topbot_t >= b2.right + dx2*topbot_t) {
-                topbot_t = Infinity;
-            }
-
-            bottop_t = (b1.bottom - b2.top) / (dy2 - dy1);
-            if (b1.right + dx1*bottop_t <= b2.left + dx2*bottop_t || b1.left + dx1*bottop_t >= b2.right + dx2*bottop_t) {
-                bottop_t = Infinity;
-            }
-        }
-        
-        if (dx1 !== dx2) {
-            leftright_t = (b1.left - b2.right) / (dx2 - dx1);
-            if (b1.bottom + dy1*leftright_t <= b2.top + dy2*leftright_t || b1.top + dy1*leftright_t >= b2.bottom + dy2*leftright_t) {
-                leftright_t = Infinity;
-            }
-
-            rightleft_t = (b1.right - b2.left) / (dx2 - dx1);
-            if (b1.bottom + dy1*rightleft_t <= b2.top + dy2*rightleft_t || b1.top + dy1*rightleft_t >= b2.bottom + dy2*rightleft_t) {
-                rightleft_t = Infinity;
-            }
-        }
-
-        let min_t = Math.min(topbot_t, bottop_t, leftright_t, rightleft_t);
-
-        let direction = {
-            [topbot_t]: Physics.Collision.Direction.UP,
-            [bottop_t]: Physics.Collision.Direction.DOWN,
-            [leftright_t]: Physics.Collision.Direction.LEFT,
-            [rightleft_t]: Physics.Collision.Direction.RIGHT,
-        }[min_t];
-
-        let result = new Physics.Collision();
-        result.move = obj;
-        result.from = from;
-        result.t = min_t;
-        result.direction = direction;
-
-        if (!result.isVertical && !result.isHorizontal) {
-            error('collision was neither vertical nor horizontal:', result);
-        }
-
-        return result;
-    }
-
-    static separate(collision: Physics.Collision, skipSeparation: boolean = false) {
-        if (collision.isVertical) {
-            return this.separateFromY(collision.move, collision.from, skipSeparation);
-        }
-
-        if (collision.isHorizontal) {
-            return this.separateFromX(collision.move, collision.from, skipSeparation);
-        }
-
-        return 0;
-    }
-
-    static separateFromX(obj: PhysicsWorldObject, from: PhysicsWorldObject, skipSeparation: boolean = false) {
-        let objBounds = obj.bounds.getBoundingBox();
-        let fromBounds = from.bounds.getBoundingBox();
-
-        if (!G.overlapRectangles(objBounds, fromBounds)) {
-            return 0;
-        }
-
-        let leftdx = fromBounds.right - objBounds.left;
-        let rightdx = fromBounds.left - objBounds.right;
-        
-        let relativedx = (obj.x - obj.physicslastx) - (from.x - from.physicslastx);
-
-        let dx = 0;
-
-        if (relativedx < 0) {
-            dx = leftdx;
-        } else if (relativedx > 0) {
-            dx = rightdx;
-        } else {
-            if (Math.abs(rightdx) < Math.abs(leftdx)) {
-                dx = rightdx;
-            } else {
-                dx = leftdx;
-            }
-        }
-
-        if (!skipSeparation) {
-            obj.x += dx;
-        }
-
-        return dx;
-    }
-
-    static separateFromY(obj: PhysicsWorldObject, from: PhysicsWorldObject, skipSeparation: boolean = false) {
-        let objBounds = obj.bounds.getBoundingBox();
-        let fromBounds = from.bounds.getBoundingBox();
-
-        if (!G.overlapRectangles(objBounds, fromBounds)) {
-            return 0;
-        }
-
-        let updy = fromBounds.bottom - objBounds.top;
-        let downdy = fromBounds.top - objBounds.bottom;
-
-        let relativedy = (obj.y - obj.physicslasty) - (from.y - from.physicslasty);
-
-        let dy = 0;
-
-        if (relativedy < 0) {
-            dy = updy;
-        } else if (relativedy > 0) {
-            dy = downdy;
-        } else {
-            if (Math.abs(downdy) < Math.abs(updy)) {
-                dy = downdy;
-            } else {
-                dy = updy;
-            }
-        }
-
-        if (!skipSeparation) {
-            obj.y += dy;
-        }
-
-        return dy;
-    }
-
-    static transferMomentum(collision: Physics.Collision) {
-        if (collision.isVertical) {
-            return this.transferMomentumY(collision.move, collision.from);
-        }
-
-        if (collision.isHorizontal) {
-            return this.transferMomentumX(collision.move, collision.from);
-        }
-    }
-
-    private static transferMomentumWithProperty(property: string, obj1: PhysicsWorldObject, obj2: PhysicsWorldObject) {
-        let v1i = obj1[property];
-        let v2i = obj2[property];
-
-        let m1 = obj1.mass;
-        let m2 = obj2.mass;
-
-        if (m1 === 0 && m2 === 0) {
-            m1 = 1; m2 = 1;
-        }
-
-        let v1f = -v1i;
-        if (!obj2.immovable) {
-            v1f = 2*m2 / (m1 + m2) * (v2i - v1i) + v1i;
-        }
-        if (!obj1.immovable) {
-            obj1[property] = v1f * obj1.bounce;
-        }
-
-        let v2f = -v2i;
-        if (!obj1.immovable) {
-            v2f = 2*m1 / (m1 + m2) * (v1i - v2i) + v2i;
-        }
-        if (!obj2.immovable) {
-            obj2[property] = v2f * obj2.bounce;
-        }
-    }
-
-    static transferMomentumX(obj1: PhysicsWorldObject, obj2: PhysicsWorldObject) {
-        return this.transferMomentumWithProperty('vx', obj1, obj2);
-    }
-
-    static transferMomentumY(obj1: PhysicsWorldObject, obj2: PhysicsWorldObject) {
-        return this.transferMomentumWithProperty('vy', obj1, obj2);
-    }
-}
-
 namespace Physics {
-    export const MAX_ITERS = 10;
-
-    export type CollideOptions = {
-        callback?: Collision.Callback,
-        transferMomentum?: boolean;
-        maxIters?: number;
-    }
-
-    export class Collision {
+    export type Collision = {
         move: PhysicsWorldObject;
         from: PhysicsWorldObject;
-        t: number;
-        direction: Collision.Direction;
+    }
 
-        get isVertical() {
-            return this.direction === Collision.Direction.UP || this.direction === Collision.Direction.DOWN;
-        }
+    export type RaycastCollision = Collision & {
+        collision: Bounds.RaycastCollision;
+        callback?: Physics.CollisionCallback;
+        transferMomentum?: boolean;
+    }
 
-        get isHorizontal() {
-            return this.direction === Collision.Direction.LEFT || this.direction === Collision.Direction.RIGHT;
+    export type DisplacementCollision = Collision & {
+        collision: Bounds.DisplacementCollision;
+    }
+
+    export type CollisionCallback = (move: PhysicsWorldObject, from: PhysicsWorldObject) => any;
+
+    export function resolveCollisions(world: World) {
+        let iter = 0;
+        while (iter < world.collisionIterations) {
+            iter++;
+            debug(`begin iter ${iter}`);
+
+            let collisions = getRaycastCollisions(world)
+                                .sort((a,b) => a.collision.t - b.collision.t);
+
+            debug('collisions:', collisions);
+
+            for (let collision of collisions) {
+                resolveCollision(world, collision);
+            }
+            debug(`end iter ${iter}`);
         }
     }
 
-    export namespace Collision {
-        export type Callback = (move: PhysicsWorldObject, from: PhysicsWorldObject) => any;
-        export enum Direction {
-            LEFT, RIGHT, UP, DOWN
+    function resolveCollision(world: World, collision: RaycastCollision) {
+        let raycastCollision: RaycastCollision = {
+            move: collision.move,
+            from: collision.from,
+            collision: collision.move.bounds.getRaycastCollision(collision.move.x-collision.move.physicslastx, collision.move.y-collision.move.physicslasty, collision.from.bounds, collision.from.x-collision.from.physicslastx, collision.from.y-collision.from.physicslasty),
+        };
+        
+        if (!raycastCollision.collision) return;
+
+        let displacementCollision: DisplacementCollision = 
+            (M.magnitude(raycastCollision.collision.displacementX, raycastCollision.collision.displacementY) <= world.useRaycastDisplacementThreshold)
+                ? {
+                    move: collision.move,
+                    from: collision.from,
+                    collision: {
+                        bounds1: collision.move.bounds,
+                        bounds2: collision.from.bounds,
+                        displacementX: collision.collision.displacementX,
+                        displacementY: collision.collision.displacementY,
+                    },
+                }
+                : {
+                    move: collision.move,
+                    from: collision.from,
+                    collision: collision.move.bounds.getDisplacementCollision(collision.from.bounds),
+                };
+
+        if (!displacementCollision || !displacementCollision.collision) return;
+
+        if (collision.move === get('player') && collision.from === get('platform')) {
+            debug(collision.move.x-collision.move.physicslastx, collision.move.y-collision.move.physicslasty, collision.from.x-collision.from.physicslastx, collision.from.y-collision.from.physicslasty);
         }
+
+        applyDisplacementForCollision(displacementCollision);
+        applyMomentumTransferForCollision(world.delta, displacementCollision, collision.transferMomentum);
+
+        if (collision.callback) collision.callback(collision.move, collision.from);
+    }
+
+    function getRaycastCollisions(world: World): RaycastCollision[] {
+        let raycastCollisions: RaycastCollision[] = [];
+        for (let moveGroup in world.collisions) {
+            for (let collision of world.collisions[moveGroup]) {
+                let fromGroup = collision.collidingPhysicsGroup;
+                for (let move of world.physicsGroups[moveGroup].worldObjects) {
+                    for (let from of world.physicsGroups[fromGroup].worldObjects) {
+                        if (move === from) continue;
+                        if (!G.overlapRectangles(move.bounds.getBoundingBox(), from.bounds.getBoundingBox())) continue;
+                        raycastCollisions.push({
+                            move, from,
+                            collision: move.bounds.getRaycastCollision(move.x-move.physicslastx, move.y-move.physicslasty, from.bounds, from.x-from.physicslastx, from.y-from.physicslasty),
+                            callback: collision.callback,
+                            transferMomentum: collision.transferMomentum,
+                        });
+                    }
+                }
+            }
+        }
+        return raycastCollisions;
+    }
+
+    function applyDisplacementForCollision(collision: Physics.DisplacementCollision) {
+        if (collision.move.immovable && collision.from.immovable) return;
+
+        if (collision.move.immovable) {
+            collision.from.x -= collision.collision.displacementX;
+            collision.from.y -= collision.collision.displacementY;
+            return;
+        }
+
+        if (collision.from.immovable) {
+            collision.move.x += collision.collision.displacementX;
+            collision.move.y += collision.collision.displacementY;
+            return;
+        }
+
+        let massFactor = (collision.move.mass + collision.from.mass === 0) ? 1 :
+                            collision.from.mass / (collision.move.mass + collision.from.mass);
+
+        collision.move.x += massFactor * collision.collision.displacementX;
+        collision.move.y += massFactor * collision.collision.displacementY;
+        collision.from.x -= (1-massFactor) * collision.collision.displacementX;
+        collision.from.y -= (1-massFactor) * collision.collision.displacementY;
+    }
+
+    function applyMomentumTransferForCollision(delta: number, collision: Physics.DisplacementCollision, transferMomentum: boolean) {
+        if (!collision.move.immovable) {
+            let fromvx = transferMomentum ? (collision.from.x - collision.from.physicslastx)/delta : 0;
+            let fromvy = transferMomentum ? (collision.from.y - collision.from.physicslasty)/delta : 0;
+            collision.move.vx -= fromvx;
+            collision.move.vy -= fromvy;
+            zeroVelocityAgainstDisplacement(collision.move, collision.collision.displacementX, collision.collision.displacementY);
+            collision.move.vx += fromvx;
+            collision.move.vy += fromvy;
+        }
+
+        if (!collision.from.immovable) {
+            let movevx = transferMomentum ? (collision.move.x - collision.move.physicslastx)/delta : 0;
+            let movevy = transferMomentum ? (collision.move.y - collision.move.physicslasty)/delta : 0;
+            collision.move.vx -= movevx;
+            collision.move.vy -= movevy;
+            zeroVelocityAgainstDisplacement(collision.from, -collision.collision.displacementX, -collision.collision.displacementY);
+            collision.move.vx += movevx;
+            collision.move.vy += movevy;
+        }
+    }
+
+    function zeroVelocityAgainstDisplacement(obj: PhysicsWorldObject, dx: number, dy: number) {
+        let dot = obj.vx * dx + obj.vy * dy;
+        if (dot >= 0) return;
+
+        let factor = dot / M.magnitudeSq(dx, dy);
+        obj.vx -= factor * dx;
+        obj.vy -= factor * dy;
     }
 }

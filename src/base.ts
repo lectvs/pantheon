@@ -18,24 +18,19 @@ function BASE_STAGE(): World.Config {
         collisions: {
             'boxes': [
                 { collidingPhysicsGroup: 'player' },
-                { collidingPhysicsGroup: 'walls' },
+                { collidingPhysicsGroup: 'walls', transferMomentum: false },
             ],
             'player': [
                 { collidingPhysicsGroup: 'boxes' },
-                { collidingPhysicsGroup: 'walls' },
+                { collidingPhysicsGroup: 'walls', transferMomentum: false },
             ],
             'walls': [
-                { collidingPhysicsGroup: 'boxes' },
-                { collidingPhysicsGroup: 'player' },
+                { collidingPhysicsGroup: 'boxes', transferMomentum: false },
+                { collidingPhysicsGroup: 'player', transferMomentum: false },
             ],
         },
-        // collisionOrder: [
-        //     { move: ['boxes'], from: ['player'] },
-        //     { move: ['boxes'], from: ['walls'] },
-        //     { move: ['player'], from: ['boxes'] },
-        //     { move: ['player'], from: ['walls'] },
-        // ],
         collisionIterations: 2,
+        useRaycastDisplacementThreshold: 4,
     };
 }
 
