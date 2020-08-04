@@ -20,17 +20,12 @@ namespace Physics {
         let iter = 0;
         while (iter < world.collisionIterations) {
             iter++;
-            debug(`begin iter ${iter}`);
-
             let collisions = getRaycastCollisions(world)
                                 .sort((a,b) => a.collision.t - b.collision.t);
-
-            debug('collisions:', collisions);
 
             for (let collision of collisions) {
                 resolveCollision(world, collision);
             }
-            debug(`end iter ${iter}`);
         }
     }
 
@@ -43,25 +38,25 @@ namespace Physics {
         
         if (!raycastCollision.collision) return;
 
-        let displacementCollision: DisplacementCollision = 
-            (M.magnitude(raycastCollision.collision.displacementX, raycastCollision.collision.displacementY) <= world.useRaycastDisplacementThreshold)
-                ? {
-                    move: raycastCollision.move,
-                    from: raycastCollision.from,
-                    collision: {
-                        bounds1: raycastCollision.move.bounds,
-                        bounds2: raycastCollision.from.bounds,
-                        displacementX: raycastCollision.collision.displacementX,
-                        displacementY: raycastCollision.collision.displacementY,
-                    },
-                }
-                : {
-                    move: raycastCollision.move,
-                    from: raycastCollision.from,
-                    collision: raycastCollision.move.bounds.getDisplacementCollision(raycastCollision.from.bounds),
-                };
+        let displacementCollision: DisplacementCollision = {
+            move: raycastCollision.move,
+            from: raycastCollision.from,
+            collision: undefined
+        };
 
-        if (!displacementCollision || !displacementCollision.collision) return;
+        // Use raycast collision displacement if applicable.
+        if (M.magnitude(raycastCollision.collision.displacementX, raycastCollision.collision.displacementY) <= world.useRaycastDisplacementThreshold) {
+            displacementCollision.collision = {
+                bounds1: raycastCollision.move.bounds,
+                bounds2: raycastCollision.from.bounds,
+                displacementX: raycastCollision.collision.displacementX,
+                displacementY: raycastCollision.collision.displacementY,
+            };
+        } else {
+            displacementCollision.collision = raycastCollision.move.bounds.getDisplacementCollision(raycastCollision.from.bounds);
+        }
+
+        if (!displacementCollision.collision) return;
 
         applyDisplacementForCollision(displacementCollision);
         applyMomentumTransferForCollision(world.delta, displacementCollision, collision.transferMomentum);
@@ -78,9 +73,11 @@ namespace Physics {
                     for (let from of world.physicsGroups[fromGroup].worldObjects) {
                         if (move === from) continue;
                         if (!G.overlapRectangles(move.bounds.getBoundingBox(), from.bounds.getBoundingBox())) continue;
+                        let raycastCollision = move.bounds.getRaycastCollision(move.x-move.physicslastx, move.y-move.physicslasty, from.bounds, from.x-from.physicslastx, from.y-from.physicslasty);
+                        if (!raycastCollision) continue;
                         raycastCollisions.push({
                             move, from,
-                            collision: move.bounds.getRaycastCollision(move.x-move.physicslastx, move.y-move.physicslasty, from.bounds, from.x-from.physicslastx, from.y-from.physicslasty),
+                            collision: raycastCollision,
                             callback: collision.callback,
                             transferMomentum: collision.transferMomentum,
                         });
@@ -88,7 +85,7 @@ namespace Physics {
                 }
             }
         }
-        return raycastCollisions.filter(col => col && col.collision);
+        return raycastCollisions;
     }
 
     function applyDisplacementForCollision(collision: Physics.DisplacementCollision) {

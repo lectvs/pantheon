@@ -7066,10 +7066,8 @@ var Physics;
         var iter = 0;
         while (iter < world.collisionIterations) {
             iter++;
-            debug("begin iter " + iter);
             var collisions = getRaycastCollisions(world)
                 .sort(function (a, b) { return a.collision.t - b.collision.t; });
-            debug('collisions:', collisions);
             try {
                 for (var collisions_1 = (e_35 = void 0, __values(collisions)), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
                     var collision = collisions_1_1.value;
@@ -7083,7 +7081,6 @@ var Physics;
                 }
                 finally { if (e_35) throw e_35.error; }
             }
-            debug("end iter " + iter);
         }
     }
     Physics.resolveCollisions = resolveCollisions;
@@ -7095,23 +7092,24 @@ var Physics;
         };
         if (!raycastCollision.collision)
             return;
-        var displacementCollision = (M.magnitude(raycastCollision.collision.displacementX, raycastCollision.collision.displacementY) <= world.useRaycastDisplacementThreshold)
-            ? {
-                move: raycastCollision.move,
-                from: raycastCollision.from,
-                collision: {
-                    bounds1: raycastCollision.move.bounds,
-                    bounds2: raycastCollision.from.bounds,
-                    displacementX: raycastCollision.collision.displacementX,
-                    displacementY: raycastCollision.collision.displacementY,
-                },
-            }
-            : {
-                move: raycastCollision.move,
-                from: raycastCollision.from,
-                collision: raycastCollision.move.bounds.getDisplacementCollision(raycastCollision.from.bounds),
+        var displacementCollision = {
+            move: raycastCollision.move,
+            from: raycastCollision.from,
+            collision: undefined
+        };
+        // Use raycast collision displacement if applicable.
+        if (M.magnitude(raycastCollision.collision.displacementX, raycastCollision.collision.displacementY) <= world.useRaycastDisplacementThreshold) {
+            displacementCollision.collision = {
+                bounds1: raycastCollision.move.bounds,
+                bounds2: raycastCollision.from.bounds,
+                displacementX: raycastCollision.collision.displacementX,
+                displacementY: raycastCollision.collision.displacementY,
             };
-        if (!displacementCollision || !displacementCollision.collision)
+        }
+        else {
+            displacementCollision.collision = raycastCollision.move.bounds.getDisplacementCollision(raycastCollision.from.bounds);
+        }
+        if (!displacementCollision.collision)
             return;
         applyDisplacementForCollision(displacementCollision);
         applyMomentumTransferForCollision(world.delta, displacementCollision, collision.transferMomentum);
@@ -7136,9 +7134,12 @@ var Physics;
                                         continue;
                                     if (!G.overlapRectangles(move.bounds.getBoundingBox(), from.bounds.getBoundingBox()))
                                         continue;
+                                    var raycastCollision = move.bounds.getRaycastCollision(move.x - move.physicslastx, move.y - move.physicslasty, from.bounds, from.x - from.physicslastx, from.y - from.physicslasty);
+                                    if (!raycastCollision)
+                                        continue;
                                     raycastCollisions.push({
                                         move: move, from: from,
-                                        collision: move.bounds.getRaycastCollision(move.x - move.physicslastx, move.y - move.physicslasty, from.bounds, from.x - from.physicslastx, from.y - from.physicslasty),
+                                        collision: raycastCollision,
                                         callback: collision.callback,
                                         transferMomentum: collision.transferMomentum,
                                     });
@@ -7170,7 +7171,7 @@ var Physics;
                 finally { if (e_36) throw e_36.error; }
             }
         }
-        return raycastCollisions.filter(function (col) { return col && col.collision; });
+        return raycastCollisions;
     }
     function applyDisplacementForCollision(collision) {
         if (collision.move.immovable && collision.from.immovable)
