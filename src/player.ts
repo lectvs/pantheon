@@ -11,7 +11,7 @@ class Player extends Sprite {
         super(config, {
             texture: 'player',
             tint: 0xFF0000,
-            bounds: { x: -16, y: -64, width: 32, height: 64 },
+            bounds: { type: 'rect', x: -16, y: -64, width: 32, height: 64 },
             gravityy: 512,
         });
 

@@ -20,16 +20,54 @@ namespace Physics {
         let iter = 0;
         while (iter < world.collisionIterations) {
             iter++;
-            let collisions = getRaycastCollisions(world)
-                                .sort((a,b) => a.collision.t - b.collision.t);
+            performNormalIteration(world);
+        }
+        performFinalIteration(world);
+    }
 
+    function performNormalIteration(world: World) {
+        let collisions = getRaycastCollisions(world)
+                .sort((a,b) => a.collision.t - b.collision.t);
+
+        for (let collision of collisions) {
+            resolveCollision(world, collision);
+        }
+    }
+
+    function performFinalIteration(world: World) {
+        let collisions = getRaycastCollisions(world);
+
+        let currentSet = new Set<PhysicsWorldObject>();
+        for (let collision of collisions) {
+            if (collision.move.immovable) currentSet.add(collision.move);
+            if (collision.from.immovable) currentSet.add(collision.from);
+        }
+
+        let doneWithCollisions = false;
+        while (!doneWithCollisions) {
+            doneWithCollisions = true;
             for (let collision of collisions) {
-                resolveCollision(world, collision);
+                let hasMove = currentSet.has(collision.move);
+                let hasFrom = currentSet.has(collision.from);
+
+                if (hasMove && !hasFrom) {
+                    resolveCollision(world, collision, collision.move);
+                    currentSet.add(collision.from);
+                    doneWithCollisions = false;
+                    debug('resolved', collision);
+                }
+
+                if (hasFrom && !hasMove) {
+                    resolveCollision(world, collision, collision.from);
+                    currentSet.add(collision.move);
+                    doneWithCollisions = false;
+                    debug('resolved', collision);
+                }
             }
         }
     }
 
-    function resolveCollision(world: World, collision: RaycastCollision) {
+    function resolveCollision(world: World, collision: RaycastCollision, forceImmovable?: PhysicsWorldObject) {
         let raycastCollision: RaycastCollision = {
             move: collision.move,
             from: collision.from,
@@ -58,7 +96,7 @@ namespace Physics {
 
         if (!displacementCollision.collision) return;
 
-        applyDisplacementForCollision(displacementCollision);
+        applyDisplacementForCollision(displacementCollision, forceImmovable);
         applyMomentumTransferForCollision(world.delta, displacementCollision, collision.transferMomentum);
 
         if (collision.callback) collision.callback(collision.move, collision.from);
@@ -88,16 +126,19 @@ namespace Physics {
         return raycastCollisions;
     }
 
-    function applyDisplacementForCollision(collision: Physics.DisplacementCollision) {
-        if (collision.move.immovable && collision.from.immovable) return;
+    function applyDisplacementForCollision(collision: Physics.DisplacementCollision, forceImmovable?: PhysicsWorldObject) {
+        let moveImmovable = collision.move.immovable || collision.move === forceImmovable;
+        let fromImmovable = collision.from.immovable || collision.from === forceImmovable;
 
-        if (collision.move.immovable) {
+        if (moveImmovable && fromImmovable) return;
+
+        if (moveImmovable) {
             collision.from.x -= collision.collision.displacementX;
             collision.from.y -= collision.collision.displacementY;
             return;
         }
 
-        if (collision.from.immovable) {
+        if (fromImmovable) {
             collision.move.x += collision.collision.displacementX;
             collision.move.y += collision.collision.displacementY;
             return;

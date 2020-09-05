@@ -143,13 +143,14 @@ class WorldObject {
     update() {
         this.updateScriptManager();
         this.updateStateMachine();
-        if (this.updateCallback) this.updateCallback(this);
-        this.life.update(this.delta);
 
         if (this.debugFollowMouse) {
             this.x = this.world.getWorldMouseX();
             this.y = this.world.getWorldMouseY();
         }
+        if (this.updateCallback) this.updateCallback(this);
+
+        this.life.update(this.delta);
 
         if (this.parent && this.ignoreCamera) {
             debug(`Warning: ignoraCamera is set to true on a child object. This will be ignored!`);

@@ -69,6 +69,17 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var Point = PIXI.Point;
 var Rectangle = PIXI.Rectangle;
 var Anchor = /** @class */ (function () {
@@ -2540,13 +2551,13 @@ var WorldObject = /** @class */ (function () {
     WorldObject.prototype.update = function () {
         this.updateScriptManager();
         this.updateStateMachine();
-        if (this.updateCallback)
-            this.updateCallback(this);
-        this.life.update(this.delta);
         if (this.debugFollowMouse) {
             this.x = this.world.getWorldMouseX();
             this.y = this.world.getWorldMouseY();
         }
+        if (this.updateCallback)
+            this.updateCallback(this);
+        this.life.update(this.delta);
         if (this.parent && this.ignoreCamera) {
             debug("Warning: ignoraCamera is set to true on a child object. This will be ignored!");
         }
@@ -2839,7 +2850,7 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         _this.gravityy = (_f = config.gravityy) !== null && _f !== void 0 ? _f : 0;
         _this.gravityz = (_g = config.gravityz) !== null && _g !== void 0 ? _g : 0;
         _this.bounce = (_h = config.bounce) !== null && _h !== void 0 ? _h : 0;
-        _this.bounds = config.bounds ? new RectBounds(config.bounds.x, config.bounds.y, config.bounds.width, config.bounds.height, _this) : new RectBounds(0, 0, 0, 0, _this);
+        _this.bounds = _this.createBounds(config.bounds);
         _this.immovable = (_j = config.immovable) !== null && _j !== void 0 ? _j : false;
         _this.colliding = (_k = config.colliding) !== null && _k !== void 0 ? _k : true;
         _this.debugDrawBounds = (_m = (_l = config.debug) === null || _l === void 0 ? void 0 : _l.drawBounds) !== null && _m !== void 0 ? _m : false;
@@ -2861,10 +2872,7 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
     };
     PhysicsWorldObject.prototype.render = function (screen) {
         if (Debug.ALL_PHYSICS_BOUNDS || this.debugDrawBounds) {
-            var worldBounds = this.bounds.getBoundingBox();
-            Draw.brush.color = 0x00FF00;
-            Draw.brush.alpha = 1;
-            Draw.rectangleOutline(screen, worldBounds.x, worldBounds.y, worldBounds.width, worldBounds.height);
+            this.drawBounds(screen);
         }
         _super.prototype.render.call(this, screen);
     };
@@ -2900,6 +2908,27 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
     PhysicsWorldObject.prototype.simulate = function () {
         this.applyGravity();
         this.move();
+    };
+    PhysicsWorldObject.prototype.createBounds = function (bounds) {
+        if (bounds) {
+            if (bounds.type === 'rect')
+                return new RectBounds(bounds.x, bounds.y, bounds.width, bounds.height, this);
+            if (bounds.type === 'circle')
+                return new CircleBounds(bounds.x, bounds.y, bounds.radius, this);
+        }
+        return new NullBounds();
+    };
+    PhysicsWorldObject.prototype.drawBounds = function (screen) {
+        Draw.brush.color = 0x00FF00;
+        Draw.brush.alpha = 1;
+        if (this.bounds instanceof RectBounds) {
+            var box = this.bounds.getBoundingBox();
+            Draw.rectangleOutline(screen, box.x, box.y, box.width, box.height);
+        }
+        else if (this.bounds instanceof CircleBounds) {
+            var center = this.bounds.getCenter();
+            Draw.circleOutline(screen, center.x, center.y, this.bounds.radius);
+        }
     };
     return PhysicsWorldObject;
 }(WorldObject));
@@ -5063,6 +5092,16 @@ var Draw = /** @class */ (function () {
             filters: [mask],
         });
     };
+    Draw.circleOutline = function (texture, x, y, radius, alignment, brush) {
+        if (alignment === void 0) { alignment = this.ALIGNMENT_INNER; }
+        if (brush === void 0) { brush = Draw.brush; }
+        this.graphics.lineStyle(brush.thickness, brush.color, brush.alpha, alignment);
+        this.graphics.clear();
+        this.graphics.beginFill(0, 0);
+        this.graphics.drawCircle(x, y, radius);
+        this.graphics.endFill();
+        texture.renderPIXIDisplayObject(this.graphics);
+    };
     Draw.pixel = function (texture, x, y, brush) {
         if (brush === void 0) { brush = Draw.brush; }
         Draw.PIXEL_TEXTURE.renderTo(texture, {
@@ -7062,29 +7101,84 @@ var Camera = /** @class */ (function () {
 var Physics;
 (function (Physics) {
     function resolveCollisions(world) {
-        var e_35, _a;
         var iter = 0;
         while (iter < world.collisionIterations) {
             iter++;
-            var collisions = getRaycastCollisions(world)
-                .sort(function (a, b) { return a.collision.t - b.collision.t; });
+            performNormalIteration(world);
+        }
+        performFinalIteration(world);
+    }
+    Physics.resolveCollisions = resolveCollisions;
+    function performNormalIteration(world) {
+        var e_35, _a;
+        var collisions = getRaycastCollisions(world)
+            .sort(function (a, b) { return a.collision.t - b.collision.t; });
+        try {
+            for (var collisions_1 = __values(collisions), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
+                var collision = collisions_1_1.value;
+                resolveCollision(world, collision);
+            }
+        }
+        catch (e_35_1) { e_35 = { error: e_35_1 }; }
+        finally {
             try {
-                for (var collisions_1 = (e_35 = void 0, __values(collisions)), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
-                    var collision = collisions_1_1.value;
-                    resolveCollision(world, collision);
+                if (collisions_1_1 && !collisions_1_1.done && (_a = collisions_1.return)) _a.call(collisions_1);
+            }
+            finally { if (e_35) throw e_35.error; }
+        }
+    }
+    function performFinalIteration(world) {
+        var e_36, _a, e_37, _b;
+        var collisions = getRaycastCollisions(world);
+        var currentSet = new Set();
+        try {
+            for (var collisions_2 = __values(collisions), collisions_2_1 = collisions_2.next(); !collisions_2_1.done; collisions_2_1 = collisions_2.next()) {
+                var collision = collisions_2_1.value;
+                if (collision.move.immovable)
+                    currentSet.add(collision.move);
+                if (collision.from.immovable)
+                    currentSet.add(collision.from);
+            }
+        }
+        catch (e_36_1) { e_36 = { error: e_36_1 }; }
+        finally {
+            try {
+                if (collisions_2_1 && !collisions_2_1.done && (_a = collisions_2.return)) _a.call(collisions_2);
+            }
+            finally { if (e_36) throw e_36.error; }
+        }
+        var doneWithCollisions = false;
+        while (!doneWithCollisions) {
+            doneWithCollisions = true;
+            try {
+                for (var collisions_3 = (e_37 = void 0, __values(collisions)), collisions_3_1 = collisions_3.next(); !collisions_3_1.done; collisions_3_1 = collisions_3.next()) {
+                    var collision = collisions_3_1.value;
+                    var hasMove = currentSet.has(collision.move);
+                    var hasFrom = currentSet.has(collision.from);
+                    if (hasMove && !hasFrom) {
+                        resolveCollision(world, collision, collision.move);
+                        currentSet.add(collision.from);
+                        doneWithCollisions = false;
+                        debug('resolved', collision);
+                    }
+                    if (hasFrom && !hasMove) {
+                        resolveCollision(world, collision, collision.from);
+                        currentSet.add(collision.move);
+                        doneWithCollisions = false;
+                        debug('resolved', collision);
+                    }
                 }
             }
-            catch (e_35_1) { e_35 = { error: e_35_1 }; }
+            catch (e_37_1) { e_37 = { error: e_37_1 }; }
             finally {
                 try {
-                    if (collisions_1_1 && !collisions_1_1.done && (_a = collisions_1.return)) _a.call(collisions_1);
+                    if (collisions_3_1 && !collisions_3_1.done && (_b = collisions_3.return)) _b.call(collisions_3);
                 }
-                finally { if (e_35) throw e_35.error; }
+                finally { if (e_37) throw e_37.error; }
             }
         }
     }
-    Physics.resolveCollisions = resolveCollisions;
-    function resolveCollision(world, collision) {
+    function resolveCollision(world, collision, forceImmovable) {
         var raycastCollision = {
             move: collision.move,
             from: collision.from,
@@ -7111,24 +7205,24 @@ var Physics;
         }
         if (!displacementCollision.collision)
             return;
-        applyDisplacementForCollision(displacementCollision);
+        applyDisplacementForCollision(displacementCollision, forceImmovable);
         applyMomentumTransferForCollision(world.delta, displacementCollision, collision.transferMomentum);
         if (collision.callback)
             collision.callback(collision.move, collision.from);
     }
     function getRaycastCollisions(world) {
-        var e_36, _a, e_37, _b, e_38, _c;
+        var e_38, _a, e_39, _b, e_40, _c;
         var raycastCollisions = [];
         for (var moveGroup in world.collisions) {
             try {
-                for (var _d = (e_36 = void 0, __values(world.collisions[moveGroup])), _e = _d.next(); !_e.done; _e = _d.next()) {
+                for (var _d = (e_38 = void 0, __values(world.collisions[moveGroup])), _e = _d.next(); !_e.done; _e = _d.next()) {
                     var collision = _e.value;
                     var fromGroup = collision.collidingPhysicsGroup;
                     try {
-                        for (var _f = (e_37 = void 0, __values(world.physicsGroups[moveGroup].worldObjects)), _g = _f.next(); !_g.done; _g = _f.next()) {
+                        for (var _f = (e_39 = void 0, __values(world.physicsGroups[moveGroup].worldObjects)), _g = _f.next(); !_g.done; _g = _f.next()) {
                             var move = _g.value;
                             try {
-                                for (var _h = (e_38 = void 0, __values(world.physicsGroups[fromGroup].worldObjects)), _j = _h.next(); !_j.done; _j = _h.next()) {
+                                for (var _h = (e_40 = void 0, __values(world.physicsGroups[fromGroup].worldObjects)), _j = _h.next(); !_j.done; _j = _h.next()) {
                                     var from = _j.value;
                                     if (move === from)
                                         continue;
@@ -7145,43 +7239,45 @@ var Physics;
                                     });
                                 }
                             }
-                            catch (e_38_1) { e_38 = { error: e_38_1 }; }
+                            catch (e_40_1) { e_40 = { error: e_40_1 }; }
                             finally {
                                 try {
                                     if (_j && !_j.done && (_c = _h.return)) _c.call(_h);
                                 }
-                                finally { if (e_38) throw e_38.error; }
+                                finally { if (e_40) throw e_40.error; }
                             }
                         }
                     }
-                    catch (e_37_1) { e_37 = { error: e_37_1 }; }
+                    catch (e_39_1) { e_39 = { error: e_39_1 }; }
                     finally {
                         try {
                             if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
                         }
-                        finally { if (e_37) throw e_37.error; }
+                        finally { if (e_39) throw e_39.error; }
                     }
                 }
             }
-            catch (e_36_1) { e_36 = { error: e_36_1 }; }
+            catch (e_38_1) { e_38 = { error: e_38_1 }; }
             finally {
                 try {
                     if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
                 }
-                finally { if (e_36) throw e_36.error; }
+                finally { if (e_38) throw e_38.error; }
             }
         }
         return raycastCollisions;
     }
-    function applyDisplacementForCollision(collision) {
-        if (collision.move.immovable && collision.from.immovable)
+    function applyDisplacementForCollision(collision, forceImmovable) {
+        var moveImmovable = collision.move.immovable || collision.move === forceImmovable;
+        var fromImmovable = collision.from.immovable || collision.from === forceImmovable;
+        if (moveImmovable && fromImmovable)
             return;
-        if (collision.move.immovable) {
+        if (moveImmovable) {
             collision.from.x -= collision.collision.displacementX;
             collision.from.y -= collision.collision.displacementY;
             return;
         }
-        if (collision.from.immovable) {
+        if (fromImmovable) {
             collision.move.x += collision.collision.displacementX;
             collision.move.y += collision.collision.displacementY;
             return;
@@ -7222,6 +7318,418 @@ var Physics;
         obj.vy -= factor * dy;
     }
 })(Physics || (Physics = {}));
+var CircleBounds = /** @class */ (function () {
+    function CircleBounds(x, y, radius, parent) {
+        this.parent = parent;
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.center = { x: x, y: y };
+        this.boundingBox = new Rectangle(0, 0, 0, 0);
+    }
+    CircleBounds.prototype.getCenter = function () {
+        var x = this.parent ? this.parent.x : 0;
+        var y = this.parent ? this.parent.y : 0;
+        this.center.x = x + this.x;
+        this.center.y = y + this.y;
+        return this.center;
+    };
+    CircleBounds.prototype.getBoundingBox = function (x, y) {
+        x = x !== null && x !== void 0 ? x : (this.parent ? this.parent.x : 0);
+        y = y !== null && y !== void 0 ? y : (this.parent ? this.parent.y : 0);
+        this.boundingBox.x = x + this.x - this.radius;
+        this.boundingBox.y = y + this.y - this.radius;
+        this.boundingBox.width = this.radius * 2;
+        this.boundingBox.height = this.radius * 2;
+        return this.boundingBox;
+    };
+    CircleBounds.prototype.getDisplacementCollision = function (other) {
+        if (other instanceof RectBounds)
+            return Bounds.Collision.getDisplacementCollisionCircleRect(this, other);
+        if (other instanceof CircleBounds)
+            return Bounds.Collision.getDisplacementCollisionCircleCircle(this, other);
+        return undefined;
+    };
+    CircleBounds.prototype.getRaycastCollision = function (dx, dy, other, otherdx, otherdy) {
+        if (other instanceof RectBounds)
+            return Bounds.Collision.getRaycastCollisionCircleRect(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof CircleBounds)
+            return Bounds.Collision.getRaycastCollisionCircleCircle(this, dx, dy, other, otherdx, otherdy);
+        return undefined;
+    };
+    CircleBounds.prototype.isOverlapping = function (other) {
+        if (other instanceof RectBounds)
+            return Bounds.Collision.isOverlappingCircleRect(this, other);
+        if (other instanceof CircleBounds)
+            return Bounds.Collision.isOverlappingCircleCircle(this, other);
+        return false;
+    };
+    return CircleBounds;
+}());
+var Bounds;
+(function (Bounds) {
+    var Collision;
+    (function (Collision) {
+        function getDisplacementCollisionCircleCircle(move, from) {
+            if (!move.isOverlapping(from))
+                return undefined;
+            var movePos = move.getCenter();
+            var fromPos = from.getCenter();
+            var distance = M.distance(movePos.x, movePos.y, fromPos.x, fromPos.y);
+            var dx = 0;
+            var dy = move.radius + from.radius;
+            if (distance !== 0) {
+                var dradius = (move.radius + from.radius) - distance;
+                debug(dradius);
+                dx = (movePos.x - fromPos.x) * dradius / distance;
+                dy = (movePos.y - fromPos.y) * dradius / distance;
+            }
+            return {
+                bounds1: move,
+                bounds2: from,
+                displacementX: dx,
+                displacementY: dy,
+            };
+        }
+        Collision.getDisplacementCollisionCircleCircle = getDisplacementCollisionCircleCircle;
+        function getDisplacementCollisionCircleRect(move, from) {
+            if (!move.isOverlapping(from))
+                return undefined;
+            var movePos = move.getCenter();
+            var fromBox = from.getBoundingBox();
+            var checkTop = movePos.y <= fromBox.top + fromBox.height / 2;
+            var checkLeft = movePos.x <= fromBox.left + fromBox.width / 2;
+            var displacementXs = [];
+            var displacementYs = [];
+            if (checkTop) {
+                displacementXs.push(0);
+                displacementYs.push(fromBox.top - move.radius - movePos.y);
+            }
+            else {
+                displacementXs.push(0);
+                displacementYs.push(fromBox.bottom + move.radius - movePos.y);
+            }
+            if (checkLeft) {
+                displacementXs.push(fromBox.left - move.radius - movePos.x);
+                displacementYs.push(0);
+            }
+            else {
+                displacementXs.push(fromBox.right + move.radius - movePos.x);
+                displacementYs.push(0);
+            }
+            if (checkTop && checkLeft) {
+                if (movePos.x === fromBox.left && movePos.y === fromBox.top) {
+                    displacementXs.push(-move.radius * Math.SQRT2);
+                    displacementYs.push(-move.radius * Math.SQRT2);
+                }
+                else if (movePos.x < fromBox.left && movePos.y < fromBox.top) {
+                    var srcd = M.distance(movePos.x, movePos.y, fromBox.left, fromBox.top);
+                    var dstd = move.radius - srcd;
+                    displacementXs.push((movePos.x - fromBox.left) * dstd / srcd);
+                    displacementYs.push((movePos.y - fromBox.top) * dstd / srcd);
+                }
+                else if (movePos.x > fromBox.left && movePos.y > fromBox.top) {
+                    var srcd = M.distance(movePos.x, movePos.y, fromBox.left, fromBox.top);
+                    var dstd = move.radius + srcd;
+                    displacementXs.push((movePos.x - fromBox.left) * dstd / srcd);
+                    displacementYs.push((movePos.y - fromBox.top) * dstd / srcd);
+                }
+            }
+            else if (checkTop && !checkLeft) {
+                if (movePos.x === fromBox.right && movePos.y === fromBox.top) {
+                    displacementXs.push(move.radius * Math.SQRT2);
+                    displacementYs.push(-move.radius * Math.SQRT2);
+                }
+                else if (movePos.x > fromBox.right && movePos.y < fromBox.top) {
+                    var srcd = M.distance(movePos.x, movePos.y, fromBox.right, fromBox.top);
+                    var dstd = move.radius - srcd;
+                    displacementXs.push((movePos.x - fromBox.right) * dstd / srcd);
+                    displacementYs.push((movePos.y - fromBox.top) * dstd / srcd);
+                }
+                else if (movePos.x < fromBox.right && movePos.y > fromBox.top) {
+                    var srcd = M.distance(movePos.x, movePos.y, fromBox.right, fromBox.top);
+                    var dstd = move.radius + srcd;
+                    displacementXs.push((movePos.x - fromBox.right) * dstd / srcd);
+                    displacementYs.push((movePos.y - fromBox.top) * dstd / srcd);
+                }
+            }
+            else if (!checkTop && !checkLeft) {
+                if (movePos.x === fromBox.right && movePos.y === fromBox.bottom) {
+                    displacementXs.push(move.radius * Math.SQRT2);
+                    displacementYs.push(move.radius * Math.SQRT2);
+                }
+                else if (movePos.x > fromBox.right && movePos.y > fromBox.bottom) {
+                    var srcd = M.distance(movePos.x, movePos.y, fromBox.right, fromBox.bottom);
+                    var dstd = move.radius - srcd;
+                    displacementXs.push((movePos.x - fromBox.right) * dstd / srcd);
+                    displacementYs.push((movePos.y - fromBox.bottom) * dstd / srcd);
+                }
+                else if (movePos.x < fromBox.right && movePos.y < fromBox.bottom) {
+                    var srcd = M.distance(movePos.x, movePos.y, fromBox.right, fromBox.bottom);
+                    var dstd = move.radius + srcd;
+                    displacementXs.push((movePos.x - fromBox.right) * dstd / srcd);
+                    displacementYs.push((movePos.y - fromBox.bottom) * dstd / srcd);
+                }
+            }
+            else if (!checkTop && checkLeft) {
+                if (movePos.x === fromBox.left && movePos.y === fromBox.bottom) {
+                    displacementXs.push(-move.radius * Math.SQRT2);
+                    displacementYs.push(move.radius * Math.SQRT2);
+                }
+                else if (movePos.x < fromBox.left && movePos.y > fromBox.bottom) {
+                    var srcd = M.distance(movePos.x, movePos.y, fromBox.left, fromBox.bottom);
+                    var dstd = move.radius - srcd;
+                    displacementXs.push((movePos.x - fromBox.left) * dstd / srcd);
+                    displacementYs.push((movePos.y - fromBox.bottom) * dstd / srcd);
+                }
+                else if (movePos.x > fromBox.left && movePos.y < fromBox.bottom) {
+                    var srcd = M.distance(movePos.x, movePos.y, fromBox.left, fromBox.bottom);
+                    var dstd = move.radius + srcd;
+                    displacementXs.push((movePos.x - fromBox.left) * dstd / srcd);
+                    displacementYs.push((movePos.y - fromBox.bottom) * dstd / srcd);
+                }
+            }
+            var i = M.argmin(A.range(displacementXs.length), function (i) { return M.magnitude(displacementXs[i], displacementYs[i]); });
+            return {
+                bounds1: move,
+                bounds2: from,
+                displacementX: displacementXs[i],
+                displacementY: displacementYs[i],
+            };
+        }
+        Collision.getDisplacementCollisionCircleRect = getDisplacementCollisionCircleRect;
+        function getDisplacementCollisionRectCircle(move, from) {
+            return invertDisplacementCollision(getDisplacementCollisionCircleRect(from, move));
+        }
+        Collision.getDisplacementCollisionRectCircle = getDisplacementCollisionRectCircle;
+        function getDisplacementCollisionRectRect(move, from) {
+            if (!move.isOverlapping(from))
+                return undefined;
+            var currentBox = move.getBoundingBox();
+            var currentOtherBox = from.getBoundingBox();
+            var displacementX = M.argmin([currentOtherBox.right - currentBox.left, currentOtherBox.left - currentBox.right], Math.abs);
+            var displacementY = M.argmin([currentOtherBox.bottom - currentBox.top, currentOtherBox.top - currentBox.bottom], Math.abs);
+            if (Math.abs(displacementX) < Math.abs(displacementY)) {
+                displacementY = 0;
+            }
+            else {
+                displacementX = 0;
+            }
+            return {
+                bounds1: move,
+                bounds2: from,
+                displacementX: displacementX,
+                displacementY: displacementY,
+            };
+        }
+        Collision.getDisplacementCollisionRectRect = getDisplacementCollisionRectRect;
+        function getRaycastCollisionCircleCircle(move, movedx, movedy, from, fromdx, fromdy) {
+            if (!move.isOverlapping(from))
+                return undefined;
+            var movePos = move.getCenter();
+            movePos.x -= movedx;
+            movePos.y -= movedy;
+            var fromPos = from.getCenter();
+            fromPos.x -= fromdx;
+            fromPos.y -= fromdy;
+            var t = raycastTimeCircleCircle(movePos.x - fromPos.x, movePos.y - fromPos.y, movedx - fromdx, movedy - fromdy, move.radius + from.radius);
+            var result = getDisplacementCollisionCircleCircle(move, from);
+            result.t = t;
+            return result;
+        }
+        Collision.getRaycastCollisionCircleCircle = getRaycastCollisionCircleCircle;
+        function getRaycastCollisionCircleRect(move, movedx, movedy, from, fromdx, fromdy) {
+            if (!move.isOverlapping(from))
+                return undefined;
+            var movePos = move.getCenter();
+            var fromBox = from.getBoundingBox();
+            var topleft_t = raycastTimeCircleCircle(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius);
+            var topright_t = raycastTimeCircleCircle(movePos.x - fromBox.right, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius);
+            var bottomright_t = raycastTimeCircleCircle(movePos.x - fromBox.right, movePos.y - fromBox.bottom, movedx - fromdx, movedy - fromdy, move.radius);
+            var bottomleft_t = raycastTimeCircleCircle(movePos.x - fromBox.left, movePos.y - fromBox.bottom, movedx - fromdx, movedy - fromdy, move.radius);
+            var left_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, 0, fromBox.height);
+            var right_t = raycastTimeCircleSegment(movePos.x - fromBox.right, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, 0, fromBox.height);
+            var top_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, fromBox.width, 0);
+            var bottom_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.bottom, movedx - fromdx, movedy - fromdy, move.radius, fromBox.width, 0);
+            var t = Math.min(topleft_t, topright_t, bottomright_t, bottomleft_t, left_t, right_t, top_t, bottom_t);
+            var result = getDisplacementCollisionCircleRect(move, from);
+            result.t = t;
+            return result;
+        }
+        Collision.getRaycastCollisionCircleRect = getRaycastCollisionCircleRect;
+        function getRaycastCollisionRectCircle(move, movedx, movedy, from, fromdx, fromdy) {
+            return invertRaycastCollision(getRaycastCollisionCircleRect(from, fromdx, fromdy, move, movedx, movedy));
+        }
+        Collision.getRaycastCollisionRectCircle = getRaycastCollisionRectCircle;
+        function getRaycastCollisionRectRect(move, movedx, movedy, from, fromdx, fromdy) {
+            if (!move.isOverlapping(from))
+                return undefined;
+            var box = move.getBoundingBox();
+            box.x -= movedx;
+            box.y -= movedy;
+            var otherbox = from.getBoundingBox();
+            otherbox.x -= fromdx;
+            otherbox.y -= fromdy;
+            var topbot_t = Infinity;
+            var bottop_t = Infinity;
+            var leftright_t = Infinity;
+            var rightleft_t = Infinity;
+            if (movedy !== fromdy) {
+                topbot_t = (box.top - otherbox.bottom) / (fromdy - movedy);
+                if (box.right + movedx * topbot_t <= otherbox.left + fromdx * topbot_t || box.left + movedx * topbot_t >= otherbox.right + fromdx * topbot_t) {
+                    topbot_t = Infinity;
+                }
+                bottop_t = (box.bottom - otherbox.top) / (fromdy - movedy);
+                if (box.right + movedx * bottop_t <= otherbox.left + fromdx * bottop_t || box.left + movedx * bottop_t >= otherbox.right + fromdx * bottop_t) {
+                    bottop_t = Infinity;
+                }
+            }
+            if (movedx !== fromdx) {
+                leftright_t = (box.left - otherbox.right) / (fromdx - movedx);
+                if (box.bottom + movedy * leftright_t <= otherbox.top + fromdy * leftright_t || box.top + movedy * leftright_t >= otherbox.bottom + fromdy * leftright_t) {
+                    leftright_t = Infinity;
+                }
+                rightleft_t = (box.right - otherbox.left) / (fromdx - movedx);
+                if (box.bottom + movedy * rightleft_t <= otherbox.top + fromdy * rightleft_t || box.top + movedy * rightleft_t >= otherbox.bottom + fromdy * rightleft_t) {
+                    rightleft_t = Infinity;
+                }
+            }
+            var min_t = Math.min(topbot_t, bottop_t, leftright_t, rightleft_t);
+            if (min_t === Infinity)
+                return undefined;
+            var displacementX = 0;
+            var displacementY = 0;
+            var currentBox = move.getBoundingBox();
+            var currentOtherBox = from.getBoundingBox();
+            if (min_t === topbot_t) {
+                displacementY = currentOtherBox.bottom - currentBox.top;
+            }
+            else if (min_t === bottop_t) {
+                displacementY = currentOtherBox.top - currentBox.bottom;
+            }
+            else if (min_t === leftright_t) {
+                displacementX = currentOtherBox.right - currentBox.left;
+            }
+            else if (min_t === rightleft_t) {
+                displacementX = currentOtherBox.left - currentBox.right;
+            }
+            if (displacementX !== 0 && displacementY !== 0) {
+                error("Warning: rect displacement in both axes");
+            }
+            return {
+                bounds1: move,
+                bounds2: from,
+                t: min_t,
+                displacementX: displacementX,
+                displacementY: displacementY,
+            };
+        }
+        Collision.getRaycastCollisionRectRect = getRaycastCollisionRectRect;
+        function isOverlappingCircleCircle(move, from) {
+            var movePosition = move.getCenter();
+            var fromPosition = from.getCenter();
+            return M.distance(movePosition.x, movePosition.y, fromPosition.x, fromPosition.y) < move.radius + from.radius;
+        }
+        Collision.isOverlappingCircleCircle = isOverlappingCircleCircle;
+        function isOverlappingCircleRect(move, from) {
+            var movePosition = move.getCenter();
+            var fromBox = from.getBoundingBox();
+            // Tall rect
+            if (fromBox.left < movePosition.x && movePosition.x < fromBox.right && fromBox.top - move.radius < movePosition.y && movePosition.y < fromBox.bottom + move.radius) {
+                return true;
+            }
+            // Long rect
+            if (fromBox.left - move.radius < movePosition.x && movePosition.x < fromBox.right + move.radius && fromBox.top < movePosition.y && movePosition.y < fromBox.bottom) {
+                return true;
+            }
+            // Vertices
+            if (M.distanceSq(movePosition.x, movePosition.y, fromBox.left, fromBox.top) < move.radius * move.radius) {
+                return true;
+            }
+            if (M.distanceSq(movePosition.x, movePosition.y, fromBox.left, fromBox.bottom) < move.radius * move.radius) {
+                return true;
+            }
+            if (M.distanceSq(movePosition.x, movePosition.y, fromBox.right, fromBox.bottom) < move.radius * move.radius) {
+                return true;
+            }
+            if (M.distanceSq(movePosition.x, movePosition.y, fromBox.right, fromBox.top) < move.radius * move.radius) {
+                return true;
+            }
+            return false;
+        }
+        Collision.isOverlappingCircleRect = isOverlappingCircleRect;
+        function isOverlappingRectRect(move, from) {
+            return G.overlapRectangles(move.getBoundingBox(), from.getBoundingBox());
+        }
+        Collision.isOverlappingRectRect = isOverlappingRectRect;
+        function invertDisplacementCollision(collision) {
+            if (collision) {
+                var temp = collision.bounds1;
+                collision.bounds1 = collision.bounds2;
+                collision.bounds2 = temp;
+                collision.displacementX *= -1;
+                collision.displacementY *= -1;
+            }
+            return collision;
+        }
+        Collision.invertDisplacementCollision = invertDisplacementCollision;
+        function invertRaycastCollision(collision) {
+            if (collision) {
+                var temp = collision.bounds1;
+                collision.bounds1 = collision.bounds2;
+                collision.bounds2 = temp;
+                collision.displacementX *= -1;
+                collision.displacementY *= -1;
+            }
+            return collision;
+        }
+        Collision.invertRaycastCollision = invertRaycastCollision;
+        function raycastTimeCircleCircle(dx, dy, ddx, ddy, R) {
+            var a = ddx * ddx + ddy * ddy;
+            var b = 2 * dx * ddx + 2 * dy * ddy;
+            var c = dx * dx + dy * dy - R * R;
+            var disc = b * b - 4 * a * c;
+            if (disc < 0)
+                return Infinity;
+            return (-b - Math.sqrt(disc)) / (2 * a);
+        }
+        function raycastTimeCircleSegment(dx, dy, ddx, ddy, r, linedx, linedy) {
+            var L = M.magnitude(linedx, linedy);
+            var denom = linedx * ddy - linedy * ddx;
+            var t1 = (r * L + linedy * dx - linedx * dy) / denom;
+            var t2 = (-r * L + linedy * dx - linedx * dy) / denom;
+            var t = Math.min(t1, t2);
+            var newx = dx + ddx * t;
+            var newy = dy + ddy * t;
+            var comp = linedx * newx + linedy * newy;
+            if (comp < 0 || L * L < comp)
+                return Infinity;
+            return t;
+        }
+    })(Collision = Bounds.Collision || (Bounds.Collision = {}));
+})(Bounds || (Bounds = {}));
+var NullBounds = /** @class */ (function () {
+    function NullBounds() {
+        this.position = { x: Infinity, y: Infinity };
+        this.boundingBox = new Rectangle(Infinity, Infinity, 0, 0);
+    }
+    NullBounds.prototype.getPosition = function (x, y) {
+        return this.position;
+    };
+    NullBounds.prototype.getBoundingBox = function (x, y) {
+        return this.boundingBox;
+    };
+    NullBounds.prototype.getDisplacementCollision = function (other) {
+        return undefined;
+    };
+    NullBounds.prototype.getRaycastCollision = function (dx, dy, other, otherdx, otherdy) {
+        return undefined;
+    };
+    NullBounds.prototype.isOverlapping = function (other) {
+        return false;
+    };
+    return NullBounds;
+}());
 var RectBounds = /** @class */ (function () {
     function RectBounds(x, y, width, height, parent) {
         this.parent = parent;
@@ -7229,7 +7737,7 @@ var RectBounds = /** @class */ (function () {
         this.y = y;
         this.width = width;
         this.height = height;
-        this.boundingBox = new Rectangle(x, y, width, height);
+        this.boundingBox = new Rectangle(0, 0, 0, 0);
     }
     RectBounds.prototype.getBoundingBox = function (x, y) {
         x = x !== null && x !== void 0 ? x : (this.parent ? this.parent.x : 0);
@@ -7240,99 +7748,26 @@ var RectBounds = /** @class */ (function () {
         this.boundingBox.height = this.height;
         return this.boundingBox;
     };
-    RectBounds.prototype.getRaycastCollision = function (dx, dy, other, otherdx, otherdy) {
-        if (!this.isOverlapping(other)) {
-            return undefined;
-        }
-        if (!(other instanceof RectBounds))
-            return undefined;
-        var box = this.getBoundingBox();
-        box.x -= dx;
-        box.y -= dy;
-        var otherbox = other.getBoundingBox();
-        otherbox.x -= otherdx;
-        otherbox.y -= otherdy;
-        var topbot_t = Infinity;
-        var bottop_t = Infinity;
-        var leftright_t = Infinity;
-        var rightleft_t = Infinity;
-        if (dy !== otherdy) {
-            topbot_t = (box.top - otherbox.bottom) / (otherdy - dy);
-            if (box.right + dx * topbot_t <= otherbox.left + otherdx * topbot_t || box.left + dx * topbot_t >= otherbox.right + otherdx * topbot_t) {
-                topbot_t = Infinity;
-            }
-            bottop_t = (box.bottom - otherbox.top) / (otherdy - dy);
-            if (box.right + dx * bottop_t <= otherbox.left + otherdx * bottop_t || box.left + dx * bottop_t >= otherbox.right + otherdx * bottop_t) {
-                bottop_t = Infinity;
-            }
-        }
-        if (dx !== otherdx) {
-            leftright_t = (box.left - otherbox.right) / (otherdx - dx);
-            if (box.bottom + dy * leftright_t <= otherbox.top + otherdy * leftright_t || box.top + dy * leftright_t >= otherbox.bottom + otherdy * leftright_t) {
-                leftright_t = Infinity;
-            }
-            rightleft_t = (box.right - otherbox.left) / (otherdx - dx);
-            if (box.bottom + dy * rightleft_t <= otherbox.top + otherdy * rightleft_t || box.top + dy * rightleft_t >= otherbox.bottom + otherdy * rightleft_t) {
-                rightleft_t = Infinity;
-            }
-        }
-        var min_t = Math.min(topbot_t, bottop_t, leftright_t, rightleft_t);
-        if (min_t === Infinity)
-            return undefined;
-        var displacementX = 0;
-        var displacementY = 0;
-        var currentBox = this.getBoundingBox();
-        var currentOtherBox = other.getBoundingBox();
-        if (min_t === topbot_t) {
-            displacementY = currentOtherBox.bottom - currentBox.top;
-        }
-        else if (min_t === bottop_t) {
-            displacementY = currentOtherBox.top - currentBox.bottom;
-        }
-        else if (min_t === leftright_t) {
-            displacementX = currentOtherBox.right - currentBox.left;
-        }
-        else if (min_t === rightleft_t) {
-            displacementX = currentOtherBox.left - currentBox.right;
-        }
-        if (displacementX !== 0 && displacementY !== 0) {
-            error("Warning: rect displacement in both axes");
-        }
-        return {
-            bounds1: this,
-            bounds2: other,
-            t: min_t,
-            displacementX: displacementX,
-            displacementY: displacementY,
-        };
-    };
     RectBounds.prototype.getDisplacementCollision = function (other) {
-        if (!this.isOverlapping(other)) {
-            return undefined;
-        }
-        if (!(other instanceof RectBounds))
-            return undefined;
-        var currentBox = this.getBoundingBox();
-        var currentOtherBox = other.getBoundingBox();
-        var displacementX = M.argmin([currentOtherBox.right - currentBox.left, currentOtherBox.left - currentBox.right], Math.abs);
-        var displacementY = M.argmin([currentOtherBox.bottom - currentBox.top, currentOtherBox.top - currentBox.bottom], Math.abs);
-        if (Math.abs(displacementX) < Math.abs(displacementY)) {
-            displacementY = 0;
-        }
-        else {
-            displacementX = 0;
-        }
-        return {
-            bounds1: this,
-            bounds2: other,
-            displacementX: displacementX,
-            displacementY: displacementY,
-        };
+        if (other instanceof RectBounds)
+            return Bounds.Collision.getDisplacementCollisionRectRect(this, other);
+        if (other instanceof CircleBounds)
+            return Bounds.Collision.getDisplacementCollisionRectCircle(this, other);
+        return undefined;
+    };
+    RectBounds.prototype.getRaycastCollision = function (dx, dy, other, otherdx, otherdy) {
+        if (other instanceof RectBounds)
+            return Bounds.Collision.getRaycastCollisionRectRect(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof CircleBounds)
+            return Bounds.Collision.getRaycastCollisionRectCircle(this, dx, dy, other, otherdx, otherdy);
+        return undefined;
     };
     RectBounds.prototype.isOverlapping = function (other) {
-        if (!(other instanceof RectBounds))
-            return false;
-        return G.overlapRectangles(this.getBoundingBox(), other.getBoundingBox());
+        if (other instanceof RectBounds)
+            return Bounds.Collision.isOverlappingRectRect(this, other);
+        if (other instanceof CircleBounds)
+            return Bounds.Collision.isOverlappingCircleRect(other, this);
+        return false;
     };
     return RectBounds;
 }());
@@ -7371,7 +7806,7 @@ var Effects = /** @class */ (function () {
         return this.pre.filters.concat(this.effects).concat(this.post.filters);
     };
     Effects.prototype.updateEffects = function (delta) {
-        var e_39, _a, e_40, _b;
+        var e_41, _a, e_42, _b;
         if (this.effects[Effects.SILHOUETTE_I])
             this.effects[Effects.SILHOUETTE_I].updateTime(delta);
         if (this.effects[Effects.OUTLINE_I])
@@ -7382,12 +7817,12 @@ var Effects = /** @class */ (function () {
                 filter.updateTime(delta);
             }
         }
-        catch (e_39_1) { e_39 = { error: e_39_1 }; }
+        catch (e_41_1) { e_41 = { error: e_41_1 }; }
         finally {
             try {
                 if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
             }
-            finally { if (e_39) throw e_39.error; }
+            finally { if (e_41) throw e_41.error; }
         }
         try {
             for (var _e = __values(this.post.filters), _f = _e.next(); !_f.done; _f = _e.next()) {
@@ -7395,12 +7830,12 @@ var Effects = /** @class */ (function () {
                 filter.updateTime(delta);
             }
         }
-        catch (e_40_1) { e_40 = { error: e_40_1 }; }
+        catch (e_42_1) { e_42 = { error: e_42_1 }; }
         finally {
             try {
                 if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
             }
-            finally { if (e_40) throw e_40.error; }
+            finally { if (e_42) throw e_42.error; }
         }
     };
     Effects.prototype.updateFromConfig = function (config) {
@@ -7758,7 +8193,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_41, _a;
+        var e_43, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -7772,12 +8207,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_41_1) { e_41 = { error: e_41_1 }; }
+            catch (e_43_1) { e_43 = { error: e_43_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_41) throw e_41.error; }
+                finally { if (e_43) throw e_43.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -7830,7 +8265,7 @@ var Tilemap = /** @class */ (function (_super) {
         this.dirty = true;
     };
     Tilemap.prototype.createCollisionBoxes = function () {
-        var e_42, _a;
+        var e_44, _a;
         World.Actions.removeWorldObjectsFromWorld(this.collisionBoxes);
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tileset);
@@ -7841,7 +8276,7 @@ var Tilemap = /** @class */ (function (_super) {
                 var rect = collisionRects_1_1.value;
                 var box = new PhysicsWorldObject({
                     x: this.x, y: this.y,
-                    bounds: rect,
+                    bounds: __assign({ type: 'rect' }, rect),
                     physicsGroup: this.physicsGroup,
                     immovable: true,
                     debug: {
@@ -7851,12 +8286,12 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_42_1) { e_42 = { error: e_42_1 }; }
+        catch (e_44_1) { e_44 = { error: e_44_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_42) throw e_42.error; }
+            finally { if (e_44) throw e_44.error; }
         }
         this.addChildren(this.collisionBoxes);
     };
@@ -8182,7 +8617,7 @@ var SmartTilemap = /** @class */ (function (_super) {
         }
         Util.getSmartTilemapLayer = getSmartTilemapLayer;
         function getSmartTile(tilemap, x, y, config) {
-            var e_43, _a;
+            var e_45, _a;
             var pattern = getTilePattern(tilemap, x, y, config);
             try {
                 for (var _b = __values(config.rules), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -8192,12 +8627,12 @@ var SmartTilemap = /** @class */ (function (_super) {
                     }
                 }
             }
-            catch (e_43_1) { e_43 = { error: e_43_1 }; }
+            catch (e_45_1) { e_45 = { error: e_45_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_43) throw e_43.error; }
+                finally { if (e_45) throw e_45.error; }
             }
             return tilemap[y][x];
         }
@@ -8253,6 +8688,9 @@ var Assets;
             anchor: Anchor.BOTTOM,
         },
         'platform': {},
+        'circle': {
+            anchor: Anchor.CENTER,
+        },
     };
     Assets.sounds = {
         // Debug
@@ -8365,11 +8803,11 @@ var Box = /** @class */ (function (_super) {
     function Box(config) {
         var _this = _super.call(this, config, {
             texture: 'debug',
-            tint: 0x00FF00,
+            tint: 0x660000,
             scaleX: 2,
             scaleY: 2,
             gravityy: 200,
-            bounds: { x: 0, y: 0, width: 32, height: 32 },
+            bounds: { type: 'circle', x: 0, y: 0, radius: 16 },
         }) || this;
         _this.carrierModule = new CarrierModule(_this);
         return _this;
@@ -8390,7 +8828,7 @@ var CarrierModule = /** @class */ (function () {
         this.obj = obj;
     }
     CarrierModule.prototype.postUpdate = function () {
-        var e_44, _a;
+        var e_46, _a;
         var objBounds = this.obj.bounds.getBoundingBox();
         var checkBounds = new RectBounds(objBounds.x, objBounds.y - 1, objBounds.width, 1);
         try {
@@ -8416,12 +8854,12 @@ var CarrierModule = /** @class */ (function () {
                 }
             }
         }
-        catch (e_44_1) { e_44 = { error: e_44_1 }; }
+        catch (e_46_1) { e_46 = { error: e_46_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_44) throw e_44.error; }
+            finally { if (e_46) throw e_46.error; }
         }
     };
     return CarrierModule;
@@ -8711,7 +9149,7 @@ var Player = /** @class */ (function (_super) {
         var _this = _super.call(this, config, {
             texture: 'player',
             tint: 0xFF0000,
-            bounds: { x: -16, y: -64, width: 32, height: 64 },
+            bounds: { type: 'rect', x: -16, y: -64, width: 32, height: 64 },
             gravityy: 512,
         }) || this;
         _this.speed = 128;
@@ -8826,24 +9264,20 @@ function getStages() {
                     name: 'box',
                     constructor: Box,
                     x: 270, y: 220,
+                    texture: 'circle',
+                    scaleX: 32 / 200,
+                    scaleY: 32 / 200,
                     layer: 'main',
                     physicsGroup: 'boxes',
                     mass: 1,
                 },
-                // <Sprite.Config>{
-                //     name: 'box2',
-                //     constructor: Box,
-                //     x: 270, y: 18,
-                //     layer: 'main',
-                //     physicsGroup: 'boxes',
-                // },
                 {
                     name: 'platform',
                     constructor: MovingPlatform,
                     texture: 'platform',
                     layer: 'main',
                     physicsGroup: 'walls',
-                    bounds: { x: 0, y: 0, width: 128, height: 16 },
+                    bounds: { type: 'rect', x: 0, y: 0, width: 128, height: 16 },
                     immovable: true,
                     data: {
                         pathStart: { x: 192, y: 402 },
@@ -8857,7 +9291,7 @@ function getStages() {
                     texture: 'platform',
                     layer: 'main',
                     physicsGroup: 'walls',
-                    bounds: { x: 0, y: 0, width: 128, height: 16 },
+                    bounds: { type: 'rect', x: 0, y: 0, width: 128, height: 16 },
                     immovable: true,
                 },
                 {

@@ -45,6 +45,15 @@ class Draw {
         });
     }
 
+    static circleOutline(texture: Texture, x: number, y: number, radius: number, alignment: number = this.ALIGNMENT_INNER, brush: Draw.Brush = Draw.brush) {
+        this.graphics.lineStyle(brush.thickness, brush.color, brush.alpha, alignment);
+        this.graphics.clear();
+        this.graphics.beginFill(0, 0);
+        this.graphics.drawCircle(x, y, radius);
+        this.graphics.endFill();
+        texture.renderPIXIDisplayObject(this.graphics);
+    }
+
     static pixel(texture: Texture, x: number, y: number, brush: Draw.Brush = Draw.brush) {
         Draw.PIXEL_TEXTURE.renderTo(texture, {
             x: x, y: y,

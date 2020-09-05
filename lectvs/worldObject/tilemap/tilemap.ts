@@ -104,7 +104,10 @@ class Tilemap extends WorldObject {
         for (let rect of collisionRects) {
             let box = new PhysicsWorldObject({
                 x: this.x, y: this.y,
-                bounds: rect,
+                bounds: {
+                    type: 'rect',
+                    ...rect
+                },
                 physicsGroup: this.physicsGroup,
                 immovable: true,
                 debug: {

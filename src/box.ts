@@ -4,11 +4,11 @@ class Box extends Sprite {
     constructor(config: Sprite.Config) {
         super(config, {
             texture: 'debug',
-            tint: 0x00FF00,
+            tint: 0x660000,
             scaleX: 2,
             scaleY: 2,
             gravityy: 200,
-            bounds: { x: 0, y: 0, width: 32, height: 32 },
+            bounds: { type: 'circle', x: 0, y: 0, radius: 16 },
         });
         this.carrierModule = new CarrierModule(this);
     }

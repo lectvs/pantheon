@@ -27,14 +27,17 @@
     - /moving platforms
     - /physics based on lastx/y instead of lastmovementx/y?
     - /one-way platforms
+    - /bounds in PhysicsWorldObject config
     - slopes/sloped bounds
-    - boxes colliding with other boxes
     - implement metroid-style transitions
 - texture vertex filter
 - documentation and API cleanup
 
 stretch
+- camera zoom
 - boundless textures
     - optimize tilemap editing with boundless textures
+- momentum transfer for collisions
+        - collect all collisions and apply momentum change afterward
 - unit tests c:
 - /1x scaled up graphics (decided not to do due to performance issues)

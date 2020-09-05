@@ -10,7 +10,7 @@ namespace PhysicsWorldObject {
         gravityy?: number;
         gravityz?: number;
         bounce?: number;
-        bounds?: Rect;
+        bounds?: BoundsConfig;
         immovable?: boolean;
         colliding?: boolean;
         simulating?: boolean;
@@ -18,6 +18,23 @@ namespace PhysicsWorldObject {
         debug?: WorldObject.DebugConfig & {
             drawBounds?: boolean;
         };
+    }
+
+    export type BoundsConfig = RectBoundsConfig | CircleBoundsConfig;
+
+    export type RectBoundsConfig = {
+        type: 'rect';
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    }
+
+    export type CircleBoundsConfig = {
+        type: 'circle';
+        x: number;
+        y: number;
+        radius: number;
     }
 }
 
@@ -53,7 +70,7 @@ class PhysicsWorldObject extends WorldObject {
         this.gravityz = config.gravityz ?? 0;
         this.bounce = config.bounce ?? 0;
 
-        this.bounds = config.bounds ? new RectBounds(config.bounds.x, config.bounds.y, config.bounds.width, config.bounds.height, this) : new RectBounds(0, 0, 0, 0, this);
+        this.bounds = this.createBounds(config.bounds);
 
         this.immovable = config.immovable ?? false;
         this.colliding = config.colliding ?? true;
@@ -80,10 +97,7 @@ class PhysicsWorldObject extends WorldObject {
 
     render(screen: Texture) {
         if (Debug.ALL_PHYSICS_BOUNDS || this.debugDrawBounds) {
-            let worldBounds = this.bounds.getBoundingBox();
-            Draw.brush.color = 0x00FF00;
-            Draw.brush.alpha = 1;
-            Draw.rectangleOutline(screen, worldBounds.x, worldBounds.y, worldBounds.width, worldBounds.height);
+            this.drawBounds(screen);
         }
         super.render(screen);
     }
@@ -126,5 +140,26 @@ class PhysicsWorldObject extends WorldObject {
     simulate() {
         this.applyGravity();
         this.move();
+    }
+
+    private createBounds(bounds: PhysicsWorldObject.BoundsConfig) {
+        if (bounds) {
+            if (bounds.type === 'rect') return new RectBounds(bounds.x, bounds.y, bounds.width, bounds.height, this);
+            if (bounds.type === 'circle') return new CircleBounds(bounds.x, bounds.y, bounds.radius, this);
+        }
+        return new NullBounds();
+    }
+
+    private drawBounds(screen: Texture) {
+        Draw.brush.color = 0x00FF00;
+        Draw.brush.alpha = 1;
+
+        if (this.bounds instanceof RectBounds) {
+            let box = this.bounds.getBoundingBox();
+            Draw.rectangleOutline(screen, box.x, box.y, box.width, box.height);
+        } else if (this.bounds instanceof CircleBounds) {
+            let center = this.bounds.getCenter();
+            Draw.circleOutline(screen, center.x, center.y, this.bounds.radius);
+        }
     }
 }
