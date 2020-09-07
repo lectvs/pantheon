@@ -62,6 +62,14 @@ class Draw {
         });
     }
 
+    static line(texture: Texture, x1: number, y1: number, x2: number, y2: number, brush: Draw.Brush = Draw.brush) {
+        this.graphics.lineStyle(brush.thickness, brush.color, brush.alpha, this.ALIGNMENT_MIDDLE);
+        this.graphics.clear();
+        this.graphics.moveTo(x1, y1);
+        this.graphics.lineTo(x2, y2);
+        texture.renderPIXIDisplayObject(this.graphics);
+    }
+
     static rectangleOutline(texture: Texture, x: number, y: number, width: number, height: number, alignment: number = this.ALIGNMENT_INNER, brush: Draw.Brush = Draw.brush) {
         this.graphics.lineStyle(brush.thickness, brush.color, brush.alpha, alignment);
         this.graphics.clear();

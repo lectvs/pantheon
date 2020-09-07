@@ -31,18 +31,21 @@ class RectBounds implements Bounds {
     getDisplacementCollision(other: Bounds): Bounds.DisplacementCollision {
         if (other instanceof RectBounds) return Bounds.Collision.getDisplacementCollisionRectRect(this, other);
         if (other instanceof CircleBounds) return Bounds.Collision.getDisplacementCollisionRectCircle(this, other);
+        if (other instanceof SlopeBounds) return Bounds.Collision.getDisplacementCollisionRectSlope(this, other);
         return undefined;
     }
 
     getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision {
         if (other instanceof RectBounds) return Bounds.Collision.getRaycastCollisionRectRect(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof CircleBounds) return Bounds.Collision.getRaycastCollisionRectCircle(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof SlopeBounds) return Bounds.Collision.getRaycastCollisionRectSlope(this, dx, dy, other, otherdx, otherdy);
         return undefined;
     }
 
     isOverlapping(other: Bounds) {
         if (other instanceof RectBounds) return Bounds.Collision.isOverlappingRectRect(this, other);
         if (other instanceof CircleBounds) return Bounds.Collision.isOverlappingCircleRect(other, this);
+        if (other instanceof SlopeBounds) return Bounds.Collision.isOverlappingRectSlope(this, other);
         return false;
     }
 }

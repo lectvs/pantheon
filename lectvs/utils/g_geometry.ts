@@ -7,6 +7,14 @@ namespace G {
         return M.distanceSq(pt1.x, pt1.y, pt2.x, pt2.y);
     }
 
+    export function distancePointToLine(px: number, py: number, lx1: number, ly1: number, lx2: number, ly2: number) {
+        let dx = px - lx1;
+        let dy = py - ly1;
+        let ldx = lx2 - lx1;
+        let ldy = ly2 - ly1;
+        return Math.abs(dy*ldx - dx*ldy) / (ldx*ldx + ldy*ldy);
+    }
+
     export function expandRectangle(rect: Rect, amount: number) {
         rect.x -= amount;
         rect.y -= amount;

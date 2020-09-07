@@ -2915,6 +2915,8 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
                 return new RectBounds(bounds.x, bounds.y, bounds.width, bounds.height, this);
             if (bounds.type === 'circle')
                 return new CircleBounds(bounds.x, bounds.y, bounds.radius, this);
+            if (bounds.type === 'slope')
+                return new SlopeBounds(bounds.x, bounds.y, bounds.width, bounds.height, bounds.direction, this);
         }
         return new NullBounds();
     };
@@ -2928,6 +2930,29 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         else if (this.bounds instanceof CircleBounds) {
             var center = this.bounds.getCenter();
             Draw.circleOutline(screen, center.x, center.y, this.bounds.radius);
+        }
+        else if (this.bounds instanceof SlopeBounds) {
+            var box = this.bounds.getBoundingBox();
+            if (this.bounds.direction === 'upleft') {
+                Draw.line(screen, box.left, box.bottom, box.right, box.bottom);
+                Draw.line(screen, box.right, box.bottom, box.right, box.top);
+                Draw.line(screen, box.right, box.top, box.left, box.bottom);
+            }
+            else if (this.bounds.direction === 'upright') {
+                Draw.line(screen, box.left, box.bottom, box.right, box.bottom);
+                Draw.line(screen, box.left, box.bottom, box.left, box.top);
+                Draw.line(screen, box.left, box.top, box.right, box.bottom);
+            }
+            else if (this.bounds.direction === 'downright') {
+                Draw.line(screen, box.left, box.bottom, box.left, box.top);
+                Draw.line(screen, box.left, box.top, box.right, box.top);
+                Draw.line(screen, box.right, box.top, box.left, box.bottom);
+            }
+            else {
+                Draw.line(screen, box.left, box.top, box.right, box.top);
+                Draw.line(screen, box.right, box.top, box.right, box.bottom);
+                Draw.line(screen, box.right, box.bottom, box.left, box.top);
+            }
         }
     };
     return PhysicsWorldObject;
@@ -5110,6 +5135,14 @@ var Draw = /** @class */ (function () {
             alpha: brush.alpha,
         });
     };
+    Draw.line = function (texture, x1, y1, x2, y2, brush) {
+        if (brush === void 0) { brush = Draw.brush; }
+        this.graphics.lineStyle(brush.thickness, brush.color, brush.alpha, this.ALIGNMENT_MIDDLE);
+        this.graphics.clear();
+        this.graphics.moveTo(x1, y1);
+        this.graphics.lineTo(x2, y2);
+        texture.renderPIXIDisplayObject(this.graphics);
+    };
     Draw.rectangleOutline = function (texture, x, y, width, height, alignment, brush) {
         if (alignment === void 0) { alignment = this.ALIGNMENT_INNER; }
         if (brush === void 0) { brush = Draw.brush; }
@@ -6472,6 +6505,14 @@ var G;
         return M.distanceSq(pt1.x, pt1.y, pt2.x, pt2.y);
     }
     G.distanceSq = distanceSq;
+    function distancePointToLine(px, py, lx1, ly1, lx2, ly2) {
+        var dx = px - lx1;
+        var dy = py - ly1;
+        var ldx = lx2 - lx1;
+        var ldy = ly2 - ly1;
+        return Math.abs(dy * ldx - dx * ldy) / (ldx * ldx + ldy * ldy);
+    }
+    G.distancePointToLine = distancePointToLine;
     function expandRectangle(rect, amount) {
         rect.x -= amount;
         rect.y -= amount;
@@ -7348,6 +7389,8 @@ var CircleBounds = /** @class */ (function () {
             return Bounds.Collision.getDisplacementCollisionCircleRect(this, other);
         if (other instanceof CircleBounds)
             return Bounds.Collision.getDisplacementCollisionCircleCircle(this, other);
+        if (other instanceof SlopeBounds)
+            return Bounds.Collision.getDisplacementCollisionCircleSlope(this, other);
         return undefined;
     };
     CircleBounds.prototype.getRaycastCollision = function (dx, dy, other, otherdx, otherdy) {
@@ -7355,6 +7398,8 @@ var CircleBounds = /** @class */ (function () {
             return Bounds.Collision.getRaycastCollisionCircleRect(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof CircleBounds)
             return Bounds.Collision.getRaycastCollisionCircleCircle(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof SlopeBounds)
+            return Bounds.Collision.getRaycastCollisionCircleSlope(this, dx, dy, other, otherdx, otherdy);
         return undefined;
     };
     CircleBounds.prototype.isOverlapping = function (other) {
@@ -7362,6 +7407,8 @@ var CircleBounds = /** @class */ (function () {
             return Bounds.Collision.isOverlappingCircleRect(this, other);
         if (other instanceof CircleBounds)
             return Bounds.Collision.isOverlappingCircleCircle(this, other);
+        if (other instanceof SlopeBounds)
+            return Bounds.Collision.isOverlappingCircleSlope(this, other);
         return false;
     };
     return CircleBounds;
@@ -7489,6 +7536,8 @@ var Bounds;
                     displacementYs.push((movePos.y - fromBox.bottom) * dstd / srcd);
                 }
             }
+            if (displacementXs.length === 0)
+                return undefined;
             var i = M.argmin(A.range(displacementXs.length), function (i) { return M.magnitude(displacementXs[i], displacementYs[i]); });
             return {
                 bounds1: move,
@@ -7498,6 +7547,122 @@ var Bounds;
             };
         }
         Collision.getDisplacementCollisionCircleRect = getDisplacementCollisionCircleRect;
+        function getDisplacementCollisionCircleSlope(move, from) {
+            if (!move.isOverlapping(from))
+                return undefined;
+            var movePos = move.getCenter();
+            var fromBox = from.getBoundingBox();
+            var newXs = [];
+            var newYs = [];
+            // Right edge
+            if (from.direction !== 'upright' && from.direction !== 'downright') {
+                var t_1 = closestPointOnLine_t(movePos.x, movePos.y, fromBox.right + move.radius, fromBox.top, fromBox.right + move.radius, fromBox.bottom);
+                if (0 <= t_1 && t_1 <= 1) {
+                    newXs.push(fromBox.right + move.radius);
+                    newYs.push(fromBox.top * (1 - t_1) + fromBox.bottom * t_1);
+                }
+            }
+            // Left edge
+            if (from.direction !== 'upleft' && from.direction !== 'downleft') {
+                var t_2 = closestPointOnLine_t(movePos.x, movePos.y, fromBox.left - move.radius, fromBox.top, fromBox.left - move.radius, fromBox.bottom);
+                if (0 <= t_2 && t_2 <= 1) {
+                    newXs.push(fromBox.left - move.radius);
+                    newYs.push(fromBox.top * (1 - t_2) + fromBox.bottom * t_2);
+                }
+            }
+            // Top edge
+            if (from.direction !== 'upleft' && from.direction !== 'upright') {
+                var t_3 = closestPointOnLine_t(movePos.x, movePos.y, fromBox.left, fromBox.top - move.radius, fromBox.right, fromBox.top - move.radius);
+                if (0 <= t_3 && t_3 <= 1) {
+                    newXs.push(fromBox.left * (1 - t_3) + fromBox.right * t_3);
+                    newYs.push(fromBox.top - move.radius);
+                }
+            }
+            // Bottom edge
+            if (from.direction !== 'downleft' && from.direction !== 'downright') {
+                var t_4 = closestPointOnLine_t(movePos.x, movePos.y, fromBox.left, fromBox.bottom + move.radius, fromBox.right, fromBox.bottom + move.radius);
+                if (0 <= t_4 && t_4 <= 1) {
+                    newXs.push(fromBox.left * (1 - t_4) + fromBox.right * t_4);
+                    newYs.push(fromBox.bottom + move.radius);
+                }
+            }
+            // Diagonal edges
+            var dfactor = move.radius / M.magnitude(fromBox.width, fromBox.height);
+            var rx = fromBox.height * dfactor;
+            var ry = fromBox.width * dfactor;
+            var lx1, ly1, lx2, ly2;
+            if (from.direction === 'upleft') {
+                lx1 = fromBox.left - rx;
+                ly1 = fromBox.bottom - ry;
+                lx2 = fromBox.right - rx;
+                ly2 = fromBox.top - ry;
+            }
+            else if (from.direction === 'upright') {
+                lx1 = fromBox.left + rx;
+                ly1 = fromBox.top - ry;
+                lx2 = fromBox.right + rx;
+                ly2 = fromBox.bottom - ry;
+            }
+            else if (from.direction === 'downleft') {
+                lx1 = fromBox.left - rx;
+                ly1 = fromBox.top + ry;
+                lx2 = fromBox.right - rx;
+                ly2 = fromBox.bottom + ry;
+            }
+            else {
+                lx1 = fromBox.left + rx;
+                ly1 = fromBox.bottom + ry;
+                lx2 = fromBox.right + rx;
+                ly2 = fromBox.top + ry;
+            }
+            var t = closestPointOnLine_t(movePos.x, movePos.y, lx1, ly1, lx2, ly2);
+            if (0 <= t && t <= 1) {
+                newXs.push(lx1 * (1 - t) + lx2 * t);
+                newYs.push(ly1 * (1 - t) + ly2 * t);
+            }
+            // Vertices
+            function addVertexPos(vx, vy, ldx1, ldy1, ldx2, ldy2) {
+                var angle = closestPointOnCircle_angle(movePos.x, movePos.y, vx, vy);
+                var newX = vx + Math.cos(angle) * move.radius;
+                var newY = vy + Math.sin(angle) * move.radius;
+                if (vectorBetweenVectors(newX - vx, newY - vy, ldx1, ldy1, ldx2, ldy2)) {
+                    newXs.push(newX);
+                    newYs.push(newY);
+                }
+            }
+            if (from.direction === 'upleft') {
+                addVertexPos(fromBox.right, fromBox.bottom, 1, 0, 0, 1);
+                addVertexPos(fromBox.right, fromBox.top, 1, 0, -fromBox.height, -fromBox.width);
+                addVertexPos(fromBox.left, fromBox.bottom, 0, 1, -fromBox.height, -fromBox.width);
+            }
+            else if (from.direction === 'upright') {
+                addVertexPos(fromBox.left, fromBox.bottom, -1, 0, 0, 1);
+                addVertexPos(fromBox.left, fromBox.top, -1, 0, fromBox.height, -fromBox.width);
+                addVertexPos(fromBox.right, fromBox.bottom, 0, 1, fromBox.height, -fromBox.width);
+            }
+            else if (from.direction === 'downright') {
+                addVertexPos(fromBox.left, fromBox.top, -1, 0, 0, -1);
+                addVertexPos(fromBox.left, fromBox.bottom, -1, 0, fromBox.height, fromBox.width);
+                addVertexPos(fromBox.right, fromBox.top, 0, -1, fromBox.height, fromBox.width);
+            }
+            else {
+                addVertexPos(fromBox.right, fromBox.top, 1, 0, 0, -1);
+                addVertexPos(fromBox.right, fromBox.bottom, 1, 0, -fromBox.height, fromBox.width);
+                addVertexPos(fromBox.left, fromBox.top, 0, -1, -fromBox.height, fromBox.width);
+            }
+            if (newXs.length === 0)
+                return undefined;
+            var i = M.argmin(A.range(newXs.length), function (i) { return M.distanceSq(movePos.x, movePos.y, newXs[i], newYs[i]); });
+            var displacementX = newXs[i] - movePos.x;
+            var displacementY = newYs[i] - movePos.y;
+            return {
+                bounds1: move,
+                bounds2: from,
+                displacementX: displacementX,
+                displacementY: displacementY,
+            };
+        }
+        Collision.getDisplacementCollisionCircleSlope = getDisplacementCollisionCircleSlope;
         function getDisplacementCollisionRectCircle(move, from) {
             return invertDisplacementCollision(getDisplacementCollisionCircleRect(from, move));
         }
@@ -7523,6 +7688,18 @@ var Bounds;
             };
         }
         Collision.getDisplacementCollisionRectRect = getDisplacementCollisionRectRect;
+        function getDisplacementCollisionRectSlope(move, from) {
+            return undefined;
+        }
+        Collision.getDisplacementCollisionRectSlope = getDisplacementCollisionRectSlope;
+        function getDisplacementCollisionSlopeCircle(move, from) {
+            return invertDisplacementCollision(getDisplacementCollisionCircleSlope(from, move));
+        }
+        Collision.getDisplacementCollisionSlopeCircle = getDisplacementCollisionSlopeCircle;
+        function getDisplacementCollisionSlopeRect(move, from) {
+            return invertDisplacementCollision(getDisplacementCollisionRectSlope(from, move));
+        }
+        Collision.getDisplacementCollisionSlopeRect = getDisplacementCollisionSlopeRect;
         function getRaycastCollisionCircleCircle(move, movedx, movedy, from, fromdx, fromdy) {
             if (!move.isOverlapping(from))
                 return undefined;
@@ -7557,6 +7734,42 @@ var Bounds;
             return result;
         }
         Collision.getRaycastCollisionCircleRect = getRaycastCollisionCircleRect;
+        function getRaycastCollisionCircleSlope(move, movedx, movedy, from, fromdx, fromdy) {
+            if (!move.isOverlapping(from))
+                return undefined;
+            var movePos = move.getCenter();
+            var fromBox = from.getBoundingBox();
+            var topleft_t = from.direction === 'upleft' ? Infinity : raycastTimeCircleCircle(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius);
+            var topright_t = from.direction === 'upright' ? Infinity : raycastTimeCircleCircle(movePos.x - fromBox.right, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius);
+            var bottomright_t = from.direction === 'downright' ? Infinity : raycastTimeCircleCircle(movePos.x - fromBox.right, movePos.y - fromBox.bottom, movedx - fromdx, movedy - fromdy, move.radius);
+            var bottomleft_t = from.direction === 'downleft' ? Infinity : raycastTimeCircleCircle(movePos.x - fromBox.left, movePos.y - fromBox.bottom, movedx - fromdx, movedy - fromdy, move.radius);
+            var line1_t, line2_t, line3_t;
+            if (from.direction === 'upleft') {
+                line1_t = raycastTimeCircleSegment(movePos.x - fromBox.right, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, 0, fromBox.height);
+                line2_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.bottom, movedx - fromdx, movedy - fromdy, move.radius, fromBox.width, 0);
+                line3_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.bottom, movedx - fromdx, movedy - fromdy, move.radius, fromBox.width, -fromBox.height);
+            }
+            else if (from.direction === 'upright') {
+                line1_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, 0, fromBox.height);
+                line2_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.bottom, movedx - fromdx, movedy - fromdy, move.radius, fromBox.width, 0);
+                line3_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, fromBox.width, fromBox.height);
+            }
+            else if (from.direction === 'downright') {
+                line1_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, 0, fromBox.height);
+                line2_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, fromBox.width, 0);
+                line3_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.bottom, movedx - fromdx, movedy - fromdy, move.radius, fromBox.width, -fromBox.height);
+            }
+            else {
+                line1_t = raycastTimeCircleSegment(movePos.x - fromBox.right, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, 0, fromBox.height);
+                line2_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, fromBox.width, 0);
+                line3_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, fromBox.width, fromBox.height);
+            }
+            var t = Math.min(topleft_t, topright_t, bottomright_t, bottomleft_t, line1_t, line2_t, line3_t);
+            var result = getDisplacementCollisionCircleSlope(move, from);
+            result.t = t;
+            return result;
+        }
+        Collision.getRaycastCollisionCircleSlope = getRaycastCollisionCircleSlope;
         function getRaycastCollisionRectCircle(move, movedx, movedy, from, fromdx, fromdy) {
             return invertRaycastCollision(getRaycastCollisionCircleRect(from, fromdx, fromdy, move, movedx, movedy));
         }
@@ -7625,6 +7838,18 @@ var Bounds;
             };
         }
         Collision.getRaycastCollisionRectRect = getRaycastCollisionRectRect;
+        function getRaycastCollisionRectSlope(move, movedx, movedy, from, fromdx, fromdy) {
+            return undefined;
+        }
+        Collision.getRaycastCollisionRectSlope = getRaycastCollisionRectSlope;
+        function getRaycastCollisionSlopeCircle(move, movedx, movedy, from, fromdx, fromdy) {
+            return invertRaycastCollision(getRaycastCollisionCircleSlope(from, fromdx, fromdy, move, movedx, movedy));
+        }
+        Collision.getRaycastCollisionSlopeCircle = getRaycastCollisionSlopeCircle;
+        function getRaycastCollisionSlopeRect(move, movedx, movedy, from, fromdx, fromdy) {
+            return invertRaycastCollision(getRaycastCollisionRectSlope(from, fromdx, fromdy, move, movedx, movedy));
+        }
+        Collision.getRaycastCollisionSlopeRect = getRaycastCollisionSlopeRect;
         function isOverlappingCircleCircle(move, from) {
             var movePosition = move.getCenter();
             var fromPosition = from.getCenter();
@@ -7658,10 +7883,68 @@ var Bounds;
             return false;
         }
         Collision.isOverlappingCircleRect = isOverlappingCircleRect;
+        function isOverlappingCircleSlope(move, from) {
+            var movePos = move.getCenter();
+            var fromBox = from.getBoundingBox();
+            var centerInBox = fromBox.contains(movePos.x, movePos.y);
+            var centerInSlope = (from.direction === 'upright' && movePos.y > fromBox.height / fromBox.width * (movePos.x - fromBox.left) + fromBox.top)
+                || (from.direction === 'upleft' && movePos.y > -fromBox.height / fromBox.width * (movePos.x - fromBox.left) + fromBox.bottom)
+                || (from.direction === 'downleft' && movePos.y < fromBox.height / fromBox.width * (movePos.x - fromBox.left) + fromBox.top)
+                || (from.direction === 'downright' && movePos.y < -fromBox.height / fromBox.width * (movePos.x - fromBox.left) + fromBox.bottom);
+            if (centerInBox && centerInSlope) {
+                return true;
+            }
+            // Top edge
+            if (from.direction !== 'upleft' && from.direction !== 'upright' && fromBox.left < movePos.x && movePos.x < fromBox.right && fromBox.top - move.radius < movePos.y && movePos.y <= fromBox.top) {
+                return true;
+            }
+            // Bottom edge
+            if (from.direction !== 'downleft' && from.direction !== 'downright' && fromBox.left < movePos.x && movePos.x < fromBox.right && fromBox.bottom <= movePos.y && movePos.y < fromBox.bottom + move.radius) {
+                return true;
+            }
+            // Left edge
+            if (from.direction !== 'upleft' && from.direction !== 'downleft' && fromBox.left - move.radius < movePos.x && movePos.x <= fromBox.left && fromBox.top < movePos.y && movePos.y < fromBox.bottom) {
+                return true;
+            }
+            // Right edge
+            if (from.direction !== 'upright' && from.direction !== 'downright' && fromBox.right <= movePos.x && movePos.x < fromBox.right + move.radius && fromBox.top < movePos.y && movePos.y < fromBox.bottom) {
+                return true;
+            }
+            // Top-left vertex
+            if (from.direction !== 'upleft' && M.distanceSq(movePos.x, movePos.y, fromBox.left, fromBox.top) < move.radius * move.radius) {
+                return true;
+            }
+            // Top-right vertex
+            if (from.direction !== 'upright' && M.distanceSq(movePos.x, movePos.y, fromBox.right, fromBox.top) < move.radius * move.radius) {
+                return true;
+            }
+            // Bottom-right vertex
+            if (from.direction !== 'downright' && M.distanceSq(movePos.x, movePos.y, fromBox.right, fromBox.bottom) < move.radius * move.radius) {
+                return true;
+            }
+            // Bottom-left vertex
+            if (from.direction !== 'downleft' && M.distanceSq(movePos.x, movePos.y, fromBox.left, fromBox.bottom) < move.radius * move.radius) {
+                return true;
+            }
+            // sloped edge /
+            if (from.direction !== 'upright' && from.direction !== 'downleft' && circleIntersectsSegment(movePos.x, movePos.y, move.radius, fromBox.left, fromBox.bottom, fromBox.right, fromBox.top)) {
+                return true;
+            }
+            // sloped edge \
+            if (from.direction !== 'upleft' && from.direction !== 'downright' && circleIntersectsSegment(movePos.x, movePos.y, move.radius, fromBox.left, fromBox.top, fromBox.right, fromBox.bottom)) {
+                return true;
+            }
+            return false;
+        }
+        Collision.isOverlappingCircleSlope = isOverlappingCircleSlope;
         function isOverlappingRectRect(move, from) {
             return G.overlapRectangles(move.getBoundingBox(), from.getBoundingBox());
         }
         Collision.isOverlappingRectRect = isOverlappingRectRect;
+        function isOverlappingRectSlope(move, from) {
+            return false;
+        }
+        Collision.isOverlappingRectSlope = isOverlappingRectSlope;
         function invertDisplacementCollision(collision) {
             if (collision) {
                 var temp = collision.bounds1;
@@ -7684,6 +7967,40 @@ var Bounds;
             return collision;
         }
         Collision.invertRaycastCollision = invertRaycastCollision;
+        function circleIntersectsSegment(cx, cy, r, lx1, ly1, lx2, ly2) {
+            var dx = cx - lx1;
+            var dy = cy - ly1;
+            var ldx = lx2 - lx1;
+            var ldy = ly2 - ly1;
+            var t = (dx * ldx + dy * ldy) / (ldx * ldx + ldy * ldy);
+            if (M.distanceSq(dx, dy, ldx * t, ldy * t) > r * r)
+                return false;
+            var tInRange = 0 < t && t < 1;
+            var intersectsVertex1 = M.distanceSq(0, 0, dx, dy) < r * r;
+            var intersectsVertex2 = M.distanceSq(ldx, ldy, dx, dy) < r * r;
+            return tInRange || intersectsVertex1 || intersectsVertex2;
+        }
+        function closestPointOnCircle_angle(px, py, cx, cy) {
+            var dx = px - cx;
+            var dy = py - cy;
+            return Math.atan2(dy, dx);
+        }
+        function closestPointOnLine_t(px, py, lx1, ly1, lx2, ly2) {
+            var dx = px - lx1;
+            var dy = py - ly1;
+            var ldx = lx2 - lx1;
+            var ldy = ly2 - ly1;
+            var t = (dx * ldx + dy * ldy) / (ldx * ldx + ldy * ldy);
+            return t;
+        }
+        function pointInSegmentSpan(px, py, lx1, ly1, lx2, ly2) {
+            var dx = px - lx1;
+            var dy = py - ly1;
+            var ldx = lx2 - lx1;
+            var ldy = ly2 - ly1;
+            var t = (dx * ldx + dy * ldy) / (ldx * ldx + ldy * ldy);
+            return 0 <= t && t <= 1;
+        }
         function raycastTimeCircleCircle(dx, dy, ddx, ddy, R) {
             var a = ddx * ddx + ddy * ddy;
             var b = 2 * dx * ddx + 2 * dy * ddy;
@@ -7705,6 +8022,13 @@ var Bounds;
             if (comp < 0 || L * L < comp)
                 return Infinity;
             return t;
+        }
+        function vectorBetweenVectors(vx, vy, x1, y1, x2, y2) {
+            var cross1xV = x1 * vy - y1 * vx;
+            var cross1x2 = x1 * y2 - y1 * x2;
+            var cross2xV = x2 * vy - y2 * vx;
+            var cross2x1 = x2 * y1 - y2 * x1;
+            return cross1xV * cross1x2 >= 0 && cross2xV * cross2x1 >= 0;
         }
     })(Collision = Bounds.Collision || (Bounds.Collision = {}));
 })(Bounds || (Bounds = {}));
@@ -7753,6 +8077,8 @@ var RectBounds = /** @class */ (function () {
             return Bounds.Collision.getDisplacementCollisionRectRect(this, other);
         if (other instanceof CircleBounds)
             return Bounds.Collision.getDisplacementCollisionRectCircle(this, other);
+        if (other instanceof SlopeBounds)
+            return Bounds.Collision.getDisplacementCollisionRectSlope(this, other);
         return undefined;
     };
     RectBounds.prototype.getRaycastCollision = function (dx, dy, other, otherdx, otherdy) {
@@ -7760,6 +8086,8 @@ var RectBounds = /** @class */ (function () {
             return Bounds.Collision.getRaycastCollisionRectRect(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof CircleBounds)
             return Bounds.Collision.getRaycastCollisionRectCircle(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof SlopeBounds)
+            return Bounds.Collision.getRaycastCollisionRectSlope(this, dx, dy, other, otherdx, otherdy);
         return undefined;
     };
     RectBounds.prototype.isOverlapping = function (other) {
@@ -7767,9 +8095,53 @@ var RectBounds = /** @class */ (function () {
             return Bounds.Collision.isOverlappingRectRect(this, other);
         if (other instanceof CircleBounds)
             return Bounds.Collision.isOverlappingCircleRect(other, this);
+        if (other instanceof SlopeBounds)
+            return Bounds.Collision.isOverlappingRectSlope(this, other);
         return false;
     };
     return RectBounds;
+}());
+var SlopeBounds = /** @class */ (function () {
+    function SlopeBounds(x, y, width, height, direction, parent) {
+        this.parent = parent;
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.direction = direction;
+        this.boundingBox = new Rectangle(0, 0, 0, 0);
+    }
+    SlopeBounds.prototype.getBoundingBox = function (x, y) {
+        x = x !== null && x !== void 0 ? x : (this.parent ? this.parent.x : 0);
+        y = y !== null && y !== void 0 ? y : (this.parent ? this.parent.y : 0);
+        this.boundingBox.x = x + this.x;
+        this.boundingBox.y = y + this.y;
+        this.boundingBox.width = this.width;
+        this.boundingBox.height = this.height;
+        return this.boundingBox;
+    };
+    SlopeBounds.prototype.getDisplacementCollision = function (other) {
+        if (other instanceof RectBounds)
+            return Bounds.Collision.getDisplacementCollisionSlopeRect(this, other);
+        if (other instanceof CircleBounds)
+            return Bounds.Collision.getDisplacementCollisionSlopeCircle(this, other);
+        return undefined;
+    };
+    SlopeBounds.prototype.getRaycastCollision = function (dx, dy, other, otherdx, otherdy) {
+        if (other instanceof RectBounds)
+            return Bounds.Collision.getRaycastCollisionSlopeRect(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof CircleBounds)
+            return Bounds.Collision.getRaycastCollisionSlopeCircle(this, dx, dy, other, otherdx, otherdy);
+        return undefined;
+    };
+    SlopeBounds.prototype.isOverlapping = function (other) {
+        if (other instanceof RectBounds)
+            return Bounds.Collision.isOverlappingRectSlope(other, this);
+        if (other instanceof CircleBounds)
+            return Bounds.Collision.isOverlappingCircleSlope(other, this);
+        return false;
+    };
+    return SlopeBounds;
 }());
 /// <reference path="../texture/filter/textureFilter.ts" />
 var Effects = /** @class */ (function () {
@@ -8691,6 +9063,7 @@ var Assets;
         'circle': {
             anchor: Anchor.CENTER,
         },
+        'slope': {},
     };
     Assets.sounds = {
         // Debug
@@ -9310,6 +9683,60 @@ function getStages() {
                         }
                     }
                 },
+                {
+                    name: 'const',
+                    constructor: Sprite,
+                    x: 600, y: 200,
+                    tint: 0x000000,
+                    //bounds: { type: 'rect', x: 0, y: 0, width: 100, height: 100 },
+                    //bounds: { type: 'circle', x: 0, y: 0, radius: 100 },
+                    bounds: { type: 'slope', x: 0, y: 0, width: 180, height: 100, direction: 'upleft' },
+                },
+                {
+                    name: 'test_circle',
+                    constructor: Sprite,
+                    x: 630, y: 240,
+                    texture: 'circle',
+                    tint: 0x006600,
+                    scaleX: 1,
+                    scaleY: 1,
+                    debug: {
+                        followMouse: true
+                    },
+                    data: { complete: false },
+                    bounds: { type: 'circle', x: 0, y: 0, radius: 100 },
+                    updateCallback: function (obj) {
+                        var cc = obj.world.getWorldObjectByName('const');
+                        obj.tint = obj.bounds.isOverlapping(cc.bounds) ? 0x660000 : 0x006600;
+                        // if (!obj.data.complete) {
+                        //     let tex = obj.world.getWorldObjectByName<Sprite>('pattern').getTexture();
+                        //     let box = cc.getWorldBounds();
+                        //     let p = 1;
+                        //     let pa = 110;
+                        //     for (let x = box.left-pa; x < box.right+pa; x+=p) {
+                        //         for (let y = box.top-pa; y < box.bottom+pa; y+=p) {
+                        //             obj.x = x;
+                        //             obj.y = y;
+                        //             Draw.brush.color = obj.bounds.isOverlapping(cc.bounds) ? 0xFF0000 : 0x0000FF;
+                        //             Draw.brush.alpha = 1;
+                        //             Draw.rectangleSolid(tex, x, y, p, p);
+                        //         }
+                        //     }
+                        //     obj.data.complete = true;
+                        // }
+                        //let coll = obj.bounds.getDisplacementCollision(cc.bounds);
+                        var coll = obj.bounds.getRaycastCollision(obj.x - obj.physicslastx, obj.y - obj.physicslasty, cc.bounds, cc.x - cc.physicslastx, cc.y - cc.physicslasty);
+                        if (coll) {
+                            obj.x += coll.displacementX;
+                            obj.y += coll.displacementY;
+                        }
+                    }
+                },
+                {
+                    name: 'pattern',
+                    constructor: Sprite,
+                    texture: new BasicTexture(global.gameWidth, global.gameHeight),
+                }
             ]
         },
     };

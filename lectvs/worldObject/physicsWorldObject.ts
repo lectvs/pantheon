@@ -20,7 +20,7 @@ namespace PhysicsWorldObject {
         };
     }
 
-    export type BoundsConfig = RectBoundsConfig | CircleBoundsConfig;
+    export type BoundsConfig = RectBoundsConfig | CircleBoundsConfig | SlopeBoundsConfig;
 
     export type RectBoundsConfig = {
         type: 'rect';
@@ -35,6 +35,15 @@ namespace PhysicsWorldObject {
         x: number;
         y: number;
         radius: number;
+    }
+
+    export type SlopeBoundsConfig = {
+        type: 'slope';
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        direction: SlopeBounds.Direction;
     }
 }
 
@@ -146,6 +155,7 @@ class PhysicsWorldObject extends WorldObject {
         if (bounds) {
             if (bounds.type === 'rect') return new RectBounds(bounds.x, bounds.y, bounds.width, bounds.height, this);
             if (bounds.type === 'circle') return new CircleBounds(bounds.x, bounds.y, bounds.radius, this);
+            if (bounds.type === 'slope') return new SlopeBounds(bounds.x, bounds.y, bounds.width, bounds.height, bounds.direction, this);
         }
         return new NullBounds();
     }
@@ -160,6 +170,25 @@ class PhysicsWorldObject extends WorldObject {
         } else if (this.bounds instanceof CircleBounds) {
             let center = this.bounds.getCenter();
             Draw.circleOutline(screen, center.x, center.y, this.bounds.radius);
-        }
+        } else if (this.bounds instanceof SlopeBounds) {
+            let box = this.bounds.getBoundingBox();
+            if (this.bounds.direction === 'upleft') {
+                Draw.line(screen, box.left, box.bottom, box.right, box.bottom);
+                Draw.line(screen, box.right, box.bottom, box.right, box.top);
+                Draw.line(screen, box.right, box.top, box.left, box.bottom);
+            } else if (this.bounds.direction === 'upright') {
+                Draw.line(screen, box.left, box.bottom, box.right, box.bottom);
+                Draw.line(screen, box.left, box.bottom, box.left, box.top);
+                Draw.line(screen, box.left, box.top, box.right, box.bottom);
+            } else if (this.bounds.direction === 'downright') {
+                Draw.line(screen, box.left, box.bottom, box.left, box.top);
+                Draw.line(screen, box.left, box.top, box.right, box.top);
+                Draw.line(screen, box.right, box.top, box.left, box.bottom);
+            } else {
+                Draw.line(screen, box.left, box.top, box.right, box.top);
+                Draw.line(screen, box.right, box.top, box.right, box.bottom);
+                Draw.line(screen, box.right, box.bottom, box.left, box.top);
+            }
+        } 
     }
 }

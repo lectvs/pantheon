@@ -22,6 +22,7 @@ namespace Assets {
         'circle': {
             anchor: Anchor.CENTER,
         },
+        'slope': {},
     }
 
     export const sounds: Dict<Preload.Sound> = {

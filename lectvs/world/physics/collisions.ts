@@ -115,6 +115,8 @@ namespace Bounds.Collision {
             }
         }
 
+        if (displacementXs.length === 0) return undefined;
+
         let i = M.argmin(A.range(displacementXs.length), i => M.magnitude(displacementXs[i], displacementYs[i]));
 
         return <Bounds.DisplacementCollision>{
@@ -122,6 +124,132 @@ namespace Bounds.Collision {
             bounds2: from,
             displacementX: displacementXs[i],
             displacementY: displacementYs[i],
+        };
+    }
+
+    export function getDisplacementCollisionCircleSlope(move: CircleBounds, from: SlopeBounds) {
+        if (!move.isOverlapping(from)) return undefined;
+
+        let movePos = move.getCenter();
+        let fromBox = from.getBoundingBox();
+
+        let newXs = [];
+        let newYs = [];
+
+
+        // Right edge
+        if (from.direction !== 'upright' && from.direction !== 'downright') {
+            let t = closestPointOnLine_t(movePos.x, movePos.y, fromBox.right + move.radius, fromBox.top, fromBox.right + move.radius, fromBox.bottom);
+            if (0 <= t && t <= 1) {
+                newXs.push(fromBox.right + move.radius);
+                newYs.push(fromBox.top * (1-t) + fromBox.bottom * t);
+            }
+        }
+
+        // Left edge
+        if (from.direction !== 'upleft' && from.direction !== 'downleft') {
+            let t = closestPointOnLine_t(movePos.x, movePos.y, fromBox.left - move.radius, fromBox.top, fromBox.left - move.radius, fromBox.bottom);
+            if (0 <= t && t <= 1) {
+                newXs.push(fromBox.left - move.radius);
+                newYs.push(fromBox.top * (1-t) + fromBox.bottom * t);
+            }
+        }
+
+        // Top edge
+        if (from.direction !== 'upleft' && from.direction !== 'upright') {
+            let t = closestPointOnLine_t(movePos.x, movePos.y, fromBox.left, fromBox.top - move.radius, fromBox.right, fromBox.top - move.radius);
+            if (0 <= t && t <= 1) {
+                newXs.push(fromBox.left * (1-t) + fromBox.right * t);
+                newYs.push(fromBox.top - move.radius);
+            }
+        }
+
+        // Bottom edge
+        if (from.direction !== 'downleft' && from.direction !== 'downright') {
+            let t = closestPointOnLine_t(movePos.x, movePos.y, fromBox.left, fromBox.bottom + move.radius, fromBox.right, fromBox.bottom + move.radius);
+            if (0 <= t && t <= 1) {
+                newXs.push(fromBox.left * (1-t) + fromBox.right * t);
+                newYs.push(fromBox.bottom + move.radius);
+            }
+        }
+
+        // Diagonal edges
+        let dfactor = move.radius / M.magnitude(fromBox.width, fromBox.height);
+        let rx = fromBox.height * dfactor;
+        let ry = fromBox.width * dfactor;
+
+        let lx1: number, ly1: number, lx2: number, ly2: number;
+        
+        if (from.direction === 'upleft') {
+            lx1 = fromBox.left - rx;
+            ly1 = fromBox.bottom - ry;
+            lx2 = fromBox.right - rx;
+            ly2 = fromBox.top - ry;
+        } else if (from.direction === 'upright') {
+            lx1 = fromBox.left + rx;
+            ly1 = fromBox.top - ry;
+            lx2 = fromBox.right + rx;
+            ly2 = fromBox.bottom - ry;
+        } else if (from.direction === 'downleft') {
+            lx1 = fromBox.left - rx;
+            ly1 = fromBox.top + ry;
+            lx2 = fromBox.right - rx;
+            ly2 = fromBox.bottom + ry;
+        } else {
+            lx1 = fromBox.left + rx;
+            ly1 = fromBox.bottom + ry;
+            lx2 = fromBox.right + rx;
+            ly2 = fromBox.top + ry;
+        }
+
+        let t = closestPointOnLine_t(movePos.x, movePos.y, lx1, ly1, lx2, ly2);
+        if (0 <= t && t <= 1) {
+            newXs.push(lx1 * (1-t) + lx2 * t);
+            newYs.push(ly1 * (1-t) + ly2 * t);
+        }
+
+        // Vertices
+        function addVertexPos(vx: number, vy: number, ldx1: number, ldy1: number, ldx2: number, ldy2: number) {
+            let angle = closestPointOnCircle_angle(movePos.x, movePos.y, vx, vy);
+            let newX = vx + Math.cos(angle) * move.radius;
+            let newY = vy + Math.sin(angle) * move.radius;
+            
+            if (vectorBetweenVectors(newX - vx, newY - vy, ldx1, ldy1, ldx2, ldy2)) {
+                newXs.push(newX);
+                newYs.push(newY);
+            }
+        }
+
+        if (from.direction === 'upleft') {
+            addVertexPos(fromBox.right, fromBox.bottom, 1, 0, 0, 1);
+            addVertexPos(fromBox.right, fromBox.top, 1, 0, -fromBox.height, -fromBox.width);
+            addVertexPos(fromBox.left, fromBox.bottom, 0, 1, -fromBox.height, -fromBox.width);
+        } else if (from.direction === 'upright') {
+            addVertexPos(fromBox.left, fromBox.bottom, -1, 0, 0, 1);
+            addVertexPos(fromBox.left, fromBox.top, -1, 0, fromBox.height, -fromBox.width);
+            addVertexPos(fromBox.right, fromBox.bottom, 0, 1, fromBox.height, -fromBox.width);
+        } else if (from.direction === 'downright') {
+            addVertexPos(fromBox.left, fromBox.top, -1, 0, 0, -1);
+            addVertexPos(fromBox.left, fromBox.bottom, -1, 0, fromBox.height, fromBox.width);
+            addVertexPos(fromBox.right, fromBox.top, 0, -1, fromBox.height, fromBox.width);
+        } else {
+            addVertexPos(fromBox.right, fromBox.top, 1, 0, 0, -1);
+            addVertexPos(fromBox.right, fromBox.bottom, 1, 0, -fromBox.height, fromBox.width);
+            addVertexPos(fromBox.left, fromBox.top, 0, -1, -fromBox.height, fromBox.width);
+        }
+
+        if (newXs.length === 0) return undefined;
+
+        let i = M.argmin(A.range(newXs.length), i => M.distanceSq(movePos.x, movePos.y, newXs[i], newYs[i]));
+
+        let displacementX = newXs[i] - movePos.x;
+        let displacementY = newYs[i] - movePos.y;
+
+        return <Bounds.DisplacementCollision>{
+            bounds1: move,
+            bounds2: from,
+            displacementX,
+            displacementY,
         };
     }
 
@@ -150,6 +278,18 @@ namespace Bounds.Collision {
             displacementX,
             displacementY,
         };
+    }
+
+    export function getDisplacementCollisionRectSlope(move: RectBounds, from: SlopeBounds) {
+        return undefined;
+    }
+
+    export function getDisplacementCollisionSlopeCircle(move: SlopeBounds, from: CircleBounds) {
+        return invertDisplacementCollision(getDisplacementCollisionCircleSlope(from, move));
+    }
+
+    export function getDisplacementCollisionSlopeRect(move: SlopeBounds, from: RectBounds) {
+        return invertDisplacementCollision(getDisplacementCollisionRectSlope(from, move));
     }
 
     export function getRaycastCollisionCircleCircle(move: CircleBounds, movedx: number, movedy: number, from: CircleBounds, fromdx: number, fromdy: number) {
@@ -189,6 +329,46 @@ namespace Bounds.Collision {
         let t = Math.min(topleft_t, topright_t, bottomright_t, bottomleft_t, left_t, right_t, top_t, bottom_t);
 
         let result = <Bounds.RaycastCollision>getDisplacementCollisionCircleRect(move, from);
+        result.t = t;
+
+        return result;
+    }
+
+    export function getRaycastCollisionCircleSlope(move: CircleBounds, movedx: number, movedy: number, from: SlopeBounds, fromdx: number, fromdy: number) {
+        if (!move.isOverlapping(from)) return undefined;
+
+        let movePos = move.getCenter();
+        let fromBox = from.getBoundingBox();
+
+        let topleft_t = from.direction === 'upleft' ? Infinity : raycastTimeCircleCircle(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius);
+        let topright_t = from.direction === 'upright' ? Infinity : raycastTimeCircleCircle(movePos.x - fromBox.right, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius);
+        let bottomright_t = from.direction === 'downright' ? Infinity : raycastTimeCircleCircle(movePos.x - fromBox.right, movePos.y - fromBox.bottom, movedx - fromdx, movedy - fromdy, move.radius);
+        let bottomleft_t = from.direction === 'downleft' ? Infinity : raycastTimeCircleCircle(movePos.x - fromBox.left, movePos.y - fromBox.bottom, movedx - fromdx, movedy - fromdy, move.radius);
+
+
+        let line1_t: number, line2_t: number, line3_t: number;
+
+        if (from.direction === 'upleft') {
+            line1_t = raycastTimeCircleSegment(movePos.x - fromBox.right, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, 0, fromBox.height);
+            line2_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.bottom, movedx - fromdx, movedy - fromdy, move.radius, fromBox.width, 0);
+            line3_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.bottom, movedx - fromdx, movedy - fromdy, move.radius, fromBox.width, -fromBox.height);
+        } else if (from.direction === 'upright') {
+            line1_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, 0, fromBox.height);
+            line2_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.bottom, movedx - fromdx, movedy - fromdy, move.radius, fromBox.width, 0);
+            line3_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, fromBox.width, fromBox.height);
+        } else if (from.direction === 'downright') {
+            line1_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, 0, fromBox.height);
+            line2_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, fromBox.width, 0);
+            line3_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.bottom, movedx - fromdx, movedy - fromdy, move.radius, fromBox.width, -fromBox.height);
+        } else {
+            line1_t = raycastTimeCircleSegment(movePos.x - fromBox.right, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, 0, fromBox.height);
+            line2_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, fromBox.width, 0);
+            line3_t = raycastTimeCircleSegment(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius, fromBox.width, fromBox.height);
+        }
+
+        let t = Math.min(topleft_t, topright_t, bottomright_t, bottomleft_t, line1_t, line2_t, line3_t);
+
+        let result = <Bounds.RaycastCollision>getDisplacementCollisionCircleSlope(move, from);
         result.t = t;
 
         return result;
@@ -270,6 +450,18 @@ namespace Bounds.Collision {
         };
     }
 
+    export function getRaycastCollisionRectSlope(move: RectBounds, movedx: number, movedy: number, from: SlopeBounds, fromdx: number, fromdy: number) {
+        return undefined;
+    }
+
+    export function getRaycastCollisionSlopeCircle(move: SlopeBounds, movedx: number, movedy: number, from: CircleBounds, fromdx: number, fromdy: number) {
+        return invertRaycastCollision(getRaycastCollisionCircleSlope(from, fromdx, fromdy, move, movedx, movedy));
+    }
+
+    export function getRaycastCollisionSlopeRect(move: SlopeBounds, movedx: number, movedy: number, from: RectBounds, fromdx: number, fromdy: number) {
+        return invertRaycastCollision(getRaycastCollisionRectSlope(from, fromdx, fromdy, move, movedx, movedy));
+    }
+
     export function isOverlappingCircleCircle(move: CircleBounds, from: CircleBounds) {
         let movePosition = move.getCenter();
         let fromPosition = from.getCenter();
@@ -310,8 +502,79 @@ namespace Bounds.Collision {
         return false;
     }
 
+    export function isOverlappingCircleSlope(move: CircleBounds, from: SlopeBounds) {
+        let movePos = move.getCenter();
+        let fromBox = from.getBoundingBox();
+
+        let centerInBox = fromBox.contains(movePos.x, movePos.y);
+        let centerInSlope = (from.direction === 'upright' && movePos.y > fromBox.height/fromBox.width * (movePos.x - fromBox.left) + fromBox.top)
+                         || (from.direction === 'upleft' && movePos.y > -fromBox.height/fromBox.width * (movePos.x - fromBox.left) + fromBox.bottom)
+                         || (from.direction === 'downleft' && movePos.y < fromBox.height/fromBox.width * (movePos.x - fromBox.left) + fromBox.top)
+                         || (from.direction === 'downright' && movePos.y < -fromBox.height/fromBox.width * (movePos.x - fromBox.left) + fromBox.bottom);
+
+        if (centerInBox && centerInSlope) {
+            return true;
+        }
+
+        // Top edge
+        if (from.direction !== 'upleft' && from.direction !== 'upright' && fromBox.left < movePos.x && movePos.x < fromBox.right && fromBox.top - move.radius < movePos.y && movePos.y <= fromBox.top) {
+            return true;
+        }
+
+        // Bottom edge
+        if (from.direction !== 'downleft' && from.direction !== 'downright' && fromBox.left < movePos.x && movePos.x < fromBox.right && fromBox.bottom <= movePos.y && movePos.y < fromBox.bottom + move.radius) {
+            return true;
+        }
+
+        // Left edge
+        if (from.direction !== 'upleft' && from.direction !== 'downleft' && fromBox.left - move.radius < movePos.x && movePos.x <= fromBox.left && fromBox.top < movePos.y && movePos.y < fromBox.bottom) {
+            return true;
+        }
+
+        // Right edge
+        if (from.direction !== 'upright' && from.direction !== 'downright' && fromBox.right <= movePos.x && movePos.x < fromBox.right + move.radius && fromBox.top < movePos.y && movePos.y < fromBox.bottom) {
+            return true;
+        }
+
+        // Top-left vertex
+        if (from.direction !== 'upleft' && M.distanceSq(movePos.x, movePos.y, fromBox.left, fromBox.top) < move.radius*move.radius) {
+            return true;
+        }
+
+        // Top-right vertex
+        if (from.direction !== 'upright' && M.distanceSq(movePos.x, movePos.y, fromBox.right, fromBox.top) < move.radius*move.radius) {
+            return true;
+        }
+
+        // Bottom-right vertex
+        if (from.direction !== 'downright' && M.distanceSq(movePos.x, movePos.y, fromBox.right, fromBox.bottom) < move.radius*move.radius) {
+            return true;
+        }
+
+        // Bottom-left vertex
+        if (from.direction !== 'downleft' && M.distanceSq(movePos.x, movePos.y, fromBox.left, fromBox.bottom) < move.radius*move.radius) {
+            return true;
+        }
+
+        // sloped edge /
+        if (from.direction !== 'upright' && from.direction !== 'downleft' && circleIntersectsSegment(movePos.x, movePos.y, move.radius, fromBox.left, fromBox.bottom, fromBox.right, fromBox.top)) {
+            return true;
+        }
+
+        // sloped edge \
+        if (from.direction !== 'upleft' && from.direction !== 'downright' && circleIntersectsSegment(movePos.x, movePos.y, move.radius, fromBox.left, fromBox.top, fromBox.right, fromBox.bottom)) {
+            return true;
+        }
+
+        return false;
+    }
+
     export function isOverlappingRectRect(move: RectBounds, from: RectBounds) {
         return G.overlapRectangles(move.getBoundingBox(), from.getBoundingBox());
+    }
+
+    export function isOverlappingRectSlope(move: RectBounds, from: SlopeBounds) {
+        return false;
     }
 
     export function invertDisplacementCollision(collision: Bounds.DisplacementCollision) {
@@ -336,6 +599,46 @@ namespace Bounds.Collision {
             collision.displacementY *= -1;
         }
         return collision;
+    }
+
+    function circleIntersectsSegment(cx: number, cy: number, r: number, lx1: number, ly1: number, lx2: number, ly2: number) {
+        let dx = cx - lx1;
+        let dy = cy - ly1;
+        let ldx = lx2 - lx1;
+        let ldy = ly2 - ly1;
+        let t = (dx*ldx + dy*ldy) / (ldx*ldx + ldy*ldy);
+        
+        if (M.distanceSq(dx, dy, ldx*t, ldy*t) > r*r) return false;
+
+        let tInRange = 0 < t && t < 1;
+        let intersectsVertex1 = M.distanceSq(0, 0, dx, dy) < r*r;
+        let intersectsVertex2 = M.distanceSq(ldx, ldy, dx, dy) < r*r;
+
+        return tInRange || intersectsVertex1 || intersectsVertex2;
+    }
+
+    function closestPointOnCircle_angle(px: number, py: number, cx: number, cy: number) {
+        let dx = px - cx;
+        let dy = py - cy;
+        return Math.atan2(dy, dx);
+    }
+
+    function closestPointOnLine_t(px: number, py: number, lx1: number, ly1: number, lx2: number, ly2: number) {
+        let dx = px - lx1;
+        let dy = py - ly1;
+        let ldx = lx2 - lx1;
+        let ldy = ly2 - ly1;
+        let t = (dx*ldx + dy*ldy) / (ldx*ldx + ldy*ldy);
+        return t;
+    }
+
+    function pointInSegmentSpan(px: number, py: number, lx1: number, ly1: number, lx2: number, ly2: number) {
+        let dx = px - lx1;
+        let dy = py - ly1;
+        let ldx = lx2 - lx1;
+        let ldy = ly2 - ly1;
+        let t = (dx*ldx + dy*ldy) / (ldx*ldx + ldy*ldy);
+        return 0 <= t && t <= 1;
     }
 
     function raycastTimeCircleCircle(dx: number, dy: number, ddx: number, ddy: number, R: number) {
@@ -363,5 +666,13 @@ namespace Bounds.Collision {
         if (comp < 0 || L*L < comp) return Infinity;
 
         return t;
+    }
+
+    function vectorBetweenVectors(vx: number, vy: number, x1: number, y1: number, x2: number, y2: number) {
+        let cross1xV = x1*vy - y1*vx;
+        let cross1x2 = x1*y2 - y1*x2;
+        let cross2xV = x2*vy - y2*vx;
+        let cross2x1 = x2*y1 - y2*x1;
+        return cross1xV * cross1x2 >= 0 && cross2xV * cross2x1 >= 0;
     }
 }

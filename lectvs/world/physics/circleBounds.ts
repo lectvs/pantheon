@@ -40,18 +40,21 @@ class CircleBounds implements Bounds {
     getDisplacementCollision(other: Bounds): Bounds.DisplacementCollision {
         if (other instanceof RectBounds) return Bounds.Collision.getDisplacementCollisionCircleRect(this, other);
         if (other instanceof CircleBounds) return Bounds.Collision.getDisplacementCollisionCircleCircle(this, other);
+        if (other instanceof SlopeBounds) return Bounds.Collision.getDisplacementCollisionCircleSlope(this, other);
         return undefined;
     }
 
     getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision {
         if (other instanceof RectBounds) return Bounds.Collision.getRaycastCollisionCircleRect(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof CircleBounds) return Bounds.Collision.getRaycastCollisionCircleCircle(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof SlopeBounds) return Bounds.Collision.getRaycastCollisionCircleSlope(this, dx, dy, other, otherdx, otherdy);
         return undefined;
     }
 
     isOverlapping(other: Bounds) {
         if (other instanceof RectBounds) return Bounds.Collision.isOverlappingCircleRect(this, other);
         if (other instanceof CircleBounds) return Bounds.Collision.isOverlappingCircleCircle(this, other);
+        if (other instanceof SlopeBounds) return Bounds.Collision.isOverlappingCircleSlope(this, other);
         return false;
     }
 }
