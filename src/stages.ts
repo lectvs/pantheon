@@ -106,15 +106,12 @@ function getStages(): Dict<World.Config> { return {
                 name: 'test_circle',
                 constructor: Sprite,
                 x: 630, y: 240,
-                texture: 'circle',
                 tint: 0x006600,
-                scaleX: 1,
-                scaleY: 1,
                 debug: {
                     followMouse: true
                 },
                 data: { complete: false },
-                bounds: { type: 'circle', x: 0, y: 0, radius: 100 },
+                bounds: { type: 'rect', x: 0, y: 0, width: 100, height: 50 },
                 updateCallback: (obj: Sprite) => {
                     let cc = obj.world.getWorldObjectByName<Sprite>('const');
 
@@ -149,6 +146,7 @@ function getStages(): Dict<World.Config> { return {
                 name: 'pattern',
                 constructor: Sprite,
                 texture: new BasicTexture(global.gameWidth, global.gameHeight),
+                alpha: 0.5,
             }
         ]
     },

@@ -281,7 +281,95 @@ namespace Bounds.Collision {
     }
 
     export function getDisplacementCollisionRectSlope(move: RectBounds, from: SlopeBounds) {
-        return undefined;
+        if (!move.isOverlapping(from)) return undefined;
+
+        let moveBox = move.getBoundingBox();
+        let fromBox = from.getBoundingBox();
+
+        let newXs = [];
+        let newYs = [];
+
+        // Left Edge + vertex
+        if (from.direction === 'upright' || from.direction === 'downright'
+            || (from.direction === 'upleft' && moveBox.top < fromBox.bottom && fromBox.bottom < moveBox.bottom)
+            || (from.direction === 'downleft' && moveBox.top < fromBox.top && fromBox.top < moveBox.bottom)) {
+            newXs.push(fromBox.left - moveBox.width);
+            newYs.push(moveBox.top);
+        }
+
+        // Right Edge + vertex
+        if (from.direction === 'upleft' || from.direction === 'downleft'
+            || (from.direction === 'upright' && moveBox.top < fromBox.bottom && fromBox.bottom < moveBox.bottom)
+            || (from.direction === 'downright' && moveBox.top < fromBox.top && fromBox.top < moveBox.bottom)) {
+            newXs.push(fromBox.right);
+            newYs.push(moveBox.top);
+        }
+
+        // Top Edge + vertex
+        if (from.direction === 'downleft' || from.direction === 'downright'
+            || (from.direction === 'upleft' && moveBox.left < fromBox.right && fromBox.right < moveBox.right)
+            || (from.direction === 'upright' && moveBox.left < fromBox.left && fromBox.left < moveBox.right)) {
+            newXs.push(moveBox.left);
+            newYs.push(fromBox.top - moveBox.height);
+        }
+
+        // Bottom Edge + vertex
+        if (from.direction === 'upleft' || from.direction === 'upright'
+            || (from.direction === 'downleft' && moveBox.left < fromBox.right && fromBox.right < moveBox.right)
+            || (from.direction === 'downright' && moveBox.left < fromBox.left && fromBox.left < moveBox.right)) {
+            newXs.push(moveBox.left);
+            newYs.push(fromBox.bottom);
+        }
+
+        let ww = fromBox.width*fromBox.width;
+        let hh = fromBox.height*fromBox.height;
+        let wh = fromBox.width*fromBox.height;
+
+        // Up-left edge
+        if (from.direction === 'upleft') {
+            let xi = (ww*moveBox.right + hh*fromBox.left + wh*fromBox.bottom - wh*moveBox.bottom) / (ww + hh);
+            let yi = fromBox.width/fromBox.height * (xi - moveBox.right) + moveBox.bottom;
+            newXs.push(xi - moveBox.width);
+            newYs.push(yi - moveBox.height);
+        }
+        
+        // Up-right edge
+        if (from.direction === 'upright') {
+            let xi = (ww*moveBox.left + hh*fromBox.left - wh*fromBox.top + wh*moveBox.bottom) / (ww + hh);
+            let yi = -fromBox.width/fromBox.height * (xi - moveBox.left) + moveBox.bottom;
+            newXs.push(xi);
+            newYs.push(yi - moveBox.height);
+        }
+
+        // Down-right edge
+        if (from.direction === 'downright') {
+            let xi = (ww*moveBox.left + hh*fromBox.left + wh*fromBox.bottom - wh*moveBox.top) / (ww + hh);
+            let yi = fromBox.width/fromBox.height * (xi - moveBox.left) + moveBox.top;
+            newXs.push(xi);
+            newYs.push(yi);
+        }
+
+        // Down-left edge
+        if (from.direction === 'downleft') {
+            let xi = (ww*moveBox.right + hh*fromBox.left - wh*fromBox.top + wh*moveBox.top) / (ww + hh);
+            let yi = -fromBox.width/fromBox.height * (xi - moveBox.right) + moveBox.top;
+            newXs.push(xi - moveBox.width);
+            newYs.push(yi);
+        }
+
+        if (newXs.length === 0) return undefined;
+
+        let i = M.argmin(A.range(newXs.length), i => M.distanceSq(moveBox.left, moveBox.top, newXs[i], newYs[i]));
+
+        let displacementX = newXs[i] - moveBox.left;
+        let displacementY = newYs[i] - moveBox.top;
+
+        return <Bounds.DisplacementCollision>{
+            bounds1: move,
+            bounds2: from,
+            displacementX,
+            displacementY,
+        };
     }
 
     export function getDisplacementCollisionSlopeCircle(move: SlopeBounds, from: CircleBounds) {
@@ -314,7 +402,11 @@ namespace Bounds.Collision {
         if (!move.isOverlapping(from)) return undefined;
 
         let movePos = move.getCenter();
+        movePos.x -= movedx;
+        movePos.y -= movedy;
         let fromBox = from.getBoundingBox();
+        fromBox.x -= fromdx;
+        fromBox.y -= fromdy;
 
         let topleft_t = raycastTimeCircleCircle(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius);
         let topright_t = raycastTimeCircleCircle(movePos.x - fromBox.right, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius);
@@ -338,7 +430,11 @@ namespace Bounds.Collision {
         if (!move.isOverlapping(from)) return undefined;
 
         let movePos = move.getCenter();
+        movePos.x -= movedx;
+        movePos.y -= movedy;
         let fromBox = from.getBoundingBox();
+        fromBox.x -= fromdx;
+        fromBox.y -= fromdy;
 
         let topleft_t = from.direction === 'upleft' ? Infinity : raycastTimeCircleCircle(movePos.x - fromBox.left, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius);
         let topright_t = from.direction === 'upright' ? Infinity : raycastTimeCircleCircle(movePos.x - fromBox.right, movePos.y - fromBox.top, movedx - fromdx, movedy - fromdy, move.radius);
@@ -451,7 +547,102 @@ namespace Bounds.Collision {
     }
 
     export function getRaycastCollisionRectSlope(move: RectBounds, movedx: number, movedy: number, from: SlopeBounds, fromdx: number, fromdy: number) {
-        return undefined;
+        if (!move.isOverlapping(from)) return undefined;
+
+        let moveBox = move.getBoundingBox();
+        moveBox.x -= movedx;
+        moveBox.y -= movedy;
+        let fromBox = from.getBoundingBox();
+        fromBox.x -= fromdx;
+        fromBox.y -= fromdy;
+
+        let left_t = Infinity;
+        let right_t = Infinity;
+        let top_t = Infinity;
+        let bottom_t = Infinity;
+
+        if (movedx !== fromdx) {
+            left_t = (fromBox.left - moveBox.right) / (movedx - fromdx);
+            if (moveBox.top + movedy*left_t >= fromBox.bottom + fromdy*left_t || fromBox.top + fromdy*left_t >= moveBox.bottom + movedy*left_t) left_t = Infinity;
+            if (from.direction === 'upleft' && (moveBox.top + movedy*left_t >= fromBox.bottom + fromdy*left_t || fromBox.bottom + fromdy*left_t >= moveBox.bottom + movedy*left_t)) left_t = Infinity;
+            if (from.direction === 'downleft' && (moveBox.top + movedy*left_t >= fromBox.top + fromdy*left_t || fromBox.top + fromdy*left_t >= moveBox.bottom + movedy*left_t)) left_t = Infinity;
+
+            right_t = (fromBox.right - moveBox.left) / (movedx - fromdx);
+            if (moveBox.top + movedy*right_t >= fromBox.bottom + fromdy*right_t || fromBox.top + fromdy*right_t >= moveBox.bottom + movedy*right_t) right_t = Infinity;
+            if (from.direction === 'upright' && (moveBox.top + movedy*right_t >= fromBox.bottom + fromdy*right_t || fromBox.bottom + fromdy*right_t >= moveBox.bottom + movedy*right_t)) right_t = Infinity;
+            if (from.direction === 'downright' && (moveBox.top + movedy*right_t >= fromBox.top + fromdy*right_t || fromBox.top + fromdy*right_t >= moveBox.bottom + movedy*right_t)) right_t = Infinity;
+        }
+
+        if (movedy !== fromdy) {
+            top_t = (fromBox.top - moveBox.bottom) / (movedy - fromdy);
+            if (moveBox.left + movedx*top_t >= fromBox.right + fromdx*top_t || fromBox.left + fromdx*top_t >= moveBox.right + movedx*top_t) top_t = Infinity;
+            if (from.direction === 'upleft' && (moveBox.left + movedx*top_t >= fromBox.right + fromdx*top_t || fromBox.right + fromdx*top_t >= moveBox.right + movedx*top_t)) top_t = Infinity;
+            if (from.direction === 'upright' && (moveBox.left + movedx*top_t >= fromBox.left + fromdx*top_t || fromBox.left + fromdx*top_t >= moveBox.right + movedx*top_t)) top_t = Infinity;
+
+            bottom_t = (fromBox.bottom - moveBox.top) / (movedy - fromdy);
+            if (moveBox.left + movedx*bottom_t >= fromBox.right + fromdx*bottom_t || fromBox.left + fromdx*bottom_t >= moveBox.right + movedx*bottom_t) bottom_t = Infinity;
+            if (from.direction === 'downleft' && (moveBox.left + movedx*bottom_t >= fromBox.right + fromdx*bottom_t || fromBox.right + fromdx*bottom_t >= moveBox.right + movedx*bottom_t)) bottom_t = Infinity;
+            if (from.direction === 'downright' && (moveBox.left + movedx*bottom_t >= fromBox.left + fromdx*bottom_t || fromBox.left + fromdx*bottom_t >= moveBox.right + movedx*bottom_t)) bottom_t = Infinity;
+        }
+
+        let topleft_t = from.direction !== 'upleft' ? Infinity : raycastTimePointSegment(moveBox.right-fromBox.left, moveBox.bottom-fromBox.bottom, movedx-fromdx, movedy-fromdy, fromBox.width, -fromBox.height);
+        let topright_t = from.direction !== 'upright' ? Infinity : raycastTimePointSegment(moveBox.left-fromBox.left, moveBox.bottom-fromBox.top, movedx-fromdx, movedy-fromdy, fromBox.width, fromBox.height);
+        let bottomleft_t = from.direction !== 'downleft' ? Infinity : raycastTimePointSegment(moveBox.right-fromBox.left, moveBox.top-fromBox.top, movedx-fromdx, movedy-fromdy, fromBox.width, fromBox.height);
+        let bottomright_t = from.direction !== 'downright' ? Infinity : raycastTimePointSegment(moveBox.left-fromBox.left, moveBox.top-fromBox.bottom, movedx-fromdx, movedy-fromdy, fromBox.width, -fromBox.height);
+
+        let t = Math.min(left_t, right_t, top_t, bottom_t, topleft_t, topright_t, bottomleft_t, bottomright_t);
+        if (!isFinite(t)) return undefined;
+
+        moveBox = move.getBoundingBox();
+        fromBox = from.getBoundingBox();
+
+        let ww = fromBox.width*fromBox.width;
+        let hh = fromBox.height*fromBox.height;
+        let wh = fromBox.width*fromBox.height;
+
+        let newX: number, newY: number;
+
+        if (t === left_t) {
+            newX = fromBox.left - moveBox.width;
+            newY = moveBox.top;
+        } else if (t === right_t) {
+            newX = fromBox.right;
+            newY = moveBox.top;
+        } else if (t === top_t) {
+            newX = moveBox.left;
+            newY = fromBox.top - moveBox.height;
+        } else if (t === bottom_t) {
+            newX = moveBox.left;
+            newY = fromBox.bottom;
+        } else if (t === topleft_t) {
+            let xi = (ww*moveBox.right + hh*fromBox.left + wh*fromBox.bottom - wh*moveBox.bottom) / (ww + hh);
+            let yi = fromBox.width/fromBox.height * (xi - moveBox.right) + moveBox.bottom;
+            newX = xi - moveBox.width;
+            newY = yi - moveBox.height;
+        } else if (t === topright_t) {
+            let xi = (ww*moveBox.left + hh*fromBox.left - wh*fromBox.top + wh*moveBox.bottom) / (ww + hh);
+            let yi = -fromBox.width/fromBox.height * (xi - moveBox.left) + moveBox.bottom;
+            newX = xi;
+            newY = yi - moveBox.height;
+        } else if (t === bottomright_t) {
+            let xi = (ww*moveBox.left + hh*fromBox.left + wh*fromBox.bottom - wh*moveBox.top) / (ww + hh);
+            let yi = fromBox.width/fromBox.height * (xi - moveBox.left) + moveBox.top;
+            newX = xi;
+            newY = yi;
+        } else {
+            let xi = (ww*moveBox.right + hh*fromBox.left - wh*fromBox.top + wh*moveBox.top) / (ww + hh);
+            let yi = -fromBox.width/fromBox.height * (xi - moveBox.right) + moveBox.top;
+            newX = xi - moveBox.width;
+            newY = yi;
+        }
+
+        return <Bounds.RaycastCollision>{
+            bounds1: move,
+            bounds2: from,
+            t: t,
+            displacementX: newX - moveBox.left,
+            displacementY: newY - moveBox.top
+        };
     }
 
     export function getRaycastCollisionSlopeCircle(move: SlopeBounds, movedx: number, movedy: number, from: CircleBounds, fromdx: number, fromdy: number) {
@@ -574,7 +765,17 @@ namespace Bounds.Collision {
     }
 
     export function isOverlappingRectSlope(move: RectBounds, from: SlopeBounds) {
-        return false;
+        let moveBox = move.getBoundingBox();
+        let fromBox = from.getBoundingBox();
+
+        if (!G.overlapRectangles(moveBox, fromBox)) return false;
+
+        if (from.direction === 'upleft' && moveBox.bottom <= -fromBox.height/fromBox.width * (moveBox.right - fromBox.left) + fromBox.bottom) return false;
+        if (from.direction === 'upright' && moveBox.bottom <= fromBox.height/fromBox.width * (moveBox.left - fromBox.left) + fromBox.top) return false;
+        if (from.direction === 'downright' && moveBox.top >= -fromBox.height/fromBox.width * (moveBox.left - fromBox.left) + fromBox.bottom) return false;
+        if (from.direction === 'downleft' && moveBox.top >= fromBox.height/fromBox.width * (moveBox.right - fromBox.left) + fromBox.top) return false;
+
+        return true;
     }
 
     export function invertDisplacementCollision(collision: Bounds.DisplacementCollision) {
@@ -632,15 +833,6 @@ namespace Bounds.Collision {
         return t;
     }
 
-    function pointInSegmentSpan(px: number, py: number, lx1: number, ly1: number, lx2: number, ly2: number) {
-        let dx = px - lx1;
-        let dy = py - ly1;
-        let ldx = lx2 - lx1;
-        let ldy = ly2 - ly1;
-        let t = (dx*ldx + dy*ldy) / (ldx*ldx + ldy*ldy);
-        return 0 <= t && t <= 1;
-    }
-
     function raycastTimeCircleCircle(dx: number, dy: number, ddx: number, ddy: number, R: number) {
         let a = ddx*ddx + ddy*ddy;
         let b = 2*dx*ddx + 2*dy*ddy;
@@ -665,6 +857,13 @@ namespace Bounds.Collision {
 
         if (comp < 0 || L*L < comp) return Infinity;
 
+        return t;
+    }
+
+    function raycastTimePointSegment(dpx: number, dpy: number, ddx: number, ddy: number, linedx: number, linedy: number) {
+        let t = (linedy*dpx - linedx*dpy) / (linedx*ddy - linedy*ddx);
+        let s = linedx !== 0 ? (dpx + ddx*t) / linedx : (dpy + ddy*t) / linedy;
+        if (s < 0 || 1 < s) return Infinity;
         return t;
     }
 
