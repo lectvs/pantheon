@@ -23,18 +23,21 @@
 - /move anchor properties off base texture class
 - /implement mask as a first-class texture feature
 - /remove delta from update?
+- /full-layer immovability
 - platformer stuff
     - /moving platforms
     - /physics based on lastx/y instead of lastmovementx/y?
     - /one-way platforms
     - /bounds in PhysicsWorldObject config
     - slopes/sloped bounds
-    - implement metroid-style transitions
+        - players stick to slopes
 - texture vertex filter
-- documentation and API cleanup
 
 stretch
+- documentation and API cleanup
+- implement metroid-style transitions
 - camera zoom
+- normal-map/lighting
 - boundless textures
     - optimize tilemap editing with boundless textures
 - momentum transfer for collisions

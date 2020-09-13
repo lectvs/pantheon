@@ -13,7 +13,7 @@ function BASE_STAGE(): World.Config {
         physicsGroups: {
             'player': {},
             'boxes': {},
-            'walls': {},
+            'walls': { immovable: true },
         },
         collisions: {
             'boxes': [

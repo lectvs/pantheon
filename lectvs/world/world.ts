@@ -7,7 +7,7 @@ namespace World {
         constructor?: any;
 
         physicsGroups?: Dict<World.PhysicsGroupConfig>;
-        collisions?: Dict<CollisionConfig2[]>;
+        collisions?: Dict<CollisionConfig[]>;
         collisionIterations?: number;
         useRaycastDisplacementThreshold?: number;
 
@@ -28,13 +28,6 @@ namespace World {
     }
 
     export type CollisionConfig = {
-        move: string[];
-        from: string[];
-        callback?: Physics.CollisionCallback;
-        transferMomentum?: boolean;
-    }
-
-    export type CollisionConfig2 = {
         collidingPhysicsGroup: string;
         callback?: Physics.CollisionCallback;
         transferMomentum?: boolean;
@@ -48,6 +41,7 @@ namespace World {
     }
 
     export type PhysicsGroupConfig = {
+        immovable?: boolean;
     }
 
     export type EntryPoint = string | Pt;
@@ -60,7 +54,7 @@ class World {
     worldObjects: WorldObject[];
 
     physicsGroups: Dict<World.PhysicsGroup>;
-    collisions: Dict<World.CollisionConfig2[]>;
+    collisions: Dict<World.CollisionConfig[]>;
     collisionIterations: number;
     useRaycastDisplacementThreshold: number;
 
@@ -505,10 +499,12 @@ namespace World {
 
     export class PhysicsGroup {
         name: string;
+        immovable: boolean;
         worldObjects: PhysicsWorldObject[];
 
         constructor(name: string, config: World.PhysicsGroupConfig) {
             this.name = name;
+            this.immovable = config.immovable ?? false;
             this.worldObjects = [];
         }
     }

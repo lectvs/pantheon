@@ -57,7 +57,6 @@ class PhysicsWorldObject extends WorldObject {
     gravityz: number;
     bounce: number;
     bounds: Bounds;
-    immovable: boolean;
     colliding: boolean;
 
     simulating: boolean;
@@ -66,6 +65,8 @@ class PhysicsWorldObject extends WorldObject {
     physicslasty: number;
 
     debugDrawBounds: boolean;
+
+    private _immovable: boolean;
 
     constructor(config: PhysicsWorldObject.Config, defaults?: PhysicsWorldObject.Config) {
         config = WorldObject.resolveConfig<PhysicsWorldObject.Config>(config, defaults);
@@ -81,7 +82,7 @@ class PhysicsWorldObject extends WorldObject {
 
         this.bounds = this.createBounds(config.bounds);
 
-        this.immovable = config.immovable ?? false;
+        this._immovable = config.immovable ?? false;
         this.colliding = config.colliding ?? true;
 
         this.debugDrawBounds = config.debug?.drawBounds ?? false;
@@ -119,12 +120,20 @@ class PhysicsWorldObject extends WorldObject {
         return this.isOverlapping(other.bounds);
     }
 
+    isImmovable() {
+        return this._immovable || (this.world && this.world.getPhysicsGroupByName(this.physicsGroup).immovable);
+    }
+
     isOverlapping(bounds: Bounds) {
         return this.bounds.isOverlapping(bounds);
     }
     
     onCollide(other: PhysicsWorldObject) {
 
+    }
+
+    setImmovable(immovable: boolean) {
+        this._immovable = immovable;
     }
 
     teleport(x: number, y: number) {

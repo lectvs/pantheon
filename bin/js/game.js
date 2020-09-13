@@ -2851,7 +2851,7 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         _this.gravityz = (_g = config.gravityz) !== null && _g !== void 0 ? _g : 0;
         _this.bounce = (_h = config.bounce) !== null && _h !== void 0 ? _h : 0;
         _this.bounds = _this.createBounds(config.bounds);
-        _this.immovable = (_j = config.immovable) !== null && _j !== void 0 ? _j : false;
+        _this._immovable = (_j = config.immovable) !== null && _j !== void 0 ? _j : false;
         _this.colliding = (_k = config.colliding) !== null && _k !== void 0 ? _k : true;
         _this.debugDrawBounds = (_m = (_l = config.debug) === null || _l === void 0 ? void 0 : _l.drawBounds) !== null && _m !== void 0 ? _m : false;
         _this.simulating = (_o = config.simulating) !== null && _o !== void 0 ? _o : true;
@@ -2884,10 +2884,16 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
     PhysicsWorldObject.prototype.isCollidingWith = function (other) {
         return this.isOverlapping(other.bounds);
     };
+    PhysicsWorldObject.prototype.isImmovable = function () {
+        return this._immovable || (this.world && this.world.getPhysicsGroupByName(this.physicsGroup).immovable);
+    };
     PhysicsWorldObject.prototype.isOverlapping = function (bounds) {
         return this.bounds.isOverlapping(bounds);
     };
     PhysicsWorldObject.prototype.onCollide = function (other) {
+    };
+    PhysicsWorldObject.prototype.setImmovable = function (immovable) {
+        this._immovable = immovable;
     };
     PhysicsWorldObject.prototype.teleport = function (x, y) {
         this.x = x;
@@ -3549,7 +3555,9 @@ var World = /** @class */ (function () {
     World.Layer = Layer;
     var PhysicsGroup = /** @class */ (function () {
         function PhysicsGroup(name, config) {
+            var _a;
             this.name = name;
+            this.immovable = (_a = config.immovable) !== null && _a !== void 0 ? _a : false;
             this.worldObjects = [];
         }
         return PhysicsGroup;
@@ -7175,9 +7183,9 @@ var Physics;
         try {
             for (var collisions_2 = __values(collisions), collisions_2_1 = collisions_2.next(); !collisions_2_1.done; collisions_2_1 = collisions_2.next()) {
                 var collision = collisions_2_1.value;
-                if (collision.move.immovable)
+                if (collision.move.isImmovable())
                     currentSet.add(collision.move);
-                if (collision.from.immovable)
+                if (collision.from.isImmovable())
                     currentSet.add(collision.from);
             }
         }
@@ -7309,8 +7317,8 @@ var Physics;
         return raycastCollisions;
     }
     function applyDisplacementForCollision(collision, forceImmovable) {
-        var moveImmovable = collision.move.immovable || collision.move === forceImmovable;
-        var fromImmovable = collision.from.immovable || collision.from === forceImmovable;
+        var moveImmovable = collision.move.isImmovable() || collision.move === forceImmovable;
+        var fromImmovable = collision.from.isImmovable() || collision.from === forceImmovable;
         if (moveImmovable && fromImmovable)
             return;
         if (moveImmovable) {
@@ -7331,7 +7339,7 @@ var Physics;
         collision.from.y -= (1 - massFactor) * collision.collision.displacementY;
     }
     function applyMomentumTransferForCollision(delta, collision, transferMomentum) {
-        if (!collision.move.immovable) {
+        if (!collision.move.isImmovable()) {
             var fromvx = transferMomentum ? (collision.from.x - collision.from.physicslastx) / delta : 0;
             var fromvy = transferMomentum ? (collision.from.y - collision.from.physicslasty) / delta : 0;
             collision.move.vx -= fromvx;
@@ -7340,7 +7348,7 @@ var Physics;
             collision.move.vx += fromvx;
             collision.move.vy += fromvy;
         }
-        if (!collision.from.immovable) {
+        if (!collision.from.isImmovable()) {
             var movevx = transferMomentum ? (collision.move.x - collision.move.physicslastx) / delta : 0;
             var movevy = transferMomentum ? (collision.move.y - collision.move.physicslasty) / delta : 0;
             collision.move.vx -= movevx;
@@ -9311,7 +9319,7 @@ function BASE_STAGE() {
         physicsGroups: {
             'player': {},
             'boxes': {},
-            'walls': {},
+            'walls': { immovable: true },
         },
         collisions: {
             'boxes': [
@@ -9643,14 +9651,14 @@ Main.loadConfig({
         font: Assets.fonts.DELUXE16,
         fontStyle: { color: 0x008800 },
         cheatsEnabled: true,
-        allPhysicsBounds: true,
+        allPhysicsBounds: false,
         moveCameraWithArrows: true,
         showOverlay: true,
         skipRate: 1,
         programmaticInput: false,
         autoplay: true,
         skipMainMenu: true,
-        frameStepEnabled: true,
+        frameStepEnabled: false,
         frameStepStepKey: '1',
         frameStepRunKey: '2',
         resetOptionsAtStart: true,
@@ -9823,6 +9831,66 @@ function getStages() {
                     physicsGroup: 'walls',
                 },
                 {
+                    constructor: Sprite,
+                    x: 160, y: 640,
+                    layer: 'main',
+                    texture: 'slope',
+                    scaleX: -32 / 100, scaleY: 32 / 100,
+                    tint: 0x000000,
+                    physicsGroup: 'walls',
+                    bounds: { type: 'slope', x: -32, y: 0, width: 32, height: 32, direction: 'upright' },
+                },
+                {
+                    constructor: Sprite,
+                    x: 288, y: 640,
+                    layer: 'main',
+                    texture: 'slope',
+                    scaleX: 32 / 100, scaleY: 32 / 100,
+                    tint: 0x000000,
+                    physicsGroup: 'walls',
+                    bounds: { type: 'slope', x: 0, y: 0, width: 32, height: 32, direction: 'upleft' },
+                },
+                {
+                    constructor: Sprite,
+                    x: 320, y: 608,
+                    layer: 'main',
+                    texture: 'slope',
+                    scaleX: 96 / 100, scaleY: 32 / 100,
+                    tint: 0x000000,
+                    physicsGroup: 'walls',
+                    bounds: { type: 'slope', x: 0, y: 0, width: 96, height: 32, direction: 'upleft' },
+                },
+                {
+                    constructor: Sprite,
+                    x: 416, y: 576,
+                    layer: 'main',
+                    texture: 'slope',
+                    scaleX: 32 / 100, scaleY: 32 / 100,
+                    tint: 0x000000,
+                    physicsGroup: 'walls',
+                    bounds: { type: 'slope', x: 0, y: 0, width: 32, height: 32, direction: 'upleft' },
+                },
+                {
+                    constructor: Sprite,
+                    x: 448, y: 544,
+                    layer: 'main',
+                    texture: 'slope',
+                    scaleX: 32 / 100, scaleY: 32 / 100,
+                    tint: 0x000000,
+                    physicsGroup: 'walls',
+                    bounds: { type: 'slope', x: 0, y: 0, width: 32, height: 32, direction: 'upleft' },
+                },
+                {
+                    constructor: Sprite,
+                    x: 480, y: 448,
+                    layer: 'main',
+                    texture: 'slope',
+                    scaleX: 32 / 100, scaleY: 96 / 100,
+                    tint: 0x000000,
+                    physicsGroup: 'walls',
+                    bounds: { type: 'slope', x: 0, y: 0, width: 32, height: 96, direction: 'upleft' },
+                },
+                {
                     name: 'player',
                     constructor: Player,
                     x: 180, y: 620,
@@ -9848,7 +9916,6 @@ function getStages() {
                     layer: 'main',
                     physicsGroup: 'walls',
                     bounds: { type: 'rect', x: 0, y: 0, width: 128, height: 16 },
-                    immovable: true,
                     data: {
                         pathStart: { x: 192, y: 402 },
                         pathEnd: { x: 320, y: 352 },
@@ -9862,7 +9929,6 @@ function getStages() {
                     layer: 'main',
                     physicsGroup: 'walls',
                     bounds: { type: 'rect', x: 0, y: 0, width: 128, height: 16 },
-                    immovable: true,
                 },
                 {
                     name: 'tilemapEditor',

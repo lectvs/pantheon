@@ -39,8 +39,8 @@ namespace Physics {
 
         let currentSet = new Set<PhysicsWorldObject>();
         for (let collision of collisions) {
-            if (collision.move.immovable) currentSet.add(collision.move);
-            if (collision.from.immovable) currentSet.add(collision.from);
+            if (collision.move.isImmovable()) currentSet.add(collision.move);
+            if (collision.from.isImmovable()) currentSet.add(collision.from);
         }
 
         let doneWithCollisions = false;
@@ -127,8 +127,8 @@ namespace Physics {
     }
 
     function applyDisplacementForCollision(collision: Physics.DisplacementCollision, forceImmovable?: PhysicsWorldObject) {
-        let moveImmovable = collision.move.immovable || collision.move === forceImmovable;
-        let fromImmovable = collision.from.immovable || collision.from === forceImmovable;
+        let moveImmovable = collision.move.isImmovable() || collision.move === forceImmovable;
+        let fromImmovable = collision.from.isImmovable() || collision.from === forceImmovable;
 
         if (moveImmovable && fromImmovable) return;
 
@@ -154,7 +154,7 @@ namespace Physics {
     }
 
     function applyMomentumTransferForCollision(delta: number, collision: Physics.DisplacementCollision, transferMomentum: boolean) {
-        if (!collision.move.immovable) {
+        if (!collision.move.isImmovable()) {
             let fromvx = transferMomentum ? (collision.from.x - collision.from.physicslastx)/delta : 0;
             let fromvy = transferMomentum ? (collision.from.y - collision.from.physicslasty)/delta : 0;
             collision.move.vx -= fromvx;
@@ -164,7 +164,7 @@ namespace Physics {
             collision.move.vy += fromvy;
         }
 
-        if (!collision.from.immovable) {
+        if (!collision.from.isImmovable()) {
             let movevx = transferMomentum ? (collision.move.x - collision.move.physicslastx)/delta : 0;
             let movevy = transferMomentum ? (collision.move.y - collision.move.physicslasty)/delta : 0;
             collision.move.vx -= movevx;
