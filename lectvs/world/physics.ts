@@ -111,6 +111,7 @@ namespace Physics {
                     for (let from of world.physicsGroups[fromGroup].worldObjects) {
                         if (move === from) continue;
                         if (!G.overlapRectangles(move.bounds.getBoundingBox(), from.bounds.getBoundingBox())) continue;
+                        if (!move.isCollidingWith(from) || !from.isCollidingWith(move)) continue;
                         let raycastCollision = move.bounds.getRaycastCollision(move.x-move.physicslastx, move.y-move.physicslasty, from.bounds, from.x-from.physicslastx, from.y-from.physicslasty);
                         if (!raycastCollision) continue;
                         raycastCollisions.push({

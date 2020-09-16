@@ -30,9 +30,9 @@
     - /moving platforms
     - /physics based on lastx/y instead of lastmovementx/y?
     - /bounds in PhysicsWorldObject config
+    - /one-way platforms
     - slopes/sloped bounds
         - players stick to slopes
-    - one-way platforms
 
 stretch
 - documentation and API cleanup

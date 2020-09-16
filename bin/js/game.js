@@ -7319,6 +7319,8 @@ var Physics;
                                         continue;
                                     if (!G.overlapRectangles(move.bounds.getBoundingBox(), from.bounds.getBoundingBox()))
                                         continue;
+                                    if (!move.isCollidingWith(from) || !from.isCollidingWith(move))
+                                        continue;
                                     var raycastCollision = move.bounds.getRaycastCollision(move.x - move.physicslastx, move.y - move.physicslasty, from.bounds, from.x - from.physicslastx, from.y - from.physicslasty);
                                     if (!raycastCollision)
                                         continue;
