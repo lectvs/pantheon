@@ -3,37 +3,30 @@
 
 namespace TextureFilter {
     /**
-     * Texture filter config.
+     * Texture fragment filter config.
      * 
-     * @property uniforms Uniform definitions for the filter. Of the form ["float rx", "vec2 position"]
-     * @property defaultUniforms Map of uniform name => value to initialize the filter. Of the form {"rx": 5, "position": [1,4]}
+     * @property uniforms Map of uniform name => value to initialize the filter. Of the form {"rx": 5, "position": [1,4]}
      * @property code The fragment shader code. Set the color in `outp`.
      *           Available for use are the following variables and methods:
      *               vec4 inp - the input color
-     *               float width/height - the width and height of the filter
+     *               float width/height - the width and height of the source texture
+     *               float destWidth/destHeight - the width and height of the dest texture (filter, technically)
      *               float x/y - the local x/y coordinates in pixels
-     *               float worldx/y - the x/y coordinates in world/screenspace(?)
+     *               float destx/y - the x/y coordinates in dest space
      *               float t - time in seconds
      *               vec4 getColor(float x, float y) - get the color at local x/y
-     *               vec4 getWorldColor(float worldx, float worldy) - get the color at world x/y
-     * @property vertCode The vertex shader code. Set the vertex in `outp`.
-*                Available for use are the following variables and methods:
-*                    vec2 inp - the input vertex
-*                    float width/height - the width and height of the filter(?)
-*                    float t - time in seconds
+     *               vec4 getDestColor(float destx, float desty) - get the color at x/y in dest space
      */
     export type Config = {
         uniforms?: Dict<any>;
         code?: string;
-        vertCode?: string;
     }
 }
 
 class TextureFilter {
     enabled: boolean;
-
+    
     private code: string;
-    private vertCode: string;
     private uniformCode: string;
     private uniforms: Dict<any>;
 
@@ -41,12 +34,13 @@ class TextureFilter {
 
     constructor(config: TextureFilter.Config) {
         this.code = config.code ?? '';
-        this.vertCode = config.vertCode ?? '';
         this.uniformCode = this.constructUniformCode(config.uniforms);
         this.uniforms = this.constructUniforms(config.uniforms);
 
         this.setUniform('posx', 0);
         this.setUniform('posy', 0);
+        this.setUniform('dimx', 0);
+        this.setUniform('dimy', 0);
         this.setUniform('t', 0);
 
         this.enabled = true;
@@ -67,8 +61,12 @@ class TextureFilter {
         this.borrowedPixiFilter = null;
     }
 
-    getCode() {
-        return this.code;
+    constructPixiFilter(): PIXI.Filter {
+        return new PIXI.Filter(PIXI.Filter.defaultVertexSrc, TextureFilter.constructFragCode(this.uniformCode, this.code), {});
+    }
+
+    getCacheCode() {
+        return `TextureFilter:${this.uniformCode}${this.code}`;
     }
 
     getUniform(uniform: string) {
@@ -79,8 +77,9 @@ class TextureFilter {
         return this.uniformCode;
     }
 
-    getVertCode() {
-        return this.vertCode;
+    setTextureDimensions(dimx: number, dimy: number) {
+        this.uniforms['dimx'] = dimx;
+        this.uniforms['dimy'] = dimy;
     }
 
     setTexturePosition(posx: number, posy: number) {
@@ -112,7 +111,7 @@ class TextureFilter {
         return uniformCode;
     }
 
-    private constructUniforms(uniformDeclarations: Dict<any>) {
+    protected constructUniforms(uniformDeclarations: Dict<any>) {
         if (_.isEmpty(uniformDeclarations)) return {};
         let uniformMap = {};
         for (let decl in uniformDeclarations) {
@@ -125,92 +124,13 @@ class TextureFilter {
 
 namespace TextureFilter {
     export const cache = new SingleKeyCache(
-        (filter: TextureFilter) => {
-            let vert = vertPreUniforms + filter.getUniformCode() + vertStartFunc + filter.getVertCode() + vertEndFunc;
-            let frag = fragPreUniforms + filter.getUniformCode() + fragStartFunc + filter.getCode() + fragEndFunc;
-            return new PIXI.Filter(vert, frag, {});
-        },
-        (filter: TextureFilter) => {
-            return filter.getUniformCode() + filter.getVertCode() + filter.getCode();
-        }
+        (filter: TextureFilter) => filter.constructPixiFilter(),
+        (filter: TextureFilter) => filter.getCacheCode(),
     );
 
-    export class Slice extends TextureFilter {
-        constructor(rect: Rect) {
-            super({
-                uniforms: {
-                    'float sliceX': rect.x,
-                    'float sliceY': rect.y,
-                    'float sliceWidth': rect.width,
-                    'float sliceHeight': rect.height,
-                },
-                code: `
-                    if (x < sliceX || x >= sliceX + sliceWidth || y < sliceY || y >= sliceY + sliceHeight) {
-                        outp.a = 0.0;
-                    }
-                `
-            });
-        }
-
-        setSlice(rect: Rect) {
-            this.setUniforms({
-                'sliceX': rect.x,
-                'sliceY': rect.y,
-                'sliceWidth': rect.width,
-                'sliceHeight': rect.height,
-            });
-        }
+    export function constructFragCode(uniformCode: string, code: string) {
+        return fragPreUniforms + uniformCode + fragStartFunc + code + fragEndFunc;
     }
-
-    var _sliceFilter: Slice;
-    export function SLICE(rect: Rect) {
-        if (!_sliceFilter) {
-            _sliceFilter = new Slice(rect);
-        } else {
-            _sliceFilter.setSlice(rect);
-        }
-        return _sliceFilter;
-    }
-
-    const vertPreUniforms = `
-        precision highp float;
-        attribute vec2 aVertexPosition;
-        uniform mat3 projectionMatrix;
-        varying vec2 vTextureCoord;
-        uniform vec4 inputSize;
-        uniform vec4 outputFrame;
-
-        uniform float posx;
-        uniform float posy;
-        uniform float t;
-
-        float width;
-        float height;
-    `;
-
-    const vertStartFunc = `
-        vec4 filterVertexPosition(void) {
-            width = inputSize.x;
-            height = inputSize.y;
-            vec2 position = aVertexPosition * max(outputFrame.zw, vec2(0.)) + outputFrame.xy;
-            vec2 inp = position - vec2(posx, posy);
-            vec2 outp = vec2(inp.x, inp.y);
-    `;
-
-    const vertEndFunc = `
-            position = outp + vec2(posx, posy);
-            return vec4((projectionMatrix * vec3(position, 1.0)).xy, 0.0, 1.0);
-        }
-
-        vec2 filterTextureCoord(void) {
-            return aVertexPosition * (outputFrame.zw * inputSize.zw);
-        }
-
-        void main(void) {
-            gl_Position = filterVertexPosition();
-            vTextureCoord = filterTextureCoord();
-        }
-    `;
 
     const fragPreUniforms = `
         precision highp float;
@@ -220,34 +140,40 @@ namespace TextureFilter {
 
         uniform float posx;
         uniform float posy;
+        uniform float dimx;
+        uniform float dimy;
         uniform float t;
 
         float width;
         float height;
+        float destWidth;
+        float destHeight;
     `;
 
     const fragStartFunc = `
         vec4 getColor(float localx, float localy) {
-            float tx = (localx + posx) / width;
-            float ty = (localy + posy) / height;
+            float tx = (localx + posx) / destWidth;
+            float ty = (localy + posy) / destHeight;
             return texture2D(uSampler, vec2(tx, ty));
         }
 
-        vec4 getWorldColor(float worldx, float worldy) {
-            float tx = worldx / width;
-            float ty = worldy / height;
+        vec4 getDestColor(float destx, float desty) {
+            float tx = destx / destWidth;
+            float ty = desty / destHeight;
             return texture2D(uSampler, vec2(tx, ty));
         }
 
         ${Perlin.SHADER_SOURCE}
 
         void main(void) {
-            width = inputSize.x;
-            height = inputSize.y;
-            float worldx = vTextureCoord.x * width;
-            float worldy = vTextureCoord.y * height;
-            float x = worldx - posx;
-            float y = worldy - posy;
+            width = dimx;
+            height = dimy;
+            destWidth = inputSize.x;
+            destHeight = inputSize.y;
+            float destx = vTextureCoord.x * destWidth;
+            float desty = vTextureCoord.y * destHeight;
+            float x = destx - posx;
+            float y = desty - posy;
             vec4 inp = texture2D(uSampler, vTextureCoord);
             // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.
             if (inp.a > 0.0) {

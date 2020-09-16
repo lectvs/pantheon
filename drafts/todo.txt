@@ -24,14 +24,15 @@
 - /implement mask as a first-class texture feature
 - /remove delta from update?
 - /full-layer immovability
+- /texture vertex filter
+- fix issue with clicking out of bounds
 - platformer stuff
     - /moving platforms
     - /physics based on lastx/y instead of lastmovementx/y?
-    - /one-way platforms
     - /bounds in PhysicsWorldObject config
     - slopes/sloped bounds
         - players stick to slopes
-- texture vertex filter
+    - one-way platforms
 
 stretch
 - documentation and API cleanup

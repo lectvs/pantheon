@@ -135,6 +135,7 @@ function getStages(): Dict<World.Config> { return {
             },
             {
                 name: 'tilemapEditor',
+                active: false,
                 updateCallback: obj => {
                     let tilemap = obj.world.getWorldObjectByType(Tilemap);
                     let mouseX = obj.world.getWorldMouseX() - tilemap.x;
@@ -152,59 +153,22 @@ function getStages(): Dict<World.Config> { return {
                 }
             },
             <Sprite.Config>{
-                name: 'const',
+                name: 'test',
                 constructor: Sprite,
-                x: 600, y: 200,
-                tint: 0x000000,
-                //bounds: { type: 'rect', x: 0, y: 0, width: 100, height: 100 },
-                //bounds: { type: 'circle', x: 0, y: 0, radius: 100 },
-                bounds: { type: 'slope', x: 0, y: 0, width: 180, height: 100, direction: 'upleft' },
-            },
-            <Sprite.Config>{
-                name: 'test_circle',
-                constructor: Sprite,
-                x: 630, y: 240,
-                tint: 0x006600,
-                debug: {
-                    followMouse: true
-                },
-                data: { complete: false },
-                bounds: { type: 'rect', x: 0, y: 0, width: 100, height: 50 },
-                updateCallback: (obj: Sprite) => {
-                    let cc = obj.world.getWorldObjectByName<Sprite>('const');
-
-                    obj.tint = obj.bounds.isOverlapping(cc.bounds) ? 0x660000 : 0x006600;
-
-                    // if (!obj.data.complete) {
-                    //     let tex = obj.world.getWorldObjectByName<Sprite>('pattern').getTexture();
-                    //     let box = cc.getWorldBounds();
-                    //     let p = 1;
-                    //     let pa = 110;
-                    //     for (let x = box.left-pa; x < box.right+pa; x+=p) {
-                    //         for (let y = box.top-pa; y < box.bottom+pa; y+=p) {
-                    //             obj.x = x;
-                    //             obj.y = y;
-                    //             Draw.brush.color = obj.bounds.isOverlapping(cc.bounds) ? 0xFF0000 : 0x0000FF;
-                    //             Draw.brush.alpha = 1;
-                    //             Draw.rectangleSolid(tex, x, y, p, p);
-                    //         }
-                    //     }
-                    //     obj.data.complete = true;
-                    // }
-
-                    //let coll = obj.bounds.getDisplacementCollision(cc.bounds);
-                    let coll = obj.bounds.getRaycastCollision(obj.x - obj.physicslastx, obj.y - obj.physicslasty, cc.bounds, cc.x - cc.physicslastx, cc.y - cc.physicslasty);
-                    if (coll) {
-                        obj.x += coll.displacementX;
-                        obj.y += coll.displacementY;
+                x: global.gameWidth/2, y: global.gameHeight/2,
+                texture: 'bec',
+                effects: {
+                    post: {
+                        filters: [new WarpFilter()],
                     }
+                },
+                updateCallback: (obj: Sprite) => {
+                    let f = <WarpFilter>obj.effects.post.filters[0];
+                    let t = 2*obj.life.time;
+                    let r = 0.1;
+                    f.setVertex3(r*Math.cos(t), 1+r*Math.sin(t));
+                    f.setVertex4(1-r*Math.sin(t), 1+r*Math.cos(t));
                 }
-            },
-            <Sprite.Config>{
-                name: 'pattern',
-                constructor: Sprite,
-                texture: new BasicTexture(global.gameWidth, global.gameHeight),
-                alpha: 0.5,
             }
         ]
     },

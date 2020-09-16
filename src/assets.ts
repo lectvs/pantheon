@@ -23,6 +23,12 @@ namespace Assets {
             anchor: Anchor.CENTER,
         },
         'slope': {},
+        'bec': {
+            anchor: Anchor.CENTER,
+        },
+        'gradient': {
+            anchor: Anchor.CENTER,
+        },
     }
 
     export const sounds: Dict<Preload.Sound> = {

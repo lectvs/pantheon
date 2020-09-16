@@ -1,4 +1,5 @@
 /// <reference path="./filter/textureFilter.ts"/>
+/// <reference path="./filter/slice.ts"/>
 
 class BasicTexture implements Texture {
     get width() { return this.renderTextureSprite._renderTexture.width; }
@@ -116,20 +117,20 @@ class BasicTexture implements Texture {
         let allFilters: TextureFilter[] = [];
 
         if (properties.slice) {
-            let sliceFilter = TextureFilter.SLICE(properties.slice);
+            let sliceFilter = BasicTexture.SLICE_FILTER(properties.slice);
             let sliceRect = this.getSliceRect(properties);
             // Subtract sliceRect.xy because slice requires the shifted xy of the texture after slice
-            Texture.setFilterProperties(sliceFilter, properties.x - sliceRect.x, properties.y - sliceRect.y);
+            Texture.setFilterProperties(sliceFilter, properties.x - sliceRect.x, properties.y - sliceRect.y, sliceRect.width, sliceRect.height);
             allFilters.push(sliceFilter);
         }
 
         if (properties.mask && properties.mask.texture) {
             let maskFilter = Mask.SHARED(properties.mask.texture, 'global', properties.mask.x, properties.mask.y, properties.mask.invert);
-            Texture.setFilterProperties(maskFilter, properties.x, properties.y);
+            Texture.setFilterProperties(maskFilter, properties.x, properties.y, this.width, this.height);
             allFilters.push(maskFilter);
         }
 
-        properties.filters.forEach(filter => filter && Texture.setFilterProperties(filter, properties.x, properties.y));
+        properties.filters.forEach(filter => filter && Texture.setFilterProperties(filter, properties.x, properties.y, this.width, this.height));
         allFilters.push(...properties.filters);
 
         return allFilters.filter(filter => filter && filter.enabled);
@@ -179,5 +180,17 @@ class BasicTexture implements Texture {
         this.renderTextureSprite.filters = allFilters.map(filter => filter.borrowPixiFilter());
         this.renderTextureSprite.filterArea = new PIXI.Rectangle(0, 0, destTexture.width, destTexture.height);
         return allFilters;
+    }
+}
+
+namespace BasicTexture {
+    var _sliceFilter: SliceFilter;
+    export function SLICE_FILTER(rect: Rect) {
+        if (!_sliceFilter) {
+            _sliceFilter = new SliceFilter(rect);
+        } else {
+            _sliceFilter.setSlice(rect);
+        }
+        return _sliceFilter;
     }
 }

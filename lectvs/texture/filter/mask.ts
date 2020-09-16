@@ -1,3 +1,5 @@
+/// <reference path="./textureFilter.ts" />
+
 class MaskFilter extends TextureFilter {
     type: Mask.Type;
     offsetX: number;

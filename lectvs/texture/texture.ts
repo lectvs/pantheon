@@ -89,8 +89,9 @@ namespace Texture {
         return result;
     }
 
-    export function setFilterProperties(filter: TextureFilter, posx: number, posy: number) {
+    export function setFilterProperties(filter: TextureFilter, posx: number, posy: number, dimx: number, dimy: number) {
         filter.setTexturePosition(posx, posy);
+        filter.setTextureDimensions(dimx, dimy);
     }
 
     export class PIXIRenderTextureSprite extends PIXI.Sprite {
