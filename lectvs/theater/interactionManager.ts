@@ -66,7 +66,7 @@ class InteractionManager {
         if (obj instanceof Sprite) {
             worldObject = obj;
         } else {
-            worldObject = this.theater.currentWorld.getWorldObjectByName(obj);
+            worldObject = this.theater.currentWorld.select.name(obj);
             if (!(worldObject instanceof Sprite)) {
                 error(`Cannot highlight object ${obj} because it is not a Sprite`);
                 return;

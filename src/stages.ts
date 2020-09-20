@@ -137,7 +137,7 @@ function getStages(): Dict<World.Config> { return {
                 name: 'tilemapEditor',
                 active: true,
                 updateCallback: obj => {
-                    let tilemap = obj.world.getWorldObjectByType(Tilemap);
+                    let tilemap = obj.world.select.type(Tilemap);
                     let mouseX = obj.world.getWorldMouseX() - tilemap.x;
                     let mouseY = obj.world.getWorldMouseY() - tilemap.y;
                     let tileX = Math.floor(mouseX / tilemap.tileset.tileWidth);
@@ -161,7 +161,7 @@ function getStages(): Dict<World.Config> { return {
                     tright: 0,
                 },
                 updateCallback: obj => {
-                    let player = obj.world.getWorldObjectByType(Player);
+                    let player = obj.world.select.type(Player);
                     let box = player.bounds.getBoundingBox();
 
                     let rleft = obj.world.select.raycast(box.left, box.bottom, 0, 1, ['walls', 'boxes']);

@@ -48,7 +48,7 @@ class Player extends Sprite {
 
         super.update();
 
-        let wos = this.world.getPhysicsObjectsThatCollideWith(this.physicsGroup)
+        let wos = this.world.select.collidesWith(this.physicsGroup)
                         .filter(wo => (wo.bounds instanceof SlopeBounds && G.overlapRectangles(bb, wo.bounds.getBoundingBox())));
         
         if (grounded && !_.isEmpty(wos)) {

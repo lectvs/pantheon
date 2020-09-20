@@ -45,7 +45,7 @@ class MetricsMenu extends Menu {
             this.menuSystem.game.unpauseGame();
         }
 
-        this.getWorldObjectByName<SpriteText>('graphxy')
+        this.select.name<SpriteText>('graphxy')
                 .setText(`${this.getPlotY().toFixed(2)} ms`);
     }
 

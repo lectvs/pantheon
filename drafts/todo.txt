@@ -33,6 +33,7 @@
     - /one-way platforms
     - slopes/sloped bounds
         - players stick to slopes
+- move getWorldObjectByName to selecter
 
 stretch
 - documentation and API cleanup

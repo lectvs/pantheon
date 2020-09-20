@@ -242,11 +242,6 @@ class World {
                     : A.removeDuplicates(this.collisions[physicsGroup].map(collision => collision.collidingPhysicsGroup));
     }
 
-    getPhysicsObjectsThatCollideWith(physicsGroup: string) {
-        let groups = this.getPhysicsGroupsThatCollideWith(physicsGroup);
-        return <PhysicsWorldObject[]>_.flatten(groups.map(group => this.physicsGroups[group].worldObjects));
-    }
-
     getWorldMouseX() {
         return Input.mouseX + Math.floor(this.camera.worldOffsetX);
     }
@@ -257,38 +252,6 @@ class World {
 
     getWorldMousePosition(): Pt {
         return { x: this.getWorldMouseX(), y: this.getWorldMouseY() };
-    }
-
-    getWorldObjectByName<T extends WorldObject>(name: string): T {
-        let results = this.getWorldObjectsByName<T>(name);
-        if (_.isEmpty(results)) {
-            error(`No object with name ${name} exists in world`, this);
-            return undefined;
-        }
-        if (results.length > 1) {
-            debug(`Multiple objects with name ${name} exist in world. Returning one of them. World:`, this);
-        }
-        return results[0];
-    }
-
-    getWorldObjectsByName<T extends WorldObject>(name: string): T[] {
-        return <T[]>A.clone(this.worldObjectsByName[name]);
-    }
-
-    getWorldObjectByType<T extends WorldObject>(type: new (...args) => T) {
-        let results = this.getWorldObjectsByType<T>(type);
-        if (_.isEmpty(results)) {
-            error(`No object of type ${type.name} exists in world`, this);
-            return undefined;
-        }
-        if (results.length > 1) {
-            debug(`Multiple objects of type ${type.name} exist in world. Returning one of them. World:`, this);
-        }
-        return results[0];
-    }
-
-    getWorldObjectsByType<T extends WorldObject>(type: new (...args: any[]) => T) {
-        return <T[]>this.worldObjects.filter(obj => obj instanceof type);
     }
 
     handleCollisions() {
@@ -324,7 +287,7 @@ class World {
     removeWorldObject<T extends WorldObject>(obj: T | string): T {
         if (!obj) return undefined;
         if (_.isString(obj)) {
-            obj = this.getWorldObjectByName<T>(obj);
+            obj = this.select.name<T>(obj);
             if (!obj) return;
         }
         if (obj.world !== this) {

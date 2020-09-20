@@ -99,7 +99,7 @@ Main.loadConfig({
 });
 
 function get(name: string) {
-    let worldObject = global.game.theater.currentWorld.getWorldObjectByName(name);
+    let worldObject = global.game.theater.currentWorld.select.name(name);
     if (worldObject) return worldObject;
     return undefined;
 }

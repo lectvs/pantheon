@@ -92,7 +92,7 @@ class Camera {
         if (this.mode.type === 'follow') {
             let target = this.mode.target;
             if (_.isString(target)) {
-                target = world.getWorldObjectByName(target);
+                target = world.select.name(target);
             }
             this.moveTowardsPoint(target.x + this.mode.offset.x, target.y + this.mode.offset.y, world.delta);
         } else if (this.mode.type === 'focus') {
@@ -137,7 +137,7 @@ class Camera {
         if (this.mode.type === 'follow') {
             let target = this.mode.target;
             if (_.isString(target)) {
-                target = world.getWorldObjectByName(target);
+                target = world.select.name(target);
             }
             this.x = target.x + this.mode.offset.x;
             this.y = target.y + this.mode.offset.y;

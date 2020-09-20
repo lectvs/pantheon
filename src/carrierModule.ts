@@ -11,7 +11,7 @@ class CarrierModule {
         let objBounds = this.obj.bounds.getBoundingBox();
         let checkBounds = new RectBounds(objBounds.x, objBounds.y-1, objBounds.width, 1);
 
-        for (let potentialRider of this.obj.world.getPhysicsObjectsThatCollideWith(this.obj.physicsGroup)) {
+        for (let potentialRider of this.obj.world.select.collidesWith(this.obj.physicsGroup)) {
             if (potentialRider instanceof OneWayPlatform || potentialRider instanceof MovingPlatform) continue;
             if (potentialRider.isOverlapping(checkBounds)) {
                 if (_.contains(this.riders, potentialRider)) continue;

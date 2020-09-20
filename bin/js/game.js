@@ -3292,11 +3292,6 @@ var World = /** @class */ (function () {
             ? []
             : A.removeDuplicates(this.collisions[physicsGroup].map(function (collision) { return collision.collidingPhysicsGroup; }));
     };
-    World.prototype.getPhysicsObjectsThatCollideWith = function (physicsGroup) {
-        var _this = this;
-        var groups = this.getPhysicsGroupsThatCollideWith(physicsGroup);
-        return _.flatten(groups.map(function (group) { return _this.physicsGroups[group].worldObjects; }));
-    };
     World.prototype.getWorldMouseX = function () {
         return Input.mouseX + Math.floor(this.camera.worldOffsetX);
     };
@@ -3305,34 +3300,6 @@ var World = /** @class */ (function () {
     };
     World.prototype.getWorldMousePosition = function () {
         return { x: this.getWorldMouseX(), y: this.getWorldMouseY() };
-    };
-    World.prototype.getWorldObjectByName = function (name) {
-        var results = this.getWorldObjectsByName(name);
-        if (_.isEmpty(results)) {
-            error("No object with name " + name + " exists in world", this);
-            return undefined;
-        }
-        if (results.length > 1) {
-            debug("Multiple objects with name " + name + " exist in world. Returning one of them. World:", this);
-        }
-        return results[0];
-    };
-    World.prototype.getWorldObjectsByName = function (name) {
-        return A.clone(this.worldObjectsByName[name]);
-    };
-    World.prototype.getWorldObjectByType = function (type) {
-        var results = this.getWorldObjectsByType(type);
-        if (_.isEmpty(results)) {
-            error("No object of type " + type.name + " exists in world", this);
-            return undefined;
-        }
-        if (results.length > 1) {
-            debug("Multiple objects of type " + type.name + " exist in world. Returning one of them. World:", this);
-        }
-        return results[0];
-    };
-    World.prototype.getWorldObjectsByType = function (type) {
-        return this.worldObjects.filter(function (obj) { return obj instanceof type; });
     };
     World.prototype.handleCollisions = function () {
         if (_.isEmpty(this.collisions))
@@ -3377,7 +3344,7 @@ var World = /** @class */ (function () {
         if (!obj)
             return undefined;
         if (_.isString(obj)) {
-            obj = this.getWorldObjectByName(obj);
+            obj = this.select.name(obj);
             if (!obj)
                 return;
         }
@@ -3902,7 +3869,7 @@ var MetricsMenu = /** @class */ (function (_super) {
             Input.consume(Input.GAME_CLOSE_MENU);
             this.menuSystem.game.unpauseGame();
         }
-        this.getWorldObjectByName('graphxy')
+        this.select.name('graphxy')
             .setText(this.getPlotY().toFixed(2) + " ms");
     };
     MetricsMenu.prototype.getPlotX = function () {
@@ -5638,7 +5605,7 @@ var InteractionManager = /** @class */ (function () {
             worldObject = obj;
         }
         else {
-            worldObject = this.theater.currentWorld.getWorldObjectByName(obj);
+            worldObject = this.theater.currentWorld.select.name(obj);
             if (!(worldObject instanceof Sprite)) {
                 error("Cannot highlight object " + obj + " because it is not a Sprite");
                 return;
@@ -7065,7 +7032,7 @@ var Camera = /** @class */ (function () {
         if (this.mode.type === 'follow') {
             var target = this.mode.target;
             if (_.isString(target)) {
-                target = world.getWorldObjectByName(target);
+                target = world.select.name(target);
             }
             this.moveTowardsPoint(target.x + this.mode.offset.x, target.y + this.mode.offset.y, world.delta);
         }
@@ -7111,7 +7078,7 @@ var Camera = /** @class */ (function () {
         if (this.mode.type === 'follow') {
             var target = this.mode.target;
             if (_.isString(target)) {
-                target = world.getWorldObjectByName(target);
+                target = world.select.name(target);
             }
             this.x = target.x + this.mode.offset.x;
             this.y = target.y + this.mode.offset.y;
@@ -7417,6 +7384,25 @@ var WorldSelecter = /** @class */ (function () {
     function WorldSelecter(world) {
         this.world = world;
     }
+    WorldSelecter.prototype.collidesWith = function (physicsGroup) {
+        var _this = this;
+        var groups = this.world.getPhysicsGroupsThatCollideWith(physicsGroup);
+        return _.flatten(groups.map(function (group) { return _this.world.physicsGroups[group].worldObjects; }));
+    };
+    WorldSelecter.prototype.name = function (name) {
+        var results = this.nameAll(name);
+        if (_.isEmpty(results)) {
+            error("No object with name " + name + " exists in world", this);
+            return undefined;
+        }
+        if (results.length > 1) {
+            debug("Multiple objects with name " + name + " exist in world. Returning one of them. World:", this);
+        }
+        return results[0];
+    };
+    WorldSelecter.prototype.nameAll = function (name) {
+        return this.world.worldObjectsByName[name] || [];
+    };
     WorldSelecter.prototype.overlap = function (bounds, physicsGroups) {
         var e_41, _a;
         var result = [];
@@ -7465,6 +7451,20 @@ var WorldSelecter = /** @class */ (function () {
             }
         }
         return result.sort(function (r1, r2) { return r1.t - r2.t; });
+    };
+    WorldSelecter.prototype.type = function (type) {
+        var results = this.typeAll(type);
+        if (_.isEmpty(results)) {
+            error("No object of type " + type.name + " exists in world", this);
+            return undefined;
+        }
+        if (results.length > 1) {
+            debug("Multiple objects of type " + type.name + " exist in world. Returning one of them. World:", this);
+        }
+        return results[0];
+    };
+    WorldSelecter.prototype.typeAll = function (type) {
+        return this.world.worldObjects.filter(function (obj) { return obj instanceof type; });
     };
     return WorldSelecter;
 }());
@@ -9635,7 +9635,7 @@ var CarrierModule = /** @class */ (function () {
         var objBounds = this.obj.bounds.getBoundingBox();
         var checkBounds = new RectBounds(objBounds.x, objBounds.y - 1, objBounds.width, 1);
         try {
-            for (var _b = __values(this.obj.world.getPhysicsObjectsThatCollideWith(this.obj.physicsGroup)), _c = _b.next(); !_c.done; _c = _b.next()) {
+            for (var _b = __values(this.obj.world.select.collidesWith(this.obj.physicsGroup)), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var potentialRider = _c.value;
                 if (potentialRider instanceof OneWayPlatform || potentialRider instanceof MovingPlatform)
                     continue;
@@ -9890,7 +9890,7 @@ Main.loadConfig({
     },
 });
 function get(name) {
-    var worldObject = global.game.theater.currentWorld.getWorldObjectByName(name);
+    var worldObject = global.game.theater.currentWorld.select.name(name);
     if (worldObject)
         return worldObject;
     return undefined;
@@ -9981,7 +9981,7 @@ var Player = /** @class */ (function (_super) {
         this.updateCrouch();
         this.gravityy = grounded ? 0 : 512;
         _super.prototype.update.call(this);
-        var wos = this.world.getPhysicsObjectsThatCollideWith(this.physicsGroup)
+        var wos = this.world.select.collidesWith(this.physicsGroup)
             .filter(function (wo) { return (wo.bounds instanceof SlopeBounds && G.overlapRectangles(bb, wo.bounds.getBoundingBox())); });
         if (grounded && !_.isEmpty(wos)) {
             var slope = wos[0];
@@ -10185,7 +10185,7 @@ function getStages() {
                     name: 'tilemapEditor',
                     active: true,
                     updateCallback: function (obj) {
-                        var tilemap = obj.world.getWorldObjectByType(Tilemap);
+                        var tilemap = obj.world.select.type(Tilemap);
                         var mouseX = obj.world.getWorldMouseX() - tilemap.x;
                         var mouseY = obj.world.getWorldMouseY() - tilemap.y;
                         var tileX = Math.floor(mouseX / tilemap.tileset.tileWidth);
@@ -10207,7 +10207,7 @@ function getStages() {
                         tright: 0,
                     },
                     updateCallback: function (obj) {
-                        var player = obj.world.getWorldObjectByType(Player);
+                        var player = obj.world.select.type(Player);
                         var box = player.bounds.getBoundingBox();
                         var rleft = obj.world.select.raycast(box.left, box.bottom, 0, 1, ['walls', 'boxes']);
                         var rmiddle = obj.world.select.raycast(box.left + box.width / 2, box.bottom, 0, 1, ['walls', 'boxes']);
