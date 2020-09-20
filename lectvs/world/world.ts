@@ -70,6 +70,8 @@ class World {
 
     protected scriptManager: ScriptManager;
     protected soundManager: SoundManager;
+
+    select: WorldSelecter;
     
     get delta() { return global.game.delta; }
 
@@ -80,6 +82,8 @@ class World {
         
         this.scriptManager = new ScriptManager();
         this.soundManager = new SoundManager();
+
+        this.select = new WorldSelecter(this);
 
         this.volume = config.volume ?? 1;
 

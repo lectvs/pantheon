@@ -26,4 +26,8 @@ class NullBounds implements Bounds {
     isOverlapping(other: Bounds) {
         return false;
     }
+
+    raycast(x: number, y: number, dx: number, dy: number) {
+        return Infinity;
+    }
 }

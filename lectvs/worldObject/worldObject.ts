@@ -19,6 +19,7 @@ namespace WorldObject {
         controllable?: boolean;
         children?: WorldObject.Config[];
         updateCallback?: UpdateCallback;
+        renderCallback?: RenderCallback;
         debug?: DebugConfig;
     }
 
@@ -29,6 +30,7 @@ namespace WorldObject {
     export type ZBehavior = 'noop' | 'threequarters';
 
     export type UpdateCallback = (obj: WorldObject) => any;
+    export type RenderCallback = (obj: WorldObject, screen: Texture) => any;
 }
 
 class WorldObject {
@@ -85,6 +87,7 @@ class WorldObject {
     get state() { return this.stateMachine.getCurrentStateName(); }
 
     private updateCallback: WorldObject.UpdateCallback;
+    private renderCallback: WorldObject.RenderCallback;
 
     debugFollowMouse: boolean;
 
@@ -124,6 +127,7 @@ class WorldObject {
         this.stateMachine = new StateMachine();
 
         this.updateCallback = config.updateCallback;
+        this.renderCallback = config.renderCallback;
 
         this.debugFollowMouse = config.debug?.followMouse ?? false;
     }
@@ -212,7 +216,7 @@ class WorldObject {
     }
 
     render(screen: Texture) {
-
+        if (this.renderCallback) this.renderCallback(this, screen);
     }
 
     postRender() {

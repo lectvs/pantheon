@@ -48,4 +48,42 @@ class RectBounds implements Bounds {
         if (other instanceof SlopeBounds) return Bounds.Collision.isOverlappingRectSlope(this, other);
         return false;
     }
+
+    raycast(x: number, y: number, dx: number, dy: number) {
+        let box = this.getBoundingBox();
+
+        let top_t = Infinity;
+        let bottom_t = Infinity;
+        let left_t = Infinity;
+        let right_t = Infinity;
+
+        if (dy !== 0) {
+            top_t = (box.top - y) / dy;
+            if (x + dx*top_t < box.left || x + dx*top_t > box.right) top_t = Infinity;
+            bottom_t = (box.bottom - y) / dy;
+            if (x + dx*bottom_t < box.left || x + dx*bottom_t > box.right) bottom_t = Infinity;
+        }
+
+        if (dx !== 0) {
+            left_t = (box.left - x) / dx;
+            if (y + dy*left_t < box.top || y + dy*left_t > box.bottom) left_t = Infinity;
+            right_t = (box.right - x) / dx;
+            if (y + dy*right_t < box.top || y + dy*right_t > box.bottom) right_t = Infinity;
+        }
+
+        let horiz_small_t = Math.min(left_t, right_t);
+        let horiz_large_t = Math.max(left_t, right_t);
+        let horiz_t = horiz_small_t >= 0 ? horiz_small_t : horiz_large_t;
+
+        let vert_small_t = Math.min(top_t, bottom_t);
+        let vert_large_t = Math.max(top_t, bottom_t);
+        let vert_t = vert_small_t >= 0 ? vert_small_t : vert_large_t;
+
+        let small_t = Math.min(horiz_t, vert_t);
+        let large_t = Math.max(horiz_t, vert_t);
+        let t = small_t >= 0 ? small_t : large_t;
+        if (t < 0) return Infinity;
+
+        return t;
+    }
 }

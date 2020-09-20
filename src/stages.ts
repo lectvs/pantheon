@@ -135,7 +135,7 @@ function getStages(): Dict<World.Config> { return {
             },
             {
                 name: 'tilemapEditor',
-                active: false,
+                active: true,
                 updateCallback: obj => {
                     let tilemap = obj.world.getWorldObjectByType(Tilemap);
                     let mouseX = obj.world.getWorldMouseX() - tilemap.x;
@@ -152,22 +152,37 @@ function getStages(): Dict<World.Config> { return {
                     }
                 }
             },
-            <Sprite.Config>{
-                name: 'test',
-                constructor: Sprite,
-                x: global.gameWidth/2, y: global.gameHeight/2,
-                texture: 'bec',
-                effects: {
-                    post: {
-                        filters: [new WarpFilter()],
-                    }
+            {
+                name: 'raycaster',
+                data: {
+                    box: undefined,
+                    tleft: 0,
+                    tmiddle: 0,
+                    tright: 0,
                 },
-                updateCallback: (obj: Sprite) => {
-                    let f = <WarpFilter>obj.effects.post.filters[0];
-                    let t = 2*obj.life.time;
-                    let r = 0.1;
-                    f.setVertex3(r*Math.cos(t), 1+r*Math.sin(t));
-                    f.setVertex4(1-r*Math.sin(t), 1+r*Math.cos(t));
+                updateCallback: obj => {
+                    let player = obj.world.getWorldObjectByType(Player);
+                    let box = player.bounds.getBoundingBox();
+
+                    let rleft = obj.world.select.raycast(box.left, box.bottom, 0, 1, ['walls', 'boxes']);
+                    let rmiddle = obj.world.select.raycast(box.left + box.width/2, box.bottom, 0, 1, ['walls', 'boxes']);
+                    let rright = obj.world.select.raycast(box.right, box.bottom, 0, 1, ['walls', 'boxes']);
+
+                    obj.data.box = box;
+                    obj.data.tleft = _.isEmpty(rleft) ? 100 : rleft[0].t;
+                    obj.data.tmiddle = _.isEmpty(rmiddle) ? 100 : rmiddle[0].t;
+                    obj.data.tright = _.isEmpty(rright) ? 100 : rright[0].t;
+                },
+                renderCallback: (obj: WorldObject, screen: Texture) => {
+                    let box: Rectangle = obj.data.box;
+
+                    Draw.brush.color = 0xFFFF00;
+                    Draw.brush.alpha = 1;
+                    Draw.brush.thickness = 1;
+
+                    Draw.line(screen, box.left+1, box.bottom, box.left+1, box.bottom + obj.data.tleft);
+                    Draw.line(screen, box.left+box.width/2, box.bottom, box.left+box.width/2, box.bottom + obj.data.tmiddle);
+                    Draw.line(screen, box.right, box.bottom, box.right, box.bottom + obj.data.tright);
                 }
             }
         ]

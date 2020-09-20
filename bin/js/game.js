@@ -2476,6 +2476,7 @@ var WorldObject = /** @class */ (function () {
         this.scriptManager = new ScriptManager();
         this.stateMachine = new StateMachine();
         this.updateCallback = config.updateCallback;
+        this.renderCallback = config.renderCallback;
         this.debugFollowMouse = (_l = (_k = config.debug) === null || _k === void 0 ? void 0 : _k.followMouse) !== null && _l !== void 0 ? _l : false;
     }
     Object.defineProperty(WorldObject.prototype, "x", {
@@ -2616,6 +2617,8 @@ var WorldObject = /** @class */ (function () {
     WorldObject.prototype.preRender = function () {
     };
     WorldObject.prototype.render = function (screen) {
+        if (this.renderCallback)
+            this.renderCallback(this, screen);
     };
     WorldObject.prototype.postRender = function () {
     };
@@ -3062,6 +3065,7 @@ var World = /** @class */ (function () {
         config = WorldObject.resolveConfig(config, defaults);
         this.scriptManager = new ScriptManager();
         this.soundManager = new SoundManager();
+        this.select = new WorldSelecter(this);
         this.volume = (_b = config.volume) !== null && _b !== void 0 ? _b : 1;
         this.width = (_c = config.width) !== null && _c !== void 0 ? _c : global.gameWidth;
         this.height = (_d = config.height) !== null && _d !== void 0 ? _d : global.gameHeight;
@@ -7250,13 +7254,11 @@ var Physics;
                         resolveCollision(world, collision, collision.move);
                         currentSet.add(collision.from);
                         doneWithCollisions = false;
-                        debug('resolved', collision);
                     }
                     if (hasFrom && !hasMove) {
                         resolveCollision(world, collision, collision.from);
                         currentSet.add(collision.move);
                         doneWithCollisions = false;
-                        debug('resolved', collision);
                     }
                 }
             }
@@ -7411,6 +7413,61 @@ var Physics;
         obj.vy -= factor * dy;
     }
 })(Physics || (Physics = {}));
+var WorldSelecter = /** @class */ (function () {
+    function WorldSelecter(world) {
+        this.world = world;
+    }
+    WorldSelecter.prototype.overlap = function (bounds, physicsGroups) {
+        var e_41, _a;
+        var result = [];
+        for (var physicsGroup in this.world.physicsGroups) {
+            if (!_.contains(physicsGroups, physicsGroup))
+                continue;
+            try {
+                for (var _b = (e_41 = void 0, __values(this.world.physicsGroups[physicsGroup].worldObjects)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var obj = _c.value;
+                    if (!obj.isOverlapping(bounds))
+                        continue;
+                    result.push(obj);
+                }
+            }
+            catch (e_41_1) { e_41 = { error: e_41_1 }; }
+            finally {
+                try {
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                }
+                finally { if (e_41) throw e_41.error; }
+            }
+        }
+        return result;
+    };
+    WorldSelecter.prototype.raycast = function (x, y, dx, dy, physicsGroups) {
+        var e_42, _a;
+        var result = [];
+        for (var physicsGroup in this.world.physicsGroups) {
+            if (!_.contains(physicsGroups, physicsGroup))
+                continue;
+            try {
+                for (var _b = (e_42 = void 0, __values(this.world.physicsGroups[physicsGroup].worldObjects)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var obj = _c.value;
+                    var t = obj.bounds.raycast(x, y, dx, dy);
+                    if (!isFinite(t))
+                        continue;
+                    result.push({ obj: obj, t: t });
+                }
+            }
+            catch (e_42_1) { e_42 = { error: e_42_1 }; }
+            finally {
+                try {
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                }
+                finally { if (e_42) throw e_42.error; }
+            }
+        }
+        return result.sort(function (r1, r2) { return r1.t - r2.t; });
+    };
+    return WorldSelecter;
+}());
 var CircleBounds = /** @class */ (function () {
     function CircleBounds(x, y, radius, parent) {
         this.parent = parent;
@@ -7462,6 +7519,21 @@ var CircleBounds = /** @class */ (function () {
         if (other instanceof SlopeBounds)
             return Bounds.Collision.isOverlappingCircleSlope(this, other);
         return false;
+    };
+    CircleBounds.prototype.raycast = function (x, y, dx, dy) {
+        var center = this.getCenter();
+        var a = Math.pow(dx, 2) + Math.pow(dy, 2);
+        var b = 2 * ((x - center.x) * dx + (y - center.y) * dy);
+        var c = Math.pow((x - center.x), 2) + Math.pow((y - center.y), 2) - Math.pow(this.radius, 2);
+        var disc = Math.pow(b, 2) - 4 * a * c;
+        if (disc < 0)
+            return Infinity;
+        var small_t = (-b - Math.sqrt(disc)) / (2 * a);
+        var large_t = (-b + Math.sqrt(disc)) / (2 * a);
+        var t = small_t >= 0 ? small_t : large_t;
+        if (t < 0)
+            return Infinity;
+        return t;
     };
     return CircleBounds;
 }());
@@ -8301,6 +8373,9 @@ var NullBounds = /** @class */ (function () {
     NullBounds.prototype.isOverlapping = function (other) {
         return false;
     };
+    NullBounds.prototype.raycast = function (x, y, dx, dy) {
+        return Infinity;
+    };
     return NullBounds;
 }());
 var RectBounds = /** @class */ (function () {
@@ -8348,6 +8423,41 @@ var RectBounds = /** @class */ (function () {
             return Bounds.Collision.isOverlappingRectSlope(this, other);
         return false;
     };
+    RectBounds.prototype.raycast = function (x, y, dx, dy) {
+        var box = this.getBoundingBox();
+        var top_t = Infinity;
+        var bottom_t = Infinity;
+        var left_t = Infinity;
+        var right_t = Infinity;
+        if (dy !== 0) {
+            top_t = (box.top - y) / dy;
+            if (x + dx * top_t < box.left || x + dx * top_t > box.right)
+                top_t = Infinity;
+            bottom_t = (box.bottom - y) / dy;
+            if (x + dx * bottom_t < box.left || x + dx * bottom_t > box.right)
+                bottom_t = Infinity;
+        }
+        if (dx !== 0) {
+            left_t = (box.left - x) / dx;
+            if (y + dy * left_t < box.top || y + dy * left_t > box.bottom)
+                left_t = Infinity;
+            right_t = (box.right - x) / dx;
+            if (y + dy * right_t < box.top || y + dy * right_t > box.bottom)
+                right_t = Infinity;
+        }
+        var horiz_small_t = Math.min(left_t, right_t);
+        var horiz_large_t = Math.max(left_t, right_t);
+        var horiz_t = horiz_small_t >= 0 ? horiz_small_t : horiz_large_t;
+        var vert_small_t = Math.min(top_t, bottom_t);
+        var vert_large_t = Math.max(top_t, bottom_t);
+        var vert_t = vert_small_t >= 0 ? vert_small_t : vert_large_t;
+        var small_t = Math.min(horiz_t, vert_t);
+        var large_t = Math.max(horiz_t, vert_t);
+        var t = small_t >= 0 ? small_t : large_t;
+        if (t < 0)
+            return Infinity;
+        return t;
+    };
     return RectBounds;
 }());
 var SlopeBounds = /** @class */ (function () {
@@ -8390,6 +8500,71 @@ var SlopeBounds = /** @class */ (function () {
             return Bounds.Collision.isOverlappingCircleSlope(other, this);
         return false;
     };
+    SlopeBounds.prototype.raycast = function (x, y, dx, dy) {
+        var box = this.getBoundingBox();
+        var top_t = Infinity;
+        var bottom_t = Infinity;
+        var left_t = Infinity;
+        var right_t = Infinity;
+        var slash_t = Infinity;
+        var backslash_t = Infinity;
+        if (dy !== 0) {
+            top_t = (box.top - y) / dy;
+            if (x + dx * top_t < box.left || x + dx * top_t > box.right)
+                top_t = Infinity;
+            bottom_t = (box.bottom - y) / dy;
+            if (x + dx * bottom_t < box.left || x + dx * bottom_t > box.right)
+                bottom_t = Infinity;
+        }
+        if (dx !== 0) {
+            left_t = (box.left - x) / dx;
+            if (y + dy * left_t < box.top || y + dy * left_t > box.bottom)
+                left_t = Infinity;
+            right_t = (box.right - x) / dx;
+            if (y + dy * right_t < box.top || y + dy * right_t > box.bottom)
+                right_t = Infinity;
+        }
+        if (dx * box.height + dy * box.width !== 0) {
+            slash_t = ((box.left - x) * box.height + (box.bottom - y) * box.width) / (dx * box.height + dy * box.width);
+            if (x + dx * slash_t < box.left || x + dx * slash_t > box.right)
+                slash_t = Infinity;
+        }
+        if (dx * box.height - dy * box.width !== 0) {
+            backslash_t = ((box.left - x) * box.height - (box.top - y) * box.width) / (dx * box.height - dy * box.width);
+            if (x + dx * backslash_t < box.left || x + dx * backslash_t > box.right)
+                backslash_t = Infinity;
+        }
+        var t1, t2, t3;
+        if (this.direction === 'upleft') {
+            t1 = right_t;
+            t2 = bottom_t;
+            t3 = slash_t;
+        }
+        else if (this.direction === 'upright') {
+            t1 = left_t;
+            t2 = bottom_t;
+            t3 = backslash_t;
+        }
+        else if (this.direction === 'downright') {
+            t1 = left_t;
+            t2 = top_t;
+            t3 = slash_t;
+        }
+        else {
+            t1 = right_t;
+            t2 = top_t;
+            t3 = backslash_t;
+        }
+        var small_t12 = Math.min(t1, t2);
+        var large_t12 = Math.max(t1, t2);
+        var t12 = small_t12 >= 0 ? small_t12 : large_t12;
+        var small_t = Math.min(t12, t3);
+        var large_t = Math.max(t12, t3);
+        var t = small_t >= 0 ? small_t : large_t;
+        if (t < 0)
+            return Infinity;
+        return t;
+    };
     return SlopeBounds;
 }());
 /// <reference path="../texture/filter/textureFilter.ts" />
@@ -8427,7 +8602,7 @@ var Effects = /** @class */ (function () {
         return this.pre.filters.concat(this.effects).concat(this.post.filters);
     };
     Effects.prototype.updateEffects = function (delta) {
-        var e_41, _a, e_42, _b;
+        var e_43, _a, e_44, _b;
         if (this.effects[Effects.SILHOUETTE_I])
             this.effects[Effects.SILHOUETTE_I].updateTime(delta);
         if (this.effects[Effects.OUTLINE_I])
@@ -8438,12 +8613,12 @@ var Effects = /** @class */ (function () {
                 filter.updateTime(delta);
             }
         }
-        catch (e_41_1) { e_41 = { error: e_41_1 }; }
+        catch (e_43_1) { e_43 = { error: e_43_1 }; }
         finally {
             try {
                 if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
             }
-            finally { if (e_41) throw e_41.error; }
+            finally { if (e_43) throw e_43.error; }
         }
         try {
             for (var _e = __values(this.post.filters), _f = _e.next(); !_f.done; _f = _e.next()) {
@@ -8451,12 +8626,12 @@ var Effects = /** @class */ (function () {
                 filter.updateTime(delta);
             }
         }
-        catch (e_42_1) { e_42 = { error: e_42_1 }; }
+        catch (e_44_1) { e_44 = { error: e_44_1 }; }
         finally {
             try {
                 if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
             }
-            finally { if (e_42) throw e_42.error; }
+            finally { if (e_44) throw e_44.error; }
         }
     };
     Effects.prototype.updateFromConfig = function (config) {
@@ -8814,7 +8989,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_43, _a;
+        var e_45, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -8828,12 +9003,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_43_1) { e_43 = { error: e_43_1 }; }
+            catch (e_45_1) { e_45 = { error: e_45_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_43) throw e_43.error; }
+                finally { if (e_45) throw e_45.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -8886,7 +9061,7 @@ var Tilemap = /** @class */ (function (_super) {
         this.dirty = true;
     };
     Tilemap.prototype.createCollisionBoxes = function () {
-        var e_44, _a;
+        var e_46, _a;
         World.Actions.removeWorldObjectsFromWorld(this.collisionBoxes);
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tileset);
@@ -8907,12 +9082,12 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_44_1) { e_44 = { error: e_44_1 }; }
+        catch (e_46_1) { e_46 = { error: e_46_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_44) throw e_44.error; }
+            finally { if (e_46) throw e_46.error; }
         }
         this.addChildren(this.collisionBoxes);
     };
@@ -9238,7 +9413,7 @@ var SmartTilemap = /** @class */ (function (_super) {
         }
         Util.getSmartTilemapLayer = getSmartTilemapLayer;
         function getSmartTile(tilemap, x, y, config) {
-            var e_45, _a;
+            var e_47, _a;
             var pattern = getTilePattern(tilemap, x, y, config);
             try {
                 for (var _b = __values(config.rules), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -9248,12 +9423,12 @@ var SmartTilemap = /** @class */ (function (_super) {
                     }
                 }
             }
-            catch (e_45_1) { e_45 = { error: e_45_1 }; }
+            catch (e_47_1) { e_47 = { error: e_47_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_45) throw e_45.error; }
+                finally { if (e_47) throw e_47.error; }
             }
             return tilemap[y][x];
         }
@@ -9456,7 +9631,7 @@ var CarrierModule = /** @class */ (function () {
         this.obj = obj;
     }
     CarrierModule.prototype.postUpdate = function () {
-        var e_46, _a;
+        var e_48, _a;
         var objBounds = this.obj.bounds.getBoundingBox();
         var checkBounds = new RectBounds(objBounds.x, objBounds.y - 1, objBounds.width, 1);
         try {
@@ -9482,12 +9657,12 @@ var CarrierModule = /** @class */ (function () {
                 }
             }
         }
-        catch (e_46_1) { e_46 = { error: e_46_1 }; }
+        catch (e_48_1) { e_48 = { error: e_48_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_46) throw e_46.error; }
+            finally { if (e_48) throw e_48.error; }
         }
     };
     return CarrierModule;
@@ -9708,7 +9883,7 @@ Main.loadConfig({
         programmaticInput: false,
         autoplay: true,
         skipMainMenu: true,
-        frameStepEnabled: false,
+        frameStepEnabled: true,
         frameStepStepKey: '1',
         frameStepRunKey: '2',
         resetOptionsAtStart: true,
@@ -9778,7 +9953,6 @@ var Player = /** @class */ (function (_super) {
             texture: 'player',
             tint: 0xFF0000,
             bounds: { type: 'rect', x: -16, y: -64, width: 32, height: 64 },
-            gravityy: 512,
         }) || this;
         _this.speed = 128;
         _this.jumpForce = 256;
@@ -9793,10 +9967,40 @@ var Player = /** @class */ (function (_super) {
         return _this;
     }
     Player.prototype.update = function () {
+        var bb = this.bounds.getBoundingBox();
+        var grounded = !_.isEmpty(this.world.overlap(new RectBounds(bb.left + bb.width / 2 - 0.5, bb.bottom, 1, 1), ['walls']))
+            || !_.isEmpty(this.world.overlap(new RectBounds(bb.left, bb.bottom, 1, 1), ['walls']))
+            || !_.isEmpty(this.world.overlap(new RectBounds(bb.right - 1, bb.bottom, 1, 1), ['walls']));
+        this.tint = grounded ? 0x00FF00 : 0xFF0000;
         var haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
         this.updateMovement(haxis);
+        if (this.controller.jump) {
+            this.vy = -this.jumpForce;
+            grounded = false;
+        }
         this.updateCrouch();
+        this.gravityy = grounded ? 0 : 512;
         _super.prototype.update.call(this);
+        var wos = this.world.getPhysicsObjectsThatCollideWith(this.physicsGroup)
+            .filter(function (wo) { return (wo.bounds instanceof SlopeBounds && G.overlapRectangles(bb, wo.bounds.getBoundingBox())); });
+        if (grounded && !_.isEmpty(wos)) {
+            var slope = wos[0];
+            var slopeBounds = slope.bounds;
+            var slopeBoundsBox = slopeBounds.getBoundingBox();
+            if (this.vy >= -1) {
+                if (slopeBounds.direction === 'upleft') {
+                    var newy = -slopeBoundsBox.height / slopeBoundsBox.width * (bb.right - slopeBoundsBox.left) + slopeBoundsBox.bottom;
+                    this.y += newy - bb.bottom;
+                }
+                else if (slopeBounds.direction === 'upright') {
+                    var newy = slopeBoundsBox.height / slopeBoundsBox.width * (bb.left - slopeBoundsBox.left) + slopeBoundsBox.top;
+                    this.y += newy - bb.bottom;
+                }
+            }
+            if (this.vy < 0) {
+                this.vy = 0;
+            }
+        }
     };
     Player.prototype.updateCrouch = function () {
         var _this = this;
@@ -9822,9 +10026,6 @@ var Player = /** @class */ (function (_super) {
     };
     Player.prototype.updateMovement = function (haxis) {
         this.vx = haxis * this.speed;
-        if (this.controller.jump) {
-            this.vy = -this.jumpForce;
-        }
     };
     Player.prototype.startCrouch = function () {
         this.bounds.y += 32;
@@ -9982,7 +10183,7 @@ function getStages() {
                 },
                 {
                     name: 'tilemapEditor',
-                    active: false,
+                    active: true,
                     updateCallback: function (obj) {
                         var tilemap = obj.world.getWorldObjectByType(Tilemap);
                         var mouseX = obj.world.getWorldMouseX() - tilemap.x;
@@ -9998,21 +10199,32 @@ function getStages() {
                     }
                 },
                 {
-                    name: 'test',
-                    constructor: Sprite,
-                    x: global.gameWidth / 2, y: global.gameHeight / 2,
-                    texture: 'bec',
-                    effects: {
-                        post: {
-                            filters: [new WarpFilter()],
-                        }
+                    name: 'raycaster',
+                    data: {
+                        box: undefined,
+                        tleft: 0,
+                        tmiddle: 0,
+                        tright: 0,
                     },
                     updateCallback: function (obj) {
-                        var f = obj.effects.post.filters[0];
-                        var t = 2 * obj.life.time;
-                        var r = 0.1;
-                        f.setVertex3(r * Math.cos(t), 1 + r * Math.sin(t));
-                        f.setVertex4(1 - r * Math.sin(t), 1 + r * Math.cos(t));
+                        var player = obj.world.getWorldObjectByType(Player);
+                        var box = player.bounds.getBoundingBox();
+                        var rleft = obj.world.select.raycast(box.left, box.bottom, 0, 1, ['walls', 'boxes']);
+                        var rmiddle = obj.world.select.raycast(box.left + box.width / 2, box.bottom, 0, 1, ['walls', 'boxes']);
+                        var rright = obj.world.select.raycast(box.right, box.bottom, 0, 1, ['walls', 'boxes']);
+                        obj.data.box = box;
+                        obj.data.tleft = _.isEmpty(rleft) ? 100 : rleft[0].t;
+                        obj.data.tmiddle = _.isEmpty(rmiddle) ? 100 : rmiddle[0].t;
+                        obj.data.tright = _.isEmpty(rright) ? 100 : rright[0].t;
+                    },
+                    renderCallback: function (obj, screen) {
+                        var box = obj.data.box;
+                        Draw.brush.color = 0xFFFF00;
+                        Draw.brush.alpha = 1;
+                        Draw.brush.thickness = 1;
+                        Draw.line(screen, box.left + 1, box.bottom, box.left + 1, box.bottom + obj.data.tleft);
+                        Draw.line(screen, box.left + box.width / 2, box.bottom, box.left + box.width / 2, box.bottom + obj.data.tmiddle);
+                        Draw.line(screen, box.right, box.bottom, box.right, box.bottom + obj.data.tright);
                     }
                 }
             ]

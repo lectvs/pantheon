@@ -12,7 +12,6 @@ class Player extends Sprite {
             texture: 'player',
             tint: 0xFF0000,
             bounds: { type: 'rect', x: -16, y: -64, width: 32, height: 64 },
-            gravityy: 512,
         });
 
         this.controllerSchema = {
@@ -27,10 +26,50 @@ class Player extends Sprite {
     }
 
     update() {
+
+        let bb = this.bounds.getBoundingBox();
+        let grounded = !_.isEmpty(this.world.overlap(new RectBounds(bb.left + bb.width/2 - 0.5, bb.bottom, 1, 1), ['walls']))
+                    || !_.isEmpty(this.world.overlap(new RectBounds(bb.left, bb.bottom, 1, 1), ['walls']))
+                    || !_.isEmpty(this.world.overlap(new RectBounds(bb.right - 1, bb.bottom, 1, 1), ['walls']));
+        this.tint = grounded ? 0x00FF00 : 0xFF0000;
+
+
+
         let haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
         this.updateMovement(haxis);
+        if (this.controller.jump) {
+            this.vy = -this.jumpForce;
+            grounded = false;
+        }
+
         this.updateCrouch();
+
+        this.gravityy = grounded ? 0 : 512;
+
         super.update();
+
+        let wos = this.world.getPhysicsObjectsThatCollideWith(this.physicsGroup)
+                        .filter(wo => (wo.bounds instanceof SlopeBounds && G.overlapRectangles(bb, wo.bounds.getBoundingBox())));
+        
+        if (grounded && !_.isEmpty(wos)) {
+            let slope = wos[0];
+            let slopeBounds = <SlopeBounds>slope.bounds;
+            let slopeBoundsBox = slopeBounds.getBoundingBox();
+            if (this.vy >= -1) {
+                if (slopeBounds.direction === 'upleft') {
+                    let newy = -slopeBoundsBox.height/slopeBoundsBox.width * (bb.right - slopeBoundsBox.left) + slopeBoundsBox.bottom;
+                    this.y += newy - bb.bottom;
+                } else if (slopeBounds.direction === 'upright') {
+                    let newy = slopeBoundsBox.height/slopeBoundsBox.width * (bb.left - slopeBoundsBox.left) + slopeBoundsBox.top;
+                    this.y += newy - bb.bottom;
+                }
+            }
+
+            if (this.vy < 0) {
+                this.vy = 0;
+            }
+
+        }
     }
 
     updateCrouch() {
@@ -56,10 +95,6 @@ class Player extends Sprite {
 
     private updateMovement(haxis: number) {
         this.vx = haxis * this.speed;
-
-        if (this.controller.jump) {
-            this.vy = -this.jumpForce;
-        }
     }
 
     private startCrouch() {

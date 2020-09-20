@@ -27,4 +27,5 @@ interface Bounds {
     getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision;
     getDisplacementCollision(other: Bounds): Bounds.DisplacementCollision;
     isOverlapping(other: Bounds): boolean;
+    raycast(x: number, y: number, dx: number, dy: number): number;
 }

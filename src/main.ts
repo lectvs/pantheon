@@ -91,7 +91,7 @@ Main.loadConfig({
         programmaticInput: false,
         autoplay: true,
         skipMainMenu: true,
-        frameStepEnabled: false,
+        frameStepEnabled: true,
         frameStepStepKey: '1',
         frameStepRunKey: '2',
         resetOptionsAtStart: true,

@@ -57,4 +57,23 @@ class CircleBounds implements Bounds {
         if (other instanceof SlopeBounds) return Bounds.Collision.isOverlappingCircleSlope(this, other);
         return false;
     }
+
+    raycast(x: number, y: number, dx: number, dy: number) {
+        let center = this.getCenter();
+
+        let a = dx**2 + dy**2;
+        let b = 2*((x-center.x)*dx + (y-center.y)*dy);
+        let c = (x-center.x)**2 + (y-center.y)**2 - this.radius**2;
+
+        let disc = b**2 - 4*a*c;
+        if (disc < 0) return Infinity;
+
+        let small_t = (-b - Math.sqrt(disc)) / (2*a);
+        let large_t = (-b + Math.sqrt(disc)) / (2*a);
+
+        let t = small_t >= 0 ? small_t : large_t;
+        if (t < 0) return Infinity;
+
+        return t;
+    }
 }

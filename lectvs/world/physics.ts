@@ -54,14 +54,12 @@ namespace Physics {
                     resolveCollision(world, collision, collision.move);
                     currentSet.add(collision.from);
                     doneWithCollisions = false;
-                    debug('resolved', collision);
                 }
 
                 if (hasFrom && !hasMove) {
                     resolveCollision(world, collision, collision.from);
                     currentSet.add(collision.move);
                     doneWithCollisions = false;
-                    debug('resolved', collision);
                 }
             }
         }
