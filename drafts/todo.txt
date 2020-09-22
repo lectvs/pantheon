@@ -25,15 +25,15 @@
 - /remove delta from update?
 - /full-layer immovability
 - /texture vertex filter
-- fix issue with clicking out of bounds
-- platformer stuff
+- /move getWorldObjectByName to selecter
+- /platformer stuff
     - /moving platforms
     - /physics based on lastx/y instead of lastmovementx/y?
     - /bounds in PhysicsWorldObject config
     - /one-way platforms
-    - slopes/sloped bounds
-        - players stick to slopes
-- move getWorldObjectByName to selecter
+    - /slopes/sloped bounds
+        - /players stick to slopes
+- /fix bug where cursor position is not set correctly when clicking out of canvas bounds
 
 stretch
 - documentation and API cleanup

@@ -74,7 +74,7 @@ namespace M {
     }
 
     export function min<T>(array: T[], key: (x: T) => number) {
-        if (!array) return NaN;
+        if (_.isEmpty(array)) return NaN;
         let result = key(array[0]);
 
         for (let i = 1; i < array.length; i++) {

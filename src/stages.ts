@@ -94,6 +94,36 @@ function getStages(): Dict<World.Config> { return {
                 bounds: { type: 'slope', x: 0, y: 0, width: 32, height: 96, direction: 'upleft' },
             },
             <Sprite.Config>{
+                constructor: Sprite,
+                x: 568, y: 320,
+                layer: 'main',
+                texture: 'slope',
+                scaleX: 32/100, scaleY: 32/100,
+                tint: 0x000000,
+                physicsGroup: 'walls',
+                bounds: { type: 'slope', x: 0, y: 0, width: 32, height: 32, direction: 'upleft' },
+            },
+            <Sprite.Config>{
+                constructor: Sprite,
+                x: 632, y: 320,
+                layer: 'main',
+                texture: 'slope',
+                scaleX: -32/100, scaleY: 32/100,
+                tint: 0x000000,
+                physicsGroup: 'walls',
+                bounds: { type: 'slope', x: -32, y: 0, width: 32, height: 32, direction: 'upright' },
+            },
+            <Sprite.Config>{
+                constructor: Sprite,
+                x: 632, y: 320,
+                layer: 'main',
+                texture: 'slope',
+                scaleX: 32/100, scaleY: 32/100,
+                tint: 0x000000,
+                physicsGroup: 'walls',
+                bounds: { type: 'slope', x: 0, y: 0, width: 32, height: 32, direction: 'upleft' },
+            },
+            <Sprite.Config>{
                 name: 'player',
                 constructor: Player,
                 x: 180, y: 620,
@@ -131,7 +161,7 @@ function getStages(): Dict<World.Config> { return {
                 texture: 'platform',
                 layer: 'main',
                 physicsGroup: 'walls',
-                bounds: { type: 'rect', x: 0, y: 0, width: 128, height: 16 },
+                bounds: { type: 'rect', x: 0, y: 0, width: 128, height: 1 },
             },
             {
                 name: 'tilemapEditor',
@@ -152,39 +182,6 @@ function getStages(): Dict<World.Config> { return {
                     }
                 }
             },
-            {
-                name: 'raycaster',
-                data: {
-                    box: undefined,
-                    tleft: 0,
-                    tmiddle: 0,
-                    tright: 0,
-                },
-                updateCallback: obj => {
-                    let player = obj.world.select.type(Player);
-                    let box = player.bounds.getBoundingBox();
-
-                    let rleft = obj.world.select.raycast(box.left, box.bottom, 0, 1, ['walls', 'boxes']);
-                    let rmiddle = obj.world.select.raycast(box.left + box.width/2, box.bottom, 0, 1, ['walls', 'boxes']);
-                    let rright = obj.world.select.raycast(box.right, box.bottom, 0, 1, ['walls', 'boxes']);
-
-                    obj.data.box = box;
-                    obj.data.tleft = _.isEmpty(rleft) ? 100 : rleft[0].t;
-                    obj.data.tmiddle = _.isEmpty(rmiddle) ? 100 : rmiddle[0].t;
-                    obj.data.tright = _.isEmpty(rright) ? 100 : rright[0].t;
-                },
-                renderCallback: (obj: WorldObject, screen: Texture) => {
-                    let box: Rectangle = obj.data.box;
-
-                    Draw.brush.color = 0xFFFF00;
-                    Draw.brush.alpha = 1;
-                    Draw.brush.thickness = 1;
-
-                    Draw.line(screen, box.left+1, box.bottom, box.left+1, box.bottom + obj.data.tleft);
-                    Draw.line(screen, box.left+box.width/2, box.bottom, box.left+box.width/2, box.bottom + obj.data.tmiddle);
-                    Draw.line(screen, box.right, box.bottom, box.right, box.bottom + obj.data.tright);
-                }
-            }
         ]
     },
 }}

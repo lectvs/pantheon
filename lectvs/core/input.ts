@@ -227,7 +227,10 @@ class Input {
         let keyCode = this.MOUSE_KEYCODES[event.button];
         this.eventKey = keyCode;
         if (keyCode && this.isDownByKeyCode[keyCode] !== undefined) {
-            this.isDownByKeyCode[keyCode] = true;
+            if (this.isMouseOnCanvas) {
+                // Prevent game-clicks outside the canvas
+                this.isDownByKeyCode[keyCode] = true;
+            }
             event.preventDefault();
         }
     }

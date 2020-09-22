@@ -267,19 +267,6 @@ class World {
         return _.contains(this.worldObjects, obj);
     }
 
-    // Returns a list of all physics objects in the world that overlap the given bounds
-    overlap(bounds: Bounds, restrictToPhysicsGroups?: string[]) {
-        let result = [];
-        for (let physicsGroup in this.physicsGroups) {
-            if (restrictToPhysicsGroups && !_.contains(restrictToPhysicsGroups, physicsGroup)) continue;
-            for (let obj of this.physicsGroups[physicsGroup].worldObjects) {
-                if (!obj.isOverlapping(bounds)) continue;
-                result.push(obj);
-            }
-        }
-        return result;
-    }
-
     playSound(key: string) {
         return this.soundManager.playSound(key);
     }

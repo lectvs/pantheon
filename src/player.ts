@@ -7,11 +7,14 @@ class Player extends Sprite {
     private crouched: boolean;
     private ignoreOneWayCollision: boolean;
 
+    groundedModule: GroundedModule;
+
     constructor(config: Sprite.Config) {
         super(config, {
             texture: 'player',
             tint: 0xFF0000,
             bounds: { type: 'rect', x: -16, y: -64, width: 32, height: 64 },
+            gravityy: 512,
         });
 
         this.controllerSchema = {
@@ -23,53 +26,28 @@ class Player extends Sprite {
         };
 
         this.ignoreOneWayCollision = false;
+
+        this.groundedModule = new GroundedModule(this, 4, 2);
     }
 
     update() {
-
-        let bb = this.bounds.getBoundingBox();
-        let grounded = !_.isEmpty(this.world.overlap(new RectBounds(bb.left + bb.width/2 - 0.5, bb.bottom, 1, 1), ['walls']))
-                    || !_.isEmpty(this.world.overlap(new RectBounds(bb.left, bb.bottom, 1, 1), ['walls']))
-                    || !_.isEmpty(this.world.overlap(new RectBounds(bb.right - 1, bb.bottom, 1, 1), ['walls']));
-        this.tint = grounded ? 0x00FF00 : 0xFF0000;
-
-
+        this.updateCrouch();
 
         let haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
         this.updateMovement(haxis);
-        if (this.controller.jump) {
-            this.vy = -this.jumpForce;
-            grounded = false;
-        }
 
-        this.updateCrouch();
-
-        this.gravityy = grounded ? 0 : 512;
+        this.groundedModule.preUpdate();
 
         super.update();
 
-        let wos = this.world.select.collidesWith(this.physicsGroup)
-                        .filter(wo => (wo.bounds instanceof SlopeBounds && G.overlapRectangles(bb, wo.bounds.getBoundingBox())));
-        
-        if (grounded && !_.isEmpty(wos)) {
-            let slope = wos[0];
-            let slopeBounds = <SlopeBounds>slope.bounds;
-            let slopeBoundsBox = slopeBounds.getBoundingBox();
-            if (this.vy >= -1) {
-                if (slopeBounds.direction === 'upleft') {
-                    let newy = -slopeBoundsBox.height/slopeBoundsBox.width * (bb.right - slopeBoundsBox.left) + slopeBoundsBox.bottom;
-                    this.y += newy - bb.bottom;
-                } else if (slopeBounds.direction === 'upright') {
-                    let newy = slopeBoundsBox.height/slopeBoundsBox.width * (bb.left - slopeBoundsBox.left) + slopeBoundsBox.top;
-                    this.y += newy - bb.bottom;
-                }
-            }
+        this.groundedModule.update();
 
-            if (this.vy < 0) {
-                this.vy = 0;
-            }
+        this.tint = this.groundedModule.grounded ? 0x00FF00 : 0xFF0000;
+    }
 
-        }
+    postUpdate() {
+        this.groundedModule.postUpdate();
+        super.postUpdate();
     }
 
     updateCrouch() {
@@ -89,12 +67,16 @@ class Player extends Sprite {
 
     isCollidingWith(other: PhysicsWorldObject) {
         if (!super.isCollidingWith(other)) return false;
-        if ((this.ignoreOneWayCollision || this.crouched) && other instanceof OneWayPlatform) return false;
+        if ((this.ignoreOneWayCollision) && other instanceof OneWayPlatform) return false;
         return true;
     }
 
     private updateMovement(haxis: number) {
         this.vx = haxis * this.speed;
+
+        if (this.controller.jump) {
+            this.vy = -this.jumpForce;
+        }
     }
 
     private startCrouch() {
@@ -105,7 +87,7 @@ class Player extends Sprite {
 
     private canEndCrouch() {
         this.bounds.y -= 32;
-        let overlappingWalls = this.world.overlap(this.bounds, this.world.getPhysicsGroupsThatCollideWith(this.physicsGroup))
+        let overlappingWalls = this.world.select.overlap(this.bounds, this.world.getPhysicsGroupsThatCollideWith(this.physicsGroup))
             .filter(obj => !(obj instanceof OneWayPlatform));
         this.bounds.y += 32;
         return _.isEmpty(overlappingWalls);
