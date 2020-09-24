@@ -11,7 +11,6 @@ namespace Bounds.Collision {
         let dy = move.radius + from.radius;
         if (distance !== 0) {
             let dradius = (move.radius + from.radius) - distance;
-            debug(dradius)
 
             dx = (movePos.x - fromPos.x) * dradius / distance;
             dy = (movePos.y - fromPos.y) * dradius / distance;

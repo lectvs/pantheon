@@ -165,7 +165,7 @@ function getStages(): Dict<World.Config> { return {
             },
             {
                 name: 'tilemapEditor',
-                active: true,
+                active: false,
                 updateCallback: obj => {
                     let tilemap = obj.world.select.type(Tilemap);
                     let mouseX = obj.world.getWorldMouseX() - tilemap.x;
@@ -182,6 +182,25 @@ function getStages(): Dict<World.Config> { return {
                     }
                 }
             },
+            {
+                name: 'ballspawner',
+                updateCallback: obj => {
+                    if (Input.justDown('placeBlock')) {
+                        obj.world.addWorldObject(<Sprite.Config>{
+                            name: 'ball',
+                            constructor: Box,
+                            x: obj.world.getWorldMouseX(),
+                            y: obj.world.getWorldMouseY(),
+                            texture: 'circle',
+                            scaleX: 32/200,
+                            scaleY: 32/200,
+                            layer: 'main',
+                            physicsGroup: 'boxes',
+                            mass: 1,
+                        })
+                    }
+                }
+            }
         ]
     },
 }}

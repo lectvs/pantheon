@@ -34,6 +34,8 @@
     - /slopes/sloped bounds
         - /players stick to slopes
 - /fix bug where cursor position is not set correctly when clicking out of canvas bounds
+- /make world "collisions" definition more compact
+- combine carrier and grounded modules
 
 stretch
 - documentation and API cleanup

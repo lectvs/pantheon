@@ -96,7 +96,6 @@ class WebAudioSound implements WebAudioSoundI{
 
     stop() {
         this.sourceNode.stop();
-        debug(this.done);
     }
 
     private start(offset: number = 0) {

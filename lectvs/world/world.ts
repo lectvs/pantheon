@@ -7,7 +7,7 @@ namespace World {
         constructor?: any;
 
         physicsGroups?: Dict<World.PhysicsGroupConfig>;
-        collisions?: Dict<CollisionConfig[]>;
+        collisions?: CollisionConfig2[];
         collisionIterations?: number;
         useRaycastDisplacementThreshold?: number;
 
@@ -27,8 +27,9 @@ namespace World {
         volume?: number;
     }
 
-    export type CollisionConfig = {
-        collidingPhysicsGroup: string;
+    export type CollisionConfig2 = {
+        group1: string;
+        group2: string;
         callback?: Physics.CollisionCallback;
         transferMomentum?: boolean;
     }
@@ -54,7 +55,7 @@ class World {
     worldObjects: WorldObject[];
 
     physicsGroups: Dict<World.PhysicsGroup>;
-    collisions: Dict<World.CollisionConfig[]>;
+    collisions: World.CollisionConfig2[];
     collisionIterations: number;
     useRaycastDisplacementThreshold: number;
 
@@ -92,7 +93,7 @@ class World {
         this.worldObjects = [];
 
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
-        this.collisions = config.collisions ?? {};
+        this.collisions = config.collisions ?? [];
         this.collisionIterations = config.collisionIterations ?? 1;
         this.useRaycastDisplacementThreshold = config.useRaycastDisplacementThreshold ?? 1;
 
@@ -237,9 +238,15 @@ class World {
     }
 
     getPhysicsGroupsThatCollideWith(physicsGroup: string) {
-        return _.isEmpty(this.collisions[physicsGroup])
-                    ? []
-                    : A.removeDuplicates(this.collisions[physicsGroup].map(collision => collision.collidingPhysicsGroup));
+        let result: string[] = [];
+        for (let collision of this.collisions) {
+            if (collision.group1 === physicsGroup) {
+                result.push(collision.group2);
+            } else if (collision.group2 === physicsGroup) {
+                result.push(collision.group1);
+            }
+        }
+        return A.removeDuplicates(result);
     }
 
     getWorldMouseX() {

@@ -102,26 +102,25 @@ namespace Physics {
 
     function getRaycastCollisions(world: World): RaycastCollision[] {
         let raycastCollisions: RaycastCollision[] = [];
-        for (let moveGroup in world.collisions) {
-            for (let collision of world.collisions[moveGroup]) {
-                let fromGroup = collision.collidingPhysicsGroup;
-                for (let move of world.physicsGroups[moveGroup].worldObjects) {
-                    for (let from of world.physicsGroups[fromGroup].worldObjects) {
-                        if (move === from) continue;
-                        if (!G.overlapRectangles(move.bounds.getBoundingBox(), from.bounds.getBoundingBox())) continue;
-                        if (!move.isCollidingWith(from) || !from.isCollidingWith(move)) continue;
-                        let raycastCollision = move.bounds.getRaycastCollision(move.x-move.physicslastx, move.y-move.physicslasty, from.bounds, from.x-from.physicslastx, from.y-from.physicslasty);
-                        if (!raycastCollision) continue;
-                        raycastCollisions.push({
-                            move, from,
-                            collision: raycastCollision,
-                            callback: collision.callback,
-                            transferMomentum: collision.transferMomentum,
-                        });
-                    }
+
+        for (let collision of world.collisions) {
+            for (let move of world.physicsGroups[collision.group1].worldObjects) {
+                for (let from of world.physicsGroups[collision.group2].worldObjects) {
+                    if (move === from) continue;
+                    if (!G.overlapRectangles(move.bounds.getBoundingBox(), from.bounds.getBoundingBox())) continue;
+                    if (!move.isCollidingWith(from) || !from.isCollidingWith(move)) continue;
+                    let raycastCollision = move.bounds.getRaycastCollision(move.x-move.physicslastx, move.y-move.physicslasty, from.bounds, from.x-from.physicslastx, from.y-from.physicslasty);
+                    if (!raycastCollision) continue;
+                    raycastCollisions.push({
+                        move, from,
+                        collision: raycastCollision,
+                        callback: collision.callback,
+                        transferMomentum: collision.transferMomentum,
+                    });
                 }
             }
         }
+
         return raycastCollisions;
     }
 
