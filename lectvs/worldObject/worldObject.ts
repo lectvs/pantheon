@@ -278,7 +278,7 @@ class WorldObject {
         if (!child) return undefined;
         if (_.isString(child)) {
             child = this.getChildByName<T>(child);
-            if (!child) return;
+            if (!child) return undefined;
         }
         if (child.parent !== this) {
             error(`Cannot remove child ${child.name} from parent ${this.name}, but no such relationship exists`);

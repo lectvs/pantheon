@@ -2686,7 +2686,7 @@ var WorldObject = /** @class */ (function () {
         if (_.isString(child)) {
             child = this.getChildByName(child);
             if (!child)
-                return;
+                return undefined;
         }
         if (child.parent !== this) {
             error("Cannot remove child " + child.name + " from parent " + this.name + ", but no such relationship exists");
@@ -9593,13 +9593,13 @@ var Box = /** @class */ (function (_super) {
             scaleX: 2,
             scaleY: 2,
             gravityy: 200,
-            bounds: { type: 'circle', x: 0, y: 0, radius: 16 },
+            bounds: { type: 'rect', x: 0, y: 0, width: 32, height: 32 },
         }) || this;
         _this.carrierModule = new CarrierModule(_this);
         return _this;
     }
     Box.prototype.update = function () {
-        //this.vx *= 0.98;
+        this.vx *= 0.98;
         _super.prototype.update.call(this);
     };
     Box.prototype.postUpdate = function () {
@@ -9662,17 +9662,35 @@ var GroundedModule = /** @class */ (function () {
         var box = this.obj.bounds.getBoundingBox();
         this.checkBounds = new RectBounds(box.left - obj.x, box.bottom - obj.y, box.width, 1, obj);
     }
+    Object.defineProperty(GroundedModule.prototype, "grounded", {
+        get: function () { return !!this.groundedObject; },
+        enumerable: false,
+        configurable: true
+    });
+    GroundedModule.prototype.getGroundedObject = function () {
+        var _this = this;
+        var checkGroups = this.obj.world.getPhysicsGroupsThatCollideWith(this.obj.physicsGroup);
+        var overlappedObjs = this.obj.world.select.overlap(this.checkBounds, checkGroups);
+        if (_.isEmpty(overlappedObjs))
+            return undefined;
+        A.removeAll(overlappedObjs, this.obj);
+        return M.argmin(overlappedObjs, function (ground) { return ground.bounds.getBoundingBox().top - _this.obj.bounds.getBoundingBox().bottom; });
+    };
     GroundedModule.prototype.preUpdate = function () {
-        this.checkGroups = this.obj.world.getPhysicsGroupsThatCollideWith(this.obj.physicsGroup);
-        this.grounded = this.obj.vy >= -1 && !_.isEmpty(this.obj.world.select.overlap(this.checkBounds, this.checkGroups));
+        if (this.obj.vy < -1) {
+            this.groundedObject = undefined;
+            return;
+        }
+        this.groundedObject = this.getGroundedObject();
     };
     GroundedModule.prototype.update = function () {
         var _this = this;
         if (!this.grounded)
             return;
         var box = this.checkBounds.getBoundingBox();
-        var raycasts = A.range(box.width + 1).map(function (i) { return _this.obj.world.select.raycast(box.left + i, box.top - _this.checkThreshold, 0, 1, _this.checkGroups); })
-            .filter(function (list) { return !_.isEmpty(list); })
+        var checkGroups = this.obj.world.getPhysicsGroupsThatCollideWith(this.obj.physicsGroup);
+        var raycasts = A.range(box.width + 1).map(function (i) { return _this.obj.world.select.raycast(box.left + i, box.top - _this.checkThreshold, 0, 1, checkGroups); })
+            .filter(function (list) { return !_.isEmpty(list) && list[0].obj !== _this.obj; })
             .map(function (list) { return list[0]; });
         if (raycasts.every(function (rr) { return rr.obj.bounds instanceof RectBounds; }))
             return;
@@ -10182,9 +10200,6 @@ function getStages() {
                     name: 'box',
                     constructor: Box,
                     x: 270, y: 220,
-                    texture: 'circle',
-                    scaleX: 32 / 200,
-                    scaleY: 32 / 200,
                     layer: 'main',
                     physicsGroup: 'boxes',
                     mass: 1,
@@ -10236,9 +10251,6 @@ function getStages() {
                                 constructor: Box,
                                 x: obj.world.getWorldMouseX(),
                                 y: obj.world.getWorldMouseY(),
-                                texture: 'circle',
-                                scaleX: 32 / 200,
-                                scaleY: 32 / 200,
                                 layer: 'main',
                                 physicsGroup: 'boxes',
                                 mass: 1,

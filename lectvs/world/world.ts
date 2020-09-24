@@ -618,7 +618,7 @@ namespace World {
             let cyclicCheckParent = obj.parent;
             while (cyclicCheckParent) {
                 if (cyclicCheckParent === child) {
-                    error (`Cannot add child ${child.name} to parent ${obj.name} because this would result in a cyclic hierarchy`);
+                    error(`Cannot add child ${child.name} to parent ${obj.name} because this would result in a cyclic hierarchy`);
                     return undefined;
                 }
                 cyclicCheckParent = cyclicCheckParent.parent;
