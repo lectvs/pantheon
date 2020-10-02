@@ -8,27 +8,6 @@ namespace Assets {
 
         // Fonts
         'deluxe16': {},
-
-        // Tiles
-        'tiles': {
-            defaultAnchor: Anchor.CENTER,
-            spritesheet: { frameWidth: 32, frameHeight: 32 },
-        },
-
-        'player': {
-            anchor: Anchor.BOTTOM,
-        },
-        'platform': {},
-        'circle': {
-            anchor: Anchor.CENTER,
-        },
-        'slope': {},
-        'bec': {
-            anchor: Anchor.CENTER,
-        },
-        'gradient': {
-            anchor: Anchor.CENTER,
-        },
     }
 
     export const sounds: Dict<Preload.Sound> = {
@@ -40,19 +19,11 @@ namespace Assets {
     }
 
     export const tilesets: Dict<Tilemap.Tileset> = {
-        'tiles': {
-            tiles: Preload.allTilesWithPrefix('tiles_'),
-            tileWidth: 32,
-            tileHeight: 32,
-            collisionIndices: [0, 1, 2, 3, 4, 5],
-        }
+
     }
 
     export const pyxelTilemaps: Dict<Preload.PyxelTilemap> = {
-        'main_tilemap': {
-            tileset: Assets.tilesets['tiles'],
-            url: 'assets/tiles.json'
-        }
+
     }
 
     export class fonts {

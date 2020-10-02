@@ -9466,25 +9466,6 @@ var Assets;
         'debug': {},
         // Fonts
         'deluxe16': {},
-        // Tiles
-        'tiles': {
-            defaultAnchor: Anchor.CENTER,
-            spritesheet: { frameWidth: 32, frameHeight: 32 },
-        },
-        'player': {
-            anchor: Anchor.BOTTOM,
-        },
-        'platform': {},
-        'circle': {
-            anchor: Anchor.CENTER,
-        },
-        'slope': {},
-        'bec': {
-            anchor: Anchor.CENTER,
-        },
-        'gradient': {
-            anchor: Anchor.CENTER,
-        },
     };
     Assets.sounds = {
         // Debug
@@ -9492,20 +9473,8 @@ var Assets;
         // SFX
         'click': {},
     };
-    Assets.tilesets = {
-        'tiles': {
-            tiles: Preload.allTilesWithPrefix('tiles_'),
-            tileWidth: 32,
-            tileHeight: 32,
-            collisionIndices: [0, 1, 2, 3, 4, 5],
-        }
-    };
-    Assets.pyxelTilemaps = {
-        'main_tilemap': {
-            tileset: Assets.tilesets['tiles'],
-            url: 'assets/tiles.json'
-        }
-    };
+    Assets.tilesets = {};
+    Assets.pyxelTilemaps = {};
     var fonts = /** @class */ (function () {
         function fonts() {
         }
@@ -9534,13 +9503,9 @@ function BASE_STAGE() {
         ],
         physicsGroups: {
             'player': {},
-            'boxes': {},
             'walls': { immovable: true },
         },
         collisions: [
-            { group1: 'boxes', group2: 'boxes' },
-            { group1: 'boxes', group2: 'player' },
-            { group1: 'boxes', group2: 'walls', transferMomentum: false },
             { group1: 'player', group2: 'walls', transferMomentum: false },
         ],
         collisionIterations: 4,
@@ -9584,128 +9549,10 @@ function WORLD_BOUNDS(left, top, right, bottom) {
         ]
     };
 }
-var Box = /** @class */ (function (_super) {
-    __extends(Box, _super);
-    function Box(config) {
-        var _this = _super.call(this, config, {
-            texture: 'debug',
-            tint: 0x660000,
-            scaleX: 2,
-            scaleY: 2,
-            gravityy: 200,
-            bounds: { type: 'rect', x: 0, y: 0, width: 32, height: 32 },
-        }) || this;
-        _this.carrierModule = new CarrierModule(_this);
-        return _this;
-    }
-    Box.prototype.update = function () {
-        this.vx *= 0.98;
-        _super.prototype.update.call(this);
-    };
-    Box.prototype.postUpdate = function () {
-        _super.prototype.postUpdate.call(this);
-        this.carrierModule.postUpdate();
-    };
-    return Box;
-}(Sprite));
-var CarrierModule = /** @class */ (function () {
-    function CarrierModule(obj) {
-        this.riders = [];
-        this.obj = obj;
-    }
-    CarrierModule.prototype.postUpdate = function () {
-        var e_48, _a;
-        var objBounds = this.obj.bounds.getBoundingBox();
-        var checkBounds = new RectBounds(objBounds.x, objBounds.y - 1, objBounds.width, 1);
-        try {
-            for (var _b = __values(this.obj.world.select.collidesWith(this.obj.physicsGroup)), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var potentialRider = _c.value;
-                if (potentialRider instanceof OneWayPlatform || potentialRider instanceof MovingPlatform)
-                    continue;
-                if (potentialRider.isOverlapping(checkBounds)) {
-                    if (_.contains(this.riders, potentialRider))
-                        continue;
-                    if (potentialRider.parent)
-                        continue; // Disallow riding by any child object
-                    this.obj.addChildKeepWorldPosition(potentialRider);
-                    this.riders.push(potentialRider);
-                }
-                else {
-                    if (!_.contains(this.riders, potentialRider))
-                        continue;
-                    A.removeAll(this.riders, potentialRider);
-                    if (_.contains(this.obj.children, potentialRider)) {
-                        this.obj.removeChildKeepWorldPosition(potentialRider);
-                    }
-                }
-            }
-        }
-        catch (e_48_1) { e_48 = { error: e_48_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_48) throw e_48.error; }
-        }
-    };
-    return CarrierModule;
-}());
 /// <reference path="../lectvs/debug/cheat.ts" />
 Cheat.init({
     'win': function (x) { return x * x; },
 });
-var GroundedModule = /** @class */ (function () {
-    function GroundedModule(obj, checkThreshold, moveThreshold) {
-        this.obj = obj;
-        this.checkThreshold = checkThreshold;
-        this.moveThreshold = moveThreshold;
-        var box = this.obj.bounds.getBoundingBox();
-        this.checkBounds = new RectBounds(box.left - obj.x, box.bottom - obj.y, box.width, 1, obj);
-    }
-    Object.defineProperty(GroundedModule.prototype, "grounded", {
-        get: function () { return !!this.groundedObject; },
-        enumerable: false,
-        configurable: true
-    });
-    GroundedModule.prototype.getGroundedObject = function () {
-        var _this = this;
-        var checkGroups = this.obj.world.getPhysicsGroupsThatCollideWith(this.obj.physicsGroup);
-        var overlappedObjs = this.obj.world.select.overlap(this.checkBounds, checkGroups);
-        if (_.isEmpty(overlappedObjs))
-            return undefined;
-        A.removeAll(overlappedObjs, this.obj);
-        return M.argmin(overlappedObjs, function (ground) { return ground.bounds.getBoundingBox().top - _this.obj.bounds.getBoundingBox().bottom; });
-    };
-    GroundedModule.prototype.preUpdate = function () {
-        if (this.obj.vy < -1) {
-            this.groundedObject = undefined;
-            return;
-        }
-        this.groundedObject = this.getGroundedObject();
-    };
-    GroundedModule.prototype.update = function () {
-        var _this = this;
-        if (!this.grounded)
-            return;
-        var box = this.checkBounds.getBoundingBox();
-        var checkGroups = this.obj.world.getPhysicsGroupsThatCollideWith(this.obj.physicsGroup);
-        var raycasts = A.range(box.width + 1).map(function (i) { return _this.obj.world.select.raycast(box.left + i, box.top - _this.checkThreshold, 0, 1, checkGroups); })
-            .filter(function (list) { return !_.isEmpty(list) && list[0].obj !== _this.obj; })
-            .map(function (list) { return list[0]; });
-        if (raycasts.every(function (rr) { return rr.obj.bounds instanceof RectBounds; }))
-            return;
-        var dist = M.min(raycasts, function (rr) { return rr.t; }) - this.checkThreshold;
-        if (!isFinite(dist) || dist > this.moveThreshold)
-            return;
-        this.obj.y += dist;
-    };
-    GroundedModule.prototype.postUpdate = function () {
-        if (this.grounded) {
-            this.obj.vy = 0;
-        }
-    };
-    return GroundedModule;
-}());
 /// <reference path="../lectvs/menu/menu.ts" />
 var MainMenu = /** @class */ (function (_super) {
     __extends(MainMenu, _super);
@@ -9850,13 +9697,13 @@ Main.loadConfig({
     defaultOptions: {
         volume: 1,
         controls: {
+            // Game
             'left': ['ArrowLeft', 'a'],
             'right': ['ArrowRight', 'd'],
             'up': ['ArrowUp', 'w', ' '],
             'down': ['ArrowDown', 's'],
             'interact': ['e'],
-            'placeBlock': ['MouseRight'],
-            'destroyBlock': ['MouseLeft'],
+            // Presets
             'game_advanceDialog': ['MouseLeft', 'e', ' '],
             'game_pause': ['Escape', 'Backspace'],
             'game_closeMenu': ['Escape', 'Backspace'],
@@ -9918,7 +9765,7 @@ Main.loadConfig({
         programmaticInput: false,
         autoplay: true,
         skipMainMenu: true,
-        frameStepEnabled: true,
+        frameStepEnabled: false,
         frameStepStepKey: '1',
         frameStepRunKey: '2',
         resetOptionsAtStart: true,
@@ -9930,50 +9777,6 @@ function get(name) {
         return worldObject;
     return undefined;
 }
-var MovingPlatform = /** @class */ (function (_super) {
-    __extends(MovingPlatform, _super);
-    function MovingPlatform(config) {
-        var _this = _super.call(this, config) || this;
-        _this.pathStart = config.data.pathStart;
-        _this.pathEnd = config.data.pathEnd;
-        _this.x = _this.pathStart.x;
-        _this.y = _this.pathStart.y;
-        _this.pathTimer = new Timer(Infinity);
-        _this.pathTimer.speed = 2;
-        _this.carrierModule = new CarrierModule(_this);
-        return _this;
-    }
-    MovingPlatform.prototype.update = function () {
-        _super.prototype.update.call(this);
-        this.pathTimer.update(this.delta);
-        this.x = M.lerp(this.pathStart.x, this.pathEnd.x, (1 - Math.cos(this.pathTimer.time)) / 2);
-        this.y = M.lerp(this.pathStart.y, this.pathEnd.y, (1 - Math.cos(this.pathTimer.time)) / 2);
-    };
-    MovingPlatform.prototype.postUpdate = function () {
-        _super.prototype.postUpdate.call(this);
-        this.carrierModule.postUpdate();
-    };
-    return MovingPlatform;
-}(Sprite));
-var OneWayPlatform = /** @class */ (function (_super) {
-    __extends(OneWayPlatform, _super);
-    function OneWayPlatform(config) {
-        return _super.call(this, config) || this;
-    }
-    OneWayPlatform.prototype.isCollidingWith = function (other) {
-        if (!_super.prototype.isCollidingWith.call(this, other))
-            return false;
-        var otherdy = other.y - other.physicslasty;
-        if (otherdy < 0)
-            return false;
-        var thisWorldBounds = this.bounds.getBoundingBox();
-        var otherWorldBounds = other.bounds.getBoundingBox();
-        if (otherWorldBounds.y + otherWorldBounds.height - otherdy > thisWorldBounds.y + 1)
-            return false;
-        return true;
-    };
-    return OneWayPlatform;
-}(Sprite));
 function getParty() {
     return {
         leader: 'none',
@@ -9981,88 +9784,6 @@ function getParty() {
         members: {}
     };
 }
-var Player = /** @class */ (function (_super) {
-    __extends(Player, _super);
-    function Player(config) {
-        var _this = _super.call(this, config, {
-            texture: 'player',
-            tint: 0xFF0000,
-            bounds: { type: 'rect', x: -16, y: -64, width: 32, height: 64 },
-            gravityy: 512,
-        }) || this;
-        _this.speed = 128;
-        _this.jumpForce = 256;
-        _this.controllerSchema = {
-            left: function () { return Input.isDown('left'); },
-            right: function () { return Input.isDown('right'); },
-            jump: function () { return Input.justDown('up'); },
-            crouch: function () { return Input.isDown('down'); },
-            fallThrough: function () { return Input.justDown('down'); },
-        };
-        _this.ignoreOneWayCollision = false;
-        _this.groundedModule = new GroundedModule(_this, 4, 2);
-        return _this;
-    }
-    Player.prototype.update = function () {
-        this.updateCrouch();
-        var haxis = (this.controller.right ? 1 : 0) - (this.controller.left ? 1 : 0);
-        this.updateMovement(haxis);
-        this.groundedModule.preUpdate();
-        _super.prototype.update.call(this);
-        this.groundedModule.update();
-        this.tint = this.groundedModule.grounded ? 0x00FF00 : 0xFF0000;
-    };
-    Player.prototype.postUpdate = function () {
-        this.groundedModule.postUpdate();
-        _super.prototype.postUpdate.call(this);
-    };
-    Player.prototype.updateCrouch = function () {
-        var _this = this;
-        if (this.controller.crouch && !this.crouched) {
-            this.startCrouch();
-            this.crouched = true;
-        }
-        else if (!this.controller.crouch && this.crouched && this.canEndCrouch()) {
-            this.endCrouch();
-            this.crouched = false;
-        }
-        if (this.controller.fallThrough) {
-            this.ignoreOneWayCollision = true;
-            this.runScript(S.callAfterTime(0.05, function () { return _this.ignoreOneWayCollision = false; }));
-        }
-    };
-    Player.prototype.isCollidingWith = function (other) {
-        if (!_super.prototype.isCollidingWith.call(this, other))
-            return false;
-        if ((this.ignoreOneWayCollision) && other instanceof OneWayPlatform)
-            return false;
-        return true;
-    };
-    Player.prototype.updateMovement = function (haxis) {
-        this.vx = haxis * this.speed;
-        if (this.controller.jump) {
-            this.vy = -this.jumpForce;
-        }
-    };
-    Player.prototype.startCrouch = function () {
-        this.bounds.y += 32;
-        this.bounds.height = 32;
-        this.scaleY = 0.5;
-    };
-    Player.prototype.canEndCrouch = function () {
-        this.bounds.y -= 32;
-        var overlappingWalls = this.world.select.overlap(this.bounds, this.world.getPhysicsGroupsThatCollideWith(this.physicsGroup))
-            .filter(function (obj) { return !(obj instanceof OneWayPlatform); });
-        this.bounds.y += 32;
-        return _.isEmpty(overlappingWalls);
-    };
-    Player.prototype.endCrouch = function () {
-        this.bounds.y -= 32;
-        this.bounds.height = 64;
-        this.scaleY = 1;
-    };
-    return Player;
-}(Sprite));
 function getStages() {
     return {
         'game': {
@@ -10074,191 +9795,7 @@ function getStages() {
             entryPoints: {
                 'main': { x: global.gameWidth / 2, y: global.gameHeight / 2 },
             },
-            worldObjects: [
-                {
-                    name: 'tiles',
-                    constructor: SmartTilemap,
-                    x: 0, y: 0,
-                    tilemap: 'main_tilemap',
-                    data: {
-                        smartConfig: {
-                            rules: SmartTilemap.Rule.oneBitRules({
-                                airIndex: -1,
-                                solidIndex: 0,
-                                edgeUpIndex: 1,
-                                cornerTopLeftIndex: 2,
-                                inverseCornerTopLeftIndex: 3,
-                                doubleEdgeHorizontalIndex: 4,
-                                peninsulaUpIndex: 5,
-                            }),
-                            outsideRule: { type: 'extend' },
-                            emptyRule: { type: 'noop' },
-                        }
-                    },
-                    layer: 'main',
-                    physicsGroup: 'walls',
-                },
-                {
-                    constructor: Sprite,
-                    x: 160, y: 640,
-                    layer: 'main',
-                    texture: 'slope',
-                    scaleX: -32 / 100, scaleY: 32 / 100,
-                    tint: 0x000000,
-                    physicsGroup: 'walls',
-                    bounds: { type: 'slope', x: -32, y: 0, width: 32, height: 32, direction: 'upright' },
-                },
-                {
-                    constructor: Sprite,
-                    x: 288, y: 640,
-                    layer: 'main',
-                    texture: 'slope',
-                    scaleX: 32 / 100, scaleY: 32 / 100,
-                    tint: 0x000000,
-                    physicsGroup: 'walls',
-                    bounds: { type: 'slope', x: 0, y: 0, width: 32, height: 32, direction: 'upleft' },
-                },
-                {
-                    constructor: Sprite,
-                    x: 320, y: 608,
-                    layer: 'main',
-                    texture: 'slope',
-                    scaleX: 96 / 100, scaleY: 32 / 100,
-                    tint: 0x000000,
-                    physicsGroup: 'walls',
-                    bounds: { type: 'slope', x: 0, y: 0, width: 96, height: 32, direction: 'upleft' },
-                },
-                {
-                    constructor: Sprite,
-                    x: 416, y: 576,
-                    layer: 'main',
-                    texture: 'slope',
-                    scaleX: 32 / 100, scaleY: 32 / 100,
-                    tint: 0x000000,
-                    physicsGroup: 'walls',
-                    bounds: { type: 'slope', x: 0, y: 0, width: 32, height: 32, direction: 'upleft' },
-                },
-                {
-                    constructor: Sprite,
-                    x: 448, y: 544,
-                    layer: 'main',
-                    texture: 'slope',
-                    scaleX: 32 / 100, scaleY: 32 / 100,
-                    tint: 0x000000,
-                    physicsGroup: 'walls',
-                    bounds: { type: 'slope', x: 0, y: 0, width: 32, height: 32, direction: 'upleft' },
-                },
-                {
-                    constructor: Sprite,
-                    x: 480, y: 448,
-                    layer: 'main',
-                    texture: 'slope',
-                    scaleX: 32 / 100, scaleY: 96 / 100,
-                    tint: 0x000000,
-                    physicsGroup: 'walls',
-                    bounds: { type: 'slope', x: 0, y: 0, width: 32, height: 96, direction: 'upleft' },
-                },
-                {
-                    constructor: Sprite,
-                    x: 568, y: 320,
-                    layer: 'main',
-                    texture: 'slope',
-                    scaleX: 32 / 100, scaleY: 32 / 100,
-                    tint: 0x000000,
-                    physicsGroup: 'walls',
-                    bounds: { type: 'slope', x: 0, y: 0, width: 32, height: 32, direction: 'upleft' },
-                },
-                {
-                    constructor: Sprite,
-                    x: 632, y: 320,
-                    layer: 'main',
-                    texture: 'slope',
-                    scaleX: -32 / 100, scaleY: 32 / 100,
-                    tint: 0x000000,
-                    physicsGroup: 'walls',
-                    bounds: { type: 'slope', x: -32, y: 0, width: 32, height: 32, direction: 'upright' },
-                },
-                {
-                    constructor: Sprite,
-                    x: 632, y: 320,
-                    layer: 'main',
-                    texture: 'slope',
-                    scaleX: 32 / 100, scaleY: 32 / 100,
-                    tint: 0x000000,
-                    physicsGroup: 'walls',
-                    bounds: { type: 'slope', x: 0, y: 0, width: 32, height: 32, direction: 'upleft' },
-                },
-                {
-                    name: 'player',
-                    constructor: Player,
-                    x: 180, y: 620,
-                    layer: 'main',
-                    physicsGroup: 'player',
-                    controllable: true,
-                },
-                {
-                    name: 'box',
-                    constructor: Box,
-                    x: 270, y: 220,
-                    layer: 'main',
-                    physicsGroup: 'boxes',
-                    mass: 1,
-                },
-                {
-                    name: 'platform',
-                    constructor: MovingPlatform,
-                    texture: 'platform',
-                    layer: 'main',
-                    physicsGroup: 'walls',
-                    bounds: { type: 'rect', x: 0, y: 0, width: 128, height: 16 },
-                    data: {
-                        pathStart: { x: 192, y: 402 },
-                        pathEnd: { x: 320, y: 352 },
-                    }
-                },
-                {
-                    name: 'oneway',
-                    constructor: OneWayPlatform,
-                    x: 250, y: 530,
-                    texture: 'platform',
-                    layer: 'main',
-                    physicsGroup: 'walls',
-                    bounds: { type: 'rect', x: 0, y: 0, width: 128, height: 1 },
-                },
-                {
-                    name: 'tilemapEditor',
-                    active: false,
-                    updateCallback: function (obj) {
-                        var tilemap = obj.world.select.type(Tilemap);
-                        var mouseX = obj.world.getWorldMouseX() - tilemap.x;
-                        var mouseY = obj.world.getWorldMouseY() - tilemap.y;
-                        var tileX = Math.floor(mouseX / tilemap.tileset.tileWidth);
-                        var tileY = Math.floor(mouseY / tilemap.tileset.tileHeight);
-                        if (Input.isDown('placeBlock')) {
-                            tilemap.setTile(tileX, tileY, { index: 0, angle: 0, flipX: false });
-                        }
-                        if (Input.isDown('destroyBlock')) {
-                            tilemap.setTile(tileX, tileY, { index: -1, angle: 0, flipX: false });
-                        }
-                    }
-                },
-                {
-                    name: 'ballspawner',
-                    updateCallback: function (obj) {
-                        if (Input.justDown('placeBlock')) {
-                            obj.world.addWorldObject({
-                                name: 'ball',
-                                constructor: Box,
-                                x: obj.world.getWorldMouseX(),
-                                y: obj.world.getWorldMouseY(),
-                                layer: 'main',
-                                physicsGroup: 'boxes',
-                                mass: 1,
-                            });
-                        }
-                    }
-                }
-            ]
+            worldObjects: []
         },
     };
 }

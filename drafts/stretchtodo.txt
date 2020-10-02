@@ -1,0 +1,9 @@
+- documentation and API cleanup
+- implement metroid-style transitions
+- camera zoom
+- normal-map/lighting
+- boundless textures
+    - optimize tilemap editing with boundless textures
+- momentum transfer for collisions
+        - collect all collisions and apply momentum change afterward
+- unit tests c:

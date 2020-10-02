@@ -18,14 +18,14 @@ Main.loadConfig({
     defaultOptions: {
         volume: 1,
         controls: {
+            // Game
             'left':                      ['ArrowLeft', 'a'],
             'right':                     ['ArrowRight', 'd'],
             'up':                        ['ArrowUp', 'w', ' '],
             'down':                      ['ArrowDown', 's'],
             'interact':                  ['e'],
-            'placeBlock':                ['MouseRight'],
-            'destroyBlock':              ['MouseLeft'],
 
+            // Presets
             'game_advanceDialog':        ['MouseLeft', 'e', ' '],
             'game_pause':                ['Escape', 'Backspace'],
             'game_closeMenu':            ['Escape', 'Backspace'],
@@ -91,7 +91,7 @@ Main.loadConfig({
         programmaticInput: false,
         autoplay: true,
         skipMainMenu: true,
-        frameStepEnabled: true,
+        frameStepEnabled: false,
         frameStepStepKey: '1',
         frameStepRunKey: '2',
         resetOptionsAtStart: true,
