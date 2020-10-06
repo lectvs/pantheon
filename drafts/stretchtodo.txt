@@ -1,4 +1,5 @@
 - documentation and API cleanup
+- fullscreen
 - implement metroid-style transitions
 - camera zoom
 - normal-map/lighting

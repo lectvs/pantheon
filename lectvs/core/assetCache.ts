@@ -12,7 +12,7 @@ class AssetCache {
         return this.pixiTextures[key];
     }
 
-    static getTexture(key: string) {
+    static getTexture(key: string): Texture {
         if (!this.textures[key]) {
             error(`Texture '${key}' does not exist.`);
             return Texture.none();

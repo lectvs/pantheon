@@ -62,6 +62,15 @@ class RandomNumberGenerator {
     }
 
     /**
+     * Random point uniformly in a disc.
+     */
+    inDisc(radiusSmall: number, radiusLarge: number): Pt {
+        let angle = this.float(0, 2*Math.PI);
+        let r = radiusLarge * Math.sqrt(this.float(radiusSmall/radiusLarge, 1));
+        return { x: r*Math.cos(angle), y: r*Math.sin(angle) };
+    }
+
+    /**
      * Random int from {0} to {array.length - 1}.
      */
     index(array: any[]) {

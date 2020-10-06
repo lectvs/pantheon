@@ -5,7 +5,8 @@ namespace Sound {
 }
 
 class Sound {
-    private webAudioSound: WebAudioSoundI;
+    // TODO: implement speed and then make this private
+    webAudioSound: WebAudioSoundI;
     private get soundManager() { return global.soundManager; }
 
     private markedForDisable: boolean;

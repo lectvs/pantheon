@@ -9,7 +9,7 @@ namespace Effects {
     }
 
     export type PreConfig = { filters?: TextureFilter[], enabled?: boolean };
-    export type SilhouetteConfig = { color?: number, alpha?: number, enabled?: boolean };
+    export type SilhouetteConfig = { color?: number, alpha?: number, amount?: number,  enabled?: boolean };
     export type OutlineConfig = { color?: number, alpha?: number, enabled?: boolean };
     export type PostConfig = { filters?: TextureFilter[], enabled?: boolean };
 }
@@ -28,14 +28,14 @@ class Effects {
             this.effects[Effects.SILHOUETTE_I] = new Effects.Filters.Silhouette(0x000000, 1);
             this.effects[Effects.SILHOUETTE_I].enabled = false;
         }
-        return this.effects[Effects.SILHOUETTE_I];
+        return <Effects.Filters.Silhouette>this.effects[Effects.SILHOUETTE_I];
     }
     get outline(): Effects.Filters.Outline {
         if (!this.effects[Effects.OUTLINE_I]) {
             this.effects[Effects.OUTLINE_I] = new Effects.Filters.Outline(0x000000, 1);
             this.effects[Effects.OUTLINE_I].enabled = false;
         }
-        return this.effects[Effects.OUTLINE_I];
+        return <Effects.Filters.Outline>this.effects[Effects.OUTLINE_I];
     }
 
     constructor(config: Effects.Config = {}) {
@@ -67,6 +67,7 @@ class Effects {
         if (config.silhouette) {
             this.silhouette.color = config.silhouette.color ?? 0x000000;
             this.silhouette.alpha = config.silhouette.alpha ?? 1;
+            this.silhouette.amount = config.silhouette.amount ?? 1;
             this.silhouette.enabled = config.silhouette.enabled ?? true;
         }
 
@@ -91,16 +92,19 @@ namespace Effects {
             set color(value: number) { this.setUniform('color', M.colorToVec3(value)); }
             get alpha() { return this.getUniform('alpha'); }
             set alpha(value: number) { this.setUniform('alpha', value); }
+            get amount() { return this.getUniform('amount'); }
+            set amount(value: number) { this.setUniform('amount', value); }
 
             constructor(color: number, alpha: number) {
                 super({
                     uniforms: {
                         "vec3 color": M.colorToVec3(0x000000),
-                        "float alpha": 1.0
+                        "float alpha": 1.0,
+                        "float amount": 1.0
                     },
                     code: `
                         if (inp.a > 0.0) {
-                            outp = vec4(color, alpha);
+                            outp = inp * (1.0 - amount) + vec4(color, alpha) * amount;
                         }
                     `
                 });

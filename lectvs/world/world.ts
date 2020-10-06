@@ -209,7 +209,7 @@ class World {
         return World.Actions.addWorldObjectToWorld(worldObject, this);
     }
     
-    addWorldObjects<T extends WorldObject>(objs: (T | WorldObject)[]): T[] {
+    addWorldObjects<T extends WorldObject>(objs: (T | WorldObject.Config)[]): T[] {
         let worldObjects: T[] = _.isEmpty(objs) ? [] : objs.map(obj => obj instanceof WorldObject ? <T>obj : WorldObject.fromConfig<T>(obj));
         return World.Actions.addWorldObjectsToWorld(worldObjects, this);
     }

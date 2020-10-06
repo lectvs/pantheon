@@ -36,7 +36,8 @@ class DialogBox extends Sprite {
         this.textArea = this.textAreaFull;
         this.done = true;
 
-        this.spriteText = new SpriteText({
+        this.spriteText = this.addChild<SpriteText>(<SpriteText.Config>{
+            constructor: SpriteText,
             font: config.spriteTextFont,
         });
 
@@ -49,7 +50,9 @@ class DialogBox extends Sprite {
         };
         this.spriteTextOffset = 0;
 
-        this.portraitSprite = new Sprite({});
+        this.portraitSprite = this.addChild<Sprite>({
+            constructor: Sprite,
+        });
 
         this.characterTimer = new Timer(0.05, () => this.advanceCharacter(), true);
     }
@@ -60,6 +63,8 @@ class DialogBox extends Sprite {
 
         if (this.done) {
             this.visible = false;
+            this.spriteText.visible = false;
+            this.portraitSprite.visible = false;
         }
 
         if (Input.justDown(Input.GAME_ADVANCE_DIALOG)) {
@@ -72,11 +77,9 @@ class DialogBox extends Sprite {
 
         if (this.portraitSprite.visible) {
             this.setPortraitSpriteProperties();
-            this.portraitSprite.render(screen);
         }
 
         this.setSpriteTextProperties();
-        this.spriteText.render(screen);
     }
 
     advanceDialog() {
@@ -130,13 +133,13 @@ class DialogBox extends Sprite {
     }
 
     setPortraitSpriteProperties() {
-        this.portraitSprite.x = this.x + this.portraitPosition.x;
-        this.portraitSprite.y = this.y + this.portraitPosition.y;
+        this.portraitSprite.localx = this.portraitPosition.x;
+        this.portraitSprite.localy = this.portraitPosition.y;
     }
 
     setSpriteTextProperties() {
-        this.spriteText.x = this.x + this.textArea.x;
-        this.spriteText.y = this.y + this.textArea.y - this.spriteTextOffset;
+        this.spriteText.localx = this.textArea.x;
+        this.spriteText.localy = this.textArea.y - this.spriteTextOffset;
     }
 
     showDialog(dialogText: string) {
@@ -144,12 +147,14 @@ class DialogBox extends Sprite {
         this.spriteText.clear();
         this.spriteTextOffset = 0;
         this.visible = true;
+        this.spriteText.visible = true;
         this.done = false;
 
         this.charQueue = SpriteTextConverter.textToCharListWithWordWrap(dialogText, this.spriteText.font, this.textArea.width);
         this.characterTimer.reset();
 
         this.advanceCharacter(); // Advance character once to start the dialog with one displayed character.
+        this.world.playSound('click').volume = 0.5;
     }
 
     showPortrait(portrait: string) {

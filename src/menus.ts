@@ -1,5 +1,34 @@
 /// <reference path="../lectvs/menu/menu.ts" />
 
+class IntroMenu extends Menu {
+    constructor(menuSystem: MenuSystem) {
+        super(menuSystem, {
+            backgroundColor: 0x000000,
+        }, [
+            new SpriteText({
+                name: 'introtext',
+                x: 20, y: 80, text: "- a game by hayden mccraw -",
+                font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+            }),
+        ]);
+
+        let introtext = this.select.name<SpriteText>('introtext');
+        introtext.x = global.gameWidth/2 - introtext.getTextWidth()/2;
+        introtext.y = global.gameHeight/2 - introtext.getTextHeight()/2;
+
+        this.runScript(S.chain(
+            S.wait(1.5),
+            S.call(() => {
+                introtext.setText("- made in 48 hours\n  for ludum dare 47 -");
+                introtext.x = global.gameWidth/2 - introtext.getTextWidth()/2;
+                introtext.y = global.gameHeight/2 - introtext.getTextHeight()/2;
+            }),
+            S.wait(1.5),
+            S.call(() => { menuSystem.loadMenu(MainMenu); }),
+        ));
+    }
+}
+
 class MainMenu extends Menu {
     constructor(menuSystem: MenuSystem) {
         super(menuSystem, {
@@ -7,17 +36,42 @@ class MainMenu extends Menu {
             worldObjects: [
                 <SpriteText.Config>{
                     constructor: SpriteText,
-                    x: 20, y: 20, text: "- platformer test -",
+                    x: 20, y: 20, text: "- HOOP KNIGHT -",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
                 },
                 <MenuTextButton.Config>{
                     constructor: MenuTextButton,
-                    x: 20, y: 50, text: "start",
+                    x: 20, y: 50, text: "play normal mode",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
                     onClick: () => {
+                        HARD_DIFFICULTY = false;
                         this.menuSystem.game.playSound('click');
                         menuSystem.game.startGame();
                     },
+                },
+                <MenuTextButton.Config>{
+                    constructor: MenuTextButton,
+                    x: 20, y: 68, text: "play hard mode (no health regen)",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                    onClick: () => {
+                        HARD_DIFFICULTY = true;
+                        this.menuSystem.game.playSound('click');
+                        menuSystem.game.startGame();
+                    },
+                },
+                <MenuTextButton.Config>{
+                    constructor: MenuTextButton,
+                    x: 20, y: 100, text: "controls",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                    onClick: () => {
+                        this.menuSystem.game.playSound('click');
+                        menuSystem.loadMenu(ControlsMenu);
+                    },
+                },
+                <SpriteText.Config>{
+                    constructor: SpriteText,
+                    x: 100, y: 100, text: "<-- read me!",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFF00 },
                 },
             ]
         });
@@ -91,17 +145,6 @@ class OptionsMenu extends Menu {
                     getValue: () => Options.getOption('volume'),
                     setValue: v => Options.updateOption('volume', v),
                 },
-                <SpriteText.Config>{
-                    constructor: SpriteText,
-                    x: 20, y: 80, text: "JUMP:",
-                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                },
-                <MenuControlMapper.Config>{
-                    constructor: MenuControlMapper,
-                    x: 68, y: 80,
-                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                    controlName: 'up',
-                },
                 <MenuTextButton.Config>{
                     constructor: MenuTextButton,
                     x: 20, y: 110, text: "back",
@@ -122,5 +165,61 @@ class OptionsMenu extends Menu {
             Input.consume(Input.GAME_CLOSE_MENU);
             this.menuSystem.back();
         }
+    }
+}
+
+class ControlsMenu extends Menu {
+    constructor(menuSystem: MenuSystem) {
+        super(menuSystem, {
+            parent: MENU_BASE_STAGE(),
+            physicsGroups: { 'items': {} },
+            worldObjects: [
+                <SpriteText.Config>{
+                    constructor: SpriteText,
+                    x: 20, y: 15, text: "controls",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                },
+                <SpriteText.Config>{
+                    constructor: SpriteText,
+                    x: 20, y: 42, text: "WASD or ARROW KEYS - move\n\nswing the hoop faster to deal more damage!",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                },
+                <Sprite.Config>{
+                    constructor: Player,
+                    x: 250, y: 180,
+                    effects: { outline: { color: 0xFFFFFF } },
+                },
+                <Sprite.Config>{
+                    constructor: Hoop,
+                    x: 240, y: 180,
+                },
+                <MenuTextButton.Config>{
+                    constructor: MenuTextButton,
+                    x: 20, y: 240, text: "back",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                    onClick: () => {
+                        this.menuSystem.game.playSound('click');
+                        menuSystem.back();
+                    },
+                },
+            ]
+        });
+
+        let player = this.select.type(Player);
+
+        this.runScript(S.chain(
+            S.loopFor(2, S.chain(
+                S.doOverTime(0.4, t => { player.controller.right = true; }),
+                S.doOverTime(0.4, t => { player.controller.down = true; }),
+                S.doOverTime(0.4, t => { player.controller.left = true; }),
+                S.doOverTime(0.4, t => { player.controller.up = true; }),
+            )),
+            S.loopFor(Infinity, S.chain(
+                S.doOverTime(0.2, t => { player.controller.right = true; }),
+                S.doOverTime(0.2, t => { player.controller.down = true; }),
+                S.doOverTime(0.2, t => { player.controller.left = true; }),
+                S.doOverTime(0.2, t => { player.controller.up = true; }),
+            )),
+        ))
     }
 }

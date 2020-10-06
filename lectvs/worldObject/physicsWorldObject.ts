@@ -105,6 +105,12 @@ class PhysicsWorldObject extends WorldObject {
         }
     }
 
+    postUpdate() {
+        super.postUpdate();
+        if (!isFinite(this.vx)) this.vx = 0;
+        if (!isFinite(this.vy)) this.vy = 0;
+    }
+
     render(screen: Texture) {
         if (Debug.ALL_PHYSICS_BOUNDS || this.debugDrawBounds) {
             this.drawBounds(screen);
@@ -175,12 +181,18 @@ class PhysicsWorldObject extends WorldObject {
 
         if (this.bounds instanceof RectBounds) {
             let box = this.bounds.getBoundingBox();
+            box.x -= this.x - this.renderScreenX;
+            box.y -= this.y - this.renderScreenY;
             Draw.rectangleOutline(screen, box.x, box.y, box.width, box.height);
         } else if (this.bounds instanceof CircleBounds) {
             let center = this.bounds.getCenter();
+            center.x -= this.x - this.renderScreenX;
+            center.y -= this.y - this.renderScreenY;
             Draw.circleOutline(screen, center.x, center.y, this.bounds.radius);
         } else if (this.bounds instanceof SlopeBounds) {
             let box = this.bounds.getBoundingBox();
+            box.x -= this.x - this.renderScreenX;
+            box.y -= this.y - this.renderScreenY;
             if (this.bounds.direction === 'upleft') {
                 Draw.line(screen, box.left, box.bottom, box.right, box.bottom);
                 Draw.line(screen, box.right, box.bottom, box.right, box.top);

@@ -98,6 +98,8 @@ namespace Physics {
         applyMomentumTransferForCollision(world.delta, displacementCollision, collision.transferMomentum);
 
         if (collision.callback) collision.callback(collision.move, collision.from);
+        collision.move.onCollide(collision.from);
+        collision.from.onCollide(collision.move);
     }
 
     function getRaycastCollisions(world: World): RaycastCollision[] {
@@ -108,6 +110,7 @@ namespace Physics {
                 for (let from of world.physicsGroups[collision.group2].worldObjects) {
                     if (move === from) continue;
                     if (!G.overlapRectangles(move.bounds.getBoundingBox(), from.bounds.getBoundingBox())) continue;
+                    if (!move.colliding || !from.colliding) continue;
                     if (!move.isCollidingWith(from) || !from.isCollidingWith(move)) continue;
                     let raycastCollision = move.bounds.getRaycastCollision(move.x-move.physicslastx, move.y-move.physicslasty, from.bounds, from.x-from.physicslastx, from.y-from.physicslasty);
                     if (!raycastCollision) continue;

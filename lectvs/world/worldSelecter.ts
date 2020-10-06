@@ -30,7 +30,7 @@ class WorldSelecter {
     }
 
     nameAll<T extends WorldObject>(name: string) {
-        return <T[]>this.world.worldObjectsByName[name] || [];
+        return A.clone(<T[]>this.world.worldObjectsByName[name] || []);
     }
 
     overlap(bounds: Bounds, physicsGroups: string[]): PhysicsWorldObject[] {

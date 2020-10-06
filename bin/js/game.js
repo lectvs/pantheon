@@ -2378,6 +2378,14 @@ var RandomNumberGenerator = /** @class */ (function () {
         return { x: r * Math.cos(angle), y: r * Math.sin(angle) };
     };
     /**
+     * Random point uniformly in a disc.
+     */
+    RandomNumberGenerator.prototype.inDisc = function (radiusSmall, radiusLarge) {
+        var angle = this.float(0, 2 * Math.PI);
+        var r = radiusLarge * Math.sqrt(this.float(radiusSmall / radiusLarge, 1));
+        return { x: r * Math.cos(angle), y: r * Math.sin(angle) };
+    };
+    /**
      * Random int from {0} to {array.length - 1}.
      */
     RandomNumberGenerator.prototype.index = function (array) {
@@ -2450,7 +2458,7 @@ var UIDGenerator = /** @class */ (function () {
 var WorldObject = /** @class */ (function () {
     function WorldObject(config, defaults) {
         var _this = this;
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
         config = WorldObject.resolveConfig(config, defaults);
         this.localx = (_a = config.x) !== null && _a !== void 0 ? _a : 0;
         this.localy = (_b = config.y) !== null && _b !== void 0 ? _b : 0;
@@ -2459,13 +2467,14 @@ var WorldObject = /** @class */ (function () {
         this.active = (_e = config.active) !== null && _e !== void 0 ? _e : true;
         this.life = new Timer((_f = config.life) !== null && _f !== void 0 ? _f : Infinity, function () { return _this.kill(); });
         this.zBehavior = (_g = config.zBehavior) !== null && _g !== void 0 ? _g : WorldObject.DEFAULT_Z_BEHAVIOR;
-        this.ignoreCamera = (_h = config.ignoreCamera) !== null && _h !== void 0 ? _h : false;
+        this.timeScale = (_h = config.timeScale) !== null && _h !== void 0 ? _h : 1;
+        this.ignoreCamera = (_j = config.ignoreCamera) !== null && _j !== void 0 ? _j : false;
         this.data = config.data ? _.clone(config.data) : {};
         this.alive = true;
         this.lastx = this.x;
         this.lasty = this.y;
         this.lastz = this.z;
-        this.controllable = (_j = config.controllable) !== null && _j !== void 0 ? _j : false;
+        this.controllable = (_k = config.controllable) !== null && _k !== void 0 ? _k : false;
         this.controller = {};
         this.controllerSchema = {};
         this.uid = WorldObject.UID.generate();
@@ -2480,7 +2489,7 @@ var WorldObject = /** @class */ (function () {
         this.stateMachine = new StateMachine();
         this.updateCallback = config.updateCallback;
         this.renderCallback = config.renderCallback;
-        this.debugFollowMouse = (_l = (_k = config.debug) === null || _k === void 0 ? void 0 : _k.followMouse) !== null && _l !== void 0 ? _l : false;
+        this.debugFollowMouse = (_m = (_l = config.debug) === null || _l === void 0 ? void 0 : _l.followMouse) !== null && _m !== void 0 ? _m : false;
     }
     Object.defineProperty(WorldObject.prototype, "x", {
         get: function () { return this.localx + (this.parent ? this.parent.x : 0); },
@@ -2532,7 +2541,7 @@ var WorldObject = /** @class */ (function () {
     });
     Object.defineProperty(WorldObject.prototype, "delta", {
         //
-        get: function () { return this.world ? this.world.delta : global.game.delta; },
+        get: function () { return (this.world ? this.world.delta : global.game.delta) * this.timeScale; },
         enumerable: false,
         configurable: true
     });
@@ -2610,7 +2619,8 @@ var WorldObject = /** @class */ (function () {
             }
             result += Math.round(this.localy);
             if (this.zBehavior === 'threequarters') {
-                result -= this.z;
+                var parentz = this.parent ? this.parent.z : 0;
+                result += parentz - this.z;
             }
             return result;
         },
@@ -2880,6 +2890,13 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
             this.simulate();
         }
     };
+    PhysicsWorldObject.prototype.postUpdate = function () {
+        _super.prototype.postUpdate.call(this);
+        if (!isFinite(this.vx))
+            this.vx = 0;
+        if (!isFinite(this.vy))
+            this.vy = 0;
+    };
     PhysicsWorldObject.prototype.render = function (screen) {
         if (Debug.ALL_PHYSICS_BOUNDS || this.debugDrawBounds) {
             this.drawBounds(screen);
@@ -2941,14 +2958,20 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         Draw.brush.alpha = 1;
         if (this.bounds instanceof RectBounds) {
             var box = this.bounds.getBoundingBox();
+            box.x -= this.x - this.renderScreenX;
+            box.y -= this.y - this.renderScreenY;
             Draw.rectangleOutline(screen, box.x, box.y, box.width, box.height);
         }
         else if (this.bounds instanceof CircleBounds) {
             var center = this.bounds.getCenter();
+            center.x -= this.x - this.renderScreenX;
+            center.y -= this.y - this.renderScreenY;
             Draw.circleOutline(screen, center.x, center.y, this.bounds.radius);
         }
         else if (this.bounds instanceof SlopeBounds) {
             var box = this.bounds.getBoundingBox();
+            box.x -= this.x - this.renderScreenX;
+            box.y -= this.y - this.renderScreenY;
             if (this.bounds.direction === 'upleft') {
                 Draw.line(screen, box.left, box.bottom, box.right, box.bottom);
                 Draw.line(screen, box.right, box.bottom, box.right, box.top);
@@ -5425,7 +5448,8 @@ var DialogBox = /** @class */ (function (_super) {
         _this.textAreaPortrait = config.textAreaPortrait;
         _this.textArea = _this.textAreaFull;
         _this.done = true;
-        _this.spriteText = new SpriteText({
+        _this.spriteText = _this.addChild({
+            constructor: SpriteText,
             font: config.spriteTextFont,
         });
         var textAreaWorldRect = _this.getTextAreaWorldRect();
@@ -5436,7 +5460,9 @@ var DialogBox = /** @class */ (function (_super) {
             offsety: textAreaWorldRect.y,
         };
         _this.spriteTextOffset = 0;
-        _this.portraitSprite = new Sprite({});
+        _this.portraitSprite = _this.addChild({
+            constructor: Sprite,
+        });
         _this.characterTimer = new Timer(0.05, function () { return _this.advanceCharacter(); }, true);
         return _this;
     }
@@ -5445,6 +5471,8 @@ var DialogBox = /** @class */ (function (_super) {
         this.characterTimer.update(this.delta);
         if (this.done) {
             this.visible = false;
+            this.spriteText.visible = false;
+            this.portraitSprite.visible = false;
         }
         if (Input.justDown(Input.GAME_ADVANCE_DIALOG)) {
             this.advanceDialog();
@@ -5454,10 +5482,8 @@ var DialogBox = /** @class */ (function (_super) {
         _super.prototype.render.call(this, screen);
         if (this.portraitSprite.visible) {
             this.setPortraitSpriteProperties();
-            this.portraitSprite.render(screen);
         }
         this.setSpriteTextProperties();
-        this.spriteText.render(screen);
     };
     DialogBox.prototype.advanceDialog = function () {
         if (this.advanceCharacter()) {
@@ -5505,22 +5531,24 @@ var DialogBox = /** @class */ (function (_super) {
         };
     };
     DialogBox.prototype.setPortraitSpriteProperties = function () {
-        this.portraitSprite.x = this.x + this.portraitPosition.x;
-        this.portraitSprite.y = this.y + this.portraitPosition.y;
+        this.portraitSprite.localx = this.portraitPosition.x;
+        this.portraitSprite.localy = this.portraitPosition.y;
     };
     DialogBox.prototype.setSpriteTextProperties = function () {
-        this.spriteText.x = this.x + this.textArea.x;
-        this.spriteText.y = this.y + this.textArea.y - this.spriteTextOffset;
+        this.spriteText.localx = this.textArea.x;
+        this.spriteText.localy = this.textArea.y - this.spriteTextOffset;
     };
     DialogBox.prototype.showDialog = function (dialogText) {
         // Reset dialog properties.
         this.spriteText.clear();
         this.spriteTextOffset = 0;
         this.visible = true;
+        this.spriteText.visible = true;
         this.done = false;
         this.charQueue = SpriteTextConverter.textToCharListWithWordWrap(dialogText, this.spriteText.font, this.textArea.width);
         this.characterTimer.reset();
         this.advanceCharacter(); // Advance character once to start the dialog with one displayed character.
+        this.world.playSound('click').volume = 0.5;
     };
     DialogBox.prototype.showPortrait = function (portrait) {
         if (!portrait || portrait === DialogBox.NONE_PORTRAIT) {
@@ -6005,10 +6033,9 @@ var Theater = /** @class */ (function (_super) {
         // Override to do nothing since we don't want to display the theater's mouse position
     };
     Theater.prototype.loadDialogBox = function (config) {
-        this.dialogBox = WorldObject.fromConfig(config);
+        this.dialogBox = this.addWorldObject(config);
         this.dialogBox.visible = false;
         World.Actions.setLayer(this.dialogBox, Theater.LAYER_DIALOG);
-        World.Actions.addWorldObjectToWorld(this.dialogBox, this);
     };
     Theater.LAYER_WORLD = 'world';
     Theater.LAYER_TRANSITION = 'transition';
@@ -6610,7 +6637,7 @@ var M;
     M.lerp = lerp;
     function lerpTime(a, b, speed, delta) {
         // From https://www.gamasutra.com/blogs/ScottLembcke/20180404/316046/Improved_Lerp_Smoothing.php
-        return lerp(a, b, Math.pow(2, -speed * delta));
+        return lerp(a, b, 1 - Math.pow(2, -speed * delta));
     }
     M.lerpTime = lerpTime;
     function magnitude(dx, dy) {
@@ -7096,12 +7123,12 @@ var Camera = /** @class */ (function () {
             if (Math.abs(dx) > hw) {
                 var tx = Math.abs(hw / dx);
                 var targetx = this.x + (1 - tx) * dx;
-                this.x = M.lerp(this.x, targetx, 0.25);
+                this.x = M.lerpTime(this.x, targetx, this.movement.speed, delta);
             }
             if (Math.abs(dy) > hh) {
                 var ty = Math.abs(hh / dy);
                 var targety = this.y + (1 - ty) * dy;
-                this.y = M.lerp(this.y, targety, 0.25);
+                this.y = M.lerpTime(this.y, targety, this.movement.speed, delta);
             }
         }
     };
@@ -7129,11 +7156,12 @@ var Camera = /** @class */ (function () {
             type: 'snap',
         });
     };
-    Camera.prototype.setMovementSmooth = function (deadZoneWidth, deadZoneHeight) {
+    Camera.prototype.setMovementSmooth = function (speed, deadZoneWidth, deadZoneHeight) {
         if (deadZoneWidth === void 0) { deadZoneWidth = 0; }
         if (deadZoneHeight === void 0) { deadZoneHeight = 0; }
         this.setMovement({
             type: 'smooth',
+            speed: speed,
             deadZoneWidth: deadZoneWidth,
             deadZoneHeight: deadZoneHeight,
         });
@@ -7264,6 +7292,8 @@ var Physics;
         applyMomentumTransferForCollision(world.delta, displacementCollision, collision.transferMomentum);
         if (collision.callback)
             collision.callback(collision.move, collision.from);
+        collision.move.onCollide(collision.from);
+        collision.from.onCollide(collision.move);
     }
     function getRaycastCollisions(world) {
         var e_38, _a, e_39, _b, e_40, _c;
@@ -7280,6 +7310,8 @@ var Physics;
                                 if (move === from)
                                     continue;
                                 if (!G.overlapRectangles(move.bounds.getBoundingBox(), from.bounds.getBoundingBox()))
+                                    continue;
+                                if (!move.colliding || !from.colliding)
                                     continue;
                                 if (!move.isCollidingWith(from) || !from.isCollidingWith(move))
                                     continue;
@@ -7393,7 +7425,7 @@ var WorldSelecter = /** @class */ (function () {
         return results[0];
     };
     WorldSelecter.prototype.nameAll = function (name) {
-        return this.world.worldObjectsByName[name] || [];
+        return A.clone(this.world.worldObjectsByName[name] || []);
     };
     WorldSelecter.prototype.overlap = function (bounds, physicsGroups) {
         var e_41, _a;
@@ -8626,7 +8658,7 @@ var Effects = /** @class */ (function () {
         }
     };
     Effects.prototype.updateFromConfig = function (config) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
         if (!config)
             return;
         if (config.pre) {
@@ -8636,16 +8668,17 @@ var Effects = /** @class */ (function () {
         if (config.silhouette) {
             this.silhouette.color = (_c = config.silhouette.color) !== null && _c !== void 0 ? _c : 0x000000;
             this.silhouette.alpha = (_d = config.silhouette.alpha) !== null && _d !== void 0 ? _d : 1;
-            this.silhouette.enabled = (_e = config.silhouette.enabled) !== null && _e !== void 0 ? _e : true;
+            this.silhouette.amount = (_e = config.silhouette.amount) !== null && _e !== void 0 ? _e : 1;
+            this.silhouette.enabled = (_f = config.silhouette.enabled) !== null && _f !== void 0 ? _f : true;
         }
         if (config.outline) {
-            this.outline.color = (_f = config.outline.color) !== null && _f !== void 0 ? _f : 0x000000;
-            this.outline.alpha = (_g = config.outline.alpha) !== null && _g !== void 0 ? _g : 1;
-            this.outline.enabled = (_h = config.outline.enabled) !== null && _h !== void 0 ? _h : true;
+            this.outline.color = (_g = config.outline.color) !== null && _g !== void 0 ? _g : 0x000000;
+            this.outline.alpha = (_h = config.outline.alpha) !== null && _h !== void 0 ? _h : 1;
+            this.outline.enabled = (_j = config.outline.enabled) !== null && _j !== void 0 ? _j : true;
         }
         if (config.post) {
-            this.post.filters = (_j = config.post.filters) !== null && _j !== void 0 ? _j : [];
-            this.post.enabled = (_k = config.post.enabled) !== null && _k !== void 0 ? _k : true;
+            this.post.filters = (_k = config.post.filters) !== null && _k !== void 0 ? _k : [];
+            this.post.enabled = (_l = config.post.enabled) !== null && _l !== void 0 ? _l : true;
         }
     };
     Effects.SILHOUETTE_I = 0;
@@ -8661,9 +8694,10 @@ var Effects = /** @class */ (function () {
                 var _this = _super.call(this, {
                     uniforms: {
                         "vec3 color": M.colorToVec3(0x000000),
-                        "float alpha": 1.0
+                        "float alpha": 1.0,
+                        "float amount": 1.0
                     },
-                    code: "\n                        if (inp.a > 0.0) {\n                            outp = vec4(color, alpha);\n                        }\n                    "
+                    code: "\n                        if (inp.a > 0.0) {\n                            outp = inp * (1.0 - amount) + vec4(color, alpha) * amount;\n                        }\n                    "
                 }) || this;
                 _this.color = color;
                 _this.alpha = alpha;
@@ -8678,6 +8712,12 @@ var Effects = /** @class */ (function () {
             Object.defineProperty(Silhouette.prototype, "alpha", {
                 get: function () { return this.getUniform('alpha'); },
                 set: function (value) { this.setUniform('alpha', value); },
+                enumerable: false,
+                configurable: true
+            });
+            Object.defineProperty(Silhouette.prototype, "amount", {
+                get: function () { return this.getUniform('amount'); },
+                set: function (value) { this.setUniform('amount', value); },
                 enumerable: false,
                 configurable: true
             });
@@ -9466,12 +9506,90 @@ var Assets;
         'debug': {},
         // Fonts
         'deluxe16': {},
+        // Game
+        'knight': {
+            defaultAnchor: Anchor.BOTTOM,
+            spritesheet: { frameWidth: 16, frameHeight: 24 },
+        },
+        'hoop': { anchor: Anchor.CENTER },
+        'golbin': {
+            defaultAnchor: Anchor.BOTTOM,
+            spritesheet: { frameWidth: 32, frameHeight: 32 },
+            frames: {
+                'golbin_dead': {
+                    anchor: { x: 0.5, y: 28 / 32 },
+                    rect: { x: 0, y: 96, width: 32, height: 32 }
+                }
+            }
+        },
+        'bullet': { anchor: Anchor.CENTER },
+        'enemyknight': {
+            defaultAnchor: Anchor.BOTTOM,
+            spritesheet: { frameWidth: 24, frameHeight: 24 },
+            frames: {
+                'enemyknight_dead': {
+                    anchor: { x: 0.5, y: 21 / 24 },
+                    rect: { x: 0, y: 72, width: 24, height: 24 }
+                }
+            }
+        },
+        'mage': {
+            defaultAnchor: Anchor.BOTTOM,
+            spritesheet: { frameWidth: 24, frameHeight: 24 },
+            frames: {
+                'mage_dead': {
+                    anchor: { x: 0.5, y: 20 / 24 },
+                    rect: { x: 0, y: 72, width: 24, height: 24 }
+                }
+            }
+        },
+        'runner': {
+            defaultAnchor: Anchor.BOTTOM,
+            spritesheet: { frameWidth: 24, frameHeight: 24 },
+            frames: {
+                'runner_dead': {
+                    anchor: { x: 0.5, y: 21 / 24 },
+                    rect: { x: 0, y: 72, width: 24, height: 24 }
+                }
+            }
+        },
+        'floor': {},
+        'lights': {},
+        'stairs': { anchor: Anchor.BOTTOM },
+        'throne': { anchor: Anchor.BOTTOM },
+        'king': {
+            defaultAnchor: Anchor.BOTTOM,
+            spritesheet: { frameWidth: 24, frameHeight: 24 },
+        },
+        'bomb': { anchor: Anchor.BOTTOM },
+        'explosion': { anchor: Anchor.CENTER },
+        'spawn': { anchor: Anchor.CENTER },
+        // UI
+        'dialogbox': { anchor: Anchor.CENTER },
+        'ui_shield': { anchor: Anchor.CENTER },
+        'royalhulatext': {},
+        'hoopkingtext': {},
     };
     Assets.sounds = {
         // Debug
         'debug': {},
-        // SFX
+        // Menu
         'click': {},
+        // Game
+        'walk': {},
+        'swing': {},
+        'hitenemy': {},
+        'hitplayer': {},
+        'shoot': {},
+        'dash': {},
+        'explode': {},
+        'shake': {},
+        'land': {},
+        'dink': {},
+        // Music
+        'jingle': {},
+        'music': {},
+        'musicboss': {},
     };
     Assets.tilesets = {};
     Assets.pyxelTilemaps = {};
@@ -9493,24 +9611,41 @@ var Assets;
 function BASE_STAGE() {
     return {
         constructor: World,
-        backgroundColor: 0xFFFFFF,
+        backgroundColor: 0x000000,
         layers: [
             { name: 'bg' },
-            { name: 'ground' },
-            { name: 'main' },
+            { name: 'hoop' },
+            { name: 'main', sortKey: function (obj) { return obj.y; } },
+            { name: 'king_shadow_start' },
+            { name: 'king_start' },
             { name: 'fg' },
-            { name: 'above' },
         ],
         physicsGroups: {
             'player': {},
+            'hoop': {},
+            'enemies': {},
+            'bombs': {},
+            'bullets': {},
             'walls': { immovable: true },
         },
         collisions: [
+            { group1: 'player', group2: 'enemies' },
+            { group1: 'player', group2: 'bullets' },
             { group1: 'player', group2: 'walls', transferMomentum: false },
+            { group1: 'enemies', group2: 'walls', transferMomentum: false },
+            { group1: 'bullets', group2: 'walls' },
+            { group1: 'bombs', group2: 'walls' },
+            { group1: 'bombs', group2: 'enemies' },
+            { group1: 'hoop', group2: 'enemies' },
+            { group1: 'hoop', group2: 'bombs' },
+            { group1: 'hoop', group2: 'walls' },
         ],
         collisionIterations: 4,
         useRaycastDisplacementThreshold: 4,
     };
+}
+function BASE_CAMERA_MOVEMENT() {
+    return { type: 'smooth', speed: 10, deadZoneWidth: 40, deadZoneHeight: 30 };
 }
 function MENU_BASE_STAGE() {
     return {
@@ -9520,7 +9655,7 @@ function MENU_BASE_STAGE() {
     };
 }
 function WORLD_BOUNDS(left, top, right, bottom) {
-    var thickness = 12;
+    var thickness = 40;
     var width = right - left;
     var height = bottom - top;
     return {
@@ -9528,32 +9663,818 @@ function WORLD_BOUNDS(left, top, right, bottom) {
         children: [
             {
                 constructor: PhysicsWorldObject,
-                bounds: { x: left - thickness, y: top - thickness, width: thickness, height: height + 2 * thickness },
+                bounds: { type: 'rect', x: left - thickness, y: top - thickness, width: thickness, height: height + 2 * thickness },
                 physicsGroup: 'walls',
             },
             {
                 constructor: PhysicsWorldObject,
-                bounds: { x: right, y: top - thickness, width: thickness, height: height + 2 * thickness },
+                bounds: { type: 'rect', x: right, y: top - thickness, width: thickness, height: height + 2 * thickness },
                 physicsGroup: 'walls',
             },
             {
                 constructor: PhysicsWorldObject,
-                bounds: { x: left, y: top - thickness, width: width, height: thickness },
+                bounds: { type: 'rect', x: left, y: top - thickness, width: width, height: thickness },
                 physicsGroup: 'walls',
             },
             {
                 constructor: PhysicsWorldObject,
-                bounds: { x: left, y: bottom, width: width, height: thickness },
+                bounds: { type: 'rect', x: left, y: bottom, width: width, height: thickness },
                 physicsGroup: 'walls',
             },
         ]
     };
 }
+var Enemy = /** @class */ (function (_super) {
+    __extends(Enemy, _super);
+    function Enemy(config, defaults) {
+        var _a, _b, _c, _d, _e;
+        var _this = this;
+        config = WorldObject.resolveConfig(config, defaults);
+        _this = _super.call(this, config) || this;
+        _this.health = (_a = config.maxHealth) !== null && _a !== void 0 ? _a : 1;
+        _this.immuneTime = (_b = config.immuneTime) !== null && _b !== void 0 ? _b : 0.5;
+        _this.weight = (_c = config.weight) !== null && _c !== void 0 ? _c : 1;
+        _this.speed = (_d = config.speed) !== null && _d !== void 0 ? _d : 0;
+        _this.damagableByHoop = (_e = config.damagableByHoop) !== null && _e !== void 0 ? _e : true;
+        _this.deadTexture = config.deadTexture;
+        _this.immunitySm = new ImmunitySm(_this.immuneTime);
+        return _this;
+    }
+    Object.defineProperty(Enemy.prototype, "immune", {
+        get: function () { return this.immunitySm.isImmune(); },
+        enumerable: false,
+        configurable: true
+    });
+    Enemy.prototype.update = function () {
+        this.immunitySm.update(this.delta);
+        _super.prototype.update.call(this);
+        this.vx = M.lerpTime(this.vx, 0, 10, this.delta);
+        this.vy = M.lerpTime(this.vy, 0, 10, this.delta);
+    };
+    Enemy.prototype.postUpdate = function () {
+        _super.prototype.postUpdate.call(this);
+        var p = 4;
+        if (this.x < -p || this.x > 768 + p || this.y < 192 - p || this.y > 768 + p) {
+            this.kill();
+        }
+    };
+    Enemy.prototype.damage = function (amount) {
+        this.health -= amount;
+        if (this.health <= 0) {
+            this.kill();
+        }
+        this.immunitySm.setImmune();
+        this.world.playSound('hitenemy');
+    };
+    Enemy.prototype.kill = function () {
+        if (this.deadTexture) {
+            this.world.addWorldObject(deadBody(this, this.deadTexture));
+        }
+        _super.prototype.kill.call(this);
+    };
+    Enemy.prototype.onCollide = function (other) {
+        _super.prototype.onCollide.call(this, other);
+        if (other instanceof Hoop && this.damagableByHoop && !this.immune && other.isStrongEnoughToDealDamage()) {
+            var d = { x: this.x - other.x, y: this.y - other.y };
+            V.setMagnitude(d, other.currentAttackStrength * 500 / this.weight);
+            this.vx += d.x;
+            this.vy += d.y;
+            this.damage(other.currentAttackStrength);
+        }
+    };
+    return Enemy;
+}(Sprite));
+/// <reference path="./enemy.ts"/>
+var Bomb = /** @class */ (function (_super) {
+    __extends(Bomb, _super);
+    function Bomb(config) {
+        var _this = _super.call(this, config, {
+            texture: 'bomb',
+            effects: {
+                silhouette: { enabled: false, color: 0xFFFFFF },
+            },
+            bounds: { type: 'circle', x: 0, y: -12, radius: 12 },
+            gravityz: -100,
+            mass: 1000,
+            colliding: false,
+            maxHealth: Infinity,
+            immuneTime: 0.01,
+            weight: 0.3,
+        }) || this;
+        _this.stateMachine.addState('start', {
+            script: S.wait(0.1),
+            transitions: [{ type: 'instant', toState: 'slowdet' }],
+        });
+        _this.stateMachine.addState('slowdet', {
+            callback: function () {
+                _this.colliding = true;
+            },
+            script: S.loopFor(24, S.chain(S.call(function () {
+                _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled;
+            }), S.wait(0.25))),
+            transitions: [{ type: 'instant', toState: 'quickdet' }],
+        });
+        _this.stateMachine.addState('quickdet', {
+            script: S.loopFor(60, S.chain(S.call(function () {
+                _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled;
+            }), S.wait(0.05))),
+            transitions: [{ type: 'instant', toState: 'explode' }],
+        });
+        _this.stateMachine.addState('explode', {
+            callback: function () { return _this.explode(); },
+        });
+        _this.setState('start');
+        return _this;
+    }
+    Bomb.prototype.update = function () {
+        _super.prototype.update.call(this);
+        if (this.z < 0) {
+            this.z = 0;
+            this.vz = -0.5 * this.vz;
+        }
+    };
+    Bomb.prototype.explode = function () {
+        this.alive = false;
+        this.world.addWorldObject({
+            constructor: Explosion,
+            x: this.x, y: this.y - 12,
+            layer: 'fg',
+        });
+        this.world.playSound('explode').volume = 0.5;
+    };
+    Bomb.prototype.onCollide = function (other) {
+        _super.prototype.onCollide.call(this, other);
+        if (other instanceof Throne) {
+            this.explode();
+        }
+    };
+    return Bomb;
+}(Enemy));
+var Bullet = /** @class */ (function (_super) {
+    __extends(Bullet, _super);
+    function Bullet(config) {
+        return _super.call(this, config, {
+            texture: 'bullet',
+            bounds: { type: 'circle', x: 0, y: 0, radius: 4 },
+        }) || this;
+    }
+    Bullet.prototype.onCollide = function (other) {
+        _super.prototype.onCollide.call(this, other);
+        this.kill();
+    };
+    return Bullet;
+}(Sprite));
 /// <reference path="../lectvs/debug/cheat.ts" />
 Cheat.init({
-    'win': function (x) { return x * x; },
+    'win': function () { return global.world.select.type(Throne).damage(5); },
+    'lose': function () { return A.range(5).forEach(function (i) { return global.world.select.type(Player).damage(); }); },
 });
+function deadBody(parent, texture) {
+    return {
+        constructor: Sprite,
+        x: parent.x, y: parent.y,
+        vx: parent.vx, vy: parent.vy,
+        texture: texture,
+        flipX: parent.vx > 0,
+        tint: parent.tint === 0xFFFF00 ? 0x888800 : (parent.tint === 0xFF00FF ? 0x880088 : 0x888888),
+        effects: {
+            silhouette: { color: 0xFFFFFF },
+            outline: { color: parent.effects.outline.color === 0xFFFFFF ? 0x555555 : 0x000000 },
+        },
+        layer: 'bg',
+        bounds: { type: 'circle', x: 0, y: -2, radius: 8 },
+        data: { flashed: false },
+        updateCallback: function (obj) {
+            if (!obj.data.flashed) {
+                obj.runScript(S.chain(S.wait(0.05), S.call(function () { return obj.effects.silhouette.enabled = false; }), S.wait(3), S.call(function () {
+                    if (obj.world.hasWorldObject('floor')) {
+                        obj.getTexture().renderTo(obj.world.select.name('floor').getTexture(), {
+                            x: obj.x,
+                            y: obj.y,
+                            tint: obj.tint,
+                            scaleX: obj.flipX ? -1 : 1,
+                            filters: [obj.effects.outline],
+                        });
+                    }
+                    obj.kill();
+                })));
+                obj.data.flashed = true;
+            }
+            obj.vx = M.lerpTime(obj.vx, 0, 10, obj.delta);
+            obj.vy = M.lerpTime(obj.vy, 0, 10, obj.delta);
+        }
+    };
+}
+var Explosion = /** @class */ (function (_super) {
+    __extends(Explosion, _super);
+    function Explosion(config) {
+        var _this = _super.call(this, config, {
+            constructor: Sprite,
+            texture: 'explosion',
+            tint: 0xFFFFFF,
+            bounds: { type: 'circle', x: 0, y: 0, radius: 50 },
+        }) || this;
+        _this.runScript(S.chain(S.wait(0.05), S.call(function () { return _this.tint = 0x000000; }), S.wait(0.05), S.call(function () { return _this.kill(); })));
+        _this.hasTriggered = false;
+        return _this;
+    }
+    Explosion.prototype.update = function () {
+        var e_48, _a;
+        _super.prototype.update.call(this);
+        if (!this.hasTriggered) {
+            var toDamages = this.world.select.overlap(this.bounds, ['player', 'enemies']);
+            try {
+                for (var toDamages_1 = __values(toDamages), toDamages_1_1 = toDamages_1.next(); !toDamages_1_1.done; toDamages_1_1 = toDamages_1.next()) {
+                    var toDamage = toDamages_1_1.value;
+                    if (toDamage instanceof Player && !toDamage.immune) {
+                        toDamage.damage();
+                    }
+                    if (toDamage instanceof Enemy && !toDamage.immune) {
+                        toDamage.damage(1);
+                    }
+                }
+            }
+            catch (e_48_1) { e_48 = { error: e_48_1 }; }
+            finally {
+                try {
+                    if (toDamages_1_1 && !toDamages_1_1.done && (_a = toDamages_1.return)) _a.call(toDamages_1);
+                }
+                finally { if (e_48) throw e_48.error; }
+            }
+            this.hasTriggered = true;
+        }
+    };
+    return Explosion;
+}(Sprite));
+/// <reference path="./enemy.ts"/>
+var Golbin = /** @class */ (function (_super) {
+    __extends(Golbin, _super);
+    function Golbin(config) {
+        var _this = _super.call(this, config, {
+            texture: 'golbin_0',
+            bounds: { type: 'circle', x: 0, y: -4, radius: 8 },
+            effects: {
+                outline: { color: 0x000000 },
+            },
+            animations: [
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'golbin_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'run', texturePrefix: 'golbin_', textures: [4, 5, 6, 7], frameRate: 8, count: -1, overrides: {
+                        2: { callback: function () { _this.world.playSound('walk').volume = 0.5; } }
+                    }
+                }),
+                Animations.fromTextureList({ name: 'drawback', texturePrefix: 'golbin_', textures: [8, 9, 10, 11, 10, 11, 10, 11, 11, 11], frameRate: 6 }),
+            ],
+            defaultAnimation: 'idle',
+            maxHealth: 1.2,
+            immuneTime: 0.5,
+            weight: 1,
+            speed: 100,
+            deadTexture: 'golbin_dead',
+        }) || this;
+        _this.bulletSpeed = 100;
+        _this.willShootNext = true;
+        _this.stateMachine.addState('start', {
+            script: S.wait(Random.float(0, 1)),
+            transitions: [
+                { type: 'instant', toState: 'idle' },
+            ]
+        });
+        _this.stateMachine.addState('idle', {
+            script: S.chain(S.wait(Random.float(0.8, 1.2)), S.call(function () {
+                _this.pickNextTargetPos();
+                _this.willShootNext = !_this.willShootNext;
+            })),
+            transitions: [
+                { type: 'condition', condition: function () { return _this.willShootNext; }, toState: 'shooting' },
+                { type: 'condition', condition: function () { return !_this.willShootNext; }, toState: 'walking' },
+            ]
+        });
+        _this.stateMachine.addState('walking', {
+            transitions: [
+                { type: 'condition', condition: function () { return M.distance(_this.x, _this.y, _this.targetPos.x, _this.targetPos.y) < 4; }, toState: 'idle' },
+            ]
+        });
+        _this.stateMachine.addState('shooting', {
+            script: S.chain(S.playAnimation(_this, 'drawback'), S.call(function () {
+                var d = { x: _this.attacking.x - _this.x, y: _this.attacking.y - _this.y };
+                _this.shoot(d);
+            })),
+            transitions: [
+                { type: 'instant', toState: 'idle' },
+            ]
+        });
+        _this.stateMachine.setState('start');
+        _this.targetPos = { x: 0, y: 0 };
+        return _this;
+    }
+    Golbin.prototype.update = function () {
+        this.ai();
+        if (this.state === 'idle') {
+            this.playAnimation('idle');
+        }
+        else if (this.state === 'walking') {
+            var v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
+            V.setMagnitude(v, this.speed);
+            this.vx = v.x;
+            this.vy = v.y;
+            if (this.vx < 0)
+                this.flipX = true;
+            if (this.vx > 0)
+                this.flipX = false;
+            this.playAnimation('run');
+        }
+        else if (this.state === 'shooting') {
+            var player = global.world.select.type(Player);
+            if (player.x < this.x)
+                this.flipX = true;
+            if (player.x > this.x)
+                this.flipX = false;
+        }
+        _super.prototype.update.call(this);
+    };
+    Golbin.prototype.damage = function (amount) {
+        var _this = this;
+        _super.prototype.damage.call(this, amount);
+        this.setState('idle');
+        this.runScript(S.chain(S.call(function () {
+            _this.effects.silhouette.color = 0xFFFFFF;
+            _this.effects.silhouette.enabled = true;
+        }), S.loopFor(8, S.chain(S.wait(this.immuneTime / 8), S.call(function () {
+            _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled;
+        }))), S.call(function () {
+            _this.effects.silhouette.enabled = false;
+        })));
+    };
+    Golbin.prototype.shoot = function (d) {
+        V.setMagnitude(d, this.bulletSpeed);
+        this.world.addWorldObject({
+            name: 'bullet',
+            constructor: Bullet,
+            x: this.x, y: this.y - 4,
+            vx: d.x, vy: d.y,
+            physicsGroup: 'bullets'
+        });
+        this.world.playSound('shoot');
+    };
+    Golbin.prototype.onCollide = function (other) {
+        _super.prototype.onCollide.call(this, other);
+        if (other.physicsGroup === 'walls') {
+            this.setState('idle');
+        }
+    };
+    Golbin.prototype.ai = function () {
+        if (!this.attacking)
+            this.attacking = this.world.select.type(Player);
+    };
+    Golbin.prototype.pickNextTargetPos = function () {
+        var _this = this;
+        if (this.x < 64 || this.x > 706 || this.y < 338 || this.y > 704) {
+            // Too close to edge of room
+            var candidates_1 = A.range(20).map(function (i) {
+                var d = { x: Random.float(64, 706), y: Random.float(338, 704) };
+                return d;
+            });
+            this.targetPos = M.argmin(candidates_1, function (pos) { return M.distance(_this.x, _this.y, pos.x, pos.y); });
+            return;
+        }
+        var candidates = A.range(3).map(function (i) {
+            var d = Random.inDisc(50, 100);
+            d.x += _this.x;
+            d.y += _this.y;
+            return d;
+        });
+        this.targetPos = M.argmin(candidates, function (pos) { return Math.abs(M.distance(_this.attacking.x, _this.attacking.y, pos.x, pos.y) - 150); });
+    };
+    return Golbin;
+}(Enemy));
+var Hoop = /** @class */ (function (_super) {
+    __extends(Hoop, _super);
+    function Hoop(config) {
+        var _this = _super.call(this, config, {
+            texture: 'hoop',
+            bounds: { type: 'circle', x: 0, y: 0, radius: 50 },
+        }) || this;
+        _this.bounceSpeed = 75;
+        _this.strengthThreshold = 0.3;
+        _this.radius = 47;
+        _this.currentAttackStrength = 0;
+        return _this;
+    }
+    Hoop.prototype.update = function () {
+        if (!this.swingSound) {
+            this.swingSound = this.world.playSound('swing');
+            this.swingSound.loop = true;
+            this.swingSound.volume = 0;
+        }
+        _super.prototype.update.call(this);
+        var player = this.world.select.type(Player);
+        var px = player.x;
+        var py = player.y - 4;
+        var radius = this.radius - player.radius;
+        var d = M.distance(px, py, this.x, this.y);
+        if (d > radius) {
+            var adx = px - this.x;
+            var ady = py - this.y;
+            var dx = adx * radius / d;
+            var dy = ady * radius / d;
+            this.x = px - dx;
+            this.y = py - dy;
+            this.vx += (adx - dx) * this.bounceSpeed;
+            this.vy += (ady - dy) * this.bounceSpeed;
+        }
+        this.vx = M.lerpTime(this.vx, 0, 1.2, this.delta);
+        this.vy = M.lerpTime(this.vy, 0, 1.2, this.delta);
+        this.setStrength(player);
+        var visibleAttackStrength = M.clamp(this.currentAttackStrength, 0, 1);
+        this.effects.outline.enabled = true;
+        this.effects.outline.color = 0x00FFFF;
+        this.effects.outline.alpha = visibleAttackStrength;
+        this.swingSound.volume = 0.5 * visibleAttackStrength;
+        this.swingSound.webAudioSound.speed = visibleAttackStrength;
+    };
+    Hoop.prototype.postUpdate = function () {
+        _super.prototype.postUpdate.call(this);
+        var player = this.world.select.type(Player);
+        if (!isFinite(this.x))
+            this.x = player.x;
+        if (!isFinite(this.y))
+            this.y = player.y;
+    };
+    Hoop.prototype.onCollide = function (other) {
+        _super.prototype.onCollide.call(this, other);
+        if (other instanceof Enemy && this.isStrongEnoughToDealDamage()) {
+            var d = { x: this.x - other.x, y: this.y - other.y };
+            V.setMagnitude(d, this.currentAttackStrength * 200);
+            this.vx += d.x;
+            this.vy += d.y;
+        }
+    };
+    Hoop.prototype.isStrongEnoughToDealDamage = function () {
+        return this.currentAttackStrength > this.strengthThreshold;
+    };
+    Hoop.prototype.setStrength = function (player) {
+        var pureVelStrength = M.magnitude(this.vx, this.vy) / 500;
+        var relPlayerStrength = M.magnitude(this.vx - player.vx, this.vy - player.vy) / 500;
+        this.currentAttackStrength = pureVelStrength * relPlayerStrength;
+        if (!_.isEmpty(this.world.select.overlap(this.bounds, ['walls']))) {
+            this.currentAttackStrength = 0;
+        }
+    };
+    return Hoop;
+}(Sprite));
+var ImmunitySm = /** @class */ (function (_super) {
+    __extends(ImmunitySm, _super);
+    function ImmunitySm(immuneTime) {
+        var _this = _super.call(this) || this;
+        _this.addState('vulnerable', {});
+        _this.addState('immune', {
+            script: S.wait(immuneTime),
+            transitions: [
+                { type: 'instant', toState: 'vulnerable' },
+            ]
+        });
+        _this.setState('vulnerable');
+        return _this;
+    }
+    ImmunitySm.prototype.isImmune = function () {
+        return this.getCurrentStateName() === 'immune';
+    };
+    ImmunitySm.prototype.setImmune = function () {
+        this.setState('immune');
+    };
+    return ImmunitySm;
+}(StateMachine));
+/// <reference path="./enemy.ts"/>
+var Knight = /** @class */ (function (_super) {
+    __extends(Knight, _super);
+    function Knight(config) {
+        var _this = _super.call(this, config, {
+            texture: 'enemyknight_0',
+            bounds: { type: 'circle', x: 0, y: -4, radius: 8 },
+            effects: {
+                outline: { color: 0x000000 },
+            },
+            animations: [
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'run', texturePrefix: 'enemyknight_', textures: [4, 5, 6, 7], frameRate: 8, count: -1, overrides: {
+                        2: { callback: function () { _this.world.playSound('walk').volume = 0.5; } }
+                    }
+                }),
+                Animations.fromTextureList({ name: 'windup', texturePrefix: 'enemyknight_', textures: [8], frameRate: 4, count: -1 }),
+            ],
+            defaultAnimation: 'idle',
+            maxHealth: 1.5,
+            immuneTime: 0.5,
+            weight: 1,
+            speed: 100,
+            deadTexture: 'enemyknight_dead',
+        }) || this;
+        var lightTint = _this.tint === 0xFFFFFF ? 0x00FFFF : _this.tint - 0xFF0000;
+        var lightTexture = new AnchoredTexture(0, 0, Texture.filledRect(1024, 16, lightTint, 0.5));
+        lightTexture.anchorX = 1 / 128;
+        lightTexture.anchorY = 1 / 2;
+        _this.light = _this.addChild({
+            constructor: Sprite,
+            x: 0, y: -4,
+            texture: lightTexture,
+            alpha: 0,
+            layer: 'bg',
+        });
+        _this.willDashNext = true;
+        _this.stateMachine.addState('start', {
+            script: S.wait(Random.float(0, 1)),
+            transitions: [
+                { type: 'instant', toState: 'idle' },
+            ]
+        });
+        _this.stateMachine.addState('idle', {
+            callback: function () {
+                _this.light.alpha = 0;
+            },
+            script: S.chain(S.wait(Random.float(0.8, 1.2)), S.call(function () {
+                _this.pickNextTargetPos();
+                _this.willDashNext = !_this.willDashNext;
+            })),
+            transitions: [
+                { type: 'condition', condition: function () { return _this.willDashNext; }, toState: 'dash' },
+                { type: 'condition', condition: function () { return !_this.willDashNext; }, toState: 'walking' },
+            ]
+        });
+        _this.stateMachine.addState('walking', {
+            transitions: [
+                { type: 'condition', condition: function () { return M.distance(_this.x, _this.y, _this.targetPos.x, _this.targetPos.y) < 4; }, toState: 'idle' },
+            ]
+        });
+        _this.stateMachine.addState('dash', {
+            script: S.chain(S.call(function () {
+                _this.playAnimation('windup');
+            }), S.doOverTime(0.5, function (t) { return _this.z = M.jumpParabola(0, 16, 0, t); }), S.doOverTime(1, function (t) {
+                _this.pickNextTargetPosForDash();
+                _this.light.angle = M.radToDeg(Math.atan2(_this.targetPos.y - _this.y, _this.targetPos.x - _this.x));
+                _this.light.alpha = t;
+                _this.flipX = (_this.attacking.x < _this.x);
+            }), S.wait(1.5), S.call(function () {
+                _this.lastPos.x = _this.x;
+                _this.lastPos.y = _this.y;
+                _this.light.alpha = 0;
+                _this.world.playSound('dash');
+            }), S.doOverTime(0.3, function (t) {
+                _this.x = M.lerp(_this.lastPos.x, _this.targetPos.x, t);
+                _this.y = M.lerp(_this.lastPos.y, _this.targetPos.y, t);
+            })),
+            transitions: [
+                { type: 'instant', toState: 'idle' },
+            ]
+        });
+        _this.stateMachine.setState('start');
+        _this.lastPos = { x: 0, y: 0 };
+        _this.targetPos = { x: 0, y: 0 };
+        return _this;
+    }
+    Knight.prototype.update = function () {
+        this.ai();
+        if (this.state === 'idle') {
+            this.playAnimation('idle');
+        }
+        else if (this.state === 'walking') {
+            var v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
+            V.setMagnitude(v, this.speed);
+            this.vx = v.x;
+            this.vy = v.y;
+            if (this.vx < 0)
+                this.flipX = true;
+            if (this.vx > 0)
+                this.flipX = false;
+            this.playAnimation('run');
+        }
+        else if (this.state === 'shooting') {
+            var player = global.world.select.type(Player);
+            if (player.x < this.x)
+                this.flipX = true;
+            if (player.x > this.x)
+                this.flipX = false;
+        }
+        _super.prototype.update.call(this);
+    };
+    Knight.prototype.damage = function (amount) {
+        var _this = this;
+        _super.prototype.damage.call(this, amount);
+        this.setState('idle');
+        this.runScript(S.chain(S.call(function () {
+            _this.effects.silhouette.color = 0xFFFFFF;
+            _this.effects.silhouette.enabled = true;
+        }), S.loopFor(8, S.chain(S.wait(this.immuneTime / 8), S.call(function () {
+            _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled;
+        }))), S.call(function () {
+            _this.effects.silhouette.enabled = false;
+        })));
+    };
+    Knight.prototype.onCollide = function (other) {
+        _super.prototype.onCollide.call(this, other);
+        if (other.physicsGroup === 'walls') {
+            this.setState('idle');
+        }
+    };
+    Knight.prototype.ai = function () {
+        if (!this.attacking)
+            this.attacking = this.world.select.type(Player);
+    };
+    Knight.prototype.pickNextTargetPos = function () {
+        var _this = this;
+        if (this.x < 64 || this.x > 706 || this.y < 338 || this.y > 704) {
+            // Too close to edge of room
+            var candidates_2 = A.range(20).map(function (i) {
+                var d = { x: Random.float(64, 706), y: Random.float(338, 704) };
+                return d;
+            });
+            this.targetPos = M.argmin(candidates_2, function (pos) { return M.distance(_this.x, _this.y, pos.x, pos.y); });
+            return;
+        }
+        var candidates = A.range(3).map(function (i) {
+            var d = Random.inDisc(50, 100);
+            d.x += _this.x;
+            d.y += _this.y;
+            return d;
+        });
+        this.targetPos = M.argmin(candidates, function (pos) { return Math.abs(M.distance(_this.attacking.x, _this.attacking.y, pos.x, pos.y) - 150); });
+    };
+    Knight.prototype.pickNextTargetPosForDash = function () {
+        var d = { x: this.attacking.x - this.x, y: this.attacking.y - this.y };
+        if (V.magnitude(d) < 300)
+            V.setMagnitude(d, 300);
+        this.targetPos.x = this.x + d.x;
+        this.targetPos.y = this.y + d.y;
+    };
+    return Knight;
+}(Enemy));
+/// <reference path="./enemy.ts"/>
+var Mage = /** @class */ (function (_super) {
+    __extends(Mage, _super);
+    function Mage(config) {
+        var _this = _super.call(this, config, {
+            texture: 'mage_0',
+            bounds: { type: 'circle', x: 0, y: -4, radius: 8 },
+            effects: {
+                outline: { color: 0x000000 },
+            },
+            animations: [
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'mage_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'run', texturePrefix: 'mage_', textures: [4, 5], frameRate: 4, count: -1, overrides: {
+                        2: { callback: function () { _this.world.playSound('walk').volume = 0.5; } }
+                    }
+                }),
+                Animations.fromTextureList({ name: 'wave', texturePrefix: 'mage_', textures: [8, 9], frameRate: 2, count: -1 }),
+            ],
+            defaultAnimation: 'idle',
+            maxHealth: 1,
+            immuneTime: 0.5,
+            weight: 1,
+            speed: 70,
+            deadTexture: 'mage_dead',
+        }) || this;
+        _this.willSpawnNext = true;
+        _this.stateMachine.addState('start', {
+            script: S.wait(Random.float(0, 1)),
+            transitions: [
+                { type: 'instant', toState: 'idle' },
+            ]
+        });
+        _this.stateMachine.addState('idle', {
+            script: S.chain(S.wait(Random.float(1.8, 2.4)), S.call(function () {
+                _this.pickNextTargetPos();
+                _this.willSpawnNext = !_this.willSpawnNext;
+            })),
+            transitions: [
+                { type: 'condition', condition: function () { return _this.willSpawnNext; }, toState: 'spawn' },
+                { type: 'condition', condition: function () { return !_this.willSpawnNext; }, toState: 'walking' },
+            ]
+        });
+        _this.stateMachine.addState('walking', {
+            transitions: [
+                { type: 'condition', condition: function () { return M.distance(_this.x, _this.y, _this.targetPos.x, _this.targetPos.y) < 4; }, toState: 'idle' },
+            ]
+        });
+        _this.stateMachine.addState('spawn', {
+            script: S.chain(S.wait(1), S.call(function () {
+                _this.pickNextSpawnTargetPos();
+                _this.spawn();
+            }), S.wait(1)),
+            transitions: [
+                { type: 'instant', toState: 'idle' },
+            ]
+        });
+        _this.stateMachine.setState('start');
+        _this.targetPos = { x: 0, y: 0 };
+        return _this;
+    }
+    Mage.prototype.update = function () {
+        this.ai();
+        if (this.state === 'idle') {
+            this.playAnimation('idle');
+        }
+        else if (this.state === 'walking') {
+            var v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
+            V.setMagnitude(v, this.speed);
+            this.vx = v.x;
+            this.vy = v.y;
+            if (this.vx < 0)
+                this.flipX = true;
+            if (this.vx > 0)
+                this.flipX = false;
+            this.playAnimation('run');
+        }
+        else if (this.state === 'spawn') {
+            this.playAnimation('wave');
+            var player = global.world.select.type(Player);
+            if (player.x < this.x)
+                this.flipX = true;
+            if (player.x > this.x)
+                this.flipX = false;
+        }
+        _super.prototype.update.call(this);
+    };
+    Mage.prototype.damage = function (amount) {
+        var _this = this;
+        _super.prototype.damage.call(this, amount);
+        this.setState('idle');
+        this.runScript(S.chain(S.call(function () {
+            _this.effects.silhouette.color = 0xFFFFFF;
+            _this.effects.silhouette.enabled = true;
+        }), S.loopFor(8, S.chain(S.wait(this.immuneTime / 8), S.call(function () {
+            _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled;
+        }))), S.call(function () {
+            _this.effects.silhouette.enabled = false;
+        })));
+    };
+    Mage.prototype.spawn = function () {
+        this.world.addWorldObject(spawn({
+            constructor: Runner,
+            x: this.targetPos.x, y: this.targetPos.y,
+            layer: 'main',
+            physicsGroup: 'enemies',
+        }));
+    };
+    Mage.prototype.onCollide = function (other) {
+        _super.prototype.onCollide.call(this, other);
+        if (other.physicsGroup === 'walls') {
+            this.setState('idle');
+        }
+    };
+    Mage.prototype.ai = function () {
+        if (!this.attacking)
+            this.attacking = this.world.select.type(Player);
+    };
+    Mage.prototype.pickNextTargetPos = function () {
+        var _this = this;
+        if (this.x < 64 || this.x > 706 || this.y < 338 || this.y > 704) {
+            // Too close to edge of room
+            var candidates_3 = A.range(20).map(function (i) {
+                var d = { x: Random.float(64, 706), y: Random.float(338, 704) };
+                return d;
+            });
+            this.targetPos = M.argmin(candidates_3, function (pos) { return M.distance(_this.x, _this.y, pos.x, pos.y); });
+            return;
+        }
+        var candidates = A.range(3).map(function (i) {
+            var d = Random.inDisc(50, 100);
+            d.x += _this.x;
+            d.y += _this.y;
+            return d;
+        });
+        this.targetPos = M.argmin(candidates, function (pos) { return Math.abs(M.distance(_this.attacking.x, _this.attacking.y, pos.x, pos.y) - 150); });
+    };
+    Mage.prototype.pickNextSpawnTargetPos = function () {
+        this.targetPos = Random.inDisc(16, 32);
+        this.targetPos.x += this.x;
+        this.targetPos.y += this.y;
+    };
+    return Mage;
+}(Enemy));
 /// <reference path="../lectvs/menu/menu.ts" />
+var IntroMenu = /** @class */ (function (_super) {
+    __extends(IntroMenu, _super);
+    function IntroMenu(menuSystem) {
+        var _this = _super.call(this, menuSystem, {
+            backgroundColor: 0x000000,
+        }, [
+            new SpriteText({
+                name: 'introtext',
+                x: 20, y: 80, text: "- a game by hayden mccraw -",
+                font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+            }),
+        ]) || this;
+        var introtext = _this.select.name('introtext');
+        introtext.x = global.gameWidth / 2 - introtext.getTextWidth() / 2;
+        introtext.y = global.gameHeight / 2 - introtext.getTextHeight() / 2;
+        _this.runScript(S.chain(S.wait(1.5), S.call(function () {
+            introtext.setText("- made in 48 hours\n  for ludum dare 47 -");
+            introtext.x = global.gameWidth / 2 - introtext.getTextWidth() / 2;
+            introtext.y = global.gameHeight / 2 - introtext.getTextHeight() / 2;
+        }), S.wait(1.5), S.call(function () { menuSystem.loadMenu(MainMenu); })));
+        return _this;
+    }
+    return IntroMenu;
+}(Menu));
 var MainMenu = /** @class */ (function (_super) {
     __extends(MainMenu, _super);
     function MainMenu(menuSystem) {
@@ -9562,17 +10483,42 @@ var MainMenu = /** @class */ (function (_super) {
             worldObjects: [
                 {
                     constructor: SpriteText,
-                    x: 20, y: 20, text: "- platformer test -",
+                    x: 20, y: 20, text: "- HOOP KNIGHT -",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
                 },
                 {
                     constructor: MenuTextButton,
-                    x: 20, y: 50, text: "start",
+                    x: 20, y: 50, text: "play normal mode",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
                     onClick: function () {
+                        HARD_DIFFICULTY = false;
                         _this.menuSystem.game.playSound('click');
                         menuSystem.game.startGame();
                     },
+                },
+                {
+                    constructor: MenuTextButton,
+                    x: 20, y: 68, text: "play hard mode (no health regen)",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                    onClick: function () {
+                        HARD_DIFFICULTY = true;
+                        _this.menuSystem.game.playSound('click');
+                        menuSystem.game.startGame();
+                    },
+                },
+                {
+                    constructor: MenuTextButton,
+                    x: 20, y: 100, text: "controls",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                    onClick: function () {
+                        _this.menuSystem.game.playSound('click');
+                        menuSystem.loadMenu(ControlsMenu);
+                    },
+                },
+                {
+                    constructor: SpriteText,
+                    x: 100, y: 100, text: "<-- read me!",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFF00 },
                 },
             ]
         }) || this;
@@ -9649,17 +10595,6 @@ var OptionsMenu = /** @class */ (function (_super) {
                     setValue: function (v) { return Options.updateOption('volume', v); },
                 },
                 {
-                    constructor: SpriteText,
-                    x: 20, y: 80, text: "JUMP:",
-                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                },
-                {
-                    constructor: MenuControlMapper,
-                    x: 68, y: 80,
-                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
-                    controlName: 'up',
-                },
-                {
                     constructor: MenuTextButton,
                     x: 20, y: 110, text: "back",
                     font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
@@ -9681,12 +10616,55 @@ var OptionsMenu = /** @class */ (function (_super) {
     };
     return OptionsMenu;
 }(Menu));
+var ControlsMenu = /** @class */ (function (_super) {
+    __extends(ControlsMenu, _super);
+    function ControlsMenu(menuSystem) {
+        var _this = _super.call(this, menuSystem, {
+            parent: MENU_BASE_STAGE(),
+            physicsGroups: { 'items': {} },
+            worldObjects: [
+                {
+                    constructor: SpriteText,
+                    x: 20, y: 15, text: "controls",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                },
+                {
+                    constructor: SpriteText,
+                    x: 20, y: 42, text: "WASD or ARROW KEYS - move\n\nswing the hoop faster to deal more damage!",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                },
+                {
+                    constructor: Player,
+                    x: 250, y: 180,
+                    effects: { outline: { color: 0xFFFFFF } },
+                },
+                {
+                    constructor: Hoop,
+                    x: 240, y: 180,
+                },
+                {
+                    constructor: MenuTextButton,
+                    x: 20, y: 240, text: "back",
+                    font: Assets.fonts.DELUXE16, style: { color: 0xFFFFFF },
+                    onClick: function () {
+                        _this.menuSystem.game.playSound('click');
+                        menuSystem.back();
+                    },
+                },
+            ]
+        }) || this;
+        var player = _this.select.type(Player);
+        _this.runScript(S.chain(S.loopFor(2, S.chain(S.doOverTime(0.4, function (t) { player.controller.right = true; }), S.doOverTime(0.4, function (t) { player.controller.down = true; }), S.doOverTime(0.4, function (t) { player.controller.left = true; }), S.doOverTime(0.4, function (t) { player.controller.up = true; }))), S.loopFor(Infinity, S.chain(S.doOverTime(0.2, function (t) { player.controller.right = true; }), S.doOverTime(0.2, function (t) { player.controller.down = true; }), S.doOverTime(0.2, function (t) { player.controller.left = true; }), S.doOverTime(0.2, function (t) { player.controller.up = true; })))));
+        return _this;
+    }
+    return ControlsMenu;
+}(Menu));
 /// <reference path="./menus.ts"/>
 Main.loadConfig({
-    gameCodeName: "PlatformerTest",
-    gameWidth: 960,
-    gameHeight: 800,
-    canvasScale: 1,
+    gameCodeName: "HoopKnight",
+    gameWidth: 400,
+    gameHeight: 300,
+    canvasScale: 2,
     backgroundColor: 0x000000,
     preloadBackgroundColor: 0x000000,
     preloadProgressBarColor: 0xFFFFFF,
@@ -9694,13 +10672,14 @@ Main.loadConfig({
     sounds: Assets.sounds,
     pyxelTilemaps: Assets.pyxelTilemaps,
     spriteTextTags: Assets.spriteTextTags,
+    defaultZBehavior: 'threequarters',
     defaultOptions: {
         volume: 1,
         controls: {
             // Game
             'left': ['ArrowLeft', 'a'],
             'right': ['ArrowRight', 'd'],
-            'up': ['ArrowUp', 'w', ' '],
+            'up': ['ArrowUp', 'w'],
             'down': ['ArrowDown', 's'],
             'interact': ['e'],
             // Presets
@@ -9729,7 +10708,7 @@ Main.loadConfig({
         }
     },
     game: {
-        entryPointMenuClass: MainMenu,
+        entryPointMenuClass: IntroMenu,
         pauseMenuClass: PauseMenu,
         theaterConfig: {
             getStages: getStages,
@@ -9744,24 +10723,25 @@ Main.loadConfig({
             getParty: getParty,
             dialogBox: {
                 constructor: DialogBox,
-                x: global.gameWidth / 2, y: global.gameHeight - 32,
-                texture: 'none',
+                x: 200, y: 250,
+                texture: 'dialogbox',
                 spriteTextFont: Assets.fonts.DELUXE16,
-                textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
-                textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
+                textAreaFull: { x: -192, y: -42, width: 384, height: 84 },
+                textAreaPortrait: { x: -200, y: -50, width: 400, height: 100 },
                 portraitPosition: { x: 78, y: 0 },
+                ignoreCamera: true,
             },
         },
     },
     debug: {
-        debug: true,
+        debug: false,
         font: Assets.fonts.DELUXE16,
         fontStyle: { color: 0x008800 },
         cheatsEnabled: true,
         allPhysicsBounds: false,
         moveCameraWithArrows: true,
         showOverlay: true,
-        skipRate: 1,
+        skipRate: 10,
         programmaticInput: false,
         autoplay: true,
         skipMainMenu: true,
@@ -9777,6 +10757,7 @@ function get(name) {
         return worldObject;
     return undefined;
 }
+var HARD_DIFFICULTY = false;
 function getParty() {
     return {
         leader: 'none',
@@ -9784,18 +10765,270 @@ function getParty() {
         members: {}
     };
 }
+var Player = /** @class */ (function (_super) {
+    __extends(Player, _super);
+    function Player(config) {
+        var _this = _super.call(this, config, {
+            texture: 'knight_0',
+            bounds: { type: 'circle', x: 0, y: -4, radius: 6 },
+            effects: {
+                outline: { color: 0x000000 },
+            },
+            animations: [
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'knight_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'run', texturePrefix: 'knight_', textures: [4, 5, 6, 7], frameRate: 12, count: -1, overrides: {
+                        2: { callback: function () { _this.world.playSound('walk').volume = 0.5; } }
+                    }
+                }),
+            ],
+        }) || this;
+        _this.immuneTime = 1;
+        _this.speed = 128;
+        _this.radius = 6;
+        _this.controllerSchema = {
+            left: function () { return Input.isDown('left'); },
+            right: function () { return Input.isDown('right'); },
+            up: function () { return Input.isDown('up'); },
+            down: function () { return Input.isDown('down'); },
+        };
+        _this.immunitySm = new ImmunitySm(_this.immuneTime);
+        _this.health = Player.MAX_HP;
+        return _this;
+    }
+    Object.defineProperty(Player.prototype, "immune", {
+        get: function () { return this.immunitySm.isImmune(); },
+        enumerable: false,
+        configurable: true
+    });
+    Player.prototype.update = function () {
+        var haxis = (this.controller.left ? -1 : 0) + (this.controller.right ? 1 : 0);
+        var vaxis = (this.controller.up ? -1 : 0) + (this.controller.down ? 1 : 0);
+        this.vx = haxis * this.speed;
+        this.vy = vaxis * this.speed;
+        this.immunitySm.update(this.delta);
+        _super.prototype.update.call(this);
+        if (haxis < 0)
+            this.flipX = true;
+        if (haxis > 0)
+            this.flipX = false;
+        if (haxis === 0 && vaxis == 0) {
+            this.playAnimation('idle');
+        }
+        else {
+            this.playAnimation('run');
+        }
+    };
+    Player.prototype.damage = function () {
+        var _this = this;
+        if (this.health <= 0)
+            return;
+        this.health -= 1;
+        var loops = 8;
+        if (this.health <= 0) {
+            loops = Infinity;
+        }
+        this.immunitySm.setImmune();
+        this.runScript(S.chain(S.call(function () {
+            _this.effects.silhouette.color = 0xFFFFFF;
+            _this.effects.silhouette.enabled = true;
+        }), S.loopFor(loops, S.chain(S.wait(this.immuneTime / 8), S.call(function () {
+            _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled;
+        }))), S.call(function () {
+            _this.effects.silhouette.enabled = false;
+        })));
+        this.world.playSound('hitplayer');
+    };
+    Player.prototype.onCollide = function (other) {
+        _super.prototype.onCollide.call(this, other);
+        if ((other instanceof Enemy || other instanceof Bullet) && !this.immune) {
+            this.damage();
+        }
+    };
+    Player.MAX_HP = 5;
+    return Player;
+}(Sprite));
+/// <reference path="./enemy.ts"/>
+var Runner = /** @class */ (function (_super) {
+    __extends(Runner, _super);
+    function Runner(config) {
+        var _this = _super.call(this, config, {
+            texture: 'runner_0',
+            bounds: { type: 'circle', x: 0, y: -4, radius: 8 },
+            effects: {
+                outline: { color: 0xFFFFFF },
+            },
+            animations: [
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'runner_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'run', texturePrefix: 'runner_', textures: [4, 5, 6, 7], frameRate: 8, count: -1, overrides: {
+                        2: { callback: function () { _this.world.playSound('walk').volume = 0.5; } }
+                    }
+                }),
+            ],
+            defaultAnimation: 'run',
+            maxHealth: 0.5,
+            immuneTime: 0.5,
+            weight: 1,
+            speed: 50,
+            deadTexture: 'runner_dead',
+        }) || this;
+        _this.stateMachine.addState("idle", {
+            script: S.wait(1),
+            transitions: [{ type: 'instant', toState: 'running' }],
+        });
+        _this.stateMachine.addState("running", {});
+        _this.setState("idle");
+        return _this;
+    }
+    Runner.prototype.update = function () {
+        this.ai();
+        if (this.state === 'running') {
+            var v = { x: this.attacking.x - this.x, y: this.attacking.y - this.y };
+            V.setMagnitude(v, this.speed);
+            this.vx = v.x;
+            this.vy = v.y;
+            if (this.vx < 0)
+                this.flipX = true;
+            if (this.vx > 0)
+                this.flipX = false;
+            this.playAnimation('run');
+        }
+        else {
+            this.playAnimation('idle');
+        }
+        _super.prototype.update.call(this);
+    };
+    Runner.prototype.damage = function (amount) {
+        var _this = this;
+        _super.prototype.damage.call(this, amount);
+        this.setState('idle');
+        this.runScript(S.chain(S.call(function () {
+            _this.effects.silhouette.color = 0xFFFFFF;
+            _this.effects.silhouette.enabled = true;
+        }), S.loopFor(8, S.chain(S.wait(this.immuneTime / 8), S.call(function () {
+            _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled;
+        }))), S.call(function () {
+            _this.effects.silhouette.enabled = false;
+        })));
+    };
+    Runner.prototype.ai = function () {
+        if (!this.attacking)
+            this.attacking = this.world.select.type(Player);
+    };
+    return Runner;
+}(Enemy));
+function spawn(config) {
+    return {
+        name: 'spawn',
+        constructor: Sprite,
+        x: config.x, y: config.y,
+        texture: 'spawn',
+        tint: 0x00FFFF,
+        alpha: 0,
+        layer: 'bg',
+        data: { flashed: false },
+        updateCallback: function (obj) {
+            if (!obj.data.flashed) {
+                obj.runScript(S.chain(S.doOverTime(1, function (t) {
+                    obj.alpha = t;
+                }), S.wait(1), S.call(function () {
+                    obj.world.addWorldObject(config);
+                    obj.kill();
+                })));
+                obj.data.flashed = true;
+            }
+        }
+    };
+}
 function getStages() {
     return {
         'game': {
             parent: BASE_STAGE(),
             camera: {
-                movement: { type: 'snap' },
-                mode: Camera.Mode.FOCUS(global.gameWidth / 2, global.gameHeight / 2),
+                mode: Camera.Mode.FOLLOW('player'),
+                movement: BASE_CAMERA_MOVEMENT(),
             },
             entryPoints: {
                 'main': { x: global.gameWidth / 2, y: global.gameHeight / 2 },
             },
-            worldObjects: []
+            worldObjects: [
+                {
+                    constructor: UI,
+                },
+                {
+                    constructor: WaveController,
+                },
+                WORLD_BOUNDS(0, 192, 768, 768),
+                {
+                    name: 'floor',
+                    constructor: Sprite,
+                    x: 0, y: 0,
+                    texture: AssetCache.getTexture('floor').clone(),
+                    layer: 'bg',
+                },
+                {
+                    name: 'lights',
+                    constructor: Sprite,
+                    x: 0, y: 0,
+                    texture: 'lights',
+                    layer: 'fg',
+                },
+                {
+                    name: 'stairs',
+                    constructor: Sprite,
+                    x: 384, y: 340,
+                    texture: 'stairs',
+                    layer: 'main',
+                    physicsGroup: 'walls',
+                    bounds: { type: 'rect', x: -78, y: -112, width: 156, height: 112 },
+                },
+                {
+                    name: 'throne',
+                    constructor: Throne,
+                    x: 384, y: 268,
+                    layer: 'king_start',
+                    physicsGroup: 'enemies',
+                    colliding: false,
+                },
+                {
+                    name: 'guard',
+                    constructor: Sprite,
+                    x: 342, y: 352,
+                    texture: 'enemyknight_0',
+                    tint: 0xFFFF00,
+                    effects: {
+                        outline: { color: 0x000000 },
+                    },
+                    layer: 'main',
+                    animations: [
+                        Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
+                    ],
+                    defaultAnimation: 'idle',
+                },
+                {
+                    name: 'guard',
+                    constructor: Sprite,
+                    x: 428, y: 352,
+                    texture: 'enemyknight_0',
+                    flipX: true,
+                    tint: 0xFF00FF,
+                    effects: {
+                        outline: { color: 0x000000 },
+                    },
+                    layer: 'main',
+                    animations: [
+                        Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
+                    ],
+                    defaultAnimation: 'idle',
+                },
+                {
+                    name: 'player',
+                    constructor: Player,
+                    x: 384, y: 750,
+                    layer: 'main',
+                    physicsGroup: 'player',
+                    controllable: true,
+                },
+            ]
         },
     };
 }
@@ -9813,20 +11046,1064 @@ function getStoryboard() {
     return {
         'start': {
             type: 'start',
-            transitions: [{ type: 'onStage', stage: 'game', toNode: 'intro' }]
+            transitions: [{ type: 'onStage', stage: 'game', toNode: 'walk_to_throne' }]
+        },
+        'walk_to_throne': {
+            type: 'gameplay',
+            transitions: [{ type: 'onCondition', condition: function () {
+                        var player = global.world.select.type(Player);
+                        return player.y < 478;
+                    }, toNode: 'intro' }]
         },
         'intro': {
             type: 'cutscene',
             script: function () {
+                var player, hoop, whoosh, text;
                 return __generator(this, function (_a) {
-                    return [2 /*return*/];
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, S.wait(0.5)];
+                        case 1:
+                            _a.sent();
+                            global.world.camera.setModeFocus(384, 292);
+                            global.world.camera.setMovementSmooth(4);
+                            return [4 /*yield*/, S.wait(2)];
+                        case 2:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Welcome, Knight. I have been awaiting you.")];
+                        case 3:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("You seek to prove thyself worthy of carrying the [y]ultimate weapon[/y]?")];
+                        case 4:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Verily well. Test your strength in mortal combat!")];
+                        case 5:
+                            _a.sent();
+                            global.world.camera.setModeFollow('player');
+                            return [4 /*yield*/, S.wait(2)];
+                        case 6:
+                            _a.sent();
+                            player = global.world.select.type(Player);
+                            hoop = global.world.addWorldObject({
+                                name: 'hoop',
+                                constructor: Hoop,
+                                x: player.x, y: player.y - 32,
+                                effects: {
+                                    silhouette: { color: 0x00FFFF, alpha: 0 },
+                                },
+                                layer: 'hoop',
+                                physicsGroup: 'hoop',
+                            });
+                            whoosh = global.world.playSound('swing');
+                            whoosh.volume = 0.5;
+                            whoosh.webAudioSound.speed = 0.1;
+                            return [4 /*yield*/, S.doOverTime(1, function (t) { return hoop.effects.silhouette.alpha = t; })];
+                        case 7:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(1)];
+                        case 8:
+                            _a.sent();
+                            return [4 /*yield*/, S.doOverTime(1, function (t) {
+                                    hoop.effects.silhouette.amount = 1 - t;
+                                    hoop.y = M.lerp(player.y - 32, player.y - 4, t);
+                                })];
+                        case 9:
+                            _a.sent();
+                            global.world.playSound('walk');
+                            return [4 /*yield*/, S.wait(2)];
+                        case 10:
+                            _a.sent();
+                            global.world.playSound('jingle').volume = 0.5;
+                            return [4 /*yield*/, S.simul(S.showSlide({
+                                    x: 0, y: 0,
+                                    texture: Texture.filledRect(global.gameWidth, global.gameHeight, 0x000000, 0.8),
+                                    timeToLoad: 2,
+                                    fadeIn: true,
+                                }), S.showSlide({
+                                    x: 0, y: 0,
+                                    texture: 'royalhulatext',
+                                    timeToLoad: 2,
+                                    fadeIn: true,
+                                }))];
+                        case 11:
+                            _a.sent();
+                            text = global.theater.addWorldObject({
+                                constructor: SpriteText,
+                                x: global.gameWidth / 2 - 17 * 8, y: global.gameHeight / 2 + 60,
+                                text: "sounds like a lot of HOOPLAH to me",
+                                style: { color: 0xFFFFFF, alpha: 0 },
+                                font: Assets.fonts.DELUXE16,
+                            });
+                            return [4 /*yield*/, S.wait(2)];
+                        case 12:
+                            _a.sent();
+                            return [4 /*yield*/, S.doOverTime(2, function (t) { return text.style.alpha = t; })];
+                        case 13:
+                            _a.sent();
+                            _a.label = 14;
+                        case 14:
+                            if (!!Input.justDown('game_advanceDialog')) return [3 /*break*/, 16];
+                            return [4 /*yield*/];
+                        case 15:
+                            _a.sent();
+                            return [3 /*break*/, 14];
+                        case 16: return [4 /*yield*/, S.simul(S.fadeSlides(1), S.doOverTime(1, function (t) { return text.style.alpha = 1 - t; }))];
+                        case 17:
+                            _a.sent();
+                            text.removeFromWorld();
+                            Debug.SKIP_RATE = 1;
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [{ type: 'instant', toNode: 'spawn_wave_1' }]
+        },
+        'gameplay': {
+            type: 'gameplay',
+            transitions: [
+                { type: 'onCondition', condition: function () { return global.world.select.type(WaveController).isWaveDefeated(1); }, toNode: 'spawn_wave_2' },
+                { type: 'onCondition', condition: function () { return global.world.select.type(WaveController).isWaveDefeated(2); }, toNode: 'spawn_wave_3' },
+                { type: 'onCondition', condition: function () { return global.world.select.type(WaveController).isWaveDefeated(3); }, toNode: 'spawn_wave_4' },
+                { type: 'onCondition', condition: function () { return global.world.select.type(WaveController).isWaveDefeated(4); }, toNode: 'spawn_wave_5' },
+                { type: 'onCondition', condition: function () { return global.world.select.type(WaveController).isWaveDefeated(5); }, toNode: 'spawn_wave_king' },
+                { type: 'onCondition', condition: function () { return global.world.select.type(WaveController).isWaveDefeated(9001); }, toNode: 'win' },
+                { type: 'onCondition', condition: function () { return global.world.select.type(Player).health <= 0; }, toNode: 'defeat' },
+            ]
+        },
+        'spawn_wave_1': {
+            type: 'cutscene',
+            script: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            global.world.camera.setModeFocus(384, 292);
+                            return [4 /*yield*/, S.wait(2)];
+                        case 1:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Duel'st in five rounds against my minions, and you may'st keep the [y]royal hula[/y].")];
+                        case 2:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Round one beginneth now.")];
+                        case 3:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(0.5)];
+                        case 4:
+                            _a.sent();
+                            global.world.camera.setModeFollow('player');
+                            return [4 /*yield*/, S.wait(1)];
+                        case 5:
+                            _a.sent();
+                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
+                            global.world.select.type(WaveController).spawnWave1();
+                            global.world.select.type(WaveController).startMusic();
+                            return [2 /*return*/];
+                    }
                 });
             },
             transitions: [{ type: 'instant', toNode: 'gameplay' }]
         },
-        'gameplay': {
-            type: 'gameplay',
+        'spawn_wave_2': {
+            type: 'cutscene',
+            script: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            global.world.select.type(WaveController).stopMusic();
+                            return [4 /*yield*/, S.wait(1)];
+                        case 1:
+                            _a.sent();
+                            if (!HARD_DIFFICULTY)
+                                global.world.select.type(Player).health = Player.MAX_HP;
+                            global.world.camera.setModeFocus(384, 292);
+                            return [4 /*yield*/, S.wait(2)];
+                        case 2:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Very good. But this is'st only the beginning.")];
+                        case 3:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Round two beginneth now.")];
+                        case 4:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(0.5)];
+                        case 5:
+                            _a.sent();
+                            global.world.camera.setModeFollow('player');
+                            return [4 /*yield*/, S.wait(1)];
+                        case 6:
+                            _a.sent();
+                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
+                            global.world.select.type(WaveController).spawnWave2();
+                            global.world.select.type(WaveController).startMusic();
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [{ type: 'instant', toNode: 'gameplay' }]
+        },
+        'spawn_wave_3': {
+            type: 'cutscene',
+            script: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            global.world.select.type(WaveController).stopMusic();
+                            return [4 /*yield*/, S.wait(1)];
+                        case 1:
+                            _a.sent();
+                            if (!HARD_DIFFICULTY)
+                                global.world.select.type(Player).health = Player.MAX_HP;
+                            global.world.camera.setModeFocus(384, 292);
+                            return [4 /*yield*/, S.wait(2)];
+                        case 2:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("I see you are'st very skilled with a hoop. But can thou handle these foes?")];
+                        case 3:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Round three beginneth now.")];
+                        case 4:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(0.5)];
+                        case 5:
+                            _a.sent();
+                            global.world.camera.setModeFollow('player');
+                            return [4 /*yield*/, S.wait(1)];
+                        case 6:
+                            _a.sent();
+                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
+                            global.world.select.type(WaveController).spawnWave3();
+                            global.world.select.type(WaveController).startMusic();
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [{ type: 'instant', toNode: 'gameplay' }]
+        },
+        'spawn_wave_4': {
+            type: 'cutscene',
+            script: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            global.world.select.type(WaveController).stopMusic();
+                            return [4 /*yield*/, S.wait(1)];
+                        case 1:
+                            _a.sent();
+                            if (!HARD_DIFFICULTY)
+                                global.world.select.type(Player).health = Player.MAX_HP;
+                            global.world.camera.setModeFocus(384, 292);
+                            return [4 /*yield*/, S.wait(2)];
+                        case 2:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Perhaps I'm going too easy on you.")];
+                        case 3:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Prepare thyself for round four.")];
+                        case 4:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(0.5)];
+                        case 5:
+                            _a.sent();
+                            global.world.camera.setModeFollow('player');
+                            return [4 /*yield*/, S.wait(1)];
+                        case 6:
+                            _a.sent();
+                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
+                            global.world.select.type(WaveController).spawnWave4();
+                            global.world.select.type(WaveController).startMusic();
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [{ type: 'instant', toNode: 'gameplay' }]
+        },
+        'spawn_wave_5': {
+            type: 'cutscene',
+            script: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            global.world.select.type(WaveController).stopMusic();
+                            return [4 /*yield*/, S.wait(1)];
+                        case 1:
+                            _a.sent();
+                            if (!HARD_DIFFICULTY)
+                                global.world.select.type(Player).health = Player.MAX_HP;
+                            global.world.camera.setModeFocus(384, 292);
+                            return [4 /*yield*/, S.wait(2)];
+                        case 2:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Impressive! One more round to go'eth, but this will be the hardest.")];
+                        case 3:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(0.5)];
+                        case 4:
+                            _a.sent();
+                            global.world.camera.setModeFollow('player');
+                            return [4 /*yield*/, S.wait(1)];
+                        case 5:
+                            _a.sent();
+                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
+                            global.world.select.type(WaveController).spawnWave5();
+                            global.world.select.type(WaveController).startMusic();
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [{ type: 'instant', toNode: 'gameplay' }]
+        },
+        'spawn_wave_king': {
+            type: 'cutscene',
+            script: function () {
+                var throne, shakeSound;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            global.world.select.type(WaveController).stopMusic();
+                            return [4 /*yield*/, S.wait(1)];
+                        case 1:
+                            _a.sent();
+                            if (!HARD_DIFFICULTY)
+                                global.world.select.type(Player).health = Player.MAX_HP;
+                            throne = global.world.select.type(Throne);
+                            global.world.camera.setModeFollow(throne, 0, -20);
+                            global.world.camera.setMovementSmooth(4);
+                            return [4 /*yield*/, S.wait(2)];
+                        case 2:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Splendid!")];
+                        case 3:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Thou hast defeated all of mine challenges. I bet you're happy to finally claim the [y]royal hula[/y] for thyself?")];
+                        case 4:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("...")];
+                        case 5:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("But I don't think I'll be parting with it so soon.")];
+                        case 6:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("If thou want'st it so bad... Heh heh heh...")];
+                        case 7:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(0.5)];
+                        case 8:
+                            _a.sent();
+                            shakeSound = global.world.playSound('shake');
+                            shakeSound.loop = true;
+                            shakeSound.volume = 0.5;
+                            return [4 /*yield*/, S.simul(S.shake(2, 7), S.chain(S.wait(3), S.call(function () {
+                                    throne.setState('jump');
+                                })))];
+                        case 9:
+                            _a.sent();
+                            shakeSound.paused = true;
+                            return [4 /*yield*/, S.wait(2)];
+                        case 10:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Prove thyself worthy!")];
+                        case 11:
+                            _a.sent();
+                            global.world.camera.setModeFollow('player');
+                            return [4 /*yield*/, S.wait(1)];
+                        case 12:
+                            _a.sent();
+                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
+                            throne.setState('idle');
+                            global.world.runScript(S.chain(S.wait(0.5), S.showSlide({
+                                x: 0, y: 0,
+                                texture: 'hoopkingtext',
+                                timeToLoad: 2,
+                                fadeIn: true,
+                            }), S.wait(3), S.fadeSlides(2)));
+                            global.world.select.type(WaveController).startMusic();
+                            global.world.select.type(WaveController).spawnWaveKing();
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [{ type: 'instant', toNode: 'gameplay' }]
+        },
+        'win': {
+            type: 'cutscene',
+            script: function () {
+                var throne, shakeSound, text, text2;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            global.world.select.type(WaveController).stopMusic();
+                            throne = global.world.select.type(Throne);
+                            global.world.camera.setModeFollow(throne, 0, -20);
+                            global.world.camera.setMovementSmooth(4);
+                            shakeSound = global.world.playSound('shake');
+                            shakeSound.loop = true;
+                            shakeSound.webAudioSound.speed = 0.8;
+                            shakeSound.volume = 0.5;
+                            return [4 /*yield*/, S.wait(3)];
+                        case 1:
+                            _a.sent();
+                            if (!(global.world.select.type(Player).health > 0)) return [3 /*break*/, 5];
+                            return [4 /*yield*/, S.dialog("Agh... you've done it...")];
+                        case 2:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("The hoop... it's yours... take it...")];
+                        case 3:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Don't... bully me... anymore...")];
+                        case 4:
+                            _a.sent();
+                            return [3 /*break*/, 10];
+                        case 5: return [4 /*yield*/, S.dialog("But... but how...?")];
+                        case 6:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("You're dead too... how...?")];
+                        case 7:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Just... take the hoop then...")];
+                        case 8:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Don't... bully me... anymore...")];
+                        case 9:
+                            _a.sent();
+                            _a.label = 10;
+                        case 10: return [4 /*yield*/, S.wait(0.5)];
+                        case 11:
+                            _a.sent();
+                            return [4 /*yield*/, S.simul(S.fadeOut(3, 0xFFFFFF), S.doOverTime(3, function (t) { return global.world.volume = 1 - t; }))];
+                        case 12:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(1)];
+                        case 13:
+                            _a.sent();
+                            text = global.theater.addWorldObject({
+                                constructor: SpriteText,
+                                x: global.gameWidth / 2 - 17 * 8, y: global.gameHeight / 2 - 8,
+                                text: "and thus begins the tale of the...",
+                                style: { color: 0x000000, alpha: 0 },
+                                font: Assets.fonts.DELUXE16,
+                                ignoreCamera: true,
+                            });
+                            return [4 /*yield*/, S.doOverTime(3, function (t) { return text.style.alpha = t; })];
+                        case 14:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(2)];
+                        case 15:
+                            _a.sent();
+                            text2 = global.theater.addWorldObject({
+                                constructor: SpriteText,
+                                x: global.gameWidth / 2 - 5.5 * 8, y: global.gameHeight / 2 + 8,
+                                text: "HOOP KNIGHT",
+                                style: { color: 0x000000, alpha: 0 },
+                                font: Assets.fonts.DELUXE16,
+                                ignoreCamera: true,
+                            });
+                            return [4 /*yield*/, S.doOverTime(3, function (t) { return text2.style.alpha = t; })];
+                        case 16:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(5)];
+                        case 17:
+                            _a.sent();
+                            return [4 /*yield*/, S.fadeOut(3)];
+                        case 18:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(2)];
+                        case 19:
+                            _a.sent();
+                            global.game.loadMainMenu();
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: []
+        },
+        'defeat': {
+            type: 'cutscene',
+            script: function () {
+                var throne;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            throne = global.world.select.type(Throne);
+                            throne.setState('passive');
+                            return [4 /*yield*/, S.doOverTime(3, function (t) { return global.world.volume = 1 - t; })];
+                        case 1:
+                            _a.sent();
+                            global.world.camera.setModeFollow(throne, 0, -20);
+                            global.world.camera.setMovementSmooth(4);
+                            return [4 /*yield*/, S.wait(3)];
+                        case 2:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("It seems... thou'st not worthy to bear the [y]ultimate weapon[/y].")];
+                        case 3:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Such a shame...")];
+                        case 4:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(0.5)];
+                        case 5:
+                            _a.sent();
+                            return [4 /*yield*/, S.fadeOut(3)];
+                        case 6:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(2)];
+                        case 7:
+                            _a.sent();
+                            global.game.loadMainMenu();
+                            return [2 /*return*/];
+                    }
+                });
+            },
             transitions: []
         },
     };
 }
+var Throne = /** @class */ (function (_super) {
+    __extends(Throne, _super);
+    function Throne(config) {
+        var _this = _super.call(this, config, {
+            texture: 'throne',
+            bounds: { type: 'rect', x: -15, y: -24, width: 30, height: 24 },
+            immovable: true,
+            maxHealth: 1003,
+            immuneTime: 1,
+            weight: 10,
+            damagableByHoop: false,
+        }) || this;
+        _this.shadow = _this.addChild({
+            constructor: Sprite,
+            x: -15, y: -22,
+            texture: Texture.filledRect(30, 24, 0x000000, 0.5),
+            layer: 'king_shadow_start',
+        });
+        var lightTexture = new AnchoredTexture(0, 0, Texture.filledRect(1024, 64, 0xFF0000, 0.5));
+        lightTexture.anchorX = 1 / 32;
+        lightTexture.anchorY = 1 / 2;
+        _this.light = _this.addChild({
+            constructor: Sprite,
+            x: 0, y: -12,
+            texture: lightTexture,
+            alpha: 0,
+            layer: 'bg',
+        });
+        _this.king = _this.addChild({
+            constructor: Sprite,
+            x: 0, y: 0, z: 20,
+            texture: 'king_0',
+            layer: _this.layer,
+            effects: {
+                outline: { color: 0x000000 },
+            },
+            animations: [
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'king_', textures: [0, 1, 2], frameRate: 4, count: -1 }),
+            ],
+            defaultAnimation: 'idle',
+        });
+        _this.stateMachine = new ThroneBehaviorSm(_this);
+        return _this;
+    }
+    Throne.prototype.update = function () {
+        _super.prototype.update.call(this);
+        var player = this.world.select.type(Player);
+        if (player.x < this.king.x)
+            this.king.flipX = true;
+        if (player.x > this.king.x)
+            this.king.flipX = false;
+        this.shadow.z = 0;
+        this.king.effects.silhouette.color = this.effects.silhouette.color;
+        this.king.effects.silhouette.enabled = this.effects.silhouette.enabled;
+        if (this.health === 1001) {
+            this.tint = 0xFF0000;
+            this.king.tint = 0xFF0000;
+            this.timeScale = 2;
+        }
+        else if (this.health === 1002) {
+            this.tint = 0xFF8888;
+            this.king.tint = 0xFF8888;
+            this.timeScale = 1.5;
+        }
+        else if (this.health === 1003) {
+            this.tint = 0xFFFFFF;
+            this.king.tint = 0xFFFFFF;
+            this.timeScale = 1;
+        }
+        else {
+            this.timeScale = 1;
+        }
+    };
+    Throne.prototype.damage = function (amount) {
+        var _this = this;
+        _super.prototype.damage.call(this, amount);
+        var loops = 8;
+        if (this.health <= 1000) {
+            loops = Infinity;
+        }
+        this.runScript(S.chain(S.call(function () {
+            _this.effects.silhouette.color = 0xFFFFFF;
+            _this.effects.silhouette.enabled = true;
+        }), S.loopFor(loops, S.chain(S.wait(this.immuneTime / 8), S.call(function () {
+            _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled;
+        }))), S.call(function () {
+            _this.effects.silhouette.enabled = false;
+        })));
+        if (this.health <= 1000) {
+            this.setState('defeat');
+        }
+        else {
+            this.setState('idle');
+        }
+    };
+    Throne.prototype.spawnBomb = function () {
+        this.world.addWorldObject({
+            constructor: Bomb,
+            x: this.x, y: this.y, z: 50,
+            layer: this.layer,
+            physicsGroup: 'bombs',
+        });
+    };
+    Throne.prototype.onCollide = function (other) {
+        _super.prototype.onCollide.call(this, other);
+        if (other.physicsGroup === 'walls' && this.state === 'dash') {
+            this.setState('vulnerable');
+        }
+        if (other instanceof Hoop && other.isStrongEnoughToDealDamage() && (!this.dinkSound || this.dinkSound.done)) {
+            this.dinkSound = this.world.playSound('dink');
+            this.dinkSound.volume = 0.5 * other.currentAttackStrength;
+        }
+    };
+    return Throne;
+}(Enemy));
+var ThroneBehaviorSm = /** @class */ (function (_super) {
+    __extends(ThroneBehaviorSm, _super);
+    function ThroneBehaviorSm(throne) {
+        var _this = _super.call(this) || this;
+        _this.throne = throne;
+        _this.lastPos = { x: 0, y: 0 };
+        _this.targetPos = { x: 0, y: 0 };
+        _this.jumpCount = 0;
+        _this.addState('passive', {
+            callback: function () {
+                _this.throne.light.alpha = 0;
+            }
+        });
+        _this.addState('jump', {
+            script: S.chain(S.call(function () {
+                _this.setLastPos();
+                _this.setFirstJumpTargetPos();
+                _this.throne.world.playSound('dash').volume = 0.6;
+            }), S.doOverTime(1, function (t) { return _this.throne.z = 500 * t; }), S.wait(1), S.doOverTime(1, function (t) {
+                _this.throne.x = M.lerp(_this.lastPos.x, _this.targetPos.x, t);
+                _this.throne.y = M.lerp(_this.lastPos.y, _this.targetPos.y, t);
+            }), S.call(function () {
+                World.Actions.setLayer(_this.throne, 'main');
+                World.Actions.setLayer(_this.throne.king, 'main');
+                World.Actions.setLayer(_this.throne.shadow, 'bg');
+            }), S.doOverTime(1, function (t) { return _this.throne.z = 500 - 500 * t; }), S.call(function () {
+                _this.throne.world.playSound('land');
+                _this.throne.colliding = true;
+            })),
+        });
+        _this.addState('idle', {
+            callback: function () {
+                _this.jumpCount = 0;
+            },
+            script: S.wait(3),
+            transitions: [
+                { type: 'instant', toState: 'small_jump' },
+            ],
+        });
+        _this.addState('small_jump', {
+            callback: function () {
+                _this.jumpCount++;
+            },
+            script: S.chain(S.call(function () {
+                _this.setLastPos();
+                _this.setSmallJumpTargetPos();
+                _this.throne.world.playSound('dash').volume = 0.4;
+                _this.throne.colliding = false;
+            }), S.doOverTime(1, function (t) {
+                _this.throne.x = M.lerp(_this.lastPos.x, _this.targetPos.x, t);
+                _this.throne.y = M.lerp(_this.lastPos.y, _this.targetPos.y, t);
+                _this.throne.z = M.jumpParabola(0, 100, 0, t);
+            }), S.call(function () {
+                var s = _this.throne.world.playSound('land');
+                s.webAudioSound.speed = 1.5;
+                s.volume = 0.7;
+                _this.throne.colliding = true;
+            }), S.wait(1)),
+            transitions: [
+                { type: 'condition', condition: function () { return _this.jumpCount < 2; }, toState: 'small_jump' },
+                { type: 'condition', condition: function () { return _this.jumpCount >= 2; }, toState: 'big_jump' },
+            ]
+        });
+        _this.addState('big_jump', {
+            script: S.chain(S.call(function () {
+                _this.setLastPos();
+                _this.setBigJumpTargetPos();
+                _this.throne.world.playSound('dash').volume = 0.6;
+                _this.throne.colliding = false;
+            }), S.doOverTime(1, function (t) { return _this.throne.z = 500 * t; }), S.doOverTime(1, function (t) {
+                _this.throne.x = M.lerp(_this.lastPos.x, _this.targetPos.x, t);
+                _this.throne.y = M.lerp(_this.lastPos.y, _this.targetPos.y, t);
+            }), S.doOverTime(1, function (t) { return _this.throne.z = 500 - 500 * t; }), S.call(function () {
+                _this.throne.world.playSound('land');
+                _this.throne.colliding = true;
+            }), S.wait(1)),
+            transitions: [{ type: 'instant', toState: 'dash' }],
+        });
+        _this.addState('dash', {
+            script: S.chain(S.call(function () {
+                _this.setLastPos();
+            }), S.doOverTime(1, function (t) {
+                _this.setDashTargetPos();
+                _this.throne.light.alpha = t;
+                _this.throne.light.angle = M.radToDeg(Math.atan2(_this.targetPos.y - _this.throne.y, _this.targetPos.x - _this.throne.x));
+            }), S.wait(1), S.call(function () {
+                _this.throne.light.alpha = 0;
+                _this.throne.world.playSound('dash');
+            }), S.simul(S.doOverTime(0.1, function (t) {
+                _this.throne.x = M.lerp(_this.lastPos.x, _this.targetPos.x, t);
+                _this.throne.y = M.lerp(_this.lastPos.y, _this.targetPos.y, t);
+            }), S.chain(S.wait(0.05), S.call(function () {
+                _this.throne.spawnBomb();
+            })))),
+            transitions: [{ type: 'instant', toState: 'vulnerable' }],
+        });
+        _this.addState('vulnerable', {
+            script: S.waitUntil(function () { return _.isEmpty(_this.throne.world.select.typeAll(Bomb)); }),
+            transitions: [{ type: 'instant', toState: 'idle' }],
+        });
+        _this.addState('defeat', {});
+        return _this;
+    }
+    ThroneBehaviorSm.prototype.setLastPos = function () {
+        this.lastPos.x = this.throne.x;
+        this.lastPos.y = this.throne.y;
+    };
+    ThroneBehaviorSm.prototype.setFirstJumpTargetPos = function () {
+        var player = this.throne.world.select.type(Player);
+        if (M.distance(player.x, player.y, 384, 480) > 36) {
+            this.targetPos.x = 384;
+            this.targetPos.y = 480;
+        }
+        else {
+            this.targetPos.x = 384;
+            this.targetPos.y = 440;
+        }
+    };
+    ThroneBehaviorSm.prototype.setSmallJumpTargetPos = function () {
+        var _this = this;
+        var candidates = A.range(20).map(function (i) {
+            var d = Random.inDisc(64, 128);
+            d.x += _this.throne.x;
+            d.y += _this.throne.y;
+            return d;
+        }).filter(function (pos) { return 64 <= pos.x && pos.x <= 706 && 338 <= pos.y && pos.y <= 704; });
+        if (_.isEmpty(candidates)) {
+            this.targetPos.x = 384;
+            this.targetPos.y = 480;
+        }
+        else {
+            this.targetPos = Random.element(candidates);
+        }
+    };
+    ThroneBehaviorSm.prototype.setBigJumpTargetPos = function () {
+        this.targetPos.x = Random.float(64, 706);
+        this.targetPos.y = Random.float(338, 704);
+    };
+    ThroneBehaviorSm.prototype.setDashTargetPos = function () {
+        var player = this.throne.world.select.type(Player);
+        var d = { x: player.x - this.throne.x, y: player.y - this.throne.y };
+        if (V.magnitude(d) < 200)
+            V.setMagnitude(d, 200);
+        this.targetPos.x = this.throne.x + d.x;
+        this.targetPos.y = this.throne.y + d.y;
+    };
+    return ThroneBehaviorSm;
+}(StateMachine));
+var UI = /** @class */ (function (_super) {
+    __extends(UI, _super);
+    function UI(config) {
+        var _this = _super.call(this, config, {
+            ignoreCamera: true,
+        }) || this;
+        _this.shields = [];
+        return _this;
+    }
+    UI.prototype.update = function () {
+        _super.prototype.update.call(this);
+        this.updateHealth();
+    };
+    UI.prototype.updateHealth = function () {
+        var _this = this;
+        var player = this.world.select.type(Player);
+        if (player.health > this.shields.length) {
+            var _loop_5 = function (i) {
+                var shield = this_4.addChild({
+                    constructor: Sprite,
+                    x: 20 + 36 * this_4.shields.length,
+                    y: 20,
+                    effects: {
+                        silhouette: { color: 0x00FFFF, alpha: 0 },
+                    },
+                    texture: 'ui_shield',
+                    layer: this_4.layer,
+                });
+                this_4.shields.push(shield);
+                this_4.world.runScript(S.chain(S.doOverTime(0.3, function (t) { return shield.effects.silhouette.alpha = t; }), S.doOverTime(0.3, function (t) { return shield.effects.silhouette.amount = 1 - t; })));
+            };
+            var this_4 = this;
+            for (var i = 0; i < player.health - this.shields.length; i++) {
+                _loop_5(i);
+            }
+        }
+        if (player.health < this.shields.length) {
+            var _loop_6 = function (i) {
+                var shield = this_5.shields.pop();
+                shield.getTexture().subdivide(4, 4).forEach(function (subdivision) {
+                    _this.addChild({
+                        constructor: Sprite,
+                        x: shield.x - 16 + subdivision.x, y: shield.y - 16 + subdivision.y,
+                        texture: subdivision.texture,
+                        vx: Random.float(-80, 80),
+                        vy: Random.float(-80, 80),
+                        gravityy: 200,
+                        data: {
+                            vangle: Random.sign() * Random.float(1, 2) * 360,
+                        },
+                        life: 1,
+                        updateCallback: function (obj) {
+                            obj.angle += obj.data.vangle * obj.delta;
+                            obj.alpha = 1 - Math.pow(obj.life.progress, 2);
+                        },
+                    });
+                });
+                shield.removeFromWorld();
+            };
+            var this_5 = this;
+            for (var i = 0; i < this.shields.length - player.health; i++) {
+                _loop_6(i);
+            }
+        }
+    };
+    return UI;
+}(WorldObject));
+var WaveController = /** @class */ (function (_super) {
+    __extends(WaveController, _super);
+    function WaveController() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.currentWave = 0;
+        return _this;
+    }
+    WaveController.prototype.isWaveDefeated = function (wave) {
+        if (wave === 9001) {
+            return this.world.select.type(Throne).health <= 1000 && this.currentWave === wave;
+        }
+        return this.world.select.nameAll('spawn').length <= 0 && this.world.select.typeAll(Enemy).length <= 1 && this.currentWave === wave;
+    };
+    WaveController.prototype.spawnWave1 = function () {
+        this.currentWave = 1;
+        this.world.addWorldObjects([
+            spawn({
+                constructor: Golbin,
+                x: 220, y: 476,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Golbin,
+                x: 548, y: 476,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+        ]);
+    };
+    WaveController.prototype.spawnWave2 = function () {
+        this.currentWave = 2;
+        this.world.addWorldObjects([
+            spawn({
+                constructor: Knight,
+                x: 220, y: 400,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Knight,
+                x: 220, y: 552,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Knight,
+                x: 548, y: 400,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Knight,
+                x: 548, y: 552,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+        ]);
+    };
+    WaveController.prototype.spawnWave3 = function () {
+        this.currentWave = 3;
+        this.world.addWorldObjects([
+            spawn({
+                constructor: Golbin,
+                x: 220, y: 400,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Mage,
+                x: 220, y: 552,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Mage,
+                x: 548, y: 400,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Golbin,
+                x: 548, y: 552,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+        ]);
+    };
+    WaveController.prototype.spawnWave4 = function () {
+        this.currentWave = 4;
+        this.world.addWorldObjects([
+            spawn({
+                constructor: Golbin,
+                x: 220, y: 400,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Golbin,
+                x: 220, y: 552,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Knight,
+                x: 160, y: 476,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Golbin,
+                x: 548, y: 400,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Golbin,
+                x: 548, y: 552,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Knight,
+                x: 608, y: 476,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+        ]);
+    };
+    WaveController.prototype.spawnWave5 = function () {
+        this.currentWave = 5;
+        this.world.addWorldObjects([
+            spawn({
+                constructor: Golbin,
+                x: 220, y: 400,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Knight,
+                x: 220, y: 552,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Knight,
+                x: 160, y: 476,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Mage,
+                x: 100, y: 476,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Knight,
+                x: 548, y: 400,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Golbin,
+                x: 548, y: 552,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Golbin,
+                x: 608, y: 476,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+            spawn({
+                constructor: Mage,
+                x: 668, y: 476,
+                layer: 'main',
+                physicsGroup: 'enemies',
+            }),
+        ]);
+    };
+    WaveController.prototype.spawnWaveKing = function () {
+        var e_49, _a;
+        this.currentWave = 9001;
+        var guards = this.world.select.nameAll('guard');
+        try {
+            for (var guards_1 = __values(guards), guards_1_1 = guards_1.next(); !guards_1_1.done; guards_1_1 = guards_1.next()) {
+                var guard = guards_1_1.value;
+                this.world.addWorldObject({
+                    constructor: Knight,
+                    x: guard.x, y: guard.y,
+                    layer: 'main',
+                    flipX: guard.flipX,
+                    tint: guard.tint,
+                    maxHealth: 2,
+                    physicsGroup: 'enemies',
+                });
+                guard.removeFromWorld();
+            }
+        }
+        catch (e_49_1) { e_49 = { error: e_49_1 }; }
+        finally {
+            try {
+                if (guards_1_1 && !guards_1_1.done && (_a = guards_1.return)) _a.call(guards_1);
+            }
+            finally { if (e_49) throw e_49.error; }
+        }
+    };
+    WaveController.prototype.startMusic = function () {
+        this.music = this.world.playSound(this.currentWave === 9001 ? 'musicboss' : 'music');
+        this.music.volume = 0.5;
+        this.music.loop = true;
+    };
+    WaveController.prototype.stopMusic = function () {
+        if (this.music) {
+            var music_1 = this.music;
+            this.world.runScript(S.chain(S.doOverTime(3, function (t) { return music_1.volume = 0.5 * (1 - t); })));
+        }
+    };
+    return WaveController;
+}(WorldObject));

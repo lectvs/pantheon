@@ -1,10 +1,10 @@
 /// <reference path="./menus.ts"/>
 
 Main.loadConfig({
-    gameCodeName: "PlatformerTest",
-    gameWidth: 960,
-    gameHeight: 800,
-    canvasScale: 1,
+    gameCodeName: "HoopKnight",
+    gameWidth: 400,
+    gameHeight: 300,
+    canvasScale: 2,
     backgroundColor: 0x000000,
 
     preloadBackgroundColor: 0x000000,
@@ -15,13 +15,15 @@ Main.loadConfig({
     pyxelTilemaps: Assets.pyxelTilemaps,
     spriteTextTags: Assets.spriteTextTags,
 
+    defaultZBehavior: 'threequarters',
+
     defaultOptions: {
         volume: 1,
         controls: {
             // Game
             'left':                      ['ArrowLeft', 'a'],
             'right':                     ['ArrowRight', 'd'],
-            'up':                        ['ArrowUp', 'w', ' '],
+            'up':                        ['ArrowUp', 'w'],
             'down':                      ['ArrowDown', 's'],
             'interact':                  ['e'],
 
@@ -54,7 +56,7 @@ Main.loadConfig({
     },
 
     game: {
-        entryPointMenuClass: MainMenu,
+        entryPointMenuClass: IntroMenu,
         pauseMenuClass: PauseMenu,
         theaterConfig: {
             getStages: getStages,
@@ -69,25 +71,26 @@ Main.loadConfig({
             getParty: getParty,
             dialogBox: {
                 constructor: DialogBox,
-                x: global.gameWidth/2, y: global.gameHeight - 32,
-                texture: 'none',
+                x: 200, y: 250,
+                texture: 'dialogbox',
                 spriteTextFont: Assets.fonts.DELUXE16,
-                textAreaFull: { x: -114, y: -27, width: 228, height: 54 },
-                textAreaPortrait: { x: -114, y: -27, width: 158, height: 54 },
+                textAreaFull: { x: -192, y: -42, width: 384, height: 84 },
+                textAreaPortrait: { x: -200, y: -50, width: 400, height: 100 },
                 portraitPosition: { x: 78, y: 0 },
+                ignoreCamera: true,
             },
         },
     },
 
     debug: {
-        debug: true,
+        debug: false,
         font: Assets.fonts.DELUXE16,
         fontStyle: { color: 0x008800 },
         cheatsEnabled: true,
         allPhysicsBounds: false,
         moveCameraWithArrows: true,
         showOverlay: true,
-        skipRate: 1,
+        skipRate: 10,
         programmaticInput: false,
         autoplay: true,
         skipMainMenu: true,
@@ -103,3 +106,5 @@ function get(name: string) {
     if (worldObject) return worldObject;
     return undefined;
 }
+
+var HARD_DIFFICULTY: boolean = false;

@@ -1,0 +1,33 @@
+jam
+
+postjam
+
+postpostjam
+- fix window focus issues
+- in general clean up the storyboard
+- define better "momentum transfer" modes
+- add custom debug overlay feeds
+- "anchor" language in asset file
+- init method for world objects
+- add angular velocity to sprite
+- figure out why configs aren't semantically checked properly
+- better scripting syntax
+- camera mode transitions
+- revisit dialog system
+- story transition delay
+- better enemy behavior system
+- pt(), rect(), etc. shortcut methods
+- fix bug with vx, vy = NaN
+- slide inheritance
+- addWorldObject type inference from `constructor` property?
+- spritetext alignment
+- fps drop with spritetext?
+- clone bounds
+- static-ify generic sprites (e.g. render to some texture instead of simulating)
+- change speed of sounds
+- change pitch of sounds
+- remove sound from dialog (and customize?)
+- render sprite to non-world texture?
+- build script
+- mute audio when window out of focus
+- fill in README.md for others to run/build the game

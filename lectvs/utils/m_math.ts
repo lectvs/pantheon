@@ -58,7 +58,7 @@ namespace M {
 
     export function lerpTime(a: number, b: number, speed: number, delta: number) {
         // From https://www.gamasutra.com/blogs/ScottLembcke/20180404/316046/Improved_Lerp_Smoothing.php
-        return lerp(a, b, Math.pow(2, -speed*delta));
+        return lerp(a, b, 1-Math.pow(2, -speed*delta));
     }
 
     export function magnitude(dx: number, dy: number) {

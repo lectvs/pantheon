@@ -30,6 +30,7 @@ namespace Camera {
 
     export type SmoothMovement = {
         type: 'smooth';
+        speed: number;
         deadZoneWidth: number;
         deadZoneHeight: number;
     }
@@ -160,13 +161,13 @@ class Camera {
             if (Math.abs(dx) > hw) {
                 let tx = Math.abs(hw / dx);
                 let targetx = this.x + (1-tx)*dx;
-                this.x = M.lerp(this.x, targetx, 0.25);
+                this.x = M.lerpTime(this.x, targetx, this.movement.speed, delta);
             }
 
             if (Math.abs(dy) > hh) {
                 let ty = Math.abs(hh / dy);
                 let targety = this.y + (1-ty)*dy;
-                this.y = M.lerp(this.y, targety, 0.25);
+                this.y = M.lerpTime(this.y, targety, this.movement.speed, delta);
             }
         }
     }
@@ -200,9 +201,10 @@ class Camera {
         });
     }
 
-    setMovementSmooth(deadZoneWidth: number = 0, deadZoneHeight: number = 0) {
+    setMovementSmooth(speed: number, deadZoneWidth: number = 0, deadZoneHeight: number = 0) {
         this.setMovement({
             type: 'smooth',
+            speed: speed,
             deadZoneWidth: deadZoneWidth,
             deadZoneHeight: deadZoneHeight,
         });

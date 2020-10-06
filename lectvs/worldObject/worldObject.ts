@@ -15,6 +15,7 @@ namespace WorldObject {
         life?: number;
         ignoreCamera?: boolean;
         zBehavior?: ZBehavior;
+        timeScale?: number;
         data?: any;
         controllable?: boolean;
         children?: WorldObject.Config[];
@@ -42,6 +43,7 @@ class WorldObject {
     life: Timer;
     ignoreCamera: boolean;
     zBehavior: WorldObject.ZBehavior;
+    timeScale: number;
     data: any;
 
     get x() { return this.localx + (this.parent ? this.parent.x : 0); }
@@ -69,7 +71,7 @@ class WorldObject {
     get parent() { return this._parent; }
     //
 
-    get delta() { return this.world ? this.world.delta : global.game.delta;}
+    get delta() { return (this.world ? this.world.delta : global.game.delta) * this.timeScale;}
 
     lastx: number;
     lasty: number;
@@ -100,6 +102,7 @@ class WorldObject {
         this.active = config.active ?? true;
         this.life = new Timer(config.life ?? Infinity, () => this.kill());
         this.zBehavior = config.zBehavior ?? WorldObject.DEFAULT_Z_BEHAVIOR;
+        this.timeScale = config.timeScale ?? 1;
         this.ignoreCamera = config.ignoreCamera ?? false;
         this.data = config.data ? _.clone(config.data) : {};
 
@@ -205,7 +208,8 @@ class WorldObject {
         result += Math.round(this.localy);
 
         if (this.zBehavior === 'threequarters') {
-            result -= this.z;
+            let parentz = this.parent ? this.parent.z : 0;
+            result += parentz - this.z;
         }
 
         return result;
