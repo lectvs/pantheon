@@ -10115,7 +10115,7 @@ var Hoop = /** @class */ (function (_super) {
     Hoop.prototype.setStrength = function (player) {
         var pureVelStrength = M.magnitude(this.vx, this.vy) / 500;
         var relPlayerStrength = M.magnitude(this.vx - player.vx, this.vy - player.vy) / 500;
-        this.currentAttackStrength = pureVelStrength * relPlayerStrength;
+        this.currentAttackStrength = M.clamp(pureVelStrength * relPlayerStrength, 0, 3);
         if (!_.isEmpty(this.world.select.overlap(this.bounds, ['walls']))) {
             this.currentAttackStrength = 0;
         }
