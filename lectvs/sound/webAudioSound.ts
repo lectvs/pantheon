@@ -27,7 +27,7 @@ class WebAudioSound implements WebAudioSoundI{
 
     private gainNode: GainNode;
     get volume() { return this.gainNode.gain.value; }
-    set volume(value: number) { this.gainNode.gain.value = value; }
+    set volume(value: number) { this.gainNode.gain.value = M.clamp(value, 0, 2); }
 
     private _speed: number;
     get speed() {

@@ -1,6 +1,7 @@
-jam
-
 postjam
+- hoop not collide with walls
+- mage light up to indicate summoning
+- calculate hoop speed from angular speed around player
 
 postpostjam
 - fix window focus issues

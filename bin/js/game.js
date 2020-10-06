@@ -4859,7 +4859,7 @@ var WebAudioSound = /** @class */ (function () {
     });
     Object.defineProperty(WebAudioSound.prototype, "volume", {
         get: function () { return this.gainNode.gain.value; },
-        set: function (value) { this.gainNode.gain.value = value; },
+        set: function (value) { this.gainNode.gain.value = M.clamp(value, 0, 2); },
         enumerable: false,
         configurable: true
     });
