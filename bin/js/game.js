@@ -11414,8 +11414,8 @@ function getStoryboard() {
                                 timeToLoad: 2,
                                 fadeIn: true,
                             }), S.wait(3), S.fadeSlides(2)));
-                            global.world.select.type(WaveController).startMusic();
                             global.world.select.type(WaveController).spawnWaveKing();
+                            global.world.select.type(WaveController).startMusic();
                             return [2 /*return*/];
                     }
                 });

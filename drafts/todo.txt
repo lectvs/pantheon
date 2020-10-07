@@ -1,4 +1,8 @@
 postjam
+- limit to how many shadows there are
+- fix sticking against the wall bug
+- fix caps lock bug?
+- cutscene skips
 - hoop not collide with walls
 - mage light up to indicate summoning
 - calculate hoop speed from angular speed around player
@@ -7,6 +11,7 @@ postpostjam
 - fix window focus issues
 - in general clean up the storyboard
 - define better "momentum transfer" modes
+- collect all collisions and apply callbacks/momentum transfer afterward
 - add custom debug overlay feeds
 - "anchor" language in asset file
 - init method for world objects
@@ -32,3 +37,4 @@ postpostjam
 - build script
 - mute audio when window out of focus
 - fill in README.md for others to run/build the game
+- fullscreen

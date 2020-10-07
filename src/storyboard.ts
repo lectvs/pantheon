@@ -288,8 +288,8 @@ function getStoryboard(): Storyboard { return {
                 S.fadeSlides(2),
             ));
 
-            global.world.select.type(WaveController).startMusic();
             global.world.select.type(WaveController).spawnWaveKing();
+            global.world.select.type(WaveController).startMusic();
         },
         transitions: [{ type: 'instant', toNode: 'gameplay' }]
     },
