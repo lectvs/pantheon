@@ -1,4 +1,5 @@
 postjam
+- investigate boss fight crash
 - limit to how many shadows there are
 - fix sticking against the wall bug
 - fix caps lock bug?
