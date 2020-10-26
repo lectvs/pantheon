@@ -9,24 +9,8 @@ class Knight extends Enemy {
 
     private willDashNext: boolean;
 
-    constructor(config: Enemy.Config) {
-        super(config, {
-            texture: 'enemyknight_0',
-            bounds: { type: 'circle', x: 0, y: -4, radius: 8 },
-            effects: {
-                outline: { color: 0x000000 },
-            },
-            animations: [
-                Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'run', texturePrefix: 'enemyknight_', textures: [4, 5, 6, 7], frameRate: 8, count: -1,
-                        overrides: {
-                            2: { callback: () => { this.world.playSound('walk').volume = 0.5; }}
-                        }
-                }),
-                Animations.fromTextureList({ name: 'windup', texturePrefix: 'enemyknight_', textures: [8], frameRate: 4, count: -1 }),
-            ],
-            defaultAnimation: 'idle',
-
+    constructor() {
+        super({
             maxHealth: 1.5,
             immuneTime: 0.5,
             weight: 1,
@@ -34,17 +18,30 @@ class Knight extends Enemy {
             deadTexture: 'enemyknight_dead',
         });
 
+        this.setTexture('enemyknight_0');
+        this.bounds = new CircleBounds(0, -4, 8, this);
+        this.effects.updateFromConfig({
+            outline: { color: 0x000000 }
+        });
+        this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
+        this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'enemyknight_', textures: [4, 5, 6, 7], frameRate: 8, count: -1,
+                overrides: {
+                    2: { callback: () => { this.world.playSound('walk').volume = 0.5; }}
+                }
+        }));
+        this.addAnimation(Animations.fromTextureList({ name: 'windup', texturePrefix: 'enemyknight_', textures: [8], frameRate: 4, count: -1 }));
+        this.playAnimation('idle');
+
         let lightTint = this.tint === 0xFFFFFF ? 0x00FFFF : this.tint - 0xFF0000;
         let lightTexture = new AnchoredTexture(0, 0, Texture.filledRect(1024, 16, lightTint, 0.5));
         lightTexture.anchorX = 1/128;
         lightTexture.anchorY = 1/2;
-        this.light = this.addChild<Sprite>(<Sprite.Config>{
-            constructor: Sprite,
-            x: 0, y: -4,
-            texture: lightTexture,
-            alpha: 0,
-            layer: 'bg',
-        });
+
+        this.light = this.addChild(new Sprite());
+        this.light.y = -4;
+        this.light.setTexture(lightTexture);
+        this.light.alpha = 0;
+        World.Actions.setLayer(this.light, 'bg');
 
         this.willDashNext = true;
 

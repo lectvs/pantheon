@@ -4,23 +4,8 @@ class Runner extends Enemy {
 
     private attacking: WorldObject;
 
-    constructor(config: Enemy.Config) {
-        super(config, {
-            texture: 'runner_0',
-            bounds: { type: 'circle', x: 0, y: -4, radius: 8 },
-            effects: {
-                outline: { color: 0xFFFFFF },
-            },
-            animations: [
-                Animations.fromTextureList({ name: 'idle', texturePrefix: 'runner_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'run', texturePrefix: 'runner_', textures: [4, 5, 6, 7], frameRate: 8, count: -1,
-                        overrides: {
-                            2: { callback: () => { this.world.playSound('walk').volume = 0.5; }}
-                        }
-                }),
-            ],
-            defaultAnimation: 'run',
-
+    constructor() {
+        super({
             maxHealth: 0.5,
             immuneTime: 0.5,
             weight: 1,
@@ -28,6 +13,18 @@ class Runner extends Enemy {
             deadTexture: 'runner_dead',
         });
 
+        this.setTexture('runner_0');
+        this.bounds = new CircleBounds(0, -4, 8, this);
+        this.effects.updateFromConfig({
+            outline: { color: 0xFFFFFF }
+        });
+        this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'runner_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
+        this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'runner_', textures: [4, 5, 6, 7], frameRate: 8, count: -1,
+                overrides: {
+                    2: { callback: () => { this.world.playSound('walk').volume = 0.5; }}
+                }
+        }));
+        this.playAnimation('run');
 
         this.stateMachine.addState("idle", {
             script: S.wait(1),

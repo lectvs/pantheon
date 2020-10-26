@@ -15,7 +15,7 @@ class Transition extends WorldObject {
     done: boolean;
 
     constructor() {
-        super({});
+        super();
         this.done = false;
     }
 }

@@ -1,7 +1,8 @@
 /// <reference path="../worldObject/spriteText/spriteText.ts" />
 
 namespace MenuTextButton {
-    export type Config = SpriteText.Config & {
+    export type Config = {
+        font: SpriteText.Font;
         onClick?: () => any;
     }
 }
@@ -10,7 +11,7 @@ class MenuTextButton extends SpriteText {
     onClick: () => any;
 
     constructor(config: MenuTextButton.Config) {
-        super(config);
+        super(config.font);
         this.onClick = config.onClick ?? Utils.NOOP;
     }
 
@@ -33,7 +34,8 @@ class MenuTextButton extends SpriteText {
 }
 
 namespace MenuNumericSelector {
-    export type Config = SpriteText.Config & {
+    export type Config = {
+        font: SpriteText.Font;
         barLength: number;
         minValue: number;
         maxValue: number;
@@ -50,17 +52,15 @@ class MenuNumericSelector extends SpriteText {
     setValue: (value: number) => any;
 
     constructor(config: MenuNumericSelector.Config) {
-        super(config);
+        super(config.font);
         this.barLength = config.barLength;
         this.minValue = config.minValue;
         this.maxValue = config.maxValue;
         this.getValue = config.getValue;
         this.setValue = config.setValue;
 
-        this.addChild(<MenuTextButton.Config>{
-            constructor: MenuTextButton,
-            x: 0, y: 0, text: "<",
-            font: this.font, style: this.style,
+        let leftButton = this.addChild(new MenuTextButton({
+            font: this.font,
             onClick: () => {
                 global.game.playSound('click');
                 let bars = this.getFullBarsForValue(this.getValue());
@@ -68,13 +68,13 @@ class MenuNumericSelector extends SpriteText {
                     let newValue = this.getValueForFullBars(bars - 1);
                     this.setValue(newValue);
                 }
-            },
-        });
+            }
+        }));
+        leftButton.setStyle(this.style);
+        leftButton.setText("<");
 
-        this.addChild(<MenuTextButton.Config>{
-            constructor: MenuTextButton,
-            x: (this.barLength+3) * this.font.charWidth, y: 0, text: ">",
-            font: this.font, style: this.style,
+        let rightButton = this.addChild(new MenuTextButton({
+            font: this.font,
             onClick: () => {
                 global.game.playSound('click');
                 let bars = this.getFullBarsForValue(this.getValue());
@@ -82,8 +82,11 @@ class MenuNumericSelector extends SpriteText {
                     let newValue = this.getValueForFullBars(bars + 1);
                     this.setValue(newValue);
                 }
-            },
-        });
+            }
+        }));
+        rightButton.localx = (this.barLength+3) * this.font.charWidth;
+        rightButton.setStyle(this.style);
+        rightButton.setText(">");
     }
 
     update() {
@@ -107,7 +110,8 @@ class MenuNumericSelector extends SpriteText {
 }
 
 namespace MenuControlMapper {
-    export type Config = SpriteText.Config & {
+    export type Config = {
+        font: SpriteText.Font;
         controlName: string;
     }
 }
@@ -117,7 +121,7 @@ class MenuControlMapper extends SpriteText {
     selectedBinding: string;
 
     constructor(config: MenuControlMapper.Config) {
-        super(config);
+        super(config.font);
         this.controlName = config.controlName;
         this.selectedBinding = undefined;
 
@@ -161,16 +165,19 @@ class MenuControlMapper extends SpriteText {
         for (let binding of controlBindings) {
             let bindingId = binding;
             let bindingName = this.getBindingName(binding);
-            this.addChild(<MenuTextButton.Config>{
-                name: this.getBindingMappingObjectName(binding),
-                constructor: MenuTextButton,
-                x: bindingx, y: 0, text: bindingName,
-                font: this.font, style: this.style,
+
+            let bindingButton = this.addChild(new MenuTextButton({
+                font: this.font,
                 onClick: () => {
                     global.game.playSound('click');
                     this.selectBinding(bindingId);
-                },
-            });
+                }
+            }));
+            World.Actions.setName(bindingButton, this.getBindingMappingObjectName(binding));
+            bindingButton.localx = bindingx;
+            bindingButton.setStyle(this.style);
+            bindingButton.setText(bindingName);
+
             bindingx += (bindingName.length + 3) * this.font.charWidth;
             text += " ".repeat(bindingName.length) + " / ";
         }

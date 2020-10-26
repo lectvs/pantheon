@@ -29,6 +29,13 @@ postpostjam
 - slide inheritance
 - addWorldObject type inference from `constructor` property?
 - spritetext alignment
+- directly set name, layer, physicsGroup on WorldObject?
+- not have to specify parent in physics object bounds?
+- spritetext as a texture and not a world object?
+- think about constructor arguments for world objects
+- physics object: combine vx/y/z, gravityx/y/z, etc.
+- do we need to specify the initial texture on an animated sprite?
+- angular velocity
 - fps drop with spritetext?
 - clone bounds
 - static-ify generic sprites (e.g. render to some texture instead of simulating)

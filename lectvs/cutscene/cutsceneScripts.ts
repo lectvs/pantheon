@@ -33,11 +33,10 @@ namespace S {
     }
 
     export function fadeOut(duration: number = 0, tint: number = 0x000000): Script.Function {
-        return showSlide({
-            x: 0, y: 0,
-            texture: Texture.filledRect(global.gameWidth, global.gameHeight, tint),
-            timeToLoad: duration,
-            fadeIn: true
+        return showSlide(() => {
+            let slide = new Slide({ timeToLoad: duration, fadeIn: true });
+            slide.setTexture(Texture.filledRect(global.gameWidth, global.gameHeight, tint));
+            return slide;
         });
     }
 
@@ -143,10 +142,10 @@ namespace S {
         })
     }
 
-    export function showSlide(config: Slide.Config, waitForCompletion: boolean = true): Script.Function {
+    export function showSlide(factory: Factory<Slide>, waitForCompletion: boolean = true): Script.Function {
         let slide: Slide;
         return function*() {
-            slide = global.theater.addSlideByConfig(config);
+            slide = global.theater.addSlide(factory());
             if (waitForCompletion) {
                 while (!slide.fullyLoaded) {
                     yield;

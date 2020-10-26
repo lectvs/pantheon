@@ -2,11 +2,10 @@ class UI extends WorldObject {
 
     shields: Sprite[];
 
-    constructor(config: WorldObject.Config) {
-        super(config, {
-            ignoreCamera: true,
-        });
+    constructor() {
+        super();
 
+        this.ignoreCamera = true;
         this.shields = [];
     }
 
@@ -20,15 +19,14 @@ class UI extends WorldObject {
 
         if (player.health > this.shields.length) {
             for (let i = 0; i < player.health - this.shields.length; i++) {
-                let shield = this.addChild<Sprite>(<Sprite.Config>{
-                    constructor: Sprite,
-                    x: 20 + 36 * this.shields.length, y: 20,
-                    effects: {
-                        silhouette: { color: 0x00FFFF, alpha: 0 },
-                    },
-                    texture: 'ui_shield',
-                    layer: this.layer,
+                let shield = this.addChild(new Sprite());
+                shield.localx = 20 + 36 * this.shields.length;
+                shield.localy = 20;
+                shield.setTexture('ui_shield');
+                shield.effects.updateFromConfig({
+                    silhouette: { color: 0x00FFFF, alpha: 0 }
                 });
+                World.Actions.setLayer(shield, this.layer);
                 this.shields.push(shield);
 
                 this.world.runScript(S.chain(
@@ -42,22 +40,19 @@ class UI extends WorldObject {
             for (let i = 0; i < this.shields.length - player.health; i++) {
                 let shield = this.shields.pop();
                 shield.getTexture().subdivide(4, 4).forEach(subdivision => {
-                    this.addChild(<Sprite.Config>{
-                        constructor: Sprite,
-                        x: shield.x - 16 + subdivision.x, y: shield.y - 16 + subdivision.y,
-                        texture: subdivision.texture,
-                        vx: Random.float(-80, 80),
-                        vy: Random.float(-80, 80),
-                        gravityy: 200,
-                        data: {
-                            vangle: Random.sign() * Random.float(1,2) * 360,
-                        },
-                        life: 1,
-                        updateCallback: (obj: Sprite) => {
-                            obj.angle += obj.data.vangle*obj.delta;
-                            obj.alpha = 1 - obj.life.progress**2;
-                        },
-                    });
+                    let shard = this.addChild(new Sprite());
+                    shard.localx = shield.localx - 16 + subdivision.x;
+                    shard.localy = shield.localy - 16 + subdivision.y;
+                    shard.setTexture(subdivision.texture);
+                    shard.vx = Random.float(-80, 80);
+                    shard.vy = Random.float(-80, 80);
+                    shard.gravityy = 200;
+                    shard.data.vangle = Random.sign() * Random.float(1, 2) * 360;
+                    shard.life.duration = 1;
+                    shard.updateCallback = obj => {
+                        obj.angle += obj.data.vangle*obj.delta;
+                        obj.alpha = 1 - obj.life.progress**2;
+                    };
                 });
                 shield.removeFromWorld();
             }

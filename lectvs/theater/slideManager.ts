@@ -7,8 +7,7 @@ class SlideManager {
         this.slides = [];
     }
 
-    addSlideByConfig(config: Slide.Config) {
-        let slide = new Slide(config);
+    addSlide(slide: Slide) {
         World.Actions.setLayer(slide, Theater.LAYER_SLIDES);
         World.Actions.addWorldObjectToWorld(slide, this.theater);
         this.slides.push(slide);

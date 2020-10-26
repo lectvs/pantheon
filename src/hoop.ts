@@ -7,11 +7,11 @@ class Hoop extends Sprite {
 
     private swingSound: Sound;
 
-    constructor(config: Sprite.Config) {
-        super(config, {
-            texture: 'hoop',
-            bounds: { type: 'circle', x: 0, y: 0, radius: 50 },
-        });
+    constructor() {
+        super();
+
+        this.setTexture('hoop');
+        this.bounds = new CircleBounds(0, 0, 50, this);
 
         this.radius = 47;
         this.currentAttackStrength = 0;

@@ -2,32 +2,9 @@
 /// <reference path="../worldObject/worldObject.ts" />
 
 namespace World {
-    export type Config = {
-        parent?: World.Config;
-        constructor?: any;
+    export type Factory = () => World;
 
-        physicsGroups?: Dict<World.PhysicsGroupConfig>;
-        collisions?: CollisionConfig2[];
-        collisionIterations?: number;
-        useRaycastDisplacementThreshold?: number;
-
-        layers?: World.LayerConfig[];
-
-        camera?: Camera.Config;
-
-        width?: number;
-        height?: number;
-
-        backgroundColor?: number;
-        backgroundAlpha?: number;
-
-        entryPoints?: Dict<Pt>;
-        worldObjects?: WorldObject.Config[];
-
-        volume?: number;
-    }
-
-    export type CollisionConfig2 = {
+    export type CollisionConfig = {
         group1: string;
         group2: string;
         callback?: Physics.CollisionCallback;
@@ -35,7 +12,6 @@ namespace World {
     }
 
     export type LayerConfig = {
-        name: string;
         sortKey?: (worldObject: WorldObject) => number;
         reverseSort?: boolean;
         effects?: Effects.Config;
@@ -55,7 +31,7 @@ class World {
     worldObjects: WorldObject[];
 
     physicsGroups: Dict<World.PhysicsGroup>;
-    collisions: World.CollisionConfig2[];
+    collisions: World.CollisionConfig[];
     collisionIterations: number;
     useRaycastDisplacementThreshold: number;
 
@@ -78,41 +54,35 @@ class World {
 
     volume: number;
 
-    constructor(config: World.Config, defaults?: World.Config) {
-        config = WorldObject.resolveConfig<World.Config>(config, defaults);
-        
+    constructor() {        
         this.scriptManager = new ScriptManager();
         this.soundManager = new SoundManager();
 
         this.select = new WorldSelecter(this);
 
-        this.volume = config.volume ?? 1;
+        this.volume = 1;
 
-        this.width = config.width ?? global.gameWidth;
-        this.height = config.height ?? global.gameHeight;
+        this.width = global.gameWidth;
+        this.height = global.gameHeight;
         this.worldObjects = [];
 
-        this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
-        this.collisions = config.collisions ?? [];
-        this.collisionIterations = config.collisionIterations ?? 1;
-        this.useRaycastDisplacementThreshold = config.useRaycastDisplacementThreshold ?? 1;
+        this.physicsGroups = {};
+        this.collisions = [];
+        this.collisionIterations = 1;
+        this.useRaycastDisplacementThreshold = 1;
 
         this.worldObjectsByName = {};
-        this.layers = this.createLayers(config.layers);
+        this.layers = [ new World.Layer(World.DEFAULT_LAYER, {}) ];
 
-        this.backgroundColor = config.backgroundColor ?? global.backgroundColor;
-        this.backgroundAlpha = config.backgroundAlpha ?? 1;
+        this.backgroundColor = global.backgroundColor;
+        this.backgroundAlpha = 1;
 
         this.screen = new BasicTexture(this.width, this.height);
         this.layerTexture = new BasicTexture(this.width, this.height);
 
-        this.entryPoints = config.entryPoints ?? {};
+        this.entryPoints = {};
 
-        for (let worldObjectConfig of config.worldObjects || []) {
-            World.Actions.addWorldObjectToWorld(WorldObject.fromConfig(worldObjectConfig), this);
-        }
-
-        this.camera = new Camera(config.camera ?? {}, this);
+        this.camera = new Camera({}, this);
     }
 
     update() {
@@ -204,14 +174,28 @@ class World {
         });
     }
 
-    addWorldObject<T extends WorldObject>(obj: T | WorldObject.Config): T {
-        let worldObject: T = obj instanceof WorldObject ? obj : WorldObject.fromConfig<T>(obj);
-        return World.Actions.addWorldObjectToWorld(worldObject, this);
+    addLayer(name: string, config: World.LayerConfig = {}) {
+        if (this.getLayerByName(name)) {
+            error(`Cannot add layer '${name}' to world, as one with that name already exists.`, this);
+            return;
+        }
+        this.layers.splice(this.layers.length-1, 0, new World.Layer(name, config));
+    }
+
+    addPhysicsGroup(name: string, config: World.PhysicsGroupConfig = {}) {
+        if (this.physicsGroups[name]) {
+            error(`Cannot add physics group '${name}' to world, as one with that name already exists.`, this);
+            return;
+        }
+        this.physicsGroups[name] = new World.PhysicsGroup(name, config);
+    }
+
+    addWorldObject<T extends WorldObject>(obj: T): T {
+        return World.Actions.addWorldObjectToWorld(obj, this);
     }
     
-    addWorldObjects<T extends WorldObject>(objs: (T | WorldObject.Config)[]): T[] {
-        let worldObjects: T[] = _.isEmpty(objs) ? [] : objs.map(obj => obj instanceof WorldObject ? <T>obj : WorldObject.fromConfig<T>(obj));
-        return World.Actions.addWorldObjectsToWorld(worldObjects, this);
+    addWorldObjects<T extends WorldObject>(objs: T[]): T[] {
+        return World.Actions.addWorldObjectsToWorld(objs, this);
     }
 
     getDeadWorldObjects() {
@@ -306,35 +290,6 @@ class World {
         return screen;
     }
 
-    private createLayers(layers: World.LayerConfig[]) {
-        if (_.isEmpty(layers)) layers = [];
-
-        layers.push({ name: World.DEFAULT_LAYER });
-
-        let result: World.Layer[] = [];
-        for (let layer of layers) {
-            _.defaults(layer, {
-                reverseSort: false,
-            });
-            result.push(new World.Layer(layer.name, layer, this.width, this.height));
-        }
-
-        return result;
-    }
-
-    private createPhysicsGroups(physicsGroups: Dict<World.PhysicsGroupConfig>) {
-        if (_.isEmpty(physicsGroups)) return {};
-
-        let result: Dict<World.PhysicsGroup> = {};
-        for (let name in physicsGroups) {
-            _.defaults(physicsGroups[name], {
-                collidesWith: [],
-            });
-            result[name] = new World.PhysicsGroup(name, physicsGroups[name]);
-        }
-        return result;
-    }
-    
     private removeDeadWorldObjects() {
         this.removeWorldObjects(this.getDeadWorldObjects());
     }
@@ -442,11 +397,11 @@ namespace World {
 
         effects: Effects;
         
-        constructor(name: string, config: World.LayerConfig, width: number, height: number) {
+        constructor(name: string, config: World.LayerConfig) {
             this.name = name;
             this.worldObjects = [];
             this.sortKey = config.sortKey;
-            this.reverseSort = config.reverseSort;
+            this.reverseSort = config.reverseSort ?? false;
 
             this.effects = new Effects(config.effects);
         }
@@ -676,60 +631,5 @@ namespace World {
             if (_.isEmpty(children)) return [];
             return A.clone(children).filter(child => removeChildFromParent(child));
         }
-    }
-}
-
-namespace World {
-    export function fromConfig<T extends World>(config: World.Config): T {
-        config = World.resolveConfig(config);
-
-        let result = new config.constructor(config);
-        if (result === config) result = new World(config);  // Default constructor to World
-
-        return <T>result;
-    }
-
-    export function resolveConfig<T extends World.Config>(config: T, ...parents: T[]): T {
-        let result = resolveConfigParent(config);
-        if (_.isEmpty(parents)) return <T>result;
-
-        for (let parent of parents) {
-            result.parent = parent;
-            result = resolveConfig(result);
-        }
-
-        return <T>result;
-    }
-
-    function resolveConfigParent(config: WorldObject.Config): WorldObject.Config {
-        if (!config.parent) return _.clone(config);
-
-        let result = resolveConfig(config.parent);
-
-        for (let key in config) {
-            if (key === 'parent') continue;
-            if (!result[key]) {
-                result[key] = config[key];
-            } else if (key === 'entryPoints') {
-                result[key] = O.mergeObject(config[key], result[key]);
-            } else if (key === 'worldObjects') {
-                result[key] = A.mergeArray(config[key], result[key], (e: WorldObject.Config) => e.name,
-                    (e: WorldObject.Config, into: WorldObject.Config) => {
-                        e = resolveConfig(e);
-                        e.parent = into;
-                        return resolveConfig(e);
-                    });
-            } else if (key === 'layers') {
-                // merge layerconfig objects to add effects, for example
-                result[key] = A.mergeArray(config[key], result[key], (e: World.LayerConfig) => e.name,
-                    (e: World.LayerConfig, into: World.LayerConfig) => {
-                        return O.mergeObject(e, into);
-                    });
-            } else {
-                result[key] = config[key];
-            }
-        }
-
-        return result;
     }
 }

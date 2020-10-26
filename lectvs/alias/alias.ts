@@ -5,6 +5,8 @@ type Dimens = {
     height: number;
 }
 
+type Factory<T> = () => T;
+
 type Point = PIXI.Point;
 const Point = PIXI.Point;
 type Pt = {

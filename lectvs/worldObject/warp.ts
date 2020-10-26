@@ -3,11 +3,11 @@ class Warp extends PhysicsWorldObject {
     entryPoint: World.EntryPoint;
     transition: Transition.Config;
 
-    constructor(config: PhysicsWorldObject.Config) {
-        super(config);
-        this.stage = this.data.stage;
-        this.entryPoint = this.data.entryPoint;
-        this.transition = this.data.transition ?? Transition.INSTANT;
+    constructor(stage: string, entryPoint: World.EntryPoint, transition: Transition.Config = Transition.INSTANT) {
+        super();
+        this.stage = stage;
+        this.entryPoint = entryPoint;
+        this.transition = transition;
     }
 
     warp() {

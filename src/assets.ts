@@ -77,8 +77,8 @@ namespace Assets {
         // UI
         'dialogbox': { anchor: Anchor.CENTER },
         'ui_shield': { anchor: Anchor.CENTER },
-        'royalhulatext': {},
-        'hoopkingtext': {},
+        'royalhulatext': { anchor: Anchor.CENTER },
+        'hoopkingtext': { anchor: Anchor.CENTER },
     }
 
     export const sounds: Dict<Preload.Sound> = {

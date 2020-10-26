@@ -11,22 +11,20 @@ class Player extends Sprite {
     private immunitySm: ImmunitySm;
     get immune() { return this.immunitySm.isImmune(); }
 
-    constructor(config: Sprite.Config) {
-        super(config, {
-            texture: 'knight_0',
-            bounds: { type: 'circle', x: 0, y: -4, radius: 6 },
-            effects: {
-                outline: { color: 0x000000 },
-            },
-            animations: [
-                Animations.fromTextureList({ name: 'idle', texturePrefix: 'knight_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'run', texturePrefix: 'knight_', textures: [4, 5, 6, 7], frameRate: 12, count: -1,
-                    overrides: {
-                        2: { callback: () => { this.world.playSound('walk').volume = 0.5; }}
-                    }
-                }),
-            ],
+    constructor() {
+        super();
+
+        this.setTexture('knight_0');
+        this.bounds = new CircleBounds(0, -4, 8, this);
+        this.effects.updateFromConfig({
+            outline: { color: 0x000000 }
         });
+        this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'knight_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
+        this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'knight_', textures: [4, 5, 6, 7], frameRate: 12, count: -1,
+            overrides: {
+                2: { callback: () => { this.world.playSound('walk').volume = 0.5; }}
+            }
+        }));
 
         this.controllerSchema = {
             left: () => Input.isDown('left'),

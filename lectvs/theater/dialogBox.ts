@@ -1,9 +1,8 @@
 /// <reference path="../worldObject/sprite/sprite.ts" />
 
 namespace DialogBox {
-    export type Config = Sprite.Config & {
-        texture: string;
-        spriteTextFont: SpriteText.Font;
+    export type Config = {
+        dialogFont: SpriteText.Font;
         textAreaFull: Rect;
         textAreaPortrait: Rect;
         portraitPosition: Pt;
@@ -25,7 +24,7 @@ class DialogBox extends Sprite {
     private characterTimer: Timer;
 
     constructor(config: DialogBox.Config) {
-        super(config);
+        super();
 
         this.charQueue = [];
         
@@ -36,23 +35,10 @@ class DialogBox extends Sprite {
         this.textArea = this.textAreaFull;
         this.done = true;
 
-        this.spriteText = this.addChild<SpriteText>(<SpriteText.Config>{
-            constructor: SpriteText,
-            font: config.spriteTextFont,
-        });
-
-        let textAreaWorldRect = this.getTextAreaWorldRect();
-        this.spriteText.mask = {
-            texture: Texture.filledRect(textAreaWorldRect.width, textAreaWorldRect.height, 0xFFFFFF),
-            type: 'world',
-            offsetx: textAreaWorldRect.x,
-            offsety: textAreaWorldRect.y,
-        };
+        this.spriteText = this.addChild(new SpriteText(config.dialogFont));
         this.spriteTextOffset = 0;
 
-        this.portraitSprite = this.addChild<Sprite>({
-            constructor: Sprite,
-        });
+        this.portraitSprite = this.addChild(new Sprite());
 
         this.characterTimer = new Timer(0.05, () => this.advanceCharacter(), true);
     }
@@ -123,15 +109,6 @@ class DialogBox extends Sprite {
         };
     }
 
-    getTextAreaWorldRect(): Rect {
-        return {
-            x: this.x + this.textArea.x,
-            y: this.y + this.textArea.y,
-            width: this.textArea.width,
-            height: this.textArea.height,
-        };
-    }
-
     setPortraitSpriteProperties() {
         this.portraitSprite.localx = this.portraitPosition.x;
         this.portraitSprite.localy = this.portraitPosition.y;
@@ -140,6 +117,12 @@ class DialogBox extends Sprite {
     setSpriteTextProperties() {
         this.spriteText.localx = this.textArea.x;
         this.spriteText.localy = this.textArea.y - this.spriteTextOffset;
+        this.spriteText.mask = {
+            type: 'world',
+            texture: Texture.filledRect(this.textArea.width, this.textArea.height, 0xFFFFFF),
+            offsetx: this.x + this.textArea.x,
+            offsety: this.y + this.textArea.y,
+        };
     }
 
     showDialog(dialogText: string) {

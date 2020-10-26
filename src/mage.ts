@@ -7,30 +7,28 @@ class Mage extends Enemy {
 
     private willSpawnNext: boolean;
 
-    constructor(config: Enemy.Config) {
-        super(config, {
-            texture: 'mage_0',
-            bounds: { type: 'circle', x: 0, y: -4, radius: 8 },
-            effects: {
-                outline: { color: 0x000000 },
-            },
-            animations: [
-                Animations.fromTextureList({ name: 'idle', texturePrefix: 'mage_', textures: [0, 1, 2], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'run', texturePrefix: 'mage_', textures: [4, 5], frameRate: 4, count: -1,
-                        overrides: {
-                            2: { callback: () => { this.world.playSound('walk').volume = 0.5; }}
-                        }
-                }),
-                Animations.fromTextureList({ name: 'wave', texturePrefix: 'mage_', textures: [8, 9], frameRate: 2, count: -1 }),
-            ],
-            defaultAnimation: 'idle',
-
+    constructor() {
+        super({
             maxHealth: 1,
             immuneTime: 0.5,
             weight: 1,
             speed: 70,
             deadTexture: 'mage_dead',
         });
+
+        this.setTexture('mage_0');
+        this.bounds = new CircleBounds(0, -4, 8, this);
+        this.effects.updateFromConfig({
+            outline: { color: 0x000000 }
+        });
+        this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'mage_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
+        this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'mage_', textures: [4, 5], frameRate: 4, count: -1,
+                overrides: {
+                    2: { callback: () => { this.world.playSound('walk').volume = 0.5; }}
+                }
+        }));
+        this.addAnimation(Animations.fromTextureList({ name: 'wave', texturePrefix: 'mage_', textures: [8, 9], frameRate: 2, count: -1 }));
+        this.playAnimation('idle');
 
         this.willSpawnNext = true;
 
@@ -123,12 +121,12 @@ class Mage extends Enemy {
     }
 
     spawn() {
-        this.world.addWorldObject(spawn(<Sprite.Config>{
-            constructor: Runner,
-            x: this.targetPos.x, y: this.targetPos.y,
-            layer: 'main',
-            physicsGroup: 'enemies',
-        }));
+        let runner = new Runner();
+        runner.x = this.targetPos.x;
+        runner.y = this.targetPos.y;
+        World.Actions.setLayer(runner, 'main');
+        World.Actions.setPhysicsGroup(runner, 'enemies');
+        this.world.addWorldObject(spawn(runner));
     }
 
     onCollide(other: PhysicsWorldObject) {

@@ -12,176 +12,56 @@ class WaveController extends WorldObject {
 
     spawnWave1() {
         this.currentWave = 1;
+
         this.world.addWorldObjects([
-            spawn(<Sprite.Config>{
-                constructor: Golbin,
-                x: 220, y: 476,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Golbin,
-                x: 548, y: 476,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
+            this.enemySpawn(Golbin, 220, 476),
+            this.enemySpawn(Golbin, 548, 476),
         ]);
     }
 
     spawnWave2() {
         this.currentWave = 2;
         this.world.addWorldObjects([
-            spawn(<Sprite.Config>{
-                constructor: Knight,
-                x: 220, y: 400,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Knight,
-                x: 220, y: 552,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Knight,
-                x: 548, y: 400,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Knight,
-                x: 548, y: 552,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
+            this.enemySpawn(Knight, 220, 400),
+            this.enemySpawn(Knight, 220, 552),
+            this.enemySpawn(Knight, 548, 400),
+            this.enemySpawn(Knight, 548, 552),
         ]);
     }
 
     spawnWave3() {
         this.currentWave = 3;
         this.world.addWorldObjects([
-            spawn(<Sprite.Config>{
-                constructor: Golbin,
-                x: 220, y: 400,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Mage,
-                x: 220, y: 552,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Mage,
-                x: 548, y: 400,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Golbin,
-                x: 548, y: 552,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-
+            this.enemySpawn(Golbin, 220, 400),
+            this.enemySpawn(Mage, 220, 552),
+            this.enemySpawn(Mage, 548, 400),
+            this.enemySpawn(Golbin, 548, 552),
         ]);
     }
 
     spawnWave4() {
         this.currentWave = 4;
         this.world.addWorldObjects([
-            spawn(<Sprite.Config>{
-                constructor: Golbin,
-                x: 220, y: 400,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Golbin,
-                x: 220, y: 552,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Knight,
-                x: 160, y: 476,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Golbin,
-                x: 548, y: 400,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Golbin,
-                x: 548, y: 552,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Knight,
-                x: 608, y: 476,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
+            this.enemySpawn(Golbin, 220, 400),
+            this.enemySpawn(Golbin, 220, 552),
+            this.enemySpawn(Knight, 160, 476),
+            this.enemySpawn(Golbin, 548, 400),
+            this.enemySpawn(Golbin, 548, 552),
+            this.enemySpawn(Knight, 608, 476),
         ]);
     }
 
     spawnWave5() {
         this.currentWave = 5;
         this.world.addWorldObjects([
-            spawn(<Sprite.Config>{
-                constructor: Golbin,
-                x: 220, y: 400,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Knight,
-                x: 220, y: 552,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Knight,
-                x: 160, y: 476,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Mage,
-                x: 100, y: 476,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Knight,
-                x: 548, y: 400,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Golbin,
-                x: 548, y: 552,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Golbin,
-                x: 608, y: 476,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
-            spawn(<Sprite.Config>{
-                constructor: Mage,
-                x: 668, y: 476,
-                layer: 'main',
-                physicsGroup: 'enemies',
-            }),
+            this.enemySpawn(Golbin, 220, 400),
+            this.enemySpawn(Knight, 220, 552),
+            this.enemySpawn(Knight, 160, 476),
+            this.enemySpawn(Mage, 100, 476),
+            this.enemySpawn(Knight, 548, 400),
+            this.enemySpawn(Golbin, 548, 552),
+            this.enemySpawn(Golbin, 608, 476),
+            this.enemySpawn(Mage, 668, 476),
         ]);
     }
 
@@ -190,15 +70,15 @@ class WaveController extends WorldObject {
         
         let guards = this.world.select.nameAll<Sprite>('guard');
         for (let guard of guards) {
-            this.world.addWorldObject(<Enemy.Config>{
-                constructor: Knight,
-                x: guard.x, y: guard.y,
-                layer: 'main',
-                flipX: guard.flipX,
-                tint: guard.tint,
-                maxHealth: 2,
-                physicsGroup: 'enemies',
-            });
+            let newGuard = this.world.addWorldObject(new Knight());
+            newGuard.x = guard.x;
+            newGuard.y = guard.y;
+            newGuard.flipX = guard.flipX;
+            newGuard.tint = guard.tint;
+            newGuard.health = 2;
+            World.Actions.setLayer(newGuard, 'main');
+            World.Actions.setPhysicsGroup(newGuard, 'enemies');
+
             guard.removeFromWorld();
         }
     }
@@ -216,5 +96,14 @@ class WaveController extends WorldObject {
                 S.doOverTime(3, t => music.volume = 0.5*(1-t)),
             ));
         }
+    }
+
+    private enemySpawn(constructor: new () => Enemy, x: number, y: number) {
+        let enemy = new constructor();
+        enemy.x = x;
+        enemy.y = y;
+        World.Actions.setLayer(enemy, 'main');
+        World.Actions.setPhysicsGroup(enemy, 'enemies');
+        return spawn(enemy);
     }
 }

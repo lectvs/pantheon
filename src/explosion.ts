@@ -1,13 +1,12 @@
 class Explosion extends Sprite {
     hasTriggered: boolean;
 
-    constructor(config: Sprite.Config) {
-        super(config, {
-            constructor: Sprite,
-            texture: 'explosion',
-            tint: 0xFFFFFF,
-            bounds: { type: 'circle', x: 0, y: 0, radius: 50 },
-        });
+    constructor() {
+        super();
+
+        this.setTexture('explosion');
+        this.tint = 0xFFFFFF;
+        this.bounds = new CircleBounds(0, 0, 50, this);
 
         this.runScript(S.chain(
             S.wait(0.05),

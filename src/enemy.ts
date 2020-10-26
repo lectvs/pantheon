@@ -1,16 +1,15 @@
 namespace Enemy {
-    export type Config = Sprite.Config & {
-        maxHealth?: number;
-        immuneTime?: number;
-        speed?: number;
-        weight?: number;
+    export type Config = {
+        maxHealth: number;
+        immuneTime: number;
+        weight: number;
+        speed: number;
         damagableByHoop?: boolean;
         deadTexture?: string;
     }
 }
 
 class Enemy extends Sprite {
-
     health: number;
     immuneTime: number;
     weight: number;
@@ -21,14 +20,13 @@ class Enemy extends Sprite {
     private immunitySm: ImmunitySm;
     get immune() { return this.immunitySm.isImmune(); }
 
-    constructor(config: Enemy.Config, defaults?: Enemy.Config) {
-        config = WorldObject.resolveConfig<Enemy.Config>(config, defaults);
-        super(config);
+    constructor(config: Enemy.Config) {
+        super();
 
-        this.health = config.maxHealth ?? 1;
-        this.immuneTime = config.immuneTime ?? 0.5;
-        this.weight = config.weight ?? 1;
-        this.speed = config.speed ?? 0;
+        this.health = config.maxHealth;
+        this.immuneTime = config.immuneTime;
+        this.weight = config.weight;
+        this.speed = config.speed;
         this.damagableByHoop = config.damagableByHoop ?? true;
         this.deadTexture = config.deadTexture;
 

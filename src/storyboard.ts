@@ -29,15 +29,14 @@ function getStoryboard(): Storyboard { return {
             yield S.wait(2);
 
             let player = global.world.select.type(Player);
-            let hoop = global.world.addWorldObject<Sprite>(<Sprite.Config>{
-                name: 'hoop',
-                constructor: Hoop,
-                x: player.x, y: player.y - 32,
-                effects: {
-                    silhouette: { color: 0x00FFFF, alpha: 0 },
-                },
-                layer: 'hoop',
-                physicsGroup: 'hoop',
+            let hoop = global.world.addWorldObject(new Hoop());
+            World.Actions.setName(hoop, 'hoop');
+            World.Actions.setLayer(hoop, 'hoop');
+            World.Actions.setPhysicsGroup(hoop, 'hoop');
+            hoop.x = player.x;
+            hoop.y = player.y - 32;
+            hoop.effects.updateFromConfig({
+                silhouette: { color: 0x00FFFF, alpha: 0 }
             });
 
             let whoosh = global.world.playSound('swing');
@@ -60,27 +59,26 @@ function getStoryboard(): Storyboard { return {
             global.world.playSound('jingle').volume = 0.5;
 
             yield S.simul(
-                S.showSlide({
-                    x: 0, y: 0,
-                    texture: Texture.filledRect(global.gameWidth, global.gameHeight, 0x000000, 0.8),
-                    timeToLoad: 2,
-                    fadeIn: true,
+                S.showSlide(() => {
+                    let slide = new Slide({ timeToLoad: 2, fadeIn: true });
+                    slide.setTexture(Texture.filledRect(global.gameWidth, global.gameHeight, 0x000000, 0.8));
+                    slide.x = 0; slide.y = 0;
+                    return slide;
                 }),
-                S.showSlide({
-                    x: 0, y: 0,
-                    texture: 'royalhulatext',
-                    timeToLoad: 2,
-                    fadeIn: true,
+                S.showSlide(() => {
+                    let slide = new Slide({ timeToLoad: 2, fadeIn: true });
+                    slide.setTexture('royalhulatext');
+                    return slide;
                 }),
             );
 
-            let text = global.theater.addWorldObject<SpriteText>(<SpriteText.Config>{
-                constructor: SpriteText,
-                x: global.gameWidth/2 - 17*8, y: global.gameHeight/2 + 60,
-                text: "sounds like a lot of HOOPLAH to me",
-                style: { color: 0xFFFFFF, alpha: 0 },
-                font: Assets.fonts.DELUXE16,
-            });
+            let text = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16));
+            text.setStyle({ alpha: 0 });
+            text.setText("sounds like a lot of HOOPLAH to me");
+            text.x = global.gameWidth/2 - text.getTextWidth()/2;
+            text.y = global.gameHeight/2 + 60;
+            World.Actions.setName(text, 'textt');
+
             yield S.wait(2);
             yield S.doOverTime(2, t => text.style.alpha = t);
 
@@ -278,11 +276,10 @@ function getStoryboard(): Storyboard { return {
 
             global.world.runScript(S.chain(
                 S.wait(0.5),
-                S.showSlide({
-                    x: 0, y: 0,
-                    texture: 'hoopkingtext',
-                    timeToLoad: 2,
-                    fadeIn: true,
+                S.showSlide(() => {
+                    let slide = new Slide({ timeToLoad: 2, fadeIn: true });
+                    slide.setTexture('hoopkingtext');
+                    return slide;
                 }),
                 S.wait(3),
                 S.fadeSlides(2),
@@ -328,26 +325,22 @@ function getStoryboard(): Storyboard { return {
             );
             yield S.wait(1);
 
-            let text = global.theater.addWorldObject<SpriteText>(<SpriteText.Config>{
-                constructor: SpriteText,
-                x: global.gameWidth/2 - 17*8, y: global.gameHeight/2 - 8,
-                text: "and thus begins the tale of the...",
-                style: { color: 0x000000, alpha: 0 },
-                font: Assets.fonts.DELUXE16,
-                ignoreCamera: true,
-            });
+            let text = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16));
+            text.setStyle({ color: 0x000000, alpha: 0 });
+            text.setText("and thus begins the tale of the...");
+            text.x = global.gameWidth/2 - text.getTextWidth()/2;
+            text.y = global.gameHeight/2 - 8;
+            text.ignoreCamera = true;
 
             yield S.doOverTime(3, t => text.style.alpha = t);
             yield S.wait(2);
 
-            let text2 = global.theater.addWorldObject<SpriteText>(<SpriteText.Config>{
-                constructor: SpriteText,
-                x: global.gameWidth/2 - 5.5*8, y: global.gameHeight/2 + 8,
-                text: "HOOP KNIGHT",
-                style: { color: 0x000000, alpha: 0 },
-                font: Assets.fonts.DELUXE16,
-                ignoreCamera: true,
-            });
+            let text2 = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16));
+            text2.setStyle({ color: 0x000000, alpha: 0 });
+            text2.setText("HOOP KNIGHT");
+            text2.x = global.gameWidth/2 - text2.getTextWidth()/2;
+            text2.y = global.gameHeight/2 + 8;
+            text2.ignoreCamera = true;
 
             yield S.doOverTime(3, t => text2.style.alpha = t);
             yield S.wait(5);

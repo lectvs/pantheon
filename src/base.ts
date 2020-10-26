@@ -1,82 +1,62 @@
 
-function BASE_STAGE(): World.Config {
-    return {
-        constructor: World,
-        backgroundColor: 0x000000,
-        layers: [
-            { name: 'bg' },
-            { name: 'hoop' },
-            { name: 'main', sortKey: obj => obj.y },
-            { name: 'king_shadow_start' },
-            { name: 'king_start' },
-            { name: 'fg' },
-        ],
-        physicsGroups: {
-            'player': {},
-            'hoop': {},
-            'enemies': {},
-            'bombs': {},
-            'bullets': {},
-            'walls': { immovable: true },
-        },
-        collisions: [
-            { group1: 'player', group2: 'enemies' },
-            { group1: 'player', group2: 'bullets' },
-            { group1: 'player', group2: 'walls', transferMomentum: false },
+function BASE_STAGE(): World {
+    let world = new World();
 
-            { group1: 'enemies', group2: 'walls', transferMomentum: false },
-            { group1: 'bullets', group2: 'walls' },
-            { group1: 'bombs', group2: 'walls' },
-            { group1: 'bombs', group2: 'enemies' },
+    world.backgroundColor = 0x000000;
+    world.addLayer('bg');
+    world.addLayer('hoop');
+    world.addLayer('main', { sortKey: obj => obj.y });
+    world.addLayer('king_shadow_start');
+    world.addLayer('king_start');
+    world.addLayer('fg');
+    world.addPhysicsGroup('player');
+    world.addPhysicsGroup('hoop');
+    world.addPhysicsGroup('enemies');
+    world.addPhysicsGroup('bombs');
+    world.addPhysicsGroup('bullets');
+    world.addPhysicsGroup('walls', { immovable: true });
+    world.collisions.push({ group1: 'player', group2: 'enemies' });
+    world.collisions.push({ group1: 'player', group2: 'bullets' });
+    world.collisions.push({ group1: 'player', group2: 'walls', transferMomentum: false });
+    world.collisions.push({ group1: 'enemies', group2: 'walls', transferMomentum: false });
+    world.collisions.push({ group1: 'bullets', group2: 'walls' });
+    world.collisions.push({ group1: 'bombs', group2: 'walls' });
+    world.collisions.push({ group1: 'bombs', group2: 'enemies' });
+    world.collisions.push({ group1: 'hoop', group2: 'enemies' });
+    world.collisions.push({ group1: 'hoop', group2: 'bombs' });
+    world.collisions.push({ group1: 'hoop', group2: 'walls' });
+    world.collisionIterations = 4;
+    world.useRaycastDisplacementThreshold = 4;
 
-            { group1: 'hoop', group2: 'enemies' },
-            { group1: 'hoop', group2: 'bombs' },
-            { group1: 'hoop', group2: 'walls' },
-        ],
-        collisionIterations: 4,
-        useRaycastDisplacementThreshold: 4,
-    };
+    return world;
 }
 
 function BASE_CAMERA_MOVEMENT(): Camera.SmoothMovement {
     return { type: 'smooth', speed: 10, deadZoneWidth: 40, deadZoneHeight: 30 };
 }
 
-function MENU_BASE_STAGE(): World.Config {
-    return {
-        constructor: World,
-        backgroundColor: 0x000000,
-        volume: 0,
-    };
-}
-
-function WORLD_BOUNDS(left: number, top: number, right: number, bottom: number): WorldObject.Config {
+function WORLD_BOUNDS(left: number, top: number, right: number, bottom: number): WorldObject {
     let thickness = 40;
     let width = right-left;
     let height = bottom-top;
-    return {
-        constructor: WorldObject,
-        children: [
-            <PhysicsWorldObject.Config>{
-                constructor: PhysicsWorldObject,
-                bounds: { type: 'rect', x: left-thickness, y: top-thickness, width: thickness, height: height+2*thickness },
-                physicsGroup: 'walls',
-            },
-            <PhysicsWorldObject.Config>{
-                constructor: PhysicsWorldObject,
-                bounds: { type: 'rect', x: right, y: top-thickness, width: thickness, height: height+2*thickness },
-                physicsGroup: 'walls',
-            },
-            <PhysicsWorldObject.Config>{
-                constructor: PhysicsWorldObject,
-                bounds: { type: 'rect', x: left, y: top-thickness, width: width, height: thickness },
-                physicsGroup: 'walls',
-            },
-            <PhysicsWorldObject.Config>{
-                constructor: PhysicsWorldObject,
-                bounds: { type: 'rect', x: left, y: bottom, width: width, height: thickness },
-                physicsGroup: 'walls',
-            },
-        ]
-    };
+
+    let worldBounds = new WorldObject();
+
+    let leftBound = worldBounds.addChild(new PhysicsWorldObject());
+    leftBound.bounds = new RectBounds(left-thickness, top-thickness, thickness, height+2*thickness, leftBound);
+    World.Actions.setPhysicsGroup(leftBound, 'walls');
+
+    let rightBound = worldBounds.addChild(new PhysicsWorldObject());
+    rightBound.bounds = new RectBounds(right, top-thickness, thickness, height+2*thickness, rightBound);
+    World.Actions.setPhysicsGroup(rightBound, 'walls');
+
+    let topBound = worldBounds.addChild(new PhysicsWorldObject());
+    topBound.bounds = new RectBounds(left, top-thickness, width, thickness, topBound);
+    World.Actions.setPhysicsGroup(topBound, 'walls');
+
+    let bottomBound = worldBounds.addChild(new PhysicsWorldObject());
+    bottomBound.bounds = new RectBounds(left, bottom, width, thickness, bottomBound);
+    World.Actions.setPhysicsGroup(bottomBound, 'walls');
+
+    return worldBounds;
 }

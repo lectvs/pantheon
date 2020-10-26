@@ -1,9 +1,9 @@
 class Bullet extends Sprite {
-    constructor(config: Sprite.Config) {
-        super(config, {
-            texture: 'bullet',
-            bounds: { type: 'circle', x: 0, y: 0, radius: 4 },
-        });
+    constructor() {
+        super();
+
+        this.setTexture('bullet');
+        this.bounds = new CircleBounds(0, 0, 4, this);
     }
 
     onCollide(other: PhysicsWorldObject) {

@@ -1,13 +1,4 @@
 namespace Tilemap {
-    export type Config = WorldObject.Config & {
-        tilemap: string | Tilemap.Tilemap;
-        tilemapLayer?: number;
-        zMap?: Tilemap.ZMap;
-        animation?: Tilemap.Animation;
-        debug?: WorldObject.DebugConfig & {
-            drawBounds?: boolean;
-        };
-    };
     export type Tile = {
         index: number;
         angle: number;
@@ -61,15 +52,14 @@ class Tilemap extends WorldObject {
 
     get tileset() { return this.tilemap.tileset; }
 
-    constructor(config: Tilemap.Config) {
-        super(config);
-        this.tilemap = Tilemap.cloneTilemap(_.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap);
-        this.tilemapLayer = config.tilemapLayer ?? 0;
+    constructor(tilemap: string | Tilemap.Tilemap, layer: number = 0) {
+        super();
 
-        this.animation = config.animation;
-        this.zMap = config.zMap ?? {};
+        this.tilemap = Tilemap.cloneTilemap(_.isString(tilemap) ? AssetCache.getTilemap(tilemap) : tilemap);
+        this.tilemapLayer = layer;
 
-        this.debugDrawBounds = config.debug?.drawBounds ?? false;
+        this.zMap = {};
+        this.debugDrawBounds = false;
 
         this.dirty = true;
     }
@@ -79,11 +69,6 @@ class Tilemap extends WorldObject {
             this.createTilemap();
             this.dirty = false;
         }
-    }
-
-    protected createTilemap() {
-        this.drawRenderTexture();
-        this.createCollisionBoxes();
     }
 
     getTile(x: number, y: number) {
@@ -102,22 +87,22 @@ class Tilemap extends WorldObject {
         Tilemap.optimizeCollisionRects(collisionRects);  // Not optimizing entire array first to save some cycles.
         Tilemap.optimizeCollisionRects(collisionRects, Tilemap.OPTIMIZE_ALL);
         for (let rect of collisionRects) {
-            let box = new PhysicsWorldObject({
-                x: this.x, y: this.y,
-                bounds: {
-                    type: 'rect',
-                    ...rect
-                },
-                physicsGroup: this.physicsGroup,
-                immovable: true,
-                debug: {
-                    drawBounds: this.debugDrawBounds,
-                },
-            });
+            let box = new PhysicsWorldObject();
+            box.x = this.x;
+            box.y = this.y;
+            box.bounds = new RectBounds(rect.x, rect.y, rect.width, rect.height, box);
+            World.Actions.setPhysicsGroup(box, this.physicsGroup);
+            box.setImmovable(true);
+            box.debugDrawBounds = this.debugDrawBounds;
             this.collisionBoxes.push(box);
         }
 
         this.addChildren(this.collisionBoxes);
+    }
+
+    protected createTilemap() {
+        this.drawRenderTexture();
+        this.createCollisionBoxes();
     }
 
     private drawRenderTexture() {
@@ -157,17 +142,17 @@ class Tilemap extends WorldObject {
 
         for (let zValue in texturesByZ) {
             let zHeight = texturesByZ[zValue].zHeight * this.tileset.tileHeight;
-            let zTexture = World.Actions.addChildToParent(new Sprite({
-                layer: this.layer,
-                x: this.x + texturesByZ[zValue].bounds.x,
-                y: this.y + texturesByZ[zValue].bounds.y + zHeight,
-                texture: this.animation ? undefined : texturesByZ[zValue].frames[0],
-                animations: this.animation ? [
-                    Animations.fromTextureList({ name: 'play', textures: texturesByZ[zValue].frames, frameRate: this.animation.frameRate, count: -1 })
-                ] : undefined,
-                defaultAnimation: this.animation ? 'play' : undefined,
-                offset: { x: 0, y: -zHeight },
-            }), this);
+            let zTexture = this.addChild(new Sprite());
+            zTexture.x = this.x + texturesByZ[zValue].bounds.x;
+            zTexture.y = this.y + texturesByZ[zValue].bounds.y + zHeight;
+            World.Actions.setLayer(zTexture, this.layer);
+            zTexture.offset.y = -zHeight;
+            zTexture.setTexture(this.animation ? undefined : texturesByZ[zValue].frames[0]);
+            if (this.animation) {
+                zTexture.addAnimation(Animations.fromTextureList({ name: 'play', textures: texturesByZ[zValue].frames, frameRate: this.animation.frameRate, count: -1 }));
+                zTexture.playAnimation('play');
+            }
+
             this.zTextures.push(zTexture);
         }
 

@@ -7,8 +7,8 @@ namespace Menu {
 class Menu extends World {
     menuSystem: MenuSystem;
 
-    constructor(menuSystem: MenuSystem, config: World.Config = {}, items?: WorldObject[]) {
-        super(config);
+    constructor(menuSystem: MenuSystem, items?: WorldObject[]) {
+        super();
         this.menuSystem = menuSystem;
         World.Actions.addWorldObjectsToWorld(items, this);
     }
@@ -18,23 +18,18 @@ class MetricsMenu extends Menu {
     private plot: MetricsPlot.Plot;
 
     constructor(menuSystem: MenuSystem) {
-        super(menuSystem, {
-            backgroundColor: 0x000000,
-            worldObjects: [
-            ]
-        });
+        super(menuSystem);
+
+        this.backgroundColor = 0x000000;
 
         this.plot = global.metrics.plotLastRecording();
-        this.addWorldObject(<Sprite.Config>{
-            constructor: Sprite,
-            texture: this.plot.texture,
-        });
-        this.addWorldObject(<SpriteText.Config>{
-            name: 'graphxy',
-            constructor: SpriteText,
-            font: Assets.fonts.DELUXE16,
-            style: { color: 0x00FF00 },
-        });
+        
+        let plotSprite = this.addWorldObject(new Sprite());
+        plotSprite.setTexture(this.plot.texture);
+
+        let graphxy = this.addWorldObject(new SpriteText(Debug.FONT));
+        World.Actions.setName(graphxy, 'graphxy');
+        graphxy.style.color = 0x00FF00;
     }
 
     update() {

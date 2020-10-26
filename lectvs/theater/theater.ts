@@ -2,9 +2,10 @@
 /// <reference path="../world/world.ts"/>
 
 namespace Theater {
+    export type TheaterClass = new (config: Theater.Config) => Theater;
     export type Config = {
         theaterClass?: TheaterClass;
-        getStages: () => Dict<World.Config>;
+        getStages: () => Dict<World.Factory>;
         stageToLoad: string;
         stageEntryPoint?: World.EntryPoint;
         story: {
@@ -14,11 +15,9 @@ namespace Theater {
             getStoryConfig: () => StoryConfig.Config;
         },
         getParty: () => Party.Config;
-        dialogBox: DialogBox.Config;
+        dialogBox: Factory<DialogBox>;
         autoPlayScript?: () => IterableIterator<any>;
     }
-    
-    export type TheaterClass = new (config: Theater.Config) => Theater;
 }
 
 class Theater extends World {
@@ -37,14 +36,12 @@ class Theater extends World {
     get slides() { return this.slideManager ? this.slideManager.slides : []; }
     
     constructor(config: Theater.Config) {
-        super({
-            layers: [
-                { name: Theater.LAYER_WORLD },
-                { name: Theater.LAYER_TRANSITION },
-                { name: Theater.LAYER_SLIDES },
-                { name: Theater.LAYER_DIALOG },
-            ],
-        });
+        super();
+
+        this.addLayer(Theater.LAYER_WORLD);
+        this.addLayer(Theater.LAYER_TRANSITION);
+        this.addLayer(Theater.LAYER_SLIDES);
+        this.addLayer(Theater.LAYER_DIALOG);
 
         this.loadDialogBox(config.dialogBox);
 
@@ -77,8 +74,8 @@ class Theater extends World {
         this.interactionManager.postRender();
     }
 
-    addSlideByConfig(config: Slide.Config) {
-        return this.slideManager.addSlideByConfig(config);
+    addSlide(slide: Slide) {
+        return this.slideManager.addSlide(slide);
     }
 
     clearSlides(exceptLast: number = 0) {
@@ -97,8 +94,8 @@ class Theater extends World {
         // Override to do nothing since we don't want to display the theater's mouse position
     }
     
-    private loadDialogBox(config: DialogBox.Config) {
-        this.dialogBox = this.addWorldObject<DialogBox>(config);
+    private loadDialogBox(factory: Factory<DialogBox>) {
+        this.dialogBox = this.addWorldObject(factory());
         this.dialogBox.visible = false;
         World.Actions.setLayer(this.dialogBox, Theater.LAYER_DIALOG);
     }
@@ -116,10 +113,11 @@ namespace Theater {
         private worldTexture: Texture;
 
         constructor(containedWorld: World) {
-            let texture = new BasicTexture(containedWorld.width, containedWorld.height);
-            super({ texture: texture });
+            super();
+
             this.containedWorld = containedWorld;
-            this.worldTexture = texture;
+            this.worldTexture = new BasicTexture(containedWorld.width, containedWorld.height);
+            this.setTexture(this.worldTexture);
         }
 
         update() {

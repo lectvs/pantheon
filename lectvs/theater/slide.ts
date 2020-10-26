@@ -1,7 +1,7 @@
 /// <reference path="../worldObject/sprite/sprite.ts"/>
 
 namespace Slide {
-    export type Config = Sprite.Config & {
+    export type Config = {
         timeToLoad?: number;
 
         fadeIn?: boolean
@@ -15,10 +15,10 @@ class Slide extends Sprite {
     fullyLoaded: boolean;
 
     constructor(config: Slide.Config) {
-        super(config, {
-            x: global.gameWidth/2,
-            y: global.gameHeight/2,
-        });
+        super();
+
+        this.x = global.gameWidth/2;
+        this.y = global.gameHeight/2;
 
         let timeToLoad = config.timeToLoad ?? 0;
         this.timer = new Timer(timeToLoad);

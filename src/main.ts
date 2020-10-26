@@ -69,21 +69,24 @@ Main.loadConfig({
                 getStoryConfig: getStoryConfig,
             },
             getParty: getParty,
-            dialogBox: {
-                constructor: DialogBox,
-                x: 200, y: 250,
-                texture: 'dialogbox',
-                spriteTextFont: Assets.fonts.DELUXE16,
-                textAreaFull: { x: -192, y: -42, width: 384, height: 84 },
-                textAreaPortrait: { x: -200, y: -50, width: 400, height: 100 },
-                portraitPosition: { x: 78, y: 0 },
-                ignoreCamera: true,
+            dialogBox: () => {
+                let dialogBox = new DialogBox({
+                    dialogFont: Assets.fonts.DELUXE16,
+                    textAreaFull: { x: -192, y: -42, width: 384, height: 84 },
+                    textAreaPortrait: { x: -200, y: -50, width: 400, height: 100 },
+                    portraitPosition: { x: 78, y: 0 },
+                });
+                dialogBox.x = 200;
+                dialogBox.y = 250;
+                dialogBox.setTexture('dialogbox');
+                dialogBox.ignoreCamera = true;
+                return dialogBox;
             },
         },
     },
 
     debug: {
-        debug: false,
+        debug: true,
         font: Assets.fonts.DELUXE16,
         fontStyle: { color: 0x008800 },
         cheatsEnabled: true,

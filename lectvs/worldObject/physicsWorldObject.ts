@@ -1,52 +1,5 @@
 /// <reference path="./worldObject.ts" />
 
-namespace PhysicsWorldObject {
-    export type Config = WorldObject.Config & {
-        vx?: number;
-        vy?: number;
-        vz?: number;
-        mass?: number;
-        gravityx?: number;
-        gravityy?: number;
-        gravityz?: number;
-        bounce?: number;
-        bounds?: BoundsConfig;
-        immovable?: boolean;
-        colliding?: boolean;
-        simulating?: boolean;
-
-        debug?: WorldObject.DebugConfig & {
-            drawBounds?: boolean;
-        };
-    }
-
-    export type BoundsConfig = RectBoundsConfig | CircleBoundsConfig | SlopeBoundsConfig;
-
-    export type RectBoundsConfig = {
-        type: 'rect';
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-    }
-
-    export type CircleBoundsConfig = {
-        type: 'circle';
-        x: number;
-        y: number;
-        radius: number;
-    }
-
-    export type SlopeBoundsConfig = {
-        type: 'slope';
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-        direction: SlopeBounds.Direction;
-    }
-}
-
 class PhysicsWorldObject extends WorldObject {
     vx: number;
     vy: number;
@@ -68,25 +21,24 @@ class PhysicsWorldObject extends WorldObject {
 
     private _immovable: boolean;
 
-    constructor(config: PhysicsWorldObject.Config, defaults?: PhysicsWorldObject.Config) {
-        config = WorldObject.resolveConfig<PhysicsWorldObject.Config>(config, defaults);
-        super(config);
-        this.vx = config.vx ?? 0;
-        this.vy = config.vy ?? 0;
-        this.vz = config.vz ?? 0;
-        this.mass = config.mass ?? 1;
-        this.gravityx = config.gravityx ?? 0;
-        this.gravityy = config.gravityy ?? 0;
-        this.gravityz = config.gravityz ?? 0;
-        this.bounce = config.bounce ?? 0;
+    constructor() {
+        super();
+        this.vx = 0;
+        this.vy = 0;
+        this.vz = 0;
+        this.mass = 1;
+        this.gravityx = 0;
+        this.gravityy = 0;
+        this.gravityz = 0;
+        this.bounce = 0;
 
-        this.bounds = this.createBounds(config.bounds);
+        this.bounds = new NullBounds();
 
-        this._immovable = config.immovable ?? false;
-        this.colliding = config.colliding ?? true;
+        this._immovable = false;
+        this.colliding = true;
 
-        this.debugDrawBounds = config.debug?.drawBounds ?? false;
-        this.simulating = config.simulating ?? true;
+        this.debugDrawBounds = false;
+        this.simulating = true;
 
         this.physicslastx = this.x;
         this.physicslasty = this.y;
@@ -164,15 +116,6 @@ class PhysicsWorldObject extends WorldObject {
     simulate() {
         this.applyGravity();
         this.move();
-    }
-
-    private createBounds(bounds: PhysicsWorldObject.BoundsConfig) {
-        if (bounds) {
-            if (bounds.type === 'rect') return new RectBounds(bounds.x, bounds.y, bounds.width, bounds.height, this);
-            if (bounds.type === 'circle') return new CircleBounds(bounds.x, bounds.y, bounds.radius, this);
-            if (bounds.type === 'slope') return new SlopeBounds(bounds.x, bounds.y, bounds.width, bounds.height, bounds.direction, this);
-        }
-        return new NullBounds();
     }
 
     private drawBounds(screen: Texture) {

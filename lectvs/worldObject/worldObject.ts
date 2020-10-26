@@ -1,37 +1,10 @@
 /// <reference path="../utils/uid.ts" />
 
 namespace WorldObject {
-    export type Config = {
-        parent?: WorldObject.Config;
-        constructor?: any;
-        name?: string;
-        layer?: string;
-        physicsGroup?: string;
-        x?: number;
-        y?: number;
-        z?: number;
-        visible?: boolean;
-        active?: boolean;
-        life?: number;
-        ignoreCamera?: boolean;
-        zBehavior?: ZBehavior;
-        timeScale?: number;
-        data?: any;
-        controllable?: boolean;
-        children?: WorldObject.Config[];
-        updateCallback?: UpdateCallback;
-        renderCallback?: RenderCallback;
-        debug?: DebugConfig;
-    }
-
-    export type DebugConfig = {
-        followMouse?: boolean;
-    }
-
     export type ZBehavior = 'noop' | 'threequarters';
 
-    export type UpdateCallback = (obj: WorldObject) => any;
-    export type RenderCallback = (obj: WorldObject, screen: Texture) => any;
+    export type UpdateCallback<T> = (obj: T) => any;
+    export type RenderCallback<T> = (obj: T, screen: Texture) => any;
 }
 
 class WorldObject {
@@ -88,23 +61,22 @@ class WorldObject {
     protected stateMachine: StateMachine;
     get state() { return this.stateMachine.getCurrentStateName(); }
 
-    private updateCallback: WorldObject.UpdateCallback;
-    private renderCallback: WorldObject.RenderCallback;
+    updateCallback: WorldObject.UpdateCallback<this>;
+    renderCallback: WorldObject.RenderCallback<this>;
 
     debugFollowMouse: boolean;
 
-    constructor(config: WorldObject.Config, defaults?: WorldObject.Config) {
-        config = WorldObject.resolveConfig(config, defaults);
-        this.localx = config.x ?? 0;
-        this.localy = config.y ?? 0;
-        this.localz = config.z ?? 0;
-        this.visible = config.visible ?? true;
-        this.active = config.active ?? true;
-        this.life = new Timer(config.life ?? Infinity, () => this.kill());
-        this.zBehavior = config.zBehavior ?? WorldObject.DEFAULT_Z_BEHAVIOR;
-        this.timeScale = config.timeScale ?? 1;
-        this.ignoreCamera = config.ignoreCamera ?? false;
-        this.data = config.data ? _.clone(config.data) : {};
+    constructor() {
+        this.localx = 0;
+        this.localy = 0;
+        this.localz = 0;
+        this.visible = true;
+        this.active = true;
+        this.life = new Timer(Infinity, () => this.kill());
+        this.zBehavior = WorldObject.DEFAULT_Z_BEHAVIOR;
+        this.timeScale = 1;
+        this.ignoreCamera = false;
+        this.data = {};
 
         this.alive = true;
 
@@ -112,27 +84,24 @@ class WorldObject {
         this.lasty = this.y;
         this.lastz = this.z;
 
-        this.controllable = config.controllable ?? false;
+        this.controllable = false;
         this.controller = {};
         this.controllerSchema = {};
 
         this.uid = WorldObject.UID.generate();
 
         this._world = null;
-        this.internalSetNameWorldObject(config.name);
-        this.internalSetLayerWorldObject(config.layer);
-        this.internalSetPhysicsGroupWorldObject(config.physicsGroup);
         this._children = [];
         this._parent = null;
-        this.addChildren(config.children);
+
+        this.internalSetNameWorldObject(undefined);
+        this.internalSetLayerWorldObject(undefined);
+        this.internalSetPhysicsGroupWorldObject(undefined);
 
         this.scriptManager = new ScriptManager();
         this.stateMachine = new StateMachine();
 
-        this.updateCallback = config.updateCallback;
-        this.renderCallback = config.renderCallback;
-
-        this.debugFollowMouse = config.debug?.followMouse ?? false;
+        this.debugFollowMouse = false;
     }
 
     onAdd() {}
@@ -233,9 +202,8 @@ class WorldObject {
         this.postRender();
     }
 
-    addChild<T extends WorldObject>(child: T | WorldObject.Config): T {
-        let worldObject: T = child instanceof WorldObject ? child : WorldObject.fromConfig(child);
-        return World.Actions.addChildToParent(worldObject, this);
+    addChild<T extends WorldObject>(child: T): T {
+        return World.Actions.addChildToParent(child, this);
     }
 
     addChildKeepWorldPosition<T extends WorldObject>(child: T): T {
@@ -249,9 +217,8 @@ class WorldObject {
         return result;
     }
 
-    addChildren<T extends WorldObject>(children: (T | WorldObject.Config)[]): T[] {
-        let worldObjects: T[] = _.isEmpty(children) ? [] : children.map(child => child instanceof WorldObject ? <T>child : WorldObject.fromConfig<T>(child));
-        return World.Actions.addChildrenToParent(worldObjects, this);
+    addChildren<T extends WorldObject>(children: T[]): T[] {
+        return World.Actions.addChildrenToParent(children, this);
     }
 
     getChildByIndex<T extends WorldObject>(index: number) {
@@ -388,51 +355,5 @@ class WorldObject {
 }
 
 namespace WorldObject {
-    export function fromConfig<T extends WorldObject>(config: WorldObject.Config): T {
-        config = WorldObject.resolveConfig(config);
-
-        let result = new config.constructor(config);
-        if (result === config) result = new WorldObject(config);  // Default constructor to WorldObject
-
-        return <T>result;
-    }
-
-    export function resolveConfig<T extends WorldObject.Config>(config: T, ...parents: T[]): T {
-        let result = resolveConfigParent(config);
-        if (_.isEmpty(parents)) return <T>result;
-
-        for (let parent of parents) {
-            result.parent = parent;
-            result = resolveConfig(result);
-        }
-
-        return <T>result;
-    }
-
-    function resolveConfigParent(config: WorldObject.Config): WorldObject.Config {
-        if (!config.parent) return _.clone(config);
-
-        let result = resolveConfig(config.parent);
-
-        for (let key in config) {
-            if (key === 'parent') continue;
-            if (!result[key]) {
-                result[key] = config[key];
-            } else if (key === 'animations') {
-                result[key] = A.mergeArray(config[key], result[key], (e: Animation.Config) => e.name);
-            } else if (key === 'states') {
-                result[key] = O.mergeObject(config[key], result[key]);
-            } else if (key === 'data') {
-                result[key] = O.withOverrides(result[key], config[key]);
-            } else if (key === 'children') {
-                result[key] = A.mergeArray(config[key], result[key], (e: WorldObject.Config) => e.name, resolveConfig);
-            } else {
-                result[key] = config[key];
-            }
-        }
-
-        return result;
-    }
-
     export const UID = new UIDGenerator();
 }

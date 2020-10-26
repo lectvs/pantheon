@@ -1,13 +1,6 @@
 /// <reference path="../worldObject.ts" />
 
 namespace SpriteText {
-    export type Config = WorldObject.Config & {
-        font: Font;
-        text?: string;
-        style?: Style;
-        mask?: Mask.WorldObjectMaskConfig;
-    }
-
     export type Font = {
         texture: string;
         charWidth: number;
@@ -27,25 +20,30 @@ namespace SpriteText {
 
 class SpriteText extends WorldObject {
     font: SpriteText.Font;
-    style: SpriteText.Style;
     chars: SpriteText.Character[];
+
+    private _style: SpriteText.Style;
+    get style() { return this._style; }
 
     mask: Mask.WorldObjectMaskConfig;
 
     private fontTexture: Texture;
 
-    constructor(config: SpriteText.Config) {
-        super(config);
-        this.font = config.font;
-        this.style = O.withDefaults(config.style ?? {}, {
+    constructor(font: SpriteText.Font) {
+        super();
+
+        this.font = font;
+        this.fontTexture = AssetCache.getTexture(this.font.texture);
+
+        this._style = {
             color: 0xFFFFFF,
             alpha: 1,
             offset: 0,
-        });
-        this.setText(config.text);
+        };
 
-        this.fontTexture = AssetCache.getTexture(this.font.texture);
-        this.mask = config.mask;
+        this.mask = null;
+
+        this.clear();
     }
 
     render(screen: Texture) {
@@ -82,6 +80,10 @@ class SpriteText extends WorldObject {
     getTextWorldBounds(): Rect {
         // TODO: adjust for alignment
         return { x: this.x, y: this.y, width: this.getTextWidth(), height: this.getTextHeight() };
+    }
+
+    setStyle(style: SpriteText.Style) {
+        O.deepOverride(this.style, style);
     }
 
     setText(text: string) {

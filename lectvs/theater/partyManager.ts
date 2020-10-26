@@ -6,7 +6,7 @@ namespace Party {
     }
 
     export type Member = {
-        config: WorldObject.Config;
+        newInstance: () => WorldObject;
         stage: string;
         worldObject?: WorldObject;
     }
@@ -71,8 +71,7 @@ class PartyManager {
     load() {
         for (let key in this.members) {
             let member = this.members[key];
-            member.config = WorldObject.resolveConfig(member.config);
-            member.worldObject = WorldObject.fromConfig(member.config);
+            member.worldObject = member.newInstance();
             if (key === this.leader) {
                 member.worldObject.controllable = true;
             }

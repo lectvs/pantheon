@@ -1,5 +1,5 @@
 class StageManager {
-    stages: Dict<World.Config>;
+    stages: Dict<World.Factory>;
 
     currentStageName: string;
     currentWorld: World;
@@ -11,7 +11,7 @@ class StageManager {
     private theater: Theater;
     private stageLoadQueue: { name: string, transitionConfig: Transition.Config, entryPoint: World.EntryPoint };
 
-    constructor(theater: Theater, stages: Dict<World.Config>) {
+    constructor(theater: Theater, stages: Dict<World.Factory>) {
         this.theater = theater;
         this.stages = stages;
         this.currentStageName = null;
@@ -72,6 +72,11 @@ class StageManager {
     }
 
     private setStage(name: string, entryPoint: World.EntryPoint) {
+        if (!this.stages[name]) {
+            error(`Cannot load stage '${name}' because it does not exist.`, this.stages);
+            return;
+        }
+
         // Remove old stuff
         if (this.currentWorld) {
             World.Actions.removeWorldObjectFromWorld(this.currentWorldAsWorldObject);
@@ -80,7 +85,7 @@ class StageManager {
 
         // Create new stuff
         this.currentStageName = name;
-        this.currentWorld = World.fromConfig<World>(this.stages[name]);
+        this.currentWorld = this.stages[name]();
         this.currentWorldAsWorldObject = new Theater.WorldAsWorldObject(this.currentWorld);
         this.addPartyToWorld(this.currentWorld, name, entryPoint);
         World.Actions.setName(this.currentWorldAsWorldObject, 'world');

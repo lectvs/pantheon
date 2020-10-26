@@ -1,23 +1,23 @@
 /// <reference path="./enemy.ts"/>
 
 class Bomb extends Enemy {
-    private dinkSound: Sound;
-
-    constructor(config: Sprite.Config) {
-        super(config, {
-            texture: 'bomb',
-            effects: {
-                silhouette: { enabled: false, color: 0xFFFFFF },
-            },
-            bounds: { type: 'circle', x: 0, y: -12, radius: 12 },
-            gravityz: -100,
-            mass: 1000,
-            colliding: false,
-
+    constructor() {
+        super({
             maxHealth: Infinity,
             immuneTime: 0.01,
             weight: 0.3,
+            speed: 0,
         });
+
+        this.setTexture('bomb');
+        this.effects.silhouette.color = 0xFFFFFF;
+        this.effects.silhouette.enabled = false;
+
+        this.bounds = new CircleBounds(0, -12, 12, this);
+
+        this.gravityz = -100;
+        this.mass = 1000;
+        this.colliding = false;
 
         this.stateMachine.addState('start', {
             script: S.wait(0.1),
@@ -65,11 +65,12 @@ class Bomb extends Enemy {
 
     explode() {
         this.alive = false;
-        this.world.addWorldObject(<Sprite.Config>{
-            constructor: Explosion,
-            x: this.x, y: this.y - 12,
-            layer: 'fg',
-        });
+
+        let explosion = this.world.addWorldObject(new Explosion());
+        explosion.x = this.x;
+        explosion.y = this.y - 12;
+        World.Actions.setLayer(explosion, 'fg');
+
         this.world.playSound('explode').volume = 0.5;
     }
 

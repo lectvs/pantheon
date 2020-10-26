@@ -4,11 +4,11 @@ class SmartTilemap extends Tilemap {
     baseTilemap: Tilemap.Tilemap;
     smartConfig: SmartTilemap.Util.SmartTilemapConfig;
 
-    constructor(config: Tilemap.Config) {
-        super(config);
+    constructor(tilemap: string | Tilemap.Tilemap, smartConfig: SmartTilemap.Util.SmartTilemapConfig, layer: number = 0) {
+        super(tilemap, layer);
 
         this.baseTilemap = this.tilemap;
-        this.smartConfig = config.data.smartConfig;
+        this.smartConfig = smartConfig;
 
         this.tilemap = SmartTilemap.Util.getSmartTilemap(this.baseTilemap, this.smartConfig);
         this.dirty = true;

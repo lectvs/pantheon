@@ -1,23 +1,5 @@
 /// <reference path="../physicsWorldObject.ts" />
 
-namespace Sprite {
-    export type Config = PhysicsWorldObject.Config & {
-        texture?: string | Texture;
-        animations?: Animation.Config[];
-        defaultAnimation?: string;
-        flipX?: boolean;
-        flipY?: boolean;
-        offset?: Pt;
-        angle?: number;
-        scaleX?: number;
-        scaleY?: number;
-        tint?: number;
-        alpha?: number;
-        effects?: Effects.Config;
-        mask?: Mask.WorldObjectMaskConfig;
-    }
-}
-
 class Sprite extends PhysicsWorldObject {
     private texture: Texture;
     protected animationManager: AnimationManager;
@@ -35,41 +17,25 @@ class Sprite extends PhysicsWorldObject {
     effects: Effects;
     mask: Mask.WorldObjectMaskConfig;
 
-    constructor(config: Sprite.Config, defaults?: Sprite.Config) {
-        config = WorldObject.resolveConfig<Sprite.Config>(config, defaults);
-        super(config);
+    constructor() {
+        super();
 
-        this.setTexture(config.texture);
+        this.setTexture(undefined);
 
         this.animationManager = new AnimationManager(this);
 
-        if (config.animations) {
-            for (let animation of config.animations) {
-                _.defaults(animation, {
-                    frames: [],
-                });
-                this.animationManager.addAnimation(animation.name, animation.frames);
-            }
-        }
+        this.flipX = false;
+        this.flipY = false;
 
-        if (config.defaultAnimation) {
-            this.playAnimation(config.defaultAnimation, 0, true);
-        }
+        this.offset = { x: 0, y: 0 };
+        this.angle = 0;
+        this.scaleX = 1;
+        this.scaleY = 1;
 
-        this.flipX = config.flipX ?? false;
-        this.flipY = config.flipY ?? false;
-
-        this.offset = config.offset || { x: 0, y: 0 };
-        this.angle = config.angle ?? 0;
-        this.scaleX = config.scaleX ??  1;
-        this.scaleY = config.scaleY ??  1;
-
-        this.tint = config.tint ?? 0xFFFFFF;
-        this.alpha = config.alpha ?? 1;
+        this.tint = 0xFFFFFF;
+        this.alpha = 1;
 
         this.effects = new Effects();
-        this.effects.updateFromConfig(config.effects);
-        this.mask = _.clone(config.mask);
     }
 
     update() {
@@ -92,6 +58,10 @@ class Sprite extends PhysicsWorldObject {
         });
         
         super.render(screen);
+    }
+
+    addAnimation(animation: Animation.Config) {
+        this.animationManager.addAnimation(animation.name, animation.frames);
     }
 
     getCurrentAnimationName() {
