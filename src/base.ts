@@ -42,21 +42,25 @@ function WORLD_BOUNDS(left: number, top: number, right: number, bottom: number):
 
     let worldBounds = new WorldObject();
 
-    let leftBound = worldBounds.addChild(new PhysicsWorldObject());
+    let leftBound = worldBounds.addChild(new PhysicsWorldObject(), {
+        physicsGroup: 'walls'
+    });
     leftBound.bounds = new RectBounds(left-thickness, top-thickness, thickness, height+2*thickness, leftBound);
-    World.Actions.setPhysicsGroup(leftBound, 'walls');
 
-    let rightBound = worldBounds.addChild(new PhysicsWorldObject());
+    let rightBound = worldBounds.addChild(new PhysicsWorldObject(), {
+        physicsGroup: 'walls'
+    });
     rightBound.bounds = new RectBounds(right, top-thickness, thickness, height+2*thickness, rightBound);
-    World.Actions.setPhysicsGroup(rightBound, 'walls');
 
-    let topBound = worldBounds.addChild(new PhysicsWorldObject());
+    let topBound = worldBounds.addChild(new PhysicsWorldObject(), {
+        physicsGroup: 'walls'
+    });
     topBound.bounds = new RectBounds(left, top-thickness, width, thickness, topBound);
-    World.Actions.setPhysicsGroup(topBound, 'walls');
 
-    let bottomBound = worldBounds.addChild(new PhysicsWorldObject());
+    let bottomBound = worldBounds.addChild(new PhysicsWorldObject(), {
+        physicsGroup: 'walls'
+    });
     bottomBound.bounds = new RectBounds(left, bottom, width, thickness, bottomBound);
-    World.Actions.setPhysicsGroup(bottomBound, 'walls');
 
     return worldBounds;
 }

@@ -12,49 +12,51 @@ function getStages(): Dict<World.Factory> { return {
         world.addWorldObject(new WaveController());
         world.addWorldObject(WORLD_BOUNDS(0, 192, 768, 768));
 
-        let floor = world.addWorldObject(new Sprite());
-        floor.setTexture(AssetCache.getTexture('floor').clone());
-        World.Actions.setName(floor, 'floor');
-        World.Actions.setLayer(floor, 'bg');
+        world.addWorldObject(new Sprite(AssetCache.getTexture('floor').clone()), {
+            name: 'floor',
+            layer: 'bg'
+        });
 
-        let lights = world.addWorldObject(new Sprite());
-        lights.setTexture('lights');
-        World.Actions.setName(lights, 'lights');
-        World.Actions.setLayer(lights, 'fg');
+        world.addWorldObject(new Sprite('lights'), {
+            name: 'lights',
+            layer: 'fg'
+        });
 
-        let stairs = world.addWorldObject(new Sprite());
+        let stairs = world.addWorldObject(new Sprite('stairs'), {
+            name: 'stairs',
+            layer: 'main',
+            physicsGroup: 'walls'
+        });
         stairs.x = 384;
         stairs.y = 340;
-        stairs.setTexture('stairs');
         stairs.bounds = new RectBounds(-78, -112, 156, 112, stairs);
-        World.Actions.setName(stairs, 'stairs');
-        World.Actions.setLayer(stairs, 'main');
-        World.Actions.setPhysicsGroup(stairs, 'walls');
 
-        let throne = world.addWorldObject(new Throne());
+        let throne = world.addWorldObject(new Throne(), {
+            name: 'throne',
+            layer: 'king_start',
+            physicsGroup: 'enemies'
+        });
         throne.x = 384;
         throne.y = 268;
         throne.colliding = false;
-        World.Actions.setName(throne, 'throne');
-        World.Actions.setLayer(throne, 'king_start');
-        World.Actions.setPhysicsGroup(throne, 'enemies');
 
-        let guard1 = world.addWorldObject(new Sprite());
+        let guard1 = world.addWorldObject(new Sprite('enemyknight_0'), {
+            name: 'guard'
+        });
         guard1.x = 342;
         guard1.y = 352;
-        guard1.setTexture('enemyknight_0');
         guard1.tint = 0xFFFF00;
         guard1.effects.updateFromConfig({
             outline: { color: 0x000000 }
         });
         guard1.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         guard1.playAnimation('idle');
-        World.Actions.setName(guard1, 'guard');
 
-        let guard2 = world.addWorldObject(new Sprite());
+        let guard2 = world.addWorldObject(new Sprite('enemyknight_0'), {
+            name: 'guard'
+        });
         guard2.x = 428;
         guard2.y = 352;
-        guard2.setTexture('enemyknight_0');
         guard2.flipX = true;
         guard2.tint = 0xFF00FF;
         guard2.effects.updateFromConfig({
@@ -62,15 +64,15 @@ function getStages(): Dict<World.Factory> { return {
         });
         guard2.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         guard2.playAnimation('idle');
-        World.Actions.setName(guard2, 'guard');
 
-        let player = world.addWorldObject(new Player());
+        let player = world.addWorldObject(new Player(), {
+            name: 'player',
+            layer: 'main',
+            physicsGroup: 'player'
+        });
         player.x = 384;
         player.y = 750;
         player.controllable = true;
-        World.Actions.setName(player, 'player');
-        World.Actions.setLayer(player, 'main');
-        World.Actions.setPhysicsGroup(player, 'player');
 
         return world;
     },

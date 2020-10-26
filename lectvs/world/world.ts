@@ -22,6 +22,12 @@ namespace World {
     }
 
     export type EntryPoint = string | Pt;
+
+    export type WorldObjectProperties = {
+        name?: string;
+        layer?: string;
+        physicsGroup?: string;
+    }
 }
 
 class World {
@@ -190,8 +196,14 @@ class World {
         this.physicsGroups[name] = new World.PhysicsGroup(name, config);
     }
 
-    addWorldObject<T extends WorldObject>(obj: T): T {
-        return World.Actions.addWorldObjectToWorld(obj, this);
+    addWorldObject<T extends WorldObject>(obj: T, worldProperties?: World.WorldObjectProperties): T {
+        let worldObject = World.Actions.addWorldObjectToWorld(obj, this);
+        if (worldProperties) {
+            if (worldProperties.name) worldObject.name = worldProperties.name;
+            if (worldProperties.layer) worldObject.layer = worldProperties.layer;
+            if (worldProperties.physicsGroup) worldObject.physicsGroup = worldProperties.physicsGroup;
+        }
+        return worldObject;
     }
     
     addWorldObjects<T extends WorldObject>(objs: T[]): T[] {
@@ -535,7 +547,7 @@ namespace World {
         /**
          * Sets the physics group of a WorldObject. Returns the new physics group name of the object.
          */
-        export function setPhysicsGroup(obj: PhysicsWorldObject, physicsGroupName: string): string {
+        export function setPhysicsGroup(obj: WorldObject, physicsGroupName: string): string {
             if (!obj) return undefined;
 
             if (obj.world && !_.isEmpty(physicsGroupName) && !obj.world.getPhysicsGroupByName(physicsGroupName)) {

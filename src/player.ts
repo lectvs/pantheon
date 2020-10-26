@@ -14,7 +14,6 @@ class Player extends Sprite {
     constructor() {
         super();
 
-        this.setTexture('knight_0');
         this.bounds = new CircleBounds(0, -4, 8, this);
         this.effects.updateFromConfig({
             outline: { color: 0x000000 }
@@ -25,6 +24,7 @@ class Player extends Sprite {
                 2: { callback: () => { this.world.playSound('walk').volume = 0.5; }}
             }
         }));
+        this.playAnimation('idle');
 
         this.controllerSchema = {
             left: () => Input.isDown('left'),

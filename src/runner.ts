@@ -13,7 +13,6 @@ class Runner extends Enemy {
             deadTexture: 'runner_dead',
         });
 
-        this.setTexture('runner_0');
         this.bounds = new CircleBounds(0, -4, 8, this);
         this.effects.updateFromConfig({
             outline: { color: 0xFFFFFF }

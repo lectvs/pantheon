@@ -79,9 +79,7 @@ namespace Texture {
         return texture;
     }
 
-    export function none() {
-        return new EmptyTexture();
-    }
+    export const NONE = new EmptyTexture();
 
     export function outlineRect(width: number, height: number, outlineColor: number, outlineAlpha: number = 1, outlineThickness = 1) {
         let result = new BasicTexture(width, height);

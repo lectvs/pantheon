@@ -17,10 +17,10 @@ class Sprite extends PhysicsWorldObject {
     effects: Effects;
     mask: Mask.WorldObjectMaskConfig;
 
-    constructor() {
+    constructor(texture?: string | Texture) {
         super();
 
-        this.setTexture(undefined);
+        this.setTexture(texture);
 
         this.animationManager = new AnimationManager(this);
 
@@ -78,7 +78,7 @@ class Sprite extends PhysicsWorldObject {
 
     setTexture(key: string | Texture) {
         if (!key) {
-            this.texture = Texture.none();
+            this.texture = Texture.NONE;
             return;
         }
         if (_.isString(key)) key = AssetCache.getTexture(key);

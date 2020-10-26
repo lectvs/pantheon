@@ -6,8 +6,7 @@ function getStoryboard(): Storyboard { return {
     'walk_to_throne': {
         type: 'gameplay',
         transitions: [{ type: 'onCondition', condition: () => {
-            let player = global.world.select.type(Player);
-            return player.y < 478;
+            return global.world.select.type(Player).y < 478;
         }, toNode: 'intro' }]
     },
     'intro': {
@@ -29,10 +28,11 @@ function getStoryboard(): Storyboard { return {
             yield S.wait(2);
 
             let player = global.world.select.type(Player);
-            let hoop = global.world.addWorldObject(new Hoop());
-            World.Actions.setName(hoop, 'hoop');
-            World.Actions.setLayer(hoop, 'hoop');
-            World.Actions.setPhysicsGroup(hoop, 'hoop');
+            let hoop = global.world.addWorldObject(new Hoop(), {
+                name: 'hoop',
+                layer: 'hoop',
+                physicsGroup: 'hoop'
+            });
             hoop.x = player.x;
             hoop.y = player.y - 32;
             hoop.effects.updateFromConfig({
@@ -77,7 +77,6 @@ function getStoryboard(): Storyboard { return {
             text.setText("sounds like a lot of HOOPLAH to me");
             text.x = global.gameWidth/2 - text.getTextWidth()/2;
             text.y = global.gameHeight/2 + 60;
-            World.Actions.setName(text, 'textt');
 
             yield S.wait(2);
             yield S.doOverTime(2, t => text.style.alpha = t);

@@ -19,14 +19,15 @@ class UI extends WorldObject {
 
         if (player.health > this.shields.length) {
             for (let i = 0; i < player.health - this.shields.length; i++) {
-                let shield = this.addChild(new Sprite());
+                let shield = this.addChild(new Sprite(), {
+                    layer: this.layer
+                });
                 shield.localx = 20 + 36 * this.shields.length;
                 shield.localy = 20;
                 shield.setTexture('ui_shield');
                 shield.effects.updateFromConfig({
                     silhouette: { color: 0x00FFFF, alpha: 0 }
                 });
-                World.Actions.setLayer(shield, this.layer);
                 this.shields.push(shield);
 
                 this.world.runScript(S.chain(

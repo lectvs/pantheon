@@ -14,10 +14,13 @@ class WorldObject {
     visible: boolean;
     active: boolean;
     life: Timer;
-    ignoreCamera: boolean;
     zBehavior: WorldObject.ZBehavior;
     timeScale: number;
     data: any;
+
+    ignoreCamera: boolean;
+    matchParentLayer: boolean;
+    matchParentPhysicsGroup: boolean;
 
     get x() { return this.localx + (this.parent ? this.parent.x : 0); }
     get y() { return this.localy + (this.parent ? this.parent.y : 0); }
@@ -38,10 +41,20 @@ class WorldObject {
 
     get world() { return this._world; }
     get name() { return this._name; }
-    get layer() { return this._layer; }
-    get physicsGroup() { return this._physicsGroup; }
+    get layer() {
+        this.resolveLayer();
+        return this._layer;
+    }
+    get physicsGroup() {
+        this.resolvePhysicsGroup();
+        return this._physicsGroup;
+    }
     get children() { return <ReadonlyArray<WorldObject>>this._children; }
     get parent() { return this._parent; }
+
+    set name(value: string) { World.Actions.setName(this, value); }
+    set layer(value: string) { World.Actions.setLayer(this, value); }
+    set physicsGroup(value: string) { World.Actions.setPhysicsGroup(this, value); }
     //
 
     get delta() { return (this.world ? this.world.delta : global.game.delta) * this.timeScale;}
@@ -75,8 +88,11 @@ class WorldObject {
         this.life = new Timer(Infinity, () => this.kill());
         this.zBehavior = WorldObject.DEFAULT_Z_BEHAVIOR;
         this.timeScale = 1;
-        this.ignoreCamera = false;
         this.data = {};
+
+        this.ignoreCamera = false;
+        this.matchParentLayer = false;
+        this.matchParentPhysicsGroup = false;
 
         this.alive = true;
 
@@ -143,6 +159,9 @@ class WorldObject {
 
     postUpdate() {
         this.resetController();
+
+        this.resolveLayer();
+        this.resolvePhysicsGroup();
     }
 
     fullUpdate() {
@@ -202,15 +221,21 @@ class WorldObject {
         this.postRender();
     }
 
-    addChild<T extends WorldObject>(child: T): T {
-        return World.Actions.addChildToParent(child, this);
+    addChild<T extends WorldObject>(child: T, worldProperties?: World.WorldObjectProperties): T {
+        let worldObject = World.Actions.addChildToParent(child, this);
+        if (worldProperties) {
+            if (worldProperties.name) worldObject.name = worldProperties.name;
+            if (worldProperties.layer) worldObject.layer = worldProperties.layer;
+            if (worldProperties.physicsGroup) worldObject.physicsGroup = worldProperties.physicsGroup;
+        }
+        return worldObject;
     }
 
-    addChildKeepWorldPosition<T extends WorldObject>(child: T): T {
+    addChildKeepWorldPosition<T extends WorldObject>(child: T, worldProperties?: World.WorldObjectProperties): T {
         let x = child.x;
         let y = child.y;
         let z = child.z;
-        let result = this.addChild(child);
+        let result = this.addChild(child, worldProperties);
         child.x = x;
         child.y = y;
         child.z = z;
@@ -303,6 +328,18 @@ class WorldObject {
         if (this.ignoreCamera) return true;
         if (this.parent) return this.parent.shouldIgnoreCamera();
         return false;
+    }
+
+    private resolveLayer() {
+        if (this.matchParentLayer && this.parent && this._layer !== this.parent.layer) {
+            this._layer = this.parent.layer;
+        }
+    }
+
+    private resolvePhysicsGroup() {
+        if (this.matchParentPhysicsGroup && this.parent && this._physicsGroup !== this.parent.physicsGroup) {
+            this._physicsGroup = this.parent.physicsGroup;
+        }
     }
 
     // For use with World.Actions.addWorldObjectToWorld

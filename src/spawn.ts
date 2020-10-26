@@ -1,8 +1,7 @@
 function spawn(worldObject: WorldObject) {
-
     let spawn = new Sprite();
-    World.Actions.setName(spawn, 'spawn');
-    World.Actions.setLayer(spawn, 'bg');
+    spawn.name = 'spawn';
+    spawn.layer = 'bg';
     spawn.x = worldObject.x;
     spawn.y = worldObject.y;
     spawn.setTexture('spawn');

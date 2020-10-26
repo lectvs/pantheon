@@ -16,7 +16,6 @@ class Mage extends Enemy {
             deadTexture: 'mage_dead',
         });
 
-        this.setTexture('mage_0');
         this.bounds = new CircleBounds(0, -4, 8, this);
         this.effects.updateFromConfig({
             outline: { color: 0x000000 }

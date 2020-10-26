@@ -15,7 +15,7 @@ class AssetCache {
     static getTexture(key: string): Texture {
         if (!this.textures[key]) {
             error(`Texture '${key}' does not exist.`);
-            return Texture.none();
+            return Texture.NONE;
         }
         return this.textures[key];
     }

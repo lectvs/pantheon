@@ -18,7 +18,6 @@ class Knight extends Enemy {
             deadTexture: 'enemyknight_dead',
         });
 
-        this.setTexture('enemyknight_0');
         this.bounds = new CircleBounds(0, -4, 8, this);
         this.effects.updateFromConfig({
             outline: { color: 0x000000 }
