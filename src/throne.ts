@@ -131,7 +131,7 @@ class Throne extends Enemy {
 
         if (other instanceof Hoop && other.isStrongEnoughToDealDamage() && (!this.dinkSound || this.dinkSound.done)) {
             this.dinkSound = this.world.playSound('dink');
-            this.dinkSound.volume = 0.5*other.currentAttackStrength;
+            this.dinkSound.volume = other.currentAttackStrength;
         }
     }
 }

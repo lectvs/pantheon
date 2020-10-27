@@ -2,8 +2,10 @@
 
 namespace Slide {
     export type Config = {
+        x?: number;
+        y?: number;
+        texture?: string | Texture;
         timeToLoad?: number;
-
         fadeIn?: boolean
     }
 }
@@ -15,10 +17,10 @@ class Slide extends Sprite {
     fullyLoaded: boolean;
 
     constructor(config: Slide.Config) {
-        super();
+        super(config.texture);
 
-        this.x = global.gameWidth/2;
-        this.y = global.gameHeight/2;
+        this.x = config.x ?? 0;
+        this.y = config.y ?? 0;
 
         let timeToLoad = config.timeToLoad ?? 0;
         this.timer = new Timer(timeToLoad);

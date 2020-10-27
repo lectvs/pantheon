@@ -5,8 +5,7 @@ namespace Sound {
 }
 
 class Sound {
-    // TODO: implement speed and then make this private
-    webAudioSound: WebAudioSoundI;
+    private webAudioSound: WebAudioSoundI;
     private get soundManager() { return global.soundManager; }
 
     private markedForDisable: boolean;
@@ -14,6 +13,7 @@ class Sound {
 
     paused: boolean;
     volume: number;
+    speed: number;
     loop: boolean;
 
     get done() { return this.webAudioSound.done; }
@@ -36,6 +36,7 @@ class Sound {
         this.pos = 0;
 
         this.volume = 1;
+        this.speed = 1;
         this.loop = false;
 
         this.controller = controller;
@@ -72,6 +73,11 @@ class Sound {
         let volume = this.volume * (this.controller ? this.controller.volume : 1);
         if (this.webAudioSound.volume !== volume) this.webAudioSound.volume = volume;
 
+        if (this.webAudioSound.speed !== this.speed) this.webAudioSound.speed = this.speed;
         if (this.webAudioSound.loop !== this.loop) this.webAudioSound.loop = this.loop;
     }
+}
+
+namespace Sound {
+    export const MAX_VOLUME: number = 2;
 }

@@ -20,7 +20,7 @@ class Runner extends Enemy {
         this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'runner_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'runner_', textures: [4, 5, 6, 7], frameRate: 8, count: -1,
                 overrides: {
-                    2: { callback: () => { this.world.playSound('walk').volume = 0.5; }}
+                    2: { callback: () => { this.world.playSound('walk'); }}
                 }
         }));
         this.playAnimation('run');

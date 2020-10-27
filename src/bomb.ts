@@ -71,7 +71,7 @@ class Bomb extends Enemy {
         explosion.y = this.y - 12;
         World.Actions.setLayer(explosion, 'fg');
 
-        this.world.playSound('explode').volume = 0.5;
+        this.world.playSound('explode').volume;
     }
 
     onCollide(other: PhysicsWorldObject) {

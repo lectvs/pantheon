@@ -7,10 +7,9 @@ namespace Menu {
 class Menu extends World {
     menuSystem: MenuSystem;
 
-    constructor(menuSystem: MenuSystem, items?: WorldObject[]) {
+    constructor(menuSystem: MenuSystem) {
         super();
         this.menuSystem = menuSystem;
-        World.Actions.addWorldObjectsToWorld(items, this);
     }
 }
 
@@ -27,8 +26,9 @@ class MetricsMenu extends Menu {
         let plotSprite = this.addWorldObject(new Sprite());
         plotSprite.setTexture(this.plot.texture);
 
-        let graphxy = this.addWorldObject(new SpriteText(Debug.FONT));
-        World.Actions.setName(graphxy, 'graphxy');
+        let graphxy = this.addWorldObject(new SpriteText(Debug.FONT), {
+            name: 'graphxy'
+        });
         graphxy.style.color = 0x00FF00;
     }
 

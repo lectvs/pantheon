@@ -182,15 +182,13 @@ class ControlsMenu extends Menu {
         this.backgroundColor = 0x000000;
         this.volume = 0;
 
-        let controlsText = this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16));
+        let controlsText = this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "- controls -"));
         controlsText.x = 20;
         controlsText.y = 15;
-        controlsText.setText("- controls -");
 
-        let wasdText = this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16));
+        let wasdText = this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "WASD or ARROW KEYS - move\n\nswing the hoop faster to deal more damage!"));
         wasdText.x = 20;
         wasdText.y = 42;
-        wasdText.setText("WASD or ARROW KEYS - move\n\nswing the hoop faster to deal more damage!");
 
         let player = this.addWorldObject(new Player());
         player.x = 250;
@@ -205,6 +203,7 @@ class ControlsMenu extends Menu {
 
         let backButton = this.addWorldObject(new MenuTextButton({
             font: Assets.fonts.DELUXE16,
+            text: "back",
             onClick: () => {
                 this.menuSystem.game.playSound('click');
                 menuSystem.back();
@@ -212,7 +211,6 @@ class ControlsMenu extends Menu {
         }));
         backButton.x = 20;
         backButton.y = 240;
-        backButton.setText("back");
 
 
         this.runScript(S.chain(

@@ -29,6 +29,7 @@ namespace Preload {
 
     export type Sound = {
         url?: string;
+        volume?: number;
     }
 
     export type TextureSpritesheet = {
@@ -208,8 +209,16 @@ class Preload {
             error(`Failed to preload sound ${key}`);
             return;
         }
+
+        let volume = sound.volume ?? 1;
+        if (volume < 0 || volume > Sound.MAX_VOLUME) {
+            error(`Sound ${key} has invalid volume:`, sound);
+            volume = M.clamp(volume, 0, Sound.MAX_VOLUME);
+        }
+
         AssetCache.sounds[key] = {
             buffer: preloadedSound.buffer,
+            volume: volume
         };
     }
 

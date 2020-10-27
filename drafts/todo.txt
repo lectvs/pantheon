@@ -9,7 +9,13 @@ postjam
 - calculate hoop speed from angular speed around player
 
 postpostjam
-- error messages for unsupported collider algorithms
+- /do we need to specify the initial texture on an animated sprite? - no
+- /error messages for unsupported collider algorithms
+- /pt(), rect(), etc. shortcut methods
+- /volume control at the asset-level
+- /change speed of sounds
+- change pitch of sounds
+- angular velocity
 - fix window focus issues
 - in general clean up the storyboard
 - define better "momentum transfer" modes
@@ -24,7 +30,6 @@ postpostjam
 - revisit dialog system
 - story transition delay
 - better enemy behavior system
-- pt(), rect(), etc. shortcut methods
 - fix bug with vx, vy = NaN
 - slide inheritance
 - addWorldObject type inference from `constructor` property?
@@ -34,13 +39,9 @@ postpostjam
 - spritetext as a texture and not a world object?
 - think about constructor arguments for world objects
 - physics object: combine vx/y/z, gravityx/y/z, etc.
-- do we need to specify the initial texture on an animated sprite?
-- angular velocity
 - fps drop with spritetext?
 - clone bounds
 - static-ify generic sprites (e.g. render to some texture instead of simulating)
-- change speed of sounds
-- change pitch of sounds
 - remove sound from dialog (and customize?)
 - render sprite to non-world texture?
 - build script

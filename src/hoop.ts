@@ -56,8 +56,8 @@ class Hoop extends Sprite {
         this.effects.outline.color = 0x00FFFF;
         this.effects.outline.alpha = visibleAttackStrength;
 
-        this.swingSound.volume = 0.5*visibleAttackStrength;
-        this.swingSound.webAudioSound.speed = visibleAttackStrength;
+        this.swingSound.volume = visibleAttackStrength;
+        this.swingSound.speed = visibleAttackStrength;
     }
 
     postUpdate() {

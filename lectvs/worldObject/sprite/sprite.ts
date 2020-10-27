@@ -8,6 +8,7 @@ class Sprite extends PhysicsWorldObject {
     flipY: boolean;
     offset: Pt;
     angle: number;
+    vangle: number;
     scaleX: number;
     scaleY: number;
 
@@ -29,6 +30,7 @@ class Sprite extends PhysicsWorldObject {
 
         this.offset = { x: 0, y: 0 };
         this.angle = 0;
+        this.vangle = 0;
         this.scaleX = 1;
         this.scaleY = 1;
 
@@ -42,6 +44,9 @@ class Sprite extends PhysicsWorldObject {
         super.update();
         this.animationManager.update(this.delta);
         this.effects.updateEffects(this.delta);
+
+
+        this.angle += this.vangle * this.delta;
     }
 
     render(screen: Texture) {

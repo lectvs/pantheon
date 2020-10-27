@@ -25,7 +25,7 @@ class Golbin extends Enemy {
         this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'golbin_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'golbin_', textures: [4, 5, 6, 7], frameRate: 8, count: -1,
                 overrides: {
-                    2: { callback: () => { this.world.playSound('walk').volume = 0.5; }}
+                    2: { callback: () => { this.world.playSound('walk'); }}
                 }
         }));
         this.addAnimation(Animations.fromTextureList({ name: 'drawback', texturePrefix: 'golbin_', textures: [8, 9, 10, 11, 10, 11, 10, 11, 11, 11], frameRate: 6 }));

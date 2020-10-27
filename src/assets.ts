@@ -77,8 +77,8 @@ namespace Assets {
         // UI
         'dialogbox': { anchor: Anchor.CENTER },
         'ui_shield': { anchor: Anchor.CENTER },
-        'royalhulatext': { anchor: Anchor.CENTER },
-        'hoopkingtext': { anchor: Anchor.CENTER },
+        'royalhulatext': {},
+        'hoopkingtext': {},
     }
 
     export const sounds: Dict<Preload.Sound> = {
@@ -89,21 +89,21 @@ namespace Assets {
         'click': {},
 
         // Game
-        'walk': {},
-        'swing': {},
+        'walk': { volume: 0.5 },
+        'swing': { volume: 0.5 },
         'hitenemy': {},
         'hitplayer': {},
         'shoot': {},
         'dash': {},
-        'explode': {},
-        'shake': {},
+        'explode': { volume: 0.5 },
+        'shake': { volume: 0.5 },
         'land': {},
-        'dink': {},
+        'dink': { volume: 0.5 },
 
         // Music
-        'jingle': {},
-        'music': {},
-        'musicboss': {},
+        'jingle': { volume: 0.5 },
+        'music': { volume: 0.5 },
+        'musicboss': { volume: 0.5 },
     }
 
     export const tilesets: Dict<Tilemap.Tileset> = {

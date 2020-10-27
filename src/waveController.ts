@@ -86,7 +86,6 @@ class WaveController extends WorldObject {
 
     startMusic() {
         this.music = this.world.playSound(this.currentWave === 9001 ? 'musicboss' : 'music');
-        this.music.volume = 0.5;
         this.music.loop = true;
     }
 

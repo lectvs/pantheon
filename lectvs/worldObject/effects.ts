@@ -38,6 +38,16 @@ class Effects {
         return <Effects.Filters.Outline>this.effects[Effects.OUTLINE_I];
     }
 
+    get addSilhouette(): Effects.Filters.Silhouette {
+        this.silhouette.enabled = true;
+        return this.silhouette;
+    }
+
+    get addOutline(): Effects.Filters.Outline {
+        this.outline.enabled = true;
+        return this.outline;
+    }
+
     constructor(config: Effects.Config = {}) {
         this.effects = [undefined, undefined];
         this.pre = { filters: [], enabled: true };

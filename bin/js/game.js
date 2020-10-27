@@ -71,6 +71,12 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 var Point = PIXI.Point;
 var Rectangle = PIXI.Rectangle;
+function pt(x, y) {
+    return { x: x, y: y };
+}
+function rect(x, y, width, height) {
+    return { x: x, y: y, width: width, height: height };
+}
 var Anchor = /** @class */ (function () {
     function Anchor() {
     }
@@ -318,7 +324,7 @@ var AssetCache = /** @class */ (function () {
     AssetCache.getSoundAsset = function (key) {
         if (!this.sounds[key]) {
             error("Sound '" + key + "' does not exist.");
-            return { buffer: new AudioBuffer({ length: 0, sampleRate: 8000 }) };
+            return { buffer: new AudioBuffer({ length: 0, sampleRate: 8000 }), volume: 1 };
         }
         return this.sounds[key];
     };
@@ -1518,13 +1524,20 @@ var Preload = /** @class */ (function () {
         WebAudio.preloadSound(key, url, function () { return _this.onLoadResource(resource); });
     };
     Preload.loadSound = function (key, sound) {
+        var _a;
         var preloadedSound = WebAudio.preloadedSounds[key];
         if (!preloadedSound) {
             error("Failed to preload sound " + key);
             return;
         }
+        var volume = (_a = sound.volume) !== null && _a !== void 0 ? _a : 1;
+        if (volume < 0 || volume > Sound.MAX_VOLUME) {
+            error("Sound " + key + " has invalid volume:", sound);
+            volume = M.clamp(volume, 0, Sound.MAX_VOLUME);
+        }
         AssetCache.sounds[key] = {
             buffer: preloadedSound.buffer,
+            volume: volume
         };
     };
     Preload.preloadPyxelTilemap = function (key, tilemap) {
@@ -2944,6 +2957,7 @@ var Sprite = /** @class */ (function (_super) {
         _this.flipY = false;
         _this.offset = { x: 0, y: 0 };
         _this.angle = 0;
+        _this.vangle = 0;
         _this.scaleX = 1;
         _this.scaleY = 1;
         _this.tint = 0xFFFFFF;
@@ -2955,6 +2969,7 @@ var Sprite = /** @class */ (function (_super) {
         _super.prototype.update.call(this);
         this.animationManager.update(this.delta);
         this.effects.updateEffects(this.delta);
+        this.angle += this.vangle * this.delta;
     };
     Sprite.prototype.render = function (screen) {
         this.texture.renderTo(screen, {
@@ -3667,10 +3682,9 @@ var DebugOverlay = /** @class */ (function (_super) {
 /// <reference path="../world/world.ts" />
 var Menu = /** @class */ (function (_super) {
     __extends(Menu, _super);
-    function Menu(menuSystem, items) {
+    function Menu(menuSystem) {
         var _this = _super.call(this) || this;
         _this.menuSystem = menuSystem;
-        World.Actions.addWorldObjectsToWorld(items, _this);
         return _this;
     }
     return Menu;
@@ -3683,8 +3697,9 @@ var MetricsMenu = /** @class */ (function (_super) {
         _this.plot = global.metrics.plotLastRecording();
         var plotSprite = _this.addWorldObject(new Sprite());
         plotSprite.setTexture(_this.plot.texture);
-        var graphxy = _this.addWorldObject(new SpriteText(Debug.FONT));
-        World.Actions.setName(graphxy, 'graphxy');
+        var graphxy = _this.addWorldObject(new SpriteText(Debug.FONT), {
+            name: 'graphxy'
+        });
         graphxy.style.color = 0x00FF00;
         return _this;
     }
@@ -3708,7 +3723,8 @@ var MetricsMenu = /** @class */ (function (_super) {
 /// <reference path="../worldObject.ts" />
 var SpriteText = /** @class */ (function (_super) {
     __extends(SpriteText, _super);
-    function SpriteText(font) {
+    function SpriteText(font, text) {
+        if (text === void 0) { text = ""; }
         var _this = _super.call(this) || this;
         _this.font = font;
         _this.fontTexture = AssetCache.getTexture(_this.font.texture);
@@ -3718,7 +3734,7 @@ var SpriteText = /** @class */ (function (_super) {
             offset: 0,
         };
         _this.mask = null;
-        _this.clear();
+        _this.setText(text);
         return _this;
     }
     Object.defineProperty(SpriteText.prototype, "style", {
@@ -3899,9 +3915,9 @@ var SpriteText = /** @class */ (function (_super) {
 var MenuTextButton = /** @class */ (function (_super) {
     __extends(MenuTextButton, _super);
     function MenuTextButton(config) {
-        var _a;
-        var _this = _super.call(this, config.font) || this;
-        _this.onClick = (_a = config.onClick) !== null && _a !== void 0 ? _a : Utils.NOOP;
+        var _a, _b;
+        var _this = _super.call(this, config.font, (_a = config.text) !== null && _a !== void 0 ? _a : "") || this;
+        _this.onClick = (_b = config.onClick) !== null && _b !== void 0 ? _b : Utils.NOOP;
         return _this;
     }
     MenuTextButton.prototype.update = function () {
@@ -3933,6 +3949,7 @@ var MenuNumericSelector = /** @class */ (function (_super) {
         _this.setValue = config.setValue;
         var leftButton = _this.addChild(new MenuTextButton({
             font: _this.font,
+            text: "<",
             onClick: function () {
                 global.game.playSound('click');
                 var bars = _this.getFullBarsForValue(_this.getValue());
@@ -3943,9 +3960,9 @@ var MenuNumericSelector = /** @class */ (function (_super) {
             }
         }));
         leftButton.setStyle(_this.style);
-        leftButton.setText("<");
         var rightButton = _this.addChild(new MenuTextButton({
             font: _this.font,
+            text: ">",
             onClick: function () {
                 global.game.playSound('click');
                 var bars = _this.getFullBarsForValue(_this.getValue());
@@ -3957,7 +3974,6 @@ var MenuNumericSelector = /** @class */ (function (_super) {
         }));
         rightButton.localx = (_this.barLength + 3) * _this.font.charWidth;
         rightButton.setStyle(_this.style);
-        rightButton.setText(">");
         return _this;
     }
     MenuNumericSelector.prototype.update = function () {
@@ -4023,15 +4039,16 @@ var MenuControlMapper = /** @class */ (function (_super) {
             var bindingName = this_2.getBindingName(binding);
             var bindingButton = this_2.addChild(new MenuTextButton({
                 font: this_2.font,
+                text: bindingName,
                 onClick: function () {
                     global.game.playSound('click');
                     _this.selectBinding(bindingId);
                 }
-            }));
-            World.Actions.setName(bindingButton, this_2.getBindingMappingObjectName(binding));
+            }), {
+                name: this_2.getBindingMappingObjectName(binding)
+            });
             bindingButton.localx = bindingx;
             bindingButton.setStyle(this_2.style);
-            bindingButton.setText(bindingName);
             bindingx += (bindingName.length + 3) * this_2.font.charWidth;
             text += " ".repeat(bindingName.length) + " / ";
         };
@@ -4542,6 +4559,7 @@ var Sound = /** @class */ (function () {
         this.paused = false;
         this.pos = 0;
         this.volume = 1;
+        this.speed = 1;
         this.loop = false;
         this.controller = controller;
     }
@@ -4590,11 +4608,16 @@ var Sound = /** @class */ (function () {
         var volume = this.volume * (this.controller ? this.controller.volume : 1);
         if (this.webAudioSound.volume !== volume)
             this.webAudioSound.volume = volume;
+        if (this.webAudioSound.speed !== this.speed)
+            this.webAudioSound.speed = this.speed;
         if (this.webAudioSound.loop !== this.loop)
             this.webAudioSound.loop = this.loop;
     };
     return Sound;
 }());
+(function (Sound) {
+    Sound.MAX_VOLUME = 2;
+})(Sound || (Sound = {}));
 var SoundManager = /** @class */ (function () {
     function SoundManager() {
         this.sounds = [];
@@ -4673,8 +4696,13 @@ var WebAudioSound = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(WebAudioSound.prototype, "volume", {
-        get: function () { return this.gainNode.gain.value; },
-        set: function (value) { this.gainNode.gain.value = M.clamp(value, 0, 2); },
+        get: function () {
+            return this._volume;
+        },
+        set: function (value) {
+            this._volume = M.clamp(value, 0, Sound.MAX_VOLUME);
+            this.gainNode.gain.value = this._volume * this.asset.volume;
+        },
         enumerable: false,
         configurable: true
     });
@@ -5536,11 +5564,11 @@ var PartyManager = /** @class */ (function () {
 var Slide = /** @class */ (function (_super) {
     __extends(Slide, _super);
     function Slide(config) {
-        var _a;
-        var _this = _super.call(this) || this;
-        _this.x = global.gameWidth / 2;
-        _this.y = global.gameHeight / 2;
-        var timeToLoad = (_a = config.timeToLoad) !== null && _a !== void 0 ? _a : 0;
+        var _a, _b, _c;
+        var _this = _super.call(this, config.texture) || this;
+        _this.x = (_a = config.x) !== null && _a !== void 0 ? _a : 0;
+        _this.y = (_b = config.y) !== null && _b !== void 0 ? _b : 0;
+        var timeToLoad = (_c = config.timeToLoad) !== null && _c !== void 0 ? _c : 0;
         _this.timer = new Timer(timeToLoad);
         if (config.fadeIn) {
             _this.targetAlpha = _this.alpha;
@@ -6857,9 +6885,9 @@ var Camera = /** @class */ (function () {
             this.moveTowardsPoint(this.mode.point.x, this.mode.point.y, world.delta);
         }
         if (this.shakeIntensity > 0) {
-            var pt = Random.inCircle(this.shakeIntensity);
-            this._shakeX = pt.x;
-            this._shakeY = pt.y;
+            var pt_1 = Random.inCircle(this.shakeIntensity);
+            this._shakeX = pt_1.x;
+            this._shakeY = pt_1.y;
         }
         else {
             this._shakeX = 0;
@@ -7319,6 +7347,9 @@ var CircleBounds = /** @class */ (function () {
             return Bounds.Collision.getDisplacementCollisionCircleCircle(this, other);
         if (other instanceof SlopeBounds)
             return Bounds.Collision.getDisplacementCollisionCircleSlope(this, other);
+        if (other instanceof NullBounds)
+            return undefined;
+        error("No collision supported between these bounds", this, other);
         return undefined;
     };
     CircleBounds.prototype.getRaycastCollision = function (dx, dy, other, otherdx, otherdy) {
@@ -7328,6 +7359,9 @@ var CircleBounds = /** @class */ (function () {
             return Bounds.Collision.getRaycastCollisionCircleCircle(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof SlopeBounds)
             return Bounds.Collision.getRaycastCollisionCircleSlope(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof NullBounds)
+            return undefined;
+        error("No collision supported between these bounds", this, other);
         return undefined;
     };
     CircleBounds.prototype.isOverlapping = function (other) {
@@ -7337,6 +7371,9 @@ var CircleBounds = /** @class */ (function () {
             return Bounds.Collision.isOverlappingCircleCircle(this, other);
         if (other instanceof SlopeBounds)
             return Bounds.Collision.isOverlappingCircleSlope(this, other);
+        if (other instanceof NullBounds)
+            return undefined;
+        error("No overlap supported between these bounds", this, other);
         return false;
     };
     CircleBounds.prototype.raycast = function (x, y, dx, dy) {
@@ -8221,6 +8258,9 @@ var RectBounds = /** @class */ (function () {
             return Bounds.Collision.getDisplacementCollisionRectCircle(this, other);
         if (other instanceof SlopeBounds)
             return Bounds.Collision.getDisplacementCollisionRectSlope(this, other);
+        if (other instanceof NullBounds)
+            return undefined;
+        error("No collision supported between these bounds", this, other);
         return undefined;
     };
     RectBounds.prototype.getRaycastCollision = function (dx, dy, other, otherdx, otherdy) {
@@ -8230,6 +8270,9 @@ var RectBounds = /** @class */ (function () {
             return Bounds.Collision.getRaycastCollisionRectCircle(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof SlopeBounds)
             return Bounds.Collision.getRaycastCollisionRectSlope(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof NullBounds)
+            return undefined;
+        error("No collision supported between these bounds", this, other);
         return undefined;
     };
     RectBounds.prototype.isOverlapping = function (other) {
@@ -8239,6 +8282,9 @@ var RectBounds = /** @class */ (function () {
             return Bounds.Collision.isOverlappingCircleRect(other, this);
         if (other instanceof SlopeBounds)
             return Bounds.Collision.isOverlappingRectSlope(this, other);
+        if (other instanceof NullBounds)
+            return undefined;
+        error("No overlap supported between these bounds", this, other);
         return false;
     };
     RectBounds.prototype.raycast = function (x, y, dx, dy) {
@@ -8302,6 +8348,9 @@ var SlopeBounds = /** @class */ (function () {
             return Bounds.Collision.getDisplacementCollisionSlopeRect(this, other);
         if (other instanceof CircleBounds)
             return Bounds.Collision.getDisplacementCollisionSlopeCircle(this, other);
+        if (other instanceof NullBounds)
+            return undefined;
+        error("No collision supported between these bounds", this, other);
         return undefined;
     };
     SlopeBounds.prototype.getRaycastCollision = function (dx, dy, other, otherdx, otherdy) {
@@ -8309,6 +8358,9 @@ var SlopeBounds = /** @class */ (function () {
             return Bounds.Collision.getRaycastCollisionSlopeRect(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof CircleBounds)
             return Bounds.Collision.getRaycastCollisionSlopeCircle(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof NullBounds)
+            return undefined;
+        error("No collision supported between these bounds", this, other);
         return undefined;
     };
     SlopeBounds.prototype.isOverlapping = function (other) {
@@ -8316,6 +8368,9 @@ var SlopeBounds = /** @class */ (function () {
             return Bounds.Collision.isOverlappingRectSlope(other, this);
         if (other instanceof CircleBounds)
             return Bounds.Collision.isOverlappingCircleSlope(other, this);
+        if (other instanceof NullBounds)
+            return undefined;
+        error("No overlap supported between these bounds", this, other);
         return false;
     };
     SlopeBounds.prototype.raycast = function (x, y, dx, dy) {
@@ -8412,6 +8467,22 @@ var Effects = /** @class */ (function () {
                 this.effects[Effects.OUTLINE_I].enabled = false;
             }
             return this.effects[Effects.OUTLINE_I];
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Effects.prototype, "addSilhouette", {
+        get: function () {
+            this.silhouette.enabled = true;
+            return this.silhouette;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Effects.prototype, "addOutline", {
+        get: function () {
+            this.outline.enabled = true;
+            return this.outline;
         },
         enumerable: false,
         configurable: true
@@ -8890,11 +8961,11 @@ var Tilemap = /** @class */ (function (_super) {
         Tilemap.optimizeCollisionRects(collisionRects, Tilemap.OPTIMIZE_ALL);
         try {
             for (var collisionRects_1 = __values(collisionRects), collisionRects_1_1 = collisionRects_1.next(); !collisionRects_1_1.done; collisionRects_1_1 = collisionRects_1.next()) {
-                var rect = collisionRects_1_1.value;
+                var rect_2 = collisionRects_1_1.value;
                 var box = new PhysicsWorldObject();
                 box.x = this.x;
                 box.y = this.y;
-                box.bounds = new RectBounds(rect.x, rect.y, rect.width, rect.height, box);
+                box.bounds = new RectBounds(rect_2.x, rect_2.y, rect_2.width, rect_2.height, box);
                 World.Actions.setPhysicsGroup(box, this.physicsGroup);
                 box.setImmovable(true);
                 box.debugDrawBounds = this.debugDrawBounds;
@@ -9032,13 +9103,13 @@ var Tilemap = /** @class */ (function (_super) {
             for (var x = 0; x < tilemapLayer[y].length; x++) {
                 var tile = tilemapLayer[y][x];
                 if (_.contains(tileset.collisionIndices, tile.index)) {
-                    var rect = {
+                    var rect_3 = {
                         x: x * tileset.tileWidth,
                         y: y * tileset.tileHeight,
                         width: tileset.tileWidth,
                         height: tileset.tileHeight
                     };
-                    result.push(rect);
+                    result.push(rect_3);
                 }
             }
         }
@@ -9359,8 +9430,8 @@ var Assets;
         // UI
         'dialogbox': { anchor: Anchor.CENTER },
         'ui_shield': { anchor: Anchor.CENTER },
-        'royalhulatext': { anchor: Anchor.CENTER },
-        'hoopkingtext': { anchor: Anchor.CENTER },
+        'royalhulatext': {},
+        'hoopkingtext': {},
     };
     Assets.sounds = {
         // Debug
@@ -9368,20 +9439,20 @@ var Assets;
         // Menu
         'click': {},
         // Game
-        'walk': {},
-        'swing': {},
+        'walk': { volume: 0.5 },
+        'swing': { volume: 0.5 },
         'hitenemy': {},
         'hitplayer': {},
         'shoot': {},
         'dash': {},
-        'explode': {},
-        'shake': {},
+        'explode': { volume: 0.5 },
+        'shake': { volume: 0.5 },
         'land': {},
-        'dink': {},
+        'dink': { volume: 0.5 },
         // Music
-        'jingle': {},
-        'music': {},
-        'musicboss': {},
+        'jingle': { volume: 0.5 },
+        'music': { volume: 0.5 },
+        'musicboss': { volume: 0.5 },
     };
     Assets.tilesets = {};
     Assets.pyxelTilemaps = {};
@@ -9568,7 +9639,7 @@ var Bomb = /** @class */ (function (_super) {
         explosion.x = this.x;
         explosion.y = this.y - 12;
         World.Actions.setLayer(explosion, 'fg');
-        this.world.playSound('explode').volume = 0.5;
+        this.world.playSound('explode').volume;
     };
     Bomb.prototype.onCollide = function (other) {
         _super.prototype.onCollide.call(this, other);
@@ -9691,7 +9762,7 @@ var Golbin = /** @class */ (function (_super) {
         });
         _this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'golbin_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         _this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'golbin_', textures: [4, 5, 6, 7], frameRate: 8, count: -1, overrides: {
-                2: { callback: function () { _this.world.playSound('walk').volume = 0.5; } }
+                2: { callback: function () { _this.world.playSound('walk'); } }
             }
         }));
         _this.addAnimation(Animations.fromTextureList({ name: 'drawback', texturePrefix: 'golbin_', textures: [8, 9, 10, 11, 10, 11, 10, 11, 11, 11], frameRate: 6 }));
@@ -9853,8 +9924,8 @@ var Hoop = /** @class */ (function (_super) {
         this.effects.outline.enabled = true;
         this.effects.outline.color = 0x00FFFF;
         this.effects.outline.alpha = visibleAttackStrength;
-        this.swingSound.volume = 0.5 * visibleAttackStrength;
-        this.swingSound.webAudioSound.speed = visibleAttackStrength;
+        this.swingSound.volume = visibleAttackStrength;
+        this.swingSound.speed = visibleAttackStrength;
     };
     Hoop.prototype.postUpdate = function () {
         _super.prototype.postUpdate.call(this);
@@ -9925,7 +9996,7 @@ var Knight = /** @class */ (function (_super) {
         });
         _this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         _this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'enemyknight_', textures: [4, 5, 6, 7], frameRate: 8, count: -1, overrides: {
-                2: { callback: function () { _this.world.playSound('walk').volume = 0.5; } }
+                2: { callback: function () { _this.world.playSound('walk'); } }
             }
         }));
         _this.addAnimation(Animations.fromTextureList({ name: 'windup', texturePrefix: 'enemyknight_', textures: [8], frameRate: 4, count: -1 }));
@@ -10083,7 +10154,7 @@ var Mage = /** @class */ (function (_super) {
         });
         _this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'mage_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         _this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'mage_', textures: [4, 5], frameRate: 4, count: -1, overrides: {
-                2: { callback: function () { _this.world.playSound('walk').volume = 0.5; } }
+                2: { callback: function () { _this.world.playSound('walk'); } }
             }
         }));
         _this.addAnimation(Animations.fromTextureList({ name: 'wave', texturePrefix: 'mage_', textures: [8, 9], frameRate: 2, count: -1 }));
@@ -10368,14 +10439,12 @@ var ControlsMenu = /** @class */ (function (_super) {
         var _this = _super.call(this, menuSystem) || this;
         _this.backgroundColor = 0x000000;
         _this.volume = 0;
-        var controlsText = _this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16));
+        var controlsText = _this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "- controls -"));
         controlsText.x = 20;
         controlsText.y = 15;
-        controlsText.setText("- controls -");
-        var wasdText = _this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16));
+        var wasdText = _this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "WASD or ARROW KEYS - move\n\nswing the hoop faster to deal more damage!"));
         wasdText.x = 20;
         wasdText.y = 42;
-        wasdText.setText("WASD or ARROW KEYS - move\n\nswing the hoop faster to deal more damage!");
         var player = _this.addWorldObject(new Player());
         player.x = 250;
         player.y = 180;
@@ -10387,6 +10456,7 @@ var ControlsMenu = /** @class */ (function (_super) {
         hoop.y = 180;
         var backButton = _this.addWorldObject(new MenuTextButton({
             font: Assets.fonts.DELUXE16,
+            text: "back",
             onClick: function () {
                 _this.menuSystem.game.playSound('click');
                 menuSystem.back();
@@ -10394,7 +10464,6 @@ var ControlsMenu = /** @class */ (function (_super) {
         }));
         backButton.x = 20;
         backButton.y = 240;
-        backButton.setText("back");
         _this.runScript(S.chain(S.loopFor(2, S.chain(S.doOverTime(0.4, function (t) { player.controller.right = true; }), S.doOverTime(0.4, function (t) { player.controller.down = true; }), S.doOverTime(0.4, function (t) { player.controller.left = true; }), S.doOverTime(0.4, function (t) { player.controller.up = true; }))), S.loopFor(Infinity, S.chain(S.doOverTime(0.2, function (t) { player.controller.right = true; }), S.doOverTime(0.2, function (t) { player.controller.down = true; }), S.doOverTime(0.2, function (t) { player.controller.left = true; }), S.doOverTime(0.2, function (t) { player.controller.up = true; })))));
         return _this;
     }
@@ -10522,7 +10591,7 @@ var Player = /** @class */ (function (_super) {
         });
         _this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'knight_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         _this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'knight_', textures: [4, 5, 6, 7], frameRate: 12, count: -1, overrides: {
-                2: { callback: function () { _this.world.playSound('walk').volume = 0.5; } }
+                2: { callback: function () { _this.world.playSound('walk'); } }
             }
         }));
         _this.playAnimation('idle');
@@ -10605,7 +10674,7 @@ var Runner = /** @class */ (function (_super) {
         });
         _this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'runner_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         _this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'runner_', textures: [4, 5, 6, 7], frameRate: 8, count: -1, overrides: {
-                2: { callback: function () { _this.world.playSound('walk').volume = 0.5; } }
+                2: { callback: function () { _this.world.playSound('walk'); } }
             }
         }));
         _this.playAnimation('run');
@@ -10807,8 +10876,7 @@ function getStoryboard() {
                                 silhouette: { color: 0x00FFFF, alpha: 0 }
                             });
                             whoosh = global.world.playSound('swing');
-                            whoosh.volume = 0.5;
-                            whoosh.webAudioSound.speed = 0.1;
+                            whoosh.speed = 0.1;
                             return [4 /*yield*/, S.doOverTime(1, function (t) { return hoop.effects.silhouette.alpha = t; })];
                         case 7:
                             _a.sent();
@@ -10821,27 +10889,30 @@ function getStoryboard() {
                                 })];
                         case 9:
                             _a.sent();
-                            global.world.playSound('walk');
+                            global.world.playSound('walk').volume = 2;
                             return [4 /*yield*/, S.wait(2)];
                         case 10:
                             _a.sent();
-                            global.world.playSound('jingle').volume = 0.5;
+                            global.world.playSound('jingle');
                             return [4 /*yield*/, S.simul(S.showSlide(function () {
-                                    var slide = new Slide({ timeToLoad: 2, fadeIn: true });
-                                    slide.setTexture(Texture.filledRect(global.gameWidth, global.gameHeight, 0x000000, 0.8));
-                                    slide.x = 0;
-                                    slide.y = 0;
+                                    var slide = new Slide({
+                                        texture: Texture.filledRect(global.gameWidth, global.gameHeight, 0x000000, 0.8),
+                                        timeToLoad: 2,
+                                        fadeIn: true
+                                    });
                                     return slide;
                                 }), S.showSlide(function () {
-                                    var slide = new Slide({ timeToLoad: 2, fadeIn: true });
-                                    slide.setTexture('royalhulatext');
+                                    var slide = new Slide({
+                                        texture: 'royalhulatext',
+                                        timeToLoad: 2,
+                                        fadeIn: true
+                                    });
                                     return slide;
                                 }))];
                         case 11:
                             _a.sent();
-                            text = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16));
+                            text = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "sounds like a lot of HOOPLAH to me"));
                             text.setStyle({ alpha: 0 });
-                            text.setText("sounds like a lot of HOOPLAH to me");
                             text.x = global.gameWidth / 2 - text.getTextWidth() / 2;
                             text.y = global.gameHeight / 2 + 60;
                             return [4 /*yield*/, S.wait(2)];
@@ -11100,7 +11171,6 @@ function getStoryboard() {
                             _a.sent();
                             shakeSound = global.world.playSound('shake');
                             shakeSound.loop = true;
-                            shakeSound.volume = 0.5;
                             return [4 /*yield*/, S.simul(S.shake(2, 7), S.chain(S.wait(3), S.call(function () {
                                     throne.setState('jump');
                                 })))];
@@ -11120,8 +11190,11 @@ function getStoryboard() {
                             global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
                             throne.setState('idle');
                             global.world.runScript(S.chain(S.wait(0.5), S.showSlide(function () {
-                                var slide = new Slide({ timeToLoad: 2, fadeIn: true });
-                                slide.setTexture('hoopkingtext');
+                                var slide = new Slide({
+                                    texture: 'hoopkingtext',
+                                    timeToLoad: 2,
+                                    fadeIn: true
+                                });
                                 return slide;
                             }), S.wait(3), S.fadeSlides(2)));
                             global.world.select.type(WaveController).spawnWaveKing();
@@ -11145,8 +11218,7 @@ function getStoryboard() {
                             global.world.camera.setMovementSmooth(4);
                             shakeSound = global.world.playSound('shake');
                             shakeSound.loop = true;
-                            shakeSound.webAudioSound.speed = 0.8;
-                            shakeSound.volume = 0.5;
+                            shakeSound.speed = 0.8;
                             return [4 /*yield*/, S.wait(3)];
                         case 1:
                             _a.sent();
@@ -11183,9 +11255,8 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(1)];
                         case 13:
                             _a.sent();
-                            text = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16));
+                            text = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "and thus begins the tale of the..."));
                             text.setStyle({ color: 0x000000, alpha: 0 });
-                            text.setText("and thus begins the tale of the...");
                             text.x = global.gameWidth / 2 - text.getTextWidth() / 2;
                             text.y = global.gameHeight / 2 - 8;
                             text.ignoreCamera = true;
@@ -11195,9 +11266,8 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(2)];
                         case 15:
                             _a.sent();
-                            text2 = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16));
+                            text2 = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "HOOP KNIGHT"));
                             text2.setStyle({ color: 0x000000, alpha: 0 });
-                            text2.setText("HOOP KNIGHT");
                             text2.x = global.gameWidth / 2 - text2.getTextWidth() / 2;
                             text2.y = global.gameHeight / 2 + 8;
                             text2.ignoreCamera = true;
@@ -11370,7 +11440,7 @@ var Throne = /** @class */ (function (_super) {
         }
         if (other instanceof Hoop && other.isStrongEnoughToDealDamage() && (!this.dinkSound || this.dinkSound.done)) {
             this.dinkSound = this.world.playSound('dink');
-            this.dinkSound.volume = 0.5 * other.currentAttackStrength;
+            this.dinkSound.volume = other.currentAttackStrength;
         }
     };
     return Throne;
@@ -11429,7 +11499,7 @@ var ThroneBehaviorSm = /** @class */ (function (_super) {
                 _this.throne.z = M.jumpParabola(0, 100, 0, t);
             }), S.call(function () {
                 var s = _this.throne.world.playSound('land');
-                s.webAudioSound.speed = 1.5;
+                s.speed = 1.5;
                 s.volume = 0.7;
                 _this.throne.colliding = true;
             }), S.wait(1)),
@@ -11540,15 +11610,13 @@ var UI = /** @class */ (function (_super) {
         var player = this.world.select.type(Player);
         if (player.health > this.shields.length) {
             var _loop_5 = function (i) {
-                var shield = this_4.addChild(new Sprite(), {
+                var shield = this_4.addChild(new Sprite('ui_shield'), {
                     layer: this_4.layer
                 });
                 shield.localx = 20 + 36 * this_4.shields.length;
                 shield.localy = 20;
-                shield.setTexture('ui_shield');
-                shield.effects.updateFromConfig({
-                    silhouette: { color: 0x00FFFF, alpha: 0 }
-                });
+                shield.effects.addSilhouette.color = 0x00FFFF;
+                shield.effects.silhouette.alpha = 0;
                 this_4.shields.push(shield);
                 this_4.world.runScript(S.chain(S.doOverTime(0.3, function (t) { return shield.effects.silhouette.alpha = t; }), S.doOverTime(0.3, function (t) { return shield.effects.silhouette.amount = 1 - t; })));
             };
@@ -11561,17 +11629,15 @@ var UI = /** @class */ (function (_super) {
             var _loop_6 = function (i) {
                 var shield = this_5.shields.pop();
                 shield.getTexture().subdivide(4, 4).forEach(function (subdivision) {
-                    var shard = _this.addChild(new Sprite());
+                    var shard = _this.addChild(new Sprite(subdivision.texture));
                     shard.localx = shield.localx - 16 + subdivision.x;
                     shard.localy = shield.localy - 16 + subdivision.y;
-                    shard.setTexture(subdivision.texture);
                     shard.vx = Random.float(-80, 80);
                     shard.vy = Random.float(-80, 80);
                     shard.gravityy = 200;
-                    shard.data.vangle = Random.sign() * Random.float(1, 2) * 360;
+                    shard.vangle = Random.sign() * Random.float(1, 2) * 360;
                     shard.life.duration = 1;
                     shard.updateCallback = function (obj) {
-                        obj.angle += obj.data.vangle * obj.delta;
                         obj.alpha = 1 - Math.pow(obj.life.progress, 2);
                     };
                 });
@@ -11676,7 +11742,6 @@ var WaveController = /** @class */ (function (_super) {
     };
     WaveController.prototype.startMusic = function () {
         this.music = this.world.playSound(this.currentWave === 9001 ? 'musicboss' : 'music');
-        this.music.volume = 0.5;
         this.music.loop = true;
     };
     WaveController.prototype.stopMusic = function () {

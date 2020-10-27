@@ -41,6 +41,8 @@ class CircleBounds implements Bounds {
         if (other instanceof RectBounds) return Bounds.Collision.getDisplacementCollisionCircleRect(this, other);
         if (other instanceof CircleBounds) return Bounds.Collision.getDisplacementCollisionCircleCircle(this, other);
         if (other instanceof SlopeBounds) return Bounds.Collision.getDisplacementCollisionCircleSlope(this, other);
+        if (other instanceof NullBounds) return undefined;
+        error("No collision supported between these bounds", this, other);
         return undefined;
     }
 
@@ -48,6 +50,8 @@ class CircleBounds implements Bounds {
         if (other instanceof RectBounds) return Bounds.Collision.getRaycastCollisionCircleRect(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof CircleBounds) return Bounds.Collision.getRaycastCollisionCircleCircle(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof SlopeBounds) return Bounds.Collision.getRaycastCollisionCircleSlope(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof NullBounds) return undefined;
+        error("No collision supported between these bounds", this, other);
         return undefined;
     }
 
@@ -55,6 +59,8 @@ class CircleBounds implements Bounds {
         if (other instanceof RectBounds) return Bounds.Collision.isOverlappingCircleRect(this, other);
         if (other instanceof CircleBounds) return Bounds.Collision.isOverlappingCircleCircle(this, other);
         if (other instanceof SlopeBounds) return Bounds.Collision.isOverlappingCircleSlope(this, other);
+        if (other instanceof NullBounds) return undefined;
+        error("No overlap supported between these bounds", this, other);
         return false;
     }
 

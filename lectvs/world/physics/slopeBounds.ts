@@ -37,18 +37,24 @@ class SlopeBounds implements Bounds {
     getDisplacementCollision(other: Bounds): Bounds.DisplacementCollision {
         if (other instanceof RectBounds) return Bounds.Collision.getDisplacementCollisionSlopeRect(this, other);
         if (other instanceof CircleBounds) return Bounds.Collision.getDisplacementCollisionSlopeCircle(this, other);
+        if (other instanceof NullBounds) return undefined;
+        error("No collision supported between these bounds", this, other);
         return undefined;
     }
 
     getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision {
         if (other instanceof RectBounds) return Bounds.Collision.getRaycastCollisionSlopeRect(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof CircleBounds) return Bounds.Collision.getRaycastCollisionSlopeCircle(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof NullBounds) return undefined;
+        error("No collision supported between these bounds", this, other);
         return undefined;
     }
 
     isOverlapping(other: Bounds) {
         if (other instanceof RectBounds) return Bounds.Collision.isOverlappingRectSlope(other, this);
         if (other instanceof CircleBounds) return Bounds.Collision.isOverlappingCircleSlope(other, this);
+        if (other instanceof NullBounds) return undefined;
+        error("No overlap supported between these bounds", this, other);
         return false;
     }
 

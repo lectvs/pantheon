@@ -30,3 +30,10 @@ type Boundaries = {
     right?: number;
 }
 
+function pt(x: number, y: number) {
+    return { x, y };
+}
+
+function rect(x: number, y: number, width: number, height: number): Rect {
+    return { x, y, width, height };
+}

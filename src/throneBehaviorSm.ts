@@ -73,7 +73,7 @@ class ThroneBehaviorSm extends StateMachine {
                 }),
                 S.call(() => {
                     let s = this.throne.world.playSound('land');
-                    s.webAudioSound.speed = 1.5;
+                    s.speed = 1.5;
                     s.volume = 0.7;
                     this.throne.colliding = true;
                 }),

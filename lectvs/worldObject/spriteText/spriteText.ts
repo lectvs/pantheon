@@ -29,7 +29,7 @@ class SpriteText extends WorldObject {
 
     private fontTexture: Texture;
 
-    constructor(font: SpriteText.Font) {
+    constructor(font: SpriteText.Font, text: string = "") {
         super();
 
         this.font = font;
@@ -43,7 +43,7 @@ class SpriteText extends WorldObject {
 
         this.mask = null;
 
-        this.clear();
+        this.setText(text)
     }
 
     render(screen: Texture) {

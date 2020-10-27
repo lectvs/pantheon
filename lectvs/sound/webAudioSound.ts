@@ -1,6 +1,7 @@
 namespace WebAudioSound {
     export type Asset = {
         buffer: AudioBuffer;
+        volume: number;
     }
 }
 
@@ -26,8 +27,14 @@ class WebAudioSound implements WebAudioSoundI{
     private get context() { return WebAudio.context; }
 
     private gainNode: GainNode;
-    get volume() { return this.gainNode.gain.value; }
-    set volume(value: number) { this.gainNode.gain.value = M.clamp(value, 0, 2); }
+    private _volume: number;
+    get volume() {
+        return this._volume;
+    }
+    set volume(value: number) {
+        this._volume = M.clamp(value, 0, Sound.MAX_VOLUME);
+        this.gainNode.gain.value = this._volume * this.asset.volume;
+    }
 
     private _speed: number;
     get speed() {

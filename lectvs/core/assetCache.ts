@@ -23,7 +23,7 @@ class AssetCache {
     static getSoundAsset(key: string): WebAudioSound.Asset {
         if (!this.sounds[key]) {
             error(`Sound '${key}' does not exist.`);
-            return { buffer: new AudioBuffer({ length: 0, sampleRate: 8000 }) };
+            return { buffer: new AudioBuffer({ length: 0, sampleRate: 8000 }), volume: 1 };
         }
         return this.sounds[key];
     }

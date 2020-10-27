@@ -25,7 +25,7 @@ class Knight extends Enemy {
         this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'enemyknight_', textures: [4, 5, 6, 7], frameRate: 8, count: -1,
                 overrides: {
-                    2: { callback: () => { this.world.playSound('walk').volume = 0.5; }}
+                    2: { callback: () => { this.world.playSound('walk'); }}
                 }
         }));
         this.addAnimation(Animations.fromTextureList({ name: 'windup', texturePrefix: 'enemyknight_', textures: [8], frameRate: 4, count: -1 }));

@@ -23,7 +23,7 @@ class Mage extends Enemy {
         this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'mage_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'mage_', textures: [4, 5], frameRate: 4, count: -1,
                 overrides: {
-                    2: { callback: () => { this.world.playSound('walk').volume = 0.5; }}
+                    2: { callback: () => { this.world.playSound('walk'); }}
                 }
         }));
         this.addAnimation(Animations.fromTextureList({ name: 'wave', texturePrefix: 'mage_', textures: [8, 9], frameRate: 2, count: -1 }));

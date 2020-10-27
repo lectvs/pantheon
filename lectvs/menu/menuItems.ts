@@ -3,6 +3,7 @@
 namespace MenuTextButton {
     export type Config = {
         font: SpriteText.Font;
+        text?: string;
         onClick?: () => any;
     }
 }
@@ -11,7 +12,7 @@ class MenuTextButton extends SpriteText {
     onClick: () => any;
 
     constructor(config: MenuTextButton.Config) {
-        super(config.font);
+        super(config.font, config.text ?? "");
         this.onClick = config.onClick ?? Utils.NOOP;
     }
 
@@ -61,6 +62,7 @@ class MenuNumericSelector extends SpriteText {
 
         let leftButton = this.addChild(new MenuTextButton({
             font: this.font,
+            text: "<",
             onClick: () => {
                 global.game.playSound('click');
                 let bars = this.getFullBarsForValue(this.getValue());
@@ -71,10 +73,10 @@ class MenuNumericSelector extends SpriteText {
             }
         }));
         leftButton.setStyle(this.style);
-        leftButton.setText("<");
 
         let rightButton = this.addChild(new MenuTextButton({
             font: this.font,
+            text: ">",
             onClick: () => {
                 global.game.playSound('click');
                 let bars = this.getFullBarsForValue(this.getValue());
@@ -86,7 +88,6 @@ class MenuNumericSelector extends SpriteText {
         }));
         rightButton.localx = (this.barLength+3) * this.font.charWidth;
         rightButton.setStyle(this.style);
-        rightButton.setText(">");
     }
 
     update() {
@@ -168,15 +169,16 @@ class MenuControlMapper extends SpriteText {
 
             let bindingButton = this.addChild(new MenuTextButton({
                 font: this.font,
+                text: bindingName,
                 onClick: () => {
                     global.game.playSound('click');
                     this.selectBinding(bindingId);
                 }
-            }));
-            World.Actions.setName(bindingButton, this.getBindingMappingObjectName(binding));
+            }), {
+                name: this.getBindingMappingObjectName(binding)
+            });
             bindingButton.localx = bindingx;
             bindingButton.setStyle(this.style);
-            bindingButton.setText(bindingName);
 
             bindingx += (bindingName.length + 3) * this.font.charWidth;
             text += " ".repeat(bindingName.length) + " / ";
