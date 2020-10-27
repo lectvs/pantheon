@@ -23,6 +23,7 @@ namespace Bounds {
 }
 
 interface Bounds {
+    clone(): Bounds;
     getBoundingBox(x?: number, y?: number): Rectangle;
     getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision;
     getDisplacementCollision(other: Bounds): Bounds.DisplacementCollision;

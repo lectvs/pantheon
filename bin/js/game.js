@@ -7324,6 +7324,9 @@ var CircleBounds = /** @class */ (function () {
         this.center = { x: x, y: y };
         this.boundingBox = new Rectangle(0, 0, 0, 0);
     }
+    CircleBounds.prototype.clone = function () {
+        return new CircleBounds(this.x, this.y, this.radius, this.parent);
+    };
     CircleBounds.prototype.getCenter = function () {
         var x = this.parent ? this.parent.x : 0;
         var y = this.parent ? this.parent.y : 0;
@@ -8213,6 +8216,9 @@ var NullBounds = /** @class */ (function () {
         this.position = { x: Infinity, y: Infinity };
         this.boundingBox = new Rectangle(Infinity, Infinity, 0, 0);
     }
+    NullBounds.prototype.clone = function () {
+        return new NullBounds();
+    };
     NullBounds.prototype.getPosition = function (x, y) {
         return this.position;
     };
@@ -8242,6 +8248,9 @@ var RectBounds = /** @class */ (function () {
         this.height = height;
         this.boundingBox = new Rectangle(0, 0, 0, 0);
     }
+    RectBounds.prototype.clone = function () {
+        return new RectBounds(this.x, this.y, this.width, this.height, this.parent);
+    };
     RectBounds.prototype.getBoundingBox = function (x, y) {
         x = x !== null && x !== void 0 ? x : (this.parent ? this.parent.x : 0);
         y = y !== null && y !== void 0 ? y : (this.parent ? this.parent.y : 0);
@@ -8334,6 +8343,9 @@ var SlopeBounds = /** @class */ (function () {
         this.direction = direction;
         this.boundingBox = new Rectangle(0, 0, 0, 0);
     }
+    SlopeBounds.prototype.clone = function () {
+        return new SlopeBounds(this.x, this.y, this.width, this.height, this.direction, this.parent);
+    };
     SlopeBounds.prototype.getBoundingBox = function (x, y) {
         x = x !== null && x !== void 0 ? x : (this.parent ? this.parent.x : 0);
         y = y !== null && y !== void 0 ? y : (this.parent ? this.parent.y : 0);

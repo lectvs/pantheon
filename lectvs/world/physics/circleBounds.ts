@@ -17,6 +17,10 @@ class CircleBounds implements Bounds {
         this.boundingBox = new Rectangle(0, 0, 0, 0);
     }
 
+    clone(): CircleBounds {
+        return new CircleBounds(this.x, this.y, this.radius, this.parent);
+    }
+
     getCenter() {
         let x = this.parent ? this.parent.x : 0;
         let y = this.parent ? this.parent.y : 0;

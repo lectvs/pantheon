@@ -7,6 +7,10 @@ class NullBounds implements Bounds {
         this.boundingBox = new Rectangle(Infinity, Infinity, 0, 0);
     }
 
+    clone(): NullBounds {
+        return new NullBounds();
+    }
+
     getPosition(x?: number, y?: number) {
         return this.position;
     }

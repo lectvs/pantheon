@@ -17,6 +17,10 @@ class RectBounds implements Bounds {
         this.boundingBox = new Rectangle(0, 0, 0, 0);
     }
 
+    clone(): RectBounds {
+        return new RectBounds(this.x, this.y, this.width, this.height, this.parent);
+    }
+
     getBoundingBox(x?: number, y?: number) {
         x = x ?? (this.parent ? this.parent.x : 0);
         y = y ?? (this.parent ? this.parent.y : 0);

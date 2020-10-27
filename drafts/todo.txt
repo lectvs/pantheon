@@ -1,14 +1,4 @@
 postjam
-- investigate boss fight crash
-- limit to how many shadows there are
-- fix sticking against the wall bug
-- fix caps lock bug?
-- cutscene skips
-- hoop not collide with walls
-- mage light up to indicate summoning
-- calculate hoop speed from angular speed around player
-
-postpostjam
 - /do we need to specify the initial texture on an animated sprite? - no
 - /error messages for unsupported collider algorithms
 - /pt(), rect(), etc. shortcut methods
@@ -17,34 +7,42 @@ postpostjam
 - /change pitch of sounds (decided not to do for now, pitch change not supported by WebAudio so requires another library)
 - /angular velocity
 - /"anchor" language in asset file
+- /directly set name, layer, physicsGroup on WorldObject?
+- /clone bounds
+- /think about constructor arguments for world objects
+- investigate performance issues
+    - fps drop with dead bodies?
+    - fps drop with spritetext?
+- investigate boss fight crash
+- limit to how many shadows there are
+- fix sticking against the wall bug
+- fix caps lock bug?
+- cutscene skips
+- hoop not collide with walls
+- mage light up to indicate summoning
+- calculate hoop speed from angular speed around player
+- add some more enemies
 - fix window focus issues
+- mute audio when window out of focus
 - in general clean up the storyboard
-- define better "momentum transfer" modes
 - collect all collisions and apply callbacks/momentum transfer afterward
+- define better "momentum transfer" modes
 - add custom debug overlay feeds
 - init method for world objects
-- add angular velocity to sprite
-- figure out why configs aren't semantically checked properly
-- better scripting syntax
+- better scripting syntax?
 - camera mode transitions
 - revisit dialog system
 - story transition delay
 - better enemy behavior system
 - fix bug with vx, vy = NaN
 - slide inheritance
-- addWorldObject type inference from `constructor` property?
 - spritetext alignment
-- directly set name, layer, physicsGroup on WorldObject?
 - not have to specify parent in physics object bounds?
 - spritetext as a texture and not a world object?
-- think about constructor arguments for world objects
 - physics object: combine vx/y/z, gravityx/y/z, etc.
-- fps drop with spritetext?
-- clone bounds
 - static-ify generic sprites (e.g. render to some texture instead of simulating)
 - remove sound from dialog (and customize?)
 - render sprite to non-world texture?
-- build script
-- mute audio when window out of focus
-- fill in README.md for others to run/build the game
 - fullscreen
+- build script
+- fill in README.md for others to run/build the game
