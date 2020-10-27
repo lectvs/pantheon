@@ -14,14 +14,14 @@ postpostjam
 - /pt(), rect(), etc. shortcut methods
 - /volume control at the asset-level
 - /change speed of sounds
-- change pitch of sounds
-- angular velocity
+- /change pitch of sounds (decided not to do for now, pitch change not supported by WebAudio so requires another library)
+- /angular velocity
+- /"anchor" language in asset file
 - fix window focus issues
 - in general clean up the storyboard
 - define better "momentum transfer" modes
 - collect all collisions and apply callbacks/momentum transfer afterward
 - add custom debug overlay feeds
-- "anchor" language in asset file
 - init method for world objects
 - add angular velocity to sprite
 - figure out why configs aren't semantically checked properly

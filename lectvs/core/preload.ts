@@ -17,7 +17,6 @@ namespace Preload {
 
     export type Texture = {
         url?: string;
-        defaultAnchor?: Pt;
         spritesheet?: TextureSpritesheet;
         frames?: Dict<TextureFrame>;
     } & TextureFrame;
@@ -180,7 +179,7 @@ class Preload {
         for (let frame in frames) {
             let frameTexture: PIXI.Texture = new PIXI.Texture(baseTexture);
             let rect = frames[frame].rect || texture.rect;
-            let anchor = frames[frame].anchor || texture.defaultAnchor;
+            let anchor = frames[frame].anchor || texture.anchor;
             if (rect) {
                 frameTexture.frame = new Rectangle(rect.x, rect.y, rect.width, rect.height);
             }

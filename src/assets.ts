@@ -11,13 +11,13 @@ namespace Assets {
 
         // Game
         'knight': {
-            defaultAnchor: Anchor.BOTTOM,
+            anchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 16, frameHeight: 24 },
         },
         'hoop': { anchor: Anchor.CENTER },
 
         'golbin': {
-            defaultAnchor: Anchor.BOTTOM,
+            anchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 32, frameHeight: 32 },
             frames: {
                 'golbin_dead': {
@@ -29,7 +29,7 @@ namespace Assets {
         'bullet': { anchor: Anchor.CENTER },
 
         'enemyknight': {
-            defaultAnchor: Anchor.BOTTOM,
+            anchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 24, frameHeight: 24 },
             frames: {
                 'enemyknight_dead': {
@@ -40,7 +40,7 @@ namespace Assets {
         },
 
         'mage': {
-            defaultAnchor: Anchor.BOTTOM,
+            anchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 24, frameHeight: 24 },
             frames: {
                 'mage_dead': {
@@ -51,7 +51,7 @@ namespace Assets {
         },
 
         'runner': {
-            defaultAnchor: Anchor.BOTTOM,
+            anchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 24, frameHeight: 24 },
             frames: {
                 'runner_dead': {
@@ -67,7 +67,7 @@ namespace Assets {
         'throne': { anchor: Anchor.BOTTOM },
 
         'king': {
-            defaultAnchor: Anchor.BOTTOM,
+            anchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 24, frameHeight: 24 },
         },
         'bomb': { anchor: Anchor.BOTTOM },

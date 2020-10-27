@@ -1501,7 +1501,7 @@ var Preload = /** @class */ (function () {
         for (var frame in frames) {
             var frameTexture = new PIXI.Texture(baseTexture);
             var rect_1 = frames[frame].rect || texture.rect;
-            var anchor_1 = frames[frame].anchor || texture.defaultAnchor;
+            var anchor_1 = frames[frame].anchor || texture.anchor;
             if (rect_1) {
                 frameTexture.frame = new Rectangle(rect_1.x, rect_1.y, rect_1.width, rect_1.height);
             }
@@ -9371,12 +9371,12 @@ var Assets;
         'deluxe16': {},
         // Game
         'knight': {
-            defaultAnchor: Anchor.BOTTOM,
+            anchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 16, frameHeight: 24 },
         },
         'hoop': { anchor: Anchor.CENTER },
         'golbin': {
-            defaultAnchor: Anchor.BOTTOM,
+            anchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 32, frameHeight: 32 },
             frames: {
                 'golbin_dead': {
@@ -9387,7 +9387,7 @@ var Assets;
         },
         'bullet': { anchor: Anchor.CENTER },
         'enemyknight': {
-            defaultAnchor: Anchor.BOTTOM,
+            anchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 24, frameHeight: 24 },
             frames: {
                 'enemyknight_dead': {
@@ -9397,7 +9397,7 @@ var Assets;
             }
         },
         'mage': {
-            defaultAnchor: Anchor.BOTTOM,
+            anchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 24, frameHeight: 24 },
             frames: {
                 'mage_dead': {
@@ -9407,7 +9407,7 @@ var Assets;
             }
         },
         'runner': {
-            defaultAnchor: Anchor.BOTTOM,
+            anchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 24, frameHeight: 24 },
             frames: {
                 'runner_dead': {
@@ -9421,7 +9421,7 @@ var Assets;
         'stairs': { anchor: Anchor.BOTTOM },
         'throne': { anchor: Anchor.BOTTOM },
         'king': {
-            defaultAnchor: Anchor.BOTTOM,
+            anchor: Anchor.BOTTOM,
             spritesheet: { frameWidth: 24, frameHeight: 24 },
         },
         'bomb': { anchor: Anchor.BOTTOM },
