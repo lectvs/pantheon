@@ -3749,6 +3749,7 @@ var SpriteText = /** @class */ (function (_super) {
             alpha: 1,
             offset: 0,
         };
+        _this.anchor = Anchor.TOP_LEFT;
         _this.mask = null;
         _this.setText(text);
         return _this;
@@ -3761,12 +3762,14 @@ var SpriteText = /** @class */ (function (_super) {
     SpriteText.prototype.render = function (screen) {
         var e_18, _a;
         var _b, _c, _d;
+        var textWidth = this.getTextWidth();
+        var textHeight = this.getTextHeight();
         try {
             for (var _e = __values(this.chars), _f = _e.next(); !_f.done; _f = _e.next()) {
                 var char = _f.value;
                 this.fontTexture.renderTo(screen, {
-                    x: this.renderScreenX + char.x,
-                    y: this.renderScreenY + char.y + ((_b = char.style.offset) !== null && _b !== void 0 ? _b : this.style.offset),
+                    x: this.renderScreenX + char.x - this.anchor.x * textWidth,
+                    y: this.renderScreenY + char.y - this.anchor.y * textHeight + ((_b = char.style.offset) !== null && _b !== void 0 ? _b : this.style.offset),
                     tint: (_c = char.style.color) !== null && _c !== void 0 ? _c : this.style.color,
                     alpha: (_d = char.style.alpha) !== null && _d !== void 0 ? _d : this.style.alpha,
                     slice: {
@@ -5300,8 +5303,9 @@ var DialogBox = /** @class */ (function (_super) {
         var _this = _super.call(this) || this;
         _this.charQueue = [];
         _this.textAreaFull = config.textAreaFull;
-        _this.portraitPosition = config.portraitPosition;
         _this.textAreaPortrait = config.textAreaPortrait;
+        _this.portraitPosition = config.portraitPosition;
+        _this.startSound = config.startSound;
         _this.textArea = _this.textAreaFull;
         _this.done = true;
         _this.spriteText = _this.addChild(new SpriteText(config.dialogFont));
@@ -5390,7 +5394,9 @@ var DialogBox = /** @class */ (function (_super) {
         this.charQueue = SpriteTextConverter.textToCharListWithWordWrap(dialogText, this.spriteText.font, this.textArea.width);
         this.characterTimer.reset();
         this.advanceCharacter(); // Advance character once to start the dialog with one displayed character.
-        this.world.playSound('click').volume = 0.5;
+        if (this.startSound) {
+            this.world.playSound(this.startSound);
+        }
     };
     DialogBox.prototype.showPortrait = function (portrait) {
         if (!portrait || portrait === DialogBox.NONE_PORTRAIT) {
@@ -9471,6 +9477,7 @@ var Assets;
         // Menu
         'click': {},
         // Game
+        'dialogstart': { url: 'assets/click.wav', volume: 0.5 },
         'walk': { volume: 0.5 },
         'swing': { volume: 0.5 },
         'hitenemy': {},
@@ -10568,6 +10575,7 @@ Main.loadConfig({
                     textAreaFull: { x: -192, y: -42, width: 384, height: 84 },
                     textAreaPortrait: { x: -200, y: -50, width: 400, height: 100 },
                     portraitPosition: { x: 78, y: 0 },
+                    startSound: 'click',
                 });
                 dialogBox.x = 200;
                 dialogBox.y = 250;
@@ -10945,7 +10953,8 @@ function getStoryboard() {
                             _a.sent();
                             text = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "sounds like a lot of HOOPLAH to me"));
                             text.setStyle({ alpha: 0 });
-                            text.x = global.gameWidth / 2 - text.getTextWidth() / 2;
+                            text.anchor = Anchor.TOP_CENTER;
+                            text.x = global.gameWidth / 2;
                             text.y = global.gameHeight / 2 + 60;
                             return [4 /*yield*/, S.wait(2)];
                         case 12:
@@ -11289,9 +11298,9 @@ function getStoryboard() {
                             _a.sent();
                             text = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "and thus begins the tale of the..."));
                             text.setStyle({ color: 0x000000, alpha: 0 });
-                            text.x = global.gameWidth / 2 - text.getTextWidth() / 2;
+                            text.anchor = Anchor.TOP_CENTER;
+                            text.x = global.gameWidth / 2;
                             text.y = global.gameHeight / 2 - 8;
-                            text.ignoreCamera = true;
                             return [4 /*yield*/, S.doOverTime(3, function (t) { return text.style.alpha = t; })];
                         case 14:
                             _a.sent();
@@ -11300,9 +11309,9 @@ function getStoryboard() {
                             _a.sent();
                             text2 = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "HOOP KNIGHT"));
                             text2.setStyle({ color: 0x000000, alpha: 0 });
-                            text2.x = global.gameWidth / 2 - text2.getTextWidth() / 2;
+                            text2.anchor = Anchor.TOP_CENTER;
+                            text2.x = global.gameWidth / 2;
                             text2.y = global.gameHeight / 2 + 8;
-                            text2.ignoreCamera = true;
                             return [4 /*yield*/, S.doOverTime(3, function (t) { return text2.style.alpha = t; })];
                         case 16:
                             _a.sent();

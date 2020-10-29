@@ -78,7 +78,8 @@ function getStoryboard(): Storyboard { return {
 
             let text = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "sounds like a lot of HOOPLAH to me"));
             text.setStyle({ alpha: 0 });
-            text.x = global.gameWidth/2 - text.getTextWidth()/2;
+            text.anchor = Anchor.TOP_CENTER;
+            text.x = global.gameWidth/2;
             text.y = global.gameHeight/2 + 60;
 
             yield S.wait(2);
@@ -330,18 +331,18 @@ function getStoryboard(): Storyboard { return {
 
             let text = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "and thus begins the tale of the..."));
             text.setStyle({ color: 0x000000, alpha: 0 });
-            text.x = global.gameWidth/2 - text.getTextWidth()/2;
+            text.anchor = Anchor.TOP_CENTER;
+            text.x = global.gameWidth/2;
             text.y = global.gameHeight/2 - 8;
-            text.ignoreCamera = true;
 
             yield S.doOverTime(3, t => text.style.alpha = t);
             yield S.wait(2);
 
             let text2 = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "HOOP KNIGHT"));
             text2.setStyle({ color: 0x000000, alpha: 0 });
-            text2.x = global.gameWidth/2 - text2.getTextWidth()/2;
+            text2.anchor = Anchor.TOP_CENTER;
+            text2.x = global.gameWidth/2;
             text2.y = global.gameHeight/2 + 8;
-            text2.ignoreCamera = true;
 
             yield S.doOverTime(3, t => text2.style.alpha = t);
             yield S.wait(5);

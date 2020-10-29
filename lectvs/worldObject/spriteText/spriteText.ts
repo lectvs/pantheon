@@ -25,6 +25,7 @@ class SpriteText extends WorldObject {
     private _style: SpriteText.Style;
     get style() { return this._style; }
 
+    anchor: Pt;
     mask: Mask.WorldObjectMaskConfig;
 
     private fontTexture: Texture;
@@ -41,16 +42,19 @@ class SpriteText extends WorldObject {
             offset: 0,
         };
 
+        this.anchor = Anchor.TOP_LEFT;
         this.mask = null;
 
         this.setText(text)
     }
 
     render(screen: Texture) {
+        let textWidth = this.getTextWidth();
+        let textHeight = this.getTextHeight();
         for (let char of this.chars) {
             this.fontTexture.renderTo(screen, {
-                x: this.renderScreenX + char.x,
-                y: this.renderScreenY + char.y + (char.style.offset ?? this.style.offset),
+                x: this.renderScreenX + char.x - this.anchor.x * textWidth,
+                y: this.renderScreenY + char.y - this.anchor.y * textHeight + (char.style.offset ?? this.style.offset),
                 tint: char.style.color ?? this.style.color,
                 alpha: char.style.alpha ?? this.style.alpha,
                 slice: {

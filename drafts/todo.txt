@@ -12,9 +12,17 @@ postjam
 - /think about constructor arguments for world objects
 - /add custom debug overlay feeds
 - /hoop not collide with walls
+- /spritetext as a texture and not a world object? (spritetext cannot be a texture because it has moving components)
+- /spritetext alignment
+- /remove sound from dialog (and customize?)
 - investigate performance issues
     - fps drop with dead bodies?
     - fps drop with spritetext?
+    - static-ify generic sprites (e.g. render to some texture instead of simulating)
+- new content
+    - add some more enemies
+    - add music/ambience during silent parts
+    - add dialog talking sound effects?
 - investigate boss fight crash
 - limit to how many shadows there are
 - fix sticking against the wall bug
@@ -22,7 +30,6 @@ postjam
 - cutscene skips
 - mage light up to indicate summoning
 - calculate hoop speed from angular speed around player
-- add some more enemies
 - fix window focus issues
 - mute audio when window out of focus
 - in general clean up the storyboard
@@ -35,13 +42,8 @@ postjam
 - story transition delay
 - better enemy behavior system
 - fix bug with vx, vy = NaN
-- slide inheritance
-- spritetext alignment
 - not have to specify parent in physics object bounds?
-- spritetext as a texture and not a world object?
 - physics object: combine vx/y/z, gravityx/y/z, etc.
-- static-ify generic sprites (e.g. render to some texture instead of simulating)
-- remove sound from dialog (and customize?)
 - render sprite to non-world texture?
 - fullscreen
 - build script

@@ -6,6 +6,7 @@ namespace DialogBox {
         textAreaFull: Rect;
         textAreaPortrait: Rect;
         portraitPosition: Pt;
+        startSound?: string;
     }
 }
 
@@ -14,6 +15,7 @@ class DialogBox extends Sprite {
     textAreaFull: Rect;
     textAreaPortrait: Rect;
     portraitPosition: Pt;
+    startSound: string;
 
     textArea: Rect;
     done: boolean;
@@ -29,8 +31,9 @@ class DialogBox extends Sprite {
         this.charQueue = [];
         
         this.textAreaFull = config.textAreaFull;
-        this.portraitPosition = config.portraitPosition;
         this.textAreaPortrait = config.textAreaPortrait;
+        this.portraitPosition = config.portraitPosition;
+        this.startSound = config.startSound;
 
         this.textArea = this.textAreaFull;
         this.done = true;
@@ -137,7 +140,10 @@ class DialogBox extends Sprite {
         this.characterTimer.reset();
 
         this.advanceCharacter(); // Advance character once to start the dialog with one displayed character.
-        this.world.playSound('click').volume = 0.5;
+
+        if (this.startSound) {
+            this.world.playSound(this.startSound);
+        }
     }
 
     showPortrait(portrait: string) {
