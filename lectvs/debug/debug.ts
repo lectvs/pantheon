@@ -7,6 +7,7 @@ namespace Debug {
         allPhysicsBounds: boolean;
         moveCameraWithArrows: boolean; 
         showOverlay: boolean;
+        overlayFeeds: ((world: World) => string)[];
         skipRate: number;
         programmaticInput: boolean;
         autoplay: boolean;
@@ -27,6 +28,7 @@ class Debug {
         Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
         Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
         Debug.SHOW_OVERLAY = config.showOverlay;
+        Debug.OVERLAY_FEEDS = config.overlayFeeds;
         Debug.SKIP_RATE = config.skipRate;
         Debug.PROGRAMMATIC_INPUT = config.programmaticInput;
         Debug.AUTOPLAY = config.autoplay;
@@ -59,6 +61,7 @@ class Debug {
     private static _SHOW_OVERLAY: boolean;
     static get SHOW_OVERLAY() { return this.DEBUG && this._SHOW_OVERLAY; }
     static set SHOW_OVERLAY(value: boolean) { this._SHOW_OVERLAY = value; }
+    static OVERLAY_FEEDS: ((world: World) => string)[];
 
     private static _SKIP_RATE: number;
     static get SKIP_RATE() { return this.DEBUG ? this._SKIP_RATE : 1; }

@@ -17,10 +17,10 @@ class WorldSelecter {
         return <PhysicsWorldObject[]>_.flatten(groups.map(group => this.world.physicsGroups[group].worldObjects));
     }
 
-    name<T extends WorldObject>(name: string) {
+    name<T extends WorldObject>(name: string, checked: boolean = true) {
         let results = this.nameAll<T>(name);
         if (_.isEmpty(results)) {
-            error(`No object with name ${name} exists in world`, this);
+            if (checked) error(`No object with name ${name} exists in world`, this);
             return undefined;
         }
         if (results.length > 1) {
@@ -58,10 +58,10 @@ class WorldSelecter {
         return result.sort((r1, r2) => r1.t - r2.t);
     }
 
-    type<T extends WorldObject>(type: new (...args) => T) {
+    type<T extends WorldObject>(type: new (...args) => T, checked: boolean = true) {
         let results = this.typeAll(type);
         if (_.isEmpty(results)) {
-            error(`No object of type ${type.name} exists in world`, this);
+            if (checked) error(`No object of type ${type.name} exists in world`, this);
             return undefined;
         }
         if (results.length > 1) {

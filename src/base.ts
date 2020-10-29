@@ -24,7 +24,6 @@ function BASE_STAGE(): World {
     world.collisions.push({ group1: 'bombs', group2: 'enemies' });
     world.collisions.push({ group1: 'hoop', group2: 'enemies' });
     world.collisions.push({ group1: 'hoop', group2: 'bombs' });
-    world.collisions.push({ group1: 'hoop', group2: 'walls' });
     world.collisionIterations = 4;
     world.useRaycastDisplacementThreshold = 4;
 

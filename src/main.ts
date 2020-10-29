@@ -93,6 +93,7 @@ Main.loadConfig({
         allPhysicsBounds: false,
         moveCameraWithArrows: true,
         showOverlay: true,
+        overlayFeeds: [],
         skipRate: 10,
         programmaticInput: false,
         autoplay: true,

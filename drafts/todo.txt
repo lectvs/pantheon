@@ -10,6 +10,8 @@ postjam
 - /directly set name, layer, physicsGroup on WorldObject?
 - /clone bounds
 - /think about constructor arguments for world objects
+- /add custom debug overlay feeds
+- /hoop not collide with walls
 - investigate performance issues
     - fps drop with dead bodies?
     - fps drop with spritetext?
@@ -18,7 +20,6 @@ postjam
 - fix sticking against the wall bug
 - fix caps lock bug?
 - cutscene skips
-- hoop not collide with walls
 - mage light up to indicate summoning
 - calculate hoop speed from angular speed around player
 - add some more enemies
@@ -27,7 +28,6 @@ postjam
 - in general clean up the storyboard
 - collect all collisions and apply callbacks/momentum transfer afterward
 - define better "momentum transfer" modes
-- add custom debug overlay feeds
 - init method for world objects
 - better scripting syntax?
 - camera mode transitions
