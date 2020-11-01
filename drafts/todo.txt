@@ -18,7 +18,10 @@ postjam
 - investigate performance issues
     - fps drop with dead bodies?
     - fps drop with spritetext?
-    - static-ify generic sprites (e.g. render to some texture instead of simulating)
+    - optimizations
+        - static-ify generic sprites (e.g. render to some texture instead of simulating)
+        - /do not render off-screen things
+        - optimize sprite text with static pieces
 - new content
     - add some more enemies
     - add music/ambience during silent parts
@@ -29,6 +32,7 @@ postjam
 - fix caps lock bug?
 - cutscene skips
 - mage light up to indicate summoning
+- fix guard beam color
 - calculate hoop speed from angular speed around player
 - fix window focus issues
 - mute audio when window out of focus

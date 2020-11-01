@@ -52,6 +52,7 @@ class SpriteText extends WorldObject {
         let textWidth = this.getTextWidth();
         let textHeight = this.getTextHeight();
         for (let char of this.chars) {
+            global.metrics.startSpan(`char_${char.char}`);
             this.fontTexture.renderTo(screen, {
                 x: this.renderScreenX + char.x - this.anchor.x * textWidth,
                 y: this.renderScreenY + char.y - this.anchor.y * textHeight + (char.style.offset ?? this.style.offset),
@@ -65,6 +66,7 @@ class SpriteText extends WorldObject {
                 },
                 mask: Mask.getTextureMaskForWorldObject(this.mask, this),
             });
+            global.metrics.endSpan(`char_${char.char}`);
         }
         super.render(screen);
     }
@@ -81,9 +83,22 @@ class SpriteText extends WorldObject {
         return SpriteText.getHeightOfCharList(this.chars);
     }
 
-    getTextWorldBounds(): Rect {
-        // TODO: adjust for alignment
-        return { x: this.x, y: this.y, width: this.getTextWidth(), height: this.getTextHeight() };
+    getTextWorldBounds() {
+        let textWidth = this.getTextWidth();
+        let textHeight = this.getTextHeight();
+        return <Rect>{
+            x: this.x - this.anchor.x * textWidth,
+            y: this.y - this.anchor.y * textHeight,
+            width: textWidth,
+            height: textHeight,
+        };
+    }
+
+    getVisibleScreenBounds() {
+        let bounds = this.getTextWorldBounds();
+        bounds.x += this.renderScreenX - this.x;
+        bounds.y += this.renderScreenY - this.y;
+        return bounds;
     }
 
     setStyle(style: SpriteText.Style) {

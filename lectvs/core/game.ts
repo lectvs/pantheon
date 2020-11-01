@@ -54,10 +54,14 @@ class Game {
             global.metrics.endSpan('theater');
         }
 
+        global.metrics.startSpan('debugOverlay');
         this.updateOverlay();
+        global.metrics.endSpan('debugOverlay');
 
+        global.metrics.startSpan('soundManager');
         this.soundManager.volume = this.volume;
         this.soundManager.update(this.delta);
+        global.metrics.endSpan('soundManager');
     }
 
     private updatePause() {
@@ -97,7 +101,10 @@ class Game {
         }
 
         if (this.isShowingOverlay && Debug.SHOW_OVERLAY) {
+            global.metrics.startSpan('debugOverlay');
             this.overlay.render(screen);
+            global.metrics.endSpan('debugOverlay');
+
         }
     }
 

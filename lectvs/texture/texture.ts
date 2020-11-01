@@ -50,6 +50,8 @@ interface Texture {
     clone(): Texture;
     free(): void;
 
+    getLocalBounds(properties: Texture.Properties): Rect;
+
     renderTo(texture: Texture, properties?: Texture.Properties): void;
     renderPIXIDisplayObject(displayObject: PIXI.DisplayObject): void;
 

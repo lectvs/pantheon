@@ -87,17 +87,15 @@ class Tilemap extends WorldObject {
         Tilemap.optimizeCollisionRects(collisionRects);  // Not optimizing entire array first to save some cycles.
         Tilemap.optimizeCollisionRects(collisionRects, Tilemap.OPTIMIZE_ALL);
         for (let rect of collisionRects) {
-            let box = new PhysicsWorldObject();
+            let box = this.addChild(new PhysicsWorldObject());
             box.x = this.x;
             box.y = this.y;
             box.bounds = new RectBounds(rect.x, rect.y, rect.width, rect.height, box);
-            World.Actions.setPhysicsGroup(box, this.physicsGroup);
+            box.matchParentPhysicsGroup = true;
             box.setImmovable(true);
             box.debugDrawBounds = this.debugDrawBounds;
             this.collisionBoxes.push(box);
         }
-
-        this.addChildren(this.collisionBoxes);
     }
 
     protected createTilemap() {
@@ -145,7 +143,7 @@ class Tilemap extends WorldObject {
             let zTexture = this.addChild(new Sprite());
             zTexture.x = this.x + texturesByZ[zValue].bounds.x;
             zTexture.y = this.y + texturesByZ[zValue].bounds.y + zHeight;
-            World.Actions.setLayer(zTexture, this.layer);
+            zTexture.matchParentLayer = true;
             zTexture.offset.y = -zHeight;
             zTexture.setTexture(this.animation ? undefined : texturesByZ[zValue].frames[0]);
             if (this.animation) {

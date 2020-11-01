@@ -28,6 +28,13 @@ class AnchoredTexture implements Texture {
         this.baseTexture.free();
     }
 
+    getLocalBounds(properties: Texture.Properties) {
+        let baseBounds = this.baseTexture.getLocalBounds(properties);
+        baseBounds.x += this.getAdjustmentX(properties.angle ?? 0, properties.scaleX ?? 1, properties.scaleY ?? 1);
+        baseBounds.y += this.getAdjustmentY(properties.angle ?? 0, properties.scaleX ?? 1, properties.scaleY ?? 1);
+        return baseBounds;
+    }
+
     renderTo(texture: Texture, properties: Texture.Properties = {}) {
         properties.x = properties.x ?? 0;
         properties.y = properties.y ?? 0;

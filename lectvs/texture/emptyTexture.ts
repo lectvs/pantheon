@@ -15,7 +15,13 @@ class EmptyTexture implements Texture {
     }
 
     free() { }
+
+    getLocalBounds(properties: Texture.Properties) {
+        return rect(0, 0, 0, 0);
+    }
+
     renderTo(texture: Texture, properties: Texture.Properties = {}) { }
+
     renderPIXIDisplayObject(displayObject: PIXI.DisplayObject) { }
 
     subdivide(h: number, v: number) {

@@ -18,6 +18,8 @@ class Sprite extends PhysicsWorldObject {
     effects: Effects;
     mask: Mask.WorldObjectMaskConfig;
 
+    onScreenPadding: number;
+
     constructor(texture?: string | Texture) {
         super();
 
@@ -38,6 +40,8 @@ class Sprite extends PhysicsWorldObject {
         this.alpha = 1;
 
         this.effects = new Effects();
+
+        this.onScreenPadding = 1;
     }
 
     update() {
@@ -77,6 +81,15 @@ class Sprite extends PhysicsWorldObject {
         return this.texture;
     }
 
+    getVisibleScreenBounds() {
+        let bounds = this.getTextureLocalBounds();
+        bounds.x += this.renderScreenX - this.onScreenPadding;
+        bounds.y += this.renderScreenY - this.onScreenPadding;
+        bounds.width += 2*this.onScreenPadding;
+        bounds.height += 2*this.onScreenPadding;
+        return bounds;
+    }
+
     playAnimation(name: string, startFrame: number = 0, force: boolean = false) {
         this.animationManager.playAnimation(name, startFrame, force);
     }
@@ -88,5 +101,14 @@ class Sprite extends PhysicsWorldObject {
         }
         if (_.isString(key)) key = AssetCache.getTexture(key);
         this.texture = key;
+    }
+
+    private getTextureLocalBounds() {
+        if (!this.texture) return rect(0, 0, 0, 0);
+        return this.texture.getLocalBounds({
+            angle: this.angle,
+            scaleX: this.scaleX,
+            scaleY: this.scaleY,
+        });
     }
 }

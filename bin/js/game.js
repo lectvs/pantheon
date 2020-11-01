@@ -378,9 +378,13 @@ var Game = /** @class */ (function () {
             this.theater.update();
             global.metrics.endSpan('theater');
         }
+        global.metrics.startSpan('debugOverlay');
         this.updateOverlay();
+        global.metrics.endSpan('debugOverlay');
+        global.metrics.startSpan('soundManager');
         this.soundManager.volume = this.volume;
         this.soundManager.update(this.delta);
+        global.metrics.endSpan('soundManager');
     };
     Game.prototype.updatePause = function () {
         if (Input.justDown(Input.GAME_PAUSE) && !this.menuSystem.inMenu) {
@@ -415,7 +419,9 @@ var Game = /** @class */ (function () {
             global.metrics.endSpan('theater');
         }
         if (this.isShowingOverlay && Debug.SHOW_OVERLAY) {
+            global.metrics.startSpan('debugOverlay');
             this.overlay.render(screen);
+            global.metrics.endSpan('debugOverlay');
         }
     };
     Game.prototype.loadMainMenu = function () {
@@ -584,6 +590,9 @@ var Metrics = /** @class */ (function () {
     };
     Metrics.prototype.getLastRecording = function () {
         return _.last(this.recordings);
+    };
+    Metrics.prototype.getReportForLastRecording = function () {
+        return MetricsReport.generateTimeReportForSpan(this.getLastRecording());
     };
     Metrics.prototype.plotLastRecording = function (width, height) {
         if (width === void 0) { width = global.gameWidth; }
@@ -1250,6 +1259,35 @@ var BasicTexture = /** @class */ (function () {
     };
     BasicTexture.prototype.free = function () {
         this.renderTextureSprite.renderTexture.destroy(true);
+    };
+    BasicTexture.prototype.getLocalBounds = function (properties) {
+        var _a, _b, _c;
+        var scaleX = (_a = properties.scaleX) !== null && _a !== void 0 ? _a : 1;
+        var scaleY = (_b = properties.scaleY) !== null && _b !== void 0 ? _b : 1;
+        var angle = M.degToRad((_c = properties.angle) !== null && _c !== void 0 ? _c : 0);
+        var width = this.width * scaleX;
+        var height = this.height * scaleY;
+        if (angle === 0) {
+            return rect(0, 0, width, height);
+        }
+        var v1x = 0;
+        var v1y = 0;
+        var v2x = width * Math.cos(angle);
+        var v2y = width * Math.sin(angle);
+        var v3x = -height * Math.sin(angle);
+        var v3y = height * Math.cos(angle);
+        var v4x = v2x + v3x;
+        var v4y = v2y + v3y;
+        var minx = Math.min(v1x, v2x, v3x, v4x);
+        var maxx = Math.max(v1x, v2x, v3x, v4x);
+        var miny = Math.min(v1y, v2y, v3y, v4y);
+        var maxy = Math.max(v1y, v2y, v3y, v4y);
+        return {
+            x: minx,
+            y: miny,
+            width: maxx - minx,
+            height: maxy - miny,
+        };
     };
     BasicTexture.prototype.renderTo = function (texture, properties) {
         if (!texture)
@@ -2701,6 +2739,18 @@ var WorldObject = /** @class */ (function () {
         error("Cannot find child named " + name + " on parent:", this);
         return undefined;
     };
+    WorldObject.prototype.getVisibleScreenBounds = function () {
+        return undefined;
+    };
+    WorldObject.prototype.isOnScreen = function () {
+        var bounds = this.getVisibleScreenBounds();
+        if (!bounds)
+            return true;
+        return bounds.x + bounds.width >= 0
+            && bounds.x <= this.world.width
+            && bounds.y + bounds.height >= 0
+            && bounds.y <= this.world.height;
+    };
     WorldObject.prototype.kill = function () {
         this.alive = false;
     };
@@ -2964,6 +3014,7 @@ var Sprite = /** @class */ (function (_super) {
         _this.tint = 0xFFFFFF;
         _this.alpha = 1;
         _this.effects = new Effects();
+        _this.onScreenPadding = 1;
         return _this;
     }
     Sprite.prototype.update = function () {
@@ -2995,6 +3046,14 @@ var Sprite = /** @class */ (function (_super) {
     Sprite.prototype.getTexture = function () {
         return this.texture;
     };
+    Sprite.prototype.getVisibleScreenBounds = function () {
+        var bounds = this.getTextureLocalBounds();
+        bounds.x += this.renderScreenX - this.onScreenPadding;
+        bounds.y += this.renderScreenY - this.onScreenPadding;
+        bounds.width += 2 * this.onScreenPadding;
+        bounds.height += 2 * this.onScreenPadding;
+        return bounds;
+    };
     Sprite.prototype.playAnimation = function (name, startFrame, force) {
         if (startFrame === void 0) { startFrame = 0; }
         if (force === void 0) { force = false; }
@@ -3008,6 +3067,15 @@ var Sprite = /** @class */ (function (_super) {
         if (_.isString(key))
             key = AssetCache.getTexture(key);
         this.texture = key;
+    };
+    Sprite.prototype.getTextureLocalBounds = function () {
+        if (!this.texture)
+            return rect(0, 0, 0, 0);
+        return this.texture.getLocalBounds({
+            angle: this.angle,
+            scaleX: this.scaleX,
+            scaleY: this.scaleY,
+        });
     };
     return Sprite;
 }(PhysicsWorldObject));
@@ -3169,7 +3237,7 @@ var World = /** @class */ (function () {
         try {
             for (var _b = __values(layer.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var worldObject = _c.value;
-                if (worldObject.visible) {
+                if (worldObject.visible && worldObject.isOnScreen()) {
                     global.metrics.startSpan(worldObject);
                     worldObject.render(layerTexture);
                     global.metrics.endSpan(worldObject);
@@ -3767,6 +3835,7 @@ var SpriteText = /** @class */ (function (_super) {
         try {
             for (var _e = __values(this.chars), _f = _e.next(); !_f.done; _f = _e.next()) {
                 var char = _f.value;
+                global.metrics.startSpan("char_" + char.char);
                 this.fontTexture.renderTo(screen, {
                     x: this.renderScreenX + char.x - this.anchor.x * textWidth,
                     y: this.renderScreenY + char.y - this.anchor.y * textHeight + ((_b = char.style.offset) !== null && _b !== void 0 ? _b : this.style.offset),
@@ -3780,6 +3849,7 @@ var SpriteText = /** @class */ (function (_super) {
                     },
                     mask: Mask.getTextureMaskForWorldObject(this.mask, this),
                 });
+                global.metrics.endSpan("char_" + char.char);
             }
         }
         catch (e_18_1) { e_18 = { error: e_18_1 }; }
@@ -3801,8 +3871,20 @@ var SpriteText = /** @class */ (function (_super) {
         return SpriteText.getHeightOfCharList(this.chars);
     };
     SpriteText.prototype.getTextWorldBounds = function () {
-        // TODO: adjust for alignment
-        return { x: this.x, y: this.y, width: this.getTextWidth(), height: this.getTextHeight() };
+        var textWidth = this.getTextWidth();
+        var textHeight = this.getTextHeight();
+        return {
+            x: this.x - this.anchor.x * textWidth,
+            y: this.y - this.anchor.y * textHeight,
+            width: textWidth,
+            height: textHeight,
+        };
+    };
+    SpriteText.prototype.getVisibleScreenBounds = function () {
+        var bounds = this.getTextWorldBounds();
+        bounds.x += this.renderScreenX - this.x;
+        bounds.y += this.renderScreenY - this.y;
+        return bounds;
     };
     SpriteText.prototype.setStyle = function (style) {
         O.deepOverride(this.style, style);
@@ -4222,6 +4304,32 @@ var MetricsPlot;
         return plot.texture.height - plot.texture.height * (y - plot.graphBounds.bottom) / (plot.graphBounds.top - plot.graphBounds.bottom);
     }
 })(MetricsPlot || (MetricsPlot = {}));
+var MetricsReport;
+(function (MetricsReport) {
+    function generateTimeReportForSpan(recording) {
+        var e_20, _a;
+        var report = {
+            time: recording.time,
+        };
+        var num = 0;
+        try {
+            for (var _b = __values(recording.subspans || []), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var subspan = _c.value;
+                report[num + "_" + subspan.name] = generateTimeReportForSpan(subspan);
+                num++;
+            }
+        }
+        catch (e_20_1) { e_20 = { error: e_20_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_20) throw e_20.error; }
+        }
+        return report;
+    }
+    MetricsReport.generateTimeReportForSpan = generateTimeReportForSpan;
+})(MetricsReport || (MetricsReport = {}));
 var S;
 (function (S) {
     // There is no async function. Use global.script.world.runScript(scriptFunction) instead.
@@ -4244,8 +4352,8 @@ var S;
             scriptFunctions[_i] = arguments[_i];
         }
         return function () {
-            var scriptFunctions_1, scriptFunctions_1_1, scriptFunction, e_20_1;
-            var e_20, _a;
+            var scriptFunctions_1, scriptFunctions_1_1, scriptFunction, e_21_1;
+            var e_21, _a;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -4264,14 +4372,14 @@ var S;
                         return [3 /*break*/, 1];
                     case 4: return [3 /*break*/, 7];
                     case 5:
-                        e_20_1 = _b.sent();
-                        e_20 = { error: e_20_1 };
+                        e_21_1 = _b.sent();
+                        e_21 = { error: e_21_1 };
                         return [3 /*break*/, 7];
                     case 6:
                         try {
                             if (scriptFunctions_1_1 && !scriptFunctions_1_1.done && (_a = scriptFunctions_1.return)) _a.call(scriptFunctions_1);
                         }
-                        finally { if (e_20) throw e_20.error; }
+                        finally { if (e_21) throw e_21.error; }
                         return [7 /*endfinally*/];
                     case 7: return [2 /*return*/];
                 }
@@ -4518,29 +4626,11 @@ var GlobalSoundManager = /** @class */ (function () {
         this.activeSounds = [];
     }
     GlobalSoundManager.prototype.preGameUpdate = function () {
-        var e_21, _a;
-        try {
-            for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var sound = _c.value;
-                sound.markForDisable();
-            }
-        }
-        catch (e_21_1) { e_21 = { error: e_21_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_21) throw e_21.error; }
-        }
-    };
-    GlobalSoundManager.prototype.postGameUpdate = function () {
         var e_22, _a;
         try {
             for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var sound = _c.value;
-                if (sound.isMarkedForDisable) {
-                    this.ensureSoundDisabled(sound);
-                }
+                sound.markForDisable();
             }
         }
         catch (e_22_1) { e_22 = { error: e_22_1 }; }
@@ -4549,6 +4639,24 @@ var GlobalSoundManager = /** @class */ (function () {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
             finally { if (e_22) throw e_22.error; }
+        }
+    };
+    GlobalSoundManager.prototype.postGameUpdate = function () {
+        var e_23, _a;
+        try {
+            for (var _b = __values(this.activeSounds), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var sound = _c.value;
+                if (sound.isMarkedForDisable) {
+                    this.ensureSoundDisabled(sound);
+                }
+            }
+        }
+        catch (e_23_1) { e_23 = { error: e_23_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_23) throw e_23.error; }
         }
     };
     GlobalSoundManager.prototype.ensureSoundDisabled = function (sound) {
@@ -4877,6 +4985,13 @@ var AnchoredTexture = /** @class */ (function () {
     AnchoredTexture.prototype.free = function () {
         this.baseTexture.free();
     };
+    AnchoredTexture.prototype.getLocalBounds = function (properties) {
+        var _a, _b, _c, _d, _e, _f;
+        var baseBounds = this.baseTexture.getLocalBounds(properties);
+        baseBounds.x += this.getAdjustmentX((_a = properties.angle) !== null && _a !== void 0 ? _a : 0, (_b = properties.scaleX) !== null && _b !== void 0 ? _b : 1, (_c = properties.scaleY) !== null && _c !== void 0 ? _c : 1);
+        baseBounds.y += this.getAdjustmentY((_d = properties.angle) !== null && _d !== void 0 ? _d : 0, (_e = properties.scaleX) !== null && _e !== void 0 ? _e : 1, (_f = properties.scaleY) !== null && _f !== void 0 ? _f : 1);
+        return baseBounds;
+    };
     AnchoredTexture.prototype.renderTo = function (texture, properties) {
         var _a, _b, _c, _d, _e;
         if (properties === void 0) { properties = {}; }
@@ -4895,7 +5010,7 @@ var AnchoredTexture = /** @class */ (function () {
         this.baseTexture.renderPIXIDisplayObject(displayObject);
     };
     AnchoredTexture.prototype.subdivide = function (h, v, anchorX, anchorY) {
-        var e_23, _a;
+        var e_24, _a;
         if (anchorX === void 0) { anchorX = 0; }
         if (anchorY === void 0) { anchorY = 0; }
         var result = this.baseTexture.subdivide(h, v);
@@ -4905,12 +5020,12 @@ var AnchoredTexture = /** @class */ (function () {
                 subdivision.texture = AnchoredTexture.fromBaseTexture(subdivision.texture, anchorX, anchorY);
             }
         }
-        catch (e_23_1) { e_23 = { error: e_23_1 }; }
+        catch (e_24_1) { e_24 = { error: e_24_1 }; }
         finally {
             try {
                 if (result_1_1 && !result_1_1.done && (_a = result_1.return)) _a.call(result_1);
             }
-            finally { if (e_23) throw e_23.error; }
+            finally { if (e_24) throw e_24.error; }
         }
         return result;
     };
@@ -5069,6 +5184,9 @@ var EmptyTexture = /** @class */ (function () {
         return new EmptyTexture();
     };
     EmptyTexture.prototype.free = function () { };
+    EmptyTexture.prototype.getLocalBounds = function (properties) {
+        return rect(0, 0, 0, 0);
+    };
     EmptyTexture.prototype.renderTo = function (texture, properties) {
         if (properties === void 0) { properties = {}; }
     };
@@ -5446,7 +5564,7 @@ var InteractionManager = /** @class */ (function () {
         this._interactRequested = null;
     };
     InteractionManager.prototype.getInteractableObjects = function () {
-        var e_24, _a;
+        var e_25, _a;
         var interactableObjects = this.theater.storyManager.getCurrentInteractableObjects();
         var result = new Set();
         try {
@@ -5457,12 +5575,12 @@ var InteractionManager = /** @class */ (function () {
                 result.add(name_4);
             }
         }
-        catch (e_24_1) { e_24 = { error: e_24_1 }; }
+        catch (e_25_1) { e_25 = { error: e_25_1 }; }
         finally {
             try {
                 if (interactableObjects_1_1 && !interactableObjects_1_1.done && (_a = interactableObjects_1.return)) _a.call(interactableObjects_1);
             }
-            finally { if (e_24) throw e_24.error; }
+            finally { if (e_25) throw e_25.error; }
         }
         return result;
     };
@@ -6147,7 +6265,7 @@ var StoryManager = /** @class */ (function () {
         return _.last(path);
     };
     StoryManager.prototype.getInteractableObjectsForNode = function (node, stageName) {
-        var e_25, _a;
+        var e_26, _a;
         var result = new Set();
         if (!node)
             return result;
@@ -6164,12 +6282,12 @@ var StoryManager = /** @class */ (function () {
                 result.add(transition.with);
             }
         }
-        catch (e_25_1) { e_25 = { error: e_25_1 }; }
+        catch (e_26_1) { e_26 = { error: e_26_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_25) throw e_25.error; }
+            finally { if (e_26) throw e_26.error; }
         }
         return result;
     };
@@ -6180,7 +6298,7 @@ var StoryManager = /** @class */ (function () {
         return this.storyboard[name];
     };
     StoryManager.prototype.updateParty = function (party) {
-        var e_26, _a, e_27, _b;
+        var e_27, _a, e_28, _b;
         if (party.setLeader !== undefined) {
             this.theater.partyManager.leader = party.setLeader;
         }
@@ -6191,12 +6309,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberActive(m);
                 }
             }
-            catch (e_26_1) { e_26 = { error: e_26_1 }; }
+            catch (e_27_1) { e_27 = { error: e_27_1 }; }
             finally {
                 try {
                     if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                 }
-                finally { if (e_26) throw e_26.error; }
+                finally { if (e_27) throw e_27.error; }
             }
         }
         if (!_.isEmpty(party.setMembersInactive)) {
@@ -6206,12 +6324,12 @@ var StoryManager = /** @class */ (function () {
                     this.theater.partyManager.setMemberInactive(m);
                 }
             }
-            catch (e_27_1) { e_27 = { error: e_27_1 }; }
+            catch (e_28_1) { e_28 = { error: e_28_1 }; }
             finally {
                 try {
                     if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
                 }
-                finally { if (e_27) throw e_27.error; }
+                finally { if (e_28) throw e_28.error; }
             }
         }
     };
@@ -6299,7 +6417,7 @@ var A;
     }
     A.map2D = map2D;
     function mergeArray(array, into, key, combine) {
-        var e_28, _a;
+        var e_29, _a;
         if (combine === void 0) { combine = (function (e, into) { return e; }); }
         var result = A.clone(into);
         try {
@@ -6318,12 +6436,12 @@ var A;
                 }
             }
         }
-        catch (e_28_1) { e_28 = { error: e_28_1 }; }
+        catch (e_29_1) { e_29 = { error: e_29_1 }; }
         finally {
             try {
                 if (array_1_1 && !array_1_1.done && (_a = array_1.return)) _a.call(array_1);
             }
-            finally { if (e_28) throw e_28.error; }
+            finally { if (e_29) throw e_29.error; }
         }
         return result;
     }
@@ -6529,7 +6647,7 @@ var O;
     }
     O.deepClone = deepClone;
     function deepCloneInternal(obj) {
-        var e_29, _a;
+        var e_30, _a;
         if (_.isArray(obj)) {
             if (_.isEmpty(obj))
                 return [];
@@ -6540,12 +6658,12 @@ var O;
                     result.push(deepCloneInternal(el));
                 }
             }
-            catch (e_29_1) { e_29 = { error: e_29_1 }; }
+            catch (e_30_1) { e_30 = { error: e_30_1 }; }
             finally {
                 try {
                     if (obj_1_1 && !obj_1_1.done && (_a = obj_1.return)) _a.call(obj_1);
                 }
-                finally { if (e_29) throw e_29.error; }
+                finally { if (e_30) throw e_30.error; }
             }
             return result;
         }
@@ -6684,7 +6802,7 @@ var StateMachine = /** @class */ (function () {
         return this.states[name];
     };
     StateMachine.prototype.getValidTransition = function (state) {
-        var e_30, _a;
+        var e_31, _a;
         try {
             for (var _b = __values(state.transitions || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -6701,12 +6819,12 @@ var StateMachine = /** @class */ (function () {
                 }
             }
         }
-        catch (e_30_1) { e_30 = { error: e_30_1 }; }
+        catch (e_31_1) { e_31 = { error: e_31_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_30) throw e_30.error; }
+            finally { if (e_31) throw e_31.error; }
         }
         return undefined;
     };
@@ -7040,7 +7158,7 @@ var Physics;
     }
     Physics.resolveCollisions = resolveCollisions;
     function performNormalIteration(world) {
-        var e_31, _a;
+        var e_32, _a;
         var collisions = getRaycastCollisions(world)
             .sort(function (a, b) { return a.collision.t - b.collision.t; });
         try {
@@ -7049,16 +7167,16 @@ var Physics;
                 resolveCollision(world, collision);
             }
         }
-        catch (e_31_1) { e_31 = { error: e_31_1 }; }
+        catch (e_32_1) { e_32 = { error: e_32_1 }; }
         finally {
             try {
                 if (collisions_1_1 && !collisions_1_1.done && (_a = collisions_1.return)) _a.call(collisions_1);
             }
-            finally { if (e_31) throw e_31.error; }
+            finally { if (e_32) throw e_32.error; }
         }
     }
     function performFinalIteration(world) {
-        var e_32, _a, e_33, _b;
+        var e_33, _a, e_34, _b;
         var collisions = getRaycastCollisions(world);
         var currentSet = new Set();
         try {
@@ -7070,18 +7188,18 @@ var Physics;
                     currentSet.add(collision.from);
             }
         }
-        catch (e_32_1) { e_32 = { error: e_32_1 }; }
+        catch (e_33_1) { e_33 = { error: e_33_1 }; }
         finally {
             try {
                 if (collisions_2_1 && !collisions_2_1.done && (_a = collisions_2.return)) _a.call(collisions_2);
             }
-            finally { if (e_32) throw e_32.error; }
+            finally { if (e_33) throw e_33.error; }
         }
         var doneWithCollisions = false;
         while (!doneWithCollisions) {
             doneWithCollisions = true;
             try {
-                for (var collisions_3 = (e_33 = void 0, __values(collisions)), collisions_3_1 = collisions_3.next(); !collisions_3_1.done; collisions_3_1 = collisions_3.next()) {
+                for (var collisions_3 = (e_34 = void 0, __values(collisions)), collisions_3_1 = collisions_3.next(); !collisions_3_1.done; collisions_3_1 = collisions_3.next()) {
                     var collision = collisions_3_1.value;
                     var hasMove = currentSet.has(collision.move);
                     var hasFrom = currentSet.has(collision.from);
@@ -7097,12 +7215,12 @@ var Physics;
                     }
                 }
             }
-            catch (e_33_1) { e_33 = { error: e_33_1 }; }
+            catch (e_34_1) { e_34 = { error: e_34_1 }; }
             finally {
                 try {
                     if (collisions_3_1 && !collisions_3_1.done && (_b = collisions_3.return)) _b.call(collisions_3);
                 }
-                finally { if (e_33) throw e_33.error; }
+                finally { if (e_34) throw e_34.error; }
             }
         }
     }
@@ -7141,16 +7259,16 @@ var Physics;
         collision.from.onCollide(collision.move);
     }
     function getRaycastCollisions(world) {
-        var e_34, _a, e_35, _b, e_36, _c;
+        var e_35, _a, e_36, _b, e_37, _c;
         var raycastCollisions = [];
         try {
             for (var _d = __values(world.collisions), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var collision = _e.value;
                 try {
-                    for (var _f = (e_35 = void 0, __values(world.physicsGroups[collision.group1].worldObjects)), _g = _f.next(); !_g.done; _g = _f.next()) {
+                    for (var _f = (e_36 = void 0, __values(world.physicsGroups[collision.group1].worldObjects)), _g = _f.next(); !_g.done; _g = _f.next()) {
                         var move = _g.value;
                         try {
-                            for (var _h = (e_36 = void 0, __values(world.physicsGroups[collision.group2].worldObjects)), _j = _h.next(); !_j.done; _j = _h.next()) {
+                            for (var _h = (e_37 = void 0, __values(world.physicsGroups[collision.group2].worldObjects)), _j = _h.next(); !_j.done; _j = _h.next()) {
                                 var from = _j.value;
                                 if (move === from)
                                     continue;
@@ -7171,30 +7289,30 @@ var Physics;
                                 });
                             }
                         }
-                        catch (e_36_1) { e_36 = { error: e_36_1 }; }
+                        catch (e_37_1) { e_37 = { error: e_37_1 }; }
                         finally {
                             try {
                                 if (_j && !_j.done && (_c = _h.return)) _c.call(_h);
                             }
-                            finally { if (e_36) throw e_36.error; }
+                            finally { if (e_37) throw e_37.error; }
                         }
                     }
                 }
-                catch (e_35_1) { e_35 = { error: e_35_1 }; }
+                catch (e_36_1) { e_36 = { error: e_36_1 }; }
                 finally {
                     try {
                         if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
                     }
-                    finally { if (e_35) throw e_35.error; }
+                    finally { if (e_36) throw e_36.error; }
                 }
             }
         }
-        catch (e_34_1) { e_34 = { error: e_34_1 }; }
+        catch (e_35_1) { e_35 = { error: e_35_1 }; }
         finally {
             try {
                 if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
             }
-            finally { if (e_34) throw e_34.error; }
+            finally { if (e_35) throw e_35.error; }
         }
         return raycastCollisions;
     }
@@ -7275,30 +7393,6 @@ var WorldSelecter = /** @class */ (function () {
         return A.clone(this.world.worldObjectsByName[name] || []);
     };
     WorldSelecter.prototype.overlap = function (bounds, physicsGroups) {
-        var e_37, _a;
-        var result = [];
-        for (var physicsGroup in this.world.physicsGroups) {
-            if (!_.contains(physicsGroups, physicsGroup))
-                continue;
-            try {
-                for (var _b = (e_37 = void 0, __values(this.world.physicsGroups[physicsGroup].worldObjects)), _c = _b.next(); !_c.done; _c = _b.next()) {
-                    var obj = _c.value;
-                    if (!obj.isOverlapping(bounds))
-                        continue;
-                    result.push(obj);
-                }
-            }
-            catch (e_37_1) { e_37 = { error: e_37_1 }; }
-            finally {
-                try {
-                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-                }
-                finally { if (e_37) throw e_37.error; }
-            }
-        }
-        return result;
-    };
-    WorldSelecter.prototype.raycast = function (x, y, dx, dy, physicsGroups) {
         var e_38, _a;
         var result = [];
         for (var physicsGroup in this.world.physicsGroups) {
@@ -7307,10 +7401,9 @@ var WorldSelecter = /** @class */ (function () {
             try {
                 for (var _b = (e_38 = void 0, __values(this.world.physicsGroups[physicsGroup].worldObjects)), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var obj = _c.value;
-                    var t = obj.bounds.raycast(x, y, dx, dy);
-                    if (!isFinite(t))
+                    if (!obj.isOverlapping(bounds))
                         continue;
-                    result.push({ obj: obj, t: t });
+                    result.push(obj);
                 }
             }
             catch (e_38_1) { e_38 = { error: e_38_1 }; }
@@ -7319,6 +7412,31 @@ var WorldSelecter = /** @class */ (function () {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
                 finally { if (e_38) throw e_38.error; }
+            }
+        }
+        return result;
+    };
+    WorldSelecter.prototype.raycast = function (x, y, dx, dy, physicsGroups) {
+        var e_39, _a;
+        var result = [];
+        for (var physicsGroup in this.world.physicsGroups) {
+            if (!_.contains(physicsGroups, physicsGroup))
+                continue;
+            try {
+                for (var _b = (e_39 = void 0, __values(this.world.physicsGroups[physicsGroup].worldObjects)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var obj = _c.value;
+                    var t = obj.bounds.raycast(x, y, dx, dy);
+                    if (!isFinite(t))
+                        continue;
+                    result.push({ obj: obj, t: t });
+                }
+            }
+            catch (e_39_1) { e_39 = { error: e_39_1 }; }
+            finally {
+                try {
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                }
+                finally { if (e_39) throw e_39.error; }
             }
         }
         return result.sort(function (r1, r2) { return r1.t - r2.t; });
@@ -8529,7 +8647,7 @@ var Effects = /** @class */ (function () {
         return this.pre.filters.concat(this.effects).concat(this.post.filters);
     };
     Effects.prototype.updateEffects = function (delta) {
-        var e_39, _a, e_40, _b;
+        var e_40, _a, e_41, _b;
         if (this.effects[Effects.SILHOUETTE_I])
             this.effects[Effects.SILHOUETTE_I].updateTime(delta);
         if (this.effects[Effects.OUTLINE_I])
@@ -8540,12 +8658,12 @@ var Effects = /** @class */ (function () {
                 filter.updateTime(delta);
             }
         }
-        catch (e_39_1) { e_39 = { error: e_39_1 }; }
+        catch (e_40_1) { e_40 = { error: e_40_1 }; }
         finally {
             try {
                 if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
             }
-            finally { if (e_39) throw e_39.error; }
+            finally { if (e_40) throw e_40.error; }
         }
         try {
             for (var _e = __values(this.post.filters), _f = _e.next(); !_f.done; _f = _e.next()) {
@@ -8553,12 +8671,12 @@ var Effects = /** @class */ (function () {
                 filter.updateTime(delta);
             }
         }
-        catch (e_40_1) { e_40 = { error: e_40_1 }; }
+        catch (e_41_1) { e_41 = { error: e_41_1 }; }
         finally {
             try {
                 if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
             }
-            finally { if (e_40) throw e_40.error; }
+            finally { if (e_41) throw e_41.error; }
         }
     };
     Effects.prototype.updateFromConfig = function (config) {
@@ -8924,7 +9042,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_41, _a;
+        var e_42, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -8938,12 +9056,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_41_1) { e_41 = { error: e_41_1 }; }
+            catch (e_42_1) { e_42 = { error: e_42_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_41) throw e_41.error; }
+                finally { if (e_42) throw e_42.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -8991,7 +9109,7 @@ var Tilemap = /** @class */ (function (_super) {
         this.dirty = true;
     };
     Tilemap.prototype.createCollisionBoxes = function () {
-        var e_42, _a;
+        var e_43, _a;
         World.Actions.removeWorldObjectsFromWorld(this.collisionBoxes);
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tileset);
@@ -9000,24 +9118,23 @@ var Tilemap = /** @class */ (function (_super) {
         try {
             for (var collisionRects_1 = __values(collisionRects), collisionRects_1_1 = collisionRects_1.next(); !collisionRects_1_1.done; collisionRects_1_1 = collisionRects_1.next()) {
                 var rect_2 = collisionRects_1_1.value;
-                var box = new PhysicsWorldObject();
+                var box = this.addChild(new PhysicsWorldObject());
                 box.x = this.x;
                 box.y = this.y;
                 box.bounds = new RectBounds(rect_2.x, rect_2.y, rect_2.width, rect_2.height, box);
-                World.Actions.setPhysicsGroup(box, this.physicsGroup);
+                box.matchParentPhysicsGroup = true;
                 box.setImmovable(true);
                 box.debugDrawBounds = this.debugDrawBounds;
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_42_1) { e_42 = { error: e_42_1 }; }
+        catch (e_43_1) { e_43 = { error: e_43_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_42) throw e_42.error; }
+            finally { if (e_43) throw e_43.error; }
         }
-        this.addChildren(this.collisionBoxes);
     };
     Tilemap.prototype.createTilemap = function () {
         this.drawRenderTexture();
@@ -9058,7 +9175,7 @@ var Tilemap = /** @class */ (function (_super) {
             var zTexture = this.addChild(new Sprite());
             zTexture.x = this.x + texturesByZ[zValue].bounds.x;
             zTexture.y = this.y + texturesByZ[zValue].bounds.y + zHeight;
-            World.Actions.setLayer(zTexture, this.layer);
+            zTexture.matchParentLayer = true;
             zTexture.offset.y = -zHeight;
             zTexture.setTexture(this.animation ? undefined : texturesByZ[zValue].frames[0]);
             if (this.animation) {
@@ -9345,7 +9462,7 @@ var SmartTilemap = /** @class */ (function (_super) {
         }
         Util.getSmartTilemapLayer = getSmartTilemapLayer;
         function getSmartTile(tilemap, x, y, config) {
-            var e_43, _a;
+            var e_44, _a;
             var pattern = getTilePattern(tilemap, x, y, config);
             try {
                 for (var _b = __values(config.rules), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -9355,12 +9472,12 @@ var SmartTilemap = /** @class */ (function (_super) {
                     }
                 }
             }
-            catch (e_43_1) { e_43 = { error: e_43_1 }; }
+            catch (e_44_1) { e_44 = { error: e_44_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_43) throw e_43.error; }
+                finally { if (e_44) throw e_44.error; }
             }
             return tilemap[y][x];
         }
@@ -9705,9 +9822,12 @@ var Bullet = /** @class */ (function (_super) {
 Cheat.init({
     'win': function () { return global.world.select.type(Throne).damage(5); },
     'lose': function () { return A.range(5).forEach(function (i) { return global.world.select.type(Player).damage(); }); },
+    'killall': function () { return global.world.select.typeAll(Enemy).forEach(function (enemy) { return enemy.kill(); }); },
 });
 function deadBody(parent, texture) {
     var deadBody = new Sprite();
+    deadBody.name = 'deadbody';
+    deadBody.layer = 'bg';
     deadBody.x = parent.x;
     deadBody.y = parent.y;
     deadBody.vx = parent.vx;
@@ -9719,22 +9839,21 @@ function deadBody(parent, texture) {
         silhouette: { color: 0xFFFFFF },
         outline: { color: parent.effects.outline.color === 0xFFFFFF ? 0x555555 : 0x000000 },
     });
-    World.Actions.setLayer(deadBody, 'bg');
     deadBody.bounds = new CircleBounds(0, -2, 8, deadBody);
     deadBody.data.flashed = false;
     deadBody.updateCallback = function (obj) {
         if (!obj.data.flashed) {
             obj.runScript(S.chain(S.wait(0.05), S.call(function () { return obj.effects.silhouette.enabled = false; }), S.wait(3), S.call(function () {
-                if (obj.world.hasWorldObject('floor')) {
-                    obj.getTexture().renderTo(obj.world.select.name('floor').getTexture(), {
-                        x: obj.x,
-                        y: obj.y,
-                        tint: obj.tint,
-                        scaleX: obj.flipX ? -1 : 1,
-                        filters: [obj.effects.outline],
-                    });
-                }
-                obj.kill();
+                // if (obj.world.hasWorldObject('floor')) {
+                //     obj.getTexture().renderTo(obj.world.select.name<Sprite>('floor').getTexture(), {
+                //         x: obj.x,
+                //         y: obj.y,
+                //         tint: obj.tint,
+                //         scaleX: obj.flipX ? -1 : 1,
+                //         filters: [ obj.effects.outline ],
+                //     });
+                // }
+                // obj.kill();
             })));
             obj.data.flashed = true;
         }
@@ -9755,7 +9874,7 @@ var Explosion = /** @class */ (function (_super) {
         return _this;
     }
     Explosion.prototype.update = function () {
-        var e_44, _a;
+        var e_45, _a;
         _super.prototype.update.call(this);
         if (!this.hasTriggered) {
             var toDamages = this.world.select.overlap(this.bounds, ['player', 'enemies']);
@@ -9770,12 +9889,12 @@ var Explosion = /** @class */ (function (_super) {
                     }
                 }
             }
-            catch (e_44_1) { e_44 = { error: e_44_1 }; }
+            catch (e_45_1) { e_45 = { error: e_45_1 }; }
             finally {
                 try {
                     if (toDamages_1_1 && !toDamages_1_1.done && (_a = toDamages_1.return)) _a.call(toDamages_1);
                 }
-                finally { if (e_44) throw e_44.error; }
+                finally { if (e_45) throw e_45.error; }
             }
             this.hasTriggered = true;
         }
@@ -10553,6 +10672,8 @@ Main.loadConfig({
             '8': ['8'],
             '9': ['9'],
             '0': ['0'],
+            'lmb': ['MouseLeft'],
+            'rmb': ['MouseRight'],
         }
     },
     game: {
@@ -10588,7 +10709,7 @@ Main.loadConfig({
     debug: {
         debug: true,
         font: Assets.fonts.DELUXE16,
-        fontStyle: { color: 0x008800 },
+        fontStyle: { color: 0xFFFFFF },
         cheatsEnabled: true,
         allPhysicsBounds: false,
         moveCameraWithArrows: true,
@@ -11755,7 +11876,7 @@ var WaveController = /** @class */ (function (_super) {
         ]);
     };
     WaveController.prototype.spawnWaveKing = function () {
-        var e_45, _a;
+        var e_46, _a;
         this.currentWave = 9001;
         var guards = this.world.select.nameAll('guard');
         try {
@@ -11773,12 +11894,12 @@ var WaveController = /** @class */ (function (_super) {
                 guard.removeFromWorld();
             }
         }
-        catch (e_45_1) { e_45 = { error: e_45_1 }; }
+        catch (e_46_1) { e_46 = { error: e_46_1 }; }
         finally {
             try {
                 if (guards_1_1 && !guards_1_1.done && (_a = guards_1.return)) _a.call(guards_1);
             }
-            finally { if (e_45) throw e_45.error; }
+            finally { if (e_46) throw e_46.error; }
         }
     };
     WaveController.prototype.startMusic = function () {

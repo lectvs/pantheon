@@ -91,12 +91,16 @@ class Metrics {
         return _.last(this.recordings);
     }
 
+    getReportForLastRecording() {
+        return MetricsReport.generateTimeReportForSpan(this.getLastRecording());
+    }
+
     plotLastRecording(width: number = global.gameWidth, height: number = global.gameHeight) {
         return MetricsPlot.plotRecording(this.getLastRecording(), width, height);
     }
 
     private getCurrentTimeMilliseconds() {
-        return performance.now()
+        return performance.now();
     }
 
     private getWorldObjectSpanName(worldObject: WorldObject) {

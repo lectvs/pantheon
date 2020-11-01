@@ -30,6 +30,39 @@ class BasicTexture implements Texture {
         this.renderTextureSprite.renderTexture.destroy(true);
     }
 
+    getLocalBounds(properties: Texture.Properties) {
+        let scaleX = properties.scaleX ?? 1;
+        let scaleY = properties.scaleY ?? 1;
+        let angle = M.degToRad(properties.angle ?? 0);
+        let width = this.width * scaleX;
+        let height = this.height * scaleY;
+
+        if (angle === 0) {
+            return rect(0, 0, width, height);
+        }
+
+        let v1x = 0;
+        let v1y = 0;
+        let v2x = width * Math.cos(angle);
+        let v2y = width * Math.sin(angle);
+        let v3x = -height * Math.sin(angle);
+        let v3y = height * Math.cos(angle);
+        let v4x = v2x + v3x;
+        let v4y = v2y + v3y;
+
+        let minx = Math.min(v1x, v2x, v3x, v4x);
+        let maxx = Math.max(v1x, v2x, v3x, v4x);
+        let miny = Math.min(v1y, v2y, v3y, v4y);
+        let maxy = Math.max(v1y, v2y, v3y, v4y);
+
+        return <Rect>{
+            x: minx,
+            y: miny,
+            width: maxx - minx,
+            height: maxy - miny,
+        };
+    }
+
     renderTo(texture: Texture, properties?: Texture.Properties) {
         if (!texture) return;
         if (texture.immutable) {

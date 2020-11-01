@@ -52,6 +52,8 @@ Main.loadConfig({
             '8':                         ['8'],
             '9':                         ['9'],
             '0':                         ['0'],
+            'lmb':                       ['MouseLeft'],
+            'rmb':                       ['MouseRight'],
         }
     },
 
@@ -89,7 +91,7 @@ Main.loadConfig({
     debug: {
         debug: true,
         font: Assets.fonts.DELUXE16,
-        fontStyle: { color: 0x008800 },
+        fontStyle: { color: 0xFFFFFF },
         cheatsEnabled: true,
         allPhysicsBounds: false,
         moveCameraWithArrows: true,

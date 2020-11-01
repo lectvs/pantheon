@@ -1,6 +1,8 @@
 function deadBody(parent: Enemy, texture: string) {
 
     let deadBody = new Sprite();
+    deadBody.name = 'deadbody';
+    deadBody.layer = 'bg';
     deadBody.x = parent.x;
     deadBody.y = parent.y;
     deadBody.vx = parent.vx;
@@ -12,7 +14,6 @@ function deadBody(parent: Enemy, texture: string) {
         silhouette: { color: 0xFFFFFF },
         outline: { color: parent.effects.outline.color === 0xFFFFFF ? 0x555555 : 0x000000 },
     });
-    World.Actions.setLayer(deadBody, 'bg');
     deadBody.bounds = new CircleBounds(0, -2, 8, deadBody);
     deadBody.data.flashed = false;
     deadBody.updateCallback = obj => {
@@ -22,16 +23,16 @@ function deadBody(parent: Enemy, texture: string) {
                 S.call(() => obj.effects.silhouette.enabled = false),
                 S.wait(3),
                 S.call(() => {
-                    if (obj.world.hasWorldObject('floor')) {
-                        obj.getTexture().renderTo(obj.world.select.name<Sprite>('floor').getTexture(), {
-                            x: obj.x,
-                            y: obj.y,
-                            tint: obj.tint,
-                            scaleX: obj.flipX ? -1 : 1,
-                            filters: [ obj.effects.outline ],
-                        });
-                    }
-                    obj.kill();
+                    // if (obj.world.hasWorldObject('floor')) {
+                    //     obj.getTexture().renderTo(obj.world.select.name<Sprite>('floor').getTexture(), {
+                    //         x: obj.x,
+                    //         y: obj.y,
+                    //         tint: obj.tint,
+                    //         scaleX: obj.flipX ? -1 : 1,
+                    //         filters: [ obj.effects.outline ],
+                    //     });
+                    // }
+                    // obj.kill();
                 }),
             ));
             obj.data.flashed = true;

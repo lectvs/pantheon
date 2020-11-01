@@ -169,7 +169,7 @@ class World {
     renderLayer(layer: World.Layer, layerTexture: Texture, screen: Texture) {
         layer.sort();
         for (let worldObject of layer.worldObjects) {
-            if (worldObject.visible) {
+            if (worldObject.visible && worldObject.isOnScreen()) {
                 global.metrics.startSpan(worldObject);
                 worldObject.render(layerTexture);
                 global.metrics.endSpan(worldObject);

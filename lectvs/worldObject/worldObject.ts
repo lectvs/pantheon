@@ -262,6 +262,19 @@ class WorldObject {
         return undefined;
     }
 
+    getVisibleScreenBounds() {
+        return undefined;
+    }
+
+    isOnScreen() {
+        let bounds = this.getVisibleScreenBounds();
+        if (!bounds) return true;
+        return bounds.x + bounds.width >= 0
+            && bounds.x <= this.world.width
+            && bounds.y + bounds.height >= 0
+            && bounds.y <= this.world.height;
+    }
+
     kill() {
         this.alive = false;
     }
