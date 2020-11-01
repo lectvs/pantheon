@@ -30,6 +30,10 @@ class SpriteText extends WorldObject {
 
     private fontTexture: Texture;
 
+    private staticTexture: Texture;
+    private currentText: string;
+    dirty: boolean;
+
     constructor(font: SpriteText.Font, text: string = "") {
         super();
 
@@ -45,17 +49,38 @@ class SpriteText extends WorldObject {
         this.anchor = Anchor.TOP_LEFT;
         this.mask = null;
 
-        this.setText(text)
+        this.setText(text);
+        this.dirty = true;
     }
 
     render(screen: Texture) {
         let textWidth = this.getTextWidth();
         let textHeight = this.getTextHeight();
+
+        if (this.dirty) {
+            this.renderSpriteText();
+            this.dirty = false;
+        }
+
+        this.staticTexture.renderTo(screen, {
+            x: this.renderScreenX - this.anchor.x * textWidth,
+            y: this.renderScreenY - this.anchor.y * textHeight,
+            mask: Mask.getTextureMaskForWorldObject(this.mask, this),
+        });
+
+        super.render(screen);
+    }
+
+    renderSpriteText() {
+        let textWidth = this.getTextWidth();
+        let textHeight = this.getTextHeight();
+        this.staticTexture = new BasicTexture(textWidth, textHeight);
+
         for (let char of this.chars) {
             global.metrics.startSpan(`char_${char.char}`);
-            this.fontTexture.renderTo(screen, {
-                x: this.renderScreenX + char.x - this.anchor.x * textWidth,
-                y: this.renderScreenY + char.y - this.anchor.y * textHeight + (char.style.offset ?? this.style.offset),
+            this.fontTexture.renderTo(this.staticTexture, {
+                x: char.x,
+                y: char.y + (char.style.offset ?? this.style.offset),
                 tint: char.style.color ?? this.style.color,
                 alpha: char.style.alpha ?? this.style.alpha,
                 slice: {
@@ -64,15 +89,13 @@ class SpriteText extends WorldObject {
                     width: this.font.charWidth,
                     height: this.font.charHeight
                 },
-                mask: Mask.getTextureMaskForWorldObject(this.mask, this),
             });
             global.metrics.endSpan(`char_${char.char}`);
         }
-        super.render(screen);
     }
 
     clear() {
-        this.setText("");
+        this.setText("", true);
     }
 
     getTextWidth() {
@@ -103,10 +126,15 @@ class SpriteText extends WorldObject {
 
     setStyle(style: SpriteText.Style) {
         O.deepOverride(this.style, style);
+        this.dirty = true;
     }
 
-    setText(text: string) {
+    setText(text: string, force: boolean = false) {
+        // TODO: remove force parameter after rewriting dialog box
+        if (!force && text === this.currentText) return;
         this.chars = SpriteTextConverter.textToCharListWithWordWrap(text, this.font, 0);
+        this.currentText = text;
+        this.dirty = true;
     }
 }
 

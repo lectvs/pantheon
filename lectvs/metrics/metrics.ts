@@ -105,8 +105,8 @@ class Metrics {
 
     private getWorldObjectSpanName(worldObject: WorldObject) {
         if (worldObject.name) {
-            return `${worldObject.name}.${worldObject.uid}`;
+            return `${worldObject.name}.${worldObject.constructor.name}.${worldObject.uid}`;
         }
-        return worldObject.uid;
+        return `${worldObject.constructor.name}.${worldObject.uid}`;
     }
 }

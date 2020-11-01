@@ -84,6 +84,7 @@ class DialogBox extends Sprite {
     advanceCharacter() {
         if (!_.isEmpty(this.charQueue) && this.charQueue[0].bottom <= this.spriteTextOffset + this.textArea.height) {
             this.spriteText.chars.push(this.charQueue.shift());
+            this.spriteText.dirty = true;
             return true;
         }
         return false;

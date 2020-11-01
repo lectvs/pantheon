@@ -604,9 +604,9 @@ var Metrics = /** @class */ (function () {
     };
     Metrics.prototype.getWorldObjectSpanName = function (worldObject) {
         if (worldObject.name) {
-            return worldObject.name + "." + worldObject.uid;
+            return worldObject.name + "." + worldObject.constructor.name + "." + worldObject.uid;
         }
-        return worldObject.uid;
+        return worldObject.constructor.name + "." + worldObject.uid;
     };
     return Metrics;
 }());
@@ -3820,6 +3820,7 @@ var SpriteText = /** @class */ (function (_super) {
         _this.anchor = Anchor.TOP_LEFT;
         _this.mask = null;
         _this.setText(text);
+        _this.dirty = true;
         return _this;
     }
     Object.defineProperty(SpriteText.prototype, "style", {
@@ -3828,17 +3829,32 @@ var SpriteText = /** @class */ (function (_super) {
         configurable: true
     });
     SpriteText.prototype.render = function (screen) {
+        var textWidth = this.getTextWidth();
+        var textHeight = this.getTextHeight();
+        if (this.dirty) {
+            this.renderSpriteText();
+            this.dirty = false;
+        }
+        this.staticTexture.renderTo(screen, {
+            x: this.renderScreenX - this.anchor.x * textWidth,
+            y: this.renderScreenY - this.anchor.y * textHeight,
+            mask: Mask.getTextureMaskForWorldObject(this.mask, this),
+        });
+        _super.prototype.render.call(this, screen);
+    };
+    SpriteText.prototype.renderSpriteText = function () {
         var e_18, _a;
         var _b, _c, _d;
         var textWidth = this.getTextWidth();
         var textHeight = this.getTextHeight();
+        this.staticTexture = new BasicTexture(textWidth, textHeight);
         try {
             for (var _e = __values(this.chars), _f = _e.next(); !_f.done; _f = _e.next()) {
                 var char = _f.value;
                 global.metrics.startSpan("char_" + char.char);
-                this.fontTexture.renderTo(screen, {
-                    x: this.renderScreenX + char.x - this.anchor.x * textWidth,
-                    y: this.renderScreenY + char.y - this.anchor.y * textHeight + ((_b = char.style.offset) !== null && _b !== void 0 ? _b : this.style.offset),
+                this.fontTexture.renderTo(this.staticTexture, {
+                    x: char.x,
+                    y: char.y + ((_b = char.style.offset) !== null && _b !== void 0 ? _b : this.style.offset),
                     tint: (_c = char.style.color) !== null && _c !== void 0 ? _c : this.style.color,
                     alpha: (_d = char.style.alpha) !== null && _d !== void 0 ? _d : this.style.alpha,
                     slice: {
@@ -3847,7 +3863,6 @@ var SpriteText = /** @class */ (function (_super) {
                         width: this.font.charWidth,
                         height: this.font.charHeight
                     },
-                    mask: Mask.getTextureMaskForWorldObject(this.mask, this),
                 });
                 global.metrics.endSpan("char_" + char.char);
             }
@@ -3859,10 +3874,9 @@ var SpriteText = /** @class */ (function (_super) {
             }
             finally { if (e_18) throw e_18.error; }
         }
-        _super.prototype.render.call(this, screen);
     };
     SpriteText.prototype.clear = function () {
-        this.setText("");
+        this.setText("", true);
     };
     SpriteText.prototype.getTextWidth = function () {
         return SpriteText.getWidthOfCharList(this.chars);
@@ -3888,9 +3902,16 @@ var SpriteText = /** @class */ (function (_super) {
     };
     SpriteText.prototype.setStyle = function (style) {
         O.deepOverride(this.style, style);
+        this.dirty = true;
     };
-    SpriteText.prototype.setText = function (text) {
+    SpriteText.prototype.setText = function (text, force) {
+        if (force === void 0) { force = false; }
+        // TODO: remove force parameter after rewriting dialog box
+        if (!force && text === this.currentText)
+            return;
         this.chars = SpriteTextConverter.textToCharListWithWordWrap(text, this.font, 0);
+        this.currentText = text;
+        this.dirty = true;
     };
     return SpriteText;
 }(WorldObject));
@@ -5465,6 +5486,7 @@ var DialogBox = /** @class */ (function (_super) {
     DialogBox.prototype.advanceCharacter = function () {
         if (!_.isEmpty(this.charQueue) && this.charQueue[0].bottom <= this.spriteTextOffset + this.textArea.height) {
             this.spriteText.chars.push(this.charQueue.shift());
+            this.spriteText.dirty = true;
             return true;
         }
         return false;
