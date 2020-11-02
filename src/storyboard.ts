@@ -1,13 +1,13 @@
 function getStoryboard(): Storyboard { return {
     'start': {
         type: 'start',
-        transitions: [{ type: 'onStage', stage: 'game', toNode: 'walk_to_throne' }]
+        transitions: [{ onStage: 'game', toNode: 'walk_to_throne' }]
     },
     'walk_to_throne': {
         type: 'gameplay',
-        transitions: [{ type: 'onCondition', condition: () => {
+        transitions: [{ toNode: 'intro', condition: () => {
             return global.world.select.type(Player).y < 478;
-        }, toNode: 'intro' }]
+        } }]
     },
     'intro': {
         type: 'cutscene',
@@ -96,18 +96,18 @@ function getStoryboard(): Storyboard { return {
 
             Debug.SKIP_RATE = 1;
         },
-        transitions: [{ type: 'instant', toNode: 'spawn_wave_1' }]
+        transitions: [{ toNode: 'spawn_wave_1' }]
     },
     'gameplay': {
         type: 'gameplay',
         transitions: [
-            { type: 'onCondition', condition: () => global.world.select.type(WaveController).isWaveDefeated(1), toNode: 'spawn_wave_2' },
-            { type: 'onCondition', condition: () => global.world.select.type(WaveController).isWaveDefeated(2), toNode: 'spawn_wave_3' },
-            { type: 'onCondition', condition: () => global.world.select.type(WaveController).isWaveDefeated(3), toNode: 'spawn_wave_4' },
-            { type: 'onCondition', condition: () => global.world.select.type(WaveController).isWaveDefeated(4), toNode: 'spawn_wave_5' },
-            { type: 'onCondition', condition: () => global.world.select.type(WaveController).isWaveDefeated(5), toNode: 'spawn_wave_king' },
-            { type: 'onCondition', condition: () => global.world.select.type(WaveController).isWaveDefeated(9001), toNode: 'win' },
-            { type: 'onCondition', condition: () => global.world.select.type(Player).health <= 0, toNode: 'defeat' },
+            { condition: () => global.world.select.type(WaveController).isWaveDefeated(1), toNode: 'spawn_wave_2' },
+            { condition: () => global.world.select.type(WaveController).isWaveDefeated(2), toNode: 'spawn_wave_3' },
+            { condition: () => global.world.select.type(WaveController).isWaveDefeated(3), toNode: 'spawn_wave_4' },
+            { condition: () => global.world.select.type(WaveController).isWaveDefeated(4), toNode: 'spawn_wave_5' },
+            { condition: () => global.world.select.type(WaveController).isWaveDefeated(5), toNode: 'spawn_wave_king' },
+            { condition: () => global.world.select.type(WaveController).isWaveDefeated(9001), toNode: 'win' },
+            { condition: () => global.world.select.type(Player).health <= 0, toNode: 'defeat' },
         ]
     },
     'spawn_wave_1': {
@@ -129,7 +129,7 @@ function getStoryboard(): Storyboard { return {
             global.world.select.type(WaveController).spawnWave1();
             global.world.select.type(WaveController).startMusic();
         },
-        transitions: [{ type: 'instant', toNode: 'gameplay' }]
+        transitions: [{ toNode: 'gameplay' }]
     },
     'spawn_wave_2': {
         type: 'cutscene',
@@ -154,7 +154,7 @@ function getStoryboard(): Storyboard { return {
             global.world.select.type(WaveController).spawnWave2();
             global.world.select.type(WaveController).startMusic();
         },
-        transitions: [{ type: 'instant', toNode: 'gameplay' }]
+        transitions: [{ toNode: 'gameplay' }]
     },
     'spawn_wave_3': {
         type: 'cutscene',
@@ -179,7 +179,7 @@ function getStoryboard(): Storyboard { return {
             global.world.select.type(WaveController).spawnWave3();
             global.world.select.type(WaveController).startMusic();
         },
-        transitions: [{ type: 'instant', toNode: 'gameplay' }]
+        transitions: [{ toNode: 'gameplay' }]
     },
     'spawn_wave_4': {
         type: 'cutscene',
@@ -204,7 +204,7 @@ function getStoryboard(): Storyboard { return {
             global.world.select.type(WaveController).spawnWave4();
             global.world.select.type(WaveController).startMusic();
         },
-        transitions: [{ type: 'instant', toNode: 'gameplay' }]
+        transitions: [{ toNode: 'gameplay' }]
     },
     'spawn_wave_5': {
         type: 'cutscene',
@@ -228,7 +228,7 @@ function getStoryboard(): Storyboard { return {
             global.world.select.type(WaveController).spawnWave5();
             global.world.select.type(WaveController).startMusic();
         },
-        transitions: [{ type: 'instant', toNode: 'gameplay' }]
+        transitions: [{ toNode: 'gameplay' }]
     },
     'spawn_wave_king': {
         type: 'cutscene',
@@ -293,7 +293,7 @@ function getStoryboard(): Storyboard { return {
             global.world.select.type(WaveController).spawnWaveKing();
             global.world.select.type(WaveController).startMusic();
         },
-        transitions: [{ type: 'instant', toNode: 'gameplay' }]
+        transitions: [{ toNode: 'gameplay' }]
     },
     'win': {
         type: 'cutscene',

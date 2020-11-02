@@ -23,6 +23,7 @@ postjam
         - /static-ify generic sprites, e.g. render to some texture instead of simulating (can't do without boundless textures)
         - /do not render off-screen things
         - /optimize sprite text with static pieces
+- /replace bomb state machine with script
 - new content
     - add some more enemies
     - add music/ambience during silent parts
@@ -44,6 +45,7 @@ postjam
 - define better "momentum transfer" modes
 - init method for world objects
 - better scripting syntax?
+    - look into writing TS transforms for scripts?
 - camera mode transitions
 - revisit dialog system
 - story transition delay

@@ -46,45 +46,22 @@ class StoryManager {
             }
             
             state.transitions = storyNode.transitions.map(transition => {
-                if (transition.type === 'instant') {
-                    return <StateMachine.Transition>{
-                        type: 'instant',
-                        toState: transition.toNode,
-                    };
-                }
+                return <StateMachine.Transition>{
+                    toState: transition.toNode,
+                    condition: () => {
+                        if (transition.condition && !transition.condition()) return false;
+                        if (transition.onStage && (this.theater.currentStageName !== transition.onStage || this.theater.stageManager.transitioning)) return false;
 
-                if (transition.type === 'onCondition') {
-                    return <StateMachine.Transition>{
-                        type: 'condition',
-                        condition: transition.condition,
-                        toState: transition.toNode,
-                    };
-                }
-
-                if (transition.type === 'onStage') {
-                    return <StateMachine.Transition>{
-                        type: 'condition',
-                        condition: () => this.theater.currentStageName === transition.stage && !this.theater.stageManager.transitioning,
-                        toState: transition.toNode,
-                    };
-                }
-
-                if (transition.type === 'onInteract') {
-                    return <StateMachine.Transition>{
-                        type: 'condition',
-                        condition: () => {
-                            if (this.theater.interactionManager.interactRequested === transition.with) {
-                                this.theater.interactionManager.consumeInteraction();
-                                return true;
+                        // All conditions met. Handle interaction.
+                        if (transition.onInteract) {
+                            if (this.theater.interactionManager.interactRequested !== transition.onInteract) {
+                                return false;
                             }
-                            return false;
-                        },
-                        toState: transition.toNode,
-                    };
-                }
-
-                error("Invalid transition type! Did you forget to add the transition to storyManager?");
-                return undefined;
+                            this.theater.interactionManager.consumeInteraction();
+                        }
+                        return true;
+                    },
+                };
             });
 
             this.stateMachine.addState(storyNodeName, state);
@@ -132,13 +109,13 @@ class StoryManager {
         if (!node) return result;
 
         for (let transition of node.transitions) {
-            if (transition.type !== 'onInteract') continue;
-            if (stageName && transition.onStage && stageName === transition.onStage) continue;
+            if (!transition.onInteract) continue;
+            if (stageName && transition.onStage && stageName !== transition.onStage) continue;
             
             let toNode = this.getNodeByName(transition.toNode);
             if (toNode.type === 'cutscene' && !this.cutsceneManager.canPlayCutscene(transition.toNode)) continue;
 
-            result.add(transition.with);
+            result.add(transition.onInteract);
         }
 
         return result;

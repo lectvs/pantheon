@@ -6241,41 +6241,23 @@ var StoryManager = /** @class */ (function () {
                 };
             }
             state.transitions = storyNode.transitions.map(function (transition) {
-                if (transition.type === 'instant') {
-                    return {
-                        type: 'instant',
-                        toState: transition.toNode,
-                    };
-                }
-                if (transition.type === 'onCondition') {
-                    return {
-                        type: 'condition',
-                        condition: transition.condition,
-                        toState: transition.toNode,
-                    };
-                }
-                if (transition.type === 'onStage') {
-                    return {
-                        type: 'condition',
-                        condition: function () { return _this.theater.currentStageName === transition.stage && !_this.theater.stageManager.transitioning; },
-                        toState: transition.toNode,
-                    };
-                }
-                if (transition.type === 'onInteract') {
-                    return {
-                        type: 'condition',
-                        condition: function () {
-                            if (_this.theater.interactionManager.interactRequested === transition.with) {
-                                _this.theater.interactionManager.consumeInteraction();
-                                return true;
-                            }
+                return {
+                    toState: transition.toNode,
+                    condition: function () {
+                        if (transition.condition && !transition.condition())
                             return false;
-                        },
-                        toState: transition.toNode,
-                    };
-                }
-                error("Invalid transition type! Did you forget to add the transition to storyManager?");
-                return undefined;
+                        if (transition.onStage && (_this.theater.currentStageName !== transition.onStage || _this.theater.stageManager.transitioning))
+                            return false;
+                        // All conditions met. Handle interaction.
+                        if (transition.onInteract) {
+                            if (_this.theater.interactionManager.interactRequested !== transition.onInteract) {
+                                return false;
+                            }
+                            _this.theater.interactionManager.consumeInteraction();
+                        }
+                        return true;
+                    },
+                };
             });
             this_3.stateMachine.addState(storyNodeName, state);
         };
@@ -6335,14 +6317,14 @@ var StoryManager = /** @class */ (function () {
         try {
             for (var _b = __values(node.transitions), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
-                if (transition.type !== 'onInteract')
+                if (!transition.onInteract)
                     continue;
-                if (stageName && transition.onStage && stageName === transition.onStage)
+                if (stageName && transition.onStage && stageName !== transition.onStage)
                     continue;
                 var toNode = this.getNodeByName(transition.toNode);
                 if (toNode.type === 'cutscene' && !this.cutsceneManager.canPlayCutscene(transition.toNode))
                     continue;
-                result.add(transition.with);
+                result.add(transition.onInteract);
             }
         }
         catch (e_25_1) { e_25 = { error: e_25_1 }; }
@@ -6869,17 +6851,9 @@ var StateMachine = /** @class */ (function () {
         try {
             for (var _b = __values(state.transitions || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
-                if (transition.type === 'instant') {
-                    return transition;
-                }
-                else if (transition.type === 'condition') {
-                    if (transition.condition())
-                        return transition;
-                }
-                else {
-                    /// @ts-ignore
-                    error("Invalid transition type " + transition.type + " for transition", transition);
-                }
+                if (transition.condition && !transition.condition())
+                    continue;
+                return transition;
             }
         }
         catch (e_30_1) { e_30 = { error: e_30_1 }; }
@@ -9821,29 +9795,7 @@ var Bomb = /** @class */ (function (_super) {
         _this.gravityz = -100;
         _this.mass = 1000;
         _this.colliding = false;
-        _this.stateMachine.addState('start', {
-            script: S.wait(0.1),
-            transitions: [{ type: 'instant', toState: 'slowdet' }],
-        });
-        _this.stateMachine.addState('slowdet', {
-            callback: function () {
-                _this.colliding = true;
-            },
-            script: S.loopFor(24, S.chain(S.call(function () {
-                _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled;
-            }), S.wait(0.25))),
-            transitions: [{ type: 'instant', toState: 'quickdet' }],
-        });
-        _this.stateMachine.addState('quickdet', {
-            script: S.loopFor(60, S.chain(S.call(function () {
-                _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled;
-            }), S.wait(0.05))),
-            transitions: [{ type: 'instant', toState: 'explode' }],
-        });
-        _this.stateMachine.addState('explode', {
-            callback: function () { return _this.explode(); },
-        });
-        _this.setState('start');
+        _this.runScript(S.chain(S.wait(0.1), S.call(function () { return _this.colliding = true; }), S.loopFor(24, S.chain(S.call(function () { return _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled; }), S.wait(0.25))), S.loopFor(60, S.chain(S.call(function () { return _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled; }), S.wait(0.05))), S.call(function () { return _this.explode(); })));
         return _this;
     }
     Bomb.prototype.update = function () {
@@ -9855,11 +9807,11 @@ var Bomb = /** @class */ (function (_super) {
     };
     Bomb.prototype.explode = function () {
         this.alive = false;
-        var explosion = this.world.addWorldObject(new Explosion());
+        var explosion = this.world.addWorldObject(new Explosion(), {
+            layer: 'fg'
+        });
         explosion.x = this.x;
         explosion.y = this.y - 12;
-        World.Actions.setLayer(explosion, 'fg');
-        this.world.playSound('explode').volume;
     };
     Bomb.prototype.onCollide = function (other) {
         _super.prototype.onCollide.call(this, other);
@@ -9888,6 +9840,11 @@ Cheat.init({
     'win': function () { return global.world.select.type(Throne).damage(5); },
     'lose': function () { return A.range(5).forEach(function (i) { return global.world.select.type(Player).damage(); }); },
     'killall': function () { return global.world.select.typeAll(Enemy).forEach(function (enemy) { return enemy.kill(); }); },
+    'explode': function () {
+        var explosion = global.world.addWorldObject(new Explosion());
+        explosion.x = 400;
+        explosion.y = 400;
+    }
 });
 function deadBody(parent, texture) {
     var deadBody = new Sprite();
@@ -9926,9 +9883,9 @@ var Explosion = /** @class */ (function (_super) {
     function Explosion() {
         var _this = _super.call(this) || this;
         _this.setTexture('explosion');
-        _this.tint = 0xFFFFFF;
+        _this.tint = 0x000000;
         _this.bounds = new CircleBounds(0, 0, 50, _this);
-        _this.runScript(S.chain(S.wait(0.05), S.call(function () { return _this.tint = 0x000000; }), S.wait(0.05), S.call(function () { return _this.kill(); })));
+        _this.runScript(S.chain(S.wait(0.05), S.call(function () { return _this.tint = 0xFFFFFF; }), S.wait(0.05), S.call(function () { return _this.kill(); })));
         _this.hasTriggered = false;
         return _this;
     }
@@ -9955,6 +9912,7 @@ var Explosion = /** @class */ (function (_super) {
                 }
                 finally { if (e_44) throw e_44.error; }
             }
+            this.world.playSound('explode');
             this.hasTriggered = true;
         }
     };
@@ -9987,7 +9945,7 @@ var Golbin = /** @class */ (function (_super) {
         _this.stateMachine.addState('start', {
             script: S.wait(Random.float(0, 1)),
             transitions: [
-                { type: 'instant', toState: 'idle' },
+                { toState: 'idle' },
             ]
         });
         _this.stateMachine.addState('idle', {
@@ -9996,13 +9954,13 @@ var Golbin = /** @class */ (function (_super) {
                 _this.willShootNext = !_this.willShootNext;
             })),
             transitions: [
-                { type: 'condition', condition: function () { return _this.willShootNext; }, toState: 'shooting' },
-                { type: 'condition', condition: function () { return !_this.willShootNext; }, toState: 'walking' },
+                { toState: 'shooting', condition: function () { return _this.willShootNext; } },
+                { toState: 'walking', condition: function () { return !_this.willShootNext; } },
             ]
         });
         _this.stateMachine.addState('walking', {
             transitions: [
-                { type: 'condition', condition: function () { return M.distance(_this.x, _this.y, _this.targetPos.x, _this.targetPos.y) < 4; }, toState: 'idle' },
+                { toState: 'idle', condition: function () { return M.distance(_this.x, _this.y, _this.targetPos.x, _this.targetPos.y) < 4; } },
             ]
         });
         _this.stateMachine.addState('shooting', {
@@ -10011,7 +9969,7 @@ var Golbin = /** @class */ (function (_super) {
                 _this.shoot(d);
             })),
             transitions: [
-                { type: 'instant', toState: 'idle' },
+                { toState: 'idle' },
             ]
         });
         _this.stateMachine.setState('start');
@@ -10181,7 +10139,7 @@ var ImmunitySm = /** @class */ (function (_super) {
         _this.addState('immune', {
             script: S.wait(immuneTime),
             transitions: [
-                { type: 'instant', toState: 'vulnerable' },
+                { toState: 'vulnerable' },
             ]
         });
         _this.setState('vulnerable');
@@ -10230,7 +10188,7 @@ var Knight = /** @class */ (function (_super) {
         _this.stateMachine.addState('start', {
             script: S.wait(Random.float(0, 1)),
             transitions: [
-                { type: 'instant', toState: 'idle' },
+                { toState: 'idle' },
             ]
         });
         _this.stateMachine.addState('idle', {
@@ -10242,13 +10200,13 @@ var Knight = /** @class */ (function (_super) {
                 _this.willDashNext = !_this.willDashNext;
             })),
             transitions: [
-                { type: 'condition', condition: function () { return _this.willDashNext; }, toState: 'dash' },
-                { type: 'condition', condition: function () { return !_this.willDashNext; }, toState: 'walking' },
+                { toState: 'dash', condition: function () { return _this.willDashNext; } },
+                { toState: 'walking', condition: function () { return !_this.willDashNext; } },
             ]
         });
         _this.stateMachine.addState('walking', {
             transitions: [
-                { type: 'condition', condition: function () { return M.distance(_this.x, _this.y, _this.targetPos.x, _this.targetPos.y) < 4; }, toState: 'idle' },
+                { toState: 'idle', condition: function () { return M.distance(_this.x, _this.y, _this.targetPos.x, _this.targetPos.y) < 4; } },
             ]
         });
         _this.stateMachine.addState('dash', {
@@ -10269,7 +10227,7 @@ var Knight = /** @class */ (function (_super) {
                 _this.y = M.lerp(_this.lastPos.y, _this.targetPos.y, t);
             })),
             transitions: [
-                { type: 'instant', toState: 'idle' },
+                { toState: 'idle' },
             ]
         });
         _this.stateMachine.setState('start');
@@ -10379,7 +10337,7 @@ var Mage = /** @class */ (function (_super) {
         _this.stateMachine.addState('start', {
             script: S.wait(Random.float(0, 1)),
             transitions: [
-                { type: 'instant', toState: 'idle' },
+                { toState: 'idle' },
             ]
         });
         _this.stateMachine.addState('idle', {
@@ -10388,13 +10346,13 @@ var Mage = /** @class */ (function (_super) {
                 _this.willSpawnNext = !_this.willSpawnNext;
             })),
             transitions: [
-                { type: 'condition', condition: function () { return _this.willSpawnNext; }, toState: 'spawn' },
-                { type: 'condition', condition: function () { return !_this.willSpawnNext; }, toState: 'walking' },
+                { toState: 'spawn', condition: function () { return _this.willSpawnNext; } },
+                { toState: 'walking', condition: function () { return !_this.willSpawnNext; } },
             ]
         });
         _this.stateMachine.addState('walking', {
             transitions: [
-                { type: 'condition', condition: function () { return M.distance(_this.x, _this.y, _this.targetPos.x, _this.targetPos.y) < 4; }, toState: 'idle' },
+                { toState: 'idle', condition: function () { return M.distance(_this.x, _this.y, _this.targetPos.x, _this.targetPos.y) < 4; } },
             ]
         });
         _this.stateMachine.addState('spawn', {
@@ -10403,7 +10361,7 @@ var Mage = /** @class */ (function (_super) {
                 _this.spawn();
             }), S.wait(1)),
             transitions: [
-                { type: 'instant', toState: 'idle' },
+                { toState: 'idle' },
             ]
         });
         _this.stateMachine.setState('start');
@@ -10901,7 +10859,7 @@ var Runner = /** @class */ (function (_super) {
         _this.playAnimation('run');
         _this.stateMachine.addState("idle", {
             script: S.wait(1),
-            transitions: [{ type: 'instant', toState: 'running' }],
+            transitions: [{ toState: 'running' }],
         });
         _this.stateMachine.addState("running", {});
         _this.setState("idle");
@@ -11050,13 +11008,13 @@ function getStoryboard() {
     return {
         'start': {
             type: 'start',
-            transitions: [{ type: 'onStage', stage: 'game', toNode: 'walk_to_throne' }]
+            transitions: [{ onStage: 'game', toNode: 'walk_to_throne' }]
         },
         'walk_to_throne': {
             type: 'gameplay',
-            transitions: [{ type: 'onCondition', condition: function () {
+            transitions: [{ toNode: 'intro', condition: function () {
                         return global.world.select.type(Player).y < 478;
-                    }, toNode: 'intro' }]
+                    } }]
         },
         'intro': {
             type: 'cutscene',
@@ -11159,18 +11117,18 @@ function getStoryboard() {
                     }
                 });
             },
-            transitions: [{ type: 'instant', toNode: 'spawn_wave_1' }]
+            transitions: [{ toNode: 'spawn_wave_1' }]
         },
         'gameplay': {
             type: 'gameplay',
             transitions: [
-                { type: 'onCondition', condition: function () { return global.world.select.type(WaveController).isWaveDefeated(1); }, toNode: 'spawn_wave_2' },
-                { type: 'onCondition', condition: function () { return global.world.select.type(WaveController).isWaveDefeated(2); }, toNode: 'spawn_wave_3' },
-                { type: 'onCondition', condition: function () { return global.world.select.type(WaveController).isWaveDefeated(3); }, toNode: 'spawn_wave_4' },
-                { type: 'onCondition', condition: function () { return global.world.select.type(WaveController).isWaveDefeated(4); }, toNode: 'spawn_wave_5' },
-                { type: 'onCondition', condition: function () { return global.world.select.type(WaveController).isWaveDefeated(5); }, toNode: 'spawn_wave_king' },
-                { type: 'onCondition', condition: function () { return global.world.select.type(WaveController).isWaveDefeated(9001); }, toNode: 'win' },
-                { type: 'onCondition', condition: function () { return global.world.select.type(Player).health <= 0; }, toNode: 'defeat' },
+                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(1); }, toNode: 'spawn_wave_2' },
+                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(2); }, toNode: 'spawn_wave_3' },
+                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(3); }, toNode: 'spawn_wave_4' },
+                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(4); }, toNode: 'spawn_wave_5' },
+                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(5); }, toNode: 'spawn_wave_king' },
+                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(9001); }, toNode: 'win' },
+                { condition: function () { return global.world.select.type(Player).health <= 0; }, toNode: 'defeat' },
             ]
         },
         'spawn_wave_1': {
@@ -11203,7 +11161,7 @@ function getStoryboard() {
                     }
                 });
             },
-            transitions: [{ type: 'instant', toNode: 'gameplay' }]
+            transitions: [{ toNode: 'gameplay' }]
         },
         'spawn_wave_2': {
             type: 'cutscene',
@@ -11241,7 +11199,7 @@ function getStoryboard() {
                     }
                 });
             },
-            transitions: [{ type: 'instant', toNode: 'gameplay' }]
+            transitions: [{ toNode: 'gameplay' }]
         },
         'spawn_wave_3': {
             type: 'cutscene',
@@ -11279,7 +11237,7 @@ function getStoryboard() {
                     }
                 });
             },
-            transitions: [{ type: 'instant', toNode: 'gameplay' }]
+            transitions: [{ toNode: 'gameplay' }]
         },
         'spawn_wave_4': {
             type: 'cutscene',
@@ -11317,7 +11275,7 @@ function getStoryboard() {
                     }
                 });
             },
-            transitions: [{ type: 'instant', toNode: 'gameplay' }]
+            transitions: [{ toNode: 'gameplay' }]
         },
         'spawn_wave_5': {
             type: 'cutscene',
@@ -11352,7 +11310,7 @@ function getStoryboard() {
                     }
                 });
             },
-            transitions: [{ type: 'instant', toNode: 'gameplay' }]
+            transitions: [{ toNode: 'gameplay' }]
         },
         'spawn_wave_king': {
             type: 'cutscene',
@@ -11425,7 +11383,7 @@ function getStoryboard() {
                     }
                 });
             },
-            transitions: [{ type: 'instant', toNode: 'gameplay' }]
+            transitions: [{ toNode: 'gameplay' }]
         },
         'win': {
             type: 'cutscene',
@@ -11703,7 +11661,7 @@ var ThroneBehaviorSm = /** @class */ (function (_super) {
             },
             script: S.wait(3),
             transitions: [
-                { type: 'instant', toState: 'small_jump' },
+                { toState: 'small_jump' },
             ],
         });
         _this.addState('small_jump', {
@@ -11726,8 +11684,8 @@ var ThroneBehaviorSm = /** @class */ (function (_super) {
                 _this.throne.colliding = true;
             }), S.wait(1)),
             transitions: [
-                { type: 'condition', condition: function () { return _this.jumpCount < 2; }, toState: 'small_jump' },
-                { type: 'condition', condition: function () { return _this.jumpCount >= 2; }, toState: 'big_jump' },
+                { toState: 'small_jump', condition: function () { return _this.jumpCount < 2; } },
+                { toState: 'big_jump', condition: function () { return _this.jumpCount >= 2; } },
             ]
         });
         _this.addState('big_jump', {
@@ -11743,7 +11701,7 @@ var ThroneBehaviorSm = /** @class */ (function (_super) {
                 _this.throne.world.playSound('land');
                 _this.throne.colliding = true;
             }), S.wait(1)),
-            transitions: [{ type: 'instant', toState: 'dash' }],
+            transitions: [{ toState: 'dash' }],
         });
         _this.addState('dash', {
             script: S.chain(S.call(function () {
@@ -11761,11 +11719,11 @@ var ThroneBehaviorSm = /** @class */ (function (_super) {
             }), S.chain(S.wait(0.05), S.call(function () {
                 _this.throne.spawnBomb();
             })))),
-            transitions: [{ type: 'instant', toState: 'vulnerable' }],
+            transitions: [{ toState: 'vulnerable' }],
         });
         _this.addState('vulnerable', {
             script: S.waitUntil(function () { return _.isEmpty(_this.throne.world.select.typeAll(Bomb)); }),
-            transitions: [{ type: 'instant', toState: 'idle' }],
+            transitions: [{ toState: 'idle' }],
         });
         _this.addState('defeat', {});
         return _this;

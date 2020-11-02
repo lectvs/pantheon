@@ -47,7 +47,7 @@ class Knight extends Enemy {
         this.stateMachine.addState('start', {
             script: S.wait(Random.float(0, 1)),
             transitions: [
-                { type: 'instant', toState: 'idle' },
+                { toState: 'idle' },
             ]
         })
         this.stateMachine.addState('idle', {
@@ -62,13 +62,13 @@ class Knight extends Enemy {
                 }),
             ),
             transitions: [
-                { type: 'condition', condition: () => this.willDashNext, toState: 'dash' },
-                { type: 'condition', condition: () => !this.willDashNext, toState: 'walking' },
+                { toState: 'dash', condition: () => this.willDashNext },
+                { toState: 'walking', condition: () => !this.willDashNext },
             ]
         });
         this.stateMachine.addState('walking', {
             transitions: [
-                { type: 'condition', condition: () => M.distance(this.x, this.y, this.targetPos.x, this.targetPos.y) < 4, toState: 'idle' },
+                { toState: 'idle', condition: () => M.distance(this.x, this.y, this.targetPos.x, this.targetPos.y) < 4 },
             ]
         });
         this.stateMachine.addState('dash', {
@@ -97,7 +97,7 @@ class Knight extends Enemy {
                 })
             ),
             transitions: [
-                { type: 'instant', toState: 'idle' },
+                { toState: 'idle' },
             ]
         })
         this.stateMachine.setState('start');

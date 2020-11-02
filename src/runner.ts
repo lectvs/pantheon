@@ -27,7 +27,7 @@ class Runner extends Enemy {
 
         this.stateMachine.addState("idle", {
             script: S.wait(1),
-            transitions: [{ type: 'instant', toState: 'running' }],
+            transitions: [{ toState: 'running' }],
         });
         this.stateMachine.addState("running", {});
         this.setState("idle");

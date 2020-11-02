@@ -5,12 +5,12 @@ class Explosion extends Sprite {
         super();
 
         this.setTexture('explosion');
-        this.tint = 0xFFFFFF;
+        this.tint = 0x000000;
         this.bounds = new CircleBounds(0, 0, 50, this);
 
         this.runScript(S.chain(
             S.wait(0.05),
-            S.call(() => this.tint = 0x000000),
+            S.call(() => this.tint = 0xFFFFFF),
             S.wait(0.05),
             S.call(() => this.kill()),
         ));
@@ -32,6 +32,8 @@ class Explosion extends Sprite {
                     toDamage.damage(1);
                 }
             }
+
+            this.world.playSound('explode');
 
             this.hasTriggered = true;
         }

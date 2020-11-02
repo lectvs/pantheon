@@ -50,7 +50,7 @@ class ThroneBehaviorSm extends StateMachine {
             },
             script: S.wait(3),
             transitions: [
-                { type: 'instant', toState: 'small_jump' },
+                { toState: 'small_jump' },
             ],
         });
 
@@ -80,8 +80,8 @@ class ThroneBehaviorSm extends StateMachine {
                 S.wait(1),
             ),
             transitions: [
-                { type: 'condition', condition: () => this.jumpCount < 2, toState: 'small_jump' },
-                { type: 'condition', condition: () => this.jumpCount >= 2, toState: 'big_jump' },
+                { toState: 'small_jump', condition: () => this.jumpCount < 2 },
+                { toState: 'big_jump', condition: () => this.jumpCount >= 2 },
             ]
         });
 
@@ -106,7 +106,7 @@ class ThroneBehaviorSm extends StateMachine {
                 }),
                 S.wait(1),
             ),
-            transitions: [{ type: 'instant', toState: 'dash' }],
+            transitions: [{ toState: 'dash' }],
         });
 
         this.addState('dash', {
@@ -137,12 +137,12 @@ class ThroneBehaviorSm extends StateMachine {
                     ),
                 ),
             ),
-            transitions: [{ type: 'instant', toState: 'vulnerable' }],
+            transitions: [{ toState: 'vulnerable' }],
         });
 
         this.addState('vulnerable', {
             script: S.waitUntil(() => _.isEmpty(this.throne.world.select.typeAll(Bomb))),
-            transitions: [{ type: 'instant', toState: 'idle' }],
+            transitions: [{ toState: 'idle' }],
         });
 
         this.addState('defeat', {});

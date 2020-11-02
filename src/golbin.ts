@@ -36,7 +36,7 @@ class Golbin extends Enemy {
         this.stateMachine.addState('start', {
             script: S.wait(Random.float(0, 1)),
             transitions: [
-                { type: 'instant', toState: 'idle' },
+                { toState: 'idle' },
             ]
         })
         this.stateMachine.addState('idle', {
@@ -48,13 +48,13 @@ class Golbin extends Enemy {
                 }),
             ),
             transitions: [
-                { type: 'condition', condition: () => this.willShootNext, toState: 'shooting' },
-                { type: 'condition', condition: () => !this.willShootNext, toState: 'walking' },
+                { toState: 'shooting', condition: () => this.willShootNext },
+                { toState: 'walking', condition: () => !this.willShootNext },
             ]
         });
         this.stateMachine.addState('walking', {
             transitions: [
-                { type: 'condition', condition: () => M.distance(this.x, this.y, this.targetPos.x, this.targetPos.y) < 4, toState: 'idle' },
+                { toState: 'idle', condition: () => M.distance(this.x, this.y, this.targetPos.x, this.targetPos.y) < 4 },
             ]
         });
         this.stateMachine.addState('shooting', {
@@ -66,7 +66,7 @@ class Golbin extends Enemy {
                 }),
             ),
             transitions: [
-                { type: 'instant', toState: 'idle' },
+                { toState: 'idle' },
             ]
         })
         this.stateMachine.setState('start');

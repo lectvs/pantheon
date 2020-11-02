@@ -34,7 +34,7 @@ class Mage extends Enemy {
         this.stateMachine.addState('start', {
             script: S.wait(Random.float(0, 1)),
             transitions: [
-                { type: 'instant', toState: 'idle' },
+                { toState: 'idle' },
             ]
         })
         this.stateMachine.addState('idle', {
@@ -46,13 +46,13 @@ class Mage extends Enemy {
                 }),
             ),
             transitions: [
-                { type: 'condition', condition: () => this.willSpawnNext, toState: 'spawn' },
-                { type: 'condition', condition: () => !this.willSpawnNext, toState: 'walking' },
+                { toState: 'spawn', condition: () => this.willSpawnNext },
+                { toState: 'walking', condition: () => !this.willSpawnNext },
             ]
         });
         this.stateMachine.addState('walking', {
             transitions: [
-                { type: 'condition', condition: () => M.distance(this.x, this.y, this.targetPos.x, this.targetPos.y) < 4, toState: 'idle' },
+                { toState: 'idle', condition: () => M.distance(this.x, this.y, this.targetPos.x, this.targetPos.y) < 4 },
             ]
         });
         this.stateMachine.addState('spawn', {
@@ -65,7 +65,7 @@ class Mage extends Enemy {
                 S.wait(1),
             ),
             transitions: [
-                { type: 'instant', toState: 'idle' },
+                { toState: 'idle' },
             ]
         })
         this.stateMachine.setState('start');

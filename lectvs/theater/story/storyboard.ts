@@ -3,7 +3,7 @@ type Storyboard = Dict<Storyboard.Node>;
 namespace Storyboard {
 
     export type Node = (Nodes.Cutscene | Nodes.Party | Nodes.Config | Nodes.Start | Nodes.Gameplay) & {
-        transitions: Node.Transition[];
+        transitions: Transition[];
     }
 
     export namespace Nodes {
@@ -34,37 +34,11 @@ namespace Storyboard {
         }
     }
 
-    export namespace Node {
-        export type Transition = (
-                  Node.Transitions.Instant
-                | Node.Transitions.OnStage
-                | Node.Transitions.OnInteract
-                | Node.Transitions.OnCondition
-            ) & {
-            toNode: string;
-        }
-    }
-
-    export namespace Node.Transitions {
-        export type Instant = {
-            type: 'instant';
-        }
-
-        export type OnStage = {
-            type: 'onStage';
-            stage: string;
-        }
-
-        export type OnInteract = {
-            type: 'onInteract';
-            with: string;
-            onStage?: string;
-        }
-
-        export type OnCondition = {
-            type: 'onCondition';
-            condition: () => any;
-        }
+    export type Transition = {
+        toNode: string;
+        condition?: () => any;
+        onStage?: string;
+        onInteract?: string;
     }
 
     export function arbitraryPathToNode(storyboard: Storyboard, endNode: string) {
