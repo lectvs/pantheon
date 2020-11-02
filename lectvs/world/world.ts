@@ -146,24 +146,17 @@ class World {
         Draw.brush.alpha = this.backgroundAlpha;
         Draw.fill(this.screen);
 
-        for (let worldObject of this.worldObjects) {
-            if (worldObject.visible) {
-                worldObject.preRender();
-            }
-        }
-
         for (let layer of this.layers) {
+            global.metrics.startSpan(`layer_${layer.name}`);
             this.layerTexture.clear();
             this.renderLayer(layer, this.layerTexture, this.screen);
+            global.metrics.endSpan(`layer_${layer.name}`);
+
         }
 
-        for (let worldObject of this.worldObjects) {
-            if (worldObject.visible) {
-                worldObject.postRender();
-            }
-        }
-
+        global.metrics.startSpan(`screen`);
         this.screen.renderTo(screen);
+        global.metrics.endSpan(`screen`);
     }
 
     renderLayer(layer: World.Layer, layerTexture: Texture, screen: Texture) {
@@ -171,7 +164,7 @@ class World {
         for (let worldObject of layer.worldObjects) {
             if (worldObject.visible && worldObject.isOnScreen()) {
                 global.metrics.startSpan(worldObject);
-                worldObject.render(layerTexture);
+                worldObject.render(layerTexture, worldObject.renderScreenX, worldObject.renderScreenY);
                 global.metrics.endSpan(worldObject);
             }
         }

@@ -2,7 +2,7 @@
 
 namespace SpriteText {
     export type Font = {
-        texture: string;
+        texturePrefix: string;
         charWidth: number;
         charHeight: number;
         spaceWidth: number;
@@ -25,10 +25,12 @@ class SpriteText extends WorldObject {
     private _style: SpriteText.Style;
     get style() { return this._style; }
 
-    anchor: Pt;
-    mask: Mask.WorldObjectMaskConfig;
+    private lastStyle: SpriteText.Style;
 
-    private fontTexture: Texture;
+    anchor: Pt;
+
+    effects: Effects;
+    mask: Mask.WorldObjectMaskConfig;
 
     private staticTexture: Texture;
     private currentText: string;
@@ -38,7 +40,6 @@ class SpriteText extends WorldObject {
         super();
 
         this.font = font;
-        this.fontTexture = AssetCache.getTexture(this.font.texture);
 
         this._style = {
             color: 0xFFFFFF,
@@ -46,14 +47,27 @@ class SpriteText extends WorldObject {
             offset: 0,
         };
 
+        this.lastStyle = O.deepClone(this.style);
+
         this.anchor = Anchor.TOP_LEFT;
+        this.effects = new Effects();
         this.mask = null;
 
         this.setText(text);
         this.dirty = true;
     }
 
-    render(screen: Texture) {
+    update() {
+        super.update();
+        this.effects.updateEffects(this.delta);
+
+        if (!_.isEqual(this.lastStyle, this.style)) {
+            this.lastStyle = O.deepClone(this.style);
+            this.dirty = true;
+        }
+    }
+
+    render(texture: Texture, x: number, y: number) {
         let textWidth = this.getTextWidth();
         let textHeight = this.getTextHeight();
 
@@ -62,13 +76,14 @@ class SpriteText extends WorldObject {
             this.dirty = false;
         }
 
-        this.staticTexture.renderTo(screen, {
-            x: this.renderScreenX - this.anchor.x * textWidth,
-            y: this.renderScreenY - this.anchor.y * textHeight,
+        this.staticTexture.renderTo(texture, {
+            x: x - this.anchor.x * textWidth,
+            y: y - this.anchor.y * textHeight,
+            filters: this.effects.getFilterList(),
             mask: Mask.getTextureMaskForWorldObject(this.mask, this),
         });
 
-        super.render(screen);
+        super.render(texture, x, y);
     }
 
     renderSpriteText() {
@@ -78,17 +93,13 @@ class SpriteText extends WorldObject {
 
         for (let char of this.chars) {
             global.metrics.startSpan(`char_${char.char}`);
-            this.fontTexture.renderTo(this.staticTexture, {
+            let char_i = SpriteText.charCodes[char.char].y * 10 + SpriteText.charCodes[char.char].x;
+            let charTexture = AssetCache.getTexture(`${this.font.texturePrefix}${char_i}`);
+            charTexture.renderTo(this.staticTexture, {
                 x: char.x,
                 y: char.y + (char.style.offset ?? this.style.offset),
                 tint: char.style.color ?? this.style.color,
                 alpha: char.style.alpha ?? this.style.alpha,
-                slice: {
-                    x: SpriteText.charCodes[char.char].x * this.font.charWidth,
-                    y: SpriteText.charCodes[char.char].y * this.font.charHeight,
-                    width: this.font.charWidth,
-                    height: this.font.charHeight
-                },
             });
             global.metrics.endSpan(`char_${char.char}`);
         }

@@ -4,7 +4,7 @@ namespace WorldObject {
     export type ZBehavior = 'noop' | 'threequarters';
 
     export type UpdateCallback<T> = (obj: T) => any;
-    export type RenderCallback<T> = (obj: T, screen: Texture) => any;
+    export type RenderCallback<T> = (obj: T, screen: Texture, x: number, y: number) => any;
 }
 
 class WorldObject {
@@ -203,22 +203,8 @@ class WorldObject {
         return result;
     }
 
-    preRender() {
-
-    }
-
-    render(screen: Texture) {
-        if (this.renderCallback) this.renderCallback(this, screen);
-    }
-
-    postRender() {
-
-    }
-
-    worldRender(screen: Texture) {
-        this.preRender();
-        this.render(screen);
-        this.postRender();
+    render(texture: Texture, x: number, y: number) {
+        if (this.renderCallback) this.renderCallback(this, texture, x, y);
     }
 
     addChild<T extends WorldObject>(child: T, worldProperties?: World.WorldObjectProperties): T {

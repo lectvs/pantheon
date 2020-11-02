@@ -139,10 +139,11 @@ class Main {
             Main.delta = frameDelta/60;
 
             global.clearStacks();
-
             global.metrics.startSpan('update');
+            
             for (let i = 0; i < Debug.SKIP_RATE; i++) {
                 Input.update();
+                Debug.update();
                 if (Debug.frameStepSkipFrame()) break;
                 Main.soundManager.preGameUpdate();
                 global.metrics.startSpan('game');

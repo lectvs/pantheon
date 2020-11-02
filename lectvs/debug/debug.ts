@@ -16,6 +16,7 @@ namespace Debug {
         frameStepStepKey: string;
         frameStepRunKey: string;
         resetOptionsAtStart: boolean;
+        experiments: Dict<Experiment>;
     }
 }
 
@@ -37,6 +38,13 @@ class Debug {
         Debug.FRAME_STEP_STEP_KEY = config.frameStepStepKey;
         Debug.FRAME_STEP_RUN_KEY = config.frameStepRunKey;
         Debug.RESET_OPTIONS_AT_START = config.resetOptionsAtStart;
+        Debug.EXPERIMENTS = config.experiments;
+    }
+
+    static update() {
+        for (let experiment in Debug.EXPERIMENTS) {
+            Debug.EXPERIMENTS[experiment].update();
+        }
     }
 
     private static _DEBUG: boolean;
@@ -91,4 +99,6 @@ class Debug {
     private static _RESET_OPTIONS_AT_START: boolean;
     static get RESET_OPTIONS_AT_START() { return this.DEBUG && this._RESET_OPTIONS_AT_START; }
     static set RESET_OPTIONS_AT_START(value: boolean) { this._RESET_OPTIONS_AT_START = value; }
+
+    static EXPERIMENTS: Dict<Experiment>;
 }

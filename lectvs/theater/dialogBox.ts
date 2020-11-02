@@ -61,8 +61,8 @@ class DialogBox extends Sprite {
         }
     }
 
-    render(screen: Texture) {
-        super.render(screen);
+    render(texture: Texture, x: number, y: number) {
+        super.render(texture, x, y);
 
         if (this.portraitSprite.visible) {
             this.setPortraitSpriteProperties();

@@ -7,7 +7,9 @@ namespace Assets {
         'debug': {},
 
         // Fonts
-        'deluxe16': {},
+        'deluxe16': {
+            spritesheet: { frameWidth: 8, frameHeight: 15 },
+        },
 
         // Game
         'knight': {
@@ -117,7 +119,7 @@ namespace Assets {
 
     export class fonts {
         static DELUXE16: SpriteText.Font = {
-            texture: 'deluxe16',
+            texturePrefix: 'deluxe16_',
             charWidth: 8,
             charHeight: 15,
             spaceWidth: 8,

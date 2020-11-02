@@ -21,18 +21,12 @@ function deadBody(parent: Enemy, texture: string) {
             obj.runScript(S.chain(
                 S.wait(0.05),
                 S.call(() => obj.effects.silhouette.enabled = false),
-                S.wait(3),
+                S.wait(1),
                 S.call(() => {
-                    // if (obj.world.hasWorldObject('floor')) {
-                    //     obj.getTexture().renderTo(obj.world.select.name<Sprite>('floor').getTexture(), {
-                    //         x: obj.x,
-                    //         y: obj.y,
-                    //         tint: obj.tint,
-                    //         scaleX: obj.flipX ? -1 : 1,
-                    //         filters: [ obj.effects.outline ],
-                    //     });
-                    // }
-                    // obj.kill();
+                    if (obj.world.hasWorldObject('floor')) {
+                        obj.render(obj.world.select.name<Sprite>('floor').getTexture(), obj.x, obj.y);
+                    }
+                    obj.kill();
                 }),
             ));
             obj.data.flashed = true;

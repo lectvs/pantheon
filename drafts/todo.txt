@@ -15,11 +15,12 @@ postjam
 - /spritetext as a texture and not a world object? (spritetext cannot be a texture because it has moving components)
 - /spritetext alignment
 - /remove sound from dialog (and customize?)
-- investigate performance issues
+- /render sprite to non-world texture?
+- /investigate performance issues
     - /fps drop with dead bodies?
     - /fps drop with spritetext?
-    - optimizations
-        - static-ify generic sprites (e.g. render to some texture instead of simulating)
+    - /optimizations
+        - /static-ify generic sprites, e.g. render to some texture instead of simulating (can't do without boundless textures)
         - /do not render off-screen things
         - /optimize sprite text with static pieces
 - new content
@@ -28,7 +29,6 @@ postjam
     - add dialog talking sound effects?
 - investigate boss fight crash
 - limit to how many shadows there are
-- fix sticking against the wall bug
 - fix caps lock bug?
 - cutscene skips
 - rewrite dialog box implementation (shouldn't use spriteText internals)
@@ -37,7 +37,8 @@ postjam
 - fix guard beam color
 - calculate hoop speed from angular speed around player
 - fix window focus issues
-- mute audio when window out of focus
+    - mute audio when window out of focus
+    - fix sticking against the wall bug
 - in general clean up the storyboard
 - collect all collisions and apply callbacks/momentum transfer afterward
 - define better "momentum transfer" modes
@@ -50,7 +51,6 @@ postjam
 - fix bug with vx, vy = NaN
 - not have to specify parent in physics object bounds?
 - physics object: combine vx/y/z, gravityx/y/z, etc.
-- render sprite to non-world texture?
 - fullscreen
 - build script
 - fill in README.md for others to run/build the game

@@ -63,11 +63,11 @@ class PhysicsWorldObject extends WorldObject {
         if (!isFinite(this.vy)) this.vy = 0;
     }
 
-    render(screen: Texture) {
+    render(texture: Texture, x: number, y: number) {
         if (Debug.ALL_PHYSICS_BOUNDS || this.debugDrawBounds) {
-            this.drawBounds(screen);
+            this.drawBounds(texture, x, y);
         }
-        super.render(screen);
+        super.render(texture, x, y);
     }
 
     getWorldBounds(newX: number = this.x, newY: number = this.y) {
@@ -118,40 +118,40 @@ class PhysicsWorldObject extends WorldObject {
         this.move();
     }
 
-    private drawBounds(screen: Texture) {
+    private drawBounds(texture: Texture, x: number, y: number) {
         Draw.brush.color = 0x00FF00;
         Draw.brush.alpha = 1;
 
         if (this.bounds instanceof RectBounds) {
             let box = this.bounds.getBoundingBox();
-            box.x -= this.x - this.renderScreenX;
-            box.y -= this.y - this.renderScreenY;
-            Draw.rectangleOutline(screen, box.x, box.y, box.width, box.height);
+            box.x += x - this.x;
+            box.y += y - this.y;
+            Draw.rectangleOutline(texture, box.x, box.y, box.width, box.height);
         } else if (this.bounds instanceof CircleBounds) {
             let center = this.bounds.getCenter();
-            center.x -= this.x - this.renderScreenX;
-            center.y -= this.y - this.renderScreenY;
-            Draw.circleOutline(screen, center.x, center.y, this.bounds.radius);
+            center.x += x - this.x;
+            center.y += y - this.y;
+            Draw.circleOutline(texture, center.x, center.y, this.bounds.radius);
         } else if (this.bounds instanceof SlopeBounds) {
             let box = this.bounds.getBoundingBox();
-            box.x -= this.x - this.renderScreenX;
-            box.y -= this.y - this.renderScreenY;
+            box.x += x - this.x;
+            box.y += y - this.y;
             if (this.bounds.direction === 'upleft') {
-                Draw.line(screen, box.left, box.bottom, box.right, box.bottom);
-                Draw.line(screen, box.right, box.bottom, box.right, box.top);
-                Draw.line(screen, box.right, box.top, box.left, box.bottom);
+                Draw.line(texture, box.left, box.bottom, box.right, box.bottom);
+                Draw.line(texture, box.right, box.bottom, box.right, box.top);
+                Draw.line(texture, box.right, box.top, box.left, box.bottom);
             } else if (this.bounds.direction === 'upright') {
-                Draw.line(screen, box.left, box.bottom, box.right, box.bottom);
-                Draw.line(screen, box.left, box.bottom, box.left, box.top);
-                Draw.line(screen, box.left, box.top, box.right, box.bottom);
+                Draw.line(texture, box.left, box.bottom, box.right, box.bottom);
+                Draw.line(texture, box.left, box.bottom, box.left, box.top);
+                Draw.line(texture, box.left, box.top, box.right, box.bottom);
             } else if (this.bounds.direction === 'downright') {
-                Draw.line(screen, box.left, box.bottom, box.left, box.top);
-                Draw.line(screen, box.left, box.top, box.right, box.top);
-                Draw.line(screen, box.right, box.top, box.left, box.bottom);
+                Draw.line(texture, box.left, box.bottom, box.left, box.top);
+                Draw.line(texture, box.left, box.top, box.right, box.top);
+                Draw.line(texture, box.right, box.top, box.left, box.bottom);
             } else {
-                Draw.line(screen, box.left, box.top, box.right, box.top);
-                Draw.line(screen, box.right, box.top, box.right, box.bottom);
-                Draw.line(screen, box.right, box.bottom, box.left, box.top);
+                Draw.line(texture, box.left, box.top, box.right, box.top);
+                Draw.line(texture, box.right, box.top, box.right, box.bottom);
+                Draw.line(texture, box.right, box.bottom, box.left, box.top);
             }
         } 
     }

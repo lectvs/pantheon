@@ -53,10 +53,10 @@ class Sprite extends PhysicsWorldObject {
         this.angle += this.vangle * this.delta;
     }
 
-    render(screen: Texture) {
-        this.texture.renderTo(screen, {
-            x: this.renderScreenX + this.offset.x,
-            y: this.renderScreenY + this.offset.y,
+    render(texture: Texture, x: number, y: number) {
+        this.texture.renderTo(texture, {
+            x: x + this.offset.x,
+            y: y + this.offset.y,
             scaleX: (this.flipX ? -1 : 1) * this.scaleX,
             scaleY: (this.flipY ? -1 : 1) * this.scaleY,
             angle: this.angle,
@@ -65,8 +65,7 @@ class Sprite extends PhysicsWorldObject {
             filters: this.effects.getFilterList(),
             mask: Mask.getTextureMaskForWorldObject(this.mask, this),
         });
-        
-        super.render(screen);
+        super.render(texture, x, y);
     }
 
     addAnimation(animation: Animation.Config) {

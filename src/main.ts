@@ -105,6 +105,7 @@ Main.loadConfig({
         frameStepStepKey: '1',
         frameStepRunKey: '2',
         resetOptionsAtStart: true,
+        experiments: {},
     },
 });
 

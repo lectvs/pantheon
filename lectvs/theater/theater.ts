@@ -125,10 +125,10 @@ namespace Theater {
             this.containedWorld.update();
         }
 
-        render(screen: Texture) {
+        render(texture: Texture, x: number, y: number) {
             this.worldTexture.clear();
             this.containedWorld.render(this.worldTexture);
-            super.render(screen);
+            super.render(texture, x, y);
         }
     }
 }

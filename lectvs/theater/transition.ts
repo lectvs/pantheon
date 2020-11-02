@@ -70,10 +70,10 @@ namespace Transition {
             ));
         }
 
-        render(screen: Texture) {
-            super.render(screen);
-            this.oldSnapshot.renderTo(screen);
-            this.newSnapshot.renderTo(screen, {
+        render(texture: Texture, x: number, y: number) {
+            super.render(texture, x, y);
+            this.oldSnapshot.renderTo(texture);
+            this.newSnapshot.renderTo(texture, {
                 alpha: this.newAlpha
             });
         }

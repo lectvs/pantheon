@@ -8,10 +8,12 @@ class DebugOverlay extends World {
 
         this.backgroundAlpha = 0;
 
-        let debugInfo = this.addWorldObject(new SpriteText(Debug.FONT));
-        World.Actions.setName(debugInfo, 'debuginfo');
+        let debugInfo = this.addWorldObject(new SpriteText(Debug.FONT), {
+            name: 'debuginfo',
+        });
         debugInfo.x = 0;
         debugInfo.y = 0;
+        debugInfo.effects.addOutline.color = 0x000000;
         debugInfo.setStyle(Debug.FONT_STYLE);
         debugInfo.updateCallback = obj => {
             obj.setText(this.getDebugInfo());
