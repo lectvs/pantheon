@@ -158,30 +158,30 @@ namespace Physics {
         if (!collision.move.isImmovable()) {
             let fromvx = transferMomentum ? (collision.from.x - collision.from.physicslastx)/delta : 0;
             let fromvy = transferMomentum ? (collision.from.y - collision.from.physicslasty)/delta : 0;
-            collision.move.vx -= fromvx;
-            collision.move.vy -= fromvy;
+            collision.move.v.x -= fromvx;
+            collision.move.v.y -= fromvy;
             zeroVelocityAgainstDisplacement(collision.move, collision.collision.displacementX, collision.collision.displacementY);
-            collision.move.vx += fromvx;
-            collision.move.vy += fromvy;
+            collision.move.v.x += fromvx;
+            collision.move.v.y += fromvy;
         }
 
         if (!collision.from.isImmovable()) {
             let movevx = transferMomentum ? (collision.move.x - collision.move.physicslastx)/delta : 0;
             let movevy = transferMomentum ? (collision.move.y - collision.move.physicslasty)/delta : 0;
-            collision.move.vx -= movevx;
-            collision.move.vy -= movevy;
+            collision.move.v.x -= movevx;
+            collision.move.v.y -= movevy;
             zeroVelocityAgainstDisplacement(collision.from, -collision.collision.displacementX, -collision.collision.displacementY);
-            collision.move.vx += movevx;
-            collision.move.vy += movevy;
+            collision.move.v.x += movevx;
+            collision.move.v.y += movevy;
         }
     }
 
     function zeroVelocityAgainstDisplacement(obj: PhysicsWorldObject, dx: number, dy: number) {
-        let dot = obj.vx * dx + obj.vy * dy;
+        let dot = obj.v.x * dx + obj.v.y * dy;
         if (dot >= 0) return;
 
         let factor = dot / M.magnitudeSq(dx, dy);
-        obj.vx -= factor * dx;
-        obj.vy -= factor * dy;
+        obj.v.x -= factor * dx;
+        obj.v.y -= factor * dy;
     }
 }

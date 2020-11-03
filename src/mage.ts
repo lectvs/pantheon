@@ -79,13 +79,11 @@ class Mage extends Enemy {
         if (this.state === 'idle') {
             this.playAnimation('idle');
         } else if (this.state === 'walking') {
-            let v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
-            V.setMagnitude(v, this.speed);
-            this.vx = v.x;
-            this.vy = v.y;
+            this.v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
+            V.setMagnitude(this.v, this.speed);
 
-            if (this.vx < 0) this.flipX = true;
-            if (this.vx > 0) this.flipX = false;
+            if (this.v.x < 0) this.flipX = true;
+            if (this.v.x > 0) this.flipX = false;
 
             this.playAnimation('run');
         } else if (this.state === 'spawn') {

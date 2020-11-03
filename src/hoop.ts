@@ -41,12 +41,12 @@ class Hoop extends Sprite {
             this.x = px - dx;
             this.y = py - dy;
 
-            this.vx += (adx - dx) * this.bounceSpeed;
-            this.vy += (ady - dy) * this.bounceSpeed;
+            this.v.x += (adx - dx) * this.bounceSpeed;
+            this.v.y += (ady - dy) * this.bounceSpeed;
         }
 
-        this.vx = M.lerpTime(this.vx, 0, 1.2, this.delta);
-        this.vy = M.lerpTime(this.vy, 0, 1.2, this.delta);
+        this.v.x = M.lerpTime(this.v.x, 0, 1.2, this.delta);
+        this.v.y = M.lerpTime(this.v.y, 0, 1.2, this.delta);
 
         this.setStrength(player);
 
@@ -74,8 +74,8 @@ class Hoop extends Sprite {
         if (other instanceof Enemy && this.isStrongEnoughToDealDamage()) {
             let d = { x: this.x - other.x, y: this.y - other.y };
             V.setMagnitude(d, this.currentAttackStrength * 200);
-            this.vx += d.x;
-            this.vy += d.y;
+            this.v.x += d.x;
+            this.v.y += d.y;
         }
     }
 
@@ -84,8 +84,8 @@ class Hoop extends Sprite {
     }
 
     private setStrength(player: Player) {
-        let pureVelStrength = M.magnitude(this.vx, this.vy)/500;
-        let relPlayerStrength = M.magnitude(this.vx - player.vx, this.vy - player.vy)/500;
+        let pureVelStrength = this.getSpeed()/500;
+        let relPlayerStrength = M.magnitude(this.v.x - player.v.x, this.v.y - player.v.y)/500;
 
         this.currentAttackStrength = M.clamp(pureVelStrength * relPlayerStrength, 0, 3);
 

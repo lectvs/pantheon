@@ -2872,12 +2872,10 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
     __extends(PhysicsWorldObject, _super);
     function PhysicsWorldObject() {
         var _this = _super.call(this) || this;
-        _this.vx = 0;
-        _this.vy = 0;
+        _this._v = pt(0, 0);
         _this.vz = 0;
         _this.mass = 1;
-        _this.gravityx = 0;
-        _this.gravityy = 0;
+        _this._gravity = pt(0, 0);
         _this.gravityz = 0;
         _this.bounce = 0;
         _this.bounds = new NullBounds();
@@ -2889,6 +2887,24 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         _this.physicslasty = _this.y;
         return _this;
     }
+    Object.defineProperty(PhysicsWorldObject.prototype, "v", {
+        get: function () { return this._v; },
+        set: function (value) {
+            this._v.x = value.x;
+            this._v.y = value.y;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(PhysicsWorldObject.prototype, "gravity", {
+        get: function () { return this._gravity; },
+        set: function (value) {
+            this._gravity.x = value.x;
+            this._gravity.y = value.y;
+        },
+        enumerable: false,
+        configurable: true
+    });
     Object.defineProperty(PhysicsWorldObject.prototype, "bounds", {
         get: function () { return this._bounds; },
         set: function (value) {
@@ -2911,16 +2927,19 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
     };
     PhysicsWorldObject.prototype.postUpdate = function () {
         _super.prototype.postUpdate.call(this);
-        if (!isFinite(this.vx))
-            this.vx = 0;
-        if (!isFinite(this.vy))
-            this.vy = 0;
+        if (!isFinite(this.v.x))
+            this.v.x = 0;
+        if (!isFinite(this.v.y))
+            this.v.y = 0;
     };
     PhysicsWorldObject.prototype.render = function (texture, x, y) {
         if (Debug.ALL_PHYSICS_BOUNDS || this.debugDrawBounds) {
             this.drawBounds(texture, x, y);
         }
         _super.prototype.render.call(this, texture, x, y);
+    };
+    PhysicsWorldObject.prototype.getSpeed = function () {
+        return V.magnitude(this.v);
     };
     PhysicsWorldObject.prototype.getWorldBounds = function (newX, newY) {
         if (newX === void 0) { newX = this.x; }
@@ -2948,13 +2967,13 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         this.physicslasty = y;
     };
     PhysicsWorldObject.prototype.applyGravity = function () {
-        this.vx += this.gravityx * this.delta;
-        this.vy += this.gravityy * this.delta;
+        this.v.x += this.gravity.x * this.delta;
+        this.v.y += this.gravity.y * this.delta;
         this.vz += this.gravityz * this.delta;
     };
     PhysicsWorldObject.prototype.move = function () {
-        this.x += this.vx * this.delta;
-        this.y += this.vy * this.delta;
+        this.x += this.v.x * this.delta;
+        this.y += this.v.y * this.delta;
         this.z += this.vz * this.delta;
     };
     PhysicsWorldObject.prototype.simulate = function () {
@@ -7388,29 +7407,29 @@ var Physics;
         if (!collision.move.isImmovable()) {
             var fromvx = transferMomentum ? (collision.from.x - collision.from.physicslastx) / delta : 0;
             var fromvy = transferMomentum ? (collision.from.y - collision.from.physicslasty) / delta : 0;
-            collision.move.vx -= fromvx;
-            collision.move.vy -= fromvy;
+            collision.move.v.x -= fromvx;
+            collision.move.v.y -= fromvy;
             zeroVelocityAgainstDisplacement(collision.move, collision.collision.displacementX, collision.collision.displacementY);
-            collision.move.vx += fromvx;
-            collision.move.vy += fromvy;
+            collision.move.v.x += fromvx;
+            collision.move.v.y += fromvy;
         }
         if (!collision.from.isImmovable()) {
             var movevx = transferMomentum ? (collision.move.x - collision.move.physicslastx) / delta : 0;
             var movevy = transferMomentum ? (collision.move.y - collision.move.physicslasty) / delta : 0;
-            collision.move.vx -= movevx;
-            collision.move.vy -= movevy;
+            collision.move.v.x -= movevx;
+            collision.move.v.y -= movevy;
             zeroVelocityAgainstDisplacement(collision.from, -collision.collision.displacementX, -collision.collision.displacementY);
-            collision.move.vx += movevx;
-            collision.move.vy += movevy;
+            collision.move.v.x += movevx;
+            collision.move.v.y += movevy;
         }
     }
     function zeroVelocityAgainstDisplacement(obj, dx, dy) {
-        var dot = obj.vx * dx + obj.vy * dy;
+        var dot = obj.v.x * dx + obj.v.y * dy;
         if (dot >= 0)
             return;
         var factor = dot / M.magnitudeSq(dx, dy);
-        obj.vx -= factor * dx;
-        obj.vy -= factor * dy;
+        obj.v.x -= factor * dx;
+        obj.v.y -= factor * dy;
     }
 })(Physics || (Physics = {}));
 var WorldSelecter = /** @class */ (function () {
@@ -9752,8 +9771,8 @@ var Enemy = /** @class */ (function (_super) {
     Enemy.prototype.update = function () {
         this.immunitySm.update(this.delta);
         _super.prototype.update.call(this);
-        this.vx = M.lerpTime(this.vx, 0, 10, this.delta);
-        this.vy = M.lerpTime(this.vy, 0, 10, this.delta);
+        this.v.x = M.lerpTime(this.v.x, 0, 10, this.delta);
+        this.v.y = M.lerpTime(this.v.y, 0, 10, this.delta);
     };
     Enemy.prototype.postUpdate = function () {
         _super.prototype.postUpdate.call(this);
@@ -9781,8 +9800,8 @@ var Enemy = /** @class */ (function (_super) {
         if (other instanceof Hoop && this.damagableByHoop && !this.immune && other.isStrongEnoughToDealDamage()) {
             var d = { x: this.x - other.x, y: this.y - other.y };
             V.setMagnitude(d, other.currentAttackStrength * 500 / this.weight);
-            this.vx += d.x;
-            this.vy += d.y;
+            this.v.x += d.x;
+            this.v.y += d.y;
             this.damage(other.currentAttackStrength);
         }
     };
@@ -9862,10 +9881,10 @@ function deadBody(parent, texture) {
     deadBody.layer = 'bg';
     deadBody.x = parent.x;
     deadBody.y = parent.y;
-    deadBody.vx = parent.vx;
-    deadBody.vy = parent.vy;
+    deadBody.v.x = parent.v.x;
+    deadBody.v.y = parent.v.y;
     deadBody.setTexture(texture);
-    deadBody.flipX = parent.vx > 0;
+    deadBody.flipX = parent.v.x > 0;
     deadBody.tint = parent.tint === 0xFFFF00 ? 0x888800 : (parent.tint === 0xFF00FF ? 0x880088 : 0x888888);
     deadBody.effects.updateFromConfig({
         silhouette: { color: 0xFFFFFF },
@@ -9883,8 +9902,8 @@ function deadBody(parent, texture) {
             })));
             obj.data.flashed = true;
         }
-        obj.vx = M.lerpTime(obj.vx, 0, 10, obj.delta);
-        obj.vy = M.lerpTime(obj.vy, 0, 10, obj.delta);
+        obj.v.x = M.lerpTime(obj.v.x, 0, 10, obj.delta);
+        obj.v.y = M.lerpTime(obj.v.y, 0, 10, obj.delta);
     };
     return deadBody;
 }
@@ -9994,11 +10013,11 @@ var Golbin = /** @class */ (function (_super) {
         else if (this.state === 'walking') {
             var v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
             V.setMagnitude(v, this.speed);
-            this.vx = v.x;
-            this.vy = v.y;
-            if (this.vx < 0)
+            this.v.x = v.x;
+            this.v.y = v.y;
+            if (this.v.x < 0)
                 this.flipX = true;
-            if (this.vx > 0)
+            if (this.v.x > 0)
                 this.flipX = false;
             this.playAnimation('run');
         }
@@ -10032,8 +10051,8 @@ var Golbin = /** @class */ (function (_super) {
         World.Actions.setPhysicsGroup(bullet, 'bullets');
         bullet.x = this.x;
         bullet.y = this.y - 4;
-        bullet.vx = d.x;
-        bullet.vy = d.y;
+        bullet.v.x = d.x;
+        bullet.v.y = d.y;
         this.world.playSound('shoot');
     };
     Golbin.prototype.onCollide = function (other) {
@@ -10098,11 +10117,11 @@ var Hoop = /** @class */ (function (_super) {
             var dy = ady * radius / d;
             this.x = px - dx;
             this.y = py - dy;
-            this.vx += (adx - dx) * this.bounceSpeed;
-            this.vy += (ady - dy) * this.bounceSpeed;
+            this.v.x += (adx - dx) * this.bounceSpeed;
+            this.v.y += (ady - dy) * this.bounceSpeed;
         }
-        this.vx = M.lerpTime(this.vx, 0, 1.2, this.delta);
-        this.vy = M.lerpTime(this.vy, 0, 1.2, this.delta);
+        this.v.x = M.lerpTime(this.v.x, 0, 1.2, this.delta);
+        this.v.y = M.lerpTime(this.v.y, 0, 1.2, this.delta);
         this.setStrength(player);
         var visibleAttackStrength = M.clamp(this.currentAttackStrength, 0, 1);
         this.effects.outline.enabled = true;
@@ -10124,16 +10143,16 @@ var Hoop = /** @class */ (function (_super) {
         if (other instanceof Enemy && this.isStrongEnoughToDealDamage()) {
             var d = { x: this.x - other.x, y: this.y - other.y };
             V.setMagnitude(d, this.currentAttackStrength * 200);
-            this.vx += d.x;
-            this.vy += d.y;
+            this.v.x += d.x;
+            this.v.y += d.y;
         }
     };
     Hoop.prototype.isStrongEnoughToDealDamage = function () {
         return this.currentAttackStrength > this.strengthThreshold;
     };
     Hoop.prototype.setStrength = function (player) {
-        var pureVelStrength = M.magnitude(this.vx, this.vy) / 500;
-        var relPlayerStrength = M.magnitude(this.vx - player.vx, this.vy - player.vy) / 500;
+        var pureVelStrength = this.getSpeed() / 500;
+        var relPlayerStrength = M.magnitude(this.v.x - player.v.x, this.v.y - player.v.y) / 500;
         this.currentAttackStrength = M.clamp(pureVelStrength * relPlayerStrength, 0, 3);
         if (!_.isEmpty(this.world.select.overlap(this.bounds, ['walls']))) {
             this.currentAttackStrength = 0;
@@ -10251,13 +10270,11 @@ var Knight = /** @class */ (function (_super) {
             this.playAnimation('idle');
         }
         else if (this.state === 'walking') {
-            var v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
-            V.setMagnitude(v, this.speed);
-            this.vx = v.x;
-            this.vy = v.y;
-            if (this.vx < 0)
+            this.v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
+            V.setMagnitude(this.v, this.speed);
+            if (this.v.x < 0)
                 this.flipX = true;
-            if (this.vx > 0)
+            if (this.v.x > 0)
                 this.flipX = false;
             this.playAnimation('run');
         }
@@ -10384,13 +10401,11 @@ var Mage = /** @class */ (function (_super) {
             this.playAnimation('idle');
         }
         else if (this.state === 'walking') {
-            var v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
-            V.setMagnitude(v, this.speed);
-            this.vx = v.x;
-            this.vy = v.y;
-            if (this.vx < 0)
+            this.v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
+            V.setMagnitude(this.v, this.speed);
+            if (this.v.x < 0)
                 this.flipX = true;
-            if (this.vx > 0)
+            if (this.v.x > 0)
                 this.flipX = false;
             this.playAnimation('run');
         }
@@ -10802,8 +10817,8 @@ var Player = /** @class */ (function (_super) {
     Player.prototype.update = function () {
         var haxis = (this.controller.left ? -1 : 0) + (this.controller.right ? 1 : 0);
         var vaxis = (this.controller.up ? -1 : 0) + (this.controller.down ? 1 : 0);
-        this.vx = haxis * this.speed;
-        this.vy = vaxis * this.speed;
+        this.v.x = haxis * this.speed;
+        this.v.y = vaxis * this.speed;
         this.immunitySm.update(this.delta);
         _super.prototype.update.call(this);
         if (haxis < 0)
@@ -10878,13 +10893,11 @@ var Runner = /** @class */ (function (_super) {
     Runner.prototype.update = function () {
         this.ai();
         if (this.state === 'running') {
-            var v = { x: this.attacking.x - this.x, y: this.attacking.y - this.y };
-            V.setMagnitude(v, this.speed);
-            this.vx = v.x;
-            this.vy = v.y;
-            if (this.vx < 0)
+            this.v = { x: this.attacking.x - this.x, y: this.attacking.y - this.y };
+            V.setMagnitude(this.v, this.speed);
+            if (this.v.x < 0)
                 this.flipX = true;
-            if (this.vx > 0)
+            if (this.v.x > 0)
                 this.flipX = false;
             this.playAnimation('run');
         }
@@ -11822,9 +11835,8 @@ var UI = /** @class */ (function (_super) {
                     var shard = _this.addChild(new Sprite(subdivision.texture));
                     shard.localx = shield.localx - 16 + subdivision.x;
                     shard.localy = shield.localy - 16 + subdivision.y;
-                    shard.vx = Random.float(-80, 80);
-                    shard.vy = Random.float(-80, 80);
-                    shard.gravityy = 200;
+                    shard.v = Random.inCircle(80);
+                    shard.gravity.y = 200;
                     shard.vangle = Random.sign() * Random.float(1, 2) * 360;
                     shard.life.duration = 1;
                     shard.updateCallback = function (obj) {

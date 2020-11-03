@@ -82,11 +82,11 @@ class Golbin extends Enemy {
         } else if (this.state === 'walking') {
             let v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
             V.setMagnitude(v, this.speed);
-            this.vx = v.x;
-            this.vy = v.y;
+            this.v.x = v.x;
+            this.v.y = v.y;
 
-            if (this.vx < 0) this.flipX = true;
-            if (this.vx > 0) this.flipX = false;
+            if (this.v.x < 0) this.flipX = true;
+            if (this.v.x > 0) this.flipX = false;
 
             this.playAnimation('run');
         } else if (this.state === 'shooting') {
@@ -128,8 +128,8 @@ class Golbin extends Enemy {
         World.Actions.setPhysicsGroup(bullet, 'bullets');
         bullet.x = this.x;
         bullet.y = this.y - 4;
-        bullet.vx = d.x;
-        bullet.vy = d.y;
+        bullet.v.x = d.x;
+        bullet.v.y = d.y;
 
         this.world.playSound('shoot');
     }

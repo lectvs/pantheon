@@ -25,6 +25,7 @@ postjam
         - /optimize sprite text with static pieces
 - /replace bomb state machine with script
 - /not have to specify parent in physics object bounds?
+- /physics object: combine vx/y/z, gravityx/y/z, etc. (decided to only do for *x/y)
 - new content
     - add some more enemies
     - add music/ambience during silent parts
@@ -54,7 +55,6 @@ postjam
 - story transition delay
 - better enemy behavior system
 - fix bug with vx, vy = NaN
-- physics object: combine vx/y/z, gravityx/y/z, etc.
 - fullscreen
 - build script
 - fill in README.md for others to run/build the game

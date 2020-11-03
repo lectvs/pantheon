@@ -41,8 +41,8 @@ class Player extends Sprite {
         let haxis = (this.controller.left ? -1 : 0) + (this.controller.right ? 1: 0);
         let vaxis = (this.controller.up ? -1 : 0) + (this.controller.down ? 1: 0);
 
-        this.vx = haxis * this.speed;
-        this.vy = vaxis * this.speed;
+        this.v.x = haxis * this.speed;
+        this.v.y = vaxis * this.speed;
 
         this.immunitySm.update(this.delta);
 

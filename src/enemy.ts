@@ -38,8 +38,8 @@ class Enemy extends Sprite {
 
         super.update();
 
-        this.vx = M.lerpTime(this.vx, 0, 10, this.delta);
-        this.vy = M.lerpTime(this.vy, 0, 10, this.delta);
+        this.v.x = M.lerpTime(this.v.x, 0, 10, this.delta);
+        this.v.y = M.lerpTime(this.v.y, 0, 10, this.delta);
     }
 
     postUpdate() {
@@ -73,8 +73,8 @@ class Enemy extends Sprite {
         if (other instanceof Hoop && this.damagableByHoop && !this.immune && other.isStrongEnoughToDealDamage()) {
             let d = { x: this.x - other.x, y: this.y - other.y };
             V.setMagnitude(d, other.currentAttackStrength * 500 / this.weight);
-            this.vx += d.x;
-            this.vy += d.y;
+            this.v.x += d.x;
+            this.v.y += d.y;
 
             this.damage(other.currentAttackStrength);
         }

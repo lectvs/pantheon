@@ -1,13 +1,23 @@
 /// <reference path="./worldObject.ts" />
 
 class PhysicsWorldObject extends WorldObject {
-    vx: number;
-    vy: number;
+    private _v: Pt;
+    get v() { return this._v; }
+    set v(value: Pt) {
+        this._v.x = value.x;
+        this._v.y = value.y;
+    }
     vz: number;
-    mass: number;
-    gravityx: number;
-    gravityy: number;
+
+    private _gravity: Pt;
+    get gravity() { return this._gravity; }
+    set gravity(value: Pt) {
+        this._gravity.x = value.x;
+        this._gravity.y = value.y;
+    }
     gravityz: number;
+
+    mass: number;
     bounce: number;
     colliding: boolean;
 
@@ -29,12 +39,10 @@ class PhysicsWorldObject extends WorldObject {
 
     constructor() {
         super();
-        this.vx = 0;
-        this.vy = 0;
+        this._v = pt(0, 0);
         this.vz = 0;
         this.mass = 1;
-        this.gravityx = 0;
-        this.gravityy = 0;
+        this._gravity = pt(0, 0);
         this.gravityz = 0;
         this.bounce = 0;
 
@@ -65,8 +73,8 @@ class PhysicsWorldObject extends WorldObject {
 
     postUpdate() {
         super.postUpdate();
-        if (!isFinite(this.vx)) this.vx = 0;
-        if (!isFinite(this.vy)) this.vy = 0;
+        if (!isFinite(this.v.x)) this.v.x = 0;
+        if (!isFinite(this.v.y)) this.v.y = 0;
     }
 
     render(texture: Texture, x: number, y: number) {
@@ -74,6 +82,10 @@ class PhysicsWorldObject extends WorldObject {
             this.drawBounds(texture, x, y);
         }
         super.render(texture, x, y);
+    }
+
+    getSpeed() {
+        return V.magnitude(this.v);
     }
 
     getWorldBounds(newX: number = this.x, newY: number = this.y) {
@@ -108,14 +120,14 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     applyGravity() {
-        this.vx += this.gravityx * this.delta;
-        this.vy += this.gravityy * this.delta;
+        this.v.x += this.gravity.x * this.delta;
+        this.v.y += this.gravity.y * this.delta;
         this.vz += this.gravityz * this.delta;
     }
 
     move() {
-        this.x += this.vx * this.delta;
-        this.y += this.vy * this.delta;
+        this.x += this.v.x * this.delta;
+        this.y += this.v.y * this.delta;
         this.z += this.vz * this.delta;
     }
 

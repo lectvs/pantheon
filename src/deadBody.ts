@@ -5,10 +5,10 @@ function deadBody(parent: Enemy, texture: string) {
     deadBody.layer = 'bg';
     deadBody.x = parent.x;
     deadBody.y = parent.y;
-    deadBody.vx = parent.vx;
-    deadBody.vy = parent.vy;
+    deadBody.v.x = parent.v.x;
+    deadBody.v.y = parent.v.y;
     deadBody.setTexture(texture);
-    deadBody.flipX = parent.vx > 0;
+    deadBody.flipX = parent.v.x > 0;
     deadBody.tint = parent.tint === 0xFFFF00 ? 0x888800 : (parent.tint === 0xFF00FF ? 0x880088 : 0x888888);
     deadBody.effects.updateFromConfig({
         silhouette: { color: 0xFFFFFF },
@@ -31,8 +31,8 @@ function deadBody(parent: Enemy, texture: string) {
             ));
             obj.data.flashed = true;
         }
-        obj.vx = M.lerpTime(obj.vx, 0, 10, obj.delta);
-        obj.vy = M.lerpTime(obj.vy, 0, 10, obj.delta);
+        obj.v.x = M.lerpTime(obj.v.x, 0, 10, obj.delta);
+        obj.v.y = M.lerpTime(obj.v.y, 0, 10, obj.delta);
     };
 
     return deadBody;

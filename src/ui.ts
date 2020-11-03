@@ -42,9 +42,8 @@ class UI extends WorldObject {
                     let shard = this.addChild(new Sprite(subdivision.texture));
                     shard.localx = shield.localx - 16 + subdivision.x;
                     shard.localy = shield.localy - 16 + subdivision.y;
-                    shard.vx = Random.float(-80, 80);
-                    shard.vy = Random.float(-80, 80);
-                    shard.gravityy = 200;
+                    shard.v = Random.inCircle(80);
+                    shard.gravity.y = 200;
                     shard.vangle = Random.sign() * Random.float(1, 2) * 360;
                     shard.life.duration = 1;
                     shard.updateCallback = obj => {

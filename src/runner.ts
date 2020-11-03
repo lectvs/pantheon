@@ -37,13 +37,11 @@ class Runner extends Enemy {
         this.ai();
 
         if (this.state === 'running') {
-            let v = { x: this.attacking.x - this.x, y: this.attacking.y - this.y };
-            V.setMagnitude(v, this.speed);
-            this.vx = v.x;
-            this.vy = v.y;
+            this.v = { x: this.attacking.x - this.x, y: this.attacking.y - this.y };
+            V.setMagnitude(this.v, this.speed);
 
-            if (this.vx < 0) this.flipX = true;
-            if (this.vx > 0) this.flipX = false;
+            if (this.v.x < 0) this.flipX = true;
+            if (this.v.x > 0) this.flipX = false;
 
             this.playAnimation('run');
         } else {
