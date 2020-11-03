@@ -1,4 +1,5 @@
 namespace Bounds {
+    export type Parent = Pt;
     export type RaycastCollision = {
         bounds1: Bounds;
         bounds2: Bounds;
@@ -23,6 +24,7 @@ namespace Bounds {
 }
 
 interface Bounds {
+    parent: Pt;
     clone(): Bounds;
     getBoundingBox(x?: number, y?: number): Rectangle;
     getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision;

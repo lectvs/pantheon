@@ -13,7 +13,7 @@ class Bomb extends Enemy {
         this.effects.silhouette.color = 0xFFFFFF;
         this.effects.silhouette.enabled = false;
 
-        this.bounds = new CircleBounds(0, -12, 12, this);
+        this.bounds = new CircleBounds(0, -12, 12);
 
         this.gravityz = -100;
         this.mass = 1000;

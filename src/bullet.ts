@@ -3,7 +3,7 @@ class Bullet extends Sprite {
         super();
 
         this.setTexture('bullet');
-        this.bounds = new CircleBounds(0, 0, 4, this);
+        this.bounds = new CircleBounds(0, 0, 4);
     }
 
     onCollide(other: PhysicsWorldObject) {

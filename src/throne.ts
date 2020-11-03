@@ -15,7 +15,7 @@ class Throne extends Enemy {
         });
 
         this.setTexture('throne');
-        this.bounds = new RectBounds(-15, -24, 30, 24, this);
+        this.bounds = new RectBounds(-15, -24, 30, 24);
         this.setImmovable(true);
 
         this.shadow = this.addChild(new Sprite(), {

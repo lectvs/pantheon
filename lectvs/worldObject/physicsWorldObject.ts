@@ -9,7 +9,6 @@ class PhysicsWorldObject extends WorldObject {
     gravityy: number;
     gravityz: number;
     bounce: number;
-    bounds: Bounds;
     colliding: boolean;
 
     simulating: boolean;
@@ -20,6 +19,13 @@ class PhysicsWorldObject extends WorldObject {
     debugDrawBounds: boolean;
 
     private _immovable: boolean;
+
+    private _bounds: Bounds;
+    get bounds() { return this._bounds; }
+    set bounds(value: Bounds) {
+        this._bounds = value;
+        this._bounds.parent = this;
+    }
 
     constructor() {
         super();

@@ -44,22 +44,22 @@ function WORLD_BOUNDS(left: number, top: number, right: number, bottom: number):
     let leftBound = worldBounds.addChild(new PhysicsWorldObject(), {
         physicsGroup: 'walls'
     });
-    leftBound.bounds = new RectBounds(left-thickness, top-thickness, thickness, height+2*thickness, leftBound);
+    leftBound.bounds = new RectBounds(left-thickness, top-thickness, thickness, height+2*thickness);
 
     let rightBound = worldBounds.addChild(new PhysicsWorldObject(), {
         physicsGroup: 'walls'
     });
-    rightBound.bounds = new RectBounds(right, top-thickness, thickness, height+2*thickness, rightBound);
+    rightBound.bounds = new RectBounds(right, top-thickness, thickness, height+2*thickness);
 
     let topBound = worldBounds.addChild(new PhysicsWorldObject(), {
         physicsGroup: 'walls'
     });
-    topBound.bounds = new RectBounds(left, top-thickness, width, thickness, topBound);
+    topBound.bounds = new RectBounds(left, top-thickness, width, thickness);
 
     let bottomBound = worldBounds.addChild(new PhysicsWorldObject(), {
         physicsGroup: 'walls'
     });
-    bottomBound.bounds = new RectBounds(left, bottom, width, thickness, bottomBound);
+    bottomBound.bounds = new RectBounds(left, bottom, width, thickness);
 
     return worldBounds;
 }

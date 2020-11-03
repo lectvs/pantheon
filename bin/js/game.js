@@ -2889,6 +2889,15 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         _this.physicslasty = _this.y;
         return _this;
     }
+    Object.defineProperty(PhysicsWorldObject.prototype, "bounds", {
+        get: function () { return this._bounds; },
+        set: function (value) {
+            this._bounds = value;
+            this._bounds.parent = this;
+        },
+        enumerable: false,
+        configurable: true
+    });
     PhysicsWorldObject.prototype.preUpdate = function () {
         _super.prototype.preUpdate.call(this);
         this.physicslastx = this.x;
@@ -8393,7 +8402,8 @@ var Bounds;
     })(Collision = Bounds.Collision || (Bounds.Collision = {}));
 })(Bounds || (Bounds = {}));
 var NullBounds = /** @class */ (function () {
-    function NullBounds() {
+    function NullBounds(parent) {
+        this.parent = parent;
         this.position = { x: Infinity, y: Infinity };
         this.boundingBox = new Rectangle(Infinity, Infinity, 0, 0);
     }
@@ -9158,7 +9168,7 @@ var Tilemap = /** @class */ (function (_super) {
                 var box = this.addChild(new PhysicsWorldObject());
                 box.x = this.x;
                 box.y = this.y;
-                box.bounds = new RectBounds(rect_2.x, rect_2.y, rect_2.width, rect_2.height, box);
+                box.bounds = new RectBounds(rect_2.x, rect_2.y, rect_2.width, rect_2.height);
                 box.matchParentPhysicsGroup = true;
                 box.setImmovable(true);
                 box.debugDrawBounds = this.debugDrawBounds;
@@ -9705,19 +9715,19 @@ function WORLD_BOUNDS(left, top, right, bottom) {
     var leftBound = worldBounds.addChild(new PhysicsWorldObject(), {
         physicsGroup: 'walls'
     });
-    leftBound.bounds = new RectBounds(left - thickness, top - thickness, thickness, height + 2 * thickness, leftBound);
+    leftBound.bounds = new RectBounds(left - thickness, top - thickness, thickness, height + 2 * thickness);
     var rightBound = worldBounds.addChild(new PhysicsWorldObject(), {
         physicsGroup: 'walls'
     });
-    rightBound.bounds = new RectBounds(right, top - thickness, thickness, height + 2 * thickness, rightBound);
+    rightBound.bounds = new RectBounds(right, top - thickness, thickness, height + 2 * thickness);
     var topBound = worldBounds.addChild(new PhysicsWorldObject(), {
         physicsGroup: 'walls'
     });
-    topBound.bounds = new RectBounds(left, top - thickness, width, thickness, topBound);
+    topBound.bounds = new RectBounds(left, top - thickness, width, thickness);
     var bottomBound = worldBounds.addChild(new PhysicsWorldObject(), {
         physicsGroup: 'walls'
     });
-    bottomBound.bounds = new RectBounds(left, bottom, width, thickness, bottomBound);
+    bottomBound.bounds = new RectBounds(left, bottom, width, thickness);
     return worldBounds;
 }
 var Enemy = /** @class */ (function (_super) {
@@ -9791,7 +9801,7 @@ var Bomb = /** @class */ (function (_super) {
         _this.setTexture('bomb');
         _this.effects.silhouette.color = 0xFFFFFF;
         _this.effects.silhouette.enabled = false;
-        _this.bounds = new CircleBounds(0, -12, 12, _this);
+        _this.bounds = new CircleBounds(0, -12, 12);
         _this.gravityz = -100;
         _this.mass = 1000;
         _this.colliding = false;
@@ -9826,7 +9836,7 @@ var Bullet = /** @class */ (function (_super) {
     function Bullet() {
         var _this = _super.call(this) || this;
         _this.setTexture('bullet');
-        _this.bounds = new CircleBounds(0, 0, 4, _this);
+        _this.bounds = new CircleBounds(0, 0, 4);
         return _this;
     }
     Bullet.prototype.onCollide = function (other) {
@@ -9861,7 +9871,7 @@ function deadBody(parent, texture) {
         silhouette: { color: 0xFFFFFF },
         outline: { color: parent.effects.outline.color === 0xFFFFFF ? 0x555555 : 0x000000 },
     });
-    deadBody.bounds = new CircleBounds(0, -2, 8, deadBody);
+    deadBody.bounds = new CircleBounds(0, -2, 8);
     deadBody.data.flashed = false;
     deadBody.updateCallback = function (obj) {
         if (!obj.data.flashed) {
@@ -9884,7 +9894,7 @@ var Explosion = /** @class */ (function (_super) {
         var _this = _super.call(this) || this;
         _this.setTexture('explosion');
         _this.tint = 0x000000;
-        _this.bounds = new CircleBounds(0, 0, 50, _this);
+        _this.bounds = new CircleBounds(0, 0, 50);
         _this.runScript(S.chain(S.wait(0.05), S.call(function () { return _this.tint = 0xFFFFFF; }), S.wait(0.05), S.call(function () { return _this.kill(); })));
         _this.hasTriggered = false;
         return _this;
@@ -9930,7 +9940,7 @@ var Golbin = /** @class */ (function (_super) {
             deadTexture: 'golbin_dead',
         }) || this;
         _this.bulletSpeed = 100;
-        _this.bounds = new CircleBounds(0, -4, 8, _this);
+        _this.bounds = new CircleBounds(0, -4, 8);
         _this.effects.updateFromConfig({
             outline: { color: 0x000000 }
         });
@@ -10064,7 +10074,7 @@ var Hoop = /** @class */ (function (_super) {
         _this.bounceSpeed = 75;
         _this.strengthThreshold = 0.3;
         _this.setTexture('hoop');
-        _this.bounds = new CircleBounds(0, 0, 50, _this);
+        _this.bounds = new CircleBounds(0, 0, 50);
         _this.radius = 47;
         _this.currentAttackStrength = 0;
         return _this;
@@ -10164,7 +10174,7 @@ var Knight = /** @class */ (function (_super) {
             speed: 100,
             deadTexture: 'enemyknight_dead',
         }) || this;
-        _this.bounds = new CircleBounds(0, -4, 8, _this);
+        _this.bounds = new CircleBounds(0, -4, 8);
         _this.effects.updateFromConfig({
             outline: { color: 0x000000 }
         });
@@ -10322,7 +10332,7 @@ var Mage = /** @class */ (function (_super) {
             speed: 70,
             deadTexture: 'mage_dead',
         }) || this;
-        _this.bounds = new CircleBounds(0, -4, 8, _this);
+        _this.bounds = new CircleBounds(0, -4, 8);
         _this.effects.updateFromConfig({
             outline: { color: 0x000000 }
         });
@@ -10764,7 +10774,7 @@ var Player = /** @class */ (function (_super) {
         _this.immuneTime = 1;
         _this.speed = 128;
         _this.radius = 6;
-        _this.bounds = new CircleBounds(0, -4, 8, _this);
+        _this.bounds = new CircleBounds(0, -4, 8);
         _this.effects.updateFromConfig({
             outline: { color: 0x000000 }
         });
@@ -10847,7 +10857,7 @@ var Runner = /** @class */ (function (_super) {
             speed: 50,
             deadTexture: 'runner_dead',
         }) || this;
-        _this.bounds = new CircleBounds(0, -4, 8, _this);
+        _this.bounds = new CircleBounds(0, -4, 8);
         _this.effects.updateFromConfig({
             outline: { color: 0xFFFFFF }
         });
@@ -10950,7 +10960,7 @@ function getStages() {
             });
             stairs.x = 384;
             stairs.y = 340;
-            stairs.bounds = new RectBounds(-78, -112, 156, 112, stairs);
+            stairs.bounds = new RectBounds(-78, -112, 156, 112);
             var throne = world.addWorldObject(new Throne(), {
                 name: 'throne',
                 layer: 'king_start',
@@ -11522,7 +11532,7 @@ var Throne = /** @class */ (function (_super) {
             damagableByHoop: false,
         }) || this;
         _this.setTexture('throne');
-        _this.bounds = new RectBounds(-15, -24, 30, 24, _this);
+        _this.bounds = new RectBounds(-15, -24, 30, 24);
         _this.setImmovable(true);
         _this.shadow = _this.addChild(new Sprite(), {
             layer: 'king_shadow_start'

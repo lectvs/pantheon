@@ -6,7 +6,7 @@ class Explosion extends Sprite {
 
         this.setTexture('explosion');
         this.tint = 0x000000;
-        this.bounds = new CircleBounds(0, 0, 50, this);
+        this.bounds = new CircleBounds(0, 0, 50);
 
         this.runScript(S.chain(
             S.wait(0.05),

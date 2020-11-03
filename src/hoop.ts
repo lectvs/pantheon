@@ -11,7 +11,7 @@ class Hoop extends Sprite {
         super();
 
         this.setTexture('hoop');
-        this.bounds = new CircleBounds(0, 0, 50, this);
+        this.bounds = new CircleBounds(0, 0, 50);
 
         this.radius = 47;
         this.currentAttackStrength = 0;

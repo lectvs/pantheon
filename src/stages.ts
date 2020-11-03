@@ -29,7 +29,7 @@ function getStages(): Dict<World.Factory> { return {
         });
         stairs.x = 384;
         stairs.y = 340;
-        stairs.bounds = new RectBounds(-78, -112, 156, 112, stairs);
+        stairs.bounds = new RectBounds(-78, -112, 156, 112);
 
         let throne = world.addWorldObject(new Throne(), {
             name: 'throne',

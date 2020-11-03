@@ -3,7 +3,7 @@ namespace SlopeBounds {
 }
 
 class SlopeBounds implements Bounds {
-    private parent: PhysicsWorldObject;
+    parent: Bounds.Parent;
 
     x: number;
     y: number;
@@ -13,7 +13,7 @@ class SlopeBounds implements Bounds {
 
     private boundingBox: Rectangle;
 
-    constructor(x: number, y: number, width: number, height: number, direction: SlopeBounds.Direction, parent?: PhysicsWorldObject) {
+    constructor(x: number, y: number, width: number, height: number, direction: SlopeBounds.Direction, parent?: Bounds.Parent) {
         this.parent = parent;
         this.x = x;
         this.y = y;

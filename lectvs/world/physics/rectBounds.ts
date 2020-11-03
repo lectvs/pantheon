@@ -1,5 +1,5 @@
 class RectBounds implements Bounds {
-    private parent: PhysicsWorldObject;
+    parent: Bounds.Parent;
 
     x: number;
     y: number;
@@ -8,7 +8,7 @@ class RectBounds implements Bounds {
 
     private boundingBox: Rectangle;
 
-    constructor(x: number, y: number, width: number, height: number, parent?: PhysicsWorldObject) {
+    constructor(x: number, y: number, width: number, height: number, parent?: Bounds.Parent) {
         this.parent = parent;
         this.x = x;
         this.y = y;

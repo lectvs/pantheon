@@ -18,7 +18,7 @@ class Golbin extends Enemy {
             deadTexture: 'golbin_dead',
         });
 
-        this.bounds = new CircleBounds(0, -4, 8, this);
+        this.bounds = new CircleBounds(0, -4, 8);
         this.effects.updateFromConfig({
             outline: { color: 0x000000 }
         });

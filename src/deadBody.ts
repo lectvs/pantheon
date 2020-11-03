@@ -14,7 +14,7 @@ function deadBody(parent: Enemy, texture: string) {
         silhouette: { color: 0xFFFFFF },
         outline: { color: parent.effects.outline.color === 0xFFFFFF ? 0x555555 : 0x000000 },
     });
-    deadBody.bounds = new CircleBounds(0, -2, 8, deadBody);
+    deadBody.bounds = new CircleBounds(0, -2, 8);
     deadBody.data.flashed = false;
     deadBody.updateCallback = obj => {
         if (!obj.data.flashed) {

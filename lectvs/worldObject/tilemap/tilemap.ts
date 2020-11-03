@@ -90,7 +90,7 @@ class Tilemap extends WorldObject {
             let box = this.addChild(new PhysicsWorldObject());
             box.x = this.x;
             box.y = this.y;
-            box.bounds = new RectBounds(rect.x, rect.y, rect.width, rect.height, box);
+            box.bounds = new RectBounds(rect.x, rect.y, rect.width, rect.height);
             box.matchParentPhysicsGroup = true;
             box.setImmovable(true);
             box.debugDrawBounds = this.debugDrawBounds;

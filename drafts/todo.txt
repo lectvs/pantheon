@@ -24,6 +24,7 @@ postjam
         - /do not render off-screen things
         - /optimize sprite text with static pieces
 - /replace bomb state machine with script
+- /not have to specify parent in physics object bounds?
 - new content
     - add some more enemies
     - add music/ambience during silent parts
@@ -32,8 +33,11 @@ postjam
 - limit to how many shadows there are
 - fix caps lock bug?
 - cutscene skips
-- rewrite dialog box implementation (shouldn't use spriteText internals)
-    - TODO: remove setText force parameter after
+- update callback type this in bound anonymous function
+- revisit dialog system
+    - rewrite dialog box implementation (shouldn't use spriteText internals)
+        - TODO: remove setText force parameter after
+    - ???
 - mage light up to indicate summoning
 - fix guard beam color
 - calculate hoop speed from angular speed around player
@@ -42,16 +46,14 @@ postjam
     - fix sticking against the wall bug
 - in general clean up the storyboard
 - collect all collisions and apply callbacks/momentum transfer afterward
-- define better "momentum transfer" modes
+- define better "momentum transfer" modes (NONE, ZERO_VELOCITY, KINETIC)
 - init method for world objects
 - better scripting syntax?
     - look into writing TS transforms for scripts?
 - camera mode transitions
-- revisit dialog system
 - story transition delay
 - better enemy behavior system
 - fix bug with vx, vy = NaN
-- not have to specify parent in physics object bounds?
 - physics object: combine vx/y/z, gravityx/y/z, etc.
 - fullscreen
 - build script
