@@ -15,22 +15,20 @@ function deadBody(parent: Enemy, texture: string) {
         outline: { color: parent.effects.outline.color === 0xFFFFFF ? 0x555555 : 0x000000 },
     });
     deadBody.bounds = new CircleBounds(0, -2, 8);
-    deadBody.data.flashed = false;
+    deadBody.onAddCallback = obj => {
+        obj.runScript(S.chain(
+            S.wait(0.05),
+            S.call(() => obj.effects.silhouette.enabled = false),
+            S.wait(1),
+            S.call(() => {
+                if (obj.world.hasWorldObject('floor')) {
+                    obj.render(obj.world.select.name<Sprite>('floor').getTexture(), obj.x, obj.y);
+                }
+                obj.kill();
+            }),
+        ));
+    };
     deadBody.updateCallback = obj => {
-        if (!obj.data.flashed) {
-            obj.runScript(S.chain(
-                S.wait(0.05),
-                S.call(() => obj.effects.silhouette.enabled = false),
-                S.wait(1),
-                S.call(() => {
-                    if (obj.world.hasWorldObject('floor')) {
-                        obj.render(obj.world.select.name<Sprite>('floor').getTexture(), obj.x, obj.y);
-                    }
-                    obj.kill();
-                }),
-            ));
-            obj.data.flashed = true;
-        }
         obj.v.x = M.lerpTime(obj.v.x, 0, 10, obj.delta);
         obj.v.y = M.lerpTime(obj.v.y, 0, 10, obj.delta);
     };

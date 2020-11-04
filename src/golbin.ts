@@ -19,9 +19,7 @@ class Golbin extends Enemy {
         });
 
         this.bounds = new CircleBounds(0, -4, 8);
-        this.effects.updateFromConfig({
-            outline: { color: 0x000000 }
-        });
+        this.effects.addOutline.color = 0x000000;
         this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'golbin_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'golbin_', textures: [4, 5, 6, 7], frameRate: 8, count: -1,
                 overrides: {
@@ -61,8 +59,7 @@ class Golbin extends Enemy {
             script: S.chain(
                 S.playAnimation(this, 'drawback'),
                 S.call(() => {
-                    let d = { x: this.attacking.x - this.x, y: this.attacking.y - this.y };
-                    this.shoot(d);
+                    this.shoot({ x: this.attacking.x - this.x, y: this.attacking.y - this.y });
                 }),
             ),
             transitions: [
@@ -80,10 +77,8 @@ class Golbin extends Enemy {
         if (this.state === 'idle') {
             this.playAnimation('idle');
         } else if (this.state === 'walking') {
-            let v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
-            V.setMagnitude(v, this.speed);
-            this.v.x = v.x;
-            this.v.y = v.y;
+            this.v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
+            this.setSpeed(this.speed);
 
             if (this.v.x < 0) this.flipX = true;
             if (this.v.x > 0) this.flipX = false;
@@ -120,16 +115,16 @@ class Golbin extends Enemy {
     }
 
     shoot(d: Pt) {
-        V.setMagnitude(d, this.bulletSpeed);
+        let bullet = this.world.addWorldObject(new Bullet(), {
+            x: this.x,
+            y: this.y - 4,
+            name: 'bullet',
+            layer: this.layer,
+            physicsGroup: 'bullets',
+        });
 
-        let bullet = this.world.addWorldObject(new Bullet());
-        World.Actions.setName(bullet, 'bullet');
-        World.Actions.setLayer(bullet, this.layer);
-        World.Actions.setPhysicsGroup(bullet, 'bullets');
-        bullet.x = this.x;
-        bullet.y = this.y - 4;
-        bullet.v.x = d.x;
-        bullet.v.y = d.y;
+        bullet.v = d;
+        bullet.setSpeed(this.bulletSpeed);
 
         this.world.playSound('shoot');
     }
@@ -151,8 +146,7 @@ class Golbin extends Enemy {
         if (this.x < 64 || this.x > 706 || this.y < 338 || this.y > 704) {
             // Too close to edge of room
             let candidates = A.range(20).map(i => {
-                let d = { x: Random.float(64, 706), y: Random.float(338, 704) };
-                return d;
+                return { x: Random.float(64, 706), y: Random.float(338, 704) };
             });
             this.targetPos = M.argmin(candidates, pos => M.distance(this.x, this.y, pos.x, pos.y));
             return;

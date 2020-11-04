@@ -86,6 +86,12 @@ class StoryManager {
         return this.getInteractableObjectsForNode(this.currentNode, stageName);
     }
 
+    setNode(node: string) {
+        if (!this.getNodeByName(node)) return;
+        if (this.storyboard[node].type === 'cutscene' && !this.cutsceneManager.canPlayCutscene(node)) return;
+        this.stateMachine.setState(node);
+    }
+
     private fastForward(path: string[]) {
         for (let i = 0; i < path.length-1; i++) {
             let node = this.getNodeByName(path[i]);

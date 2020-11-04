@@ -20,10 +20,9 @@ class UI extends WorldObject {
         if (player.health > this.shields.length) {
             for (let i = 0; i < player.health - this.shields.length; i++) {
                 let shield = this.addChild(new Sprite('ui_shield'), {
+                    x: 20 + 36*this.shields.length, y: 20,
                     layer: this.layer
                 });
-                shield.localx = 20 + 36 * this.shields.length;
-                shield.localy = 20;
                 shield.effects.addSilhouette.color = 0x00FFFF;
                 shield.effects.silhouette.alpha = 0;
                 this.shields.push(shield);
@@ -39,9 +38,10 @@ class UI extends WorldObject {
             for (let i = 0; i < this.shields.length - player.health; i++) {
                 let shield = this.shields.pop();
                 shield.getTexture().subdivide(4, 4).forEach(subdivision => {
-                    let shard = this.addChild(new Sprite(subdivision.texture));
-                    shard.localx = shield.localx - 16 + subdivision.x;
-                    shard.localy = shield.localy - 16 + subdivision.y;
+                    let shard = this.addChild(new Sprite(subdivision.texture), {
+                        x: shield.localx-16 + subdivision.x,
+                        y: shield.localy-16 + subdivision.y,
+                    });
                     shard.v = Random.inCircle(80);
                     shard.gravity.y = 200;
                     shard.vangle = Random.sign() * Random.float(1, 2) * 360;

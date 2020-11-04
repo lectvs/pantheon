@@ -9,7 +9,7 @@ class Knight extends Enemy {
 
     private willDashNext: boolean;
 
-    constructor() {
+    constructor(tint: number = 0xFFFFFF) {
         super({
             maxHealth: 1.5,
             immuneTime: 0.5,
@@ -18,10 +18,9 @@ class Knight extends Enemy {
             deadTexture: 'enemyknight_dead',
         });
 
+        this.tint = tint;
         this.bounds = new CircleBounds(0, -4, 8);
-        this.effects.updateFromConfig({
-            outline: { color: 0x000000 }
-        });
+        this.effects.addOutline.color = 0x000000;
         this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'enemyknight_', textures: [4, 5, 6, 7], frameRate: 8, count: -1,
                 overrides: {
@@ -36,11 +35,12 @@ class Knight extends Enemy {
         lightTexture.anchorX = 1/128;
         lightTexture.anchorY = 1/2;
 
-        this.light = this.addChild(new Sprite());
-        this.light.y = -4;
+        this.light = this.addChild(new Sprite(), {
+            x: 0, y: -4,
+            layer: 'bg'
+        });
         this.light.setTexture(lightTexture);
         this.light.alpha = 0;
-        World.Actions.setLayer(this.light, 'bg');
 
         this.willDashNext = true;
 
@@ -165,8 +165,7 @@ class Knight extends Enemy {
         if (this.x < 64 || this.x > 706 || this.y < 338 || this.y > 704) {
             // Too close to edge of room
             let candidates = A.range(20).map(i => {
-                let d = { x: Random.float(64, 706), y: Random.float(338, 704) };
-                return d;
+                return { x: Random.float(64, 706), y: Random.float(338, 704) };
             });
             this.targetPos = M.argmin(candidates, pos => M.distance(this.x, this.y, pos.x, pos.y));
             return;

@@ -14,7 +14,7 @@ class DebugOverlay extends World {
         debugInfo.x = 0;
         debugInfo.y = 0;
         debugInfo.effects.addOutline.color = 0x000000;
-        debugInfo.setStyle(Debug.FONT_STYLE);
+        debugInfo.style = Debug.FONT_STYLE;
         debugInfo.updateCallback = obj => {
             obj.setText(this.getDebugInfo());
         };

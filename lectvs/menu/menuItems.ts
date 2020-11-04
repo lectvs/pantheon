@@ -72,7 +72,7 @@ class MenuNumericSelector extends SpriteText {
                 }
             }
         }));
-        leftButton.setStyle(this.style);
+        leftButton.style = this.style;
 
         let rightButton = this.addChild(new MenuTextButton({
             font: this.font,
@@ -87,7 +87,7 @@ class MenuNumericSelector extends SpriteText {
             }
         }));
         rightButton.localx = (this.barLength+3) * this.font.charWidth;
-        rightButton.setStyle(this.style);
+        rightButton.style = this.style;
     }
 
     update() {
@@ -178,7 +178,7 @@ class MenuControlMapper extends SpriteText {
                 name: this.getBindingMappingObjectName(binding)
             });
             bindingButton.localx = bindingx;
-            bindingButton.setStyle(this.style);
+            bindingButton.style = this.style;
 
             bindingx += (bindingName.length + 3) * this.font.charWidth;
             text += " ".repeat(bindingName.length) + " / ";

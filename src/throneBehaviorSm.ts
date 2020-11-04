@@ -32,9 +32,9 @@ class ThroneBehaviorSm extends StateMachine {
                     this.throne.y = M.lerp(this.lastPos.y, this.targetPos.y, t);
                 }),
                 S.call(() => {
-                    World.Actions.setLayer(this.throne, 'main');
-                    World.Actions.setLayer(this.throne.king, 'main');
-                    World.Actions.setLayer(this.throne.shadow, 'bg');
+                    this.throne.layer = 'main';
+                    this.throne.king.layer = 'main';
+                    this.throne.shadow.layer = 'bg';
                 }),
                 S.doOverTime(1, t => this.throne.z = 500 - 500*t),
                 S.call(() => {

@@ -52,7 +52,7 @@ class Tilemap extends WorldObject {
 
     get tileset() { return this.tilemap.tileset; }
 
-    constructor(tilemap: string | Tilemap.Tilemap, layer: number = 0) {
+    constructor(tilemap: string | Tilemap.Tilemap, layer: number) {
         super();
 
         this.tilemap = Tilemap.cloneTilemap(_.isString(tilemap) ? AssetCache.getTilemap(tilemap) : tilemap);

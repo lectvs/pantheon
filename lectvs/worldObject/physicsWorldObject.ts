@@ -112,6 +112,10 @@ class PhysicsWorldObject extends WorldObject {
         this._immovable = immovable;
     }
 
+    setSpeed(speed: number) {
+        V.setMagnitude(this.v, speed);
+    }
+
     teleport(x: number, y: number) {
         this.x = x;
         this.y = y;

@@ -4,7 +4,7 @@ class SmartTilemap extends Tilemap {
     baseTilemap: Tilemap.Tilemap;
     smartConfig: SmartTilemap.Util.SmartTilemapConfig;
 
-    constructor(tilemap: string | Tilemap.Tilemap, smartConfig: SmartTilemap.Util.SmartTilemapConfig, layer: number = 0) {
+    constructor(tilemap: string | Tilemap.Tilemap, smartConfig: SmartTilemap.Util.SmartTilemapConfig, layer: number) {
         super(tilemap, layer);
 
         this.baseTilemap = this.tilemap;

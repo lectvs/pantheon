@@ -24,6 +24,8 @@ namespace World {
     export type EntryPoint = string | Pt;
 
     export type WorldObjectProperties = {
+        x?: number;
+        y?: number;
         name?: string;
         layer?: string;
         physicsGroup?: string;
@@ -190,13 +192,8 @@ class World {
     }
 
     addWorldObject<T extends WorldObject>(obj: T, worldProperties?: World.WorldObjectProperties): T {
-        let worldObject = World.Actions.addWorldObjectToWorld(obj, this);
-        if (worldProperties) {
-            if (worldProperties.name) worldObject.name = worldProperties.name;
-            if (worldProperties.layer) worldObject.layer = worldProperties.layer;
-            if (worldProperties.physicsGroup) worldObject.physicsGroup = worldProperties.physicsGroup;
-        }
-        return worldObject;
+        World.setWorldObjectProperties(obj, worldProperties);
+        return World.Actions.addWorldObjectToWorld(obj, this);
     }
     
     addWorldObjects<T extends WorldObject>(objs: T[]): T[] {
@@ -471,9 +468,9 @@ namespace World {
                 return obj;
             }
 
-            let world = obj.world;
-
             obj.onRemove();
+
+            let world = obj.world;
 
             /// @ts-ignore
             obj.internalRemoveWorldObjectFromWorldWorldObject(world);
@@ -636,5 +633,21 @@ namespace World {
             if (_.isEmpty(children)) return [];
             return A.clone(children).filter(child => removeChildFromParent(child));
         }
+    }
+
+    export function setWorldObjectProperties(worldObject: WorldObject, worldProperties: World.WorldObjectProperties) {
+        if (!worldProperties) return;
+
+        if (worldProperties.x !== undefined) {
+            worldObject.localx = worldProperties.x;
+            worldObject.lastx = worldObject.x;
+        }
+        if (worldProperties.y !== undefined) {
+            worldObject.localy = worldProperties.y;
+            worldObject.lasty = worldObject.y;
+        }
+        if (worldProperties.name !== undefined) worldObject.name = worldProperties.name;
+        if (worldProperties.layer !== undefined) worldObject.layer = worldProperties.layer;
+        if (worldProperties.physicsGroup !== undefined) worldObject.physicsGroup = worldProperties.physicsGroup;
     }
 }

@@ -23,28 +23,25 @@ function getStages(): Dict<World.Factory> { return {
         });
 
         let stairs = world.addWorldObject(new Sprite('stairs'), {
+            x: 384, y: 340,
             name: 'stairs',
             layer: 'main',
             physicsGroup: 'walls'
         });
-        stairs.x = 384;
-        stairs.y = 340;
         stairs.bounds = new RectBounds(-78, -112, 156, 112);
 
         let throne = world.addWorldObject(new Throne(), {
+            x: 384, y: 268,
             name: 'throne',
             layer: 'king_start',
             physicsGroup: 'enemies'
         });
-        throne.x = 384;
-        throne.y = 268;
         throne.colliding = false;
 
         let guard1 = world.addWorldObject(new Sprite('enemyknight_0'), {
+            x: 342, y: 352,
             name: 'guard'
         });
-        guard1.x = 342;
-        guard1.y = 352;
         guard1.tint = 0xFFFF00;
         guard1.effects.updateFromConfig({
             outline: { color: 0x000000 }
@@ -53,10 +50,9 @@ function getStages(): Dict<World.Factory> { return {
         guard1.playAnimation('idle');
 
         let guard2 = world.addWorldObject(new Sprite('enemyknight_0'), {
+            x: 428, y: 352,
             name: 'guard'
         });
-        guard2.x = 428;
-        guard2.y = 352;
         guard2.flipX = true;
         guard2.tint = 0xFF00FF;
         guard2.effects.updateFromConfig({
@@ -66,12 +62,11 @@ function getStages(): Dict<World.Factory> { return {
         guard2.playAnimation('idle');
 
         let player = world.addWorldObject(new Player(), {
+            x: 384, y: 750,
             name: 'player',
             layer: 'main',
             physicsGroup: 'player'
         });
-        player.x = 384;
-        player.y = 750;
         player.controllable = true;
 
         return world;

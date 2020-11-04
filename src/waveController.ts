@@ -70,14 +70,12 @@ class WaveController extends WorldObject {
         
         let guards = this.world.select.nameAll<Sprite>('guard');
         for (let guard of guards) {
-            let newGuard = this.world.addWorldObject(new Knight(), {
+            let newGuard = this.world.addWorldObject(new Knight(guard.tint), {
+                x: guard.x, y: guard.y,
                 layer: 'main',
                 physicsGroup: 'enemies'
             });
-            newGuard.x = guard.x;
-            newGuard.y = guard.y;
             newGuard.flipX = guard.flipX;
-            newGuard.tint = guard.tint;
             newGuard.health = 2;
 
             guard.removeFromWorld();

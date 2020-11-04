@@ -1,6 +1,4 @@
 class Explosion extends Sprite {
-    hasTriggered: boolean;
-
     constructor() {
         super();
 
@@ -14,28 +12,22 @@ class Explosion extends Sprite {
             S.wait(0.05),
             S.call(() => this.kill()),
         ));
-
-        this.hasTriggered = false;
     }
 
-    update() {
-        super.update();
+    onAdd() {
+        super.onAdd();
 
-        if (!this.hasTriggered) {
-            let toDamages = this.world.select.overlap(this.bounds, ['player', 'enemies']);
+        let toDamages = this.world.select.overlap(this.bounds, ['player', 'enemies']);
 
-            for (let toDamage of toDamages) {
-                if (toDamage instanceof Player && !toDamage.immune) {
-                    toDamage.damage();
-                }
-                if (toDamage instanceof Enemy && !toDamage.immune) {
-                    toDamage.damage(1);
-                }
+        for (let toDamage of toDamages) {
+            if (toDamage instanceof Player && !toDamage.immune) {
+                toDamage.damage();
             }
-
-            this.world.playSound('explode');
-
-            this.hasTriggered = true;
+            if (toDamage instanceof Enemy && !toDamage.immune) {
+                toDamage.damage(1);
+            }
         }
+
+        this.world.playSound('explode');
     }
 }

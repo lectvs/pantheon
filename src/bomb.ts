@@ -46,11 +46,11 @@ class Bomb extends Enemy {
     explode() {
         this.alive = false;
 
-        let explosion = this.world.addWorldObject(new Explosion(), {
+        this.world.addWorldObject(new Explosion(), {
+            x: this.x,
+            y: this.y - 12,
             layer: 'fg'
         });
-        explosion.x = this.x;
-        explosion.y = this.y - 12;
     }
 
     onCollide(other: PhysicsWorldObject) {

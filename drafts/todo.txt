@@ -26,12 +26,14 @@ postjam
 - /replace bomb state machine with script
 - /not have to specify parent in physics object bounds?
 - /physics object: combine vx/y/z, gravityx/y/z, etc. (decided to only do for *x/y)
+- /fix guard beam color
+- init method for world objects (this is the onAdd method)
 - new content
     - add some more enemies
     - add music/ambience during silent parts
     - add dialog talking sound effects?
 - investigate boss fight crash
-- limit to how many shadows there are
+- limit to how many runners there are
 - fix caps lock bug?
 - cutscene skips
 - update callback type this in bound anonymous function
@@ -40,7 +42,6 @@ postjam
         - TODO: remove setText force parameter after
     - ???
 - mage light up to indicate summoning
-- fix guard beam color
 - calculate hoop speed from angular speed around player
 - fix window focus issues
     - mute audio when window out of focus
@@ -48,7 +49,6 @@ postjam
 - in general clean up the storyboard
 - collect all collisions and apply callbacks/momentum transfer afterward
 - define better "momentum transfer" modes (NONE, ZERO_VELOCITY, KINETIC)
-- init method for world objects
 - better scripting syntax?
     - look into writing TS transforms for scripts?
 - camera mode transitions

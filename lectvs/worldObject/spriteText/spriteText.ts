@@ -24,6 +24,11 @@ class SpriteText extends WorldObject {
 
     private _style: SpriteText.Style;
     get style() { return this._style; }
+    set style(value: SpriteText.Style) {
+        this._style.alpha = value.alpha;
+        this._style.color = value.color;
+        this._style.offset = value.offset;
+    }
 
     private lastStyle: SpriteText.Style;
 
@@ -133,11 +138,6 @@ class SpriteText extends WorldObject {
         bounds.x += this.renderScreenX - this.x;
         bounds.y += this.renderScreenY - this.y;
         return bounds;
-    }
-
-    setStyle(style: SpriteText.Style) {
-        O.deepOverride(this.style, style);
-        this.dirty = true;
     }
 
     setText(text: string, force: boolean = false) {

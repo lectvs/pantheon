@@ -7,21 +7,17 @@ function spawn(worldObject: WorldObject) {
     spawn.setTexture('spawn');
     spawn.tint = 0x00FFFF;
     spawn.alpha = 0;
-    spawn.data.flashed = false;
-    spawn.updateCallback = obj => {
-        if (!obj.data.flashed) {
-            obj.runScript(S.chain(
-                S.doOverTime(1, t => {
-                    obj.alpha = t;
-                }),
-                S.wait(1),
-                S.call(() => {
-                    obj.world.addWorldObject(worldObject);
-                    obj.kill();
-                }),
-            ));
-            obj.data.flashed = true;
-        }
+    spawn.onAddCallback = obj => {
+        obj.runScript(S.chain(
+            S.doOverTime(1, t => {
+                obj.alpha = t;
+            }),
+            S.wait(1),
+            S.call(() => {
+                obj.world.addWorldObject(worldObject);
+                obj.kill();
+            }),
+        ));
     };
 
     return spawn;

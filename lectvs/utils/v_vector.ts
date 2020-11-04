@@ -26,9 +26,9 @@ namespace V {
     export function normalized(vector: Pt) {
         let mag = this.magnitude(vector);
         if (mag === 0) {
-            return new Point(0, 0);
+            return pt(0, 0);
         }
-        return new Point(vector.x / mag, vector.y / mag);
+        return pt(vector.x / mag, vector.y / mag);
     }
 
     export function scale(vector: Pt, amount: number) {
@@ -37,7 +37,7 @@ namespace V {
     }
 
     export function scaled(vector: Pt, amount: number) {
-        return new Point(vector.x * amount, vector.y * amount);
+        return pt(vector.x * amount, vector.y * amount);
     }
 
     export function setMagnitude(vector: Pt, magnitude: number) {

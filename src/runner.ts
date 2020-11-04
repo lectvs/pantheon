@@ -14,9 +14,7 @@ class Runner extends Enemy {
         });
 
         this.bounds = new CircleBounds(0, -4, 8);
-        this.effects.updateFromConfig({
-            outline: { color: 0xFFFFFF }
-        });
+        this.effects.addOutline.color = 0xFFFFFF;
         this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'runner_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'runner_', textures: [4, 5, 6, 7], frameRate: 8, count: -1,
                 overrides: {

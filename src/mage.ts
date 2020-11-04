@@ -17,9 +17,7 @@ class Mage extends Enemy {
         });
 
         this.bounds = new CircleBounds(0, -4, 8);
-        this.effects.updateFromConfig({
-            outline: { color: 0x000000 }
-        });
+        this.effects.addOutline.color = 0x000000;
         this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'mage_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'mage_', textures: [4, 5], frameRate: 4, count: -1,
                 overrides: {
@@ -121,8 +119,8 @@ class Mage extends Enemy {
         let runner = new Runner();
         runner.x = this.targetPos.x;
         runner.y = this.targetPos.y;
-        World.Actions.setLayer(runner, 'main');
-        World.Actions.setPhysicsGroup(runner, 'enemies');
+        runner.layer = 'main';
+        runner.physicsGroup = 'enemies';
         this.world.addWorldObject(spawn(runner));
     }
 
@@ -142,8 +140,7 @@ class Mage extends Enemy {
         if (this.x < 64 || this.x > 706 || this.y < 338 || this.y > 704) {
             // Too close to edge of room
             let candidates = A.range(20).map(i => {
-                let d = { x: Random.float(64, 706), y: Random.float(338, 704) };
-                return d;
+                return { x: Random.float(64, 706), y: Random.float(338, 704) };
             });
             this.targetPos = M.argmin(candidates, pos => M.distance(this.x, this.y, pos.x, pos.y));
             return;

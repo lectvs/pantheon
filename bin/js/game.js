@@ -2608,8 +2608,14 @@ var WorldObject = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
-    WorldObject.prototype.onAdd = function () { };
-    WorldObject.prototype.onRemove = function () { };
+    WorldObject.prototype.onAdd = function () {
+        if (this.onAddCallback)
+            this.onAddCallback(this);
+    };
+    WorldObject.prototype.onRemove = function () {
+        if (this.onRemoveCallback)
+            this.onRemoveCallback(this);
+    };
     WorldObject.prototype.preUpdate = function () {
         this.lastx = this.x;
         this.lasty = this.y;
@@ -2687,16 +2693,8 @@ var WorldObject = /** @class */ (function () {
             this.renderCallback(this, texture, x, y);
     };
     WorldObject.prototype.addChild = function (child, worldProperties) {
-        var worldObject = World.Actions.addChildToParent(child, this);
-        if (worldProperties) {
-            if (worldProperties.name)
-                worldObject.name = worldProperties.name;
-            if (worldProperties.layer)
-                worldObject.layer = worldProperties.layer;
-            if (worldProperties.physicsGroup)
-                worldObject.physicsGroup = worldProperties.physicsGroup;
-        }
-        return worldObject;
+        World.setWorldObjectProperties(child, worldProperties);
+        return World.Actions.addChildToParent(child, this);
     };
     WorldObject.prototype.addChildKeepWorldPosition = function (child, worldProperties) {
         var x = child.x;
@@ -2959,6 +2957,9 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
     };
     PhysicsWorldObject.prototype.setImmovable = function (immovable) {
         this._immovable = immovable;
+    };
+    PhysicsWorldObject.prototype.setSpeed = function (speed) {
+        V.setMagnitude(this.v, speed);
     };
     PhysicsWorldObject.prototype.teleport = function (x, y) {
         this.x = x;
@@ -3272,16 +3273,8 @@ var World = /** @class */ (function () {
         this.physicsGroups[name] = new World.PhysicsGroup(name, config);
     };
     World.prototype.addWorldObject = function (obj, worldProperties) {
-        var worldObject = World.Actions.addWorldObjectToWorld(obj, this);
-        if (worldProperties) {
-            if (worldProperties.name)
-                worldObject.name = worldProperties.name;
-            if (worldProperties.layer)
-                worldObject.layer = worldProperties.layer;
-            if (worldProperties.physicsGroup)
-                worldObject.physicsGroup = worldProperties.physicsGroup;
-        }
-        return worldObject;
+        World.setWorldObjectProperties(obj, worldProperties);
+        return World.Actions.addWorldObjectToWorld(obj, this);
     };
     World.prototype.addWorldObjects = function (objs) {
         return World.Actions.addWorldObjectsToWorld(objs, this);
@@ -3565,8 +3558,8 @@ var World = /** @class */ (function () {
             if (!obj.world) {
                 return obj;
             }
-            var world = obj.world;
             obj.onRemove();
+            var world = obj.world;
             /// @ts-ignore
             obj.internalRemoveWorldObjectFromWorldWorldObject(world);
             /// @ts-ignore
@@ -3714,6 +3707,25 @@ var World = /** @class */ (function () {
         }
         Actions.removeChildrenFromParent = removeChildrenFromParent;
     })(Actions = World.Actions || (World.Actions = {}));
+    function setWorldObjectProperties(worldObject, worldProperties) {
+        if (!worldProperties)
+            return;
+        if (worldProperties.x !== undefined) {
+            worldObject.localx = worldProperties.x;
+            worldObject.lastx = worldObject.x;
+        }
+        if (worldProperties.y !== undefined) {
+            worldObject.localy = worldProperties.y;
+            worldObject.lasty = worldObject.y;
+        }
+        if (worldProperties.name !== undefined)
+            worldObject.name = worldProperties.name;
+        if (worldProperties.layer !== undefined)
+            worldObject.layer = worldProperties.layer;
+        if (worldProperties.physicsGroup !== undefined)
+            worldObject.physicsGroup = worldProperties.physicsGroup;
+    }
+    World.setWorldObjectProperties = setWorldObjectProperties;
 })(World || (World = {}));
 /// <reference path="../world/world.ts" />
 var DebugOverlay = /** @class */ (function (_super) {
@@ -3727,7 +3739,7 @@ var DebugOverlay = /** @class */ (function (_super) {
         debugInfo.x = 0;
         debugInfo.y = 0;
         debugInfo.effects.addOutline.color = 0x000000;
-        debugInfo.setStyle(Debug.FONT_STYLE);
+        debugInfo.style = Debug.FONT_STYLE;
         debugInfo.updateCallback = function (obj) {
             obj.setText(_this.getDebugInfo());
         };
@@ -3843,6 +3855,11 @@ var SpriteText = /** @class */ (function (_super) {
     }
     Object.defineProperty(SpriteText.prototype, "style", {
         get: function () { return this._style; },
+        set: function (value) {
+            this._style.alpha = value.alpha;
+            this._style.color = value.color;
+            this._style.offset = value.offset;
+        },
         enumerable: false,
         configurable: true
     });
@@ -3922,10 +3939,6 @@ var SpriteText = /** @class */ (function (_super) {
         bounds.x += this.renderScreenX - this.x;
         bounds.y += this.renderScreenY - this.y;
         return bounds;
-    };
-    SpriteText.prototype.setStyle = function (style) {
-        O.deepOverride(this.style, style);
-        this.dirty = true;
     };
     SpriteText.prototype.setText = function (text, force) {
         if (force === void 0) { force = false; }
@@ -4104,7 +4117,7 @@ var MenuNumericSelector = /** @class */ (function (_super) {
                 }
             }
         }));
-        leftButton.setStyle(_this.style);
+        leftButton.style = _this.style;
         var rightButton = _this.addChild(new MenuTextButton({
             font: _this.font,
             text: ">",
@@ -4118,7 +4131,7 @@ var MenuNumericSelector = /** @class */ (function (_super) {
             }
         }));
         rightButton.localx = (_this.barLength + 3) * _this.font.charWidth;
-        rightButton.setStyle(_this.style);
+        rightButton.style = _this.style;
         return _this;
     }
     MenuNumericSelector.prototype.update = function () {
@@ -4193,7 +4206,7 @@ var MenuControlMapper = /** @class */ (function (_super) {
                 name: this_2.getBindingMappingObjectName(binding)
             });
             bindingButton.localx = bindingx;
-            bindingButton.setStyle(this_2.style);
+            bindingButton.style = this_2.style;
             bindingx += (bindingName.length + 3) * this_2.font.charWidth;
             text += " ".repeat(bindingName.length) + " / ";
         };
@@ -6318,6 +6331,13 @@ var StoryManager = /** @class */ (function () {
     StoryManager.prototype.getCurrentInteractableObjects = function (stageName) {
         return this.getInteractableObjectsForNode(this.currentNode, stageName);
     };
+    StoryManager.prototype.setNode = function (node) {
+        if (!this.getNodeByName(node))
+            return;
+        if (this.storyboard[node].type === 'cutscene' && !this.cutsceneManager.canPlayCutscene(node))
+            return;
+        this.stateMachine.setState(node);
+    };
     StoryManager.prototype.fastForward = function (path) {
         for (var i = 0; i < path.length - 1; i++) {
             var node = this.getNodeByName(path[i]);
@@ -7018,9 +7038,9 @@ var V;
     function normalized(vector) {
         var mag = this.magnitude(vector);
         if (mag === 0) {
-            return new Point(0, 0);
+            return pt(0, 0);
         }
-        return new Point(vector.x / mag, vector.y / mag);
+        return pt(vector.x / mag, vector.y / mag);
     }
     V.normalized = normalized;
     function scale(vector, amount) {
@@ -7029,7 +7049,7 @@ var V;
     }
     V.scale = scale;
     function scaled(vector, amount) {
-        return new Point(vector.x * amount, vector.y * amount);
+        return pt(vector.x * amount, vector.y * amount);
     }
     V.scaled = scaled;
     function setMagnitude(vector, magnitude) {
@@ -9142,7 +9162,6 @@ var SpriteTextConverter = /** @class */ (function () {
 var Tilemap = /** @class */ (function (_super) {
     __extends(Tilemap, _super);
     function Tilemap(tilemap, layer) {
-        if (layer === void 0) { layer = 0; }
         var _this = _super.call(this) || this;
         _this.tilemap = Tilemap.cloneTilemap(_.isString(tilemap) ? AssetCache.getTilemap(tilemap) : tilemap);
         _this.tilemapLayer = layer;
@@ -9441,7 +9460,6 @@ var Tilemap = /** @class */ (function (_super) {
 var SmartTilemap = /** @class */ (function (_super) {
     __extends(SmartTilemap, _super);
     function SmartTilemap(tilemap, smartConfig, layer) {
-        if (layer === void 0) { layer = 0; }
         var _this = _super.call(this, tilemap, layer) || this;
         _this.baseTilemap = _this.tilemap;
         _this.smartConfig = smartConfig;
@@ -9836,11 +9854,11 @@ var Bomb = /** @class */ (function (_super) {
     };
     Bomb.prototype.explode = function () {
         this.alive = false;
-        var explosion = this.world.addWorldObject(new Explosion(), {
+        this.world.addWorldObject(new Explosion(), {
+            x: this.x,
+            y: this.y - 12,
             layer: 'fg'
         });
-        explosion.x = this.x;
-        explosion.y = this.y - 12;
     };
     Bomb.prototype.onCollide = function (other) {
         _super.prototype.onCollide.call(this, other);
@@ -9868,12 +9886,20 @@ var Bullet = /** @class */ (function (_super) {
 Cheat.init({
     'win': function () { return global.world.select.type(Throne).damage(5); },
     'lose': function () { return A.range(5).forEach(function (i) { return global.world.select.type(Player).damage(); }); },
-    'killall': function () { return global.world.select.typeAll(Enemy).forEach(function (enemy) { return enemy.kill(); }); },
+    'killall': function () {
+        global.world.select.typeAll(Enemy).filter(function (e) { return !(e instanceof Throne); }).forEach(function (e) { return e.kill(); });
+        global.world.select.nameAll('spawn').forEach(function (s) { return s.kill(); });
+    },
     'explode': function () {
-        var explosion = global.world.addWorldObject(new Explosion());
-        explosion.x = 400;
-        explosion.y = 400;
-    }
+        global.world.addWorldObject(new Explosion(), {
+            x: 400, y: 400,
+        });
+    },
+    'skiptofinalwave': function () {
+        Cheat['killall']();
+        Debug.SKIP_RATE = 1;
+        global.theater.storyManager.setNode('spawn_wave_king');
+    },
 });
 function deadBody(parent, texture) {
     var deadBody = new Sprite();
@@ -9891,17 +9917,15 @@ function deadBody(parent, texture) {
         outline: { color: parent.effects.outline.color === 0xFFFFFF ? 0x555555 : 0x000000 },
     });
     deadBody.bounds = new CircleBounds(0, -2, 8);
-    deadBody.data.flashed = false;
+    deadBody.onAddCallback = function (obj) {
+        obj.runScript(S.chain(S.wait(0.05), S.call(function () { return obj.effects.silhouette.enabled = false; }), S.wait(1), S.call(function () {
+            if (obj.world.hasWorldObject('floor')) {
+                obj.render(obj.world.select.name('floor').getTexture(), obj.x, obj.y);
+            }
+            obj.kill();
+        })));
+    };
     deadBody.updateCallback = function (obj) {
-        if (!obj.data.flashed) {
-            obj.runScript(S.chain(S.wait(0.05), S.call(function () { return obj.effects.silhouette.enabled = false; }), S.wait(1), S.call(function () {
-                if (obj.world.hasWorldObject('floor')) {
-                    obj.render(obj.world.select.name('floor').getTexture(), obj.x, obj.y);
-                }
-                obj.kill();
-            })));
-            obj.data.flashed = true;
-        }
         obj.v.x = M.lerpTime(obj.v.x, 0, 10, obj.delta);
         obj.v.y = M.lerpTime(obj.v.y, 0, 10, obj.delta);
     };
@@ -9915,35 +9939,31 @@ var Explosion = /** @class */ (function (_super) {
         _this.tint = 0x000000;
         _this.bounds = new CircleBounds(0, 0, 50);
         _this.runScript(S.chain(S.wait(0.05), S.call(function () { return _this.tint = 0xFFFFFF; }), S.wait(0.05), S.call(function () { return _this.kill(); })));
-        _this.hasTriggered = false;
         return _this;
     }
-    Explosion.prototype.update = function () {
+    Explosion.prototype.onAdd = function () {
         var e_44, _a;
-        _super.prototype.update.call(this);
-        if (!this.hasTriggered) {
-            var toDamages = this.world.select.overlap(this.bounds, ['player', 'enemies']);
-            try {
-                for (var toDamages_1 = __values(toDamages), toDamages_1_1 = toDamages_1.next(); !toDamages_1_1.done; toDamages_1_1 = toDamages_1.next()) {
-                    var toDamage = toDamages_1_1.value;
-                    if (toDamage instanceof Player && !toDamage.immune) {
-                        toDamage.damage();
-                    }
-                    if (toDamage instanceof Enemy && !toDamage.immune) {
-                        toDamage.damage(1);
-                    }
+        _super.prototype.onAdd.call(this);
+        var toDamages = this.world.select.overlap(this.bounds, ['player', 'enemies']);
+        try {
+            for (var toDamages_1 = __values(toDamages), toDamages_1_1 = toDamages_1.next(); !toDamages_1_1.done; toDamages_1_1 = toDamages_1.next()) {
+                var toDamage = toDamages_1_1.value;
+                if (toDamage instanceof Player && !toDamage.immune) {
+                    toDamage.damage();
+                }
+                if (toDamage instanceof Enemy && !toDamage.immune) {
+                    toDamage.damage(1);
                 }
             }
-            catch (e_44_1) { e_44 = { error: e_44_1 }; }
-            finally {
-                try {
-                    if (toDamages_1_1 && !toDamages_1_1.done && (_a = toDamages_1.return)) _a.call(toDamages_1);
-                }
-                finally { if (e_44) throw e_44.error; }
-            }
-            this.world.playSound('explode');
-            this.hasTriggered = true;
         }
+        catch (e_44_1) { e_44 = { error: e_44_1 }; }
+        finally {
+            try {
+                if (toDamages_1_1 && !toDamages_1_1.done && (_a = toDamages_1.return)) _a.call(toDamages_1);
+            }
+            finally { if (e_44) throw e_44.error; }
+        }
+        this.world.playSound('explode');
     };
     return Explosion;
 }(Sprite));
@@ -9960,9 +9980,7 @@ var Golbin = /** @class */ (function (_super) {
         }) || this;
         _this.bulletSpeed = 100;
         _this.bounds = new CircleBounds(0, -4, 8);
-        _this.effects.updateFromConfig({
-            outline: { color: 0x000000 }
-        });
+        _this.effects.addOutline.color = 0x000000;
         _this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'golbin_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         _this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'golbin_', textures: [4, 5, 6, 7], frameRate: 8, count: -1, overrides: {
                 2: { callback: function () { _this.world.playSound('walk'); } }
@@ -9994,8 +10012,7 @@ var Golbin = /** @class */ (function (_super) {
         });
         _this.stateMachine.addState('shooting', {
             script: S.chain(S.playAnimation(_this, 'drawback'), S.call(function () {
-                var d = { x: _this.attacking.x - _this.x, y: _this.attacking.y - _this.y };
-                _this.shoot(d);
+                _this.shoot({ x: _this.attacking.x - _this.x, y: _this.attacking.y - _this.y });
             })),
             transitions: [
                 { toState: 'idle' },
@@ -10011,10 +10028,8 @@ var Golbin = /** @class */ (function (_super) {
             this.playAnimation('idle');
         }
         else if (this.state === 'walking') {
-            var v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
-            V.setMagnitude(v, this.speed);
-            this.v.x = v.x;
-            this.v.y = v.y;
+            this.v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
+            this.setSpeed(this.speed);
             if (this.v.x < 0)
                 this.flipX = true;
             if (this.v.x > 0)
@@ -10044,15 +10059,15 @@ var Golbin = /** @class */ (function (_super) {
         })));
     };
     Golbin.prototype.shoot = function (d) {
-        V.setMagnitude(d, this.bulletSpeed);
-        var bullet = this.world.addWorldObject(new Bullet());
-        World.Actions.setName(bullet, 'bullet');
-        World.Actions.setLayer(bullet, this.layer);
-        World.Actions.setPhysicsGroup(bullet, 'bullets');
-        bullet.x = this.x;
-        bullet.y = this.y - 4;
-        bullet.v.x = d.x;
-        bullet.v.y = d.y;
+        var bullet = this.world.addWorldObject(new Bullet(), {
+            x: this.x,
+            y: this.y - 4,
+            name: 'bullet',
+            layer: this.layer,
+            physicsGroup: 'bullets',
+        });
+        bullet.v = d;
+        bullet.setSpeed(this.bulletSpeed);
         this.world.playSound('shoot');
     };
     Golbin.prototype.onCollide = function (other) {
@@ -10070,8 +10085,7 @@ var Golbin = /** @class */ (function (_super) {
         if (this.x < 64 || this.x > 706 || this.y < 338 || this.y > 704) {
             // Too close to edge of room
             var candidates_1 = A.range(20).map(function (i) {
-                var d = { x: Random.float(64, 706), y: Random.float(338, 704) };
-                return d;
+                return { x: Random.float(64, 706), y: Random.float(338, 704) };
             });
             this.targetPos = M.argmin(candidates_1, function (pos) { return M.distance(_this.x, _this.y, pos.x, pos.y); });
             return;
@@ -10185,7 +10199,8 @@ var ImmunitySm = /** @class */ (function (_super) {
 /// <reference path="./enemy.ts"/>
 var Knight = /** @class */ (function (_super) {
     __extends(Knight, _super);
-    function Knight() {
+    function Knight(tint) {
+        if (tint === void 0) { tint = 0xFFFFFF; }
         var _this = _super.call(this, {
             maxHealth: 1.5,
             immuneTime: 0.5,
@@ -10193,10 +10208,9 @@ var Knight = /** @class */ (function (_super) {
             speed: 100,
             deadTexture: 'enemyknight_dead',
         }) || this;
+        _this.tint = tint;
         _this.bounds = new CircleBounds(0, -4, 8);
-        _this.effects.updateFromConfig({
-            outline: { color: 0x000000 }
-        });
+        _this.effects.addOutline.color = 0x000000;
         _this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         _this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'enemyknight_', textures: [4, 5, 6, 7], frameRate: 8, count: -1, overrides: {
                 2: { callback: function () { _this.world.playSound('walk'); } }
@@ -10208,11 +10222,12 @@ var Knight = /** @class */ (function (_super) {
         var lightTexture = new AnchoredTexture(0, 0, Texture.filledRect(1024, 16, lightTint, 0.5));
         lightTexture.anchorX = 1 / 128;
         lightTexture.anchorY = 1 / 2;
-        _this.light = _this.addChild(new Sprite());
-        _this.light.y = -4;
+        _this.light = _this.addChild(new Sprite(), {
+            x: 0, y: -4,
+            layer: 'bg'
+        });
         _this.light.setTexture(lightTexture);
         _this.light.alpha = 0;
-        World.Actions.setLayer(_this.light, 'bg');
         _this.willDashNext = true;
         _this.stateMachine.addState('start', {
             script: S.wait(Random.float(0, 1)),
@@ -10315,8 +10330,7 @@ var Knight = /** @class */ (function (_super) {
         if (this.x < 64 || this.x > 706 || this.y < 338 || this.y > 704) {
             // Too close to edge of room
             var candidates_2 = A.range(20).map(function (i) {
-                var d = { x: Random.float(64, 706), y: Random.float(338, 704) };
-                return d;
+                return { x: Random.float(64, 706), y: Random.float(338, 704) };
             });
             this.targetPos = M.argmin(candidates_2, function (pos) { return M.distance(_this.x, _this.y, pos.x, pos.y); });
             return;
@@ -10350,9 +10364,7 @@ var Mage = /** @class */ (function (_super) {
             deadTexture: 'mage_dead',
         }) || this;
         _this.bounds = new CircleBounds(0, -4, 8);
-        _this.effects.updateFromConfig({
-            outline: { color: 0x000000 }
-        });
+        _this.effects.addOutline.color = 0x000000;
         _this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'mage_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         _this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'mage_', textures: [4, 5], frameRate: 4, count: -1, overrides: {
                 2: { callback: function () { _this.world.playSound('walk'); } }
@@ -10436,8 +10448,8 @@ var Mage = /** @class */ (function (_super) {
         var runner = new Runner();
         runner.x = this.targetPos.x;
         runner.y = this.targetPos.y;
-        World.Actions.setLayer(runner, 'main');
-        World.Actions.setPhysicsGroup(runner, 'enemies');
+        runner.layer = 'main';
+        runner.physicsGroup = 'enemies';
         this.world.addWorldObject(spawn(runner));
     };
     Mage.prototype.onCollide = function (other) {
@@ -10455,8 +10467,7 @@ var Mage = /** @class */ (function (_super) {
         if (this.x < 64 || this.x > 706 || this.y < 338 || this.y > 704) {
             // Too close to edge of room
             var candidates_3 = A.range(20).map(function (i) {
-                var d = { x: Random.float(64, 706), y: Random.float(338, 704) };
-                return d;
+                return { x: Random.float(64, 706), y: Random.float(338, 704) };
             });
             this.targetPos = M.argmin(candidates_3, function (pos) { return M.distance(_this.x, _this.y, pos.x, pos.y); });
             return;
@@ -10638,31 +10649,31 @@ var ControlsMenu = /** @class */ (function (_super) {
         var _this = _super.call(this, menuSystem) || this;
         _this.backgroundColor = 0x000000;
         _this.volume = 0;
-        var controlsText = _this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "- controls -"));
-        controlsText.x = 20;
-        controlsText.y = 15;
-        var wasdText = _this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "WASD or ARROW KEYS - move\n\nswing the hoop faster to deal more damage!"));
-        wasdText.x = 20;
-        wasdText.y = 42;
-        var player = _this.addWorldObject(new Player());
-        player.x = 250;
-        player.y = 180;
+        _this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "- controls -"), {
+            x: 20, y: 15,
+        });
+        _this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "WASD or ARROW KEYS - move\n\nswing the hoop faster to deal more damage!"), {
+            x: 20, y: 42,
+        });
+        var player = _this.addWorldObject(new Player(), {
+            x: 250, y: 180,
+        });
         player.effects.updateFromConfig({
             outline: { color: 0xFFFFFF }
         });
-        var hoop = _this.addWorldObject(new Hoop());
-        hoop.x = 240;
-        hoop.y = 180;
-        var backButton = _this.addWorldObject(new MenuTextButton({
+        _this.addWorldObject(new Hoop(), {
+            x: 240, y: 180,
+        });
+        _this.addWorldObject(new MenuTextButton({
             font: Assets.fonts.DELUXE16,
             text: "back",
             onClick: function () {
                 _this.menuSystem.game.playSound('click');
                 menuSystem.back();
             }
-        }));
-        backButton.x = 20;
-        backButton.y = 240;
+        }), {
+            x: 20, y: 240,
+        });
         _this.runScript(S.chain(S.loopFor(2, S.chain(S.doOverTime(0.4, function (t) { player.controller.right = true; }), S.doOverTime(0.4, function (t) { player.controller.down = true; }), S.doOverTime(0.4, function (t) { player.controller.left = true; }), S.doOverTime(0.4, function (t) { player.controller.up = true; }))), S.loopFor(Infinity, S.chain(S.doOverTime(0.2, function (t) { player.controller.right = true; }), S.doOverTime(0.2, function (t) { player.controller.down = true; }), S.doOverTime(0.2, function (t) { player.controller.left = true; }), S.doOverTime(0.2, function (t) { player.controller.up = true; })))));
         return _this;
     }
@@ -10873,9 +10884,7 @@ var Runner = /** @class */ (function (_super) {
             deadTexture: 'runner_dead',
         }) || this;
         _this.bounds = new CircleBounds(0, -4, 8);
-        _this.effects.updateFromConfig({
-            outline: { color: 0xFFFFFF }
-        });
+        _this.effects.addOutline.color = 0xFFFFFF;
         _this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'runner_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
         _this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'runner_', textures: [4, 5, 6, 7], frameRate: 8, count: -1, overrides: {
                 2: { callback: function () { _this.world.playSound('walk'); } }
@@ -10934,17 +10943,13 @@ function spawn(worldObject) {
     spawn.setTexture('spawn');
     spawn.tint = 0x00FFFF;
     spawn.alpha = 0;
-    spawn.data.flashed = false;
-    spawn.updateCallback = function (obj) {
-        if (!obj.data.flashed) {
-            obj.runScript(S.chain(S.doOverTime(1, function (t) {
-                obj.alpha = t;
-            }), S.wait(1), S.call(function () {
-                obj.world.addWorldObject(worldObject);
-                obj.kill();
-            })));
-            obj.data.flashed = true;
-        }
+    spawn.onAddCallback = function (obj) {
+        obj.runScript(S.chain(S.doOverTime(1, function (t) {
+            obj.alpha = t;
+        }), S.wait(1), S.call(function () {
+            obj.world.addWorldObject(worldObject);
+            obj.kill();
+        })));
     };
     return spawn;
 }
@@ -10967,26 +10972,23 @@ function getStages() {
                 layer: 'fg'
             });
             var stairs = world.addWorldObject(new Sprite('stairs'), {
+                x: 384, y: 340,
                 name: 'stairs',
                 layer: 'main',
                 physicsGroup: 'walls'
             });
-            stairs.x = 384;
-            stairs.y = 340;
             stairs.bounds = new RectBounds(-78, -112, 156, 112);
             var throne = world.addWorldObject(new Throne(), {
+                x: 384, y: 268,
                 name: 'throne',
                 layer: 'king_start',
                 physicsGroup: 'enemies'
             });
-            throne.x = 384;
-            throne.y = 268;
             throne.colliding = false;
             var guard1 = world.addWorldObject(new Sprite('enemyknight_0'), {
+                x: 342, y: 352,
                 name: 'guard'
             });
-            guard1.x = 342;
-            guard1.y = 352;
             guard1.tint = 0xFFFF00;
             guard1.effects.updateFromConfig({
                 outline: { color: 0x000000 }
@@ -10994,10 +10996,9 @@ function getStages() {
             guard1.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
             guard1.playAnimation('idle');
             var guard2 = world.addWorldObject(new Sprite('enemyknight_0'), {
+                x: 428, y: 352,
                 name: 'guard'
             });
-            guard2.x = 428;
-            guard2.y = 352;
             guard2.flipX = true;
             guard2.tint = 0xFF00FF;
             guard2.effects.updateFromConfig({
@@ -11006,12 +11007,11 @@ function getStages() {
             guard2.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
             guard2.playAnimation('idle');
             var player = world.addWorldObject(new Player(), {
+                x: 384, y: 750,
                 name: 'player',
                 layer: 'main',
                 physicsGroup: 'player'
             });
-            player.x = 384;
-            player.y = 750;
             player.controllable = true;
             return world;
         },
@@ -11068,15 +11068,13 @@ function getStoryboard() {
                             _a.sent();
                             player = global.world.select.type(Player);
                             hoop = global.world.addWorldObject(new Hoop(), {
+                                x: player.x, y: player.y - 32,
                                 name: 'hoop',
                                 layer: 'hoop',
                                 physicsGroup: 'hoop'
                             });
-                            hoop.x = player.x;
-                            hoop.y = player.y - 32;
-                            hoop.effects.updateFromConfig({
-                                silhouette: { color: 0x00FFFF, alpha: 0 }
-                            });
+                            hoop.effects.addSilhouette.color = 0x00FFFF;
+                            hoop.effects.addSilhouette.alpha = 0;
                             whoosh = global.world.playSound('swing');
                             whoosh.speed = 0.1;
                             return [4 /*yield*/, S.doOverTime(1, function (t) { return hoop.effects.silhouette.alpha = t; })];
@@ -11096,28 +11094,23 @@ function getStoryboard() {
                         case 10:
                             _a.sent();
                             global.world.playSound('jingle');
-                            return [4 /*yield*/, S.simul(S.showSlide(function () {
-                                    var slide = new Slide({
-                                        texture: Texture.filledRect(global.gameWidth, global.gameHeight, 0x000000, 0.8),
-                                        timeToLoad: 2,
-                                        fadeIn: true
-                                    });
-                                    return slide;
-                                }), S.showSlide(function () {
-                                    var slide = new Slide({
-                                        texture: 'royalhulatext',
-                                        timeToLoad: 2,
-                                        fadeIn: true
-                                    });
-                                    return slide;
-                                }))];
+                            return [4 /*yield*/, S.simul(S.showSlide(function () { return new Slide({
+                                    texture: Texture.filledRect(global.gameWidth, global.gameHeight, 0x000000, 0.8),
+                                    timeToLoad: 2,
+                                    fadeIn: true
+                                }); }), S.showSlide(function () { return new Slide({
+                                    texture: 'royalhulatext',
+                                    timeToLoad: 2,
+                                    fadeIn: true
+                                }); }))];
                         case 11:
                             _a.sent();
-                            text = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "sounds like a lot of HOOPLAH to me"));
-                            text.setStyle({ alpha: 0 });
+                            text = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "sounds like a lot of HOOPLAH to me"), {
+                                x: global.gameWidth / 2,
+                                y: global.gameHeight / 2 + 60,
+                            });
+                            text.style.alpha = 0;
                             text.anchor = Anchor.TOP_CENTER;
-                            text.x = global.gameWidth / 2;
-                            text.y = global.gameHeight / 2 + 60;
                             return [4 /*yield*/, S.wait(2)];
                         case 12:
                             _a.sent();
@@ -11392,14 +11385,11 @@ function getStoryboard() {
                             _a.sent();
                             global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
                             throne.setState('idle');
-                            global.world.runScript(S.chain(S.wait(0.5), S.showSlide(function () {
-                                var slide = new Slide({
-                                    texture: 'hoopkingtext',
-                                    timeToLoad: 2,
-                                    fadeIn: true
-                                });
-                                return slide;
-                            }), S.wait(3), S.fadeSlides(2)));
+                            global.world.runScript(S.chain(S.wait(0.5), S.showSlide(function () { return new Slide({
+                                texture: 'hoopkingtext',
+                                timeToLoad: 2,
+                                fadeIn: true
+                            }); }), S.wait(3), S.fadeSlides(2)));
                             global.world.select.type(WaveController).spawnWaveKing();
                             global.world.select.type(WaveController).startMusic();
                             return [2 /*return*/];
@@ -11458,22 +11448,26 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(1)];
                         case 13:
                             _a.sent();
-                            text = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "and thus begins the tale of the..."));
-                            text.setStyle({ color: 0x000000, alpha: 0 });
+                            text = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "and thus begins the tale of the..."), {
+                                x: global.gameWidth / 2,
+                                y: global.gameHeight / 2 - 8,
+                            });
+                            text.style.color = 0x000000;
+                            text.style.alpha = 0;
                             text.anchor = Anchor.TOP_CENTER;
-                            text.x = global.gameWidth / 2;
-                            text.y = global.gameHeight / 2 - 8;
                             return [4 /*yield*/, S.doOverTime(3, function (t) { return text.style.alpha = t; })];
                         case 14:
                             _a.sent();
                             return [4 /*yield*/, S.wait(2)];
                         case 15:
                             _a.sent();
-                            text2 = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "HOOP KNIGHT"));
-                            text2.setStyle({ color: 0x000000, alpha: 0 });
+                            text2 = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "HOOP KNIGHT"), {
+                                x: global.gameWidth / 2,
+                                y: global.gameHeight / 2 + 8,
+                            });
+                            text2.style.color = 0x000000;
+                            text2.style.alpha = 0;
                             text2.anchor = Anchor.TOP_CENTER;
-                            text2.x = global.gameWidth / 2;
-                            text2.y = global.gameHeight / 2 + 8;
                             return [4 /*yield*/, S.doOverTime(3, function (t) { return text2.style.alpha = t; })];
                         case 16:
                             _a.sent();
@@ -11548,24 +11542,22 @@ var Throne = /** @class */ (function (_super) {
         _this.bounds = new RectBounds(-15, -24, 30, 24);
         _this.setImmovable(true);
         _this.shadow = _this.addChild(new Sprite(), {
+            x: -15, y: -22,
             layer: 'king_shadow_start'
         });
-        _this.shadow.localx = -15;
-        _this.shadow.localy = -22;
         _this.shadow.setTexture(Texture.filledRect(30, 24, 0x000000, 0.5));
         var lightTexture = new AnchoredTexture(0, 0, Texture.filledRect(1024, 64, 0xFF0000, 0.5));
         lightTexture.anchorX = 1 / 32;
         lightTexture.anchorY = 1 / 2;
         _this.light = _this.addChild(new Sprite(), {
+            x: 0, y: -12,
             layer: 'bg'
         });
-        _this.light.localx = 0;
-        _this.light.localy = -12;
         _this.light.setTexture(lightTexture);
         _this.light.alpha = 0;
-        _this.king = _this.addChild(new Sprite());
-        _this.king.localx = 0;
-        _this.king.localy = 0;
+        _this.king = _this.addChild(new Sprite(), {
+            x: 0, y: 0,
+        });
         _this.king.localz = 20;
         _this.king.matchParentLayer = true;
         _this.king.effects.updateFromConfig({
@@ -11613,8 +11605,7 @@ var Throne = /** @class */ (function (_super) {
             loops = Infinity;
         }
         this.runScript(S.chain(S.call(function () {
-            _this.effects.silhouette.color = 0xFFFFFF;
-            _this.effects.silhouette.enabled = true;
+            _this.effects.addSilhouette.color = 0xFFFFFF;
         }), S.loopFor(loops, S.chain(S.wait(this.immuneTime / 8), S.call(function () {
             _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled;
         }))), S.call(function () {
@@ -11629,11 +11620,10 @@ var Throne = /** @class */ (function (_super) {
     };
     Throne.prototype.spawnBomb = function () {
         var bomb = this.world.addWorldObject(new Bomb(), {
+            x: this.x, y: this.y,
             layer: this.layer,
             physicsGroup: 'bombs'
         });
-        bomb.x = this.x;
-        bomb.y = this.y;
         bomb.z = 50;
     };
     Throne.prototype.onCollide = function (other) {
@@ -11670,9 +11660,9 @@ var ThroneBehaviorSm = /** @class */ (function (_super) {
                 _this.throne.x = M.lerp(_this.lastPos.x, _this.targetPos.x, t);
                 _this.throne.y = M.lerp(_this.lastPos.y, _this.targetPos.y, t);
             }), S.call(function () {
-                World.Actions.setLayer(_this.throne, 'main');
-                World.Actions.setLayer(_this.throne.king, 'main');
-                World.Actions.setLayer(_this.throne.shadow, 'bg');
+                _this.throne.layer = 'main';
+                _this.throne.king.layer = 'main';
+                _this.throne.shadow.layer = 'bg';
             }), S.doOverTime(1, function (t) { return _this.throne.z = 500 - 500 * t; }), S.call(function () {
                 _this.throne.world.playSound('land');
                 _this.throne.colliding = true;
@@ -11814,10 +11804,10 @@ var UI = /** @class */ (function (_super) {
         if (player.health > this.shields.length) {
             var _loop_5 = function (i) {
                 var shield = this_4.addChild(new Sprite('ui_shield'), {
+                    x: 20 + 36 * this_4.shields.length,
+                    y: 20,
                     layer: this_4.layer
                 });
-                shield.localx = 20 + 36 * this_4.shields.length;
-                shield.localy = 20;
                 shield.effects.addSilhouette.color = 0x00FFFF;
                 shield.effects.silhouette.alpha = 0;
                 this_4.shields.push(shield);
@@ -11832,9 +11822,10 @@ var UI = /** @class */ (function (_super) {
             var _loop_6 = function (i) {
                 var shield = this_5.shields.pop();
                 shield.getTexture().subdivide(4, 4).forEach(function (subdivision) {
-                    var shard = _this.addChild(new Sprite(subdivision.texture));
-                    shard.localx = shield.localx - 16 + subdivision.x;
-                    shard.localy = shield.localy - 16 + subdivision.y;
+                    var shard = _this.addChild(new Sprite(subdivision.texture), {
+                        x: shield.localx - 16 + subdivision.x,
+                        y: shield.localy - 16 + subdivision.y,
+                    });
                     shard.v = Random.inCircle(80);
                     shard.gravity.y = 200;
                     shard.vangle = Random.sign() * Random.float(1, 2) * 360;
@@ -11922,14 +11913,12 @@ var WaveController = /** @class */ (function (_super) {
         try {
             for (var guards_1 = __values(guards), guards_1_1 = guards_1.next(); !guards_1_1.done; guards_1_1 = guards_1.next()) {
                 var guard = guards_1_1.value;
-                var newGuard = this.world.addWorldObject(new Knight(), {
+                var newGuard = this.world.addWorldObject(new Knight(guard.tint), {
+                    x: guard.x, y: guard.y,
                     layer: 'main',
                     physicsGroup: 'enemies'
                 });
-                newGuard.x = guard.x;
-                newGuard.y = guard.y;
                 newGuard.flipX = guard.flipX;
-                newGuard.tint = guard.tint;
                 newGuard.health = 2;
                 guard.removeFromWorld();
             }

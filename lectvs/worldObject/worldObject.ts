@@ -3,6 +3,8 @@
 namespace WorldObject {
     export type ZBehavior = 'noop' | 'threequarters';
 
+    export type OnAddCallback<T> = (obj: T) => any;
+    export type OnRemoveCallback<T> = (obj: T) => any;
     export type UpdateCallback<T> = (obj: T) => any;
     export type RenderCallback<T> = (obj: T, screen: Texture, x: number, y: number) => any;
 }
@@ -74,6 +76,8 @@ class WorldObject {
     protected stateMachine: StateMachine;
     get state() { return this.stateMachine.getCurrentStateName(); }
 
+    onAddCallback: WorldObject.OnAddCallback<this>;
+    onRemoveCallback: WorldObject.OnRemoveCallback<this>;
     updateCallback: WorldObject.UpdateCallback<this>;
     renderCallback: WorldObject.RenderCallback<this>;
 
@@ -120,8 +124,13 @@ class WorldObject {
         this.debugFollowMouse = false;
     }
 
-    onAdd() {}
-    onRemove() {}
+    onAdd() {
+        if (this.onAddCallback) this.onAddCallback(this);
+    }
+
+    onRemove() {
+        if (this.onRemoveCallback) this.onRemoveCallback(this);
+    }
 
     preUpdate() {
         this.lastx = this.x;
@@ -208,13 +217,8 @@ class WorldObject {
     }
 
     addChild<T extends WorldObject>(child: T, worldProperties?: World.WorldObjectProperties): T {
-        let worldObject = World.Actions.addChildToParent(child, this);
-        if (worldProperties) {
-            if (worldProperties.name) worldObject.name = worldProperties.name;
-            if (worldProperties.layer) worldObject.layer = worldProperties.layer;
-            if (worldProperties.physicsGroup) worldObject.physicsGroup = worldProperties.physicsGroup;
-        }
-        return worldObject;
+        World.setWorldObjectProperties(child, worldProperties);
+        return World.Actions.addChildToParent(child, this);
     }
 
     addChildKeepWorldPosition<T extends WorldObject>(child: T, worldProperties?: World.WorldObjectProperties): T {

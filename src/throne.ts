@@ -19,10 +19,9 @@ class Throne extends Enemy {
         this.setImmovable(true);
 
         this.shadow = this.addChild(new Sprite(), {
+            x: -15, y: -22,
             layer: 'king_shadow_start'
         });
-        this.shadow.localx = -15;
-        this.shadow.localy = -22;
         this.shadow.setTexture(Texture.filledRect(30, 24, 0x000000, 0.5));
 
         let lightTexture = new AnchoredTexture(0, 0, Texture.filledRect(1024, 64, 0xFF0000, 0.5));
@@ -30,16 +29,15 @@ class Throne extends Enemy {
         lightTexture.anchorY = 1/2;
 
         this.light = this.addChild(new Sprite(), {
+            x: 0, y: -12,
             layer: 'bg'
         });
-        this.light.localx = 0;
-        this.light.localy = -12;
         this.light.setTexture(lightTexture);
         this.light.alpha = 0;
 
-        this.king = this.addChild(new Sprite());
-        this.king.localx = 0;
-        this.king.localy = 0;
+        this.king = this.addChild(new Sprite(), {
+            x: 0, y: 0,
+        });
         this.king.localz = 20;
         this.king.matchParentLayer = true;
         this.king.effects.updateFromConfig({
@@ -91,8 +89,7 @@ class Throne extends Enemy {
 
         this.runScript(S.chain(
             S.call(() => {
-                this.effects.silhouette.color = 0xFFFFFF;
-                this.effects.silhouette.enabled = true;
+                this.effects.addSilhouette.color = 0xFFFFFF;
             }),
             S.loopFor(loops, S.chain(
                 S.wait(this.immuneTime/8),
@@ -114,11 +111,10 @@ class Throne extends Enemy {
 
     spawnBomb() {
         let bomb = this.world.addWorldObject(new Bomb(), {
+            x: this.x, y: this.y,
             layer: this.layer,
             physicsGroup: 'bombs'
         });
-        bomb.x = this.x;
-        bomb.y = this.y;
         bomb.z = 50;
     }
 
