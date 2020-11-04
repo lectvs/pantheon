@@ -2,6 +2,8 @@
 
 class Mage extends Enemy {
 
+    private static readonly MAX_RUNNERS = 4;
+
     private attacking: WorldObject;
     private targetPos: Pt;
 
@@ -37,10 +39,13 @@ class Mage extends Enemy {
         })
         this.stateMachine.addState('idle', {
             script: S.chain(
-                S.wait(Random.float(1.8, 2.4)),
+                S.wait(Random.float(1.4, 2)),
                 S.call(() => {
                     this.pickNextTargetPos();
                     this.willSpawnNext = !this.willSpawnNext;
+                    if (this.world.select.typeAll(Runner).length >= Mage.MAX_RUNNERS) {
+                        this.willSpawnNext = false;
+                    }
                 }),
             ),
             transitions: [
@@ -60,7 +65,9 @@ class Mage extends Enemy {
                     this.pickNextSpawnTargetPos();
                     this.spawn();
                 }),
+                S.doOverTime(1, t => this.effects.outline.color = M.vec3ToColor([0, t, t])),
                 S.wait(1),
+                S.doOverTime(0.2, t => this.effects.outline.color = M.vec3ToColor([0, 1-t, 1-t])),
             ),
             transitions: [
                 { toState: 'idle' },

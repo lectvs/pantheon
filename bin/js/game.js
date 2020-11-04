@@ -10138,9 +10138,9 @@ var Hoop = /** @class */ (function (_super) {
         this.v.y = M.lerpTime(this.v.y, 0, 1.2, this.delta);
         this.setStrength(player);
         var visibleAttackStrength = M.clamp(this.currentAttackStrength, 0, 1);
-        this.effects.outline.enabled = true;
-        this.effects.outline.color = 0x00FFFF;
-        this.effects.outline.alpha = visibleAttackStrength;
+        this.effects.silhouette.enabled = true;
+        this.effects.silhouette.color = 0x00FFFF;
+        this.effects.silhouette.amount = M.clamp(Math.pow(visibleAttackStrength, 2), 0, 1);
         this.swingSound.volume = visibleAttackStrength;
         this.swingSound.speed = visibleAttackStrength;
     };
@@ -10164,10 +10164,18 @@ var Hoop = /** @class */ (function (_super) {
     Hoop.prototype.isStrongEnoughToDealDamage = function () {
         return this.currentAttackStrength > this.strengthThreshold;
     };
+    Hoop.prototype.getPerpendicularSpeed = function (player) {
+        var dx = this.x - player.x;
+        var dy = this.y - player.y;
+        if (dx === 0 && dy === 0) {
+            return 0;
+        }
+        return Math.abs(dx * this.v.y - dy * this.v.x) / M.magnitude(dx, dy);
+    };
     Hoop.prototype.setStrength = function (player) {
-        var pureVelStrength = this.getSpeed() / 500;
-        var relPlayerStrength = M.magnitude(this.v.x - player.v.x, this.v.y - player.v.y) / 500;
-        this.currentAttackStrength = M.clamp(pureVelStrength * relPlayerStrength, 0, 3);
+        var perpendicularStrengthComp = this.getPerpendicularSpeed(player) / 500;
+        perpendicularStrengthComp = Math.pow(perpendicularStrengthComp, 4);
+        this.currentAttackStrength = M.clamp(perpendicularStrengthComp, 0, 1);
         if (!_.isEmpty(this.world.select.overlap(this.bounds, ['walls']))) {
             this.currentAttackStrength = 0;
         }
@@ -10380,9 +10388,12 @@ var Mage = /** @class */ (function (_super) {
             ]
         });
         _this.stateMachine.addState('idle', {
-            script: S.chain(S.wait(Random.float(1.8, 2.4)), S.call(function () {
+            script: S.chain(S.wait(Random.float(1.4, 2)), S.call(function () {
                 _this.pickNextTargetPos();
                 _this.willSpawnNext = !_this.willSpawnNext;
+                if (_this.world.select.typeAll(Runner).length >= Mage.MAX_RUNNERS) {
+                    _this.willSpawnNext = false;
+                }
             })),
             transitions: [
                 { toState: 'spawn', condition: function () { return _this.willSpawnNext; } },
@@ -10398,7 +10409,7 @@ var Mage = /** @class */ (function (_super) {
             script: S.chain(S.wait(1), S.call(function () {
                 _this.pickNextSpawnTargetPos();
                 _this.spawn();
-            }), S.wait(1)),
+            }), S.doOverTime(1, function (t) { return _this.effects.outline.color = M.vec3ToColor([0, t, t]); }), S.wait(1), S.doOverTime(0.2, function (t) { return _this.effects.outline.color = M.vec3ToColor([0, 1 - t, 1 - t]); })),
             transitions: [
                 { toState: 'idle' },
             ]
@@ -10485,6 +10496,7 @@ var Mage = /** @class */ (function (_super) {
         this.targetPos.x += this.x;
         this.targetPos.y += this.y;
     };
+    Mage.MAX_RUNNERS = 4;
     return Mage;
 }(Enemy));
 /// <reference path="../lectvs/menu/menu.ts" />

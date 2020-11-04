@@ -52,9 +52,9 @@ class Hoop extends Sprite {
 
         let visibleAttackStrength = M.clamp(this.currentAttackStrength, 0, 1);
 
-        this.effects.outline.enabled = true;
-        this.effects.outline.color = 0x00FFFF;
-        this.effects.outline.alpha = visibleAttackStrength;
+        this.effects.silhouette.enabled = true;
+        this.effects.silhouette.color = 0x00FFFF;
+        this.effects.silhouette.amount = M.clamp(visibleAttackStrength**2, 0, 1);
 
         this.swingSound.volume = visibleAttackStrength;
         this.swingSound.speed = visibleAttackStrength;
@@ -83,11 +83,22 @@ class Hoop extends Sprite {
         return this.currentAttackStrength > this.strengthThreshold;
     }
 
-    private setStrength(player: Player) {
-        let pureVelStrength = this.getSpeed()/500;
-        let relPlayerStrength = M.magnitude(this.v.x - player.v.x, this.v.y - player.v.y)/500;
+    private getPerpendicularSpeed(player: Player) {
+        let dx = this.x - player.x;
+        let dy = this.y - player.y;
 
-        this.currentAttackStrength = M.clamp(pureVelStrength * relPlayerStrength, 0, 3);
+        if (dx === 0 && dy === 0) {
+            return 0;
+        }
+
+        return Math.abs(dx*this.v.y - dy*this.v.x) / M.magnitude(dx, dy);
+    }
+
+    private setStrength(player: Player) {
+        let perpendicularStrengthComp = this.getPerpendicularSpeed(player)/500;
+        perpendicularStrengthComp = perpendicularStrengthComp**4;
+
+        this.currentAttackStrength = M.clamp(perpendicularStrengthComp, 0, 1);
 
         if (!_.isEmpty(this.world.select.overlap(this.bounds, ['walls']))) {
             this.currentAttackStrength = 0;
