@@ -1,6 +1,15 @@
 /// <reference path="../worldObject.ts" />
 
 namespace SpriteText {
+    export type Config = ReplaceConfigCallbacks<WorldObject.Config, SpriteText> & {
+        font?: Font;
+        text?: string;
+        anchor?: Pt;
+        style?: Style;
+        effects?: Effects.Config;
+        mask?: Mask.WorldObjectMaskConfig;
+    }
+
     export type Font = {
         texturePrefix: string;
         charWidth: number;
@@ -41,24 +50,36 @@ class SpriteText extends WorldObject {
     private currentText: string;
     dirty: boolean;
 
-    constructor(font: SpriteText.Font, text: string = "") {
-        super();
+    constructor(config: SpriteText.Config) {
+        super(config);
 
-        this.font = font;
+        if (!config.font && !SpriteText.DEFAULT_FONT) {
+            error("SpriteText must have a font provided, or a default font set");
+        }
 
-        this._style = {
+        this.font = config.font ?? SpriteText.DEFAULT_FONT ?? {
+            texturePrefix: 'none',
+            charWidth: 0,
+            charHeight: 0,
+            spaceWidth: 0,
+            newlineHeight: 0
+        };
+
+        this._style = _.defaults(O.deepClone(config.style ?? {}), {
             color: 0xFFFFFF,
             alpha: 1,
             offset: 0,
-        };
+        });
 
         this.lastStyle = O.deepClone(this.style);
 
-        this.anchor = Anchor.TOP_LEFT;
+        this.anchor = config.anchor ?? Anchor.TOP_LEFT;
         this.effects = new Effects();
-        this.mask = null;
+        this.effects.updateFromConfig(config.effects);
 
-        this.setText(text);
+        this.mask = config.mask;
+
+        this.setText(config.text ?? "");
         this.dirty = true;
     }
 
@@ -99,7 +120,7 @@ class SpriteText extends WorldObject {
         for (let char of this.chars) {
             global.metrics.startSpan(`char_${char.char}`);
             let char_i = SpriteText.charCodes[char.char].y * 10 + SpriteText.charCodes[char.char].x;
-            let charTexture = AssetCache.getTexture(`${this.font.texturePrefix}${char_i}`);
+            let charTexture = AssetCache.getTexture(`${this.font.texturePrefix}_${char_i}`);
             charTexture.renderTo(this.staticTexture, {
                 x: char.x,
                 y: char.y + (char.style.offset ?? this.style.offset),
@@ -147,6 +168,8 @@ class SpriteText extends WorldObject {
         this.currentText = text;
         this.dirty = true;
     }
+
+    static DEFAULT_FONT: SpriteText.Font = null;
 }
 
 namespace SpriteText {

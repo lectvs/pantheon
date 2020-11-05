@@ -30,6 +30,8 @@ type Boundaries = {
     right?: number;
 }
 
+type ReplaceConfigCallbacks<SuperType extends WorldObject.Config, NewType extends WorldObject> = Omit<SuperType, WorldObject.CallbackKeys> & WorldObject.Callbacks<NewType>;
+
 function pt(x: number, y: number) {
     return { x, y };
 }

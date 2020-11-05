@@ -1,6 +1,37 @@
 /// <reference path="../utils/uid.ts" />
 
 namespace WorldObject {
+    export type Config = {
+        name?: string;
+        layer?: string;
+        physicsGroup?: string;
+        x?: number;
+        y?: number;
+        z?: number;
+        visible?: boolean;
+        active?: boolean;
+        life?: number;
+        ignoreCamera?: boolean;
+        matchParentLayer?: boolean;
+        matchParentPhysicsGroup?: boolean;
+        zBehavior?: ZBehavior;
+        timeScale?: number;
+        controllable?: boolean;
+        data?: any;
+    } & Callbacks<WorldObject>;
+
+    export type CallbackKeys =
+        'onAdd'
+      | 'onRemove'
+      | 'update'
+      | 'render';
+    export type Callbacks<T> = {
+        onAdd?: OnAddCallback<T>;
+        onRemove?: OnRemoveCallback<T>;
+        update?: UpdateCallback<T>;
+        render?: RenderCallback<T>;
+    }
+
     export type ZBehavior = 'noop' | 'threequarters';
 
     export type OnAddCallback<T> = (obj: T) => any;
@@ -83,20 +114,20 @@ class WorldObject {
 
     debugFollowMouse: boolean;
 
-    constructor() {
-        this.localx = 0;
-        this.localy = 0;
-        this.localz = 0;
-        this.visible = true;
-        this.active = true;
-        this.life = new Timer(Infinity, () => this.kill());
-        this.zBehavior = WorldObject.DEFAULT_Z_BEHAVIOR;
-        this.timeScale = 1;
-        this.data = {};
+    constructor(config: WorldObject.Config = {}) {
+        this.localx = config.x ?? 0;
+        this.localy = config.y ?? 0;
+        this.localz = config.z ?? 0;
+        this.visible = config.visible ?? true;
+        this.active = config.active ?? true;
+        this.life = new Timer(config.life ?? Infinity, () => this.kill());
+        this.zBehavior = config.zBehavior ?? WorldObject.DEFAULT_Z_BEHAVIOR;
+        this.timeScale = config.timeScale ?? 1;
+        this.data = config.data ? O.deepClone(config.data) : {};
 
-        this.ignoreCamera = false;
-        this.matchParentLayer = false;
-        this.matchParentPhysicsGroup = false;
+        this.ignoreCamera = config.ignoreCamera ?? false;
+        this.matchParentLayer = config.matchParentLayer ?? false;
+        this.matchParentPhysicsGroup = config.matchParentPhysicsGroup ?? false;
 
         this.alive = true;
 
@@ -104,7 +135,7 @@ class WorldObject {
         this.lasty = this.y;
         this.lastz = this.z;
 
-        this.controllable = false;
+        this.controllable = config.controllable ?? false;
         this.controller = {};
         this.controllerSchema = {};
 
@@ -114,12 +145,17 @@ class WorldObject {
         this._children = [];
         this._parent = null;
 
-        this.internalSetNameWorldObject(undefined);
-        this.internalSetLayerWorldObject(undefined);
-        this.internalSetPhysicsGroupWorldObject(undefined);
+        this.internalSetNameWorldObject(config.name);
+        this.internalSetLayerWorldObject(config.layer);
+        this.internalSetPhysicsGroupWorldObject(config.physicsGroup);
 
         this.scriptManager = new ScriptManager();
         this.stateMachine = new StateMachine();
+
+        this.onAddCallback = config.onAdd;
+        this.onRemoveCallback = config.onRemove;
+        this.updateCallback = config.update;
+        this.renderCallback = config.render;
 
         this.debugFollowMouse = false;
     }
@@ -216,16 +252,15 @@ class WorldObject {
         if (this.renderCallback) this.renderCallback(this, texture, x, y);
     }
 
-    addChild<T extends WorldObject>(child: T, worldProperties?: World.WorldObjectProperties): T {
-        World.setWorldObjectProperties(child, worldProperties);
+    addChild<T extends WorldObject>(child: T): T {
         return World.Actions.addChildToParent(child, this);
     }
 
-    addChildKeepWorldPosition<T extends WorldObject>(child: T, worldProperties?: World.WorldObjectProperties): T {
+    addChildKeepWorldPosition<T extends WorldObject>(child: T): T {
         let x = child.x;
         let y = child.y;
         let z = child.z;
-        let result = this.addChild(child, worldProperties);
+        let result = this.addChild(child);
         child.x = x;
         child.y = y;
         child.z = z;

@@ -9,25 +9,27 @@ class Golbin extends Enemy {
 
     private willShootNext: boolean;
 
-    constructor() {
+    constructor(config: Sprite.Config) {
         super({
+            bounds: new CircleBounds(0, -4, 8),
+            animations: [
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'golbin', textures: [0, 1, 2], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'run', texturePrefix: 'golbin', textures: [4, 5, 6, 7], frameRate: 8, count: -1,
+                        overrides: {
+                            2: { callback: () => { this.world.playSound('walk'); }}
+                        }
+                }),
+                Animations.fromTextureList({ name: 'drawback', texturePrefix: 'golbin', textures: [8, 9, 10, 11, 10, 11, 10, 11, 11, 11], frameRate: 6 })
+            ],
+            defaultAnimation: 'idle',
+            effects: { outline: { color: 0x000000 } },
             maxHealth: 1.2,
             immuneTime: 0.5,
             weight: 1,
             speed: 100,
             deadTexture: 'golbin_dead',
+            ...config,
         });
-
-        this.bounds = new CircleBounds(0, -4, 8);
-        this.effects.addOutline.color = 0x000000;
-        this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'golbin_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
-        this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'golbin_', textures: [4, 5, 6, 7], frameRate: 8, count: -1,
-                overrides: {
-                    2: { callback: () => { this.world.playSound('walk'); }}
-                }
-        }));
-        this.addAnimation(Animations.fromTextureList({ name: 'drawback', texturePrefix: 'golbin_', textures: [8, 9, 10, 11, 10, 11, 10, 11, 11, 11], frameRate: 6 }));
-        this.playAnimation('idle');
 
         this.willShootNext = true;
 
@@ -115,15 +117,15 @@ class Golbin extends Enemy {
     }
 
     shoot(d: Pt) {
-        let bullet = this.world.addWorldObject(new Bullet(), {
+        let bullet = this.world.addWorldObject(new Bullet({
             x: this.x,
             y: this.y - 4,
+            vx: d.x, vy: d.y,
             name: 'bullet',
             layer: this.layer,
             physicsGroup: 'bullets',
-        });
+        }));
 
-        bullet.v = d;
         bullet.setSpeed(this.bulletSpeed);
 
         this.world.playSound('shoot');

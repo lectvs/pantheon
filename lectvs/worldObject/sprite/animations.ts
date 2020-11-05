@@ -61,7 +61,7 @@ class Animations {
         for (let i = 0; i < textures.length; i++) {
             let animationFrame: Animation.Frame = {
                 duration: frameDuration,
-                texture: (_.isString(textures[i]) || _.isNumber(textures[i])) ? `${config.texturePrefix}${textures[i]}` : <Texture>textures[i],
+                texture: (_.isString(textures[i]) || _.isNumber(textures[i])) ? `${config.texturePrefix}_${textures[i]}` : <Texture>textures[i],
                 nextFrameRef: `${config.name}/${i+1}`,
                 forceRequired: config.forceRequired,
             };

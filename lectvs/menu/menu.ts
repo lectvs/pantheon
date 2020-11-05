@@ -26,10 +26,11 @@ class MetricsMenu extends Menu {
         let plotSprite = this.addWorldObject(new Sprite());
         plotSprite.setTexture(this.plot.texture);
 
-        let graphxy = this.addWorldObject(new SpriteText(Debug.FONT), {
-            name: 'graphxy'
-        });
-        graphxy.style.color = 0x00FF00;
+        this.addWorldObject(new SpriteText({
+            name: 'graphxy',
+            font: Debug.FONT,
+            style: { color: 0x00FF00 },
+        }));
     }
 
     update() {

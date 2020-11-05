@@ -1,4 +1,11 @@
 namespace Tilemap {
+    export type Config = ReplaceConfigCallbacks<WorldObject.Config, TilemapClass> &  {
+        tilemap: string | Tilemap.Tilemap;
+        tilemapLayer?: number;
+        zMap?: Tilemap.ZMap;
+        animation?: Tilemap.Animation;
+    }
+
     export type Tile = {
         index: number;
         angle: number;
@@ -52,16 +59,18 @@ class Tilemap extends WorldObject {
 
     get tileset() { return this.tilemap.tileset; }
 
-    constructor(tilemap: string | Tilemap.Tilemap, layer: number) {
-        super();
+    constructor(config: Tilemap.Config) {
+        super(config);
 
-        this.tilemap = Tilemap.cloneTilemap(_.isString(tilemap) ? AssetCache.getTilemap(tilemap) : tilemap);
-        this.tilemapLayer = layer;
+        this.tilemap = Tilemap.cloneTilemap(_.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap);
+        this.tilemapLayer = config.tilemapLayer ?? 0;
 
-        this.zMap = {};
-        this.debugDrawBounds = false;
+        this.zMap = config.zMap ?? {};
+        this.animation = config.animation;
 
         this.dirty = true;
+
+        this.debugDrawBounds = false;
     }
 
     update() {
@@ -144,7 +153,7 @@ class Tilemap extends WorldObject {
             zTexture.x = this.x + texturesByZ[zValue].bounds.x;
             zTexture.y = this.y + texturesByZ[zValue].bounds.y + zHeight;
             zTexture.matchParentLayer = true;
-            zTexture.offset.y = -zHeight;
+            zTexture.offsetY = -zHeight;
             zTexture.setTexture(this.animation ? undefined : texturesByZ[zValue].frames[0]);
             if (this.animation) {
                 zTexture.addAnimation(Animations.fromTextureList({ name: 'play', textures: texturesByZ[zValue].frames, frameRate: this.animation.frameRate, count: -1 }));
@@ -162,6 +171,7 @@ class Tilemap extends WorldObject {
         this.zTextures = [];
     }
 }
+type TilemapClass = Tilemap;
 
 namespace Tilemap {
     export function cloneTilemap(tilemap: Tilemap) {

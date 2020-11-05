@@ -38,7 +38,7 @@ class DialogBox extends Sprite {
         this.textArea = this.textAreaFull;
         this.done = true;
 
-        this.spriteText = this.addChild(new SpriteText(config.dialogFont));
+        this.spriteText = this.addChild(new SpriteText({ font: config.dialogFont }));
         this.spriteTextOffset = 0;
 
         this.portraitSprite = this.addChild(new Sprite());
@@ -148,7 +148,7 @@ class DialogBox extends Sprite {
     }
 
     showPortrait(portrait: string) {
-        if (!portrait || portrait === DialogBox.NONE_PORTRAIT) {
+        if (AssetCache.isNoneTexture(portrait)) {
             this.portraitSprite.visible = false;
             this.textArea = this.textAreaFull;
         } else {
@@ -159,5 +159,4 @@ class DialogBox extends Sprite {
     }
 
     static MAX_COMPLETE_PAGE_ITERS: number = 10000;
-    static NONE_PORTRAIT: string = 'none';
 }

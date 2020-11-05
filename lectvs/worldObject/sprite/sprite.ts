@@ -1,12 +1,33 @@
 /// <reference path="../physicsWorldObject.ts" />
 
+namespace Sprite {
+    export type Config = ReplaceConfigCallbacks<PhysicsWorldObject.Config, Sprite> & {
+        texture?: string | Texture;
+        animations?: Animation.Config[];
+        defaultAnimation?: string;
+        flipX?: boolean;
+        flipY?: boolean;
+        offsetX?: number;
+        offsetY?: number;
+        angle?: number;
+        vangle?: number;
+        scaleX?: number;
+        scaleY?: number;
+        tint?: number;
+        alpha?: number;
+        effects?: Effects.Config;
+        mask?: Mask.WorldObjectMaskConfig;
+    }
+}
+
 class Sprite extends PhysicsWorldObject {
     private texture: Texture;
     protected animationManager: AnimationManager;
 
     flipX: boolean;
     flipY: boolean;
-    offset: Pt;
+    offsetX: number;
+    offsetY: number;
     angle: number;
     vangle: number;
     scaleX: number;
@@ -20,26 +41,34 @@ class Sprite extends PhysicsWorldObject {
 
     onScreenPadding: number;
 
-    constructor(texture?: string | Texture) {
-        super();
+    constructor(config: Sprite.Config = {}) {
+        super(config);
 
-        this.setTexture(texture);
+        this.setTexture(config.texture);
 
         this.animationManager = new AnimationManager(this);
+        for (let animation of config.animations || []) {
+            this.addAnimation(animation);
+        }
+        if (config.defaultAnimation) this.playAnimation(config.defaultAnimation);
 
-        this.flipX = false;
-        this.flipY = false;
+        this.flipX = config.flipX ?? false;
+        this.flipY = config.flipY ?? false;
 
-        this.offset = { x: 0, y: 0 };
-        this.angle = 0;
-        this.vangle = 0;
-        this.scaleX = 1;
-        this.scaleY = 1;
+        this.offsetX = config.offsetX ?? 0;
+        this.offsetY = config.offsetY ?? 0;
+        this.angle = config.angle ?? 0;
+        this.vangle = config.vangle ?? 0;
+        this.scaleX = config.scaleX ?? 1;
+        this.scaleY = config.scaleY ?? 1;
 
-        this.tint = 0xFFFFFF;
-        this.alpha = 1;
+        this.tint = config.tint ?? 0xFFFFFF;
+        this.alpha = config.alpha ?? 1;
 
         this.effects = new Effects();
+        this.effects.updateFromConfig(config.effects);
+
+        this.mask = config.mask;
 
         this.onScreenPadding = 1;
     }
@@ -55,8 +84,8 @@ class Sprite extends PhysicsWorldObject {
 
     render(texture: Texture, x: number, y: number) {
         this.texture.renderTo(texture, {
-            x: x + this.offset.x,
-            y: y + this.offset.y,
+            x: x + this.offsetX,
+            y: y + this.offsetY,
             scaleX: (this.flipX ? -1 : 1) * this.scaleX,
             scaleY: (this.flipY ? -1 : 1) * this.scaleY,
             angle: this.angle,

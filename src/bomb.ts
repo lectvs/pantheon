@@ -1,23 +1,20 @@
 /// <reference path="./enemy.ts"/>
 
 class Bomb extends Enemy {
-    constructor() {
+    constructor(config: Sprite.Config) {
         super({
+            texture: 'bomb',
+            effects: { silhouette: { color: 0xFFFFFF, enabled: false } },
+            bounds: new CircleBounds(0, -12, 12),
+            gravityz: -100,
+            mass: 1000,
+            colliding: false,
             maxHealth: Infinity,
             immuneTime: 0.01,
             weight: 0.3,
             speed: 0,
+            ...config,
         });
-
-        this.setTexture('bomb');
-        this.effects.silhouette.color = 0xFFFFFF;
-        this.effects.silhouette.enabled = false;
-
-        this.bounds = new CircleBounds(0, -12, 12);
-
-        this.gravityz = -100;
-        this.mass = 1000;
-        this.colliding = false;
 
         this.runScript(S.chain(
             S.wait(0.1),
@@ -46,11 +43,11 @@ class Bomb extends Enemy {
     explode() {
         this.alive = false;
 
-        this.world.addWorldObject(new Explosion(), {
+        this.world.addWorldObject(new Explosion({
             x: this.x,
             y: this.y - 12,
             layer: 'fg'
-        });
+        }));
     }
 
     onCollide(other: PhysicsWorldObject) {

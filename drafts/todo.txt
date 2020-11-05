@@ -31,6 +31,7 @@ postjam
 - /limit to how many runners there are
 - /mage light up to indicate summoning
 - /calculate hoop speed from angular speed around player
+- /bring configs back!
 - new content
     - add some more enemies
     - add music/ambience during silent parts

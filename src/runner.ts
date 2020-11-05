@@ -4,24 +4,26 @@ class Runner extends Enemy {
 
     private attacking: WorldObject;
 
-    constructor() {
+    constructor(config: Sprite.Config) {
         super({
+            bounds: new CircleBounds(0, -4, 8),
+            animations: [
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'runner', textures: [0, 1, 2], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'run', texturePrefix: 'runner', textures: [4, 5, 6, 7], frameRate: 8, count: -1,
+                        overrides: {
+                            2: { callback: () => { this.world.playSound('walk'); }}
+                        }
+                }),
+            ],
+            defaultAnimation: 'idle',
+            effects: { outline: { color: 0xFFFFFF } },
             maxHealth: 0.5,
             immuneTime: 0.5,
             weight: 1,
             speed: 50,
             deadTexture: 'runner_dead',
+            ...config,
         });
-
-        this.bounds = new CircleBounds(0, -4, 8);
-        this.effects.addOutline.color = 0xFFFFFF;
-        this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'runner_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
-        this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'runner_', textures: [4, 5, 6, 7], frameRate: 8, count: -1,
-                overrides: {
-                    2: { callback: () => { this.world.playSound('walk'); }}
-                }
-        }));
-        this.playAnimation('run');
 
         this.stateMachine.addState("idle", {
             script: S.wait(1),

@@ -5,46 +5,45 @@ class Throne extends Enemy {
 
     private dinkSound: Sound;
 
-    constructor() {
+    constructor(config: Sprite.Config) {
         super({
+            texture: 'throne',
+            bounds: new RectBounds(-15, -24, 30, 24),
+            immovable: true,
             maxHealth: 1003,
             immuneTime: 1,
             weight: 10,
             speed: 0,
             damagableByHoop: false,
+            ...config,
         });
 
-        this.setTexture('throne');
-        this.bounds = new RectBounds(-15, -24, 30, 24);
-        this.setImmovable(true);
-
-        this.shadow = this.addChild(new Sprite(), {
+        this.shadow = this.addChild(new Sprite({
             x: -15, y: -22,
+            texture: Texture.filledRect(30, 24, 0x000000, 0.5),
             layer: 'king_shadow_start'
-        });
-        this.shadow.setTexture(Texture.filledRect(30, 24, 0x000000, 0.5));
+        }));
 
         let lightTexture = new AnchoredTexture(0, 0, Texture.filledRect(1024, 64, 0xFF0000, 0.5));
         lightTexture.anchorX = 1/32;
         lightTexture.anchorY = 1/2;
 
-        this.light = this.addChild(new Sprite(), {
+        this.light = this.addChild(new Sprite({
             x: 0, y: -12,
+            texture: lightTexture,
+            alpha: 0,
             layer: 'bg'
-        });
-        this.light.setTexture(lightTexture);
-        this.light.alpha = 0;
+        }));
 
-        this.king = this.addChild(new Sprite(), {
-            x: 0, y: 0,
-        });
-        this.king.localz = 20;
-        this.king.matchParentLayer = true;
-        this.king.effects.updateFromConfig({
-            outline: { color: 0x000000 }
-        });
-        this.king.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'king_', textures: [0, 1, 2], frameRate: 4, count: -1 }));
-        this.king.playAnimation('idle');
+        this.king = this.addChild(new Sprite({
+            x: 0, y: 0, z: 20,
+            animations: [
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'king', textures: [0, 1, 2], frameRate: 4, count: -1 })
+            ],
+            defaultAnimation: 'idle',
+            effects: { outline: { color: 0x000000 } },
+            matchParentLayer: true
+        }));
 
         this.stateMachine = new ThroneBehaviorSm(this);
     }
@@ -110,12 +109,11 @@ class Throne extends Enemy {
     }
 
     spawnBomb() {
-        let bomb = this.world.addWorldObject(new Bomb(), {
-            x: this.x, y: this.y,
+        this.world.addWorldObject(new Bomb({
+            x: this.x, y: this.y, z: 50,
             layer: this.layer,
             physicsGroup: 'bombs'
-        });
-        bomb.z = 50;
+        }));
     }
 
     onCollide(other: PhysicsWorldObject) {

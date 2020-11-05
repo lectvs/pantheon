@@ -1,5 +1,22 @@
 /// <reference path="./worldObject.ts" />
 
+namespace PhysicsWorldObject {
+    export type Config = ReplaceConfigCallbacks<WorldObject.Config, PhysicsWorldObject> & {
+        vx?: number;
+        vy?: number;
+        vz?: number;
+        mass?: number;
+        gravityx?: number;
+        gravityy?: number;
+        gravityz?: number;
+        bounce?: number;
+        bounds?: Bounds;
+        immovable?: boolean;
+        colliding?: boolean;
+        simulating?: boolean;
+    } 
+}
+
 class PhysicsWorldObject extends WorldObject {
     private _v: Pt;
     get v() { return this._v; }
@@ -37,25 +54,25 @@ class PhysicsWorldObject extends WorldObject {
         this._bounds.parent = this;
     }
 
-    constructor() {
-        super();
-        this._v = pt(0, 0);
-        this.vz = 0;
-        this.mass = 1;
-        this._gravity = pt(0, 0);
-        this.gravityz = 0;
-        this.bounce = 0;
+    constructor(config: PhysicsWorldObject.Config = {}) {
+        super(config);
+        this._v = pt(config.vx ?? 0, config.vy ?? 0);
+        this.vz = config.vz ?? 0;
+        this.mass = config.mass ?? 1;
+        this._gravity = pt(config.gravityx ?? 0, config.gravityy ?? 0);
+        this.gravityz = config.gravityz ?? 0;
+        this.bounce = config.bounce ?? 0;
 
-        this.bounds = new NullBounds();
+        this.bounds = config.bounds ?? new NullBounds();
 
-        this._immovable = false;
-        this.colliding = true;
-
-        this.debugDrawBounds = false;
-        this.simulating = true;
+        this._immovable = config.immovable ?? false;
+        this.colliding = config.colliding ?? true;
+        this.simulating = config.simulating ?? true;
 
         this.physicslastx = this.x;
         this.physicslasty = this.y;
+
+        this.debugDrawBounds = false;
     }
 
     preUpdate() {

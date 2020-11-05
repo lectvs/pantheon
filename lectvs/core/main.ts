@@ -8,6 +8,7 @@ namespace Main {
         canvasScale: number;
         backgroundColor: number;
         defaultZBehavior?: WorldObject.ZBehavior;
+        defaultSpriteTextFont?: SpriteText.Font;
 
         preloadBackgroundColor: number;
         preloadProgressBarColor: number;
@@ -59,6 +60,7 @@ class Main {
         global.backgroundColor = this.config.backgroundColor;
         WorldObject.DEFAULT_Z_BEHAVIOR = this.config.defaultZBehavior ?? 'noop';
         SpriteText.addTags(this.config.spriteTextTags ?? {});
+        SpriteText.DEFAULT_FONT = this.config.defaultSpriteTextFont;
 
         Main.renderer = PIXI.autoDetectRenderer({
             width: global.gameWidth,

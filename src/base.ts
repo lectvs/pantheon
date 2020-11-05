@@ -34,32 +34,32 @@ function BASE_CAMERA_MOVEMENT(): Camera.SmoothMovement {
     return { type: 'smooth', speed: 10, deadZoneWidth: 40, deadZoneHeight: 30 };
 }
 
-function WORLD_BOUNDS(left: number, top: number, right: number, bottom: number): WorldObject {
+function WORLD_BOUNDS(left: number, top: number, right: number, bottom: number, physicsGroup: string): WorldObject {
     let thickness = 40;
     let width = right-left;
     let height = bottom-top;
 
     let worldBounds = new WorldObject();
 
-    let leftBound = worldBounds.addChild(new PhysicsWorldObject(), {
-        physicsGroup: 'walls'
-    });
-    leftBound.bounds = new RectBounds(left-thickness, top-thickness, thickness, height+2*thickness);
+    worldBounds.addChild(new PhysicsWorldObject({
+        bounds: new RectBounds(left-thickness, top-thickness, thickness, height+2*thickness),
+        physicsGroup: physicsGroup
+    }));
 
-    let rightBound = worldBounds.addChild(new PhysicsWorldObject(), {
-        physicsGroup: 'walls'
-    });
-    rightBound.bounds = new RectBounds(right, top-thickness, thickness, height+2*thickness);
+    worldBounds.addChild(new PhysicsWorldObject({
+        bounds: new RectBounds(right, top-thickness, thickness, height+2*thickness),
+        physicsGroup: physicsGroup
+    }));
 
-    let topBound = worldBounds.addChild(new PhysicsWorldObject(), {
-        physicsGroup: 'walls'
-    });
-    topBound.bounds = new RectBounds(left, top-thickness, width, thickness);
+    worldBounds.addChild(new PhysicsWorldObject({
+        bounds: new RectBounds(left, top-thickness, width, thickness),
+        physicsGroup: physicsGroup
+    }));
 
-    let bottomBound = worldBounds.addChild(new PhysicsWorldObject(), {
-        physicsGroup: 'walls'
-    });
-    bottomBound.bounds = new RectBounds(left, bottom, width, thickness);
+    worldBounds.addChild(new PhysicsWorldObject({
+        bounds: new RectBounds(left, bottom, width, thickness),
+        physicsGroup: physicsGroup
+    }));
 
     return worldBounds;
 }

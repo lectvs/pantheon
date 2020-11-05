@@ -16,6 +16,7 @@ Main.loadConfig({
     spriteTextTags: Assets.spriteTextTags,
 
     defaultZBehavior: 'threequarters',
+    defaultSpriteTextFont: Assets.fonts.DELUXE16,
 
     defaultOptions: {
         volume: 1,

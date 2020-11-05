@@ -28,14 +28,13 @@ function getStoryboard(): Storyboard { return {
             yield S.wait(2);
 
             let player = global.world.select.type(Player);
-            let hoop = global.world.addWorldObject(new Hoop(), {
+            let hoop = global.world.addWorldObject(new Hoop({
                 x: player.x, y: player.y - 32,
                 name: 'hoop',
                 layer: 'hoop',
+                effects: { silhouette: { color: 0x00FFFF, alpha: 0 } },
                 physicsGroup: 'hoop'
-            });
-            hoop.effects.addSilhouette.color = 0x00FFFF;
-            hoop.effects.addSilhouette.alpha = 0;
+            }));
 
             let whoosh = global.world.playSound('swing');
             whoosh.speed = 0.1;
@@ -68,12 +67,12 @@ function getStoryboard(): Storyboard { return {
                 })),
             );
 
-            let text = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "sounds like a lot of HOOPLAH to me"), {
-                x: global.gameWidth/2,
-                y: global.gameHeight/2 + 60,
-            });
-            text.style.alpha = 0;
-            text.anchor = Anchor.TOP_CENTER;
+            let text = global.theater.addWorldObject(new SpriteText({
+                x: global.gameWidth/2, y: global.gameHeight/2 + 60,
+                text: "sounds like a lot of HOOPLAH to me",
+                style: { alpha: 0 },
+                anchor: Anchor.TOP_CENTER
+            }));
 
             yield S.wait(2);
             yield S.doOverTime(2, t => text.style.alpha = t);
@@ -319,24 +318,22 @@ function getStoryboard(): Storyboard { return {
             );
             yield S.wait(1);
 
-            let text = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "and thus begins the tale of the..."), {
-                x: global.gameWidth/2,
-                y: global.gameHeight/2 - 8,
-            });
-            text.style.color = 0x000000;
-            text.style.alpha = 0;
-            text.anchor = Anchor.TOP_CENTER;
+            let text = global.theater.addWorldObject(new SpriteText({
+                x: global.gameWidth/2, y: global.gameHeight/2 - 8,
+                text: "and thus begins the tale of the...",
+                style: { color: 0x000000, alpha: 0 },
+                anchor: Anchor.TOP_CENTER
+            }));
 
             yield S.doOverTime(3, t => text.style.alpha = t);
             yield S.wait(2);
 
-            let text2 = global.theater.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "HOOP KNIGHT"), {
-                x: global.gameWidth/2,
-                y: global.gameHeight/2 + 8,
-            });
-            text2.style.color = 0x000000;
-            text2.style.alpha = 0;
-            text2.anchor = Anchor.TOP_CENTER;
+            let text2 = global.theater.addWorldObject(new SpriteText({
+                x: global.gameWidth/2, y: global.gameHeight/2 + 8,
+                text: "HOOP KNIGHT",
+                style: { color: 0x000000, alpha: 0 },
+                anchor: Anchor.TOP_CENTER
+            }));
 
             yield S.doOverTime(3, t => text2.style.alpha = t);
             yield S.wait(5);

@@ -8,9 +8,9 @@ Cheat.init({
         global.world.select.nameAll('spawn').forEach(s => s.kill());
     },
     'explode': () => {
-        global.world.addWorldObject(new Explosion(), {
+        global.world.addWorldObject(new Explosion({
             x: 400, y: 400,
-        });
+        }));
     },
     'skiptofinalwave': () => {
         Cheat['killall']();

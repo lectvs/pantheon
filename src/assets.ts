@@ -1,6 +1,5 @@
 namespace Assets {
     export const textures: Dict<Preload.Texture> = {
-        'none': {},
         'blank': {},
 
         // Debug
@@ -119,7 +118,7 @@ namespace Assets {
 
     export class fonts {
         static DELUXE16: SpriteText.Font = {
-            texturePrefix: 'deluxe16_',
+            texturePrefix: 'deluxe16',
             charWidth: 8,
             charHeight: 15,
             spaceWidth: 8,

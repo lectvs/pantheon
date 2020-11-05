@@ -22,14 +22,6 @@ namespace World {
     }
 
     export type EntryPoint = string | Pt;
-
-    export type WorldObjectProperties = {
-        x?: number;
-        y?: number;
-        name?: string;
-        layer?: string;
-        physicsGroup?: string;
-    }
 }
 
 class World {
@@ -191,8 +183,7 @@ class World {
         this.physicsGroups[name] = new World.PhysicsGroup(name, config);
     }
 
-    addWorldObject<T extends WorldObject>(obj: T, worldProperties?: World.WorldObjectProperties): T {
-        World.setWorldObjectProperties(obj, worldProperties);
+    addWorldObject<T extends WorldObject>(obj: T): T {
         return World.Actions.addWorldObjectToWorld(obj, this);
     }
     
@@ -633,21 +624,5 @@ namespace World {
             if (_.isEmpty(children)) return [];
             return A.clone(children).filter(child => removeChildFromParent(child));
         }
-    }
-
-    export function setWorldObjectProperties(worldObject: WorldObject, worldProperties: World.WorldObjectProperties) {
-        if (!worldProperties) return;
-
-        if (worldProperties.x !== undefined) {
-            worldObject.localx = worldProperties.x;
-            worldObject.lastx = worldObject.x;
-        }
-        if (worldProperties.y !== undefined) {
-            worldObject.localy = worldProperties.y;
-            worldObject.lasty = worldObject.y;
-        }
-        if (worldProperties.name !== undefined) worldObject.name = worldProperties.name;
-        if (worldProperties.layer !== undefined) worldObject.layer = worldProperties.layer;
-        if (worldProperties.physicsGroup !== undefined) worldObject.physicsGroup = worldProperties.physicsGroup;
     }
 }

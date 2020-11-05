@@ -13,6 +13,9 @@ class AssetCache {
     }
 
     static getTexture(key: string): Texture {
+        if (this.isNoneTexture(key)) {
+            return Texture.NONE;
+        }
         if (!this.textures[key]) {
             error(`Texture '${key}' does not exist.`);
             return Texture.NONE;
@@ -33,5 +36,9 @@ class AssetCache {
             error(`Tilemap '${key}' does not exist.`);
         }
         return this.tilemaps[key];
+    }
+
+    static isNoneTexture(key: string) {
+        return !key || key === 'none' || key.startsWith('none_');
     }
 }

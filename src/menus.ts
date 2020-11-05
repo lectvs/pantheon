@@ -6,21 +6,17 @@ class IntroMenu extends Menu {
         
         this.backgroundColor = 0x000000;
 
-        let introtext = this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16));
-        introtext.setText("- a game by hayden mccraw -");
-
-        introtext.x = global.gameWidth/2 - introtext.getTextWidth()/2;
-        introtext.y = global.gameHeight/2 - introtext.getTextHeight()/2;
+        let introtext = this.addWorldObject(new SpriteText({
+            x: global.gameWidth/2, y: global.gameHeight/2,
+            text: "- a game by hayden mccraw -",
+            anchor: Anchor.CENTER
+        }));
 
         this.runScript(S.chain(
             S.wait(1.5),
-            S.call(() => {
-                introtext.setText("- made in 48 hours\n  for ludum dare 47 -");
-                introtext.x = global.gameWidth/2 - introtext.getTextWidth()/2;
-                introtext.y = global.gameHeight/2 - introtext.getTextHeight()/2;
-            }),
+            S.call(() => introtext.setText("- made in 48 hours\n  for ludum dare 47 -")),
             S.wait(1.5),
-            S.call(() => { menuSystem.loadMenu(MainMenu); }),
+            S.call(() => menuSystem.loadMenu(MainMenu)),
         ));
     }
 }
@@ -32,51 +28,45 @@ class MainMenu extends Menu {
         this.backgroundColor = 0x000000;
         this.volume = 0;
 
-        let titleText = this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16));
-        titleText.x = 20;
-        titleText.y = 20;
-        titleText.setText("- HOOP KNIGHT -");
+        this.addWorldObject(new SpriteText({
+            x: 20, y: 20,
+            text: "- HOOP KNIGHT -"
+        }));
 
-        let normalModeButton = this.addWorldObject(new MenuTextButton({
-            font: Assets.fonts.DELUXE16,
+        this.addWorldObject(new MenuTextButton({
+            x: 20, y: 50,
+            text: "play normal mode",
             onClick: () => {
                 HARD_DIFFICULTY = false;
                 this.menuSystem.game.playSound('click');
                 menuSystem.game.startGame();
             }
         }));
-        normalModeButton.x = 20;
-        normalModeButton.y = 50;
-        normalModeButton.setText("play normal mode");
 
-        let hardModeButton = this.addWorldObject(new MenuTextButton({
-            font: Assets.fonts.DELUXE16,
+        this.addWorldObject(new MenuTextButton({
+            x: 20, y: 68,
+            text: "play hard mode (no health regen)",
             onClick: () => {
                 HARD_DIFFICULTY = true;
                 this.menuSystem.game.playSound('click');
                 menuSystem.game.startGame();
             }
         }));
-        hardModeButton.x = 20;
-        hardModeButton.y = 68;
-        hardModeButton.setText("play hard mode (no health regen)");
 
-        let controlsButton = this.addWorldObject(new MenuTextButton({
-            font: Assets.fonts.DELUXE16,
+        this.addWorldObject(new MenuTextButton({
+            x: 20, y: 100,
+            text: "controls",
             onClick: () => {
                 this.menuSystem.game.playSound('click');
                 menuSystem.loadMenu(ControlsMenu);
             }
         }));
-        controlsButton.x = 20;
-        controlsButton.y = 100;
-        controlsButton.setText("controls");
 
-        let readMeText = this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16));
-        readMeText.x = 100;
-        readMeText.y = 100;
-        readMeText.style.color = 0xFFFF00;
-        readMeText.setText("<-- read me!");
+        this.addWorldObject(new SpriteText({
+            x: 100, y: 100,
+            text: "<-- read me!",
+            style: { color: 0xFFFF00 }
+        }));
     }
 }
 
@@ -87,32 +77,28 @@ class PauseMenu extends Menu {
         this.backgroundColor = 0x000000;
         this.volume = 0;
 
-        let pausedText = this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16));
-        pausedText.x = 20;
-        pausedText.y = 20;
-        pausedText.setText("- paused -");
+        this.addWorldObject(new SpriteText({
+            x: 20, y: 20,
+            text: "- paused -"
+        }));
 
-        let resumeButton = this.addWorldObject(new MenuTextButton({
-            font: Assets.fonts.DELUXE16,
+        this.addWorldObject(new MenuTextButton({
+            x: 20, y: 50,
+            text: "resume",
             onClick: () => {
                 this.menuSystem.game.playSound('click');
                 menuSystem.game.unpauseGame();
             }
         }));
-        resumeButton.x = 20;
-        resumeButton.y = 50;
-        resumeButton.setText("resume");
 
-        let optionsButton = this.addWorldObject(new MenuTextButton({
-            font: Assets.fonts.DELUXE16,
+        this.addWorldObject(new MenuTextButton({
+            x: 20, y: 80,
+            text: "options",
             onClick: () => {
                 this.menuSystem.game.playSound('click');
                 menuSystem.loadMenu(OptionsMenu);
             }
         }));
-        optionsButton.x = 20;
-        optionsButton.y = 80;
-        optionsButton.setText("options");
     }
 
     update() {
@@ -132,37 +118,33 @@ class OptionsMenu extends Menu {
         this.backgroundColor = 0x000000;
         this.volume = 0;
 
-        let optionsText = this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16));
-        optionsText.x = 20;
-        optionsText.y = 20;
-        optionsText.setText("- options -");
+        this.addWorldObject(new SpriteText({
+            x: 20, y: 20,
+            text: "- options -"
+        }));
 
-        let volumeText = this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16));
-        volumeText.x = 20;
-        volumeText.y = 50;
-        volumeText.setText("volume:");
+        this.addWorldObject(new SpriteText({
+            x: 20, y: 50,
+            text: "volume:"
+        }));
 
-        let volumeSelector = this.addWorldObject(new MenuNumericSelector({
-            font: Assets.fonts.DELUXE16,
+        this.addWorldObject(new MenuNumericSelector({
+            x: 84, y: 50,
             barLength: 10,
             minValue: 0,
             maxValue: 1,
             getValue: () => Options.getOption('volume'),
             setValue: v => Options.updateOption('volume', v)
         }));
-        volumeSelector.x = 84;
-        volumeSelector.y = 50;
 
         let backButton = this.addWorldObject(new MenuTextButton({
-            font: Assets.fonts.DELUXE16,
+            x: 20, y: 110,
+            text: "back",
             onClick: () => {
                 this.menuSystem.game.playSound('click');
                 menuSystem.back();
             }
         }));
-        backButton.x = 20;
-        backButton.y = 110;
-        backButton.setText("back");
     }
 
     update() {
@@ -182,36 +164,33 @@ class ControlsMenu extends Menu {
         this.backgroundColor = 0x000000;
         this.volume = 0;
 
-        this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "- controls -"), {
+        this.addWorldObject(new SpriteText({
             x: 20, y: 15,
-        });
+            text: "- controls -"
+        }));
 
-        this.addWorldObject(new SpriteText(Assets.fonts.DELUXE16, "WASD or ARROW KEYS - move\n\nswing the hoop faster to deal more damage!"), {
+        this.addWorldObject(new SpriteText({
             x: 20, y: 42,
-        });
+            text: "WASD or ARROW KEYS - move\n\nswing the hoop faster to deal more damage!"
+        }));
 
-        let player = this.addWorldObject(new Player(), {
+        let player = this.addWorldObject(new Player({
             x: 250, y: 180,
-        });
-        player.effects.updateFromConfig({
-            outline: { color: 0xFFFFFF }
-        });
+            effects: { outline: { color: 0xFFFFFF } }
+        }));
 
-        this.addWorldObject(new Hoop(), {
-            x: 240, y: 180,
-        });
+        this.addWorldObject(new Hoop({
+            x: 240, y: 180
+        }));
 
         this.addWorldObject(new MenuTextButton({
-            font: Assets.fonts.DELUXE16,
+            x: 20, y: 240,
             text: "back",
             onClick: () => {
                 this.menuSystem.game.playSound('click');
                 menuSystem.back();
             }
-        }), {
-            x: 20, y: 240,
-        });
-
+        }));
 
         this.runScript(S.chain(
             S.loopFor(2, S.chain(

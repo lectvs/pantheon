@@ -9,25 +9,27 @@ class Mage extends Enemy {
 
     private willSpawnNext: boolean;
 
-    constructor() {
+    constructor(config: Sprite.Config) {
         super({
+            bounds: new CircleBounds(0, -4, 8),
+            animations: [
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'mage', textures: [0, 1, 2], frameRate: 8, count: -1 }),
+                        Animations.fromTextureList({ name: 'run', texturePrefix: 'mage', textures: [4, 5], frameRate: 4, count: -1,
+                        overrides: {
+                            2: { callback: () => { this.world.playSound('walk'); }}
+                        }
+                }),
+                Animations.fromTextureList({ name: 'wave', texturePrefix: 'mage', textures: [8, 9], frameRate: 2, count: -1 })
+            ],
+            defaultAnimation: 'idle',
+            effects: { outline: { color: 0x000000 } },
             maxHealth: 1,
             immuneTime: 0.5,
             weight: 1,
             speed: 70,
             deadTexture: 'mage_dead',
+            ...config,
         });
-
-        this.bounds = new CircleBounds(0, -4, 8);
-        this.effects.addOutline.color = 0x000000;
-        this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'mage_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
-        this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'mage_', textures: [4, 5], frameRate: 4, count: -1,
-                overrides: {
-                    2: { callback: () => { this.world.playSound('walk'); }}
-                }
-        }));
-        this.addAnimation(Animations.fromTextureList({ name: 'wave', texturePrefix: 'mage_', textures: [8, 9], frameRate: 2, count: -1 }));
-        this.playAnimation('idle');
 
         this.willSpawnNext = true;
 
@@ -123,12 +125,11 @@ class Mage extends Enemy {
     }
 
     spawn() {
-        let runner = new Runner();
-        runner.x = this.targetPos.x;
-        runner.y = this.targetPos.y;
-        runner.layer = 'main';
-        runner.physicsGroup = 'enemies';
-        this.world.addWorldObject(spawn(runner));
+        this.world.addWorldObject(spawn(new Runner({
+            x: this.targetPos.x, y: this.targetPos.y,
+            layer: 'main',
+            physicsGroup: 'enemies'
+        })));
     }
 
     onCollide(other: PhysicsWorldObject) {

@@ -1,9 +1,7 @@
 /// <reference path="../worldObject/spriteText/spriteText.ts" />
 
 namespace MenuTextButton {
-    export type Config = {
-        font: SpriteText.Font;
-        text?: string;
+    export type Config = SpriteText.Config & {
         onClick?: () => any;
     }
 }
@@ -12,7 +10,7 @@ class MenuTextButton extends SpriteText {
     onClick: () => any;
 
     constructor(config: MenuTextButton.Config) {
-        super(config.font, config.text ?? "");
+        super(config);
         this.onClick = config.onClick ?? Utils.NOOP;
     }
 
@@ -35,8 +33,7 @@ class MenuTextButton extends SpriteText {
 }
 
 namespace MenuNumericSelector {
-    export type Config = {
-        font: SpriteText.Font;
+    export type Config = SpriteText.Config & {
         barLength: number;
         minValue: number;
         maxValue: number;
@@ -53,7 +50,7 @@ class MenuNumericSelector extends SpriteText {
     setValue: (value: number) => any;
 
     constructor(config: MenuNumericSelector.Config) {
-        super(config.font);
+        super(config);
         this.barLength = config.barLength;
         this.minValue = config.minValue;
         this.maxValue = config.maxValue;
@@ -111,8 +108,7 @@ class MenuNumericSelector extends SpriteText {
 }
 
 namespace MenuControlMapper {
-    export type Config = {
-        font: SpriteText.Font;
+    export type Config = SpriteText.Config & {
         controlName: string;
     }
 }
@@ -122,7 +118,7 @@ class MenuControlMapper extends SpriteText {
     selectedBinding: string;
 
     constructor(config: MenuControlMapper.Config) {
-        super(config.font);
+        super(config);
         this.controlName = config.controlName;
         this.selectedBinding = undefined;
 
@@ -168,15 +164,14 @@ class MenuControlMapper extends SpriteText {
             let bindingName = this.getBindingName(binding);
 
             let bindingButton = this.addChild(new MenuTextButton({
+                name: this.getBindingMappingObjectName(binding),
                 font: this.font,
                 text: bindingName,
                 onClick: () => {
                     global.game.playSound('click');
                     this.selectBinding(bindingId);
                 }
-            }), {
-                name: this.getBindingMappingObjectName(binding)
-            });
+            }));
             bindingButton.localx = bindingx;
             bindingButton.style = this.style;
 

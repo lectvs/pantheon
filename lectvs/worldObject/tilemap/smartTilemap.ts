@@ -1,16 +1,23 @@
 /// <reference path="./tilemap.ts" />
 
+namespace SmartTilemap {
+    export type Config = ReplaceConfigCallbacks<Tilemap.Config, SmartTilemap> & {
+        smartConfig: SmartTilemap.Util.SmartTilemapConfig;
+    }
+}
+
 class SmartTilemap extends Tilemap {
     baseTilemap: Tilemap.Tilemap;
     smartConfig: SmartTilemap.Util.SmartTilemapConfig;
 
-    constructor(tilemap: string | Tilemap.Tilemap, smartConfig: SmartTilemap.Util.SmartTilemapConfig, layer: number) {
-        super(tilemap, layer);
+    constructor(config: SmartTilemap.Config) {
+        super(config);
+
+        this.smartConfig = config.smartConfig;
 
         this.baseTilemap = this.tilemap;
-        this.smartConfig = smartConfig;
-
         this.tilemap = SmartTilemap.Util.getSmartTilemap(this.baseTilemap, this.smartConfig);
+
         this.dirty = true;
     }
 

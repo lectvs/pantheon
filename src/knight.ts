@@ -9,38 +9,39 @@ class Knight extends Enemy {
 
     private willDashNext: boolean;
 
-    constructor(tint: number = 0xFFFFFF) {
+    constructor(config: Sprite.Config) {
         super({
+            bounds: new CircleBounds(0, -4, 8),
+            animations: [
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight', textures: [0, 1, 2], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'run', texturePrefix: 'enemyknight', textures: [4, 5, 6, 7], frameRate: 8, count: -1,
+                        overrides: {
+                            2: { callback: () => { this.world.playSound('walk'); }}
+                        }
+                }),
+                Animations.fromTextureList({ name: 'windup', texturePrefix: 'enemyknight', textures: [8], frameRate: 4, count: -1 })
+            ],
+            defaultAnimation: 'idle',
+            effects: { outline: { color: 0x000000 } },
             maxHealth: 1.5,
             immuneTime: 0.5,
             weight: 1,
             speed: 100,
             deadTexture: 'enemyknight_dead',
+            ...config,
         });
-
-        this.tint = tint;
-        this.bounds = new CircleBounds(0, -4, 8);
-        this.effects.addOutline.color = 0x000000;
-        this.addAnimation(Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight_', textures: [0, 1, 2], frameRate: 8, count: -1 }));
-        this.addAnimation(Animations.fromTextureList({ name: 'run', texturePrefix: 'enemyknight_', textures: [4, 5, 6, 7], frameRate: 8, count: -1,
-                overrides: {
-                    2: { callback: () => { this.world.playSound('walk'); }}
-                }
-        }));
-        this.addAnimation(Animations.fromTextureList({ name: 'windup', texturePrefix: 'enemyknight_', textures: [8], frameRate: 4, count: -1 }));
-        this.playAnimation('idle');
 
         let lightTint = this.tint === 0xFFFFFF ? 0x00FFFF : this.tint - 0xFF0000;
         let lightTexture = new AnchoredTexture(0, 0, Texture.filledRect(1024, 16, lightTint, 0.5));
         lightTexture.anchorX = 1/128;
         lightTexture.anchorY = 1/2;
 
-        this.light = this.addChild(new Sprite(), {
+        this.light = this.addChild(new Sprite({
             x: 0, y: -4,
+            texture: lightTexture,
+            alpha: 0,
             layer: 'bg'
-        });
-        this.light.setTexture(lightTexture);
-        this.light.alpha = 0;
+        }));
 
         this.willDashNext = true;
 

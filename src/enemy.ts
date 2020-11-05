@@ -1,5 +1,5 @@
 namespace Enemy {
-    export type Config = {
+    export type Config = Sprite.Config & {
         maxHealth: number;
         immuneTime: number;
         weight: number;
@@ -21,7 +21,7 @@ class Enemy extends Sprite {
     get immune() { return this.immunitySm.isImmune(); }
 
     constructor(config: Enemy.Config) {
-        super();
+        super(config);
 
         this.health = config.maxHealth;
         this.immuneTime = config.immuneTime;

@@ -42,16 +42,16 @@ namespace S {
 
     export function jump(sprite: Sprite, peakDelta: number, time: number, landOnGround: boolean = false): Script.Function {
         return runInCurrentWorld(function*() {
-            let start = sprite.offset.y;
+            let start = sprite.offsetY;
             let groundDelta = landOnGround ? -start : 0;
 
             let timer = new Timer(time);
             while (!timer.done) {
-                sprite.offset.y = M.jumpParabola(start, -peakDelta, groundDelta, timer.progress);
+                sprite.offsetY = M.jumpParabola(start, -peakDelta, groundDelta, timer.progress);
                 timer.update(global.script.delta);
                 yield;
             }
-            sprite.offset.y = start + groundDelta;
+            sprite.offsetY = start + groundDelta;
         })
     }
 
