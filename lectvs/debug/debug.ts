@@ -3,7 +3,6 @@ namespace Debug {
         debug: boolean;
         font: SpriteText.Font;
         fontStyle: SpriteText.Style;
-        cheatsEnabled: boolean;
         allPhysicsBounds: boolean;
         moveCameraWithArrows: boolean; 
         showOverlay: boolean;
@@ -25,7 +24,6 @@ class Debug {
         Debug.DEBUG = config.debug;
         Debug.FONT = config.font;
         Debug.FONT_STYLE = config.fontStyle;
-        Debug.CHEATS_ENABLED = config.cheatsEnabled;
         Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
         Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
         Debug.SHOW_OVERLAY = config.showOverlay;
@@ -53,10 +51,6 @@ class Debug {
     
     static FONT: SpriteText.Font;
     static FONT_STYLE: SpriteText.Style;
-
-    private static _CHEATS_ENABLED: boolean;
-    static get CHEATS_ENABLED() { return this.DEBUG && this._CHEATS_ENABLED; }
-    static set CHEATS_ENABLED(value: boolean) { this._CHEATS_ENABLED = value; }
 
     private static _ALL_PHYSICS_BOUNDS: boolean;
     static get ALL_PHYSICS_BOUNDS() { return this.DEBUG && this._ALL_PHYSICS_BOUNDS; }

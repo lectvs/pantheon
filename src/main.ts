@@ -93,7 +93,6 @@ Main.loadConfig({
         debug: true,
         font: Assets.fonts.DELUXE16,
         fontStyle: { color: 0xFFFFFF },
-        cheatsEnabled: true,
         allPhysicsBounds: false,
         moveCameraWithArrows: true,
         showOverlay: true,

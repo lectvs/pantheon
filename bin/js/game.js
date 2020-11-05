@@ -2261,27 +2261,6 @@ var S;
     }
     S.showSlide = showSlide;
 })(S || (S = {}));
-var Cheat = /** @class */ (function () {
-    function Cheat() {
-    }
-    Cheat.init = function (config) {
-        var _loop_1 = function (cheat) {
-            var fn = config[cheat];
-            Object.defineProperty(this_1, cheat, {
-                get: function () {
-                    if (!Debug.CHEATS_ENABLED)
-                        return undefined;
-                    return fn;
-                }
-            });
-        };
-        var this_1 = this;
-        for (var cheat in config) {
-            _loop_1(cheat);
-        }
-    };
-    return Cheat;
-}());
 var Debug = /** @class */ (function () {
     function Debug() {
     }
@@ -2289,7 +2268,6 @@ var Debug = /** @class */ (function () {
         Debug.DEBUG = config.debug;
         Debug.FONT = config.font;
         Debug.FONT_STYLE = config.fontStyle;
-        Debug.CHEATS_ENABLED = config.cheatsEnabled;
         Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
         Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
         Debug.SHOW_OVERLAY = config.showOverlay;
@@ -2312,12 +2290,6 @@ var Debug = /** @class */ (function () {
     Object.defineProperty(Debug, "DEBUG", {
         get: function () { return this._DEBUG; },
         set: function (value) { this._DEBUG = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Debug, "CHEATS_ENABLED", {
-        get: function () { return this.DEBUG && this._CHEATS_ENABLED; },
-        set: function (value) { this._CHEATS_ENABLED = value; },
         enumerable: false,
         configurable: true
     });
@@ -4230,12 +4202,12 @@ var MenuControlMapper = /** @class */ (function (_super) {
         var controlBindings = controls[this.controlName];
         var bindingx = 0;
         var text = "";
-        var _loop_2 = function (binding) {
+        var _loop_1 = function (binding) {
             var bindingId = binding;
-            var bindingName = this_2.getBindingName(binding);
-            var bindingButton = this_2.addChild(new MenuTextButton({
-                name: this_2.getBindingMappingObjectName(binding),
-                font: this_2.font,
+            var bindingName = this_1.getBindingName(binding);
+            var bindingButton = this_1.addChild(new MenuTextButton({
+                name: this_1.getBindingMappingObjectName(binding),
+                font: this_1.font,
                 text: bindingName,
                 onClick: function () {
                     global.game.playSound('click');
@@ -4243,15 +4215,15 @@ var MenuControlMapper = /** @class */ (function (_super) {
                 }
             }));
             bindingButton.localx = bindingx;
-            bindingButton.style = this_2.style;
-            bindingx += (bindingName.length + 3) * this_2.font.charWidth;
+            bindingButton.style = this_1.style;
+            bindingx += (bindingName.length + 3) * this_1.font.charWidth;
             text += " ".repeat(bindingName.length) + " / ";
         };
-        var this_2 = this;
+        var this_1 = this;
         try {
             for (var controlBindings_1 = __values(controlBindings), controlBindings_1_1 = controlBindings_1.next(); !controlBindings_1_1.done; controlBindings_1_1 = controlBindings_1.next()) {
                 var binding = controlBindings_1_1.value;
-                _loop_2(binding);
+                _loop_1(binding);
             }
         }
         catch (e_18_1) { e_18 = { error: e_18_1 }; }
@@ -6292,7 +6264,7 @@ var StoryManager = /** @class */ (function () {
         this.eventManager = new StoryEventManager(theater, events);
         this.storyConfig = new StoryConfig(theater, storyConfig);
         this.stateMachine = new StateMachine();
-        var _loop_3 = function (storyNodeName) {
+        var _loop_2 = function (storyNodeName) {
             var storyNode = storyboard[storyNodeName];
             var state = {};
             if (storyNode.type === 'cutscene') {
@@ -6334,11 +6306,11 @@ var StoryManager = /** @class */ (function () {
                     },
                 };
             });
-            this_3.stateMachine.addState(storyNodeName, state);
+            this_2.stateMachine.addState(storyNodeName, state);
         };
-        var this_3 = this;
+        var this_2 = this;
         for (var storyNodeName in storyboard) {
-            _loop_3(storyNodeName);
+            _loop_2(storyNodeName);
         }
         var nodeToStartOn = this.fastForward(storyboardPath);
         this.stateMachine.setState(nodeToStartOn);
@@ -9357,7 +9329,7 @@ var Tilemap = /** @class */ (function (_super) {
                 }
             }
         }
-        var _loop_4 = function (zValue) {
+        var _loop_3 = function (zValue) {
             zTextureSlots[zValue].bounds.x = zTextureSlots[zValue].tileBounds.left * tileset.tileWidth;
             zTextureSlots[zValue].bounds.y = zTextureSlots[zValue].tileBounds.top * tileset.tileHeight;
             zTextureSlots[zValue].bounds.width = (zTextureSlots[zValue].tileBounds.right - zTextureSlots[zValue].tileBounds.left + 1) * tileset.tileWidth;
@@ -9366,7 +9338,7 @@ var Tilemap = /** @class */ (function (_super) {
             zTextureSlots[zValue].frames = A.range(numFrames).map(function (i) { return new BasicTexture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height); });
         };
         for (var zValue in zTextureSlots) {
-            _loop_4(zValue);
+            _loop_3(zValue);
         }
         return zTextureSlots;
     }
@@ -9903,8 +9875,7 @@ var Bullet = /** @class */ (function (_super) {
     };
     return Bullet;
 }(Sprite));
-/// <reference path="../lectvs/debug/cheat.ts" />
-Cheat.init({
+var Cheat = {
     'win': function () { return global.world.select.type(Throne).damage(5); },
     'lose': function () { return A.range(5).forEach(function (i) { return global.world.select.type(Player).damage(); }); },
     'killall': function () {
@@ -9921,7 +9892,7 @@ Cheat.init({
         Debug.SKIP_RATE = 1;
         global.theater.storyManager.setNode('spawn_wave_king');
     },
-});
+};
 function deadBody(parent, texture) {
     return new Sprite({
         name: 'deadbody',
@@ -10745,7 +10716,6 @@ Main.loadConfig({
         debug: true,
         font: Assets.fonts.DELUXE16,
         fontStyle: { color: 0xFFFFFF },
-        cheatsEnabled: true,
         allPhysicsBounds: false,
         moveCameraWithArrows: true,
         showOverlay: true,
@@ -11764,25 +11734,25 @@ var UI = /** @class */ (function (_super) {
         var _this = this;
         var player = this.world.select.type(Player);
         if (player.health > this.shields.length) {
-            var _loop_5 = function (i) {
-                var shield = this_4.addChild(new Sprite({
-                    x: 20 + 36 * this_4.shields.length,
+            var _loop_4 = function (i) {
+                var shield = this_3.addChild(new Sprite({
+                    x: 20 + 36 * this_3.shields.length,
                     y: 20,
                     texture: 'ui_shield',
                     effects: { silhouette: { color: 0x00FFFF, alpha: 0 } },
-                    layer: this_4.layer
+                    layer: this_3.layer
                 }));
-                this_4.shields.push(shield);
-                this_4.world.runScript(S.chain(S.doOverTime(0.3, function (t) { return shield.effects.silhouette.alpha = t; }), S.doOverTime(0.3, function (t) { return shield.effects.silhouette.amount = 1 - t; })));
+                this_3.shields.push(shield);
+                this_3.world.runScript(S.chain(S.doOverTime(0.3, function (t) { return shield.effects.silhouette.alpha = t; }), S.doOverTime(0.3, function (t) { return shield.effects.silhouette.amount = 1 - t; })));
             };
-            var this_4 = this;
+            var this_3 = this;
             for (var i = 0; i < player.health - this.shields.length; i++) {
-                _loop_5(i);
+                _loop_4(i);
             }
         }
         if (player.health < this.shields.length) {
-            var _loop_6 = function (i) {
-                var shield = this_5.shields.pop();
+            var _loop_5 = function (i) {
+                var shield = this_4.shields.pop();
                 shield.getTexture().subdivide(4, 4).forEach(function (subdivision) {
                     var shard = _this.addChild(new Sprite({
                         x: shield.localx - 16 + subdivision.x,
@@ -11799,9 +11769,9 @@ var UI = /** @class */ (function (_super) {
                 });
                 shield.removeFromWorld();
             };
-            var this_5 = this;
+            var this_4 = this;
             for (var i = 0; i < this.shields.length - player.health; i++) {
-                _loop_6(i);
+                _loop_5(i);
             }
         }
     };
