@@ -3836,12 +3836,12 @@ var MetricsMenu = /** @class */ (function (_super) {
 var SpriteText = /** @class */ (function (_super) {
     __extends(SpriteText, _super);
     function SpriteText(config) {
-        var _a, _b, _c, _d, _e;
+        var _a, _b, _c, _d, _e, _f;
         var _this = _super.call(this, config) || this;
         if (!config.font && !SpriteText.DEFAULT_FONT) {
             error("SpriteText must have a font provided, or a default font set");
         }
-        _this.font = (_b = (_a = config.font) !== null && _a !== void 0 ? _a : SpriteText.DEFAULT_FONT) !== null && _b !== void 0 ? _b : {
+        _this._font = (_b = (_a = config.font) !== null && _a !== void 0 ? _a : SpriteText.DEFAULT_FONT) !== null && _b !== void 0 ? _b : {
             texturePrefix: 'none',
             charWidth: 0,
             charHeight: 0,
@@ -3854,14 +3854,20 @@ var SpriteText = /** @class */ (function (_super) {
             offset: 0,
         });
         _this.lastStyle = O.deepClone(_this.style);
-        _this.anchor = (_d = config.anchor) !== null && _d !== void 0 ? _d : Anchor.TOP_LEFT;
+        _this.maxWidth = (_d = config.maxWidth) !== null && _d !== void 0 ? _d : 0;
+        _this.anchor = (_e = config.anchor) !== null && _e !== void 0 ? _e : Anchor.TOP_LEFT;
         _this.effects = new Effects();
         _this.effects.updateFromConfig(config.effects);
         _this.mask = config.mask;
-        _this.setText((_e = config.text) !== null && _e !== void 0 ? _e : "");
+        _this.setText((_f = config.text) !== null && _f !== void 0 ? _f : "");
         _this.dirty = true;
         return _this;
     }
+    Object.defineProperty(SpriteText.prototype, "font", {
+        get: function () { return this._font; },
+        enumerable: false,
+        configurable: true
+    });
     Object.defineProperty(SpriteText.prototype, "style", {
         get: function () { return this._style; },
         set: function (value) {
@@ -3925,7 +3931,7 @@ var SpriteText = /** @class */ (function (_super) {
         }
     };
     SpriteText.prototype.clear = function () {
-        this.setText("", true);
+        this.setText("");
     };
     SpriteText.prototype.getTextWidth = function () {
         return SpriteText.getWidthOfCharList(this.chars);
@@ -3949,12 +3955,20 @@ var SpriteText = /** @class */ (function (_super) {
         bounds.y += this.renderScreenY - this.y;
         return bounds;
     };
-    SpriteText.prototype.setText = function (text, force) {
-        if (force === void 0) { force = false; }
-        // TODO: remove force parameter after rewriting dialog box
-        if (!force && text === this.currentText)
+    SpriteText.prototype.pushChar = function (char) {
+        this.chars.push(char);
+        this.dirty = true;
+        // Set text to undefined so any text update will not short-circuit.
+        this.currentText = undefined;
+    };
+    SpriteText.prototype.setMaxWidth = function (maxWidth) {
+        this.maxWidth = maxWidth;
+        this.dirty = true;
+    };
+    SpriteText.prototype.setText = function (text) {
+        if (text === this.currentText)
             return;
-        this.chars = SpriteTextConverter.textToCharListWithWordWrap(text, this.font, 0);
+        this.chars = SpriteTextConverter.textToCharListWithWordWrap(text, this.font, this.maxWidth);
         this.currentText = text;
         this.dirty = true;
     };
@@ -5530,7 +5544,7 @@ var WarpFilter = /** @class */ (function (_super) {
 var DialogBox = /** @class */ (function (_super) {
     __extends(DialogBox, _super);
     function DialogBox(config) {
-        var _this = _super.call(this) || this;
+        var _this = _super.call(this, config) || this;
         _this.charQueue = [];
         _this.textAreaFull = config.textAreaFull;
         _this.textAreaPortrait = config.textAreaPortrait;
@@ -5576,8 +5590,7 @@ var DialogBox = /** @class */ (function (_super) {
     };
     DialogBox.prototype.advanceCharacter = function () {
         if (!_.isEmpty(this.charQueue) && this.charQueue[0].bottom <= this.spriteTextOffset + this.textArea.height) {
-            this.spriteText.chars.push(this.charQueue.shift());
-            this.spriteText.dirty = true;
+            this.spriteText.pushChar(this.charQueue.shift());
             return true;
         }
         return false;
@@ -10696,20 +10709,15 @@ Main.loadConfig({
                 getStoryConfig: getStoryConfig,
             },
             getParty: getParty,
-            dialogBox: function () {
-                var dialogBox = new DialogBox({
-                    dialogFont: Assets.fonts.DELUXE16,
-                    textAreaFull: { x: -192, y: -42, width: 384, height: 84 },
-                    textAreaPortrait: { x: -200, y: -50, width: 400, height: 100 },
-                    portraitPosition: { x: 78, y: 0 },
-                    startSound: 'click',
-                });
-                dialogBox.x = 200;
-                dialogBox.y = 250;
-                dialogBox.setTexture('dialogbox');
-                dialogBox.ignoreCamera = true;
-                return dialogBox;
-            },
+            dialogBox: function () { return new DialogBox({
+                x: 200, y: 250,
+                texture: 'dialogbox',
+                dialogFont: Assets.fonts.DELUXE16,
+                textAreaFull: { x: -192, y: -42, width: 384, height: 84 },
+                textAreaPortrait: { x: -200, y: -50, width: 400, height: 100 },
+                portraitPosition: { x: 78, y: 0 },
+                startSound: 'click',
+            }); },
         },
     },
     debug: {

@@ -1,7 +1,7 @@
 /// <reference path="../worldObject/sprite/sprite.ts" />
 
 namespace DialogBox {
-    export type Config = {
+    export type Config = Sprite.Config & {
         dialogFont: SpriteText.Font;
         textAreaFull: Rect;
         textAreaPortrait: Rect;
@@ -26,7 +26,7 @@ class DialogBox extends Sprite {
     private characterTimer: Timer;
 
     constructor(config: DialogBox.Config) {
-        super();
+        super(config);
 
         this.charQueue = [];
         
@@ -83,8 +83,7 @@ class DialogBox extends Sprite {
 
     advanceCharacter() {
         if (!_.isEmpty(this.charQueue) && this.charQueue[0].bottom <= this.spriteTextOffset + this.textArea.height) {
-            this.spriteText.chars.push(this.charQueue.shift());
-            this.spriteText.dirty = true;
+            this.spriteText.pushChar(this.charQueue.shift());
             return true;
         }
         return false;

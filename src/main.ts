@@ -72,20 +72,15 @@ Main.loadConfig({
                 getStoryConfig: getStoryConfig,
             },
             getParty: getParty,
-            dialogBox: () => {
-                let dialogBox = new DialogBox({
-                    dialogFont: Assets.fonts.DELUXE16,
-                    textAreaFull: { x: -192, y: -42, width: 384, height: 84 },
-                    textAreaPortrait: { x: -200, y: -50, width: 400, height: 100 },
-                    portraitPosition: { x: 78, y: 0 },
-                    startSound: 'click',
-                });
-                dialogBox.x = 200;
-                dialogBox.y = 250;
-                dialogBox.setTexture('dialogbox');
-                dialogBox.ignoreCamera = true;
-                return dialogBox;
-            },
+            dialogBox: () => new DialogBox({
+                x: 200, y: 250,
+                texture: 'dialogbox',
+                dialogFont: Assets.fonts.DELUXE16,
+                textAreaFull: { x: -192, y: -42, width: 384, height: 84 },
+                textAreaPortrait: { x: -200, y: -50, width: 400, height: 100 },
+                portraitPosition: { x: 78, y: 0 },
+                startSound: 'click',
+            }),
         },
     },
 

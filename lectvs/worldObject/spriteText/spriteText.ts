@@ -5,6 +5,7 @@ namespace SpriteText {
         font?: Font;
         text?: string;
         anchor?: Pt;
+        maxWidth?: number;
         style?: Style;
         effects?: Effects.Config;
         mask?: Mask.WorldObjectMaskConfig;
@@ -28,8 +29,9 @@ namespace SpriteText {
 }
 
 class SpriteText extends WorldObject {
-    font: SpriteText.Font;
-    chars: SpriteText.Character[];
+    private _font: SpriteText.Font;
+    get font() { return this._font; }
+    private chars: SpriteText.Character[];
 
     private _style: SpriteText.Style;
     get style() { return this._style; }
@@ -38,8 +40,9 @@ class SpriteText extends WorldObject {
         this._style.color = value.color;
         this._style.offset = value.offset;
     }
-
     private lastStyle: SpriteText.Style;
+
+    private maxWidth: number;
 
     anchor: Pt;
 
@@ -48,7 +51,7 @@ class SpriteText extends WorldObject {
 
     private staticTexture: Texture;
     private currentText: string;
-    dirty: boolean;
+    private dirty: boolean;
 
     constructor(config: SpriteText.Config) {
         super(config);
@@ -57,7 +60,7 @@ class SpriteText extends WorldObject {
             error("SpriteText must have a font provided, or a default font set");
         }
 
-        this.font = config.font ?? SpriteText.DEFAULT_FONT ?? {
+        this._font = config.font ?? SpriteText.DEFAULT_FONT ?? {
             texturePrefix: 'none',
             charWidth: 0,
             charHeight: 0,
@@ -73,6 +76,7 @@ class SpriteText extends WorldObject {
 
         this.lastStyle = O.deepClone(this.style);
 
+        this.maxWidth = config.maxWidth ?? 0;
         this.anchor = config.anchor ?? Anchor.TOP_LEFT;
         this.effects = new Effects();
         this.effects.updateFromConfig(config.effects);
@@ -132,7 +136,7 @@ class SpriteText extends WorldObject {
     }
 
     clear() {
-        this.setText("", true);
+        this.setText("");
     }
 
     getTextWidth() {
@@ -161,10 +165,21 @@ class SpriteText extends WorldObject {
         return bounds;
     }
 
-    setText(text: string, force: boolean = false) {
-        // TODO: remove force parameter after rewriting dialog box
-        if (!force && text === this.currentText) return;
-        this.chars = SpriteTextConverter.textToCharListWithWordWrap(text, this.font, 0);
+    pushChar(char: SpriteText.Character) {
+        this.chars.push(char);
+        this.dirty = true;
+        // Set text to undefined so any text update will not short-circuit.
+        this.currentText = undefined;
+    }
+
+    setMaxWidth(maxWidth: number) {
+        this.maxWidth = maxWidth;
+        this.dirty = true;
+    }
+
+    setText(text: string) {
+        if (text === this.currentText) return;
+        this.chars = SpriteTextConverter.textToCharListWithWordWrap(text, this.font, this.maxWidth);
         this.currentText = text;
         this.dirty = true;
     }
