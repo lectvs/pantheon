@@ -113,7 +113,7 @@ class Game {
     }
 
     loadTheater() {
-        this.theater = new (this.theaterConfig.theaterClass ?? Theater)(this.theaterConfig);
+        this.theater = new Theater(this.theaterConfig);
     }
 
     pauseGame() {

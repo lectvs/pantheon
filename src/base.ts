@@ -1,33 +1,37 @@
 
 function BASE_STAGE(): World {
-    let world = new World();
-
-    world.backgroundColor = 0x000000;
-    world.addLayer('bg');
-    world.addLayer('hoop');
-    world.addLayer('main', { sortKey: obj => obj.y });
-    world.addLayer('king_shadow_start');
-    world.addLayer('king_start');
-    world.addLayer('fg');
-    world.addPhysicsGroup('player');
-    world.addPhysicsGroup('hoop');
-    world.addPhysicsGroup('enemies');
-    world.addPhysicsGroup('bombs');
-    world.addPhysicsGroup('bullets');
-    world.addPhysicsGroup('walls', { immovable: true });
-    world.collisions.push({ group1: 'player', group2: 'enemies' });
-    world.collisions.push({ group1: 'player', group2: 'bullets' });
-    world.collisions.push({ group1: 'player', group2: 'walls', transferMomentum: false });
-    world.collisions.push({ group1: 'enemies', group2: 'walls', transferMomentum: false });
-    world.collisions.push({ group1: 'bullets', group2: 'walls' });
-    world.collisions.push({ group1: 'bombs', group2: 'walls' });
-    world.collisions.push({ group1: 'bombs', group2: 'enemies' });
-    world.collisions.push({ group1: 'hoop', group2: 'enemies' });
-    world.collisions.push({ group1: 'hoop', group2: 'bombs' });
-    world.collisionIterations = 4;
-    world.useRaycastDisplacementThreshold = 4;
-
-    return world;
+    return new World({
+        backgroundColor: 0x000000,
+        layers: [
+            { name: 'bg' },
+            { name: 'hoop' },
+            { name: 'main', sortKey: obj => obj.y },
+            { name: 'king_shadow_start' },
+            { name: 'king_start' },
+            { name: 'fg' },
+        ],
+        physicsGroups: {
+            'player': {},
+            'hoop': {},
+            'enemies': {},
+            'bombs': {},
+            'bullets': {},
+            'walls': { immovable: true },
+        },
+        collisions: [
+            { move: 'player', from: 'enemies' },
+            { move: 'player', from: 'bullets' },
+            { move: 'player', from: 'walls', transferMomentum: false },
+            { move: 'enemies', from: 'walls', transferMomentum: false },
+            { move: 'bullets', from: 'walls' },
+            { move: 'bombs', from: 'walls' },
+            { move: 'bombs', from: 'enemies' },
+            { move: 'hoop', from: 'enemies' },
+            { move: 'hoop', from: 'bombs' },
+        ],
+        collisionIterations: 4,
+        useRaycastDisplacementThreshold: 4,
+    });
 }
 
 function BASE_CAMERA_MOVEMENT(): Camera.SmoothMovement {

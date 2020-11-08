@@ -1,4 +1,6 @@
 namespace Bounds.Collision {
+    const OVERLAP_EPSILON: number = 0.000001;
+
     export function getDisplacementCollisionCircleCircle(move: CircleBounds, from: CircleBounds) {
         if (!move.isOverlapping(from)) return undefined;
 
@@ -655,7 +657,7 @@ namespace Bounds.Collision {
     export function isOverlappingCircleCircle(move: CircleBounds, from: CircleBounds) {
         let movePosition = move.getCenter();
         let fromPosition = from.getCenter();
-        return M.distance(movePosition.x, movePosition.y, fromPosition.x, fromPosition.y) < move.radius + from.radius;
+        return M.distance(movePosition.x, movePosition.y, fromPosition.x, fromPosition.y) < move.radius + from.radius - OVERLAP_EPSILON;
     }
 
     export function isOverlappingCircleRect(move: CircleBounds, from: RectBounds) {
@@ -673,19 +675,19 @@ namespace Bounds.Collision {
         }
 
         // Vertices
-        if (M.distanceSq(movePosition.x, movePosition.y, fromBox.left, fromBox.top) < move.radius*move.radius) {
+        if (M.distanceSq(movePosition.x, movePosition.y, fromBox.left, fromBox.top) < move.radius*move.radius - OVERLAP_EPSILON) {
             return true;
         }
 
-        if (M.distanceSq(movePosition.x, movePosition.y, fromBox.left, fromBox.bottom) < move.radius*move.radius) {
+        if (M.distanceSq(movePosition.x, movePosition.y, fromBox.left, fromBox.bottom) < move.radius*move.radius - OVERLAP_EPSILON) {
             return true;
         }
 
-        if (M.distanceSq(movePosition.x, movePosition.y, fromBox.right, fromBox.bottom) < move.radius*move.radius) {
+        if (M.distanceSq(movePosition.x, movePosition.y, fromBox.right, fromBox.bottom) < move.radius*move.radius - OVERLAP_EPSILON) {
             return true;
         }
 
-        if (M.distanceSq(movePosition.x, movePosition.y, fromBox.right, fromBox.top) < move.radius*move.radius) {
+        if (M.distanceSq(movePosition.x, movePosition.y, fromBox.right, fromBox.top) < move.radius*move.radius - OVERLAP_EPSILON) {
             return true;
         }
 
@@ -727,22 +729,22 @@ namespace Bounds.Collision {
         }
 
         // Top-left vertex
-        if (from.direction !== 'upleft' && M.distanceSq(movePos.x, movePos.y, fromBox.left, fromBox.top) < move.radius*move.radius) {
+        if (from.direction !== 'upleft' && M.distanceSq(movePos.x, movePos.y, fromBox.left, fromBox.top) < move.radius*move.radius - OVERLAP_EPSILON) {
             return true;
         }
 
         // Top-right vertex
-        if (from.direction !== 'upright' && M.distanceSq(movePos.x, movePos.y, fromBox.right, fromBox.top) < move.radius*move.radius) {
+        if (from.direction !== 'upright' && M.distanceSq(movePos.x, movePos.y, fromBox.right, fromBox.top) < move.radius*move.radius - OVERLAP_EPSILON) {
             return true;
         }
 
         // Bottom-right vertex
-        if (from.direction !== 'downright' && M.distanceSq(movePos.x, movePos.y, fromBox.right, fromBox.bottom) < move.radius*move.radius) {
+        if (from.direction !== 'downright' && M.distanceSq(movePos.x, movePos.y, fromBox.right, fromBox.bottom) < move.radius*move.radius - OVERLAP_EPSILON) {
             return true;
         }
 
         // Bottom-left vertex
-        if (from.direction !== 'downleft' && M.distanceSq(movePos.x, movePos.y, fromBox.left, fromBox.bottom) < move.radius*move.radius) {
+        if (from.direction !== 'downleft' && M.distanceSq(movePos.x, movePos.y, fromBox.left, fromBox.bottom) < move.radius*move.radius - OVERLAP_EPSILON) {
             return true;
         }
 

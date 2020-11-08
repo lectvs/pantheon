@@ -103,11 +103,11 @@ namespace A {
         return A.sort(A.clone(array), reverse);
     }
 
-    export function sum(array: number[]) {
+    export function sum(array: any[], key: (e: any) => number = (e => e)) {
         if (_.isEmpty(array)) return 0;
         let result = 0;
         for (let i = 0; i < array.length; i++) {
-            result += array[i];
+            result += key(array[i]);
         }
         return result;
     }

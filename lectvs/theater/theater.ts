@@ -2,9 +2,7 @@
 /// <reference path="../world/world.ts"/>
 
 namespace Theater {
-    export type TheaterClass = new (config: Theater.Config) => Theater;
     export type Config = {
-        theaterClass?: TheaterClass;
         getStages: () => Dict<World.Factory>;
         stageToLoad: string;
         stageEntryPoint?: World.EntryPoint;
@@ -31,17 +29,18 @@ class Theater extends World {
 
     get currentStageName() { return this.stageManager ? this.stageManager.currentStageName : undefined; }
     get currentWorld() { return this.stageManager ? this.stageManager.currentWorld : undefined; }
-    get currentStage() { return (this.stageManager && this.stageManager.stages) ? this.stageManager.stages[this.stageManager.currentStageName] : undefined; }
     get isCutscenePlaying() { return this.storyManager ? this.storyManager.cutsceneManager.isCutscenePlaying : false; }
     get slides() { return this.slideManager ? this.slideManager.slides : []; }
     
     constructor(config: Theater.Config) {
-        super();
-
-        this.addLayer(Theater.LAYER_WORLD);
-        this.addLayer(Theater.LAYER_TRANSITION);
-        this.addLayer(Theater.LAYER_SLIDES);
-        this.addLayer(Theater.LAYER_DIALOG);
+        super({
+            layers: [
+                { name: Theater.LAYER_WORLD },
+                { name: Theater.LAYER_TRANSITION },
+                { name: Theater.LAYER_SLIDES },
+                { name: Theater.LAYER_DIALOG },
+            ]
+        });
 
         this.loadDialogBox(config.dialogBox);
 

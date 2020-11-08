@@ -4,14 +4,36 @@
 namespace World {
     export type Factory = () => World;
 
+    export type Config = {
+        layers?: World.LayerConfig[];
+
+        camera?: Camera.Config;
+
+        backgroundColor?: number;
+        backgroundAlpha?: number;
+
+        width?: number;
+        height?: number;
+
+        physicsGroups?: Dict<World.PhysicsGroupConfig>;
+        collisions?: CollisionConfig[];
+        collisionIterations?: number;
+        useRaycastDisplacementThreshold?: number;
+
+        entryPoints?: Dict<Pt>;
+
+        volume?: number;
+    }
+
     export type CollisionConfig = {
-        group1: string;
-        group2: string;
+        move: string;
+        from: string;
         callback?: Physics.CollisionCallback;
         transferMomentum?: boolean;
     }
 
     export type LayerConfig = {
+        name?: string;
         sortKey?: (worldObject: WorldObject) => number;
         reverseSort?: boolean;
         effects?: Effects.Config;
@@ -54,35 +76,35 @@ class World {
 
     volume: number;
 
-    constructor() {        
+    constructor(config: World.Config = {}) {        
         this.scriptManager = new ScriptManager();
         this.soundManager = new SoundManager();
 
         this.select = new WorldSelecter(this);
 
-        this.volume = 1;
+        this.volume = config.volume ?? 1;
 
-        this.width = global.gameWidth;
-        this.height = global.gameHeight;
+        this.width = config.width ?? global.gameWidth;
+        this.height = config.height ?? global.gameHeight;
+
+        this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
+        this.collisions = config.collisions ?? [];
+        this.collisionIterations = config.collisionIterations ?? 1;
+        this.useRaycastDisplacementThreshold = config.useRaycastDisplacementThreshold ?? 1;
+
         this.worldObjects = [];
-
-        this.physicsGroups = {};
-        this.collisions = [];
-        this.collisionIterations = 1;
-        this.useRaycastDisplacementThreshold = 1;
-
         this.worldObjectsByName = {};
-        this.layers = [ new World.Layer(World.DEFAULT_LAYER, {}) ];
+        this.layers = this.createLayers(config.layers);
 
-        this.backgroundColor = global.backgroundColor;
-        this.backgroundAlpha = 1;
+        this.backgroundColor = config.backgroundColor ?? global.backgroundColor;
+        this.backgroundAlpha = config.backgroundAlpha ?? 1;
 
         this.screen = new BasicTexture(this.width, this.height);
         this.layerTexture = new BasicTexture(this.width, this.height);
 
-        this.entryPoints = {};
+        this.entryPoints = config.entryPoints ?? {};
 
-        this.camera = new Camera({}, this);
+        this.camera = new Camera(config.camera ?? {}, this);
     }
 
     update() {
@@ -167,22 +189,6 @@ class World {
         });
     }
 
-    addLayer(name: string, config: World.LayerConfig = {}) {
-        if (this.getLayerByName(name)) {
-            error(`Cannot add layer '${name}' to world, as one with that name already exists.`, this);
-            return;
-        }
-        this.layers.splice(this.layers.length-1, 0, new World.Layer(name, config));
-    }
-
-    addPhysicsGroup(name: string, config: World.PhysicsGroupConfig = {}) {
-        if (this.physicsGroups[name]) {
-            error(`Cannot add physics group '${name}' to world, as one with that name already exists.`, this);
-            return;
-        }
-        this.physicsGroups[name] = new World.PhysicsGroup(name, config);
-    }
-
     addWorldObject<T extends WorldObject>(obj: T): T {
         return World.Actions.addWorldObjectToWorld(obj, this);
     }
@@ -217,10 +223,10 @@ class World {
     getPhysicsGroupsThatCollideWith(physicsGroup: string) {
         let result: string[] = [];
         for (let collision of this.collisions) {
-            if (collision.group1 === physicsGroup) {
-                result.push(collision.group2);
-            } else if (collision.group2 === physicsGroup) {
-                result.push(collision.group1);
+            if (collision.move === physicsGroup) {
+                result.push(collision.from);
+            } else if (collision.from === physicsGroup) {
+                result.push(collision.move);
             }
         }
         return A.removeDuplicates(result);
@@ -281,6 +287,35 @@ class World {
         let screen = new BasicTexture(this.camera.width, this.camera.height);
         this.render(screen);
         return screen;
+    }
+
+    private createLayers(layers: World.LayerConfig[]) {
+        if (_.isEmpty(layers)) layers = [];
+
+        layers.push({ name: World.DEFAULT_LAYER });
+
+        let result: World.Layer[] = [];
+        for (let layer of layers) {
+            _.defaults(layer, {
+                reverseSort: false,
+            });
+            result.push(new World.Layer(layer.name, layer));
+        }
+
+        return result;
+    }
+
+    private createPhysicsGroups(physicsGroups: Dict<World.PhysicsGroupConfig>) {
+        if (_.isEmpty(physicsGroups)) return {};
+
+        let result: Dict<World.PhysicsGroup> = {};
+        for (let name in physicsGroups) {
+            _.defaults(physicsGroups[name], {
+                collidesWith: [],
+            });
+            result[name] = new World.PhysicsGroup(name, physicsGroups[name]);
+        }
+        return result;
     }
 
     private removeDeadWorldObjects() {

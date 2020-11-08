@@ -35,6 +35,8 @@ postjam
 - /revisit dialog system
     - /rewrite dialog box implementation (shouldn't use spriteText internals)
         - /TODO: remove setText force parameter after
+- /collect all collisions and apply callbacks/momentum transfer afterward
+- define better "momentum transfer" modes (NONE, ZERO_VELOCITY, KINETIC)
 - new content
     - add some more enemies
     - add music/ambience during silent parts
@@ -46,8 +48,6 @@ postjam
 - fix window focus issues
     - mute audio when window out of focus
     - fix sticking against the wall bug
-- collect all collisions and apply callbacks/momentum transfer afterward
-- define better "momentum transfer" modes (NONE, ZERO_VELOCITY, KINETIC)
 - better scripting syntax?
     - look into writing TS transforms for scripts?
 - camera mode transitions
