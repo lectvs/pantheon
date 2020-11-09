@@ -68,10 +68,10 @@ Main.loadConfig({
             story: {
                 getStoryboard: getStoryboard,
                 storyboardPath: ['start'],
-                getStoryEvents: getStoryEvents,
-                getStoryConfig: getStoryConfig,
+                getStoryEvents: () => StoryEvent.EMPTY_MAP,
+                getStoryConfig: () => StoryConfig.EMPTY,
             },
-            getParty: getParty,
+            getParty: () => Party.EMPTY,
             dialogBox: () => new DialogBox({
                 x: 200, y: 250,
                 texture: 'dialogbox',

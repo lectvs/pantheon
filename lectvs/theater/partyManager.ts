@@ -10,6 +10,12 @@ namespace Party {
         stage: string;
         worldObject?: WorldObject;
     }
+
+    export const EMPTY: Config = {
+        leader: 'none',
+        activeMembers: ['none'],
+        members: {},
+    }
 }
 
 class PartyManager {

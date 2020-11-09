@@ -2,6 +2,7 @@ function deadBody(parent: Enemy, texture: string) {
     return new Sprite({
         name: 'deadbody',
         layer: 'bg',
+        physicsGroup: 'deadbodies',
         x: parent.x, y: parent.y,
         vx: parent.v.x, vy: parent.v.y,
         texture: texture,

@@ -37,6 +37,7 @@ postjam
         - /TODO: remove setText force parameter after
 - /collect all collisions and apply callbacks/momentum transfer afterward
 - /define better "momentum transfer" modes (NONE, ZERO_VELOCITY, KINETIC)
+- /fix bug with vx, vy = NaN (fixed, maybe? :])
 - new content
     - add some more enemies
     - add music/ambience during silent parts
@@ -53,7 +54,6 @@ postjam
 - camera mode transitions
 - story transition delay
 - better enemy behavior system
-- fix bug with vx, vy = NaN
 - in general clean up the storyboard
 - fullscreen
 - build script

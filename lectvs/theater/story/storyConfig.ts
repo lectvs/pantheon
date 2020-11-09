@@ -32,3 +32,10 @@ class StoryConfig {
         }
     }
 }
+
+namespace StoryConfig {
+    export const EMPTY: StoryConfig.Config = {
+        initialConfig: {},
+        executeFn: sc => null,
+    }
+}

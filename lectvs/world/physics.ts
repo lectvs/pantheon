@@ -153,7 +153,7 @@ namespace Physics {
             return;
         }
 
-        let massFactor = (collision.move.mass + collision.from.mass === 0) ? 1 :
+        let massFactor = (collision.move.mass + collision.from.mass === 0) ? 0.5 :
                             collision.from.mass / (collision.move.mass + collision.from.mass);
 
         collision.move.x += massFactor * collision.collision.displacementX;
@@ -213,13 +213,24 @@ namespace Physics {
 
             let d = V.normalized({ x: collision.collision.displacementX, y: collision.collision.displacementY });
 
-            let mm = (collision.move.mass + collision.from.mass !== 0) ? collision.move.mass : 1;
-            let mf = (collision.move.mass + collision.from.mass !== 0) ? collision.from.mass : 1;
+            let mm = collision.move.mass;
+            let mf = collision.from.mass;
+            if (mm + mf === 0) {
+                // In case of invald masses, set both to the default 1.
+                mm = 1; mf = 1;
+            }
+
             let vmi_proj = V.dot(collision.move.v, d);
             let vfi_proj = V.dot(collision.from.v, d);
 
-            let dvmf_proj = collision.move.isImmovable() ? 0 : (collision.from.isImmovable() ? 2*(vfi_proj - vmi_proj) : 2*mf / (mm + mf) * (vfi_proj - vmi_proj));
-            let dvff_proj = collision.from.isImmovable() ? 0 : (collision.move.isImmovable() ? 2*(vmi_proj - vfi_proj) : 2*mm / (mm + mf) * (vmi_proj - vfi_proj));
+            let mass_factor = (collision.move.mass + collision.from.mass === 0) ? 0.5 :
+                                collision.from.mass / (collision.move.mass + collision.from.mass);
+
+            let elastic_factor_m = collision.move.isImmovable() ? 0 : collision.from.isImmovable() ? 1 : mass_factor;
+            let elastic_factor_f = 1 - elastic_factor_m;
+
+            let dvmf_proj = 2 * (vfi_proj - vmi_proj) * elastic_factor_m;
+            let dvff_proj = 2 * (vmi_proj - vfi_proj) * elastic_factor_f;
 
             collision.move.v.x += dvmf_proj * collision.move.bounce * d.x;
             collision.move.v.y += dvmf_proj * collision.move.bounce * d.y;
@@ -228,8 +239,8 @@ namespace Physics {
 
         } else if (momentumTransferMode === 'zero_velocity_local') {
             if (!collision.move.isImmovable()) {
-                let fromvx = (collision.from.x - collision.from.physicslastx)/delta;
-                let fromvy = (collision.from.y - collision.from.physicslasty)/delta;
+                let fromvx = delta === 0 ? 0 : (collision.from.x - collision.from.physicslastx) / delta;
+                let fromvy = delta === 0 ? 0 : (collision.from.y - collision.from.physicslasty) / delta;
                 collision.move.v.x -= fromvx;
                 collision.move.v.y -= fromvy;
                 zeroVelocityAgainstDisplacement(collision.move, collision.collision.displacementX, collision.collision.displacementY);
@@ -238,8 +249,8 @@ namespace Physics {
             }
     
             if (!collision.from.isImmovable()) {
-                let movevx = (collision.move.x - collision.move.physicslastx)/delta;
-                let movevy = (collision.move.y - collision.move.physicslasty)/delta;
+                let movevx = delta === 0 ? 0 : (collision.move.x - collision.move.physicslastx) / delta;
+                let movevy = delta === 0 ? 0 : (collision.move.y - collision.move.physicslasty) / delta;
                 collision.move.v.x -= movevx;
                 collision.move.v.y -= movevy;
                 zeroVelocityAgainstDisplacement(collision.from, -collision.collision.displacementX, -collision.collision.displacementY);
@@ -253,28 +264,6 @@ namespace Physics {
             if (!collision.from.isImmovable()) {
                 zeroVelocityAgainstDisplacement(collision.from, -collision.collision.displacementX, -collision.collision.displacementY);
             }
-        }
-    }
-
-    function applyMomentumTransferForCollision2(delta: number, collision: Physics.DisplacementCollision, momentumTransferMode: MomentumTransferMode) {
-        if (!collision.move.isImmovable()) {
-            let fromvx = momentumTransferMode ? (collision.from.x - collision.from.physicslastx)/delta : 0;
-            let fromvy = momentumTransferMode ? (collision.from.y - collision.from.physicslasty)/delta : 0;
-            collision.move.v.x -= fromvx;
-            collision.move.v.y -= fromvy;
-            zeroVelocityAgainstDisplacement(collision.move, collision.collision.displacementX, collision.collision.displacementY);
-            collision.move.v.x += fromvx;
-            collision.move.v.y += fromvy;
-        }
-
-        if (!collision.from.isImmovable()) {
-            let movevx = momentumTransferMode ? (collision.move.x - collision.move.physicslastx)/delta : 0;
-            let movevy = momentumTransferMode ? (collision.move.y - collision.move.physicslasty)/delta : 0;
-            collision.move.v.x -= movevx;
-            collision.move.v.y -= movevy;
-            zeroVelocityAgainstDisplacement(collision.from, -collision.collision.displacementX, -collision.collision.displacementY);
-            collision.move.v.x += movevx;
-            collision.move.v.y += movevy;
         }
     }
 

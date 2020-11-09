@@ -2921,10 +2921,13 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
     };
     PhysicsWorldObject.prototype.postUpdate = function () {
         _super.prototype.postUpdate.call(this);
-        if (!isFinite(this.v.x))
-            this.v.x = 0;
-        if (!isFinite(this.v.y))
-            this.v.y = 0;
+        if (!isFinite(this.v.x) || !isFinite(this.v.y)) {
+            error("Non-finite velocity " + this.v + " on object", this);
+            if (!isFinite(this.v.x))
+                this.v.x = 0;
+            if (!isFinite(this.v.y))
+                this.v.y = 0;
+        }
     };
     PhysicsWorldObject.prototype.render = function (texture, x, y) {
         if (Debug.ALL_PHYSICS_BOUNDS || this.debugDrawBounds) {
@@ -5759,6 +5762,14 @@ var InteractionManager = /** @class */ (function () {
     };
     return InteractionManager;
 }());
+var Party;
+(function (Party) {
+    Party.EMPTY = {
+        leader: 'none',
+        activeMembers: ['none'],
+        members: {},
+    };
+})(Party || (Party = {}));
 var PartyManager = /** @class */ (function () {
     function PartyManager(theater, config) {
         this.theater = theater;
@@ -6191,6 +6202,12 @@ var StoryConfig = /** @class */ (function () {
     };
     return StoryConfig;
 }());
+(function (StoryConfig) {
+    StoryConfig.EMPTY = {
+        initialConfig: {},
+        executeFn: function (sc) { return null; },
+    };
+})(StoryConfig || (StoryConfig = {}));
 var StoryEventManager = /** @class */ (function () {
     function StoryEventManager(theater, storyEvents) {
         this.theater = theater;
@@ -6287,6 +6304,10 @@ var StoryEventManager = /** @class */ (function () {
     };
     return StoryEventManager;
 }());
+var StoryEvent;
+(function (StoryEvent) {
+    StoryEvent.EMPTY_MAP = {};
+})(StoryEvent || (StoryEvent = {}));
 var StoryManager = /** @class */ (function () {
     function StoryManager(theater, storyboard, storyboardPath, events, storyConfig) {
         var _this = this;
@@ -7465,7 +7486,7 @@ var Physics;
             collision.move.y += collision.collision.displacementY;
             return;
         }
-        var massFactor = (collision.move.mass + collision.from.mass === 0) ? 1 :
+        var massFactor = (collision.move.mass + collision.from.mass === 0) ? 0.5 :
             collision.from.mass / (collision.move.mass + collision.from.mass);
         collision.move.x += massFactor * collision.collision.displacementX;
         collision.move.y += massFactor * collision.collision.displacementY;
@@ -7549,12 +7570,21 @@ var Physics;
             if (collision.move.isImmovable() && collision.from.isImmovable())
                 return;
             var d = V.normalized({ x: collision.collision.displacementX, y: collision.collision.displacementY });
-            var mm = (collision.move.mass + collision.from.mass !== 0) ? collision.move.mass : 1;
-            var mf = (collision.move.mass + collision.from.mass !== 0) ? collision.from.mass : 1;
+            var mm = collision.move.mass;
+            var mf = collision.from.mass;
+            if (mm + mf === 0) {
+                // In case of invald masses, set both to the default 1.
+                mm = 1;
+                mf = 1;
+            }
             var vmi_proj = V.dot(collision.move.v, d);
             var vfi_proj = V.dot(collision.from.v, d);
-            var dvmf_proj = collision.move.isImmovable() ? 0 : (collision.from.isImmovable() ? 2 * (vfi_proj - vmi_proj) : 2 * mf / (mm + mf) * (vfi_proj - vmi_proj));
-            var dvff_proj = collision.from.isImmovable() ? 0 : (collision.move.isImmovable() ? 2 * (vmi_proj - vfi_proj) : 2 * mm / (mm + mf) * (vmi_proj - vfi_proj));
+            var mass_factor = (collision.move.mass + collision.from.mass === 0) ? 0.5 :
+                collision.from.mass / (collision.move.mass + collision.from.mass);
+            var elastic_factor_m = collision.move.isImmovable() ? 0 : collision.from.isImmovable() ? 1 : mass_factor;
+            var elastic_factor_f = 1 - elastic_factor_m;
+            var dvmf_proj = 2 * (vfi_proj - vmi_proj) * elastic_factor_m;
+            var dvff_proj = 2 * (vmi_proj - vfi_proj) * elastic_factor_f;
             collision.move.v.x += dvmf_proj * collision.move.bounce * d.x;
             collision.move.v.y += dvmf_proj * collision.move.bounce * d.y;
             collision.from.v.x += dvff_proj * collision.from.bounce * d.x;
@@ -7562,8 +7592,8 @@ var Physics;
         }
         else if (momentumTransferMode === 'zero_velocity_local') {
             if (!collision.move.isImmovable()) {
-                var fromvx = (collision.from.x - collision.from.physicslastx) / delta;
-                var fromvy = (collision.from.y - collision.from.physicslasty) / delta;
+                var fromvx = delta === 0 ? 0 : (collision.from.x - collision.from.physicslastx) / delta;
+                var fromvy = delta === 0 ? 0 : (collision.from.y - collision.from.physicslasty) / delta;
                 collision.move.v.x -= fromvx;
                 collision.move.v.y -= fromvy;
                 zeroVelocityAgainstDisplacement(collision.move, collision.collision.displacementX, collision.collision.displacementY);
@@ -7571,8 +7601,8 @@ var Physics;
                 collision.move.v.y += fromvy;
             }
             if (!collision.from.isImmovable()) {
-                var movevx = (collision.move.x - collision.move.physicslastx) / delta;
-                var movevy = (collision.move.y - collision.move.physicslasty) / delta;
+                var movevx = delta === 0 ? 0 : (collision.move.x - collision.move.physicslastx) / delta;
+                var movevy = delta === 0 ? 0 : (collision.move.y - collision.move.physicslasty) / delta;
                 collision.move.v.x -= movevx;
                 collision.move.v.y -= movevy;
                 zeroVelocityAgainstDisplacement(collision.from, -collision.collision.displacementX, -collision.collision.displacementY);
@@ -7587,26 +7617,6 @@ var Physics;
             if (!collision.from.isImmovable()) {
                 zeroVelocityAgainstDisplacement(collision.from, -collision.collision.displacementX, -collision.collision.displacementY);
             }
-        }
-    }
-    function applyMomentumTransferForCollision2(delta, collision, momentumTransferMode) {
-        if (!collision.move.isImmovable()) {
-            var fromvx = momentumTransferMode ? (collision.from.x - collision.from.physicslastx) / delta : 0;
-            var fromvy = momentumTransferMode ? (collision.from.y - collision.from.physicslasty) / delta : 0;
-            collision.move.v.x -= fromvx;
-            collision.move.v.y -= fromvy;
-            zeroVelocityAgainstDisplacement(collision.move, collision.collision.displacementX, collision.collision.displacementY);
-            collision.move.v.x += fromvx;
-            collision.move.v.y += fromvy;
-        }
-        if (!collision.from.isImmovable()) {
-            var movevx = momentumTransferMode ? (collision.move.x - collision.move.physicslastx) / delta : 0;
-            var movevy = momentumTransferMode ? (collision.move.y - collision.move.physicslasty) / delta : 0;
-            collision.move.v.x -= movevx;
-            collision.move.v.y -= movevy;
-            zeroVelocityAgainstDisplacement(collision.from, -collision.collision.displacementX, -collision.collision.displacementY);
-            collision.move.v.x += movevx;
-            collision.move.v.y += movevy;
         }
     }
     function zeroVelocityAgainstDisplacement(obj, dx, dy) {
@@ -9881,74 +9891,6 @@ var Assets;
     Assets.fonts = fonts;
     Assets.spriteTextTags = {};
 })(Assets || (Assets = {}));
-function BASE_STAGE() {
-    return new World({
-        backgroundColor: 0x000000,
-        layers: [
-            { name: 'bg' },
-            { name: 'hoop' },
-            { name: 'main', sortKey: function (obj) { return obj.y; } },
-            { name: 'king_shadow_start' },
-            { name: 'king_start' },
-            { name: 'fg' },
-        ],
-        physicsGroups: {
-            'player': {},
-            'hoop': {},
-            'enemies': {},
-            'bombs': {},
-            'bullets': {},
-            'walls': { immovable: true },
-        },
-        collisions: [
-            { move: 'player', from: 'enemies' },
-            { move: 'player', from: 'bullets' },
-            { move: 'player', from: 'walls' },
-            { move: 'enemies', from: 'walls' },
-            { move: 'bullets', from: 'walls' },
-            { move: 'bombs', from: 'walls' },
-            { move: 'bombs', from: 'enemies' },
-            { move: 'hoop', from: 'enemies', momentumTransfer: 'elastic', callback: function (hoop, enemy) {
-                    if (enemy.damagableByHoop && !enemy.immune && hoop.isStrongEnoughToDealDamage()) {
-                        enemy.damage(hoop.currentAttackStrength);
-                    }
-                } },
-            { move: 'hoop', from: 'bombs', momentumTransfer: 'elastic', callback: function (hoop, bomb) {
-                    if (hoop.isStrongEnoughToDealDamage()) {
-                        global.world.playSound('hitenemy');
-                    }
-                } },
-        ],
-        collisionIterations: 4,
-        useRaycastDisplacementThreshold: 4,
-    });
-}
-function BASE_CAMERA_MOVEMENT() {
-    return { type: 'smooth', speed: 10, deadZoneWidth: 40, deadZoneHeight: 30 };
-}
-function WORLD_BOUNDS(left, top, right, bottom, physicsGroup) {
-    var thickness = 40;
-    var width = right - left;
-    var height = bottom - top;
-    var worldBounds = new WorldObject();
-    worldBounds.addChild(new PhysicsWorldObject({
-        bounds: new RectBounds(left - thickness, top - thickness, thickness, height + 2 * thickness),
-        physicsGroup: physicsGroup
-    }));
-    worldBounds.addChild(new PhysicsWorldObject({
-        bounds: new RectBounds(right, top - thickness, thickness, height + 2 * thickness),
-        physicsGroup: physicsGroup
-    }));
-    worldBounds.addChild(new PhysicsWorldObject({
-        bounds: new RectBounds(left, top - thickness, width, thickness),
-        physicsGroup: physicsGroup
-    }));
-    worldBounds.addChild(new PhysicsWorldObject({
-        bounds: new RectBounds(left, bottom, width, thickness),
-        physicsGroup: physicsGroup
-    }));
-    return worldBounds;
-}
 var Enemy = /** @class */ (function (_super) {
     __extends(Enemy, _super);
     function Enemy(config) {
@@ -10065,6 +10007,7 @@ function deadBody(parent, texture) {
     return new Sprite({
         name: 'deadbody',
         layer: 'bg',
+        physicsGroup: 'deadbodies',
         x: parent.x, y: parent.y,
         vx: parent.v.x, vy: parent.v.y,
         texture: texture,
@@ -10852,10 +10795,10 @@ Main.loadConfig({
             story: {
                 getStoryboard: getStoryboard,
                 storyboardPath: ['start'],
-                getStoryEvents: getStoryEvents,
-                getStoryConfig: getStoryConfig,
+                getStoryEvents: function () { return StoryEvent.EMPTY_MAP; },
+                getStoryConfig: function () { return StoryConfig.EMPTY; },
             },
-            getParty: getParty,
+            getParty: function () { return Party.EMPTY; },
             dialogBox: function () { return new DialogBox({
                 x: 200, y: 250,
                 texture: 'dialogbox',
@@ -10893,13 +10836,6 @@ function get(name) {
     return undefined;
 }
 var HARD_DIFFICULTY = false;
-function getParty() {
-    return {
-        leader: 'none',
-        activeMembers: ['none'],
-        members: {}
-    };
-}
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player(config) {
@@ -11049,10 +10985,77 @@ function spawn(worldObject) {
     });
     return spawn;
 }
+function BASE_CAMERA_MOVEMENT() {
+    return { type: 'smooth', speed: 10, deadZoneWidth: 40, deadZoneHeight: 30 };
+}
+function WORLD_BOUNDS(left, top, right, bottom, physicsGroup) {
+    var thickness = 40;
+    var width = right - left;
+    var height = bottom - top;
+    var worldBounds = new WorldObject();
+    worldBounds.addChild(new PhysicsWorldObject({
+        bounds: new RectBounds(left - thickness, top - thickness, thickness, height + 2 * thickness),
+        physicsGroup: physicsGroup
+    }));
+    worldBounds.addChild(new PhysicsWorldObject({
+        bounds: new RectBounds(right, top - thickness, thickness, height + 2 * thickness),
+        physicsGroup: physicsGroup
+    }));
+    worldBounds.addChild(new PhysicsWorldObject({
+        bounds: new RectBounds(left, top - thickness, width, thickness),
+        physicsGroup: physicsGroup
+    }));
+    worldBounds.addChild(new PhysicsWorldObject({
+        bounds: new RectBounds(left, bottom, width, thickness),
+        physicsGroup: physicsGroup
+    }));
+    return worldBounds;
+}
 function getStages() {
     return {
         'game': function () {
-            var world = BASE_STAGE();
+            var world = new World({
+                backgroundColor: 0x000000,
+                layers: [
+                    { name: 'bg' },
+                    { name: 'hoop' },
+                    { name: 'main', sortKey: function (obj) { return obj.y; } },
+                    { name: 'king_shadow_start' },
+                    { name: 'king_start' },
+                    { name: 'fg' },
+                ],
+                physicsGroups: {
+                    'player': {},
+                    'hoop': {},
+                    'enemies': {},
+                    'bombs': {},
+                    'bullets': {},
+                    'deadbodies': {},
+                    'walls': { immovable: true },
+                },
+                collisions: [
+                    { move: 'player', from: 'enemies' },
+                    { move: 'player', from: 'bullets' },
+                    { move: 'player', from: 'walls' },
+                    { move: 'enemies', from: 'walls' },
+                    { move: 'bullets', from: 'walls' },
+                    { move: 'bombs', from: 'walls' },
+                    { move: 'bombs', from: 'enemies' },
+                    { move: 'hoop', from: 'enemies', momentumTransfer: 'elastic', callback: function (hoop, enemy) {
+                            if (enemy.damagableByHoop && !enemy.immune && hoop.isStrongEnoughToDealDamage()) {
+                                enemy.damage(hoop.currentAttackStrength);
+                            }
+                        } },
+                    { move: 'hoop', from: 'bombs', momentumTransfer: 'elastic', callback: function (hoop, bomb) {
+                            if (hoop.isStrongEnoughToDealDamage()) {
+                                global.world.playSound('hitenemy');
+                            }
+                        } },
+                    { move: 'deadbodies', from: 'walls' },
+                ],
+                collisionIterations: 4,
+                useRaycastDisplacementThreshold: 4,
+            });
             world.camera.setModeFollow('player');
             world.camera.setMovement(BASE_CAMERA_MOVEMENT());
             world.entryPoints['main'] = { x: global.gameWidth / 2, y: global.gameHeight / 2 };
@@ -11117,16 +11120,6 @@ function getStages() {
             return world;
         },
     };
-}
-function getStoryConfig() {
-    return {
-        initialConfig: {},
-        executeFn: function (sc) {
-        }
-    };
-}
-function getStoryEvents() {
-    return {};
 }
 function getStoryboard() {
     return {
