@@ -66,17 +66,4 @@ class Enemy extends Sprite {
         }
         super.kill();
     }
-
-    onCollide(other: PhysicsWorldObject) {
-        super.onCollide(other);
-
-        if (other instanceof Hoop && this.damagableByHoop && !this.immune && other.isStrongEnoughToDealDamage()) {
-            let d = { x: this.x - other.x, y: this.y - other.y };
-            V.setMagnitude(d, other.currentAttackStrength * 500 / this.weight);
-            this.v.x += d.x;
-            this.v.y += d.y;
-
-            this.damage(other.currentAttackStrength);
-        }
-    }
 }

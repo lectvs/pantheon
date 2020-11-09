@@ -61,7 +61,7 @@ class PhysicsWorldObject extends WorldObject {
         this.mass = config.mass ?? 1;
         this._gravity = pt(config.gravityx ?? 0, config.gravityy ?? 0);
         this.gravityz = config.gravityz ?? 0;
-        this.bounce = config.bounce ?? 0;
+        this.bounce = config.bounce ?? 1;
 
         this.bounds = config.bounds ?? new NullBounds();
 

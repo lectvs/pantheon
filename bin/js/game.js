@@ -2871,7 +2871,7 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         _this.mass = (_d = config.mass) !== null && _d !== void 0 ? _d : 1;
         _this._gravity = pt((_e = config.gravityx) !== null && _e !== void 0 ? _e : 0, (_f = config.gravityy) !== null && _f !== void 0 ? _f : 0);
         _this.gravityz = (_g = config.gravityz) !== null && _g !== void 0 ? _g : 0;
-        _this.bounce = (_h = config.bounce) !== null && _h !== void 0 ? _h : 0;
+        _this.bounce = (_h = config.bounce) !== null && _h !== void 0 ? _h : 1;
         _this.bounds = (_j = config.bounds) !== null && _j !== void 0 ? _j : new NullBounds();
         _this._immovable = (_k = config.immovable) !== null && _k !== void 0 ? _k : false;
         _this.colliding = (_l = config.colliding) !== null && _l !== void 0 ? _l : true;
@@ -7058,6 +7058,10 @@ var V;
         return angle;
     }
     V.angle = angle;
+    function dot(v1, v2) {
+        return v1.x * v2.x + v1.y * v2.y;
+    }
+    V.dot = dot;
     function magnitude(vector) {
         return Math.sqrt(this.magnitudeSq(vector));
     }
@@ -7415,7 +7419,7 @@ var Physics;
                                     move: move, from: from,
                                     collision: raycastCollision,
                                     callback: collision.callback,
-                                    transferMomentum: collision.transferMomentum,
+                                    momentumTransfer: collision.momentumTransfer,
                                 });
                             }
                         }
@@ -7509,7 +7513,7 @@ var Physics;
                 move: collisionList[0].move,
                 from: collisionList[0].from,
                 callback: collisionList[0].callback,
-                transferMomentum: collisionList[0].transferMomentum,
+                momentumTransfer: collisionList[0].momentumTransfer,
                 collision: {
                     bounds1: collisionList[0].move.bounds,
                     bounds2: collisionList[0].from.bounds,
@@ -7525,7 +7529,7 @@ var Physics;
         try {
             for (var collisions_5 = __values(collisions), collisions_5_1 = collisions_5.next(); !collisions_5_1.done; collisions_5_1 = collisions_5.next()) {
                 var collision = collisions_5_1.value;
-                applyMomentumTransferForCollision(delta, collision, collision.transferMomentum);
+                applyMomentumTransferForCollision(collision, collision.momentumTransfer, delta);
                 if (collision.callback)
                     collision.callback(collision.move, collision.from);
                 collision.move.onCollide(collision.from);
@@ -7540,10 +7544,55 @@ var Physics;
             finally { if (e_41) throw e_41.error; }
         }
     }
-    function applyMomentumTransferForCollision(delta, collision, transferMomentum) {
+    function applyMomentumTransferForCollision(collision, momentumTransferMode, delta) {
+        if (momentumTransferMode === 'elastic') {
+            if (collision.move.isImmovable() && collision.from.isImmovable())
+                return;
+            var d = V.normalized({ x: collision.collision.displacementX, y: collision.collision.displacementY });
+            var mm = (collision.move.mass + collision.from.mass !== 0) ? collision.move.mass : 1;
+            var mf = (collision.move.mass + collision.from.mass !== 0) ? collision.from.mass : 1;
+            var vmi_proj = V.dot(collision.move.v, d);
+            var vfi_proj = V.dot(collision.from.v, d);
+            var dvmf_proj = collision.move.isImmovable() ? 0 : (collision.from.isImmovable() ? 2 * (vfi_proj - vmi_proj) : 2 * mf / (mm + mf) * (vfi_proj - vmi_proj));
+            var dvff_proj = collision.from.isImmovable() ? 0 : (collision.move.isImmovable() ? 2 * (vmi_proj - vfi_proj) : 2 * mm / (mm + mf) * (vmi_proj - vfi_proj));
+            collision.move.v.x += dvmf_proj * collision.move.bounce * d.x;
+            collision.move.v.y += dvmf_proj * collision.move.bounce * d.y;
+            collision.from.v.x += dvff_proj * collision.from.bounce * d.x;
+            collision.from.v.y += dvff_proj * collision.from.bounce * d.y;
+        }
+        else if (momentumTransferMode === 'zero_velocity_local') {
+            if (!collision.move.isImmovable()) {
+                var fromvx = (collision.from.x - collision.from.physicslastx) / delta;
+                var fromvy = (collision.from.y - collision.from.physicslasty) / delta;
+                collision.move.v.x -= fromvx;
+                collision.move.v.y -= fromvy;
+                zeroVelocityAgainstDisplacement(collision.move, collision.collision.displacementX, collision.collision.displacementY);
+                collision.move.v.x += fromvx;
+                collision.move.v.y += fromvy;
+            }
+            if (!collision.from.isImmovable()) {
+                var movevx = (collision.move.x - collision.move.physicslastx) / delta;
+                var movevy = (collision.move.y - collision.move.physicslasty) / delta;
+                collision.move.v.x -= movevx;
+                collision.move.v.y -= movevy;
+                zeroVelocityAgainstDisplacement(collision.from, -collision.collision.displacementX, -collision.collision.displacementY);
+                collision.move.v.x += movevx;
+                collision.move.v.y += movevy;
+            }
+        }
+        else { // zero_velocity_global
+            if (!collision.move.isImmovable()) {
+                zeroVelocityAgainstDisplacement(collision.move, collision.collision.displacementX, collision.collision.displacementY);
+            }
+            if (!collision.from.isImmovable()) {
+                zeroVelocityAgainstDisplacement(collision.from, -collision.collision.displacementX, -collision.collision.displacementY);
+            }
+        }
+    }
+    function applyMomentumTransferForCollision2(delta, collision, momentumTransferMode) {
         if (!collision.move.isImmovable()) {
-            var fromvx = transferMomentum ? (collision.from.x - collision.from.physicslastx) / delta : 0;
-            var fromvy = transferMomentum ? (collision.from.y - collision.from.physicslasty) / delta : 0;
+            var fromvx = momentumTransferMode ? (collision.from.x - collision.from.physicslastx) / delta : 0;
+            var fromvy = momentumTransferMode ? (collision.from.y - collision.from.physicslasty) / delta : 0;
             collision.move.v.x -= fromvx;
             collision.move.v.y -= fromvy;
             zeroVelocityAgainstDisplacement(collision.move, collision.collision.displacementX, collision.collision.displacementY);
@@ -7551,8 +7600,8 @@ var Physics;
             collision.move.v.y += fromvy;
         }
         if (!collision.from.isImmovable()) {
-            var movevx = transferMomentum ? (collision.move.x - collision.move.physicslastx) / delta : 0;
-            var movevy = transferMomentum ? (collision.move.y - collision.move.physicslasty) / delta : 0;
+            var movevx = momentumTransferMode ? (collision.move.x - collision.move.physicslastx) / delta : 0;
+            var movevy = momentumTransferMode ? (collision.move.y - collision.move.physicslasty) / delta : 0;
             collision.move.v.x -= movevx;
             collision.move.v.y -= movevy;
             zeroVelocityAgainstDisplacement(collision.from, -collision.collision.displacementX, -collision.collision.displacementY);
@@ -9854,13 +9903,21 @@ function BASE_STAGE() {
         collisions: [
             { move: 'player', from: 'enemies' },
             { move: 'player', from: 'bullets' },
-            { move: 'player', from: 'walls', transferMomentum: false },
-            { move: 'enemies', from: 'walls', transferMomentum: false },
+            { move: 'player', from: 'walls' },
+            { move: 'enemies', from: 'walls' },
             { move: 'bullets', from: 'walls' },
             { move: 'bombs', from: 'walls' },
             { move: 'bombs', from: 'enemies' },
-            { move: 'hoop', from: 'enemies' },
-            { move: 'hoop', from: 'bombs' },
+            { move: 'hoop', from: 'enemies', momentumTransfer: 'elastic', callback: function (hoop, enemy) {
+                    if (enemy.damagableByHoop && !enemy.immune && hoop.isStrongEnoughToDealDamage()) {
+                        enemy.damage(hoop.currentAttackStrength);
+                    }
+                } },
+            { move: 'hoop', from: 'bombs', momentumTransfer: 'elastic', callback: function (hoop, bomb) {
+                    if (hoop.isStrongEnoughToDealDamage()) {
+                        global.world.playSound('hitenemy');
+                    }
+                } },
         ],
         collisionIterations: 4,
         useRaycastDisplacementThreshold: 4,
@@ -9938,24 +9995,17 @@ var Enemy = /** @class */ (function (_super) {
         }
         _super.prototype.kill.call(this);
     };
-    Enemy.prototype.onCollide = function (other) {
-        _super.prototype.onCollide.call(this, other);
-        if (other instanceof Hoop && this.damagableByHoop && !this.immune && other.isStrongEnoughToDealDamage()) {
-            var d = { x: this.x - other.x, y: this.y - other.y };
-            V.setMagnitude(d, other.currentAttackStrength * 500 / this.weight);
-            this.v.x += d.x;
-            this.v.y += d.y;
-            this.damage(other.currentAttackStrength);
-        }
-    };
     return Enemy;
 }(Sprite));
 /// <reference path="./enemy.ts"/>
 var Bomb = /** @class */ (function (_super) {
     __extends(Bomb, _super);
     function Bomb(config) {
-        var _this = _super.call(this, __assign({ texture: 'bomb', effects: { silhouette: { color: 0xFFFFFF, enabled: false } }, bounds: new CircleBounds(0, -12, 12), gravityz: -100, mass: 1000, colliding: false, maxHealth: Infinity, immuneTime: 0.01, weight: 0.3, speed: 0 }, config)) || this;
-        _this.runScript(S.chain(S.wait(0.1), S.call(function () { return _this.colliding = true; }), S.loopFor(24, S.chain(S.call(function () { return _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled; }), S.wait(0.25))), S.loopFor(60, S.chain(S.call(function () { return _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled; }), S.wait(0.05))), S.call(function () { return _this.explode(); })));
+        var _this = _super.call(this, __assign({ texture: 'bomb', effects: { silhouette: { color: 0xFFFFFF, enabled: false } }, bounds: new CircleBounds(0, -12, 12), gravityz: -100, colliding: false, maxHealth: Infinity, immuneTime: 0.01, weight: 0.3, speed: 0 }, config)) || this;
+        _this.runScript(S.chain(S.wait(0.1), S.call(function () { return _this.colliding = true; }), S.loopFor(24, S.chain(S.call(function () { return _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled; }), S.wait(0.25))), S.loopFor(60, S.chain(S.call(function () { return _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled; }), S.wait(0.05))), S.call(function () {
+            if (_this.alive)
+                _this.explode();
+        })));
         return _this;
     }
     Bomb.prototype.update = function () {
@@ -9975,7 +10025,7 @@ var Bomb = /** @class */ (function (_super) {
     };
     Bomb.prototype.onCollide = function (other) {
         _super.prototype.onCollide.call(this, other);
-        if (other instanceof Throne) {
+        if (other instanceof Throne && this.alive) {
             this.explode();
         }
     };
@@ -10233,6 +10283,7 @@ var Hoop = /** @class */ (function (_super) {
         this.v.x = M.lerpTime(this.v.x, 0, 1.2, this.delta);
         this.v.y = M.lerpTime(this.v.y, 0, 1.2, this.delta);
         this.setStrength(player);
+        this.mass = M.clamp(this.currentAttackStrength, 0.1, 1);
         var visibleAttackStrength = M.clamp(this.currentAttackStrength, 0, 1);
         this.effects.silhouette.enabled = true;
         this.effects.silhouette.color = 0x00FFFF;
@@ -10247,15 +10298,6 @@ var Hoop = /** @class */ (function (_super) {
             this.x = player.x;
         if (!isFinite(this.y))
             this.y = player.y;
-    };
-    Hoop.prototype.onCollide = function (other) {
-        _super.prototype.onCollide.call(this, other);
-        if (other instanceof Enemy && this.isStrongEnoughToDealDamage()) {
-            var d = { x: this.x - other.x, y: this.y - other.y };
-            V.setMagnitude(d, this.currentAttackStrength * 200);
-            this.v.x += d.x;
-            this.v.y += d.y;
-        }
     };
     Hoop.prototype.isStrongEnoughToDealDamage = function () {
         return this.currentAttackStrength > this.strengthThreshold;

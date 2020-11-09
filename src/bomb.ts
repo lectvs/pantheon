@@ -7,7 +7,6 @@ class Bomb extends Enemy {
             effects: { silhouette: { color: 0xFFFFFF, enabled: false } },
             bounds: new CircleBounds(0, -12, 12),
             gravityz: -100,
-            mass: 1000,
             colliding: false,
             maxHealth: Infinity,
             immuneTime: 0.01,
@@ -27,7 +26,9 @@ class Bomb extends Enemy {
                 S.call(() => this.effects.silhouette.enabled = !this.effects.silhouette.enabled),
                 S.wait(0.05),
             )),
-            S.call(() => this.explode()),
+            S.call(() => {
+                if (this.alive) this.explode();
+            }),
         ));
     }
 
@@ -53,7 +54,7 @@ class Bomb extends Enemy {
     onCollide(other: PhysicsWorldObject) {
         super.onCollide(other);
 
-        if (other instanceof Throne) {
+        if (other instanceof Throne && this.alive) {
             this.explode();
         }
     }

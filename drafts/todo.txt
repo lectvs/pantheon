@@ -36,7 +36,7 @@ postjam
     - /rewrite dialog box implementation (shouldn't use spriteText internals)
         - /TODO: remove setText force parameter after
 - /collect all collisions and apply callbacks/momentum transfer afterward
-- define better "momentum transfer" modes (NONE, ZERO_VELOCITY, KINETIC)
+- /define better "momentum transfer" modes (NONE, ZERO_VELOCITY, KINETIC)
 - new content
     - add some more enemies
     - add music/ambience during silent parts

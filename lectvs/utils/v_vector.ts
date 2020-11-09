@@ -7,6 +7,10 @@ namespace V {
         return angle;
     }
 
+    export function dot(v1: Pt, v2: Pt) {
+        return v1.x*v2.x + v1.y*v2.y;
+    }
+
     export function magnitude(vector: Pt) {
         return Math.sqrt(this.magnitudeSq(vector));
     }

@@ -51,6 +51,8 @@ class Hoop extends Sprite {
 
         this.setStrength(player);
 
+        this.mass = M.clamp(this.currentAttackStrength, 0.1, 1);
+
         let visibleAttackStrength = M.clamp(this.currentAttackStrength, 0, 1);
 
         this.effects.silhouette.enabled = true;
@@ -67,17 +69,6 @@ class Hoop extends Sprite {
         let player = this.world.select.type(Player);
         if (!isFinite(this.x)) this.x = player.x;
         if (!isFinite(this.y)) this.y = player.y;
-    }
-
-    onCollide(other: PhysicsWorldObject) {
-        super.onCollide(other);
-
-        if (other instanceof Enemy && this.isStrongEnoughToDealDamage()) {
-            let d = { x: this.x - other.x, y: this.y - other.y };
-            V.setMagnitude(d, this.currentAttackStrength * 200);
-            this.v.x += d.x;
-            this.v.y += d.y;
-        }
     }
 
     isStrongEnoughToDealDamage() {

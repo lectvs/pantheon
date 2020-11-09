@@ -21,13 +21,21 @@ function BASE_STAGE(): World {
         collisions: [
             { move: 'player', from: 'enemies' },
             { move: 'player', from: 'bullets' },
-            { move: 'player', from: 'walls', transferMomentum: false },
-            { move: 'enemies', from: 'walls', transferMomentum: false },
+            { move: 'player', from: 'walls' },
+            { move: 'enemies', from: 'walls' },
             { move: 'bullets', from: 'walls' },
             { move: 'bombs', from: 'walls' },
             { move: 'bombs', from: 'enemies' },
-            { move: 'hoop', from: 'enemies' },
-            { move: 'hoop', from: 'bombs' },
+            { move: 'hoop', from: 'enemies', momentumTransfer: 'elastic', callback: (hoop: Hoop, enemy: Enemy) => {
+                if (enemy.damagableByHoop && !enemy.immune && hoop.isStrongEnoughToDealDamage()) {
+                    enemy.damage(hoop.currentAttackStrength);
+                }
+            }},
+            { move: 'hoop', from: 'bombs', momentumTransfer: 'elastic', callback: (hoop: Hoop, bomb: Bomb) => {
+                if (hoop.isStrongEnoughToDealDamage()) {
+                    global.world.playSound('hitenemy');
+                }
+            } },
         ],
         collisionIterations: 4,
         useRaycastDisplacementThreshold: 4,
