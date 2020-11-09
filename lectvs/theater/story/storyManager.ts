@@ -61,6 +61,7 @@ class StoryManager {
                         }
                         return true;
                     },
+                    delay: transition.delay,
                 };
             });
 

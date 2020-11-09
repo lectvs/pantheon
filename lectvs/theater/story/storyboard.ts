@@ -37,6 +37,7 @@ namespace Storyboard {
     export type Transition = {
         toNode: string;
         condition?: () => any;
+        delay?: number;
         onStage?: string;
         onInteract?: string;
     }

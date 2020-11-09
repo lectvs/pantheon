@@ -9,6 +9,7 @@ namespace StateMachine {
     export type Transition = {
         toState: string;
         condition?: () => any;
+        delay?: number;
     }
 }
 
@@ -36,18 +37,19 @@ class StateMachine {
 
         let stateScript = state.script ?? S.noop();
 
-        this.script = new Script(S.chain(
-            stateScript,
-            S.loopFor(Infinity, S.chain(
-                S.call(() => {
-                    let transition = this.getValidTransition(this.currentState);
-                    if (transition) {
-                        this.setState(transition.toState);
-                    }
-                }),
-                S.yield(),
-            ))
-        ));
+        let sm = this;
+        this.script = new Script(function*() {
+            yield* stateScript();
+
+            let selectedTransition: StateMachine.Transition = undefined;
+            while (!selectedTransition) {
+                selectedTransition = sm.getValidTransition(sm.currentState);
+                yield;
+            }
+
+            yield* S.wait(selectedTransition.delay ?? 0)();
+            sm.setState(selectedTransition.toState);
+        });
 
         this.script.update(0);
     }

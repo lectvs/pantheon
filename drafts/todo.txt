@@ -38,21 +38,21 @@ postjam
 - /collect all collisions and apply callbacks/momentum transfer afterward
 - /define better "momentum transfer" modes (NONE, ZERO_VELOCITY, KINETIC)
 - /fix bug with vx, vy = NaN (fixed, maybe? :])
+- /story transition delay
 - new content
     - add some more enemies
     - add music/ambience during silent parts
     - add dialog talking sound effects?
 - investigate boss fight crash
 - fix caps lock bug?
-- cutscene skips
-- update callback type this in bound anonymous function
 - fix window focus issues
     - mute audio when window out of focus
     - fix sticking against the wall bug
+- cutscene skips
+- update callback type this in bound anonymous function
 - better scripting syntax?
     - look into writing TS transforms for scripts?
 - camera mode transitions
-- story transition delay
 - better enemy behavior system
 - in general clean up the storyboard
 - fullscreen

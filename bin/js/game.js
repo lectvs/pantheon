@@ -6357,6 +6357,7 @@ var StoryManager = /** @class */ (function () {
                         }
                         return true;
                     },
+                    delay: transition.delay,
                 };
             });
             this_2.stateMachine.addState(storyNodeName, state);
@@ -6917,7 +6918,6 @@ var StateMachine = /** @class */ (function () {
         this.states[name] = state;
     };
     StateMachine.prototype.setState = function (name) {
-        var _this = this;
         var _a;
         if (this.script)
             this.script.done = true;
@@ -6928,12 +6928,32 @@ var StateMachine = /** @class */ (function () {
         if (state.callback)
             state.callback();
         var stateScript = (_a = state.script) !== null && _a !== void 0 ? _a : S.noop();
-        this.script = new Script(S.chain(stateScript, S.loopFor(Infinity, S.chain(S.call(function () {
-            var transition = _this.getValidTransition(_this.currentState);
-            if (transition) {
-                _this.setState(transition.toState);
-            }
-        }), S.yield()))));
+        var sm = this;
+        this.script = new Script(function () {
+            var selectedTransition;
+            var _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0: return [5 /*yield**/, __values(stateScript())];
+                    case 1:
+                        _b.sent();
+                        selectedTransition = undefined;
+                        _b.label = 2;
+                    case 2:
+                        if (!!selectedTransition) return [3 /*break*/, 4];
+                        selectedTransition = sm.getValidTransition(sm.currentState);
+                        return [4 /*yield*/];
+                    case 3:
+                        _b.sent();
+                        return [3 /*break*/, 2];
+                    case 4: return [5 /*yield**/, __values(S.wait((_a = selectedTransition.delay) !== null && _a !== void 0 ? _a : 0)())];
+                    case 5:
+                        _b.sent();
+                        sm.setState(selectedTransition.toState);
+                        return [2 /*return*/];
+                }
+            });
+        });
         this.script.update(0);
     };
     StateMachine.prototype.update = function (delta) {
@@ -11231,11 +11251,11 @@ function getStoryboard() {
         'gameplay': {
             type: 'gameplay',
             transitions: [
-                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(1); }, toNode: 'spawn_wave_2' },
-                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(2); }, toNode: 'spawn_wave_3' },
-                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(3); }, toNode: 'spawn_wave_4' },
-                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(4); }, toNode: 'spawn_wave_5' },
-                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(5); }, toNode: 'spawn_wave_king' },
+                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(1); }, delay: 0.5, toNode: 'spawn_wave_2' },
+                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(2); }, delay: 0.5, toNode: 'spawn_wave_3' },
+                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(3); }, delay: 0.5, toNode: 'spawn_wave_4' },
+                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(4); }, delay: 0.5, toNode: 'spawn_wave_5' },
+                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(5); }, delay: 0.5, toNode: 'spawn_wave_king' },
                 { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(9001); }, toNode: 'win' },
                 { condition: function () { return global.world.select.type(Player).health <= 0; }, toNode: 'defeat' },
             ]
