@@ -41,7 +41,7 @@ class Debug {
 
     static update() {
         for (let experiment in Debug.EXPERIMENTS) {
-            Debug.EXPERIMENTS[experiment].update();
+            Debug.EXPERIMENTS[experiment].update(experiment);
         }
     }
 

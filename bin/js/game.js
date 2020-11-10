@@ -1221,6 +1221,17 @@ var TextureFilter = /** @class */ (function () {
     var fragPreUniforms = "\n        precision highp float;\n        varying vec2 vTextureCoord;\n        uniform vec4 inputSize;\n        uniform sampler2D uSampler;\n\n        uniform float posx;\n        uniform float posy;\n        uniform float dimx;\n        uniform float dimy;\n        uniform float t;\n\n        float width;\n        float height;\n        float destWidth;\n        float destHeight;\n    ";
     var fragStartFunc = "\n        vec4 getColor(float localx, float localy) {\n            float tx = (localx + posx) / destWidth;\n            float ty = (localy + posy) / destHeight;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        vec4 getDestColor(float destx, float desty) {\n            float tx = destx / destWidth;\n            float ty = desty / destHeight;\n            return texture2D(uSampler, vec2(tx, ty));\n        }\n\n        " + Perlin.SHADER_SOURCE + "\n\n        void main(void) {\n            width = dimx;\n            height = dimy;\n            destWidth = inputSize.x;\n            destHeight = inputSize.y;\n            float destx = vTextureCoord.x * destWidth;\n            float desty = vTextureCoord.y * destHeight;\n            float x = destx - posx;\n            float y = desty - posy;\n            vec4 inp = texture2D(uSampler, vTextureCoord);\n            // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.\n            if (inp.a > 0.0) {\n                inp.rgb /= inp.a;\n            }\n            vec4 outp = vec4(inp.r, inp.g, inp.b, inp.a);\n    ";
     var fragEndFunc = "\n            // Premultiply alpha again.\n            outp.rgb *= outp.a;\n            gl_FragColor = outp;\n        }\n    ";
+    var _sliceFilter;
+    function SLICE_FILTER(rect) {
+        if (!_sliceFilter) {
+            _sliceFilter = new SliceFilter(rect);
+        }
+        else {
+            _sliceFilter.setSlice(rect);
+        }
+        return _sliceFilter;
+    }
+    TextureFilter.SLICE_FILTER = SLICE_FILTER;
 })(TextureFilter || (TextureFilter = {}));
 /// <reference path="./textureFilter.ts"/>
 var SliceFilter = /** @class */ (function (_super) {
@@ -1386,7 +1397,7 @@ var BasicTexture = /** @class */ (function () {
         var _this = this;
         var allFilters = [];
         if (properties.slice) {
-            var sliceFilter = BasicTexture.SLICE_FILTER(properties.slice);
+            var sliceFilter = TextureFilter.SLICE_FILTER(properties.slice);
             var sliceRect = this.getSliceRect(properties);
             // Subtract sliceRect.xy because slice requires the shifted xy of the texture after slice
             Texture.setFilterProperties(sliceFilter, properties.x - sliceRect.x, properties.y - sliceRect.y, sliceRect.width, sliceRect.height);
@@ -1442,19 +1453,6 @@ var BasicTexture = /** @class */ (function () {
     };
     return BasicTexture;
 }());
-(function (BasicTexture) {
-    var _sliceFilter;
-    function SLICE_FILTER(rect) {
-        if (!_sliceFilter) {
-            _sliceFilter = new SliceFilter(rect);
-        }
-        else {
-            _sliceFilter.setSlice(rect);
-        }
-        return _sliceFilter;
-    }
-    BasicTexture.SLICE_FILTER = SLICE_FILTER;
-})(BasicTexture || (BasicTexture = {}));
 /// <reference path="../texture/basicTexture.ts"/>
 var Preload = /** @class */ (function () {
     function Preload() {
@@ -2284,7 +2282,7 @@ var Debug = /** @class */ (function () {
     };
     Debug.update = function () {
         for (var experiment in Debug.EXPERIMENTS) {
-            Debug.EXPERIMENTS[experiment].update();
+            Debug.EXPERIMENTS[experiment].update(experiment);
         }
     };
     Object.defineProperty(Debug, "DEBUG", {
@@ -3814,9 +3812,10 @@ var Experiment = /** @class */ (function () {
         this.toggleKey = toggleKey;
         this.enabled = false;
     }
-    Experiment.prototype.update = function () {
+    Experiment.prototype.update = function (name) {
         if (Input.justDown(this.toggleKey)) {
             this.enabled = !this.enabled;
+            debug("Experiment '" + name + "' turned " + (this.enabled ? 'on' : 'off'));
         }
     };
     Experiment.prototype.isEnabled = function () {

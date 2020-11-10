@@ -188,4 +188,14 @@ namespace TextureFilter {
             gl_FragColor = outp;
         }
     `;
+
+    var _sliceFilter: SliceFilter;
+    export function SLICE_FILTER(rect: Rect) {
+        if (!_sliceFilter) {
+            _sliceFilter = new SliceFilter(rect);
+        } else {
+            _sliceFilter.setSlice(rect);
+        }
+        return _sliceFilter;
+    }
 }

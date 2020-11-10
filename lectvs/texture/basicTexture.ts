@@ -150,7 +150,7 @@ class BasicTexture implements Texture {
         let allFilters: TextureFilter[] = [];
 
         if (properties.slice) {
-            let sliceFilter = BasicTexture.SLICE_FILTER(properties.slice);
+            let sliceFilter = TextureFilter.SLICE_FILTER(properties.slice);
             let sliceRect = this.getSliceRect(properties);
             // Subtract sliceRect.xy because slice requires the shifted xy of the texture after slice
             Texture.setFilterProperties(sliceFilter, properties.x - sliceRect.x, properties.y - sliceRect.y, sliceRect.width, sliceRect.height);
@@ -213,17 +213,5 @@ class BasicTexture implements Texture {
         this.renderTextureSprite.filters = allFilters.map(filter => filter.borrowPixiFilter());
         this.renderTextureSprite.filterArea = new PIXI.Rectangle(0, 0, destTexture.width, destTexture.height);
         return allFilters;
-    }
-}
-
-namespace BasicTexture {
-    var _sliceFilter: SliceFilter;
-    export function SLICE_FILTER(rect: Rect) {
-        if (!_sliceFilter) {
-            _sliceFilter = new SliceFilter(rect);
-        } else {
-            _sliceFilter.setSlice(rect);
-        }
-        return _sliceFilter;
     }
 }

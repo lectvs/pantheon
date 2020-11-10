@@ -40,7 +40,7 @@ postjam
 - /fix bug with vx, vy = NaN (fixed, maybe? :])
 - /story transition delay
 - /render layers directly unless they have effects
-- render asset sprites directly instead of using render textures?
+- /render asset sprites directly instead of using render textures? (no performance gain identified)
 - new content
     - add some more enemies
     - add music/ambience during silent parts

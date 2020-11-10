@@ -7,9 +7,10 @@ class Experiment {
         this.enabled = false;
     }
 
-    update() {
+    update(name: string) {
         if (Input.justDown(this.toggleKey)) {
             this.enabled = !this.enabled;
+            debug(`Experiment '${name}' turned ${this.enabled ? 'on' : 'off'}`);
         }
     }
 
