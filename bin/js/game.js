@@ -573,7 +573,7 @@ var Metrics = /** @class */ (function () {
             start: this.getCurrentTimeMilliseconds(),
             end: undefined,
             time: undefined,
-            //metrics: {},
+            metrics: {},
             subspans: [],
         };
         if (this.currentSpan) {
@@ -601,8 +601,9 @@ var Metrics = /** @class */ (function () {
         this.spanStack.pop();
     };
     Metrics.prototype.recordMetric = function (metric, value) {
-        //this.currentSpan.metrics[metric] = value;
-        error("Metrics have not been implemented yet! Uncomment the lines in metrics.ts");
+        if (!this.isRecording)
+            return;
+        this.currentSpan.metrics[metric] = value;
     };
     Metrics.prototype.getLastRecording = function () {
         return _.last(this.recordings);
@@ -3147,7 +3148,6 @@ var World = /** @class */ (function () {
         this.layers = this.createLayers(config.layers);
         this.backgroundColor = (_g = config.backgroundColor) !== null && _g !== void 0 ? _g : global.backgroundColor;
         this.backgroundAlpha = (_h = config.backgroundAlpha) !== null && _h !== void 0 ? _h : 1;
-        this.screen = new BasicTexture(this.width, this.height);
         this.layerTexture = new BasicTexture(this.width, this.height);
         this.entryPoints = (_j = config.entryPoints) !== null && _j !== void 0 ? _j : {};
         this.camera = new Camera((_k = config.camera) !== null && _k !== void 0 ? _k : {}, this);
@@ -3233,13 +3233,22 @@ var World = /** @class */ (function () {
         // Render background color.
         Draw.brush.color = this.backgroundColor;
         Draw.brush.alpha = this.backgroundAlpha;
-        Draw.fill(this.screen);
+        Draw.rectangleSolid(screen, 0, 0, screen.width, screen.height);
         try {
             for (var _b = __values(this.layers), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var layer = _c.value;
                 global.metrics.startSpan("layer_" + layer.name);
-                this.layerTexture.clear();
-                this.renderLayer(layer, this.layerTexture, this.screen);
+                global.metrics.recordMetric('renderToOwnLayer', layer.shouldRenderToOwnLayer ? 0 : 1);
+                if (layer.shouldRenderToOwnLayer) {
+                    this.layerTexture.clear();
+                    this.renderLayerToTexture(layer, this.layerTexture);
+                    this.layerTexture.renderTo(screen, {
+                        filters: layer.effects.getFilterList()
+                    });
+                }
+                else {
+                    this.renderLayerToTexture(layer, screen);
+                }
                 global.metrics.endSpan("layer_" + layer.name);
             }
         }
@@ -3250,11 +3259,8 @@ var World = /** @class */ (function () {
             }
             finally { if (e_10) throw e_10.error; }
         }
-        global.metrics.startSpan("screen");
-        this.screen.renderTo(screen);
-        global.metrics.endSpan("screen");
     };
-    World.prototype.renderLayer = function (layer, layerTexture, screen) {
+    World.prototype.renderLayerToTexture = function (layer, texture) {
         var e_11, _a;
         layer.sort();
         try {
@@ -3262,7 +3268,7 @@ var World = /** @class */ (function () {
                 var worldObject = _c.value;
                 if (worldObject.visible && worldObject.isOnScreen()) {
                     global.metrics.startSpan(worldObject);
-                    worldObject.render(layerTexture, worldObject.renderScreenX, worldObject.renderScreenY);
+                    worldObject.render(texture, worldObject.renderScreenX, worldObject.renderScreenY);
                     global.metrics.endSpan(worldObject);
                 }
             }
@@ -3274,9 +3280,6 @@ var World = /** @class */ (function () {
             }
             finally { if (e_11) throw e_11.error; }
         }
-        layerTexture.renderTo(screen, {
-            filters: layer.effects.getFilterList()
-        });
     };
     World.prototype.addWorldObject = function (obj) {
         return World.Actions.addWorldObjectToWorld(obj, this);
@@ -3540,6 +3543,13 @@ var World = /** @class */ (function () {
             this.reverseSort = (_a = config.reverseSort) !== null && _a !== void 0 ? _a : false;
             this.effects = new Effects(config.effects);
         }
+        Object.defineProperty(Layer.prototype, "shouldRenderToOwnLayer", {
+            get: function () {
+                return this.effects.hasEffects();
+            },
+            enumerable: false,
+            configurable: true
+        });
         Layer.prototype.sort = function () {
             var _this = this;
             if (!this.sortKey)
@@ -3833,9 +3843,11 @@ var MetricsMenu = /** @class */ (function (_super) {
         var plotSprite = _this.addWorldObject(new Sprite());
         plotSprite.setTexture(_this.plot.texture);
         _this.addWorldObject(new SpriteText({
+            x: 0, y: global.gameHeight,
             name: 'graphxy',
             font: Debug.FONT,
             style: { color: 0x00FF00 },
+            anchor: Anchor.BOTTOM_LEFT,
         }));
         return _this;
     }
@@ -6166,8 +6178,6 @@ var Theater = /** @class */ (function (_super) {
         function WorldAsWorldObject(containedWorld) {
             var _this = _super.call(this) || this;
             _this.containedWorld = containedWorld;
-            _this.worldTexture = new BasicTexture(containedWorld.width, containedWorld.height);
-            _this.setTexture(_this.worldTexture);
             return _this;
         }
         WorldAsWorldObject.prototype.update = function () {
@@ -6175,12 +6185,11 @@ var Theater = /** @class */ (function (_super) {
             this.containedWorld.update();
         };
         WorldAsWorldObject.prototype.render = function (texture, x, y) {
-            this.worldTexture.clear();
-            this.containedWorld.render(this.worldTexture);
+            this.containedWorld.render(texture);
             _super.prototype.render.call(this, texture, x, y);
         };
         return WorldAsWorldObject;
-    }(Sprite));
+    }(WorldObject));
     Theater.WorldAsWorldObject = WorldAsWorldObject;
 })(Theater || (Theater = {}));
 var StoryConfig = /** @class */ (function () {
@@ -8928,6 +8937,15 @@ var Effects = /** @class */ (function () {
     });
     Effects.prototype.getFilterList = function () {
         return this.pre.filters.concat(this.effects).concat(this.post.filters);
+    };
+    Effects.prototype.hasEffects = function () {
+        if (this.effects.some(function (effect) { return effect && effect.enabled; }))
+            return true;
+        if (this.pre.enabled && this.pre.filters.some(function (filter) { return filter && filter.enabled; }))
+            return true;
+        if (this.post.enabled && this.post.filters.some(function (filter) { return filter && filter.enabled; }))
+            return true;
+        return false;
     };
     Effects.prototype.updateEffects = function (delta) {
         var e_44, _a, e_45, _b;

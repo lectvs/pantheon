@@ -142,7 +142,7 @@ class Main {
 
             global.clearStacks();
             global.metrics.startSpan('update');
-            
+
             for (let i = 0; i < Debug.SKIP_RATE; i++) {
                 Input.update();
                 Debug.update();

@@ -64,7 +64,6 @@ class World {
     backgroundAlpha: number;
 
     camera: Camera;
-    private screen: Texture;
     private layerTexture: Texture;
 
     protected scriptManager: ScriptManager;
@@ -99,7 +98,6 @@ class World {
         this.backgroundColor = config.backgroundColor ?? global.backgroundColor;
         this.backgroundAlpha = config.backgroundAlpha ?? 1;
 
-        this.screen = new BasicTexture(this.width, this.height);
         this.layerTexture = new BasicTexture(this.width, this.height);
 
         this.entryPoints = config.entryPoints ?? {};
@@ -160,33 +158,35 @@ class World {
         // Render background color.
         Draw.brush.color = this.backgroundColor;
         Draw.brush.alpha = this.backgroundAlpha;
-        Draw.fill(this.screen);
+        Draw.rectangleSolid(screen, 0, 0, screen.width, screen.height);
 
         for (let layer of this.layers) {
             global.metrics.startSpan(`layer_${layer.name}`);
-            this.layerTexture.clear();
-            this.renderLayer(layer, this.layerTexture, this.screen);
+            global.metrics.recordMetric('renderToOwnLayer', layer.shouldRenderToOwnLayer ? 0 : 1);
+            if (layer.shouldRenderToOwnLayer) {
+                this.layerTexture.clear();
+                this.renderLayerToTexture(layer, this.layerTexture);
+                this.layerTexture.renderTo(screen, {
+                    filters: layer.effects.getFilterList()
+                });
+            } else {
+                this.renderLayerToTexture(layer, screen);
+            }
             global.metrics.endSpan(`layer_${layer.name}`);
 
         }
-
-        global.metrics.startSpan(`screen`);
-        this.screen.renderTo(screen);
-        global.metrics.endSpan(`screen`);
     }
 
-    renderLayer(layer: World.Layer, layerTexture: Texture, screen: Texture) {
+    renderLayerToTexture(layer: World.Layer, texture: Texture) {
         layer.sort();
+
         for (let worldObject of layer.worldObjects) {
             if (worldObject.visible && worldObject.isOnScreen()) {
                 global.metrics.startSpan(worldObject);
-                worldObject.render(layerTexture, worldObject.renderScreenX, worldObject.renderScreenY);
+                worldObject.render(texture, worldObject.renderScreenX, worldObject.renderScreenY);
                 global.metrics.endSpan(worldObject);
             }
         }
-        layerTexture.renderTo(screen, {
-            filters: layer.effects.getFilterList()
-        });
     }
 
     addWorldObject<T extends WorldObject>(obj: T): T {
@@ -424,6 +424,10 @@ namespace World {
         reverseSort: boolean;
 
         effects: Effects;
+
+        get shouldRenderToOwnLayer() {
+            return this.effects.hasEffects();
+        }
         
         constructor(name: string, config: World.LayerConfig) {
             this.name = name;

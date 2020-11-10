@@ -4,8 +4,7 @@ namespace Metrics {
         start: number;
         end: number;
         time: number;
-        // To be uncommented when a use case is found.
-        //metrics: Dict<number>;
+        metrics: Dict<number>;
         subspans?: Span[];
     }
 }
@@ -54,7 +53,7 @@ class Metrics {
             start: this.getCurrentTimeMilliseconds(),
             end: undefined,
             time: undefined,
-            //metrics: {},
+            metrics: {},
             subspans: [],
         };
 
@@ -83,8 +82,8 @@ class Metrics {
     }
 
     recordMetric(metric: string, value: number) {
-        //this.currentSpan.metrics[metric] = value;
-        error("Metrics have not been implemented yet! Uncomment the lines in metrics.ts");
+        if (!this.isRecording) return;
+        this.currentSpan.metrics[metric] = value;
     }
 
     getLastRecording() {

@@ -59,6 +59,13 @@ class Effects {
         return this.pre.filters.concat(this.effects).concat(this.post.filters);
     }
 
+    hasEffects() {
+        if (this.effects.some(effect => effect && effect.enabled)) return true;
+        if (this.pre.enabled && this.pre.filters.some(filter => filter && filter.enabled)) return true;
+        if (this.post.enabled && this.post.filters.some(filter => filter && filter.enabled)) return true;
+        return false;
+    }
+
     updateEffects(delta: number) {
         if (this.effects[Effects.SILHOUETTE_I]) this.effects[Effects.SILHOUETTE_I].updateTime(delta);
         if (this.effects[Effects.OUTLINE_I]) this.effects[Effects.OUTLINE_I].updateTime(delta);

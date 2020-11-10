@@ -39,6 +39,8 @@ postjam
 - /define better "momentum transfer" modes (NONE, ZERO_VELOCITY, KINETIC)
 - /fix bug with vx, vy = NaN (fixed, maybe? :])
 - /story transition delay
+- /render layers directly unless they have effects
+- render asset sprites directly instead of using render textures?
 - new content
     - add some more enemies
     - add music/ambience during silent parts

@@ -27,9 +27,11 @@ class MetricsMenu extends Menu {
         plotSprite.setTexture(this.plot.texture);
 
         this.addWorldObject(new SpriteText({
+            x: 0, y: global.gameHeight,
             name: 'graphxy',
             font: Debug.FONT,
             style: { color: 0x00FF00 },
+            anchor: Anchor.BOTTOM_LEFT,
         }));
     }
 

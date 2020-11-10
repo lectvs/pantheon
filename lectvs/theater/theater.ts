@@ -106,17 +106,12 @@ class Theater extends World {
 }
 
 namespace Theater {
-    export class WorldAsWorldObject extends Sprite {
+    export class WorldAsWorldObject extends WorldObject {
         containedWorld: World;
-
-        private worldTexture: Texture;
 
         constructor(containedWorld: World) {
             super();
-
             this.containedWorld = containedWorld;
-            this.worldTexture = new BasicTexture(containedWorld.width, containedWorld.height);
-            this.setTexture(this.worldTexture);
         }
 
         update() {
@@ -125,8 +120,7 @@ namespace Theater {
         }
 
         render(texture: Texture, x: number, y: number) {
-            this.worldTexture.clear();
-            this.containedWorld.render(this.worldTexture);
+            this.containedWorld.render(texture);
             super.render(texture, x, y);
         }
     }
