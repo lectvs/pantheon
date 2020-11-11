@@ -77,7 +77,7 @@ Main.loadConfig({
                 texture: 'dialogbox',
                 dialogFont: Assets.fonts.DELUXE16,
                 textAreaFull: { x: -192, y: -42, width: 384, height: 84 },
-                textAreaPortrait: { x: -200, y: -50, width: 400, height: 100 },
+                textAreaPortrait: { x: -192, y: -42, width: 384, height: 84 },
                 portraitPosition: { x: 78, y: 0 },
                 startSound: 'click',
             }),
@@ -103,11 +103,5 @@ Main.loadConfig({
         experiments: {},
     },
 });
-
-function get(name: string) {
-    let worldObject = global.game.theater.currentWorld.select.name(name);
-    if (worldObject) return worldObject;
-    return undefined;
-}
 
 var HARD_DIFFICULTY: boolean = false;

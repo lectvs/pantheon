@@ -11,13 +11,14 @@ namespace DialogBox {
 }
 
 class DialogBox extends Sprite {
-    charQueue: SpriteText.Character[];
-    textAreaFull: Rect;
-    textAreaPortrait: Rect;
-    portraitPosition: Pt;
-    startSound: string;
+    private textAreaFull: Rect;
+    private textAreaPortrait: Rect;
+    private portraitPosition: Pt;
+    private startSound: string;
+    
+    private isShowingPortrait: boolean;
+    private get textArea() { return this.isShowingPortrait ? this.textAreaPortrait : this.textAreaFull; }
 
-    textArea: Rect;
     done: boolean;
 
     private spriteText: SpriteText;
@@ -28,20 +29,19 @@ class DialogBox extends Sprite {
     constructor(config: DialogBox.Config) {
         super(config);
 
-        this.charQueue = [];
-        
         this.textAreaFull = config.textAreaFull;
         this.textAreaPortrait = config.textAreaPortrait;
         this.portraitPosition = config.portraitPosition;
         this.startSound = config.startSound;
 
-        this.textArea = this.textAreaFull;
+        this.isShowingPortrait = false;
         this.done = true;
 
         this.spriteText = this.addChild(new SpriteText({ font: config.dialogFont }));
         this.spriteTextOffset = 0;
 
         this.portraitSprite = this.addChild(new Sprite());
+        this.showPortrait('none');
 
         this.characterTimer = new Timer(0.05, () => this.advanceCharacter(), true);
     }
@@ -50,11 +50,9 @@ class DialogBox extends Sprite {
         super.update();
         this.characterTimer.update(this.delta);
 
-        if (this.done) {
-            this.visible = false;
-            this.spriteText.visible = false;
-            this.portraitSprite.visible = false;
-        }
+        this.visible = !this.done;
+        this.spriteText.visible = !this.done;
+        this.portraitSprite.visible = !this.done && this.isShowingPortrait;
 
         if (Input.justDown(Input.GAME_ADVANCE_DIALOG)) {
             this.advanceDialog();
@@ -72,71 +70,38 @@ class DialogBox extends Sprite {
     }
 
     advanceDialog() {
-        if (this.advanceCharacter()) {
-            this.completePage();
-        } else if (!_.isEmpty(this.charQueue)) {
+        if (this.isPageComplete()) {
             this.advancePage();
         } else {
-            this.completeDialog();
+            this.completePage();
         }
-    }
-
-    advanceCharacter() {
-        if (!_.isEmpty(this.charQueue) && this.charQueue[0].bottom <= this.spriteTextOffset + this.textArea.height) {
-            this.spriteText.pushChar(this.charQueue.shift());
-            return true;
-        }
-        return false;
-    }
-
-    advancePage() {
-        this.completePage();
-        this.spriteTextOffset = this.spriteText.getTextHeight();
-    }
-
-    completeDialog() {
-        this.done = true;
-    }
-
-    completePage() {
-        let iters = 0;
-        while (this.advanceCharacter() && iters < DialogBox.MAX_COMPLETE_PAGE_ITERS) {
-            iters++;
-        }
-    }
-
-    getPortraitWorldPosition(): Pt {
-        return {
-            x: this.x + this.portraitPosition.x,
-            y: this.y + this.portraitPosition.y,
-        };
-    }
-
-    setPortraitSpriteProperties() {
-        this.portraitSprite.localx = this.portraitPosition.x;
-        this.portraitSprite.localy = this.portraitPosition.y;
-    }
-
-    setSpriteTextProperties() {
-        this.spriteText.localx = this.textArea.x;
-        this.spriteText.localy = this.textArea.y - this.spriteTextOffset;
-        this.spriteText.mask = {
-            type: 'world',
-            texture: Texture.filledRect(this.textArea.width, this.textArea.height, 0xFFFFFF),
-            offsetx: this.x + this.textArea.x,
-            offsety: this.y + this.textArea.y,
-        };
     }
 
     showDialog(dialogText: string) {
-        // Reset dialog properties.
         this.spriteText.clear();
         this.spriteTextOffset = 0;
-        this.visible = true;
-        this.spriteText.visible = true;
         this.done = false;
 
-        this.charQueue = SpriteTextConverter.textToCharListWithWordWrap(dialogText, this.spriteText.font, this.textArea.width);
+        this.spriteText.setText(dialogText);
+        this.spriteText.visibleCharCount = 0;
+        this.spriteTextOffset = 0;
+        this.characterTimer.reset();
+
+        this.advanceCharacter(); // Advance character once to start the dialog with one displayed character.
+
+        if (this.startSound) {
+            this.world.playSound(this.startSound);
+        }
+    }
+
+    addToDialog(additionalText: string) {
+        this.done = false;
+
+        let newCurrentText = this.spriteText.getCurrentText() + additionalText;
+        let newVisibleCharCount = this.spriteText.visibleCharCount;
+
+        this.spriteText.setText(newCurrentText);
+        this.spriteText.visibleCharCount = newVisibleCharCount;
         this.characterTimer.reset();
 
         this.advanceCharacter(); // Advance character once to start the dialog with one displayed character.
@@ -147,14 +112,61 @@ class DialogBox extends Sprite {
     }
 
     showPortrait(portrait: string) {
-        if (AssetCache.isNoneTexture(portrait)) {
-            this.portraitSprite.visible = false;
-            this.textArea = this.textAreaFull;
-        } else {
-            this.portraitSprite.setTexture(portrait);
-            this.portraitSprite.visible = true;
-            this.textArea = this.textAreaPortrait;
+        this.portraitSprite.setTexture(portrait);
+        this.isShowingPortrait = !AssetCache.isNoneTexture(portrait);
+        this.spriteText.maxWidth = this.textArea.width;
+    }
+
+    private advanceCharacter() {
+        if (!this.isPageComplete()) {
+            this.spriteText.visibleCharCount++;
         }
+    }
+
+    private advancePage() {
+        if (this.isDialogComplete()) {
+            this.done = true;
+        } else {
+            this.spriteTextOffset = this.spriteText.getTextHeight();
+        }
+    }
+
+    private completePage() {
+        let iters = 0;
+        while (!this.isPageComplete() && iters < DialogBox.MAX_COMPLETE_PAGE_ITERS) {
+            this.advanceCharacter();
+            iters++;
+        }
+
+        if (!this.isPageComplete()) {
+            this.advancePage();
+        }
+    }
+
+    private setPortraitSpriteProperties() {
+        this.portraitSprite.localx = this.portraitPosition.x;
+        this.portraitSprite.localy = this.portraitPosition.y;
+    }
+
+    private setSpriteTextProperties() {
+        this.spriteText.localx = this.textArea.x;
+        this.spriteText.localy = this.textArea.y - this.spriteTextOffset;
+        this.spriteText.mask = {
+            type: 'world',
+            texture: Texture.filledRect(this.textArea.width, this.textArea.height, 0xFFFFFF),
+            offsetx: this.x + this.textArea.x,
+            offsety: this.y + this.textArea.y,
+        };
+    }
+
+    private isDialogComplete() {
+        return this.spriteText.visibleCharCount >= this.spriteText.getCharList().length;
+    }
+
+    private isPageComplete() {
+        if (this.isDialogComplete()) return true;
+        let nextHeight = SpriteText.getHeightOfCharList(this.spriteText.getCharList(), this.spriteText.visibleCharCount + 1);
+        return nextHeight > this.textArea.height + this.spriteTextOffset;
     }
 
     static MAX_COMPLETE_PAGE_ITERS: number = 10000;

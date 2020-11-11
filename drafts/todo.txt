@@ -41,6 +41,9 @@ postjam
 - /story transition delay
 - /render layers directly unless they have effects
 - /render asset sprites directly instead of using render textures? (no performance gain identified)
+- /re-examine relation between dialog and spritetext
+    - /how to pause dialog? add text to dialog?
+    - /add control to spritetext for how many chars are displayed?
 - new content
     - add some more enemies
     - add music/ambience during silent parts
@@ -57,6 +60,7 @@ postjam
 - camera mode transitions
 - better enemy behavior system
 - in general clean up the storyboard
+    - use new dialog pausing/adding feature
 - fullscreen
 - build script
 - fill in README.md for others to run/build the game

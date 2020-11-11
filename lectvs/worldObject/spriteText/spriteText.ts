@@ -42,7 +42,19 @@ class SpriteText extends WorldObject {
     }
     private lastStyle: SpriteText.Style;
 
-    private maxWidth: number;
+    private _maxWidth: number;
+    get maxWidth() { return this._maxWidth; }
+    set maxWidth(value: number) {
+        this._maxWidth = value;
+        this.dirty = true;
+    }
+
+    private _visibleCharCount: number;
+    get visibleCharCount() { return this._visibleCharCount; }
+    set visibleCharCount(value: number) {
+        this._visibleCharCount = value;
+        this.dirty = true;
+    }
 
     anchor: Pt;
 
@@ -73,10 +85,12 @@ class SpriteText extends WorldObject {
             alpha: 1,
             offset: 0,
         });
-
         this.lastStyle = O.deepClone(this.style);
 
-        this.maxWidth = config.maxWidth ?? 0;
+        this.visibleCharCount = Infinity;
+
+        this.maxWidth = config.maxWidth ?? Infinity;
+
         this.anchor = config.anchor ?? Anchor.TOP_LEFT;
         this.effects = new Effects();
         this.effects.updateFromConfig(config.effects);
@@ -121,7 +135,9 @@ class SpriteText extends WorldObject {
         let textHeight = this.getTextHeight();
         this.staticTexture = new BasicTexture(textWidth, textHeight);
 
-        for (let char of this.chars) {
+        let charCount = Math.min(this.visibleCharCount, this.chars.length);
+        for (let i = 0; i < charCount; i++) {
+            let char = this.chars[i];
             global.metrics.startSpan(`char_${char.char}`);
             let char_i = SpriteText.charCodes[char.char].y * 10 + SpriteText.charCodes[char.char].x;
             let charTexture = AssetCache.getTexture(`${this.font.texturePrefix}_${char_i}`);
@@ -139,12 +155,20 @@ class SpriteText extends WorldObject {
         this.setText("");
     }
 
+    getCharList() {
+        return this.chars;
+    }
+
+    getCurrentText() {
+        return this.currentText;
+    }
+
     getTextWidth() {
-        return SpriteText.getWidthOfCharList(this.chars);
+        return SpriteText.getWidthOfCharList(this.chars, this.visibleCharCount);
     }
 
     getTextHeight() {
-        return SpriteText.getHeightOfCharList(this.chars);
+        return SpriteText.getHeightOfCharList(this.chars, this.visibleCharCount);
     }
 
     getTextWorldBounds() {
@@ -163,18 +187,6 @@ class SpriteText extends WorldObject {
         bounds.x += this.renderScreenX - this.x;
         bounds.y += this.renderScreenY - this.y;
         return bounds;
-    }
-
-    pushChar(char: SpriteText.Character) {
-        this.chars.push(char);
-        this.dirty = true;
-        // Set text to undefined so any text update will not short-circuit.
-        this.currentText = undefined;
-    }
-
-    setMaxWidth(maxWidth: number) {
-        this.maxWidth = maxWidth;
-        this.dirty = true;
     }
 
     setText(text: string) {
@@ -255,14 +267,28 @@ namespace SpriteText {
         }
     }
 
-    export function getWidthOfCharList(list: SpriteText.Character[]) {
+    export function getWidthOfCharList(list: SpriteText.Character[], charCount?: number) {
         if (_.isEmpty(list)) return 0;
-        return M.max(list, char => char.x + char.width);
+        charCount = Math.min(charCount ?? list.length, list.length);
+
+        let result = 0;
+        for (let i = 0; i < charCount; i++) {
+            if (list[i].right > result) result = list[i].right;
+        }
+
+        return result;
     }
 
-    export function getHeightOfCharList(list: SpriteText.Character[]) {
+    export function getHeightOfCharList(list: SpriteText.Character[], charCount?: number) {
         if (_.isEmpty(list)) return 0;
-        return M.max(list, char => char.y + char.height);
+        charCount = Math.min(charCount ?? list.length, list.length);
+
+        let result = 0;
+        for (let i = 0; i < charCount; i++) {
+            if (list[i].bottom > result) result = list[i].bottom;
+        }
+
+        return result;
     }
 
     export const NOOP_TAG = 'noop';

@@ -13,6 +13,15 @@ namespace S {
         }
     }
 
+    export function dialogAdd(text: string): Script.Function {
+        return function*() {
+            global.theater.dialogBox.addToDialog(text);
+            while (!global.theater.dialogBox.done) {
+                yield;
+            }
+        }
+    }
+
     export function fadeSlides(duration: number): Script.Function {
         return function*() {
             if (_.isEmpty(global.theater.slides)) return;
