@@ -2,6 +2,7 @@
 
 namespace PhysicsWorldObject {
     export type Config = ReplaceConfigCallbacks<WorldObject.Config, PhysicsWorldObject> & {
+        v?: Pt;
         vx?: number;
         vy?: number;
         vz?: number;
@@ -56,7 +57,7 @@ class PhysicsWorldObject extends WorldObject {
 
     constructor(config: PhysicsWorldObject.Config = {}) {
         super(config);
-        this._v = pt(config.vx ?? 0, config.vy ?? 0);
+        this._v = config.v ? pt(config.v.x, config.v.y) : pt(config.vx ?? 0, config.vy ?? 0);
         this.vz = config.vz ?? 0;
         this.mass = config.mass ?? 1;
         this._gravity = pt(config.gravityx ?? 0, config.gravityy ?? 0);

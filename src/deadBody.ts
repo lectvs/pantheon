@@ -13,22 +13,22 @@ function deadBody(parent: Enemy, texture: string) {
             outline: { color: parent.effects.outline.color === 0xFFFFFF ? 0x555555 : 0x000000 } 
         },
         bounds: new CircleBounds(0, -2, 8),
-        onAdd: obj => {
-            obj.runScript(S.chain(
+        onAdd: function() {
+            this.runScript(S.chain(
                 S.wait(0.05),
-                S.call(() => obj.effects.silhouette.enabled = false),
+                S.call(() => this.effects.silhouette.enabled = false),
                 S.wait(1),
                 S.call(() => {
-                    if (obj.world.hasWorldObject('floor')) {
-                        obj.render(obj.world.select.name<Sprite>('floor').getTexture(), obj.x, obj.y);
+                    if (this.world.hasWorldObject('floor')) {
+                        this.render(this.world.select.name<Sprite>('floor').getTexture(), this.x, this.y);
                     }
-                    obj.kill();
+                    this.kill();
                 }),
             ));
         },
-        update: obj => {
-            obj.v.x = M.lerpTime(obj.v.x, 0, 10, obj.delta);
-            obj.v.y = M.lerpTime(obj.v.y, 0, 10, obj.delta);
+        update: function() {
+            this.v.x = M.lerpTime(this.v.x, 0, 10, this.delta);
+            this.v.y = M.lerpTime(this.v.y, 0, 10, this.delta);
         }
     });
 }

@@ -44,17 +44,18 @@ postjam
 - /re-examine relation between dialog and spritetext
     - /how to pause dialog? add text to dialog?
     - /add control to spritetext for how many chars are displayed?
+- /update callback type this in bound anonymous function (must use function() and not arrow function)
 - new content
     - add some more enemies
     - add music/ambience during silent parts
     - add dialog talking sound effects?
+    - hoop cleave through enemies at full power?
 - investigate boss fight crash
 - fix caps lock bug?
 - fix window focus issues
     - mute audio when window out of focus
     - fix sticking against the wall bug
 - cutscene skips
-- update callback type this in bound anonymous function
 - better scripting syntax?
     - look into writing TS transforms for scripts?
 - camera mode transitions

@@ -34,10 +34,10 @@ namespace WorldObject {
 
     export type ZBehavior = 'noop' | 'threequarters';
 
-    export type OnAddCallback<T> = (obj: T) => any;
-    export type OnRemoveCallback<T> = (obj: T) => any;
-    export type UpdateCallback<T> = (obj: T) => any;
-    export type RenderCallback<T> = (obj: T, screen: Texture, x: number, y: number) => any;
+    export type OnAddCallback<T> = (this: T) => any;
+    export type OnRemoveCallback<T> = (this: T) => any;
+    export type UpdateCallback<T> = (this: T) => any;
+    export type RenderCallback<T> = (this: T, screen: Texture, x: number, y: number) => any;
 }
 
 class WorldObject {
@@ -161,11 +161,11 @@ class WorldObject {
     }
 
     onAdd() {
-        if (this.onAddCallback) this.onAddCallback(this);
+        if (this.onAddCallback) this.onAddCallback();
     }
 
     onRemove() {
-        if (this.onRemoveCallback) this.onRemoveCallback(this);
+        if (this.onRemoveCallback) this.onRemoveCallback();
     }
 
     preUpdate() {
@@ -185,7 +185,7 @@ class WorldObject {
             this.x = this.world.getWorldMouseX();
             this.y = this.world.getWorldMouseY();
         }
-        if (this.updateCallback) this.updateCallback(this);
+        if (this.updateCallback) this.updateCallback();
 
         this.life.update(this.delta);
 
@@ -249,7 +249,7 @@ class WorldObject {
     }
 
     render(texture: Texture, x: number, y: number) {
-        if (this.renderCallback) this.renderCallback(this, texture, x, y);
+        if (this.renderCallback) this.renderCallback(texture, x, y);
     }
 
     addChild<T extends WorldObject>(child: T): T {

@@ -2629,11 +2629,11 @@ var WorldObject = /** @class */ (function () {
     });
     WorldObject.prototype.onAdd = function () {
         if (this.onAddCallback)
-            this.onAddCallback(this);
+            this.onAddCallback();
     };
     WorldObject.prototype.onRemove = function () {
         if (this.onRemoveCallback)
-            this.onRemoveCallback(this);
+            this.onRemoveCallback();
     };
     WorldObject.prototype.preUpdate = function () {
         this.lastx = this.x;
@@ -2651,7 +2651,7 @@ var WorldObject = /** @class */ (function () {
             this.y = this.world.getWorldMouseY();
         }
         if (this.updateCallback)
-            this.updateCallback(this);
+            this.updateCallback();
         this.life.update(this.delta);
         if (this.parent && this.ignoreCamera) {
             debug("Warning: ignoraCamera is set to true on a child object. This will be ignored!");
@@ -2709,7 +2709,7 @@ var WorldObject = /** @class */ (function () {
     });
     WorldObject.prototype.render = function (texture, x, y) {
         if (this.renderCallback)
-            this.renderCallback(this, texture, x, y);
+            this.renderCallback(texture, x, y);
     };
     WorldObject.prototype.addChild = function (child) {
         return World.Actions.addChildToParent(child, this);
@@ -2890,7 +2890,7 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         if (config === void 0) { config = {}; }
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
         var _this = _super.call(this, config) || this;
-        _this._v = pt((_a = config.vx) !== null && _a !== void 0 ? _a : 0, (_b = config.vy) !== null && _b !== void 0 ? _b : 0);
+        _this._v = config.v ? pt(config.v.x, config.v.y) : pt((_a = config.vx) !== null && _a !== void 0 ? _a : 0, (_b = config.vy) !== null && _b !== void 0 ? _b : 0);
         _this.vz = (_c = config.vz) !== null && _c !== void 0 ? _c : 0;
         _this.mass = (_d = config.mass) !== null && _d !== void 0 ? _d : 1;
         _this._gravity = pt((_e = config.gravityx) !== null && _e !== void 0 ? _e : 0, (_f = config.gravityy) !== null && _f !== void 0 ? _f : 0);
@@ -3788,16 +3788,17 @@ var DebugOverlay = /** @class */ (function (_super) {
     function DebugOverlay() {
         var _this = _super.call(this) || this;
         _this.backgroundAlpha = 0;
-        var debugInfo = _this.addWorldObject(new SpriteText({
+        var debugOverlay = _this;
+        _this.addWorldObject(new SpriteText({
             name: 'debuginfo',
             x: 0, y: 0,
             font: Debug.FONT,
             style: Debug.FONT_STYLE,
             effects: { outline: { color: 0x000000 } },
+            update: function () {
+                this.setText(debugOverlay.getDebugInfo());
+            }
         }));
-        debugInfo.updateCallback = function (obj) {
-            obj.setText(_this.getDebugInfo());
-        };
         return _this;
     }
     DebugOverlay.prototype.setCurrentWorldToDebug = function (world) {
@@ -10109,17 +10110,18 @@ function deadBody(parent, texture) {
             outline: { color: parent.effects.outline.color === 0xFFFFFF ? 0x555555 : 0x000000 }
         },
         bounds: new CircleBounds(0, -2, 8),
-        onAdd: function (obj) {
-            obj.runScript(S.chain(S.wait(0.05), S.call(function () { return obj.effects.silhouette.enabled = false; }), S.wait(1), S.call(function () {
-                if (obj.world.hasWorldObject('floor')) {
-                    obj.render(obj.world.select.name('floor').getTexture(), obj.x, obj.y);
+        onAdd: function () {
+            var _this = this;
+            this.runScript(S.chain(S.wait(0.05), S.call(function () { return _this.effects.silhouette.enabled = false; }), S.wait(1), S.call(function () {
+                if (_this.world.hasWorldObject('floor')) {
+                    _this.render(_this.world.select.name('floor').getTexture(), _this.x, _this.y);
                 }
-                obj.kill();
+                _this.kill();
             })));
         },
-        update: function (obj) {
-            obj.v.x = M.lerpTime(obj.v.x, 0, 10, obj.delta);
-            obj.v.y = M.lerpTime(obj.v.y, 0, 10, obj.delta);
+        update: function () {
+            this.v.x = M.lerpTime(this.v.x, 0, 10, this.delta);
+            this.v.y = M.lerpTime(this.v.y, 0, 10, this.delta);
         }
     });
 }
@@ -11059,12 +11061,13 @@ function spawn(worldObject) {
         texture: 'spawn',
         tint: 0x00FFFF,
         alpha: 0,
-        onAdd: function (obj) {
-            obj.runScript(S.chain(S.doOverTime(1, function (t) {
-                obj.alpha = t;
+        onAdd: function () {
+            var _this = this;
+            this.runScript(S.chain(S.doOverTime(1, function (t) {
+                _this.alpha = t;
             }), S.wait(1), S.call(function () {
-                obj.world.addWorldObject(worldObject);
-                obj.kill();
+                _this.world.addWorldObject(worldObject);
+                _this.kill();
             })));
         }
     });
@@ -11987,18 +11990,18 @@ var UI = /** @class */ (function (_super) {
             var _loop_5 = function (i) {
                 var shield = this_4.shields.pop();
                 shield.getTexture().subdivide(4, 4).forEach(function (subdivision) {
-                    var shard = _this.addChild(new Sprite({
+                    _this.addChild(new Sprite({
                         x: shield.localx - 16 + subdivision.x,
                         y: shield.localy - 16 + subdivision.y,
                         texture: subdivision.texture,
                         gravityy: 200,
+                        v: Random.inCircle(80),
                         vangle: Random.sign() * Random.float(1, 2) * 360,
                         life: 1,
+                        update: function () {
+                            this.alpha = 1 - Math.pow(this.life.progress, 2);
+                        }
                     }));
-                    shard.v = Random.inCircle(80);
-                    shard.updateCallback = function (obj) {
-                        obj.alpha = 1 - Math.pow(obj.life.progress, 2);
-                    };
                 });
                 shield.removeFromWorld();
             };

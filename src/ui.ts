@@ -38,18 +38,18 @@ class UI extends WorldObject {
             for (let i = 0; i < this.shields.length - player.health; i++) {
                 let shield = this.shields.pop();
                 shield.getTexture().subdivide(4, 4).forEach(subdivision => {
-                    let shard = this.addChild(new Sprite({
+                    this.addChild(new Sprite({
                         x: shield.localx-16 + subdivision.x,
                         y: shield.localy-16 + subdivision.y,
                         texture: subdivision.texture,
                         gravityy: 200,
+                        v: Random.inCircle(80),
                         vangle: Random.sign() * Random.float(1, 2) * 360,
                         life: 1,
+                        update: function() {
+                            this.alpha = 1 - this.life.progress**2;
+                        }
                     }));
-                    shard.v = Random.inCircle(80);
-                    shard.updateCallback = obj => {
-                        obj.alpha = 1 - obj.life.progress**2;
-                    };
                 });
                 shield.removeFromWorld();
             }

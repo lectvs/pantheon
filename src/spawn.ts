@@ -6,15 +6,15 @@ function spawn(worldObject: WorldObject) {
         texture: 'spawn',
         tint: 0x00FFFF,
         alpha: 0,
-        onAdd: obj => {
-            obj.runScript(S.chain(
+        onAdd: function() {
+            this.runScript(S.chain(
                 S.doOverTime(1, t => {
-                    obj.alpha = t;
+                    this.alpha = t;
                 }),
                 S.wait(1),
                 S.call(() => {
-                    obj.world.addWorldObject(worldObject);
-                    obj.kill();
+                    this.world.addWorldObject(worldObject);
+                    this.kill();
                 }),
             ));
         }
