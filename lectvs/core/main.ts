@@ -69,6 +69,8 @@ class Main {
             backgroundColor: global.backgroundColor,
         });
         document.body.appendChild(Main.renderer.view);
+        Main.renderer.view.style.setProperty('image-rendering', 'pixelated');  // Chrome
+        Main.renderer.view.style.setProperty('image-rendering', 'crisp-edges');  // Firefox
 
         // AccessibilityManager causes game to crash when Tab is pressed.
         // Deleting it as per https://github.com/pixijs/pixi.js/issues/5111#issuecomment-420047824
@@ -103,7 +105,7 @@ class Main {
         window.addEventListener("keydown", event => {
             WebAudio.start();
             Input.handleKeyDownEvent(event);
-            if (event.key == 'Tab') {
+            if (event.key === 'Tab') {
                 event.preventDefault();
             }
         }, false);

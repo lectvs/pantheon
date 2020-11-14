@@ -1,5 +1,8 @@
 namespace Input {
     export type KeyCodesByName = {
+        // General
+        [Input.FULLSCREEN]: string[],
+
         // Game
         [Input.GAME_ADVANCE_DIALOG]: string[],
         [Input.GAME_PAUSE]: string[],
@@ -213,6 +216,11 @@ class Input {
             this.isDownByKeyCode[event.key] = true;
             event.preventDefault();
         }
+
+        // Handle fullscreen toggle
+        if (_.contains(this.keyCodesByName[Input.FULLSCREEN], event.key)) {
+            Fullscreen.toggleFullscreen();
+        }
     }
 
     static handleKeyUpEvent(event: KeyboardEvent) {
@@ -250,6 +258,8 @@ class Input {
 }
 
 namespace Input {
+    export const FULLSCREEN = 'fullscreen';
+
     export const GAME_ADVANCE_DIALOG = 'game_advanceDialog';
     export const GAME_PAUSE = 'game_pause';
     export const GAME_CLOSE_MENU = 'game_closeMenu';

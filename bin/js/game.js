@@ -357,6 +357,41 @@ var AssetCache = /** @class */ (function () {
     AssetCache.tilemaps = {};
     return AssetCache;
 }());
+var Fullscreen = /** @class */ (function () {
+    function Fullscreen() {
+    }
+    Object.defineProperty(Fullscreen, "supported", {
+        get: function () { return document.fullscreenEnabled; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Fullscreen, "enabled", {
+        get: function () { return !!document.fullscreenElement; },
+        enumerable: false,
+        configurable: true
+    });
+    Fullscreen.toggleFullscreen = function () {
+        if (!this.supported)
+            return;
+        if (this.enabled) {
+            this.stopFullscreen();
+        }
+        else {
+            this.startFullscreen();
+        }
+    };
+    Fullscreen.startFullscreen = function () {
+        if (!this.supported || this.enabled)
+            return;
+        Main.renderer.view.requestFullscreen();
+    };
+    Fullscreen.stopFullscreen = function () {
+        if (!this.supported || !this.enabled)
+            return;
+        document.exitFullscreen();
+    };
+    return Fullscreen;
+}());
 var Game = /** @class */ (function () {
     function Game(config) {
         this.entryPointMenuClass = config.entryPointMenuClass;
@@ -889,6 +924,10 @@ var Input = /** @class */ (function () {
             this.isDownByKeyCode[event.key] = true;
             event.preventDefault();
         }
+        // Handle fullscreen toggle
+        if (_.contains(this.keyCodesByName[Input.FULLSCREEN], event.key)) {
+            Fullscreen.toggleFullscreen();
+        }
     };
     Input.handleKeyUpEvent = function (event) {
         if (this.eventKey === event.key)
@@ -927,6 +966,7 @@ var Input = /** @class */ (function () {
     return Input;
 }());
 (function (Input) {
+    Input.FULLSCREEN = 'fullscreen';
     Input.GAME_ADVANCE_DIALOG = 'game_advanceDialog';
     Input.GAME_PAUSE = 'game_pause';
     Input.GAME_CLOSE_MENU = 'game_closeMenu';
@@ -1699,6 +1739,8 @@ var Main = /** @class */ (function () {
             backgroundColor: global.backgroundColor,
         });
         document.body.appendChild(Main.renderer.view);
+        Main.renderer.view.style.setProperty('image-rendering', 'pixelated'); // Chrome
+        Main.renderer.view.style.setProperty('image-rendering', 'crisp-edges'); // Firefox
         // AccessibilityManager causes game to crash when Tab is pressed.
         // Deleting it as per https://github.com/pixijs/pixi.js/issues/5111#issuecomment-420047824
         Main.renderer.plugins.accessibility.destroy();
@@ -1726,7 +1768,7 @@ var Main = /** @class */ (function () {
         window.addEventListener("keydown", function (event) {
             WebAudio.start();
             Input.handleKeyDownEvent(event);
-            if (event.key == 'Tab') {
+            if (event.key === 'Tab') {
                 event.preventDefault();
             }
         }, false);
@@ -10845,6 +10887,8 @@ Main.loadConfig({
     defaultOptions: {
         volume: 1,
         controls: {
+            // General
+            'fullscreen': ['f', 'g'],
             // Game
             'left': ['ArrowLeft', 'a'],
             'right': ['ArrowRight', 'd'],

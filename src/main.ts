@@ -21,6 +21,9 @@ Main.loadConfig({
     defaultOptions: {
         volume: 1,
         controls: {
+            // General
+            'fullscreen':                ['f', 'g'],
+
             // Game
             'left':                      ['ArrowLeft', 'a'],
             'right':                     ['ArrowRight', 'd'],
