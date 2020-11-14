@@ -46,14 +46,14 @@ postjam
     - /add control to spritetext for how many chars are displayed?
 - /update callback type this in bound anonymous function (must use function() and not arrow function)
 - /fullscreen
-- autocomplete ref -> <reference path=.../>
+- /autocomplete ref -> <reference path=.../> (already in VS code)
+- /fix caps lock bug
 - new content
     - add some more enemies
     - add music/ambience during silent parts
     - add dialog talking sound effects?
     - hoop cleave through enemies at full power?
 - investigate boss fight crash
-- fix caps lock bug?
 - fix window focus issues
     - mute audio when window out of focus
     - fix sticking against the wall bug

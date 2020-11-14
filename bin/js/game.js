@@ -849,6 +849,9 @@ var Input = /** @class */ (function () {
     Input.consumeEventKey = function () {
         this.eventKey = undefined;
     };
+    /**
+     * Used to detect keypress when updating key binds.
+     */
     Input.getEventKey = function () {
         return this.eventKey;
     };
@@ -919,21 +922,23 @@ var Input = /** @class */ (function () {
         configurable: true
     });
     Input.handleKeyDownEvent = function (event) {
-        this.eventKey = event.key;
-        if (this.isDownByKeyCode[event.key] !== undefined) {
-            this.isDownByKeyCode[event.key] = true;
+        var keyCode = Input.getKeyFromEventKey(event.key);
+        this.eventKey = keyCode;
+        if (this.isDownByKeyCode[keyCode] !== undefined) {
+            this.isDownByKeyCode[keyCode] = true;
             event.preventDefault();
         }
         // Handle fullscreen toggle
-        if (_.contains(this.keyCodesByName[Input.FULLSCREEN], event.key)) {
+        if (_.contains(this.keyCodesByName[Input.FULLSCREEN], keyCode)) {
             Fullscreen.toggleFullscreen();
         }
     };
     Input.handleKeyUpEvent = function (event) {
-        if (this.eventKey === event.key)
+        var keyCode = Input.getKeyFromEventKey(event.key);
+        if (this.eventKey === keyCode)
             this.eventKey = undefined;
-        if (this.isDownByKeyCode[event.key] !== undefined) {
-            this.isDownByKeyCode[event.key] = false;
+        if (this.isDownByKeyCode[keyCode] !== undefined) {
+            this.isDownByKeyCode[keyCode] = false;
             event.preventDefault();
         }
     };
@@ -1028,6 +1033,23 @@ var Input = /** @class */ (function () {
         return Key;
     }());
     Input.Key = Key;
+    /**
+     * Translate possible capital letters/symbols to their lowercase key form.
+     */
+    function getKeyFromEventKey(key) {
+        if (!key)
+            return key;
+        if (key.length === 1 && 'A' <= key && key <= 'Z')
+            return key.toLowerCase();
+        if (key in CAPS_TO_KEYS)
+            return CAPS_TO_KEYS[key];
+        return key;
+    }
+    Input.getKeyFromEventKey = getKeyFromEventKey;
+    var CAPS_TO_KEYS = {
+        '~': '`', '!': '1', '@': '2', '#': '3', '$': '4', '%': '5', '^': '6', '&': '7', '*': '8', '(': '9', ')': '0',
+        '_': '-', '+': '=', '{': '[', '}': ']', '|': '\\', ':': ';', '"': '\'', '<': ',', '>': '.', '?': '/',
+    };
 })(Input || (Input = {}));
 function debug(message) {
     var optionalParams = [];

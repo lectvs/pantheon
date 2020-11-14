@@ -22,9 +22,9 @@ namespace Input {
 
 class Input {
     private static eventKey: string; // Mainly for use in control binding
-    private static isDownByKeyCode: {[keyCode: string]: boolean};
-    private static keysByKeycode: {[keyCode: string]: Input.Key};
-    private static keyCodesByName: {[name: string]: string[]};
+    private static isDownByKeyCode: Dict<boolean>;
+    private static keysByKeycode: Dict<Input.Key>;
+    private static keyCodesByName: Input.KeyCodesByName;
     private static _mouseX: number = 0;
     private static _mouseY: number = 0;
     private static _canvasMouseX: number = 0;
@@ -161,6 +161,9 @@ class Input {
         this.eventKey = undefined;
     }
 
+    /**
+     * Used to detect keypress when updating key binds.
+     */
     static getEventKey() {
         return this.eventKey;
     }
@@ -211,22 +214,24 @@ class Input {
     }
 
     static handleKeyDownEvent(event: KeyboardEvent) {
-        this.eventKey = event.key;
-        if (this.isDownByKeyCode[event.key] !== undefined) {
-            this.isDownByKeyCode[event.key] = true;
+        let keyCode = Input.getKeyFromEventKey(event.key);
+        this.eventKey = keyCode;
+        if (this.isDownByKeyCode[keyCode] !== undefined) {
+            this.isDownByKeyCode[keyCode] = true;
             event.preventDefault();
         }
 
         // Handle fullscreen toggle
-        if (_.contains(this.keyCodesByName[Input.FULLSCREEN], event.key)) {
+        if (_.contains(this.keyCodesByName[Input.FULLSCREEN], keyCode)) {
             Fullscreen.toggleFullscreen();
         }
     }
 
     static handleKeyUpEvent(event: KeyboardEvent) {
-        if (this.eventKey === event.key) this.eventKey = undefined;
-        if (this.isDownByKeyCode[event.key] !== undefined) {
-            this.isDownByKeyCode[event.key] = false;
+        let keyCode = Input.getKeyFromEventKey(event.key);
+        if (this.eventKey === keyCode) this.eventKey = undefined;
+        if (this.isDownByKeyCode[keyCode] !== undefined) {
+            this.isDownByKeyCode[keyCode] = false;
             event.preventDefault();
         }
     }
@@ -315,4 +320,19 @@ namespace Input {
             this._lastDown = true;
         }
     }
+
+    /**
+     * Translate possible capital letters/symbols to their lowercase key form.
+     */
+    export function getKeyFromEventKey(key: string) {
+        if (!key) return key;
+        if (key.length === 1 && 'A' <= key && key <= 'Z') return key.toLowerCase();
+        if (key in CAPS_TO_KEYS) return CAPS_TO_KEYS[key];
+        return key;
+    }
+
+    const CAPS_TO_KEYS = {
+        '~': '`', '!': '1', '@': '2', '#': '3', '$': '4',  '%': '5', '^': '6',  '&': '7', '*': '8', '(': '9', ')': '0',
+        '_': '-', '+': '=', '{': '[', '}': ']', '|': '\\', ':': ';', '"': '\'', '<': ',', '>': '.', '?': '/',
+    };
 }
