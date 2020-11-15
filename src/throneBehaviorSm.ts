@@ -25,7 +25,7 @@ class ThroneBehaviorSm extends StateMachine {
                     this.setFirstJumpTargetPos();
                     this.throne.world.playSound('dash').volume = 0.6;
                 }),
-                S.doOverTime(1, t => this.throne.z = 500*t),
+                S.tween(1, this.throne, 'z', 0, 500),
                 S.wait(1),
                 S.doOverTime(1, t => {
                     this.throne.x = M.lerp(this.lastPos.x, this.targetPos.x, t);
@@ -36,7 +36,7 @@ class ThroneBehaviorSm extends StateMachine {
                     this.throne.king.layer = 'main';
                     this.throne.shadow.layer = 'bg';
                 }),
-                S.doOverTime(1, t => this.throne.z = 500 - 500*t),
+                S.tween(1, this.throne, 'z', 500, 0),
                 S.call(() => {
                     this.throne.world.playSound('land');
                     this.throne.colliding = true;
@@ -48,10 +48,7 @@ class ThroneBehaviorSm extends StateMachine {
             callback: () => {
                 this.jumpCount = 0;
             },
-            script: S.wait(3),
-            transitions: [
-                { toState: 'small_jump' },
-            ],
+            transitions: [{ delay: 3, toState: 'small_jump' }],
         });
 
         this.addState('small_jump', {
@@ -66,11 +63,13 @@ class ThroneBehaviorSm extends StateMachine {
                     this.throne.world.playSound('dash').volume = 0.4;
                     this.throne.colliding = false;
                 }),
-                S.doOverTime(1, t => {
-                    this.throne.x = M.lerp(this.lastPos.x, this.targetPos.x, t);
-                    this.throne.y = M.lerp(this.lastPos.y, this.targetPos.y, t);
-                    this.throne.z = M.jumpParabola(0, 100, 0, t);
-                }),
+                S.simul(
+                    S.doOverTime(1, t => {
+                        this.throne.x = M.lerp(this.lastPos.x, this.targetPos.x, t);
+                        this.throne.y = M.lerp(this.lastPos.y, this.targetPos.y, t);
+                    }),
+                    S.jumpZ(this.throne, 100, 1),
+                ),
                 S.call(() => {
                     let s = this.throne.world.playSound('land');
                     s.speed = 1.5;
@@ -94,12 +93,12 @@ class ThroneBehaviorSm extends StateMachine {
                     this.throne.world.playSound('dash').volume = 0.6;
                     this.throne.colliding = false;
                 }),
-                S.doOverTime(1, t => this.throne.z = 500*t),
+                S.tween(1, this.throne, 'z', 0, 500),
                 S.doOverTime(1, t => {
                     this.throne.x = M.lerp(this.lastPos.x, this.targetPos.x, t);
                     this.throne.y = M.lerp(this.lastPos.y, this.targetPos.y, t);
                 }),
-                S.doOverTime(1, t => this.throne.z = 500 - 500*t),
+                S.tween(1, this.throne, 'z', 500, 0),
                 S.call(() => {
                     this.throne.world.playSound('land');
                     this.throne.colliding = true;

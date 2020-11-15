@@ -70,15 +70,15 @@ namespace S {
         }
     }
 
-    export function tween(obj: any, prop: string, start: number, end: number, duration: number, easingFunction: Tween.Easing.Function = Tween.Easing.Linear): Script.Function {
+    export function tween<T extends Partial<Record<K, number>>, K extends keyof T>(duration: number, obj: T, prop: K, start: number, end: number, easingFunction: Tween.Easing.Function = Tween.Easing.Linear): Script.Function {
         return function*() {
             let tween = new Tween(start, end, duration, easingFunction);
             while (!tween.done) {
                 tween.update(global.script.delta);
-                obj[prop] = tween.value;
+                obj[prop] = <any>tween.value;
                 yield;
             }
-            obj[prop] = end;
+            obj[prop] = <any>end;
         }
     }
 

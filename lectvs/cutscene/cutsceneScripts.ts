@@ -49,18 +49,14 @@ namespace S {
         });
     }
 
-    export function jump(sprite: Sprite, peakDelta: number, time: number, landOnGround: boolean = false): Script.Function {
+    export function jumpZ(sprite: Sprite, peakDelta: number, time: number, landOnGround: boolean = false): Script.Function {
         return runInCurrentWorld(function*() {
-            let start = sprite.offsetY;
-            let groundDelta = landOnGround ? -start : 0;
+            let start = sprite.z;
+            let groundDelta = landOnGround ? start : 0;
 
-            let timer = new Timer(time);
-            while (!timer.done) {
-                sprite.offsetY = M.jumpParabola(start, -peakDelta, groundDelta, timer.progress);
-                timer.update(global.script.delta);
-                yield;
-            }
-            sprite.offsetY = start + groundDelta;
+            yield* S.doOverTime(time, t => {
+                sprite.z = M.jumpParabola(start, peakDelta, groundDelta, t);
+            })();
         })
     }
 

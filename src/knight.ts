@@ -77,7 +77,7 @@ class Knight extends Enemy {
                 S.call(() => {
                     this.playAnimation('windup');
                 }),
-                S.doOverTime(0.5, t => this.z = M.jumpParabola(0, 16, 0, t)),
+                S.jumpZ(this, 16, 0.5),
                 S.doOverTime(1, t => {
                     this.pickNextTargetPosForDash();
                     this.light.angle = M.radToDeg(Math.atan2(this.targetPos.y - this.y, this.targetPos.x - this.x));
@@ -95,7 +95,7 @@ class Knight extends Enemy {
                 S.doOverTime(0.3, t => {
                     this.x = M.lerp(this.lastPos.x, this.targetPos.x, t);
                     this.y = M.lerp(this.lastPos.y, this.targetPos.y, t);
-                })
+                }),
             ),
             transitions: [
                 { toState: 'idle' },

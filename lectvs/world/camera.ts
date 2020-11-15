@@ -13,7 +13,7 @@ namespace Camera {
 
     export type FollowMode = {
         type: 'follow';
-        target: string | WorldObject;
+        target: string | Pt;
         offset: Pt;
     }
 
@@ -91,10 +91,7 @@ class Camera {
 
     update(world: World) {
         if (this.mode.type === 'follow') {
-            let target = this.mode.target;
-            if (_.isString(target)) {
-                target = world.select.name(target);
-            }
+            let target = this.getTarget(this.mode.target, world);
             this.moveTowardsPoint(target.x + this.mode.offset.x, target.y + this.mode.offset.y, world.delta);
         } else if (this.mode.type === 'focus') {
             this.moveTowardsPoint(this.mode.point.x, this.mode.point.y, world.delta);
@@ -136,10 +133,7 @@ class Camera {
 
     initPosition(world: World) {
         if (this.mode.type === 'follow') {
-            let target = this.mode.target;
-            if (_.isString(target)) {
-                target = world.select.name(target);
-            }
+            let target = this.getTarget(this.mode.target, world);
             this.x = target.x + this.mode.offset.x;
             this.y = target.y + this.mode.offset.y;
         } else if (this.mode.type === 'focus') {
@@ -209,11 +203,17 @@ class Camera {
             deadZoneHeight: deadZoneHeight,
         });
     }
+
+    private getTarget(target: string | Pt, world: World): Pt {
+        if (!target) return pt(this.x, this.y);
+        if (_.isString(target)) return world.select.name(target);
+        return target;
+    }
 }
 
 namespace Camera {
     export namespace Mode {
-        export function FOLLOW(target: string | WorldObject, offsetX: number = 0, offsetY: number = 0): FollowMode {
+        export function FOLLOW(target: string | Pt, offsetX: number = 0, offsetY: number = 0): FollowMode {
             return { type: 'follow', target, offset: { x: offsetX, y: offsetY } };
         }
         export function FOCUS(x: number, y: number): FocusMode {

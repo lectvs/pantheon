@@ -41,8 +41,8 @@ class WebAudioSound implements WebAudioSoundI{
         return this.sourceNode ? this.sourceNode.playbackRate.value : this._speed;
     }
     set speed(value: number) {
-        this._speed = value;
-        if (this.sourceNode) this.sourceNode.playbackRate.value = value;
+        this._speed = M.clamp(value, 0, Sound.MAX_SPEED);
+        if (this.sourceNode) this.sourceNode.playbackRate.value = this._speed;
     }
 
     private _loop: boolean;

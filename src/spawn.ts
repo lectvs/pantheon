@@ -8,9 +8,7 @@ function spawn(worldObject: WorldObject) {
         alpha: 0,
         onAdd: function() {
             this.runScript(S.chain(
-                S.doOverTime(1, t => {
-                    this.alpha = t;
-                }),
+                S.tween(1, this, 'alpha', 0, 1),
                 S.wait(1),
                 S.call(() => {
                     this.world.addWorldObject(worldObject);

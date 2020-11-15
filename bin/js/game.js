@@ -2144,33 +2144,26 @@ var S;
         });
     }
     S.fadeOut = fadeOut;
-    function jump(sprite, peakDelta, time, landOnGround) {
+    function jumpZ(sprite, peakDelta, time, landOnGround) {
         if (landOnGround === void 0) { landOnGround = false; }
         return runInCurrentWorld(function () {
-            var start, groundDelta, timer;
+            var start, groundDelta;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        start = sprite.offsetY;
-                        groundDelta = landOnGround ? -start : 0;
-                        timer = new Timer(time);
-                        _a.label = 1;
+                        start = sprite.z;
+                        groundDelta = landOnGround ? start : 0;
+                        return [5 /*yield**/, __values(S.doOverTime(time, function (t) {
+                                sprite.z = M.jumpParabola(start, peakDelta, groundDelta, t);
+                            })())];
                     case 1:
-                        if (!!timer.done) return [3 /*break*/, 3];
-                        sprite.offsetY = M.jumpParabola(start, -peakDelta, groundDelta, timer.progress);
-                        timer.update(global.script.delta);
-                        return [4 /*yield*/];
-                    case 2:
                         _a.sent();
-                        return [3 /*break*/, 1];
-                    case 3:
-                        sprite.offsetY = start + groundDelta;
                         return [2 /*return*/];
                 }
             });
         });
     }
-    S.jump = jump;
+    S.jumpZ = jumpZ;
     function moveTo(worldObject, x, y, maxTime) {
         if (maxTime === void 0) { maxTime = 10; }
         return S.simul(moveToX(worldObject, x, maxTime), moveToY(worldObject, y, maxTime));
@@ -4764,7 +4757,7 @@ var S;
         };
     }
     S.simul = simul;
-    function tween(obj, prop, start, end, duration, easingFunction) {
+    function tween(duration, obj, prop, start, end, easingFunction) {
         if (easingFunction === void 0) { easingFunction = Tween.Easing.Linear; }
         return function () {
             var tween;
@@ -5001,6 +4994,8 @@ var Sound = /** @class */ (function () {
             }
             this.webAudioSound.seek(this.pos);
         }
+        this.volume = M.clamp(this.volume, 0, Sound.MAX_VOLUME);
+        this.speed = M.clamp(this.speed, 0, Sound.MAX_SPEED);
         var volume = this.volume * (this.controller ? this.controller.volume : 1);
         if (this.webAudioSound.volume !== volume)
             this.webAudioSound.volume = volume;
@@ -5013,6 +5008,7 @@ var Sound = /** @class */ (function () {
 }());
 (function (Sound) {
     Sound.MAX_VOLUME = 2;
+    Sound.MAX_SPEED = 100;
 })(Sound || (Sound = {}));
 var SoundManager = /** @class */ (function () {
     function SoundManager() {
@@ -5107,9 +5103,9 @@ var WebAudioSound = /** @class */ (function () {
             return this.sourceNode ? this.sourceNode.playbackRate.value : this._speed;
         },
         set: function (value) {
-            this._speed = value;
+            this._speed = M.clamp(value, 0, Sound.MAX_SPEED);
             if (this.sourceNode)
-                this.sourceNode.playbackRate.value = value;
+                this.sourceNode.playbackRate.value = this._speed;
         },
         enumerable: false,
         configurable: true
@@ -7311,10 +7307,7 @@ var Camera = /** @class */ (function () {
     });
     Camera.prototype.update = function (world) {
         if (this.mode.type === 'follow') {
-            var target = this.mode.target;
-            if (_.isString(target)) {
-                target = world.select.name(target);
-            }
+            var target = this.getTarget(this.mode.target, world);
             this.moveTowardsPoint(target.x + this.mode.offset.x, target.y + this.mode.offset.y, world.delta);
         }
         else if (this.mode.type === 'focus') {
@@ -7357,10 +7350,7 @@ var Camera = /** @class */ (function () {
     };
     Camera.prototype.initPosition = function (world) {
         if (this.mode.type === 'follow') {
-            var target = this.mode.target;
-            if (_.isString(target)) {
-                target = world.select.name(target);
-            }
+            var target = this.getTarget(this.mode.target, world);
             this.x = target.x + this.mode.offset.x;
             this.y = target.y + this.mode.offset.y;
         }
@@ -7424,6 +7414,13 @@ var Camera = /** @class */ (function () {
             deadZoneWidth: deadZoneWidth,
             deadZoneHeight: deadZoneHeight,
         });
+    };
+    Camera.prototype.getTarget = function (target, world) {
+        if (!target)
+            return pt(this.x, this.y);
+        if (_.isString(target))
+            return world.select.name(target);
+        return target;
     };
     return Camera;
 }());
@@ -10059,6 +10056,7 @@ var Enemy = /** @class */ (function (_super) {
         _this.damagableByHoop = (_a = config.damagableByHoop) !== null && _a !== void 0 ? _a : true;
         _this.deadTexture = config.deadTexture;
         _this.immunitySm = new ImmunitySm(_this.immuneTime);
+        _this.outOfBounds = false;
         return _this;
     }
     Object.defineProperty(Enemy.prototype, "immune", {
@@ -10075,9 +10073,11 @@ var Enemy = /** @class */ (function (_super) {
     Enemy.prototype.postUpdate = function () {
         _super.prototype.postUpdate.call(this);
         var p = 4;
-        if (this.x < -p || this.x > 768 + p || this.y < 192 - p || this.y > 768 + p) {
+        var outOfBounds = this.x < -p || this.x > 768 + p || this.y < 192 - p || this.y > 768 + p;
+        if (this.outOfBounds && outOfBounds) {
             this.kill();
         }
+        this.outOfBounds = outOfBounds;
     };
     Enemy.prototype.damage = function (amount) {
         this.health -= amount;
@@ -10426,10 +10426,7 @@ var ImmunitySm = /** @class */ (function (_super) {
         var _this = _super.call(this) || this;
         _this.addState('vulnerable', {});
         _this.addState('immune', {
-            script: S.wait(immuneTime),
-            transitions: [
-                { toState: 'vulnerable' },
-            ]
+            transitions: [{ delay: immuneTime, toState: 'vulnerable' }]
         });
         _this.setState('vulnerable');
         return _this;
@@ -10492,7 +10489,7 @@ var Knight = /** @class */ (function (_super) {
         _this.stateMachine.addState('dash', {
             script: S.chain(S.call(function () {
                 _this.playAnimation('windup');
-            }), S.doOverTime(0.5, function (t) { return _this.z = M.jumpParabola(0, 16, 0, t); }), S.doOverTime(1, function (t) {
+            }), S.jumpZ(_this, 16, 0.5), S.doOverTime(1, function (t) {
                 _this.pickNextTargetPosForDash();
                 _this.light.angle = M.radToDeg(Math.atan2(_this.targetPos.y - _this.y, _this.targetPos.x - _this.x));
                 _this.light.alpha = t;
@@ -10838,7 +10835,7 @@ var OptionsMenu = /** @class */ (function (_super) {
             getValue: function () { return Options.getOption('volume'); },
             setValue: function (v) { return Options.updateOption('volume', v); }
         }));
-        var backButton = _this.addWorldObject(new MenuTextButton({
+        _this.addWorldObject(new MenuTextButton({
             x: 20, y: 110,
             text: "back",
             onClick: function () {
@@ -11129,9 +11126,7 @@ function spawn(worldObject) {
         alpha: 0,
         onAdd: function () {
             var _this = this;
-            this.runScript(S.chain(S.doOverTime(1, function (t) {
-                _this.alpha = t;
-            }), S.wait(1), S.call(function () {
+            this.runScript(S.chain(S.tween(1, this, 'alpha', 0, 1), S.wait(1), S.call(function () {
                 _this.world.addWorldObject(worldObject);
                 _this.kill();
             })));
@@ -11324,16 +11319,13 @@ function getStoryboard() {
                             }));
                             whoosh = global.world.playSound('swing');
                             whoosh.speed = 0.1;
-                            return [4 /*yield*/, S.doOverTime(1, function (t) { return hoop.effects.silhouette.alpha = t; })];
+                            return [4 /*yield*/, S.tween(1, hoop.effects.silhouette, 'alpha', 0, 1)];
                         case 7:
                             _a.sent();
                             return [4 /*yield*/, S.wait(1)];
                         case 8:
                             _a.sent();
-                            return [4 /*yield*/, S.doOverTime(1, function (t) {
-                                    hoop.effects.silhouette.amount = 1 - t;
-                                    hoop.y = M.lerp(player.y - 32, player.y - 4, t);
-                                })];
+                            return [4 /*yield*/, S.simul(S.tween(1, hoop.effects.silhouette, 'amount', 1, 0), S.tween(1, hoop, 'y', player.y - 32, player.y - 4))];
                         case 9:
                             _a.sent();
                             global.world.playSound('walk').volume = 2;
@@ -11361,7 +11353,7 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(2)];
                         case 12:
                             _a.sent();
-                            return [4 /*yield*/, S.doOverTime(2, function (t) { return text.style.alpha = t; })];
+                            return [4 /*yield*/, S.tween(2, text.style, 'alpha', 0, 1)];
                         case 13:
                             _a.sent();
                             _a.label = 14;
@@ -11371,7 +11363,7 @@ function getStoryboard() {
                         case 15:
                             _a.sent();
                             return [3 /*break*/, 14];
-                        case 16: return [4 /*yield*/, S.simul(S.fadeSlides(1), S.doOverTime(1, function (t) { return text.style.alpha = 1 - t; }))];
+                        case 16: return [4 /*yield*/, S.simul(S.fadeSlides(1), S.tween(1, text.style, 'alpha', 1, 0))];
                         case 17:
                             _a.sent();
                             text.removeFromWorld();
@@ -11689,7 +11681,7 @@ function getStoryboard() {
                         case 10: return [4 /*yield*/, S.wait(0.5)];
                         case 11:
                             _a.sent();
-                            return [4 /*yield*/, S.simul(S.fadeOut(3, 0xFFFFFF), S.doOverTime(3, function (t) { return global.world.volume = 1 - t; }))];
+                            return [4 /*yield*/, S.simul(S.fadeOut(3, 0xFFFFFF), S.tween(3, global.world, 'volume', 1, 0))];
                         case 12:
                             _a.sent();
                             return [4 /*yield*/, S.wait(1)];
@@ -11701,7 +11693,7 @@ function getStoryboard() {
                                 style: { color: 0x000000, alpha: 0 },
                                 anchor: Anchor.TOP_CENTER
                             }));
-                            return [4 /*yield*/, S.doOverTime(3, function (t) { return text.style.alpha = t; })];
+                            return [4 /*yield*/, S.tween(3, text.style, 'alpha', 0, 1)];
                         case 14:
                             _a.sent();
                             return [4 /*yield*/, S.wait(2)];
@@ -11713,7 +11705,7 @@ function getStoryboard() {
                                 style: { color: 0x000000, alpha: 0 },
                                 anchor: Anchor.TOP_CENTER
                             }));
-                            return [4 /*yield*/, S.doOverTime(3, function (t) { return text2.style.alpha = t; })];
+                            return [4 /*yield*/, S.tween(3, text2.style, 'alpha', 0, 1)];
                         case 16:
                             _a.sent();
                             return [4 /*yield*/, S.wait(5)];
@@ -11741,7 +11733,7 @@ function getStoryboard() {
                         case 0:
                             throne = global.world.select.type(Throne);
                             throne.setState('passive');
-                            return [4 /*yield*/, S.doOverTime(3, function (t) { return global.world.volume = 1 - t; })];
+                            return [4 /*yield*/, S.tween(3, global.world, 'volume', 1, 0)];
                         case 1:
                             _a.sent();
                             global.world.camera.setModeFollow(throne, 0, -20);
@@ -11890,14 +11882,14 @@ var ThroneBehaviorSm = /** @class */ (function (_super) {
                 _this.setLastPos();
                 _this.setFirstJumpTargetPos();
                 _this.throne.world.playSound('dash').volume = 0.6;
-            }), S.doOverTime(1, function (t) { return _this.throne.z = 500 * t; }), S.wait(1), S.doOverTime(1, function (t) {
+            }), S.tween(1, _this.throne, 'z', 0, 500), S.wait(1), S.doOverTime(1, function (t) {
                 _this.throne.x = M.lerp(_this.lastPos.x, _this.targetPos.x, t);
                 _this.throne.y = M.lerp(_this.lastPos.y, _this.targetPos.y, t);
             }), S.call(function () {
                 _this.throne.layer = 'main';
                 _this.throne.king.layer = 'main';
                 _this.throne.shadow.layer = 'bg';
-            }), S.doOverTime(1, function (t) { return _this.throne.z = 500 - 500 * t; }), S.call(function () {
+            }), S.tween(1, _this.throne, 'z', 500, 0), S.call(function () {
                 _this.throne.world.playSound('land');
                 _this.throne.colliding = true;
             })),
@@ -11906,10 +11898,7 @@ var ThroneBehaviorSm = /** @class */ (function (_super) {
             callback: function () {
                 _this.jumpCount = 0;
             },
-            script: S.wait(3),
-            transitions: [
-                { toState: 'small_jump' },
-            ],
+            transitions: [{ delay: 3, toState: 'small_jump' }],
         });
         _this.addState('small_jump', {
             callback: function () {
@@ -11920,11 +11909,10 @@ var ThroneBehaviorSm = /** @class */ (function (_super) {
                 _this.setSmallJumpTargetPos();
                 _this.throne.world.playSound('dash').volume = 0.4;
                 _this.throne.colliding = false;
-            }), S.doOverTime(1, function (t) {
+            }), S.simul(S.doOverTime(1, function (t) {
                 _this.throne.x = M.lerp(_this.lastPos.x, _this.targetPos.x, t);
                 _this.throne.y = M.lerp(_this.lastPos.y, _this.targetPos.y, t);
-                _this.throne.z = M.jumpParabola(0, 100, 0, t);
-            }), S.call(function () {
+            }), S.jumpZ(_this.throne, 100, 1)), S.call(function () {
                 var s = _this.throne.world.playSound('land');
                 s.speed = 1.5;
                 s.volume = 0.7;
@@ -11941,10 +11929,10 @@ var ThroneBehaviorSm = /** @class */ (function (_super) {
                 _this.setBigJumpTargetPos();
                 _this.throne.world.playSound('dash').volume = 0.6;
                 _this.throne.colliding = false;
-            }), S.doOverTime(1, function (t) { return _this.throne.z = 500 * t; }), S.doOverTime(1, function (t) {
+            }), S.tween(1, _this.throne, 'z', 0, 500), S.doOverTime(1, function (t) {
                 _this.throne.x = M.lerp(_this.lastPos.x, _this.targetPos.x, t);
                 _this.throne.y = M.lerp(_this.lastPos.y, _this.targetPos.y, t);
-            }), S.doOverTime(1, function (t) { return _this.throne.z = 500 - 500 * t; }), S.call(function () {
+            }), S.tween(1, _this.throne, 'z', 500, 0), S.call(function () {
                 _this.throne.world.playSound('land');
                 _this.throne.colliding = true;
             }), S.wait(1)),
@@ -12036,25 +12024,20 @@ var UI = /** @class */ (function (_super) {
         var _this = this;
         var player = this.world.select.type(Player);
         if (player.health > this.shields.length) {
-            var _loop_4 = function (i) {
-                var shield = this_3.addChild(new Sprite({
-                    x: 20 + 36 * this_3.shields.length,
-                    y: 20,
+            for (var i = 0; i < player.health - this.shields.length; i++) {
+                var shield = this.addChild(new Sprite({
+                    x: 20 + 36 * this.shields.length, y: 20,
                     texture: 'ui_shield',
                     effects: { silhouette: { color: 0x00FFFF, alpha: 0 } },
-                    layer: this_3.layer
+                    layer: this.layer
                 }));
-                this_3.shields.push(shield);
-                this_3.world.runScript(S.chain(S.doOverTime(0.3, function (t) { return shield.effects.silhouette.alpha = t; }), S.doOverTime(0.3, function (t) { return shield.effects.silhouette.amount = 1 - t; })));
-            };
-            var this_3 = this;
-            for (var i = 0; i < player.health - this.shields.length; i++) {
-                _loop_4(i);
+                this.shields.push(shield);
+                this.world.runScript(S.chain(S.tween(0.3, shield.effects.silhouette, 'alpha', 0, 1), S.tween(0.3, shield.effects.silhouette, 'amount', 1, 0)));
             }
         }
         if (player.health < this.shields.length) {
-            var _loop_5 = function (i) {
-                var shield = this_4.shields.pop();
+            var _loop_4 = function (i) {
+                var shield = this_3.shields.pop();
                 shield.getTexture().subdivide(4, 4).forEach(function (subdivision) {
                     _this.addChild(new Sprite({
                         x: shield.localx - 16 + subdivision.x,
@@ -12071,9 +12054,9 @@ var UI = /** @class */ (function (_super) {
                 });
                 shield.removeFromWorld();
             };
-            var this_4 = this;
+            var this_3 = this;
             for (var i = 0; i < this.shields.length - player.health; i++) {
-                _loop_5(i);
+                _loop_4(i);
             }
         }
     };
@@ -12088,7 +12071,7 @@ var WaveController = /** @class */ (function (_super) {
     }
     WaveController.prototype.isWaveDefeated = function (wave) {
         if (wave === 9001) {
-            return this.world.select.type(Throne).health <= 1000 && this.currentWave === wave;
+            return (!this.world.select.type(Throne, false) || this.world.select.type(Throne).health) <= 1000 && this.currentWave === wave;
         }
         return this.world.select.nameAll('spawn').length <= 0 && this.world.select.typeAll(Enemy).length <= 1 && this.currentWave === wave;
     };
@@ -12173,8 +12156,8 @@ var WaveController = /** @class */ (function (_super) {
     };
     WaveController.prototype.stopMusic = function () {
         if (this.music) {
-            var music_1 = this.music;
-            this.world.runScript(S.chain(S.doOverTime(3, function (t) { return music_1.volume = 0.5 * (1 - t); })));
+            var music = this.music;
+            this.world.runScript(S.tween(3, music, 'volume', music.volume, 0));
         }
     };
     WaveController.prototype.enemySpawn = function (constructor, x, y) {

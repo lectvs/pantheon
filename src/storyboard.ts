@@ -39,14 +39,14 @@ function getStoryboard(): Storyboard { return {
             let whoosh = global.world.playSound('swing');
             whoosh.speed = 0.1;
 
-            yield S.doOverTime(1, t => hoop.effects.silhouette.alpha = t);
+            yield S.tween(1, hoop.effects.silhouette, 'alpha', 0, 1);
 
             yield S.wait(1);
 
-            yield S.doOverTime(1, t => {
-                hoop.effects.silhouette.amount = 1-t;
-                hoop.y = M.lerp(player.y - 32, player.y - 4, t);
-            });
+            yield S.simul(
+                S.tween(1, hoop.effects.silhouette, 'amount', 1, 0),
+                S.tween(1, hoop, 'y', player.y - 32, player.y - 4),
+            );
 
             global.world.playSound('walk').volume = 2;
 
@@ -75,13 +75,13 @@ function getStoryboard(): Storyboard { return {
             }));
 
             yield S.wait(2);
-            yield S.doOverTime(2, t => text.style.alpha = t);
+            yield S.tween(2, text.style, 'alpha', 0, 1);
 
             while (!Input.justDown('game_advanceDialog')) yield;
 
             yield S.simul(
                 S.fadeSlides(1),
-                S.doOverTime(1, t => text.style.alpha = 1-t),
+                S.tween(1, text.style, 'alpha', 1, 0),
             );
 
             text.removeFromWorld();
@@ -314,7 +314,7 @@ function getStoryboard(): Storyboard { return {
 
             yield S.simul(
                 S.fadeOut(3, 0xFFFFFF),
-                S.doOverTime(3, t => global.world.volume = 1-t),
+                S.tween(3, global.world, 'volume', 1, 0),
             );
             yield S.wait(1);
 
@@ -325,7 +325,7 @@ function getStoryboard(): Storyboard { return {
                 anchor: Anchor.TOP_CENTER
             }));
 
-            yield S.doOverTime(3, t => text.style.alpha = t);
+            yield S.tween(3, text.style, 'alpha', 0, 1);
             yield S.wait(2);
 
             let text2 = global.theater.addWorldObject(new SpriteText({
@@ -335,7 +335,7 @@ function getStoryboard(): Storyboard { return {
                 anchor: Anchor.TOP_CENTER
             }));
 
-            yield S.doOverTime(3, t => text2.style.alpha = t);
+            yield S.tween(3, text2.style, 'alpha', 0, 1);
             yield S.wait(5);
 
             yield S.fadeOut(3);
@@ -351,7 +351,7 @@ function getStoryboard(): Storyboard { return {
             let throne = global.world.select.type(Throne);
             throne.setState('passive');
 
-            yield S.doOverTime(3, t => global.world.volume = 1-t);
+            yield S.tween(3, global.world, 'volume', 1, 0);
 
             global.world.camera.setModeFollow(throne, 0, -20);
             global.world.camera.setMovementSmooth(4);

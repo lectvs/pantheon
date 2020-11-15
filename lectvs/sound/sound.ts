@@ -12,13 +12,15 @@ class Sound {
     get isMarkedForDisable() { return this.markedForDisable; }
 
     paused: boolean;
+    /** Must be between 0 and Sound.MAX_VOLUME */
     volume: number;
+    /** Must be between 0 and Sound.MAX_SPEED */
     speed: number;
     loop: boolean;
 
     get done() { return this.webAudioSound.done; }
 
-    pos: number;
+    private pos: number;
     get duration() { return this.webAudioSound.duration; }
 
     controller: Sound.Controller;
@@ -70,6 +72,9 @@ class Sound {
             this.webAudioSound.seek(this.pos);
         }
 
+        this.volume = M.clamp(this.volume, 0, Sound.MAX_VOLUME);
+        this.speed = M.clamp(this.speed, 0, Sound.MAX_SPEED);
+
         let volume = this.volume * (this.controller ? this.controller.volume : 1);
         if (this.webAudioSound.volume !== volume) this.webAudioSound.volume = volume;
 
@@ -80,4 +85,5 @@ class Sound {
 
 namespace Sound {
     export const MAX_VOLUME: number = 2;
+    export const MAX_SPEED: number = 100;
 }

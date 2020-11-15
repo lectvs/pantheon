@@ -48,12 +48,12 @@ postjam
 - /fullscreen
 - /autocomplete ref -> <reference path=.../> (already in VS code)
 - /fix caps lock bug
+- /investigate boss fight crash
 - new content
     - add some more enemies
     - add music/ambience during silent parts
     - add dialog talking sound effects?
     - hoop cleave through enemies at full power?
-- investigate boss fight crash
 - fix window focus issues
     - mute audio when window out of focus
     - fix sticking against the wall bug

@@ -28,8 +28,8 @@ class UI extends WorldObject {
                 this.shields.push(shield);
 
                 this.world.runScript(S.chain(
-                    S.doOverTime(0.3, t => shield.effects.silhouette.alpha = t),
-                    S.doOverTime(0.3, t => shield.effects.silhouette.amount = 1-t),
+                    S.tween(0.3, shield.effects.silhouette, 'alpha', 0, 1),
+                    S.tween(0.3, shield.effects.silhouette, 'amount', 1, 0),
                 ));
             }
         }

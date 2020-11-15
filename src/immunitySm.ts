@@ -3,10 +3,7 @@ class ImmunitySm extends StateMachine {
         super();
         this.addState('vulnerable', {});
         this.addState('immune', {
-            script: S.wait(immuneTime),
-            transitions: [
-                { toState: 'vulnerable' },
-            ]
+            transitions: [{ delay: immuneTime, toState: 'vulnerable' }]
         });
         this.setState('vulnerable');
     }

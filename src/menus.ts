@@ -137,7 +137,7 @@ class OptionsMenu extends Menu {
             setValue: v => Options.updateOption('volume', v)
         }));
 
-        let backButton = this.addWorldObject(new MenuTextButton({
+        this.addWorldObject(new MenuTextButton({
             x: 20, y: 110,
             text: "back",
             onClick: () => {

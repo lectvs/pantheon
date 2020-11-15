@@ -5,7 +5,7 @@ class WaveController extends WorldObject {
 
     isWaveDefeated(wave: number) {
         if (wave === 9001) {
-            return this.world.select.type(Throne).health <= 1000 && this.currentWave === wave;
+            return (!this.world.select.type(Throne, false) || this.world.select.type(Throne).health) <= 1000 && this.currentWave === wave;
         }
         return this.world.select.nameAll('spawn').length <= 0 && this.world.select.typeAll(Enemy).length <= 1 && this.currentWave === wave;
     }
@@ -91,9 +91,7 @@ class WaveController extends WorldObject {
     stopMusic() {
         if (this.music) {
             let music = this.music;
-            this.world.runScript(S.chain(
-                S.doOverTime(3, t => music.volume = 0.5*(1-t)),
-            ));
+            this.world.runScript(S.tween(3, music, 'volume', music.volume, 0));
         }
     }
 
