@@ -99,32 +99,7 @@ class Main {
         Options.updateCallbacks.push(() => Input.init());
         Options.init(global.gameCodeName, this.config.defaultOptions);
 
-        window.addEventListener("keypress", event => {
-            WebAudio.start();
-        });
-        window.addEventListener("keydown", event => {
-            WebAudio.start();
-            Input.handleKeyDownEvent(event);
-            if (event.key === 'Tab') {
-                event.preventDefault();
-            }
-        }, false);
-        window.addEventListener("keyup", event => {
-            WebAudio.start();
-            Input.handleKeyUpEvent(event);
-        }, false);
-        window.addEventListener("mousedown", event => {
-            WebAudio.start();
-            Input.handleMouseDownEvent(event);
-        }, false);
-        window.addEventListener("mouseup", event => {
-            WebAudio.start();
-            Input.handleMouseUpEvent(event);
-        }, false);
-        window.addEventListener("contextmenu", event => {
-            WebAudio.start();
-            event.preventDefault();
-        }, false);
+        this.initEvents();
 
         this.metricsManager = new MetricsManager();
 
@@ -195,5 +170,37 @@ class Main {
         Draw.rectangleOutline(Main.screen, barx, bary, barw, barh, Draw.ALIGNMENT_INNER);
 
         Main.renderScreenToCanvas();
+    }
+
+    private static initEvents() {
+        window.addEventListener("keypress", event => {
+            WebAudio.start();
+        });
+        window.addEventListener("keydown", event => {
+            WebAudio.start();
+            Input.handleKeyDownEvent(event);
+            if (event.key === 'Tab') {
+                event.preventDefault();
+            }
+        });
+        window.addEventListener("keyup", event => {
+            WebAudio.start();
+            Input.handleKeyUpEvent(event);
+        });
+        window.addEventListener("mousedown", event => {
+            WebAudio.start();
+            Input.handleMouseDownEvent(event);
+        });
+        window.addEventListener("mouseup", event => {
+            WebAudio.start();
+            Input.handleMouseUpEvent(event);
+        });
+        window.addEventListener("contextmenu", event => {
+            WebAudio.start();
+            event.preventDefault();
+        });
+        window.addEventListener("blur", event => {
+            Input.reset();
+        });
     }
 }

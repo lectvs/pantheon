@@ -757,6 +757,11 @@ var Input = /** @class */ (function () {
             finally { if (e_2) throw e_2.error; }
         }
     };
+    Input.reset = function () {
+        for (var key in this.isDownByKeyCode) {
+            this.isDownByKeyCode[key] = false;
+        }
+    };
     Input.debugKeyDown = function (name) {
         if (!Debug.PROGRAMMATIC_INPUT)
             return;
@@ -1013,6 +1018,9 @@ var Input = /** @class */ (function () {
         };
         Key.prototype.consume = function () {
             this._lastDown = this._isDown;
+        };
+        Key.prototype.reset = function () {
+            this.setUp();
         };
         Key.prototype.setDown = function () {
             this._isDown = true;
@@ -1784,32 +1792,7 @@ var Main = /** @class */ (function () {
     Main.load = function () {
         Options.updateCallbacks.push(function () { return Input.init(); });
         Options.init(global.gameCodeName, this.config.defaultOptions);
-        window.addEventListener("keypress", function (event) {
-            WebAudio.start();
-        });
-        window.addEventListener("keydown", function (event) {
-            WebAudio.start();
-            Input.handleKeyDownEvent(event);
-            if (event.key === 'Tab') {
-                event.preventDefault();
-            }
-        }, false);
-        window.addEventListener("keyup", function (event) {
-            WebAudio.start();
-            Input.handleKeyUpEvent(event);
-        }, false);
-        window.addEventListener("mousedown", function (event) {
-            WebAudio.start();
-            Input.handleMouseDownEvent(event);
-        }, false);
-        window.addEventListener("mouseup", function (event) {
-            WebAudio.start();
-            Input.handleMouseUpEvent(event);
-        }, false);
-        window.addEventListener("contextmenu", function (event) {
-            WebAudio.start();
-            event.preventDefault();
-        }, false);
+        this.initEvents();
         this.metricsManager = new MetricsManager();
         this.delta = 0;
         this.game = new Game(this.config.game);
@@ -1865,6 +1848,37 @@ var Main = /** @class */ (function () {
         Draw.rectangleSolid(Main.screen, barx, bary, barw * progress, barh);
         Draw.rectangleOutline(Main.screen, barx, bary, barw, barh, Draw.ALIGNMENT_INNER);
         Main.renderScreenToCanvas();
+    };
+    Main.initEvents = function () {
+        window.addEventListener("keypress", function (event) {
+            WebAudio.start();
+        });
+        window.addEventListener("keydown", function (event) {
+            WebAudio.start();
+            Input.handleKeyDownEvent(event);
+            if (event.key === 'Tab') {
+                event.preventDefault();
+            }
+        });
+        window.addEventListener("keyup", function (event) {
+            WebAudio.start();
+            Input.handleKeyUpEvent(event);
+        });
+        window.addEventListener("mousedown", function (event) {
+            WebAudio.start();
+            Input.handleMouseDownEvent(event);
+        });
+        window.addEventListener("mouseup", function (event) {
+            WebAudio.start();
+            Input.handleMouseUpEvent(event);
+        });
+        window.addEventListener("contextmenu", function (event) {
+            WebAudio.start();
+            event.preventDefault();
+        });
+        window.addEventListener("blur", function (event) {
+            Input.reset();
+        });
     };
     return Main;
 }());
@@ -10907,7 +10921,7 @@ Main.loadConfig({
         volume: 1,
         controls: {
             // General
-            'fullscreen': ['f', 'g'],
+            'fullscreen': ['g'],
             // Game
             'left': ['ArrowLeft', 'a'],
             'right': ['ArrowRight', 'd'],

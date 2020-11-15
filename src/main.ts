@@ -22,7 +22,7 @@ Main.loadConfig({
         volume: 1,
         controls: {
             // General
-            'fullscreen':                ['f', 'g'],
+            'fullscreen':                ['g'],
 
             // Game
             'left':                      ['ArrowLeft', 'a'],

@@ -57,6 +57,12 @@ class Input {
         }
     }
 
+    static reset() {
+        for (let key in this.isDownByKeyCode) {
+            this.isDownByKeyCode[key] = false;
+        }
+    }
+
     static debugKeyDown(name: string) {
         if (!Debug.PROGRAMMATIC_INPUT) return;
         this.keysByKeycode[this.debugKeyCode(name)].setDown();
@@ -298,6 +304,10 @@ namespace Input {
 
         consume() {
             this._lastDown = this._isDown;
+        }
+
+        reset() {
+            this.setUp();
         }
 
         setDown() {
