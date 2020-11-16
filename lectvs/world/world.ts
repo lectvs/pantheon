@@ -144,7 +144,7 @@ class World {
 
         this.removeDeadWorldObjects();
 
-        this.camera.update(this);
+        this.camera.update();
 
         this.soundManager.volume = this.volume * global.game.volume;
         this.soundManager.update(this.delta);

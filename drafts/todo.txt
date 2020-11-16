@@ -52,6 +52,7 @@ postjam
 - /fix window focus issues
     - /mute audio when window out of focus (don't particularly want to do this)
     - /fix sticking against the wall bug
+- /camera mode transitions
 - new content
     - add some more enemies
     - add music/ambience during silent parts
@@ -60,7 +61,6 @@ postjam
 - cutscene skips
 - better scripting syntax?
     - look into writing TS transforms for scripts?
-- camera mode transitions
 - better enemy behavior system
 - in general clean up the storyboard
     - use new dialog pausing/adding feature

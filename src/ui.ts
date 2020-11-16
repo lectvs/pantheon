@@ -18,7 +18,7 @@ class UI extends WorldObject {
         let player = this.world.select.type(Player);
 
         if (player.health > this.shields.length) {
-            for (let i = 0; i < player.health - this.shields.length; i++) {
+            for (let i = 0; this.shields.length < player.health; i++) {
                 let shield = this.addChild(new Sprite({
                     x: 20 + 36*this.shields.length, y: 20,
                     texture: 'ui_shield',
@@ -35,7 +35,7 @@ class UI extends WorldObject {
         }
 
         if (player.health < this.shields.length) {
-            for (let i = 0; i < this.shields.length - player.health; i++) {
+            for (let i = 0; this.shields.length > player.health; i++) {
                 let shield = this.shields.pop();
                 shield.getTexture().subdivide(4, 4).forEach(subdivision => {
                     this.addChild(new Sprite({

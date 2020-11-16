@@ -95,7 +95,7 @@ Main.loadConfig({
         moveCameraWithArrows: true,
         showOverlay: true,
         overlayFeeds: [],
-        skipRate: 10,
+        skipRate: 1,
         programmaticInput: false,
         autoplay: true,
         skipMainMenu: true,

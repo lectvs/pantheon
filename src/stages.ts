@@ -1,7 +1,5 @@
 
-function BASE_CAMERA_MOVEMENT(): Camera.SmoothMovement {
-    return { type: 'smooth', speed: 10, deadZoneWidth: 40, deadZoneHeight: 30 };
-}
+const BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(10, 40, 30);
 
 function WORLD_BOUNDS(left: number, top: number, right: number, bottom: number, physicsGroup: string): WorldObject {
     let thickness = 40;
@@ -38,6 +36,7 @@ function getStages(): Dict<World.Factory> { return {
     'game': () => {
         let world = new World({
             backgroundColor: 0x000000,
+            entryPoints: { 'main': { x: 0, y: 0 } },
             layers: [
                 { name: 'bg' },
                 { name: 'hoop' },
@@ -78,11 +77,6 @@ function getStages(): Dict<World.Factory> { return {
             collisionIterations: 4,
             useRaycastDisplacementThreshold: 4,
         })
-
-        world.camera.setModeFollow('player');
-        world.camera.setMovement(BASE_CAMERA_MOVEMENT());
-
-        world.entryPoints['main'] = { x: global.gameWidth/2, y: global.gameHeight/2 };
 
         world.addWorldObject(new UI());
         world.addWorldObject(new WaveController());
@@ -149,6 +143,10 @@ function getStages(): Dict<World.Factory> { return {
             physicsGroup: 'player',
             controllable: true
         }));
+
+        world.camera.setModeFollow('player');
+        world.camera.setMovement(BASE_CAMERA_MOVEMENT);
+        world.camera.initPosition();
 
         return world;
     },

@@ -11,6 +11,7 @@ class Hoop extends Sprite {
         super({
             texture: 'hoop',
             bounds: new CircleBounds(0, 0, 50),
+            data: { intro: false },
             ...config
         });
 
@@ -55,9 +56,11 @@ class Hoop extends Sprite {
 
         let visibleAttackStrength = M.clamp(this.currentAttackStrength, 0, 1);
 
-        this.effects.silhouette.enabled = true;
-        this.effects.silhouette.color = 0x00FFFF;
-        this.effects.silhouette.amount = M.clamp(visibleAttackStrength**2, 0, 1);
+        if (!this.data.intro) {
+            this.effects.silhouette.enabled = true;
+            this.effects.silhouette.color = 0x00FFFF;
+            this.effects.silhouette.amount = M.clamp(visibleAttackStrength**2, 0, 1);
+        }
 
         this.swingSound.volume = visibleAttackStrength;
         this.swingSound.speed = visibleAttackStrength;

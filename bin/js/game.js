@@ -2075,6 +2075,35 @@ var CutsceneManager = /** @class */ (function () {
 }());
 var S;
 (function (S) {
+    function cameraTransition(duration, toMode, toMovement, easingFunction) {
+        if (easingFunction === void 0) { easingFunction = Tween.Easing.OutExp; }
+        return function () {
+            var camera, cameraPoint, startPoint;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        camera = global.world.camera;
+                        if (!toMovement)
+                            toMovement = camera.movement;
+                        cameraPoint = pt(camera.x, camera.y);
+                        camera.setModeFollow(cameraPoint);
+                        camera.setMovementSnap();
+                        startPoint = pt(cameraPoint.x, cameraPoint.y);
+                        return [5 /*yield**/, __values(S.doOverTime(duration, function (t) {
+                                var toPoint = toMode.getTargetPt(camera);
+                                cameraPoint.x = M.lerp(startPoint.x, toPoint.x + toMode.offsetX, easingFunction(t));
+                                cameraPoint.y = M.lerp(startPoint.y, toPoint.y + toMode.offsetY, easingFunction(t));
+                            })())];
+                    case 1:
+                        _a.sent();
+                        camera.setMode(toMode);
+                        camera.setMovement(toMovement);
+                        return [2 /*return*/];
+                }
+            });
+        };
+    }
+    S.cameraTransition = cameraTransition;
     function dialog(p1, p2) {
         return function () {
             return __generator(this, function (_a) {
@@ -2160,7 +2189,7 @@ var S;
     S.fadeOut = fadeOut;
     function jumpZ(sprite, peakDelta, time, landOnGround) {
         if (landOnGround === void 0) { landOnGround = false; }
-        return runInCurrentWorld(function () {
+        return function () {
             var start, groundDelta;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -2175,7 +2204,7 @@ var S;
                         return [2 /*return*/];
                 }
             });
-        });
+        };
     }
     S.jumpZ = jumpZ;
     function moveTo(worldObject, x, y, maxTime) {
@@ -2185,7 +2214,7 @@ var S;
     S.moveTo = moveTo;
     function moveToX(worldObject, x, maxTime) {
         if (maxTime === void 0) { maxTime = 10; }
-        return runInCurrentWorld(function () {
+        return function () {
             var dx, timer;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -2218,12 +2247,12 @@ var S;
                         return [2 /*return*/];
                 }
             });
-        });
+        };
     }
     S.moveToX = moveToX;
     function moveToY(worldObject, y, maxTime) {
         if (maxTime === void 0) { maxTime = 10; }
-        return runInCurrentWorld(function () {
+        return function () {
             var dy, timer;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -2256,14 +2285,14 @@ var S;
                         return [2 /*return*/];
                 }
             });
-        });
+        };
     }
     S.moveToY = moveToY;
     function playAnimation(sprite, animationName, startFrame, force, waitForCompletion) {
         if (startFrame === void 0) { startFrame = 0; }
         if (force === void 0) { force = true; }
         if (waitForCompletion === void 0) { waitForCompletion = true; }
-        return runInCurrentWorld(function () {
+        return function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -2279,31 +2308,11 @@ var S;
                     case 3: return [2 /*return*/];
                 }
             });
-        });
-    }
-    S.playAnimation = playAnimation;
-    function runInCurrentWorld(script) {
-        return function () {
-            var scr;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        scr = global.theater.currentWorld.runScript(script);
-                        _a.label = 1;
-                    case 1:
-                        if (!!scr.done) return [3 /*break*/, 3];
-                        return [4 /*yield*/];
-                    case 2:
-                        _a.sent();
-                        return [3 /*break*/, 1];
-                    case 3: return [2 /*return*/];
-                }
-            });
         };
     }
-    S.runInCurrentWorld = runInCurrentWorld;
+    S.playAnimation = playAnimation;
     function shake(intensity, time) {
-        return runInCurrentWorld(function () {
+        return function () {
             var timer;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -2323,7 +2332,7 @@ var S;
                         return [2 /*return*/];
                 }
             });
-        });
+        };
     }
     S.shake = shake;
     function showSlide(factory, waitForCompletion) {
@@ -3315,7 +3324,7 @@ var World = /** @class */ (function () {
         }
         global.metrics.endSpan('postUpdate');
         this.removeDeadWorldObjects();
-        this.camera.update(this);
+        this.camera.update();
         this.soundManager.volume = this.volume * global.game.volume;
         this.soundManager.update(this.delta);
     };
@@ -7215,9 +7224,31 @@ var Tween = /** @class */ (function () {
 (function (Tween) {
     var Easing;
     (function (Easing) {
-        Easing.Linear = (function (t) { return t; });
-        Easing.Square = (function (t) { return Math.pow(t, 2); });
-        Easing.InvSquare = (function (t) { return 1 - Math.pow((1 - t), 2); });
+        function outFromIn(inFn) {
+            return function (t) { return 1 - inFn(1 - t); };
+        }
+        Easing.outFromIn = outFromIn;
+        function inOutFromIn(inFn) {
+            return function (t) { return t <= 0.5 ? inFn(2 * t) / 2 : 1 - inFn(2 * (1 - t)) / 2; };
+        }
+        Easing.inOutFromIn = inOutFromIn;
+        /* Easing Functions */
+        Easing.Linear = function (t) { return t; };
+        Easing.InPow = function (pow) { return (function (t) { return Math.pow(t, pow); }); };
+        Easing.OutPow = function (pow) { return outFromIn(Easing.InPow(pow)); };
+        Easing.InOutPow = function (pow) { return inOutFromIn(Easing.InPow(pow)); };
+        Easing.InQuad = Easing.InPow(2);
+        Easing.OutQuad = Easing.OutPow(2);
+        Easing.InOutQuad = Easing.InOutPow(2);
+        Easing.InCubic = Easing.InPow(3);
+        Easing.OutCubic = Easing.OutPow(3);
+        Easing.InOutCubic = Easing.InOutPow(3);
+        Easing.InExpPow = function (pow) { return function (t) { return t * Math.pow(2, (8.25 * pow * (t - 1))); }; };
+        Easing.OutExpPow = function (pow) { return outFromIn(Easing.InExpPow(pow)); };
+        Easing.InOutExpPow = function (pow) { return inOutFromIn(Easing.InExpPow(pow)); };
+        Easing.InExp = Easing.InExpPow(1);
+        Easing.OutExp = Easing.OutExpPow(1);
+        Easing.InOutExp = Easing.InOutExpPow(1);
     })(Easing = Tween.Easing || (Tween.Easing = {}));
 })(Tween || (Tween = {}));
 var Utils;
@@ -7282,32 +7313,24 @@ var V;
 /// <reference path="../utils/o_object.ts"/>
 var Camera = /** @class */ (function () {
     function Camera(config, world) {
-        _.defaults(config, {
-            width: global.gameWidth,
-            height: global.gameHeight,
-            bounds: { x: -Infinity, y: -Infinity, width: Infinity, height: Infinity },
-            movement: { type: 'snap' },
-        });
-        _.defaults(config, {
-            // Needs to use new values for config
-            mode: { type: 'focus', point: { x: config.width / 2, y: config.height / 2 } },
-        });
-        this.width = config.width;
-        this.height = config.height;
-        this.bounds = O.withDefaults(config.bounds, {
+        var _a, _b, _c, _d, _e;
+        this.world = world;
+        this.width = (_a = config.width) !== null && _a !== void 0 ? _a : global.gameWidth;
+        this.height = (_b = config.height) !== null && _b !== void 0 ? _b : global.gameHeight;
+        this.bounds = O.withDefaults((_c = config.bounds) !== null && _c !== void 0 ? _c : {}, {
             top: -Infinity,
             bottom: Infinity,
             left: -Infinity,
             right: Infinity,
         });
-        this.mode = _.clone(config.mode);
-        this.movement = _.clone(config.movement);
+        this.mode = (_d = _.clone(config.mode)) !== null && _d !== void 0 ? _d : Camera.Mode.FOCUS(this.width / 2, this.height / 2);
+        this.movement = (_e = _.clone(config.movement)) !== null && _e !== void 0 ? _e : Camera.Movement.SNAP();
         this.shakeIntensity = 0;
         this._shakeX = 0;
         this._shakeY = 0;
         this.debugOffsetX = 0;
         this.debugOffsetY = 0;
-        this.initPosition(world);
+        this.initPosition();
     }
     Object.defineProperty(Camera.prototype, "worldOffsetX", {
         get: function () { return this.x - this.width / 2 + this._shakeX + this.debugOffsetX; },
@@ -7319,14 +7342,9 @@ var Camera = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
-    Camera.prototype.update = function (world) {
-        if (this.mode.type === 'follow') {
-            var target = this.getTarget(this.mode.target, world);
-            this.moveTowardsPoint(target.x + this.mode.offset.x, target.y + this.mode.offset.y, world.delta);
-        }
-        else if (this.mode.type === 'focus') {
-            this.moveTowardsPoint(this.mode.point.x, this.mode.point.y, world.delta);
-        }
+    Camera.prototype.update = function () {
+        var target = this.mode.getTargetPt(this);
+        this.moveTowardsPoint(target.x + this.mode.offsetX, target.y + this.mode.offsetY);
         if (this.shakeIntensity > 0) {
             var pt_1 = Random.inCircle(this.shakeIntensity);
             this._shakeX = pt_1.x;
@@ -7337,7 +7355,7 @@ var Camera = /** @class */ (function () {
             this._shakeY = 0;
         }
         this.clampToBounds();
-        if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && world === global.theater.currentWorld) {
+        if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && this.world === global.theater.currentWorld) {
             if (Input.isDown(Input.DEBUG_MOVE_CAMERA_LEFT))
                 this.debugOffsetX -= 1;
             if (Input.isDown(Input.DEBUG_MOVE_CAMERA_RIGHT))
@@ -7362,79 +7380,48 @@ var Camera = /** @class */ (function () {
             this.y = this.bounds.bottom - this.height / 2;
         }
     };
-    Camera.prototype.initPosition = function (world) {
-        if (this.mode.type === 'follow') {
-            var target = this.getTarget(this.mode.target, world);
-            this.x = target.x + this.mode.offset.x;
-            this.y = target.y + this.mode.offset.y;
+    Camera.prototype.moveTowardsPoint = function (x, y) {
+        var hw = this.movement.deadZoneWidth / 2;
+        var hh = this.movement.deadZoneHeight / 2;
+        var dx = x - this.x;
+        var dy = y - this.y;
+        if (Math.abs(dx) > hw) {
+            var tx = Math.abs(hw / dx);
+            var targetx = this.x + (1 - tx) * dx;
+            this.x = M.lerpTime(this.x, targetx, this.movement.speed, this.world.delta);
         }
-        else if (this.mode.type === 'focus') {
-            this.x = this.mode.point.x;
-            this.y = this.mode.point.y;
+        if (Math.abs(dy) > hh) {
+            var ty = Math.abs(hh / dy);
+            var targety = this.y + (1 - ty) * dy;
+            this.y = M.lerpTime(this.y, targety, this.movement.speed, this.world.delta);
         }
     };
-    Camera.prototype.moveTowardsPoint = function (x, y, delta) {
-        if (this.movement.type === 'snap') {
-            this.x = x;
-            this.y = y;
-        }
-        else if (this.movement.type === 'smooth') {
-            var hw = this.movement.deadZoneWidth / 2;
-            var hh = this.movement.deadZoneHeight / 2;
-            var dx = x - this.x;
-            var dy = y - this.y;
-            if (Math.abs(dx) > hw) {
-                var tx = Math.abs(hw / dx);
-                var targetx = this.x + (1 - tx) * dx;
-                this.x = M.lerpTime(this.x, targetx, this.movement.speed, delta);
-            }
-            if (Math.abs(dy) > hh) {
-                var ty = Math.abs(hh / dy);
-                var targety = this.y + (1 - ty) * dy;
-                this.y = M.lerpTime(this.y, targety, this.movement.speed, delta);
-            }
-        }
+    Camera.prototype.initPosition = function () {
+        var target = this.mode.getTargetPt(this);
+        this.x = target.x;
+        this.y = target.y;
     };
     Camera.prototype.setMode = function (mode) {
         this.mode = mode;
     };
-    Camera.prototype.setModeFollow = function (target, offsetX, offsetY) {
-        this.setMode({
-            type: 'follow',
-            target: target,
-            offset: { x: offsetX || 0, y: offsetY || 0 },
-        });
-    };
     Camera.prototype.setModeFocus = function (x, y) {
-        this.setMode({
-            type: 'focus',
-            point: { x: x, y: y },
-        });
+        this.setMode(Camera.Mode.FOCUS(x, y));
+    };
+    Camera.prototype.setModeFollow = function (target, offsetX, offsetY) {
+        if (offsetX === void 0) { offsetX = 0; }
+        if (offsetY === void 0) { offsetY = 0; }
+        this.setMode(Camera.Mode.FOLLOW(target, offsetX, offsetY));
     };
     Camera.prototype.setMovement = function (movement) {
         this.movement = movement;
     };
     Camera.prototype.setMovementSnap = function () {
-        this.setMovement({
-            type: 'snap',
-        });
+        this.setMovement(Camera.Movement.SNAP());
     };
     Camera.prototype.setMovementSmooth = function (speed, deadZoneWidth, deadZoneHeight) {
         if (deadZoneWidth === void 0) { deadZoneWidth = 0; }
         if (deadZoneHeight === void 0) { deadZoneHeight = 0; }
-        this.setMovement({
-            type: 'smooth',
-            speed: speed,
-            deadZoneWidth: deadZoneWidth,
-            deadZoneHeight: deadZoneHeight,
-        });
-    };
-    Camera.prototype.getTarget = function (target, world) {
-        if (!target)
-            return pt(this.x, this.y);
-        if (_.isString(target))
-            return world.select.name(target);
-        return target;
+        this.setMovement(Camera.Movement.SMOOTH(speed, deadZoneWidth, deadZoneHeight));
     };
     return Camera;
 }());
@@ -7444,14 +7431,50 @@ var Camera = /** @class */ (function () {
         function FOLLOW(target, offsetX, offsetY) {
             if (offsetX === void 0) { offsetX = 0; }
             if (offsetY === void 0) { offsetY = 0; }
-            return { type: 'follow', target: target, offset: { x: offsetX, y: offsetY } };
+            return {
+                getTargetPt: function (camera) {
+                    if (_.isString(target)) {
+                        var worldObject = camera.world.select.name(target, false);
+                        return worldObject !== null && worldObject !== void 0 ? worldObject : pt(camera.x, camera.y);
+                    }
+                    return target;
+                },
+                offsetX: offsetX,
+                offsetY: offsetY,
+            };
         }
         Mode.FOLLOW = FOLLOW;
         function FOCUS(x, y) {
-            return { type: 'focus', point: { x: x, y: y } };
+            var focusPt = pt(x, y);
+            return {
+                getTargetPt: function (camera) { return focusPt; },
+                offsetX: 0,
+                offsetY: 0,
+            };
         }
         Mode.FOCUS = FOCUS;
     })(Mode = Camera.Mode || (Camera.Mode = {}));
+    var Movement;
+    (function (Movement) {
+        function SNAP() {
+            return {
+                speed: Infinity,
+                deadZoneWidth: 0,
+                deadZoneHeight: 0,
+            };
+        }
+        Movement.SNAP = SNAP;
+        function SMOOTH(speed, deadZoneWidth, deadZoneHeight) {
+            if (deadZoneWidth === void 0) { deadZoneWidth = 0; }
+            if (deadZoneHeight === void 0) { deadZoneHeight = 0; }
+            return {
+                speed: speed,
+                deadZoneWidth: deadZoneWidth,
+                deadZoneHeight: deadZoneHeight,
+            };
+        }
+        Movement.SMOOTH = SMOOTH;
+    })(Movement = Camera.Movement || (Camera.Movement = {}));
 })(Camera || (Camera = {}));
 var Physics;
 (function (Physics) {
@@ -7797,7 +7820,7 @@ var WorldSelecter = /** @class */ (function () {
     };
     WorldSelecter.prototype.name = function (name, checked) {
         if (checked === void 0) { checked = true; }
-        var results = this.nameAll(name);
+        var results = this.world.worldObjectsByName[name] || [];
         if (_.isEmpty(results)) {
             if (checked)
                 error("No object with name " + name + " exists in world", this);
@@ -10365,7 +10388,7 @@ var Golbin = /** @class */ (function (_super) {
 var Hoop = /** @class */ (function (_super) {
     __extends(Hoop, _super);
     function Hoop(config) {
-        var _this = _super.call(this, __assign({ texture: 'hoop', bounds: new CircleBounds(0, 0, 50) }, config)) || this;
+        var _this = _super.call(this, __assign({ texture: 'hoop', bounds: new CircleBounds(0, 0, 50), data: { intro: false } }, config)) || this;
         _this.bounceSpeed = 75;
         _this.strengthThreshold = 0.3;
         _this.radius = 47;
@@ -10399,9 +10422,11 @@ var Hoop = /** @class */ (function (_super) {
         this.setStrength(player);
         this.mass = M.clamp(this.currentAttackStrength, 0.1, 1);
         var visibleAttackStrength = M.clamp(this.currentAttackStrength, 0, 1);
-        this.effects.silhouette.enabled = true;
-        this.effects.silhouette.color = 0x00FFFF;
-        this.effects.silhouette.amount = M.clamp(Math.pow(visibleAttackStrength, 2), 0, 1);
+        if (!this.data.intro) {
+            this.effects.silhouette.enabled = true;
+            this.effects.silhouette.color = 0x00FFFF;
+            this.effects.silhouette.amount = M.clamp(Math.pow(visibleAttackStrength, 2), 0, 1);
+        }
         this.swingSound.volume = visibleAttackStrength;
         this.swingSound.speed = visibleAttackStrength;
     };
@@ -10988,7 +11013,7 @@ Main.loadConfig({
         moveCameraWithArrows: true,
         showOverlay: true,
         overlayFeeds: [],
-        skipRate: 10,
+        skipRate: 1,
         programmaticInput: false,
         autoplay: true,
         skipMainMenu: true,
@@ -11148,9 +11173,7 @@ function spawn(worldObject) {
     });
     return spawn;
 }
-function BASE_CAMERA_MOVEMENT() {
-    return { type: 'smooth', speed: 10, deadZoneWidth: 40, deadZoneHeight: 30 };
-}
+var BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(10, 40, 30);
 function WORLD_BOUNDS(left, top, right, bottom, physicsGroup) {
     var thickness = 40;
     var width = right - left;
@@ -11179,6 +11202,7 @@ function getStages() {
         'game': function () {
             var world = new World({
                 backgroundColor: 0x000000,
+                entryPoints: { 'main': { x: 0, y: 0 } },
                 layers: [
                     { name: 'bg' },
                     { name: 'hoop' },
@@ -11219,9 +11243,6 @@ function getStages() {
                 collisionIterations: 4,
                 useRaycastDisplacementThreshold: 4,
             });
-            world.camera.setModeFollow('player');
-            world.camera.setMovement(BASE_CAMERA_MOVEMENT());
-            world.entryPoints['main'] = { x: global.gameWidth / 2, y: global.gameHeight / 2 };
             world.addWorldObject(new UI());
             world.addWorldObject(new WaveController());
             world.addWorldObject(WORLD_BOUNDS(0, 192, 768, 768, 'walls'));
@@ -11280,6 +11301,9 @@ function getStages() {
                 physicsGroup: 'player',
                 controllable: true
             }));
+            world.camera.setModeFollow('player');
+            world.camera.setMovement(BASE_CAMERA_MOVEMENT);
+            world.camera.initPosition();
             return world;
         },
     };
@@ -11305,9 +11329,7 @@ function getStoryboard() {
                         case 0: return [4 /*yield*/, S.wait(0.5)];
                         case 1:
                             _a.sent();
-                            global.world.camera.setModeFocus(384, 292);
-                            global.world.camera.setMovementSmooth(4);
-                            return [4 /*yield*/, S.wait(2)];
+                            return [4 /*yield*/, S.cameraTransition(2, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();
                             return [4 /*yield*/, S.dialog("Welcome, Knight. I have been awaiting you.")];
@@ -11319,8 +11341,7 @@ function getStoryboard() {
                             return [4 /*yield*/, S.dialog("Verily well. Test your strength in mortal combat!")];
                         case 5:
                             _a.sent();
-                            global.world.camera.setModeFollow('player');
-                            return [4 /*yield*/, S.wait(2)];
+                            return [4 /*yield*/, S.cameraTransition(2, Camera.Mode.FOLLOW('player'))];
                         case 6:
                             _a.sent();
                             player = global.world.select.type(Player);
@@ -11333,6 +11354,7 @@ function getStoryboard() {
                             }));
                             whoosh = global.world.playSound('swing');
                             whoosh.speed = 0.1;
+                            hoop.data.intro = true;
                             return [4 /*yield*/, S.tween(1, hoop.effects.silhouette, 'alpha', 0, 1)];
                         case 7:
                             _a.sent();
@@ -11342,6 +11364,7 @@ function getStoryboard() {
                             return [4 /*yield*/, S.simul(S.tween(1, hoop.effects.silhouette, 'amount', 1, 0), S.tween(1, hoop, 'y', player.y - 32, player.y - 4))];
                         case 9:
                             _a.sent();
+                            hoop.data.intro = false;
                             global.world.playSound('walk').volume = 2;
                             return [4 /*yield*/, S.wait(2)];
                         case 10:
@@ -11405,25 +11428,25 @@ function getStoryboard() {
             script: function () {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
-                        case 0:
-                            global.world.camera.setModeFocus(384, 292);
-                            return [4 /*yield*/, S.wait(2)];
+                        case 0: return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
                         case 1:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("Duel'st in five rounds against my minions, and you may'st keep the [y]royal hula[/y].")];
+                            return [4 /*yield*/, S.wait(1)];
                         case 2:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("Round one beginneth now.")];
+                            return [4 /*yield*/, S.dialog("Duel'st in five rounds against my minions, and you may'st keep the [y]royal hula[/y].")];
                         case 3:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(0.5)];
+                            return [4 /*yield*/, S.dialog("Round one beginneth now.")];
                         case 4:
                             _a.sent();
-                            global.world.camera.setModeFollow('player');
-                            return [4 /*yield*/, S.wait(1)];
+                            return [4 /*yield*/, S.wait(0.5)];
                         case 5:
                             _a.sent();
-                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
+                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
+                        case 6:
+                            _a.sent();
+                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
                             global.world.select.type(WaveController).spawnWave1();
                             global.world.select.type(WaveController).startMusic();
                             return [2 /*return*/];
@@ -11444,24 +11467,25 @@ function getStoryboard() {
                             _a.sent();
                             if (!HARD_DIFFICULTY)
                                 global.world.select.type(Player).health = Player.MAX_HP;
-                            global.world.camera.setModeFocus(384, 292);
-                            return [4 /*yield*/, S.wait(2)];
+                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("Very good. But this is'st only the beginning.")];
+                            return [4 /*yield*/, S.wait(1)];
                         case 3:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("Round two beginneth now.")];
+                            return [4 /*yield*/, S.dialog("Very good. But this is'st only the beginning.")];
                         case 4:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(0.5)];
+                            return [4 /*yield*/, S.dialog("Round two beginneth now.")];
                         case 5:
                             _a.sent();
-                            global.world.camera.setModeFollow('player');
-                            return [4 /*yield*/, S.wait(1)];
+                            return [4 /*yield*/, S.wait(0.5)];
                         case 6:
                             _a.sent();
-                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
+                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
+                        case 7:
+                            _a.sent();
+                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
                             global.world.select.type(WaveController).spawnWave2();
                             global.world.select.type(WaveController).startMusic();
                             return [2 /*return*/];
@@ -11482,24 +11506,25 @@ function getStoryboard() {
                             _a.sent();
                             if (!HARD_DIFFICULTY)
                                 global.world.select.type(Player).health = Player.MAX_HP;
-                            global.world.camera.setModeFocus(384, 292);
-                            return [4 /*yield*/, S.wait(2)];
+                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("I see you are'st very skilled with a hoop. But can thou handle these foes?")];
+                            return [4 /*yield*/, S.wait(1)];
                         case 3:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("Round three beginneth now.")];
+                            return [4 /*yield*/, S.dialog("I see you are'st very skilled with a hoop. But can thou handle these foes?")];
                         case 4:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(0.5)];
+                            return [4 /*yield*/, S.dialog("Round three beginneth now.")];
                         case 5:
                             _a.sent();
-                            global.world.camera.setModeFollow('player');
-                            return [4 /*yield*/, S.wait(1)];
+                            return [4 /*yield*/, S.wait(0.5)];
                         case 6:
                             _a.sent();
-                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
+                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
+                        case 7:
+                            _a.sent();
+                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
                             global.world.select.type(WaveController).spawnWave3();
                             global.world.select.type(WaveController).startMusic();
                             return [2 /*return*/];
@@ -11520,24 +11545,25 @@ function getStoryboard() {
                             _a.sent();
                             if (!HARD_DIFFICULTY)
                                 global.world.select.type(Player).health = Player.MAX_HP;
-                            global.world.camera.setModeFocus(384, 292);
-                            return [4 /*yield*/, S.wait(2)];
+                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("Perhaps I'm going too easy on you.")];
+                            return [4 /*yield*/, S.wait(1)];
                         case 3:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("Prepare thyself for round four.")];
+                            return [4 /*yield*/, S.dialog("Perhaps I'm going too easy on you.")];
                         case 4:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(0.5)];
+                            return [4 /*yield*/, S.dialog("Prepare thyself for round four.")];
                         case 5:
                             _a.sent();
-                            global.world.camera.setModeFollow('player');
-                            return [4 /*yield*/, S.wait(1)];
+                            return [4 /*yield*/, S.wait(0.5)];
                         case 6:
                             _a.sent();
-                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
+                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
+                        case 7:
+                            _a.sent();
+                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
                             global.world.select.type(WaveController).spawnWave4();
                             global.world.select.type(WaveController).startMusic();
                             return [2 /*return*/];
@@ -11558,21 +11584,22 @@ function getStoryboard() {
                             _a.sent();
                             if (!HARD_DIFFICULTY)
                                 global.world.select.type(Player).health = Player.MAX_HP;
-                            global.world.camera.setModeFocus(384, 292);
-                            return [4 /*yield*/, S.wait(2)];
+                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("Impressive! One more round to go'eth, but this will be the hardest.")];
+                            return [4 /*yield*/, S.wait(1)];
                         case 3:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(0.5)];
+                            return [4 /*yield*/, S.dialog("Impressive! One more round to go'eth, but this will be the hardest.")];
                         case 4:
                             _a.sent();
-                            global.world.camera.setModeFollow('player');
-                            return [4 /*yield*/, S.wait(1)];
+                            return [4 /*yield*/, S.wait(0.5)];
                         case 5:
                             _a.sent();
-                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
+                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
+                        case 6:
+                            _a.sent();
+                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
                             global.world.select.type(WaveController).spawnWave5();
                             global.world.select.type(WaveController).startMusic();
                             return [2 /*return*/];
@@ -11595,48 +11622,47 @@ function getStoryboard() {
                             if (!HARD_DIFFICULTY)
                                 global.world.select.type(Player).health = Player.MAX_HP;
                             throne = global.world.select.type(Throne);
-                            global.world.camera.setModeFollow(throne, 0, -20);
-                            global.world.camera.setMovementSmooth(4);
-                            return [4 /*yield*/, S.wait(2)];
+                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("Splendid!")];
+                            return [4 /*yield*/, S.wait(1)];
                         case 3:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("Thou hast defeated all of mine challenges. I bet you're happy to finally claim the [y]royal hula[/y] for thyself?")];
+                            return [4 /*yield*/, S.dialog("Splendid!")];
                         case 4:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("...")];
+                            return [4 /*yield*/, S.dialog("Thou hast defeated all of mine challenges. I bet you're happy to finally claim the [y]royal hula[/y] for thyself?")];
                         case 5:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("But I don't think I'll be parting with it so soon.")];
+                            return [4 /*yield*/, S.dialog("...")];
                         case 6:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("If thou want'st it so bad... Heh heh heh...")];
+                            return [4 /*yield*/, S.dialog("But I don't think I'll be parting with it so soon.")];
                         case 7:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(0.5)];
+                            return [4 /*yield*/, S.dialog("If thou want'st it so bad... Heh heh heh...")];
                         case 8:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(0.5)];
+                        case 9:
                             _a.sent();
                             shakeSound = global.world.playSound('shake');
                             shakeSound.loop = true;
                             return [4 /*yield*/, S.simul(S.shake(2, 7), S.chain(S.wait(3), S.call(function () {
                                     throne.setState('jump');
                                 })))];
-                        case 9:
+                        case 10:
                             _a.sent();
                             shakeSound.paused = true;
                             return [4 /*yield*/, S.wait(2)];
-                        case 10:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog("Prove thyself worthy!")];
                         case 11:
                             _a.sent();
-                            global.world.camera.setModeFollow('player');
-                            return [4 /*yield*/, S.wait(1)];
+                            return [4 /*yield*/, S.dialog("Prove thyself worthy!")];
                         case 12:
                             _a.sent();
-                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
+                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
+                        case 13:
+                            _a.sent();
                             throne.setState('idle');
                             global.world.runScript(S.chain(S.wait(0.5), S.showSlide(function () { return new Slide({
                                 texture: 'hoopkingtext',
@@ -11654,52 +11680,55 @@ function getStoryboard() {
         'win': {
             type: 'cutscene',
             script: function () {
-                var throne, shakeSound, text, text2;
+                var shakeSound, text, text2;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
                             global.world.select.type(WaveController).stopMusic();
-                            throne = global.world.select.type(Throne);
-                            global.world.camera.setModeFollow(throne, 0, -20);
-                            global.world.camera.setMovementSmooth(4);
+                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
+                        case 1:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(1)];
+                        case 2:
+                            _a.sent();
                             shakeSound = global.world.playSound('shake');
                             shakeSound.loop = true;
                             shakeSound.speed = 0.8;
                             return [4 /*yield*/, S.wait(3)];
-                        case 1:
-                            _a.sent();
-                            if (!(global.world.select.type(Player).health > 0)) return [3 /*break*/, 5];
-                            return [4 /*yield*/, S.dialog("Agh... you've done it...")];
-                        case 2:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog("The hoop... it's yours... take it...")];
                         case 3:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("Don't... bully me... anymore...")];
+                            if (!(global.world.select.type(Player).health > 0)) return [3 /*break*/, 7];
+                            return [4 /*yield*/, S.dialog("Agh... you've done it...")];
                         case 4:
                             _a.sent();
-                            return [3 /*break*/, 10];
-                        case 5: return [4 /*yield*/, S.dialog("But... but how...?")];
-                        case 6:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog("You're dead too... how...?")];
-                        case 7:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog("Just... take the hoop then...")];
-                        case 8:
+                            return [4 /*yield*/, S.dialog("The hoop... it's yours... take it...")];
+                        case 5:
                             _a.sent();
                             return [4 /*yield*/, S.dialog("Don't... bully me... anymore...")];
+                        case 6:
+                            _a.sent();
+                            return [3 /*break*/, 12];
+                        case 7: return [4 /*yield*/, S.dialog("But... but how...?")];
+                        case 8:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("You're dead too... how...?")];
                         case 9:
                             _a.sent();
-                            _a.label = 10;
-                        case 10: return [4 /*yield*/, S.wait(0.5)];
+                            return [4 /*yield*/, S.dialog("Just... take the hoop then...")];
+                        case 10:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("Don't... bully me... anymore...")];
                         case 11:
                             _a.sent();
+                            _a.label = 12;
+                        case 12: return [4 /*yield*/, S.wait(0.5)];
+                        case 13:
+                            _a.sent();
                             return [4 /*yield*/, S.simul(S.fadeOut(3, 0xFFFFFF), S.tween(3, global.world, 'volume', 1, 0))];
-                        case 12:
+                        case 14:
                             _a.sent();
                             return [4 /*yield*/, S.wait(1)];
-                        case 13:
+                        case 15:
                             _a.sent();
                             text = global.theater.addWorldObject(new SpriteText({
                                 x: global.gameWidth / 2, y: global.gameHeight / 2 - 8,
@@ -11708,10 +11737,10 @@ function getStoryboard() {
                                 anchor: Anchor.TOP_CENTER
                             }));
                             return [4 /*yield*/, S.tween(3, text.style, 'alpha', 0, 1)];
-                        case 14:
+                        case 16:
                             _a.sent();
                             return [4 /*yield*/, S.wait(2)];
-                        case 15:
+                        case 17:
                             _a.sent();
                             text2 = global.theater.addWorldObject(new SpriteText({
                                 x: global.gameWidth / 2, y: global.gameHeight / 2 + 8,
@@ -11720,16 +11749,16 @@ function getStoryboard() {
                                 anchor: Anchor.TOP_CENTER
                             }));
                             return [4 /*yield*/, S.tween(3, text2.style, 'alpha', 0, 1)];
-                        case 16:
-                            _a.sent();
-                            return [4 /*yield*/, S.wait(5)];
-                        case 17:
-                            _a.sent();
-                            return [4 /*yield*/, S.fadeOut(3)];
                         case 18:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(2)];
+                            return [4 /*yield*/, S.wait(5)];
                         case 19:
+                            _a.sent();
+                            return [4 /*yield*/, S.fadeOut(3)];
+                        case 20:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(2)];
+                        case 21:
                             _a.sent();
                             global.game.loadMainMenu();
                             return [2 /*return*/];
@@ -11750,25 +11779,26 @@ function getStoryboard() {
                             return [4 /*yield*/, S.tween(3, global.world, 'volume', 1, 0)];
                         case 1:
                             _a.sent();
-                            global.world.camera.setModeFollow(throne, 0, -20);
-                            global.world.camera.setMovementSmooth(4);
-                            return [4 /*yield*/, S.wait(3)];
+                            return [4 /*yield*/, S.cameraTransition(2, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("It seems... thou'st not worthy to bear the [y]ultimate weapon[/y].")];
+                            return [4 /*yield*/, S.wait(1)];
                         case 3:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("Such a shame...")];
+                            return [4 /*yield*/, S.dialog("It seems... thou'st not worthy to bear the [y]ultimate weapon[/y].")];
                         case 4:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(0.5)];
+                            return [4 /*yield*/, S.dialog("Such a shame...")];
                         case 5:
                             _a.sent();
-                            return [4 /*yield*/, S.fadeOut(3)];
+                            return [4 /*yield*/, S.wait(0.5)];
                         case 6:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(2)];
+                            return [4 /*yield*/, S.fadeOut(3)];
                         case 7:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(2)];
+                        case 8:
                             _a.sent();
                             global.game.loadMainMenu();
                             return [2 /*return*/];
@@ -12038,7 +12068,7 @@ var UI = /** @class */ (function (_super) {
         var _this = this;
         var player = this.world.select.type(Player);
         if (player.health > this.shields.length) {
-            for (var i = 0; i < player.health - this.shields.length; i++) {
+            for (var i = 0; this.shields.length < player.health; i++) {
                 var shield = this.addChild(new Sprite({
                     x: 20 + 36 * this.shields.length, y: 20,
                     texture: 'ui_shield',
@@ -12069,7 +12099,7 @@ var UI = /** @class */ (function (_super) {
                 shield.removeFromWorld();
             };
             var this_3 = this;
-            for (var i = 0; i < this.shields.length - player.health; i++) {
+            for (var i = 0; this.shields.length > player.health; i++) {
                 _loop_4(i);
             }
         }

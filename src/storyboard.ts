@@ -14,18 +14,13 @@ function getStoryboard(): Storyboard { return {
         script: function*() {
             yield S.wait(0.5);
 
-            global.world.camera.setModeFocus(384, 292);
-            global.world.camera.setMovementSmooth(4);
-
-            yield S.wait(2);
+            yield S.cameraTransition(2, Camera.Mode.FOLLOW('throne'));
 
             yield S.dialog("Welcome, Knight. I have been awaiting you.");
             yield S.dialog("You seek to prove thyself worthy of carrying the [y]ultimate weapon[/y]?");
             yield S.dialog("Verily well. Test your strength in mortal combat!");
 
-            global.world.camera.setModeFollow('player');
-
-            yield S.wait(2);
+            yield S.cameraTransition(2, Camera.Mode.FOLLOW('player'));
 
             let player = global.world.select.type(Player);
             let hoop = global.world.addWorldObject(new Hoop({
@@ -39,6 +34,7 @@ function getStoryboard(): Storyboard { return {
             let whoosh = global.world.playSound('swing');
             whoosh.speed = 0.1;
 
+            hoop.data.intro = true;
             yield S.tween(1, hoop.effects.silhouette, 'alpha', 0, 1);
 
             yield S.wait(1);
@@ -47,6 +43,7 @@ function getStoryboard(): Storyboard { return {
                 S.tween(1, hoop.effects.silhouette, 'amount', 1, 0),
                 S.tween(1, hoop, 'y', player.y - 32, player.y - 4),
             );
+            hoop.data.intro = false;
 
             global.world.playSound('walk').volume = 2;
 
@@ -105,18 +102,16 @@ function getStoryboard(): Storyboard { return {
     'spawn_wave_1': {
         type: 'cutscene',
         script: function*() {
-            global.world.camera.setModeFocus(384, 292);
-
-            yield S.wait(2);
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
+            yield S.wait(1);
 
             yield S.dialog("Duel'st in five rounds against my minions, and you may'st keep the [y]royal hula[/y].");
             yield S.dialog("Round one beginneth now.");
 
             yield S.wait(0.5);
-            global.world.camera.setModeFollow('player');
-            yield S.wait(1);
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'));
 
-            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
+            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
 
             global.world.select.type(WaveController).spawnWave1();
             global.world.select.type(WaveController).startMusic();
@@ -130,18 +125,17 @@ function getStoryboard(): Storyboard { return {
             yield S.wait(1);
 
             if (!HARD_DIFFICULTY) global.world.select.type(Player).health = Player.MAX_HP;
-            global.world.camera.setModeFocus(384, 292);
 
-            yield S.wait(2);
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
+            yield S.wait(1);
 
             yield S.dialog("Very good. But this is'st only the beginning.");
             yield S.dialog("Round two beginneth now.");
 
             yield S.wait(0.5);
-            global.world.camera.setModeFollow('player');
-            yield S.wait(1);
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'));
 
-            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
+            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
 
             global.world.select.type(WaveController).spawnWave2();
             global.world.select.type(WaveController).startMusic();
@@ -155,18 +149,17 @@ function getStoryboard(): Storyboard { return {
             yield S.wait(1);
 
             if (!HARD_DIFFICULTY) global.world.select.type(Player).health = Player.MAX_HP;
-            global.world.camera.setModeFocus(384, 292);
-
-            yield S.wait(2);
+            
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
+            yield S.wait(1);
 
             yield S.dialog("I see you are'st very skilled with a hoop. But can thou handle these foes?");
             yield S.dialog("Round three beginneth now.");
 
             yield S.wait(0.5);
-            global.world.camera.setModeFollow('player');
-            yield S.wait(1);
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'));
 
-            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
+            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
 
             global.world.select.type(WaveController).spawnWave3();
             global.world.select.type(WaveController).startMusic();
@@ -180,18 +173,17 @@ function getStoryboard(): Storyboard { return {
             yield S.wait(1);
 
             if (!HARD_DIFFICULTY) global.world.select.type(Player).health = Player.MAX_HP;
-            global.world.camera.setModeFocus(384, 292);
-
-            yield S.wait(2);
+            
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
+            yield S.wait(1);
 
             yield S.dialog("Perhaps I'm going too easy on you.");
             yield S.dialog("Prepare thyself for round four.");
 
             yield S.wait(0.5);
-            global.world.camera.setModeFollow('player');
-            yield S.wait(1);
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'));
 
-            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
+            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
 
             global.world.select.type(WaveController).spawnWave4();
             global.world.select.type(WaveController).startMusic();
@@ -205,17 +197,16 @@ function getStoryboard(): Storyboard { return {
             yield S.wait(1);
 
             if (!HARD_DIFFICULTY) global.world.select.type(Player).health = Player.MAX_HP;
-            global.world.camera.setModeFocus(384, 292);
-
-            yield S.wait(2);
+            
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
+            yield S.wait(1);
 
             yield S.dialog("Impressive! One more round to go'eth, but this will be the hardest.");
 
             yield S.wait(0.5);
-            global.world.camera.setModeFollow('player');
-            yield S.wait(1);
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'));
 
-            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
+            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
 
             global.world.select.type(WaveController).spawnWave5();
             global.world.select.type(WaveController).startMusic();
@@ -232,10 +223,8 @@ function getStoryboard(): Storyboard { return {
 
             let throne = global.world.select.type(Throne);
 
-            global.world.camera.setModeFollow(throne, 0, -20);
-            global.world.camera.setMovementSmooth(4);
-
-            yield S.wait(2);
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
+            yield S.wait(1);
 
             yield S.dialog("Splendid!");
             yield S.dialog("Thou hast defeated all of mine challenges. I bet you're happy to finally claim the [y]royal hula[/y] for thyself?");
@@ -263,9 +252,8 @@ function getStoryboard(): Storyboard { return {
             yield S.wait(2);
             yield S.dialog("Prove thyself worthy!");
 
-            global.world.camera.setModeFollow('player');
-            yield S.wait(1);
-            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT());
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'));
+    
             throne.setState('idle');
 
             global.world.runScript(S.chain(
@@ -288,10 +276,9 @@ function getStoryboard(): Storyboard { return {
         type: 'cutscene',
         script: function*() {
             global.world.select.type(WaveController).stopMusic();
-            let throne = global.world.select.type(Throne);
 
-            global.world.camera.setModeFollow(throne, 0, -20);
-            global.world.camera.setMovementSmooth(4);
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
+            yield S.wait(1);
 
             let shakeSound = global.world.playSound('shake');
             shakeSound.loop = true;
@@ -353,10 +340,9 @@ function getStoryboard(): Storyboard { return {
 
             yield S.tween(3, global.world, 'volume', 1, 0);
 
-            global.world.camera.setModeFollow(throne, 0, -20);
-            global.world.camera.setMovementSmooth(4);
+            yield S.cameraTransition(2, Camera.Mode.FOLLOW('throne'));
 
-            yield S.wait(3);
+            yield S.wait(1);
 
             yield S.dialog("It seems... thou'st not worthy to bear the [y]ultimate weapon[/y].");
             yield S.dialog("Such a shame...");

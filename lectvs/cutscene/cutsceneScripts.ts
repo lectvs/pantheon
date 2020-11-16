@@ -1,4 +1,27 @@
 namespace S {
+    export function cameraTransition(duration: number, toMode: Camera.Mode, toMovement?: Camera.Movement, easingFunction: Tween.Easing.Function = Tween.Easing.OutExp): Script.Function {
+        return function*() {
+            let camera = global.world.camera;
+
+            if (!toMovement) toMovement = camera.movement;
+
+            let cameraPoint = pt(camera.x, camera.y);
+            camera.setModeFollow(cameraPoint);
+            camera.setMovementSnap();
+
+            let startPoint = pt(cameraPoint.x, cameraPoint.y);
+
+            yield* S.doOverTime(duration, t => {
+                let toPoint = toMode.getTargetPt(camera);
+                cameraPoint.x = M.lerp(startPoint.x, toPoint.x + toMode.offsetX, easingFunction(t));
+                cameraPoint.y = M.lerp(startPoint.y, toPoint.y + toMode.offsetY, easingFunction(t));
+            })();
+
+            camera.setMode(toMode);
+            camera.setMovement(toMovement);
+        }
+    }
+
     export function dialog(p1: string, p2?: string): Script.Function {
         return function*() {
             if (p2) {
@@ -50,14 +73,14 @@ namespace S {
     }
 
     export function jumpZ(sprite: Sprite, peakDelta: number, time: number, landOnGround: boolean = false): Script.Function {
-        return runInCurrentWorld(function*() {
+        return function*() {
             let start = sprite.z;
             let groundDelta = landOnGround ? start : 0;
 
             yield* S.doOverTime(time, t => {
                 sprite.z = M.jumpParabola(start, peakDelta, groundDelta, t);
             })();
-        })
+        }
     }
 
     export function moveTo(worldObject: WorldObject, x: number, y: number, maxTime: number = 10): Script.Function {
@@ -68,7 +91,7 @@ namespace S {
     }
 
     export function moveToX(worldObject: WorldObject, x: number, maxTime: number = 10): Script.Function {
-        return runInCurrentWorld(function*() {
+        return function*() {
             let dx = x - worldObject.x;
             if (dx === 0) return;
 
@@ -88,11 +111,11 @@ namespace S {
             }
 
             worldObject.x = x;
-        })
+        }
     }
 
     export function moveToY(worldObject: WorldObject, y: number, maxTime: number = 10): Script.Function {
-        return runInCurrentWorld(function*() {
+        return function*() {
             let dy = y - worldObject.y;
             if (dy === 0) return;
 
@@ -112,31 +135,22 @@ namespace S {
             }
 
             worldObject.y = y;
-        })
+        }
     }
 
     export function playAnimation(sprite: Sprite, animationName: string, startFrame: number = 0, force: boolean = true, waitForCompletion: boolean = true): Script.Function {
-        return runInCurrentWorld(function*() {
+        return function*() {
             sprite.playAnimation(animationName, startFrame, force);
             if (waitForCompletion) {
                 while (sprite.getCurrentAnimationName() === animationName) {
                     yield;
                 }
             }
-        })
-    }
-
-    export function runInCurrentWorld(script: Script.Function): Script.Function {
-        return function*() {
-            let scr = global.theater.currentWorld.runScript(script);
-            while (!scr.done) {
-                yield;
-            }
         }
     }
 
     export function shake(intensity: number, time: number): Script.Function {
-        return runInCurrentWorld(function*() {
+        return function*() {
             global.world.camera.shakeIntensity += intensity;
             let timer = new Timer(time);
             while (!timer.done) {
@@ -144,7 +158,7 @@ namespace S {
                 yield;
             }
             global.world.camera.shakeIntensity -= intensity;
-        })
+        }
     }
 
     export function showSlide(factory: Factory<Slide>, waitForCompletion: boolean = true): Script.Function {

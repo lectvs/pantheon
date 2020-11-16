@@ -9,27 +9,13 @@ namespace Camera {
         movement?: Movement;
     }
 
-    export type Mode = FollowMode | FocusMode;
-
-    export type FollowMode = {
-        type: 'follow';
-        target: string | Pt;
-        offset: Pt;
+    export type Mode = {
+        getTargetPt: (camera: Camera) => Pt;
+        offsetX: number;
+        offsetY: number;
     }
 
-    export type FocusMode = {
-        type: 'focus';
-        point: Pt;
-    }
-
-    export type Movement = SnapMovement | SmoothMovement;
-
-    export type SnapMovement = {
-        type: 'snap';
-    }
-
-    export type SmoothMovement = {
-        type: 'smooth';
+    export type Movement = {
         speed: number;
         deadZoneWidth: number;
         deadZoneHeight: number;
@@ -37,6 +23,8 @@ namespace Camera {
 }
 
 class Camera {
+    readonly world: World;
+
     x: number;
     y: number;
     width: number;
@@ -57,28 +45,19 @@ class Camera {
     get worldOffsetY() { return this.y - this.height/2 + this._shakeY + this.debugOffsetY; }
 
     constructor(config: Camera.Config, world: World) {
-        _.defaults(config, {
-            width: global.gameWidth,
-            height: global.gameHeight,
-            bounds: { x: -Infinity, y: -Infinity, width: Infinity, height: Infinity },
-            movement: { type: 'snap' },
-        });
-        _.defaults(config, {
-            // Needs to use new values for config
-            mode: { type: 'focus', point: { x: config.width/2, y: config.height/2 } },
-        });
-        
-        this.width = config.width;
-        this.height = config.height;
+        this.world = world;
 
-        this.bounds = O.withDefaults(config.bounds, {
+        this.width = config.width ?? global.gameWidth;
+        this.height = config.height ?? global.gameHeight;
+
+        this.bounds = O.withDefaults(config.bounds ?? {}, {
             top: -Infinity,
             bottom: Infinity,
             left: -Infinity,
             right: Infinity,
         });
-        this.mode = _.clone(config.mode);
-        this.movement = _.clone(config.movement);
+        this.mode = _.clone(config.mode) ?? Camera.Mode.FOCUS(this.width/2, this.height/2);
+        this.movement = _.clone(config.movement) ?? Camera.Movement.SNAP();
 
         this.shakeIntensity = 0;
         this._shakeX = 0;
@@ -86,16 +65,12 @@ class Camera {
         this.debugOffsetX = 0;
         this.debugOffsetY = 0;
 
-        this.initPosition(world);
+        this.initPosition();
     }
 
-    update(world: World) {
-        if (this.mode.type === 'follow') {
-            let target = this.getTarget(this.mode.target, world);
-            this.moveTowardsPoint(target.x + this.mode.offset.x, target.y + this.mode.offset.y, world.delta);
-        } else if (this.mode.type === 'focus') {
-            this.moveTowardsPoint(this.mode.point.x, this.mode.point.y, world.delta);
-        }
+    update() {
+        let target = this.mode.getTargetPt(this);
+        this.moveTowardsPoint(target.x + this.mode.offsetX, target.y + this.mode.offsetY);
 
         if (this.shakeIntensity > 0) {
             let pt = Random.inCircle(this.shakeIntensity);
@@ -108,7 +83,7 @@ class Camera {
 
         this.clampToBounds();
 
-        if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && world === global.theater.currentWorld) {
+        if (Debug.MOVE_CAMERA_WITH_ARROWS && global.theater && this.world === global.theater.currentWorld) {
             if (Input.isDown(Input.DEBUG_MOVE_CAMERA_LEFT))  this.debugOffsetX -= 1;
             if (Input.isDown(Input.DEBUG_MOVE_CAMERA_RIGHT)) this.debugOffsetX += 1;
             if (Input.isDown(Input.DEBUG_MOVE_CAMERA_UP))    this.debugOffsetY -= 1;
@@ -116,7 +91,7 @@ class Camera {
         }
     }
 
-    clampToBounds() {
+    private clampToBounds() {
         if (this.bounds.left > -Infinity && this.x - this.width/2 < this.bounds.left) {
             this.x = this.bounds.left + this.width/2;
         }
@@ -131,58 +106,41 @@ class Camera {
         }
     }
 
-    initPosition(world: World) {
-        if (this.mode.type === 'follow') {
-            let target = this.getTarget(this.mode.target, world);
-            this.x = target.x + this.mode.offset.x;
-            this.y = target.y + this.mode.offset.y;
-        } else if (this.mode.type === 'focus') {
-            this.x = this.mode.point.x;
-            this.y = this.mode.point.y;
+    private moveTowardsPoint(x: number, y: number) {
+        let hw = this.movement.deadZoneWidth/2;
+        let hh = this.movement.deadZoneHeight/2;
+        let dx = x - this.x;
+        let dy = y - this.y;
+
+        if (Math.abs(dx) > hw) {
+            let tx = Math.abs(hw / dx);
+            let targetx = this.x + (1-tx)*dx;
+            this.x = M.lerpTime(this.x, targetx, this.movement.speed, this.world.delta);
+        }
+
+        if (Math.abs(dy) > hh) {
+            let ty = Math.abs(hh / dy);
+            let targety = this.y + (1-ty)*dy;
+            this.y = M.lerpTime(this.y, targety, this.movement.speed, this.world.delta);
         }
     }
-
-    moveTowardsPoint(x: number, y: number, delta: number) {
-        if (this.movement.type === 'snap') {
-            this.x = x;
-            this.y = y;
-        } else if (this.movement.type === 'smooth') {
-            let hw = this.movement.deadZoneWidth/2;
-            let hh = this.movement.deadZoneHeight/2;
-            let dx = x - this.x;
-            let dy = y - this.y;
-
-            if (Math.abs(dx) > hw) {
-                let tx = Math.abs(hw / dx);
-                let targetx = this.x + (1-tx)*dx;
-                this.x = M.lerpTime(this.x, targetx, this.movement.speed, delta);
-            }
-
-            if (Math.abs(dy) > hh) {
-                let ty = Math.abs(hh / dy);
-                let targety = this.y + (1-ty)*dy;
-                this.y = M.lerpTime(this.y, targety, this.movement.speed, delta);
-            }
-        }
+    
+    initPosition() {
+        let target = this.mode.getTargetPt(this);
+        this.x = target.x;
+        this.y = target.y;
     }
 
     setMode(mode: Camera.Mode) {
         this.mode = mode;
     }
 
-    setModeFollow(target: string | WorldObject, offsetX?: number, offsetY?: number) {
-        this.setMode({
-            type: 'follow',
-            target: target,
-            offset: { x: offsetX || 0, y: offsetY || 0 },
-        });
+    setModeFocus(x: number, y: number) {
+        this.setMode(Camera.Mode.FOCUS(x, y));
     }
 
-    setModeFocus(x: number, y: number) {
-        this.setMode({
-            type: 'focus',
-            point: { x: x, y: y },
-        });
+    setModeFollow(target: string | Pt, offsetX: number = 0, offsetY: number = 0) {
+        this.setMode(Camera.Mode.FOLLOW(target, offsetX, offsetY));
     }
 
     setMovement(movement: Camera.Movement) {
@@ -190,34 +148,54 @@ class Camera {
     }
 
     setMovementSnap() {
-        this.setMovement({
-            type: 'snap',
-        });
+        this.setMovement(Camera.Movement.SNAP());
     }
 
     setMovementSmooth(speed: number, deadZoneWidth: number = 0, deadZoneHeight: number = 0) {
-        this.setMovement({
-            type: 'smooth',
-            speed: speed,
-            deadZoneWidth: deadZoneWidth,
-            deadZoneHeight: deadZoneHeight,
-        });
-    }
-
-    private getTarget(target: string | Pt, world: World): Pt {
-        if (!target) return pt(this.x, this.y);
-        if (_.isString(target)) return world.select.name(target);
-        return target;
+        this.setMovement(Camera.Movement.SMOOTH(speed, deadZoneWidth, deadZoneHeight));
     }
 }
 
 namespace Camera {
     export namespace Mode {
-        export function FOLLOW(target: string | Pt, offsetX: number = 0, offsetY: number = 0): FollowMode {
-            return { type: 'follow', target, offset: { x: offsetX, y: offsetY } };
+        export function FOLLOW(target: string | Pt, offsetX: number = 0, offsetY: number = 0): Mode {
+            return {
+                getTargetPt: (camera: Camera) => {
+                    if (_.isString(target)) {
+                        let worldObject = camera.world.select.name(target, false);
+                        return worldObject ?? pt(camera.x, camera.y);
+                    }
+                    return target;
+                },
+                offsetX,
+                offsetY,
+            };
         }
-        export function FOCUS(x: number, y: number): FocusMode {
-            return { type: 'focus', point: { x, y } };
+        export function FOCUS(x: number, y: number): Mode {
+            let focusPt = pt(x, y);
+            return {
+                getTargetPt: (camera: Camera) => focusPt,
+                offsetX: 0,
+                offsetY: 0,
+            };
+        }
+    }
+
+    export namespace Movement {
+        export function SNAP(): Movement {
+            return {
+                speed: Infinity,
+                deadZoneWidth: 0,
+                deadZoneHeight: 0,
+            };
+        }
+
+        export function SMOOTH(speed: number, deadZoneWidth: number = 0, deadZoneHeight: number = 0): Movement {
+            return {
+                speed: speed,
+                deadZoneWidth: deadZoneWidth,
+                deadZoneHeight: deadZoneHeight,
+            };
         }
     }
 }

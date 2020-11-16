@@ -18,7 +18,7 @@ class WorldSelecter {
     }
 
     name<T extends WorldObject>(name: string, checked: boolean = true) {
-        let results = this.nameAll<T>(name);
+        let results = <T[]>this.world.worldObjectsByName[name] || [];
         if (_.isEmpty(results)) {
             if (checked) error(`No object with name ${name} exists in world`, this);
             return undefined;
