@@ -8908,7 +8908,7 @@ var InvertedRectBounds = /** @class */ (function () {
         this.boundingBox = new Rectangle(0, 0, 0, 0);
     }
     InvertedRectBounds.prototype.clone = function () {
-        return new RectBounds(this.x, this.y, this.width, this.height, this.parent);
+        return new InvertedRectBounds(this.x, this.y, this.width, this.height, this.parent);
     };
     InvertedRectBounds.prototype.getBoundingBox = function (x, y) {
         x = x !== null && x !== void 0 ? x : (this.parent ? this.parent.x : 0);
@@ -8950,35 +8950,16 @@ var InvertedRectBounds = /** @class */ (function () {
         return false;
     };
     InvertedRectBounds.prototype.raycast = function (x, y, dx, dy) {
-        // let box = this.getBoundingBox();
-        // let top_t = Infinity;
-        // let bottom_t = Infinity;
-        // let left_t = Infinity;
-        // let right_t = Infinity;
-        // if (dy !== 0) {
-        //     top_t = (box.top - y) / dy;
-        //     if (x + dx*top_t < box.left || x + dx*top_t > box.right) top_t = Infinity;
-        //     bottom_t = (box.bottom - y) / dy;
-        //     if (x + dx*bottom_t < box.left || x + dx*bottom_t > box.right) bottom_t = Infinity;
-        // }
-        // if (dx !== 0) {
-        //     left_t = (box.left - x) / dx;
-        //     if (y + dy*left_t < box.top || y + dy*left_t > box.bottom) left_t = Infinity;
-        //     right_t = (box.right - x) / dx;
-        //     if (y + dy*right_t < box.top || y + dy*right_t > box.bottom) right_t = Infinity;
-        // }
-        // let horiz_small_t = Math.min(left_t, right_t);
-        // let horiz_large_t = Math.max(left_t, right_t);
-        // let horiz_t = horiz_small_t >= 0 ? horiz_small_t : horiz_large_t;
-        // let vert_small_t = Math.min(top_t, bottom_t);
-        // let vert_large_t = Math.max(top_t, bottom_t);
-        // let vert_t = vert_small_t >= 0 ? vert_small_t : vert_large_t;
-        // let small_t = Math.min(horiz_t, vert_t);
-        // let large_t = Math.max(horiz_t, vert_t);
-        // let t = small_t >= 0 ? small_t : large_t;
-        // if (t < 0) return Infinity;
-        // return t;
-        return Infinity;
+        var box = this.getBoundingBox();
+        if (dx === 0 && dy === 0) {
+            return box.contains(x, y) ? Infinity : 0;
+        }
+        var left_t = dx < 0 && x >= box.left ? (box.left - x) / dx : Infinity;
+        var right_t = dx > 0 && x <= box.right ? (box.right - x) / dx : Infinity;
+        var top_t = dy < 0 && y >= box.top ? (box.top - y) / dy : Infinity;
+        var bottom_t = dy > 0 && y <= box.bottom ? (box.bottom - y) / dy : Infinity;
+        var t = Math.min(left_t, right_t, top_t, bottom_t);
+        return t;
     };
     return InvertedRectBounds;
 }());
