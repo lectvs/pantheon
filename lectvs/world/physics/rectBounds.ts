@@ -34,8 +34,9 @@ class RectBounds implements Bounds {
 
     getDisplacementCollision(other: Bounds): Bounds.DisplacementCollision {
         if (other instanceof RectBounds) return Bounds.Collision.getDisplacementCollisionRectRect(this, other);
-        if (other instanceof CircleBounds) return Bounds.Collision.getDisplacementCollisionRectCircle(this, other);
+        if (other instanceof CircleBounds) return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionCircleRect(other, this));
         if (other instanceof SlopeBounds) return Bounds.Collision.getDisplacementCollisionRectSlope(this, other);
+        if (other instanceof InvertedRectBounds) return Bounds.Collision.getDisplacementCollisionRectInvertedRect(this, other);
         if (other instanceof NullBounds) return undefined;
         error("No collision supported between these bounds", this, other);
         return undefined;
@@ -43,8 +44,9 @@ class RectBounds implements Bounds {
 
     getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision {
         if (other instanceof RectBounds) return Bounds.Collision.getRaycastCollisionRectRect(this, dx, dy, other, otherdx, otherdy);
-        if (other instanceof CircleBounds) return Bounds.Collision.getRaycastCollisionRectCircle(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof CircleBounds) return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionCircleRect(other, otherdx, otherdy, this, dx, dy));
         if (other instanceof SlopeBounds) return Bounds.Collision.getRaycastCollisionRectSlope(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof InvertedRectBounds) return Bounds.Collision.getRaycastCollisionRectInvertedRect(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof NullBounds) return undefined;
         error("No collision supported between these bounds", this, other);
         return undefined;
@@ -54,6 +56,7 @@ class RectBounds implements Bounds {
         if (other instanceof RectBounds) return Bounds.Collision.isOverlappingRectRect(this, other);
         if (other instanceof CircleBounds) return Bounds.Collision.isOverlappingCircleRect(other, this);
         if (other instanceof SlopeBounds) return Bounds.Collision.isOverlappingRectSlope(this, other);
+        if (other instanceof InvertedRectBounds) return Bounds.Collision.isOverlappingRectInvertedRect(this, other);
         if (other instanceof NullBounds) return undefined;
         error("No overlap supported between these bounds", this, other);
         return false;

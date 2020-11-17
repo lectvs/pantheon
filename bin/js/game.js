@@ -3087,7 +3087,7 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
     PhysicsWorldObject.prototype.drawBounds = function (texture, x, y) {
         Draw.brush.color = 0x00FF00;
         Draw.brush.alpha = 1;
-        if (this.bounds instanceof RectBounds) {
+        if (this.bounds instanceof RectBounds || this.bounds instanceof InvertedRectBounds) {
             var box = this.bounds.getBoundingBox();
             box.x += x - this.x;
             box.y += y - this.y;
@@ -7936,6 +7936,8 @@ var CircleBounds = /** @class */ (function () {
             return Bounds.Collision.getDisplacementCollisionCircleCircle(this, other);
         if (other instanceof SlopeBounds)
             return Bounds.Collision.getDisplacementCollisionCircleSlope(this, other);
+        if (other instanceof InvertedRectBounds)
+            return Bounds.Collision.getDisplacementCollisionCircleInvertedRect(this, other);
         if (other instanceof NullBounds)
             return undefined;
         error("No collision supported between these bounds", this, other);
@@ -7948,6 +7950,8 @@ var CircleBounds = /** @class */ (function () {
             return Bounds.Collision.getRaycastCollisionCircleCircle(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof SlopeBounds)
             return Bounds.Collision.getRaycastCollisionCircleSlope(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof InvertedRectBounds)
+            return Bounds.Collision.getRaycastCollisionCircleInvertedRect(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof NullBounds)
             return undefined;
         error("No collision supported between these bounds", this, other);
@@ -7960,6 +7964,8 @@ var CircleBounds = /** @class */ (function () {
             return Bounds.Collision.isOverlappingCircleCircle(this, other);
         if (other instanceof SlopeBounds)
             return Bounds.Collision.isOverlappingCircleSlope(this, other);
+        if (other instanceof InvertedRectBounds)
+            return Bounds.Collision.isOverlappingCircleInvertedRect(this, other);
         if (other instanceof NullBounds)
             return undefined;
         error("No overlap supported between these bounds", this, other);
@@ -8232,10 +8238,29 @@ var Bounds;
             };
         }
         Collision.getDisplacementCollisionCircleSlope = getDisplacementCollisionCircleSlope;
-        function getDisplacementCollisionRectCircle(move, from) {
-            return invertDisplacementCollision(getDisplacementCollisionCircleRect(from, move));
+        function getDisplacementCollisionCircleInvertedRect(move, from) {
+            if (!move.isOverlapping(from))
+                return undefined;
+            var movePos = move.getCenter();
+            var fromBox = from.getBoundingBox();
+            var displacementX = 0;
+            if (movePos.x - move.radius < fromBox.left)
+                displacementX = fromBox.left - (movePos.x - move.radius);
+            if (movePos.x + move.radius > fromBox.right)
+                displacementX = fromBox.right - (movePos.x + move.radius);
+            var displacementY = 0;
+            if (movePos.y - move.radius < fromBox.top)
+                displacementY = fromBox.top - (movePos.y - move.radius);
+            if (movePos.y + move.radius > fromBox.bottom)
+                displacementY = fromBox.bottom - (movePos.y + move.radius);
+            return {
+                bounds1: move,
+                bounds2: from,
+                displacementX: displacementX,
+                displacementY: displacementY,
+            };
         }
-        Collision.getDisplacementCollisionRectCircle = getDisplacementCollisionRectCircle;
+        Collision.getDisplacementCollisionCircleInvertedRect = getDisplacementCollisionCircleInvertedRect;
         function getDisplacementCollisionRectRect(move, from) {
             if (!move.isOverlapping(from))
                 return undefined;
@@ -8336,14 +8361,29 @@ var Bounds;
             };
         }
         Collision.getDisplacementCollisionRectSlope = getDisplacementCollisionRectSlope;
-        function getDisplacementCollisionSlopeCircle(move, from) {
-            return invertDisplacementCollision(getDisplacementCollisionCircleSlope(from, move));
+        function getDisplacementCollisionRectInvertedRect(move, from) {
+            if (!move.isOverlapping(from))
+                return undefined;
+            var moveBox = move.getBoundingBox();
+            var fromBox = from.getBoundingBox();
+            var displacementX = 0;
+            if (moveBox.left < fromBox.left)
+                displacementX = fromBox.left - moveBox.left;
+            if (moveBox.right > fromBox.right)
+                displacementX = fromBox.right - moveBox.right;
+            var displacementY = 0;
+            if (moveBox.top < fromBox.top)
+                displacementY = fromBox.top - moveBox.top;
+            if (moveBox.bottom > fromBox.bottom)
+                displacementY = fromBox.bottom - moveBox.bottom;
+            return {
+                bounds1: move,
+                bounds2: from,
+                displacementX: displacementX,
+                displacementY: displacementY,
+            };
         }
-        Collision.getDisplacementCollisionSlopeCircle = getDisplacementCollisionSlopeCircle;
-        function getDisplacementCollisionSlopeRect(move, from) {
-            return invertDisplacementCollision(getDisplacementCollisionRectSlope(from, move));
-        }
-        Collision.getDisplacementCollisionSlopeRect = getDisplacementCollisionSlopeRect;
+        Collision.getDisplacementCollisionRectInvertedRect = getDisplacementCollisionRectInvertedRect;
         function getRaycastCollisionCircleCircle(move, movedx, movedy, from, fromdx, fromdy) {
             if (!move.isOverlapping(from))
                 return undefined;
@@ -8422,10 +8462,28 @@ var Bounds;
             return result;
         }
         Collision.getRaycastCollisionCircleSlope = getRaycastCollisionCircleSlope;
-        function getRaycastCollisionRectCircle(move, movedx, movedy, from, fromdx, fromdy) {
-            return invertRaycastCollision(getRaycastCollisionCircleRect(from, fromdx, fromdy, move, movedx, movedy));
+        function getRaycastCollisionCircleInvertedRect(move, movedx, movedy, from, fromdx, fromdy) {
+            if (!move.isOverlapping(from))
+                return undefined;
+            var movePos = move.getCenter();
+            movePos.x -= movedx;
+            movePos.y -= movedy;
+            var fromBox = from.getBoundingBox();
+            fromBox.x -= fromdx;
+            fromBox.y -= fromdy;
+            var left_t = movePos.x - move.radius + movedx < fromBox.left ? (movePos.x - move.radius - fromBox.left) / (fromdx - movedx) : Infinity;
+            var right_t = movePos.x + move.radius + movedx > fromBox.right ? (movePos.x + move.radius - fromBox.right) / (fromdx - movedx) : Infinity;
+            var top_t = movePos.y - move.radius + movedy < fromBox.top ? (movePos.y - move.radius - fromBox.top) / (fromdy - movedy) : Infinity;
+            var bottom_t = movePos.y + move.radius + movedy > fromBox.bottom ? (movePos.y + move.radius - fromBox.bottom) / (fromdy - movedy) : Infinity;
+            var t = Math.min(left_t, right_t, top_t, bottom_t);
+            if (!isFinite(t)) {
+                error("Failed to detect time of collision for inverted rect:", move, from);
+            }
+            var result = getDisplacementCollisionCircleInvertedRect(move, from);
+            result.t = t;
+            return result;
         }
-        Collision.getRaycastCollisionRectCircle = getRaycastCollisionRectCircle;
+        Collision.getRaycastCollisionCircleInvertedRect = getRaycastCollisionCircleInvertedRect;
         function getRaycastCollisionRectRect(move, movedx, movedy, from, fromdx, fromdy) {
             if (!move.isOverlapping(from))
                 return undefined;
@@ -8597,14 +8655,28 @@ var Bounds;
             };
         }
         Collision.getRaycastCollisionRectSlope = getRaycastCollisionRectSlope;
-        function getRaycastCollisionSlopeCircle(move, movedx, movedy, from, fromdx, fromdy) {
-            return invertRaycastCollision(getRaycastCollisionCircleSlope(from, fromdx, fromdy, move, movedx, movedy));
+        function getRaycastCollisionRectInvertedRect(move, movedx, movedy, from, fromdx, fromdy) {
+            if (!move.isOverlapping(from))
+                return undefined;
+            var moveBox = move.getBoundingBox();
+            moveBox.x -= movedx;
+            moveBox.y -= movedy;
+            var fromBox = from.getBoundingBox();
+            fromBox.x -= fromdx;
+            fromBox.y -= fromdy;
+            var left_t = moveBox.left + movedx < fromBox.left ? (moveBox.left - fromBox.left) / (fromdx - movedx) : Infinity;
+            var right_t = moveBox.right + movedx > fromBox.right ? (moveBox.right - fromBox.right) / (fromdx - movedx) : Infinity;
+            var top_t = moveBox.top + movedy < fromBox.top ? (moveBox.top - fromBox.top) / (fromdy - movedy) : Infinity;
+            var bottom_t = moveBox.bottom + movedy > fromBox.bottom ? (moveBox.bottom - fromBox.bottom) / (fromdy - movedy) : Infinity;
+            var t = Math.min(left_t, right_t, top_t, bottom_t);
+            if (!isFinite(t)) {
+                error("Failed to detect time of collision for inverted rect:", move, from);
+            }
+            var result = getDisplacementCollisionRectInvertedRect(move, from);
+            result.t = t;
+            return result;
         }
-        Collision.getRaycastCollisionSlopeCircle = getRaycastCollisionSlopeCircle;
-        function getRaycastCollisionSlopeRect(move, movedx, movedy, from, fromdx, fromdy) {
-            return invertRaycastCollision(getRaycastCollisionRectSlope(from, fromdx, fromdy, move, movedx, movedy));
-        }
-        Collision.getRaycastCollisionSlopeRect = getRaycastCollisionSlopeRect;
+        Collision.getRaycastCollisionRectInvertedRect = getRaycastCollisionRectInvertedRect;
         function isOverlappingCircleCircle(move, from) {
             var movePosition = move.getCenter();
             var fromPosition = from.getCenter();
@@ -8692,6 +8764,20 @@ var Bounds;
             return false;
         }
         Collision.isOverlappingCircleSlope = isOverlappingCircleSlope;
+        function isOverlappingCircleInvertedRect(move, from) {
+            var movePos = move.getCenter();
+            var fromBox = from.getBoundingBox();
+            if (movePos.x - move.radius < fromBox.left)
+                return true;
+            if (movePos.x + move.radius > fromBox.right)
+                return true;
+            if (movePos.y - move.radius < fromBox.top)
+                return true;
+            if (movePos.y + move.radius > fromBox.bottom)
+                return true;
+            return false;
+        }
+        Collision.isOverlappingCircleInvertedRect = isOverlappingCircleInvertedRect;
         function isOverlappingRectRect(move, from) {
             return G.overlapRectangles(move.getBoundingBox(), from.getBoundingBox());
         }
@@ -8712,6 +8798,20 @@ var Bounds;
             return true;
         }
         Collision.isOverlappingRectSlope = isOverlappingRectSlope;
+        function isOverlappingRectInvertedRect(move, from) {
+            var moveBox = move.getBoundingBox();
+            var fromBox = from.getBoundingBox();
+            if (moveBox.left < fromBox.left)
+                return true;
+            if (moveBox.right > fromBox.right)
+                return true;
+            if (moveBox.top < fromBox.top)
+                return true;
+            if (moveBox.bottom > fromBox.bottom)
+                return true;
+            return false;
+        }
+        Collision.isOverlappingRectInvertedRect = isOverlappingRectInvertedRect;
         function invertDisplacementCollision(collision) {
             if (collision) {
                 var temp = collision.bounds1;
@@ -8798,6 +8898,90 @@ var Bounds;
         }
     })(Collision = Bounds.Collision || (Bounds.Collision = {}));
 })(Bounds || (Bounds = {}));
+var InvertedRectBounds = /** @class */ (function () {
+    function InvertedRectBounds(x, y, width, height, parent) {
+        this.parent = parent;
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.boundingBox = new Rectangle(0, 0, 0, 0);
+    }
+    InvertedRectBounds.prototype.clone = function () {
+        return new RectBounds(this.x, this.y, this.width, this.height, this.parent);
+    };
+    InvertedRectBounds.prototype.getBoundingBox = function (x, y) {
+        x = x !== null && x !== void 0 ? x : (this.parent ? this.parent.x : 0);
+        y = y !== null && y !== void 0 ? y : (this.parent ? this.parent.y : 0);
+        this.boundingBox.x = x + this.x;
+        this.boundingBox.y = y + this.y;
+        this.boundingBox.width = this.width;
+        this.boundingBox.height = this.height;
+        return this.boundingBox;
+    };
+    InvertedRectBounds.prototype.getDisplacementCollision = function (other) {
+        if (other instanceof RectBounds)
+            return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionRectInvertedRect(other, this));
+        if (other instanceof CircleBounds)
+            return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionCircleInvertedRect(other, this));
+        if (other instanceof NullBounds)
+            return undefined;
+        error("No collision supported between these bounds", this, other);
+        return undefined;
+    };
+    InvertedRectBounds.prototype.getRaycastCollision = function (dx, dy, other, otherdx, otherdy) {
+        if (other instanceof RectBounds)
+            return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionRectInvertedRect(other, otherdx, otherdy, this, dx, dy));
+        if (other instanceof CircleBounds)
+            return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionCircleInvertedRect(other, otherdx, otherdy, this, dx, dy));
+        if (other instanceof NullBounds)
+            return undefined;
+        error("No collision supported between these bounds", this, other);
+        return undefined;
+    };
+    InvertedRectBounds.prototype.isOverlapping = function (other) {
+        if (other instanceof RectBounds)
+            return Bounds.Collision.isOverlappingRectInvertedRect(other, this);
+        if (other instanceof CircleBounds)
+            return Bounds.Collision.isOverlappingCircleInvertedRect(other, this);
+        if (other instanceof NullBounds)
+            return undefined;
+        error("No overlap supported between these bounds", this, other);
+        return false;
+    };
+    InvertedRectBounds.prototype.raycast = function (x, y, dx, dy) {
+        // let box = this.getBoundingBox();
+        // let top_t = Infinity;
+        // let bottom_t = Infinity;
+        // let left_t = Infinity;
+        // let right_t = Infinity;
+        // if (dy !== 0) {
+        //     top_t = (box.top - y) / dy;
+        //     if (x + dx*top_t < box.left || x + dx*top_t > box.right) top_t = Infinity;
+        //     bottom_t = (box.bottom - y) / dy;
+        //     if (x + dx*bottom_t < box.left || x + dx*bottom_t > box.right) bottom_t = Infinity;
+        // }
+        // if (dx !== 0) {
+        //     left_t = (box.left - x) / dx;
+        //     if (y + dy*left_t < box.top || y + dy*left_t > box.bottom) left_t = Infinity;
+        //     right_t = (box.right - x) / dx;
+        //     if (y + dy*right_t < box.top || y + dy*right_t > box.bottom) right_t = Infinity;
+        // }
+        // let horiz_small_t = Math.min(left_t, right_t);
+        // let horiz_large_t = Math.max(left_t, right_t);
+        // let horiz_t = horiz_small_t >= 0 ? horiz_small_t : horiz_large_t;
+        // let vert_small_t = Math.min(top_t, bottom_t);
+        // let vert_large_t = Math.max(top_t, bottom_t);
+        // let vert_t = vert_small_t >= 0 ? vert_small_t : vert_large_t;
+        // let small_t = Math.min(horiz_t, vert_t);
+        // let large_t = Math.max(horiz_t, vert_t);
+        // let t = small_t >= 0 ? small_t : large_t;
+        // if (t < 0) return Infinity;
+        // return t;
+        return Infinity;
+    };
+    return InvertedRectBounds;
+}());
 var NullBounds = /** @class */ (function () {
     function NullBounds(parent) {
         this.parent = parent;
@@ -8852,9 +9036,11 @@ var RectBounds = /** @class */ (function () {
         if (other instanceof RectBounds)
             return Bounds.Collision.getDisplacementCollisionRectRect(this, other);
         if (other instanceof CircleBounds)
-            return Bounds.Collision.getDisplacementCollisionRectCircle(this, other);
+            return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionCircleRect(other, this));
         if (other instanceof SlopeBounds)
             return Bounds.Collision.getDisplacementCollisionRectSlope(this, other);
+        if (other instanceof InvertedRectBounds)
+            return Bounds.Collision.getDisplacementCollisionRectInvertedRect(this, other);
         if (other instanceof NullBounds)
             return undefined;
         error("No collision supported between these bounds", this, other);
@@ -8864,9 +9050,11 @@ var RectBounds = /** @class */ (function () {
         if (other instanceof RectBounds)
             return Bounds.Collision.getRaycastCollisionRectRect(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof CircleBounds)
-            return Bounds.Collision.getRaycastCollisionRectCircle(this, dx, dy, other, otherdx, otherdy);
+            return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionCircleRect(other, otherdx, otherdy, this, dx, dy));
         if (other instanceof SlopeBounds)
             return Bounds.Collision.getRaycastCollisionRectSlope(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof InvertedRectBounds)
+            return Bounds.Collision.getRaycastCollisionRectInvertedRect(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof NullBounds)
             return undefined;
         error("No collision supported between these bounds", this, other);
@@ -8879,6 +9067,8 @@ var RectBounds = /** @class */ (function () {
             return Bounds.Collision.isOverlappingCircleRect(other, this);
         if (other instanceof SlopeBounds)
             return Bounds.Collision.isOverlappingRectSlope(this, other);
+        if (other instanceof InvertedRectBounds)
+            return Bounds.Collision.isOverlappingRectInvertedRect(this, other);
         if (other instanceof NullBounds)
             return undefined;
         error("No overlap supported between these bounds", this, other);
@@ -8945,9 +9135,9 @@ var SlopeBounds = /** @class */ (function () {
     };
     SlopeBounds.prototype.getDisplacementCollision = function (other) {
         if (other instanceof RectBounds)
-            return Bounds.Collision.getDisplacementCollisionSlopeRect(this, other);
+            return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionRectSlope(other, this));
         if (other instanceof CircleBounds)
-            return Bounds.Collision.getDisplacementCollisionSlopeCircle(this, other);
+            return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionCircleSlope(other, this));
         if (other instanceof NullBounds)
             return undefined;
         error("No collision supported between these bounds", this, other);
@@ -8955,9 +9145,9 @@ var SlopeBounds = /** @class */ (function () {
     };
     SlopeBounds.prototype.getRaycastCollision = function (dx, dy, other, otherdx, otherdy) {
         if (other instanceof RectBounds)
-            return Bounds.Collision.getRaycastCollisionSlopeRect(this, dx, dy, other, otherdx, otherdy);
+            return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionRectSlope(other, otherdx, otherdy, this, dx, dy));
         if (other instanceof CircleBounds)
-            return Bounds.Collision.getRaycastCollisionSlopeCircle(this, dx, dy, other, otherdx, otherdy);
+            return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionCircleSlope(other, otherdx, otherdy, this, dx, dy));
         if (other instanceof NullBounds)
             return undefined;
         error("No collision supported between these bounds", this, other);
@@ -10093,7 +10283,6 @@ var Enemy = /** @class */ (function (_super) {
         _this.damagableByHoop = (_a = config.damagableByHoop) !== null && _a !== void 0 ? _a : true;
         _this.deadTexture = config.deadTexture;
         _this.immunitySm = new ImmunitySm(_this.immuneTime);
-        _this.outOfBounds = false;
         return _this;
     }
     Object.defineProperty(Enemy.prototype, "immune", {
@@ -10106,15 +10295,6 @@ var Enemy = /** @class */ (function (_super) {
         _super.prototype.update.call(this);
         this.v.x = M.lerpTime(this.v.x, 0, 10, this.delta);
         this.v.y = M.lerpTime(this.v.y, 0, 10, this.delta);
-    };
-    Enemy.prototype.postUpdate = function () {
-        _super.prototype.postUpdate.call(this);
-        var p = 4;
-        var outOfBounds = this.x < -p || this.x > 768 + p || this.y < 192 - p || this.y > 768 + p;
-        if (this.outOfBounds && outOfBounds) {
-            this.kill();
-        }
-        this.outOfBounds = outOfBounds;
     };
     Enemy.prototype.damage = function (amount) {
         this.health -= amount;
@@ -11013,7 +11193,7 @@ Main.loadConfig({
         moveCameraWithArrows: true,
         showOverlay: true,
         overlayFeeds: [],
-        skipRate: 1,
+        skipRate: 10,
         programmaticInput: false,
         autoplay: true,
         skipMainMenu: true,
@@ -11174,29 +11354,6 @@ function spawn(worldObject) {
     return spawn;
 }
 var BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(10, 40, 30);
-function WORLD_BOUNDS(left, top, right, bottom, physicsGroup) {
-    var thickness = 40;
-    var width = right - left;
-    var height = bottom - top;
-    var worldBounds = new WorldObject();
-    worldBounds.addChild(new PhysicsWorldObject({
-        bounds: new RectBounds(left - thickness, top - thickness, thickness, height + 2 * thickness),
-        physicsGroup: physicsGroup
-    }));
-    worldBounds.addChild(new PhysicsWorldObject({
-        bounds: new RectBounds(right, top - thickness, thickness, height + 2 * thickness),
-        physicsGroup: physicsGroup
-    }));
-    worldBounds.addChild(new PhysicsWorldObject({
-        bounds: new RectBounds(left, top - thickness, width, thickness),
-        physicsGroup: physicsGroup
-    }));
-    worldBounds.addChild(new PhysicsWorldObject({
-        bounds: new RectBounds(left, bottom, width, thickness),
-        physicsGroup: physicsGroup
-    }));
-    return worldBounds;
-}
 function getStages() {
     return {
         'game': function () {
@@ -11240,12 +11397,15 @@ function getStages() {
                         } },
                     { move: 'deadbodies', from: 'walls' },
                 ],
-                collisionIterations: 4,
+                collisionIterations: 0,
                 useRaycastDisplacementThreshold: 4,
             });
             world.addWorldObject(new UI());
             world.addWorldObject(new WaveController());
-            world.addWorldObject(WORLD_BOUNDS(0, 192, 768, 768, 'walls'));
+            world.addWorldObject(new PhysicsWorldObject({
+                bounds: new InvertedRectBounds(0, 192, 768, 576),
+                physicsGroup: 'walls'
+            }));
             world.addWorldObject(new Sprite({
                 name: 'floor',
                 texture: AssetCache.getTexture('floor').clone(),
@@ -11812,7 +11972,7 @@ function getStoryboard() {
 var Throne = /** @class */ (function (_super) {
     __extends(Throne, _super);
     function Throne(config) {
-        var _this = _super.call(this, __assign({ texture: 'throne', bounds: new RectBounds(-15, -24, 30, 24), immovable: true, maxHealth: 1003, immuneTime: 1, weight: 10, speed: 0, damagableByHoop: false }, config)) || this;
+        var _this = _super.call(this, __assign({ texture: 'throne', bounds: new RectBounds(-15, -24, 30, 24), mass: 10000, maxHealth: 1003, immuneTime: 1, weight: 10, speed: 0, damagableByHoop: false }, config)) || this;
         _this.shadow = _this.addChild(new Sprite({
             x: -15, y: -22,
             texture: Texture.filledRect(30, 24, 0x000000, 0.5),

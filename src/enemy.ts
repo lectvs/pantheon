@@ -20,8 +20,6 @@ class Enemy extends Sprite {
     private immunitySm: ImmunitySm;
     get immune() { return this.immunitySm.isImmune(); }
 
-    private outOfBounds: boolean;
-
     constructor(config: Enemy.Config) {
         super(config);
 
@@ -33,7 +31,6 @@ class Enemy extends Sprite {
         this.deadTexture = config.deadTexture;
 
         this.immunitySm = new ImmunitySm(this.immuneTime);
-        this.outOfBounds = false;
     }
 
     update() {
@@ -43,18 +40,6 @@ class Enemy extends Sprite {
 
         this.v.x = M.lerpTime(this.v.x, 0, 10, this.delta);
         this.v.y = M.lerpTime(this.v.y, 0, 10, this.delta);
-    }
-
-    postUpdate() {
-        super.postUpdate();
-
-        let p = 4;
-        let outOfBounds = this.x < -p || this.x > 768+p || this.y < 192-p || this.y > 768+p;
-
-        if (this.outOfBounds && outOfBounds) {
-            this.kill();
-        }
-        this.outOfBounds = outOfBounds;
     }
 
     damage(amount: number) {

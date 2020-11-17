@@ -1,36 +1,6 @@
 
 const BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(10, 40, 30);
 
-function WORLD_BOUNDS(left: number, top: number, right: number, bottom: number, physicsGroup: string): WorldObject {
-    let thickness = 40;
-    let width = right-left;
-    let height = bottom-top;
-
-    let worldBounds = new WorldObject();
-
-    worldBounds.addChild(new PhysicsWorldObject({
-        bounds: new RectBounds(left-thickness, top-thickness, thickness, height+2*thickness),
-        physicsGroup: physicsGroup
-    }));
-
-    worldBounds.addChild(new PhysicsWorldObject({
-        bounds: new RectBounds(right, top-thickness, thickness, height+2*thickness),
-        physicsGroup: physicsGroup
-    }));
-
-    worldBounds.addChild(new PhysicsWorldObject({
-        bounds: new RectBounds(left, top-thickness, width, thickness),
-        physicsGroup: physicsGroup
-    }));
-
-    worldBounds.addChild(new PhysicsWorldObject({
-        bounds: new RectBounds(left, bottom, width, thickness),
-        physicsGroup: physicsGroup
-    }));
-
-    return worldBounds;
-}
-
 function getStages(): Dict<World.Factory> { return {
 
     'game': () => {
@@ -74,13 +44,16 @@ function getStages(): Dict<World.Factory> { return {
                 } },
                 { move: 'deadbodies', from:'walls' },
             ],
-            collisionIterations: 4,
+            collisionIterations: 0,
             useRaycastDisplacementThreshold: 4,
         })
 
         world.addWorldObject(new UI());
         world.addWorldObject(new WaveController());
-        world.addWorldObject(WORLD_BOUNDS(0, 192, 768, 768, 'walls'));
+        world.addWorldObject(new PhysicsWorldObject({
+            bounds: new InvertedRectBounds(0, 192, 768, 576),
+            physicsGroup: 'walls'
+        }));
 
         world.addWorldObject(new Sprite({
             name: 'floor',

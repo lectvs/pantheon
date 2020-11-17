@@ -165,7 +165,7 @@ class PhysicsWorldObject extends WorldObject {
         Draw.brush.color = 0x00FF00;
         Draw.brush.alpha = 1;
 
-        if (this.bounds instanceof RectBounds) {
+        if (this.bounds instanceof RectBounds || this.bounds instanceof InvertedRectBounds) {
             let box = this.bounds.getBoundingBox();
             box.x += x - this.x;
             box.y += y - this.y;

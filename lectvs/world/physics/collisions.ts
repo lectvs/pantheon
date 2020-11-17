@@ -254,8 +254,26 @@ namespace Bounds.Collision {
         };
     }
 
-    export function getDisplacementCollisionRectCircle(move: RectBounds, from: CircleBounds) {
-        return invertDisplacementCollision(getDisplacementCollisionCircleRect(from, move));
+    export function getDisplacementCollisionCircleInvertedRect(move: CircleBounds, from: InvertedRectBounds) {
+        if (!move.isOverlapping(from)) return undefined;
+
+        let movePos = move.getCenter();
+        let fromBox = from.getBoundingBox();
+
+        let displacementX = 0;
+        if (movePos.x - move.radius < fromBox.left) displacementX = fromBox.left - (movePos.x - move.radius);
+        if (movePos.x + move.radius > fromBox.right) displacementX = fromBox.right - (movePos.x + move.radius);
+
+        let displacementY = 0;
+        if (movePos.y - move.radius < fromBox.top) displacementY = fromBox.top - (movePos.y - move.radius);
+        if (movePos.y + move.radius > fromBox.bottom) displacementY = fromBox.bottom - (movePos.y + move.radius);
+
+        return <Bounds.DisplacementCollision>{
+            bounds1: move,
+            bounds2: from,
+            displacementX: displacementX,
+            displacementY: displacementY,
+        };
     }
 
     export function getDisplacementCollisionRectRect(move: RectBounds, from: RectBounds) {
@@ -373,12 +391,26 @@ namespace Bounds.Collision {
         };
     }
 
-    export function getDisplacementCollisionSlopeCircle(move: SlopeBounds, from: CircleBounds) {
-        return invertDisplacementCollision(getDisplacementCollisionCircleSlope(from, move));
-    }
+    export function getDisplacementCollisionRectInvertedRect(move: RectBounds, from: InvertedRectBounds) {
+        if (!move.isOverlapping(from)) return undefined;
 
-    export function getDisplacementCollisionSlopeRect(move: SlopeBounds, from: RectBounds) {
-        return invertDisplacementCollision(getDisplacementCollisionRectSlope(from, move));
+        let moveBox = move.getBoundingBox();
+        let fromBox = from.getBoundingBox();
+
+        let displacementX = 0;
+        if (moveBox.left < fromBox.left) displacementX = fromBox.left - moveBox.left;
+        if (moveBox.right > fromBox.right) displacementX = fromBox.right - moveBox.right;
+
+        let displacementY = 0;
+        if (moveBox.top < fromBox.top) displacementY = fromBox.top - moveBox.top;
+        if (moveBox.bottom > fromBox.bottom) displacementY = fromBox.bottom - moveBox.bottom;
+
+        return <Bounds.DisplacementCollision>{
+            bounds1: move,
+            bounds2: from,
+            displacementX: displacementX,
+            displacementY: displacementY,
+        };
     }
 
     export function getRaycastCollisionCircleCircle(move: CircleBounds, movedx: number, movedy: number, from: CircleBounds, fromdx: number, fromdy: number) {
@@ -471,8 +503,31 @@ namespace Bounds.Collision {
         return result;
     }
 
-    export function getRaycastCollisionRectCircle(move: RectBounds, movedx: number, movedy: number, from: CircleBounds, fromdx: number, fromdy: number) {
-        return invertRaycastCollision(getRaycastCollisionCircleRect(from, fromdx, fromdy, move, movedx, movedy));
+    export function getRaycastCollisionCircleInvertedRect(move: CircleBounds, movedx: number, movedy: number, from: InvertedRectBounds, fromdx: number, fromdy: number) {
+        if (!move.isOverlapping(from)) return undefined;
+
+        let movePos = move.getCenter();
+        movePos.x -= movedx;
+        movePos.y -= movedy;
+        let fromBox = from.getBoundingBox();
+        fromBox.x -= fromdx;
+        fromBox.y -= fromdy;
+
+        let left_t = movePos.x - move.radius + movedx < fromBox.left ? (movePos.x - move.radius - fromBox.left) / (fromdx - movedx) : Infinity;
+        let right_t = movePos.x + move.radius + movedx > fromBox.right ? (movePos.x + move.radius - fromBox.right) / (fromdx - movedx) : Infinity;
+        let top_t = movePos.y - move.radius + movedy < fromBox.top ? (movePos.y - move.radius - fromBox.top) / (fromdy - movedy) : Infinity;
+        let bottom_t = movePos.y + move.radius + movedy > fromBox.bottom ? (movePos.y + move.radius - fromBox.bottom) / (fromdy - movedy) : Infinity;
+
+        let t = Math.min(left_t, right_t, top_t, bottom_t);
+
+        if (!isFinite(t)) {
+            error(`Failed to detect time of collision for inverted rect:`, move, from);
+        }
+
+        let result = <Bounds.RaycastCollision>getDisplacementCollisionCircleInvertedRect(move, from);
+        result.t = t;
+
+        return result;
     }
 
     export function getRaycastCollisionRectRect(move: RectBounds, movedx: number, movedy: number, from: RectBounds, fromdx: number, fromdy: number) {
@@ -646,12 +701,31 @@ namespace Bounds.Collision {
         };
     }
 
-    export function getRaycastCollisionSlopeCircle(move: SlopeBounds, movedx: number, movedy: number, from: CircleBounds, fromdx: number, fromdy: number) {
-        return invertRaycastCollision(getRaycastCollisionCircleSlope(from, fromdx, fromdy, move, movedx, movedy));
-    }
+    export function getRaycastCollisionRectInvertedRect(move: RectBounds, movedx: number, movedy: number, from: InvertedRectBounds, fromdx: number, fromdy: number) {
+        if (!move.isOverlapping(from)) return undefined;
 
-    export function getRaycastCollisionSlopeRect(move: SlopeBounds, movedx: number, movedy: number, from: RectBounds, fromdx: number, fromdy: number) {
-        return invertRaycastCollision(getRaycastCollisionRectSlope(from, fromdx, fromdy, move, movedx, movedy));
+        let moveBox = move.getBoundingBox();
+        moveBox.x -= movedx;
+        moveBox.y -= movedy;
+        let fromBox = from.getBoundingBox();
+        fromBox.x -= fromdx;
+        fromBox.y -= fromdy;
+
+        let left_t = moveBox.left + movedx < fromBox.left ? (moveBox.left - fromBox.left) / (fromdx - movedx) : Infinity;
+        let right_t = moveBox.right + movedx > fromBox.right ? (moveBox.right - fromBox.right) / (fromdx - movedx) : Infinity;
+        let top_t = moveBox.top + movedy < fromBox.top ? (moveBox.top - fromBox.top) / (fromdy - movedy) : Infinity;
+        let bottom_t = moveBox.bottom + movedy > fromBox.bottom ? (moveBox.bottom - fromBox.bottom) / (fromdy - movedy) : Infinity;
+
+        let t = Math.min(left_t, right_t, top_t, bottom_t);
+
+        if (!isFinite(t)) {
+            error(`Failed to detect time of collision for inverted rect:`, move, from);
+        }
+
+        let result = <Bounds.RaycastCollision>getDisplacementCollisionRectInvertedRect(move, from);
+        result.t = t;
+
+        return result;
     }
 
     export function isOverlappingCircleCircle(move: CircleBounds, from: CircleBounds) {
@@ -761,6 +835,18 @@ namespace Bounds.Collision {
         return false;
     }
 
+    export function isOverlappingCircleInvertedRect(move: CircleBounds, from: InvertedRectBounds) {
+        let movePos = move.getCenter();
+        let fromBox = from.getBoundingBox();
+
+        if (movePos.x - move.radius < fromBox.left) return true;
+        if (movePos.x + move.radius > fromBox.right) return true;
+        if (movePos.y - move.radius < fromBox.top) return true;
+        if (movePos.y + move.radius > fromBox.bottom) return true;
+
+        return false;
+    }
+
     export function isOverlappingRectRect(move: RectBounds, from: RectBounds) {
         return G.overlapRectangles(move.getBoundingBox(), from.getBoundingBox());
     }
@@ -777,6 +863,18 @@ namespace Bounds.Collision {
         if (from.direction === 'downleft' && moveBox.top >= fromBox.height/fromBox.width * (moveBox.right - fromBox.left) + fromBox.top) return false;
 
         return true;
+    }
+
+    export function isOverlappingRectInvertedRect(move: RectBounds, from: InvertedRectBounds) {
+        let moveBox = move.getBoundingBox();
+        let fromBox = from.getBoundingBox();
+
+        if (moveBox.left < fromBox.left) return true;
+        if (moveBox.right > fromBox.right) return true;
+        if (moveBox.top < fromBox.top) return true;
+        if (moveBox.bottom > fromBox.bottom) return true;
+
+        return false;
     }
 
     export function invertDisplacementCollision(collision: Bounds.DisplacementCollision) {

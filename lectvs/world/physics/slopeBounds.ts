@@ -39,16 +39,16 @@ class SlopeBounds implements Bounds {
     }
 
     getDisplacementCollision(other: Bounds): Bounds.DisplacementCollision {
-        if (other instanceof RectBounds) return Bounds.Collision.getDisplacementCollisionSlopeRect(this, other);
-        if (other instanceof CircleBounds) return Bounds.Collision.getDisplacementCollisionSlopeCircle(this, other);
+        if (other instanceof RectBounds) return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionRectSlope(other, this));
+        if (other instanceof CircleBounds) return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionCircleSlope(other, this));
         if (other instanceof NullBounds) return undefined;
         error("No collision supported between these bounds", this, other);
         return undefined;
     }
 
     getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision {
-        if (other instanceof RectBounds) return Bounds.Collision.getRaycastCollisionSlopeRect(this, dx, dy, other, otherdx, otherdy);
-        if (other instanceof CircleBounds) return Bounds.Collision.getRaycastCollisionSlopeCircle(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof RectBounds) return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionRectSlope(other, otherdx, otherdy, this, dx, dy));
+        if (other instanceof CircleBounds) return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionCircleSlope(other, otherdx, otherdy, this, dx, dy));
         if (other instanceof NullBounds) return undefined;
         error("No collision supported between these bounds", this, other);
         return undefined;

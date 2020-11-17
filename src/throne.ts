@@ -9,7 +9,7 @@ class Throne extends Enemy {
         super({
             texture: 'throne',
             bounds: new RectBounds(-15, -24, 30, 24),
-            immovable: true,
+            mass: 10000,
             maxHealth: 1003,
             immuneTime: 1,
             weight: 10,
