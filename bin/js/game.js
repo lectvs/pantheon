@@ -2367,7 +2367,7 @@ var Debug = /** @class */ (function () {
         Debug.FONT_STYLE = config.fontStyle;
         Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
         Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
-        Debug.SHOW_OVERLAY = config.showOverlay;
+        Debug.SHOW_OVERLAY = Debug.DEBUG && config.showOverlay;
         Debug.OVERLAY_FEEDS = config.overlayFeeds;
         Debug.SKIP_RATE = config.skipRate;
         Debug.PROGRAMMATIC_INPUT = config.programmaticInput;
@@ -2399,12 +2399,6 @@ var Debug = /** @class */ (function () {
     Object.defineProperty(Debug, "MOVE_CAMERA_WITH_ARROWS", {
         get: function () { return this.DEBUG && this._MOVE_CAMERA_WITH_ARROWS; },
         set: function (value) { this._MOVE_CAMERA_WITH_ARROWS = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Debug, "SHOW_OVERLAY", {
-        get: function () { return this.DEBUG && this._SHOW_OVERLAY; },
-        set: function (value) { this._SHOW_OVERLAY = value; },
         enumerable: false,
         configurable: true
     });
@@ -3863,6 +3857,89 @@ var World = /** @class */ (function () {
     })(Actions = World.Actions || (World.Actions = {}));
 })(World || (World = {}));
 /// <reference path="../world/world.ts" />
+var Menu = /** @class */ (function (_super) {
+    __extends(Menu, _super);
+    function Menu(menuSystem) {
+        var _this = _super.call(this) || this;
+        _this.menuSystem = menuSystem;
+        return _this;
+    }
+    return Menu;
+}(World));
+var MetricsMenu = /** @class */ (function (_super) {
+    __extends(MetricsMenu, _super);
+    function MetricsMenu(menuSystem) {
+        var _this = _super.call(this, menuSystem) || this;
+        _this.backgroundColor = 0x000000;
+        _this.plot = global.metrics.plotLastRecording();
+        var plotSprite = _this.addWorldObject(new Sprite());
+        plotSprite.setTexture(_this.plot.texture);
+        _this.addWorldObject(new SpriteText({
+            x: 0, y: global.gameHeight,
+            name: 'graphxy',
+            font: Debug.FONT,
+            style: { color: 0x00FF00 },
+            anchor: Anchor.BOTTOM_LEFT,
+        }));
+        return _this;
+    }
+    MetricsMenu.prototype.update = function () {
+        _super.prototype.update.call(this);
+        if (Input.justDown(Input.GAME_CLOSE_MENU)) {
+            Input.consume(Input.GAME_CLOSE_MENU);
+            this.menuSystem.game.unpauseGame();
+        }
+        this.select.name('graphxy')
+            .setText(this.getPlotY().toFixed(2) + " ms");
+    };
+    MetricsMenu.prototype.getPlotX = function () {
+        return this.plot.graphBounds.left + Input.mouseX / global.gameWidth * (this.plot.graphBounds.right - this.plot.graphBounds.left);
+    };
+    MetricsMenu.prototype.getPlotY = function () {
+        return this.plot.graphBounds.bottom + (1 - Input.mouseY / global.gameHeight) * (this.plot.graphBounds.top - this.plot.graphBounds.bottom);
+    };
+    return MetricsMenu;
+}(Menu));
+/// <reference path="../menu/menu.ts" />
+var DebugOptionsMenu = /** @class */ (function (_super) {
+    __extends(DebugOptionsMenu, _super);
+    function DebugOptionsMenu(menuSystem) {
+        var _this = _super.call(this, menuSystem) || this;
+        _this.backgroundColor = 0x000000;
+        _this.volume = 0;
+        _this.addWorldObject(new SpriteText({
+            x: 20, y: 20,
+            text: "- debug options -"
+        }));
+        var getDebugText = function () { return "debug overlay: " + (Debug.SHOW_OVERLAY ? "ON" : "OFF"); };
+        var debugOverlayButton = _this.addWorldObject(new MenuTextButton({
+            x: 20, y: 50,
+            text: getDebugText(),
+            onClick: function () {
+                Debug.SHOW_OVERLAY = !Debug.SHOW_OVERLAY;
+                debugOverlayButton.setText(getDebugText());
+            }
+        }));
+        _this.addWorldObject(new MenuTextButton({
+            x: 20, y: 110,
+            text: "back",
+            onClick: function () {
+                menuSystem.game.playSound('click');
+                menuSystem.back();
+            }
+        }));
+        return _this;
+    }
+    DebugOptionsMenu.prototype.update = function () {
+        _super.prototype.update.call(this);
+        if (Input.justDown(Input.GAME_CLOSE_MENU)) {
+            Input.consume(Input.GAME_CLOSE_MENU);
+            this.menuSystem.back();
+        }
+    };
+    return DebugOptionsMenu;
+}(Menu));
+/// <reference path="../world/world.ts" />
 var DebugOverlay = /** @class */ (function (_super) {
     __extends(DebugOverlay, _super);
     function DebugOverlay() {
@@ -3929,50 +4006,6 @@ var Experiment = /** @class */ (function () {
     };
     return Experiment;
 }());
-/// <reference path="../world/world.ts" />
-var Menu = /** @class */ (function (_super) {
-    __extends(Menu, _super);
-    function Menu(menuSystem) {
-        var _this = _super.call(this) || this;
-        _this.menuSystem = menuSystem;
-        return _this;
-    }
-    return Menu;
-}(World));
-var MetricsMenu = /** @class */ (function (_super) {
-    __extends(MetricsMenu, _super);
-    function MetricsMenu(menuSystem) {
-        var _this = _super.call(this, menuSystem) || this;
-        _this.backgroundColor = 0x000000;
-        _this.plot = global.metrics.plotLastRecording();
-        var plotSprite = _this.addWorldObject(new Sprite());
-        plotSprite.setTexture(_this.plot.texture);
-        _this.addWorldObject(new SpriteText({
-            x: 0, y: global.gameHeight,
-            name: 'graphxy',
-            font: Debug.FONT,
-            style: { color: 0x00FF00 },
-            anchor: Anchor.BOTTOM_LEFT,
-        }));
-        return _this;
-    }
-    MetricsMenu.prototype.update = function () {
-        _super.prototype.update.call(this);
-        if (Input.justDown(Input.GAME_CLOSE_MENU)) {
-            Input.consume(Input.GAME_CLOSE_MENU);
-            this.menuSystem.game.unpauseGame();
-        }
-        this.select.name('graphxy')
-            .setText(this.getPlotY().toFixed(2) + " ms");
-    };
-    MetricsMenu.prototype.getPlotX = function () {
-        return this.plot.graphBounds.left + Input.mouseX / global.gameWidth * (this.plot.graphBounds.right - this.plot.graphBounds.left);
-    };
-    MetricsMenu.prototype.getPlotY = function () {
-        return this.plot.graphBounds.bottom + (1 - Input.mouseY / global.gameHeight) * (this.plot.graphBounds.top - this.plot.graphBounds.bottom);
-    };
-    return MetricsMenu;
-}(Menu));
 /// <reference path="../worldObject.ts" />
 var SpriteText = /** @class */ (function (_super) {
     __extends(SpriteText, _super);
@@ -10946,7 +10979,7 @@ var MainMenu = /** @class */ (function (_super) {
             text: "play normal mode",
             onClick: function () {
                 HARD_DIFFICULTY = false;
-                _this.menuSystem.game.playSound('click');
+                menuSystem.game.playSound('click');
                 menuSystem.game.startGame();
             }
         }));
@@ -10955,7 +10988,7 @@ var MainMenu = /** @class */ (function (_super) {
             text: "play hard mode (no health regen)",
             onClick: function () {
                 HARD_DIFFICULTY = true;
-                _this.menuSystem.game.playSound('click');
+                menuSystem.game.playSound('click');
                 menuSystem.game.startGame();
             }
         }));
@@ -10963,7 +10996,7 @@ var MainMenu = /** @class */ (function (_super) {
             x: 20, y: 100,
             text: "controls",
             onClick: function () {
-                _this.menuSystem.game.playSound('click');
+                menuSystem.game.playSound('click');
                 menuSystem.loadMenu(ControlsMenu);
             }
         }));
@@ -10998,7 +11031,7 @@ var PauseMenu = /** @class */ (function (_super) {
             x: 20, y: 80,
             text: "options",
             onClick: function () {
-                _this.menuSystem.game.playSound('click');
+                menuSystem.game.playSound('click');
                 menuSystem.loadMenu(OptionsMenu);
             }
         }));
@@ -11036,10 +11069,18 @@ var OptionsMenu = /** @class */ (function (_super) {
             setValue: function (v) { return Options.updateOption('volume', v); }
         }));
         _this.addWorldObject(new MenuTextButton({
-            x: 20, y: 110,
+            x: 20, y: 96,
+            text: "debug",
+            onClick: function () {
+                menuSystem.game.playSound('click');
+                menuSystem.loadMenu(DebugOptionsMenu);
+            }
+        }));
+        _this.addWorldObject(new MenuTextButton({
+            x: 20, y: 126,
             text: "back",
             onClick: function () {
-                _this.menuSystem.game.playSound('click');
+                menuSystem.game.playSound('click');
                 menuSystem.back();
             }
         }));
@@ -11079,7 +11120,7 @@ var ControlsMenu = /** @class */ (function (_super) {
             x: 20, y: 240,
             text: "back",
             onClick: function () {
-                _this.menuSystem.game.playSound('click');
+                menuSystem.game.playSound('click');
                 menuSystem.back();
             }
         }));

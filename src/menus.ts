@@ -38,7 +38,7 @@ class MainMenu extends Menu {
             text: "play normal mode",
             onClick: () => {
                 HARD_DIFFICULTY = false;
-                this.menuSystem.game.playSound('click');
+                menuSystem.game.playSound('click');
                 menuSystem.game.startGame();
             }
         }));
@@ -48,7 +48,7 @@ class MainMenu extends Menu {
             text: "play hard mode (no health regen)",
             onClick: () => {
                 HARD_DIFFICULTY = true;
-                this.menuSystem.game.playSound('click');
+                menuSystem.game.playSound('click');
                 menuSystem.game.startGame();
             }
         }));
@@ -57,7 +57,7 @@ class MainMenu extends Menu {
             x: 20, y: 100,
             text: "controls",
             onClick: () => {
-                this.menuSystem.game.playSound('click');
+                menuSystem.game.playSound('click');
                 menuSystem.loadMenu(ControlsMenu);
             }
         }));
@@ -95,7 +95,7 @@ class PauseMenu extends Menu {
             x: 20, y: 80,
             text: "options",
             onClick: () => {
-                this.menuSystem.game.playSound('click');
+                menuSystem.game.playSound('click');
                 menuSystem.loadMenu(OptionsMenu);
             }
         }));
@@ -138,10 +138,19 @@ class OptionsMenu extends Menu {
         }));
 
         this.addWorldObject(new MenuTextButton({
-            x: 20, y: 110,
+            x: 20, y: 96,
+            text: "debug",
+            onClick: () => {
+                menuSystem.game.playSound('click');
+                menuSystem.loadMenu(DebugOptionsMenu);
+            }
+        }));
+
+        this.addWorldObject(new MenuTextButton({
+            x: 20, y: 126,
             text: "back",
             onClick: () => {
-                this.menuSystem.game.playSound('click');
+                menuSystem.game.playSound('click');
                 menuSystem.back();
             }
         }));
@@ -187,7 +196,7 @@ class ControlsMenu extends Menu {
             x: 20, y: 240,
             text: "back",
             onClick: () => {
-                this.menuSystem.game.playSound('click');
+                menuSystem.game.playSound('click');
                 menuSystem.back();
             }
         }));

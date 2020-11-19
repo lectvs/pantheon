@@ -55,6 +55,7 @@ postjam
 - /camera mode transitions
 - /teleport enemies back into stage if they go out (will work with inverted rectangle world bounds)
 - /inverted rectangle bounds
+- /debug options menu (with FPS option)
 - new content
     - add some more enemies
     - add music/ambience during silent parts
@@ -64,7 +65,6 @@ postjam
 - better scripting syntax?
     - look into writing TS transforms for scripts?
 - better enemy behavior system
-- debug options menu (with FPS option)
 - in general clean up the storyboard
     - use new dialog pausing/adding feature
 - build script

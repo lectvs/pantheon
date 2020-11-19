@@ -26,7 +26,7 @@ class Debug {
         Debug.FONT_STYLE = config.fontStyle;
         Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
         Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
-        Debug.SHOW_OVERLAY = config.showOverlay;
+        Debug.SHOW_OVERLAY = Debug.DEBUG && config.showOverlay;
         Debug.OVERLAY_FEEDS = config.overlayFeeds;
         Debug.SKIP_RATE = config.skipRate;
         Debug.PROGRAMMATIC_INPUT = config.programmaticInput;
@@ -60,9 +60,7 @@ class Debug {
     static get MOVE_CAMERA_WITH_ARROWS() { return this.DEBUG && this._MOVE_CAMERA_WITH_ARROWS; }
     static set MOVE_CAMERA_WITH_ARROWS(value: boolean) { this._MOVE_CAMERA_WITH_ARROWS = value; }
 
-    private static _SHOW_OVERLAY: boolean;
-    static get SHOW_OVERLAY() { return this.DEBUG && this._SHOW_OVERLAY; }
-    static set SHOW_OVERLAY(value: boolean) { this._SHOW_OVERLAY = value; }
+    static SHOW_OVERLAY: boolean;
     static OVERLAY_FEEDS: ((world: World) => string)[];
 
     private static _SKIP_RATE: number;
