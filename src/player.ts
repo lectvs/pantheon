@@ -27,11 +27,13 @@ class Player extends Sprite {
             ...config
         });
 
-        this.controllerSchema = {
-            left: () => Input.isDown('left'),
-            right: () => Input.isDown('right'),
-            up: () => Input.isDown('up'),
-            down: () => Input.isDown('down'),
+        this.controller.schema = {
+            keys: {
+                left: () => Input.isDown('left'),
+                right: () => Input.isDown('right'),
+                up: () => Input.isDown('up'),
+                down: () => Input.isDown('down'),
+            }
         };
 
         this.immunitySm = new ImmunitySm(this.immuneTime);

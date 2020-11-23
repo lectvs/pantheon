@@ -98,7 +98,6 @@ class WorldObject {
 
     controllable: boolean;
     controller: Controller;
-    protected controllerSchema: Controller.Schema;
     get isControlled() { return this.controllable && !global.theater.isCutscenePlaying; }
 
     readonly uid: string;
@@ -136,8 +135,7 @@ class WorldObject {
         this.lastz = this.z;
 
         this.controllable = config.controllable ?? false;
-        this.controller = {};
-        this.controllerSchema = {};
+        this.controller = new Controller();
 
         this.uid = WorldObject.UID.generate();
 
@@ -173,7 +171,7 @@ class WorldObject {
         this.lasty = this.y;
         this.lastz = this.z;
         if (this.isControlled) {
-            this.updateControllerFromSchema();
+            this.controller.updateFromSchema();
         }
     }
 
@@ -203,7 +201,7 @@ class WorldObject {
     }
 
     postUpdate() {
-        this.resetController();
+        this.controller.reset();
 
         this.resolveLayer();
         this.resolvePhysicsGroup();
@@ -342,24 +340,12 @@ class WorldObject {
         return World.Actions.removeWorldObjectFromWorld(this);
     }
 
-    resetController() {
-        for (let key in this.controller) {
-            this.controller[key] = false;
-        }
-    }
-
     runScript(script: Script | Script.Function) {
         return this.scriptManager.runScript(script);
     }
 
     setState(state: string) {
         this.stateMachine.setState(state);
-    }
-
-    updateControllerFromSchema() {
-        for (let key in this.controllerSchema) {
-            this.controller[key] = this.controllerSchema[key]();
-        }
     }
 
     private shouldIgnoreCamera() {

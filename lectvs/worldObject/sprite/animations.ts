@@ -23,7 +23,7 @@ namespace Animation {
             frameRate: number;
             nextFrameRef?: string;
             count?: number;
-            forceRequired?: boolean;
+            oneOff?: boolean;
             overrides?: {[frame: number]: Frame};
         }
     }
@@ -41,7 +41,7 @@ class Animations {
             count: 1,
         });
 
-        if (config.count < 0) {
+        if (config.count < 0 || !isFinite(config.count)) {
             config.nextFrameRef = `${config.name}/0`;
             config.count = 1;
         }
@@ -63,7 +63,7 @@ class Animations {
                 duration: frameDuration,
                 texture: (_.isString(textures[i]) || _.isNumber(textures[i])) ? `${config.texturePrefix}_${textures[i]}` : <Texture>textures[i],
                 nextFrameRef: `${config.name}/${i+1}`,
-                forceRequired: config.forceRequired,
+                forceRequired: config.oneOff,
             };
 
             result.frames.push(animationFrame);

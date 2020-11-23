@@ -2288,15 +2288,14 @@ var S;
         };
     }
     S.moveToY = moveToY;
-    function playAnimation(sprite, animationName, startFrame, force, waitForCompletion) {
-        if (startFrame === void 0) { startFrame = 0; }
+    function playAnimation(sprite, animationName, force, waitForCompletion) {
         if (force === void 0) { force = true; }
         if (waitForCompletion === void 0) { waitForCompletion = true; }
         return function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        sprite.playAnimation(animationName, startFrame, force);
+                        sprite.playAnimation(animationName, force);
                         if (!waitForCompletion) return [3 /*break*/, 3];
                         _a.label = 1;
                     case 1:
@@ -2611,8 +2610,7 @@ var WorldObject = /** @class */ (function () {
         this.lasty = this.y;
         this.lastz = this.z;
         this.controllable = (_m = config.controllable) !== null && _m !== void 0 ? _m : false;
-        this.controller = {};
-        this.controllerSchema = {};
+        this.controller = new Controller();
         this.uid = WorldObject.UID.generate();
         this._world = null;
         this._children = [];
@@ -2714,7 +2712,7 @@ var WorldObject = /** @class */ (function () {
         this.lasty = this.y;
         this.lastz = this.z;
         if (this.isControlled) {
-            this.updateControllerFromSchema();
+            this.controller.updateFromSchema();
         }
     };
     WorldObject.prototype.update = function () {
@@ -2738,7 +2736,7 @@ var WorldObject = /** @class */ (function () {
         this.stateMachine.update(this.delta);
     };
     WorldObject.prototype.postUpdate = function () {
-        this.resetController();
+        this.controller.reset();
         this.resolveLayer();
         this.resolvePhysicsGroup();
     };
@@ -2880,21 +2878,11 @@ var WorldObject = /** @class */ (function () {
             return this;
         return World.Actions.removeWorldObjectFromWorld(this);
     };
-    WorldObject.prototype.resetController = function () {
-        for (var key in this.controller) {
-            this.controller[key] = false;
-        }
-    };
     WorldObject.prototype.runScript = function (script) {
         return this.scriptManager.runScript(script);
     };
     WorldObject.prototype.setState = function (state) {
         this.stateMachine.setState(state);
-    };
-    WorldObject.prototype.updateControllerFromSchema = function () {
-        for (var key in this.controllerSchema) {
-            this.controller[key] = this.controllerSchema[key]();
-        }
     };
     WorldObject.prototype.shouldIgnoreCamera = function () {
         if (this.ignoreCamera)
@@ -3199,10 +3187,9 @@ var Sprite = /** @class */ (function (_super) {
         bounds.height += 2 * this.onScreenPadding;
         return bounds;
     };
-    Sprite.prototype.playAnimation = function (name, startFrame, force) {
-        if (startFrame === void 0) { startFrame = 0; }
+    Sprite.prototype.playAnimation = function (name, force) {
         if (force === void 0) { force = false; }
-        this.animationManager.playAnimation(name, startFrame, force);
+        this.animationManager.playAnimation(name, force);
     };
     Sprite.prototype.setTexture = function (key) {
         if (!key) {
@@ -4838,6 +4825,15 @@ var S;
         };
     }
     S.tween = tween;
+    function tweenPt(duration, pt, start, end, easingFunction) {
+        if (easingFunction === void 0) { easingFunction = Tween.Easing.Linear; }
+        var startx = start.x;
+        var starty = start.y;
+        var endx = end.x;
+        var endy = end.y;
+        return S.simul(S.tween(duration, pt, 'x', startx, endx, easingFunction), S.tween(duration, pt, 'y', starty, endy, easingFunction));
+    }
+    S.tweenPt = tweenPt;
     function wait(time) {
         return doOverTime(time, function (t) { return null; });
     }
@@ -7304,6 +7300,10 @@ var V;
         return v1.x * v2.x + v1.y * v2.y;
     }
     V.dot = dot;
+    function isZero(v) {
+        return v.x === 0 && v.y === 0;
+    }
+    V.isZero = isZero;
     function magnitude(vector) {
         return Math.sqrt(this.magnitudeSq(vector));
     }
@@ -7856,11 +7856,11 @@ var WorldSelecter = /** @class */ (function () {
         var results = this.world.worldObjectsByName[name] || [];
         if (_.isEmpty(results)) {
             if (checked)
-                error("No object with name " + name + " exists in world", this);
+                error("No object with name " + name + " exists in world:", this.world);
             return undefined;
         }
         if (results.length > 1) {
-            debug("Multiple objects with name " + name + " exist in world. Returning one of them. World:", this);
+            debug("Multiple objects with name " + name + " exist in world. Returning one of them. World:", this.world);
         }
         return results[0];
     };
@@ -7921,11 +7921,11 @@ var WorldSelecter = /** @class */ (function () {
         var results = this.typeAll(type);
         if (_.isEmpty(results)) {
             if (checked)
-                error("No object of type " + type.name + " exists in world", this);
+                error("No object of type " + type.name + " exists in world:", this.world);
             return undefined;
         }
         if (results.length > 1) {
-            debug("Multiple objects of type " + type.name + " exist in world. Returning one of them. World:", this);
+            debug("Multiple objects of type " + type.name + " exist in world. Returning one of them. World:", this.world);
         }
         return results[0];
     };
@@ -9244,6 +9244,77 @@ var SlopeBounds = /** @class */ (function () {
     };
     return SlopeBounds;
 }());
+var Controller = /** @class */ (function () {
+    function Controller() {
+        this.schema = {};
+        this.moveDirection = pt(0, 0);
+        this.aimDirection = pt(0, 0);
+        this.keys = {};
+    }
+    Object.defineProperty(Controller.prototype, "left", {
+        get: function () { return this.keys.left; },
+        set: function (value) { this.keys.left = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Controller.prototype, "right", {
+        get: function () { return this.keys.right; },
+        set: function (value) { this.keys.right = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Controller.prototype, "up", {
+        get: function () { return this.keys.up; },
+        set: function (value) { this.keys.up = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Controller.prototype, "down", {
+        get: function () { return this.keys.down; },
+        set: function (value) { this.keys.down = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Controller.prototype, "jump", {
+        get: function () { return this.keys.jump; },
+        set: function (value) { this.keys.jump = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Controller.prototype, "attack", {
+        get: function () { return this.keys.attack; },
+        set: function (value) { this.keys.attack = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Controller.prototype.updateFromSchema = function () {
+        if (this.schema.moveDirection) {
+            var moveDirection = this.schema.moveDirection();
+            this.moveDirection.x = moveDirection.x;
+            this.moveDirection.y = moveDirection.y;
+        }
+        if (this.schema.aimDirection) {
+            var aimDirection = this.schema.aimDirection();
+            this.aimDirection.x = aimDirection.x;
+            this.aimDirection.y = aimDirection.y;
+        }
+        if (this.schema.keys) {
+            for (var key in this.schema.keys) {
+                this.keys[key] = this.schema.keys[key]();
+            }
+        }
+    };
+    Controller.prototype.reset = function () {
+        this.moveDirection.x = 0;
+        this.moveDirection.y = 0;
+        this.aimDirection.x = 0;
+        this.aimDirection.y = 0;
+        for (var key in this.keys) {
+            this.keys[key] = false;
+        }
+    };
+    return Controller;
+}());
 /// <reference path="../texture/filter/textureFilter.ts" />
 var Effects = /** @class */ (function () {
     function Effects(config) {
@@ -9524,8 +9595,7 @@ var AnimationManager = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
-    AnimationManager.prototype.playAnimation = function (name, startFrame, force) {
-        if (startFrame === void 0) { startFrame = 0; }
+    AnimationManager.prototype.playAnimation = function (name, force) {
         if (force === void 0) { force = false; }
         if (!force && (this.forceRequired || this.getCurrentAnimationName() == name)) {
             return;
@@ -9534,7 +9604,7 @@ var AnimationManager = /** @class */ (function () {
             this.setCurrentFrame(null, true, force);
             return;
         }
-        this.setCurrentFrame(name + "/" + startFrame, true, force);
+        this.setCurrentFrame(name + "/0", true, force);
     };
     AnimationManager.prototype.setCurrentFrame = function (frameRef, resetFrameTime, force) {
         if (resetFrameTime === void 0) { resetFrameTime = true; }
@@ -9586,7 +9656,7 @@ var Animations = /** @class */ (function () {
             texturePrefix: "",
             count: 1,
         });
-        if (config.count < 0) {
+        if (config.count < 0 || !isFinite(config.count)) {
             config.nextFrameRef = config.name + "/0";
             config.count = 1;
         }
@@ -9604,7 +9674,7 @@ var Animations = /** @class */ (function () {
                 duration: frameDuration,
                 texture: (_.isString(textures[i]) || _.isNumber(textures[i])) ? config.texturePrefix + "_" + textures[i] : textures[i],
                 nextFrameRef: config.name + "/" + (i + 1),
-                forceRequired: config.forceRequired,
+                forceRequired: config.oneOff,
             };
             result.frames.push(animationFrame);
         }
@@ -10324,6 +10394,23 @@ var Enemy = /** @class */ (function (_super) {
         }
         _super.prototype.kill.call(this);
     };
+    Enemy.prototype.pickNextTargetPos = function (target) {
+        var _this = this;
+        if (this.x < 64 || this.x > 706 || this.y < 338 || this.y > 704) {
+            // Too close to edge of room
+            var candidates_1 = A.range(20).map(function (i) {
+                return { x: Random.float(64, 706), y: Random.float(338, 704) };
+            });
+            return M.argmin(candidates_1, function (pos) { return M.distance(_this.x, _this.y, pos.x, pos.y); });
+        }
+        var candidates = A.range(3).map(function (i) {
+            var d = Random.inDisc(50, 100);
+            d.x += _this.x;
+            d.y += _this.y;
+            return d;
+        });
+        return M.argmin(candidates, function (pos) { return Math.abs(M.distance(target.x, target.y, pos.x, pos.y) - 150); });
+    };
     return Enemy;
 }(Sprite));
 /// <reference path="./enemy.ts"/>
@@ -10464,70 +10551,54 @@ var Golbin = /** @class */ (function (_super) {
                         2: { callback: function () { _this.world.playSound('walk'); } }
                     }
                 }),
-                Animations.fromTextureList({ name: 'drawback', texturePrefix: 'golbin', textures: [8, 9, 10, 11, 10, 11, 10, 11, 11, 11], frameRate: 6 })
+                Animations.fromTextureList({ name: 'aim', texturePrefix: 'golbin', textures: [8, 9, 10, 11, 10, 11, 10], frameRate: 6, nextFrameRef: 'aim_hold/0' }),
+                Animations.fromTextureList({ name: 'aim_hold', texturePrefix: 'golbin', textures: [11], frameRate: 1, count: Infinity, }),
             ], defaultAnimation: 'idle', effects: { outline: { color: 0x000000 } }, maxHealth: 1.2, immuneTime: 0.5, weight: 1, speed: 100, deadTexture: 'golbin_dead' }, config)) || this;
         _this.bulletSpeed = 100;
-        _this.willShootNext = true;
-        _this.stateMachine.addState('start', {
-            script: S.wait(Random.float(0, 1)),
-            transitions: [
-                { toState: 'idle' },
-            ]
-        });
-        _this.stateMachine.addState('idle', {
-            script: S.chain(S.wait(Random.float(0.8, 1.2)), S.call(function () {
-                _this.pickNextTargetPos();
-                _this.willShootNext = !_this.willShootNext;
-            })),
-            transitions: [
-                { toState: 'shooting', condition: function () { return _this.willShootNext; } },
-                { toState: 'walking', condition: function () { return !_this.willShootNext; } },
-            ]
-        });
-        _this.stateMachine.addState('walking', {
-            transitions: [
-                { toState: 'idle', condition: function () { return M.distance(_this.x, _this.y, _this.targetPos.x, _this.targetPos.y) < 4; } },
-            ]
-        });
-        _this.stateMachine.addState('shooting', {
-            script: S.chain(S.playAnimation(_this, 'drawback'), S.call(function () {
-                _this.shoot({ x: _this.attacking.x - _this.x, y: _this.attacking.y - _this.y });
-            })),
-            transitions: [
-                { toState: 'idle' },
-            ]
-        });
-        _this.stateMachine.setState('start');
-        _this.targetPos = { x: 0, y: 0 };
+        _this.stateMachine = new Golbin.GolbinBehavior(_this);
         return _this;
     }
+    Object.defineProperty(Golbin.prototype, "aiming", {
+        get: function () { return this.getCurrentAnimationName() === 'aim' || this.getCurrentAnimationName() === 'aim_hold'; },
+        enumerable: false,
+        configurable: true
+    });
     Golbin.prototype.update = function () {
-        this.ai();
-        if (this.state === 'idle') {
+        _super.prototype.update.call(this);
+        if (this.controller.attack && !this.aiming)
+            this.aim();
+        if (!this.controller.attack && this.aiming)
+            this.shoot();
+        if (this.immune) {
             this.playAnimation('idle');
         }
-        else if (this.state === 'walking') {
-            this.v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
+        else if (!V.isZero(this.controller.moveDirection)) {
+            this.v = this.controller.moveDirection;
             this.setSpeed(this.speed);
+            this.playAnimation('run');
             if (this.v.x < 0)
                 this.flipX = true;
             if (this.v.x > 0)
                 this.flipX = false;
-            this.playAnimation('run');
         }
-        else if (this.state === 'shooting') {
-            var player = global.world.select.type(Player);
-            if (player.x < this.x)
-                this.flipX = true;
-            if (player.x > this.x)
-                this.flipX = false;
+        else if (this.aiming) {
+            this.flipX = this.controller.aimDirection.x < 0;
         }
-        _super.prototype.update.call(this);
+        else {
+            this.playAnimation('idle');
+        }
+    };
+    Golbin.prototype.onCollide = function (other) {
+        _super.prototype.onCollide.call(this, other);
+        if (other.physicsGroup === 'walls') {
+            this.setState('idle1');
+        }
     };
     Golbin.prototype.damage = function (amount) {
         var _this = this;
         _super.prototype.damage.call(this, amount);
-        this.setState('idle');
+        this.interruptShot();
+        this.setState('idle1');
         this.runScript(S.chain(S.call(function () {
             _this.effects.silhouette.color = 0xFFFFFF;
             _this.effects.silhouette.enabled = true;
@@ -10537,48 +10608,104 @@ var Golbin = /** @class */ (function (_super) {
             _this.effects.silhouette.enabled = false;
         })));
     };
-    Golbin.prototype.shoot = function (d) {
+    Golbin.prototype.aim = function () {
+        this.playAnimation('aim', true);
+    };
+    Golbin.prototype.shoot = function () {
         var bullet = this.world.addWorldObject(new Bullet({
             x: this.x,
             y: this.y - 4,
-            vx: d.x, vy: d.y,
+            v: this.controller.aimDirection,
             name: 'bullet',
             layer: this.layer,
             physicsGroup: 'bullets',
         }));
         bullet.setSpeed(this.bulletSpeed);
         this.world.playSound('shoot');
+        this.playAnimation('idle', true);
     };
-    Golbin.prototype.onCollide = function (other) {
-        _super.prototype.onCollide.call(this, other);
-        if (other.physicsGroup === 'walls') {
-            this.setState('idle');
-        }
-    };
-    Golbin.prototype.ai = function () {
-        if (!this.attacking)
-            this.attacking = this.world.select.type(Player);
-    };
-    Golbin.prototype.pickNextTargetPos = function () {
-        var _this = this;
-        if (this.x < 64 || this.x > 706 || this.y < 338 || this.y > 704) {
-            // Too close to edge of room
-            var candidates_1 = A.range(20).map(function (i) {
-                return { x: Random.float(64, 706), y: Random.float(338, 704) };
-            });
-            this.targetPos = M.argmin(candidates_1, function (pos) { return M.distance(_this.x, _this.y, pos.x, pos.y); });
-            return;
-        }
-        var candidates = A.range(3).map(function (i) {
-            var d = Random.inDisc(50, 100);
-            d.x += _this.x;
-            d.y += _this.y;
-            return d;
-        });
-        this.targetPos = M.argmin(candidates, function (pos) { return Math.abs(M.distance(_this.attacking.x, _this.attacking.y, pos.x, pos.y) - 150); });
+    Golbin.prototype.interruptShot = function () {
+        this.playAnimation('idle');
     };
     return Golbin;
 }(Enemy));
+(function (Golbin) {
+    var GolbinBehavior = /** @class */ (function (_super) {
+        __extends(GolbinBehavior, _super);
+        function GolbinBehavior(golbin) {
+            var _this = _super.call(this) || this;
+            _this.golbin = golbin;
+            var b = _this;
+            _this.addState('start', { transitions: [{ delay: Random.float(0, 1), toState: 'idle1' }] });
+            _this.addState('idle1', {
+                callback: function () {
+                    golbin.controller.moveDirection.x = 0;
+                    golbin.controller.moveDirection.y = 0;
+                },
+                transitions: [{ delay: Random.float(0.8, 1.2), toState: 'walk' }]
+            });
+            _this.addState('walk', {
+                script: function () {
+                    var targetPos;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                targetPos = golbin.pickNextTargetPos(b.getTarget());
+                                _a.label = 1;
+                            case 1:
+                                if (!(G.distance(b.golbin, targetPos) > 4)) return [3 /*break*/, 3];
+                                golbin.controller.moveDirection.x = targetPos.x - golbin.x;
+                                golbin.controller.moveDirection.y = targetPos.y - golbin.y;
+                                return [4 /*yield*/];
+                            case 2:
+                                _a.sent();
+                                return [3 /*break*/, 1];
+                            case 3: return [2 /*return*/];
+                        }
+                    });
+                },
+                transitions: [{ toState: 'idle2' }]
+            });
+            _this.addState('idle2', {
+                callback: function () {
+                    b.golbin.controller.moveDirection.x = 0;
+                    b.golbin.controller.moveDirection.y = 0;
+                },
+                transitions: [{ delay: Random.float(0.8, 1.2), toState: 'shoot' }]
+            });
+            _this.addState('shoot', {
+                script: function () {
+                    var target;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                target = b.getTarget();
+                                return [5 /*yield**/, __values(S.doOverTime(2, function (t) {
+                                        golbin.controller.attack = true;
+                                        golbin.controller.aimDirection.x = target.x - golbin.x;
+                                        golbin.controller.aimDirection.y = target.y - golbin.y;
+                                    })())];
+                            case 1:
+                                _a.sent();
+                                golbin.controller.attack = false;
+                                golbin.controller.aimDirection.x = target.x - golbin.x;
+                                golbin.controller.aimDirection.y = target.y - golbin.y;
+                                return [2 /*return*/];
+                        }
+                    });
+                },
+                transitions: [{ toState: 'idle1' }]
+            });
+            _this.setState('start');
+            return _this;
+        }
+        GolbinBehavior.prototype.getTarget = function () {
+            return this.golbin.world.select.type(Player);
+        };
+        return GolbinBehavior;
+    }(StateMachine));
+    Golbin.GolbinBehavior = GolbinBehavior;
+})(Golbin || (Golbin = {}));
 var Hoop = /** @class */ (function (_super) {
     __extends(Hoop, _super);
     function Hoop(config) {
@@ -10706,7 +10833,7 @@ var Knight = /** @class */ (function (_super) {
                 _this.light.alpha = 0;
             },
             script: S.chain(S.wait(Random.float(0.8, 1.2)), S.call(function () {
-                _this.pickNextTargetPos();
+                _this.pickNextTargetPos(_this.attacking);
                 _this.willDashNext = !_this.willDashNext;
             })),
             transitions: [
@@ -10791,24 +10918,6 @@ var Knight = /** @class */ (function (_super) {
         if (!this.attacking)
             this.attacking = this.world.select.type(Player);
     };
-    Knight.prototype.pickNextTargetPos = function () {
-        var _this = this;
-        if (this.x < 64 || this.x > 706 || this.y < 338 || this.y > 704) {
-            // Too close to edge of room
-            var candidates_2 = A.range(20).map(function (i) {
-                return { x: Random.float(64, 706), y: Random.float(338, 704) };
-            });
-            this.targetPos = M.argmin(candidates_2, function (pos) { return M.distance(_this.x, _this.y, pos.x, pos.y); });
-            return;
-        }
-        var candidates = A.range(3).map(function (i) {
-            var d = Random.inDisc(50, 100);
-            d.x += _this.x;
-            d.y += _this.y;
-            return d;
-        });
-        this.targetPos = M.argmin(candidates, function (pos) { return Math.abs(M.distance(_this.attacking.x, _this.attacking.y, pos.x, pos.y) - 150); });
-    };
     Knight.prototype.pickNextTargetPosForDash = function () {
         var d = { x: this.attacking.x - this.x, y: this.attacking.y - this.y };
         if (V.magnitude(d) < 300)
@@ -10818,6 +10927,16 @@ var Knight = /** @class */ (function (_super) {
     };
     return Knight;
 }(Enemy));
+(function (Knight) {
+    var KnightBehavior = /** @class */ (function (_super) {
+        __extends(KnightBehavior, _super);
+        function KnightBehavior() {
+            return _super !== null && _super.apply(this, arguments) || this;
+        }
+        return KnightBehavior;
+    }(StateMachine));
+    Knight.KnightBehavior = KnightBehavior;
+})(Knight || (Knight = {}));
 /// <reference path="./enemy.ts"/>
 var Mage = /** @class */ (function (_super) {
     __extends(Mage, _super);
@@ -10839,7 +10958,7 @@ var Mage = /** @class */ (function (_super) {
         });
         _this.stateMachine.addState('idle', {
             script: S.chain(S.wait(Random.float(1.4, 2)), S.call(function () {
-                _this.pickNextTargetPos();
+                _this.pickNextTargetPos(_this.attacking);
                 _this.willSpawnNext = !_this.willSpawnNext;
                 if (_this.world.select.typeAll(Runner).length >= Mage.MAX_RUNNERS) {
                     _this.willSpawnNext = false;
@@ -10921,24 +11040,6 @@ var Mage = /** @class */ (function (_super) {
     Mage.prototype.ai = function () {
         if (!this.attacking)
             this.attacking = this.world.select.type(Player);
-    };
-    Mage.prototype.pickNextTargetPos = function () {
-        var _this = this;
-        if (this.x < 64 || this.x > 706 || this.y < 338 || this.y > 704) {
-            // Too close to edge of room
-            var candidates_3 = A.range(20).map(function (i) {
-                return { x: Random.float(64, 706), y: Random.float(338, 704) };
-            });
-            this.targetPos = M.argmin(candidates_3, function (pos) { return M.distance(_this.x, _this.y, pos.x, pos.y); });
-            return;
-        }
-        var candidates = A.range(3).map(function (i) {
-            var d = Random.inDisc(50, 100);
-            d.x += _this.x;
-            d.y += _this.y;
-            return d;
-        });
-        this.targetPos = M.argmin(candidates, function (pos) { return Math.abs(M.distance(_this.attacking.x, _this.attacking.y, pos.x, pos.y) - 150); });
     };
     Mage.prototype.pickNextSpawnTargetPos = function () {
         this.targetPos = Random.inDisc(16, 32);
@@ -11241,11 +11342,13 @@ var Player = /** @class */ (function (_super) {
         _this.immuneTime = 1;
         _this.speed = 128;
         _this.radius = 6;
-        _this.controllerSchema = {
-            left: function () { return Input.isDown('left'); },
-            right: function () { return Input.isDown('right'); },
-            up: function () { return Input.isDown('up'); },
-            down: function () { return Input.isDown('down'); },
+        _this.controller.schema = {
+            keys: {
+                left: function () { return Input.isDown('left'); },
+                right: function () { return Input.isDown('right'); },
+                up: function () { return Input.isDown('up'); },
+                down: function () { return Input.isDown('down'); },
+            }
         };
         _this.immunitySm = new ImmunitySm(_this.immuneTime);
         _this.health = Player.MAX_HP;
@@ -11419,7 +11522,7 @@ function getStages() {
                         } },
                     { move: 'deadbodies', from: 'walls' },
                 ],
-                collisionIterations: 0,
+                collisionIterations: 4,
                 useRaycastDisplacementThreshold: 4,
             });
             world.addWorldObject(new UI());

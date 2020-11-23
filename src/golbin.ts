@@ -1,13 +1,9 @@
 /// <reference path="./enemy.ts"/>
 
 class Golbin extends Enemy {
-
     private readonly bulletSpeed = 100;
 
-    private attacking: WorldObject;
-    private targetPos: Pt;
-
-    private willShootNext: boolean;
+    get aiming() { return this.getCurrentAnimationName() === 'aim' || this.getCurrentAnimationName() === 'aim_hold'; }
 
     constructor(config: Sprite.Config) {
         super({
@@ -19,7 +15,8 @@ class Golbin extends Enemy {
                             2: { callback: () => { this.world.playSound('walk'); }}
                         }
                 }),
-                Animations.fromTextureList({ name: 'drawback', texturePrefix: 'golbin', textures: [8, 9, 10, 11, 10, 11, 10, 11, 11, 11], frameRate: 6 })
+                Animations.fromTextureList({ name: 'aim', texturePrefix: 'golbin', textures: [8, 9, 10, 11, 10, 11, 10], frameRate: 6, nextFrameRef: 'aim_hold/0' }),
+                Animations.fromTextureList({ name: 'aim_hold', texturePrefix: 'golbin', textures: [11], frameRate: 1, count: Infinity, }),
             ],
             defaultAnimation: 'idle',
             effects: { outline: { color: 0x000000 } },
@@ -31,73 +28,44 @@ class Golbin extends Enemy {
             ...config,
         });
 
-        this.willShootNext = true;
-
-        this.stateMachine.addState('start', {
-            script: S.wait(Random.float(0, 1)),
-            transitions: [
-                { toState: 'idle' },
-            ]
-        })
-        this.stateMachine.addState('idle', {
-            script: S.chain(
-                S.wait(Random.float(0.8, 1.2)),
-                S.call(() => {
-                    this.pickNextTargetPos();
-                    this.willShootNext = !this.willShootNext;
-                }),
-            ),
-            transitions: [
-                { toState: 'shooting', condition: () => this.willShootNext },
-                { toState: 'walking', condition: () => !this.willShootNext },
-            ]
-        });
-        this.stateMachine.addState('walking', {
-            transitions: [
-                { toState: 'idle', condition: () => M.distance(this.x, this.y, this.targetPos.x, this.targetPos.y) < 4 },
-            ]
-        });
-        this.stateMachine.addState('shooting', {
-            script: S.chain(
-                S.playAnimation(this, 'drawback'),
-                S.call(() => {
-                    this.shoot({ x: this.attacking.x - this.x, y: this.attacking.y - this.y });
-                }),
-            ),
-            transitions: [
-                { toState: 'idle' },
-            ]
-        })
-        this.stateMachine.setState('start');
-
-        this.targetPos = { x: 0, y: 0 };
+        this.stateMachine = new Golbin.GolbinBehavior(this);
     }
 
     update() {
-        this.ai();
+        super.update();
 
-        if (this.state === 'idle') {
+        if (this.controller.attack && !this.aiming) this.aim();
+        if (!this.controller.attack && this.aiming) this.shoot();
+
+        if (this.immune) {
             this.playAnimation('idle');
-        } else if (this.state === 'walking') {
-            this.v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
+        } else if (!V.isZero(this.controller.moveDirection)) {
+            this.v = this.controller.moveDirection;
             this.setSpeed(this.speed);
 
+            this.playAnimation('run');
             if (this.v.x < 0) this.flipX = true;
             if (this.v.x > 0) this.flipX = false;
-
-            this.playAnimation('run');
-        } else if (this.state === 'shooting') {
-            let player = global.world.select.type(Player);
-            if (player.x < this.x) this.flipX = true;
-            if (player.x > this.x) this.flipX = false;
+        } else if (this.aiming) {
+            this.flipX = this.controller.aimDirection.x < 0;
+        } else {
+            this.playAnimation('idle');
         }
+    }
 
-        super.update();
+    onCollide(other: PhysicsWorldObject) {
+        super.onCollide(other);
+
+        if (other.physicsGroup === 'walls') {
+            this.setState('idle1');
+        }
     }
 
     damage(amount: number) {
         super.damage(amount);
-        this.setState('idle');
+
+        this.interruptShot();
+        this.setState('idle1');
 
         this.runScript(S.chain(
             S.call(() => {
@@ -116,51 +84,92 @@ class Golbin extends Enemy {
         ));
     }
 
-    shoot(d: Pt) {
+    private aim() {
+        this.playAnimation('aim', true);
+    }
+
+    private shoot() {
         let bullet = this.world.addWorldObject(new Bullet({
             x: this.x,
             y: this.y - 4,
-            vx: d.x, vy: d.y,
+            v: this.controller.aimDirection,
             name: 'bullet',
             layer: this.layer,
             physicsGroup: 'bullets',
         }));
-
         bullet.setSpeed(this.bulletSpeed);
 
         this.world.playSound('shoot');
+
+        this.playAnimation('idle', true);
     }
 
-    onCollide(other: PhysicsWorldObject) {
-        super.onCollide(other);
-
-        if (other.physicsGroup === 'walls') {
-            this.setState('idle');
-        }
+    private interruptShot() {
+        this.playAnimation('idle');
     }
+}
 
-    private ai() {
-        if (!this.attacking) this.attacking = this.world.select.type(Player);
-    }
+namespace Golbin {
+    export class GolbinBehavior extends StateMachine {
+        private golbin: Golbin;
 
-    private pickNextTargetPos() {
+        constructor(golbin: Golbin) {
+            super();
 
-        if (this.x < 64 || this.x > 706 || this.y < 338 || this.y > 704) {
-            // Too close to edge of room
-            let candidates = A.range(20).map(i => {
-                return { x: Random.float(64, 706), y: Random.float(338, 704) };
+            this.golbin = golbin;
+
+            let b = this;
+            this.addState('start', { transitions: [{ delay: Random.float(0, 1), toState: 'idle1' }] });
+
+            this.addState('idle1', {
+                callback: () => {
+                    golbin.controller.moveDirection.x = 0;
+                    golbin.controller.moveDirection.y = 0;
+                },
+                transitions: [{ delay: Random.float(0.8, 1.2), toState: 'walk' }]
             });
-            this.targetPos = M.argmin(candidates, pos => M.distance(this.x, this.y, pos.x, pos.y));
-            return;
+
+            this.addState('walk', {
+                script: function*() {
+                    let targetPos = golbin.pickNextTargetPos(b.getTarget());
+
+                    while (G.distance(b.golbin, targetPos) > 4) {
+                        golbin.controller.moveDirection.x = targetPos.x - golbin.x;
+                        golbin.controller.moveDirection.y = targetPos.y - golbin.y;
+                        yield;
+                    }
+                },
+                transitions: [{ toState: 'idle2' }]
+            });
+
+            this.addState('idle2', {
+                callback: () => {
+                    b.golbin.controller.moveDirection.x = 0;
+                    b.golbin.controller.moveDirection.y = 0;
+                },
+                transitions: [{ delay: Random.float(0.8, 1.2), toState: 'shoot' }]
+            });
+
+            this.addState('shoot', {
+                script: function*() {
+                    let target = b.getTarget();
+                    yield* S.doOverTime(2, t => {
+                        golbin.controller.attack = true;
+                        golbin.controller.aimDirection.x = target.x - golbin.x;
+                        golbin.controller.aimDirection.y = target.y - golbin.y;
+                    })();
+                    golbin.controller.attack = false;
+                    golbin.controller.aimDirection.x = target.x - golbin.x;
+                    golbin.controller.aimDirection.y = target.y - golbin.y;
+                },
+                transitions: [{ toState: 'idle1' }]
+            });
+
+            this.setState('start');
         }
 
-        let candidates = A.range(3).map(i => {
-            let d = Random.inDisc(50, 100);
-            d.x += this.x;
-            d.y += this.y;
-            return d;
-        });
-
-        this.targetPos = M.argmin(candidates, pos => Math.abs(M.distance(this.attacking.x, this.attacking.y, pos.x, pos.y) - 150));
+        private getTarget() {
+            return this.golbin.world.select.type(Player);
+        }
     }
 }

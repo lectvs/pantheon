@@ -44,7 +44,7 @@ function getStages(): Dict<World.Factory> { return {
                 } },
                 { move: 'deadbodies', from:'walls' },
             ],
-            collisionIterations: 0,
+            collisionIterations: 4,
             useRaycastDisplacementThreshold: 4,
         })
 

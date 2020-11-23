@@ -58,7 +58,7 @@ class Knight extends Enemy {
             script: S.chain(
                 S.wait(Random.float(0.8, 1.2)),
                 S.call(() => {
-                    this.pickNextTargetPos();
+                    this.pickNextTargetPos(this.attacking);
                     this.willDashNext = !this.willDashNext;
                 }),
             ),
@@ -162,30 +162,16 @@ class Knight extends Enemy {
         if (!this.attacking) this.attacking = this.world.select.type(Player);
     }
 
-    private pickNextTargetPos() {
-        if (this.x < 64 || this.x > 706 || this.y < 338 || this.y > 704) {
-            // Too close to edge of room
-            let candidates = A.range(20).map(i => {
-                return { x: Random.float(64, 706), y: Random.float(338, 704) };
-            });
-            this.targetPos = M.argmin(candidates, pos => M.distance(this.x, this.y, pos.x, pos.y));
-            return;
-        }
-
-        let candidates = A.range(3).map(i => {
-            let d = Random.inDisc(50, 100);
-            d.x += this.x;
-            d.y += this.y;
-            return d;
-        });
-
-        this.targetPos = M.argmin(candidates, pos => Math.abs(M.distance(this.attacking.x, this.attacking.y, pos.x, pos.y) - 150));
-    }
-
     private pickNextTargetPosForDash() {
         let d = { x: this.attacking.x - this.x, y: this.attacking.y - this.y };
         if (V.magnitude(d) < 300) V.setMagnitude(d, 300);
         this.targetPos.x = this.x + d.x;
         this.targetPos.y = this.y + d.y;
+    }
+}
+
+namespace Knight {
+    export class KnightBehavior extends StateMachine {
+
     }
 }

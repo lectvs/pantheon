@@ -83,7 +83,7 @@ class AnimationManager {
         return !!this.currentFrame;
     }
 
-    playAnimation(name: string, startFrame: number = 0, force: boolean = false) {
+    playAnimation(name: string, force: boolean = false) {
         if (!force && (this.forceRequired || this.getCurrentAnimationName() == name)) {
             return;
         }
@@ -91,7 +91,7 @@ class AnimationManager {
             this.setCurrentFrame(null, true, force);
             return;
         }
-        this.setCurrentFrame(`${name}/${startFrame}`, true, force);
+        this.setCurrentFrame(`${name}/0`, true, force);
     }
 
     setCurrentFrame(frameRef: string, resetFrameTime: boolean = true, force: boolean = false) {

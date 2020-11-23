@@ -118,8 +118,8 @@ class Sprite extends PhysicsWorldObject {
         return bounds;
     }
 
-    playAnimation(name: string, startFrame: number = 0, force: boolean = false) {
-        this.animationManager.playAnimation(name, startFrame, force);
+    playAnimation(name: string, force: boolean = false) {
+        this.animationManager.playAnimation(name, force);
     }
 
     setTexture(key: string | Texture) {

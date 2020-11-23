@@ -138,9 +138,9 @@ namespace S {
         }
     }
 
-    export function playAnimation(sprite: Sprite, animationName: string, startFrame: number = 0, force: boolean = true, waitForCompletion: boolean = true): Script.Function {
+    export function playAnimation(sprite: Sprite, animationName: string, force: boolean = true, waitForCompletion: boolean = true): Script.Function {
         return function*() {
-            sprite.playAnimation(animationName, startFrame, force);
+            sprite.playAnimation(animationName, force);
             if (waitForCompletion) {
                 while (sprite.getCurrentAnimationName() === animationName) {
                     yield;

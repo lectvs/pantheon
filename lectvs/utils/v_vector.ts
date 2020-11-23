@@ -11,6 +11,10 @@ namespace V {
         return v1.x*v2.x + v1.y*v2.y;
     }
 
+    export function isZero(v: Pt) {
+        return v.x === 0 && v.y === 0;
+    }
+
     export function magnitude(vector: Pt) {
         return Math.sqrt(this.magnitudeSq(vector));
     }

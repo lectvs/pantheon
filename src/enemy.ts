@@ -57,4 +57,23 @@ class Enemy extends Sprite {
         }
         super.kill();
     }
+
+    pickNextTargetPos(target: Pt) {
+        if (this.x < 64 || this.x > 706 || this.y < 338 || this.y > 704) {
+            // Too close to edge of room
+            let candidates = A.range(20).map(i => {
+                return { x: Random.float(64, 706), y: Random.float(338, 704) };
+            });
+            return M.argmin(candidates, pos => M.distance(this.x, this.y, pos.x, pos.y));
+        }
+
+        let candidates = A.range(3).map(i => {
+            let d = Random.inDisc(50, 100);
+            d.x += this.x;
+            d.y += this.y;
+            return d;
+        });
+
+        return M.argmin(candidates, pos => Math.abs(M.distance(target.x, target.y, pos.x, pos.y) - 150));
+    }
 }

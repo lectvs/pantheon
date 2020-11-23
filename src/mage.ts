@@ -43,7 +43,7 @@ class Mage extends Enemy {
             script: S.chain(
                 S.wait(Random.float(1.4, 2)),
                 S.call(() => {
-                    this.pickNextTargetPos();
+                    this.pickNextTargetPos(this.attacking);
                     this.willSpawnNext = !this.willSpawnNext;
                     if (this.world.select.typeAll(Runner).length >= Mage.MAX_RUNNERS) {
                         this.willSpawnNext = false;
@@ -142,26 +142,6 @@ class Mage extends Enemy {
 
     private ai() {
         if (!this.attacking) this.attacking = this.world.select.type(Player);
-    }
-
-    private pickNextTargetPos() {
-        if (this.x < 64 || this.x > 706 || this.y < 338 || this.y > 704) {
-            // Too close to edge of room
-            let candidates = A.range(20).map(i => {
-                return { x: Random.float(64, 706), y: Random.float(338, 704) };
-            });
-            this.targetPos = M.argmin(candidates, pos => M.distance(this.x, this.y, pos.x, pos.y));
-            return;
-        }
-
-        let candidates = A.range(3).map(i => {
-            let d = Random.inDisc(50, 100);
-            d.x += this.x;
-            d.y += this.y;
-            return d;
-        });
-
-        this.targetPos = M.argmin(candidates, pos => Math.abs(M.distance(this.attacking.x, this.attacking.y, pos.x, pos.y) - 150));
     }
 
     private pickNextSpawnTargetPos() {
