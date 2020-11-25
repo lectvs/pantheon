@@ -69,7 +69,8 @@ class PartyManager {
         this._leader = name;
         for (let key in this.members) {
             if (this.members[key].worldObject) {
-                this.members[key].worldObject.controllable = (key === this.leader);
+                // TODO: re-implement notion of controllability?
+                //this.members[key].worldObject.controllable = (key === this.leader);
             }
         }
     }
@@ -79,7 +80,8 @@ class PartyManager {
             let member = this.members[key];
             member.worldObject = member.newInstance();
             if (key === this.leader) {
-                member.worldObject.controllable = true;
+                // TODO: re-implement notion of controllability?
+                //member.worldObject.controllable = true;
             }
         }
     }

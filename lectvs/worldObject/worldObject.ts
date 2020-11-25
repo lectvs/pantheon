@@ -16,7 +16,6 @@ namespace WorldObject {
         matchParentPhysicsGroup?: boolean;
         zBehavior?: ZBehavior;
         timeScale?: number;
-        controllable?: boolean;
         data?: any;
     } & Callbacks<WorldObject>;
 
@@ -96,9 +95,10 @@ class WorldObject {
     lasty: number;
     lastz: number;
 
-    controllable: boolean;
     controller: Controller;
-    get isControlled() { return this.controllable && !global.theater.isCutscenePlaying; }
+    get isControlRevoked() { return global.theater.isCutscenePlaying; }
+
+    behavior: IBehavior;
 
     readonly uid: string;
 
@@ -134,8 +134,8 @@ class WorldObject {
         this.lasty = this.y;
         this.lastz = this.z;
 
-        this.controllable = config.controllable ?? false;
         this.controller = new Controller();
+        this.behavior = new NullBehavior();
 
         this.uid = WorldObject.UID.generate();
 
@@ -170,14 +170,13 @@ class WorldObject {
         this.lastx = this.x;
         this.lasty = this.y;
         this.lastz = this.z;
-        if (this.isControlled) {
-            this.controller.updateFromSchema();
-        }
+        this.behavior.update(this.delta);
+        this.updateController();
     }
 
     update() {
-        this.updateScriptManager();
-        this.updateStateMachine();
+        this.scriptManager.update(this.delta);
+        this.stateMachine.update(this.delta);
 
         if (this.debugFollowMouse) {
             this.x = this.world.getWorldMouseX();
@@ -190,14 +189,6 @@ class WorldObject {
         if (this.parent && this.ignoreCamera) {
             debug(`Warning: ignoraCamera is set to true on a child object. This will be ignored!`);
         }
-    }
-
-    protected updateScriptManager() {
-        this.scriptManager.update(this.delta);
-    }
-
-    protected updateStateMachine() {
-        this.stateMachine.update(this.delta);
     }
 
     postUpdate() {
@@ -364,6 +355,11 @@ class WorldObject {
         if (this.matchParentPhysicsGroup && this.parent && this._physicsGroup !== this.parent.physicsGroup) {
             this._physicsGroup = this.parent.physicsGroup;
         }
+    }
+
+    private updateController() {
+        if (this.isControlRevoked) return;
+        this.controller.updateFromBehavior(this.behavior);
     }
 
     // For use with World.Actions.addWorldObjectToWorld

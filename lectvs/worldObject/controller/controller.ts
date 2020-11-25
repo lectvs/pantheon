@@ -1,6 +1,4 @@
 class Controller {
-    schema: Controller.Schema;
-
     moveDirection?: Pt;
     aimDirection?: Pt;
     keys?: Dict<boolean>;
@@ -19,28 +17,21 @@ class Controller {
     set attack(value: boolean) { this.keys.attack = value; }
 
     constructor() {
-        this.schema = {};
-
         this.moveDirection = pt(0, 0);
         this.aimDirection = pt(0, 0);
         this.keys = {};
     }
 
-    updateFromSchema() {
-        if (this.schema.moveDirection) {
-            let moveDirection = this.schema.moveDirection();
-            this.moveDirection.x = moveDirection.x;
-            this.moveDirection.y = moveDirection.y;
-        }
-        if (this.schema.aimDirection) {
-            let aimDirection = this.schema.aimDirection();
-            this.aimDirection.x = aimDirection.x;
-            this.aimDirection.y = aimDirection.y;
-        }
-        if (this.schema.keys) {
-            for (let key in this.schema.keys) {
-                this.keys[key] = this.schema.keys[key]();
-            }
+    updateFromBehavior(behavior: IBehavior) {
+        if (behavior instanceof NullBehavior) return;
+
+        this.moveDirection.x = behavior.controller.moveDirection.x;
+        this.moveDirection.y = behavior.controller.moveDirection.y;
+        this.aimDirection.x = behavior.controller.aimDirection.x;
+        this.aimDirection.y = behavior.controller.aimDirection.y;
+
+        for (let key in behavior.controller.keys) {
+            this.keys[key] = behavior.controller.keys[key];
         }
     }
 
@@ -52,14 +43,5 @@ class Controller {
         for (let key in this.keys) {
             this.keys[key] = false;
         }
-    }
-}
-
-namespace Controller {
-    export type Schema = {
-        moveDirection?: () => Pt;
-        aimDirection?: () => Pt;
-
-        keys?: Dict<() => boolean>;
     }
 }

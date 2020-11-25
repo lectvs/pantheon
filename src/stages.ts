@@ -114,7 +114,6 @@ function getStages(): Dict<World.Factory> { return {
             name: 'player',
             layer: 'main',
             physicsGroup: 'player',
-            controllable: true
         }));
 
         world.camera.setModeFollow('player');

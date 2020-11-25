@@ -3,6 +3,7 @@
 - implement metroid-style transitions
 - camera zoom
 - normal-map/lighting
+- controller revamp
 - boundless textures
     - optimize tilemap editing with boundless textures
 - unit tests c:

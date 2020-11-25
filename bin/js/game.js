@@ -2592,7 +2592,7 @@ var WorldObject = /** @class */ (function () {
     function WorldObject(config) {
         var _this = this;
         if (config === void 0) { config = {}; }
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
         this.localx = (_a = config.x) !== null && _a !== void 0 ? _a : 0;
         this.localy = (_b = config.y) !== null && _b !== void 0 ? _b : 0;
         this.localz = (_c = config.z) !== null && _c !== void 0 ? _c : 0;
@@ -2609,8 +2609,8 @@ var WorldObject = /** @class */ (function () {
         this.lastx = this.x;
         this.lasty = this.y;
         this.lastz = this.z;
-        this.controllable = (_m = config.controllable) !== null && _m !== void 0 ? _m : false;
         this.controller = new Controller();
+        this.behavior = new NullBehavior();
         this.uid = WorldObject.UID.generate();
         this._world = null;
         this._children = [];
@@ -2689,8 +2689,8 @@ var WorldObject = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
-    Object.defineProperty(WorldObject.prototype, "isControlled", {
-        get: function () { return this.controllable && !global.theater.isCutscenePlaying; },
+    Object.defineProperty(WorldObject.prototype, "isControlRevoked", {
+        get: function () { return global.theater.isCutscenePlaying; },
         enumerable: false,
         configurable: true
     });
@@ -2711,13 +2711,12 @@ var WorldObject = /** @class */ (function () {
         this.lastx = this.x;
         this.lasty = this.y;
         this.lastz = this.z;
-        if (this.isControlled) {
-            this.controller.updateFromSchema();
-        }
+        this.behavior.update(this.delta);
+        this.updateController();
     };
     WorldObject.prototype.update = function () {
-        this.updateScriptManager();
-        this.updateStateMachine();
+        this.scriptManager.update(this.delta);
+        this.stateMachine.update(this.delta);
         if (this.debugFollowMouse) {
             this.x = this.world.getWorldMouseX();
             this.y = this.world.getWorldMouseY();
@@ -2728,12 +2727,6 @@ var WorldObject = /** @class */ (function () {
         if (this.parent && this.ignoreCamera) {
             debug("Warning: ignoraCamera is set to true on a child object. This will be ignored!");
         }
-    };
-    WorldObject.prototype.updateScriptManager = function () {
-        this.scriptManager.update(this.delta);
-    };
-    WorldObject.prototype.updateStateMachine = function () {
-        this.stateMachine.update(this.delta);
     };
     WorldObject.prototype.postUpdate = function () {
         this.controller.reset();
@@ -2900,6 +2893,11 @@ var WorldObject = /** @class */ (function () {
         if (this.matchParentPhysicsGroup && this.parent && this._physicsGroup !== this.parent.physicsGroup) {
             this._physicsGroup = this.parent.physicsGroup;
         }
+    };
+    WorldObject.prototype.updateController = function () {
+        if (this.isControlRevoked)
+            return;
+        this.controller.updateFromBehavior(this.behavior);
     };
     // For use with World.Actions.addWorldObjectToWorld
     WorldObject.prototype.internalAddWorldObjectToWorldWorldObject = function (world) {
@@ -5990,7 +5988,8 @@ var PartyManager = /** @class */ (function () {
             this._leader = name;
             for (var key in this.members) {
                 if (this.members[key].worldObject) {
-                    this.members[key].worldObject.controllable = (key === this.leader);
+                    // TODO: re-implement notion of controllability?
+                    //this.members[key].worldObject.controllable = (key === this.leader);
                 }
             }
         },
@@ -6002,7 +6001,8 @@ var PartyManager = /** @class */ (function () {
             var member = this.members[key];
             member.worldObject = member.newInstance();
             if (key === this.leader) {
-                member.worldObject.controllable = true;
+                // TODO: re-implement notion of controllability?
+                //member.worldObject.controllable = true;
             }
         }
     };
@@ -7285,6 +7285,7 @@ var Utils;
     Utils.NOOP = function () { return null; };
     Utils.NOOP_DISPLAYOBJECT = new PIXI.DisplayObject();
     Utils.NOOP_RENDERTEXTURE = PIXI.RenderTexture.create({ width: 0, height: 0 });
+    Utils.UID = new UIDGenerator();
 })(Utils || (Utils = {}));
 var V;
 (function (V) {
@@ -9244,77 +9245,6 @@ var SlopeBounds = /** @class */ (function () {
     };
     return SlopeBounds;
 }());
-var Controller = /** @class */ (function () {
-    function Controller() {
-        this.schema = {};
-        this.moveDirection = pt(0, 0);
-        this.aimDirection = pt(0, 0);
-        this.keys = {};
-    }
-    Object.defineProperty(Controller.prototype, "left", {
-        get: function () { return this.keys.left; },
-        set: function (value) { this.keys.left = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Controller.prototype, "right", {
-        get: function () { return this.keys.right; },
-        set: function (value) { this.keys.right = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Controller.prototype, "up", {
-        get: function () { return this.keys.up; },
-        set: function (value) { this.keys.up = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Controller.prototype, "down", {
-        get: function () { return this.keys.down; },
-        set: function (value) { this.keys.down = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Controller.prototype, "jump", {
-        get: function () { return this.keys.jump; },
-        set: function (value) { this.keys.jump = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Controller.prototype, "attack", {
-        get: function () { return this.keys.attack; },
-        set: function (value) { this.keys.attack = value; },
-        enumerable: false,
-        configurable: true
-    });
-    Controller.prototype.updateFromSchema = function () {
-        if (this.schema.moveDirection) {
-            var moveDirection = this.schema.moveDirection();
-            this.moveDirection.x = moveDirection.x;
-            this.moveDirection.y = moveDirection.y;
-        }
-        if (this.schema.aimDirection) {
-            var aimDirection = this.schema.aimDirection();
-            this.aimDirection.x = aimDirection.x;
-            this.aimDirection.y = aimDirection.y;
-        }
-        if (this.schema.keys) {
-            for (var key in this.schema.keys) {
-                this.keys[key] = this.schema.keys[key]();
-            }
-        }
-    };
-    Controller.prototype.reset = function () {
-        this.moveDirection.x = 0;
-        this.moveDirection.y = 0;
-        this.aimDirection.x = 0;
-        this.aimDirection.y = 0;
-        for (var key in this.keys) {
-            this.keys[key] = false;
-        }
-    };
-    return Controller;
-}());
 /// <reference path="../texture/filter/textureFilter.ts" />
 var Effects = /** @class */ (function () {
     function Effects(config) {
@@ -9520,6 +9450,189 @@ var Warp = /** @class */ (function (_super) {
     };
     return Warp;
 }(PhysicsWorldObject));
+var Controller = /** @class */ (function () {
+    function Controller() {
+        this.moveDirection = pt(0, 0);
+        this.aimDirection = pt(0, 0);
+        this.keys = {};
+    }
+    Object.defineProperty(Controller.prototype, "left", {
+        get: function () { return this.keys.left; },
+        set: function (value) { this.keys.left = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Controller.prototype, "right", {
+        get: function () { return this.keys.right; },
+        set: function (value) { this.keys.right = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Controller.prototype, "up", {
+        get: function () { return this.keys.up; },
+        set: function (value) { this.keys.up = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Controller.prototype, "down", {
+        get: function () { return this.keys.down; },
+        set: function (value) { this.keys.down = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Controller.prototype, "jump", {
+        get: function () { return this.keys.jump; },
+        set: function (value) { this.keys.jump = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Controller.prototype, "attack", {
+        get: function () { return this.keys.attack; },
+        set: function (value) { this.keys.attack = value; },
+        enumerable: false,
+        configurable: true
+    });
+    Controller.prototype.updateFromBehavior = function (behavior) {
+        if (behavior instanceof NullBehavior)
+            return;
+        this.moveDirection.x = behavior.controller.moveDirection.x;
+        this.moveDirection.y = behavior.controller.moveDirection.y;
+        this.aimDirection.x = behavior.controller.aimDirection.x;
+        this.aimDirection.y = behavior.controller.aimDirection.y;
+        for (var key in behavior.controller.keys) {
+            this.keys[key] = behavior.controller.keys[key];
+        }
+    };
+    Controller.prototype.reset = function () {
+        this.moveDirection.x = 0;
+        this.moveDirection.y = 0;
+        this.aimDirection.x = 0;
+        this.aimDirection.y = 0;
+        for (var key in this.keys) {
+            this.keys[key] = false;
+        }
+    };
+    return Controller;
+}());
+/// <reference path="../controller/controller.ts" />
+var Behavior = /** @class */ (function () {
+    function Behavior(startAction, startWait) {
+        this.controller = new Controller();
+        this.stateMachine = new StateMachine();
+        this.actions = {};
+        this.addAction(Behavior.START_ACTION, {
+            wait: startWait,
+            nextAction: startAction,
+        });
+    }
+    Object.defineProperty(Behavior.prototype, "currentAction", {
+        get: function () { return this.actions[this.currentActionName]; },
+        enumerable: false,
+        configurable: true
+    });
+    Behavior.prototype.update = function (delta) {
+        this.controller.reset();
+        this.stateMachine.update(delta);
+        if (!this.currentAction) {
+            this.stateMachine.setState(Behavior.START_ACTION);
+        }
+    };
+    Behavior.prototype.addAction = function (name, action) {
+        var b = this;
+        if (action.wait) {
+            var waitActionName = "wait_after_" + name;
+            this.addAction(name, {
+                script: action.script,
+                interrupt: action.interrupt,
+                nextAction: waitActionName,
+            });
+            this.addAction(waitActionName, {
+                script: function () {
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [5 /*yield**/, __values(S.wait(b.getWait(action.wait))())];
+                            case 1:
+                                _a.sent();
+                                return [2 /*return*/];
+                        }
+                    });
+                },
+                nextAction: action.nextAction,
+            });
+            return;
+        }
+        this.stateMachine.addState(name, {
+            script: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            if (!action.script) return [3 /*break*/, 2];
+                            return [5 /*yield**/, __values(action.script())];
+                        case 1:
+                            _a.sent();
+                            _a.label = 2;
+                        case 2:
+                            b.doAction(b.getNextAction(action.nextAction));
+                            return [2 /*return*/];
+                    }
+                });
+            }
+        });
+        this.actions[name] = action;
+    };
+    Behavior.prototype.interrupt = function () {
+        if (!this.currentAction)
+            return;
+        if (!this.canInterrupt(this.currentAction.interrupt))
+            return;
+        var interruptAction = this.getInterruptAction(this.currentAction);
+        this.doAction(interruptAction);
+    };
+    Behavior.prototype.doAction = function (name) {
+        this.currentActionName = name;
+        this.stateMachine.setState(name);
+    };
+    Behavior.prototype.canInterrupt = function (interrupt) {
+        return !!interrupt;
+    };
+    Behavior.prototype.getNextAction = function (nextAction) {
+        if (_.isString(nextAction))
+            return nextAction;
+        return nextAction.call(this);
+    };
+    Behavior.prototype.getWait = function (wait) {
+        if (_.isNumber(wait))
+            return wait;
+        return wait.call(this);
+    };
+    Behavior.prototype.getInterruptAction = function (action) {
+        if (_.isString(action.interrupt))
+            return action.interrupt;
+        return this.getNextAction(action.nextAction);
+    };
+    Behavior.START_ACTION = 'start';
+    return Behavior;
+}());
+var ControllerBehavior = /** @class */ (function () {
+    function ControllerBehavior(update) {
+        this.controller = new Controller();
+        this.updateCallback = update;
+    }
+    ControllerBehavior.prototype.update = function (delta) {
+        this.controller.reset();
+        this.updateCallback();
+    };
+    ControllerBehavior.prototype.interrupt = function () { };
+    return ControllerBehavior;
+}());
+var NullBehavior = /** @class */ (function () {
+    function NullBehavior() {
+        this.controller = new Controller();
+    }
+    NullBehavior.prototype.update = function (delta) { };
+    NullBehavior.prototype.interrupt = function () { };
+    return NullBehavior;
+}());
 var AnimationManager = /** @class */ (function () {
     function AnimationManager(sprite) {
         this.sprite = sprite;
@@ -10541,6 +10654,7 @@ var Explosion = /** @class */ (function (_super) {
     };
     return Explosion;
 }(Sprite));
+/// <reference path="../lectvs/worldObject/behavior/behavior.ts"/>
 /// <reference path="./enemy.ts"/>
 var Golbin = /** @class */ (function (_super) {
     __extends(Golbin, _super);
@@ -10551,26 +10665,27 @@ var Golbin = /** @class */ (function (_super) {
                         2: { callback: function () { _this.world.playSound('walk'); } }
                     }
                 }),
-                Animations.fromTextureList({ name: 'aim', texturePrefix: 'golbin', textures: [8, 9, 10, 11, 10, 11, 10], frameRate: 6, nextFrameRef: 'aim_hold/0' }),
-                Animations.fromTextureList({ name: 'aim_hold', texturePrefix: 'golbin', textures: [11], frameRate: 1, count: Infinity, }),
+                Animations.fromTextureList({ name: 'aim', texturePrefix: 'golbin', textures: [8, 9, 10, 11, 10, 11, 10, 11], frameRate: 6, nextFrameRef: 'aim/7' }),
             ], defaultAnimation: 'idle', effects: { outline: { color: 0x000000 } }, maxHealth: 1.2, immuneTime: 0.5, weight: 1, speed: 100, deadTexture: 'golbin_dead' }, config)) || this;
         _this.bulletSpeed = 100;
-        _this.stateMachine = new Golbin.GolbinBehavior(_this);
+        _this.behavior = new Golbin.GBehavior(_this);
+        _this.aiming = false;
         return _this;
     }
-    Object.defineProperty(Golbin.prototype, "aiming", {
-        get: function () { return this.getCurrentAnimationName() === 'aim' || this.getCurrentAnimationName() === 'aim_hold'; },
-        enumerable: false,
-        configurable: true
-    });
     Golbin.prototype.update = function () {
         _super.prototype.update.call(this);
         if (this.controller.attack && !this.aiming)
-            this.aim();
-        if (!this.controller.attack && this.aiming)
+            this.aiming = true;
+        if (!this.controller.attack && this.aiming) {
+            this.aiming = false;
             this.shoot();
+        }
         if (this.immune) {
             this.playAnimation('idle');
+        }
+        else if (this.aiming) {
+            this.playAnimation('aim');
+            this.flipX = this.controller.aimDirection.x < 0;
         }
         else if (!V.isZero(this.controller.moveDirection)) {
             this.v = this.controller.moveDirection;
@@ -10581,9 +10696,6 @@ var Golbin = /** @class */ (function (_super) {
             if (this.v.x > 0)
                 this.flipX = false;
         }
-        else if (this.aiming) {
-            this.flipX = this.controller.aimDirection.x < 0;
-        }
         else {
             this.playAnimation('idle');
         }
@@ -10591,14 +10703,14 @@ var Golbin = /** @class */ (function (_super) {
     Golbin.prototype.onCollide = function (other) {
         _super.prototype.onCollide.call(this, other);
         if (other.physicsGroup === 'walls') {
-            this.setState('idle1');
+            this.behavior.interrupt();
         }
     };
     Golbin.prototype.damage = function (amount) {
         var _this = this;
         _super.prototype.damage.call(this, amount);
-        this.interruptShot();
-        this.setState('idle1');
+        this.aiming = false;
+        this.behavior.interrupt();
         this.runScript(S.chain(S.call(function () {
             _this.effects.silhouette.color = 0xFFFFFF;
             _this.effects.silhouette.enabled = true;
@@ -10607,9 +10719,6 @@ var Golbin = /** @class */ (function (_super) {
         }))), S.call(function () {
             _this.effects.silhouette.enabled = false;
         })));
-    };
-    Golbin.prototype.aim = function () {
-        this.playAnimation('aim', true);
     };
     Golbin.prototype.shoot = function () {
         var bullet = this.world.addWorldObject(new Bullet({
@@ -10622,14 +10731,71 @@ var Golbin = /** @class */ (function (_super) {
         }));
         bullet.setSpeed(this.bulletSpeed);
         this.world.playSound('shoot');
-        this.playAnimation('idle', true);
-    };
-    Golbin.prototype.interruptShot = function () {
-        this.playAnimation('idle');
     };
     return Golbin;
 }(Enemy));
 (function (Golbin) {
+    var GBehavior = /** @class */ (function (_super) {
+        __extends(GBehavior, _super);
+        function GBehavior(golbin) {
+            var _this = _super.call(this, 'walk', 1) || this;
+            var controller = _this.controller;
+            var getTarget = function () { return golbin.world.select.type(Player); };
+            /* ACTIONS */
+            _this.addAction('walk', {
+                script: function () {
+                    var targetPos;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                targetPos = golbin.pickNextTargetPos(getTarget());
+                                _a.label = 1;
+                            case 1:
+                                if (!(G.distance(golbin, targetPos) > 4)) return [3 /*break*/, 3];
+                                controller.moveDirection.x = targetPos.x - golbin.x;
+                                controller.moveDirection.y = targetPos.y - golbin.y;
+                                return [4 /*yield*/];
+                            case 2:
+                                _a.sent();
+                                return [3 /*break*/, 1];
+                            case 3: return [2 /*return*/];
+                        }
+                    });
+                },
+                interrupt: true,
+                wait: function () { return Random.float(1, 2); },
+                nextAction: 'shoot',
+            });
+            _this.addAction('shoot', {
+                script: function () {
+                    var target;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                target = getTarget();
+                                return [5 /*yield**/, __values(S.doOverTime(2, function (t) {
+                                        controller.attack = true;
+                                        controller.aimDirection.x = target.x - golbin.x;
+                                        controller.aimDirection.y = target.y - golbin.y;
+                                    })())];
+                            case 1:
+                                _a.sent();
+                                controller.attack = false;
+                                controller.aimDirection.x = target.x - golbin.x;
+                                controller.aimDirection.y = target.y - golbin.y;
+                                return [2 /*return*/];
+                        }
+                    });
+                },
+                interrupt: true,
+                wait: function () { return Random.float(1, 2); },
+                nextAction: 'walk',
+            });
+            return _this;
+        }
+        return GBehavior;
+    }(Behavior));
+    Golbin.GBehavior = GBehavior;
     var GolbinBehavior = /** @class */ (function (_super) {
         __extends(GolbinBehavior, _super);
         function GolbinBehavior(golbin) {
@@ -11342,14 +11508,12 @@ var Player = /** @class */ (function (_super) {
         _this.immuneTime = 1;
         _this.speed = 128;
         _this.radius = 6;
-        _this.controller.schema = {
-            keys: {
-                left: function () { return Input.isDown('left'); },
-                right: function () { return Input.isDown('right'); },
-                up: function () { return Input.isDown('up'); },
-                down: function () { return Input.isDown('down'); },
-            }
-        };
+        _this.behavior = new ControllerBehavior(function () {
+            this.controller.left = Input.isDown('left');
+            this.controller.right = Input.isDown('right');
+            this.controller.up = Input.isDown('up');
+            this.controller.down = Input.isDown('down');
+        });
         _this.immunitySm = new ImmunitySm(_this.immuneTime);
         _this.health = Player.MAX_HP;
         return _this;
@@ -11584,7 +11748,6 @@ function getStages() {
                 name: 'player',
                 layer: 'main',
                 physicsGroup: 'player',
-                controllable: true
             }));
             world.camera.setModeFollow('player');
             world.camera.setMovement(BASE_CAMERA_MOVEMENT);

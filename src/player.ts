@@ -27,14 +27,12 @@ class Player extends Sprite {
             ...config
         });
 
-        this.controller.schema = {
-            keys: {
-                left: () => Input.isDown('left'),
-                right: () => Input.isDown('right'),
-                up: () => Input.isDown('up'),
-                down: () => Input.isDown('down'),
-            }
-        };
+        this.behavior = new ControllerBehavior(function() {
+            this.controller.left = Input.isDown('left');
+            this.controller.right = Input.isDown('right');
+            this.controller.up = Input.isDown('up');
+            this.controller.down = Input.isDown('down');
+        });
 
         this.immunitySm = new ImmunitySm(this.immuneTime);
         this.health = Player.MAX_HP;

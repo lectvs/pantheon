@@ -1,9 +1,10 @@
+/// <reference path="../lectvs/worldObject/behavior/behavior.ts"/>
 /// <reference path="./enemy.ts"/>
 
 class Golbin extends Enemy {
     private readonly bulletSpeed = 100;
 
-    get aiming() { return this.getCurrentAnimationName() === 'aim' || this.getCurrentAnimationName() === 'aim_hold'; }
+    private aiming: boolean;
 
     constructor(config: Sprite.Config) {
         super({
@@ -15,8 +16,7 @@ class Golbin extends Enemy {
                             2: { callback: () => { this.world.playSound('walk'); }}
                         }
                 }),
-                Animations.fromTextureList({ name: 'aim', texturePrefix: 'golbin', textures: [8, 9, 10, 11, 10, 11, 10], frameRate: 6, nextFrameRef: 'aim_hold/0' }),
-                Animations.fromTextureList({ name: 'aim_hold', texturePrefix: 'golbin', textures: [11], frameRate: 1, count: Infinity, }),
+                Animations.fromTextureList({ name: 'aim', texturePrefix: 'golbin', textures: [8, 9, 10, 11, 10, 11, 10, 11], frameRate: 6, nextFrameRef: 'aim/7' }),
             ],
             defaultAnimation: 'idle',
             effects: { outline: { color: 0x000000 } },
@@ -28,17 +28,25 @@ class Golbin extends Enemy {
             ...config,
         });
 
-        this.stateMachine = new Golbin.GolbinBehavior(this);
+        this.behavior = new Golbin.GBehavior(this);
+        
+        this.aiming = false;
     }
 
     update() {
         super.update();
 
-        if (this.controller.attack && !this.aiming) this.aim();
-        if (!this.controller.attack && this.aiming) this.shoot();
+        if (this.controller.attack && !this.aiming) this.aiming = true;
+        if (!this.controller.attack && this.aiming) {
+            this.aiming = false;
+            this.shoot();
+        }
 
         if (this.immune) {
             this.playAnimation('idle');
+        } else if (this.aiming) {
+            this.playAnimation('aim');
+            this.flipX = this.controller.aimDirection.x < 0;
         } else if (!V.isZero(this.controller.moveDirection)) {
             this.v = this.controller.moveDirection;
             this.setSpeed(this.speed);
@@ -46,8 +54,6 @@ class Golbin extends Enemy {
             this.playAnimation('run');
             if (this.v.x < 0) this.flipX = true;
             if (this.v.x > 0) this.flipX = false;
-        } else if (this.aiming) {
-            this.flipX = this.controller.aimDirection.x < 0;
         } else {
             this.playAnimation('idle');
         }
@@ -57,15 +63,15 @@ class Golbin extends Enemy {
         super.onCollide(other);
 
         if (other.physicsGroup === 'walls') {
-            this.setState('idle1');
+            this.behavior.interrupt();
         }
     }
 
     damage(amount: number) {
         super.damage(amount);
 
-        this.interruptShot();
-        this.setState('idle1');
+        this.aiming = false;
+        this.behavior.interrupt();
 
         this.runScript(S.chain(
             S.call(() => {
@@ -84,10 +90,6 @@ class Golbin extends Enemy {
         ));
     }
 
-    private aim() {
-        this.playAnimation('aim', true);
-    }
-
     private shoot() {
         let bullet = this.world.addWorldObject(new Bullet({
             x: this.x,
@@ -100,16 +102,53 @@ class Golbin extends Enemy {
         bullet.setSpeed(this.bulletSpeed);
 
         this.world.playSound('shoot');
-
-        this.playAnimation('idle', true);
-    }
-
-    private interruptShot() {
-        this.playAnimation('idle');
     }
 }
 
 namespace Golbin {
+    export class GBehavior extends Behavior {
+        constructor(golbin: Golbin) {
+            super('walk', 1);
+            let controller = this.controller;
+
+            let getTarget = () => golbin.world.select.type(Player);
+
+            /* ACTIONS */
+
+            this.addAction('walk', {
+                script: function*() {
+                    let targetPos = golbin.pickNextTargetPos(getTarget());
+
+                    while (G.distance(golbin, targetPos) > 4) {
+                        controller.moveDirection.x = targetPos.x - golbin.x;
+                        controller.moveDirection.y = targetPos.y - golbin.y;
+                        yield;
+                    }
+                },
+                interrupt: true,
+                wait: () => Random.float(1, 2),
+                nextAction: 'shoot',
+            });
+
+            this.addAction('shoot', {
+                script: function*() {
+                    let target = getTarget();
+                    yield* S.doOverTime(2, t => {
+                        controller.attack = true;
+                        controller.aimDirection.x = target.x - golbin.x;
+                        controller.aimDirection.y = target.y - golbin.y;
+                    })();
+                    controller.attack = false;
+                    controller.aimDirection.x = target.x - golbin.x;
+                    controller.aimDirection.y = target.y - golbin.y;
+                },
+                interrupt: true,
+                wait: () => Random.float(1, 2),
+                nextAction: 'walk',
+            });
+        }
+    }
+
     export class GolbinBehavior extends StateMachine {
         private golbin: Golbin;
 
