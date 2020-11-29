@@ -52,4 +52,10 @@ namespace V {
         this.normalize(vector);
         this.scale(vector, magnitude);
     }
+
+    export function withMagnitude(vector: Pt, magnitude: number) {
+        let result = this.normalized(vector);
+        this.setMagnitude(result, magnitude);
+        return result;
+    }
 }

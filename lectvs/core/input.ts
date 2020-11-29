@@ -17,6 +17,8 @@ namespace Input {
         [Input.DEBUG_RECORD_METRICS]: string[],
         [Input.DEBUG_SHOW_METRICS_MENU]: string[],
         [Input.DEBUG_TOGGLE_OVERLAY]: string[],
+        [Input.DEBUG_FRAME_SKIP_STEP]: string[],
+        [Input.DEBUG_FRAME_SKIP_RUN]: string[],
     } & Dict<string[]>;
 }
 
@@ -283,6 +285,8 @@ namespace Input {
     export const DEBUG_RECORD_METRICS = 'debug_recordMetrics';
     export const DEBUG_SHOW_METRICS_MENU = 'debug_showMetricsMenu';
     export const DEBUG_TOGGLE_OVERLAY = 'debug_toggleOverlay';
+    export const DEBUG_FRAME_SKIP_STEP = 'debug_frameSkipStep';
+    export const DEBUG_FRAME_SKIP_RUN = 'debug_frameSkipRun';
 
     export class Key {
         private _isDown: boolean;

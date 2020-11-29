@@ -521,7 +521,7 @@ namespace Bounds.Collision {
         let t = Math.min(left_t, right_t, top_t, bottom_t);
 
         if (!isFinite(t)) {
-            error(`Failed to detect time of collision for inverted rect:`, move, from);
+            error(`Failed to detect time of collision between circle and inverted rect:`, move.parent, { x: movePos.x, y: movePos.y, radius: move.radius }, movedx, movedy, from.parent, fromBox, fromdx, fromdy);
         }
 
         let result = <Bounds.RaycastCollision>getDisplacementCollisionCircleInvertedRect(move, from);
@@ -719,7 +719,7 @@ namespace Bounds.Collision {
         let t = Math.min(left_t, right_t, top_t, bottom_t);
 
         if (!isFinite(t)) {
-            error(`Failed to detect time of collision for inverted rect:`, move, from);
+            error(`Failed to detect time of collision between rect and inverted rect:`, move.parent, moveBox, movedx, movedy, from.parent, fromBox, fromdx, fromdy);
         }
 
         let result = <Bounds.RaycastCollision>getDisplacementCollisionRectInvertedRect(move, from);

@@ -12,8 +12,6 @@ namespace Debug {
         autoplay: boolean;
         skipMainMenu: boolean;
         frameStepEnabled: boolean;
-        frameStepStepKey: string;
-        frameStepRunKey: string;
         resetOptionsAtStart: boolean;
         experiments: Dict<Experiment>;
     }
@@ -22,6 +20,7 @@ namespace Debug {
 class Debug {
     static init(config: Debug.Config) {
         Debug.DEBUG = config.debug;
+        Debug.DEBUG_TOGGLE_ENABLED = Debug.DEBUG;
         Debug.FONT = config.font;
         Debug.FONT_STYLE = config.fontStyle;
         Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
@@ -33,8 +32,6 @@ class Debug {
         Debug.AUTOPLAY = config.autoplay;
         Debug.SKIP_MAIN_MENU = config.skipMainMenu;
         Debug.FRAME_STEP_ENABLED = config.frameStepEnabled;
-        Debug.FRAME_STEP_STEP_KEY = config.frameStepStepKey;
-        Debug.FRAME_STEP_RUN_KEY = config.frameStepRunKey;
         Debug.RESET_OPTIONS_AT_START = config.resetOptionsAtStart;
         Debug.EXPERIMENTS = config.experiments;
     }
@@ -48,6 +45,7 @@ class Debug {
     private static _DEBUG: boolean;
     static get DEBUG() { return this._DEBUG; }
     static set DEBUG(value: boolean) { this._DEBUG = value; }
+    static DEBUG_TOGGLE_ENABLED: boolean;
     
     static FONT: SpriteText.Font;
     static FONT_STYLE: SpriteText.Style;
@@ -82,10 +80,8 @@ class Debug {
     private static _FRAME_STEP_ENABLED: boolean;
     static get FRAME_STEP_ENABLED() { return this.DEBUG && this._FRAME_STEP_ENABLED; }
     static set FRAME_STEP_ENABLED(value: boolean) { this._FRAME_STEP_ENABLED = value; }
-    static FRAME_STEP_STEP_KEY: string;
-    static FRAME_STEP_RUN_KEY: string;
     static frameStepSkipFrame() {
-        return this.FRAME_STEP_ENABLED && !(Input.justDown(this.FRAME_STEP_STEP_KEY) || Input.isDown(this.FRAME_STEP_RUN_KEY));
+        return this.FRAME_STEP_ENABLED && !(Input.justDown(Input.DEBUG_FRAME_SKIP_STEP) || Input.isDown(Input.DEBUG_FRAME_SKIP_RUN));
     }
 
     private static _RESET_OPTIONS_AT_START: boolean;

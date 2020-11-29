@@ -2,8 +2,6 @@
 
 class Runner extends Enemy {
 
-    private attacking: WorldObject;
-
     constructor(config: Sprite.Config) {
         super({
             bounds: new CircleBounds(0, -4, 8),
@@ -25,35 +23,42 @@ class Runner extends Enemy {
             ...config,
         });
 
-        this.stateMachine.addState("idle", {
-            script: S.wait(1),
-            transitions: [{ toState: 'running' }],
+        /* STATES */
+
+        this.stateMachine.addState('idle', {
+            update: () => {
+                this.playAnimation('idle');
+            },
+            transitions: [
+                { toState: 'run', condition: () => !V.isZero(this.controller.moveDirection) }
+            ],
         });
-        this.stateMachine.addState("running", {});
-        this.setState("idle");
-    }
 
-    update() {
-        this.ai();
+        this.stateMachine.addState('run', {
+            update: () => {
+                this.v = this.controller.moveDirection;
+                this.setSpeed(this.speed);
 
-        if (this.state === 'running') {
-            this.v = { x: this.attacking.x - this.x, y: this.attacking.y - this.y };
-            V.setMagnitude(this.v, this.speed);
+                this.playAnimation('run');
 
-            if (this.v.x < 0) this.flipX = true;
-            if (this.v.x > 0) this.flipX = false;
+                if (this.v.x < 0) this.flipX = true;
+                if (this.v.x > 0) this.flipX = false;
+            },
+            transitions: [
+                { toState: 'idle', condition: () => V.isZero(this.controller.moveDirection) }
+            ],
+        });
 
-            this.playAnimation('run');
-        } else {
-            this.playAnimation('idle')
-        }
+        this.setState('idle');
 
-        super.update();
+        this.behavior = new Runner.RunnerBehavior(this);
     }
 
     damage(amount: number) {
         super.damage(amount);
+
         this.setState('idle');
+        this.behavior.interrupt();
 
         this.runScript(S.chain(
             S.call(() => {
@@ -71,8 +76,31 @@ class Runner extends Enemy {
             }),
         ));
     }
+}
 
-    private ai() {
-        if (!this.attacking) this.attacking = this.world.select.type(Player);
+namespace Runner {
+    export class RunnerBehavior extends ActionBehavior {
+        constructor(runner: Runner) {
+            super('walk', 2);
+            let controller = this.controller;
+
+            let getTarget = () => runner.world.select.type(Player);
+
+            /* ACTIONS */
+
+            this.addAction('walk', {
+                script: function*() {
+                    while (true) {
+                        let target = getTarget();
+                        controller.moveDirection.x = target.x - runner.x;
+                        controller.moveDirection.y = target.y - runner.y;
+                        yield;
+                    }
+                },
+                interrupt: true,
+                wait: 2,
+                nextAction: 'walk',
+            });
+        }
     }
 }

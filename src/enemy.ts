@@ -1,3 +1,5 @@
+/// <reference path="../lectvs/worldObject/behavior/controllerBehavior.ts" />
+
 namespace Enemy {
     export type Config = Sprite.Config & {
         maxHealth: number;
@@ -75,5 +77,27 @@ class Enemy extends Sprite {
         });
 
         return M.argmin(candidates, pos => Math.abs(M.distance(target.x, target.y, pos.x, pos.y) - 150));
+    }
+}
+
+namespace Enemy {
+    export class EnemyControllerBehavior extends ControllerBehavior {
+        constructor(enemy: Enemy) {
+            super(function() {
+                if (Input.isDown('rmb')) {
+                    this.controller.moveDirection.x = enemy.world.getWorldMouseX() - enemy.x;
+                    this.controller.moveDirection.y = enemy.world.getWorldMouseY() - enemy.y;
+                } else {
+                    this.controller.moveDirection.x = 0;
+                    this.controller.moveDirection.y = 0;
+                }
+    
+                this.controller.aimDirection.x = enemy.world.getWorldMouseX() - enemy.x;
+                this.controller.aimDirection.y = enemy.world.getWorldMouseY() - enemy.y;
+    
+                this.controller.attack = Input.isDown('lmb');
+                this.controller.jump = Input.isDown('3');
+            });
+        }
     }
 }

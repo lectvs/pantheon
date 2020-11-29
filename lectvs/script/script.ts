@@ -42,6 +42,10 @@ class Script {
         this.done = true;
     }
 
+    stop() {
+        this.done = true;
+    }
+
     static FINISH_IMMEDIATELY_MAX_ITERS = 1000000;
 }
 

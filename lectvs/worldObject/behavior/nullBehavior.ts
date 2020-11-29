@@ -1,4 +1,4 @@
-class NullBehavior implements IBehavior {
+class NullBehavior implements Behavior {
     controller: Controller;
 
     constructor() {

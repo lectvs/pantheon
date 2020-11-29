@@ -988,6 +988,8 @@ var Input = /** @class */ (function () {
     Input.DEBUG_RECORD_METRICS = 'debug_recordMetrics';
     Input.DEBUG_SHOW_METRICS_MENU = 'debug_showMetricsMenu';
     Input.DEBUG_TOGGLE_OVERLAY = 'debug_toggleOverlay';
+    Input.DEBUG_FRAME_SKIP_STEP = 'debug_frameSkipStep';
+    Input.DEBUG_FRAME_SKIP_RUN = 'debug_frameSkipRun';
     var Key = /** @class */ (function () {
         function Key() {
             this._isDown = false;
@@ -2362,6 +2364,7 @@ var Debug = /** @class */ (function () {
     }
     Debug.init = function (config) {
         Debug.DEBUG = config.debug;
+        Debug.DEBUG_TOGGLE_ENABLED = Debug.DEBUG;
         Debug.FONT = config.font;
         Debug.FONT_STYLE = config.fontStyle;
         Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
@@ -2373,8 +2376,6 @@ var Debug = /** @class */ (function () {
         Debug.AUTOPLAY = config.autoplay;
         Debug.SKIP_MAIN_MENU = config.skipMainMenu;
         Debug.FRAME_STEP_ENABLED = config.frameStepEnabled;
-        Debug.FRAME_STEP_STEP_KEY = config.frameStepStepKey;
-        Debug.FRAME_STEP_RUN_KEY = config.frameStepRunKey;
         Debug.RESET_OPTIONS_AT_START = config.resetOptionsAtStart;
         Debug.EXPERIMENTS = config.experiments;
     };
@@ -2432,7 +2433,7 @@ var Debug = /** @class */ (function () {
         configurable: true
     });
     Debug.frameStepSkipFrame = function () {
-        return this.FRAME_STEP_ENABLED && !(Input.justDown(this.FRAME_STEP_STEP_KEY) || Input.isDown(this.FRAME_STEP_RUN_KEY));
+        return this.FRAME_STEP_ENABLED && !(Input.justDown(Input.DEBUG_FRAME_SKIP_STEP) || Input.isDown(Input.DEBUG_FRAME_SKIP_RUN));
     };
     Object.defineProperty(Debug, "RESET_OPTIONS_AT_START", {
         get: function () { return this.DEBUG && this._RESET_OPTIONS_AT_START; },
@@ -4896,6 +4897,9 @@ var Script = /** @class */ (function () {
         }
         this.done = true;
     };
+    Script.prototype.stop = function () {
+        this.done = true;
+    };
     Script.FINISH_IMMEDIATELY_MAX_ITERS = 1000000;
     return Script;
 }());
@@ -7112,17 +7116,20 @@ var StateMachine = /** @class */ (function () {
                     case 0: return [5 /*yield**/, __values(stateScript())];
                     case 1:
                         _b.sent();
-                        selectedTransition = undefined;
-                        _b.label = 2;
+                        return [4 /*yield*/];
                     case 2:
-                        if (!!selectedTransition) return [3 /*break*/, 4];
+                        _b.sent(); // Yield one more time so we don't immediately transition to next state.
+                        selectedTransition = undefined;
+                        _b.label = 3;
+                    case 3:
+                        if (!!selectedTransition) return [3 /*break*/, 5];
                         selectedTransition = sm.getValidTransition(sm.currentState);
                         return [4 /*yield*/];
-                    case 3:
+                    case 4:
                         _b.sent();
-                        return [3 /*break*/, 2];
-                    case 4: return [5 /*yield**/, __values(S.wait((_a = selectedTransition.delay) !== null && _a !== void 0 ? _a : 0)())];
-                    case 5:
+                        return [3 /*break*/, 3];
+                    case 5: return [5 /*yield**/, __values(S.wait((_a = selectedTransition.delay) !== null && _a !== void 0 ? _a : 0)())];
+                    case 6:
                         _b.sent();
                         sm.setState(selectedTransition.toState);
                         return [2 /*return*/];
@@ -7132,8 +7139,11 @@ var StateMachine = /** @class */ (function () {
         this.script.update(0);
     };
     StateMachine.prototype.update = function (delta) {
+        var _a;
         if (this.script)
             this.script.update(delta);
+        if ((_a = this.currentState) === null || _a === void 0 ? void 0 : _a.update)
+            this.currentState.update();
     };
     StateMachine.prototype.getCurrentStateName = function () {
         for (var name_6 in this.states) {
@@ -7343,6 +7353,12 @@ var V;
         this.scale(vector, magnitude);
     }
     V.setMagnitude = setMagnitude;
+    function withMagnitude(vector, magnitude) {
+        var result = this.normalized(vector);
+        this.setMagnitude(result, magnitude);
+        return result;
+    }
+    V.withMagnitude = withMagnitude;
 })(V || (V = {}));
 /// <reference path="../utils/o_object.ts"/>
 var Camera = /** @class */ (function () {
@@ -8511,7 +8527,7 @@ var Bounds;
             var bottom_t = movePos.y + move.radius + movedy > fromBox.bottom ? (movePos.y + move.radius - fromBox.bottom) / (fromdy - movedy) : Infinity;
             var t = Math.min(left_t, right_t, top_t, bottom_t);
             if (!isFinite(t)) {
-                error("Failed to detect time of collision for inverted rect:", move, from);
+                error("Failed to detect time of collision between circle and inverted rect:", move.parent, { x: movePos.x, y: movePos.y, radius: move.radius }, movedx, movedy, from.parent, fromBox, fromdx, fromdy);
             }
             var result = getDisplacementCollisionCircleInvertedRect(move, from);
             result.t = t;
@@ -8704,7 +8720,7 @@ var Bounds;
             var bottom_t = moveBox.bottom + movedy > fromBox.bottom ? (moveBox.bottom - fromBox.bottom) / (fromdy - movedy) : Infinity;
             var t = Math.min(left_t, right_t, top_t, bottom_t);
             if (!isFinite(t)) {
-                error("Failed to detect time of collision for inverted rect:", move, from);
+                error("Failed to detect time of collision between rect and inverted rect:", move.parent, moveBox, movedx, movedy, from.parent, fromBox, fromdx, fromdy);
             }
             var result = getDisplacementCollisionRectInvertedRect(move, from);
             result.t = t;
@@ -9450,6 +9466,107 @@ var Warp = /** @class */ (function (_super) {
     };
     return Warp;
 }(PhysicsWorldObject));
+var ActionBehavior = /** @class */ (function () {
+    function ActionBehavior(startAction, startWait) {
+        this.controller = new Controller();
+        this.stateMachine = new StateMachine();
+        this.actions = {};
+        this.addAction(ActionBehavior.START_ACTION, {
+            wait: startWait,
+            nextAction: startAction,
+        });
+    }
+    Object.defineProperty(ActionBehavior.prototype, "currentAction", {
+        get: function () { return this.actions[this.currentActionName]; },
+        enumerable: false,
+        configurable: true
+    });
+    ActionBehavior.prototype.update = function (delta) {
+        this.controller.reset();
+        this.stateMachine.update(delta);
+        if (!this.currentAction) {
+            this.stateMachine.setState(ActionBehavior.START_ACTION);
+        }
+    };
+    ActionBehavior.prototype.addAction = function (name, action) {
+        var b = this;
+        if (action.wait) {
+            var waitActionName = "wait_after_" + name;
+            this.addAction(name, {
+                script: action.script,
+                interrupt: action.interrupt,
+                nextAction: waitActionName,
+            });
+            this.addAction(waitActionName, {
+                script: function () {
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [5 /*yield**/, __values(S.wait(b.getWait(action.wait))())];
+                            case 1:
+                                _a.sent();
+                                return [2 /*return*/];
+                        }
+                    });
+                },
+                nextAction: action.nextAction,
+            });
+            return;
+        }
+        this.stateMachine.addState(name, {
+            script: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            if (!action.script) return [3 /*break*/, 2];
+                            return [5 /*yield**/, __values(action.script())];
+                        case 1:
+                            _a.sent();
+                            _a.label = 2;
+                        case 2:
+                            b.doAction(b.getNextAction(action.nextAction));
+                            return [2 /*return*/];
+                    }
+                });
+            }
+        });
+        this.actions[name] = action;
+    };
+    ActionBehavior.prototype.interrupt = function (action) {
+        if (!this.currentAction)
+            return;
+        if (action && action !== this.currentActionName)
+            return;
+        if (!this.canInterrupt(this.currentAction.interrupt))
+            return;
+        var interruptAction = this.getInterruptAction(this.currentAction);
+        this.controller.reset();
+        this.doAction(interruptAction);
+    };
+    ActionBehavior.prototype.doAction = function (name) {
+        this.currentActionName = name;
+        this.stateMachine.setState(name);
+    };
+    ActionBehavior.prototype.canInterrupt = function (interrupt) {
+        return !!interrupt;
+    };
+    ActionBehavior.prototype.getNextAction = function (nextAction) {
+        if (_.isString(nextAction))
+            return nextAction;
+        return nextAction.call(this);
+    };
+    ActionBehavior.prototype.getWait = function (wait) {
+        if (_.isNumber(wait))
+            return wait;
+        return wait.call(this);
+    };
+    ActionBehavior.prototype.getInterruptAction = function (action) {
+        if (_.isString(action.interrupt))
+            return action.interrupt;
+        return this.getNextAction(action.nextAction);
+    };
+    ActionBehavior.START_ACTION = 'start';
+    return ActionBehavior;
+}());
 var Controller = /** @class */ (function () {
     function Controller() {
         this.moveDirection = pt(0, 0);
@@ -9515,104 +9632,6 @@ var Controller = /** @class */ (function () {
     return Controller;
 }());
 /// <reference path="../controller/controller.ts" />
-var Behavior = /** @class */ (function () {
-    function Behavior(startAction, startWait) {
-        this.controller = new Controller();
-        this.stateMachine = new StateMachine();
-        this.actions = {};
-        this.addAction(Behavior.START_ACTION, {
-            wait: startWait,
-            nextAction: startAction,
-        });
-    }
-    Object.defineProperty(Behavior.prototype, "currentAction", {
-        get: function () { return this.actions[this.currentActionName]; },
-        enumerable: false,
-        configurable: true
-    });
-    Behavior.prototype.update = function (delta) {
-        this.controller.reset();
-        this.stateMachine.update(delta);
-        if (!this.currentAction) {
-            this.stateMachine.setState(Behavior.START_ACTION);
-        }
-    };
-    Behavior.prototype.addAction = function (name, action) {
-        var b = this;
-        if (action.wait) {
-            var waitActionName = "wait_after_" + name;
-            this.addAction(name, {
-                script: action.script,
-                interrupt: action.interrupt,
-                nextAction: waitActionName,
-            });
-            this.addAction(waitActionName, {
-                script: function () {
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0: return [5 /*yield**/, __values(S.wait(b.getWait(action.wait))())];
-                            case 1:
-                                _a.sent();
-                                return [2 /*return*/];
-                        }
-                    });
-                },
-                nextAction: action.nextAction,
-            });
-            return;
-        }
-        this.stateMachine.addState(name, {
-            script: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            if (!action.script) return [3 /*break*/, 2];
-                            return [5 /*yield**/, __values(action.script())];
-                        case 1:
-                            _a.sent();
-                            _a.label = 2;
-                        case 2:
-                            b.doAction(b.getNextAction(action.nextAction));
-                            return [2 /*return*/];
-                    }
-                });
-            }
-        });
-        this.actions[name] = action;
-    };
-    Behavior.prototype.interrupt = function () {
-        if (!this.currentAction)
-            return;
-        if (!this.canInterrupt(this.currentAction.interrupt))
-            return;
-        var interruptAction = this.getInterruptAction(this.currentAction);
-        this.doAction(interruptAction);
-    };
-    Behavior.prototype.doAction = function (name) {
-        this.currentActionName = name;
-        this.stateMachine.setState(name);
-    };
-    Behavior.prototype.canInterrupt = function (interrupt) {
-        return !!interrupt;
-    };
-    Behavior.prototype.getNextAction = function (nextAction) {
-        if (_.isString(nextAction))
-            return nextAction;
-        return nextAction.call(this);
-    };
-    Behavior.prototype.getWait = function (wait) {
-        if (_.isNumber(wait))
-            return wait;
-        return wait.call(this);
-    };
-    Behavior.prototype.getInterruptAction = function (action) {
-        if (_.isString(action.interrupt))
-            return action.interrupt;
-        return this.getNextAction(action.nextAction);
-    };
-    Behavior.START_ACTION = 'start';
-    return Behavior;
-}());
 var ControllerBehavior = /** @class */ (function () {
     function ControllerBehavior(update) {
         this.controller = new Controller();
@@ -10468,6 +10487,7 @@ var Assets;
     Assets.fonts = fonts;
     Assets.spriteTextTags = {};
 })(Assets || (Assets = {}));
+/// <reference path="../lectvs/worldObject/behavior/controllerBehavior.ts" />
 var Enemy = /** @class */ (function (_super) {
     __extends(Enemy, _super);
     function Enemy(config) {
@@ -10526,6 +10546,29 @@ var Enemy = /** @class */ (function (_super) {
     };
     return Enemy;
 }(Sprite));
+(function (Enemy) {
+    var EnemyControllerBehavior = /** @class */ (function (_super) {
+        __extends(EnemyControllerBehavior, _super);
+        function EnemyControllerBehavior(enemy) {
+            return _super.call(this, function () {
+                if (Input.isDown('rmb')) {
+                    this.controller.moveDirection.x = enemy.world.getWorldMouseX() - enemy.x;
+                    this.controller.moveDirection.y = enemy.world.getWorldMouseY() - enemy.y;
+                }
+                else {
+                    this.controller.moveDirection.x = 0;
+                    this.controller.moveDirection.y = 0;
+                }
+                this.controller.aimDirection.x = enemy.world.getWorldMouseX() - enemy.x;
+                this.controller.aimDirection.y = enemy.world.getWorldMouseY() - enemy.y;
+                this.controller.attack = Input.isDown('lmb');
+                this.controller.jump = Input.isDown('3');
+            }) || this;
+        }
+        return EnemyControllerBehavior;
+    }(ControllerBehavior));
+    Enemy.EnemyControllerBehavior = EnemyControllerBehavior;
+})(Enemy || (Enemy = {}));
 /// <reference path="./enemy.ts"/>
 var Bomb = /** @class */ (function (_super) {
     __extends(Bomb, _super);
@@ -10654,7 +10697,7 @@ var Explosion = /** @class */ (function (_super) {
     };
     return Explosion;
 }(Sprite));
-/// <reference path="../lectvs/worldObject/behavior/behavior.ts"/>
+/// <reference path="../lectvs/worldObject/behavior/actionBehavior.ts"/>
 /// <reference path="./enemy.ts"/>
 var Golbin = /** @class */ (function (_super) {
     __extends(Golbin, _super);
@@ -10668,48 +10711,72 @@ var Golbin = /** @class */ (function (_super) {
                 Animations.fromTextureList({ name: 'aim', texturePrefix: 'golbin', textures: [8, 9, 10, 11, 10, 11, 10, 11], frameRate: 6, nextFrameRef: 'aim/7' }),
             ], defaultAnimation: 'idle', effects: { outline: { color: 0x000000 } }, maxHealth: 1.2, immuneTime: 0.5, weight: 1, speed: 100, deadTexture: 'golbin_dead' }, config)) || this;
         _this.bulletSpeed = 100;
-        _this.behavior = new Golbin.GBehavior(_this);
-        _this.aiming = false;
+        /* STATES */
+        _this.stateMachine.addState('idle', {
+            update: function () {
+                _this.playAnimation('idle');
+            },
+            transitions: [
+                { toState: 'aim', condition: function () { return _this.controller.attack; } },
+                { toState: 'run', condition: function () { return !V.isZero(_this.controller.moveDirection); } },
+            ]
+        });
+        _this.stateMachine.addState('run', {
+            update: function () {
+                _this.v = _this.controller.moveDirection;
+                _this.setSpeed(_this.speed);
+                _this.playAnimation('run');
+                if (_this.v.x < 0)
+                    _this.flipX = true;
+                if (_this.v.x > 0)
+                    _this.flipX = false;
+            },
+            transitions: [
+                { toState: 'aim', condition: function () { return _this.controller.attack; } },
+                { toState: 'idle', condition: function () { return V.isZero(_this.controller.moveDirection); } },
+            ]
+        });
+        _this.stateMachine.addState('aim', {
+            update: function () {
+                _this.playAnimation('aim');
+                _this.flipX = _this.controller.aimDirection.x < 0;
+            },
+            transitions: [
+                { toState: 'shoot', condition: function () { return !_this.controller.attack; } },
+            ]
+        });
+        _this.stateMachine.addState('shoot', {
+            callback: function () {
+                var bullet = _this.world.addWorldObject(new Bullet({
+                    x: _this.x,
+                    y: _this.y - 4,
+                    v: _this.controller.aimDirection,
+                    name: 'bullet',
+                    layer: _this.layer,
+                    physicsGroup: 'bullets',
+                }));
+                bullet.setSpeed(_this.bulletSpeed);
+                _this.world.playSound('shoot');
+            },
+            transitions: [
+                { toState: 'idle' }
+            ]
+        });
+        _this.stateMachine.setState('idle');
+        _this.behavior = new Golbin.GolbinBehavior(_this);
         return _this;
     }
-    Golbin.prototype.update = function () {
-        _super.prototype.update.call(this);
-        if (this.controller.attack && !this.aiming)
-            this.aiming = true;
-        if (!this.controller.attack && this.aiming) {
-            this.aiming = false;
-            this.shoot();
-        }
-        if (this.immune) {
-            this.playAnimation('idle');
-        }
-        else if (this.aiming) {
-            this.playAnimation('aim');
-            this.flipX = this.controller.aimDirection.x < 0;
-        }
-        else if (!V.isZero(this.controller.moveDirection)) {
-            this.v = this.controller.moveDirection;
-            this.setSpeed(this.speed);
-            this.playAnimation('run');
-            if (this.v.x < 0)
-                this.flipX = true;
-            if (this.v.x > 0)
-                this.flipX = false;
-        }
-        else {
-            this.playAnimation('idle');
-        }
-    };
     Golbin.prototype.onCollide = function (other) {
         _super.prototype.onCollide.call(this, other);
         if (other.physicsGroup === 'walls') {
-            this.behavior.interrupt();
+            this.setState('idle');
+            this.behavior.interrupt('walk');
         }
     };
     Golbin.prototype.damage = function (amount) {
         var _this = this;
         _super.prototype.damage.call(this, amount);
-        this.aiming = false;
+        this.setState('idle');
         this.behavior.interrupt();
         this.runScript(S.chain(S.call(function () {
             _this.effects.silhouette.color = 0xFFFFFF;
@@ -10720,24 +10787,12 @@ var Golbin = /** @class */ (function (_super) {
             _this.effects.silhouette.enabled = false;
         })));
     };
-    Golbin.prototype.shoot = function () {
-        var bullet = this.world.addWorldObject(new Bullet({
-            x: this.x,
-            y: this.y - 4,
-            v: this.controller.aimDirection,
-            name: 'bullet',
-            layer: this.layer,
-            physicsGroup: 'bullets',
-        }));
-        bullet.setSpeed(this.bulletSpeed);
-        this.world.playSound('shoot');
-    };
     return Golbin;
 }(Enemy));
 (function (Golbin) {
-    var GBehavior = /** @class */ (function (_super) {
-        __extends(GBehavior, _super);
-        function GBehavior(golbin) {
+    var GolbinBehavior = /** @class */ (function (_super) {
+        __extends(GolbinBehavior, _super);
+        function GolbinBehavior(golbin) {
             var _this = _super.call(this, 'walk', 1) || this;
             var controller = _this.controller;
             var getTarget = function () { return golbin.world.select.type(Player); };
@@ -10773,16 +10828,12 @@ var Golbin = /** @class */ (function (_super) {
                         switch (_a.label) {
                             case 0:
                                 target = getTarget();
-                                return [5 /*yield**/, __values(S.doOverTime(2, function (t) {
-                                        controller.attack = true;
+                                return [5 /*yield**/, __values(S.simul(S.doOverTime(2, function (t) { return controller.attack = true; }), S.doOverTime(2.1, function (t) {
                                         controller.aimDirection.x = target.x - golbin.x;
                                         controller.aimDirection.y = target.y - golbin.y;
-                                    })())];
+                                    }))())];
                             case 1:
                                 _a.sent();
-                                controller.attack = false;
-                                controller.aimDirection.x = target.x - golbin.x;
-                                controller.aimDirection.y = target.y - golbin.y;
                                 return [2 /*return*/];
                         }
                     });
@@ -10793,83 +10844,8 @@ var Golbin = /** @class */ (function (_super) {
             });
             return _this;
         }
-        return GBehavior;
-    }(Behavior));
-    Golbin.GBehavior = GBehavior;
-    var GolbinBehavior = /** @class */ (function (_super) {
-        __extends(GolbinBehavior, _super);
-        function GolbinBehavior(golbin) {
-            var _this = _super.call(this) || this;
-            _this.golbin = golbin;
-            var b = _this;
-            _this.addState('start', { transitions: [{ delay: Random.float(0, 1), toState: 'idle1' }] });
-            _this.addState('idle1', {
-                callback: function () {
-                    golbin.controller.moveDirection.x = 0;
-                    golbin.controller.moveDirection.y = 0;
-                },
-                transitions: [{ delay: Random.float(0.8, 1.2), toState: 'walk' }]
-            });
-            _this.addState('walk', {
-                script: function () {
-                    var targetPos;
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                targetPos = golbin.pickNextTargetPos(b.getTarget());
-                                _a.label = 1;
-                            case 1:
-                                if (!(G.distance(b.golbin, targetPos) > 4)) return [3 /*break*/, 3];
-                                golbin.controller.moveDirection.x = targetPos.x - golbin.x;
-                                golbin.controller.moveDirection.y = targetPos.y - golbin.y;
-                                return [4 /*yield*/];
-                            case 2:
-                                _a.sent();
-                                return [3 /*break*/, 1];
-                            case 3: return [2 /*return*/];
-                        }
-                    });
-                },
-                transitions: [{ toState: 'idle2' }]
-            });
-            _this.addState('idle2', {
-                callback: function () {
-                    b.golbin.controller.moveDirection.x = 0;
-                    b.golbin.controller.moveDirection.y = 0;
-                },
-                transitions: [{ delay: Random.float(0.8, 1.2), toState: 'shoot' }]
-            });
-            _this.addState('shoot', {
-                script: function () {
-                    var target;
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                target = b.getTarget();
-                                return [5 /*yield**/, __values(S.doOverTime(2, function (t) {
-                                        golbin.controller.attack = true;
-                                        golbin.controller.aimDirection.x = target.x - golbin.x;
-                                        golbin.controller.aimDirection.y = target.y - golbin.y;
-                                    })())];
-                            case 1:
-                                _a.sent();
-                                golbin.controller.attack = false;
-                                golbin.controller.aimDirection.x = target.x - golbin.x;
-                                golbin.controller.aimDirection.y = target.y - golbin.y;
-                                return [2 /*return*/];
-                        }
-                    });
-                },
-                transitions: [{ toState: 'idle1' }]
-            });
-            _this.setState('start');
-            return _this;
-        }
-        GolbinBehavior.prototype.getTarget = function () {
-            return this.golbin.world.select.type(Player);
-        };
         return GolbinBehavior;
-    }(StateMachine));
+    }(ActionBehavior));
     Golbin.GolbinBehavior = GolbinBehavior;
 })(Golbin || (Golbin = {}));
 var Hoop = /** @class */ (function (_super) {
@@ -10970,101 +10946,107 @@ var Knight = /** @class */ (function (_super) {
     __extends(Knight, _super);
     function Knight(config) {
         var _this = _super.call(this, __assign({ bounds: new CircleBounds(0, -4, 8), animations: [
-                Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight', textures: [0, 1, 2], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'run', texturePrefix: 'enemyknight', textures: [4, 5, 6, 7], frameRate: 8, count: -1, overrides: {
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight', textures: [0, 1, 2], frameRate: 8, count: Infinity }),
+                Animations.fromTextureList({ name: 'run', texturePrefix: 'enemyknight', textures: [4, 5, 6, 7], frameRate: 8, count: Infinity, overrides: {
                         2: { callback: function () { _this.world.playSound('walk'); } }
                     }
                 }),
-                Animations.fromTextureList({ name: 'windup', texturePrefix: 'enemyknight', textures: [8], frameRate: 4, count: -1 })
+                Animations.fromTextureList({ name: 'windup', texturePrefix: 'enemyknight', textures: [8], frameRate: 4, count: Infinity })
             ], defaultAnimation: 'idle', effects: { outline: { color: 0x000000 } }, maxHealth: 1.5, immuneTime: 0.5, weight: 1, speed: 100, deadTexture: 'enemyknight_dead' }, config)) || this;
-        var lightTint = _this.tint === 0xFFFFFF ? 0x00FFFF : _this.tint - 0xFF0000;
-        var lightTexture = new AnchoredTexture(0, 0, Texture.filledRect(1024, 16, lightTint, 0.5));
+        var knight = _this;
+        var lightTexture = new AnchoredTexture(0, 0, Texture.filledRect(1024, 16, 0xFFFFFF));
         lightTexture.anchorX = 1 / 128;
         lightTexture.anchorY = 1 / 2;
         _this.light = _this.addChild(new Sprite({
             x: 0, y: -4,
             texture: lightTexture,
+            tint: _this.tint === 0xFFFFFF ? 0x00FFFF : _this.tint - 0xFF0000,
             alpha: 0,
             layer: 'bg'
         }));
-        _this.willDashNext = true;
-        _this.stateMachine.addState('start', {
-            script: S.wait(Random.float(0, 1)),
-            transitions: [
-                { toState: 'idle' },
-            ]
-        });
+        /* STATES */
         _this.stateMachine.addState('idle', {
-            callback: function () {
+            update: function () {
+                _this.playAnimation('idle');
                 _this.light.alpha = 0;
             },
-            script: S.chain(S.wait(Random.float(0.8, 1.2)), S.call(function () {
-                _this.pickNextTargetPos(_this.attacking);
-                _this.willDashNext = !_this.willDashNext;
-            })),
             transitions: [
-                { toState: 'dash', condition: function () { return _this.willDashNext; } },
-                { toState: 'walking', condition: function () { return !_this.willDashNext; } },
+                { toState: 'aim', condition: function () { return _this.controller.attack; } },
+                { toState: 'run', condition: function () { return !V.isZero(_this.controller.moveDirection); } }
             ]
         });
-        _this.stateMachine.addState('walking', {
+        _this.stateMachine.addState('run', {
+            update: function () {
+                _this.v = _this.controller.moveDirection;
+                _this.setSpeed(_this.speed);
+                _this.playAnimation('run');
+                if (_this.v.x < 0)
+                    _this.flipX = true;
+                if (_this.v.x > 0)
+                    _this.flipX = false;
+                _this.light.alpha = 0;
+            },
             transitions: [
-                { toState: 'idle', condition: function () { return M.distance(_this.x, _this.y, _this.targetPos.x, _this.targetPos.y) < 4; } },
+                { toState: 'aim', condition: function () { return _this.controller.attack; } },
+                { toState: 'idle', condition: function () { return V.isZero(_this.controller.moveDirection); } },
+            ]
+        });
+        _this.stateMachine.addState('aim', {
+            script: S.simul(S.jumpZ(_this, 16, 0.5), S.tween(1, _this.light, 'alpha', 0, 1)),
+            update: function () {
+                _this.light.angle = M.radToDeg(Math.atan2(_this.controller.aimDirection.y, _this.controller.aimDirection.x));
+                _this.light.z = 0;
+                _this.playAnimation('windup');
+                _this.flipX = _this.controller.aimDirection.x < 0;
+            },
+            transitions: [
+                { toState: 'dash', condition: function () { return !_this.controller.attack; } }
             ]
         });
         _this.stateMachine.addState('dash', {
-            script: S.chain(S.call(function () {
+            script: function () {
+                var lastPos, target;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            lastPos = pt(knight.x, knight.y);
+                            target = _.clone(knight.controller.aimDirection);
+                            if (V.magnitude(target) < 300)
+                                V.setMagnitude(target, 300);
+                            target.x += lastPos.x;
+                            target.y += lastPos.y;
+                            knight.world.playSound('dash');
+                            return [5 /*yield**/, __values(S.tweenPt(0.2, knight, lastPos, target)())];
+                        case 1:
+                            _a.sent();
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            update: function () {
                 _this.playAnimation('windup');
-            }), S.jumpZ(_this, 16, 0.5), S.doOverTime(1, function (t) {
-                _this.pickNextTargetPosForDash();
-                _this.light.angle = M.radToDeg(Math.atan2(_this.targetPos.y - _this.y, _this.targetPos.x - _this.x));
-                _this.light.alpha = t;
-                _this.flipX = (_this.attacking.x < _this.x);
-            }), S.wait(1.5), S.call(function () {
-                _this.lastPos.x = _this.x;
-                _this.lastPos.y = _this.y;
                 _this.light.alpha = 0;
-                _this.world.playSound('dash');
-            }), S.doOverTime(0.3, function (t) {
-                _this.x = M.lerp(_this.lastPos.x, _this.targetPos.x, t);
-                _this.y = M.lerp(_this.lastPos.y, _this.targetPos.y, t);
-            })),
+            },
             transitions: [
-                { toState: 'idle' },
+                { toState: 'idle' }
             ]
         });
-        _this.stateMachine.setState('start');
-        _this.lastPos = { x: 0, y: 0 };
-        _this.targetPos = { x: 0, y: 0 };
+        _this.setState('idle');
+        _this.behavior = new Knight.KnightBehavior(_this);
         return _this;
     }
-    Knight.prototype.update = function () {
-        this.ai();
-        if (this.state === 'idle') {
-            this.playAnimation('idle');
+    Knight.prototype.onCollide = function (other) {
+        _super.prototype.onCollide.call(this, other);
+        if (other.physicsGroup === 'walls') {
+            this.setState('idle');
+            this.behavior.interrupt('walk');
         }
-        else if (this.state === 'walking') {
-            this.v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
-            V.setMagnitude(this.v, this.speed);
-            if (this.v.x < 0)
-                this.flipX = true;
-            if (this.v.x > 0)
-                this.flipX = false;
-            this.playAnimation('run');
-        }
-        else if (this.state === 'shooting') {
-            var player = global.world.select.type(Player);
-            if (player.x < this.x)
-                this.flipX = true;
-            if (player.x > this.x)
-                this.flipX = false;
-        }
-        _super.prototype.update.call(this);
     };
     Knight.prototype.damage = function (amount) {
         var _this = this;
         _super.prototype.damage.call(this, amount);
         this.setState('idle');
+        this.behavior.interrupt();
         this.runScript(S.chain(S.call(function () {
             _this.effects.silhouette.color = 0xFFFFFF;
             _this.effects.silhouette.enabled = true;
@@ -11074,33 +11056,72 @@ var Knight = /** @class */ (function (_super) {
             _this.effects.silhouette.enabled = false;
         })));
     };
-    Knight.prototype.onCollide = function (other) {
-        _super.prototype.onCollide.call(this, other);
-        if (other.physicsGroup === 'walls') {
-            this.setState('idle');
-        }
-    };
-    Knight.prototype.ai = function () {
-        if (!this.attacking)
-            this.attacking = this.world.select.type(Player);
-    };
-    Knight.prototype.pickNextTargetPosForDash = function () {
-        var d = { x: this.attacking.x - this.x, y: this.attacking.y - this.y };
-        if (V.magnitude(d) < 300)
-            V.setMagnitude(d, 300);
-        this.targetPos.x = this.x + d.x;
-        this.targetPos.y = this.y + d.y;
-    };
     return Knight;
 }(Enemy));
 (function (Knight) {
     var KnightBehavior = /** @class */ (function (_super) {
         __extends(KnightBehavior, _super);
-        function KnightBehavior() {
-            return _super !== null && _super.apply(this, arguments) || this;
+        function KnightBehavior(knight) {
+            var _this = _super.call(this, 'walk', 1) || this;
+            var controller = _this.controller;
+            var getTarget = function () { return knight.world.select.type(Player); };
+            /* ACTIONS */
+            _this.addAction('walk', {
+                script: function () {
+                    var targetPos;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                targetPos = knight.pickNextTargetPos(getTarget());
+                                _a.label = 1;
+                            case 1:
+                                if (!(G.distance(knight, targetPos) > 4)) return [3 /*break*/, 3];
+                                controller.moveDirection.x = targetPos.x - knight.x;
+                                controller.moveDirection.y = targetPos.y - knight.y;
+                                return [4 /*yield*/];
+                            case 2:
+                                _a.sent();
+                                return [3 /*break*/, 1];
+                            case 3: return [2 /*return*/];
+                        }
+                    });
+                },
+                interrupt: true,
+                wait: function () { return Random.float(1, 2); },
+                nextAction: 'dash',
+            });
+            _this.addAction('dash', {
+                script: function () {
+                    var target, aimDir;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                target = getTarget();
+                                aimDir = pt(0, 0);
+                                return [5 /*yield**/, __values(S.simul(S.chain(S.doOverTime(1.5, function (t) {
+                                        controller.attack = true;
+                                        aimDir.x = target.x - knight.x;
+                                        aimDir.y = target.y - knight.y;
+                                    }), S.doOverTime(1.5, function (t) {
+                                        controller.attack = true;
+                                    })), S.doOverTime(3.1, function (t) {
+                                        controller.aimDirection.x = aimDir.x;
+                                        controller.aimDirection.y = aimDir.y;
+                                    }))())];
+                            case 1:
+                                _a.sent();
+                                return [2 /*return*/];
+                        }
+                    });
+                },
+                interrupt: true,
+                wait: function () { return Random.float(1, 2); },
+                nextAction: 'walk',
+            });
+            return _this;
         }
         return KnightBehavior;
-    }(StateMachine));
+    }(ActionBehavior));
     Knight.KnightBehavior = KnightBehavior;
 })(Knight || (Knight = {}));
 /// <reference path="./enemy.ts"/>
@@ -11115,72 +11136,64 @@ var Mage = /** @class */ (function (_super) {
                 }),
                 Animations.fromTextureList({ name: 'wave', texturePrefix: 'mage', textures: [8, 9], frameRate: 2, count: -1 })
             ], defaultAnimation: 'idle', effects: { outline: { color: 0x000000 } }, maxHealth: 1, immuneTime: 0.5, weight: 1, speed: 70, deadTexture: 'mage_dead' }, config)) || this;
-        _this.willSpawnNext = true;
-        _this.stateMachine.addState('start', {
-            script: S.wait(Random.float(0, 1)),
-            transitions: [
-                { toState: 'idle' },
-            ]
-        });
+        /* STATES */
         _this.stateMachine.addState('idle', {
-            script: S.chain(S.wait(Random.float(1.4, 2)), S.call(function () {
-                _this.pickNextTargetPos(_this.attacking);
-                _this.willSpawnNext = !_this.willSpawnNext;
-                if (_this.world.select.typeAll(Runner).length >= Mage.MAX_RUNNERS) {
-                    _this.willSpawnNext = false;
-                }
-            })),
+            update: function () {
+                _this.effects.outline.color = 0x000000;
+                _this.playAnimation('idle');
+            },
             transitions: [
-                { toState: 'spawn', condition: function () { return _this.willSpawnNext; } },
-                { toState: 'walking', condition: function () { return !_this.willSpawnNext; } },
+                { toState: 'summon', condition: function () { return _this.controller.attack; } },
+                { toState: 'run', condition: function () { return !V.isZero(_this.controller.moveDirection); } },
             ]
         });
-        _this.stateMachine.addState('walking', {
+        _this.stateMachine.addState('run', {
+            update: function () {
+                _this.v = _this.controller.moveDirection;
+                _this.setSpeed(_this.speed);
+                _this.playAnimation('run');
+                if (_this.v.x < 0)
+                    _this.flipX = true;
+                if (_this.v.x > 0)
+                    _this.flipX = false;
+            },
             transitions: [
-                { toState: 'idle', condition: function () { return M.distance(_this.x, _this.y, _this.targetPos.x, _this.targetPos.y) < 4; } },
+                { toState: 'summon', condition: function () { return _this.controller.attack; } },
+                { toState: 'idle', condition: function () { return V.isZero(_this.controller.moveDirection); } },
             ]
         });
-        _this.stateMachine.addState('spawn', {
-            script: S.chain(S.wait(1), S.call(function () {
-                _this.pickNextSpawnTargetPos();
-                _this.spawn();
+        _this.stateMachine.addState('summon', {
+            script: S.chain(S.call(function () {
+                var target_d = Random.inDisc(16, 32);
+                _this.world.addWorldObject(spawn(new Runner({
+                    x: _this.x + target_d.x, y: _this.y + target_d.y,
+                    layer: 'main',
+                    physicsGroup: 'enemies'
+                })));
             }), S.doOverTime(1, function (t) { return _this.effects.outline.color = M.vec3ToColor([0, t, t]); }), S.wait(1), S.doOverTime(0.2, function (t) { return _this.effects.outline.color = M.vec3ToColor([0, 1 - t, 1 - t]); })),
+            update: function () {
+                _this.playAnimation('wave');
+            },
             transitions: [
                 { toState: 'idle' },
             ]
         });
-        _this.stateMachine.setState('start');
-        _this.targetPos = { x: 0, y: 0 };
+        _this.stateMachine.setState('idle');
+        _this.behavior = new Mage.MageBehavior(_this);
         return _this;
     }
-    Mage.prototype.update = function () {
-        this.ai();
-        if (this.state === 'idle') {
-            this.playAnimation('idle');
+    Mage.prototype.onCollide = function (other) {
+        _super.prototype.onCollide.call(this, other);
+        if (other.physicsGroup === 'walls') {
+            this.setState('idle');
+            this.behavior.interrupt('walk');
         }
-        else if (this.state === 'walking') {
-            this.v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
-            V.setMagnitude(this.v, this.speed);
-            if (this.v.x < 0)
-                this.flipX = true;
-            if (this.v.x > 0)
-                this.flipX = false;
-            this.playAnimation('run');
-        }
-        else if (this.state === 'spawn') {
-            this.playAnimation('wave');
-            var player = global.world.select.type(Player);
-            if (player.x < this.x)
-                this.flipX = true;
-            if (player.x > this.x)
-                this.flipX = false;
-        }
-        _super.prototype.update.call(this);
     };
     Mage.prototype.damage = function (amount) {
         var _this = this;
         _super.prototype.damage.call(this, amount);
         this.setState('idle');
+        this.behavior.interrupt();
         this.runScript(S.chain(S.call(function () {
             _this.effects.silhouette.color = 0xFFFFFF;
             _this.effects.silhouette.enabled = true;
@@ -11190,31 +11203,56 @@ var Mage = /** @class */ (function (_super) {
             _this.effects.silhouette.enabled = false;
         })));
     };
-    Mage.prototype.spawn = function () {
-        this.world.addWorldObject(spawn(new Runner({
-            x: this.targetPos.x, y: this.targetPos.y,
-            layer: 'main',
-            physicsGroup: 'enemies'
-        })));
-    };
-    Mage.prototype.onCollide = function (other) {
-        _super.prototype.onCollide.call(this, other);
-        if (other.physicsGroup === 'walls') {
-            this.setState('idle');
-        }
-    };
-    Mage.prototype.ai = function () {
-        if (!this.attacking)
-            this.attacking = this.world.select.type(Player);
-    };
-    Mage.prototype.pickNextSpawnTargetPos = function () {
-        this.targetPos = Random.inDisc(16, 32);
-        this.targetPos.x += this.x;
-        this.targetPos.y += this.y;
-    };
-    Mage.MAX_RUNNERS = 4;
     return Mage;
 }(Enemy));
+(function (Mage) {
+    var MageBehavior = /** @class */ (function (_super) {
+        __extends(MageBehavior, _super);
+        function MageBehavior(mage) {
+            var _this = _super.call(this, 'walk', 1) || this;
+            var controller = _this.controller;
+            var getTarget = function () { return mage.world.select.type(Player); };
+            /* ACTIONS */
+            _this.addAction('walk', {
+                script: function () {
+                    var targetPos;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                targetPos = mage.pickNextTargetPos(getTarget());
+                                _a.label = 1;
+                            case 1:
+                                if (!(G.distance(mage, targetPos) > 4)) return [3 /*break*/, 3];
+                                controller.moveDirection.x = targetPos.x - mage.x;
+                                controller.moveDirection.y = targetPos.y - mage.y;
+                                return [4 /*yield*/];
+                            case 2:
+                                _a.sent();
+                                return [3 /*break*/, 1];
+                            case 3: return [2 /*return*/];
+                        }
+                    });
+                },
+                interrupt: true,
+                wait: function () { return Random.float(1, 2); },
+                nextAction: function () {
+                    if (mage.world.select.typeAll(Runner).length >= MAX_RUNNERS)
+                        return 'walk';
+                    return 'summon';
+                },
+            });
+            _this.addAction('summon', {
+                script: S.chain(S.call(function () { return controller.attack = true; }), S.yield(), S.yield(), S.waitUntil(function () { return mage.state !== 'summon'; })),
+                wait: function () { return Random.float(2, 3); },
+                nextAction: 'walk',
+            });
+            return _this;
+        }
+        return MageBehavior;
+    }(ActionBehavior));
+    Mage.MageBehavior = MageBehavior;
+    var MAX_RUNNERS = 4;
+})(Mage || (Mage = {}));
 /// <reference path="../lectvs/menu/menu.ts" />
 var IntroMenu = /** @class */ (function (_super) {
     __extends(IntroMenu, _super);
@@ -11415,7 +11453,7 @@ Main.loadConfig({
         volume: 1,
         controls: {
             // General
-            'fullscreen': ['g'],
+            'fullscreen': ['f', 'g'],
             // Game
             'left': ['ArrowLeft', 'a'],
             'right': ['ArrowRight', 'd'],
@@ -11434,6 +11472,8 @@ Main.loadConfig({
             'debug_recordMetrics': ['0'],
             'debug_showMetricsMenu': ['9'],
             'debug_toggleOverlay': ['o'],
+            'debug_frameSkipStep': ['1'],
+            'debug_frameSkipRun': ['2'],
             // Debug
             '1': ['1'],
             '2': ['2'],
@@ -11487,8 +11527,6 @@ Main.loadConfig({
         autoplay: true,
         skipMainMenu: true,
         frameStepEnabled: false,
-        frameStepStepKey: '1',
-        frameStepRunKey: '2',
         resetOptionsAtStart: true,
         experiments: {},
     },
@@ -11581,34 +11619,38 @@ var Runner = /** @class */ (function (_super) {
                     }
                 }),
             ], defaultAnimation: 'idle', effects: { outline: { color: 0xFFFFFF } }, maxHealth: 0.5, immuneTime: 0.5, weight: 1, speed: 50, deadTexture: 'runner_dead' }, config)) || this;
-        _this.stateMachine.addState("idle", {
-            script: S.wait(1),
-            transitions: [{ toState: 'running' }],
+        /* STATES */
+        _this.stateMachine.addState('idle', {
+            update: function () {
+                _this.playAnimation('idle');
+            },
+            transitions: [
+                { toState: 'run', condition: function () { return !V.isZero(_this.controller.moveDirection); } }
+            ],
         });
-        _this.stateMachine.addState("running", {});
-        _this.setState("idle");
+        _this.stateMachine.addState('run', {
+            update: function () {
+                _this.v = _this.controller.moveDirection;
+                _this.setSpeed(_this.speed);
+                _this.playAnimation('run');
+                if (_this.v.x < 0)
+                    _this.flipX = true;
+                if (_this.v.x > 0)
+                    _this.flipX = false;
+            },
+            transitions: [
+                { toState: 'idle', condition: function () { return V.isZero(_this.controller.moveDirection); } }
+            ],
+        });
+        _this.setState('idle');
+        _this.behavior = new Runner.RunnerBehavior(_this);
         return _this;
     }
-    Runner.prototype.update = function () {
-        this.ai();
-        if (this.state === 'running') {
-            this.v = { x: this.attacking.x - this.x, y: this.attacking.y - this.y };
-            V.setMagnitude(this.v, this.speed);
-            if (this.v.x < 0)
-                this.flipX = true;
-            if (this.v.x > 0)
-                this.flipX = false;
-            this.playAnimation('run');
-        }
-        else {
-            this.playAnimation('idle');
-        }
-        _super.prototype.update.call(this);
-    };
     Runner.prototype.damage = function (amount) {
         var _this = this;
         _super.prototype.damage.call(this, amount);
         this.setState('idle');
+        this.behavior.interrupt();
         this.runScript(S.chain(S.call(function () {
             _this.effects.silhouette.color = 0xFFFFFF;
             _this.effects.silhouette.enabled = true;
@@ -11618,12 +11660,44 @@ var Runner = /** @class */ (function (_super) {
             _this.effects.silhouette.enabled = false;
         })));
     };
-    Runner.prototype.ai = function () {
-        if (!this.attacking)
-            this.attacking = this.world.select.type(Player);
-    };
     return Runner;
 }(Enemy));
+(function (Runner) {
+    var RunnerBehavior = /** @class */ (function (_super) {
+        __extends(RunnerBehavior, _super);
+        function RunnerBehavior(runner) {
+            var _this = _super.call(this, 'walk', 2) || this;
+            var controller = _this.controller;
+            var getTarget = function () { return runner.world.select.type(Player); };
+            /* ACTIONS */
+            _this.addAction('walk', {
+                script: function () {
+                    var target;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                if (!true) return [3 /*break*/, 2];
+                                target = getTarget();
+                                controller.moveDirection.x = target.x - runner.x;
+                                controller.moveDirection.y = target.y - runner.y;
+                                return [4 /*yield*/];
+                            case 1:
+                                _a.sent();
+                                return [3 /*break*/, 0];
+                            case 2: return [2 /*return*/];
+                        }
+                    });
+                },
+                interrupt: true,
+                wait: 2,
+                nextAction: 'walk',
+            });
+            return _this;
+        }
+        return RunnerBehavior;
+    }(ActionBehavior));
+    Runner.RunnerBehavior = RunnerBehavior;
+})(Runner || (Runner = {}));
 function spawn(worldObject) {
     var spawn = new Sprite({
         name: 'spawn',
@@ -12059,7 +12133,7 @@ function getStoryboard() {
         'spawn_wave_king': {
             type: 'cutscene',
             script: function () {
-                var throne, shakeSound;
+                var throne, player, shakeSound;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -12070,6 +12144,7 @@ function getStoryboard() {
                             if (!HARD_DIFFICULTY)
                                 global.world.select.type(Player).health = Player.MAX_HP;
                             throne = global.world.select.type(Throne);
+                            player = global.world.select.type(Player);
                             return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();
@@ -12096,8 +12171,18 @@ function getStoryboard() {
                             _a.sent();
                             shakeSound = global.world.playSound('shake');
                             shakeSound.loop = true;
-                            return [4 /*yield*/, S.simul(S.shake(2, 7), S.chain(S.wait(3), S.call(function () {
-                                    throne.setState('jump');
+                            return [4 /*yield*/, S.simul(S.shake(2, 6), S.chain(S.wait(3), S.doOverTime(1.5, function (t) {
+                                    if (M.distance(player.x, player.y, 384, 480) > 36) {
+                                        throne.controller.moveDirection.y = 480 - throne.y;
+                                    }
+                                    else {
+                                        throne.controller.moveDirection.y = 440 - throne.y;
+                                    }
+                                    throne.controller.jump = true;
+                                }), S.call(function () {
+                                    throne.layer = 'main';
+                                    throne.king.layer = 'main';
+                                    throne.shadow.layer = 'bg';
                                 })))];
                         case 10:
                             _a.sent();
@@ -12111,7 +12196,7 @@ function getStoryboard() {
                             return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
                         case 13:
                             _a.sent();
-                            throne.setState('idle');
+                            throne.activate();
                             global.world.runScript(S.chain(S.wait(0.5), S.showSlide(function () { return new Slide({
                                 texture: 'hoopkingtext',
                                 timeToLoad: 2,
@@ -12223,7 +12308,7 @@ function getStoryboard() {
                     switch (_a.label) {
                         case 0:
                             throne = global.world.select.type(Throne);
-                            throne.setState('passive');
+                            throne.setState('idle');
                             return [4 /*yield*/, S.tween(3, global.world, 'volume', 1, 0)];
                         case 1:
                             _a.sent();
@@ -12261,17 +12346,19 @@ var Throne = /** @class */ (function (_super) {
     __extends(Throne, _super);
     function Throne(config) {
         var _this = _super.call(this, __assign({ texture: 'throne', bounds: new RectBounds(-15, -24, 30, 24), mass: 10000, maxHealth: 1003, immuneTime: 1, weight: 10, speed: 0, damagableByHoop: false }, config)) || this;
+        var throne = _this;
         _this.shadow = _this.addChild(new Sprite({
             x: -15, y: -22,
             texture: Texture.filledRect(30, 24, 0x000000, 0.5),
             layer: 'king_shadow_start'
         }));
-        var lightTexture = new AnchoredTexture(0, 0, Texture.filledRect(1024, 64, 0xFF0000, 0.5));
+        var lightTexture = new AnchoredTexture(0, 0, Texture.filledRect(1024, 64, 0xFFFFFF));
         lightTexture.anchorX = 1 / 32;
         lightTexture.anchorY = 1 / 2;
         _this.light = _this.addChild(new Sprite({
             x: 0, y: -12,
             texture: lightTexture,
+            tint: 0xFF0000,
             alpha: 0,
             layer: 'bg'
         }));
@@ -12284,7 +12371,118 @@ var Throne = /** @class */ (function (_super) {
             effects: { outline: { color: 0x000000 } },
             matchParentLayer: true
         }));
-        _this.stateMachine = new ThroneBehaviorSm(_this);
+        _this.stateMachine.addState('passive', {
+            update: function () {
+                _this.colliding = false;
+            },
+            transitions: [
+                { toState: 'big_jump', condition: function () { return _this.controller.jump; } },
+            ]
+        });
+        _this.stateMachine.addState('idle', {
+            update: function () {
+                _this.z = 0;
+                _this.colliding = true;
+                _this.light.alpha = 0;
+            },
+            transitions: [
+                { toState: 'aim', condition: function () { return _this.controller.attack; } },
+                { toState: 'big_jump', condition: function () { return _this.controller.jump; } },
+                { toState: 'small_jump', condition: function () { return !V.isZero(_this.controller.moveDirection); } },
+            ]
+        });
+        _this.stateMachine.addState('small_jump', {
+            script: function () {
+                var lastPos, targetPos, s;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            lastPos = pt(throne.x, throne.y);
+                            targetPos = pt(throne.x + throne.controller.moveDirection.x, throne.y + throne.controller.moveDirection.y);
+                            s = throne.world.playSound('dash');
+                            s.volume = 0.4;
+                            throne.colliding = false;
+                            return [5 /*yield**/, __values(S.simul(S.tweenPt(1, throne, lastPos, targetPos), S.jumpZ(throne, 100, 1))())];
+                        case 1:
+                            _a.sent();
+                            s = throne.world.playSound('land');
+                            s.speed = 1.5;
+                            s.volume = 0.7;
+                            throne.colliding = true;
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [
+                { toState: 'idle' }
+            ]
+        });
+        _this.stateMachine.addState('big_jump', {
+            script: function () {
+                var lastPos, targetPos, s;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            lastPos = pt(throne.x, throne.y);
+                            targetPos = pt(throne.x + throne.controller.moveDirection.x, throne.y + throne.controller.moveDirection.y);
+                            s = throne.world.playSound('dash');
+                            s.volume = 0.6;
+                            throne.colliding = false;
+                            return [5 /*yield**/, __values(S.tween(1, throne, 'z', 0, 500)())];
+                        case 1:
+                            _a.sent();
+                            return [5 /*yield**/, __values(S.tweenPt(1, throne, lastPos, targetPos)())];
+                        case 2:
+                            _a.sent();
+                            return [5 /*yield**/, __values(S.tween(1, throne, 'z', 500, 0)())];
+                        case 3:
+                            _a.sent();
+                            throne.world.playSound('land');
+                            throne.colliding = true;
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [
+                { toState: 'idle' }
+            ]
+        });
+        _this.stateMachine.addState('aim', {
+            script: S.tween(1, _this.light, 'alpha', 0, 1),
+            update: function () {
+                _this.light.angle = M.radToDeg(Math.atan2(_this.controller.aimDirection.y, _this.controller.aimDirection.x));
+                _this.light.z = 0;
+            },
+            transitions: [
+                { toState: 'dash', condition: function () { return !_this.controller.attack; } }
+            ]
+        });
+        _this.stateMachine.addState('dash', {
+            script: function () {
+                var lastPos, target;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            lastPos = pt(throne.x, throne.y);
+                            target = _.clone(throne.controller.aimDirection);
+                            if (V.magnitude(target) < 200)
+                                V.setMagnitude(target, 200);
+                            target.x += lastPos.x;
+                            target.y += lastPos.y;
+                            throne.light.alpha = 0;
+                            throne.world.playSound('dash');
+                            return [5 /*yield**/, __values(S.simul(S.tweenPt(0.1, throne, lastPos, target), S.chain(S.wait(0.05), S.call(function () { return throne.spawnBomb(); })))())];
+                        case 1:
+                            _a.sent();
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [
+                { toState: 'idle' }
+            ]
+        });
+        _this.setState('passive');
         return _this;
     }
     Throne.prototype.update = function () {
@@ -12316,6 +12514,17 @@ var Throne = /** @class */ (function (_super) {
             this.timeScale = 1;
         }
     };
+    Throne.prototype.onCollide = function (other) {
+        _super.prototype.onCollide.call(this, other);
+        if (other.physicsGroup === 'walls' && this.state === 'dash') {
+            this.setState('idle');
+            this.behavior.interrupt('dash');
+        }
+        if (other instanceof Hoop && other.isStrongEnoughToDealDamage() && (!this.dinkSound || this.dinkSound.done)) {
+            this.dinkSound = this.world.playSound('dink');
+            this.dinkSound.volume = other.currentAttackStrength;
+        }
+    };
     Throne.prototype.damage = function (amount) {
         var _this = this;
         _super.prototype.damage.call(this, amount);
@@ -12330,12 +12539,10 @@ var Throne = /** @class */ (function (_super) {
         }))), S.call(function () {
             _this.effects.silhouette.enabled = false;
         })));
-        if (this.health <= 1000) {
-            this.setState('defeat');
-        }
-        else {
-            this.setState('idle');
-        }
+        this.setState('idle');
+    };
+    Throne.prototype.activate = function () {
+        this.behavior = new Throne.ThroneBehavior(this);
     };
     Throne.prototype.spawnBomb = function () {
         this.world.addWorldObject(new Bomb({
@@ -12344,162 +12551,98 @@ var Throne = /** @class */ (function (_super) {
             physicsGroup: 'bombs'
         }));
     };
-    Throne.prototype.onCollide = function (other) {
-        _super.prototype.onCollide.call(this, other);
-        if (other.physicsGroup === 'walls' && this.state === 'dash') {
-            this.setState('vulnerable');
-        }
-        if (other instanceof Hoop && other.isStrongEnoughToDealDamage() && (!this.dinkSound || this.dinkSound.done)) {
-            this.dinkSound = this.world.playSound('dink');
-            this.dinkSound.volume = other.currentAttackStrength;
-        }
-    };
-    return Throne;
-}(Enemy));
-var ThroneBehaviorSm = /** @class */ (function (_super) {
-    __extends(ThroneBehaviorSm, _super);
-    function ThroneBehaviorSm(throne) {
-        var _this = _super.call(this) || this;
-        _this.throne = throne;
-        _this.lastPos = { x: 0, y: 0 };
-        _this.targetPos = { x: 0, y: 0 };
-        _this.jumpCount = 0;
-        _this.addState('passive', {
-            callback: function () {
-                _this.throne.light.alpha = 0;
-            }
-        });
-        _this.addState('jump', {
-            script: S.chain(S.call(function () {
-                _this.setLastPos();
-                _this.setFirstJumpTargetPos();
-                _this.throne.world.playSound('dash').volume = 0.6;
-            }), S.tween(1, _this.throne, 'z', 0, 500), S.wait(1), S.doOverTime(1, function (t) {
-                _this.throne.x = M.lerp(_this.lastPos.x, _this.targetPos.x, t);
-                _this.throne.y = M.lerp(_this.lastPos.y, _this.targetPos.y, t);
-            }), S.call(function () {
-                _this.throne.layer = 'main';
-                _this.throne.king.layer = 'main';
-                _this.throne.shadow.layer = 'bg';
-            }), S.tween(1, _this.throne, 'z', 500, 0), S.call(function () {
-                _this.throne.world.playSound('land');
-                _this.throne.colliding = true;
-            })),
-        });
-        _this.addState('idle', {
-            callback: function () {
-                _this.jumpCount = 0;
-            },
-            transitions: [{ delay: 3, toState: 'small_jump' }],
-        });
-        _this.addState('small_jump', {
-            callback: function () {
-                _this.jumpCount++;
-            },
-            script: S.chain(S.call(function () {
-                _this.setLastPos();
-                _this.setSmallJumpTargetPos();
-                _this.throne.world.playSound('dash').volume = 0.4;
-                _this.throne.colliding = false;
-            }), S.simul(S.doOverTime(1, function (t) {
-                _this.throne.x = M.lerp(_this.lastPos.x, _this.targetPos.x, t);
-                _this.throne.y = M.lerp(_this.lastPos.y, _this.targetPos.y, t);
-            }), S.jumpZ(_this.throne, 100, 1)), S.call(function () {
-                var s = _this.throne.world.playSound('land');
-                s.speed = 1.5;
-                s.volume = 0.7;
-                _this.throne.colliding = true;
-            }), S.wait(1)),
-            transitions: [
-                { toState: 'small_jump', condition: function () { return _this.jumpCount < 2; } },
-                { toState: 'big_jump', condition: function () { return _this.jumpCount >= 2; } },
-            ]
-        });
-        _this.addState('big_jump', {
-            script: S.chain(S.call(function () {
-                _this.setLastPos();
-                _this.setBigJumpTargetPos();
-                _this.throne.world.playSound('dash').volume = 0.6;
-                _this.throne.colliding = false;
-            }), S.tween(1, _this.throne, 'z', 0, 500), S.doOverTime(1, function (t) {
-                _this.throne.x = M.lerp(_this.lastPos.x, _this.targetPos.x, t);
-                _this.throne.y = M.lerp(_this.lastPos.y, _this.targetPos.y, t);
-            }), S.tween(1, _this.throne, 'z', 500, 0), S.call(function () {
-                _this.throne.world.playSound('land');
-                _this.throne.colliding = true;
-            }), S.wait(1)),
-            transitions: [{ toState: 'dash' }],
-        });
-        _this.addState('dash', {
-            script: S.chain(S.call(function () {
-                _this.setLastPos();
-            }), S.doOverTime(1, function (t) {
-                _this.setDashTargetPos();
-                _this.throne.light.alpha = t;
-                _this.throne.light.angle = M.radToDeg(Math.atan2(_this.targetPos.y - _this.throne.y, _this.targetPos.x - _this.throne.x));
-            }), S.wait(1), S.call(function () {
-                _this.throne.light.alpha = 0;
-                _this.throne.world.playSound('dash');
-            }), S.simul(S.doOverTime(0.1, function (t) {
-                _this.throne.x = M.lerp(_this.lastPos.x, _this.targetPos.x, t);
-                _this.throne.y = M.lerp(_this.lastPos.y, _this.targetPos.y, t);
-            }), S.chain(S.wait(0.05), S.call(function () {
-                _this.throne.spawnBomb();
-            })))),
-            transitions: [{ toState: 'vulnerable' }],
-        });
-        _this.addState('vulnerable', {
-            script: S.waitUntil(function () { return _.isEmpty(_this.throne.world.select.typeAll(Bomb)); }),
-            transitions: [{ toState: 'idle' }],
-        });
-        _this.addState('defeat', {});
-        return _this;
-    }
-    ThroneBehaviorSm.prototype.setLastPos = function () {
-        this.lastPos.x = this.throne.x;
-        this.lastPos.y = this.throne.y;
-    };
-    ThroneBehaviorSm.prototype.setFirstJumpTargetPos = function () {
-        var player = this.throne.world.select.type(Player);
-        if (M.distance(player.x, player.y, 384, 480) > 36) {
-            this.targetPos.x = 384;
-            this.targetPos.y = 480;
-        }
-        else {
-            this.targetPos.x = 384;
-            this.targetPos.y = 440;
-        }
-    };
-    ThroneBehaviorSm.prototype.setSmallJumpTargetPos = function () {
+    Throne.prototype.pickSmallJumpTargetPos = function () {
         var _this = this;
         var candidates = A.range(20).map(function (i) {
             var d = Random.inDisc(64, 128);
-            d.x += _this.throne.x;
-            d.y += _this.throne.y;
+            d.x += _this.x;
+            d.y += _this.y;
             return d;
         }).filter(function (pos) { return 64 <= pos.x && pos.x <= 706 && 338 <= pos.y && pos.y <= 704; });
-        if (_.isEmpty(candidates)) {
-            this.targetPos.x = 384;
-            this.targetPos.y = 480;
+        if (!_.isEmpty(candidates)) {
+            return Random.element(candidates);
         }
-        else {
-            this.targetPos = Random.element(candidates);
+        return pt(384, 480);
+    };
+    Throne.prototype.pickBigJumpTargetPos = function () {
+        return pt(Random.float(64, 706), Random.float(338, 704));
+    };
+    return Throne;
+}(Enemy));
+(function (Throne) {
+    var ThroneBehavior = /** @class */ (function (_super) {
+        __extends(ThroneBehavior, _super);
+        function ThroneBehavior(throne) {
+            var _this = _super.call(this, 'small_jump_1', 3) || this;
+            var controller = _this.controller;
+            var getTarget = function () { return throne.world.select.type(Player); };
+            /* ACTIONS */
+            _this.addAction('small_jump_1', {
+                script: S.doOverTime(1, function (t) {
+                    var targetPos = throne.pickSmallJumpTargetPos();
+                    controller.moveDirection.x = targetPos.x - throne.x;
+                    controller.moveDirection.y = targetPos.y - throne.y;
+                }),
+                wait: 1,
+                nextAction: 'small_jump_2'
+            });
+            _this.addAction('small_jump_2', {
+                script: S.doOverTime(1, function (t) {
+                    var targetPos = throne.pickSmallJumpTargetPos();
+                    controller.moveDirection.x = targetPos.x - throne.x;
+                    controller.moveDirection.y = targetPos.y - throne.y;
+                }),
+                wait: 1,
+                nextAction: 'big_jump'
+            });
+            _this.addAction('big_jump', {
+                script: S.doOverTime(1, function (t) {
+                    var targetPos = throne.pickBigJumpTargetPos();
+                    controller.moveDirection.x = targetPos.x - throne.x;
+                    controller.moveDirection.y = targetPos.y - throne.y;
+                    controller.jump = true;
+                }),
+                wait: 3,
+                nextAction: 'dash'
+            });
+            _this.addAction('dash', {
+                script: function () {
+                    var target, aimDir;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                target = getTarget();
+                                aimDir = pt(0, 0);
+                                return [5 /*yield**/, __values(S.simul(S.chain(S.doOverTime(1, function (t) {
+                                        controller.attack = true;
+                                        aimDir.x = target.x - throne.x;
+                                        aimDir.y = target.y - throne.y;
+                                    }), S.doOverTime(1, function (t) {
+                                        controller.attack = true;
+                                    })), S.doOverTime(3.1, function (t) {
+                                        controller.aimDirection.x = aimDir.x;
+                                        controller.aimDirection.y = aimDir.y;
+                                    }))())];
+                            case 1:
+                                _a.sent();
+                                return [2 /*return*/];
+                        }
+                    });
+                },
+                interrupt: true,
+                nextAction: 'vulnerable'
+            });
+            _this.addAction('vulnerable', {
+                script: S.waitUntil(function () { return _.isEmpty(throne.world.select.typeAll(Bomb)); }),
+                wait: 3,
+                nextAction: 'small_jump_1'
+            });
+            return _this;
         }
-    };
-    ThroneBehaviorSm.prototype.setBigJumpTargetPos = function () {
-        this.targetPos.x = Random.float(64, 706);
-        this.targetPos.y = Random.float(338, 704);
-    };
-    ThroneBehaviorSm.prototype.setDashTargetPos = function () {
-        var player = this.throne.world.select.type(Player);
-        var d = { x: player.x - this.throne.x, y: player.y - this.throne.y };
-        if (V.magnitude(d) < 200)
-            V.setMagnitude(d, 200);
-        this.targetPos.x = this.throne.x + d.x;
-        this.targetPos.y = this.throne.y + d.y;
-    };
-    return ThroneBehaviorSm;
-}(StateMachine));
+        return ThroneBehavior;
+    }(ActionBehavior));
+    Throne.ThroneBehavior = ThroneBehavior;
+})(Throne || (Throne = {}));
 var UI = /** @class */ (function (_super) {
     __extends(UI, _super);
     function UI() {

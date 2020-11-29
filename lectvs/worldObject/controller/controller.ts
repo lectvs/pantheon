@@ -22,7 +22,7 @@ class Controller {
         this.keys = {};
     }
 
-    updateFromBehavior(behavior: IBehavior) {
+    updateFromBehavior(behavior: Behavior) {
         if (behavior instanceof NullBehavior) return;
 
         this.moveDirection.x = behavior.controller.moveDirection.x;

@@ -1,4 +1,4 @@
-class ControllerBehavior implements IBehavior {
+class ControllerBehavior implements Behavior {
     controller: Controller;
 
     private updateCallback: (this: ControllerBehavior) => any;

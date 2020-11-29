@@ -222,6 +222,7 @@ function getStoryboard(): Storyboard { return {
             if (!HARD_DIFFICULTY) global.world.select.type(Player).health = Player.MAX_HP;
 
             let throne = global.world.select.type(Throne);
+            let player = global.world.select.type(Player);
 
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
             yield S.wait(1);
@@ -238,11 +239,21 @@ function getStoryboard(): Storyboard { return {
             shakeSound.loop = true;
 
             yield S.simul(
-                S.shake(2, 7),
+                S.shake(2, 6),
                 S.chain(
                     S.wait(3),
+                    S.doOverTime(1.5, t => {
+                        if (M.distance(player.x, player.y, 384, 480) > 36) {
+                            throne.controller.moveDirection.y = 480 - throne.y;
+                        } else {
+                            throne.controller.moveDirection.y = 440 - throne.y;
+                        }
+                        throne.controller.jump = true;
+                    }),
                     S.call(() => {
-                        throne.setState('jump');
+                        throne.layer = 'main';
+                        throne.king.layer = 'main';
+                        throne.shadow.layer = 'bg';
                     }),
                 ),
             );
@@ -254,7 +265,7 @@ function getStoryboard(): Storyboard { return {
 
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'));
     
-            throne.setState('idle');
+            throne.activate();
 
             global.world.runScript(S.chain(
                 S.wait(0.5),
@@ -336,7 +347,7 @@ function getStoryboard(): Storyboard { return {
         type: 'cutscene',
         script: function*() {
             let throne = global.world.select.type(Throne);
-            throne.setState('passive');
+            throne.setState('idle');
 
             yield S.tween(3, global.world, 'volume', 1, 0);
 

@@ -98,7 +98,7 @@ class WorldObject {
     controller: Controller;
     get isControlRevoked() { return global.theater.isCutscenePlaying; }
 
-    behavior: IBehavior;
+    behavior: Behavior;
 
     readonly uid: string;
 

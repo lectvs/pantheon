@@ -22,7 +22,7 @@ Main.loadConfig({
         volume: 1,
         controls: {
             // General
-            'fullscreen':                ['g'],
+            'fullscreen':                ['f', 'g'],
 
             // Game
             'left':                      ['ArrowLeft', 'a'],
@@ -44,6 +44,8 @@ Main.loadConfig({
             'debug_recordMetrics':       ['0'],
             'debug_showMetricsMenu':     ['9'],
             'debug_toggleOverlay':       ['o'],
+            'debug_frameSkipStep':       ['1'],
+            'debug_frameSkipRun':        ['2'],
 
             // Debug
             '1':                         ['1'],
@@ -100,8 +102,6 @@ Main.loadConfig({
         autoplay: true,
         skipMainMenu: true,
         frameStepEnabled: false,
-        frameStepStepKey: '1',
-        frameStepRunKey: '2',
         resetOptionsAtStart: true,
         experiments: {},
     },

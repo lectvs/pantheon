@@ -2,13 +2,6 @@
 
 class Mage extends Enemy {
 
-    private static readonly MAX_RUNNERS = 4;
-
-    private attacking: WorldObject;
-    private targetPos: Pt;
-
-    private willSpawnNext: boolean;
-
     constructor(config: Sprite.Config) {
         super({
             bounds: new CircleBounds(0, -4, 8),
@@ -31,81 +24,75 @@ class Mage extends Enemy {
             ...config,
         });
 
-        this.willSpawnNext = true;
+        /* STATES */
 
-        this.stateMachine.addState('start', {
-            script: S.wait(Random.float(0, 1)),
-            transitions: [
-                { toState: 'idle' },
-            ]
-        })
         this.stateMachine.addState('idle', {
-            script: S.chain(
-                S.wait(Random.float(1.4, 2)),
-                S.call(() => {
-                    this.pickNextTargetPos(this.attacking);
-                    this.willSpawnNext = !this.willSpawnNext;
-                    if (this.world.select.typeAll(Runner).length >= Mage.MAX_RUNNERS) {
-                        this.willSpawnNext = false;
-                    }
-                }),
-            ),
+            update: () => {
+                this.effects.outline.color = 0x000000;
+                this.playAnimation('idle');
+            },
             transitions: [
-                { toState: 'spawn', condition: () => this.willSpawnNext },
-                { toState: 'walking', condition: () => !this.willSpawnNext },
+                { toState: 'summon', condition: () => this.controller.attack },
+                { toState: 'run', condition: () => !V.isZero(this.controller.moveDirection) },
             ]
         });
-        this.stateMachine.addState('walking', {
+
+        this.stateMachine.addState('run', {
+            update: () => {
+                this.v = this.controller.moveDirection;
+                this.setSpeed(this.speed);
+    
+                this.playAnimation('run');
+                if (this.v.x < 0) this.flipX = true;
+                if (this.v.x > 0) this.flipX = false;
+            },
             transitions: [
-                { toState: 'idle', condition: () => M.distance(this.x, this.y, this.targetPos.x, this.targetPos.y) < 4 },
+                { toState: 'summon', condition: () => this.controller.attack },
+                { toState: 'idle', condition: () => V.isZero(this.controller.moveDirection) },
             ]
         });
-        this.stateMachine.addState('spawn', {
+
+        this.stateMachine.addState('summon', {
             script: S.chain(
-                S.wait(1),
                 S.call(() => {
-                    this.pickNextSpawnTargetPos();
-                    this.spawn();
+                    let target_d = Random.inDisc(16, 32);
+                    this.world.addWorldObject(spawn(new Runner({
+                        x: this.x + target_d.x, y: this.y + target_d.y,
+                        layer: 'main',
+                        physicsGroup: 'enemies'
+                    })));
                 }),
                 S.doOverTime(1, t => this.effects.outline.color = M.vec3ToColor([0, t, t])),
                 S.wait(1),
                 S.doOverTime(0.2, t => this.effects.outline.color = M.vec3ToColor([0, 1-t, 1-t])),
             ),
+            update: () => {
+                this.playAnimation('wave');
+            },
             transitions: [
                 { toState: 'idle' },
             ]
-        })
-        this.stateMachine.setState('start');
+        });
 
-        this.targetPos = { x: 0, y: 0 };
+        this.stateMachine.setState('idle');
+
+        this.behavior = new Mage.MageBehavior(this);
     }
 
-    update() {
-        this.ai();
+    onCollide(other: PhysicsWorldObject) {
+        super.onCollide(other);
 
-        if (this.state === 'idle') {
-            this.playAnimation('idle');
-        } else if (this.state === 'walking') {
-            this.v = { x: this.targetPos.x - this.x, y: this.targetPos.y - this.y };
-            V.setMagnitude(this.v, this.speed);
-
-            if (this.v.x < 0) this.flipX = true;
-            if (this.v.x > 0) this.flipX = false;
-
-            this.playAnimation('run');
-        } else if (this.state === 'spawn') {
-            this.playAnimation('wave');
-            let player = global.world.select.type(Player);
-            if (player.x < this.x) this.flipX = true;
-            if (player.x > this.x) this.flipX = false;
+        if (other.physicsGroup === 'walls') {
+            this.setState('idle');
+            this.behavior.interrupt('walk');
         }
-
-        super.update();
     }
 
     damage(amount: number) {
         super.damage(amount);
+
         this.setState('idle');
+        this.behavior.interrupt();
 
         this.runScript(S.chain(
             S.call(() => {
@@ -123,30 +110,48 @@ class Mage extends Enemy {
             }),
         ));
     }
+}
 
-    spawn() {
-        this.world.addWorldObject(spawn(new Runner({
-            x: this.targetPos.x, y: this.targetPos.y,
-            layer: 'main',
-            physicsGroup: 'enemies'
-        })));
-    }
+namespace Mage {
+    export class MageBehavior extends ActionBehavior {
+        constructor(mage: Mage) {
+            super('walk', 1);
+            let controller = this.controller;
 
-    onCollide(other: PhysicsWorldObject) {
-        super.onCollide(other);
+            let getTarget = () => mage.world.select.type(Player);
 
-        if (other.physicsGroup === 'walls') {
-            this.setState('idle');
+            /* ACTIONS */
+
+            this.addAction('walk', {
+                script: function*() {
+                    let targetPos = mage.pickNextTargetPos(getTarget());
+
+                    while (G.distance(mage, targetPos) > 4) {
+                        controller.moveDirection.x = targetPos.x - mage.x;
+                        controller.moveDirection.y = targetPos.y - mage.y;
+                        yield;
+                    }
+                },
+                interrupt: true,
+                wait: () => Random.float(1, 2),
+                nextAction: () => {
+                    if (mage.world.select.typeAll(Runner).length >= MAX_RUNNERS) return 'walk';
+                    return 'summon';
+                },
+            });
+
+            this.addAction('summon', {
+                script: S.chain(
+                    S.call(() => controller.attack = true),
+                    S.yield(),
+                    S.yield(),
+                    S.waitUntil(() => mage.state !== 'summon')
+                ),
+                wait: () => Random.float(2, 3),
+                nextAction: 'walk',
+            });
         }
     }
 
-    private ai() {
-        if (!this.attacking) this.attacking = this.world.select.type(Player);
-    }
-
-    private pickNextSpawnTargetPos() {
-        this.targetPos = Random.inDisc(16, 32);
-        this.targetPos.x += this.x;
-        this.targetPos.y += this.y;
-    }
+    const MAX_RUNNERS = 4;
 }
