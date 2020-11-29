@@ -149,13 +149,14 @@ namespace Golbin {
                 script: function*() {
                     let target = getTarget();
 
-                    yield* S.simul(
-                        S.doOverTime(2, t => controller.attack = true),
-                        S.doOverTime(2.1, t => {
-                            controller.aimDirection.x = target.x - golbin.x;
-                            controller.aimDirection.y = target.y - golbin.y;
-                        })
-                    )();
+                    controller.attack = true;
+
+                    yield* S.doOverTime(2, t => {
+                        controller.aimDirection.x = target.x - golbin.x;
+                        controller.aimDirection.y = target.y - golbin.y;
+                    })();
+
+                    controller.attack = false;
                 },
                 interrupt: true,
                 wait: () => Random.float(1, 2),

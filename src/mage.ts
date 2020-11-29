@@ -2,6 +2,8 @@
 
 class Mage extends Enemy {
 
+    private currentSpawn: WorldObject;
+
     constructor(config: Sprite.Config) {
         super({
             bounds: new CircleBounds(0, -4, 8),
@@ -56,7 +58,7 @@ class Mage extends Enemy {
             script: S.chain(
                 S.call(() => {
                     let target_d = Random.inDisc(16, 32);
-                    this.world.addWorldObject(spawn(new Runner({
+                    this.currentSpawn = this.world.addWorldObject(spawn(new Runner({
                         x: this.x + target_d.x, y: this.y + target_d.y,
                         layer: 'main',
                         physicsGroup: 'enemies'
@@ -93,6 +95,11 @@ class Mage extends Enemy {
 
         this.setState('idle');
         this.behavior.interrupt();
+
+        if (this.currentSpawn) {
+            this.currentSpawn.kill();
+            this.currentSpawn = undefined;
+        }
 
         this.runScript(S.chain(
             S.call(() => {
@@ -141,12 +148,14 @@ namespace Mage {
             });
 
             this.addAction('summon', {
-                script: S.chain(
-                    S.call(() => controller.attack = true),
-                    S.yield(),
-                    S.yield(),
-                    S.waitUntil(() => mage.state !== 'summon')
-                ),
+                script: function*() {
+                    controller.attack = true;
+                    yield; yield;
+                    while (mage.state === 'summon') {
+                        yield;
+                    }
+                    controller.attack = false;
+                },
                 wait: () => Random.float(2, 3),
                 nextAction: 'walk',
             });

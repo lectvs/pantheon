@@ -44,10 +44,10 @@ class StateMachine {
             yield; // Yield one more time so we don't immediately transition to next state.
 
             let selectedTransition: StateMachine.Transition = undefined;
-            while (!selectedTransition) {
+            do {
                 selectedTransition = sm.getValidTransition(sm.currentState);
-                yield;
-            }
+                if (!selectedTransition) yield;
+            } while (!selectedTransition);
 
             yield* S.wait(selectedTransition.delay ?? 0)();
             sm.setState(selectedTransition.toState);

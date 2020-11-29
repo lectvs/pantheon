@@ -32,7 +32,7 @@ class ActionBehavior implements Behavior {
     }
 
     update(delta: number) {
-        this.controller.reset();
+        //this.controller.reset();
         this.stateMachine.update(delta);
 
         if (!this.currentAction) {
@@ -65,7 +65,7 @@ class ActionBehavior implements Behavior {
         this.stateMachine.addState(name, {
             script: function*() {
                 if (action.script) yield* action.script();
-
+                yield;  // Yield once before doing the next action to let final controller inputs go through.
                 b.doAction(b.getNextAction(action.nextAction));
             }
         });
@@ -78,11 +78,11 @@ class ActionBehavior implements Behavior {
         if (action && action !== this.currentActionName) return;
         if (!this.canInterrupt(this.currentAction.interrupt)) return;
         let interruptAction = this.getInterruptAction(this.currentAction);
-        this.controller.reset();
         this.doAction(interruptAction);
     }
 
     protected doAction(name: string) {
+        this.controller.reset();
         this.currentActionName = name;
         this.stateMachine.setState(name);
     }

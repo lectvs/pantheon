@@ -7122,14 +7122,17 @@ var StateMachine = /** @class */ (function () {
                         selectedTransition = undefined;
                         _b.label = 3;
                     case 3:
-                        if (!!selectedTransition) return [3 /*break*/, 5];
                         selectedTransition = sm.getValidTransition(sm.currentState);
+                        if (!!selectedTransition) return [3 /*break*/, 5];
                         return [4 /*yield*/];
                     case 4:
                         _b.sent();
-                        return [3 /*break*/, 3];
-                    case 5: return [5 /*yield**/, __values(S.wait((_a = selectedTransition.delay) !== null && _a !== void 0 ? _a : 0)())];
-                    case 6:
+                        _b.label = 5;
+                    case 5:
+                        if (!selectedTransition) return [3 /*break*/, 3];
+                        _b.label = 6;
+                    case 6: return [5 /*yield**/, __values(S.wait((_a = selectedTransition.delay) !== null && _a !== void 0 ? _a : 0)())];
+                    case 7:
                         _b.sent();
                         sm.setState(selectedTransition.toState);
                         return [2 /*return*/];
@@ -9482,7 +9485,7 @@ var ActionBehavior = /** @class */ (function () {
         configurable: true
     });
     ActionBehavior.prototype.update = function (delta) {
-        this.controller.reset();
+        //this.controller.reset();
         this.stateMachine.update(delta);
         if (!this.currentAction) {
             this.stateMachine.setState(ActionBehavior.START_ACTION);
@@ -9522,7 +9525,9 @@ var ActionBehavior = /** @class */ (function () {
                         case 1:
                             _a.sent();
                             _a.label = 2;
-                        case 2:
+                        case 2: return [4 /*yield*/];
+                        case 3:
+                            _a.sent(); // Yield once before doing the next action to let final controller inputs go through.
                             b.doAction(b.getNextAction(action.nextAction));
                             return [2 /*return*/];
                     }
@@ -9539,10 +9544,10 @@ var ActionBehavior = /** @class */ (function () {
         if (!this.canInterrupt(this.currentAction.interrupt))
             return;
         var interruptAction = this.getInterruptAction(this.currentAction);
-        this.controller.reset();
         this.doAction(interruptAction);
     };
     ActionBehavior.prototype.doAction = function (name) {
+        this.controller.reset();
         this.currentActionName = name;
         this.stateMachine.setState(name);
     };
@@ -10828,12 +10833,14 @@ var Golbin = /** @class */ (function (_super) {
                         switch (_a.label) {
                             case 0:
                                 target = getTarget();
-                                return [5 /*yield**/, __values(S.simul(S.doOverTime(2, function (t) { return controller.attack = true; }), S.doOverTime(2.1, function (t) {
+                                controller.attack = true;
+                                return [5 /*yield**/, __values(S.doOverTime(2, function (t) {
                                         controller.aimDirection.x = target.x - golbin.x;
                                         controller.aimDirection.y = target.y - golbin.y;
-                                    }))())];
+                                    })())];
                             case 1:
                                 _a.sent();
+                                controller.attack = false;
                                 return [2 /*return*/];
                         }
                     });
@@ -11092,24 +11099,22 @@ var Knight = /** @class */ (function (_super) {
             });
             _this.addAction('dash', {
                 script: function () {
-                    var target, aimDir;
+                    var target;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
                             case 0:
                                 target = getTarget();
-                                aimDir = pt(0, 0);
-                                return [5 /*yield**/, __values(S.simul(S.chain(S.doOverTime(1.5, function (t) {
-                                        controller.attack = true;
-                                        aimDir.x = target.x - knight.x;
-                                        aimDir.y = target.y - knight.y;
-                                    }), S.doOverTime(1.5, function (t) {
-                                        controller.attack = true;
-                                    })), S.doOverTime(3.1, function (t) {
-                                        controller.aimDirection.x = aimDir.x;
-                                        controller.aimDirection.y = aimDir.y;
-                                    }))())];
+                                controller.attack = true;
+                                return [5 /*yield**/, __values(S.doOverTime(1.5, function (t) {
+                                        controller.aimDirection.x = target.x - knight.x;
+                                        controller.aimDirection.y = target.y - knight.y;
+                                    })())];
                             case 1:
                                 _a.sent();
+                                return [5 /*yield**/, __values(S.wait(1.5)())];
+                            case 2:
+                                _a.sent();
+                                controller.attack = false;
                                 return [2 /*return*/];
                         }
                     });
@@ -11165,7 +11170,7 @@ var Mage = /** @class */ (function (_super) {
         _this.stateMachine.addState('summon', {
             script: S.chain(S.call(function () {
                 var target_d = Random.inDisc(16, 32);
-                _this.world.addWorldObject(spawn(new Runner({
+                _this.currentSpawn = _this.world.addWorldObject(spawn(new Runner({
                     x: _this.x + target_d.x, y: _this.y + target_d.y,
                     layer: 'main',
                     physicsGroup: 'enemies'
@@ -11194,6 +11199,10 @@ var Mage = /** @class */ (function (_super) {
         _super.prototype.damage.call(this, amount);
         this.setState('idle');
         this.behavior.interrupt();
+        if (this.currentSpawn) {
+            this.currentSpawn.kill();
+            this.currentSpawn = undefined;
+        }
         this.runScript(S.chain(S.call(function () {
             _this.effects.silhouette.color = 0xFFFFFF;
             _this.effects.silhouette.enabled = true;
@@ -11242,7 +11251,30 @@ var Mage = /** @class */ (function (_super) {
                 },
             });
             _this.addAction('summon', {
-                script: S.chain(S.call(function () { return controller.attack = true; }), S.yield(), S.yield(), S.waitUntil(function () { return mage.state !== 'summon'; })),
+                script: function () {
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                controller.attack = true;
+                                return [4 /*yield*/];
+                            case 1:
+                                _a.sent();
+                                return [4 /*yield*/];
+                            case 2:
+                                _a.sent();
+                                _a.label = 3;
+                            case 3:
+                                if (!(mage.state === 'summon')) return [3 /*break*/, 5];
+                                return [4 /*yield*/];
+                            case 4:
+                                _a.sent();
+                                return [3 /*break*/, 3];
+                            case 5:
+                                controller.attack = false;
+                                return [2 /*return*/];
+                        }
+                    });
+                },
                 wait: function () { return Random.float(2, 3); },
                 nextAction: 'walk',
             });
@@ -12578,53 +12610,51 @@ var Throne = /** @class */ (function (_super) {
             var getTarget = function () { return throne.world.select.type(Player); };
             /* ACTIONS */
             _this.addAction('small_jump_1', {
-                script: S.doOverTime(1, function (t) {
+                script: S.call(function () {
                     var targetPos = throne.pickSmallJumpTargetPos();
                     controller.moveDirection.x = targetPos.x - throne.x;
                     controller.moveDirection.y = targetPos.y - throne.y;
                 }),
-                wait: 1,
+                wait: 2,
                 nextAction: 'small_jump_2'
             });
             _this.addAction('small_jump_2', {
-                script: S.doOverTime(1, function (t) {
+                script: S.call(function () {
                     var targetPos = throne.pickSmallJumpTargetPos();
                     controller.moveDirection.x = targetPos.x - throne.x;
                     controller.moveDirection.y = targetPos.y - throne.y;
                 }),
-                wait: 1,
+                wait: 2,
                 nextAction: 'big_jump'
             });
             _this.addAction('big_jump', {
-                script: S.doOverTime(1, function (t) {
+                script: S.call(function () {
                     var targetPos = throne.pickBigJumpTargetPos();
                     controller.moveDirection.x = targetPos.x - throne.x;
                     controller.moveDirection.y = targetPos.y - throne.y;
                     controller.jump = true;
                 }),
-                wait: 3,
+                wait: 4,
                 nextAction: 'dash'
             });
             _this.addAction('dash', {
                 script: function () {
-                    var target, aimDir;
+                    var target;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
                             case 0:
                                 target = getTarget();
-                                aimDir = pt(0, 0);
-                                return [5 /*yield**/, __values(S.simul(S.chain(S.doOverTime(1, function (t) {
-                                        controller.attack = true;
-                                        aimDir.x = target.x - throne.x;
-                                        aimDir.y = target.y - throne.y;
-                                    }), S.doOverTime(1, function (t) {
-                                        controller.attack = true;
-                                    })), S.doOverTime(3.1, function (t) {
-                                        controller.aimDirection.x = aimDir.x;
-                                        controller.aimDirection.y = aimDir.y;
-                                    }))())];
+                                controller.attack = true;
+                                return [5 /*yield**/, __values(S.doOverTime(1, function (t) {
+                                        controller.aimDirection.x = target.x - throne.x;
+                                        controller.aimDirection.y = target.y - throne.y;
+                                    })())];
                             case 1:
                                 _a.sent();
+                                return [5 /*yield**/, __values(S.wait(1)())];
+                            case 2:
+                                _a.sent();
+                                controller.attack = false;
                                 return [2 /*return*/];
                         }
                     });
@@ -12633,7 +12663,7 @@ var Throne = /** @class */ (function (_super) {
                 nextAction: 'vulnerable'
             });
             _this.addAction('vulnerable', {
-                script: S.waitUntil(function () { return _.isEmpty(throne.world.select.typeAll(Bomb)); }),
+                script: S.chain(S.wait(1), S.waitUntil(function () { return _.isEmpty(throne.world.select.typeAll(Bomb)); })),
                 wait: 3,
                 nextAction: 'small_jump_1'
             });

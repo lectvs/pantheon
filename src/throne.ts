@@ -266,66 +266,63 @@ namespace Throne {
             /* ACTIONS */
 
             this.addAction('small_jump_1', {
-                script: S.doOverTime(1, t => {
+                script: S.call(() => {
                     let targetPos = throne.pickSmallJumpTargetPos();
 
                     controller.moveDirection.x = targetPos.x - throne.x;
                     controller.moveDirection.y = targetPos.y - throne.y;
                 }),
-                wait: 1,
+                wait: 2,
                 nextAction: 'small_jump_2'
             });
 
             this.addAction('small_jump_2', {
-                script: S.doOverTime(1, t => {
+                script: S.call(() => {
                     let targetPos = throne.pickSmallJumpTargetPos();
 
                     controller.moveDirection.x = targetPos.x - throne.x;
                     controller.moveDirection.y = targetPos.y - throne.y;
                 }),
-                wait: 1,
+                wait: 2,
                 nextAction: 'big_jump'
             });
 
             this.addAction('big_jump', {
-                script: S.doOverTime(1, t => {
+                script: S.call(() => {
                     let targetPos = throne.pickBigJumpTargetPos();
 
                     controller.moveDirection.x = targetPos.x - throne.x;
                     controller.moveDirection.y = targetPos.y - throne.y;
                     controller.jump = true;
                 }),
-                wait: 3,
+                wait: 4,
                 nextAction: 'dash'
             });
 
             this.addAction('dash', {
                 script: function*() {
                     let target = getTarget();
-                    let aimDir = pt(0, 0);
-                    yield* S.simul(
-                        S.chain(
-                            S.doOverTime(1, t => {
-                                controller.attack = true;
-                                aimDir.x = target.x - throne.x;
-                                aimDir.y = target.y - throne.y;
-                            }),
-                            S.doOverTime(1, t => {
-                                controller.attack = true;
-                            }),
-                        ),
-                        S.doOverTime(3.1, t => {
-                            controller.aimDirection.x = aimDir.x;
-                            controller.aimDirection.y = aimDir.y;
-                        }),
-                    )();
+
+                    controller.attack = true;
+
+                    yield* S.doOverTime(1, t => {
+                        controller.aimDirection.x = target.x - throne.x;
+                        controller.aimDirection.y = target.y - throne.y;
+                    })();
+
+                    yield* S.wait(1)();
+
+                    controller.attack = false;
                 },
                 interrupt: true,
                 nextAction: 'vulnerable'
             });
 
             this.addAction('vulnerable', {
-                script: S.waitUntil(() => _.isEmpty(throne.world.select.typeAll(Bomb))),
+                script: S.chain(
+                    S.wait(1),
+                    S.waitUntil(() => _.isEmpty(throne.world.select.typeAll(Bomb))),
+                ),
                 wait: 3,
                 nextAction: 'small_jump_1'
             })

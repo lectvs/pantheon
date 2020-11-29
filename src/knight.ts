@@ -170,23 +170,17 @@ namespace Knight {
             this.addAction('dash', {
                 script: function*() {
                     let target = getTarget();
-                    let aimDir = pt(0, 0);
-                    yield* S.simul(
-                        S.chain(
-                            S.doOverTime(1.5, t => {
-                                controller.attack = true;
-                                aimDir.x = target.x - knight.x;
-                                aimDir.y = target.y - knight.y;
-                            }),
-                            S.doOverTime(1.5, t => {
-                                controller.attack = true;
-                            }),
-                        ),
-                        S.doOverTime(3.1, t => {
-                            controller.aimDirection.x = aimDir.x;
-                            controller.aimDirection.y = aimDir.y;
-                        }),
-                    )();
+
+                    controller.attack = true;
+
+                    yield* S.doOverTime(1.5, t => {
+                        controller.aimDirection.x = target.x - knight.x;
+                        controller.aimDirection.y = target.y - knight.y;
+                    })();
+
+                    yield* S.wait(1.5)();
+
+                    controller.attack = false;
                 },
                 interrupt: true,
                 wait: () => Random.float(1, 2),
