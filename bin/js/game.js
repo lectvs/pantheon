@@ -10519,12 +10519,21 @@ var Enemy = /** @class */ (function (_super) {
         this.v.y = M.lerpTime(this.v.y, 0, 10, this.delta);
     };
     Enemy.prototype.damage = function (amount) {
+        var _this = this;
         this.health -= amount;
         if (this.health <= 0) {
             this.kill();
         }
-        this.immunitySm.setImmune();
         this.world.playSound('hitenemy');
+        this.immunitySm.setImmune();
+        this.runScript(S.chain(S.call(function () {
+            _this.effects.silhouette.color = 0xFFFFFF;
+            _this.effects.silhouette.enabled = true;
+        }), S.loopFor(8, S.chain(S.wait(this.immuneTime / 8), S.call(function () {
+            _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled;
+        }))), S.call(function () {
+            _this.effects.silhouette.enabled = false;
+        })));
     };
     Enemy.prototype.kill = function () {
         if (this.deadTexture) {
@@ -10779,18 +10788,9 @@ var Golbin = /** @class */ (function (_super) {
         }
     };
     Golbin.prototype.damage = function (amount) {
-        var _this = this;
         _super.prototype.damage.call(this, amount);
         this.setState('idle');
         this.behavior.interrupt();
-        this.runScript(S.chain(S.call(function () {
-            _this.effects.silhouette.color = 0xFFFFFF;
-            _this.effects.silhouette.enabled = true;
-        }), S.loopFor(8, S.chain(S.wait(this.immuneTime / 8), S.call(function () {
-            _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled;
-        }))), S.call(function () {
-            _this.effects.silhouette.enabled = false;
-        })));
     };
     return Golbin;
 }(Enemy));
@@ -11050,18 +11050,9 @@ var Knight = /** @class */ (function (_super) {
         }
     };
     Knight.prototype.damage = function (amount) {
-        var _this = this;
         _super.prototype.damage.call(this, amount);
         this.setState('idle');
         this.behavior.interrupt();
-        this.runScript(S.chain(S.call(function () {
-            _this.effects.silhouette.color = 0xFFFFFF;
-            _this.effects.silhouette.enabled = true;
-        }), S.loopFor(8, S.chain(S.wait(this.immuneTime / 8), S.call(function () {
-            _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled;
-        }))), S.call(function () {
-            _this.effects.silhouette.enabled = false;
-        })));
     };
     return Knight;
 }(Enemy));
@@ -11195,7 +11186,6 @@ var Mage = /** @class */ (function (_super) {
         }
     };
     Mage.prototype.damage = function (amount) {
-        var _this = this;
         _super.prototype.damage.call(this, amount);
         this.setState('idle');
         this.behavior.interrupt();
@@ -11203,14 +11193,6 @@ var Mage = /** @class */ (function (_super) {
             this.currentSpawn.kill();
             this.currentSpawn = undefined;
         }
-        this.runScript(S.chain(S.call(function () {
-            _this.effects.silhouette.color = 0xFFFFFF;
-            _this.effects.silhouette.enabled = true;
-        }), S.loopFor(8, S.chain(S.wait(this.immuneTime / 8), S.call(function () {
-            _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled;
-        }))), S.call(function () {
-            _this.effects.silhouette.enabled = false;
-        })));
     };
     return Mage;
 }(Enemy));
@@ -11679,18 +11661,9 @@ var Runner = /** @class */ (function (_super) {
         return _this;
     }
     Runner.prototype.damage = function (amount) {
-        var _this = this;
         _super.prototype.damage.call(this, amount);
         this.setState('idle');
         this.behavior.interrupt();
-        this.runScript(S.chain(S.call(function () {
-            _this.effects.silhouette.color = 0xFFFFFF;
-            _this.effects.silhouette.enabled = true;
-        }), S.loopFor(8, S.chain(S.wait(this.immuneTime / 8), S.call(function () {
-            _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled;
-        }))), S.call(function () {
-            _this.effects.silhouette.enabled = false;
-        })));
     };
     return Runner;
 }(Enemy));

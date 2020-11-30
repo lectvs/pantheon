@@ -58,7 +58,7 @@ postjam
 - /debug options menu (with FPS option)
 - /better enemy behavior system
     - /test behavior not resetting controller
-- DRY enemy immune animation
+- /DRY enemy immune animation
 - new content
     - add some more enemies
     - add music/ambience during silent parts

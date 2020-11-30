@@ -59,22 +59,6 @@ class Runner extends Enemy {
 
         this.setState('idle');
         this.behavior.interrupt();
-
-        this.runScript(S.chain(
-            S.call(() => {
-                this.effects.silhouette.color = 0xFFFFFF;
-                this.effects.silhouette.enabled = true;
-            }),
-            S.loopFor(8, S.chain(
-                S.wait(this.immuneTime/8),
-                S.call(() => {
-                    this.effects.silhouette.enabled = !this.effects.silhouette.enabled;
-                })
-            )),
-            S.call(() => {
-                this.effects.silhouette.enabled = false;
-            }),
-        ));
     }
 }
 
