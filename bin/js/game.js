@@ -11941,13 +11941,20 @@ function getStoryboard() {
         'gameplay': {
             type: 'gameplay',
             transitions: [
-                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(1); }, delay: 0.5, toNode: 'wave_2' },
-                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(2); }, delay: 0.5, toNode: 'wave_3' },
-                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(3); }, delay: 0.5, toNode: 'wave_4' },
-                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(4); }, delay: 0.5, toNode: 'wave_5' },
-                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(5); }, delay: 0.5, toNode: 'wave_king' },
-                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(9001); }, toNode: 'win' },
+                { condition: function () { return global.world.select.type(WaveController).isKingWaveDefeated(); }, toNode: 'win' },
                 { condition: function () { return global.world.select.type(Player).health <= 0; }, toNode: 'defeat' },
+                { condition: function () { return global.world.select.type(WaveController).isNormalWaveDefeated(); }, delay: 0.5, toNode: 'post_gameplay' },
+            ]
+        },
+        'post_gameplay': {
+            type: 'gameplay',
+            transitions: [
+                { condition: function () { return global.world.select.type(Player).health <= 0; }, toNode: 'defeat' },
+                { condition: function () { return global.world.select.type(WaveController).isNormalWaveDefeated(1); }, toNode: 'wave_2' },
+                { condition: function () { return global.world.select.type(WaveController).isNormalWaveDefeated(2); }, toNode: 'wave_3' },
+                { condition: function () { return global.world.select.type(WaveController).isNormalWaveDefeated(3); }, toNode: 'wave_4' },
+                { condition: function () { return global.world.select.type(WaveController).isNormalWaveDefeated(4); }, toNode: 'wave_5' },
+                { condition: function () { return global.world.select.type(WaveController).isNormalWaveDefeated(5); }, toNode: 'wave_king' },
             ]
         },
         'wave_1': {
@@ -12774,11 +12781,12 @@ var WaveController = /** @class */ (function (_super) {
         _this.currentWave = 0;
         return _this;
     }
-    WaveController.prototype.isWaveDefeated = function (wave) {
-        if (wave === 9001) {
-            return (!this.world.select.type(Throne, false) || this.world.select.type(Throne).health) <= 1000 && this.currentWave === wave;
-        }
+    WaveController.prototype.isNormalWaveDefeated = function (wave) {
+        if (wave === void 0) { wave = this.currentWave; }
         return this.world.select.nameAll('spawn').length <= 0 && this.world.select.typeAll(Enemy).length <= 1 && this.currentWave === wave;
+    };
+    WaveController.prototype.isKingWaveDefeated = function () {
+        return (!this.world.select.type(Throne, false) || this.world.select.type(Throne).health) <= 1000 && this.currentWave === 9001;
     };
     WaveController.prototype.spawnWave1 = function () {
         this.currentWave = 1;

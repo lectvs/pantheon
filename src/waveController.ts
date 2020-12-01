@@ -3,11 +3,12 @@ class WaveController extends WorldObject {
 
     music: Sound;
 
-    isWaveDefeated(wave: number) {
-        if (wave === 9001) {
-            return (!this.world.select.type(Throne, false) || this.world.select.type(Throne).health) <= 1000 && this.currentWave === wave;
-        }
+    isNormalWaveDefeated(wave: number = this.currentWave) {
         return this.world.select.nameAll('spawn').length <= 0 && this.world.select.typeAll(Enemy).length <= 1 && this.currentWave === wave;
+    }
+
+    isKingWaveDefeated() {
+        return (!this.world.select.type(Throne, false) || this.world.select.type(Throne).health) <= 1000 && this.currentWave === 9001;
     }
 
     spawnWave1() {

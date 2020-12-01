@@ -66,6 +66,8 @@ postjam
     - add dialog talking sound effects?
     - hoop cleave through enemies at full power?
 - cutscene skips
+- correct storyboard health delay issue
+    - transition nodes?
 - better scripting syntax?
     - look into writing TS transforms for scripts?
 - in general clean up the storyboard

@@ -90,13 +90,20 @@ function getStoryboard(): Storyboard { return {
     'gameplay': {
         type: 'gameplay',
         transitions: [
-            { condition: () => global.world.select.type(WaveController).isWaveDefeated(1), delay: 0.5, toNode: 'wave_2' },
-            { condition: () => global.world.select.type(WaveController).isWaveDefeated(2), delay: 0.5, toNode: 'wave_3' },
-            { condition: () => global.world.select.type(WaveController).isWaveDefeated(3), delay: 0.5, toNode: 'wave_4' },
-            { condition: () => global.world.select.type(WaveController).isWaveDefeated(4), delay: 0.5, toNode: 'wave_5' },
-            { condition: () => global.world.select.type(WaveController).isWaveDefeated(5), delay: 0.5, toNode: 'wave_king' },
-            { condition: () => global.world.select.type(WaveController).isWaveDefeated(9001), toNode: 'win' },
+            { condition: () => global.world.select.type(WaveController).isKingWaveDefeated(), toNode: 'win' },
             { condition: () => global.world.select.type(Player).health <= 0, toNode: 'defeat' },
+            { condition: () => global.world.select.type(WaveController).isNormalWaveDefeated(), delay: 0.5, toNode: 'post_gameplay' },
+        ]
+    },
+    'post_gameplay': {
+        type: 'gameplay',
+        transitions: [
+            { condition: () => global.world.select.type(Player).health <= 0, toNode: 'defeat' },
+            { condition: () => global.world.select.type(WaveController).isNormalWaveDefeated(1), toNode: 'wave_2' },
+            { condition: () => global.world.select.type(WaveController).isNormalWaveDefeated(2), toNode: 'wave_3' },
+            { condition: () => global.world.select.type(WaveController).isNormalWaveDefeated(3), toNode: 'wave_4' },
+            { condition: () => global.world.select.type(WaveController).isNormalWaveDefeated(4), toNode: 'wave_5' },
+            { condition: () => global.world.select.type(WaveController).isNormalWaveDefeated(5), toNode: 'wave_king' },
         ]
     },
     'wave_1': {
