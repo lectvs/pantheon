@@ -11936,21 +11936,21 @@ function getStoryboard() {
                     }
                 });
             },
-            transitions: [{ toNode: 'spawn_wave_1' }]
+            transitions: [{ toNode: 'wave_1' }]
         },
         'gameplay': {
             type: 'gameplay',
             transitions: [
-                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(1); }, delay: 0.5, toNode: 'spawn_wave_2' },
-                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(2); }, delay: 0.5, toNode: 'spawn_wave_3' },
-                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(3); }, delay: 0.5, toNode: 'spawn_wave_4' },
-                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(4); }, delay: 0.5, toNode: 'spawn_wave_5' },
-                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(5); }, delay: 0.5, toNode: 'spawn_wave_king' },
+                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(1); }, delay: 0.5, toNode: 'wave_2' },
+                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(2); }, delay: 0.5, toNode: 'wave_3' },
+                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(3); }, delay: 0.5, toNode: 'wave_4' },
+                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(4); }, delay: 0.5, toNode: 'wave_5' },
+                { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(5); }, delay: 0.5, toNode: 'wave_king' },
                 { condition: function () { return global.world.select.type(WaveController).isWaveDefeated(9001); }, toNode: 'win' },
                 { condition: function () { return global.world.select.type(Player).health <= 0; }, toNode: 'defeat' },
             ]
         },
-        'spawn_wave_1': {
+        'wave_1': {
             type: 'cutscene',
             script: function () {
                 return __generator(this, function (_a) {
@@ -11970,8 +11970,19 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(0.5)];
                         case 5:
                             _a.sent();
-                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
-                        case 6:
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [{ toNode: 'spawn_wave_1' }]
+        },
+        'spawn_wave_1': {
+            type: 'cutscene',
+            script: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
+                        case 1:
                             _a.sent();
                             global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
                             global.world.select.type(WaveController).spawnWave1();
@@ -11982,7 +11993,7 @@ function getStoryboard() {
             },
             transitions: [{ toNode: 'gameplay' }]
         },
-        'spawn_wave_2': {
+        'wave_2': {
             type: 'cutscene',
             script: function () {
                 return __generator(this, function (_a) {
@@ -12009,8 +12020,19 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(0.5)];
                         case 6:
                             _a.sent();
-                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
-                        case 7:
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [{ toNode: 'spawn_wave_2' }]
+        },
+        'spawn_wave_2': {
+            type: 'cutscene',
+            script: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
+                        case 1:
                             _a.sent();
                             global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
                             global.world.select.type(WaveController).spawnWave2();
@@ -12021,7 +12043,7 @@ function getStoryboard() {
             },
             transitions: [{ toNode: 'gameplay' }]
         },
-        'spawn_wave_3': {
+        'wave_3': {
             type: 'cutscene',
             script: function () {
                 return __generator(this, function (_a) {
@@ -12048,8 +12070,19 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(0.5)];
                         case 6:
                             _a.sent();
-                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
-                        case 7:
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [{ toNode: 'spawn_wave_3' }]
+        },
+        'spawn_wave_3': {
+            type: 'cutscene',
+            script: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
+                        case 1:
                             _a.sent();
                             global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
                             global.world.select.type(WaveController).spawnWave3();
@@ -12060,7 +12093,7 @@ function getStoryboard() {
             },
             transitions: [{ toNode: 'gameplay' }]
         },
-        'spawn_wave_4': {
+        'wave_4': {
             type: 'cutscene',
             script: function () {
                 return __generator(this, function (_a) {
@@ -12087,8 +12120,19 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(0.5)];
                         case 6:
                             _a.sent();
-                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
-                        case 7:
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [{ toNode: 'spawn_wave_4' }]
+        },
+        'spawn_wave_4': {
+            type: 'cutscene',
+            script: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
+                        case 1:
                             _a.sent();
                             global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
                             global.world.select.type(WaveController).spawnWave4();
@@ -12099,7 +12143,7 @@ function getStoryboard() {
             },
             transitions: [{ toNode: 'gameplay' }]
         },
-        'spawn_wave_5': {
+        'wave_5': {
             type: 'cutscene',
             script: function () {
                 return __generator(this, function (_a) {
@@ -12123,8 +12167,19 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(0.5)];
                         case 5:
                             _a.sent();
-                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
-                        case 6:
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [{ toNode: 'spawn_wave_5' }]
+        },
+        'spawn_wave_5': {
+            type: 'cutscene',
+            script: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
+                        case 1:
                             _a.sent();
                             global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
                             global.world.select.type(WaveController).spawnWave5();
@@ -12135,10 +12190,9 @@ function getStoryboard() {
             },
             transitions: [{ toNode: 'gameplay' }]
         },
-        'spawn_wave_king': {
+        'wave_king': {
             type: 'cutscene',
             script: function () {
-                var throne, player, shakeSound;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -12148,8 +12202,6 @@ function getStoryboard() {
                             _a.sent();
                             if (!HARD_DIFFICULTY)
                                 global.world.select.type(Player).health = Player.MAX_HP;
-                            throne = global.world.select.type(Throne);
-                            player = global.world.select.type(Player);
                             return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();
@@ -12174,6 +12226,21 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(0.5)];
                         case 9:
                             _a.sent();
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [{ toNode: 'spawn_wave_king' }]
+        },
+        'spawn_wave_king': {
+            type: 'cutscene',
+            script: function () {
+                var throne, player, shakeSound;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            throne = global.world.select.type(Throne);
+                            player = global.world.select.type(Player);
                             shakeSound = global.world.playSound('shake');
                             shakeSound.loop = true;
                             return [4 /*yield*/, S.simul(S.shake(2, 6), S.chain(S.wait(3), S.doOverTime(1.5, function (t) {
@@ -12189,17 +12256,17 @@ function getStoryboard() {
                                     throne.king.layer = 'main';
                                     throne.shadow.layer = 'bg';
                                 })))];
-                        case 10:
+                        case 1:
                             _a.sent();
                             shakeSound.paused = true;
                             return [4 /*yield*/, S.wait(2)];
-                        case 11:
+                        case 2:
                             _a.sent();
                             return [4 /*yield*/, S.dialog("Prove thyself worthy!")];
-                        case 12:
+                        case 3:
                             _a.sent();
                             return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
-                        case 13:
+                        case 4:
                             _a.sent();
                             throne.activate();
                             global.world.runScript(S.chain(S.wait(0.5), S.showSlide(function () { return new Slide({

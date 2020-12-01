@@ -85,21 +85,21 @@ function getStoryboard(): Storyboard { return {
 
             Debug.SKIP_RATE = 1;
         },
-        transitions: [{ toNode: 'spawn_wave_1' }]
+        transitions: [{ toNode: 'wave_1' }]
     },
     'gameplay': {
         type: 'gameplay',
         transitions: [
-            { condition: () => global.world.select.type(WaveController).isWaveDefeated(1), delay: 0.5, toNode: 'spawn_wave_2' },
-            { condition: () => global.world.select.type(WaveController).isWaveDefeated(2), delay: 0.5, toNode: 'spawn_wave_3' },
-            { condition: () => global.world.select.type(WaveController).isWaveDefeated(3), delay: 0.5, toNode: 'spawn_wave_4' },
-            { condition: () => global.world.select.type(WaveController).isWaveDefeated(4), delay: 0.5, toNode: 'spawn_wave_5' },
-            { condition: () => global.world.select.type(WaveController).isWaveDefeated(5), delay: 0.5, toNode: 'spawn_wave_king' },
+            { condition: () => global.world.select.type(WaveController).isWaveDefeated(1), delay: 0.5, toNode: 'wave_2' },
+            { condition: () => global.world.select.type(WaveController).isWaveDefeated(2), delay: 0.5, toNode: 'wave_3' },
+            { condition: () => global.world.select.type(WaveController).isWaveDefeated(3), delay: 0.5, toNode: 'wave_4' },
+            { condition: () => global.world.select.type(WaveController).isWaveDefeated(4), delay: 0.5, toNode: 'wave_5' },
+            { condition: () => global.world.select.type(WaveController).isWaveDefeated(5), delay: 0.5, toNode: 'wave_king' },
             { condition: () => global.world.select.type(WaveController).isWaveDefeated(9001), toNode: 'win' },
             { condition: () => global.world.select.type(Player).health <= 0, toNode: 'defeat' },
         ]
     },
-    'spawn_wave_1': {
+    'wave_1': {
         type: 'cutscene',
         script: function*() {
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
@@ -109,6 +109,12 @@ function getStoryboard(): Storyboard { return {
             yield S.dialog("Round one beginneth now.");
 
             yield S.wait(0.5);
+        },
+        transitions: [{ toNode: 'spawn_wave_1' }]
+    },
+    'spawn_wave_1': {
+        type: 'cutscene',
+        script: function*() {
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'));
 
             global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
@@ -118,7 +124,7 @@ function getStoryboard(): Storyboard { return {
         },
         transitions: [{ toNode: 'gameplay' }]
     },
-    'spawn_wave_2': {
+    'wave_2': {
         type: 'cutscene',
         script: function*() {
             global.world.select.type(WaveController).stopMusic();
@@ -133,6 +139,12 @@ function getStoryboard(): Storyboard { return {
             yield S.dialog("Round two beginneth now.");
 
             yield S.wait(0.5);
+        },
+        transitions: [{ toNode: 'spawn_wave_2' }]
+    },
+    'spawn_wave_2': {
+        type: 'cutscene',
+        script: function*() {
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'));
 
             global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
@@ -142,7 +154,7 @@ function getStoryboard(): Storyboard { return {
         },
         transitions: [{ toNode: 'gameplay' }]
     },
-    'spawn_wave_3': {
+    'wave_3': {
         type: 'cutscene',
         script: function*() {
             global.world.select.type(WaveController).stopMusic();
@@ -157,6 +169,12 @@ function getStoryboard(): Storyboard { return {
             yield S.dialog("Round three beginneth now.");
 
             yield S.wait(0.5);
+        },
+        transitions: [{ toNode: 'spawn_wave_3' }]
+    },
+    'spawn_wave_3': {
+        type: 'cutscene',
+        script: function*() {
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'));
 
             global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
@@ -166,7 +184,7 @@ function getStoryboard(): Storyboard { return {
         },
         transitions: [{ toNode: 'gameplay' }]
     },
-    'spawn_wave_4': {
+    'wave_4': {
         type: 'cutscene',
         script: function*() {
             global.world.select.type(WaveController).stopMusic();
@@ -181,6 +199,12 @@ function getStoryboard(): Storyboard { return {
             yield S.dialog("Prepare thyself for round four.");
 
             yield S.wait(0.5);
+        },
+        transitions: [{ toNode: 'spawn_wave_4' }]
+    },
+    'spawn_wave_4': {
+        type: 'cutscene',
+        script: function*() {
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'));
 
             global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
@@ -190,7 +214,7 @@ function getStoryboard(): Storyboard { return {
         },
         transitions: [{ toNode: 'gameplay' }]
     },
-    'spawn_wave_5': {
+    'wave_5': {
         type: 'cutscene',
         script: function*() {
             global.world.select.type(WaveController).stopMusic();
@@ -204,6 +228,12 @@ function getStoryboard(): Storyboard { return {
             yield S.dialog("Impressive! One more round to go'eth, but this will be the hardest.");
 
             yield S.wait(0.5);
+        },
+        transitions: [{ toNode: 'spawn_wave_5' }]
+    },
+    'spawn_wave_5': {
+        type: 'cutscene',
+        script: function*() {
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'));
 
             global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
@@ -213,16 +243,13 @@ function getStoryboard(): Storyboard { return {
         },
         transitions: [{ toNode: 'gameplay' }]
     },
-    'spawn_wave_king': {
+    'wave_king': {
         type: 'cutscene',
         script: function*() {
             global.world.select.type(WaveController).stopMusic();
             yield S.wait(1);
 
             if (!HARD_DIFFICULTY) global.world.select.type(Player).health = Player.MAX_HP;
-
-            let throne = global.world.select.type(Throne);
-            let player = global.world.select.type(Player);
 
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
             yield S.wait(1);
@@ -234,7 +261,15 @@ function getStoryboard(): Storyboard { return {
             yield S.dialog("If thou want'st it so bad... Heh heh heh...");
 
             yield S.wait(0.5);
-
+        },
+        transitions: [{ toNode: 'spawn_wave_king' }]
+    },
+    'spawn_wave_king': {
+        type: 'cutscene',
+        script: function*() {
+            let throne = global.world.select.type(Throne);
+            let player = global.world.select.type(Player);
+            
             let shakeSound = global.world.playSound('shake');
             shakeSound.loop = true;
 
