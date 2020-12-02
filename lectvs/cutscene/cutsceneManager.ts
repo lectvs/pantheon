@@ -120,6 +120,7 @@ class CutsceneManager {
         if (completed.node.onFinish) completed.node.onFinish();
 
         this.theater.dialogBox.complete();
+        this.theater.clearSlides();
     }
 
     private getCutsceneByName(name: string) {

@@ -65,7 +65,7 @@ class Camera {
         this.debugOffsetX = 0;
         this.debugOffsetY = 0;
 
-        this.initPosition();
+        this.snapPosition();
     }
 
     update() {
@@ -125,7 +125,7 @@ class Camera {
         }
     }
     
-    initPosition() {
+    snapPosition() {
         let target = this.mode.getTargetPt(this);
         this.x = target.x;
         this.y = target.y;

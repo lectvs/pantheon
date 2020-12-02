@@ -72,14 +72,14 @@ class StoryManager {
         this.stateMachine.update(this.theater.delta);
     }
 
+    getCurrentInteractableObjects(stageName?: string) {
+        return this.getInteractableObjectsForNode(this.currentNode, stageName);
+    }
+
     onStageLoad() {
         this.cutsceneManager.onStageLoad();
         this.eventManager.onStageLoad();
         this.storyConfig.execute();
-    }
-
-    getCurrentInteractableObjects(stageName?: string) {
-        return this.getInteractableObjectsForNode(this.currentNode, stageName);
     }
 
     setNode(node: string) {

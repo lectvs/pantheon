@@ -61,7 +61,8 @@ class DialogBox extends Sprite {
 
     private updateDialogProgression() {
         this.characterTimer.update(this.delta);
-        if (Input.justDown(Input.GAME_ADVANCE_DIALOG)) {
+        if (Input.justDown(Input.GAME_ADVANCE_CUTSCENE)) {
+            Input.consume(Input.GAME_ADVANCE_CUTSCENE);
             this.advanceDialog();
         }
     }

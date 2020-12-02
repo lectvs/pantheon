@@ -58,8 +58,6 @@ class Theater extends World {
         }
     }
 
-    // Theater cannot have preUpdate or postUpdate because I say so
-
     update() {
         this.storyManager.update();
 
@@ -69,8 +67,6 @@ class Theater extends World {
             this.endOfFrameQueue.shift()();
         }
     }
-
-    // Theater cannot have preRender or postRender because it doesn't have a parent world
 
     render(screen: Texture) {
         this.interactionManager.preRender();
@@ -102,10 +98,6 @@ class Theater extends World {
 
     onStageLoad() {
         this.storyManager.onStageLoad();
-    }
-
-    protected updateDebugMousePosition() {
-        // Override to do nothing since we don't want to display the theater's mouse position
     }
     
     private loadDialogBox(factory: Factory<DialogBox>) {

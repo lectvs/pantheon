@@ -4,7 +4,7 @@ namespace Input {
         [Input.FULLSCREEN]: string[],
 
         // Game
-        [Input.GAME_ADVANCE_DIALOG]: string[],
+        [Input.GAME_ADVANCE_CUTSCENE]: string[],
         [Input.GAME_PAUSE]: string[],
         [Input.GAME_CLOSE_MENU]: string[],
         [Input.GAME_SELECT]: string[],
@@ -273,7 +273,7 @@ class Input {
 namespace Input {
     export const FULLSCREEN = 'fullscreen';
 
-    export const GAME_ADVANCE_DIALOG = 'game_advanceDialog';
+    export const GAME_ADVANCE_CUTSCENE = 'game_advanceCutscene';
     export const GAME_PAUSE = 'game_pause';
     export const GAME_CLOSE_MENU = 'game_closeMenu';
     export const GAME_SELECT = 'game_select';

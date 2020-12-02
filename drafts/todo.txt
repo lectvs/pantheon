@@ -59,13 +59,15 @@ postjam
 - /better enemy behavior system
     - /test behavior not resetting controller
 - /DRY enemy immune animation
+- /cutscene skips
 - new content
     - add some more enemies
     - add music/ambience during silent parts
     - king emotes
     - add dialog talking sound effects?
     - hoop cleave through enemies at full power?
-- cutscene skips
+- cutscene skips finishImmediately the cutscene?
+- redesign slide system (allow for more than just sprites?)
 - correct storyboard health delay issue
     - transition nodes?
 - better scripting syntax?

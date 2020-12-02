@@ -977,7 +977,7 @@ var Input = /** @class */ (function () {
 }());
 (function (Input) {
     Input.FULLSCREEN = 'fullscreen';
-    Input.GAME_ADVANCE_DIALOG = 'game_advanceDialog';
+    Input.GAME_ADVANCE_CUTSCENE = 'game_advanceCutscene';
     Input.GAME_PAUSE = 'game_pause';
     Input.GAME_CLOSE_MENU = 'game_closeMenu';
     Input.GAME_SELECT = 'game_select';
@@ -2074,6 +2074,7 @@ var CutsceneManager = /** @class */ (function () {
         if (completed.node.onFinish)
             completed.node.onFinish();
         this.theater.dialogBox.complete();
+        this.theater.clearSlides();
     };
     CutsceneManager.prototype.getCutsceneByName = function (name) {
         var node = this.storyboard[name];
@@ -2109,6 +2110,7 @@ var S;
                                 var toPoint = toMode.getTargetPt(camera);
                                 cameraPoint.x = M.lerp(startPoint.x, toPoint.x + toMode.offsetX, easingFunction(t));
                                 cameraPoint.y = M.lerp(startPoint.y, toPoint.y + toMode.offsetY, easingFunction(t));
+                                camera.snapPosition();
                             })())];
                     case 1:
                         _a.sent();
@@ -3857,89 +3859,6 @@ var World = /** @class */ (function () {
     })(Actions = World.Actions || (World.Actions = {}));
 })(World || (World = {}));
 /// <reference path="../world/world.ts" />
-var Menu = /** @class */ (function (_super) {
-    __extends(Menu, _super);
-    function Menu(menuSystem) {
-        var _this = _super.call(this) || this;
-        _this.menuSystem = menuSystem;
-        return _this;
-    }
-    return Menu;
-}(World));
-var MetricsMenu = /** @class */ (function (_super) {
-    __extends(MetricsMenu, _super);
-    function MetricsMenu(menuSystem) {
-        var _this = _super.call(this, menuSystem) || this;
-        _this.backgroundColor = 0x000000;
-        _this.plot = global.metrics.plotLastRecording();
-        var plotSprite = _this.addWorldObject(new Sprite());
-        plotSprite.setTexture(_this.plot.texture);
-        _this.addWorldObject(new SpriteText({
-            x: 0, y: global.gameHeight,
-            name: 'graphxy',
-            font: Debug.FONT,
-            style: { color: 0x00FF00 },
-            anchor: Anchor.BOTTOM_LEFT,
-        }));
-        return _this;
-    }
-    MetricsMenu.prototype.update = function () {
-        _super.prototype.update.call(this);
-        if (Input.justDown(Input.GAME_CLOSE_MENU)) {
-            Input.consume(Input.GAME_CLOSE_MENU);
-            this.menuSystem.game.unpauseGame();
-        }
-        this.select.name('graphxy')
-            .setText(this.getPlotY().toFixed(2) + " ms");
-    };
-    MetricsMenu.prototype.getPlotX = function () {
-        return this.plot.graphBounds.left + Input.mouseX / global.gameWidth * (this.plot.graphBounds.right - this.plot.graphBounds.left);
-    };
-    MetricsMenu.prototype.getPlotY = function () {
-        return this.plot.graphBounds.bottom + (1 - Input.mouseY / global.gameHeight) * (this.plot.graphBounds.top - this.plot.graphBounds.bottom);
-    };
-    return MetricsMenu;
-}(Menu));
-/// <reference path="../menu/menu.ts" />
-var DebugOptionsMenu = /** @class */ (function (_super) {
-    __extends(DebugOptionsMenu, _super);
-    function DebugOptionsMenu(menuSystem) {
-        var _this = _super.call(this, menuSystem) || this;
-        _this.backgroundColor = 0x000000;
-        _this.volume = 0;
-        _this.addWorldObject(new SpriteText({
-            x: 20, y: 20,
-            text: "- debug options -"
-        }));
-        var getDebugText = function () { return "debug overlay: " + (Debug.SHOW_OVERLAY ? "ON" : "OFF"); };
-        var debugOverlayButton = _this.addWorldObject(new MenuTextButton({
-            x: 20, y: 50,
-            text: getDebugText(),
-            onClick: function () {
-                Debug.SHOW_OVERLAY = !Debug.SHOW_OVERLAY;
-                debugOverlayButton.setText(getDebugText());
-            }
-        }));
-        _this.addWorldObject(new MenuTextButton({
-            x: 20, y: 110,
-            text: "back",
-            onClick: function () {
-                menuSystem.game.playSound('click');
-                menuSystem.back();
-            }
-        }));
-        return _this;
-    }
-    DebugOptionsMenu.prototype.update = function () {
-        _super.prototype.update.call(this);
-        if (Input.justDown(Input.GAME_CLOSE_MENU)) {
-            Input.consume(Input.GAME_CLOSE_MENU);
-            this.menuSystem.back();
-        }
-    };
-    return DebugOptionsMenu;
-}(Menu));
-/// <reference path="../world/world.ts" />
 var DebugOverlay = /** @class */ (function (_super) {
     __extends(DebugOverlay, _super);
     function DebugOverlay() {
@@ -4006,6 +3925,50 @@ var Experiment = /** @class */ (function () {
     };
     return Experiment;
 }());
+/// <reference path="../world/world.ts" />
+var Menu = /** @class */ (function (_super) {
+    __extends(Menu, _super);
+    function Menu(menuSystem) {
+        var _this = _super.call(this) || this;
+        _this.menuSystem = menuSystem;
+        return _this;
+    }
+    return Menu;
+}(World));
+var MetricsMenu = /** @class */ (function (_super) {
+    __extends(MetricsMenu, _super);
+    function MetricsMenu(menuSystem) {
+        var _this = _super.call(this, menuSystem) || this;
+        _this.backgroundColor = 0x000000;
+        _this.plot = global.metrics.plotLastRecording();
+        var plotSprite = _this.addWorldObject(new Sprite());
+        plotSprite.setTexture(_this.plot.texture);
+        _this.addWorldObject(new SpriteText({
+            x: 0, y: global.gameHeight,
+            name: 'graphxy',
+            font: Debug.FONT,
+            style: { color: 0x00FF00 },
+            anchor: Anchor.BOTTOM_LEFT,
+        }));
+        return _this;
+    }
+    MetricsMenu.prototype.update = function () {
+        _super.prototype.update.call(this);
+        if (Input.justDown(Input.GAME_CLOSE_MENU)) {
+            Input.consume(Input.GAME_CLOSE_MENU);
+            this.menuSystem.game.unpauseGame();
+        }
+        this.select.name('graphxy')
+            .setText(this.getPlotY().toFixed(2) + " ms");
+    };
+    MetricsMenu.prototype.getPlotX = function () {
+        return this.plot.graphBounds.left + Input.mouseX / global.gameWidth * (this.plot.graphBounds.right - this.plot.graphBounds.left);
+    };
+    MetricsMenu.prototype.getPlotY = function () {
+        return this.plot.graphBounds.bottom + (1 - Input.mouseY / global.gameHeight) * (this.plot.graphBounds.top - this.plot.graphBounds.bottom);
+    };
+    return MetricsMenu;
+}(Menu));
 /// <reference path="../worldObject.ts" />
 var SpriteText = /** @class */ (function (_super) {
     __extends(SpriteText, _super);
@@ -5782,7 +5745,8 @@ var DialogBox = /** @class */ (function (_super) {
     };
     DialogBox.prototype.updateDialogProgression = function () {
         this.characterTimer.update(this.delta);
-        if (Input.justDown(Input.GAME_ADVANCE_DIALOG)) {
+        if (Input.justDown(Input.GAME_ADVANCE_CUTSCENE)) {
+            Input.consume(Input.GAME_ADVANCE_CUTSCENE);
             this.advanceDialog();
         }
     };
@@ -6013,8 +5977,9 @@ var SlideManager = /** @class */ (function () {
         this.slides = [];
     }
     SlideManager.prototype.addSlide = function (slide) {
+        slide.layer = Theater.LAYER_SLIDES;
         World.Actions.setLayer(slide, Theater.LAYER_SLIDES);
-        World.Actions.addWorldObjectToWorld(slide, this.theater);
+        this.theater.addWorldObject(slide);
         this.slides.push(slide);
         return slide;
     };
@@ -6022,7 +5987,7 @@ var SlideManager = /** @class */ (function () {
         if (exceptLast === void 0) { exceptLast = 0; }
         var deleteCount = this.slides.length - exceptLast;
         for (var i = 0; i < deleteCount; i++) {
-            World.Actions.removeWorldObjectFromWorld(this.slides[i]);
+            this.slides[i].removeFromWorld();
         }
         this.slides.splice(0, deleteCount);
     };
@@ -6202,7 +6167,6 @@ var Theater = /** @class */ (function (_super) {
         enumerable: false,
         configurable: true
     });
-    // Theater cannot have preUpdate or postUpdate because I say so
     Theater.prototype.update = function () {
         this.storyManager.update();
         _super.prototype.update.call(this);
@@ -6210,7 +6174,6 @@ var Theater = /** @class */ (function (_super) {
             this.endOfFrameQueue.shift()();
         }
     };
-    // Theater cannot have preRender or postRender because it doesn't have a parent world
     Theater.prototype.render = function (screen) {
         this.interactionManager.preRender();
         _super.prototype.render.call(this, screen);
@@ -6238,9 +6201,6 @@ var Theater = /** @class */ (function (_super) {
     };
     Theater.prototype.onStageLoad = function () {
         this.storyManager.onStageLoad();
-    };
-    Theater.prototype.updateDebugMousePosition = function () {
-        // Override to do nothing since we don't want to display the theater's mouse position
     };
     Theater.prototype.loadDialogBox = function (factory) {
         this.dialogBox = this.addWorldObject(factory());
@@ -6467,13 +6427,13 @@ var StoryManager = /** @class */ (function () {
         this.cutsceneManager.update();
         this.stateMachine.update(this.theater.delta);
     };
+    StoryManager.prototype.getCurrentInteractableObjects = function (stageName) {
+        return this.getInteractableObjectsForNode(this.currentNode, stageName);
+    };
     StoryManager.prototype.onStageLoad = function () {
         this.cutsceneManager.onStageLoad();
         this.eventManager.onStageLoad();
         this.storyConfig.execute();
-    };
-    StoryManager.prototype.getCurrentInteractableObjects = function (stageName) {
-        return this.getInteractableObjectsForNode(this.currentNode, stageName);
     };
     StoryManager.prototype.setNode = function (node) {
         if (!this.getNodeByName(node))
@@ -7249,7 +7209,7 @@ var Camera = /** @class */ (function () {
         this._shakeY = 0;
         this.debugOffsetX = 0;
         this.debugOffsetY = 0;
-        this.initPosition();
+        this.snapPosition();
     }
     Object.defineProperty(Camera.prototype, "worldOffsetX", {
         get: function () { return this.x - this.width / 2 + this._shakeX + this.debugOffsetX; },
@@ -7315,7 +7275,7 @@ var Camera = /** @class */ (function () {
             this.y = M.lerpTime(this.y, targety, this.movement.speed, this.world.delta);
         }
     };
-    Camera.prototype.initPosition = function () {
+    Camera.prototype.snapPosition = function () {
         var target = this.mode.getTargetPt(this);
         this.x = target.x;
         this.y = target.y;
@@ -11214,6 +11174,15 @@ var PauseMenu = /** @class */ (function (_super) {
         }));
         _this.addWorldObject(new MenuTextButton({
             x: 20, y: 80,
+            text: "skip current cutscene",
+            onClick: function () {
+                _this.menuSystem.game.playSound('click');
+                menuSystem.game.unpauseGame();
+                global.theater.skipCurrentCutscene();
+            }
+        }));
+        _this.addWorldObject(new MenuTextButton({
+            x: 20, y: 110,
             text: "options",
             onClick: function () {
                 menuSystem.game.playSound('click');
@@ -11280,6 +11249,44 @@ var OptionsMenu = /** @class */ (function (_super) {
     };
     return OptionsMenu;
 }(Menu));
+var DebugOptionsMenu = /** @class */ (function (_super) {
+    __extends(DebugOptionsMenu, _super);
+    function DebugOptionsMenu(menuSystem) {
+        var _this = _super.call(this, menuSystem) || this;
+        _this.backgroundColor = 0x000000;
+        _this.volume = 0;
+        _this.addWorldObject(new SpriteText({
+            x: 20, y: 20,
+            text: "- debug options -"
+        }));
+        var getDebugText = function () { return "debug overlay: " + (Debug.SHOW_OVERLAY ? "ON" : "OFF"); };
+        var debugOverlayButton = _this.addWorldObject(new MenuTextButton({
+            x: 20, y: 50,
+            text: getDebugText(),
+            onClick: function () {
+                Debug.SHOW_OVERLAY = !Debug.SHOW_OVERLAY;
+                debugOverlayButton.setText(getDebugText());
+            }
+        }));
+        _this.addWorldObject(new MenuTextButton({
+            x: 20, y: 110,
+            text: "back",
+            onClick: function () {
+                menuSystem.game.playSound('click');
+                menuSystem.back();
+            }
+        }));
+        return _this;
+    }
+    DebugOptionsMenu.prototype.update = function () {
+        _super.prototype.update.call(this);
+        if (Input.justDown(Input.GAME_CLOSE_MENU)) {
+            Input.consume(Input.GAME_CLOSE_MENU);
+            this.menuSystem.back();
+        }
+    };
+    return DebugOptionsMenu;
+}(Menu));
 var ControlsMenu = /** @class */ (function (_super) {
     __extends(ControlsMenu, _super);
     function ControlsMenu(menuSystem) {
@@ -11341,7 +11348,7 @@ Main.loadConfig({
             'down': ['ArrowDown', 's'],
             'interact': ['e'],
             // Presets
-            'game_advanceDialog': ['MouseLeft', 'e', ' '],
+            'game_advanceCutscene': ['MouseLeft', 'e', ' '],
             'game_pause': ['Escape', 'Backspace'],
             'game_closeMenu': ['Escape', 'Backspace'],
             'game_select': ['MouseLeft'],
@@ -11695,7 +11702,7 @@ function getStages() {
             }));
             world.camera.setModeFollow('player');
             world.camera.setMovement(BASE_CAMERA_MOVEMENT);
-            world.camera.initPosition();
+            world.camera.snapPosition();
             return world;
         },
     };
@@ -11785,6 +11792,7 @@ function getStoryboard() {
                         case 11:
                             _a.sent();
                             text = global.theater.addWorldObject(new SpriteText({
+                                name: 'hooplahText',
                                 x: global.gameWidth / 2, y: global.gameHeight / 2 + 60,
                                 text: "sounds like a lot of HOOPLAH to me",
                                 style: { alpha: 0 },
@@ -11798,7 +11806,7 @@ function getStoryboard() {
                             _a.sent();
                             _a.label = 14;
                         case 14:
-                            if (!!Input.justDown('game_advanceDialog')) return [3 /*break*/, 16];
+                            if (!!Input.justDown(Input.GAME_ADVANCE_CUTSCENE)) return [3 /*break*/, 16];
                             return [4 /*yield*/];
                         case 15:
                             _a.sent();
@@ -11807,6 +11815,12 @@ function getStoryboard() {
                         case 17:
                             _a.sent();
                             text.removeFromWorld();
+                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
+                        case 18:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(1)];
+                        case 19:
+                            _a.sent();
                             return [2 /*return*/];
                     }
                 });
@@ -11816,6 +11830,11 @@ function getStoryboard() {
                 if (!global.world.hasWorldObject('hoop')) {
                     addHoop();
                 }
+                global.world.select.name('hoop').data.intro = false;
+                if (global.theater.hasWorldObject('hooplahText')) {
+                    global.theater.removeWorldObject('hooplahText');
+                }
+                Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('throne')));
             },
             transitions: [{ toNode: 'wave_1' }]
         },
@@ -11844,24 +11863,24 @@ function getStoryboard() {
             script: function () {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
+                        case 0: return [4 /*yield*/, S.dialog("Duel'st in five rounds against my minions, and you may'st keep the [y]royal hula[/y].")];
                         case 1:
                             _a.sent();
-                            return [4 /*yield*/, S.wait(1)];
+                            return [4 /*yield*/, S.dialog("Round one beginneth now.")];
                         case 2:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("Duel'st in five rounds against my minions, and you may'st keep the [y]royal hula[/y].")];
+                            return [4 /*yield*/, S.wait(0.5)];
                         case 3:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("Round one beginneth now.")];
+                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT)];
                         case 4:
-                            _a.sent();
-                            return [4 /*yield*/, S.wait(0.5)];
-                        case 5:
                             _a.sent();
                             return [2 /*return*/];
                     }
                 });
+            },
+            onFinish: function () {
+                Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
             },
             transitions: [{ toNode: 'spawn_wave_1' }]
         },
@@ -11869,15 +11888,9 @@ function getStoryboard() {
             type: 'cutscene',
             script: function () {
                 return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
-                        case 1:
-                            _a.sent();
-                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
-                            global.world.select.type(WaveController).spawnWave1();
-                            global.world.select.type(WaveController).startMusic();
-                            return [2 /*return*/];
-                    }
+                    global.world.select.type(WaveController).spawnWave1();
+                    global.world.select.type(WaveController).startMusic();
+                    return [2 /*return*/];
                 });
             },
             transitions: [{ toNode: 'gameplay' }]
@@ -11909,6 +11922,9 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(0.5)];
                         case 6:
                             _a.sent();
+                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT)];
+                        case 7:
+                            _a.sent();
                             return [2 /*return*/];
                     }
                 });
@@ -11916,6 +11932,7 @@ function getStoryboard() {
             onFinish: function () {
                 global.world.select.type(WaveController).stopMusic();
                 setPlayerMaxHP();
+                Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
             },
             transitions: [{ toNode: 'spawn_wave_2' }]
         },
@@ -11923,15 +11940,9 @@ function getStoryboard() {
             type: 'cutscene',
             script: function () {
                 return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
-                        case 1:
-                            _a.sent();
-                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
-                            global.world.select.type(WaveController).spawnWave2();
-                            global.world.select.type(WaveController).startMusic();
-                            return [2 /*return*/];
-                    }
+                    global.world.select.type(WaveController).spawnWave2();
+                    global.world.select.type(WaveController).startMusic();
+                    return [2 /*return*/];
                 });
             },
             transitions: [{ toNode: 'gameplay' }]
@@ -11963,6 +11974,9 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(0.5)];
                         case 6:
                             _a.sent();
+                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT)];
+                        case 7:
+                            _a.sent();
                             return [2 /*return*/];
                     }
                 });
@@ -11970,6 +11984,7 @@ function getStoryboard() {
             onFinish: function () {
                 global.world.select.type(WaveController).stopMusic();
                 setPlayerMaxHP();
+                Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
             },
             transitions: [{ toNode: 'spawn_wave_3' }]
         },
@@ -11977,15 +11992,9 @@ function getStoryboard() {
             type: 'cutscene',
             script: function () {
                 return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
-                        case 1:
-                            _a.sent();
-                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
-                            global.world.select.type(WaveController).spawnWave3();
-                            global.world.select.type(WaveController).startMusic();
-                            return [2 /*return*/];
-                    }
+                    global.world.select.type(WaveController).spawnWave3();
+                    global.world.select.type(WaveController).startMusic();
+                    return [2 /*return*/];
                 });
             },
             transitions: [{ toNode: 'gameplay' }]
@@ -12017,6 +12026,9 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(0.5)];
                         case 6:
                             _a.sent();
+                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT)];
+                        case 7:
+                            _a.sent();
                             return [2 /*return*/];
                     }
                 });
@@ -12024,6 +12036,7 @@ function getStoryboard() {
             onFinish: function () {
                 global.world.select.type(WaveController).stopMusic();
                 setPlayerMaxHP();
+                Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
             },
             transitions: [{ toNode: 'spawn_wave_4' }]
         },
@@ -12031,15 +12044,9 @@ function getStoryboard() {
             type: 'cutscene',
             script: function () {
                 return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
-                        case 1:
-                            _a.sent();
-                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
-                            global.world.select.type(WaveController).spawnWave4();
-                            global.world.select.type(WaveController).startMusic();
-                            return [2 /*return*/];
-                    }
+                    global.world.select.type(WaveController).spawnWave4();
+                    global.world.select.type(WaveController).startMusic();
+                    return [2 /*return*/];
                 });
             },
             transitions: [{ toNode: 'gameplay' }]
@@ -12068,6 +12075,9 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(0.5)];
                         case 5:
                             _a.sent();
+                            return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT)];
+                        case 6:
+                            _a.sent();
                             return [2 /*return*/];
                     }
                 });
@@ -12075,6 +12085,7 @@ function getStoryboard() {
             onFinish: function () {
                 global.world.select.type(WaveController).stopMusic();
                 setPlayerMaxHP();
+                Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
             },
             transitions: [{ toNode: 'spawn_wave_5' }]
         },
@@ -12082,15 +12093,9 @@ function getStoryboard() {
             type: 'cutscene',
             script: function () {
                 return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('player'))];
-                        case 1:
-                            _a.sent();
-                            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
-                            global.world.select.type(WaveController).spawnWave5();
-                            global.world.select.type(WaveController).startMusic();
-                            return [2 /*return*/];
-                    }
+                    global.world.select.type(WaveController).spawnWave5();
+                    global.world.select.type(WaveController).startMusic();
+                    return [2 /*return*/];
                 });
             },
             transitions: [{ toNode: 'gameplay' }]
@@ -12137,6 +12142,7 @@ function getStoryboard() {
             onFinish: function () {
                 global.world.select.type(WaveController).stopMusic();
                 setPlayerMaxHP();
+                Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('throne')));
             },
             transitions: [{ toNode: 'spawn_wave_king' }]
         },

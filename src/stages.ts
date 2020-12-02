@@ -118,7 +118,7 @@ function getStages(): Dict<World.Factory> { return {
 
         world.camera.setModeFollow('player');
         world.camera.setMovement(BASE_CAMERA_MOVEMENT);
-        world.camera.initPosition();
+        world.camera.snapPosition();
 
         return world;
     },

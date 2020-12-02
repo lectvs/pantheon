@@ -77,6 +77,7 @@ function getStoryboard(): Storyboard { return {
             );
 
             let text = global.theater.addWorldObject(new SpriteText({
+                name: 'hooplahText',
                 x: global.gameWidth/2, y: global.gameHeight/2 + 60,
                 text: "sounds like a lot of HOOPLAH to me",
                 style: { alpha: 0 },
@@ -86,7 +87,7 @@ function getStoryboard(): Storyboard { return {
             yield S.wait(2);
             yield S.tween(2, text.style, 'alpha', 0, 1);
 
-            while (!Input.justDown('game_advanceDialog')) yield;
+            while (!Input.justDown(Input.GAME_ADVANCE_CUTSCENE)) yield;
 
             yield S.simul(
                 S.fadeSlides(1),
@@ -94,12 +95,20 @@ function getStoryboard(): Storyboard { return {
             );
 
             text.removeFromWorld();
+
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
+            yield S.wait(1);
         },
         onFinish: () => {
             Debug.SKIP_RATE = 1;
             if (!global.world.hasWorldObject('hoop')) {
                 addHoop();
             }
+            global.world.select.name('hoop').data.intro = false;
+            if (global.theater.hasWorldObject('hooplahText')) {
+                global.theater.removeWorldObject('hooplahText');
+            }
+            Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('throne')));
         },
         transitions: [{ toNode: 'wave_1' }]
     },
@@ -126,23 +135,21 @@ function getStoryboard(): Storyboard { return {
         type: 'cutscene',
         skippable: true,
         script: function*() {
-            yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
-            yield S.wait(1);
-
             yield S.dialog("Duel'st in five rounds against my minions, and you may'st keep the [y]royal hula[/y].");
             yield S.dialog("Round one beginneth now.");
 
             yield S.wait(0.5);
+
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT);
+        },
+        onFinish: () => {
+            Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
         },
         transitions: [{ toNode: 'spawn_wave_1' }]
     },
     'spawn_wave_1': {
         type: 'cutscene',
         script: function*() {
-            yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'));
-
-            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
-
             global.world.select.type(WaveController).spawnWave1();
             global.world.select.type(WaveController).startMusic();
         },
@@ -164,20 +171,19 @@ function getStoryboard(): Storyboard { return {
             yield S.dialog("Round two beginneth now.");
 
             yield S.wait(0.5);
+
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT);
         },
         onFinish: () => {
             global.world.select.type(WaveController).stopMusic();
             setPlayerMaxHP();
+            Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
         },
         transitions: [{ toNode: 'spawn_wave_2' }]
     },
     'spawn_wave_2': {
         type: 'cutscene',
         script: function*() {
-            yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'));
-
-            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
-
             global.world.select.type(WaveController).spawnWave2();
             global.world.select.type(WaveController).startMusic();
         },
@@ -199,20 +205,19 @@ function getStoryboard(): Storyboard { return {
             yield S.dialog("Round three beginneth now.");
 
             yield S.wait(0.5);
+
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT);
         },
         onFinish: () => {
             global.world.select.type(WaveController).stopMusic();
             setPlayerMaxHP();
+            Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
         },
         transitions: [{ toNode: 'spawn_wave_3' }]
     },
     'spawn_wave_3': {
         type: 'cutscene',
         script: function*() {
-            yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'));
-
-            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
-
             global.world.select.type(WaveController).spawnWave3();
             global.world.select.type(WaveController).startMusic();
         },
@@ -234,20 +239,19 @@ function getStoryboard(): Storyboard { return {
             yield S.dialog("Prepare thyself for round four.");
 
             yield S.wait(0.5);
+
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT);
         },
         onFinish: () => {
             global.world.select.type(WaveController).stopMusic();
             setPlayerMaxHP();
+            Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
         },
         transitions: [{ toNode: 'spawn_wave_4' }]
     },
     'spawn_wave_4': {
         type: 'cutscene',
         script: function*() {
-            yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'));
-
-            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
-
             global.world.select.type(WaveController).spawnWave4();
             global.world.select.type(WaveController).startMusic();
         },
@@ -268,20 +272,19 @@ function getStoryboard(): Storyboard { return {
             yield S.dialog("Impressive! One more round to go'eth, but this will be the hardest.");
 
             yield S.wait(0.5);
+
+            yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT);
         },
         onFinish: () => {
             global.world.select.type(WaveController).stopMusic();
             setPlayerMaxHP();
+            Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
         },
         transitions: [{ toNode: 'spawn_wave_5' }]
     },
     'spawn_wave_5': {
         type: 'cutscene',
         script: function*() {
-            yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'));
-
-            global.world.camera.setMovement(BASE_CAMERA_MOVEMENT);
-
             global.world.select.type(WaveController).spawnWave5();
             global.world.select.type(WaveController).startMusic();
         },
@@ -309,6 +312,7 @@ function getStoryboard(): Storyboard { return {
         onFinish: () => {
             global.world.select.type(WaveController).stopMusic();
             setPlayerMaxHP();
+            Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('throne')));
         },
         transitions: [{ toNode: 'spawn_wave_king' }]
     },

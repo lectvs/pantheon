@@ -8,8 +8,9 @@ class SlideManager {
     }
 
     addSlide(slide: Slide) {
+        slide.layer = Theater.LAYER_SLIDES;
         World.Actions.setLayer(slide, Theater.LAYER_SLIDES);
-        World.Actions.addWorldObjectToWorld(slide, this.theater);
+        this.theater.addWorldObject(slide);
         this.slides.push(slide);
         return slide;
     }
@@ -17,7 +18,7 @@ class SlideManager {
     clearSlides(exceptLast: number = 0) {
         let deleteCount = this.slides.length - exceptLast;
         for (let i = 0; i < deleteCount; i++) {
-            World.Actions.removeWorldObjectFromWorld(this.slides[i]);
+            this.slides[i].removeFromWorld();
         }
         this.slides.splice(0, deleteCount);
     }
