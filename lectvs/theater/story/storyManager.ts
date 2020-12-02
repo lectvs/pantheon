@@ -32,11 +32,6 @@ class StoryManager {
                     this.cutsceneManager.playCutscene(cutsceneName);
                 }
                 state.script = S.waitUntil(() => !this.cutsceneManager.isCutscenePlaying);
-            } else if (storyNode.type === 'party') {
-                let partyNode = storyNode;
-                state.callback = () => {
-                    this.updateParty(partyNode);
-                }
             } else if (storyNode.type === 'config') {
                 let config = storyNode.config;
                 state.callback = () => {
@@ -99,8 +94,6 @@ class StoryManager {
             if (!node) continue;
             if (node.type === 'cutscene') {
                 this.cutsceneManager.fastForwardCutscene(path[i]);
-            } else if (node.type === 'party') {
-                this.updateParty(node);
             } else if (node.type === 'config') {
                 this.storyConfig.updateConfig(node.config);
                 this.storyConfig.execute();
@@ -133,23 +126,5 @@ class StoryManager {
             error(`No storyboard node exists with name ${name}`);
         }
         return this.storyboard[name];
-    }
-
-    private updateParty(party: Storyboard.Nodes.Party) {
-        if (party.setLeader !== undefined) {
-            this.theater.partyManager.leader = party.setLeader;
-        }
-
-        if (!_.isEmpty(party.setMembersActive)) {
-            for (let m of party.setMembersActive) {
-                this.theater.partyManager.setMemberActive(m);
-            }
-        }
-
-        if (!_.isEmpty(party.setMembersInactive)) {
-            for (let m of party.setMembersInactive) {
-                this.theater.partyManager.setMemberInactive(m);
-            }
-        }
     }
 }

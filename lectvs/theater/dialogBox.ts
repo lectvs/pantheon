@@ -48,12 +48,19 @@ class DialogBox extends Sprite {
 
     update() {
         super.update();
-        this.characterTimer.update(this.delta);
 
+        // Visibility must be set before dialog progression to avoid a 1-frame flicker.
         this.visible = !this.done;
         this.spriteText.visible = !this.done;
         this.portraitSprite.visible = !this.done && this.isShowingPortrait;
 
+        if (!this.done) {
+            this.updateDialogProgression();
+        }
+    }
+
+    private updateDialogProgression() {
+        this.characterTimer.update(this.delta);
         if (Input.justDown(Input.GAME_ADVANCE_DIALOG)) {
             this.advanceDialog();
         }
@@ -115,6 +122,13 @@ class DialogBox extends Sprite {
         this.portraitSprite.setTexture(portrait);
         this.isShowingPortrait = !AssetCache.isNoneTexture(portrait);
         this.spriteText.maxWidth = this.textArea.width;
+    }
+
+    complete() {
+        while (!this.done) {
+            this.completePage();
+            this.advancePage();
+        }
     }
 
     private advanceCharacter() {

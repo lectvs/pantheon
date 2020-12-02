@@ -6,7 +6,7 @@ class CutsceneManager {
     theater: Theater;
     storyboard: Storyboard;
 
-    current: { name: string, script: Script };
+    current: { name: string, node: Storyboard.Nodes.Cutscene, script: Script };
     playedCutscenes: Set<string>;
 
     get isCutscenePlaying() { return !!this.current; }
@@ -64,20 +64,12 @@ class CutsceneManager {
         return true;
     }
 
+    canSkipCurrentCutscene() {
+        return this.current && this.current.node.skippable;
+    }
+
     fastForwardCutscene(name: string) {
         this.playCutscene(name);
-        this.finishCurrentCutscene();
-    }
-
-    finishCurrentCutscene() {
-        if (!this.current) return;
-        let completed = this.current;
-        this.current = null;
-
-        this.playedCutscenes.add(completed.name);
-    }
-
-    onStageLoad() {
         this.finishCurrentCutscene();
     }
 
@@ -92,6 +84,7 @@ class CutsceneManager {
 
         this.current = {
             name: name,
+            node: cutscene,
             script: new Script(this.toScript(cutscene.script))
         };
 
@@ -103,6 +96,30 @@ class CutsceneManager {
             this.current.script.done = true;
         }
         this.current = null;
+    }
+
+    skipCurrentCutscene() {
+        if (!this.canSkipCurrentCutscene()) {
+            error(`Attempted to skip unskippable cutscene`, this.current);
+            return;
+        }
+        this.finishCurrentCutscene();
+    }
+
+    onStageLoad() {
+        this.finishCurrentCutscene();
+    }
+
+    private finishCurrentCutscene() {
+        if (!this.isCutscenePlaying) return;
+        
+        let completed = this.current;
+        this.current = null;
+
+        this.playedCutscenes.add(completed.name);
+        if (completed.node.onFinish) completed.node.onFinish();
+
+        this.theater.dialogBox.complete();
     }
 
     private getCutsceneByName(name: string) {

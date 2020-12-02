@@ -2,7 +2,7 @@ type Storyboard = Dict<Storyboard.Node>;
 
 namespace Storyboard {
 
-    export type Node = (Nodes.Cutscene | Nodes.Party | Nodes.Config | Nodes.Start | Nodes.Gameplay) & {
+    export type Node = (Nodes.Cutscene | Nodes.Config | Nodes.Start | Nodes.Gameplay) & {
         transitions: Transition[];
     }
 
@@ -11,17 +11,12 @@ namespace Storyboard {
             type: 'cutscene';
             script: Cutscene.Generator;
             playOnlyOnce?: boolean;
+            skippable?: boolean;
+            onFinish?: () => any;
         }
 
         export type Gameplay = {
             type: 'gameplay';
-        }
-
-        export type Party = {
-            type: 'party';
-            setLeader?: string;
-            setMembersActive?: string[];
-            setMembersInactive?: string[];
         }
 
         export type Config = {

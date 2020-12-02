@@ -76,7 +76,6 @@ Main.loadConfig({
                 getStoryEvents: () => StoryEvent.EMPTY_MAP,
                 getStoryConfig: () => StoryConfig.EMPTY,
             },
-            getParty: () => Party.EMPTY,
             dialogBox: () => new DialogBox({
                 x: 200, y: 250,
                 texture: 'dialogbox',

@@ -12,7 +12,6 @@ namespace Theater {
             getStoryEvents: () => StoryEvent.Map;
             getStoryConfig: () => StoryConfig.Config;
         },
-        getParty: () => Party.Config;
         dialogBox: Factory<DialogBox>;
         autoPlayScript?: () => IterableIterator<any>;
     }
@@ -21,7 +20,6 @@ namespace Theater {
 class Theater extends World {
     dialogBox: DialogBox;
     
-    partyManager: PartyManager;
     storyManager: StoryManager;
     stageManager: StageManager;
     interactionManager: InteractionManager;
@@ -31,6 +29,8 @@ class Theater extends World {
     get currentWorld() { return this.stageManager ? this.stageManager.currentWorld : undefined; }
     get isCutscenePlaying() { return this.storyManager ? this.storyManager.cutsceneManager.isCutscenePlaying : false; }
     get slides() { return this.slideManager ? this.slideManager.slides : []; }
+
+    endOfFrameQueue: (() => any)[];
     
     constructor(config: Theater.Config) {
         super({
@@ -44,13 +44,14 @@ class Theater extends World {
 
         this.loadDialogBox(config.dialogBox);
 
-        this.partyManager = new PartyManager(this, config.getParty());
         this.storyManager = new StoryManager(this, config.story.getStoryboard(), config.story.storyboardPath, config.story.getStoryEvents(), config.story.getStoryConfig());
         this.stageManager = new StageManager(this, config.getStages());
         this.interactionManager = new InteractionManager(this);
         this.slideManager = new SlideManager(this);
 
-        this.stageManager.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
+        this.endOfFrameQueue = [];
+
+        this.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
 
         if (Debug.AUTOPLAY && config.autoPlayScript) {
             this.runScript(config.autoPlayScript);
@@ -61,8 +62,12 @@ class Theater extends World {
 
     update() {
         this.storyManager.update();
+
         super.update();
-        this.stageManager.loadStageIfQueued();
+
+        while (!_.isEmpty(this.endOfFrameQueue)) {
+            this.endOfFrameQueue.shift()();
+        }
     }
 
     // Theater cannot have preRender or postRender because it doesn't have a parent world
@@ -82,7 +87,17 @@ class Theater extends World {
     }
 
     loadStage(name: string, transition: Transition.Config = Transition.INSTANT, entryPoint?: World.EntryPoint) {
-        this.stageManager.loadStage(name, transition, entryPoint);
+        this.runAtEndOfFrame(() => this.stageManager.internalLoadStage(name, transition, entryPoint));
+    }
+
+    runAtEndOfFrame(fn: () => any) {
+        this.endOfFrameQueue.push(fn);
+    }
+
+    skipCurrentCutscene() {
+        if (this.storyManager.cutsceneManager.canSkipCurrentCutscene()) {
+            this.storyManager.cutsceneManager.skipCurrentCutscene();
+        }
     }
 
     onStageLoad() {

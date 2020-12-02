@@ -1,3 +1,17 @@
+function addHoop() {
+    let player = global.world.select.type(Player);
+    return global.world.addWorldObject(new Hoop({
+        x: player.x, y: player.y,
+        name: 'hoop',
+        layer: 'hoop',
+        physicsGroup: 'hoop'
+    }));
+}
+
+function setPlayerMaxHP() {
+    if (!HARD_DIFFICULTY) global.world.select.type(Player).health = Player.MAX_HP;
+}
+
 function getStoryboard(): Storyboard { return {
     'start': {
         type: 'start',
@@ -11,6 +25,7 @@ function getStoryboard(): Storyboard { return {
     },
     'intro': {
         type: 'cutscene',
+        skippable: true,
         script: function*() {
             yield S.wait(0.5);
 
@@ -23,13 +38,10 @@ function getStoryboard(): Storyboard { return {
             yield S.cameraTransition(2, Camera.Mode.FOLLOW('player'));
 
             let player = global.world.select.type(Player);
-            let hoop = global.world.addWorldObject(new Hoop({
-                x: player.x, y: player.y - 32,
-                name: 'hoop',
-                layer: 'hoop',
-                effects: { silhouette: { color: 0x00FFFF, alpha: 0 } },
-                physicsGroup: 'hoop'
-            }));
+            let hoop = addHoop();
+            hoop.y -= 32;
+            hoop.effects.addSilhouette.color = 0x00FFFF;
+            hoop.effects.addSilhouette.alpha = 0;
 
             let whoosh = global.world.playSound('swing');
             whoosh.speed = 0.1;
@@ -82,8 +94,12 @@ function getStoryboard(): Storyboard { return {
             );
 
             text.removeFromWorld();
-
+        },
+        onFinish: () => {
             Debug.SKIP_RATE = 1;
+            if (!global.world.hasWorldObject('hoop')) {
+                addHoop();
+            }
         },
         transitions: [{ toNode: 'wave_1' }]
     },
@@ -108,6 +124,7 @@ function getStoryboard(): Storyboard { return {
     },
     'wave_1': {
         type: 'cutscene',
+        skippable: true,
         script: function*() {
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
             yield S.wait(1);
@@ -133,11 +150,12 @@ function getStoryboard(): Storyboard { return {
     },
     'wave_2': {
         type: 'cutscene',
+        skippable: true,
         script: function*() {
             global.world.select.type(WaveController).stopMusic();
             yield S.wait(1);
 
-            if (!HARD_DIFFICULTY) global.world.select.type(Player).health = Player.MAX_HP;
+            setPlayerMaxHP();
 
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
             yield S.wait(1);
@@ -146,6 +164,10 @@ function getStoryboard(): Storyboard { return {
             yield S.dialog("Round two beginneth now.");
 
             yield S.wait(0.5);
+        },
+        onFinish: () => {
+            global.world.select.type(WaveController).stopMusic();
+            setPlayerMaxHP();
         },
         transitions: [{ toNode: 'spawn_wave_2' }]
     },
@@ -163,11 +185,12 @@ function getStoryboard(): Storyboard { return {
     },
     'wave_3': {
         type: 'cutscene',
+        skippable: true,
         script: function*() {
             global.world.select.type(WaveController).stopMusic();
             yield S.wait(1);
 
-            if (!HARD_DIFFICULTY) global.world.select.type(Player).health = Player.MAX_HP;
+            setPlayerMaxHP();
             
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
             yield S.wait(1);
@@ -176,6 +199,10 @@ function getStoryboard(): Storyboard { return {
             yield S.dialog("Round three beginneth now.");
 
             yield S.wait(0.5);
+        },
+        onFinish: () => {
+            global.world.select.type(WaveController).stopMusic();
+            setPlayerMaxHP();
         },
         transitions: [{ toNode: 'spawn_wave_3' }]
     },
@@ -193,11 +220,12 @@ function getStoryboard(): Storyboard { return {
     },
     'wave_4': {
         type: 'cutscene',
+        skippable: true,
         script: function*() {
             global.world.select.type(WaveController).stopMusic();
             yield S.wait(1);
 
-            if (!HARD_DIFFICULTY) global.world.select.type(Player).health = Player.MAX_HP;
+            setPlayerMaxHP();
             
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
             yield S.wait(1);
@@ -206,6 +234,10 @@ function getStoryboard(): Storyboard { return {
             yield S.dialog("Prepare thyself for round four.");
 
             yield S.wait(0.5);
+        },
+        onFinish: () => {
+            global.world.select.type(WaveController).stopMusic();
+            setPlayerMaxHP();
         },
         transitions: [{ toNode: 'spawn_wave_4' }]
     },
@@ -223,11 +255,12 @@ function getStoryboard(): Storyboard { return {
     },
     'wave_5': {
         type: 'cutscene',
+        skippable: true,
         script: function*() {
             global.world.select.type(WaveController).stopMusic();
             yield S.wait(1);
 
-            if (!HARD_DIFFICULTY) global.world.select.type(Player).health = Player.MAX_HP;
+            setPlayerMaxHP();
             
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
             yield S.wait(1);
@@ -235,6 +268,10 @@ function getStoryboard(): Storyboard { return {
             yield S.dialog("Impressive! One more round to go'eth, but this will be the hardest.");
 
             yield S.wait(0.5);
+        },
+        onFinish: () => {
+            global.world.select.type(WaveController).stopMusic();
+            setPlayerMaxHP();
         },
         transitions: [{ toNode: 'spawn_wave_5' }]
     },
@@ -256,7 +293,7 @@ function getStoryboard(): Storyboard { return {
             global.world.select.type(WaveController).stopMusic();
             yield S.wait(1);
 
-            if (!HARD_DIFFICULTY) global.world.select.type(Player).health = Player.MAX_HP;
+            setPlayerMaxHP();
 
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
             yield S.wait(1);
@@ -268,6 +305,10 @@ function getStoryboard(): Storyboard { return {
             yield S.dialog("If thou want'st it so bad... Heh heh heh...");
 
             yield S.wait(0.5);
+        },
+        onFinish: () => {
+            global.world.select.type(WaveController).stopMusic();
+            setPlayerMaxHP();
         },
         transitions: [{ toNode: 'spawn_wave_king' }]
     },

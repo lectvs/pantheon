@@ -2027,18 +2027,11 @@ var CutsceneManager = /** @class */ (function () {
             return false;
         return true;
     };
+    CutsceneManager.prototype.canSkipCurrentCutscene = function () {
+        return this.current && this.current.node.skippable;
+    };
     CutsceneManager.prototype.fastForwardCutscene = function (name) {
         this.playCutscene(name);
-        this.finishCurrentCutscene();
-    };
-    CutsceneManager.prototype.finishCurrentCutscene = function () {
-        if (!this.current)
-            return;
-        var completed = this.current;
-        this.current = null;
-        this.playedCutscenes.add(completed.name);
-    };
-    CutsceneManager.prototype.onStageLoad = function () {
         this.finishCurrentCutscene();
     };
     CutsceneManager.prototype.playCutscene = function (name) {
@@ -2051,6 +2044,7 @@ var CutsceneManager = /** @class */ (function () {
         }
         this.current = {
             name: name,
+            node: cutscene,
             script: new Script(this.toScript(cutscene.script))
         };
         this.updateCurrentCutscene();
@@ -2060,6 +2054,26 @@ var CutsceneManager = /** @class */ (function () {
             this.current.script.done = true;
         }
         this.current = null;
+    };
+    CutsceneManager.prototype.skipCurrentCutscene = function () {
+        if (!this.canSkipCurrentCutscene()) {
+            error("Attempted to skip unskippable cutscene", this.current);
+            return;
+        }
+        this.finishCurrentCutscene();
+    };
+    CutsceneManager.prototype.onStageLoad = function () {
+        this.finishCurrentCutscene();
+    };
+    CutsceneManager.prototype.finishCurrentCutscene = function () {
+        if (!this.isCutscenePlaying)
+            return;
+        var completed = this.current;
+        this.current = null;
+        this.playedCutscenes.add(completed.name);
+        if (completed.node.onFinish)
+            completed.node.onFinish();
+        this.theater.dialogBox.complete();
     };
     CutsceneManager.prototype.getCutsceneByName = function (name) {
         var node = this.storyboard[name];
@@ -5758,10 +5772,16 @@ var DialogBox = /** @class */ (function (_super) {
     });
     DialogBox.prototype.update = function () {
         _super.prototype.update.call(this);
-        this.characterTimer.update(this.delta);
+        // Visibility must be set before dialog progression to avoid a 1-frame flicker.
         this.visible = !this.done;
         this.spriteText.visible = !this.done;
         this.portraitSprite.visible = !this.done && this.isShowingPortrait;
+        if (!this.done) {
+            this.updateDialogProgression();
+        }
+    };
+    DialogBox.prototype.updateDialogProgression = function () {
+        this.characterTimer.update(this.delta);
         if (Input.justDown(Input.GAME_ADVANCE_DIALOG)) {
             this.advanceDialog();
         }
@@ -5810,6 +5830,12 @@ var DialogBox = /** @class */ (function (_super) {
         this.portraitSprite.setTexture(portrait);
         this.isShowingPortrait = !AssetCache.isNoneTexture(portrait);
         this.spriteText.maxWidth = this.textArea.width;
+    };
+    DialogBox.prototype.complete = function () {
+        while (!this.done) {
+            this.completePage();
+            this.advancePage();
+        }
     };
     DialogBox.prototype.advanceCharacter = function () {
         if (!this.isPageComplete()) {
@@ -5942,103 +5968,6 @@ var InteractionManager = /** @class */ (function () {
     };
     return InteractionManager;
 }());
-var Party;
-(function (Party) {
-    Party.EMPTY = {
-        leader: 'none',
-        activeMembers: ['none'],
-        members: {},
-    };
-})(Party || (Party = {}));
-var PartyManager = /** @class */ (function () {
-    function PartyManager(theater, config) {
-        this.theater = theater;
-        this.leader = config.leader;
-        this.activeMembers = new Set(config.activeMembers);
-        this.members = config.members;
-        this.load();
-    }
-    PartyManager.prototype.addMembersToWorld = function (world, stageName, entryPoint) {
-        for (var memberName in this.members) {
-            var member = this.members[memberName];
-            if (this.isMemberActive(memberName)) {
-                member.stage = stageName;
-                member.worldObject.x = entryPoint.x;
-                member.worldObject.y = entryPoint.y;
-            }
-            if (member.stage === stageName) {
-                if (member.worldObject.world) {
-                    World.Actions.removeWorldObjectFromWorld(member.worldObject);
-                }
-                World.Actions.addWorldObjectToWorld(member.worldObject, world);
-            }
-        }
-    };
-    PartyManager.prototype.getMember = function (name) {
-        var member = this.members[name];
-        if (!member) {
-            error("No party member named '" + name + "':", this);
-        }
-        return member;
-    };
-    PartyManager.prototype.isMemberActive = function (name) {
-        return this.activeMembers.has(name);
-    };
-    Object.defineProperty(PartyManager.prototype, "leader", {
-        get: function () {
-            return this._leader;
-        },
-        set: function (name) {
-            this._leader = name;
-            for (var key in this.members) {
-                if (this.members[key].worldObject) {
-                    // TODO: re-implement notion of controllability?
-                    //this.members[key].worldObject.controllable = (key === this.leader);
-                }
-            }
-        },
-        enumerable: false,
-        configurable: true
-    });
-    PartyManager.prototype.load = function () {
-        for (var key in this.members) {
-            var member = this.members[key];
-            member.worldObject = member.newInstance();
-            if (key === this.leader) {
-                // TODO: re-implement notion of controllability?
-                //member.worldObject.controllable = true;
-            }
-        }
-    };
-    PartyManager.prototype.moveMemberToStage = function (memberName, stageName, x, y) {
-        var member = this.getMember(memberName);
-        if (!member)
-            return;
-        if (!stageName) {
-            member.stage = null;
-            return;
-        }
-        var stage = this.theater.stageManager.stages[stageName];
-        if (!stage) {
-            error("Cannot move party member " + memberName + " to stage " + stageName + " because the stage does not exist");
-            return;
-        }
-        member.stage = stageName;
-        member.worldObject.x = x;
-        member.worldObject.y = y;
-    };
-    PartyManager.prototype.setMemberActive = function (name) {
-        if (!this.getMember(name))
-            return;
-        this.activeMembers.add(name);
-    };
-    PartyManager.prototype.setMemberInactive = function (name) {
-        if (!this.getMember(name))
-            return;
-        this.activeMembers.delete(name);
-    };
-    return PartyManager;
-}());
 /// <reference path="../worldObject/sprite/sprite.ts"/>
 var Slide = /** @class */ (function (_super) {
     __extends(Slide, _super);
@@ -6106,38 +6035,36 @@ var StageManager = /** @class */ (function () {
         this.currentStageName = null;
         this.currentWorld = null;
         this.currentWorldAsWorldObject = null;
-        this.stageLoadQueue = null;
     }
     Object.defineProperty(StageManager.prototype, "transitioning", {
         get: function () { return !!this.transition; },
         enumerable: false,
         configurable: true
     });
-    StageManager.prototype.loadStage = function (name, transitionConfig, entryPoint) {
+    /**
+     * Loads a stage immediately. If you are calling from inside your game, you probably want to call Theater.loadStage
+     */
+    StageManager.prototype.internalLoadStage = function (name, transitionConfig, entryPoint) {
         if (!this.stages[name]) {
             error("Cannot load world '" + name + "' because it does not exist:", this.stages);
             return;
         }
         if (!entryPoint)
             entryPoint = { x: this.theater.width / 2, y: this.theater.height / 2 };
-        if (!this.currentStageName) {
-            if (transitionConfig.type !== 'instant')
-                debug("Ignoring transition " + transitionConfig.type + " for world " + name + " because no other world is loaded");
-            this.setStage(name, entryPoint);
-            return;
+        var oldSnapshot = this.currentWorld ? this.currentWorld.takeSnapshot() : Texture.filledRect(global.gameWidth, global.gameHeight, global.backgroundColor);
+        // Remove old stuff
+        if (this.currentWorld) {
+            World.Actions.removeWorldObjectFromWorld(this.currentWorldAsWorldObject);
         }
-        this.stageLoadQueue = { name: name, transitionConfig: transitionConfig, entryPoint: entryPoint };
-    };
-    StageManager.prototype.loadStageIfQueued = function () {
-        if (!this.stageLoadQueue)
-            return;
-        var name = this.stageLoadQueue.name;
-        var transitionConfig = this.stageLoadQueue.transitionConfig;
-        var entryPoint = this.stageLoadQueue.entryPoint;
-        this.stageLoadQueue = null;
-        var oldWorld = this.currentWorld;
-        var oldSnapshot = oldWorld.takeSnapshot();
-        this.setStage(name, entryPoint);
+        this.theater.interactionManager.reset();
+        // Create new stuff
+        this.currentStageName = name;
+        this.currentWorld = this.stages[name]();
+        this.currentWorldAsWorldObject = new Theater.WorldAsWorldObject(this.currentWorld);
+        World.Actions.setName(this.currentWorldAsWorldObject, 'world');
+        World.Actions.setLayer(this.currentWorldAsWorldObject, Theater.LAYER_WORLD);
+        World.Actions.addWorldObjectToWorld(this.currentWorldAsWorldObject, this.theater);
+        this.theater.onStageLoad();
         this.currentWorld.update();
         var newSnapshot = this.currentWorld.takeSnapshot();
         this.currentWorldAsWorldObject.active = false;
@@ -6165,33 +6092,6 @@ var StageManager = /** @class */ (function () {
                 }
             });
         });
-    };
-    StageManager.prototype.setStage = function (name, entryPoint) {
-        if (!this.stages[name]) {
-            error("Cannot load stage '" + name + "' because it does not exist.", this.stages);
-            return;
-        }
-        // Remove old stuff
-        if (this.currentWorld) {
-            World.Actions.removeWorldObjectFromWorld(this.currentWorldAsWorldObject);
-        }
-        this.theater.interactionManager.reset();
-        // Create new stuff
-        this.currentStageName = name;
-        this.currentWorld = this.stages[name]();
-        this.currentWorldAsWorldObject = new Theater.WorldAsWorldObject(this.currentWorld);
-        this.addPartyToWorld(this.currentWorld, name, entryPoint);
-        World.Actions.setName(this.currentWorldAsWorldObject, 'world');
-        World.Actions.setLayer(this.currentWorldAsWorldObject, Theater.LAYER_WORLD);
-        World.Actions.addWorldObjectToWorld(this.currentWorldAsWorldObject, this.theater);
-        this.theater.onStageLoad();
-    };
-    StageManager.prototype.addPartyToWorld = function (world, stageName, entryPoint) {
-        // Resolve entry point.
-        if (_.isString(entryPoint)) {
-            entryPoint = world.getEntryPoint(entryPoint);
-        }
-        this.theater.partyManager.addMembersToWorld(world, stageName, entryPoint);
     };
     return StageManager;
 }());
@@ -6271,12 +6171,12 @@ var Theater = /** @class */ (function (_super) {
             ]
         }) || this;
         _this.loadDialogBox(config.dialogBox);
-        _this.partyManager = new PartyManager(_this, config.getParty());
         _this.storyManager = new StoryManager(_this, config.story.getStoryboard(), config.story.storyboardPath, config.story.getStoryEvents(), config.story.getStoryConfig());
         _this.stageManager = new StageManager(_this, config.getStages());
         _this.interactionManager = new InteractionManager(_this);
         _this.slideManager = new SlideManager(_this);
-        _this.stageManager.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
+        _this.endOfFrameQueue = [];
+        _this.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
         if (Debug.AUTOPLAY && config.autoPlayScript) {
             _this.runScript(config.autoPlayScript);
         }
@@ -6306,7 +6206,9 @@ var Theater = /** @class */ (function (_super) {
     Theater.prototype.update = function () {
         this.storyManager.update();
         _super.prototype.update.call(this);
-        this.stageManager.loadStageIfQueued();
+        while (!_.isEmpty(this.endOfFrameQueue)) {
+            this.endOfFrameQueue.shift()();
+        }
     };
     // Theater cannot have preRender or postRender because it doesn't have a parent world
     Theater.prototype.render = function (screen) {
@@ -6322,8 +6224,17 @@ var Theater = /** @class */ (function (_super) {
         this.slideManager.clearSlides(exceptLast);
     };
     Theater.prototype.loadStage = function (name, transition, entryPoint) {
+        var _this = this;
         if (transition === void 0) { transition = Transition.INSTANT; }
-        this.stageManager.loadStage(name, transition, entryPoint);
+        this.runAtEndOfFrame(function () { return _this.stageManager.internalLoadStage(name, transition, entryPoint); });
+    };
+    Theater.prototype.runAtEndOfFrame = function (fn) {
+        this.endOfFrameQueue.push(fn);
+    };
+    Theater.prototype.skipCurrentCutscene = function () {
+        if (this.storyManager.cutsceneManager.canSkipCurrentCutscene()) {
+            this.storyManager.cutsceneManager.skipCurrentCutscene();
+        }
     };
     Theater.prototype.onStageLoad = function () {
         this.storyManager.onStageLoad();
@@ -6506,12 +6417,6 @@ var StoryManager = /** @class */ (function () {
                 };
                 state.script = S.waitUntil(function () { return !_this.cutsceneManager.isCutscenePlaying; });
             }
-            else if (storyNode.type === 'party') {
-                var partyNode_1 = storyNode;
-                state.callback = function () {
-                    _this.updateParty(partyNode_1);
-                };
-            }
             else if (storyNode.type === 'config') {
                 var config_1 = storyNode.config;
                 state.callback = function () {
@@ -6585,9 +6490,6 @@ var StoryManager = /** @class */ (function () {
             if (node.type === 'cutscene') {
                 this.cutsceneManager.fastForwardCutscene(path[i]);
             }
-            else if (node.type === 'party') {
-                this.updateParty(node);
-            }
             else if (node.type === 'config') {
                 this.storyConfig.updateConfig(node.config);
                 this.storyConfig.execute();
@@ -6628,42 +6530,6 @@ var StoryManager = /** @class */ (function () {
             error("No storyboard node exists with name " + name);
         }
         return this.storyboard[name];
-    };
-    StoryManager.prototype.updateParty = function (party) {
-        var e_27, _a, e_28, _b;
-        if (party.setLeader !== undefined) {
-            this.theater.partyManager.leader = party.setLeader;
-        }
-        if (!_.isEmpty(party.setMembersActive)) {
-            try {
-                for (var _c = __values(party.setMembersActive), _d = _c.next(); !_d.done; _d = _c.next()) {
-                    var m = _d.value;
-                    this.theater.partyManager.setMemberActive(m);
-                }
-            }
-            catch (e_27_1) { e_27 = { error: e_27_1 }; }
-            finally {
-                try {
-                    if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
-                }
-                finally { if (e_27) throw e_27.error; }
-            }
-        }
-        if (!_.isEmpty(party.setMembersInactive)) {
-            try {
-                for (var _e = __values(party.setMembersInactive), _f = _e.next(); !_f.done; _f = _e.next()) {
-                    var m = _f.value;
-                    this.theater.partyManager.setMemberInactive(m);
-                }
-            }
-            catch (e_28_1) { e_28 = { error: e_28_1 }; }
-            finally {
-                try {
-                    if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
-                }
-                finally { if (e_28) throw e_28.error; }
-            }
-        }
     };
     return StoryManager;
 }());
@@ -6749,7 +6615,7 @@ var A;
     }
     A.map2D = map2D;
     function mergeArray(array, into, key, combine) {
-        var e_29, _a;
+        var e_27, _a;
         if (combine === void 0) { combine = (function (e, into) { return e; }); }
         var result = A.clone(into);
         try {
@@ -6768,12 +6634,12 @@ var A;
                 }
             }
         }
-        catch (e_29_1) { e_29 = { error: e_29_1 }; }
+        catch (e_27_1) { e_27 = { error: e_27_1 }; }
         finally {
             try {
                 if (array_1_1 && !array_1_1.done && (_a = array_1.return)) _a.call(array_1);
             }
-            finally { if (e_29) throw e_29.error; }
+            finally { if (e_27) throw e_27.error; }
         }
         return result;
     }
@@ -6980,7 +6846,7 @@ var O;
     }
     O.deepClone = deepClone;
     function deepCloneInternal(obj) {
-        var e_30, _a;
+        var e_28, _a;
         if (_.isArray(obj)) {
             if (_.isEmpty(obj))
                 return [];
@@ -6991,12 +6857,12 @@ var O;
                     result.push(deepCloneInternal(el));
                 }
             }
-            catch (e_30_1) { e_30 = { error: e_30_1 }; }
+            catch (e_28_1) { e_28 = { error: e_28_1 }; }
             finally {
                 try {
                     if (obj_1_1 && !obj_1_1.done && (_a = obj_1.return)) _a.call(obj_1);
                 }
-                finally { if (e_30) throw e_30.error; }
+                finally { if (e_28) throw e_28.error; }
             }
             return result;
         }
@@ -7163,7 +7029,7 @@ var StateMachine = /** @class */ (function () {
         return this.states[name];
     };
     StateMachine.prototype.getValidTransition = function (state) {
-        var e_31, _a;
+        var e_29, _a;
         try {
             for (var _b = __values(state.transitions || []), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var transition = _c.value;
@@ -7172,12 +7038,12 @@ var StateMachine = /** @class */ (function () {
                 return transition;
             }
         }
-        catch (e_31_1) { e_31 = { error: e_31_1 }; }
+        catch (e_29_1) { e_29 = { error: e_29_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_31) throw e_31.error; }
+            finally { if (e_29) throw e_29.error; }
         }
         return undefined;
     };
@@ -7544,7 +7410,7 @@ var Physics;
     }
     Physics.resolveCollisions = resolveCollisions;
     function performNormalIteration(world, resultCollisions) {
-        var e_32, _a;
+        var e_30, _a;
         var collisions = getRaycastCollisions(world)
             .sort(function (a, b) { return a.collision.t - b.collision.t; });
         try {
@@ -7555,16 +7421,16 @@ var Physics;
                     resultCollisions.push(collision);
             }
         }
-        catch (e_32_1) { e_32 = { error: e_32_1 }; }
+        catch (e_30_1) { e_30 = { error: e_30_1 }; }
         finally {
             try {
                 if (collisions_1_1 && !collisions_1_1.done && (_a = collisions_1.return)) _a.call(collisions_1);
             }
-            finally { if (e_32) throw e_32.error; }
+            finally { if (e_30) throw e_30.error; }
         }
     }
     function performFinalIteration(world, resultCollisions) {
-        var e_33, _a, e_34, _b;
+        var e_31, _a, e_32, _b;
         var collisions = getRaycastCollisions(world);
         var currentSet = new Set();
         try {
@@ -7576,18 +7442,18 @@ var Physics;
                     currentSet.add(collision.from);
             }
         }
-        catch (e_33_1) { e_33 = { error: e_33_1 }; }
+        catch (e_31_1) { e_31 = { error: e_31_1 }; }
         finally {
             try {
                 if (collisions_2_1 && !collisions_2_1.done && (_a = collisions_2.return)) _a.call(collisions_2);
             }
-            finally { if (e_33) throw e_33.error; }
+            finally { if (e_31) throw e_31.error; }
         }
         var doneWithCollisions = false;
         while (!doneWithCollisions) {
             doneWithCollisions = true;
             try {
-                for (var collisions_3 = (e_34 = void 0, __values(collisions)), collisions_3_1 = collisions_3.next(); !collisions_3_1.done; collisions_3_1 = collisions_3.next()) {
+                for (var collisions_3 = (e_32 = void 0, __values(collisions)), collisions_3_1 = collisions_3.next(); !collisions_3_1.done; collisions_3_1 = collisions_3.next()) {
                     var collision = collisions_3_1.value;
                     var hasMove = currentSet.has(collision.move);
                     var hasFrom = currentSet.has(collision.from);
@@ -7607,12 +7473,12 @@ var Physics;
                     }
                 }
             }
-            catch (e_34_1) { e_34 = { error: e_34_1 }; }
+            catch (e_32_1) { e_32 = { error: e_32_1 }; }
             finally {
                 try {
                     if (collisions_3_1 && !collisions_3_1.done && (_b = collisions_3.return)) _b.call(collisions_3);
                 }
-                finally { if (e_34) throw e_34.error; }
+                finally { if (e_32) throw e_32.error; }
             }
         }
     }
@@ -7648,16 +7514,16 @@ var Physics;
         return true;
     }
     function getRaycastCollisions(world) {
-        var e_35, _a, e_36, _b, e_37, _c;
+        var e_33, _a, e_34, _b, e_35, _c;
         var raycastCollisions = [];
         try {
             for (var _d = __values(world.collisions), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var collision = _e.value;
                 try {
-                    for (var _f = (e_36 = void 0, __values(world.physicsGroups[collision.move].worldObjects)), _g = _f.next(); !_g.done; _g = _f.next()) {
+                    for (var _f = (e_34 = void 0, __values(world.physicsGroups[collision.move].worldObjects)), _g = _f.next(); !_g.done; _g = _f.next()) {
                         var move = _g.value;
                         try {
-                            for (var _h = (e_37 = void 0, __values(world.physicsGroups[collision.from].worldObjects)), _j = _h.next(); !_j.done; _j = _h.next()) {
+                            for (var _h = (e_35 = void 0, __values(world.physicsGroups[collision.from].worldObjects)), _j = _h.next(); !_j.done; _j = _h.next()) {
                                 var from = _j.value;
                                 if (move === from)
                                     continue;
@@ -7678,30 +7544,30 @@ var Physics;
                                 });
                             }
                         }
-                        catch (e_37_1) { e_37 = { error: e_37_1 }; }
+                        catch (e_35_1) { e_35 = { error: e_35_1 }; }
                         finally {
                             try {
                                 if (_j && !_j.done && (_c = _h.return)) _c.call(_h);
                             }
-                            finally { if (e_37) throw e_37.error; }
+                            finally { if (e_35) throw e_35.error; }
                         }
                     }
                 }
-                catch (e_36_1) { e_36 = { error: e_36_1 }; }
+                catch (e_34_1) { e_34 = { error: e_34_1 }; }
                 finally {
                     try {
                         if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
                     }
-                    finally { if (e_36) throw e_36.error; }
+                    finally { if (e_34) throw e_34.error; }
                 }
             }
         }
-        catch (e_35_1) { e_35 = { error: e_35_1 }; }
+        catch (e_33_1) { e_33 = { error: e_33_1 }; }
         finally {
             try {
                 if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
             }
-            finally { if (e_35) throw e_35.error; }
+            finally { if (e_33) throw e_33.error; }
         }
         return raycastCollisions;
     }
@@ -7728,14 +7594,14 @@ var Physics;
         collision.from.y -= (1 - massFactor) * collision.collision.displacementY;
     }
     function collectCollisions(collisions) {
-        var e_38, _a, e_39, _b;
+        var e_36, _a, e_37, _b;
         var collisionGroups = [];
         try {
             for (var collisions_4 = __values(collisions), collisions_4_1 = collisions_4.next(); !collisions_4_1.done; collisions_4_1 = collisions_4.next()) {
                 var collision = collisions_4_1.value;
                 var collisionFoundInList = false;
                 try {
-                    for (var collisionGroups_1 = (e_39 = void 0, __values(collisionGroups)), collisionGroups_1_1 = collisionGroups_1.next(); !collisionGroups_1_1.done; collisionGroups_1_1 = collisionGroups_1.next()) {
+                    for (var collisionGroups_1 = (e_37 = void 0, __values(collisionGroups)), collisionGroups_1_1 = collisionGroups_1.next(); !collisionGroups_1_1.done; collisionGroups_1_1 = collisionGroups_1.next()) {
                         var collisionList = collisionGroups_1_1.value;
                         if (collisionList[0].move === collision.move && collisionList[0].from === collision.from) {
                             collisionList.push(collision);
@@ -7744,24 +7610,24 @@ var Physics;
                         }
                     }
                 }
-                catch (e_39_1) { e_39 = { error: e_39_1 }; }
+                catch (e_37_1) { e_37 = { error: e_37_1 }; }
                 finally {
                     try {
                         if (collisionGroups_1_1 && !collisionGroups_1_1.done && (_b = collisionGroups_1.return)) _b.call(collisionGroups_1);
                     }
-                    finally { if (e_39) throw e_39.error; }
+                    finally { if (e_37) throw e_37.error; }
                 }
                 if (!collisionFoundInList) {
                     collisionGroups.push([collision]);
                 }
             }
         }
-        catch (e_38_1) { e_38 = { error: e_38_1 }; }
+        catch (e_36_1) { e_36 = { error: e_36_1 }; }
         finally {
             try {
                 if (collisions_4_1 && !collisions_4_1.done && (_a = collisions_4.return)) _a.call(collisions_4);
             }
-            finally { if (e_38) throw e_38.error; }
+            finally { if (e_36) throw e_36.error; }
         }
         return collisionGroups.map(function (collisionList) {
             return {
@@ -7780,7 +7646,7 @@ var Physics;
         });
     }
     function applyCollisionEffects(collisions, delta) {
-        var e_40, _a;
+        var e_38, _a;
         try {
             for (var collisions_5 = __values(collisions), collisions_5_1 = collisions_5.next(); !collisions_5_1.done; collisions_5_1 = collisions_5.next()) {
                 var collision = collisions_5_1.value;
@@ -7791,12 +7657,12 @@ var Physics;
                 collision.from.onCollide(collision.move);
             }
         }
-        catch (e_40_1) { e_40 = { error: e_40_1 }; }
+        catch (e_38_1) { e_38 = { error: e_38_1 }; }
         finally {
             try {
                 if (collisions_5_1 && !collisions_5_1.done && (_a = collisions_5.return)) _a.call(collisions_5);
             }
-            finally { if (e_40) throw e_40.error; }
+            finally { if (e_38) throw e_38.error; }
         }
     }
     function applyMomentumTransferForCollision(collision, momentumTransferMode, delta) {
@@ -7888,37 +7754,37 @@ var WorldSelecter = /** @class */ (function () {
         return A.clone(this.world.worldObjectsByName[name] || []);
     };
     WorldSelecter.prototype.overlap = function (bounds, physicsGroups) {
-        var e_41, _a;
+        var e_39, _a;
         var result = [];
         for (var physicsGroup in this.world.physicsGroups) {
             if (!_.contains(physicsGroups, physicsGroup))
                 continue;
             try {
-                for (var _b = (e_41 = void 0, __values(this.world.physicsGroups[physicsGroup].worldObjects)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                for (var _b = (e_39 = void 0, __values(this.world.physicsGroups[physicsGroup].worldObjects)), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var obj = _c.value;
                     if (!obj.isOverlapping(bounds))
                         continue;
                     result.push(obj);
                 }
             }
-            catch (e_41_1) { e_41 = { error: e_41_1 }; }
+            catch (e_39_1) { e_39 = { error: e_39_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_41) throw e_41.error; }
+                finally { if (e_39) throw e_39.error; }
             }
         }
         return result;
     };
     WorldSelecter.prototype.raycast = function (x, y, dx, dy, physicsGroups) {
-        var e_42, _a;
+        var e_40, _a;
         var result = [];
         for (var physicsGroup in this.world.physicsGroups) {
             if (!_.contains(physicsGroups, physicsGroup))
                 continue;
             try {
-                for (var _b = (e_42 = void 0, __values(this.world.physicsGroups[physicsGroup].worldObjects)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                for (var _b = (e_40 = void 0, __values(this.world.physicsGroups[physicsGroup].worldObjects)), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var obj = _c.value;
                     var t = obj.bounds.raycast(x, y, dx, dy);
                     if (!isFinite(t))
@@ -7926,12 +7792,12 @@ var WorldSelecter = /** @class */ (function () {
                     result.push({ obj: obj, t: t });
                 }
             }
-            catch (e_42_1) { e_42 = { error: e_42_1 }; }
+            catch (e_40_1) { e_40 = { error: e_40_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_42) throw e_42.error; }
+                finally { if (e_40) throw e_40.error; }
             }
         }
         return result.sort(function (r1, r2) { return r1.t - r2.t; });
@@ -9324,7 +9190,7 @@ var Effects = /** @class */ (function () {
         return false;
     };
     Effects.prototype.updateEffects = function (delta) {
-        var e_43, _a, e_44, _b;
+        var e_41, _a, e_42, _b;
         if (this.effects[Effects.SILHOUETTE_I])
             this.effects[Effects.SILHOUETTE_I].updateTime(delta);
         if (this.effects[Effects.OUTLINE_I])
@@ -9335,12 +9201,12 @@ var Effects = /** @class */ (function () {
                 filter.updateTime(delta);
             }
         }
-        catch (e_43_1) { e_43 = { error: e_43_1 }; }
+        catch (e_41_1) { e_41 = { error: e_41_1 }; }
         finally {
             try {
                 if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
             }
-            finally { if (e_43) throw e_43.error; }
+            finally { if (e_41) throw e_41.error; }
         }
         try {
             for (var _e = __values(this.post.filters), _f = _e.next(); !_f.done; _f = _e.next()) {
@@ -9348,12 +9214,12 @@ var Effects = /** @class */ (function () {
                 filter.updateTime(delta);
             }
         }
-        catch (e_44_1) { e_44 = { error: e_44_1 }; }
+        catch (e_42_1) { e_42 = { error: e_42_1 }; }
         finally {
             try {
                 if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
             }
-            finally { if (e_44) throw e_44.error; }
+            finally { if (e_42) throw e_42.error; }
         }
     };
     Effects.prototype.updateFromConfig = function (config) {
@@ -9906,7 +9772,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_45, _a;
+        var e_43, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -9920,12 +9786,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_45_1) { e_45 = { error: e_45_1 }; }
+            catch (e_43_1) { e_43 = { error: e_43_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_45) throw e_45.error; }
+                finally { if (e_43) throw e_43.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -9974,7 +9840,7 @@ var Tilemap = /** @class */ (function (_super) {
         this.dirty = true;
     };
     Tilemap.prototype.createCollisionBoxes = function () {
-        var e_46, _a;
+        var e_44, _a;
         World.Actions.removeWorldObjectsFromWorld(this.collisionBoxes);
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tileset);
@@ -9993,12 +9859,12 @@ var Tilemap = /** @class */ (function (_super) {
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_46_1) { e_46 = { error: e_46_1 }; }
+        catch (e_44_1) { e_44 = { error: e_44_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_46) throw e_46.error; }
+            finally { if (e_44) throw e_44.error; }
         }
     };
     Tilemap.prototype.createTilemap = function () {
@@ -10326,7 +10192,7 @@ var SmartTilemap = /** @class */ (function (_super) {
         }
         Util.getSmartTilemapLayer = getSmartTilemapLayer;
         function getSmartTile(tilemap, x, y, config) {
-            var e_47, _a;
+            var e_45, _a;
             var pattern = getTilePattern(tilemap, x, y, config);
             try {
                 for (var _b = __values(config.rules), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -10336,12 +10202,12 @@ var SmartTilemap = /** @class */ (function (_super) {
                     }
                 }
             }
-            catch (e_47_1) { e_47 = { error: e_47_1 }; }
+            catch (e_45_1) { e_45 = { error: e_45_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_47) throw e_47.error; }
+                finally { if (e_45) throw e_45.error; }
             }
             return tilemap[y][x];
         }
@@ -10686,7 +10552,7 @@ var Explosion = /** @class */ (function (_super) {
         return _this;
     }
     Explosion.prototype.onAdd = function () {
-        var e_48, _a;
+        var e_46, _a;
         _super.prototype.onAdd.call(this);
         var toDamages = this.world.select.overlap(this.bounds, ['player', 'enemies']);
         try {
@@ -10700,12 +10566,12 @@ var Explosion = /** @class */ (function (_super) {
                 }
             }
         }
-        catch (e_48_1) { e_48 = { error: e_48_1 }; }
+        catch (e_46_1) { e_46 = { error: e_46_1 }; }
         finally {
             try {
                 if (toDamages_1_1 && !toDamages_1_1.done && (_a = toDamages_1.return)) _a.call(toDamages_1);
             }
-            finally { if (e_48) throw e_48.error; }
+            finally { if (e_46) throw e_46.error; }
         }
         this.world.playSound('explode');
     };
@@ -11516,7 +11382,6 @@ Main.loadConfig({
                 getStoryEvents: function () { return StoryEvent.EMPTY_MAP; },
                 getStoryConfig: function () { return StoryConfig.EMPTY; },
             },
-            getParty: function () { return Party.EMPTY; },
             dialogBox: function () { return new DialogBox({
                 x: 200, y: 250,
                 texture: 'dialogbox',
@@ -11835,6 +11700,19 @@ function getStages() {
         },
     };
 }
+function addHoop() {
+    var player = global.world.select.type(Player);
+    return global.world.addWorldObject(new Hoop({
+        x: player.x, y: player.y,
+        name: 'hoop',
+        layer: 'hoop',
+        physicsGroup: 'hoop'
+    }));
+}
+function setPlayerMaxHP() {
+    if (!HARD_DIFFICULTY)
+        global.world.select.type(Player).health = Player.MAX_HP;
+}
 function getStoryboard() {
     return {
         'start': {
@@ -11849,6 +11727,7 @@ function getStoryboard() {
         },
         'intro': {
             type: 'cutscene',
+            skippable: true,
             script: function () {
                 var player, hoop, whoosh, text;
                 return __generator(this, function (_a) {
@@ -11872,13 +11751,10 @@ function getStoryboard() {
                         case 6:
                             _a.sent();
                             player = global.world.select.type(Player);
-                            hoop = global.world.addWorldObject(new Hoop({
-                                x: player.x, y: player.y - 32,
-                                name: 'hoop',
-                                layer: 'hoop',
-                                effects: { silhouette: { color: 0x00FFFF, alpha: 0 } },
-                                physicsGroup: 'hoop'
-                            }));
+                            hoop = addHoop();
+                            hoop.y -= 32;
+                            hoop.effects.addSilhouette.color = 0x00FFFF;
+                            hoop.effects.addSilhouette.alpha = 0;
                             whoosh = global.world.playSound('swing');
                             whoosh.speed = 0.1;
                             hoop.data.intro = true;
@@ -11931,10 +11807,15 @@ function getStoryboard() {
                         case 17:
                             _a.sent();
                             text.removeFromWorld();
-                            Debug.SKIP_RATE = 1;
                             return [2 /*return*/];
                     }
                 });
+            },
+            onFinish: function () {
+                Debug.SKIP_RATE = 1;
+                if (!global.world.hasWorldObject('hoop')) {
+                    addHoop();
+                }
             },
             transitions: [{ toNode: 'wave_1' }]
         },
@@ -11959,6 +11840,7 @@ function getStoryboard() {
         },
         'wave_1': {
             type: 'cutscene',
+            skippable: true,
             script: function () {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
@@ -12002,6 +11884,7 @@ function getStoryboard() {
         },
         'wave_2': {
             type: 'cutscene',
+            skippable: true,
             script: function () {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
@@ -12010,8 +11893,7 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(1)];
                         case 1:
                             _a.sent();
-                            if (!HARD_DIFFICULTY)
-                                global.world.select.type(Player).health = Player.MAX_HP;
+                            setPlayerMaxHP();
                             return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();
@@ -12030,6 +11912,10 @@ function getStoryboard() {
                             return [2 /*return*/];
                     }
                 });
+            },
+            onFinish: function () {
+                global.world.select.type(WaveController).stopMusic();
+                setPlayerMaxHP();
             },
             transitions: [{ toNode: 'spawn_wave_2' }]
         },
@@ -12052,6 +11938,7 @@ function getStoryboard() {
         },
         'wave_3': {
             type: 'cutscene',
+            skippable: true,
             script: function () {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
@@ -12060,8 +11947,7 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(1)];
                         case 1:
                             _a.sent();
-                            if (!HARD_DIFFICULTY)
-                                global.world.select.type(Player).health = Player.MAX_HP;
+                            setPlayerMaxHP();
                             return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();
@@ -12080,6 +11966,10 @@ function getStoryboard() {
                             return [2 /*return*/];
                     }
                 });
+            },
+            onFinish: function () {
+                global.world.select.type(WaveController).stopMusic();
+                setPlayerMaxHP();
             },
             transitions: [{ toNode: 'spawn_wave_3' }]
         },
@@ -12102,6 +11992,7 @@ function getStoryboard() {
         },
         'wave_4': {
             type: 'cutscene',
+            skippable: true,
             script: function () {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
@@ -12110,8 +12001,7 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(1)];
                         case 1:
                             _a.sent();
-                            if (!HARD_DIFFICULTY)
-                                global.world.select.type(Player).health = Player.MAX_HP;
+                            setPlayerMaxHP();
                             return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();
@@ -12130,6 +12020,10 @@ function getStoryboard() {
                             return [2 /*return*/];
                     }
                 });
+            },
+            onFinish: function () {
+                global.world.select.type(WaveController).stopMusic();
+                setPlayerMaxHP();
             },
             transitions: [{ toNode: 'spawn_wave_4' }]
         },
@@ -12152,6 +12046,7 @@ function getStoryboard() {
         },
         'wave_5': {
             type: 'cutscene',
+            skippable: true,
             script: function () {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
@@ -12160,8 +12055,7 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(1)];
                         case 1:
                             _a.sent();
-                            if (!HARD_DIFFICULTY)
-                                global.world.select.type(Player).health = Player.MAX_HP;
+                            setPlayerMaxHP();
                             return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();
@@ -12177,6 +12071,10 @@ function getStoryboard() {
                             return [2 /*return*/];
                     }
                 });
+            },
+            onFinish: function () {
+                global.world.select.type(WaveController).stopMusic();
+                setPlayerMaxHP();
             },
             transitions: [{ toNode: 'spawn_wave_5' }]
         },
@@ -12207,8 +12105,7 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(1)];
                         case 1:
                             _a.sent();
-                            if (!HARD_DIFFICULTY)
-                                global.world.select.type(Player).health = Player.MAX_HP;
+                            setPlayerMaxHP();
                             return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();
@@ -12236,6 +12133,10 @@ function getStoryboard() {
                             return [2 /*return*/];
                     }
                 });
+            },
+            onFinish: function () {
+                global.world.select.type(WaveController).stopMusic();
+                setPlayerMaxHP();
             },
             transitions: [{ toNode: 'spawn_wave_king' }]
         },
@@ -12838,7 +12739,7 @@ var WaveController = /** @class */ (function (_super) {
         ]);
     };
     WaveController.prototype.spawnWaveKing = function () {
-        var e_49, _a;
+        var e_47, _a;
         this.currentWave = 9001;
         var guards = this.world.select.nameAll('guard');
         try {
@@ -12855,12 +12756,12 @@ var WaveController = /** @class */ (function (_super) {
                 guard.removeFromWorld();
             }
         }
-        catch (e_49_1) { e_49 = { error: e_49_1 }; }
+        catch (e_47_1) { e_47 = { error: e_47_1 }; }
         finally {
             try {
                 if (guards_1_1 && !guards_1_1.done && (_a = guards_1.return)) _a.call(guards_1);
             }
-            finally { if (e_49) throw e_49.error; }
+            finally { if (e_47) throw e_47.error; }
         }
     };
     WaveController.prototype.startMusic = function () {
