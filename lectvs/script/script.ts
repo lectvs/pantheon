@@ -39,7 +39,11 @@ class Script {
         for (let i = 0; i < maxIters && !this.done; i++) {
             this.update(0.1);
         }
-        this.done = true;
+        
+        if (!this.done) {
+            error('Warning: script finishImmediately exceeded max iters!', this);
+            this.done = true;
+        }
     }
 
     stop() {

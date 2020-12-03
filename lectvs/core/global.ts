@@ -15,7 +15,9 @@ class global {
 
     static get game() { return Main.game; }
     static get theater() { return this.game.theater; }
-    static get world() { return this.theater ? this.theater.currentWorld : undefined; }
+    static get world() { return this.theater?.currentWorld; }
+
+    static get skippingCutscene() { return this.theater?.isSkippingCutscene; }
 
     static get renderer() { return Main.renderer; }
     static get soundManager() { return Main.soundManager; }

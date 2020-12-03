@@ -71,7 +71,10 @@ class World {
 
     select: WorldSelecter;
     
-    get delta() { return global.game.delta; }
+    get delta() {
+        if (global.skippingCutscene) return Theater.SKIP_CUTSCENE_DELTA;
+        return global.game.delta;
+    }
 
     volume: number;
 

@@ -690,7 +690,12 @@ var global = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(global, "world", {
-        get: function () { return this.theater ? this.theater.currentWorld : undefined; },
+        get: function () { var _a; return (_a = this.theater) === null || _a === void 0 ? void 0 : _a.currentWorld; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(global, "skippingCutscene", {
+        get: function () { var _a; return (_a = this.theater) === null || _a === void 0 ? void 0 : _a.isSkippingCutscene; },
         enumerable: false,
         configurable: true
     });
@@ -862,6 +867,8 @@ var Input = /** @class */ (function () {
     };
     Input.isDown = function (key) {
         var _this = this;
+        if (key === Input.GAME_ADVANCE_CUTSCENE && global.skippingCutscene)
+            return true;
         return this.keyCodesByName[key] && this.keyCodesByName[key].some(function (keyCode) { return _this.keysByKeycode[keyCode].isDown; });
     };
     Input.isUp = function (key) {
@@ -870,6 +877,8 @@ var Input = /** @class */ (function () {
     };
     Input.justDown = function (key) {
         var _this = this;
+        if (key === Input.GAME_ADVANCE_CUTSCENE && global.skippingCutscene)
+            return true;
         return this.keyCodesByName[key] && this.keyCodesByName[key].some(function (keyCode) { return _this.keysByKeycode[keyCode].justDown; });
     };
     Input.justUp = function (key) {
@@ -2055,13 +2064,6 @@ var CutsceneManager = /** @class */ (function () {
         }
         this.current = null;
     };
-    CutsceneManager.prototype.skipCurrentCutscene = function () {
-        if (!this.canSkipCurrentCutscene()) {
-            error("Attempted to skip unskippable cutscene", this.current);
-            return;
-        }
-        this.finishCurrentCutscene();
-    };
     CutsceneManager.prototype.onStageLoad = function () {
         this.finishCurrentCutscene();
     };
@@ -2071,8 +2073,6 @@ var CutsceneManager = /** @class */ (function () {
         var completed = this.current;
         this.current = null;
         this.playedCutscenes.add(completed.name);
-        if (completed.node.onFinish)
-            completed.node.onFinish();
         this.theater.dialogBox.complete();
         this.theater.clearSlides();
     };
@@ -3252,7 +3252,11 @@ var World = /** @class */ (function () {
         this.camera = new Camera((_k = config.camera) !== null && _k !== void 0 ? _k : {}, this);
     }
     Object.defineProperty(World.prototype, "delta", {
-        get: function () { return global.game.delta; },
+        get: function () {
+            if (global.skippingCutscene)
+                return Theater.SKIP_CUTSCENE_DELTA;
+            return global.game.delta;
+        },
         enumerable: false,
         configurable: true
     });
@@ -4872,7 +4876,10 @@ var Script = /** @class */ (function () {
         for (var i = 0; i < maxIters && !this.done; i++) {
             this.update(0.1);
         }
-        this.done = true;
+        if (!this.done) {
+            error('Warning: script finishImmediately exceeded max iters!', this);
+            this.done = true;
+        }
     };
     Script.prototype.stop = function () {
         this.done = true;
@@ -6141,6 +6148,7 @@ var Theater = /** @class */ (function (_super) {
         _this.interactionManager = new InteractionManager(_this);
         _this.slideManager = new SlideManager(_this);
         _this.endOfFrameQueue = [];
+        _this.isSkippingCutscene = false;
         _this.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
         if (Debug.AUTOPLAY && config.autoPlayScript) {
             _this.runScript(config.autoPlayScript);
@@ -6194,9 +6202,22 @@ var Theater = /** @class */ (function (_super) {
     Theater.prototype.runAtEndOfFrame = function (fn) {
         this.endOfFrameQueue.push(fn);
     };
+    // Rapidly update theater until cutscene is completed.
     Theater.prototype.skipCurrentCutscene = function () {
+        var _this = this;
         if (this.storyManager.cutsceneManager.canSkipCurrentCutscene()) {
-            this.storyManager.cutsceneManager.skipCurrentCutscene();
+            var currentCutscene_1 = this.storyManager.cutsceneManager.current.name;
+            var cutsceneFinished = function () { return !_this.storyManager.cutsceneManager.current || _this.storyManager.cutsceneManager.current.name !== currentCutscene_1; };
+            this.isSkippingCutscene = true;
+            var iters = 0;
+            while (iters < Theater.SKIP_CUTSCENE_MAX_FRAMES && !cutsceneFinished()) {
+                this.update();
+                iters++;
+            }
+            this.isSkippingCutscene = false;
+            if (iters >= Theater.SKIP_CUTSCENE_MAX_FRAMES) {
+                error('Cutscene skip exceeded max frames!');
+            }
         }
     };
     Theater.prototype.onStageLoad = function () {
@@ -6211,6 +6232,8 @@ var Theater = /** @class */ (function (_super) {
     Theater.LAYER_TRANSITION = 'transition';
     Theater.LAYER_SLIDES = 'slides';
     Theater.LAYER_DIALOG = 'dialog';
+    Theater.SKIP_CUTSCENE_DELTA = 0.1;
+    Theater.SKIP_CUTSCENE_MAX_FRAMES = 10000;
     return Theater;
 }(World));
 (function (Theater) {
@@ -11821,20 +11844,10 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(1)];
                         case 19:
                             _a.sent();
+                            Debug.SKIP_RATE = 1;
                             return [2 /*return*/];
                     }
                 });
-            },
-            onFinish: function () {
-                Debug.SKIP_RATE = 1;
-                if (!global.world.hasWorldObject('hoop')) {
-                    addHoop();
-                }
-                global.world.select.name('hoop').data.intro = false;
-                if (global.theater.hasWorldObject('hooplahText')) {
-                    global.theater.removeWorldObject('hooplahText');
-                }
-                Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('throne')));
             },
             transitions: [{ toNode: 'wave_1' }]
         },
@@ -11878,9 +11891,6 @@ function getStoryboard() {
                             return [2 /*return*/];
                     }
                 });
-            },
-            onFinish: function () {
-                Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
             },
             transitions: [{ toNode: 'spawn_wave_1' }]
         },
@@ -11929,11 +11939,6 @@ function getStoryboard() {
                     }
                 });
             },
-            onFinish: function () {
-                global.world.select.type(WaveController).stopMusic();
-                setPlayerMaxHP();
-                Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
-            },
             transitions: [{ toNode: 'spawn_wave_2' }]
         },
         'spawn_wave_2': {
@@ -11980,11 +11985,6 @@ function getStoryboard() {
                             return [2 /*return*/];
                     }
                 });
-            },
-            onFinish: function () {
-                global.world.select.type(WaveController).stopMusic();
-                setPlayerMaxHP();
-                Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
             },
             transitions: [{ toNode: 'spawn_wave_3' }]
         },
@@ -12033,11 +12033,6 @@ function getStoryboard() {
                     }
                 });
             },
-            onFinish: function () {
-                global.world.select.type(WaveController).stopMusic();
-                setPlayerMaxHP();
-                Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
-            },
             transitions: [{ toNode: 'spawn_wave_4' }]
         },
         'spawn_wave_4': {
@@ -12081,11 +12076,6 @@ function getStoryboard() {
                             return [2 /*return*/];
                     }
                 });
-            },
-            onFinish: function () {
-                global.world.select.type(WaveController).stopMusic();
-                setPlayerMaxHP();
-                Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
             },
             transitions: [{ toNode: 'spawn_wave_5' }]
         },
@@ -12138,11 +12128,6 @@ function getStoryboard() {
                             return [2 /*return*/];
                     }
                 });
-            },
-            onFinish: function () {
-                global.world.select.type(WaveController).stopMusic();
-                setPlayerMaxHP();
-                Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('throne')));
             },
             transitions: [{ toNode: 'spawn_wave_king' }]
         },

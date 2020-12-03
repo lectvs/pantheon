@@ -98,14 +98,6 @@ class CutsceneManager {
         this.current = null;
     }
 
-    skipCurrentCutscene() {
-        if (!this.canSkipCurrentCutscene()) {
-            error(`Attempted to skip unskippable cutscene`, this.current);
-            return;
-        }
-        this.finishCurrentCutscene();
-    }
-
     onStageLoad() {
         this.finishCurrentCutscene();
     }
@@ -117,7 +109,6 @@ class CutsceneManager {
         this.current = null;
 
         this.playedCutscenes.add(completed.name);
-        if (completed.node.onFinish) completed.node.onFinish();
 
         this.theater.dialogBox.complete();
         this.theater.clearSlides();

@@ -31,6 +31,8 @@ class Theater extends World {
     get slides() { return this.slideManager ? this.slideManager.slides : []; }
 
     endOfFrameQueue: (() => any)[];
+
+    isSkippingCutscene: boolean;
     
     constructor(config: Theater.Config) {
         super({
@@ -50,6 +52,8 @@ class Theater extends World {
         this.slideManager = new SlideManager(this);
 
         this.endOfFrameQueue = [];
+
+        this.isSkippingCutscene = false;
 
         this.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
 
@@ -90,9 +94,23 @@ class Theater extends World {
         this.endOfFrameQueue.push(fn);
     }
 
+    // Rapidly update theater until cutscene is completed.
     skipCurrentCutscene() {
         if (this.storyManager.cutsceneManager.canSkipCurrentCutscene()) {
-            this.storyManager.cutsceneManager.skipCurrentCutscene();
+            let currentCutscene = this.storyManager.cutsceneManager.current.name;
+            let cutsceneFinished = () => !this.storyManager.cutsceneManager.current || this.storyManager.cutsceneManager.current.name !== currentCutscene;
+
+            this.isSkippingCutscene = true;
+            let iters = 0;
+            while (iters < Theater.SKIP_CUTSCENE_MAX_FRAMES && !cutsceneFinished()) {
+                this.update();
+                iters++;
+            }
+            this.isSkippingCutscene = false;
+
+            if (iters >= Theater.SKIP_CUTSCENE_MAX_FRAMES) {
+                error('Cutscene skip exceeded max frames!');
+            }
         }
     }
 
@@ -106,10 +124,13 @@ class Theater extends World {
         World.Actions.setLayer(this.dialogBox, Theater.LAYER_DIALOG);
     }
 
-    static LAYER_WORLD = 'world';
-    static LAYER_TRANSITION = 'transition';
-    static LAYER_SLIDES = 'slides';
-    static LAYER_DIALOG = 'dialog';
+    static readonly LAYER_WORLD = 'world';
+    static readonly LAYER_TRANSITION = 'transition';
+    static readonly LAYER_SLIDES = 'slides';
+    static readonly LAYER_DIALOG = 'dialog';
+
+    static readonly SKIP_CUTSCENE_DELTA = 0.1;
+    static readonly SKIP_CUTSCENE_MAX_FRAMES = 10000;
 }
 
 namespace Theater {

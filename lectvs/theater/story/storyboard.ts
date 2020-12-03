@@ -12,7 +12,6 @@ namespace Storyboard {
             script: Cutscene.Generator;
             playOnlyOnce?: boolean;
             skippable?: boolean;
-            onFinish?: () => any;
         }
 
         export type Gameplay = {

@@ -98,17 +98,8 @@ function getStoryboard(): Storyboard { return {
 
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
             yield S.wait(1);
-        },
-        onFinish: () => {
+
             Debug.SKIP_RATE = 1;
-            if (!global.world.hasWorldObject('hoop')) {
-                addHoop();
-            }
-            global.world.select.name('hoop').data.intro = false;
-            if (global.theater.hasWorldObject('hooplahText')) {
-                global.theater.removeWorldObject('hooplahText');
-            }
-            Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('throne')));
         },
         transitions: [{ toNode: 'wave_1' }]
     },
@@ -142,9 +133,6 @@ function getStoryboard(): Storyboard { return {
 
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT);
         },
-        onFinish: () => {
-            Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
-        },
         transitions: [{ toNode: 'spawn_wave_1' }]
     },
     'spawn_wave_1': {
@@ -173,11 +161,6 @@ function getStoryboard(): Storyboard { return {
             yield S.wait(0.5);
 
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT);
-        },
-        onFinish: () => {
-            global.world.select.type(WaveController).stopMusic();
-            setPlayerMaxHP();
-            Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
         },
         transitions: [{ toNode: 'spawn_wave_2' }]
     },
@@ -208,11 +191,6 @@ function getStoryboard(): Storyboard { return {
 
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT);
         },
-        onFinish: () => {
-            global.world.select.type(WaveController).stopMusic();
-            setPlayerMaxHP();
-            Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
-        },
         transitions: [{ toNode: 'spawn_wave_3' }]
     },
     'spawn_wave_3': {
@@ -242,11 +220,6 @@ function getStoryboard(): Storyboard { return {
 
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT);
         },
-        onFinish: () => {
-            global.world.select.type(WaveController).stopMusic();
-            setPlayerMaxHP();
-            Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
-        },
         transitions: [{ toNode: 'spawn_wave_4' }]
     },
     'spawn_wave_4': {
@@ -274,11 +247,6 @@ function getStoryboard(): Storyboard { return {
             yield S.wait(0.5);
 
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT);
-        },
-        onFinish: () => {
-            global.world.select.type(WaveController).stopMusic();
-            setPlayerMaxHP();
-            Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('player'), BASE_CAMERA_MOVEMENT));
         },
         transitions: [{ toNode: 'spawn_wave_5' }]
     },
@@ -308,11 +276,6 @@ function getStoryboard(): Storyboard { return {
             yield S.dialog("If thou want'st it so bad... Heh heh heh...");
 
             yield S.wait(0.5);
-        },
-        onFinish: () => {
-            global.world.select.type(WaveController).stopMusic();
-            setPlayerMaxHP();
-            Script.instant(S.cameraTransition(1, Camera.Mode.FOLLOW('throne')));
         },
         transitions: [{ toNode: 'spawn_wave_king' }]
     },

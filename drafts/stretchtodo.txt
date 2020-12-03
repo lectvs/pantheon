@@ -1,6 +1,7 @@
 - move from config-based creation to factory-based creation? 
 - documentation and API cleanup
 - implement metroid-style transitions
+- theater not a world (for real this time)
 - camera zoom
 - normal-map/lighting
 - controller revamp
