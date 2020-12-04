@@ -3,7 +3,7 @@ class Hoop extends Sprite {
     private bounceSpeed: number = 75;
 
     currentAttackStrength: number;
-    private readonly strengthThreshold = 0.3;
+    private readonly strengthThreshold = 0.2;
 
     private swingSound: Sound;
 

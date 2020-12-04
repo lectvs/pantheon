@@ -6371,6 +6371,9 @@ var StoryManager = /** @class */ (function () {
                 };
                 state.script = S.waitUntil(function () { return !_this.cutsceneManager.isCutscenePlaying; });
             }
+            else if (storyNode.type === 'transition') {
+                state.script = S.wait(storyNode.delay);
+            }
             state.transitions = storyNode.transitions.map(function (transition) {
                 return {
                     toState: transition.toNode,
@@ -10667,7 +10670,7 @@ var Hoop = /** @class */ (function (_super) {
     function Hoop(config) {
         var _this = _super.call(this, __assign({ texture: 'hoop', bounds: new CircleBounds(0, 0, 50), data: { intro: false } }, config)) || this;
         _this.bounceSpeed = 75;
-        _this.strengthThreshold = 0.3;
+        _this.strengthThreshold = 0.2;
         _this.radius = 47;
         _this.currentAttackStrength = 0;
         return _this;
@@ -11805,11 +11808,12 @@ function getStoryboard() {
             transitions: [
                 { condition: function () { return global.world.select.type(WaveController).isKingWaveDefeated(); }, toNode: 'win' },
                 { condition: function () { return global.world.select.type(Player).health <= 0; }, toNode: 'defeat' },
-                { condition: function () { return global.world.select.type(WaveController).isNormalWaveDefeated(); }, delay: 0.5, toNode: 'post_gameplay' },
+                { condition: function () { return global.world.select.type(WaveController).isNormalWaveDefeated(); }, toNode: 'post_gameplay' },
             ]
         },
         'post_gameplay': {
-            type: 'gameplay',
+            type: 'transition',
+            delay: 0.5,
             transitions: [
                 { condition: function () { return global.world.select.type(Player).health <= 0; }, toNode: 'defeat' },
                 { condition: function () { return global.world.select.type(WaveController).isNormalWaveDefeated(1); }, toNode: 'wave_2' },

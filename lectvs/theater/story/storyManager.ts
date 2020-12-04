@@ -30,6 +30,8 @@ class StoryManager {
                     this.cutsceneManager.playCutscene(cutsceneName);
                 }
                 state.script = S.waitUntil(() => !this.cutsceneManager.isCutscenePlaying);
+            } else if (storyNode.type === 'transition') {
+                state.script = S.wait(storyNode.delay);
             }
             
             state.transitions = storyNode.transitions.map(transition => {

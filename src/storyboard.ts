@@ -99,11 +99,12 @@ function getStoryboard(): Storyboard { return {
         transitions: [
             { condition: () => global.world.select.type(WaveController).isKingWaveDefeated(), toNode: 'win' },
             { condition: () => global.world.select.type(Player).health <= 0, toNode: 'defeat' },
-            { condition: () => global.world.select.type(WaveController).isNormalWaveDefeated(), delay: 0.5, toNode: 'post_gameplay' },
+            { condition: () => global.world.select.type(WaveController).isNormalWaveDefeated(), toNode: 'post_gameplay' },
         ]
     },
     'post_gameplay': {
-        type: 'gameplay',
+        type: 'transition',
+        delay: 0.5,
         transitions: [
             { condition: () => global.world.select.type(Player).health <= 0, toNode: 'defeat' },
             { condition: () => global.world.select.type(WaveController).isNormalWaveDefeated(1), toNode: 'wave_2' },
