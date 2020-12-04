@@ -4,20 +4,18 @@ class StoryManager {
 
     cutsceneManager: CutsceneManager;
     eventManager: StoryEventManager;
-    storyConfig: StoryConfig;
 
     get currentNodeName() { return this.stateMachine.getCurrentStateName(); }
     get currentNode() { return this.getNodeByName(this.currentNodeName); }
 
     private stateMachine: StateMachine;
 
-    constructor(theater: Theater, storyboard: Storyboard, storyboardPath: string[], events: StoryEvent.Map, storyConfig: StoryConfig.Config) {
+    constructor(theater: Theater, storyboard: Storyboard, storyboardPath: string[], events: StoryEvent.Map) {
         this.theater = theater;
         this.storyboard = storyboard;
 
         this.cutsceneManager = new CutsceneManager(theater, storyboard);
         this.eventManager = new StoryEventManager(theater, events);
-        this.storyConfig = new StoryConfig(theater, storyConfig);
 
         this.stateMachine = new StateMachine();
         
@@ -32,12 +30,6 @@ class StoryManager {
                     this.cutsceneManager.playCutscene(cutsceneName);
                 }
                 state.script = S.waitUntil(() => !this.cutsceneManager.isCutscenePlaying);
-            } else if (storyNode.type === 'config') {
-                let config = storyNode.config;
-                state.callback = () => {
-                    this.storyConfig.updateConfig(config);
-                    this.storyConfig.execute();
-                }
             }
             
             state.transitions = storyNode.transitions.map(transition => {
@@ -79,7 +71,6 @@ class StoryManager {
     onStageLoad() {
         this.cutsceneManager.onStageLoad();
         this.eventManager.onStageLoad();
-        this.storyConfig.execute();
     }
 
     setNode(node: string) {
@@ -94,12 +85,8 @@ class StoryManager {
             if (!node) continue;
             if (node.type === 'cutscene') {
                 this.cutsceneManager.fastForwardCutscene(path[i]);
-            } else if (node.type === 'config') {
-                this.storyConfig.updateConfig(node.config);
-                this.storyConfig.execute();
             }
         }
-        this.storyConfig.execute();
         return _.last(path);
     }
 

@@ -94,7 +94,3 @@ class StoryEventManager {
         return event;
     }
 }
-
-namespace StoryEvent {
-    export const EMPTY_MAP: StoryEvent.Map = {}
-}

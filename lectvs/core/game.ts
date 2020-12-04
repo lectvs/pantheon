@@ -50,6 +50,7 @@ class Game {
             global.metrics.endSpan('menu');
         } else {
             global.metrics.startSpan('theater');
+            this.theater.isSkippingCutscene = false;  // Safeguard
             this.theater.update();
             global.metrics.endSpan('theater');
         }

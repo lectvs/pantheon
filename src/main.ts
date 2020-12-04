@@ -73,8 +73,7 @@ Main.loadConfig({
             story: {
                 getStoryboard: getStoryboard,
                 storyboardPath: ['start'],
-                getStoryEvents: () => StoryEvent.EMPTY_MAP,
-                getStoryConfig: () => StoryConfig.EMPTY,
+                getStoryEvents: () => ({}),
             },
             dialogBox: () => new DialogBox({
                 x: 200, y: 250,

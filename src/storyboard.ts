@@ -1,17 +1,3 @@
-function addHoop() {
-    let player = global.world.select.type(Player);
-    return global.world.addWorldObject(new Hoop({
-        x: player.x, y: player.y,
-        name: 'hoop',
-        layer: 'hoop',
-        physicsGroup: 'hoop'
-    }));
-}
-
-function setPlayerMaxHP() {
-    if (!HARD_DIFFICULTY) global.world.select.type(Player).health = Player.MAX_HP;
-}
-
 function getStoryboard(): Storyboard { return {
     'start': {
         type: 'start',
@@ -38,10 +24,15 @@ function getStoryboard(): Storyboard { return {
             yield S.cameraTransition(2, Camera.Mode.FOLLOW('player'));
 
             let player = global.world.select.type(Player);
-            let hoop = addHoop();
-            hoop.y -= 32;
-            hoop.effects.addSilhouette.color = 0x00FFFF;
-            hoop.effects.addSilhouette.alpha = 0;
+            let hoop = global.world.addWorldObject(new Hoop({
+                x: player.x, y: player.y - 32,
+                name: 'hoop',
+                layer: 'hoop',
+                physicsGroup: 'hoop',
+                effects: {
+                    silhouette: { color: 0x00FFFF, alpha: 0 }
+                }
+            }));
 
             let whoosh = global.world.playSound('swing');
             whoosh.speed = 0.1;
@@ -150,7 +141,7 @@ function getStoryboard(): Storyboard { return {
             global.world.select.type(WaveController).stopMusic();
             yield S.wait(1);
 
-            setPlayerMaxHP();
+            if (!HARD_DIFFICULTY) global.world.select.type(Player).health = Player.MAX_HP;
 
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
             yield S.wait(1);
@@ -179,7 +170,7 @@ function getStoryboard(): Storyboard { return {
             global.world.select.type(WaveController).stopMusic();
             yield S.wait(1);
 
-            setPlayerMaxHP();
+            if (!HARD_DIFFICULTY) global.world.select.type(Player).health = Player.MAX_HP;
             
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
             yield S.wait(1);
@@ -208,7 +199,7 @@ function getStoryboard(): Storyboard { return {
             global.world.select.type(WaveController).stopMusic();
             yield S.wait(1);
 
-            setPlayerMaxHP();
+            if (!HARD_DIFFICULTY) global.world.select.type(Player).health = Player.MAX_HP;
             
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
             yield S.wait(1);
@@ -237,7 +228,7 @@ function getStoryboard(): Storyboard { return {
             global.world.select.type(WaveController).stopMusic();
             yield S.wait(1);
 
-            setPlayerMaxHP();
+            if (!HARD_DIFFICULTY) global.world.select.type(Player).health = Player.MAX_HP;
             
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
             yield S.wait(1);
@@ -264,7 +255,7 @@ function getStoryboard(): Storyboard { return {
             global.world.select.type(WaveController).stopMusic();
             yield S.wait(1);
 
-            setPlayerMaxHP();
+            if (!HARD_DIFFICULTY) global.world.select.type(Player).health = Player.MAX_HP;
 
             yield S.cameraTransition(1, Camera.Mode.FOLLOW('throne'));
             yield S.wait(1);

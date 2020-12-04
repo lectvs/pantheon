@@ -427,6 +427,7 @@ var Game = /** @class */ (function () {
         }
         else {
             global.metrics.startSpan('theater');
+            this.theater.isSkippingCutscene = false; // Safeguard
             this.theater.update();
             global.metrics.endSpan('theater');
         }
@@ -6143,7 +6144,7 @@ var Theater = /** @class */ (function (_super) {
             ]
         }) || this;
         _this.loadDialogBox(config.dialogBox);
-        _this.storyManager = new StoryManager(_this, config.story.getStoryboard(), config.story.storyboardPath, config.story.getStoryEvents(), config.story.getStoryConfig());
+        _this.storyManager = new StoryManager(_this, config.story.getStoryboard(), config.story.storyboardPath, config.story.getStoryEvents());
         _this.stageManager = new StageManager(_this, config.getStages());
         _this.interactionManager = new InteractionManager(_this);
         _this.slideManager = new SlideManager(_this);
@@ -6256,31 +6257,6 @@ var Theater = /** @class */ (function (_super) {
     }(WorldObject));
     Theater.WorldAsWorldObject = WorldAsWorldObject;
 })(Theater || (Theater = {}));
-var StoryConfig = /** @class */ (function () {
-    function StoryConfig(theater, config) {
-        this.theater = theater;
-        this.config = O.deepClone(config.initialConfig);
-        this.executeFn = config.executeFn;
-    }
-    StoryConfig.prototype.execute = function () {
-        this.executeFn(this);
-    };
-    StoryConfig.prototype.updateConfig = function (config) {
-        O.deepOverride(this.config, config);
-        for (var key in config) {
-            if (this.config[key] === undefined) {
-                this.config[key] = config[key];
-            }
-        }
-    };
-    return StoryConfig;
-}());
-(function (StoryConfig) {
-    StoryConfig.EMPTY = {
-        initialConfig: {},
-        executeFn: function (sc) { return null; },
-    };
-})(StoryConfig || (StoryConfig = {}));
 var StoryEventManager = /** @class */ (function () {
     function StoryEventManager(theater, storyEvents) {
         this.theater = theater;
@@ -6377,18 +6353,13 @@ var StoryEventManager = /** @class */ (function () {
     };
     return StoryEventManager;
 }());
-var StoryEvent;
-(function (StoryEvent) {
-    StoryEvent.EMPTY_MAP = {};
-})(StoryEvent || (StoryEvent = {}));
 var StoryManager = /** @class */ (function () {
-    function StoryManager(theater, storyboard, storyboardPath, events, storyConfig) {
+    function StoryManager(theater, storyboard, storyboardPath, events) {
         var _this = this;
         this.theater = theater;
         this.storyboard = storyboard;
         this.cutsceneManager = new CutsceneManager(theater, storyboard);
         this.eventManager = new StoryEventManager(theater, events);
-        this.storyConfig = new StoryConfig(theater, storyConfig);
         this.stateMachine = new StateMachine();
         var _loop_2 = function (storyNodeName) {
             var storyNode = storyboard[storyNodeName];
@@ -6399,13 +6370,6 @@ var StoryManager = /** @class */ (function () {
                     _this.cutsceneManager.playCutscene(cutsceneName_1);
                 };
                 state.script = S.waitUntil(function () { return !_this.cutsceneManager.isCutscenePlaying; });
-            }
-            else if (storyNode.type === 'config') {
-                var config_1 = storyNode.config;
-                state.callback = function () {
-                    _this.storyConfig.updateConfig(config_1);
-                    _this.storyConfig.execute();
-                };
             }
             state.transitions = storyNode.transitions.map(function (transition) {
                 return {
@@ -6456,7 +6420,6 @@ var StoryManager = /** @class */ (function () {
     StoryManager.prototype.onStageLoad = function () {
         this.cutsceneManager.onStageLoad();
         this.eventManager.onStageLoad();
-        this.storyConfig.execute();
     };
     StoryManager.prototype.setNode = function (node) {
         if (!this.getNodeByName(node))
@@ -6473,12 +6436,7 @@ var StoryManager = /** @class */ (function () {
             if (node.type === 'cutscene') {
                 this.cutsceneManager.fastForwardCutscene(path[i]);
             }
-            else if (node.type === 'config') {
-                this.storyConfig.updateConfig(node.config);
-                this.storyConfig.execute();
-            }
         }
-        this.storyConfig.execute();
         return _.last(path);
     };
     StoryManager.prototype.getInteractableObjectsForNode = function (node, stageName) {
@@ -11409,8 +11367,7 @@ Main.loadConfig({
             story: {
                 getStoryboard: getStoryboard,
                 storyboardPath: ['start'],
-                getStoryEvents: function () { return StoryEvent.EMPTY_MAP; },
-                getStoryConfig: function () { return StoryConfig.EMPTY; },
+                getStoryEvents: function () { return ({}); },
             },
             dialogBox: function () { return new DialogBox({
                 x: 200, y: 250,
@@ -11730,19 +11687,6 @@ function getStages() {
         },
     };
 }
-function addHoop() {
-    var player = global.world.select.type(Player);
-    return global.world.addWorldObject(new Hoop({
-        x: player.x, y: player.y,
-        name: 'hoop',
-        layer: 'hoop',
-        physicsGroup: 'hoop'
-    }));
-}
-function setPlayerMaxHP() {
-    if (!HARD_DIFFICULTY)
-        global.world.select.type(Player).health = Player.MAX_HP;
-}
 function getStoryboard() {
     return {
         'start': {
@@ -11781,10 +11725,15 @@ function getStoryboard() {
                         case 6:
                             _a.sent();
                             player = global.world.select.type(Player);
-                            hoop = addHoop();
-                            hoop.y -= 32;
-                            hoop.effects.addSilhouette.color = 0x00FFFF;
-                            hoop.effects.addSilhouette.alpha = 0;
+                            hoop = global.world.addWorldObject(new Hoop({
+                                x: player.x, y: player.y - 32,
+                                name: 'hoop',
+                                layer: 'hoop',
+                                physicsGroup: 'hoop',
+                                effects: {
+                                    silhouette: { color: 0x00FFFF, alpha: 0 }
+                                }
+                            }));
                             whoosh = global.world.playSound('swing');
                             whoosh.speed = 0.1;
                             hoop.data.intro = true;
@@ -11916,7 +11865,8 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(1)];
                         case 1:
                             _a.sent();
-                            setPlayerMaxHP();
+                            if (!HARD_DIFFICULTY)
+                                global.world.select.type(Player).health = Player.MAX_HP;
                             return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();
@@ -11963,7 +11913,8 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(1)];
                         case 1:
                             _a.sent();
-                            setPlayerMaxHP();
+                            if (!HARD_DIFFICULTY)
+                                global.world.select.type(Player).health = Player.MAX_HP;
                             return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();
@@ -12010,7 +11961,8 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(1)];
                         case 1:
                             _a.sent();
-                            setPlayerMaxHP();
+                            if (!HARD_DIFFICULTY)
+                                global.world.select.type(Player).health = Player.MAX_HP;
                             return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();
@@ -12057,7 +12009,8 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(1)];
                         case 1:
                             _a.sent();
-                            setPlayerMaxHP();
+                            if (!HARD_DIFFICULTY)
+                                global.world.select.type(Player).health = Player.MAX_HP;
                             return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();
@@ -12100,7 +12053,8 @@ function getStoryboard() {
                             return [4 /*yield*/, S.wait(1)];
                         case 1:
                             _a.sent();
-                            setPlayerMaxHP();
+                            if (!HARD_DIFFICULTY)
+                                global.world.select.type(Player).health = Player.MAX_HP;
                             return [4 /*yield*/, S.cameraTransition(1, Camera.Mode.FOLLOW('throne'))];
                         case 2:
                             _a.sent();

@@ -2,7 +2,7 @@ type Storyboard = Dict<Storyboard.Node>;
 
 namespace Storyboard {
 
-    export type Node = (Nodes.Cutscene | Nodes.Config | Nodes.Start | Nodes.Gameplay) & {
+    export type Node = (Nodes.Cutscene | Nodes.Start | Nodes.Gameplay) & {
         transitions: Transition[];
     }
 
@@ -16,11 +16,6 @@ namespace Storyboard {
 
         export type Gameplay = {
             type: 'gameplay';
-        }
-
-        export type Config = {
-            type: 'config';
-            config: any;
         }
 
         export type Start = {

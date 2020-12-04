@@ -10,7 +10,6 @@ namespace Theater {
             getStoryboard: () => Storyboard;
             storyboardPath: string[];
             getStoryEvents: () => StoryEvent.Map;
-            getStoryConfig: () => StoryConfig.Config;
         },
         dialogBox: Factory<DialogBox>;
         autoPlayScript?: () => IterableIterator<any>;
@@ -46,7 +45,7 @@ class Theater extends World {
 
         this.loadDialogBox(config.dialogBox);
 
-        this.storyManager = new StoryManager(this, config.story.getStoryboard(), config.story.storyboardPath, config.story.getStoryEvents(), config.story.getStoryConfig());
+        this.storyManager = new StoryManager(this, config.story.getStoryboard(), config.story.storyboardPath, config.story.getStoryEvents());
         this.stageManager = new StageManager(this, config.getStages());
         this.interactionManager = new InteractionManager(this);
         this.slideManager = new SlideManager(this);
