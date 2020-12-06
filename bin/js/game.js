@@ -1973,49 +1973,6 @@ var CutsceneManager = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
-    CutsceneManager.prototype.toScript = function (generator) {
-        var cm = this;
-        return function () {
-            var iterator, result, script;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        iterator = generator();
-                        _a.label = 1;
-                    case 1:
-                        if (!true) return [3 /*break*/, 8];
-                        result = iterator.next();
-                        if (!result.value) return [3 /*break*/, 5];
-                        if (_.isArray(result.value)) {
-                            result.value = S.simul.apply(S, __spread(result.value.map(function (scr) { return cm.toScript(scr); })));
-                        }
-                        script = new Script(result.value);
-                        _a.label = 2;
-                    case 2:
-                        if (!!script.done) return [3 /*break*/, 4];
-                        script.update(global.script.delta);
-                        if (script.done)
-                            return [3 /*break*/, 4];
-                        return [4 /*yield*/];
-                    case 3:
-                        _a.sent();
-                        return [3 /*break*/, 2];
-                    case 4: return [3 /*break*/, 7];
-                    case 5:
-                        if (!!result.done) return [3 /*break*/, 7];
-                        return [4 /*yield*/];
-                    case 6:
-                        _a.sent();
-                        _a.label = 7;
-                    case 7:
-                        if (result.done)
-                            return [3 /*break*/, 8];
-                        return [3 /*break*/, 1];
-                    case 8: return [2 /*return*/];
-                }
-            });
-        };
-    };
     CutsceneManager.prototype.update = function () {
         this.updateCurrentCutscene();
     };
@@ -2055,7 +2012,7 @@ var CutsceneManager = /** @class */ (function () {
         this.current = {
             name: name,
             node: cutscene,
-            script: new Script(this.toScript(cutscene.script))
+            script: new Script(cutscene.script),
         };
         this.updateCurrentCutscene();
     };
@@ -2107,12 +2064,12 @@ var S;
                         camera.setModeFollow(cameraPoint);
                         camera.setMovementSnap();
                         startPoint = pt(cameraPoint.x, cameraPoint.y);
-                        return [5 /*yield**/, __values(S.doOverTime(duration, function (t) {
+                        return [4 /*yield*/, S.doOverTime(duration, function (t) {
                                 var toPoint = toMode.getTargetPt(camera);
                                 cameraPoint.x = M.lerp(startPoint.x, toPoint.x + toMode.offsetX, easingFunction(t));
                                 cameraPoint.y = M.lerp(startPoint.y, toPoint.y + toMode.offsetY, easingFunction(t));
                                 camera.snapPosition();
-                            })())];
+                            })];
                     case 1:
                         _a.sent();
                         camera.setMode(toMode);
@@ -2215,9 +2172,9 @@ var S;
                     case 0:
                         start = sprite.z;
                         groundDelta = landOnGround ? start : 0;
-                        return [5 /*yield**/, __values(S.doOverTime(time, function (t) {
+                        return [4 /*yield*/, S.doOverTime(time, function (t) {
                                 sprite.z = M.jumpParabola(start, peakDelta, groundDelta, t);
-                            })())];
+                            })];
                     case 1:
                         _a.sent();
                         return [2 /*return*/];
@@ -4649,7 +4606,7 @@ var S;
                     case 1:
                         if (!!scriptFunctions_1_1.done) return [3 /*break*/, 4];
                         scriptFunction = scriptFunctions_1_1.value;
-                        return [5 /*yield**/, __values(scriptFunction())];
+                        return [4 /*yield*/, scriptFunction];
                     case 2:
                         _b.sent();
                         _b.label = 3;
@@ -4707,7 +4664,7 @@ var S;
                         _a.label = 1;
                     case 1:
                         if (!(i < count)) return [3 /*break*/, 4];
-                        return [5 /*yield**/, __values(scriptFunction())];
+                        return [4 /*yield*/, scriptFunction];
                     case 2:
                         _a.sent();
                         _a.label = 3;
@@ -4726,7 +4683,7 @@ var S;
                 switch (_a.label) {
                     case 0:
                         if (!!condition()) return [3 /*break*/, 2];
-                        return [5 /*yield**/, __values(scriptFunction())];
+                        return [4 /*yield*/, scriptFunction];
                     case 1:
                         _a.sent();
                         return [3 /*break*/, 0];
@@ -4851,7 +4808,7 @@ var S;
 })(S || (S = {}));
 var Script = /** @class */ (function () {
     function Script(scriptFunction) {
-        this.iterator = scriptFunction();
+        this.iterator = this.buildIterator(scriptFunction)();
         this.data = {};
     }
     Object.defineProperty(Script.prototype, "running", {
@@ -4884,6 +4841,49 @@ var Script = /** @class */ (function () {
     };
     Script.prototype.stop = function () {
         this.done = true;
+    };
+    Script.prototype.buildIterator = function (scriptFunction) {
+        var s = this;
+        return function () {
+            var iterator, result, script;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        iterator = scriptFunction();
+                        _a.label = 1;
+                    case 1:
+                        if (!true) return [3 /*break*/, 8];
+                        result = iterator.next();
+                        if (!result.value) return [3 /*break*/, 5];
+                        if (_.isArray(result.value)) {
+                            result.value = S.simul.apply(S, __spread(result.value.map(function (scr) { return s.buildIterator(scr); })));
+                        }
+                        script = new Script(result.value);
+                        _a.label = 2;
+                    case 2:
+                        if (!!script.done) return [3 /*break*/, 4];
+                        script.update(global.script.delta);
+                        if (script.done)
+                            return [3 /*break*/, 4];
+                        return [4 /*yield*/];
+                    case 3:
+                        _a.sent();
+                        return [3 /*break*/, 2];
+                    case 4: return [3 /*break*/, 7];
+                    case 5:
+                        if (!!result.done) return [3 /*break*/, 7];
+                        return [4 /*yield*/];
+                    case 6:
+                        _a.sent();
+                        _a.label = 7;
+                    case 7:
+                        if (result.done)
+                            return [3 /*break*/, 8];
+                        return [3 /*break*/, 1];
+                    case 8: return [2 /*return*/];
+                }
+            });
+        };
     };
     Script.FINISH_IMMEDIATELY_MAX_ITERS = 1000000;
     return Script;
@@ -6923,7 +6923,7 @@ var StateMachine = /** @class */ (function () {
             var _a;
             return __generator(this, function (_b) {
                 switch (_b.label) {
-                    case 0: return [5 /*yield**/, __values(stateScript())];
+                    case 0: return [4 /*yield*/, stateScript];
                     case 1:
                         _b.sent();
                         return [4 /*yield*/];
@@ -6941,7 +6941,7 @@ var StateMachine = /** @class */ (function () {
                     case 5:
                         if (!selectedTransition) return [3 /*break*/, 3];
                         _b.label = 6;
-                    case 6: return [5 /*yield**/, __values(S.wait((_a = selectedTransition.delay) !== null && _a !== void 0 ? _a : 0)())];
+                    case 6: return [4 /*yield*/, S.wait((_a = selectedTransition.delay) !== null && _a !== void 0 ? _a : 0)];
                     case 7:
                         _b.sent();
                         sm.setState(selectedTransition.toState);
@@ -9314,7 +9314,7 @@ var ActionBehavior = /** @class */ (function () {
                 script: function () {
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [5 /*yield**/, __values(S.wait(b.getWait(action.wait))())];
+                            case 0: return [4 /*yield*/, S.wait(b.getWait(action.wait))];
                             case 1:
                                 _a.sent();
                                 return [2 /*return*/];
@@ -9331,7 +9331,7 @@ var ActionBehavior = /** @class */ (function () {
                     switch (_a.label) {
                         case 0:
                             if (!action.script) return [3 /*break*/, 2];
-                            return [5 /*yield**/, __values(action.script())];
+                            return [4 /*yield*/, action.script];
                         case 1:
                             _a.sent();
                             _a.label = 2;
@@ -10644,10 +10644,10 @@ var Golbin = /** @class */ (function (_super) {
                             case 0:
                                 target = getTarget();
                                 controller.attack = true;
-                                return [5 /*yield**/, __values(S.doOverTime(2, function (t) {
+                                return [4 /*yield*/, S.doOverTime(2, function (t) {
                                         controller.aimDirection.x = target.x - golbin.x;
                                         controller.aimDirection.y = target.y - golbin.y;
-                                    })())];
+                                    })];
                             case 1:
                                 _a.sent();
                                 controller.attack = false;
@@ -10833,7 +10833,7 @@ var Knight = /** @class */ (function (_super) {
                             target.x += lastPos.x;
                             target.y += lastPos.y;
                             knight.world.playSound('dash');
-                            return [5 /*yield**/, __values(S.tweenPt(0.2, knight, lastPos, target)())];
+                            return [4 /*yield*/, S.tweenPt(0.2, knight, lastPos, target)];
                         case 1:
                             _a.sent();
                             return [2 /*return*/];
@@ -10906,13 +10906,13 @@ var Knight = /** @class */ (function (_super) {
                             case 0:
                                 target = getTarget();
                                 controller.attack = true;
-                                return [5 /*yield**/, __values(S.doOverTime(1.5, function (t) {
+                                return [4 /*yield*/, S.doOverTime(1.5, function (t) {
                                         controller.aimDirection.x = target.x - knight.x;
                                         controller.aimDirection.y = target.y - knight.y;
-                                    })())];
+                                    })];
                             case 1:
                                 _a.sent();
-                                return [5 /*yield**/, __values(S.wait(1.5)())];
+                                return [4 /*yield*/, S.wait(1.5)];
                             case 2:
                                 _a.sent();
                                 controller.attack = false;
@@ -12331,7 +12331,7 @@ var Throne = /** @class */ (function (_super) {
                             s = throne.world.playSound('dash');
                             s.volume = 0.4;
                             throne.colliding = false;
-                            return [5 /*yield**/, __values(S.simul(S.tweenPt(1, throne, lastPos, targetPos), S.jumpZ(throne, 100, 1))())];
+                            return [4 /*yield*/, S.simul(S.tweenPt(1, throne, lastPos, targetPos), S.jumpZ(throne, 100, 1))];
                         case 1:
                             _a.sent();
                             s = throne.world.playSound('land');
@@ -12357,13 +12357,13 @@ var Throne = /** @class */ (function (_super) {
                             s = throne.world.playSound('dash');
                             s.volume = 0.6;
                             throne.colliding = false;
-                            return [5 /*yield**/, __values(S.tween(1, throne, 'z', 0, 500)())];
+                            return [4 /*yield*/, S.tween(1, throne, 'z', 0, 500)];
                         case 1:
                             _a.sent();
-                            return [5 /*yield**/, __values(S.tweenPt(1, throne, lastPos, targetPos)())];
+                            return [4 /*yield*/, S.tweenPt(1, throne, lastPos, targetPos)];
                         case 2:
                             _a.sent();
-                            return [5 /*yield**/, __values(S.tween(1, throne, 'z', 500, 0)())];
+                            return [4 /*yield*/, S.tween(1, throne, 'z', 500, 0)];
                         case 3:
                             _a.sent();
                             throne.world.playSound('land');
@@ -12400,7 +12400,7 @@ var Throne = /** @class */ (function (_super) {
                             target.y += lastPos.y;
                             throne.light.alpha = 0;
                             throne.world.playSound('dash');
-                            return [5 /*yield**/, __values(S.simul(S.tweenPt(0.1, throne, lastPos, target), S.chain(S.wait(0.05), S.call(function () { return throne.spawnBomb(); })))())];
+                            return [4 /*yield*/, S.simul(S.tweenPt(0.1, throne, lastPos, target), S.chain(S.wait(0.05), S.call(function () { return throne.spawnBomb(); })))];
                         case 1:
                             _a.sent();
                             return [2 /*return*/];
@@ -12542,13 +12542,13 @@ var Throne = /** @class */ (function (_super) {
                             case 0:
                                 target = getTarget();
                                 controller.attack = true;
-                                return [5 /*yield**/, __values(S.doOverTime(1, function (t) {
+                                return [4 /*yield*/, S.doOverTime(1, function (t) {
                                         controller.aimDirection.x = target.x - throne.x;
                                         controller.aimDirection.y = target.y - throne.y;
-                                    })())];
+                                    })];
                             case 1:
                                 _a.sent();
-                                return [5 /*yield**/, __values(S.wait(1)())];
+                                return [4 /*yield*/, S.wait(1)];
                             case 2:
                                 _a.sent();
                                 controller.attack = false;
@@ -12719,8 +12719,7 @@ var WaveController = /** @class */ (function (_super) {
     };
     WaveController.prototype.stopMusic = function () {
         if (this.music) {
-            var music = this.music;
-            this.world.runScript(S.tween(3, music, 'volume', music.volume, 0));
+            this.world.runScript(S.tween(3, this.music, 'volume', this.music.volume, 0));
         }
     };
     WaveController.prototype.enemySpawn = function (constructor, x, y) {

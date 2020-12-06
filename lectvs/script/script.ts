@@ -1,5 +1,5 @@
 namespace Script {
-    export type Function = () => IterableIterator<any>;
+    export type Function = () => IterableIterator<Script.Function | (() => IterableIterator<Script.Function>)[]>;
 }
 
 class Script {
@@ -13,7 +13,7 @@ class Script {
     data: any;
 
     constructor(scriptFunction: Script.Function) {
-        this.iterator = scriptFunction();
+        this.iterator = this.buildIterator(scriptFunction)();
         this.data = {};
     }
 
@@ -48,6 +48,31 @@ class Script {
 
     stop() {
         this.done = true;
+    }
+
+    private buildIterator(scriptFunction: Script.Function) {
+        let s = this;
+        return function*() {
+            let iterator = scriptFunction();
+
+            while (true) {
+                let result = iterator.next();
+                if (result.value) {
+                    if (_.isArray(result.value)) {
+                        result.value = S.simul(...result.value.map(scr => s.buildIterator(scr)));
+                    }
+                    let script = new Script(result.value);
+                    while (!script.done) {
+                        script.update(global.script.delta);
+                        if (script.done) break;
+                        yield;
+                    }
+                } else if (!result.done) {  // Normal yield statement.
+                    yield;
+                }
+                if (result.done) break;
+            }
+        };
     }
 
     static FINISH_IMMEDIATELY_MAX_ITERS = 1000000;

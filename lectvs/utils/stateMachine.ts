@@ -40,7 +40,7 @@ class StateMachine {
 
         let sm = this;
         this.script = new Script(function*() {
-            yield* stateScript();
+            yield stateScript;
             yield; // Yield one more time so we don't immediately transition to next state.
 
             let selectedTransition: StateMachine.Transition = undefined;
@@ -49,7 +49,7 @@ class StateMachine {
                 if (!selectedTransition) yield;
             } while (!selectedTransition);
 
-            yield* S.wait(selectedTransition.delay ?? 0)();
+            yield S.wait(selectedTransition.delay ?? 0);
             sm.setState(selectedTransition.toState);
         });
 

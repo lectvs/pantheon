@@ -32,7 +32,7 @@ Main.loadConfig({
             'interact':                  ['e'],
 
             // Presets
-            'game_advanceCutscene':        ['MouseLeft', 'e', ' '],
+            'game_advanceCutscene':      ['MouseLeft', 'e', ' '],
             'game_pause':                ['Escape', 'Backspace'],
             'game_closeMenu':            ['Escape', 'Backspace'],
             'game_select':               ['MouseLeft'],

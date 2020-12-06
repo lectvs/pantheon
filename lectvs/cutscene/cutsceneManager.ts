@@ -1,7 +1,3 @@
-namespace Cutscene {
-    export type Generator = () => IterableIterator<Script.Function | (() => IterableIterator<Script.Function>)[]>;
-}
-
 class CutsceneManager {
     theater: Theater;
     storyboard: Storyboard;
@@ -16,31 +12,6 @@ class CutsceneManager {
         this.storyboard = storyboard;
         this.current = null;
         this.playedCutscenes = new Set<string>();
-    }
-
-    toScript(generator: Cutscene.Generator): Script.Function {
-        let cm = this;
-        return function*() {
-            let iterator = generator();
-
-            while (true) {
-                let result = iterator.next();
-                if (result.value) {
-                    if (_.isArray(result.value)) {
-                        result.value = S.simul(...result.value.map(scr => cm.toScript(scr)));
-                    }
-                    let script = new Script(result.value);
-                    while (!script.done) {
-                        script.update(global.script.delta);
-                        if (script.done) break;
-                        yield;
-                    }
-                } else if (!result.done) {  // Normal yield statement.
-                    yield;
-                }
-                if (result.done) break;
-            }
-        }
     }
 
     update() {
@@ -85,7 +56,7 @@ class CutsceneManager {
         this.current = {
             name: name,
             node: cutscene,
-            script: new Script(this.toScript(cutscene.script))
+            script: new Script(cutscene.script),
         };
 
         this.updateCurrentCutscene();

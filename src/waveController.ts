@@ -91,8 +91,7 @@ class WaveController extends WorldObject {
 
     stopMusic() {
         if (this.music) {
-            let music = this.music;
-            this.world.runScript(S.tween(3, music, 'volume', music.volume, 0));
+            this.world.runScript(S.tween(3, this.music, 'volume', this.music.volume, 0));
         }
     }
 

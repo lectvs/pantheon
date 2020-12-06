@@ -63,15 +63,15 @@ postjam
     - /cutscene skips finishImmediately the cutscene?
 - /redesign slide system (allow for more than just sprites?) (decided not to do for now)
 - /correct storyboard health delay issue
+- /better scripting syntax?
+    - /look into writing TS transforms for scripts? (transforms not supported in stock ts)
+- /build script
+- /fill in README.md for others to run/build the game
 - new content
+    - /hoop cleave through enemies at full power? (decided not to do)
     - add some more enemies
     - add music/ambience during silent parts
     - king emotes
     - add dialog talking sound effects?
-    - hoop cleave through enemies at full power?
-- better scripting syntax?
-    - look into writing TS transforms for scripts?
 - in general clean up the storyboard
     - use new dialog pausing/adding feature
-- build script
-- fill in README.md for others to run/build the game

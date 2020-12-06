@@ -11,12 +11,12 @@ namespace S {
 
             let startPoint = pt(cameraPoint.x, cameraPoint.y);
 
-            yield* S.doOverTime(duration, t => {
+            yield S.doOverTime(duration, t => {
                 let toPoint = toMode.getTargetPt(camera);
                 cameraPoint.x = M.lerp(startPoint.x, toPoint.x + toMode.offsetX, easingFunction(t));
                 cameraPoint.y = M.lerp(startPoint.y, toPoint.y + toMode.offsetY, easingFunction(t));
                 camera.snapPosition();
-            })();
+            });
 
             camera.setMode(toMode);
             camera.setMovement(toMovement);
@@ -78,9 +78,9 @@ namespace S {
             let start = sprite.z;
             let groundDelta = landOnGround ? start : 0;
 
-            yield* S.doOverTime(time, t => {
+            yield S.doOverTime(time, t => {
                 sprite.z = M.jumpParabola(start, peakDelta, groundDelta, t);
-            })();
+            });
         }
     }
 

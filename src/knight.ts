@@ -93,7 +93,7 @@ class Knight extends Enemy {
                 target.y += lastPos.y;
         
                 knight.world.playSound('dash');
-                yield* S.tweenPt(0.2, knight, lastPos, target)();
+                yield S.tweenPt(0.2, knight, lastPos, target);
             },
             update: () => {
                 this.playAnimation('windup');
@@ -157,12 +157,12 @@ namespace Knight {
 
                     controller.attack = true;
 
-                    yield* S.doOverTime(1.5, t => {
+                    yield S.doOverTime(1.5, t => {
                         controller.aimDirection.x = target.x - knight.x;
                         controller.aimDirection.y = target.y - knight.y;
-                    })();
+                    });
 
-                    yield* S.wait(1.5)();
+                    yield S.wait(1.5);
 
                     controller.attack = false;
                 },

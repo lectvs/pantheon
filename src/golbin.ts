@@ -135,10 +135,10 @@ namespace Golbin {
 
                     controller.attack = true;
 
-                    yield* S.doOverTime(2, t => {
+                    yield S.doOverTime(2, t => {
                         controller.aimDirection.x = target.x - golbin.x;
                         controller.aimDirection.y = target.y - golbin.y;
-                    })();
+                    });
 
                     controller.attack = false;
                 },

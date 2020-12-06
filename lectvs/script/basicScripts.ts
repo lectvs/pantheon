@@ -14,7 +14,7 @@ namespace S {
     export function chain(...scriptFunctions: Script.Function[]): Script.Function {
         return function*() {
             for (let scriptFunction of scriptFunctions) {
-                yield* scriptFunction();
+                yield scriptFunction;
             }
         }
     }
@@ -34,7 +34,7 @@ namespace S {
     export function loopFor(count: number, scriptFunction: Script.Function): Script.Function {
         return function*() {
             for (let i = 0; i < count; i++) {
-                yield* scriptFunction();
+                yield scriptFunction;
             }
         }
     }
@@ -42,7 +42,7 @@ namespace S {
     export function loopUntil(condition: () => any, scriptFunction: Script.Function): Script.Function {
         return function*() {
             while (!condition()) {
-                yield* scriptFunction();
+                yield scriptFunction;
             }
         }
     }

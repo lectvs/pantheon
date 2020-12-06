@@ -9,7 +9,7 @@ namespace Storyboard {
     export namespace Nodes {
         export type Cutscene = {
             type: 'cutscene';
-            script: Cutscene.Generator;
+            script: Script.Function;
             playOnlyOnce?: boolean;
             skippable?: boolean;
         }

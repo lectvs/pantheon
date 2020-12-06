@@ -54,7 +54,7 @@ class ActionBehavior implements Behavior {
 
             this.addAction(waitActionName, {
                 script: function*() {
-                    yield* S.wait(b.getWait(action.wait))();
+                    yield S.wait(b.getWait(action.wait));
                 },
                 nextAction: action.nextAction,
             });
@@ -64,7 +64,7 @@ class ActionBehavior implements Behavior {
 
         this.stateMachine.addState(name, {
             script: function*() {
-                if (action.script) yield* action.script();
+                if (action.script) yield action.script;
                 yield;  // Yield once before doing the next action to let final controller inputs go through.
                 b.doAction(b.getNextAction(action.nextAction));
             }

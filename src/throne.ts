@@ -79,10 +79,10 @@ class Throne extends Enemy {
                 s.volume = 0.4;
                 throne.colliding = false;
 
-                yield* S.simul(
+                yield S.simul(
                     S.tweenPt(1, throne, lastPos, targetPos),
                     S.jumpZ(throne, 100, 1),
-                )();
+                );
 
                 s = throne.world.playSound('land');
                 s.speed = 1.5;
@@ -103,9 +103,9 @@ class Throne extends Enemy {
                 s.volume = 0.6;
                 throne.colliding = false;
 
-                yield* S.tween(1, throne, 'z', 0, 500)();
-                yield* S.tweenPt(1, throne, lastPos, targetPos)();
-                yield* S.tween(1, throne, 'z', 500, 0)();
+                yield S.tween(1, throne, 'z', 0, 500);
+                yield S.tweenPt(1, throne, lastPos, targetPos);
+                yield S.tween(1, throne, 'z', 500, 0);
                 
                 throne.world.playSound('land');
                 throne.colliding = true;
@@ -137,13 +137,13 @@ class Throne extends Enemy {
                 throne.light.alpha = 0;
                 throne.world.playSound('dash');
 
-                yield* S.simul(
+                yield S.simul(
                     S.tweenPt(0.1, throne, lastPos, target),
                     S.chain(
                         S.wait(0.05),
                         S.call(() => throne.spawnBomb())
                     )
-                )();
+                );
             },
             transitions: [
                 { toState: 'idle' }
@@ -305,12 +305,12 @@ namespace Throne {
 
                     controller.attack = true;
 
-                    yield* S.doOverTime(1, t => {
+                    yield S.doOverTime(1, t => {
                         controller.aimDirection.x = target.x - throne.x;
                         controller.aimDirection.y = target.y - throne.y;
-                    })();
+                    });
 
-                    yield* S.wait(1)();
+                    yield S.wait(1);
 
                     controller.attack = false;
                 },
