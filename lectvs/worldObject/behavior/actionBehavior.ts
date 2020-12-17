@@ -1,12 +1,11 @@
 namespace ActionBehavior {
     export type Interrupt = boolean | string;
-    export type Wait = number | ((this: ActionBehavior) => number);
     export type NextAction = string | ((this: ActionBehavior) => string);
 
     export type Action = {
         script?: Script.Function;
         interrupt?: Interrupt;
-        wait?: Wait;
+        wait?: OrFactory<number>;
         nextAction: NextAction;
     }
 }
@@ -20,7 +19,7 @@ class ActionBehavior implements Behavior {
     private currentActionName: string;
     private get currentAction() { return this.actions[this.currentActionName]; }
 
-    constructor(startAction: string, startWait: ActionBehavior.Wait) {
+    constructor(startAction: string, startWait: OrFactory<number>) {
         this.controller = new Controller();
         this.stateMachine = new StateMachine();
         this.actions = {};
@@ -32,7 +31,6 @@ class ActionBehavior implements Behavior {
     }
 
     update(delta: number) {
-        //this.controller.reset();
         this.stateMachine.update(delta);
 
         if (!this.currentAction) {
@@ -54,7 +52,7 @@ class ActionBehavior implements Behavior {
 
             this.addAction(waitActionName, {
                 script: function*() {
-                    yield S.wait(b.getWait(action.wait));
+                    yield S.wait(action.wait);
                 },
                 nextAction: action.nextAction,
             });
@@ -94,11 +92,6 @@ class ActionBehavior implements Behavior {
     private getNextAction(nextAction: ActionBehavior.NextAction): string {
         if (_.isString(nextAction)) return nextAction;
         return nextAction.call(this);
-    }
-
-    private getWait(wait: ActionBehavior.Wait): number {
-        if (_.isNumber(wait)) return wait;
-        return wait.call(this);
     }
 
     private getInterruptAction(action: ActionBehavior.Action) {

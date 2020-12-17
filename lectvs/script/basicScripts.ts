@@ -7,7 +7,7 @@ namespace S {
         }
     }
 
-    export function callAfterTime(time: number, func: () => any): Script.Function {
+    export function callAfterTime(time: OrFactory<number>, func: () => any): Script.Function {
         return S.chain(S.wait(time), S.call(func));
     }
 
@@ -19,9 +19,9 @@ namespace S {
         }
     }
 
-    export function doOverTime(time: number, func: (t: number) => any): Script.Function {
+    export function doOverTime(time: OrFactory<number>, func: (t: number) => any): Script.Function {
         return function*() {
-            let t = new Timer(time);
+            let t = new Timer(OrFactory.resolve(time));
             while (!t.done) {
                 func(t.progress);
                 t.update(global.script.delta);
@@ -70,9 +70,9 @@ namespace S {
         }
     }
 
-    export function tween<T extends Partial<Record<K, number>>, K extends keyof T>(duration: number, obj: T, prop: K, start: number, end: number, easingFunction: Tween.Easing.Function = Tween.Easing.Linear): Script.Function {
+    export function tween<T extends Partial<Record<K, number>>, K extends keyof T>(duration: OrFactory<number>, obj: T, prop: K, start: number, end: number, easingFunction: Tween.Easing.Function = Tween.Easing.Linear): Script.Function {
         return function*() {
-            let tween = new Tween(start, end, duration, easingFunction);
+            let tween = new Tween(start, end, OrFactory.resolve(duration), easingFunction);
             while (!tween.done) {
                 tween.update(global.script.delta);
                 obj[prop] = <any>tween.value;
@@ -82,7 +82,7 @@ namespace S {
         }
     }
 
-    export function tweenPt(duration: number, pt: Pt, start: Pt, end: Pt, easingFunction: Tween.Easing.Function = Tween.Easing.Linear): Script.Function {
+    export function tweenPt(duration: OrFactory<number>, pt: Pt, start: Pt, end: Pt, easingFunction: Tween.Easing.Function = Tween.Easing.Linear): Script.Function {
         let startx = start.x;
         let starty = start.y;
         let endx = end.x;
@@ -93,7 +93,7 @@ namespace S {
         );
     }
 
-    export function wait(time: number): Script.Function {
+    export function wait(time: OrFactory<number>): Script.Function {
         return doOverTime(time, t => null);
     }
 

@@ -13,6 +13,6 @@ const Cheat = {
     'skiptofinalwave': () => {
         Cheat['killall']();
         Debug.SKIP_RATE = 1;
-        global.theater.storyManager.setNode('spawn_wave_king');
+        global.theater.storyManager.setNode('wave_king');
     },
 }

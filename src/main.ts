@@ -83,6 +83,7 @@ Main.loadConfig({
                 textAreaPortrait: { x: -192, y: -42, width: 384, height: 84 },
                 portraitPosition: { x: 78, y: 0 },
                 startSound: 'click',
+                speakSound: 'dialogspeak'
             }),
         },
     },
@@ -95,7 +96,7 @@ Main.loadConfig({
         moveCameraWithArrows: true,
         showOverlay: true,
         overlayFeeds: [],
-        skipRate: 10,
+        skipRate: 1,
         programmaticInput: false,
         autoplay: true,
         skipMainMenu: true,

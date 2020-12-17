@@ -90,7 +90,10 @@ namespace Assets {
         'click': {},
 
         // Game
-        'dialogstart': {  url: 'assets/click.wav', volume: 0.5 },
+        'dialogstart': { url: 'assets/click.wav', volume: 0.5 },
+        'dialogspeak': { volume: 0.25 },
+
+
         'walk': { volume: 0.5 },
         'swing': { volume: 0.5 },
         'hitenemy': {},

@@ -4636,7 +4636,7 @@ var S;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        t = new Timer(time);
+                        t = new Timer(OrFactory.resolve(time));
                         _a.label = 1;
                     case 1:
                         if (!!t.done) return [3 /*break*/, 3];
@@ -4745,7 +4745,7 @@ var S;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        tween = new Tween(start, end, duration, easingFunction);
+                        tween = new Tween(start, end, OrFactory.resolve(duration), easingFunction);
                         _a.label = 1;
                     case 1:
                         if (!!tween.done) return [3 /*break*/, 3];
@@ -5727,6 +5727,7 @@ var DialogBox = /** @class */ (function (_super) {
         _this.textAreaPortrait = config.textAreaPortrait;
         _this.portraitPosition = config.portraitPosition;
         _this.startSound = config.startSound;
+        _this.speakSound = config.speakSound;
         _this.isShowingPortrait = false;
         _this.done = true;
         _this.spriteText = _this.addChild(new SpriteText({ font: config.dialogFont }));
@@ -5734,6 +5735,13 @@ var DialogBox = /** @class */ (function (_super) {
         _this.portraitSprite = _this.addChild(new Sprite());
         _this.showPortrait('none');
         _this.characterTimer = new Timer(0.05, function () { return _this.advanceCharacter(); }, true);
+        _this.speakSoundTimer = new Timer(0.05, function () {
+            var p = _this.getDialogProgression() < 0.9 ? 0.85 : 1; // 85% normally, but 100% if dialog is close to ending
+            if (_this.speakSound && !_this.isPageComplete() && Random.boolean(p)) {
+                var sound = _this.world.playSound(_this.speakSound);
+                sound.speed = Random.float(0.95, 1.05);
+            }
+        }, true);
         return _this;
     }
     Object.defineProperty(DialogBox.prototype, "textArea", {
@@ -5749,6 +5757,7 @@ var DialogBox = /** @class */ (function (_super) {
         this.portraitSprite.visible = !this.done && this.isShowingPortrait;
         if (!this.done) {
             this.updateDialogProgression();
+            this.speakSoundTimer.update(this.delta);
         }
     };
     DialogBox.prototype.updateDialogProgression = function () {
@@ -5847,7 +5856,10 @@ var DialogBox = /** @class */ (function (_super) {
         };
     };
     DialogBox.prototype.isDialogComplete = function () {
-        return this.spriteText.visibleCharCount >= this.spriteText.getCharList().length;
+        return this.getDialogProgression() >= 1;
+    };
+    DialogBox.prototype.getDialogProgression = function () {
+        return this.spriteText.visibleCharCount / this.spriteText.getCharList().length;
     };
     DialogBox.prototype.isPageComplete = function () {
         if (this.isDialogComplete())
@@ -6644,6 +6656,17 @@ var A;
     }
     A.sum = sum;
 })(A || (A = {}));
+var OrFactory;
+(function (OrFactory) {
+    /** CANNOT RESOLVE FACTORIES OF FUNCTIONS */
+    function resolve(orFactory) {
+        if (_.isFunction(orFactory)) {
+            return orFactory();
+        }
+        return orFactory;
+    }
+    OrFactory.resolve = resolve;
+})(OrFactory || (OrFactory = {}));
 var G;
 (function (G) {
     function distance(pt1, pt2) {
@@ -9295,7 +9318,6 @@ var ActionBehavior = /** @class */ (function () {
         configurable: true
     });
     ActionBehavior.prototype.update = function (delta) {
-        //this.controller.reset();
         this.stateMachine.update(delta);
         if (!this.currentAction) {
             this.stateMachine.setState(ActionBehavior.START_ACTION);
@@ -9314,7 +9336,7 @@ var ActionBehavior = /** @class */ (function () {
                 script: function () {
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, S.wait(b.getWait(action.wait))];
+                            case 0: return [4 /*yield*/, S.wait(action.wait)];
                             case 1:
                                 _a.sent();
                                 return [2 /*return*/];
@@ -9368,11 +9390,6 @@ var ActionBehavior = /** @class */ (function () {
         if (_.isString(nextAction))
             return nextAction;
         return nextAction.call(this);
-    };
-    ActionBehavior.prototype.getWait = function (wait) {
-        if (_.isNumber(wait))
-            return wait;
-        return wait.call(this);
     };
     ActionBehavior.prototype.getInterruptAction = function (action) {
         if (_.isString(action.interrupt))
@@ -10270,6 +10287,7 @@ var Assets;
         'click': {},
         // Game
         'dialogstart': { url: 'assets/click.wav', volume: 0.5 },
+        'dialogspeak': { volume: 0.25 },
         'walk': { volume: 0.5 },
         'swing': { volume: 0.5 },
         'hitenemy': {},
@@ -10454,7 +10472,7 @@ var Cheat = {
     'skiptofinalwave': function () {
         Cheat['killall']();
         Debug.SKIP_RATE = 1;
-        global.theater.storyManager.setNode('spawn_wave_king');
+        global.theater.storyManager.setNode('wave_king');
     },
 };
 function deadBody(parent, texture) {
@@ -10758,6 +10776,41 @@ var ImmunitySm = /** @class */ (function (_super) {
     };
     return ImmunitySm;
 }(StateMachine));
+var King = /** @class */ (function (_super) {
+    __extends(King, _super);
+    function King(throne, config) {
+        var _this = _super.call(this, __assign({ animations: [
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'king', textures: [0, 1, 2], frameRate: 4, count: -1 }),
+                Animations.fromTextureList({ name: 'laugh', texturePrefix: 'king', textures: [4, 5], frameRate: 3, count: -1 }),
+                Animations.fromTextureList({ name: 'cry', texturePrefix: 'king', textures: [8, 9], frameRate: 4, count: -1 }),
+            ], defaultAnimation: 'idle', effects: { outline: { color: 0x000000 } } }, config)) || this;
+        _this.throne = throne;
+        _this.stateMachine.addState('idle', {
+            update: function () {
+                _this.playAnimation('idle');
+            },
+            transitions: [
+                { toState: 'laugh', condition: function () { return !_.isEmpty(throne.world.select.typeAll(Bomb)); } },
+                { toState: 'cry', condition: function () { return _this.throne.immune; } }
+            ]
+        });
+        _this.stateMachine.addState('laugh', {
+            update: function () {
+                _this.playAnimation('laugh');
+            },
+            transitions: [{ toState: 'idle', condition: function () { return _.isEmpty(throne.world.select.typeAll(Bomb)); } }]
+        });
+        _this.stateMachine.addState('cry', {
+            update: function () {
+                _this.playAnimation('cry');
+            },
+            transitions: [{ toState: 'idle', delay: 1, condition: function () { return _this.throne.health > 1000 && !_this.throne.immune; } }]
+        });
+        _this.stateMachine.setState('idle');
+        return _this;
+    }
+    return King;
+}(Sprite));
 /// <reference path="./enemy.ts"/>
 var Knight = /** @class */ (function (_super) {
     __extends(Knight, _super);
@@ -11380,6 +11433,7 @@ Main.loadConfig({
                 textAreaPortrait: { x: -192, y: -42, width: 384, height: 84 },
                 portraitPosition: { x: 78, y: 0 },
                 startSound: 'click',
+                speakSound: 'dialogspeak'
             }); },
         },
     },
@@ -11391,7 +11445,7 @@ Main.loadConfig({
         moveCameraWithArrows: true,
         showOverlay: true,
         overlayFeeds: [],
-        skipRate: 10,
+        skipRate: 1,
         programmaticInput: false,
         autoplay: true,
         skipMainMenu: true,
@@ -12274,7 +12328,7 @@ function getStoryboard() {
 var Throne = /** @class */ (function (_super) {
     __extends(Throne, _super);
     function Throne(config) {
-        var _this = _super.call(this, __assign({ texture: 'throne', bounds: new RectBounds(-15, -24, 30, 24), mass: 10000, maxHealth: 1003, immuneTime: 1, weight: 10, speed: 0, damagableByHoop: false }, config)) || this;
+        var _this = _super.call(this, __assign({ texture: 'throne', bounds: new RectBounds(-15, -24, 30, 24), mass: 10000, maxHealth: 1003, immuneTime: 0.5, weight: 10, speed: 0, damagableByHoop: false }, config)) || this;
         var throne = _this;
         _this.shadow = _this.addChild(new Sprite({
             x: -15, y: -22,
@@ -12291,13 +12345,8 @@ var Throne = /** @class */ (function (_super) {
             alpha: 0,
             layer: 'bg'
         }));
-        _this.king = _this.addChild(new Sprite({
+        _this.king = _this.addChild(new King(_this, {
             x: 0, y: 0, z: 20,
-            animations: [
-                Animations.fromTextureList({ name: 'idle', texturePrefix: 'king', textures: [0, 1, 2], frameRate: 4, count: -1 })
-            ],
-            defaultAnimation: 'idle',
-            effects: { outline: { color: 0x000000 } },
             matchParentLayer: true
         }));
         _this.stateMachine.addState('passive', {
@@ -12633,10 +12682,10 @@ var WaveController = /** @class */ (function (_super) {
     }
     WaveController.prototype.isNormalWaveDefeated = function (wave) {
         if (wave === void 0) { wave = this.currentWave; }
-        return this.world.select.nameAll('spawn').length <= 0 && this.world.select.typeAll(Enemy).length <= 1 && this.currentWave === wave;
+        return this.world.select.nameAll('spawn').length <= 0 && this.world.select.typeAll(Enemy).length <= 1 && wave !== 9001 && this.currentWave === wave;
     };
     WaveController.prototype.isKingWaveDefeated = function () {
-        return (!this.world.select.type(Throne, false) || this.world.select.type(Throne).health) <= 1000 && this.currentWave === 9001;
+        return !this.world.select.type(Throne, false) || (this.world.select.type(Throne).health <= 1000 && this.currentWave === 9001);
     };
     WaveController.prototype.spawnWave1 = function () {
         this.currentWave = 1;

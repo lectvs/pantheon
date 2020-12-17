@@ -11,7 +11,7 @@ class Throne extends Enemy {
             bounds: new RectBounds(-15, -24, 30, 24),
             mass: 10000,
             maxHealth: 1003,
-            immuneTime: 1,
+            immuneTime: 0.5,
             weight: 10,
             speed: 0,
             damagableByHoop: false,
@@ -38,13 +38,8 @@ class Throne extends Enemy {
             layer: 'bg'
         }));
 
-        this.king = this.addChild(new Sprite({
+        this.king = this.addChild(new King(this, {
             x: 0, y: 0, z: 20,
-            animations: [
-                Animations.fromTextureList({ name: 'idle', texturePrefix: 'king', textures: [0, 1, 2], frameRate: 4, count: -1 })
-            ],
-            defaultAnimation: 'idle',
-            effects: { outline: { color: 0x000000 } },
             matchParentLayer: true
         }));
 

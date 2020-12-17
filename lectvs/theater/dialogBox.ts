@@ -7,6 +7,7 @@ namespace DialogBox {
         textAreaPortrait: Rect;
         portraitPosition: Pt;
         startSound?: string;
+        speakSound?: string;
     }
 }
 
@@ -14,7 +15,9 @@ class DialogBox extends Sprite {
     private textAreaFull: Rect;
     private textAreaPortrait: Rect;
     private portraitPosition: Pt;
+
     private startSound: string;
+    private speakSound: string;
     
     private isShowingPortrait: boolean;
     private get textArea() { return this.isShowingPortrait ? this.textAreaPortrait : this.textAreaFull; }
@@ -24,7 +27,9 @@ class DialogBox extends Sprite {
     private spriteText: SpriteText;
     private spriteTextOffset: number;
     private portraitSprite: Sprite;
+
     private characterTimer: Timer;
+    private speakSoundTimer: Timer;
 
     constructor(config: DialogBox.Config) {
         super(config);
@@ -32,7 +37,9 @@ class DialogBox extends Sprite {
         this.textAreaFull = config.textAreaFull;
         this.textAreaPortrait = config.textAreaPortrait;
         this.portraitPosition = config.portraitPosition;
+
         this.startSound = config.startSound;
+        this.speakSound = config.speakSound;
 
         this.isShowingPortrait = false;
         this.done = true;
@@ -44,6 +51,14 @@ class DialogBox extends Sprite {
         this.showPortrait('none');
 
         this.characterTimer = new Timer(0.05, () => this.advanceCharacter(), true);
+
+        this.speakSoundTimer = new Timer(0.05, () => {
+            let p = this.getDialogProgression() < 0.9 ? 0.85 : 1;  // 85% normally, but 100% if dialog is close to ending
+            if (this.speakSound && !this.isPageComplete() && Random.boolean(p)) {
+                let sound = this.world.playSound(this.speakSound);
+                sound.speed = Random.float(0.95, 1.05);
+            }
+        }, true);
     }
 
     update() {
@@ -56,6 +71,7 @@ class DialogBox extends Sprite {
 
         if (!this.done) {
             this.updateDialogProgression();
+            this.speakSoundTimer.update(this.delta);
         }
     }
 
@@ -175,7 +191,11 @@ class DialogBox extends Sprite {
     }
 
     private isDialogComplete() {
-        return this.spriteText.visibleCharCount >= this.spriteText.getCharList().length;
+        return this.getDialogProgression() >= 1;
+    }
+
+    private getDialogProgression() {
+        return this.spriteText.visibleCharCount / this.spriteText.getCharList().length;
     }
 
     private isPageComplete() {
