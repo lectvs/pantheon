@@ -7,7 +7,7 @@ set GAMENAME=%NAME%
 set SRCNAME=%NAME%-src
 
 :: Game
-7z a %GAMENAME%.zip bin
+7z a %GAMENAME%.zip bin -xr!*.pyxel -xr!*.flp
 move %GAMENAME%.zip build
 
 :: Source code
