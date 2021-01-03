@@ -44,11 +44,11 @@ class WaveController extends WorldObject {
         this.currentWave = 4;
         this.world.addWorldObjects([
             this.enemySpawn(Golbin, 220, 400),
-            this.enemySpawn(Golbin, 220, 552),
-            this.enemySpawn(Knight, 160, 476),
-            this.enemySpawn(Golbin, 548, 400),
+            this.enemySpawn(Knight, 220, 552),
+            this.enemySpawn(Jester, 160, 476),
+            this.enemySpawn(Knight, 548, 400),
             this.enemySpawn(Golbin, 548, 552),
-            this.enemySpawn(Knight, 608, 476),
+            this.enemySpawn(Jester, 608, 476),
         ]);
     }
 
@@ -57,12 +57,12 @@ class WaveController extends WorldObject {
         this.world.addWorldObjects([
             this.enemySpawn(Golbin, 220, 400),
             this.enemySpawn(Knight, 220, 552),
-            this.enemySpawn(Knight, 160, 476),
-            this.enemySpawn(Mage, 100, 476),
+            this.enemySpawn(Mage, 160, 476),
+            this.enemySpawn(Jester, 100, 476),
             this.enemySpawn(Knight, 548, 400),
             this.enemySpawn(Golbin, 548, 552),
-            this.enemySpawn(Golbin, 608, 476),
-            this.enemySpawn(Mage, 668, 476),
+            this.enemySpawn(Mage, 608, 476),
+            this.enemySpawn(Jester, 668, 476),
         ]);
     }
 

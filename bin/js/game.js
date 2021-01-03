@@ -83,7 +83,9 @@ var __assign = (this && this.__assign) || function () {
 var Point = PIXI.Point;
 var Rectangle = PIXI.Rectangle;
 function pt(x, y) {
-    return { x: x, y: y };
+    if (typeof (x) === 'number')
+        return { x: x, y: y };
+    return { x: x.x, y: x.y };
 }
 function rect(x, y, width, height) {
     return { x: x, y: y, width: width, height: height };
@@ -2990,7 +2992,12 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
     };
     PhysicsWorldObject.prototype.render = function (texture, x, y) {
         if (Debug.ALL_PHYSICS_BOUNDS || this.debugDrawBounds) {
-            this.drawBounds(texture, x, y);
+            var zoffset = 0; // offset to cancel out the z-factor when drawing bounds
+            if (this.zBehavior === 'threequarters') {
+                var parentz = this.parent ? this.parent.z : 0;
+                zoffset = parentz - this.z;
+            }
+            this.drawBounds(texture, x, y - zoffset);
         }
         _super.prototype.render.call(this, texture, x, y);
     };
@@ -5737,7 +5744,7 @@ var DialogBox = /** @class */ (function (_super) {
         _this.characterTimer = new Timer(0.05, function () { return _this.advanceCharacter(); }, true);
         _this.speakSoundTimer = new Timer(0.05, function () {
             var p = _this.getDialogProgression() < 0.9 ? 0.85 : 1; // 85% normally, but 100% if dialog is close to ending
-            if (_this.speakSound && !_this.isPageComplete() && Random.boolean(p)) {
+            if (_this.speakSound && Debug.SKIP_RATE < 2 && !_this.isPageComplete() && Random.boolean(p)) {
                 var sound = _this.world.playSound(_this.speakSound);
                 sound.speed = Random.float(0.95, 1.05);
             }
@@ -7143,6 +7150,12 @@ var V;
         return angle;
     }
     V.angle = angle;
+    function clampMagnitude(v, magnitude) {
+        if (magnitude >= 0 && V.magnitude(v) > magnitude) {
+            setMagnitude(v, magnitude);
+        }
+    }
+    V.clampMagnitude = clampMagnitude;
     function dot(v1, v2) {
         return v1.x * v2.x + v1.y * v2.y;
     }
@@ -7152,7 +7165,7 @@ var V;
     }
     V.isZero = isZero;
     function magnitude(vector) {
-        return Math.sqrt(this.magnitudeSq(vector));
+        return Math.sqrt(magnitudeSq(vector));
     }
     V.magnitude = magnitude;
     function magnitudeSq(vector) {
@@ -7160,7 +7173,7 @@ var V;
     }
     V.magnitudeSq = magnitudeSq;
     function normalize(vector) {
-        var mag = this.magnitude(vector);
+        var mag = magnitude(vector);
         if (mag !== 0) {
             vector.x /= mag;
             vector.y /= mag;
@@ -7168,13 +7181,28 @@ var V;
     }
     V.normalize = normalize;
     function normalized(vector) {
-        var mag = this.magnitude(vector);
+        var mag = magnitude(vector);
         if (mag === 0) {
             return pt(0, 0);
         }
         return pt(vector.x / mag, vector.y / mag);
     }
     V.normalized = normalized;
+    function rotate(vector, angle) {
+        var sin = Math.sin(angle);
+        var cos = Math.cos(angle);
+        var x = vector.x;
+        var y = vector.y;
+        vector.x = cos * x - sin * y;
+        vector.y = sin * x + cos * y;
+    }
+    V.rotate = rotate;
+    function rotated(vector, angle) {
+        var result = pt(vector);
+        rotate(result, angle);
+        return result;
+    }
+    V.rotated = rotated;
     function scale(vector, amount) {
         vector.x *= amount;
         vector.y *= amount;
@@ -7185,13 +7213,13 @@ var V;
     }
     V.scaled = scaled;
     function setMagnitude(vector, magnitude) {
-        this.normalize(vector);
-        this.scale(vector, magnitude);
+        normalize(vector);
+        scale(vector, magnitude);
     }
     V.setMagnitude = setMagnitude;
     function withMagnitude(vector, magnitude) {
-        var result = this.normalized(vector);
-        this.setMagnitude(result, magnitude);
+        var result = normalized(vector);
+        setMagnitude(result, magnitude);
         return result;
     }
     V.withMagnitude = withMagnitude;
@@ -10263,6 +10291,18 @@ var Assets;
                 }
             }
         },
+        'jester': {
+            anchor: Anchor.BOTTOM,
+            spritesheet: { frameWidth: 24, frameHeight: 24 },
+            frames: {
+                'jester_dead': {
+                    anchor: { x: 0.5, y: 21 / 24 },
+                    rect: { x: 0, y: 72, width: 24, height: 24 }
+                }
+            }
+        },
+        'ball': { anchor: Anchor.CENTER },
+        'shadow': { anchor: Anchor.CENTER },
         'floor': {},
         'lights': {},
         'stairs': { anchor: Anchor.BOTTOM },
@@ -10320,11 +10360,59 @@ var Assets;
     Assets.fonts = fonts;
     Assets.spriteTextTags = {};
 })(Assets || (Assets = {}));
+var Ball = /** @class */ (function (_super) {
+    __extends(Ball, _super);
+    function Ball(config) {
+        if (config === void 0) { config = {}; }
+        var _this = _super.call(this, __assign({ texture: 'ball', bounds: new CircleBounds(0, 0, 6), vangle: 90 * Random.sign(), gravityz: -100, mass: 1, effects: { silhouette: { color: 0xFFFFFF, enabled: false } } }, config)) || this;
+        _this.maxSpeed = 300;
+        _this.shadow = _this.addChild(new Sprite({
+            x: 0, y: 0,
+            texture: 'shadow',
+            tint: 0x000000,
+            alpha: 0.5,
+            layer: 'bg',
+        }));
+        _this.makesExplosionSound = true;
+        _this.runScript(S.chain(S.wait(1), S.loopFor(8, S.chain(S.call(function () { return _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled; }), S.wait(0.25))), S.loopFor(20, S.chain(S.call(function () { return _this.effects.silhouette.enabled = !_this.effects.silhouette.enabled; }), S.wait(0.05))), S.call(function () { _this.explode(); })));
+        return _this;
+    }
+    Ball.prototype.update = function () {
+        this.v.x -= this.v.x * 30 / 80 * this.delta;
+        this.v.y -= this.v.y * 30 / 80 * this.delta;
+        _super.prototype.update.call(this);
+        if (this.z < 8) {
+            this.z = 8;
+            this.vz = -this.vz;
+        }
+        this.shadow.z = 0;
+        V.clampMagnitude(this.v, this.maxSpeed);
+    };
+    Ball.prototype.render = function (texture, x, y) {
+        _super.prototype.render.call(this, texture, x, y);
+        Draw.brush.color = 0x000000;
+        Draw.brush.alpha = 1;
+        Draw.brush.thickness = 1;
+        Draw.circleOutline(texture, x, y, 8, Draw.ALIGNMENT_INNER);
+    };
+    Ball.prototype.explode = function () {
+        this.world.addWorldObject(new Explosion({
+            x: this.x,
+            y: this.y - this.z,
+            layer: 'fg',
+            size: 0.5,
+            soundVolume: this.makesExplosionSound ? 1 : 0,
+            damageGroups: ['player']
+        }));
+        this.kill();
+    };
+    return Ball;
+}(Sprite));
 /// <reference path="../lectvs/worldObject/behavior/controllerBehavior.ts" />
 var Enemy = /** @class */ (function (_super) {
     __extends(Enemy, _super);
     function Enemy(config) {
-        var _a;
+        var _a, _b;
         var _this = _super.call(this, config) || this;
         _this.health = config.maxHealth;
         _this.immuneTime = config.immuneTime;
@@ -10332,6 +10420,15 @@ var Enemy = /** @class */ (function (_super) {
         _this.speed = config.speed;
         _this.damagableByHoop = (_a = config.damagableByHoop) !== null && _a !== void 0 ? _a : true;
         _this.deadTexture = config.deadTexture;
+        if ((_b = config.hasNormalShadow) !== null && _b !== void 0 ? _b : true) {
+            _this.shadow = _this.addChild(new Sprite({
+                x: 0, y: 0,
+                texture: 'shadow',
+                tint: 0x000000,
+                alpha: 0.5,
+                layer: 'bg',
+            }));
+        }
         _this.immunitySm = new ImmunitySm(_this.immuneTime);
         return _this;
     }
@@ -10345,6 +10442,8 @@ var Enemy = /** @class */ (function (_super) {
         _super.prototype.update.call(this);
         this.v.x = M.lerpTime(this.v.x, 0, 10, this.delta);
         this.v.y = M.lerpTime(this.v.y, 0, 10, this.delta);
+        if (this.shadow)
+            this.shadow.z = 0;
     };
     Enemy.prototype.damage = function (amount) {
         var _this = this;
@@ -10509,14 +10608,21 @@ var Explosion = /** @class */ (function (_super) {
     __extends(Explosion, _super);
     function Explosion(config) {
         if (config === void 0) { config = {}; }
-        var _this = _super.call(this, __assign({ texture: 'explosion', tint: 0x000000, bounds: new CircleBounds(0, 0, 50) }, config)) || this;
+        var _a, _b, _c;
+        var _this = this;
+        var size = (_a = config.size) !== null && _a !== void 0 ? _a : 1;
+        _this = _super.call(this, __assign({ texture: 'explosion', tint: 0x000000, bounds: new CircleBounds(0, 0, 50 * size) }, config)) || this;
+        _this.scaleX *= size;
+        _this.scaleY *= size;
+        _this.soundVolume = (_b = config.soundVolume) !== null && _b !== void 0 ? _b : 1;
+        _this.damageGroups = (_c = config.damageGroups) !== null && _c !== void 0 ? _c : ['player', 'enemies'];
         _this.runScript(S.chain(S.wait(0.05), S.call(function () { return _this.tint = 0xFFFFFF; }), S.wait(0.05), S.call(function () { return _this.kill(); })));
         return _this;
     }
     Explosion.prototype.onAdd = function () {
         var e_46, _a;
         _super.prototype.onAdd.call(this);
-        var toDamages = this.world.select.overlap(this.bounds, ['player', 'enemies']);
+        var toDamages = this.world.select.overlap(this.bounds, this.damageGroups);
         try {
             for (var toDamages_1 = __values(toDamages), toDamages_1_1 = toDamages_1.next(); !toDamages_1_1.done; toDamages_1_1 = toDamages_1.next()) {
                 var toDamage = toDamages_1_1.value;
@@ -10535,7 +10641,8 @@ var Explosion = /** @class */ (function (_super) {
             }
             finally { if (e_46) throw e_46.error; }
         }
-        this.world.playSound('explode');
+        var sound = this.world.playSound('explode');
+        sound.volume = this.soundVolume;
     };
     return Explosion;
 }(Sprite));
@@ -10776,6 +10883,171 @@ var ImmunitySm = /** @class */ (function (_super) {
     };
     return ImmunitySm;
 }(StateMachine));
+/// <reference path="../lectvs/worldObject/behavior/actionBehavior.ts"/>
+/// <reference path="./enemy.ts"/>
+var Jester = /** @class */ (function (_super) {
+    __extends(Jester, _super);
+    function Jester(config) {
+        var _this = _super.call(this, __assign({ bounds: new CircleBounds(0, -4, 8), animations: [
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'jester', textures: [0, 1, 2], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'jump_right', texturePrefix: 'jester', textures: [5], frameRate: 4, count: -1 }),
+                Animations.fromTextureList({ name: 'jump_left', texturePrefix: 'jester', textures: [7], frameRate: 4, count: -1 }),
+                Animations.fromTextureList({ name: 'aim', texturePrefix: 'jester', textures: [8, 9], frameRate: 4, count: 3, nextFrameRef: 'aim/1' }),
+                Animations.fromTextureList({ name: 'throw', texturePrefix: 'jester', textures: [10, 10, 10, 10], frameRate: 4 }),
+            ], defaultAnimation: 'idle', effects: { outline: { color: 0x000000 } }, maxHealth: 1.2, immuneTime: 0.5, weight: 1, speed: 100, deadTexture: 'jester_dead' }, config)) || this;
+        _this.ballSpeed = 70;
+        _this.leg = false;
+        /* STATES */
+        var jester = _this;
+        _this.stateMachine.addState('idle', {
+            update: function () {
+                _this.playAnimation('idle');
+                _this.z = 0;
+            },
+            transitions: [
+                { toState: 'aim', condition: function () { return _this.controller.attack; } },
+                { toState: 'run', condition: function () { return !V.isZero(_this.controller.moveDirection); } },
+            ]
+        });
+        _this.stateMachine.addState('run', {
+            update: function () {
+                var flipped = _this.leg !== _this.flipX; // !== is xor
+                _this.playAnimation("jump_" + (flipped ? 'right' : 'left'));
+            },
+            script: function () {
+                var lastPos, dir, targetPos, jumpTime;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            jester.leg = !jester.leg;
+                            lastPos = pt(jester.x, jester.y);
+                            dir = pt(jester.controller.moveDirection);
+                            V.clampMagnitude(dir, 16);
+                            targetPos = pt(jester.x + dir.x, jester.y + dir.y);
+                            jester.flipX = targetPos.x - lastPos.x < 0;
+                            jumpTime = 0.5;
+                            return [4 /*yield*/, S.simul(S.tweenPt(jumpTime, jester, lastPos, targetPos), S.jumpZ(jester, 16, jumpTime))];
+                        case 1:
+                            _a.sent();
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [
+                { toState: 'idle' },
+            ]
+        });
+        _this.stateMachine.addState('aim', {
+            update: function () {
+                _this.playAnimation('aim');
+                _this.flipX = _this.controller.aimDirection.x < 0;
+            },
+            transitions: [
+                { toState: 'shoot', condition: function () { return !_this.controller.attack; } },
+            ]
+        });
+        _this.stateMachine.addState('shoot', {
+            callback: function () {
+                for (var angle = -1; angle <= 1; angle++) {
+                    var ball = _this.world.addWorldObject(new Ball({
+                        x: _this.x,
+                        y: _this.y,
+                        v: V.rotated(_this.controller.aimDirection, Math.PI / 6 * angle),
+                        z: 8,
+                        vz: 60,
+                        name: 'ball',
+                        layer: _this.layer,
+                        physicsGroup: 'balls',
+                    }));
+                    ball.setSpeed(_this.ballSpeed);
+                    ball.makesExplosionSound = (angle === 0);
+                }
+                _this.world.playSound('shoot');
+            },
+            script: S.playAnimation(_this, 'throw'),
+            transitions: [
+                { toState: 'idle' }
+            ]
+        });
+        _this.stateMachine.setState('idle');
+        _this.behavior = new Jester.JesterBehavior(_this);
+        return _this;
+    }
+    Jester.prototype.onCollide = function (other) {
+        _super.prototype.onCollide.call(this, other);
+        if (other.physicsGroup === 'walls') {
+            this.setState('idle');
+            this.behavior.interrupt('walk');
+        }
+    };
+    Jester.prototype.damage = function (amount) {
+        _super.prototype.damage.call(this, amount);
+        this.setState('idle');
+        this.behavior.interrupt();
+    };
+    return Jester;
+}(Enemy));
+(function (Jester) {
+    var JesterBehavior = /** @class */ (function (_super) {
+        __extends(JesterBehavior, _super);
+        function JesterBehavior(jester) {
+            var _this = _super.call(this, 'walk', 1) || this;
+            var controller = _this.controller;
+            var getTarget = function () { return jester.world.select.type(Player); };
+            /* ACTIONS */
+            _this.addAction('walk', {
+                script: function () {
+                    var targetPos;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                targetPos = jester.pickNextTargetPos(getTarget());
+                                _a.label = 1;
+                            case 1:
+                                if (!(G.distance(jester, targetPos) > 8)) return [3 /*break*/, 3];
+                                controller.moveDirection.x = targetPos.x - jester.x;
+                                controller.moveDirection.y = targetPos.y - jester.y;
+                                return [4 /*yield*/];
+                            case 2:
+                                _a.sent();
+                                return [3 /*break*/, 1];
+                            case 3: return [2 /*return*/];
+                        }
+                    });
+                },
+                interrupt: true,
+                wait: function () { return Random.float(1, 2); },
+                nextAction: 'shoot',
+            });
+            _this.addAction('shoot', {
+                script: function () {
+                    var target;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                target = getTarget();
+                                controller.attack = true;
+                                return [4 /*yield*/, S.doOverTime(1, function (t) {
+                                        controller.aimDirection.x = target.x - jester.x;
+                                        controller.aimDirection.y = target.y - jester.y;
+                                    })];
+                            case 1:
+                                _a.sent();
+                                controller.attack = false;
+                                return [2 /*return*/];
+                        }
+                    });
+                },
+                interrupt: true,
+                wait: function () { return Random.float(1, 2); },
+                nextAction: 'walk',
+            });
+            return _this;
+        }
+        return JesterBehavior;
+    }(ActionBehavior));
+    Jester.JesterBehavior = JesterBehavior;
+})(Jester || (Jester = {}));
 var King = /** @class */ (function (_super) {
     __extends(King, _super);
     function King(throne, config) {
@@ -10839,6 +11111,7 @@ var Knight = /** @class */ (function (_super) {
             update: function () {
                 _this.playAnimation('idle');
                 _this.light.alpha = 0;
+                _this.z = 0;
             },
             transitions: [
                 { toState: 'aim', condition: function () { return _this.controller.attack; } },
@@ -11445,7 +11718,7 @@ Main.loadConfig({
         moveCameraWithArrows: true,
         showOverlay: true,
         overlayFeeds: [],
-        skipRate: 1,
+        skipRate: 10,
         programmaticInput: false,
         autoplay: true,
         skipMainMenu: true,
@@ -11477,6 +11750,13 @@ var Player = /** @class */ (function (_super) {
         });
         _this.immunitySm = new ImmunitySm(_this.immuneTime);
         _this.health = Player.MAX_HP;
+        _this.addChild(new Sprite({
+            x: 0, y: 0,
+            texture: 'shadow',
+            tint: 0x000000,
+            alpha: 0.5,
+            layer: 'bg',
+        }));
         return _this;
     }
     Object.defineProperty(Player.prototype, "immune", {
@@ -11651,6 +11931,7 @@ function getStages() {
                     'enemies': {},
                     'bombs': {},
                     'bullets': {},
+                    'balls': {},
                     'deadbodies': {},
                     'walls': { immovable: true },
                 },
@@ -11660,6 +11941,8 @@ function getStages() {
                     { move: 'player', from: 'walls' },
                     { move: 'enemies', from: 'walls' },
                     { move: 'bullets', from: 'walls' },
+                    { move: 'balls', from: 'walls', momentumTransfer: 'elastic' },
+                    { move: 'balls', from: 'hoop', momentumTransfer: 'elastic' },
                     { move: 'bombs', from: 'walls' },
                     { move: 'bombs', from: 'enemies' },
                     { move: 'hoop', from: 'enemies', momentumTransfer: 'elastic', callback: function (hoop, enemy) {
@@ -11708,7 +11991,7 @@ function getStages() {
                 physicsGroup: 'enemies',
                 colliding: false
             }));
-            world.addWorldObject(new Sprite({
+            var guard1 = world.addWorldObject(new Sprite({
                 x: 342, y: 352,
                 name: 'guard',
                 texture: 'enemyknight_0',
@@ -11719,7 +12002,14 @@ function getStages() {
                 ],
                 defaultAnimation: 'idle',
             }));
-            world.addWorldObject(new Sprite({
+            guard1.addChild(new Sprite({
+                x: 0, y: 0,
+                texture: 'shadow',
+                tint: 0x000000,
+                alpha: 0.5,
+                layer: 'bg',
+            }));
+            var guard2 = world.addWorldObject(new Sprite({
                 x: 428, y: 352,
                 name: 'guard',
                 texture: 'enemyknight_0',
@@ -11730,6 +12020,13 @@ function getStages() {
                     Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight', textures: [0, 1, 2], frameRate: 8, count: -1 })
                 ],
                 defaultAnimation: 'idle',
+            }));
+            guard2.addChild(new Sprite({
+                x: 0, y: 0,
+                texture: 'shadow',
+                tint: 0x000000,
+                alpha: 0.5,
+                layer: 'bg',
             }));
             world.addWorldObject(new Player({
                 x: 384, y: 750,
@@ -12328,7 +12625,7 @@ function getStoryboard() {
 var Throne = /** @class */ (function (_super) {
     __extends(Throne, _super);
     function Throne(config) {
-        var _this = _super.call(this, __assign({ texture: 'throne', bounds: new RectBounds(-15, -24, 30, 24), mass: 10000, maxHealth: 1003, immuneTime: 0.5, weight: 10, speed: 0, damagableByHoop: false }, config)) || this;
+        var _this = _super.call(this, __assign({ texture: 'throne', bounds: new RectBounds(-15, -24, 30, 24), mass: 10000, maxHealth: 1003, immuneTime: 0.5, weight: 10, speed: 0, damagableByHoop: false, hasNormalShadow: false }, config)) || this;
         var throne = _this;
         _this.shadow = _this.addChild(new Sprite({
             x: -15, y: -22,
@@ -12716,11 +13013,11 @@ var WaveController = /** @class */ (function (_super) {
         this.currentWave = 4;
         this.world.addWorldObjects([
             this.enemySpawn(Golbin, 220, 400),
-            this.enemySpawn(Golbin, 220, 552),
-            this.enemySpawn(Knight, 160, 476),
-            this.enemySpawn(Golbin, 548, 400),
+            this.enemySpawn(Knight, 220, 552),
+            this.enemySpawn(Jester, 160, 476),
+            this.enemySpawn(Knight, 548, 400),
             this.enemySpawn(Golbin, 548, 552),
-            this.enemySpawn(Knight, 608, 476),
+            this.enemySpawn(Jester, 608, 476),
         ]);
     };
     WaveController.prototype.spawnWave5 = function () {
@@ -12728,12 +13025,12 @@ var WaveController = /** @class */ (function (_super) {
         this.world.addWorldObjects([
             this.enemySpawn(Golbin, 220, 400),
             this.enemySpawn(Knight, 220, 552),
-            this.enemySpawn(Knight, 160, 476),
-            this.enemySpawn(Mage, 100, 476),
+            this.enemySpawn(Mage, 160, 476),
+            this.enemySpawn(Jester, 100, 476),
             this.enemySpawn(Knight, 548, 400),
             this.enemySpawn(Golbin, 548, 552),
-            this.enemySpawn(Golbin, 608, 476),
-            this.enemySpawn(Mage, 668, 476),
+            this.enemySpawn(Mage, 608, 476),
+            this.enemySpawn(Jester, 668, 476),
         ]);
     };
     WaveController.prototype.spawnWaveKing = function () {

@@ -1,6 +1,5 @@
 class Throne extends Enemy {
     king: Sprite;
-    shadow: Sprite;
     light: Sprite;
 
     private dinkSound: Sound;
@@ -15,6 +14,7 @@ class Throne extends Enemy {
             weight: 10,
             speed: 0,
             damagableByHoop: false,
+            hasNormalShadow: false,
             ...config,
         });
 

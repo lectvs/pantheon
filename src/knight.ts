@@ -45,6 +45,7 @@ class Knight extends Enemy {
             update: () => {
                 this.playAnimation('idle');
                 this.light.alpha = 0;
+                this.z = 0;
             },
             transitions: [
                 { toState: 'aim', condition: () => this.controller.attack },

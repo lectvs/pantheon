@@ -8,6 +8,7 @@ namespace Enemy {
         speed: number;
         damagableByHoop?: boolean;
         deadTexture?: string;
+        hasNormalShadow?: boolean;
     }
 }
 
@@ -18,9 +19,11 @@ class Enemy extends Sprite {
     speed: number;
     damagableByHoop: boolean;
     deadTexture: string;
-    
+
     private immunitySm: ImmunitySm;
     get immune() { return this.immunitySm.isImmune(); }
+
+    shadow: Sprite;
 
     constructor(config: Enemy.Config) {
         super(config);
@@ -32,6 +35,16 @@ class Enemy extends Sprite {
         this.damagableByHoop = config.damagableByHoop ?? true;
         this.deadTexture = config.deadTexture;
 
+        if (config.hasNormalShadow ?? true) {
+            this.shadow = this.addChild(new Sprite({
+                x: 0, y: 0,
+                texture: 'shadow',
+                tint: 0x000000,
+                alpha: 0.5,
+                layer: 'bg',
+            }));
+        }
+
         this.immunitySm = new ImmunitySm(this.immuneTime);
     }
 
@@ -42,6 +55,8 @@ class Enemy extends Sprite {
 
         this.v.x = M.lerpTime(this.v.x, 0, 10, this.delta);
         this.v.y = M.lerpTime(this.v.y, 0, 10, this.delta);
+
+        if (this.shadow) this.shadow.z = 0;
     }
 
     damage(amount: number) {

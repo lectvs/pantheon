@@ -5,6 +5,8 @@
 - camera zoom
 - normal-map/lighting
 - controller revamp
+- animation revamp (animation/script parity?)
+- module system
 - boundless textures
     - optimize tilemap editing with boundless textures
 - unit tests c:

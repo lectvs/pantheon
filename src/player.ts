@@ -36,6 +36,14 @@ class Player extends Sprite {
 
         this.immunitySm = new ImmunitySm(this.immuneTime);
         this.health = Player.MAX_HP;
+
+        this.addChild(new Sprite({
+            x: 0, y: 0,
+            texture: 'shadow',
+            tint: 0x000000,
+            alpha: 0.5,
+            layer: 'bg',
+        }));
     }
 
     update() {

@@ -72,7 +72,7 @@ postjam
     - /hoop cleave through enemies at full power? (decided not to do)
     - /king emotes
     - /add dialog talking sound effects?
-    - add some more enemies
+    - /add some more enemies
     - add music/ambience during silent parts
 - in general clean up the storyboard
     - use new dialog pausing/adding feature

@@ -62,6 +62,20 @@ namespace Assets {
             }
         },
 
+        'jester': {
+            anchor: Anchor.BOTTOM,
+            spritesheet: { frameWidth: 24, frameHeight: 24 },
+            frames: {
+                'jester_dead': {
+                    anchor: { x: 0.5, y: 21/24 },
+                    rect: { x: 0, y: 72, width: 24, height: 24 }
+                }
+            }
+        },
+        'ball': { anchor: Anchor.CENTER },
+
+        'shadow': { anchor: Anchor.CENTER },
+
         'floor': {},
         'lights': {},
         'stairs': { anchor: Anchor.BOTTOM },

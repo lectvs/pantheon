@@ -21,6 +21,7 @@ function getStages(): Dict<World.Factory> { return {
                 'enemies': {},
                 'bombs': {},
                 'bullets': {},
+                'balls': {},
                 'deadbodies': {},
                 'walls': { immovable: true },
             },
@@ -30,6 +31,8 @@ function getStages(): Dict<World.Factory> { return {
                 { move: 'player', from: 'walls' },
                 { move: 'enemies', from: 'walls' },
                 { move: 'bullets', from: 'walls' },
+                { move: 'balls', from: 'walls', momentumTransfer: 'elastic' },
+                { move: 'balls', from: 'hoop', momentumTransfer: 'elastic' },
                 { move: 'bombs', from: 'walls' },
                 { move: 'bombs', from: 'enemies' },
                 { move: 'hoop', from: 'enemies', momentumTransfer: 'elastic', callback: (hoop: Hoop, enemy: Enemy) => {
@@ -84,7 +87,7 @@ function getStages(): Dict<World.Factory> { return {
             colliding: false
         }));
 
-        world.addWorldObject(new Sprite({
+        let guard1 = world.addWorldObject(new Sprite({
             x: 342, y: 352,
             name: 'guard',
             texture: 'enemyknight_0',
@@ -95,8 +98,15 @@ function getStages(): Dict<World.Factory> { return {
             ],
             defaultAnimation: 'idle',
         }));
+        guard1.addChild(new Sprite({
+            x: 0, y: 0,
+            texture: 'shadow',
+            tint: 0x000000,
+            alpha: 0.5,
+            layer: 'bg',
+        }));
 
-        world.addWorldObject(new Sprite({
+        let guard2 = world.addWorldObject(new Sprite({
             x: 428, y: 352,
             name: 'guard',
             texture: 'enemyknight_0',
@@ -107,6 +117,13 @@ function getStages(): Dict<World.Factory> { return {
                 Animations.fromTextureList({ name: 'idle', texturePrefix: 'enemyknight', textures: [0, 1, 2], frameRate: 8, count: -1 })
             ],
             defaultAnimation: 'idle',
+        }));
+        guard2.addChild(new Sprite({
+            x: 0, y: 0,
+            texture: 'shadow',
+            tint: 0x000000,
+            alpha: 0.5,
+            layer: 'bg',
         }));
 
         world.addWorldObject(new Player({

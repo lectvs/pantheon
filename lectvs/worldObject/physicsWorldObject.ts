@@ -100,7 +100,12 @@ class PhysicsWorldObject extends WorldObject {
 
     render(texture: Texture, x: number, y: number) {
         if (Debug.ALL_PHYSICS_BOUNDS || this.debugDrawBounds) {
-            this.drawBounds(texture, x, y);
+            let zoffset = 0; // offset to cancel out the z-factor when drawing bounds
+            if (this.zBehavior === 'threequarters') {
+                let parentz = this.parent ? this.parent.z : 0;
+                zoffset = parentz - this.z;
+            }
+            this.drawBounds(texture, x, y - zoffset);
         }
         super.render(texture, x, y);
     }
