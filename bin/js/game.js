@@ -1929,11 +1929,11 @@ var Options = /** @class */ (function () {
         this.saveOptions();
     };
     Options.saveOptions = function () {
-        localStorage.setItem(this.getOptionsLocalStorageName(), JSON.stringify(this.options));
+        LocalStorage.setJson(this.getOptionsLocalStorageName(), this.options);
         this.onUpdate();
     };
     Options.loadOptions = function () {
-        this.options = JSON.parse(localStorage.getItem(this.getOptionsLocalStorageName()));
+        this.options = LocalStorage.getJson(this.getOptionsLocalStorageName());
         if (_.isEmpty(this.options)) {
             this.resetOptions();
         }
@@ -2667,7 +2667,7 @@ var WorldObject = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(WorldObject.prototype, "isControlRevoked", {
-        get: function () { return global.theater.isCutscenePlaying; },
+        get: function () { var _a; return (_a = global.theater) === null || _a === void 0 ? void 0 : _a.isCutscenePlaying; },
         enumerable: false,
         configurable: true
     });
@@ -3897,8 +3897,9 @@ var Experiment = /** @class */ (function () {
 /// <reference path="../world/world.ts" />
 var Menu = /** @class */ (function (_super) {
     __extends(Menu, _super);
-    function Menu(menuSystem) {
-        var _this = _super.call(this) || this;
+    function Menu(menuSystem, config) {
+        if (config === void 0) { config = {}; }
+        var _this = _super.call(this, config) || this;
         _this.menuSystem = menuSystem;
         return _this;
     }
@@ -6713,6 +6714,35 @@ var G;
     }
     G.rectContainsRect = rectContainsRect;
 })(G || (G = {}));
+var LocalStorage = /** @class */ (function () {
+    function LocalStorage() {
+    }
+    LocalStorage.getJson = function (key) {
+        var str = this.getString(key);
+        return _.isEmpty(str) ? undefined : JSON.parse(str);
+    };
+    LocalStorage.getString = function (key) {
+        try {
+            return localStorage.getItem(key);
+        }
+        catch (e) {
+            error('Unable to get localStorage:', e);
+        }
+        return undefined;
+    };
+    LocalStorage.setJson = function (key, value) {
+        this.setString(key, JSON.stringify(value));
+    };
+    LocalStorage.setString = function (key, value) {
+        try {
+            localStorage.setItem(key, value);
+        }
+        catch (e) {
+            error('Unable to set localStorage:', e);
+        }
+    };
+    return LocalStorage;
+}());
 var M;
 (function (M) {
     function argmax(array, key) {
@@ -11455,6 +11485,14 @@ var MainMenu = /** @class */ (function (_super) {
                 menuSystem.loadMenu(ControlsMenu);
             }
         }));
+        _this.addWorldObject(new MenuTextButton({
+            x: 20, y: 132,
+            text: "options",
+            onClick: function () {
+                menuSystem.game.playSound('click');
+                menuSystem.loadMenu(OptionsMenu);
+            }
+        }));
         _this.addWorldObject(new SpriteText({
             x: 100, y: 100,
             text: "<-- read me!",
@@ -11532,8 +11570,12 @@ var OptionsMenu = /** @class */ (function (_super) {
             getValue: function () { return Options.getOption('volume'); },
             setValue: function (v) { return Options.updateOption('volume', v); }
         }));
+        _this.addWorldObject(new SpriteText({
+            x: 20, y: 74,
+            text: "toggle fullscreen - F"
+        }));
         _this.addWorldObject(new MenuTextButton({
-            x: 20, y: 96,
+            x: 20, y: 114,
             text: "debug",
             onClick: function () {
                 menuSystem.game.playSound('click');
@@ -11541,7 +11583,7 @@ var OptionsMenu = /** @class */ (function (_super) {
             }
         }));
         _this.addWorldObject(new MenuTextButton({
-            x: 20, y: 126,
+            x: 20, y: 144,
             text: "back",
             onClick: function () {
                 menuSystem.game.playSound('click');
@@ -11600,7 +11642,11 @@ var DebugOptionsMenu = /** @class */ (function (_super) {
 var ControlsMenu = /** @class */ (function (_super) {
     __extends(ControlsMenu, _super);
     function ControlsMenu(menuSystem) {
-        var _this = _super.call(this, menuSystem) || this;
+        var _this = _super.call(this, menuSystem, {
+            layers: [
+                { name: 'bg' }
+            ]
+        }) || this;
         _this.backgroundColor = 0x000000;
         _this.volume = 0;
         _this.addWorldObject(new SpriteText({
@@ -11609,12 +11655,21 @@ var ControlsMenu = /** @class */ (function (_super) {
         }));
         _this.addWorldObject(new SpriteText({
             x: 20, y: 42,
-            text: "WASD or ARROW KEYS - move\n\nswing the hoop faster to deal more damage!"
+            text: "WASD or ARROW KEYS - move"
+        }));
+        _this.addWorldObject(new SpriteText({
+            x: 20, y: 66,
+            text: "F - toggle fullscreen"
+        }));
+        _this.addWorldObject(new SpriteText({
+            x: 20, y: 90,
+            text: "swing the hoop faster\nto deal more damage!"
         }));
         var player = _this.addWorldObject(new Player({
             x: 250, y: 180,
             effects: { outline: { color: 0xFFFFFF } }
         }));
+        player.behavior = new NullBehavior();
         _this.addWorldObject(new Hoop({
             x: 240, y: 180
         }));
@@ -11711,7 +11766,7 @@ Main.loadConfig({
         },
     },
     debug: {
-        debug: true,
+        debug: false,
         font: Assets.fonts.DELUXE16,
         fontStyle: { color: 0xFFFFFF },
         allPhysicsBounds: false,
@@ -12419,13 +12474,13 @@ function getStoryboard() {
                             return [4 /*yield*/, S.dialog("Splendid!")];
                         case 4:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("Thou hast defeated all of mine challenges. I bet you're happy to finally claim the [y]royal hula[/y] for thyself?")];
+                            return [4 /*yield*/, S.dialogAdd(" Thou hast defeated all of mine challenges. I bet you're happy to finally claim the [y]royal hula[/y] for thyself?")];
                         case 5:
                             _a.sent();
                             return [4 /*yield*/, S.dialog("...")];
                         case 6:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("But I don't think I'll be parting with it so soon.")];
+                            return [4 /*yield*/, S.dialogAdd("But I don't think I'll be parting with it so soon.")];
                         case 7:
                             _a.sent();
                             return [4 /*yield*/, S.dialog("If thou want'st it so bad... Heh heh heh...")];

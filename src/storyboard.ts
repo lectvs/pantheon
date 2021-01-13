@@ -262,9 +262,9 @@ function getStoryboard(): Storyboard { return {
             yield S.wait(1);
 
             yield S.dialog("Splendid!");
-            yield S.dialog("Thou hast defeated all of mine challenges. I bet you're happy to finally claim the [y]royal hula[/y] for thyself?");
+            yield S.dialogAdd(" Thou hast defeated all of mine challenges. I bet you're happy to finally claim the [y]royal hula[/y] for thyself?");
             yield S.dialog("...");
-            yield S.dialog("But I don't think I'll be parting with it so soon.");
+            yield S.dialogAdd("But I don't think I'll be parting with it so soon.");
             yield S.dialog("If thou want'st it so bad... Heh heh heh...");
 
             yield S.wait(0.5);

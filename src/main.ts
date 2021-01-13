@@ -89,7 +89,7 @@ Main.loadConfig({
     },
 
     debug: {
-        debug: true,
+        debug: false,
         font: Assets.fonts.DELUXE16,
         fontStyle: { color: 0xFFFFFF },
         allPhysicsBounds: false,

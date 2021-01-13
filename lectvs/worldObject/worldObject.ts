@@ -96,7 +96,7 @@ class WorldObject {
     lastz: number;
 
     controller: Controller;
-    get isControlRevoked() { return global.theater.isCutscenePlaying; }
+    get isControlRevoked() { return global.theater?.isCutscenePlaying; }
 
     behavior: Behavior;
 

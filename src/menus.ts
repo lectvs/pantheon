@@ -62,6 +62,15 @@ class MainMenu extends Menu {
             }
         }));
 
+        this.addWorldObject(new MenuTextButton({
+            x: 20, y: 132,
+            text: "options",
+            onClick: () => {
+                menuSystem.game.playSound('click');
+                menuSystem.loadMenu(OptionsMenu);
+            }
+        }));
+
         this.addWorldObject(new SpriteText({
             x: 100, y: 100,
             text: "<-- read me!",
@@ -147,8 +156,13 @@ class OptionsMenu extends Menu {
             setValue: v => Options.updateOption('volume', v)
         }));
 
+        this.addWorldObject(new SpriteText({
+            x: 20, y: 74,
+            text: "toggle fullscreen - F"
+        }));
+
         this.addWorldObject(new MenuTextButton({
-            x: 20, y: 96,
+            x: 20, y: 114,
             text: "debug",
             onClick: () => {
                 menuSystem.game.playSound('click');
@@ -157,7 +171,7 @@ class OptionsMenu extends Menu {
         }));
 
         this.addWorldObject(new MenuTextButton({
-            x: 20, y: 126,
+            x: 20, y: 144,
             text: "back",
             onClick: () => {
                 menuSystem.game.playSound('click');
@@ -220,7 +234,11 @@ class DebugOptionsMenu extends Menu {
 
 class ControlsMenu extends Menu {
     constructor(menuSystem: MenuSystem) {
-        super(menuSystem);
+        super(menuSystem, {
+            layers: [
+                { name: 'bg' }
+            ]
+        });
 
         this.backgroundColor = 0x000000;
         this.volume = 0;
@@ -232,13 +250,24 @@ class ControlsMenu extends Menu {
 
         this.addWorldObject(new SpriteText({
             x: 20, y: 42,
-            text: "WASD or ARROW KEYS - move\n\nswing the hoop faster to deal more damage!"
+            text: "WASD or ARROW KEYS - move"
+        }));
+
+        this.addWorldObject(new SpriteText({
+            x: 20, y: 66,
+            text: "F - toggle fullscreen"
+        }));
+
+        this.addWorldObject(new SpriteText({
+            x: 20, y: 90,
+            text: "swing the hoop faster\nto deal more damage!"
         }));
 
         let player = this.addWorldObject(new Player({
             x: 250, y: 180,
             effects: { outline: { color: 0xFFFFFF } }
         }));
+        player.behavior = new NullBehavior();
 
         this.addWorldObject(new Hoop({
             x: 240, y: 180

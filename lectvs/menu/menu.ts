@@ -7,8 +7,8 @@ namespace Menu {
 class Menu extends World {
     menuSystem: MenuSystem;
 
-    constructor(menuSystem: MenuSystem) {
-        super();
+    constructor(menuSystem: MenuSystem, config: World.Config = {}) {
+        super(config);
         this.menuSystem = menuSystem;
     }
 }

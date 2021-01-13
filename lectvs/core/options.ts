@@ -45,12 +45,13 @@ class Options {
     }
 
     static saveOptions() {
-        localStorage.setItem(this.getOptionsLocalStorageName(), JSON.stringify(this.options));
+        LocalStorage.setJson(this.getOptionsLocalStorageName(), this.options);
         this.onUpdate();
     }
 
     private static loadOptions() {
-        this.options = JSON.parse(localStorage.getItem(this.getOptionsLocalStorageName()));
+        this.options = LocalStorage.getJson<Options.Options>(this.getOptionsLocalStorageName());
+        
         if (_.isEmpty(this.options)) {
             this.resetOptions();
         } else {
