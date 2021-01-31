@@ -1,7 +1,7 @@
 /// <reference path="./menus.ts"/>
 
 Main.loadConfig({
-    gameCodeName: "HoopKnight",
+    gameCodeName: "SilverBullet",
     gameWidth: 400,
     gameHeight: 300,
     canvasScale: 2,
@@ -105,5 +105,3 @@ Main.loadConfig({
         experiments: {},
     },
 });
-
-var HARD_DIFFICULTY: boolean = false;

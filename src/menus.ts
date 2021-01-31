@@ -14,8 +14,6 @@ class IntroMenu extends Menu {
 
         this.runScript(S.chain(
             S.wait(1.5),
-            S.call(() => introtext.setText("- made in 48 hours\n  for ludum dare 47 -")),
-            S.wait(1.5),
             S.call(() => menuSystem.loadMenu(MainMenu)),
         ));
     }
@@ -30,24 +28,13 @@ class MainMenu extends Menu {
 
         this.addWorldObject(new SpriteText({
             x: 20, y: 20,
-            text: "- HOOP KNIGHT -"
+            text: "- SILVER BULLET -"
         }));
 
         this.addWorldObject(new MenuTextButton({
             x: 20, y: 50,
-            text: "play normal mode",
+            text: "play",
             onClick: () => {
-                HARD_DIFFICULTY = false;
-                menuSystem.game.playSound('click');
-                menuSystem.game.startGame();
-            }
-        }));
-
-        this.addWorldObject(new MenuTextButton({
-            x: 20, y: 68,
-            text: "play hard mode (no health regen)",
-            onClick: () => {
-                HARD_DIFFICULTY = true;
                 menuSystem.game.playSound('click');
                 menuSystem.game.startGame();
             }
@@ -69,12 +56,6 @@ class MainMenu extends Menu {
                 menuSystem.game.playSound('click');
                 menuSystem.loadMenu(OptionsMenu);
             }
-        }));
-
-        this.addWorldObject(new SpriteText({
-            x: 100, y: 100,
-            text: "<-- read me!",
-            style: { color: 0xFFFF00 }
         }));
     }
 }
@@ -258,21 +239,6 @@ class ControlsMenu extends Menu {
             text: "F - toggle fullscreen"
         }));
 
-        this.addWorldObject(new SpriteText({
-            x: 20, y: 90,
-            text: "swing the hoop faster\nto deal more damage!"
-        }));
-
-        let player = this.addWorldObject(new Player({
-            x: 250, y: 180,
-            effects: { outline: { color: 0xFFFFFF } }
-        }));
-        player.behavior = new NullBehavior();
-
-        this.addWorldObject(new Hoop({
-            x: 240, y: 180
-        }));
-
         this.addWorldObject(new MenuTextButton({
             x: 20, y: 240,
             text: "back",
@@ -281,21 +247,6 @@ class ControlsMenu extends Menu {
                 menuSystem.back();
             }
         }));
-
-        this.runScript(S.chain(
-            S.loopFor(2, S.chain(
-                S.doOverTime(0.4, t => { player.controller.right = true; }),
-                S.doOverTime(0.4, t => { player.controller.down = true; }),
-                S.doOverTime(0.4, t => { player.controller.left = true; }),
-                S.doOverTime(0.4, t => { player.controller.up = true; }),
-            )),
-            S.loopFor(Infinity, S.chain(
-                S.doOverTime(0.2, t => { player.controller.right = true; }),
-                S.doOverTime(0.2, t => { player.controller.down = true; }),
-                S.doOverTime(0.2, t => { player.controller.left = true; }),
-                S.doOverTime(0.2, t => { player.controller.up = true; }),
-            )),
-        ))
     }
 }
 
