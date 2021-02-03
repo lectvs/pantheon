@@ -69,6 +69,17 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var Point = PIXI.Point;
 var Rectangle = PIXI.Rectangle;
 function pt(x, y) {
@@ -2852,12 +2863,12 @@ var WorldObject = /** @class */ (function () {
     };
     WorldObject.prototype.resolveLayer = function () {
         if (this.matchParentLayer && this.parent && this._layer !== this.parent.layer) {
-            this._layer = this.parent.layer;
+            this.layer = this.parent.layer;
         }
     };
     WorldObject.prototype.resolvePhysicsGroup = function () {
         if (this.matchParentPhysicsGroup && this.parent && this._physicsGroup !== this.parent.physicsGroup) {
-            this._physicsGroup = this.parent.physicsGroup;
+            this.physicsGroup = this.parent.physicsGroup;
         }
     };
     WorldObject.prototype.updateController = function () {
@@ -10260,10 +10271,13 @@ var Assets;
         // Debug
         'debug': {},
         // Fonts
-        'deluxe16': {
-            spritesheet: { frameWidth: 8, frameHeight: 15 },
-        },
+        'deluxe16': { spritesheet: { frameWidth: 8, frameHeight: 15 } },
         // Game
+        'player': { anchor: Anchor.BOTTOM },
+        'world': {
+            anchor: Anchor.CENTER,
+            spritesheet: { frameWidth: 16, frameHeight: 16 }
+        },
         // UI
         'dialogbox': { anchor: Anchor.CENTER },
     };
@@ -10276,8 +10290,19 @@ var Assets;
         'dialogstart': { url: 'assets/click.wav', volume: 0.5 },
         'dialogspeak': { volume: 0.25 },
     };
-    Assets.tilesets = {};
-    Assets.pyxelTilemaps = {};
+    Assets.tilesets = {
+        'world': {
+            tileWidth: 16,
+            tileHeight: 16,
+            tiles: Preload.allTilesWithPrefix('world_'),
+            collisionIndices: [0],
+        }
+    };
+    Assets.pyxelTilemaps = {
+        'world': {
+            tileset: Assets.tilesets.world,
+        }
+    };
     var fonts = /** @class */ (function () {
         function fonts() {
         }
@@ -10522,8 +10547,8 @@ var ControlsMenu = /** @class */ (function (_super) {
 /// <reference path="./menus.ts"/>
 Main.loadConfig({
     gameCodeName: "SilverBullet",
-    gameWidth: 400,
-    gameHeight: 300,
+    gameWidth: 320,
+    gameHeight: 240,
     canvasScale: 2,
     backgroundColor: 0x000000,
     preloadBackgroundColor: 0x000000,
@@ -10599,7 +10624,7 @@ Main.loadConfig({
         },
     },
     debug: {
-        debug: false,
+        debug: true,
         font: Assets.fonts.DELUXE16,
         fontStyle: { color: 0xFFFFFF },
         allPhysicsBounds: false,
@@ -10615,12 +10640,34 @@ Main.loadConfig({
         experiments: {},
     },
 });
+var Player = /** @class */ (function (_super) {
+    __extends(Player, _super);
+    function Player(config) {
+        var _this = _super.call(this, __assign({ texture: 'player' }, config)) || this;
+        _this.behavior = new ControllerBehavior(function () {
+            this.controller.left = Input.isDown('left');
+            this.controller.right = Input.isDown('right');
+            this.controller.up = Input.isDown('up');
+            this.controller.down = Input.isDown('down');
+        });
+        return _this;
+    }
+    Player.prototype.update = function () {
+        var haxis = (this.controller.left ? -1 : 0) + (this.controller.right ? 1 : 0);
+        var vaxis = (this.controller.up ? -1 : 0) + (this.controller.down ? 1 : 0);
+        this.v.x = haxis * Player.MAX_SPEED;
+        this.v.y = vaxis * Player.MAX_SPEED;
+        _super.prototype.update.call(this);
+    };
+    Player.MAX_SPEED = 32;
+    return Player;
+}(Sprite));
 var BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(10, 40, 30);
 function getStages() {
     return {
         'game': function () {
             var world = new World({
-                backgroundColor: 0x000000,
+                backgroundColor: 0xFFFFFF,
                 entryPoints: { 'main': { x: 0, y: 0 } },
                 layers: [
                     { name: 'bg' },
@@ -10637,6 +10684,18 @@ function getStages() {
                 collisionIterations: 4,
                 useRaycastDisplacementThreshold: 4,
             });
+            world.addWorldObject(new Player({
+                name: 'player',
+                x: 156, y: 166,
+                bounds: new RectBounds(-4, -8, 8, 8),
+                physicsGroup: 'player',
+            }));
+            world.addWorldObject(new Tilemap({
+                name: 'walls',
+                x: 0, y: 0,
+                tilemap: 'world',
+                physicsGroup: 'walls',
+            }));
             world.camera.setMovement(BASE_CAMERA_MOVEMENT);
             world.camera.snapPosition();
             return world;

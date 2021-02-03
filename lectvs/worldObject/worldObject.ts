@@ -347,13 +347,13 @@ class WorldObject {
 
     private resolveLayer() {
         if (this.matchParentLayer && this.parent && this._layer !== this.parent.layer) {
-            this._layer = this.parent.layer;
+            this.layer = this.parent.layer;
         }
     }
 
     private resolvePhysicsGroup() {
         if (this.matchParentPhysicsGroup && this.parent && this._physicsGroup !== this.parent.physicsGroup) {
-            this._physicsGroup = this.parent.physicsGroup;
+            this.physicsGroup = this.parent.physicsGroup;
         }
     }
 

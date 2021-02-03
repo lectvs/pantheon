@@ -2,8 +2,8 @@
 
 Main.loadConfig({
     gameCodeName: "SilverBullet",
-    gameWidth: 400,
-    gameHeight: 300,
+    gameWidth: 320,
+    gameHeight: 240,
     canvasScale: 2,
     backgroundColor: 0x000000,
 
@@ -89,7 +89,7 @@ Main.loadConfig({
     },
 
     debug: {
-        debug: false,
+        debug: true,
         font: Assets.fonts.DELUXE16,
         fontStyle: { color: 0xFFFFFF },
         allPhysicsBounds: false,
