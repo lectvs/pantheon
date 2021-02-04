@@ -15,9 +15,11 @@ function getStages(): Dict<World.Factory> { return {
             physicsGroups: {
                 'player': {},
                 'walls': { immovable: true },
+                'bullets': {},
             },
             collisions: [
                 { move: 'player', from: 'walls' },
+                { move: 'bullets', from: 'walls', callback: (bullet, wall) => { bullet.kill(); } },
             ],
             collisionIterations: 4,
             useRaycastDisplacementThreshold: 4,
@@ -30,11 +32,13 @@ function getStages(): Dict<World.Factory> { return {
             physicsGroup: 'player',
         }));
 
+        let tilemap = AssetCache.getTilemap('world');
+        let binaryTiles = A.map2D(tilemap.layers[0], tile => tile.index);
         world.addWorldObject(new Tilemap({
             name: 'walls',
             x: 0, y: 0,
-            tilemap: 'world',
             physicsGroup: 'walls',
+            ...ConvertTilemap.convert(binaryTiles, Assets.tilesets.base),
         }));
 
         world.camera.setMovement(BASE_CAMERA_MOVEMENT);

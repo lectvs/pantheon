@@ -1,2 +1,3 @@
 todo
 - easier tilemap definition in assets?
+- vector class? replace v, gravity with vectors?

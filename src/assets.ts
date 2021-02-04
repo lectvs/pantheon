@@ -14,6 +14,10 @@ namespace Assets {
             anchor: Anchor.CENTER,
             spritesheet: { frameWidth: 16, frameHeight: 16 }
         },
+        'base_tiles': {
+            anchor: Anchor.CENTER,
+            spritesheet: { frameWidth: 16, frameHeight: 16 }
+        },
 
         // UI
         'dialogbox': { anchor: Anchor.CENTER },
@@ -39,13 +43,18 @@ namespace Assets {
             tileHeight: 16,
             tiles: Preload.allTilesWithPrefix('world_'),
             collisionIndices: [0],
-        }
+        },
+        'base': {
+            tileWidth: 16,
+            tileHeight: 16,
+            tiles: Preload.allTilesWithPrefix('base_tiles_'),
+        },
     }
 
     export const pyxelTilemaps: Dict<Preload.PyxelTilemap> = {
         'world': {
             tileset: tilesets.world,
-        }
+        },
     }
 
     export class fonts {

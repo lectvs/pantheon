@@ -5417,6 +5417,15 @@ var Draw = /** @class */ (function () {
         this.graphics.endFill();
         texture.renderPIXIDisplayObject(this.graphics);
     };
+    Draw.circleSolid = function (texture, x, y, radius, brush) {
+        if (brush === void 0) { brush = Draw.brush; }
+        this.graphics.lineStyle(0, 0, 0);
+        this.graphics.clear();
+        this.graphics.beginFill(brush.color, brush.alpha);
+        this.graphics.drawCircle(x, y, radius);
+        this.graphics.endFill();
+        texture.renderPIXIDisplayObject(this.graphics);
+    };
     Draw.pixel = function (texture, x, y, brush) {
         if (brush === void 0) { brush = Draw.brush; }
         Draw.PIXEL_TEXTURE.renderTo(texture, {
@@ -5526,6 +5535,13 @@ var EmptyTexture = /** @class */ (function () {
 }());
 var Texture;
 (function (Texture) {
+    function filledCircle(radius, fillColor, fillAlpha) {
+        if (fillAlpha === void 0) { fillAlpha = 1; }
+        var result = new BasicTexture(radius * 2, radius * 2);
+        Draw.circleSolid(result, radius, radius, radius, { color: fillColor, alpha: fillAlpha, thickness: 0 });
+        return result;
+    }
+    Texture.filledCircle = filledCircle;
     function filledRect(width, height, fillColor, fillAlpha) {
         if (fillAlpha === void 0) { fillAlpha = 1; }
         var result = new BasicTexture(width, height);
@@ -10149,38 +10165,77 @@ var SmartTilemap = /** @class */ (function (_super) {
         function oneBitRules(config) {
             var rules = [];
             if (config.peninsulaUpIndex !== undefined) {
-                rules.push({ pattern: /. . \S .../, tile: { index: config.peninsulaUpIndex, angle: 0, flipX: false } }); // Peninsula up
-                rules.push({ pattern: /. ..\S . ./, tile: { index: config.peninsulaUpIndex, angle: 90, flipX: false } }); // Peninsula right
-                rules.push({ pattern: /... \S . ./, tile: { index: config.peninsulaUpIndex, angle: 180, flipX: false } }); // Peninsula down
-                rules.push({ pattern: /. . \S.. ./, tile: { index: config.peninsulaUpIndex, angle: 270, flipX: false } }); // Peninsula left
+                rules.push.apply(rules, __spread(peninsulaRules('\\S', config.peninsulaUpIndex)));
             }
             if (config.cornerTopLeftIndex !== undefined) {
-                rules.push({ pattern: /. . \S..../, tile: { index: config.cornerTopLeftIndex, angle: 0, flipX: false } }); // Corner top-left
-                rules.push({ pattern: /. ..\S .../, tile: { index: config.cornerTopLeftIndex, angle: 90, flipX: false } }); // Corner top-right
-                rules.push({ pattern: /....\S . ./, tile: { index: config.cornerTopLeftIndex, angle: 180, flipX: false } }); // Corner bottom-right
-                rules.push({ pattern: /... \S.. ./, tile: { index: config.cornerTopLeftIndex, angle: 270, flipX: false } }); // Corner bottom-left
+                rules.push.apply(rules, __spread(cornerRules('\\S', config.cornerTopLeftIndex)));
             }
             if (config.doubleEdgeHorizontalIndex !== undefined) {
-                rules.push({ pattern: /. ..\S.. ./, tile: { index: config.doubleEdgeHorizontalIndex, angle: 0, flipX: false } }); // Double Edge horizontal
-                rules.push({ pattern: /... \S .../, tile: { index: config.doubleEdgeHorizontalIndex, angle: 90, flipX: false } }); // Double Edge vertical
+                rules.push.apply(rules, __spread(doubleEdgeRules('\\S', config.doubleEdgeHorizontalIndex)));
             }
             if (config.edgeUpIndex !== undefined) {
-                rules.push({ pattern: /. ..\S..../, tile: { index: config.edgeUpIndex, angle: 0, flipX: false } }); // Edge up
-                rules.push({ pattern: /....\S .../, tile: { index: config.edgeUpIndex, angle: 90, flipX: false } }); // Edge right
-                rules.push({ pattern: /....\S.. ./, tile: { index: config.edgeUpIndex, angle: 180, flipX: false } }); // Edge down
-                rules.push({ pattern: /... \S..../, tile: { index: config.edgeUpIndex, angle: 270, flipX: false } }); // Edge left
+                rules.push.apply(rules, __spread(edgeRules('\\S', config.edgeUpIndex)));
             }
             if (config.inverseCornerTopLeftIndex !== undefined) {
-                rules.push({ pattern: / ...\S..../, tile: { index: config.inverseCornerTopLeftIndex, angle: 0, flipX: false } }); // Inverse Corner top-left
-                rules.push({ pattern: /.. .\S..../, tile: { index: config.inverseCornerTopLeftIndex, angle: 90, flipX: false } }); // Inverse Corner top-right
-                rules.push({ pattern: /....\S... /, tile: { index: config.inverseCornerTopLeftIndex, angle: 180, flipX: false } }); // Inverse Corner bottom-right
-                rules.push({ pattern: /....\S. ../, tile: { index: config.inverseCornerTopLeftIndex, angle: 270, flipX: false } }); // Inverse Corner bottom-left
+                rules.push.apply(rules, __spread(inverseCornerRules('\\S', config.inverseCornerTopLeftIndex)));
             }
-            rules.push({ pattern: /.... ..../, tile: { index: config.airIndex, angle: 0, flipX: false } }); // Air
-            rules.push({ pattern: /....\S..../, tile: { index: config.solidIndex, angle: 0, flipX: false } }); // Solid
+            rules.push(genericRule(' ', config.airIndex));
+            rules.push(genericRule('\\S', config.solidIndex));
             return rules;
         }
         Rule.oneBitRules = oneBitRules;
+        function peninsulaRules(testString, peninsulaUpIndex) {
+            var testAgainst = "[^" + testString + "]";
+            return [
+                { pattern: new RegExp("." + testAgainst + "." + testAgainst + testString + testAgainst + "..."), tile: { index: peninsulaUpIndex, angle: 0, flipX: false } },
+                { pattern: new RegExp("." + testAgainst + ".." + testString + testAgainst + "." + testAgainst + "."), tile: { index: peninsulaUpIndex, angle: 90, flipX: false } },
+                { pattern: new RegExp("..." + testAgainst + testString + testAgainst + "." + testAgainst + "."), tile: { index: peninsulaUpIndex, angle: 180, flipX: false } },
+                { pattern: new RegExp("." + testAgainst + "." + testAgainst + testString + ".." + testAgainst + "."), tile: { index: peninsulaUpIndex, angle: 270, flipX: false } },
+            ];
+        }
+        Rule.peninsulaRules = peninsulaRules;
+        function cornerRules(testString, cornerTopLeftIndex) {
+            var testAgainst = "[^" + testString + "]";
+            return [
+                { pattern: new RegExp("." + testAgainst + "." + testAgainst + testString + "...."), tile: { index: cornerTopLeftIndex, angle: 0, flipX: false } },
+                { pattern: new RegExp("." + testAgainst + ".." + testString + testAgainst + "..."), tile: { index: cornerTopLeftIndex, angle: 90, flipX: false } },
+                { pattern: new RegExp("...." + testString + testAgainst + "." + testAgainst + "."), tile: { index: cornerTopLeftIndex, angle: 180, flipX: false } },
+                { pattern: new RegExp("..." + testAgainst + testString + ".." + testAgainst + "."), tile: { index: cornerTopLeftIndex, angle: 270, flipX: false } },
+            ];
+        }
+        Rule.cornerRules = cornerRules;
+        function doubleEdgeRules(testString, doubleEdgeHorizontalIndex) {
+            var testAgainst = "[^" + testString + "]";
+            return [
+                { pattern: new RegExp("." + testAgainst + ".." + testString + ".." + testAgainst + "."), tile: { index: doubleEdgeHorizontalIndex, angle: 0, flipX: false } },
+                { pattern: new RegExp("...." + testString + testAgainst + testAgainst + ".."), tile: { index: doubleEdgeHorizontalIndex, angle: 90, flipX: false } },
+            ];
+        }
+        Rule.doubleEdgeRules = doubleEdgeRules;
+        function edgeRules(testString, edgeUpIndex) {
+            var testAgainst = "[^" + testString + "]";
+            return [
+                { pattern: new RegExp("." + testAgainst + ".." + testString + "...."), tile: { index: edgeUpIndex, angle: 0, flipX: false } },
+                { pattern: new RegExp("...." + testString + testAgainst + "..."), tile: { index: edgeUpIndex, angle: 90, flipX: false } },
+                { pattern: new RegExp("...." + testString + ".." + testAgainst + "."), tile: { index: edgeUpIndex, angle: 180, flipX: false } },
+                { pattern: new RegExp("..." + testAgainst + testString + "...."), tile: { index: edgeUpIndex, angle: 270, flipX: false } },
+            ];
+        }
+        Rule.edgeRules = edgeRules;
+        function inverseCornerRules(testString, inverseCornerTopLeftIndex) {
+            var testAgainst = "[^" + testString + "]";
+            return [
+                { pattern: new RegExp(testAgainst + "..." + testString + "...."), tile: { index: inverseCornerTopLeftIndex, angle: 0, flipX: false } },
+                { pattern: new RegExp(".." + testAgainst + "." + testString + "...."), tile: { index: inverseCornerTopLeftIndex, angle: 90, flipX: false } },
+                { pattern: new RegExp("...." + testString + "..." + testAgainst), tile: { index: inverseCornerTopLeftIndex, angle: 180, flipX: false } },
+                { pattern: new RegExp("...." + testString + "." + testAgainst + ".."), tile: { index: inverseCornerTopLeftIndex, angle: 270, flipX: false } },
+            ];
+        }
+        Rule.inverseCornerRules = inverseCornerRules;
+        function genericRule(inString, outIndex) {
+            return { pattern: new RegExp("...." + inString + "...."), tile: { index: outIndex, angle: 0, flipX: false } };
+        }
+        Rule.genericRule = genericRule;
     })(Rule = SmartTilemap.Rule || (SmartTilemap.Rule = {}));
 })(SmartTilemap || (SmartTilemap = {}));
 (function (SmartTilemap) {
@@ -10246,7 +10301,7 @@ var SmartTilemap = /** @class */ (function (_super) {
                 if (tilemap[y][x].index >= 0) {
                     return tilemap[y][x].index;
                 }
-                if (emptyRule.type === 'noop') {
+                if (!emptyRule || emptyRule.type === 'noop') {
                     return tilemap[y][x].index;
                 }
                 if (emptyRule.type === 'constant') {
@@ -10278,6 +10333,10 @@ var Assets;
             anchor: Anchor.CENTER,
             spritesheet: { frameWidth: 16, frameHeight: 16 }
         },
+        'base_tiles': {
+            anchor: Anchor.CENTER,
+            spritesheet: { frameWidth: 16, frameHeight: 16 }
+        },
         // UI
         'dialogbox': { anchor: Anchor.CENTER },
     };
@@ -10296,12 +10355,17 @@ var Assets;
             tileHeight: 16,
             tiles: Preload.allTilesWithPrefix('world_'),
             collisionIndices: [0],
-        }
+        },
+        'base': {
+            tileWidth: 16,
+            tileHeight: 16,
+            tiles: Preload.allTilesWithPrefix('base_tiles_'),
+        },
     };
     Assets.pyxelTilemaps = {
         'world': {
             tileset: Assets.tilesets.world,
-        }
+        },
     };
     var fonts = /** @class */ (function () {
         function fonts() {
@@ -10318,7 +10382,44 @@ var Assets;
     Assets.fonts = fonts;
     Assets.spriteTextTags = {};
 })(Assets || (Assets = {}));
+var Bullet = /** @class */ (function (_super) {
+    __extends(Bullet, _super);
+    function Bullet(config) {
+        return _super.call(this, __assign({}, config)) || this;
+    }
+    Bullet.prototype.update = function () {
+        V.setMagnitude(this.v, Bullet.MAX_SPEED);
+        _super.prototype.update.call(this);
+    };
+    Bullet.MAX_SPEED = 64;
+    return Bullet;
+}(Sprite));
 var Cheat = {};
+var ConvertTilemap;
+(function (ConvertTilemap) {
+    function convert(binaryTiles, tileset) {
+        var binaryTilemapLayer = A.map2D(binaryTiles, function (tileIndex) { return ({ index: tileIndex, angle: 0, flipX: false }); });
+        var ceilingTilemapLayer = SmartTilemap.Util.getSmartTilemapLayer(binaryTilemapLayer, {
+            rules: SmartTilemap.Rule.oneBitRules({
+                airIndex: -1,
+                solidIndex: 9,
+                cornerTopLeftIndex: 0,
+                inverseCornerTopLeftIndex: 4,
+                edgeUpIndex: 1,
+                doubleEdgeHorizontalIndex: 25,
+                peninsulaUpIndex: 3,
+            }),
+            outsideRule: { type: 'extend' },
+        });
+        return {
+            tilemap: {
+                tileset: tileset,
+                layers: [ceilingTilemapLayer]
+            },
+        };
+    }
+    ConvertTilemap.convert = convert;
+})(ConvertTilemap || (ConvertTilemap = {}));
 /// <reference path="../lectvs/menu/menu.ts" />
 var IntroMenu = /** @class */ (function (_super) {
     __extends(IntroMenu, _super);
@@ -10549,7 +10650,7 @@ Main.loadConfig({
     gameCodeName: "SilverBullet",
     gameWidth: 320,
     gameHeight: 240,
-    canvasScale: 2,
+    canvasScale: 4,
     backgroundColor: 0x000000,
     preloadBackgroundColor: 0x000000,
     preloadProgressBarColor: 0xFFFFFF,
@@ -10644,11 +10745,15 @@ var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player(config) {
         var _this = _super.call(this, __assign({ texture: 'player' }, config)) || this;
+        var player = _this;
         _this.behavior = new ControllerBehavior(function () {
             this.controller.left = Input.isDown('left');
             this.controller.right = Input.isDown('right');
             this.controller.up = Input.isDown('up');
             this.controller.down = Input.isDown('down');
+            this.controller.attack = Input.justDown('lmb');
+            this.controller.aimDirection.x = player.world.getWorldMouseX() - player.x;
+            this.controller.aimDirection.y = player.world.getWorldMouseY() - player.y;
         });
         return _this;
     }
@@ -10658,6 +10763,18 @@ var Player = /** @class */ (function (_super) {
         this.v.x = haxis * Player.MAX_SPEED;
         this.v.y = vaxis * Player.MAX_SPEED;
         _super.prototype.update.call(this);
+        if (this.controller.attack) {
+            this.attack();
+        }
+    };
+    Player.prototype.attack = function () {
+        this.world.addWorldObject(new Bullet({
+            x: this.x, y: this.y, z: 4,
+            texture: AnchoredTexture.fromBaseTexture(Texture.filledCircle(4, 0xFF0000, 1), 0.5, 0.5),
+            v: this.controller.aimDirection,
+            physicsGroup: 'bullets',
+            bounds: new CircleBounds(0, 0, 4),
+        }));
     };
     Player.MAX_SPEED = 32;
     return Player;
@@ -10677,9 +10794,11 @@ function getStages() {
                 physicsGroups: {
                     'player': {},
                     'walls': { immovable: true },
+                    'bullets': {},
                 },
                 collisions: [
                     { move: 'player', from: 'walls' },
+                    { move: 'bullets', from: 'walls', callback: function (bullet, wall) { bullet.kill(); } },
                 ],
                 collisionIterations: 4,
                 useRaycastDisplacementThreshold: 4,
@@ -10690,12 +10809,9 @@ function getStages() {
                 bounds: new RectBounds(-4, -8, 8, 8),
                 physicsGroup: 'player',
             }));
-            world.addWorldObject(new Tilemap({
-                name: 'walls',
-                x: 0, y: 0,
-                tilemap: 'world',
-                physicsGroup: 'walls',
-            }));
+            var tilemap = AssetCache.getTilemap('world');
+            var binaryTiles = A.map2D(tilemap.layers[0], function (tile) { return tile.index; });
+            world.addWorldObject(new Tilemap(__assign({ name: 'walls', x: 0, y: 0, physicsGroup: 'walls' }, ConvertTilemap.convert(binaryTiles, Assets.tilesets.base))));
             world.camera.setMovement(BASE_CAMERA_MOVEMENT);
             world.camera.snapPosition();
             return world;

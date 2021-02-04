@@ -59,42 +59,81 @@ namespace SmartTilemap.Rule {
         let rules: Rule[] = [];
         
         if (config.peninsulaUpIndex !== undefined) {
-            rules.push({ pattern: /. . \S .../, tile: { index: config.peninsulaUpIndex, angle: 0, flipX: false } });     // Peninsula up
-            rules.push({ pattern: /. ..\S . ./, tile: { index: config.peninsulaUpIndex, angle: 90, flipX: false } });    // Peninsula right
-            rules.push({ pattern: /... \S . ./, tile: { index: config.peninsulaUpIndex, angle: 180, flipX: false } });   // Peninsula down
-            rules.push({ pattern: /. . \S.. ./, tile: { index: config.peninsulaUpIndex, angle: 270, flipX: false } });   // Peninsula left
+            rules.push(...peninsulaRules('\\S', config.peninsulaUpIndex));
         }
 
         if (config.cornerTopLeftIndex !== undefined) {
-            rules.push({ pattern: /. . \S..../, tile: { index: config.cornerTopLeftIndex, angle: 0, flipX: false } });      // Corner top-left
-            rules.push({ pattern: /. ..\S .../, tile: { index: config.cornerTopLeftIndex, angle: 90, flipX: false } });     // Corner top-right
-            rules.push({ pattern: /....\S . ./, tile: { index: config.cornerTopLeftIndex, angle: 180, flipX: false } });    // Corner bottom-right
-            rules.push({ pattern: /... \S.. ./, tile: { index: config.cornerTopLeftIndex, angle: 270, flipX: false } });    // Corner bottom-left
+            rules.push(...cornerRules('\\S', config.cornerTopLeftIndex));
         }
 
         if (config.doubleEdgeHorizontalIndex !== undefined) {
-            rules.push({ pattern: /. ..\S.. ./, tile: { index: config.doubleEdgeHorizontalIndex, angle: 0, flipX: false } });   // Double Edge horizontal
-            rules.push({ pattern: /... \S .../, tile: { index: config.doubleEdgeHorizontalIndex, angle: 90, flipX: false } });  // Double Edge vertical
+            rules.push(...doubleEdgeRules('\\S', config.doubleEdgeHorizontalIndex));
         }
 
         if (config.edgeUpIndex !== undefined) {
-            rules.push({ pattern: /. ..\S..../, tile: { index: config.edgeUpIndex, angle: 0, flipX: false } });     // Edge up
-            rules.push({ pattern: /....\S .../, tile: { index: config.edgeUpIndex, angle: 90, flipX: false } });    // Edge right
-            rules.push({ pattern: /....\S.. ./, tile: { index: config.edgeUpIndex, angle: 180, flipX: false } });   // Edge down
-            rules.push({ pattern: /... \S..../, tile: { index: config.edgeUpIndex, angle: 270, flipX: false } });   // Edge left
+            rules.push(...edgeRules('\\S', config.edgeUpIndex));
         }
 
         if (config.inverseCornerTopLeftIndex !== undefined) {
-            rules.push({ pattern: / ...\S..../, tile: { index: config.inverseCornerTopLeftIndex, angle: 0, flipX: false } });   // Inverse Corner top-left
-            rules.push({ pattern: /.. .\S..../, tile: { index: config.inverseCornerTopLeftIndex, angle: 90, flipX: false } });  // Inverse Corner top-right
-            rules.push({ pattern: /....\S... /, tile: { index: config.inverseCornerTopLeftIndex, angle: 180, flipX: false } }); // Inverse Corner bottom-right
-            rules.push({ pattern: /....\S. ../, tile: { index: config.inverseCornerTopLeftIndex, angle: 270, flipX: false } }); // Inverse Corner bottom-left
+            rules.push(...inverseCornerRules('\\S', config.inverseCornerTopLeftIndex));
         }
 
-        rules.push({ pattern: /.... ..../, tile: { index: config.airIndex, angle: 0, flipX: false } });     // Air
-        rules.push({ pattern: /....\S..../, tile: { index: config.solidIndex, angle: 0, flipX: false } });  // Solid
+        rules.push(genericRule(' ', config.airIndex));
+        rules.push(genericRule('\\S', config.solidIndex));
 
         return rules;
+    }
+
+    export function peninsulaRules(testString: string, peninsulaUpIndex: number): Rule[] {
+        let testAgainst = `[^${testString}]`;
+        return [
+            { pattern: new RegExp(`.${testAgainst}.${testAgainst}${testString}${testAgainst}...`), tile: { index: peninsulaUpIndex, angle: 0, flipX: false } },     // Up
+            { pattern: new RegExp(`.${testAgainst}..${testString}${testAgainst}.${testAgainst}.`), tile: { index: peninsulaUpIndex, angle: 90, flipX: false } },    // Right
+            { pattern: new RegExp(`...${testAgainst}${testString}${testAgainst}.${testAgainst}.`), tile: { index: peninsulaUpIndex, angle: 180, flipX: false } },   // Down
+            { pattern: new RegExp(`.${testAgainst}.${testAgainst}${testString}..${testAgainst}.`), tile: { index: peninsulaUpIndex, angle: 270, flipX: false } },   // Left
+        ];
+    }
+
+    export function cornerRules(testString: string, cornerTopLeftIndex: number): Rule[] {
+        let testAgainst = `[^${testString}]`;
+        return [
+            { pattern: new RegExp(`.${testAgainst}.${testAgainst}${testString}....`), tile: { index: cornerTopLeftIndex, angle: 0, flipX: false } },    // Top-left
+            { pattern: new RegExp(`.${testAgainst}..${testString}${testAgainst}...`), tile: { index: cornerTopLeftIndex, angle: 90, flipX: false } },   // Top-right
+            { pattern: new RegExp(`....${testString}${testAgainst}.${testAgainst}.`), tile: { index: cornerTopLeftIndex, angle: 180, flipX: false } },  // Bottom-right
+            { pattern: new RegExp(`...${testAgainst}${testString}..${testAgainst}.`), tile: { index: cornerTopLeftIndex, angle: 270, flipX: false } },  // Bottom-left
+        ];
+    }
+
+    export function doubleEdgeRules(testString: string, doubleEdgeHorizontalIndex: number): Rule[] {
+        let testAgainst = `[^${testString}]`;
+        return [
+            { pattern: new RegExp(`.${testAgainst}..${testString}..${testAgainst}.`), tile: { index: doubleEdgeHorizontalIndex, angle: 0, flipX: false } },     // Horizontal
+            { pattern: new RegExp(`....${testString}${testAgainst}${testAgainst}..`), tile: { index: doubleEdgeHorizontalIndex, angle: 90, flipX: false } },    // Vertical
+        ];
+    }
+
+    export function edgeRules(testString: string, edgeUpIndex: number): Rule[] {
+        let testAgainst = `[^${testString}]`;
+        return [
+            { pattern: new RegExp(`.${testAgainst}..${testString}....`), tile: { index: edgeUpIndex, angle: 0, flipX: false } },    // Up
+            { pattern: new RegExp(`....${testString}${testAgainst}...`), tile: { index: edgeUpIndex, angle: 90, flipX: false } },   // Right
+            { pattern: new RegExp(`....${testString}..${testAgainst}.`), tile: { index: edgeUpIndex, angle: 180, flipX: false } },  // Down
+            { pattern: new RegExp(`...${testAgainst}${testString}....`), tile: { index: edgeUpIndex, angle: 270, flipX: false } },  // Left
+        ];
+    }
+
+    export function inverseCornerRules(testString: string, inverseCornerTopLeftIndex: number): Rule[] {
+        let testAgainst = `[^${testString}]`;
+        return [
+            { pattern: new RegExp(`${testAgainst}...${testString}....`), tile: { index: inverseCornerTopLeftIndex, angle: 0, flipX: false } },      // Top-left
+            { pattern: new RegExp(`..${testAgainst}.${testString}....`), tile: { index: inverseCornerTopLeftIndex, angle: 90, flipX: false } },     // Top-right
+            { pattern: new RegExp(`....${testString}...${testAgainst}`), tile: { index: inverseCornerTopLeftIndex, angle: 180, flipX: false } },    // Bottom-right
+            { pattern: new RegExp(`....${testString}.${testAgainst}..`), tile: { index: inverseCornerTopLeftIndex, angle: 270, flipX: false } },    // Bottom-left
+        ];
+    }
+
+    export function genericRule(inString: string, outIndex: number): Rule {
+        return { pattern: new RegExp(`....${inString}....`), tile: { index: outIndex, angle: 0, flipX: false } };
     }
 }
 
@@ -162,7 +201,7 @@ namespace SmartTilemap.Util {
                 return tilemap[y][x].index;
             }
 
-            if (emptyRule.type === 'noop') {
+            if (!emptyRule || emptyRule.type === 'noop') {
                 return tilemap[y][x].index;
             }
             

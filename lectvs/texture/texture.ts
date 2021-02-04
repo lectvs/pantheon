@@ -63,6 +63,12 @@ interface Texture {
 }
 
 namespace Texture {
+    export function filledCircle(radius: number, fillColor: number, fillAlpha: number = 1) {
+        let result = new BasicTexture(radius*2, radius*2);
+        Draw.circleSolid(result, radius, radius, radius, { color: fillColor, alpha: fillAlpha, thickness: 0 })
+        return result;
+    }
+
     export function filledRect(width: number, height: number, fillColor: number, fillAlpha: number = 1) {
         let result = new BasicTexture(width, height);
         Draw.fill(result, { color: fillColor, alpha: fillAlpha, thickness: 0 });

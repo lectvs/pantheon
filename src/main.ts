@@ -4,7 +4,7 @@ Main.loadConfig({
     gameCodeName: "SilverBullet",
     gameWidth: 320,
     gameHeight: 240,
-    canvasScale: 2,
+    canvasScale: 4,
     backgroundColor: 0x000000,
 
     preloadBackgroundColor: 0x000000,

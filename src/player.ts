@@ -1,5 +1,5 @@
 class Player extends Sprite {
-    static MAX_SPEED: number = 32;
+    static readonly MAX_SPEED = 32;
 
     constructor(config: Sprite.Config) {
         super({
@@ -7,11 +7,15 @@ class Player extends Sprite {
             ...config
         });
 
+        let player = this;
         this.behavior = new ControllerBehavior(function() {
             this.controller.left = Input.isDown('left');
             this.controller.right = Input.isDown('right');
             this.controller.up = Input.isDown('up');
             this.controller.down = Input.isDown('down');
+            this.controller.attack = Input.justDown('lmb');
+            this.controller.aimDirection.x = player.world.getWorldMouseX() - player.x;
+            this.controller.aimDirection.y = player.world.getWorldMouseY() - player.y;
         });
     }
 
@@ -23,5 +27,19 @@ class Player extends Sprite {
         this.v.y = vaxis * Player.MAX_SPEED;
 
         super.update();
+
+        if (this.controller.attack) {
+            this.attack();
+        }
+    }
+
+    attack() {
+        this.world.addWorldObject(new Bullet({
+            x: this.x, y: this.y, z: 4,
+            texture: AnchoredTexture.fromBaseTexture(Texture.filledCircle(4, 0xFF0000, 1), 0.5, 0.5),
+            v: this.controller.aimDirection,
+            physicsGroup: 'bullets',
+            bounds: new CircleBounds(0, 0, 4),
+        }));
     }
 }
