@@ -111,8 +111,8 @@ class Sprite extends PhysicsWorldObject {
 
     getVisibleScreenBounds() {
         let bounds = this.getTextureLocalBounds();
-        bounds.x += this.renderScreenX - this.onScreenPadding;
-        bounds.y += this.renderScreenY - this.onScreenPadding;
+        bounds.x += this.renderScreenX + this.offsetX - this.onScreenPadding;
+        bounds.y += this.renderScreenY + this.offsetY - this.onScreenPadding;
         bounds.width += 2*this.onScreenPadding;
         bounds.height += 2*this.onScreenPadding;
         return bounds;

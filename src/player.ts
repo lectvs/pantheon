@@ -1,5 +1,5 @@
 class Player extends Sprite {
-    static readonly MAX_SPEED = 32;
+    static readonly MAX_SPEED = 64;
 
     constructor(config: Sprite.Config) {
         super({
@@ -15,7 +15,7 @@ class Player extends Sprite {
             this.controller.down = Input.isDown('down');
             this.controller.attack = Input.justDown('lmb');
             this.controller.aimDirection.x = player.world.getWorldMouseX() - player.x;
-            this.controller.aimDirection.y = player.world.getWorldMouseY() - player.y;
+            this.controller.aimDirection.y = player.world.getWorldMouseY() - (player.y-4);
         });
     }
 
@@ -31,13 +31,17 @@ class Player extends Sprite {
         if (this.controller.attack) {
             this.attack();
         }
+
+        if (haxis < 0) this.flipX = true;
+        if (haxis > 0) this.flipX = false;
     }
 
     attack() {
         this.world.addWorldObject(new Bullet({
-            x: this.x, y: this.y, z: 4,
+            x: this.x, y: this.y-4,
             texture: AnchoredTexture.fromBaseTexture(Texture.filledCircle(4, 0xFF0000, 1), 0.5, 0.5),
             v: this.controller.aimDirection,
+            layer: 'main',
             physicsGroup: 'bullets',
             bounds: new CircleBounds(0, 0, 4),
         }));

@@ -1,5 +1,5 @@
 class Bullet extends Sprite {
-    static readonly MAX_SPEED = 64;
+    static readonly MAX_SPEED = 200;
 
     constructor(config: Sprite.Config) {
         super({

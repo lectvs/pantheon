@@ -28,6 +28,7 @@ function getStages(): Dict<World.Factory> { return {
         world.addWorldObject(new Player({
             name: 'player',
             x: 156, y: 166,
+            layer: 'main',
             bounds: new RectBounds(-4, -8, 8, 8),
             physicsGroup: 'player',
         }));
@@ -36,11 +37,20 @@ function getStages(): Dict<World.Factory> { return {
         let binaryTiles = A.map2D(tilemap.layers[0], tile => tile.index);
         world.addWorldObject(new Tilemap({
             name: 'walls',
-            x: 0, y: 0,
-            physicsGroup: 'walls',
+            x: 0, y: -32,
+            layer: 'main',
             ...ConvertTilemap.convert(binaryTiles, Assets.tilesets.base),
         }));
 
+        world.addWorldObject(new Tilemap({
+            name: 'walls_collision',
+            x: 0, y: 0,
+            physicsGroup: 'walls',
+            tilemap: 'world',
+            collisionOnly: true
+        }))
+
+        world.camera.setModeFocus(160, 88);
         world.camera.setMovement(BASE_CAMERA_MOVEMENT);
         world.camera.snapPosition();
 

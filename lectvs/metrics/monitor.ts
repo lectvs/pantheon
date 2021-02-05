@@ -20,7 +20,7 @@ class Monitor {
     getP(p: number) {
         let count = (p === 100) ? 1 : Math.ceil(this.points.length * (100-p) / 100);
         let sum = 0;
-        A.sort(this.points);
+        A.sort(this.points, point => point);
         for (let i = this.points.length - count; i < this.points.length; i++) {
             sum += this.points[i];
         }
@@ -30,7 +30,7 @@ class Monitor {
     getQ(q: number) {
         let count = (q === 0) ? 1 : Math.ceil(this.points.length * q / 100);
         let sum = 0;
-        A.sort(this.points);
+        A.sort(this.points, point => point);
         for (let i = 0; i < count; i++) {
             sum += this.points[i];
         }

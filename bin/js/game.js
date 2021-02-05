@@ -516,7 +516,7 @@ var Monitor = /** @class */ (function () {
     Monitor.prototype.getP = function (p) {
         var count = (p === 100) ? 1 : Math.ceil(this.points.length * (100 - p) / 100);
         var sum = 0;
-        A.sort(this.points);
+        A.sort(this.points, function (point) { return point; });
         for (var i = this.points.length - count; i < this.points.length; i++) {
             sum += this.points[i];
         }
@@ -525,7 +525,7 @@ var Monitor = /** @class */ (function () {
     Monitor.prototype.getQ = function (q) {
         var count = (q === 0) ? 1 : Math.ceil(this.points.length * q / 100);
         var sum = 0;
-        A.sort(this.points);
+        A.sort(this.points, function (point) { return point; });
         for (var i = 0; i < count; i++) {
             sum += this.points[i];
         }
@@ -2702,7 +2702,7 @@ var WorldObject = /** @class */ (function () {
             this.updateCallback();
         this.life.update(this.delta);
         if (this.parent && this.ignoreCamera) {
-            debug("Warning: ignoraCamera is set to true on a child object. This will be ignored!");
+            debug("Warning: ignoreCamera is set to true on a child object. This will be ignored!");
         }
     };
     WorldObject.prototype.postUpdate = function () {
@@ -3161,8 +3161,8 @@ var Sprite = /** @class */ (function (_super) {
     };
     Sprite.prototype.getVisibleScreenBounds = function () {
         var bounds = this.getTextureLocalBounds();
-        bounds.x += this.renderScreenX - this.onScreenPadding;
-        bounds.y += this.renderScreenY - this.onScreenPadding;
+        bounds.x += this.renderScreenX + this.offsetX - this.onScreenPadding;
+        bounds.y += this.renderScreenY + this.offsetY - this.onScreenPadding;
         bounds.width += 2 * this.onScreenPadding;
         bounds.height += 2 * this.onScreenPadding;
         return bounds;
@@ -6570,11 +6570,11 @@ var A;
         return result;
     }
     A.filledArray = filledArray;
-    function filledArray2D(n, m, fillWith) {
+    function filledArray2D(rows, cols, fillWith) {
         var result = [];
-        for (var i = 0; i < n; i++) {
+        for (var i = 0; i < rows; i++) {
             var line = [];
-            for (var j = 0; j < m; j++) {
+            for (var j = 0; j < cols; j++) {
                 line.push(fillWith);
             }
             result.push(line);
@@ -6657,15 +6657,21 @@ var A;
         return result;
     }
     A.repeat = repeat;
-    function sort(array, reverse) {
+    /**
+     * Sorts in ascending order by default.
+     */
+    function sort(array, key, reverse) {
         if (reverse === void 0) { reverse = false; }
         var r = reverse ? -1 : 1;
-        return array.sort(function (a, b) { return r * (a - b); });
+        return array.sort(function (a, b) { return r * (key(a) - key(b)); });
     }
     A.sort = sort;
-    function sorted(array, reverse) {
+    /**
+     * Sorts in ascending order by default.
+     */
+    function sorted(array, key, reverse) {
         if (reverse === void 0) { reverse = false; }
-        return A.sort(A.clone(array), reverse);
+        return A.sort(A.clone(array), key, reverse);
     }
     A.sorted = sorted;
     function sum(array, key) {
@@ -9841,12 +9847,13 @@ var SpriteTextConverter = /** @class */ (function () {
 var Tilemap = /** @class */ (function (_super) {
     __extends(Tilemap, _super);
     function Tilemap(config) {
-        var _a, _b;
+        var _a, _b, _c;
         var _this = _super.call(this, config) || this;
         _this.tilemap = Tilemap.cloneTilemap(_.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap);
         _this.tilemapLayer = (_a = config.tilemapLayer) !== null && _a !== void 0 ? _a : 0;
         _this.zMap = (_b = config.zMap) !== null && _b !== void 0 ? _b : {};
         _this.animation = config.animation;
+        _this.collisionOnly = (_c = config.collisionOnly) !== null && _c !== void 0 ? _c : false;
         _this.dirty = true;
         _this.debugDrawBounds = false;
         return _this;
@@ -9903,7 +9910,9 @@ var Tilemap = /** @class */ (function (_super) {
         }
     };
     Tilemap.prototype.createTilemap = function () {
-        this.drawRenderTexture();
+        if (!this.collisionOnly) {
+            this.drawRenderTexture();
+        }
         this.createCollisionBoxes();
     };
     Tilemap.prototype.drawRenderTexture = function () {
@@ -10138,186 +10147,114 @@ var Tilemap = /** @class */ (function (_super) {
     }
 })(Tilemap || (Tilemap = {}));
 /// <reference path="./tilemap.ts" />
-var SmartTilemap = /** @class */ (function (_super) {
-    __extends(SmartTilemap, _super);
-    function SmartTilemap(config) {
-        var _this = _super.call(this, config) || this;
-        _this.smartConfig = config.smartConfig;
-        _this.baseTilemap = _this.tilemap;
-        _this.tilemap = SmartTilemap.Util.getSmartTilemap(_this.baseTilemap, _this.smartConfig);
-        _this.dirty = true;
-        return _this;
+var SmartTilemap;
+(function (SmartTilemap) {
+    function sortedRules(rules) {
+        return A.sort(rules, function (rule) { return getPatternSpecificity(rule.pattern); }, true);
     }
-    SmartTilemap.prototype.getTile = function (x, y) {
-        return this.baseTilemap[y][x];
-    };
-    SmartTilemap.prototype.setTile = function (x, y, tile) {
-        this.baseTilemap.layers[this.tilemapLayer][y][x] = O.deepClone(tile);
-        this.tilemap = SmartTilemap.Util.getSmartTilemap(this.baseTilemap, this.smartConfig);
-        this.dirty = true;
-    };
-    return SmartTilemap;
-}(Tilemap));
-(function (SmartTilemap) {
-    var Rule;
-    (function (Rule) {
-        // Rules for a tilemap with air=empty, solid=non-empty
-        function oneBitRules(config) {
-            var rules = [];
-            if (config.peninsulaUpIndex !== undefined) {
-                rules.push.apply(rules, __spread(peninsulaRules('\\S', config.peninsulaUpIndex)));
+    SmartTilemap.sortedRules = sortedRules;
+    function getSmartTilemap(tilemap, config) {
+        if (_.isString(tilemap)) {
+            tilemap = AssetCache.getTilemap(tilemap);
+            if (!tilemap)
+                return;
+        }
+        return {
+            tileset: tilemap.tileset,
+            layers: tilemap.layers.map(function (layer) { return getSmartTilemapLayer(layer, config); }),
+        };
+    }
+    SmartTilemap.getSmartTilemap = getSmartTilemap;
+    function getSmartTilemapLayer(tilemapLayer, config) {
+        var result = [];
+        for (var y = 0; y < tilemapLayer.length; y++) {
+            var line = [];
+            for (var x = 0; x < tilemapLayer[y].length; x++) {
+                line.push(getSmartTile(tilemapLayer, x, y, config));
             }
-            if (config.cornerTopLeftIndex !== undefined) {
-                rules.push.apply(rules, __spread(cornerRules('\\S', config.cornerTopLeftIndex)));
-            }
-            if (config.doubleEdgeHorizontalIndex !== undefined) {
-                rules.push.apply(rules, __spread(doubleEdgeRules('\\S', config.doubleEdgeHorizontalIndex)));
-            }
-            if (config.edgeUpIndex !== undefined) {
-                rules.push.apply(rules, __spread(edgeRules('\\S', config.edgeUpIndex)));
-            }
-            if (config.inverseCornerTopLeftIndex !== undefined) {
-                rules.push.apply(rules, __spread(inverseCornerRules('\\S', config.inverseCornerTopLeftIndex)));
-            }
-            rules.push(genericRule(' ', config.airIndex));
-            rules.push(genericRule('\\S', config.solidIndex));
-            return rules;
+            result.push(line);
         }
-        Rule.oneBitRules = oneBitRules;
-        function peninsulaRules(testString, peninsulaUpIndex) {
-            var testAgainst = "[^" + testString + "]";
-            return [
-                { pattern: new RegExp("." + testAgainst + "." + testAgainst + testString + testAgainst + "..."), tile: { index: peninsulaUpIndex, angle: 0, flipX: false } },
-                { pattern: new RegExp("." + testAgainst + ".." + testString + testAgainst + "." + testAgainst + "."), tile: { index: peninsulaUpIndex, angle: 90, flipX: false } },
-                { pattern: new RegExp("..." + testAgainst + testString + testAgainst + "." + testAgainst + "."), tile: { index: peninsulaUpIndex, angle: 180, flipX: false } },
-                { pattern: new RegExp("." + testAgainst + "." + testAgainst + testString + ".." + testAgainst + "."), tile: { index: peninsulaUpIndex, angle: 270, flipX: false } },
-            ];
-        }
-        Rule.peninsulaRules = peninsulaRules;
-        function cornerRules(testString, cornerTopLeftIndex) {
-            var testAgainst = "[^" + testString + "]";
-            return [
-                { pattern: new RegExp("." + testAgainst + "." + testAgainst + testString + "...."), tile: { index: cornerTopLeftIndex, angle: 0, flipX: false } },
-                { pattern: new RegExp("." + testAgainst + ".." + testString + testAgainst + "..."), tile: { index: cornerTopLeftIndex, angle: 90, flipX: false } },
-                { pattern: new RegExp("...." + testString + testAgainst + "." + testAgainst + "."), tile: { index: cornerTopLeftIndex, angle: 180, flipX: false } },
-                { pattern: new RegExp("..." + testAgainst + testString + ".." + testAgainst + "."), tile: { index: cornerTopLeftIndex, angle: 270, flipX: false } },
-            ];
-        }
-        Rule.cornerRules = cornerRules;
-        function doubleEdgeRules(testString, doubleEdgeHorizontalIndex) {
-            var testAgainst = "[^" + testString + "]";
-            return [
-                { pattern: new RegExp("." + testAgainst + ".." + testString + ".." + testAgainst + "."), tile: { index: doubleEdgeHorizontalIndex, angle: 0, flipX: false } },
-                { pattern: new RegExp("...." + testString + testAgainst + testAgainst + ".."), tile: { index: doubleEdgeHorizontalIndex, angle: 90, flipX: false } },
-            ];
-        }
-        Rule.doubleEdgeRules = doubleEdgeRules;
-        function edgeRules(testString, edgeUpIndex) {
-            var testAgainst = "[^" + testString + "]";
-            return [
-                { pattern: new RegExp("." + testAgainst + ".." + testString + "...."), tile: { index: edgeUpIndex, angle: 0, flipX: false } },
-                { pattern: new RegExp("...." + testString + testAgainst + "..."), tile: { index: edgeUpIndex, angle: 90, flipX: false } },
-                { pattern: new RegExp("...." + testString + ".." + testAgainst + "."), tile: { index: edgeUpIndex, angle: 180, flipX: false } },
-                { pattern: new RegExp("..." + testAgainst + testString + "...."), tile: { index: edgeUpIndex, angle: 270, flipX: false } },
-            ];
-        }
-        Rule.edgeRules = edgeRules;
-        function inverseCornerRules(testString, inverseCornerTopLeftIndex) {
-            var testAgainst = "[^" + testString + "]";
-            return [
-                { pattern: new RegExp(testAgainst + "..." + testString + "...."), tile: { index: inverseCornerTopLeftIndex, angle: 0, flipX: false } },
-                { pattern: new RegExp(".." + testAgainst + "." + testString + "...."), tile: { index: inverseCornerTopLeftIndex, angle: 90, flipX: false } },
-                { pattern: new RegExp("...." + testString + "..." + testAgainst), tile: { index: inverseCornerTopLeftIndex, angle: 180, flipX: false } },
-                { pattern: new RegExp("...." + testString + "." + testAgainst + ".."), tile: { index: inverseCornerTopLeftIndex, angle: 270, flipX: false } },
-            ];
-        }
-        Rule.inverseCornerRules = inverseCornerRules;
-        function genericRule(inString, outIndex) {
-            return { pattern: new RegExp("...." + inString + "...."), tile: { index: outIndex, angle: 0, flipX: false } };
-        }
-        Rule.genericRule = genericRule;
-    })(Rule = SmartTilemap.Rule || (SmartTilemap.Rule = {}));
-})(SmartTilemap || (SmartTilemap = {}));
-(function (SmartTilemap) {
-    var Util;
-    (function (Util) {
-        function getSmartTilemap(tilemap, config) {
-            if (_.isString(tilemap)) {
-                tilemap = AssetCache.getTilemap(tilemap);
-                if (!tilemap)
-                    return;
-            }
-            return {
-                tileset: tilemap.tileset,
-                layers: tilemap.layers.map(function (layer) { return getSmartTilemapLayer(layer, config); }),
-            };
-        }
-        Util.getSmartTilemap = getSmartTilemap;
-        function getSmartTilemapLayer(tilemap, config) {
-            var result = [];
-            for (var y = 0; y < tilemap.length; y++) {
-                var line = [];
-                for (var x = 0; x < tilemap[y].length; x++) {
-                    line.push(getSmartTile(tilemap, x, y, config));
+        return result;
+    }
+    SmartTilemap.getSmartTilemapLayer = getSmartTilemapLayer;
+    function getSmartTile(tilemap, x, y, config) {
+        var e_45, _a;
+        try {
+            for (var _b = __values(config.rules), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var rule = _c.value;
+                if (matchTilePattern(tilemap, x, y, config, rule.pattern)) {
+                    return _.isNumber(rule.tile) ? { index: rule.tile, angle: 0, flipX: false } : rule.tile;
                 }
-                result.push(line);
             }
-            return result;
         }
-        Util.getSmartTilemapLayer = getSmartTilemapLayer;
-        function getSmartTile(tilemap, x, y, config) {
-            var e_45, _a;
-            var pattern = getTilePattern(tilemap, x, y, config);
+        catch (e_45_1) { e_45 = { error: e_45_1 }; }
+        finally {
             try {
-                for (var _b = __values(config.rules), _c = _b.next(); !_c.done; _c = _b.next()) {
-                    var rule = _c.value;
-                    if (pattern.search(rule.pattern) > -1) {
-                        return rule.tile;
-                    }
-                }
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            catch (e_45_1) { e_45 = { error: e_45_1 }; }
-            finally {
-                try {
-                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-                }
-                finally { if (e_45) throw e_45.error; }
-            }
-            return tilemap[y][x];
+            finally { if (e_45) throw e_45.error; }
         }
-        Util.getSmartTile = getSmartTile;
-        function getTilePattern(tilemap, x, y, config) {
-            var pattern = '';
-            for (var j = y - 1; j <= y + 1; j++) {
-                for (var i = x - 1; i <= x + 1; i++) {
-                    var index = getTileIndex(tilemap, i, j, config.outsideRule, config.emptyRule);
-                    pattern += index >= 0 ? index : ' ';
-                }
+        return tilemap[y][x];
+    }
+    function matchTilePattern(tilemap, x, y, config, pattern) {
+        return matchTilePatternTile(pattern.tile, getTileIndex(tilemap, x, y, config))
+            && matchTilePatternTile(pattern.above, getTileIndex(tilemap, x, y - 1, config))
+            && matchTilePatternTile(pattern.below, getTileIndex(tilemap, x, y + 1, config))
+            && matchTilePatternTile(pattern.left, getTileIndex(tilemap, x - 1, y, config))
+            && matchTilePatternTile(pattern.right, getTileIndex(tilemap, x + 1, y, config))
+            && matchTilePatternTile(pattern.aboveLeft, getTileIndex(tilemap, x - 1, y - 1, config))
+            && matchTilePatternTile(pattern.aboveRight, getTileIndex(tilemap, x + 1, y - 1, config))
+            && matchTilePatternTile(pattern.belowLeft, getTileIndex(tilemap, x - 1, y + 1, config))
+            && matchTilePatternTile(pattern.belowRight, getTileIndex(tilemap, x + 1, y + 1, config));
+    }
+    function matchTilePatternTile(patternTile, tileIndex) {
+        if (patternTile === undefined)
+            return true;
+        if (_.isNumber(patternTile))
+            return patternTile === tileIndex;
+        if (patternTile.type === 'is')
+            return patternTile.index === tileIndex;
+        if (patternTile.type === 'not')
+            return patternTile.index !== tileIndex;
+        return false;
+    }
+    function getPatternSpecificity(pattern) {
+        return getPatternTileSpecificity(pattern.tile)
+            + getPatternTileSpecificity(pattern.above)
+            + getPatternTileSpecificity(pattern.below)
+            + getPatternTileSpecificity(pattern.left)
+            + getPatternTileSpecificity(pattern.right)
+            + getPatternTileSpecificity(pattern.aboveLeft)
+            + getPatternTileSpecificity(pattern.aboveRight)
+            + getPatternTileSpecificity(pattern.belowLeft)
+            + getPatternTileSpecificity(pattern.belowRight);
+    }
+    function getPatternTileSpecificity(patternTile) {
+        if (patternTile === undefined)
+            return 0;
+        return 1;
+    }
+    function getTileIndex(tilemap, x, y, config) {
+        if (0 <= y && y < tilemap.length && 0 <= x && x < tilemap[y].length) {
+            if (tilemap[y][x].index >= 0) {
+                return tilemap[y][x].index;
             }
-            return pattern;
+            if (!config.emptyRule || config.emptyRule.type === 'noop') {
+                return tilemap[y][x].index;
+            }
+            if (config.emptyRule.type === 'constant') {
+                return config.emptyRule.index;
+            }
         }
-        function getTileIndex(tilemap, x, y, outsideRule, emptyRule) {
-            if (0 <= y && y < tilemap.length && 0 <= x && x < tilemap[y].length) {
-                if (tilemap[y][x].index >= 0) {
-                    return tilemap[y][x].index;
-                }
-                if (!emptyRule || emptyRule.type === 'noop') {
-                    return tilemap[y][x].index;
-                }
-                if (emptyRule.type === 'constant') {
-                    return emptyRule.index;
-                }
-            }
-            if (outsideRule.type === 'constant') {
-                return outsideRule.index;
-            }
-            if (outsideRule.type === 'extend') {
-                var nearesty = M.clamp(y, 0, tilemap.length - 1);
-                var nearestx = M.clamp(x, 0, tilemap[nearesty].length - 1);
-                return tilemap[nearesty][nearestx].index;
-            }
+        if (config.outsideRule.type === 'constant') {
+            return config.outsideRule.index;
         }
-    })(Util = SmartTilemap.Util || (SmartTilemap.Util = {}));
+        if (config.outsideRule.type === 'extend') {
+            var nearesty = M.clamp(y, 0, tilemap.length - 1);
+            var nearestx = M.clamp(x, 0, tilemap[nearesty].length - 1);
+            return tilemap[nearesty][nearestx].index;
+        }
+    }
 })(SmartTilemap || (SmartTilemap = {}));
 var Assets;
 (function (Assets) {
@@ -10391,30 +10328,85 @@ var Bullet = /** @class */ (function (_super) {
         V.setMagnitude(this.v, Bullet.MAX_SPEED);
         _super.prototype.update.call(this);
     };
-    Bullet.MAX_SPEED = 64;
+    Bullet.MAX_SPEED = 200;
     return Bullet;
 }(Sprite));
 var Cheat = {};
 var ConvertTilemap;
 (function (ConvertTilemap) {
+    function not(i) {
+        return { type: 'not', index: i };
+    }
     function convert(binaryTiles, tileset) {
-        var binaryTilemapLayer = A.map2D(binaryTiles, function (tileIndex) { return ({ index: tileIndex, angle: 0, flipX: false }); });
-        var ceilingTilemapLayer = SmartTilemap.Util.getSmartTilemapLayer(binaryTilemapLayer, {
-            rules: SmartTilemap.Rule.oneBitRules({
-                airIndex: -1,
-                solidIndex: 9,
-                cornerTopLeftIndex: 0,
-                inverseCornerTopLeftIndex: 4,
-                edgeUpIndex: 1,
-                doubleEdgeHorizontalIndex: 25,
-                peninsulaUpIndex: 3,
-            }),
+        var tilesWithWalls = A.filledArray2D(binaryTiles.length, binaryTiles[0].length, -1);
+        // Create walls
+        for (var y = 0; y < binaryTiles.length; y++) {
+            for (var x = 0; x < binaryTiles[y].length; x++) {
+                if (binaryTiles[y][x] === 0) {
+                    if (y + 1 < tilesWithWalls.length)
+                        tilesWithWalls[y + 1][x] = 1;
+                    if (y + 2 < tilesWithWalls.length)
+                        tilesWithWalls[y + 2][x] = 1;
+                }
+            }
+        }
+        // Create ceiling
+        for (var y = 0; y < binaryTiles.length; y++) {
+            for (var x = 0; x < binaryTiles[y].length; x++) {
+                if (binaryTiles[y][x] === 0) {
+                    tilesWithWalls[y][x] = 0;
+                }
+            }
+        }
+        var tilemapLayer = A.map2D(tilesWithWalls, function (tileIndex) { return ({ index: tileIndex, angle: 0, flipX: false }); });
+        var smartTilemapLayer = SmartTilemap.getSmartTilemapLayer(tilemapLayer, {
+            rules: SmartTilemap.sortedRules([
+                // General
+                { pattern: { tile: 0 }, tile: 9 },
+                { pattern: { tile: -1 }, tile: -1 },
+                // Edges
+                { pattern: { tile: 0, above: not(0) }, tile: 1 },
+                { pattern: { tile: 0, below: not(0) }, tile: 17 },
+                { pattern: { tile: 0, left: not(0) }, tile: 8 },
+                { pattern: { tile: 0, right: not(0) }, tile: 10 },
+                // Corners
+                { pattern: { tile: 0, above: not(0), left: not(0) }, tile: 0 },
+                { pattern: { tile: 0, above: not(0), right: not(0) }, tile: 2 },
+                { pattern: { tile: 0, below: not(0), left: not(0) }, tile: 16 },
+                { pattern: { tile: 0, below: not(0), right: not(0) }, tile: 18 },
+                // Double Edges
+                { pattern: { tile: 0, above: not(0), below: not(0) }, tile: 25 },
+                { pattern: { tile: 0, left: not(0), right: not(0) }, tile: 11 },
+                // Peninsulas
+                { pattern: { tile: 0, above: not(0), below: not(0), left: not(0) }, tile: 24 },
+                { pattern: { tile: 0, above: not(0), below: not(0), right: not(0) }, tile: 26 },
+                { pattern: { tile: 0, left: not(0), right: not(0), above: not(0) }, tile: 3 },
+                { pattern: { tile: 0, left: not(0), right: not(0), below: not(0) }, tile: 19 },
+                // Inverse Corners
+                { pattern: { tile: 0, aboveLeft: not(0) }, tile: 4 },
+                { pattern: { tile: 0, aboveRight: not(0) }, tile: 5 },
+                { pattern: { tile: 0, belowLeft: not(0) }, tile: 12 },
+                { pattern: { tile: 0, belowRight: not(0) }, tile: 13 },
+                // Wall General
+                { pattern: { tile: 1 }, tile: 33 },
+                // Wall Edges
+                { pattern: { tile: 1, left: -1 }, tile: 32 },
+                { pattern: { tile: 1, right: -1 }, tile: 34 },
+                // Wall Double Edge
+                { pattern: { tile: 1, left: -1, right: -1 }, tile: 35 },
+            ]),
             outsideRule: { type: 'extend' },
         });
         return {
             tilemap: {
                 tileset: tileset,
-                layers: [ceilingTilemapLayer]
+                layers: [smartTilemapLayer],
+            },
+            zMap: {
+                0: 3, 1: 3, 2: 3, 3: 3, 4: 3, 5: 3,
+                8: 3, 9: 3, 10: 3, 11: 3,
+                16: 3, 17: 3, 18: 3, 19: 3,
+                24: 3, 25: 3, 26: 3, 27: 3,
             },
         };
     }
@@ -10732,7 +10724,7 @@ Main.loadConfig({
         moveCameraWithArrows: true,
         showOverlay: true,
         overlayFeeds: [],
-        skipRate: 10,
+        skipRate: 1,
         programmaticInput: false,
         autoplay: true,
         skipMainMenu: true,
@@ -10753,7 +10745,7 @@ var Player = /** @class */ (function (_super) {
             this.controller.down = Input.isDown('down');
             this.controller.attack = Input.justDown('lmb');
             this.controller.aimDirection.x = player.world.getWorldMouseX() - player.x;
-            this.controller.aimDirection.y = player.world.getWorldMouseY() - player.y;
+            this.controller.aimDirection.y = player.world.getWorldMouseY() - (player.y - 4);
         });
         return _this;
     }
@@ -10766,17 +10758,22 @@ var Player = /** @class */ (function (_super) {
         if (this.controller.attack) {
             this.attack();
         }
+        if (haxis < 0)
+            this.flipX = true;
+        if (haxis > 0)
+            this.flipX = false;
     };
     Player.prototype.attack = function () {
         this.world.addWorldObject(new Bullet({
-            x: this.x, y: this.y, z: 4,
+            x: this.x, y: this.y - 4,
             texture: AnchoredTexture.fromBaseTexture(Texture.filledCircle(4, 0xFF0000, 1), 0.5, 0.5),
             v: this.controller.aimDirection,
+            layer: 'main',
             physicsGroup: 'bullets',
             bounds: new CircleBounds(0, 0, 4),
         }));
     };
-    Player.MAX_SPEED = 32;
+    Player.MAX_SPEED = 64;
     return Player;
 }(Sprite));
 var BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(10, 40, 30);
@@ -10806,12 +10803,21 @@ function getStages() {
             world.addWorldObject(new Player({
                 name: 'player',
                 x: 156, y: 166,
+                layer: 'main',
                 bounds: new RectBounds(-4, -8, 8, 8),
                 physicsGroup: 'player',
             }));
             var tilemap = AssetCache.getTilemap('world');
             var binaryTiles = A.map2D(tilemap.layers[0], function (tile) { return tile.index; });
-            world.addWorldObject(new Tilemap(__assign({ name: 'walls', x: 0, y: 0, physicsGroup: 'walls' }, ConvertTilemap.convert(binaryTiles, Assets.tilesets.base))));
+            world.addWorldObject(new Tilemap(__assign({ name: 'walls', x: 0, y: -32, layer: 'main' }, ConvertTilemap.convert(binaryTiles, Assets.tilesets.base))));
+            world.addWorldObject(new Tilemap({
+                name: 'walls_collision',
+                x: 0, y: 0,
+                physicsGroup: 'walls',
+                tilemap: 'world',
+                collisionOnly: true
+            }));
+            world.camera.setModeFocus(160, 88);
             world.camera.setMovement(BASE_CAMERA_MOVEMENT);
             world.camera.snapPosition();
             return world;

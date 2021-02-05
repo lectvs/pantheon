@@ -4,6 +4,7 @@ namespace Tilemap {
         tilemapLayer?: number;
         zMap?: Tilemap.ZMap;
         animation?: Tilemap.Animation;
+        collisionOnly?: boolean;
     }
 
     export type Tile = {
@@ -45,6 +46,7 @@ namespace Tilemap {
 class Tilemap extends WorldObject {
     protected tilemap: Tilemap.Tilemap;
     protected animation: Tilemap.Animation;
+    protected collisionOnly: boolean;
 
     protected collisionBoxes: PhysicsWorldObject[];
     
@@ -67,6 +69,7 @@ class Tilemap extends WorldObject {
 
         this.zMap = config.zMap ?? {};
         this.animation = config.animation;
+        this.collisionOnly = config.collisionOnly ?? false;
 
         this.dirty = true;
 
@@ -108,7 +111,9 @@ class Tilemap extends WorldObject {
     }
 
     protected createTilemap() {
-        this.drawRenderTexture();
+        if (!this.collisionOnly) {
+            this.drawRenderTexture();
+        }
         this.createCollisionBoxes();
     }
 

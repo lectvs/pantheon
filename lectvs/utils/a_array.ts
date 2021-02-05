@@ -21,11 +21,11 @@ namespace A {
         return result;
     }
 
-    export function filledArray2D<T>(n: number, m: number, fillWith?: T) {
+    export function filledArray2D<T>(rows: number, cols: number, fillWith?: T) {
         let result: T[][] = [];
-        for (let i = 0; i < n; i++) {
+        for (let i = 0; i < rows; i++) {
             let line: T[] = [];
-            for (let j = 0; j < m; j++) {
+            for (let j = 0; j < cols; j++) {
                 line.push(fillWith);
             }
             result.push(line);
@@ -94,13 +94,19 @@ namespace A {
         return result;
     }
 
-    export function sort(array: number[], reverse: boolean = false) {
+    /**
+     * Sorts in ascending order by default.
+     */
+    export function sort<T>(array: T[], key: (t: T) => number, reverse: boolean = false) {
         let r = reverse ? -1 : 1;
-        return array.sort((a,b) => r*(a-b));
+        return array.sort((a,b) => r*(key(a)-key(b)));
     }
 
-    export function sorted(array: number[], reverse: boolean = false) {
-        return A.sort(A.clone(array), reverse);
+    /**
+     * Sorts in ascending order by default.
+     */
+    export function sorted<T>(array: T[], key: (t: T) => number, reverse: boolean = false) {
+        return A.sort(A.clone(array), key, reverse);
     }
 
     export function sum(array: any[], key: (e: any) => number = (e => e)) {

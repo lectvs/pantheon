@@ -187,7 +187,7 @@ class WorldObject {
         this.life.update(this.delta);
 
         if (this.parent && this.ignoreCamera) {
-            debug(`Warning: ignoraCamera is set to true on a child object. This will be ignored!`);
+            debug(`Warning: ignoreCamera is set to true on a child object. This will be ignored!`);
         }
     }
 
