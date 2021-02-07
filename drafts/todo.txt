@@ -1,3 +1,4 @@
 todo
 - easier tilemap definition in assets?
 - vector class? replace v, gravity with vectors?
+- rethink tilemap zMap? z on a per-tile basis rather than per-index?

@@ -109,6 +109,13 @@ class Sprite extends PhysicsWorldObject {
         return this.texture;
     }
 
+    getTextureWorldBounds() {
+        let bounds = this.getTextureLocalBounds();
+        bounds.x += this.x + this.offsetX;
+        bounds.y += this.y + this.offsetY;
+        return bounds;
+    }
+
     getVisibleScreenBounds() {
         let bounds = this.getTextureLocalBounds();
         bounds.x += this.renderScreenX + this.offsetX - this.onScreenPadding;

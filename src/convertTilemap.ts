@@ -13,7 +13,7 @@ namespace ConvertTilemap {
             for (let x = 0; x < binaryTiles[y].length; x++) {
                 if (binaryTiles[y][x] === 0) {
                     if (y+1 < tilesWithWalls.length) tilesWithWalls[y+1][x] = 1;
-                    if (y+2 < tilesWithWalls.length) tilesWithWalls[y+2][x] = 1;
+                    //if (y+2 < tilesWithWalls.length) tilesWithWalls[y+2][x] = 1;
                 }
             }
         }
@@ -76,16 +76,17 @@ namespace ConvertTilemap {
             outsideRule: { type: 'extend' },
         })
 
+        let ceilingZ = 2;
         return {
             tilemap: {
                 tileset: tileset,
                 layers: [smartTilemapLayer],
             },
             zMap: {
-                0: 3,  1: 3,  2: 3,  3: 3,  4: 3,  5: 3,
-                8: 3,  9: 3, 10: 3, 11: 3,
-               16: 3, 17: 3, 18: 3, 19: 3,
-               24: 3, 25: 3, 26: 3, 27: 3,
+                0: ceilingZ,  1: ceilingZ,  2: ceilingZ,  3: ceilingZ,  4: ceilingZ,  5: ceilingZ,
+                8: ceilingZ,  9: ceilingZ, 10: ceilingZ, 11: ceilingZ,
+               16: ceilingZ, 17: ceilingZ, 18: ceilingZ, 19: ceilingZ,
+               24: ceilingZ, 25: ceilingZ, 26: ceilingZ, 27: ceilingZ,
            },
         };
     }

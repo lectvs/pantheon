@@ -48,7 +48,7 @@ class Tilemap extends WorldObject {
     protected animation: Tilemap.Animation;
     protected collisionOnly: boolean;
 
-    protected collisionBoxes: PhysicsWorldObject[];
+    collisionBoxes: PhysicsWorldObject[];
     
     protected tilemapLayer: number;
     protected dirty: boolean;
@@ -71,7 +71,8 @@ class Tilemap extends WorldObject {
         this.animation = config.animation;
         this.collisionOnly = config.collisionOnly ?? false;
 
-        this.dirty = true;
+        this.createTilemap();
+        this.dirty = false;
 
         this.debugDrawBounds = false;
     }

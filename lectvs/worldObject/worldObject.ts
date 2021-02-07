@@ -100,6 +100,8 @@ class WorldObject {
 
     behavior: Behavior;
 
+    modules: Module<this>[];
+
     readonly uid: string;
 
     protected scriptManager: ScriptManager;
@@ -136,6 +138,8 @@ class WorldObject {
 
         this.controller = new Controller();
         this.behavior = new NullBehavior();
+
+        this.modules = [];
 
         this.uid = WorldObject.UID.generate();
 
@@ -183,6 +187,10 @@ class WorldObject {
             this.y = this.world.getWorldMouseY();
         }
         if (this.updateCallback) this.updateCallback();
+
+        for (let module of this.modules) {
+            module.update();
+        }
 
         this.life.update(this.delta);
 
@@ -239,6 +247,10 @@ class WorldObject {
 
     render(texture: Texture, x: number, y: number) {
         if (this.renderCallback) this.renderCallback(texture, x, y);
+
+        for (let module of this.modules) {
+            module.render(texture, x, y);
+        }
     }
 
     addChild<T extends WorldObject>(child: T): T {
@@ -260,6 +272,12 @@ class WorldObject {
         return World.Actions.addChildrenToParent(children, this);
     }
 
+    addModule(module: Module<this>) {
+        this.modules.push(module);
+        module.worldObject = this;
+        module.init();
+    }
+
     getChildByIndex<T extends WorldObject>(index: number) {
         if (this.children.length < index) {
             error(`Parent has no child at index ${index}:`, this);
@@ -273,6 +291,13 @@ class WorldObject {
             if (child.name === name) return <T>child;
         }
         error(`Cannot find child named ${name} on parent:`, this);
+        return undefined;
+    }
+
+    getModule<T extends Module<this>>(type: new (...args) => T): T {
+        for (let module of this.modules) {
+            if (module instanceof type) return module;
+        }
         return undefined;
     }
 

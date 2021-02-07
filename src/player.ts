@@ -15,7 +15,7 @@ class Player extends Sprite {
             this.controller.down = Input.isDown('down');
             this.controller.attack = Input.justDown('lmb');
             this.controller.aimDirection.x = player.world.getWorldMouseX() - player.x;
-            this.controller.aimDirection.y = player.world.getWorldMouseY() - (player.y-4);
+            this.controller.aimDirection.y = player.world.getWorldMouseY() - player.y;
         });
     }
 
@@ -38,12 +38,12 @@ class Player extends Sprite {
 
     attack() {
         this.world.addWorldObject(new Bullet({
-            x: this.x, y: this.y-4,
-            texture: AnchoredTexture.fromBaseTexture(Texture.filledCircle(4, 0xFF0000, 1), 0.5, 0.5),
+            x: this.x, y: this.y, z: 4,
+            texture: AnchoredTexture.fromBaseTexture(Texture.filledCircle(2, 0xFF0000, 1), 0.5, 0.5),
             v: this.controller.aimDirection,
             layer: 'main',
             physicsGroup: 'bullets',
-            bounds: new CircleBounds(0, 0, 4),
+            bounds: new CircleBounds(0, 0, 2),
         }));
     }
 }

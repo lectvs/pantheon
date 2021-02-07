@@ -19,7 +19,7 @@ function getStages(): Dict<World.Factory> { return {
             },
             collisions: [
                 { move: 'player', from: 'walls' },
-                { move: 'bullets', from: 'walls', callback: (bullet, wall) => { bullet.kill(); } },
+                { move: 'bullets', from: 'walls' },
             ],
             collisionIterations: 4,
             useRaycastDisplacementThreshold: 4,
@@ -37,20 +37,24 @@ function getStages(): Dict<World.Factory> { return {
         let binaryTiles = A.map2D(tilemap.layers[0], tile => tile.index);
         world.addWorldObject(new Tilemap({
             name: 'walls',
-            x: 0, y: -32,
+            x: 0, y: -16,
             layer: 'main',
             ...ConvertTilemap.convert(binaryTiles, Assets.tilesets.base),
         }));
 
-        world.addWorldObject(new Tilemap({
+        let collisionTilemap = world.addWorldObject(new Tilemap({
             name: 'walls_collision',
             x: 0, y: 0,
             physicsGroup: 'walls',
             tilemap: 'world',
             collisionOnly: true
-        }))
+        }));
 
-        world.camera.setModeFocus(160, 88);
+        for (let box of collisionTilemap.collisionBoxes) {
+            box.addModule(new DecalModule());
+        }
+
+        world.camera.setModeFocus(160, 104);
         world.camera.setMovement(BASE_CAMERA_MOVEMENT);
         world.camera.snapPosition();
 
