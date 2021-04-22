@@ -100,7 +100,7 @@ class WorldObject {
 
     behavior: Behavior;
 
-    modules: Module<this>[];
+    modules: Module<WorldObject>[];
 
     readonly uid: string;
 
@@ -272,10 +272,9 @@ class WorldObject {
         return World.Actions.addChildrenToParent(children, this);
     }
 
-    addModule(module: Module<this>) {
+    addModule(module: Module<WorldObject>) {
         this.modules.push(module);
-        module.worldObject = this;
-        module.init();
+        module.init(this);
     }
 
     getChildByIndex<T extends WorldObject>(index: number) {
@@ -294,7 +293,7 @@ class WorldObject {
         return undefined;
     }
 
-    getModule<T extends Module<this>>(type: new (...args) => T): T {
+    getModule<T extends Module<WorldObject>>(type: new (...args) => T): T {
         for (let module of this.modules) {
             if (module instanceof type) return module;
         }

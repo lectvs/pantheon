@@ -14,7 +14,18 @@ namespace Physics {
         collision: Bounds.DisplacementCollision;
     }
 
-    export type CollisionCallback = (move: PhysicsWorldObject, from: PhysicsWorldObject) => any;
+    export type CollisionCallback = (collision: CollisionInfo) => any;
+
+    export type CollisionInfo = {
+        self: CollisionObject;
+        other: CollisionObject;
+    }
+
+    export type CollisionObject = {
+        obj: PhysicsWorldObject;
+        vx: number;
+        vy: number;
+    }
 
     export type MomentumTransferMode = 'zero_velocity_global' | 'zero_velocity_local' | 'elastic';
 
@@ -198,11 +209,29 @@ namespace Physics {
 
     function applyCollisionEffects(collisions: RaycastCollision[], delta: number) {
         for (let collision of collisions) {
+            let moveCollisionInfo: Physics.CollisionInfo = {
+                self: {
+                    obj: collision.move,
+                    vx: collision.move.v.x,
+                    vy: collision.move.v.y,
+                },
+                other: {
+                    obj: collision.from,
+                    vx: collision.from.v.x,
+                    vy: collision.from.v.y,
+                }
+            };
+
+            let fromCollisionInfo: Physics.CollisionInfo = {
+                self: moveCollisionInfo.other,
+                other: moveCollisionInfo.self
+            };
+
             applyMomentumTransferForCollision(collision, collision.momentumTransfer, delta);
 
-            if (collision.callback) collision.callback(collision.move, collision.from);
-            collision.move.onCollide(collision.from);
-            collision.from.onCollide(collision.move);
+            if (collision.callback) collision.callback(moveCollisionInfo);
+            collision.move.onCollide(moveCollisionInfo);
+            collision.from.onCollide(fromCollisionInfo);
         }
     }
 

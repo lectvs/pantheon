@@ -44,12 +44,18 @@ namespace M {
         return dx*dx + dy*dy;
     }
 
-    /* Calculates the height of a parabola that starts at startHeight, increases to startHeight + peakDelta, then falls to startHeight + groundDelta.
-    0 <= t <= 1 is the percent completion of the jump. */
+    /** 
+     * Calculates the height of a parabola that starts at startHeight, increases to startHeight + peakDelta, then falls to startHeight + groundDelta.
+     * 0 <= t <= 1 is the percent completion of the jump.
+     */
     export function jumpParabola(startHeight: number, peakDelta: number, groundDelta: number, t: number) {
         let a = 2*groundDelta - 4*peakDelta;
         let b = 4*peakDelta - groundDelta;
         return a*t*t + b*t + startHeight;
+    }
+
+    export function jumpVelocityForHeight(height: number, gravity: number) {
+        return Math.sqrt(2*height*Math.abs(gravity));
     }
 
     export function lerp(a: number, b: number, t: number) {
