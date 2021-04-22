@@ -28,7 +28,7 @@ class MainMenu extends Menu {
 
         this.addWorldObject(new SpriteText({
             x: 20, y: 20,
-            text: "- SILVER BULLET -"
+            text: "- TBD GAME -"
         }));
 
         this.addWorldObject(new MenuTextButton({
