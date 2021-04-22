@@ -2800,8 +2800,7 @@ var WorldObject = /** @class */ (function () {
     };
     WorldObject.prototype.addModule = function (module) {
         this.modules.push(module);
-        module.worldObject = this;
-        module.init();
+        module.init(this);
     };
     WorldObject.prototype.getChildByIndex = function (index) {
         if (this.children.length < index) {
@@ -3070,7 +3069,7 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
     PhysicsWorldObject.prototype.isOverlapping = function (bounds) {
         return this.bounds.isOverlapping(bounds);
     };
-    PhysicsWorldObject.prototype.onCollide = function (other) {
+    PhysicsWorldObject.prototype.onCollide = function (collision) {
     };
     PhysicsWorldObject.prototype.setImmovable = function (immovable) {
         this._immovable = immovable;
@@ -6869,14 +6868,20 @@ var M;
         return dx * dx + dy * dy;
     }
     M.distanceSq = distanceSq;
-    /* Calculates the height of a parabola that starts at startHeight, increases to startHeight + peakDelta, then falls to startHeight + groundDelta.
-    0 <= t <= 1 is the percent completion of the jump. */
+    /**
+     * Calculates the height of a parabola that starts at startHeight, increases to startHeight + peakDelta, then falls to startHeight + groundDelta.
+     * 0 <= t <= 1 is the percent completion of the jump.
+     */
     function jumpParabola(startHeight, peakDelta, groundDelta, t) {
         var a = 2 * groundDelta - 4 * peakDelta;
         var b = 4 * peakDelta - groundDelta;
         return a * t * t + b * t + startHeight;
     }
     M.jumpParabola = jumpParabola;
+    function jumpVelocityForHeight(height, gravity) {
+        return Math.sqrt(2 * height * Math.abs(gravity));
+    }
+    M.jumpVelocityForHeight = jumpVelocityForHeight;
     function lerp(a, b, t) {
         return a * (1 - t) + b * t;
     }
@@ -7755,11 +7760,27 @@ var Physics;
         try {
             for (var collisions_5 = __values(collisions), collisions_5_1 = collisions_5.next(); !collisions_5_1.done; collisions_5_1 = collisions_5.next()) {
                 var collision = collisions_5_1.value;
+                var moveCollisionInfo = {
+                    self: {
+                        obj: collision.move,
+                        vx: collision.move.v.x,
+                        vy: collision.move.v.y,
+                    },
+                    other: {
+                        obj: collision.from,
+                        vx: collision.from.v.x,
+                        vy: collision.from.v.y,
+                    }
+                };
+                var fromCollisionInfo = {
+                    self: moveCollisionInfo.other,
+                    other: moveCollisionInfo.self
+                };
                 applyMomentumTransferForCollision(collision, collision.momentumTransfer, delta);
                 if (collision.callback)
-                    collision.callback(collision.move, collision.from);
-                collision.move.onCollide(collision.from);
-                collision.from.onCollide(collision.move);
+                    collision.callback(moveCollisionInfo);
+                collision.move.onCollide(moveCollisionInfo);
+                collision.from.onCollide(fromCollisionInfo);
             }
         }
         catch (e_41_1) { e_41 = { error: e_41_1 }; }
@@ -9426,9 +9447,16 @@ var Effects = /** @class */ (function () {
     })(Filters = Effects.Filters || (Effects.Filters = {}));
 })(Effects || (Effects = {}));
 var Module = /** @class */ (function () {
-    function Module() {
+    function Module(type) {
+        this.type = type;
     }
-    Module.prototype.init = function () { };
+    Module.prototype.init = function (worldObject) {
+        if (!(worldObject instanceof this.type)) {
+            error("Tried to add Module<" + this.type.name + "> to a world object of incompatible type:", worldObject);
+            return;
+        }
+        this.worldObject = worldObject;
+    };
     Module.prototype.update = function () { };
     Module.prototype.render = function (texture, x, y) { };
     return Module;
@@ -9948,6 +9976,34 @@ var Tilemap = /** @class */ (function (_super) {
         this.currentTilemapLayer[y][x] = O.deepClone(tile);
         this.dirty = true;
     };
+    Object.defineProperty(Tilemap.prototype, "width", {
+        get: function () {
+            return this.widthInTiles * this.tileset.tileWidth;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Tilemap.prototype, "height", {
+        get: function () {
+            return this.heightInTiles * this.tileset.tileHeight;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Tilemap.prototype, "widthInTiles", {
+        get: function () {
+            return this.tilemap.layers[this.tilemapLayer][0].length;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Tilemap.prototype, "heightInTiles", {
+        get: function () {
+            return this.tilemap.layers[this.tilemapLayer].length;
+        },
+        enumerable: false,
+        configurable: true
+    });
     Tilemap.prototype.createCollisionBoxes = function () {
         var e_47, _a;
         World.Actions.removeWorldObjectsFromWorld(this.collisionBoxes);
@@ -10333,6 +10389,17 @@ var Assets;
         'deluxe16': { spritesheet: { frameWidth: 8, frameHeight: 15 } },
         // Game
         'player': { anchor: Anchor.BOTTOM },
+        'splotches': {
+            anchor: Anchor.CENTER,
+            frames: {
+                'splotch_0': { rect: rect(0, 0, 11, 8) },
+                'splotch_1': { rect: rect(12, 0, 12, 9), anchor: pt(2 / 12, 7 / 9) },
+                'splotch_2': { rect: rect(25, 0, 9, 9), anchor: pt(8 / 9, 7 / 9) },
+                'splotch_3': { rect: rect(35, 0, 5, 5) },
+                'splotch_4': { rect: rect(41, 0, 7, 8) },
+                'splotch_5': { rect: rect(49, 0, 4, 4) },
+            }
+        },
         'world': {
             anchor: Anchor.CENTER,
             spritesheet: { frameWidth: 16, frameHeight: 16 }
@@ -10394,14 +10461,37 @@ var Bullet = /** @class */ (function (_super) {
     Bullet.prototype.update = function () {
         V.setMagnitude(this.v, Bullet.MAX_SPEED);
         _super.prototype.update.call(this);
-    };
-    Bullet.prototype.onCollide = function (other) {
-        _super.prototype.onCollide.call(this, other);
-        var decalModule = other.getModule(DecalModule);
-        if (decalModule) {
-            decalModule.drawSprite(this);
+        if (Input.justDown('rmb'))
+            this.kill();
+        var r = 1;
+        if (Random.boolean(r * this.delta)) {
+            this.spawnPaintDrop(Random.inCircle(20), 0);
         }
+    };
+    Bullet.prototype.kill = function () {
+        // Paint on wall
+        for (var i = 0; i < 5; i++) {
+            this.spawnPaintDrop(pt(Random.float(-20, 20), -10), Random.float(2, 14));
+        }
+        // Paint in front of wall
+        for (var i = 0; i < 5; i++) {
+            this.spawnPaintDrop(pt(Random.float(-20, 20), 10 * Math.pow(Random.float(0, 1), 2) + 1), Random.float(4, 16));
+        }
+        _super.prototype.kill.call(this);
+    };
+    Bullet.prototype.onCollide = function (collision) {
+        _super.prototype.onCollide.call(this, collision);
         this.kill();
+    };
+    Bullet.prototype.spawnPaintDrop = function (v, height) {
+        this.world.addWorldObject(new PaintDrop({
+            x: this.x, y: this.y, z: this.z,
+            v: v,
+            vz: M.jumpVelocityForHeight(height, PaintDrop.GRAVITY),
+            tint: this.tint,
+            layer: 'main',
+            physicsGroup: 'paintdrops',
+        }));
     };
     Bullet.MAX_SPEED = 200;
     return Bullet;
@@ -10413,25 +10503,7 @@ var ConvertTilemap;
         return { type: 'not', index: i };
     }
     function convert(binaryTiles, tileset) {
-        var tilesWithWalls = A.filledArray2D(binaryTiles.length, binaryTiles[0].length, -1);
-        // Create walls
-        for (var y = 0; y < binaryTiles.length; y++) {
-            for (var x = 0; x < binaryTiles[y].length; x++) {
-                if (binaryTiles[y][x] === 0) {
-                    if (y + 1 < tilesWithWalls.length)
-                        tilesWithWalls[y + 1][x] = 1;
-                    //if (y+2 < tilesWithWalls.length) tilesWithWalls[y+2][x] = 1;
-                }
-            }
-        }
-        // Create ceiling
-        for (var y = 0; y < binaryTiles.length; y++) {
-            for (var x = 0; x < binaryTiles[y].length; x++) {
-                if (binaryTiles[y][x] === 0) {
-                    tilesWithWalls[y][x] = 0;
-                }
-            }
-        }
+        var tilesWithWalls = getRoughTilemap(binaryTiles);
         var tilemapLayer = A.map2D(tilesWithWalls, function (tileIndex) { return ({ index: tileIndex, angle: 0, flipX: false }); });
         var smartTilemapLayer = SmartTilemap.getSmartTilemapLayer(tilemapLayer, {
             rules: SmartTilemap.sortedRules([
@@ -10486,30 +10558,66 @@ var ConvertTilemap;
         };
     }
     ConvertTilemap.convert = convert;
+    function getRoughTilemap(binaryTiles) {
+        var tilesWithWalls = A.filledArray2D(binaryTiles.length, binaryTiles[0].length, -1);
+        // Create walls
+        for (var y = 0; y < binaryTiles.length; y++) {
+            for (var x = 0; x < binaryTiles[y].length; x++) {
+                if (binaryTiles[y][x] === 0) {
+                    if (y + 1 < tilesWithWalls.length)
+                        tilesWithWalls[y + 1][x] = 1;
+                    //if (y+2 < tilesWithWalls.length) tilesWithWalls[y+2][x] = 1;
+                }
+            }
+        }
+        // Create ceiling
+        for (var y = 0; y < binaryTiles.length; y++) {
+            for (var x = 0; x < binaryTiles[y].length; x++) {
+                if (binaryTiles[y][x] === 0) {
+                    tilesWithWalls[y][x] = 0;
+                }
+            }
+        }
+        return tilesWithWalls;
+    }
+    ConvertTilemap.getRoughTilemap = getRoughTilemap;
 })(ConvertTilemap || (ConvertTilemap = {}));
 /// <reference path="../lectvs/worldObject/module.ts" />
 var DecalModule = /** @class */ (function (_super) {
     __extends(DecalModule, _super);
-    function DecalModule() {
-        return _super !== null && _super.apply(this, arguments) || this;
+    function DecalModule(mask) {
+        var _this = _super.call(this, WorldObject) || this;
+        _this.mask = mask;
+        return _this;
     }
-    DecalModule.prototype.init = function () {
-        if (this.worldObject.parent instanceof Tilemap) {
+    DecalModule.prototype.init = function (worldObject) {
+        _super.prototype.init.call(this, worldObject);
+        if (this.worldObject instanceof PhysicsWorldObject && this.worldObject.parent instanceof Tilemap) {
             var box = this.worldObject.bounds.getBoundingBox();
-            var texture = new AnchoredTexture(box.width, 16);
+            var texture = new AnchoredTexture(box.width, 18);
             texture.anchorX = 0;
             texture.anchorY = 1;
             this.decal = this.worldObject.addChildKeepWorldPosition(new Sprite({
                 x: box.left,
                 y: box.bottom,
                 texture: texture,
+                mask: this.mask,
                 layer: 'main',
+            }));
+        }
+        else if (this.worldObject instanceof Sprite) {
+            var texture = this.worldObject.getTexture().clone();
+            texture.clear();
+            this.decal = this.worldObject.addChild(new Sprite({
+                x: 0, y: 0,
+                texture: texture,
+                mask: this.mask,
+                matchParentLayer: true,
             }));
         }
     };
     DecalModule.prototype.drawSprite = function (sprite) {
         var dtwb = this.decal.getTextureWorldBounds();
-        debug(sprite.x - dtwb.x, sprite.y - dtwb.y);
         sprite.render(this.decal.getTexture(), sprite.x - dtwb.x, sprite.y - sprite.z - dtwb.y);
     };
     return DecalModule;
@@ -10835,6 +10943,71 @@ Main.loadConfig({
         experiments: {},
     },
 });
+var PaintDrop = /** @class */ (function (_super) {
+    __extends(PaintDrop, _super);
+    function PaintDrop(config) {
+        return _super.call(this, __assign({ texture: AnchoredTexture.fromBaseTexture(Texture.filledCircle(2, 0xFFFFFF, 1), 0.5, 0.5), gravityz: PaintDrop.GRAVITY, bounds: new CircleBounds(0, 0, 0) }, config)) || this;
+    }
+    PaintDrop.prototype.update = function () {
+        _super.prototype.update.call(this);
+        if (this.z < 0) {
+            var floorDecal = this.world.select.name('floor_decal');
+            if (floorDecal) {
+                this.addPaintSplotch(undefined, floorDecal.getTexture());
+            }
+            this.kill();
+        }
+    };
+    PaintDrop.prototype.onCollide = function (collision) {
+        _super.prototype.onCollide.call(this, collision);
+        var other = collision.other.obj;
+        var decalModule = other.getModule(DecalModule);
+        if (decalModule) {
+            this.addPaintSplotch(decalModule, undefined);
+        }
+        this.kill();
+    };
+    PaintDrop.prototype.addPaintSplotch = function (decal, floorTexture) {
+        var splotches = ['splotch_0', 'splotch_1', /*'splotch_2',*/ 'splotch_3', 'splotch_4', 'splotch_5'];
+        this.world.addWorldObject(new PaintSplotch({
+            x: this.x, y: this.y, z: this.z,
+            texture: Random.element(splotches),
+            tint: this.tint,
+            angle: 90 * Random.int(0, 3),
+            layer: 'main',
+        }, decal, floorTexture));
+    };
+    PaintDrop.GRAVITY = -800;
+    return PaintDrop;
+}(Sprite));
+var PaintSplotch = /** @class */ (function (_super) {
+    __extends(PaintSplotch, _super);
+    function PaintSplotch(config, decal, floorTexture) {
+        var _this = _super.call(this, __assign({}, config)) || this;
+        _this.decal = decal;
+        _this.floorTexture = floorTexture;
+        return _this;
+    }
+    PaintSplotch.prototype.onAdd = function () {
+        var _this = this;
+        _super.prototype.onAdd.call(this);
+        this.scaleX = 0;
+        this.scaleY = 0;
+        this.runScript(S.chain(S.doOverTime(0.1, function (t) {
+            _this.scaleX = (t + 1) / 2;
+            _this.scaleY = (t + 1) / 2;
+        }), S.call(function () {
+            if (_this.decal) {
+                _this.decal.drawSprite(_this);
+            }
+            if (_this.floorTexture) {
+                _this.render(_this.floorTexture, _this.x, _this.y);
+            }
+            _this.kill();
+        })));
+    };
+    return PaintSplotch;
+}(Sprite));
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player(config) {
@@ -10866,16 +11039,18 @@ var Player = /** @class */ (function (_super) {
             this.flipX = false;
     };
     Player.prototype.attack = function () {
+        var colors = [0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0xFF00FF, 0x00FFFF];
         this.world.addWorldObject(new Bullet({
             x: this.x, y: this.y, z: 4,
-            texture: AnchoredTexture.fromBaseTexture(Texture.filledCircle(2, 0xFF0000, 1), 0.5, 0.5),
+            texture: AnchoredTexture.fromBaseTexture(Texture.filledCircle(2, 0xFFFFFF, 1), 0.5, 0.5),
+            tint: Random.element(colors),
             v: this.controller.aimDirection,
             layer: 'main',
             physicsGroup: 'bullets',
             bounds: new CircleBounds(0, 0, 2),
         }));
     };
-    Player.MAX_SPEED = 64;
+    Player.MAX_SPEED = 80;
     return Player;
 }(Sprite));
 var BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(10, 40, 30);
@@ -10895,24 +11070,26 @@ function getStages() {
                     'player': {},
                     'walls': { immovable: true },
                     'bullets': {},
+                    'paintdrops': {},
                 },
                 collisions: [
                     { move: 'player', from: 'walls' },
                     { move: 'bullets', from: 'walls' },
+                    { move: 'paintdrops', from: 'walls' },
                 ],
                 collisionIterations: 4,
                 useRaycastDisplacementThreshold: 4,
             });
             world.addWorldObject(new Player({
                 name: 'player',
-                x: 156, y: 166,
+                x: 240, y: 480,
                 layer: 'main',
                 bounds: new RectBounds(-4, -8, 8, 8),
                 physicsGroup: 'player',
             }));
             var tilemap = AssetCache.getTilemap('world');
             var binaryTiles = A.map2D(tilemap.layers[0], function (tile) { return tile.index; });
-            world.addWorldObject(new Tilemap(__assign({ name: 'walls', x: 0, y: -16, layer: 'main' }, ConvertTilemap.convert(binaryTiles, Assets.tilesets.base))));
+            var wallsTilemap = world.addWorldObject(new Tilemap(__assign({ name: 'walls', x: 0, y: -16, layer: 'main' }, ConvertTilemap.convert(binaryTiles, Assets.tilesets.base))));
             var collisionTilemap = world.addWorldObject(new Tilemap({
                 name: 'walls_collision',
                 x: 0, y: 0,
@@ -10920,10 +11097,26 @@ function getStages() {
                 tilemap: 'world',
                 collisionOnly: true
             }));
+            var wallMask = new BasicTexture(wallsTilemap.width, wallsTilemap.height);
+            var roughTilemap = ConvertTilemap.getRoughTilemap(binaryTiles);
+            for (var y = 0; y < roughTilemap.length; y++) {
+                for (var x = 0; x < roughTilemap[y].length; x++) {
+                    if (roughTilemap[y][x] === 1) {
+                        Draw.brush.color = 0xFFFFFF;
+                        Draw.brush.alpha = 1;
+                        Draw.rectangleSolid(wallMask, x * 16, y * 16 - 2, 16, 18);
+                    }
+                }
+            }
             try {
                 for (var _b = __values(collisionTilemap.collisionBoxes), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var box = _c.value;
-                    box.addModule(new DecalModule());
+                    box.addModule(new DecalModule({
+                        texture: wallMask,
+                        type: 'world',
+                        offsetx: 0,
+                        offsety: -16,
+                    }));
                 }
             }
             catch (e_49_1) { e_49 = { error: e_49_1 }; }
@@ -10933,7 +11126,13 @@ function getStages() {
                 }
                 finally { if (e_49) throw e_49.error; }
             }
-            world.camera.setModeFocus(160, 104);
+            world.addWorldObject(new Sprite({
+                name: 'floor_decal',
+                x: collisionTilemap.x, y: collisionTilemap.y,
+                texture: new BasicTexture(collisionTilemap.width, collisionTilemap.height),
+                layer: 'bg',
+            }));
+            world.camera.setModeFollow('player', 0, -4);
             world.camera.setMovement(BASE_CAMERA_MOVEMENT);
             world.camera.snapPosition();
             return world;

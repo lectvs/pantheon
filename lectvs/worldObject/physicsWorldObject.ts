@@ -15,7 +15,7 @@ namespace PhysicsWorldObject {
         immovable?: boolean;
         colliding?: boolean;
         simulating?: boolean;
-    } 
+    }
 }
 
 class PhysicsWorldObject extends WorldObject {
@@ -130,7 +130,7 @@ class PhysicsWorldObject extends WorldObject {
         return this.bounds.isOverlapping(bounds);
     }
     
-    onCollide(other: PhysicsWorldObject) {
+    onCollide(collision: Physics.CollisionInfo) {
 
     }
 

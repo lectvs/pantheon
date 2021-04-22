@@ -6,26 +6,7 @@ namespace ConvertTilemap {
 
     export function convert(binaryTiles: number[][], tileset: Tilemap.Tileset): Tilemap.Config {
 
-        let tilesWithWalls = A.filledArray2D(binaryTiles.length, binaryTiles[0].length, -1);
-
-        // Create walls
-        for (let y = 0; y < binaryTiles.length; y++) {
-            for (let x = 0; x < binaryTiles[y].length; x++) {
-                if (binaryTiles[y][x] === 0) {
-                    if (y+1 < tilesWithWalls.length) tilesWithWalls[y+1][x] = 1;
-                    //if (y+2 < tilesWithWalls.length) tilesWithWalls[y+2][x] = 1;
-                }
-            }
-        }
-
-        // Create ceiling
-        for (let y = 0; y < binaryTiles.length; y++) {
-            for (let x = 0; x < binaryTiles[y].length; x++) {
-                if (binaryTiles[y][x] === 0) {
-                    tilesWithWalls[y][x] = 0;
-                }
-            }
-        }
+        let tilesWithWalls = getRoughTilemap(binaryTiles);
 
         let tilemapLayer = A.map2D(tilesWithWalls, tileIndex => <Tilemap.Tile>{ index: tileIndex, angle: 0, flipX: false });
 
@@ -91,4 +72,28 @@ namespace ConvertTilemap {
         };
     }
 
+    export function getRoughTilemap(binaryTiles: number[][]) {
+        let tilesWithWalls = A.filledArray2D(binaryTiles.length, binaryTiles[0].length, -1);
+
+        // Create walls
+        for (let y = 0; y < binaryTiles.length; y++) {
+            for (let x = 0; x < binaryTiles[y].length; x++) {
+                if (binaryTiles[y][x] === 0) {
+                    if (y+1 < tilesWithWalls.length) tilesWithWalls[y+1][x] = 1;
+                    //if (y+2 < tilesWithWalls.length) tilesWithWalls[y+2][x] = 1;
+                }
+            }
+        }
+
+        // Create ceiling
+        for (let y = 0; y < binaryTiles.length; y++) {
+            for (let x = 0; x < binaryTiles[y].length; x++) {
+                if (binaryTiles[y][x] === 0) {
+                    tilesWithWalls[y][x] = 0;
+                }
+            }
+        }
+
+        return tilesWithWalls;
+    }
 }

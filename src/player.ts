@@ -1,5 +1,5 @@
 class Player extends Sprite {
-    static readonly MAX_SPEED = 64;
+    static readonly MAX_SPEED = 80;
 
     constructor(config: Sprite.Config) {
         super({
@@ -37,9 +37,11 @@ class Player extends Sprite {
     }
 
     attack() {
+        let colors = [0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0xFF00FF, 0x00FFFF];
         this.world.addWorldObject(new Bullet({
             x: this.x, y: this.y, z: 4,
-            texture: AnchoredTexture.fromBaseTexture(Texture.filledCircle(2, 0xFF0000, 1), 0.5, 0.5),
+            texture: AnchoredTexture.fromBaseTexture(Texture.filledCircle(2, 0xFFFFFF, 1), 0.5, 0.5),
+            tint: Random.element(colors),
             v: this.controller.aimDirection,
             layer: 'main',
             physicsGroup: 'bullets',

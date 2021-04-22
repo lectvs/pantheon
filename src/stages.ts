@@ -16,10 +16,12 @@ function getStages(): Dict<World.Factory> { return {
                 'player': {},
                 'walls': { immovable: true },
                 'bullets': {},
+                'paintdrops': {},
             },
             collisions: [
                 { move: 'player', from: 'walls' },
                 { move: 'bullets', from: 'walls' },
+                { move: 'paintdrops', from: 'walls' },
             ],
             collisionIterations: 4,
             useRaycastDisplacementThreshold: 4,
@@ -27,7 +29,7 @@ function getStages(): Dict<World.Factory> { return {
 
         world.addWorldObject(new Player({
             name: 'player',
-            x: 156, y: 166,
+            x: 240, y: 480,
             layer: 'main',
             bounds: new RectBounds(-4, -8, 8, 8),
             physicsGroup: 'player',
@@ -35,7 +37,7 @@ function getStages(): Dict<World.Factory> { return {
 
         let tilemap = AssetCache.getTilemap('world');
         let binaryTiles = A.map2D(tilemap.layers[0], tile => tile.index);
-        world.addWorldObject(new Tilemap({
+        let wallsTilemap = world.addWorldObject(new Tilemap({
             name: 'walls',
             x: 0, y: -16,
             layer: 'main',
@@ -50,11 +52,35 @@ function getStages(): Dict<World.Factory> { return {
             collisionOnly: true
         }));
 
-        for (let box of collisionTilemap.collisionBoxes) {
-            box.addModule(new DecalModule());
+        let wallMask = new BasicTexture(wallsTilemap.width, wallsTilemap.height);
+        let roughTilemap = ConvertTilemap.getRoughTilemap(binaryTiles);
+        for (let y = 0; y < roughTilemap.length; y++) {
+            for (let x = 0; x < roughTilemap[y].length; x++) {
+                if (roughTilemap[y][x] === 1) {
+                    Draw.brush.color = 0xFFFFFF;
+                    Draw.brush.alpha = 1;
+                    Draw.rectangleSolid(wallMask, x*16, y*16 - 2, 16, 18);
+                }
+            }
         }
 
-        world.camera.setModeFocus(160, 104);
+        for (let box of collisionTilemap.collisionBoxes) {
+            box.addModule(new DecalModule({
+                texture: wallMask,
+                type: 'world',
+                offsetx: 0,
+                offsety: -16,
+            }));
+        }
+
+        world.addWorldObject(new Sprite({
+            name: 'floor_decal',
+            x: collisionTilemap.x, y: collisionTilemap.y,
+            texture: new BasicTexture(collisionTilemap.width, collisionTilemap.height),
+            layer: 'bg',
+        }));
+
+        world.camera.setModeFollow('player', 0, -4);
         world.camera.setMovement(BASE_CAMERA_MOVEMENT);
         world.camera.snapPosition();
 

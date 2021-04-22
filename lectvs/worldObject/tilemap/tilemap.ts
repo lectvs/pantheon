@@ -93,6 +93,22 @@ class Tilemap extends WorldObject {
         this.dirty = true;
     }
 
+    get width() {
+        return this.widthInTiles * this.tileset.tileWidth;
+    }
+
+    get height() {
+        return this.heightInTiles * this.tileset.tileHeight;
+    }
+
+    get widthInTiles() {
+        return this.tilemap.layers[this.tilemapLayer][0].length;
+    }
+
+    get heightInTiles() {
+        return this.tilemap.layers[this.tilemapLayer].length;
+    }
+
     private createCollisionBoxes() {
         World.Actions.removeWorldObjectsFromWorld(this.collisionBoxes);
         this.collisionBoxes = [];
