@@ -1,8 +1,8 @@
 /// <reference path="./menus.ts"/>
 
 Main.loadConfig({
-    gameCodeName: "SilverBullet",
-    gameWidth: 320,
+    gameCodeName: "LD48",
+    gameWidth: 160,
     gameHeight: 240,
     canvasScale: 4,
     backgroundColor: 0x000000,
@@ -29,7 +29,8 @@ Main.loadConfig({
             'right':                     ['ArrowRight', 'd'],
             'up':                        ['ArrowUp', 'w'],
             'down':                      ['ArrowDown', 's'],
-            'interact':                  ['e'],
+            'jump':                      ['z'],
+            'grapple':                   ['x'],
 
             // Presets
             'game_advanceCutscene':      ['MouseLeft', 'e', ' '],

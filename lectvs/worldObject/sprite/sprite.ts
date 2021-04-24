@@ -78,7 +78,6 @@ class Sprite extends PhysicsWorldObject {
         this.animationManager.update(this.delta);
         this.effects.updateEffects(this.delta);
 
-
         this.angle += this.vangle * this.delta;
     }
 

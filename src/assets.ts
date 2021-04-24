@@ -9,6 +9,10 @@ namespace Assets {
         'deluxe16': { spritesheet: { frameWidth: 8, frameHeight: 15 } },
 
         // Game
+        'player': { anchor: Anchor.BOTTOM_CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
+        'grapple': { anchor: Anchor.CENTER },
+
+        'world': { anchor: Anchor.CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
 
         // UI
         'dialogbox': { anchor: Anchor.CENTER },
@@ -29,11 +33,18 @@ namespace Assets {
     }
 
     export const tilesets: Dict<Tilemap.Tileset> = {
-
+        'world': {
+            tileWidth: 16,
+            tileHeight: 16,
+            tiles: Preload.allTilesWithPrefix('world_'),
+            collisionIndices: [1],
+        }
     }
 
     export const pyxelTilemaps: Dict<Preload.PyxelTilemap> = {
-
+        'world': {
+            tileset: tilesets['world'],
+        }
     }
 
     export class fonts {
