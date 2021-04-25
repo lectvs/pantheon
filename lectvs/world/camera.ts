@@ -11,8 +11,6 @@ namespace Camera {
 
     export type Mode = {
         getTargetPt: (camera: Camera) => Pt;
-        offsetX: number;
-        offsetY: number;
     }
 
     export type Movement = {
@@ -70,7 +68,7 @@ class Camera {
 
     update() {
         let target = this.mode.getTargetPt(this);
-        this.moveTowardsPoint(target.x + this.mode.offsetX, target.y + this.mode.offsetY);
+        this.moveTowardsPoint(target.x, target.y);
 
         if (this.shakeIntensity > 0) {
             let pt = Random.inCircle(this.shakeIntensity);
@@ -163,20 +161,16 @@ namespace Camera {
                 getTargetPt: (camera: Camera) => {
                     if (_.isString(target)) {
                         let worldObject = camera.world.select.name(target, false);
-                        return worldObject ?? pt(camera.x, camera.y);
+                        return worldObject ? pt(worldObject.x + offsetX, worldObject.y + offsetY) : pt(camera.x, camera.y);
                     }
-                    return target;
+                    return pt(target.x + offsetX, target.y + offsetY);
                 },
-                offsetX,
-                offsetY,
             };
         }
         export function FOCUS(x: number, y: number): Mode {
             let focusPt = pt(x, y);
             return {
                 getTargetPt: (camera: Camera) => focusPt,
-                offsetX: 0,
-                offsetY: 0,
             };
         }
     }

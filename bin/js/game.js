@@ -1272,6 +1272,8 @@ var TextureFilter = /** @class */ (function () {
             this.uniforms[key] = uniforms[key];
         }
     };
+    TextureFilter.prototype.update = function () {
+    };
     TextureFilter.prototype.updateTime = function (delta) {
         this.setUniform('t', this.getUniform('t') + delta);
     };
@@ -1531,6 +1533,7 @@ var BasicTexture = /** @class */ (function () {
     };
     BasicTexture.prototype.setRenderTextureSpriteFilters = function (destTexture, properties) {
         var allFilters = this.getAllTextureFilters(properties);
+        allFilters.forEach(function (filter) { return filter.update(); });
         this.renderTextureSprite.filters = allFilters.map(function (filter) { return filter.borrowPixiFilter(); });
         this.renderTextureSprite.filterArea = new PIXI.Rectangle(0, 0, destTexture.width, destTexture.height);
         return allFilters;
@@ -2068,8 +2071,8 @@ var S;
                         startPoint = pt(cameraPoint.x, cameraPoint.y);
                         return [4 /*yield*/, S.doOverTime(duration, function (t) {
                                 var toPoint = toMode.getTargetPt(camera);
-                                cameraPoint.x = M.lerp(startPoint.x, toPoint.x + toMode.offsetX, easingFunction(t));
-                                cameraPoint.y = M.lerp(startPoint.y, toPoint.y + toMode.offsetY, easingFunction(t));
+                                cameraPoint.x = M.lerp(startPoint.x, toPoint.x, easingFunction(t));
+                                cameraPoint.y = M.lerp(startPoint.y, toPoint.y, easingFunction(t));
                                 camera.snapPosition();
                             })];
                     case 1:
@@ -7373,7 +7376,7 @@ var Camera = /** @class */ (function () {
     });
     Camera.prototype.update = function () {
         var target = this.mode.getTargetPt(this);
-        this.moveTowardsPoint(target.x + this.mode.offsetX, target.y + this.mode.offsetY);
+        this.moveTowardsPoint(target.x, target.y);
         if (this.shakeIntensity > 0) {
             var pt_1 = Random.inCircle(this.shakeIntensity);
             this._shakeX = pt_1.x;
@@ -7464,12 +7467,10 @@ var Camera = /** @class */ (function () {
                 getTargetPt: function (camera) {
                     if (_.isString(target)) {
                         var worldObject = camera.world.select.name(target, false);
-                        return worldObject !== null && worldObject !== void 0 ? worldObject : pt(camera.x, camera.y);
+                        return worldObject ? pt(worldObject.x + offsetX, worldObject.y + offsetY) : pt(camera.x, camera.y);
                     }
-                    return target;
+                    return pt(target.x + offsetX, target.y + offsetY);
                 },
-                offsetX: offsetX,
-                offsetY: offsetY,
             };
         }
         Mode.FOLLOW = FOLLOW;
@@ -7477,8 +7478,6 @@ var Camera = /** @class */ (function () {
             var focusPt = pt(x, y);
             return {
                 getTargetPt: function (camera) { return focusPt; },
-                offsetX: 0,
-                offsetY: 0,
             };
         }
         Mode.FOCUS = FOCUS;
@@ -10391,6 +10390,20 @@ var Assets;
         'player': { anchor: Anchor.BOTTOM_CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
         'grapple': { anchor: Anchor.CENTER },
         'world': { anchor: Anchor.CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
+        'checkpoint': { anchor: Anchor.CENTER, frames: {
+                'checkpoint_low': { rect: rect(0, 0, 16, 16) },
+                'checkpoint_high': { rect: rect(16, 0, 16, 16) },
+            } },
+        'spikes': { anchor: Anchor.CENTER },
+        'thwomp': { anchor: Anchor.CENTER, frames: {
+                'thwomp_sleep': { rect: rect(0, 0, 16, 16) },
+                'thwomp_awake': { rect: rect(16, 0, 16, 16) },
+                'thwomp_active': { rect: rect(32, 0, 16, 16) },
+            } },
+        'bat': { anchor: Anchor.CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
+        'mover': { anchor: Anchor.CENTER },
+        'cannon': { anchor: Anchor.CENTER },
+        'cannonball': { anchor: Anchor.CENTER },
         // UI
         'dialogbox': { anchor: Anchor.CENTER },
     };
@@ -10429,37 +10442,801 @@ var Assets;
         return fonts;
     }());
     Assets.fonts = fonts;
-    Assets.spriteTextTags = {};
+    Assets.spriteTextTags = {
+        'g': function (args) { return ({ color: 0x00FF00 }); },
+    };
 })(Assets || (Assets = {}));
-var Cheat = {};
-var Grapple = /** @class */ (function (_super) {
-    __extends(Grapple, _super);
-    function Grapple(x, y, direction) {
+var Bat = /** @class */ (function (_super) {
+    __extends(Bat, _super);
+    function Bat(tx, ty) {
+        var _this = _super.call(this, {
+            x: tx * 16 + 8, y: ty * 16 + 8,
+            animations: [
+                Animations.fromTextureList({ name: 'sleep', texturePrefix: 'bat', textures: [0], frameRate: 1 }),
+                Animations.fromTextureList({ name: 'fly', texturePrefix: 'bat', textures: [1, 2], frameRate: 4, count: -1 }),
+            ],
+            defaultAnimation: 'sleep',
+            layer: 'entities',
+            physicsGroup: 'enemies',
+            bounds: new RectBounds(-4, -2, 8, 4),
+        }) || this;
+        _this.ACCELERATION = 64;
+        _this.MAX_SPEED = 32;
+        _this.KNOCKBACK_SPEED = 100;
+        _this.health = 2;
+        var bat = _this;
+        _this.stateMachine.addState('sleep', {
+            update: function () {
+                _this.playAnimation('sleep');
+            },
+            transitions: [
+                { toState: 'active', condition: function () {
+                        var player = _this.world.select.name('player');
+                        return player && _this.world.select.raycast(_this.x, _this.y, player.x - _this.x, player.y - _this.y, ['walls']).every(function (rr) { return rr.t > 1; });
+                    } }
+            ]
+        });
+        _this.stateMachine.addState('active', {
+            callback: function () {
+                _this.v.y = 100;
+            },
+            update: function () {
+                var a = V.withMagnitude(_this.controller.moveDirection, _this.ACCELERATION);
+                _this.v.x += a.x * _this.delta;
+                _this.v.y += a.y * _this.delta;
+                V.clampMagnitude(_this.v, _this.MAX_SPEED);
+                _this.flipX = _this.controller.moveDirection.x < 0;
+                _this.playAnimation('fly');
+            }
+        });
+        _this.stateMachine.addState('stunned', {
+            script: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            bat.effects.addSilhouette.color = 0x000000;
+                            bat.effects.addOutline.color = 0xFFFFFF;
+                            return [4 /*yield*/, S.wait(0.2)];
+                        case 1:
+                            _a.sent();
+                            bat.effects.silhouette.enabled = false;
+                            bat.effects.outline.enabled = false;
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [{ toState: 'active' }]
+        });
+        _this.setState('sleep');
+        _this.behavior = new Bat.BatBehavior(_this);
+        return _this;
+    }
+    Bat.prototype.damage = function (direction) {
+        this.v.x += direction.h * this.KNOCKBACK_SPEED;
+        this.v.y += direction.v * this.KNOCKBACK_SPEED;
+        var oppdir = { h: -direction.h, v: -direction.v };
+        Puff.puffDirection(this.world, this.x, this.y, 5, oppdir, 50, 50);
+        this.setState('stunned');
+        this.health--;
+        if (this.health <= 0) {
+            this.kill();
+        }
+    };
+    Bat.prototype.kill = function () {
+        Puff.puff(this.world, this.x, this.y, 20, function () { return Random.inCircle(50); });
+        _super.prototype.kill.call(this);
+    };
+    return Bat;
+}(Sprite));
+(function (Bat) {
+    var BatBehavior = /** @class */ (function (_super) {
+        __extends(BatBehavior, _super);
+        function BatBehavior(bat) {
+            return _super.call(this, function () {
+                var player = bat.world.select.name('player');
+                if (!player)
+                    return;
+                this.controller.moveDirection.x = player.x - bat.x;
+                this.controller.moveDirection.y = player.y - bat.y;
+            }) || this;
+        }
+        return BatBehavior;
+    }(ControllerBehavior));
+    Bat.BatBehavior = BatBehavior;
+})(Bat || (Bat = {}));
+var Player = /** @class */ (function (_super) {
+    __extends(Player, _super);
+    function Player(tx, ty) {
+        var _this = _super.call(this, {
+            x: tx * 16 + 8, y: ty * 16 + 16,
+            layer: 'player',
+            physicsGroup: 'player',
+            bounds: new RectBounds(-4, -12, 8, 12),
+            animations: [
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'player', textures: [0, 1, 2, 3], frameRate: 12, count: -1 }),
+                Animations.fromTextureList({ name: 'run', texturePrefix: 'player', textures: [5, 6, 7, 8, 9], frameRate: 12, count: -1 }),
+                Animations.fromTextureList({ name: 'grapple_horiz', texturePrefix: 'player', textures: [6], frameRate: 1, count: -1 }),
+                Animations.fromTextureList({ name: 'jump', texturePrefix: 'player', textures: [10], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'fall', texturePrefix: 'player', textures: [11], frameRate: 8, count: -1 }),
+            ],
+            defaultAnimation: 'idle',
+        }) || this;
+        _this.RUN_SPEED = 64;
+        _this.JUMP_SPEED = 200;
+        _this.PULL_SPEED = 200;
+        _this.GRAVITY = 800;
+        _this.FRICTION = 1000;
+        _this.WATER_DRAG = 1000;
+        _this.GRAPPLE_BREAK_TIME = 0.5;
+        _this.behavior = new ControllerBehavior(function () {
+            this.controller.left = Input.isDown('left');
+            this.controller.right = Input.isDown('right');
+            this.controller.up = Input.isDown('up');
+            this.controller.down = Input.isDown('down');
+        });
+        _this.stateMachine.addState('can_grapple', {});
+        _this.stateMachine.addState('cant_grapple', {
+            script: S.wait(_this.GRAPPLE_BREAK_TIME),
+            transitions: [{ toState: 'can_grapple' }]
+        });
+        _this.setState('can_grapple');
+        _this.dead = false;
+        _this.grappleColor = 0xFFFFFF;
+        return _this;
+    }
+    Object.defineProperty(Player.prototype, "isGrappling", {
+        get: function () { return this.grapple; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Player.prototype, "isBoss", {
+        get: function () { return this instanceof Boss; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Player.prototype, "canGrapple", {
+        get: function () { return this.state !== 'cant_grapple'; },
+        enumerable: false,
+        configurable: true
+    });
+    Player.prototype.update = function () {
+        var grounded = this.isGrounded();
+        var haxis = (this.controller.keys.runLeft ? -1 : 0) + (this.controller.keys.runRight ? 1 : 0);
+        if (haxis !== 0) {
+            this.v.x = haxis * this.RUN_SPEED;
+        }
+        if (this.controller.jump) {
+            this.v.y = -this.JUMP_SPEED;
+        }
+        this.updateGrapple();
+        this.updateWater();
+        if (grounded) {
+            if (this.v.x > 0)
+                this.v.x = Math.max(this.v.x - this.FRICTION * this.delta, 0);
+            if (this.v.x < 0)
+                this.v.x = Math.min(this.v.x + this.FRICTION * this.delta, 0);
+        }
+        if (!this.isBoss && this.dead) {
+            this.v.x = this.v.y = 0;
+        }
+        this.v.y = M.clamp(this.v.y, -400, 400);
+        _super.prototype.update.call(this);
+        if (this.controller.left || this.controller.keys.runLeft)
+            this.flipX = true;
+        if (this.controller.right || this.controller.keys.runRight)
+            this.flipX = false;
+        if (this.isGrappling) {
+            if (this.grapple.grappleKey === 'left' || this.grapple.grappleKey === 'right') {
+                this.playAnimation('grapple_horiz');
+            }
+            else if (this.grapple.grappleKey === 'up') {
+                this.playAnimation('jump');
+            }
+            else {
+                this.playAnimation('fall');
+            }
+        }
+        else {
+            if (this.v.y < 0)
+                this.playAnimation('jump');
+            else if (this.v.y > 20)
+                this.playAnimation('fall');
+            else if (haxis !== 0)
+                this.playAnimation('run');
+            else
+                this.playAnimation('idle');
+        }
+    };
+    Player.prototype.updateGrapple = function () {
+        if (this.isGrappling) {
+            if (this.grapple.grapple.broken || !this.controller.keys[this.grapple.grappleKey]) {
+                if (this.grapple.grapple.broken) {
+                    this.setState('cant_grapple');
+                }
+                this.grapple.grapple.removeFromWorld();
+                this.grapple = undefined;
+            }
+        }
+        var grappleKey = undefined;
+        if (this.controller.left)
+            grappleKey = 'left';
+        if (this.controller.right)
+            grappleKey = 'right';
+        if (this.controller.up)
+            grappleKey = 'up';
+        if (this.controller.down)
+            grappleKey = 'down';
+        if (!this.isGrappling && grappleKey && this.canGrapple) {
+            var direction = {
+                'left': Direction2D.LEFT,
+                'right': Direction2D.RIGHT,
+                'up': Direction2D.UP,
+                'down': Direction2D.DOWN
+            }[grappleKey];
+            this.grapple = {
+                grapple: this.world.addWorldObject(new Grapple(this, 0, -6, direction, this.grappleColor)),
+                grappleKey: grappleKey
+            };
+        }
+        if (this.isGrappling) {
+            if (this.grapple.grapple.isPulling) {
+                this.v.x = this.grapple.grapple.direction.h * this.PULL_SPEED;
+                this.v.y = this.grapple.grapple.direction.v * this.PULL_SPEED;
+            }
+            else {
+                this.v.x = 0;
+                this.v.y = 0;
+            }
+            this.gravity.y = 0;
+        }
+        else {
+            this.gravity.y = this.GRAVITY;
+        }
+    };
+    Player.prototype.updateWater = function () {
+        if (this.isInWater()) {
+            this.timeScale = 0.5;
+            if (this.v.x > 0)
+                this.v.x = Math.max(this.v.x - this.WATER_DRAG * this.delta, 0);
+            if (this.v.x < 0)
+                this.v.x = Math.min(this.v.x + this.WATER_DRAG * this.delta, 0);
+        }
+        else {
+            this.timeScale = 1;
+        }
+    };
+    Player.prototype.onCollide = function (collision) {
+        _super.prototype.onCollide.call(this, collision);
+        if (!this.isBoss && !this.dead) {
+            if (collision.other.obj instanceof Spikes ||
+                collision.other.obj instanceof Thwomp ||
+                collision.other.obj instanceof Bat ||
+                collision.other.obj instanceof Mover ||
+                collision.other.obj instanceof Lava ||
+                collision.other.obj instanceof Cannon ||
+                collision.other.obj instanceof Cannonball ||
+                collision.other.obj instanceof Boss) {
+                this.dead = true;
+            }
+        }
+    };
+    Player.prototype.isGrounded = function () {
+        this.bounds.y++;
+        var ground = this.world.select.overlap(this.bounds, ['walls']);
+        this.bounds.y--;
+        return !_.isEmpty(ground);
+    };
+    Player.prototype.isInWater = function () {
+        return !_.isEmpty(this.world.select.overlap(this.bounds, ['water']));
+    };
+    return Player;
+}(Sprite));
+/// <reference path="./player.ts" />
+var Boss = /** @class */ (function (_super) {
+    __extends(Boss, _super);
+    function Boss(tx, ty) {
+        var _this = _super.call(this, tx, ty) || this;
+        _this.SHOT_SPEED = 200;
+        _this.KNOCKBACK_SPEED = 200;
+        _this.health = 4;
+        _this.layer = 'entities';
+        _this.physicsGroup = 'enemies';
+        _this.glitchFilter = new Boss.BossGlitchFilter();
+        _this.effects.updateFromConfig({ post: { filters: [new Boss.BossFilter(), _this.glitchFilter] } });
+        _this.behavior = new NullBehavior();
+        _this.grappleColor = 0x00FF00;
+        return _this;
+    }
+    Object.defineProperty(Boss.prototype, "startedFighting", {
+        get: function () { return this.dead || this.behavior instanceof Boss.BossBehavior; },
+        enumerable: false,
+        configurable: true
+    });
+    Boss.prototype.startFighting = function () {
+        this.behavior = new Boss.BossBehavior(this);
+    };
+    Boss.prototype.update = function () {
+        _super.prototype.update.call(this);
+        if (this.controller.attack) {
+            this.shoot();
+        }
+    };
+    Boss.prototype.shoot = function () {
+        console.log('shoot');
+        var dir = V.normalized(this.controller.aimDirection);
+        var off = 10;
+        this.world.addWorldObject(new Cannonball(this.x + dir.x * off, this.y + dir.y * off, V.withMagnitude(dir, this.SHOT_SPEED)));
+        this.v = V.withMagnitude(V.scaled(dir, -1), this.KNOCKBACK_SPEED);
+    };
+    Boss.prototype.damage = function (direction) {
+        this.v.x += direction.h * this.KNOCKBACK_SPEED;
+        this.v.y += direction.v * this.KNOCKBACK_SPEED;
+        var oppdir = { h: -direction.h, v: -direction.v };
+        Puff.puffDirection(this.world, this.x, this.y, 5, oppdir, 50, 50);
+        this.behavior.interrupt();
+        this.health--;
+        if (this.health <= 0) {
+            this.dead = true;
+            this.behavior = new NullBehavior();
+        }
+        var boss = this;
+        this.runScript(function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        boss.glitchFilter.amount = 1;
+                        return [4 /*yield*/, S.wait(0.5)];
+                    case 1:
+                        _a.sent();
+                        if (!boss.dead)
+                            boss.glitchFilter.amount = 0;
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    return Boss;
+}(Player));
+(function (Boss) {
+    var BossBehavior = /** @class */ (function (_super) {
+        __extends(BossBehavior, _super);
+        function BossBehavior(boss) {
+            var _this = _super.call(this, 'grappleright', 1) || this;
+            var controller = _this.controller;
+            var nextAction = function () {
+                if (boss.x < boss.world.width / 2) {
+                    return Random.element(['grappleright', 'attackright']);
+                }
+                else {
+                    return Random.element(['grappleleft', 'attackleft']);
+                }
+            };
+            _this.addAction('interrupt', {
+                interrupt: 'interrupt',
+                wait: 1,
+                nextAction: nextAction
+            });
+            _this.addAction('grappleleft', {
+                script: function () {
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                controller.left = true;
+                                return [4 /*yield*/, S.wait(0.7)];
+                            case 1:
+                                _a.sent();
+                                controller.left = false;
+                                return [2 /*return*/];
+                        }
+                    });
+                },
+                interrupt: 'interrupt',
+                wait: 1,
+                nextAction: nextAction
+            });
+            _this.addAction('grappleright', {
+                script: function () {
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                controller.right = true;
+                                return [4 /*yield*/, S.wait(0.7)];
+                            case 1:
+                                _a.sent();
+                                controller.right = false;
+                                return [2 /*return*/];
+                        }
+                    });
+                },
+                interrupt: 'interrupt',
+                wait: 1,
+                nextAction: nextAction
+            });
+            _this.addAction('attackright', {
+                script: function () {
+                    var player;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                controller.keys.runRight = true;
+                                return [4 /*yield*/, S.wait(0.25)];
+                            case 1:
+                                _a.sent();
+                                controller.jump = true;
+                                return [4 /*yield*/];
+                            case 2:
+                                _a.sent();
+                                controller.jump = false;
+                                return [4 /*yield*/, S.wait(0.25)];
+                            case 3:
+                                _a.sent();
+                                controller.keys.runRight = false;
+                                controller.up = true;
+                                return [4 /*yield*/, S.wait(1)];
+                            case 4:
+                                _a.sent();
+                                controller.up = false;
+                                return [4 /*yield*/, S.wait(0.5)];
+                            case 5:
+                                _a.sent();
+                                controller.right = true;
+                                return [4 /*yield*/, S.wait(0.3)];
+                            case 6:
+                                _a.sent();
+                                controller.right = false;
+                                player = boss.world.select.name('player');
+                                if (!player)
+                                    return [2 /*return*/];
+                                controller.aimDirection.x = player.x - boss.x;
+                                controller.aimDirection.y = player.y - boss.y;
+                                controller.attack = true;
+                                return [4 /*yield*/];
+                            case 7:
+                                _a.sent();
+                                controller.attack = false;
+                                return [2 /*return*/];
+                        }
+                    });
+                },
+                interrupt: 'interrupt',
+                wait: 0.5,
+                nextAction: nextAction
+            });
+            _this.addAction('attackleft', {
+                script: function () {
+                    var player;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                controller.keys.runLeft = true;
+                                return [4 /*yield*/, S.wait(0.25)];
+                            case 1:
+                                _a.sent();
+                                controller.jump = true;
+                                return [4 /*yield*/];
+                            case 2:
+                                _a.sent();
+                                controller.jump = false;
+                                return [4 /*yield*/, S.wait(0.25)];
+                            case 3:
+                                _a.sent();
+                                controller.keys.runLeft = false;
+                                controller.up = true;
+                                return [4 /*yield*/, S.wait(1)];
+                            case 4:
+                                _a.sent();
+                                controller.up = false;
+                                return [4 /*yield*/, S.wait(0.5)];
+                            case 5:
+                                _a.sent();
+                                controller.left = true;
+                                return [4 /*yield*/, S.wait(0.3)];
+                            case 6:
+                                _a.sent();
+                                controller.left = false;
+                                player = boss.world.select.name('player');
+                                if (!player)
+                                    return [2 /*return*/];
+                                controller.aimDirection.x = player.x - boss.x;
+                                controller.aimDirection.y = player.y - boss.y;
+                                controller.attack = true;
+                                return [4 /*yield*/];
+                            case 7:
+                                _a.sent();
+                                controller.attack = false;
+                                return [2 /*return*/];
+                        }
+                    });
+                },
+                interrupt: 'interrupt',
+                wait: 0.5,
+                nextAction: nextAction
+            });
+            return _this;
+        }
+        return BossBehavior;
+    }(ActionBehavior));
+    Boss.BossBehavior = BossBehavior;
+    var BossFilter = /** @class */ (function (_super) {
+        __extends(BossFilter, _super);
+        function BossFilter() {
+            return _super.call(this, {
+                code: "\n                    if (inp.rgb == vec3(1.0, 0.0, 0.0)) {\n                        outp.rgb = vec3(0.0, 1.0, 0.0);\n                    }\n                "
+            }) || this;
+        }
+        return BossFilter;
+    }(TextureFilter));
+    Boss.BossFilter = BossFilter;
+    var BossGlitchFilter = /** @class */ (function (_super) {
+        __extends(BossGlitchFilter, _super);
+        function BossGlitchFilter() {
+            return _super.call(this, {
+                uniforms: {
+                    'float amount': 0
+                },
+                code: "\n                    if (y > 8.0) {\n                        outp = getColor(x + amount * 16.0 * cnoise(vec3(t*100.0, 0.0, 0.0)), y);\n                    } else {\n                        outp = getColor(x + amount * 16.0 * cnoise(vec3(t*100.0, 100.0, 0.0)), y);\n                    }\n                "
+            }) || this;
+        }
+        Object.defineProperty(BossGlitchFilter.prototype, "amount", {
+            set: function (value) { this.setUniform('amount', value); },
+            enumerable: false,
+            configurable: true
+        });
+        return BossGlitchFilter;
+    }(TextureFilter));
+    Boss.BossGlitchFilter = BossGlitchFilter;
+})(Boss || (Boss = {}));
+var Cannon = /** @class */ (function (_super) {
+    __extends(Cannon, _super);
+    function Cannon(tx, ty, angle) {
+        var _this = _super.call(this, {
+            x: tx * 16 + 8,
+            y: ty * 16 + 8,
+            texture: 'cannon',
+            angle: angle,
+            layer: 'entities',
+            physicsGroup: 'cannons',
+            bounds: new RectBounds(-7, -7, 14, 14),
+        }) || this;
+        _this.SHOT_SPEED = 250;
+        var cannon = _this;
+        _this.stateMachine.addState('shoot', {
+            script: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, S.wait(1)];
+                        case 1:
+                            _a.sent();
+                            cannon.shoot();
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [
+                { toState: 'shoot' },
+            ]
+        });
+        _this.setState('shoot');
+        return _this;
+    }
+    Cannon.prototype.shoot = function () {
+        var dir = V.rotated({ x: -1, y: 0 }, M.degToRad(this.angle + 45));
+        var off = 10;
+        this.world.addWorldObject(new Cannonball(this.x + dir.x * off, this.y + dir.y * off, V.withMagnitude(dir, this.SHOT_SPEED)));
+    };
+    return Cannon;
+}(Sprite));
+var Cannonball = /** @class */ (function (_super) {
+    __extends(Cannonball, _super);
+    function Cannonball(x, y, v) {
         var _this = _super.call(this, {
             x: x, y: y,
+            texture: 'cannonball',
+            layer: 'entities',
+            physicsGroup: 'cannonballs',
+            bounds: new CircleBounds(0, 0, 4),
+            v: v,
+            gravityy: 400,
+        }) || this;
+        _this.DRAG = 200;
+        return _this;
+    }
+    Cannonball.prototype.update = function () {
+        if (this.v.x > 0)
+            this.v.x = Math.max(this.v.x - this.DRAG * this.delta, 0);
+        if (this.v.x < 0)
+            this.v.x = Math.min(this.v.x + this.DRAG * this.delta, 0);
+        _super.prototype.update.call(this);
+    };
+    Cannonball.prototype.kill = function (d) {
+        if (d === void 0) { d = { x: 0, y: 0 }; }
+        Puff.puffDirection(this.world, this.x + d.x * 5, this.y + d.y * 5, 10, { h: -d.x, v: -d.y }, 50, 50);
+        _super.prototype.kill.call(this);
+    };
+    Cannonball.prototype.onCollide = function (collision) {
+        _super.prototype.onCollide.call(this, collision);
+        this.kill(V.withMagnitude({ x: collision.self.vx, y: collision.self.vy }, 1));
+    };
+    return Cannonball;
+}(Sprite));
+var Cheat = {};
+var Checkpoint = /** @class */ (function (_super) {
+    __extends(Checkpoint, _super);
+    function Checkpoint(tx, ty, angle) {
+        var _this = _super.call(this, {
+            x: tx * 16 + 8, y: ty * 16 + 8,
+            texture: 'checkpoint_low',
+            angle: angle,
+            layer: 'entities',
+            physicsGroup: 'checkpoints',
+            bounds: new RectBounds(-8, -16, 16, 16),
+        }) || this;
+        _this.isCheckpointGot = false;
+        return _this;
+    }
+    Checkpoint.prototype.update = function () {
+        _super.prototype.update.call(this);
+        if (!this.isCheckpointGot) {
+            var players = this.world.select.overlap(this.bounds, ['player']);
+            if (!_.isEmpty(players)) {
+                this.checkpointGet(true);
+            }
+        }
+    };
+    Checkpoint.prototype.checkpointGet = function (fanfare) {
+        this.world.select.typeAll(Checkpoint).forEach(function (checkpoint) { return checkpoint.checkpointUnget(); });
+        this.setTexture('checkpoint_high');
+        this.isCheckpointGot = true;
+        Checkpoints.current = this.name;
+        if (fanfare)
+            Puff.puff(this.world, this.x, this.y, 10, function () { return pt(Random.float(-50, 50), Random.float(-40, 0)); });
+    };
+    Checkpoint.prototype.checkpointUnget = function () {
+        this.setTexture('checkpoint_low');
+        this.isCheckpointGot = false;
+    };
+    return Checkpoint;
+}(Sprite));
+var Checkpoints;
+(function (Checkpoints) {
+    function init(checkpoints) {
+        checkpoints.sort(function (a, b) { return a.y - b.y; });
+        for (var i = 0; i < checkpoints.length; i++) {
+            checkpoints[i].name = "checkpoint_" + (i + 1);
+            if (checkpoints[i].name === Checkpoints.current) {
+                checkpoints[i].checkpointGet(false);
+            }
+        }
+    }
+    Checkpoints.init = init;
+})(Checkpoints || (Checkpoints = {}));
+var DepthFilter = /** @class */ (function (_super) {
+    __extends(DepthFilter, _super);
+    function DepthFilter() {
+        return _super.call(this, {
+            uniforms: {
+                'float cameray': 0
+            },
+            code: "\n                float depth = y + cameray;\n\n                float transition = 64.0;\n\n                float digitalDepth = 3200.0;\n                float castleDepth = 1700.0;\n                float waterDepth = 1070.0;\n                float cavesDepth = 400.0;\n\n                vec3 digitalColor = vec3(0.0, 1.0, 0.0);\n                vec3 castleColor = vec3(0.7, 0.7, 0.7);\n                vec3 waterColor = vec3(0.0, 0.0, 1.0);\n                vec3 cavesColor = vec3(0.89, 0.61, 0.45);\n                vec3 topColor = vec3(1.0, 1.0, 1.0);\n\n                vec3 multcolor;\n                if (depth > digitalDepth + transition) {\n                    multcolor = digitalColor;\n                } else if (depth > digitalDepth) {\n                    float t = (depth - digitalDepth) / transition;\n                    multcolor = castleColor * (1.0-t) + digitalColor * t;\n                } else if (depth > castleDepth + transition) {\n                    multcolor = castleColor;\n                } else if (depth > castleDepth) {\n                    float t = (depth - castleDepth) / transition;\n                    multcolor = waterColor * (1.0-t) + castleColor * t;\n                } else if (depth > waterDepth + transition) {\n                    multcolor = waterColor;\n                } else if (depth > waterDepth) {\n                    float t = (depth - waterDepth) / transition;\n                    multcolor = cavesColor * (1.0-t) + waterColor * t;\n                } else if (depth > cavesDepth + transition) {\n                    multcolor = cavesColor;\n                } else if (depth > cavesDepth) {\n                    float t = (depth - cavesDepth) / transition;\n                    multcolor = topColor * (1.0-t) + cavesColor * t;\n                } else {\n                    multcolor = topColor;\n                }\n                outp.rgb *= multcolor;\n            ",
+        }) || this;
+    }
+    DepthFilter.prototype.update = function () {
+        this.setUniform('cameray', global.world.camera.y);
+    };
+    return DepthFilter;
+}(TextureFilter));
+var Grapple = /** @class */ (function (_super) {
+    __extends(Grapple, _super);
+    function Grapple(player, offx, offy, direction, color) {
+        var _this = _super.call(this, {
+            x: player.x + offx,
+            y: player.y + offy,
             texture: 'grapple',
             layer: 'entities',
             physicsGroup: 'grapple',
-            bounds: new RectBounds(-4, -4, 4, 8),
+            bounds: new RectBounds(-3, -3, 6, 6),
         }) || this;
         _this.SPEED = 800;
-        _this.PULL_SPEED = 200;
         _this.v.x = direction.h * _this.SPEED;
         _this.v.y = direction.v * _this.SPEED;
         _this.angle = M.radToDeg(Direction.angleOf(direction));
+        _this.tint = color;
         _this.direction = direction;
         _this.isPulling = false;
+        _this.broken = false;
+        _this.player = player;
+        _this.offx = offx;
+        _this.offy = offy;
+        _this.color = color;
         return _this;
     }
+    Object.defineProperty(Grapple.prototype, "isPlayers", {
+        get: function () { return !(this.player instanceof Boss); },
+        enumerable: false,
+        configurable: true
+    });
     Grapple.prototype.update = function () {
+        var e_49, _a;
+        if (this.isPulling) {
+            this.v.x = this.v.y = 0;
+        }
         _super.prototype.update.call(this);
+        if (!this.isPulling) {
+            var overlap = this.world.select.overlap(this.bounds, ['walls', 'enemies']);
+            try {
+                for (var overlap_1 = __values(overlap), overlap_1_1 = overlap_1.next(); !overlap_1_1.done; overlap_1_1 = overlap_1.next()) {
+                    var wo = overlap_1_1.value;
+                    if (wo.physicsGroup === 'walls') {
+                        var bounds = wo.bounds.getBoundingBox();
+                        if (this.direction.h > 0)
+                            this.x = bounds.left - 2;
+                        if (this.direction.h < 0)
+                            this.x = bounds.right + 2;
+                        if (this.direction.v > 0)
+                            this.y = bounds.top - 2;
+                        if (this.direction.v < 0)
+                            this.y = bounds.bottom + 2;
+                        this.isPulling = true;
+                    }
+                    if (this.isPlayers && (wo instanceof Bat || wo instanceof Boss)) {
+                        wo.damage(this.direction);
+                        this.broken = true;
+                    }
+                    if (wo instanceof Lava) {
+                        this.broken = true;
+                    }
+                }
+            }
+            catch (e_49_1) { e_49 = { error: e_49_1 }; }
+            finally {
+                try {
+                    if (overlap_1_1 && !overlap_1_1.done && (_a = overlap_1.return)) _a.call(overlap_1);
+                }
+                finally { if (e_49) throw e_49.error; }
+            }
+        }
     };
-    Grapple.prototype.onCollide = function (collision) {
-        _super.prototype.onCollide.call(this, collision);
-        this.isPulling = true;
+    Grapple.prototype.render = function (texture, x, y) {
+        _super.prototype.render.call(this, texture, x, y);
+        var ox = x - this.x + this.player.x + this.offx;
+        var oy = y - this.y + this.player.y + this.offy;
+        Draw.brush.color = this.color;
+        Draw.brush.alpha = 1;
+        Draw.brush.thickness = 1;
+        Draw.line(texture, ox, oy, x, y);
+        Draw.line(texture, ox + 1, oy + 1, x + 1, y + 1);
+    };
+    Grapple.prototype.getVisibleScreenBounds = function () {
+        return undefined;
     };
     return Grapple;
 }(Sprite));
+var Lava = /** @class */ (function (_super) {
+    __extends(Lava, _super);
+    function Lava(tx, ty, tw, th) {
+        return _super.call(this, {
+            x: tx * 16, y: ty * 16,
+            texture: Texture.filledRect(tw * 16, th * 16, 0xFF6A00),
+            effects: { post: { filters: [new Lava.LavaFilter()] } },
+            layer: 'water',
+            physicsGroup: 'walls',
+            bounds: new RectBounds(0, 0, tw * 16, th * 16),
+        }) || this;
+    }
+    return Lava;
+}(Sprite));
+(function (Lava) {
+    var LavaFilter = /** @class */ (function (_super) {
+        __extends(LavaFilter, _super);
+        function LavaFilter() {
+            return _super.call(this, {
+                code: "\n                    float xx = x + (sin(2.0*t+4.0) + 4.0) * cnoise(vec3(y/10.0 - t, 0.0, 0.0));\n                    float yy = y + (sin(2.0*t) + 4.0) * cnoise(vec3(x/10.0, t, 0.0));\n                    outp = getColor(xx, yy);\n                "
+            }) || this;
+        }
+        return LavaFilter;
+    }(TextureFilter));
+    Lava.LavaFilter = LavaFilter;
+})(Lava || (Lava = {}));
 /// <reference path="../lectvs/menu/menu.ts" />
 var IntroMenu = /** @class */ (function (_super) {
     __extends(IntroMenu, _super);
@@ -10706,12 +11483,16 @@ Main.loadConfig({
             // General
             'fullscreen': ['f', 'g'],
             // Game
-            'left': ['ArrowLeft', 'a'],
-            'right': ['ArrowRight', 'd'],
-            'up': ['ArrowUp', 'w'],
-            'down': ['ArrowDown', 's'],
-            'jump': ['z'],
-            'grapple': ['x'],
+            'left': ['ArrowLeft'],
+            'right': ['ArrowRight'],
+            'up': ['ArrowUp'],
+            'down': ['ArrowDown'],
+            'bossleft': ['a'],
+            'bossright': ['d'],
+            'bossup': ['w'],
+            'bossdown': ['s'],
+            'bossjump': ['z'],
+            'bossattack': ['MouseLeft'],
             // Presets
             'game_advanceCutscene': ['MouseLeft', 'e', ' '],
             'game_pause': ['Escape', 'Backspace'],
@@ -10754,11 +11535,11 @@ Main.loadConfig({
                 getStoryEvents: function () { return ({}); },
             },
             dialogBox: function () { return new DialogBox({
-                x: 200, y: 250,
+                x: 80, y: 50,
                 texture: 'dialogbox',
                 dialogFont: Assets.fonts.DELUXE16,
-                textAreaFull: { x: -192, y: -42, width: 384, height: 84 },
-                textAreaPortrait: { x: -192, y: -42, width: 384, height: 84 },
+                textAreaFull: { x: -70, y: -42, width: 140, height: 84 },
+                textAreaPortrait: { x: -70, y: -42, width: 140, height: 84 },
                 portraitPosition: { x: 78, y: 0 },
                 startSound: 'click',
                 speakSound: 'dialogspeak'
@@ -10772,7 +11553,9 @@ Main.loadConfig({
         allPhysicsBounds: false,
         moveCameraWithArrows: true,
         showOverlay: true,
-        overlayFeeds: [],
+        overlayFeeds: [
+            function (world) { return "t: " + Math.floor(world.getWorldMouseX() / 16) + ", " + Math.floor(world.getWorldMouseY() / 16); }
+        ],
         skipRate: 1,
         programmaticInput: false,
         autoplay: true,
@@ -10782,124 +11565,26 @@ Main.loadConfig({
         experiments: {},
     },
 });
-var Player = /** @class */ (function (_super) {
-    __extends(Player, _super);
-    function Player(config) {
-        var _this = _super.call(this, __assign({ bounds: new RectBounds(-5, -10, 10, 10), animations: [
-                Animations.fromTextureList({ name: 'idle', texturePrefix: 'player', textures: [0, 1, 2, 3], frameRate: 12, count: -1 }),
-                Animations.fromTextureList({ name: 'run', texturePrefix: 'player', textures: [5, 6, 7, 8, 9], frameRate: 16, count: -1 }),
-                Animations.fromTextureList({ name: 'jump', texturePrefix: 'player', textures: [10], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'fall', texturePrefix: 'player', textures: [11], frameRate: 8, count: -1 }),
-            ], defaultAnimation: 'idle' }, config)) || this;
-        _this.SPEED = 64;
-        _this.JUMP_SPEED = 200;
-        _this.GRAVITY = 800;
-        _this.behavior = new ControllerBehavior(function () {
-            this.controller.left = Input.isDown('left');
-            this.controller.right = Input.isDown('right');
-            this.controller.up = Input.isDown('up');
-            this.controller.down = Input.isDown('down');
-        });
-        return _this;
+var Mover = /** @class */ (function (_super) {
+    __extends(Mover, _super);
+    function Mover(tx, ty, angle) {
+        return _super.call(this, {
+            x: tx * 16 + 8,
+            y: ty * 16 + 8,
+            texture: 'mover',
+            layer: 'entities',
+            physicsGroup: 'movers',
+            bounds: new RectBounds(-6, -6, 12, 12),
+            v: V.rotated({ x: 0, y: 32 }, M.degToRad(angle)),
+            bounce: 1,
+        }) || this;
     }
-    Object.defineProperty(Player.prototype, "isGrappling", {
-        get: function () { return this.grapple; },
-        enumerable: false,
-        configurable: true
-    });
-    Player.prototype.update = function () {
-        var haxis = (this.controller.left ? -1 : 0) + (this.controller.right ? 1 : 0);
-        // this.v.x = haxis * this.SPEED;
-        // let grounded = this.isGrounded();
-        // if (this.controller.jump && grounded) {
-        //     this.v.y = -this.JUMP_SPEED;
-        // }
-        this.updateGrapple();
-        _super.prototype.update.call(this);
-        if (haxis < 0)
-            this.flipX = true;
-        if (haxis > 0)
-            this.flipX = false;
-        // if (grounded) {
-        //     this.playAnimation(haxis === 0 ? 'idle' : 'run');
-        // } else {
-        //     this.playAnimation(this.v.y < 0 ? 'jump' : 'fall');
-        // }
-        // if (this.controller.jump && grounded) {
-        //     Puff.puff(this.world, this.x, this.y, 5, () => new PIXI.Point(Random.float(-50, 50), Random.float(-20, 0)));
-        // }
-        // if (this.controller.keys.justLeft) {
-        //     Puff.puff(this.world, this.x, this.y, 5, () => {
-        //         let v = Random.inCircle(15);
-        //         v.x += 30;
-        //         v.y += -15;
-        //         return v;
-        //     });
-        // }
-        // if (this.controller.keys.justRight) {
-        //     Puff.puff(this.world, this.x, this.y, 5, () => {
-        //         let v = Random.inCircle(15);
-        //         v.x += -30;
-        //         v.y += -15;
-        //         return v;
-        //     });
-        // }
-    };
-    Player.prototype.updateGrapple = function () {
-        if (this.isGrappling) {
-            if (!this.controller.keys[this.grapple.grappleKey]) {
-                this.grapple.grapple.removeFromWorld();
-                this.grapple = undefined;
-            }
-        }
-        var grappleKey = undefined;
-        if (this.controller.left)
-            grappleKey = 'left';
-        if (this.controller.right)
-            grappleKey = 'right';
-        if (this.controller.up)
-            grappleKey = 'up';
-        if (this.controller.down)
-            grappleKey = 'down';
-        if (!this.isGrappling && grappleKey) {
-            var direction = {
-                'left': Direction2D.LEFT,
-                'right': Direction2D.RIGHT,
-                'up': Direction2D.UP,
-                'down': Direction2D.DOWN
-            }[grappleKey];
-            this.grapple = {
-                grapple: this.addChild(new Grapple(0, -8, direction)),
-                grappleKey: grappleKey
-            };
-        }
-        if (this.isGrappling) {
-            if (this.grapple.grapple.isPulling) {
-                this.v.x = this.grapple.grapple.direction.h * this.grapple.grapple.PULL_SPEED;
-                this.v.y = this.grapple.grapple.direction.v * this.grapple.grapple.PULL_SPEED;
-            }
-            else {
-                this.v.x = 0;
-                this.v.y = 0;
-            }
-            this.gravity.y = 0;
-        }
-        else {
-            this.gravity.y = this.GRAVITY;
-        }
-    };
-    Player.prototype.isGrounded = function () {
-        this.bounds.y++;
-        var ground = this.world.select.overlap(this.bounds, ['walls']);
-        this.bounds.y--;
-        return !_.isEmpty(ground);
-    };
-    return Player;
+    return Mover;
 }(Sprite));
 var Puff = /** @class */ (function (_super) {
     __extends(Puff, _super);
     function Puff(scale, config) {
-        var _this = _super.call(this, __assign({ texture: AnchoredTexture.fromBaseTexture(Texture.filledCircle(24, 0xFFFFFF), 0.55, 0.55), scaleX: scale, scaleY: scale, life: 0.5 }, config)) || this;
+        var _this = _super.call(this, __assign({ texture: AnchoredTexture.fromBaseTexture(Texture.filledCircle(24, 0xFFFFFF), 0.55, 0.55), scaleX: scale, scaleY: scale, layer: 'puffs', life: 0.5 }, config)) || this;
         _this.scale = scale;
         return _this;
     }
@@ -10916,47 +11601,169 @@ var Puff = /** @class */ (function (_super) {
         }
     }
     Puff.puff = puff;
+    function puffDirection(world, x, y, count, direction, speed, spread) {
+        puff(world, x, y, count, function () {
+            var v = V.withMagnitude({ x: direction.h, y: direction.v }, speed);
+            var spreadv = Random.inCircle(spread);
+            v.x += spreadv.x;
+            v.y += spreadv.y;
+            return v;
+        });
+    }
+    Puff.puffDirection = puffDirection;
 })(Puff || (Puff = {}));
+var Spikes = /** @class */ (function (_super) {
+    __extends(Spikes, _super);
+    function Spikes(tx, ty, angle) {
+        return _super.call(this, {
+            x: tx * 16 + 8,
+            y: ty * 16 + 8,
+            texture: 'spikes',
+            angle: angle,
+            layer: 'entities',
+            physicsGroup: 'walls',
+            bounds: new RectBounds(-7, -7, 14, 14),
+        }) || this;
+    }
+    return Spikes;
+}(Sprite));
+var BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(100, 10, 10);
 function getStages() {
     return {
         'game': function () {
+            var e_50, _a;
             var world = new World({
                 width: 192, height: 272,
                 backgroundColor: 0x000000,
                 entryPoints: { 'main': { x: 0, y: 0 } },
                 layers: [
                     { name: 'bg' },
-                    { name: 'walls', effects: { post: { filters: [new WorldFilter()] } } },
                     { name: 'entities' },
+                    { name: 'player' },
+                    { name: 'puffs' },
+                    { name: 'water' },
+                    { name: 'walls', effects: { post: { filters: [new WorldFilter(), new DepthFilter()] } } },
                     { name: 'fg' },
                 ],
                 physicsGroups: {
                     'player': {},
                     'grapple': {},
                     'walls': { immovable: true },
+                    'thwomps': {},
+                    'movers': {},
+                    'enemies': {},
+                    'cannons': { immovable: true },
+                    'cannonballs': {},
+                    'checkpoints': {},
+                    'water': {},
                 },
                 collisions: [
                     { move: 'player', from: 'walls' },
-                    { move: 'grapple', from: 'walls' },
+                    { move: 'thwomps', from: 'walls' },
+                    { move: 'thwomps', from: 'thwomps' },
+                    { move: 'movers', from: 'walls', momentumTransfer: 'elastic' },
+                    { move: 'player', from: 'thwomps' },
+                    { move: 'player', from: 'movers' },
+                    { move: 'enemies', from: 'walls' },
+                    { move: 'player', from: 'enemies' },
+                    { move: 'cannonballs', from: 'walls' },
+                    { move: 'player', from: 'cannons' },
+                    { move: 'player', from: 'cannonballs' },
                 ],
                 collisionIterations: 4,
                 useRaycastDisplacementThreshold: 4,
             });
+            extractEntities(AssetCache.tilemaps['world'].layers[0]);
             var tiles = world.addWorldObject(new Tilemap({
                 x: -16, y: -16,
                 tilemap: 'world',
                 layer: 'walls',
                 physicsGroup: 'walls',
             }));
-            var player = world.addWorldObject(new Player({
-                x: global.gameWidth / 2, y: global.gameHeight / 2,
-                layer: 'entities',
-                physicsGroup: 'player',
-            }));
+            try {
+                for (var worldEntities_1 = __values(worldEntities), worldEntities_1_1 = worldEntities_1.next(); !worldEntities_1_1.done; worldEntities_1_1 = worldEntities_1.next()) {
+                    var entity = worldEntities_1_1.value;
+                    if (entity.type === 'spikes') {
+                        world.addWorldObject(new Spikes(entity.tx, entity.ty, entity.angle));
+                    }
+                    else if (entity.type === 'thwomp') {
+                        world.addWorldObject(new Thwomp(entity.tx, entity.ty));
+                    }
+                    else if (entity.type === 'checkpoint') {
+                        world.addWorldObject(new Checkpoint(entity.tx, entity.ty, entity.angle));
+                    }
+                    else if (entity.type === 'bat') {
+                        world.addWorldObject(new Bat(entity.tx, entity.ty));
+                    }
+                    else if (entity.type === 'mover') {
+                        world.addWorldObject(new Mover(entity.tx, entity.ty, entity.angle));
+                    }
+                    else if (entity.type === 'cannon') {
+                        world.addWorldObject(new Cannon(entity.tx, entity.ty, entity.angle));
+                    }
+                    else if (entity.type === 'boss') {
+                        world.addWorldObject(new Boss(entity.tx, entity.ty));
+                    }
+                }
+            }
+            catch (e_50_1) { e_50 = { error: e_50_1 }; }
+            finally {
+                try {
+                    if (worldEntities_1_1 && !worldEntities_1_1.done && (_a = worldEntities_1.return)) _a.call(worldEntities_1);
+                }
+                finally { if (e_50) throw e_50.error; }
+            }
+            world.addWorldObject(new Water(0, 61, 10, 39.5));
+            world.addWorldObjects([
+                new Lava(2.5, 124.25, 5, 2.5),
+                new Lava(2.5, 134.25, 5, 2.5),
+                new Lava(8.25, 144.25, 2, 6),
+                new Lava(-0.25, 148.25, 2, 6),
+            ]);
+            Checkpoints.init(world.select.typeAll(Checkpoint));
+            var player = world.addWorldObject(new Player(3, 9));
+            player.name = 'player';
+            var currentCheckpoint = world.select.name(Checkpoints.current, false);
+            if (currentCheckpoint) {
+                player.x = currentCheckpoint.x;
+                player.y = currentCheckpoint.y + 7;
+            }
+            world.camera.bounds = {
+                left: 0, right: 160,
+                top: -Infinity, bottom: tiles.height - 32
+            };
+            world.camera.setModeFollow(player, 0, -8);
+            world.camera.setMovementSnap();
+            world.camera.snapPosition();
             return world;
         },
     };
 }
+var worldEntities;
+function extractEntities(layer) {
+    if (worldEntities)
+        return;
+    var indexToType = {
+        2: 'spikes',
+        3: 'thwomp',
+        4: 'checkpoint',
+        5: 'bat',
+        6: 'mover',
+        7: 'cannon',
+        8: 'boss',
+    };
+    worldEntities = [];
+    for (var ty = 0; ty < layer.length; ty++) {
+        for (var tx = 0; tx < layer[ty].length; tx++) {
+            var index = layer[ty][tx].index;
+            if (index > 1) {
+                worldEntities.push({ type: indexToType[index], tx: tx - 1, ty: ty - 1, angle: layer[ty][tx].angle });
+                layer[ty][tx].index = -1;
+            }
+        }
+    }
+}
+var seenBossDialog = false;
 function getStoryboard() {
     return {
         'start': {
@@ -10965,16 +11772,227 @@ function getStoryboard() {
         },
         'gameplay': {
             type: 'gameplay',
+            transitions: [
+                { condition: function () { return global.world.select.type(Boss).dead; }, toNode: 'win' },
+                { condition: function () { return global.world.select.name('player').dead; }, toNode: 'death' },
+                { condition: function () { return !global.world.select.type(Boss).startedFighting
+                        && global.world.select.name('player').y > 3618; }, toNode: 'introduce_boss' },
+            ]
+        },
+        'introduce_boss': {
+            type: 'cutscene',
+            script: function () {
+                var player;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            global.world.addWorldObject(new Sprite({
+                                x: 7 * 16, y: 222 * 16,
+                                texture: Texture.filledRect(48, 32, 0x000000),
+                                layer: 'walls',
+                                physicsGroup: 'walls',
+                                bounds: new RectBounds(0, 0, 48, 32),
+                            }));
+                            Puff.puffDirection(global.world, 7 * 16 + 24, 222 * 16 + 32, 10, Direction2D.DOWN, 50, 50);
+                            player = global.world.select.name('player');
+                            player.flipX = true;
+                            if (!!seenBossDialog) return [3 /*break*/, 9];
+                            return [4 /*yield*/, S.wait(2)];
+                        case 1:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("[g]Well, well. You've finally arrived.[/g]")];
+                        case 2:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("You! You're--!")];
+                        case 3:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("[g]You didn't think you'd get through this entire thing with no lore, did you?[/g]")];
+                        case 4:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("But, who are you?")];
+                        case 5:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("[g]I'm you, but digitized.[/g]")];
+                        case 6:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialogAdd(" [g]It's symbolic.[/g]")];
+                        case 7:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("[g]Anyways, I'm the boss, so let's just fight, okay?[/g]")];
+                        case 8:
+                            _a.sent();
+                            seenBossDialog = true;
+                            _a.label = 9;
+                        case 9:
+                            global.world.select.type(Boss).startFighting();
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [
+                { toNode: 'gameplay' }
+            ]
+        },
+        'win': {
+            type: 'cutscene',
+            script: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, S.wait(2)];
+                        case 1:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("[g]No! Defeated so easily?![/g]")];
+                        case 2:
+                            _a.sent();
+                            return [4 /*yield*/, S.dialog("[g]Maybe I'll be harder in the post-jam versiooo\nooooooooooooooooo\nooooooooooooooooo[/g]")];
+                        case 3:
+                            _a.sent();
+                            return [4 /*yield*/, S.simul(S.shake(10, 5), S.fadeOut(5, 0xFFFFFF))];
+                        case 4:
+                            _a.sent();
+                            global.game.loadMainMenu();
+                            return [2 /*return*/];
+                    }
+                });
+            },
             transitions: []
         },
+        'death': {
+            type: 'cutscene',
+            script: function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, S.shake(5, 0.3)];
+                        case 1:
+                            _a.sent();
+                            global.theater.loadStage('game');
+                            return [2 /*return*/];
+                    }
+                });
+            },
+            transitions: [
+                { toNode: 'gameplay' }
+            ]
+        }
     };
 }
+var Thwomp = /** @class */ (function (_super) {
+    __extends(Thwomp, _super);
+    function Thwomp(tx, ty) {
+        var _this = _super.call(this, {
+            x: tx * 16 + 8,
+            y: ty * 16 + 8,
+            animations: [
+                Animations.fromTextureList({ name: 'sleep', texturePrefix: 'thwomp', textures: ['sleep'], frameRate: 1 }),
+                Animations.fromTextureList({ name: 'awake', texturePrefix: 'thwomp', textures: ['awake'], frameRate: 1 }),
+                Animations.fromTextureList({ name: 'active', texturePrefix: 'thwomp', textures: ['active'], frameRate: 1 }),
+            ],
+            defaultAnimation: 'awake',
+            layer: 'entities',
+            physicsGroup: 'thwomps',
+            bounds: new RectBounds(-8, -8, 16, 16),
+        }) || this;
+        _this.SLEEP_TIME = 0.7;
+        _this.GRAVITY = 1000;
+        _this.MAX_SPEED = 300;
+        _this.stateMachine.addState('awake', {
+            callback: function () { return _this.playAnimation('awake'); },
+            transitions: [
+                { toState: 'active', condition: function () { return !V.isZero(_this.controller.moveDirection); } },
+            ]
+        });
+        _this.stateMachine.addState('active', {
+            callback: function () {
+                _this.playAnimation('active');
+                _this.gravity.x = _this.controller.moveDirection.x * _this.GRAVITY;
+                _this.gravity.y = _this.controller.moveDirection.y * _this.GRAVITY;
+            }
+        });
+        _this.stateMachine.addState('sleep', {
+            callback: function () {
+                _this.playAnimation('sleep');
+                _this.gravity.x = 0;
+                _this.gravity.y = 0;
+            },
+            script: S.wait(_this.SLEEP_TIME),
+            transitions: [{ toState: 'awake' }]
+        });
+        _this.setState('awake');
+        _this.behavior = new Thwomp.ThwompBehavior(_this);
+        return _this;
+    }
+    Thwomp.prototype.update = function () {
+        V.clampMagnitude(this.v, this.MAX_SPEED);
+        _super.prototype.update.call(this);
+    };
+    Thwomp.prototype.onCollide = function (collision) {
+        _super.prototype.onCollide.call(this, collision);
+        var gdir = V.normalized(this.gravity);
+        Puff.puff(this.world, this.x + gdir.x * 8, this.y + gdir.y * 8, 10, function () { return Random.inCircle(50); });
+        this.setState('sleep');
+    };
+    return Thwomp;
+}(Sprite));
+(function (Thwomp) {
+    var ThwompBehavior = /** @class */ (function (_super) {
+        __extends(ThwompBehavior, _super);
+        function ThwompBehavior(thwomp) {
+            return _super.call(this, function () {
+                var e_51, _a;
+                try {
+                    for (var _b = __values([Direction2D.LEFT, Direction2D.RIGHT, Direction2D.UP, Direction2D.DOWN]), _c = _b.next(); !_c.done; _c = _b.next()) {
+                        var direction = _c.value;
+                        var result = thwomp.world.select.raycast(thwomp.x, thwomp.y, direction.h, direction.v, ['player', 'walls']);
+                        if (!_.isEmpty(result) && result[0].obj instanceof Player) {
+                            this.controller.moveDirection = { x: direction.h, y: direction.v };
+                        }
+                    }
+                }
+                catch (e_51_1) { e_51 = { error: e_51_1 }; }
+                finally {
+                    try {
+                        if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                    }
+                    finally { if (e_51) throw e_51.error; }
+                }
+            }) || this;
+        }
+        return ThwompBehavior;
+    }(ControllerBehavior));
+    Thwomp.ThwompBehavior = ThwompBehavior;
+})(Thwomp || (Thwomp = {}));
+var Water = /** @class */ (function (_super) {
+    __extends(Water, _super);
+    function Water(tx, ty, tw, th) {
+        return _super.call(this, {
+            x: tx * 16, y: ty * 16,
+            texture: Texture.filledRect(tw * 16, th * 16, 0x00C6FF),
+            alpha: 0.6,
+            effects: { post: { filters: [new Water.WaterFilter()] } },
+            layer: 'water',
+            physicsGroup: 'water',
+            bounds: new RectBounds(0, 0, tw * 16, th * 16),
+        }) || this;
+    }
+    return Water;
+}(Sprite));
+(function (Water) {
+    var WaterFilter = /** @class */ (function (_super) {
+        __extends(WaterFilter, _super);
+        function WaterFilter() {
+            return _super.call(this, {
+                code: "\n                    outp = getColor(x, y + (sin(2.0*t) + 4.0) * cnoise(vec3(x/10.0, t, 0.0)));\n                "
+            }) || this;
+        }
+        return WaterFilter;
+    }(TextureFilter));
+    Water.WaterFilter = WaterFilter;
+})(Water || (Water = {}));
 var WorldFilter = /** @class */ (function (_super) {
     __extends(WorldFilter, _super);
     function WorldFilter() {
         return _super.call(this, {
-            uniforms: [],
-            code: "\n                if (inp.a == 1.0 && (\n                       getColor(x-1.0, y).a == 0.0\n                    || getColor(x+1.0, y).a == 0.0\n                    || getColor(x, y-1.0).a == 0.0\n                    || getColor(x, y+1.0).a == 0.0\n                    || getColor(x+1.0, y+1.0).a == 0.0\n                    || getColor(x+1.0, y-1.0).a == 0.0\n                    || getColor(x-1.0, y+1.0).a == 0.0\n                    || getColor(x-1.0, y-1.0).a == 0.0\n                    )) {\n                    outp = vec4(1.0, 1.0, 1.0, 1.0);\n                }\n\n                float amount = 1.0 / (1.0 + exp(-(y - 100.0)/20.0)) + (sin(5.0*y) + 1.0) / 4.0;\n                if (amount < 0.5) {\n                    outp.a = 0.0;\n                }\n            ",
+            code: "\n                if (inp.a == 1.0 && (\n                       getColor(x-1.0, y).a == 0.0\n                    || getColor(x+1.0, y).a == 0.0\n                    || getColor(x, y-1.0).a == 0.0\n                    || getColor(x, y+1.0).a == 0.0\n                    || getColor(x+1.0, y+1.0).a == 0.0\n                    || getColor(x+1.0, y-1.0).a == 0.0\n                    || getColor(x-1.0, y+1.0).a == 0.0\n                    || getColor(x-1.0, y-1.0).a == 0.0\n                    )) {\n                    outp = vec4(1.0, 1.0, 1.0, 1.0);\n                }\n            ",
         }) || this;
     }
     return WorldFilter;

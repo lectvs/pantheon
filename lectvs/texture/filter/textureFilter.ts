@@ -98,6 +98,10 @@ class TextureFilter {
         }
     }
 
+    update() {
+        
+    }
+
     updateTime(delta: number) {
         this.setUniform('t', this.getUniform('t') + delta);
     }

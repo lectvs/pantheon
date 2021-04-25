@@ -13,6 +13,20 @@ namespace Assets {
         'grapple': { anchor: Anchor.CENTER },
 
         'world': { anchor: Anchor.CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
+        'checkpoint': { anchor: Anchor.CENTER, frames: {
+            'checkpoint_low': { rect: rect(0, 0, 16, 16) },
+            'checkpoint_high': { rect: rect(16, 0, 16, 16) },
+        }},
+        'spikes': { anchor: Anchor.CENTER },
+        'thwomp': { anchor: Anchor.CENTER, frames: {
+            'thwomp_sleep': { rect: rect(0, 0, 16, 16) },
+            'thwomp_awake': { rect: rect(16, 0, 16, 16) },
+            'thwomp_active': { rect: rect(32, 0, 16, 16) },
+        }},
+        'bat': { anchor: Anchor.CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
+        'mover': { anchor: Anchor.CENTER },
+        'cannon': { anchor: Anchor.CENTER },
+        'cannonball': { anchor: Anchor.CENTER },
 
         // UI
         'dialogbox': { anchor: Anchor.CENTER },
@@ -58,5 +72,6 @@ namespace Assets {
     }
 
     export const spriteTextTags: Dict<SpriteText.TagFunction> = {
+        'g': (args: string[]) => ({ color: 0x00FF00 }),
     }
 }

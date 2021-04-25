@@ -1,3 +1,4 @@
+const BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(100, 10, 10);
 
 function getStages(): Dict<World.Factory> { return {
 
@@ -8,22 +9,43 @@ function getStages(): Dict<World.Factory> { return {
             entryPoints: { 'main': { x: 0, y: 0 } },
             layers: [
                 { name: 'bg' },
-                { name: 'walls', effects: { post: { filters: [new WorldFilter()] } } },
                 { name: 'entities' },
+                { name: 'player' },
+                { name: 'puffs' },
+                { name: 'water' },
+                { name: 'walls', effects: { post: { filters: [new WorldFilter(), new DepthFilter()] }} },
                 { name: 'fg' },
             ],
             physicsGroups: {
                 'player': {},
                 'grapple': {},
                 'walls': { immovable: true },
+                'thwomps': {},
+                'movers': {},
+                'enemies': {},
+                'cannons': { immovable: true },
+                'cannonballs': {},
+                'checkpoints': {},
+                'water': {},
             },
             collisions: [
                 { move: 'player', from: 'walls' },
-                { move: 'grapple', from: 'walls' },
+                { move: 'thwomps', from: 'walls' },
+                { move: 'thwomps', from: 'thwomps' },
+                { move: 'movers', from: 'walls', momentumTransfer: 'elastic' },
+                { move: 'player', from: 'thwomps' },
+                { move: 'player', from: 'movers' },
+                { move: 'enemies', from: 'walls' },
+                { move: 'player', from: 'enemies' },
+                { move: 'cannonballs', from: 'walls' },
+                { move: 'player', from: 'cannons' },
+                { move: 'player', from: 'cannonballs' },
             ],
             collisionIterations: 4,
             useRaycastDisplacementThreshold: 4,
         });
+
+        extractEntities(AssetCache.tilemaps['world'].layers[0]);
 
         let tiles = world.addWorldObject(new Tilemap({
             x: -16, y: -16,
@@ -32,12 +54,77 @@ function getStages(): Dict<World.Factory> { return {
             physicsGroup: 'walls',
         }));
 
-        let player = world.addWorldObject(new Player({
-            x: global.gameWidth/2, y: global.gameHeight/2,
-            layer: 'entities',
-            physicsGroup: 'player',
-        }));
+        for (let entity of worldEntities) {
+            if (entity.type === 'spikes') {
+                world.addWorldObject(new Spikes(entity.tx, entity.ty, entity.angle));
+            } else if (entity.type === 'thwomp') {
+                world.addWorldObject(new Thwomp(entity.tx, entity.ty));
+            } else if (entity.type === 'checkpoint') {
+                world.addWorldObject(new Checkpoint(entity.tx, entity.ty, entity.angle));
+            } else if (entity.type === 'bat') {
+                world.addWorldObject(new Bat(entity.tx, entity.ty));
+            } else if (entity.type === 'mover') {
+                world.addWorldObject(new Mover(entity.tx, entity.ty, entity.angle));
+            } else if (entity.type === 'cannon') {
+                world.addWorldObject(new Cannon(entity.tx, entity.ty, entity.angle));
+            } else if (entity.type === 'boss') {
+                world.addWorldObject(new Boss(entity.tx, entity.ty));
+            }
+        }
+
+        world.addWorldObject(new Water(0, 61, 10, 39.5));
+
+        world.addWorldObjects([
+            new Lava(2.5, 124.25, 5, 2.5),
+            new Lava(2.5, 134.25, 5, 2.5),
+            new Lava(8.25, 144.25, 2, 6),
+            new Lava(-0.25, 148.25, 2, 6),
+        ]);
+
+        Checkpoints.init(world.select.typeAll(Checkpoint));
+
+        let player = world.addWorldObject(new Player(3, 9));
+        player.name = 'player';
+
+        let currentCheckpoint = world.select.name(Checkpoints.current, false);
+        if (currentCheckpoint) {
+            player.x = currentCheckpoint.x;
+            player.y = currentCheckpoint.y + 7;
+        }
+
+        world.camera.bounds = {
+            left: 0, right: 160,
+            top: -Infinity, bottom: tiles.height - 32
+        }
+        world.camera.setModeFollow(player, 0, -8);
+        world.camera.setMovementSnap();
+        world.camera.snapPosition();
 
         return world;
     },
 }}
+
+var worldEntities: { type: string, tx: number, ty: number, angle: number }[];
+
+function extractEntities(layer: Tilemap.TilemapLayer) {
+    if (worldEntities) return;
+    let indexToType = {
+        2: 'spikes',
+        3: 'thwomp',
+        4: 'checkpoint',
+        5: 'bat',
+        6: 'mover',
+        7: 'cannon',
+        8: 'boss',
+    };
+    worldEntities = [];
+    for (let ty = 0; ty < layer.length; ty++) {
+        for (let tx = 0; tx < layer[ty].length; tx++) {
+            let index = layer[ty][tx].index;
+            if (index > 1) {
+                worldEntities.push({ type: indexToType[index], tx: tx-1, ty: ty-1, angle: layer[ty][tx].angle });
+                layer[ty][tx].index = -1;
+            }
+        }
+    }
+}

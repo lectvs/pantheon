@@ -210,6 +210,7 @@ class BasicTexture implements Texture {
 
     private setRenderTextureSpriteFilters(destTexture: Texture, properties: Texture.Properties) {
         let allFilters = this.getAllTextureFilters(properties);
+        allFilters.forEach(filter => filter.update());
         this.renderTextureSprite.filters = allFilters.map(filter => filter.borrowPixiFilter());
         this.renderTextureSprite.filterArea = new PIXI.Rectangle(0, 0, destTexture.width, destTexture.height);
         return allFilters;

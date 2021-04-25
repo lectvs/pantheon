@@ -25,12 +25,17 @@ Main.loadConfig({
             'fullscreen':                ['f', 'g'],
 
             // Game
-            'left':                      ['ArrowLeft', 'a'],
-            'right':                     ['ArrowRight', 'd'],
-            'up':                        ['ArrowUp', 'w'],
-            'down':                      ['ArrowDown', 's'],
-            'jump':                      ['z'],
-            'grapple':                   ['x'],
+            'left':                      ['ArrowLeft'],
+            'right':                     ['ArrowRight'],
+            'up':                        ['ArrowUp'],
+            'down':                      ['ArrowDown'],
+
+            'bossleft':                  ['a'],
+            'bossright':                 ['d'],
+            'bossup':                    ['w'],
+            'bossdown':                  ['s'],
+            'bossjump':                  ['z'],
+            'bossattack':                ['MouseLeft'],
 
             // Presets
             'game_advanceCutscene':      ['MouseLeft', 'e', ' '],
@@ -77,11 +82,11 @@ Main.loadConfig({
                 getStoryEvents: () => ({}),
             },
             dialogBox: () => new DialogBox({
-                x: 200, y: 250,
+                x: 80, y: 50,
                 texture: 'dialogbox',
                 dialogFont: Assets.fonts.DELUXE16,
-                textAreaFull: { x: -192, y: -42, width: 384, height: 84 },
-                textAreaPortrait: { x: -192, y: -42, width: 384, height: 84 },
+                textAreaFull: { x: -70, y: -42, width: 140, height: 84 },
+                textAreaPortrait: { x: -70, y: -42, width: 140, height: 84 },
                 portraitPosition: { x: 78, y: 0 },
                 startSound: 'click',
                 speakSound: 'dialogspeak'
@@ -96,7 +101,9 @@ Main.loadConfig({
         allPhysicsBounds: false,
         moveCameraWithArrows: true,
         showOverlay: true,
-        overlayFeeds: [],
+        overlayFeeds: [
+            (world: World) => `t: ${Math.floor(world.getWorldMouseX()/16)}, ${Math.floor(world.getWorldMouseY()/16)}`
+        ],
         skipRate: 1,
         programmaticInput: false,
         autoplay: true,
