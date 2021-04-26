@@ -55,9 +55,11 @@ class Thwomp extends Sprite {
 
     onCollide(collision: Physics.CollisionInfo) {
         super.onCollide(collision);
-        let gdir = V.normalized(this.gravity);
-        Puff.puff(this.world, this.x + gdir.x*8, this.y + gdir.y*8, 10, () => Random.inCircle(50));
-        this.world.playSound('thwomphit')
+        if (this.state !== 'sleep') {
+            let gdir = V.normalized(this.gravity);
+            Puff.puff(this.world, this.x + gdir.x*8, this.y + gdir.y*8, 10, () => Random.inCircle(50));
+            this.world.playSound('thwomphit');
+        }
         this.setState('sleep');
     }
 }

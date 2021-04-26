@@ -32,6 +32,12 @@ function getStoryboard(): Storyboard { return {
 
             let oldMusic = music;
             global.world.runScript(S.doOverTime(2, t => oldMusic.volume = 1-t));
+            global.world.runScript(S.chain(
+                S.waitUntil(() => player.y >= 3760),
+                S.call(() => {
+                    global.world.camera.bounds.top = global.world.camera.bounds.bottom - global.world.camera.height;
+                })
+            ));
 
             if (!seenBossDialog) {
                 yield S.wait(2);

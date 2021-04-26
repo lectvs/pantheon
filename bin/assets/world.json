@@ -3291,7 +3291,7 @@
                     "flipX": false,
                     "index": 410,
                     "rot": 0,
-                    "tile": 1
+                    "tile": 2
                 },
                 {
                     "x": 3,
@@ -3387,7 +3387,7 @@
                     "flipX": false,
                     "index": 422,
                     "rot": 0,
-                    "tile": 2
+                    "tile": 1
                 },
                 {
                     "x": 3,
@@ -3483,7 +3483,7 @@
                     "flipX": false,
                     "index": 434,
                     "rot": 0,
-                    "tile": 1
+                    "tile": 17
                 },
                 {
                     "x": 3,
@@ -3579,7 +3579,7 @@
                     "flipX": false,
                     "index": 446,
                     "rot": 0,
-                    "tile": 17
+                    "tile": -1
                 },
                 {
                     "x": 3,

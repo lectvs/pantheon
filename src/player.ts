@@ -99,7 +99,10 @@ class Player extends Sprite {
         if (this.controller.left || this.controller.keys.runLeft) this.flipX = true;
         if (this.controller.right || this.controller.keys.runRight) this.flipX = false;
 
-
+        // Patch to prevent some softlocks
+        if (this.x < -16 || this.x >= 192 || this.y >= this.world.select.type(Tilemap).height + 32) {
+            this.dead = true;
+        }
     }
 
     postUpdate() {

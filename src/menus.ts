@@ -38,6 +38,7 @@ class MainMenu extends Menu {
             text: "play",
             onClick: () => {
                 music = undefined;
+                seenBossDialog = false;
                 if (!Debug.DEBUG) Checkpoints.current = undefined;
                 menuSystem.game.playSound('click');
                 menuSystem.game.startGame();
@@ -244,7 +245,7 @@ class ControlsMenu extends Menu {
         });
 
         this.backgroundColor = 0x000000;
-        this.volume = 0;
+        //this.volume = 0;
 
         this.addWorldObject(new Sprite({
             x: 0, y: 0,

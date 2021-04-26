@@ -10669,6 +10669,10 @@ var Player = /** @class */ (function (_super) {
             this.flipX = true;
         if (this.controller.right || this.controller.keys.runRight)
             this.flipX = false;
+        // Patch to prevent some softlocks
+        if (this.x < -16 || this.x >= 192 || this.y >= this.world.select.type(Tilemap).height + 32) {
+            this.dead = true;
+        }
     };
     Player.prototype.postUpdate = function () {
         _super.prototype.postUpdate.call(this);
@@ -11267,7 +11271,7 @@ var Checkpoints;
         }
     }
     Checkpoints.init = init;
-    Checkpoints.current = 'checkpoint_4';
+    Checkpoints.current = 'checkpoint_12';
 })(Checkpoints || (Checkpoints = {}));
 var DepthFilter = /** @class */ (function (_super) {
     __extends(DepthFilter, _super);
@@ -11450,6 +11454,7 @@ var MainMenu = /** @class */ (function (_super) {
             text: "play",
             onClick: function () {
                 music = undefined;
+                seenBossDialog = false;
                 if (!Debug.DEBUG)
                     Checkpoints.current = undefined;
                 menuSystem.game.playSound('click');
@@ -11639,7 +11644,7 @@ var ControlsMenu = /** @class */ (function (_super) {
             useRaycastDisplacementThreshold: 4
         }) || this;
         _this.backgroundColor = 0x000000;
-        _this.volume = 0;
+        //this.volume = 0;
         _this.addWorldObject(new Sprite({
             x: 0, y: 0,
             texture: Texture.filledRect(16, global.gameHeight, 0x000000),
@@ -12073,6 +12078,9 @@ function getStoryboard() {
                             player.flipX = true;
                             oldMusic = music;
                             global.world.runScript(S.doOverTime(2, function (t) { return oldMusic.volume = 1 - t; }));
+                            global.world.runScript(S.chain(S.waitUntil(function () { return player.y >= 3760; }), S.call(function () {
+                                global.world.camera.bounds.top = global.world.camera.bounds.bottom - global.world.camera.height;
+                            })));
                             if (!!seenBossDialog) return [3 /*break*/, 11];
                             return [4 /*yield*/, S.wait(2)];
                         case 1:
@@ -12220,9 +12228,11 @@ var Thwomp = /** @class */ (function (_super) {
     };
     Thwomp.prototype.onCollide = function (collision) {
         _super.prototype.onCollide.call(this, collision);
-        var gdir = V.normalized(this.gravity);
-        Puff.puff(this.world, this.x + gdir.x * 8, this.y + gdir.y * 8, 10, function () { return Random.inCircle(50); });
-        this.world.playSound('thwomphit');
+        if (this.state !== 'sleep') {
+            var gdir = V.normalized(this.gravity);
+            Puff.puff(this.world, this.x + gdir.x * 8, this.y + gdir.y * 8, 10, function () { return Random.inCircle(50); });
+            this.world.playSound('thwomphit');
+        }
         this.setState('sleep');
     };
     return Thwomp;
