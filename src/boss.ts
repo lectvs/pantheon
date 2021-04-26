@@ -6,7 +6,7 @@ class Boss extends Player {
 
     get startedFighting() { return this.dead || this.behavior instanceof Boss.BossBehavior; }
 
-    health: number = 4;
+    health: number = 5;
     
     private glitchFilter: Boss.BossGlitchFilter;
 
@@ -37,10 +37,10 @@ class Boss extends Player {
     }
 
     shoot() {
-        console.log('shoot')
         let dir = V.normalized(this.controller.aimDirection);
         let off = 10;
         this.world.addWorldObject(new Cannonball(this.x + dir.x*off, this.y + dir.y*off, V.withMagnitude(dir, this.SHOT_SPEED)));
+        this.world.playSound('cannonshoot');
         this.v = V.withMagnitude(V.scaled(dir, -1), this.KNOCKBACK_SPEED);
     }
 
@@ -58,18 +58,32 @@ class Boss extends Player {
         }
 
         let boss = this;
-        this.runScript(function*() {
-            boss.glitchFilter.amount = 1;
-            yield S.wait(0.5);
-            if (!boss.dead) boss.glitchFilter.amount = 0;
-        })
+        if (this.dead) {
+            this.runScript(function*() {
+                boss.playGlitchSound(0.5);
+                boss.glitchFilter.amount = 1;
+                yield S.wait(0.5);
+
+                while (true) {
+                    boss.playGlitchSound(Random.float(0.1, 0.5));
+                    yield S.wait(Random.float(0.2, 0.35));
+                }
+            })
+        } else {
+            this.runScript(function*() {
+                boss.playGlitchSound(0.5);
+                boss.glitchFilter.amount = 1;
+                yield S.wait(0.5);
+                boss.glitchFilter.amount = 0;
+            })
+        }
     }
 }
 
 namespace Boss {
     export class BossBehavior extends ActionBehavior {
         constructor(boss: Boss) {
-            super('grappleright', 1);
+            super('start', 0);
             let controller = this.controller;
 
             let nextAction = () => {
@@ -80,9 +94,31 @@ namespace Boss {
                 }
             };
 
-            this.addAction('interrupt', {
+            this.addAction('start', {
                 interrupt: 'interrupt',
-                wait: 1,
+                wait: 0.5,
+                nextAction: 'grappleright'
+            });
+
+            this.addAction('interrupt', {
+                script: function*() {
+                    controller.up = true;
+                    yield S.wait(1);
+                    controller.up = false;
+                    yield S.wait(0.5);
+
+                    if (boss.x < boss.world.width/2) {
+                        controller.right = true;
+                        yield S.wait(0.3);
+                        controller.right = false;
+                    } else {
+                        controller.left = true;
+                        yield S.wait(0.3);
+                        controller.left = false;
+                    }
+                },
+                interrupt: 'interrupt',
+                wait: 0.5,
                 nextAction: nextAction
             })
 
@@ -99,6 +135,7 @@ namespace Boss {
 
             this.addAction('grappleright', {
                 script: function*() {
+                    yield S.wait(0.5);
                     controller.right = true;
                     yield S.wait(0.7);
                     controller.right = false;

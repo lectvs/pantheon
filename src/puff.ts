@@ -22,18 +22,29 @@ class Puff extends Sprite {
 
 namespace Puff {
     export function puff(world: World, x: number, y: number, count: number, v: Factory<Pt>) {
+        let result: Puff[] = [];
         for (let i = 0; i < count; i++) {
-            world.addWorldObject(new Puff(0.1, { x, y, v: v() }))
+            result.push(world.addWorldObject(new Puff(0.1, { x, y, v: v() })));
         }
+        return result;
     }
 
     export function puffDirection(world: World, x: number, y: number, count: number, direction: Direction2D, speed: number, spread: number) {
-        puff(world, x, y, count, () => {
+        return puff(world, x, y, count, () => {
             let v = V.withMagnitude({ x: direction.h, y: direction.v }, speed);
             let spreadv = Random.inCircle(spread);
             v.x += spreadv.x;
             v.y += spreadv.y;
             return v;
         });
+    }
+
+    export function puffWater(world: World, x: number, y: number, direction: Direction2D) {
+        let puffs = puffDirection(world, x, y, 20, direction, 50, 50);
+        for (let puff of puffs) {
+            puff.tint = 0x00C6FF;
+            puff.alpha = 0.6;
+        }
+        return puffs;
     }
 }

@@ -5,10 +5,9 @@ class Grapple extends Sprite {
     isPulling: boolean;
     broken: boolean;
 
-    private player: Player;
+    private player: Pt;
     private offx: number;
     private offy: number;
-    private color: number;
 
     get isPlayers() { return !(this.player instanceof Boss); }
 
@@ -35,7 +34,6 @@ class Grapple extends Sprite {
         this.player = player;
         this.offx = offx;
         this.offy = offy;
-        this.color = color;
     }
 
     update() {
@@ -44,10 +42,29 @@ class Grapple extends Sprite {
         }
         super.update();
 
-        if (!this.isPulling) {
+        if (!this.isPulling && !this.broken) {
             let overlap = this.world.select.overlap(this.bounds, ['walls', 'enemies']);
 
+            overlap.sort((a,b) => {
+                if (a.physicsGroup === 'walls') return 1;
+                if (b.physicsGroup === 'walls') return -1;
+                return 0;
+            });
+
             for (let wo of overlap) {
+                if (this.isPlayers && (wo instanceof Bat || wo instanceof Boss)) {
+                    wo.damage(this.direction);
+                    this.world.playSound('grapplehit');
+                    this.break();
+                    break;
+                }
+
+                if (wo instanceof Lava) {
+                    this.world.playSound('grapplehit');
+                    this.break();
+                    break;
+                }
+
                 if (wo.physicsGroup === 'walls') {
                     let bounds = wo.bounds.getBoundingBox();
                     if (this.direction.h > 0) this.x = bounds.left - 2;
@@ -55,15 +72,9 @@ class Grapple extends Sprite {
                     if (this.direction.v > 0) this.y = bounds.top - 2;
                     if (this.direction.v < 0) this.y = bounds.bottom + 2;
                     this.isPulling = true;
-                }
-
-                if (this.isPlayers && (wo instanceof Bat || wo instanceof Boss)) {
-                    wo.damage(this.direction);
-                    this.broken = true;
-                }
-
-                if (wo instanceof Lava) {
-                    this.broken = true;
+                    this.world.playSound('grapplehit');
+                    this.world.playSound('grapplepull');
+                    break;
                 }
             }
         }
@@ -75,12 +86,26 @@ class Grapple extends Sprite {
         let ox = x - this.x + this.player.x + this.offx;
         let oy = y - this.y + this.player.y + this.offy;
 
-        Draw.brush.color = this.color;
-        Draw.brush.alpha = 1;
+        Draw.brush.color = this.tint;
+        Draw.brush.alpha = this.alpha;
         Draw.brush.thickness = 1;
 
         Draw.line(texture, ox, oy, x, y);
         Draw.line(texture, ox+1, oy+1, x+1, y+1);
+    }
+
+    break() {
+        this.broken = true;
+        this.world.playSound('break');
+        this.player = { x: this.player.x, y: this.player.y };
+        this.v.x = this.v.y = 0;
+
+        this.runScript(S.chain(
+            S.doOverTime(0.5, t => {
+                this.alpha = 1-t;
+            }),
+            S.call(() => this.kill())
+        ));
     }
 
     getVisibleScreenBounds() {

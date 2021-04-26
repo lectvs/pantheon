@@ -17,10 +17,13 @@ class Player extends Sprite {
 
     private grapple: Player.GrappleData;
     protected grappleColor: number;
+    private bubbleTimer: Timer;
 
     private get isGrappling() { return this.grapple; }
 
+    lastIsInWater: boolean;
     dead: boolean;
+    private haxis: number;
 
     get isBoss() { return this instanceof Boss; }
     get canGrapple() { return this.state !== 'cant_grapple'; }
@@ -34,9 +37,10 @@ class Player extends Sprite {
             animations: [
                 Animations.fromTextureList({ name: 'idle', texturePrefix: 'player', textures: [0, 1, 2, 3], frameRate: 12, count: -1 }),
                 Animations.fromTextureList({ name: 'run', texturePrefix: 'player', textures: [5, 6, 7, 8, 9], frameRate: 12, count: -1 }),
-                Animations.fromTextureList({ name: 'grapple_horiz',  texturePrefix: 'player', textures: [6], frameRate: 1, count: -1 }),
-                Animations.fromTextureList({ name: 'jump',  texturePrefix: 'player', textures: [10], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'fall',  texturePrefix: 'player', textures: [11], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'grapple_horiz', texturePrefix: 'player', textures: [17, 18], frameRate: 16, count: -1 }),
+                Animations.fromTextureList({ name: 'jump', texturePrefix: 'player', textures: [11, 12], frameRate: 12, count: -1 }),
+                Animations.fromTextureList({ name: 'fall', texturePrefix: 'player', textures: [13, 14], frameRate: 12, count: -1 }),
+                Animations.fromTextureList({ name: 'dead', texturePrefix: 'player', textures: [15], frameRate: 8, count: -1 }),
             ],
             defaultAnimation: 'idle',
         });
@@ -57,14 +61,19 @@ class Player extends Sprite {
 
         this.dead = false;
         this.grappleColor = 0xFFFFFF;
+
+        this.bubbleTimer = new Timer(1, () => {
+            this.world.addWorldObject(new Bubble(this.x, this.y-12));
+            this.world.addWorldObject(new Bubble(this.x, this.y-10));
+        }, true);
     }
 
     update() {
         let grounded = this.isGrounded();
-        let haxis = (this.controller.keys.runLeft ? -1 : 0) + (this.controller.keys.runRight ? 1 : 0);
+        this.haxis = (this.controller.keys.runLeft ? -1 : 0) + (this.controller.keys.runRight ? 1 : 0);
 
-        if (haxis !== 0) {
-            this.v.x = haxis * this.RUN_SPEED;
+        if (this.haxis !== 0) {
+            this.v.x = this.haxis * this.RUN_SPEED;
         }
 
         if (this.controller.jump) {
@@ -90,7 +99,17 @@ class Player extends Sprite {
         if (this.controller.left || this.controller.keys.runLeft) this.flipX = true;
         if (this.controller.right || this.controller.keys.runRight) this.flipX = false;
 
-        if (this.isGrappling) {
+
+    }
+
+    postUpdate() {
+        super.postUpdate();
+
+        if (this.dead) {
+            this.playAnimation('dead');
+        } else if (!this.canGrapple) {
+            this.playAnimation('fall');
+        } else if (this.isGrappling) {
             if (this.grapple.grappleKey === 'left' || this.grapple.grappleKey === 'right') {
                 this.playAnimation('grapple_horiz');
             } else if (this.grapple.grappleKey === 'up') {
@@ -99,20 +118,22 @@ class Player extends Sprite {
                 this.playAnimation('fall');
             }
         } else {
-            if (this.v.y < 0) this.playAnimation('jump');
+            if (this.v.y < -10) this.playAnimation('jump');
             else if (this.v.y > 20) this.playAnimation('fall');
-            else if (haxis !== 0) this.playAnimation('run');
+            else if (this.haxis !== 0) this.playAnimation('run');
             else this.playAnimation('idle');
         }
     }
 
     updateGrapple() {        
         if (this.isGrappling) {
-            if (this.grapple.grapple.broken || !this.controller.keys[this.grapple.grappleKey]) {
-                if (this.grapple.grapple.broken) {
+            if (this.dead || this.grapple.grapple.broken || !this.controller.keys[this.grapple.grappleKey]) {
+                if (this.dead || this.grapple.grapple.broken) {
                     this.setState('cant_grapple');
                 }
-                this.grapple.grapple.removeFromWorld();
+                if (!this.grapple.grapple.broken) {
+                    this.grapple.grapple.removeFromWorld();
+                }
                 this.grapple = undefined;
             }
         }
@@ -135,6 +156,8 @@ class Player extends Sprite {
                 grapple: this.world.addWorldObject(new Grapple(this, 0, -6, direction, this.grappleColor)),
                 grappleKey: grappleKey
             };
+
+            this.world.playSound('grappleshoot');
         }
 
         if (this.isGrappling) {
@@ -152,13 +175,22 @@ class Player extends Sprite {
     }
 
     updateWater() {
-        if (this.isInWater()) {
+        let isInWater = this.isInWater();
+        if (isInWater) {
             this.timeScale = 0.5;
             if (this.v.x > 0) this.v.x = Math.max(this.v.x - this.WATER_DRAG*this.delta, 0);
             if (this.v.x < 0) this.v.x = Math.min(this.v.x + this.WATER_DRAG*this.delta, 0);
+            this.bubbleTimer.update(this.delta*2);
         } else {
             this.timeScale = 1;
         }
+
+        if (this.lastIsInWater !== undefined && this.lastIsInWater !== isInWater) {
+            this.world.playSound('enterwater1');
+            this.world.playSound('enterwater2');
+            Puff.puffWater(this.world, this.x, this.y-4, { h: this.v.x, v: this.v.y });
+        }
+        this.lastIsInWater = isInWater;
     }
 
     onCollide(collision: Physics.CollisionInfo) {
@@ -171,11 +203,16 @@ class Player extends Sprite {
                 collision.other.obj instanceof Lava ||
                 collision.other.obj instanceof Cannon ||
                 collision.other.obj instanceof Cannonball ||
-                collision.other.obj instanceof Boss
+                (collision.other.obj instanceof Boss && !collision.other.obj.dead)
                     ) {
                 this.dead = true;
             }
         }
+    }
+
+    playGlitchSound(volume: number = 1) {
+        this.world.playSound('glitch3').volume = volume;
+        this.world.playSound(Random.element(['glitch1', 'glitch4'])).volume = volume;
     }
 
     private isGrounded() {

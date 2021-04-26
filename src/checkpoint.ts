@@ -31,7 +31,11 @@ class Checkpoint extends Sprite {
         this.isCheckpointGot = true;
         Checkpoints.current = this.name;
 
-        if (fanfare) Puff.puff(this.world, this.x, this.y, 10, () => pt(Random.float(-50, 50), Random.float(-40, 0)));
+        if (fanfare) {
+            Puff.puff(this.world, this.x, this.y, 10, () => pt(Random.float(-50, 50), Random.float(-40, 0)));
+            this.world.playSound('checkpoint');
+            //this.world.playSound('checkpoint2');
+        }
     }
 
     checkpointUnget() {
@@ -51,5 +55,5 @@ namespace Checkpoints {
         }
     }
 
-    export var current: string;// = 'checkpoint_12';
+    export var current: string = 'checkpoint_4';
 }

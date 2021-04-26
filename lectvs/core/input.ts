@@ -154,6 +154,23 @@ class Input {
     private static updateMousePosition() {
         this._canvasMouseX = global.renderer.plugins.interaction.mouse.global.x;
         this._canvasMouseY = global.renderer.plugins.interaction.mouse.global.y;
+        if (Fullscreen.enabled) {
+            let cw = global.renderer.width / global.renderer.resolution;
+            let ch = global.renderer.height / global.renderer.resolution;
+            let iw = window.innerWidth;
+            let ih = window.innerHeight;
+            let ratioW = iw/cw;
+            let ratioH = ih/ch;
+            if (ratioW < ratioH) {
+                let h = ch*ch*ratioW/ih;
+                let y1 = (ch - h) / 2;
+                this._canvasMouseY = ch * (this._canvasMouseY - y1) / h;
+            } else if (ratioW > ratioH) {
+                let w = cw*cw*ratioH/window.innerWidth;
+                let x1 = (cw - w) / 2;
+                this._canvasMouseX = cw * (this._canvasMouseX - x1) / w;
+            }
+        }
         if (this.isMouseOnCanvas) {
             this._mouseX = Math.floor(this._canvasMouseX);
             this._mouseY = Math.floor(this._canvasMouseY);

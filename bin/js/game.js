@@ -850,6 +850,24 @@ var Input = /** @class */ (function () {
     Input.updateMousePosition = function () {
         this._canvasMouseX = global.renderer.plugins.interaction.mouse.global.x;
         this._canvasMouseY = global.renderer.plugins.interaction.mouse.global.y;
+        if (Fullscreen.enabled) {
+            var cw = global.renderer.width / global.renderer.resolution;
+            var ch = global.renderer.height / global.renderer.resolution;
+            var iw = window.innerWidth;
+            var ih = window.innerHeight;
+            var ratioW = iw / cw;
+            var ratioH = ih / ch;
+            if (ratioW < ratioH) {
+                var h = ch * ch * ratioW / ih;
+                var y1 = (ch - h) / 2;
+                this._canvasMouseY = ch * (this._canvasMouseY - y1) / h;
+            }
+            else if (ratioW > ratioH) {
+                var w = cw * cw * ratioH / window.innerWidth;
+                var x1 = (cw - w) / 2;
+                this._canvasMouseX = cw * (this._canvasMouseX - x1) / w;
+            }
+        }
         if (this.isMouseOnCanvas) {
             this._mouseX = Math.floor(this._canvasMouseX);
             this._mouseY = Math.floor(this._canvasMouseY);
@@ -10404,6 +10422,8 @@ var Assets;
         'mover': { anchor: Anchor.CENTER },
         'cannon': { anchor: Anchor.CENTER },
         'cannonball': { anchor: Anchor.CENTER },
+        'bubble': { anchor: Anchor.CENTER },
+        'grappledownhelp': { anchor: Anchor.CENTER },
         // UI
         'dialogbox': { anchor: Anchor.CENTER },
     };
@@ -10415,13 +10435,31 @@ var Assets;
         // Game
         'dialogstart': { url: 'assets/click.wav', volume: 0.5 },
         'dialogspeak': { volume: 0.25 },
+        'grappleshoot': {},
+        'grapplehit': {},
+        'grapplepull': {},
+        'thwomphit': { volume: 0.5 },
+        'bathit': { volume: 0.5 },
+        'break': { volume: 0.5 },
+        'enterwater1': { volume: 0.1 },
+        'enterwater2': { volume: 0.3 },
+        'checkpoint': { volume: 0.4 },
+        'checkpoint2': { volume: 0.5 },
+        'cannonshoot': { volume: 0.5 },
+        'glitch1': {},
+        'glitch2': {},
+        'glitch3': {},
+        'glitch4': {},
+        // Music
+        'caves': {},
+        'boss': {},
     };
     Assets.tilesets = {
         'world': {
             tileWidth: 16,
             tileHeight: 16,
             tiles: Preload.allTilesWithPrefix('world_'),
-            collisionIndices: [1],
+            collisionIndices: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         }
     };
     Assets.pyxelTilemaps = {
@@ -10453,7 +10491,7 @@ var Bat = /** @class */ (function (_super) {
             x: tx * 16 + 8, y: ty * 16 + 8,
             animations: [
                 Animations.fromTextureList({ name: 'sleep', texturePrefix: 'bat', textures: [0], frameRate: 1 }),
-                Animations.fromTextureList({ name: 'fly', texturePrefix: 'bat', textures: [1, 2], frameRate: 4, count: -1 }),
+                Animations.fromTextureList({ name: 'fly', texturePrefix: 'bat', textures: [1, 2, 3, 3, 4], frameRate: 12, count: -1 }),
             ],
             defaultAnimation: 'sleep',
             layer: 'entities',
@@ -10516,6 +10554,7 @@ var Bat = /** @class */ (function (_super) {
         this.v.y += direction.v * this.KNOCKBACK_SPEED;
         var oppdir = { h: -direction.h, v: -direction.v };
         Puff.puffDirection(this.world, this.x, this.y, 5, oppdir, 50, 50);
+        this.world.playSound('bathit');
         this.setState('stunned');
         this.health--;
         if (this.health <= 0) {
@@ -10555,9 +10594,10 @@ var Player = /** @class */ (function (_super) {
             animations: [
                 Animations.fromTextureList({ name: 'idle', texturePrefix: 'player', textures: [0, 1, 2, 3], frameRate: 12, count: -1 }),
                 Animations.fromTextureList({ name: 'run', texturePrefix: 'player', textures: [5, 6, 7, 8, 9], frameRate: 12, count: -1 }),
-                Animations.fromTextureList({ name: 'grapple_horiz', texturePrefix: 'player', textures: [6], frameRate: 1, count: -1 }),
-                Animations.fromTextureList({ name: 'jump', texturePrefix: 'player', textures: [10], frameRate: 8, count: -1 }),
-                Animations.fromTextureList({ name: 'fall', texturePrefix: 'player', textures: [11], frameRate: 8, count: -1 }),
+                Animations.fromTextureList({ name: 'grapple_horiz', texturePrefix: 'player', textures: [17, 18], frameRate: 16, count: -1 }),
+                Animations.fromTextureList({ name: 'jump', texturePrefix: 'player', textures: [11, 12], frameRate: 12, count: -1 }),
+                Animations.fromTextureList({ name: 'fall', texturePrefix: 'player', textures: [13, 14], frameRate: 12, count: -1 }),
+                Animations.fromTextureList({ name: 'dead', texturePrefix: 'player', textures: [15], frameRate: 8, count: -1 }),
             ],
             defaultAnimation: 'idle',
         }) || this;
@@ -10582,6 +10622,10 @@ var Player = /** @class */ (function (_super) {
         _this.setState('can_grapple');
         _this.dead = false;
         _this.grappleColor = 0xFFFFFF;
+        _this.bubbleTimer = new Timer(1, function () {
+            _this.world.addWorldObject(new Bubble(_this.x, _this.y - 12));
+            _this.world.addWorldObject(new Bubble(_this.x, _this.y - 10));
+        }, true);
         return _this;
     }
     Object.defineProperty(Player.prototype, "isGrappling", {
@@ -10601,9 +10645,9 @@ var Player = /** @class */ (function (_super) {
     });
     Player.prototype.update = function () {
         var grounded = this.isGrounded();
-        var haxis = (this.controller.keys.runLeft ? -1 : 0) + (this.controller.keys.runRight ? 1 : 0);
-        if (haxis !== 0) {
-            this.v.x = haxis * this.RUN_SPEED;
+        this.haxis = (this.controller.keys.runLeft ? -1 : 0) + (this.controller.keys.runRight ? 1 : 0);
+        if (this.haxis !== 0) {
+            this.v.x = this.haxis * this.RUN_SPEED;
         }
         if (this.controller.jump) {
             this.v.y = -this.JUMP_SPEED;
@@ -10625,7 +10669,16 @@ var Player = /** @class */ (function (_super) {
             this.flipX = true;
         if (this.controller.right || this.controller.keys.runRight)
             this.flipX = false;
-        if (this.isGrappling) {
+    };
+    Player.prototype.postUpdate = function () {
+        _super.prototype.postUpdate.call(this);
+        if (this.dead) {
+            this.playAnimation('dead');
+        }
+        else if (!this.canGrapple) {
+            this.playAnimation('fall');
+        }
+        else if (this.isGrappling) {
             if (this.grapple.grappleKey === 'left' || this.grapple.grappleKey === 'right') {
                 this.playAnimation('grapple_horiz');
             }
@@ -10637,11 +10690,11 @@ var Player = /** @class */ (function (_super) {
             }
         }
         else {
-            if (this.v.y < 0)
+            if (this.v.y < -10)
                 this.playAnimation('jump');
             else if (this.v.y > 20)
                 this.playAnimation('fall');
-            else if (haxis !== 0)
+            else if (this.haxis !== 0)
                 this.playAnimation('run');
             else
                 this.playAnimation('idle');
@@ -10649,11 +10702,13 @@ var Player = /** @class */ (function (_super) {
     };
     Player.prototype.updateGrapple = function () {
         if (this.isGrappling) {
-            if (this.grapple.grapple.broken || !this.controller.keys[this.grapple.grappleKey]) {
-                if (this.grapple.grapple.broken) {
+            if (this.dead || this.grapple.grapple.broken || !this.controller.keys[this.grapple.grappleKey]) {
+                if (this.dead || this.grapple.grapple.broken) {
                     this.setState('cant_grapple');
                 }
-                this.grapple.grapple.removeFromWorld();
+                if (!this.grapple.grapple.broken) {
+                    this.grapple.grapple.removeFromWorld();
+                }
                 this.grapple = undefined;
             }
         }
@@ -10677,6 +10732,7 @@ var Player = /** @class */ (function (_super) {
                 grapple: this.world.addWorldObject(new Grapple(this, 0, -6, direction, this.grappleColor)),
                 grappleKey: grappleKey
             };
+            this.world.playSound('grappleshoot');
         }
         if (this.isGrappling) {
             if (this.grapple.grapple.isPulling) {
@@ -10694,16 +10750,24 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.updateWater = function () {
-        if (this.isInWater()) {
+        var isInWater = this.isInWater();
+        if (isInWater) {
             this.timeScale = 0.5;
             if (this.v.x > 0)
                 this.v.x = Math.max(this.v.x - this.WATER_DRAG * this.delta, 0);
             if (this.v.x < 0)
                 this.v.x = Math.min(this.v.x + this.WATER_DRAG * this.delta, 0);
+            this.bubbleTimer.update(this.delta * 2);
         }
         else {
             this.timeScale = 1;
         }
+        if (this.lastIsInWater !== undefined && this.lastIsInWater !== isInWater) {
+            this.world.playSound('enterwater1');
+            this.world.playSound('enterwater2');
+            Puff.puffWater(this.world, this.x, this.y - 4, { h: this.v.x, v: this.v.y });
+        }
+        this.lastIsInWater = isInWater;
     };
     Player.prototype.onCollide = function (collision) {
         _super.prototype.onCollide.call(this, collision);
@@ -10715,10 +10779,15 @@ var Player = /** @class */ (function (_super) {
                 collision.other.obj instanceof Lava ||
                 collision.other.obj instanceof Cannon ||
                 collision.other.obj instanceof Cannonball ||
-                collision.other.obj instanceof Boss) {
+                (collision.other.obj instanceof Boss && !collision.other.obj.dead)) {
                 this.dead = true;
             }
         }
+    };
+    Player.prototype.playGlitchSound = function (volume) {
+        if (volume === void 0) { volume = 1; }
+        this.world.playSound('glitch3').volume = volume;
+        this.world.playSound(Random.element(['glitch1', 'glitch4'])).volume = volume;
     };
     Player.prototype.isGrounded = function () {
         this.bounds.y++;
@@ -10738,7 +10807,7 @@ var Boss = /** @class */ (function (_super) {
         var _this = _super.call(this, tx, ty) || this;
         _this.SHOT_SPEED = 200;
         _this.KNOCKBACK_SPEED = 200;
-        _this.health = 4;
+        _this.health = 5;
         _this.layer = 'entities';
         _this.physicsGroup = 'enemies';
         _this.glitchFilter = new Boss.BossGlitchFilter();
@@ -10762,10 +10831,10 @@ var Boss = /** @class */ (function (_super) {
         }
     };
     Boss.prototype.shoot = function () {
-        console.log('shoot');
         var dir = V.normalized(this.controller.aimDirection);
         var off = 10;
         this.world.addWorldObject(new Cannonball(this.x + dir.x * off, this.y + dir.y * off, V.withMagnitude(dir, this.SHOT_SPEED)));
+        this.world.playSound('cannonshoot');
         this.v = V.withMagnitude(V.scaled(dir, -1), this.KNOCKBACK_SPEED);
     };
     Boss.prototype.damage = function (direction) {
@@ -10780,20 +10849,45 @@ var Boss = /** @class */ (function (_super) {
             this.behavior = new NullBehavior();
         }
         var boss = this;
-        this.runScript(function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        boss.glitchFilter.amount = 1;
-                        return [4 /*yield*/, S.wait(0.5)];
-                    case 1:
-                        _a.sent();
-                        if (!boss.dead)
-                            boss.glitchFilter.amount = 0;
-                        return [2 /*return*/];
-                }
+        if (this.dead) {
+            this.runScript(function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            boss.playGlitchSound(0.5);
+                            boss.glitchFilter.amount = 1;
+                            return [4 /*yield*/, S.wait(0.5)];
+                        case 1:
+                            _a.sent();
+                            _a.label = 2;
+                        case 2:
+                            if (!true) return [3 /*break*/, 4];
+                            boss.playGlitchSound(Random.float(0.1, 0.5));
+                            return [4 /*yield*/, S.wait(Random.float(0.2, 0.35))];
+                        case 3:
+                            _a.sent();
+                            return [3 /*break*/, 2];
+                        case 4: return [2 /*return*/];
+                    }
+                });
             });
-        });
+        }
+        else {
+            this.runScript(function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            boss.playGlitchSound(0.5);
+                            boss.glitchFilter.amount = 1;
+                            return [4 /*yield*/, S.wait(0.5)];
+                        case 1:
+                            _a.sent();
+                            boss.glitchFilter.amount = 0;
+                            return [2 /*return*/];
+                    }
+                });
+            });
+        }
     };
     return Boss;
 }(Player));
@@ -10801,7 +10895,7 @@ var Boss = /** @class */ (function (_super) {
     var BossBehavior = /** @class */ (function (_super) {
         __extends(BossBehavior, _super);
         function BossBehavior(boss) {
-            var _this = _super.call(this, 'grappleright', 1) || this;
+            var _this = _super.call(this, 'start', 0) || this;
             var controller = _this.controller;
             var nextAction = function () {
                 if (boss.x < boss.world.width / 2) {
@@ -10811,9 +10905,44 @@ var Boss = /** @class */ (function (_super) {
                     return Random.element(['grappleleft', 'attackleft']);
                 }
             };
-            _this.addAction('interrupt', {
+            _this.addAction('start', {
                 interrupt: 'interrupt',
-                wait: 1,
+                wait: 0.5,
+                nextAction: 'grappleright'
+            });
+            _this.addAction('interrupt', {
+                script: function () {
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                controller.up = true;
+                                return [4 /*yield*/, S.wait(1)];
+                            case 1:
+                                _a.sent();
+                                controller.up = false;
+                                return [4 /*yield*/, S.wait(0.5)];
+                            case 2:
+                                _a.sent();
+                                if (!(boss.x < boss.world.width / 2)) return [3 /*break*/, 4];
+                                controller.right = true;
+                                return [4 /*yield*/, S.wait(0.3)];
+                            case 3:
+                                _a.sent();
+                                controller.right = false;
+                                return [3 /*break*/, 6];
+                            case 4:
+                                controller.left = true;
+                                return [4 /*yield*/, S.wait(0.3)];
+                            case 5:
+                                _a.sent();
+                                controller.left = false;
+                                _a.label = 6;
+                            case 6: return [2 /*return*/];
+                        }
+                    });
+                },
+                interrupt: 'interrupt',
+                wait: 0.5,
                 nextAction: nextAction
             });
             _this.addAction('grappleleft', {
@@ -10838,10 +10967,12 @@ var Boss = /** @class */ (function (_super) {
                 script: function () {
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0:
+                            case 0: return [4 /*yield*/, S.wait(0.5)];
+                            case 1:
+                                _a.sent();
                                 controller.right = true;
                                 return [4 /*yield*/, S.wait(0.7)];
-                            case 1:
+                            case 2:
                                 _a.sent();
                                 controller.right = false;
                                 return [2 /*return*/];
@@ -10986,6 +11117,27 @@ var Boss = /** @class */ (function (_super) {
     }(TextureFilter));
     Boss.BossGlitchFilter = BossGlitchFilter;
 })(Boss || (Boss = {}));
+var Bubble = /** @class */ (function (_super) {
+    __extends(Bubble, _super);
+    function Bubble(x, y) {
+        var _this = _super.call(this, {
+            x: x, y: y,
+            texture: 'bubble',
+            layer: 'puffs',
+            life: 1,
+            vx: Random.float(-4, 4)
+        }) || this;
+        _this.vvx = Random.float(-4, 4);
+        _this.vvy = Random.float(-40, -20);
+        return _this;
+    }
+    Bubble.prototype.update = function () {
+        this.v.x = this.vvx * (1 - this.life.progress);
+        this.v.y = this.vvy * (1 - this.life.progress);
+        _super.prototype.update.call(this);
+    };
+    return Bubble;
+}(Sprite));
 var Cannon = /** @class */ (function (_super) {
     __extends(Cannon, _super);
     function Cannon(tx, ty, angle) {
@@ -11007,7 +11159,8 @@ var Cannon = /** @class */ (function (_super) {
                         case 0: return [4 /*yield*/, S.wait(1)];
                         case 1:
                             _a.sent();
-                            cannon.shoot();
+                            if (cannon.world.camera.y - 120 < cannon.y && cannon.y < cannon.world.camera.y + 120)
+                                cannon.shoot();
                             return [2 /*return*/];
                     }
                 });
@@ -11016,13 +11169,14 @@ var Cannon = /** @class */ (function (_super) {
                 { toState: 'shoot' },
             ]
         });
-        _this.setState('shoot');
+        _this.runScript(S.chain(S.wait(Random.float(_this.x / 160)), S.call(function () { return _this.setState('shoot'); })));
         return _this;
     }
     Cannon.prototype.shoot = function () {
         var dir = V.rotated({ x: -1, y: 0 }, M.degToRad(this.angle + 45));
         var off = 10;
         this.world.addWorldObject(new Cannonball(this.x + dir.x * off, this.y + dir.y * off, V.withMagnitude(dir, this.SHOT_SPEED)));
+        this.world.playSound('cannonshoot');
     };
     return Cannon;
 }(Sprite));
@@ -11051,6 +11205,7 @@ var Cannonball = /** @class */ (function (_super) {
     Cannonball.prototype.kill = function (d) {
         if (d === void 0) { d = { x: 0, y: 0 }; }
         Puff.puffDirection(this.world, this.x + d.x * 5, this.y + d.y * 5, 10, { h: -d.x, v: -d.y }, 50, 50);
+        this.world.playSound('thwomphit');
         _super.prototype.kill.call(this);
     };
     Cannonball.prototype.onCollide = function (collision) {
@@ -11088,8 +11243,11 @@ var Checkpoint = /** @class */ (function (_super) {
         this.setTexture('checkpoint_high');
         this.isCheckpointGot = true;
         Checkpoints.current = this.name;
-        if (fanfare)
+        if (fanfare) {
             Puff.puff(this.world, this.x, this.y, 10, function () { return pt(Random.float(-50, 50), Random.float(-40, 0)); });
+            this.world.playSound('checkpoint');
+            //this.world.playSound('checkpoint2');
+        }
     };
     Checkpoint.prototype.checkpointUnget = function () {
         this.setTexture('checkpoint_low');
@@ -11109,6 +11267,7 @@ var Checkpoints;
         }
     }
     Checkpoints.init = init;
+    Checkpoints.current = 'checkpoint_4';
 })(Checkpoints || (Checkpoints = {}));
 var DepthFilter = /** @class */ (function (_super) {
     __extends(DepthFilter, _super);
@@ -11117,7 +11276,7 @@ var DepthFilter = /** @class */ (function (_super) {
             uniforms: {
                 'float cameray': 0
             },
-            code: "\n                float depth = y + cameray;\n\n                float transition = 64.0;\n\n                float digitalDepth = 3200.0;\n                float castleDepth = 1700.0;\n                float waterDepth = 1070.0;\n                float cavesDepth = 400.0;\n\n                vec3 digitalColor = vec3(0.0, 1.0, 0.0);\n                vec3 castleColor = vec3(0.7, 0.7, 0.7);\n                vec3 waterColor = vec3(0.0, 0.0, 1.0);\n                vec3 cavesColor = vec3(0.89, 0.61, 0.45);\n                vec3 topColor = vec3(1.0, 1.0, 1.0);\n\n                vec3 multcolor;\n                if (depth > digitalDepth + transition) {\n                    multcolor = digitalColor;\n                } else if (depth > digitalDepth) {\n                    float t = (depth - digitalDepth) / transition;\n                    multcolor = castleColor * (1.0-t) + digitalColor * t;\n                } else if (depth > castleDepth + transition) {\n                    multcolor = castleColor;\n                } else if (depth > castleDepth) {\n                    float t = (depth - castleDepth) / transition;\n                    multcolor = waterColor * (1.0-t) + castleColor * t;\n                } else if (depth > waterDepth + transition) {\n                    multcolor = waterColor;\n                } else if (depth > waterDepth) {\n                    float t = (depth - waterDepth) / transition;\n                    multcolor = cavesColor * (1.0-t) + waterColor * t;\n                } else if (depth > cavesDepth + transition) {\n                    multcolor = cavesColor;\n                } else if (depth > cavesDepth) {\n                    float t = (depth - cavesDepth) / transition;\n                    multcolor = topColor * (1.0-t) + cavesColor * t;\n                } else {\n                    multcolor = topColor;\n                }\n                outp.rgb *= multcolor;\n            ",
+            code: "\n                float depth = y + cameray;\n\n                float transition = 64.0;\n\n                float digitalDepth = 3200.0;\n                float castleDepth = 1700.0;\n                float waterDepth = 1100.0;\n                float cavesDepth = 400.0;\n                float topDepth = 180.0;\n\n                vec3 digitalColor = vec3(0.0, 1.0, 0.0);\n                vec3 castleColor = vec3(0.7, 0.7, 0.7);\n                vec3 waterColor = vec3(0.0, 0.0, 1.0);\n                vec3 cavesColor = vec3(0.89, 0.61, 0.45);\n                vec3 topColor = vec3(1.0, 1.0, 1.0);\n                vec3 blackColor = vec3(0.0, 0.0, 0.0);\n\n                vec3 multcolor;\n                if (depth > digitalDepth + transition) {\n                    multcolor = digitalColor;\n                } else if (depth > digitalDepth) {\n                    float t = (depth - digitalDepth) / transition;\n                    multcolor = castleColor * (1.0-t) + digitalColor * t;\n                } else if (depth > castleDepth + transition) {\n                    multcolor = castleColor;\n                } else if (depth > castleDepth) {\n                    float t = (depth - castleDepth) / transition;\n                    multcolor = waterColor * (1.0-t) + castleColor * t;\n                } else if (depth > waterDepth + transition) {\n                    multcolor = waterColor;\n                } else if (depth > waterDepth) {\n                    float t = (depth - waterDepth) / transition;\n                    multcolor = cavesColor * (1.0-t) + waterColor * t;\n                } else if (depth > cavesDepth + transition) {\n                    multcolor = cavesColor;\n                } else if (depth > cavesDepth) {\n                    float t = (depth - cavesDepth) / transition;\n                    multcolor = topColor * (1.0-t) + cavesColor * t;\n                } else if (depth > topDepth + transition) {\n                    multcolor = topColor;\n                } else if (depth > topDepth) {\n                    float t = (depth - topDepth) / transition;\n                    multcolor = blackColor * (1.0-t) + topColor * t;\n                } else {\n                    multcolor = blackColor;\n                }\n                outp.rgb *= multcolor;\n            ",
         }) || this;
     }
     DepthFilter.prototype.update = function () {
@@ -11147,7 +11306,6 @@ var Grapple = /** @class */ (function (_super) {
         _this.player = player;
         _this.offx = offx;
         _this.offy = offy;
-        _this.color = color;
         return _this;
     }
     Object.defineProperty(Grapple.prototype, "isPlayers", {
@@ -11161,11 +11319,29 @@ var Grapple = /** @class */ (function (_super) {
             this.v.x = this.v.y = 0;
         }
         _super.prototype.update.call(this);
-        if (!this.isPulling) {
+        if (!this.isPulling && !this.broken) {
             var overlap = this.world.select.overlap(this.bounds, ['walls', 'enemies']);
+            overlap.sort(function (a, b) {
+                if (a.physicsGroup === 'walls')
+                    return 1;
+                if (b.physicsGroup === 'walls')
+                    return -1;
+                return 0;
+            });
             try {
                 for (var overlap_1 = __values(overlap), overlap_1_1 = overlap_1.next(); !overlap_1_1.done; overlap_1_1 = overlap_1.next()) {
                     var wo = overlap_1_1.value;
+                    if (this.isPlayers && (wo instanceof Bat || wo instanceof Boss)) {
+                        wo.damage(this.direction);
+                        this.world.playSound('grapplehit');
+                        this.break();
+                        break;
+                    }
+                    if (wo instanceof Lava) {
+                        this.world.playSound('grapplehit');
+                        this.break();
+                        break;
+                    }
                     if (wo.physicsGroup === 'walls') {
                         var bounds = wo.bounds.getBoundingBox();
                         if (this.direction.h > 0)
@@ -11177,13 +11353,9 @@ var Grapple = /** @class */ (function (_super) {
                         if (this.direction.v < 0)
                             this.y = bounds.bottom + 2;
                         this.isPulling = true;
-                    }
-                    if (this.isPlayers && (wo instanceof Bat || wo instanceof Boss)) {
-                        wo.damage(this.direction);
-                        this.broken = true;
-                    }
-                    if (wo instanceof Lava) {
-                        this.broken = true;
+                        this.world.playSound('grapplehit');
+                        this.world.playSound('grapplepull');
+                        break;
                     }
                 }
             }
@@ -11200,11 +11372,21 @@ var Grapple = /** @class */ (function (_super) {
         _super.prototype.render.call(this, texture, x, y);
         var ox = x - this.x + this.player.x + this.offx;
         var oy = y - this.y + this.player.y + this.offy;
-        Draw.brush.color = this.color;
-        Draw.brush.alpha = 1;
+        Draw.brush.color = this.tint;
+        Draw.brush.alpha = this.alpha;
         Draw.brush.thickness = 1;
         Draw.line(texture, ox, oy, x, y);
         Draw.line(texture, ox + 1, oy + 1, x + 1, y + 1);
+    };
+    Grapple.prototype.break = function () {
+        var _this = this;
+        this.broken = true;
+        this.world.playSound('break');
+        this.player = { x: this.player.x, y: this.player.y };
+        this.v.x = this.v.y = 0;
+        this.runScript(S.chain(S.doOverTime(0.5, function (t) {
+            _this.alpha = 1 - t;
+        }), S.call(function () { return _this.kill(); })));
     };
     Grapple.prototype.getVisibleScreenBounds = function () {
         return undefined;
@@ -11245,10 +11427,10 @@ var IntroMenu = /** @class */ (function (_super) {
         _this.backgroundColor = 0x000000;
         var introtext = _this.addWorldObject(new SpriteText({
             x: global.gameWidth / 2, y: global.gameHeight / 2,
-            text: "- a game by hayden mccraw -",
+            text: "- a game by\nhayden mccraw -",
             anchor: Anchor.CENTER
         }));
-        _this.runScript(S.chain(S.wait(1.5), S.call(function () { return menuSystem.loadMenu(MainMenu); })));
+        _this.runScript(S.chain(S.wait(1.5), S.call(function () { return introtext.setText("- made in 48 hours\nfor ludum dare 48 -"); }), S.wait(1.5), S.call(function () { return menuSystem.loadMenu(MainMenu); })));
         return _this;
     }
     return IntroMenu;
@@ -11261,12 +11443,15 @@ var MainMenu = /** @class */ (function (_super) {
         _this.volume = 0;
         _this.addWorldObject(new SpriteText({
             x: 20, y: 20,
-            text: "- TBD GAME -"
+            text: "- GRAPPLE THE\nABYSS! -"
         }));
         _this.addWorldObject(new MenuTextButton({
-            x: 20, y: 50,
+            x: 20, y: 65,
             text: "play",
             onClick: function () {
+                music = undefined;
+                if (!Debug.DEBUG)
+                    Checkpoints.current = undefined;
                 menuSystem.game.playSound('click');
                 menuSystem.game.startGame();
             }
@@ -11279,8 +11464,12 @@ var MainMenu = /** @class */ (function (_super) {
                 menuSystem.loadMenu(ControlsMenu);
             }
         }));
+        _this.addWorldObject(new SpriteText({
+            x: 40, y: 120,
+            text: "[g]^ read me! :)[/g]"
+        }));
         _this.addWorldObject(new MenuTextButton({
-            x: 20, y: 132,
+            x: 20, y: 148,
             text: "options",
             onClick: function () {
                 menuSystem.game.playSound('click');
@@ -11309,15 +11498,15 @@ var PauseMenu = /** @class */ (function (_super) {
                 menuSystem.game.unpauseGame();
             }
         }));
-        _this.addWorldObject(new MenuTextButton({
-            x: 20, y: 80,
-            text: "skip current cutscene",
-            onClick: function () {
-                _this.menuSystem.game.playSound('click');
-                menuSystem.game.unpauseGame();
-                global.theater.skipCurrentCutscene();
-            }
-        }));
+        // this.addWorldObject(new MenuTextButton({
+        //     x: 20, y: 80,
+        //     text: "skip current cutscene",
+        //     onClick: () => {
+        //         this.menuSystem.game.playSound('click');
+        //         menuSystem.game.unpauseGame();
+        //         global.theater.skipCurrentCutscene();
+        //     }
+        // }));
         _this.addWorldObject(new MenuTextButton({
             x: 20, y: 110,
             text: "options",
@@ -11352,7 +11541,7 @@ var OptionsMenu = /** @class */ (function (_super) {
             text: "volume:"
         }));
         _this.addWorldObject(new MenuNumericSelector({
-            x: 84, y: 50,
+            x: 20, y: 66,
             barLength: 10,
             minValue: 0,
             maxValue: 1,
@@ -11360,11 +11549,11 @@ var OptionsMenu = /** @class */ (function (_super) {
             setValue: function (v) { return Options.updateOption('volume', v); }
         }));
         _this.addWorldObject(new SpriteText({
-            x: 20, y: 74,
-            text: "toggle fullscreen - F"
+            x: 20, y: 90,
+            text: "toggle fullscreen\n => F"
         }));
         _this.addWorldObject(new MenuTextButton({
-            x: 20, y: 114,
+            x: 20, y: 130,
             text: "debug",
             onClick: function () {
                 menuSystem.game.playSound('click');
@@ -11372,7 +11561,7 @@ var OptionsMenu = /** @class */ (function (_super) {
             }
         }));
         _this.addWorldObject(new MenuTextButton({
-            x: 20, y: 144,
+            x: 20, y: 170,
             text: "back",
             onClick: function () {
                 menuSystem.game.playSound('click');
@@ -11433,25 +11622,75 @@ var ControlsMenu = /** @class */ (function (_super) {
     function ControlsMenu(menuSystem) {
         var _this = _super.call(this, menuSystem, {
             layers: [
-                { name: 'bg' }
-            ]
+                { name: 'bg' },
+                { name: 'entities' },
+                { name: 'player' },
+                { name: 'walls' },
+            ],
+            physicsGroups: {
+                'player': {},
+                'grapple': {},
+                'walls': { immovable: true }
+            },
+            collisions: [
+                { move: 'player', from: 'walls' }
+            ],
+            collisionIterations: 4,
+            useRaycastDisplacementThreshold: 4
         }) || this;
         _this.backgroundColor = 0x000000;
         _this.volume = 0;
-        _this.addWorldObject(new SpriteText({
-            x: 20, y: 15,
-            text: "- controls -"
+        _this.addWorldObject(new Sprite({
+            x: 0, y: 0,
+            texture: Texture.filledRect(16, global.gameHeight, 0x000000),
+            layer: 'walls',
+            physicsGroup: 'walls',
+            bounds: new RectBounds(0, 0, 16, global.gameHeight)
+        }));
+        _this.addWorldObject(new Sprite({
+            x: 0, y: 0,
+            texture: Texture.filledRect(global.gameWidth, 16, 0x000000),
+            layer: 'walls',
+            physicsGroup: 'walls',
+            bounds: new RectBounds(0, 0, global.gameWidth, 16)
+        }));
+        _this.addWorldObject(new Sprite({
+            x: global.gameWidth - 16, y: 0,
+            texture: Texture.filledRect(16, global.gameHeight, 0x000000),
+            layer: 'walls',
+            physicsGroup: 'walls',
+            bounds: new RectBounds(0, 0, 16, global.gameHeight)
+        }));
+        _this.addWorldObject(new Sprite({
+            x: 0, y: global.gameHeight - 16,
+            texture: Texture.filledRect(global.gameWidth, 16, 0x000000),
+            layer: 'walls',
+            physicsGroup: 'walls',
+            bounds: new RectBounds(0, 0, global.gameWidth, 16)
+        }));
+        _this.addWorldObject(new Sprite({
+            x: 15, y: 15,
+            texture: Texture.outlineRect(global.gameWidth - 30, global.gameHeight - 30, 0xFFFFFF),
         }));
         _this.addWorldObject(new SpriteText({
-            x: 20, y: 42,
-            text: "WASD or ARROW KEYS - move"
+            x: 30, y: 24,
+            text: "controls:"
         }));
         _this.addWorldObject(new SpriteText({
-            x: 20, y: 66,
-            text: "F - toggle fullscreen"
+            x: 30, y: 60,
+            text: "WASD/ARROWS\n\n => grapple"
         }));
+        _this.addWorldObject(new SpriteText({
+            x: 36, y: 170,
+            text: "try it :)\n|"
+        }));
+        _this.addWorldObject(new SpriteText({
+            x: 36, y: 172,
+            text: "\nv"
+        }));
+        _this.addWorldObject(new Player(2, 12));
         _this.addWorldObject(new MenuTextButton({
-            x: 20, y: 240,
+            x: 16, y: 226,
             text: "back",
             onClick: function () {
                 menuSystem.game.playSound('click');
@@ -11483,16 +11722,10 @@ Main.loadConfig({
             // General
             'fullscreen': ['f', 'g'],
             // Game
-            'left': ['ArrowLeft'],
-            'right': ['ArrowRight'],
-            'up': ['ArrowUp'],
-            'down': ['ArrowDown'],
-            'bossleft': ['a'],
-            'bossright': ['d'],
-            'bossup': ['w'],
-            'bossdown': ['s'],
-            'bossjump': ['z'],
-            'bossattack': ['MouseLeft'],
+            'left': ['ArrowLeft', 'a'],
+            'right': ['ArrowRight', 'd'],
+            'up': ['ArrowUp', 'w'],
+            'down': ['ArrowDown', 's'],
             // Presets
             'game_advanceCutscene': ['MouseLeft', 'e', ' '],
             'game_pause': ['Escape', 'Backspace'],
@@ -11547,7 +11780,7 @@ Main.loadConfig({
         },
     },
     debug: {
-        debug: true,
+        debug: false,
         font: Assets.fonts.DELUXE16,
         fontStyle: { color: 0xFFFFFF },
         allPhysicsBounds: false,
@@ -11596,13 +11829,15 @@ var Puff = /** @class */ (function (_super) {
 }(Sprite));
 (function (Puff) {
     function puff(world, x, y, count, v) {
+        var result = [];
         for (var i = 0; i < count; i++) {
-            world.addWorldObject(new Puff(0.1, { x: x, y: y, v: v() }));
+            result.push(world.addWorldObject(new Puff(0.1, { x: x, y: y, v: v() })));
         }
+        return result;
     }
     Puff.puff = puff;
     function puffDirection(world, x, y, count, direction, speed, spread) {
-        puff(world, x, y, count, function () {
+        return puff(world, x, y, count, function () {
             var v = V.withMagnitude({ x: direction.h, y: direction.v }, speed);
             var spreadv = Random.inCircle(spread);
             v.x += spreadv.x;
@@ -11611,6 +11846,26 @@ var Puff = /** @class */ (function (_super) {
         });
     }
     Puff.puffDirection = puffDirection;
+    function puffWater(world, x, y, direction) {
+        var e_50, _a;
+        var puffs = puffDirection(world, x, y, 20, direction, 50, 50);
+        try {
+            for (var puffs_1 = __values(puffs), puffs_1_1 = puffs_1.next(); !puffs_1_1.done; puffs_1_1 = puffs_1.next()) {
+                var puff_1 = puffs_1_1.value;
+                puff_1.tint = 0x00C6FF;
+                puff_1.alpha = 0.6;
+            }
+        }
+        catch (e_50_1) { e_50 = { error: e_50_1 }; }
+        finally {
+            try {
+                if (puffs_1_1 && !puffs_1_1.done && (_a = puffs_1.return)) _a.call(puffs_1);
+            }
+            finally { if (e_50) throw e_50.error; }
+        }
+        return puffs;
+    }
+    Puff.puffWater = puffWater;
 })(Puff || (Puff = {}));
 var Spikes = /** @class */ (function (_super) {
     __extends(Spikes, _super);
@@ -11628,10 +11883,11 @@ var Spikes = /** @class */ (function (_super) {
     return Spikes;
 }(Sprite));
 var BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(100, 10, 10);
+var music;
 function getStages() {
     return {
         'game': function () {
-            var e_50, _a;
+            var e_51, _a;
             var world = new World({
                 width: 192, height: 272,
                 backgroundColor: 0x000000,
@@ -11706,14 +11962,14 @@ function getStages() {
                     }
                 }
             }
-            catch (e_50_1) { e_50 = { error: e_50_1 }; }
+            catch (e_51_1) { e_51 = { error: e_51_1 }; }
             finally {
                 try {
                     if (worldEntities_1_1 && !worldEntities_1_1.done && (_a = worldEntities_1.return)) _a.call(worldEntities_1);
                 }
-                finally { if (e_50) throw e_50.error; }
+                finally { if (e_51) throw e_51.error; }
             }
-            world.addWorldObject(new Water(0, 61, 10, 39.5));
+            world.addWorldObject(new Water(0, 61.5, 10, 39));
             world.addWorldObjects([
                 new Lava(2.5, 124.25, 5, 2.5),
                 new Lava(2.5, 134.25, 5, 2.5),
@@ -11721,6 +11977,21 @@ function getStages() {
                 new Lava(-0.25, 148.25, 2, 6),
             ]);
             Checkpoints.init(world.select.typeAll(Checkpoint));
+            world.addWorldObject(new Sprite({
+                x: 111, y: 1078,
+                texture: 'grappledownhelp',
+                layer: 'bg'
+            }));
+            world.addWorldObject(new Sprite({
+                x: 113, y: 2343,
+                texture: 'grappledownhelp',
+                layer: 'bg'
+            }));
+            world.addWorldObject(new Sprite({
+                x: 45, y: 2408,
+                texture: 'grappledownhelp',
+                layer: 'bg'
+            }));
             var player = world.addWorldObject(new Player(3, 9));
             player.name = 'player';
             var currentCheckpoint = world.select.name(Checkpoints.current, false);
@@ -11735,6 +12006,10 @@ function getStages() {
             world.camera.setModeFollow(player, 0, -8);
             world.camera.setMovementSnap();
             world.camera.snapPosition();
+            music = world.playSound('caves');
+            music.volume = 0;
+            music.loop = true;
+            world.runScript(S.doOverTime(1, function (t) { return music.volume = t * t; }));
             return world;
         },
     };
@@ -11744,19 +12019,19 @@ function extractEntities(layer) {
     if (worldEntities)
         return;
     var indexToType = {
-        2: 'spikes',
-        3: 'thwomp',
-        4: 'checkpoint',
-        5: 'bat',
-        6: 'mover',
-        7: 'cannon',
-        8: 'boss',
+        11: 'checkpoint',
+        12: 'bat',
+        13: 'mover',
+        14: 'cannon',
+        15: 'boss',
+        16: 'spikes',
+        17: 'thwomp',
     };
     worldEntities = [];
     for (var ty = 0; ty < layer.length; ty++) {
         for (var tx = 0; tx < layer[ty].length; tx++) {
             var index = layer[ty][tx].index;
-            if (index > 1) {
+            if (index > 10) {
                 worldEntities.push({ type: indexToType[index], tx: tx - 1, ty: ty - 1, angle: layer[ty][tx].angle });
                 layer[ty][tx].index = -1;
             }
@@ -11782,7 +12057,7 @@ function getStoryboard() {
         'introduce_boss': {
             type: 'cutscene',
             script: function () {
-                var player;
+                var player, oldMusic;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -11796,7 +12071,9 @@ function getStoryboard() {
                             Puff.puffDirection(global.world, 7 * 16 + 24, 222 * 16 + 32, 10, Direction2D.DOWN, 50, 50);
                             player = global.world.select.name('player');
                             player.flipX = true;
-                            if (!!seenBossDialog) return [3 /*break*/, 9];
+                            oldMusic = music;
+                            global.world.runScript(S.doOverTime(2, function (t) { return oldMusic.volume = 1 - t; }));
+                            if (!!seenBossDialog) return [3 /*break*/, 11];
                             return [4 /*yield*/, S.wait(2)];
                         case 1:
                             _a.sent();
@@ -11818,12 +12095,20 @@ function getStoryboard() {
                             return [4 /*yield*/, S.dialogAdd(" [g]It's symbolic.[/g]")];
                         case 7:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("[g]Anyways, I'm the boss, so let's just fight, okay?[/g]")];
+                            return [4 /*yield*/, S.dialog("What?")];
                         case 8:
                             _a.sent();
-                            seenBossDialog = true;
-                            _a.label = 9;
+                            return [4 /*yield*/, S.dialog("[g]Look, I'm the final boss, so just fight me, okay?[/g]")];
                         case 9:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(0.5)];
+                        case 10:
+                            _a.sent();
+                            seenBossDialog = true;
+                            _a.label = 11;
+                        case 11:
+                            music = global.world.playSound('boss');
+                            global.world.runScript(S.doOverTime(3, function (t) { return music.volume = t * t; }));
                             global.world.select.type(Boss).startFighting();
                             return [2 /*return*/];
                     }
@@ -11838,17 +12123,22 @@ function getStoryboard() {
             script: function () {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.wait(2)];
+                        case 0:
+                            music.paused = true;
+                            return [4 /*yield*/, S.wait(2)];
                         case 1:
                             _a.sent();
                             return [4 /*yield*/, S.dialog("[g]No! Defeated so easily?![/g]")];
                         case 2:
                             _a.sent();
-                            return [4 /*yield*/, S.dialog("[g]Maybe I'll be harder in the post-jam versiooo\nooooooooooooooooo\nooooooooooooooooo[/g]")];
+                            return [4 /*yield*/, S.dialog("[g]Maybe I'll be harder in the post-jam versionn\nnnnnnnnnnnnnnnnnn\nnnnnnnnnnnnnn!!!![/g]")];
                         case 3:
                             _a.sent();
-                            return [4 /*yield*/, S.simul(S.shake(10, 5), S.fadeOut(5, 0xFFFFFF))];
+                            return [4 /*yield*/, S.simul(S.shake(10, 5), S.fadeOut(5, 0xFFFFFF), S.doOverTime(5, function (t) { return global.world.volume = 1 - t; }))];
                         case 4:
+                            _a.sent();
+                            return [4 /*yield*/, S.wait(3)];
+                        case 5:
                             _a.sent();
                             global.game.loadMainMenu();
                             return [2 /*return*/];
@@ -11862,7 +12152,10 @@ function getStoryboard() {
             script: function () {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.shake(5, 0.3)];
+                        case 0:
+                            music.paused = true;
+                            global.world.select.name('player').playGlitchSound();
+                            return [4 /*yield*/, S.shake(5, 1)];
                         case 1:
                             _a.sent();
                             global.theater.loadStage('game');
@@ -11929,6 +12222,7 @@ var Thwomp = /** @class */ (function (_super) {
         _super.prototype.onCollide.call(this, collision);
         var gdir = V.normalized(this.gravity);
         Puff.puff(this.world, this.x + gdir.x * 8, this.y + gdir.y * 8, 10, function () { return Random.inCircle(50); });
+        this.world.playSound('thwomphit');
         this.setState('sleep');
     };
     return Thwomp;
@@ -11938,22 +12232,22 @@ var Thwomp = /** @class */ (function (_super) {
         __extends(ThwompBehavior, _super);
         function ThwompBehavior(thwomp) {
             return _super.call(this, function () {
-                var e_51, _a;
+                var e_52, _a;
                 try {
                     for (var _b = __values([Direction2D.LEFT, Direction2D.RIGHT, Direction2D.UP, Direction2D.DOWN]), _c = _b.next(); !_c.done; _c = _b.next()) {
                         var direction = _c.value;
-                        var result = thwomp.world.select.raycast(thwomp.x, thwomp.y, direction.h, direction.v, ['player', 'walls']);
-                        if (!_.isEmpty(result) && result[0].obj instanceof Player) {
+                        var result = thwomp.world.select.raycast(thwomp.x, thwomp.y, direction.h, direction.v, ['player', 'walls', 'thwomps']);
+                        if (_.size(result) > 1 && result[1].obj instanceof Player) {
                             this.controller.moveDirection = { x: direction.h, y: direction.v };
                         }
                     }
                 }
-                catch (e_51_1) { e_51 = { error: e_51_1 }; }
+                catch (e_52_1) { e_52 = { error: e_52_1 }; }
                 finally {
                     try {
                         if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                     }
-                    finally { if (e_51) throw e_51.error; }
+                    finally { if (e_52) throw e_52.error; }
                 }
             }) || this;
         }

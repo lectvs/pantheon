@@ -27,6 +27,8 @@ namespace Assets {
         'mover': { anchor: Anchor.CENTER },
         'cannon': { anchor: Anchor.CENTER },
         'cannonball': { anchor: Anchor.CENTER },
+        'bubble': { anchor: Anchor.CENTER },
+        'grappledownhelp': { anchor: Anchor.CENTER },
 
         // UI
         'dialogbox': { anchor: Anchor.CENTER },
@@ -43,7 +45,25 @@ namespace Assets {
         'dialogstart': { url: 'assets/click.wav', volume: 0.5 },
         'dialogspeak': { volume: 0.25 },
 
+        'grappleshoot': {},
+        'grapplehit': {},
+        'grapplepull': {},
+        'thwomphit': { volume: 0.5 },
+        'bathit': { volume: 0.5 },
+        'break': { volume: 0.5 },
+        'enterwater1': { volume: 0.1 },
+        'enterwater2': { volume: 0.3 },
+        'checkpoint': { volume: 0.4 },
+        'checkpoint2': { volume: 0.5 },
+        'cannonshoot': { volume: 0.5 },
+        'glitch1': {},
+        'glitch2': {},
+        'glitch3': {},
+        'glitch4': {},
+
         // Music
+        'caves': {},
+        'boss': {},
     }
 
     export const tilesets: Dict<Tilemap.Tileset> = {
@@ -51,7 +71,7 @@ namespace Assets {
             tileWidth: 16,
             tileHeight: 16,
             tiles: Preload.allTilesWithPrefix('world_'),
-            collisionIndices: [1],
+            collisionIndices: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         }
     }
 

@@ -57,6 +57,7 @@ class Thwomp extends Sprite {
         super.onCollide(collision);
         let gdir = V.normalized(this.gravity);
         Puff.puff(this.world, this.x + gdir.x*8, this.y + gdir.y*8, 10, () => Random.inCircle(50));
+        this.world.playSound('thwomphit')
         this.setState('sleep');
     }
 }
@@ -66,8 +67,8 @@ namespace Thwomp {
         constructor(thwomp: Thwomp) {
             super(function() {
                 for (let direction of [Direction2D.LEFT, Direction2D.RIGHT, Direction2D.UP, Direction2D.DOWN]) {
-                    let result = thwomp.world.select.raycast(thwomp.x, thwomp.y, direction.h, direction.v, ['player', 'walls']);
-                    if (!_.isEmpty(result) && result[0].obj instanceof Player) {
+                    let result = thwomp.world.select.raycast(thwomp.x, thwomp.y, direction.h, direction.v, ['player', 'walls', 'thwomps']);
+                    if (_.size(result) > 1 && result[1].obj instanceof Player) {
                         this.controller.moveDirection = { x: direction.h, y: direction.v };
                     }
                 }

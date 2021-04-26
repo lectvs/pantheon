@@ -7,3 +7,9 @@ todo
 - normalize angle deg/rad?
 - normalize direction/vectors
 - option for entities to only update within screen bounds?
+- limit sound effect count per effect
+- random pitch/speed variation on sfx
+
+
+ld
+- performance (go through walls??)

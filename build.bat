@@ -1,13 +1,13 @@
 @echo off
 
-set NAME=hoopknight
+set NAME=grapple
 
 set TIMESTAMP=%date:~10,4%%date:~7,2%%date:~4,2%%time:~0,2%%time:~3,2%%time:~6,2%
 set GAMENAME=%NAME%
 set SRCNAME=%NAME%-src
 
 :: Game
-7z a %GAMENAME%.zip bin -xr!*.pyxel -xr!*.flp
+7z a %GAMENAME%.zip bin -xr!*.pyxel -xr!*.flp -xr!*.xrns
 move %GAMENAME%.zip build
 
 :: Source code

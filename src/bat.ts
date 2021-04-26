@@ -10,7 +10,7 @@ class Bat extends Sprite {
             x: tx*16 + 8, y: ty*16 + 8,
             animations: [
                 Animations.fromTextureList({ name: 'sleep', texturePrefix: 'bat', textures: [0], frameRate: 1 }),
-                Animations.fromTextureList({ name: 'fly', texturePrefix: 'bat', textures: [1, 2], frameRate: 4, count: -1 }),
+                Animations.fromTextureList({ name: 'fly', texturePrefix: 'bat', textures: [1, 2, 3, 3, 4], frameRate: 12, count: -1 }),
             ],
             defaultAnimation: 'sleep',
             layer: 'entities',
@@ -64,6 +64,7 @@ class Bat extends Sprite {
         this.v.y += direction.v * this.KNOCKBACK_SPEED;
         let oppdir = { h: -direction.h, v: -direction.v };
         Puff.puffDirection(this.world, this.x, this.y, 5, oppdir, 50, 50);
+        this.world.playSound('bathit');
         this.setState('stunned');
 
         this.health--;

@@ -1,5 +1,7 @@
 const BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(100, 10, 10);
 
+var music: Sound;
+
 function getStages(): Dict<World.Factory> { return {
 
     'game': () => {
@@ -72,7 +74,7 @@ function getStages(): Dict<World.Factory> { return {
             }
         }
 
-        world.addWorldObject(new Water(0, 61, 10, 39.5));
+        world.addWorldObject(new Water(0, 61.5, 10, 39));
 
         world.addWorldObjects([
             new Lava(2.5, 124.25, 5, 2.5),
@@ -82,6 +84,22 @@ function getStages(): Dict<World.Factory> { return {
         ]);
 
         Checkpoints.init(world.select.typeAll(Checkpoint));
+
+        world.addWorldObject(new Sprite({
+            x: 111, y: 1078,
+            texture: 'grappledownhelp',
+            layer: 'bg'
+        }));
+        world.addWorldObject(new Sprite({
+            x: 113, y: 2343,
+            texture: 'grappledownhelp',
+            layer: 'bg'
+        }));
+        world.addWorldObject(new Sprite({
+            x: 45, y: 2408,
+            texture: 'grappledownhelp',
+            layer: 'bg'
+        }));
 
         let player = world.addWorldObject(new Player(3, 9));
         player.name = 'player';
@@ -100,6 +118,11 @@ function getStages(): Dict<World.Factory> { return {
         world.camera.setMovementSnap();
         world.camera.snapPosition();
 
+        music = world.playSound('caves');
+        music.volume = 0;
+        music.loop = true;
+        world.runScript(S.doOverTime(1, t => music.volume = t*t));
+
         return world;
     },
 }}
@@ -109,19 +132,19 @@ var worldEntities: { type: string, tx: number, ty: number, angle: number }[];
 function extractEntities(layer: Tilemap.TilemapLayer) {
     if (worldEntities) return;
     let indexToType = {
-        2: 'spikes',
-        3: 'thwomp',
-        4: 'checkpoint',
-        5: 'bat',
-        6: 'mover',
-        7: 'cannon',
-        8: 'boss',
+        11: 'checkpoint',
+        12: 'bat',
+        13: 'mover',
+        14: 'cannon',
+        15: 'boss',
+        16: 'spikes',
+        17: 'thwomp',
     };
     worldEntities = [];
     for (let ty = 0; ty < layer.length; ty++) {
         for (let tx = 0; tx < layer[ty].length; tx++) {
             let index = layer[ty][tx].index;
-            if (index > 1) {
+            if (index > 10) {
                 worldEntities.push({ type: indexToType[index], tx: tx-1, ty: ty-1, angle: layer[ty][tx].angle });
                 layer[ty][tx].index = -1;
             }

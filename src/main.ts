@@ -25,17 +25,10 @@ Main.loadConfig({
             'fullscreen':                ['f', 'g'],
 
             // Game
-            'left':                      ['ArrowLeft'],
-            'right':                     ['ArrowRight'],
-            'up':                        ['ArrowUp'],
-            'down':                      ['ArrowDown'],
-
-            'bossleft':                  ['a'],
-            'bossright':                 ['d'],
-            'bossup':                    ['w'],
-            'bossdown':                  ['s'],
-            'bossjump':                  ['z'],
-            'bossattack':                ['MouseLeft'],
+            'left':                      ['ArrowLeft', 'a'],
+            'right':                     ['ArrowRight', 'd'],
+            'up':                        ['ArrowUp', 'w'],
+            'down':                      ['ArrowDown', 's'],
 
             // Presets
             'game_advanceCutscene':      ['MouseLeft', 'e', ' '],
@@ -95,7 +88,7 @@ Main.loadConfig({
     },
 
     debug: {
-        debug: true,
+        debug: false,
         font: Assets.fonts.DELUXE16,
         fontStyle: { color: 0xFFFFFF },
         allPhysicsBounds: false,

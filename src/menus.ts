@@ -8,11 +8,13 @@ class IntroMenu extends Menu {
 
         let introtext = this.addWorldObject(new SpriteText({
             x: global.gameWidth/2, y: global.gameHeight/2,
-            text: "- a game by hayden mccraw -",
+            text: "- a game by\nhayden mccraw -",
             anchor: Anchor.CENTER
         }));
 
         this.runScript(S.chain(
+            S.wait(1.5),
+            S.call(() => introtext.setText("- made in 48 hours\nfor ludum dare 48 -")),
             S.wait(1.5),
             S.call(() => menuSystem.loadMenu(MainMenu)),
         ));
@@ -28,13 +30,15 @@ class MainMenu extends Menu {
 
         this.addWorldObject(new SpriteText({
             x: 20, y: 20,
-            text: "- TBD GAME -"
+            text: "- GRAPPLE THE\nABYSS! -"
         }));
 
         this.addWorldObject(new MenuTextButton({
-            x: 20, y: 50,
+            x: 20, y: 65,
             text: "play",
             onClick: () => {
+                music = undefined;
+                if (!Debug.DEBUG) Checkpoints.current = undefined;
                 menuSystem.game.playSound('click');
                 menuSystem.game.startGame();
             }
@@ -49,8 +53,13 @@ class MainMenu extends Menu {
             }
         }));
 
+        this.addWorldObject(new SpriteText({
+            x: 40, y: 120,
+            text: "[g]^ read me! :)[/g]"
+        }));
+
         this.addWorldObject(new MenuTextButton({
-            x: 20, y: 132,
+            x: 20, y: 148,
             text: "options",
             onClick: () => {
                 menuSystem.game.playSound('click');
@@ -81,15 +90,15 @@ class PauseMenu extends Menu {
             }
         }));
 
-        this.addWorldObject(new MenuTextButton({
-            x: 20, y: 80,
-            text: "skip current cutscene",
-            onClick: () => {
-                this.menuSystem.game.playSound('click');
-                menuSystem.game.unpauseGame();
-                global.theater.skipCurrentCutscene();
-            }
-        }));
+        // this.addWorldObject(new MenuTextButton({
+        //     x: 20, y: 80,
+        //     text: "skip current cutscene",
+        //     onClick: () => {
+        //         this.menuSystem.game.playSound('click');
+        //         menuSystem.game.unpauseGame();
+        //         global.theater.skipCurrentCutscene();
+        //     }
+        // }));
 
         this.addWorldObject(new MenuTextButton({
             x: 20, y: 110,
@@ -129,7 +138,7 @@ class OptionsMenu extends Menu {
         }));
 
         this.addWorldObject(new MenuNumericSelector({
-            x: 84, y: 50,
+            x: 20, y: 66,
             barLength: 10,
             minValue: 0,
             maxValue: 1,
@@ -138,12 +147,12 @@ class OptionsMenu extends Menu {
         }));
 
         this.addWorldObject(new SpriteText({
-            x: 20, y: 74,
-            text: "toggle fullscreen - F"
+            x: 20, y: 90,
+            text: "toggle fullscreen\n => F"
         }));
 
         this.addWorldObject(new MenuTextButton({
-            x: 20, y: 114,
+            x: 20, y: 130,
             text: "debug",
             onClick: () => {
                 menuSystem.game.playSound('click');
@@ -152,7 +161,7 @@ class OptionsMenu extends Menu {
         }));
 
         this.addWorldObject(new MenuTextButton({
-            x: 20, y: 144,
+            x: 20, y: 170,
             text: "back",
             onClick: () => {
                 menuSystem.game.playSound('click');
@@ -217,30 +226,83 @@ class ControlsMenu extends Menu {
     constructor(menuSystem: MenuSystem) {
         super(menuSystem, {
             layers: [
-                { name: 'bg' }
-            ]
+                { name: 'bg' },
+                { name: 'entities' },
+                { name: 'player' },
+                { name: 'walls' },
+            ],
+            physicsGroups: {
+                'player': {},
+                'grapple': {},
+                'walls': { immovable: true }
+            },
+            collisions: [
+                { move: 'player', from: 'walls' }
+            ],
+            collisionIterations: 4,
+            useRaycastDisplacementThreshold: 4
         });
 
         this.backgroundColor = 0x000000;
         this.volume = 0;
 
+        this.addWorldObject(new Sprite({
+            x: 0, y: 0,
+            texture: Texture.filledRect(16, global.gameHeight, 0x000000),
+            layer: 'walls',
+            physicsGroup: 'walls',
+            bounds: new RectBounds(0, 0, 16, global.gameHeight)
+        }));
+        this.addWorldObject(new Sprite({
+            x: 0, y: 0,
+            texture: Texture.filledRect(global.gameWidth, 16, 0x000000),
+            layer: 'walls',
+            physicsGroup: 'walls',
+            bounds: new RectBounds(0, 0, global.gameWidth, 16)
+        }));
+        this.addWorldObject(new Sprite({
+            x: global.gameWidth-16, y: 0,
+            texture: Texture.filledRect(16, global.gameHeight, 0x000000),
+            layer: 'walls',
+            physicsGroup: 'walls',
+            bounds: new RectBounds(0, 0, 16, global.gameHeight)
+        }));
+        this.addWorldObject(new Sprite({
+            x: 0, y: global.gameHeight-16,
+            texture: Texture.filledRect(global.gameWidth, 16, 0x000000),
+            layer: 'walls',
+            physicsGroup: 'walls',
+            bounds: new RectBounds(0, 0, global.gameWidth, 16)
+        }));
+        this.addWorldObject(new Sprite({
+            x: 15, y: 15,
+            texture: Texture.outlineRect(global.gameWidth-30, global.gameHeight-30, 0xFFFFFF),
+        }))
+
+
         this.addWorldObject(new SpriteText({
-            x: 20, y: 15,
-            text: "- controls -"
+            x: 30, y: 24,
+            text: "controls:"
         }));
 
         this.addWorldObject(new SpriteText({
-            x: 20, y: 42,
-            text: "WASD or ARROW KEYS - move"
+            x: 30, y: 60,
+            text: "WASD/ARROWS\n\n => grapple"
         }));
 
         this.addWorldObject(new SpriteText({
-            x: 20, y: 66,
-            text: "F - toggle fullscreen"
+            x: 36, y: 170,
+            text: "try it :)\n|"
         }));
+        this.addWorldObject(new SpriteText({
+            x: 36, y: 172,
+            text: "\nv"
+        }));
+
+        this.addWorldObject(new Player(2, 12));
 
         this.addWorldObject(new MenuTextButton({
-            x: 20, y: 240,
+            x: 16, y: 226,
             text: "back",
             onClick: () => {
                 menuSystem.game.playSound('click');
