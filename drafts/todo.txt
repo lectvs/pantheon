@@ -12,7 +12,5 @@ todo
 - better global variables
 - shader builder
 - worldobject tag system
-
-
-ld
-- performance (go through walls??)
+- variable hitboxes? (i.e. different hitboxes for wall collision vs enemy collision)
+- "max distance" step functionality for collisions

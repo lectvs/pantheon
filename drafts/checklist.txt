@@ -1,2 +1,3 @@
 a checklist of various small things to increase enjoyment of the game :)
 - sound does not restart on death
+- test with throttling (chrome dev console > performance > [gear])

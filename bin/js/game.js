@@ -1839,7 +1839,7 @@ var Main = /** @class */ (function () {
             _this.metricsManager.update();
             global.metrics.startSpan('frame');
             global.fpsCalculator.update();
-            Main.delta = frameDelta / 60;
+            Main.delta = M.clamp(frameDelta / 60, 0, 1 / _this.config.fpsLimit);
             global.clearStacks();
             global.metrics.startSpan('update');
             for (var i = 0; i < Debug.SKIP_RATE; i++) {
@@ -10451,8 +10451,8 @@ var Assets;
         'glitch3': {},
         'glitch4': {},
         // Music
-        'caves': {},
-        'boss': {},
+        'caves': { volume: 0.5 },
+        'boss': { volume: 0.5 },
     };
     Assets.tilesets = {
         'world': {
@@ -11714,6 +11714,7 @@ Main.loadConfig({
     gameHeight: 240,
     canvasScale: 4,
     backgroundColor: 0x000000,
+    fpsLimit: 30,
     preloadBackgroundColor: 0x000000,
     preloadProgressBarColor: 0xFFFFFF,
     textures: Assets.textures,

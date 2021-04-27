@@ -7,6 +7,7 @@ namespace Main {
         gameHeight: number;
         canvasScale: number;
         backgroundColor: number;
+        fpsLimit: number;
         defaultZBehavior?: WorldObject.ZBehavior;
         defaultSpriteTextFont?: SpriteText.Font;
 
@@ -115,7 +116,7 @@ class Main {
             global.metrics.startSpan('frame');
             global.fpsCalculator.update();
 
-            Main.delta = frameDelta/60;
+            Main.delta = M.clamp(frameDelta/60, 0, 1/this.config.fpsLimit);
 
             global.clearStacks();
             global.metrics.startSpan('update');

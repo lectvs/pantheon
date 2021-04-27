@@ -62,8 +62,8 @@ namespace Assets {
         'glitch4': {},
 
         // Music
-        'caves': {},
-        'boss': {},
+        'caves': { volume: 0.5 },
+        'boss': { volume: 0.5 },
     }
 
     export const tilesets: Dict<Tilemap.Tileset> = {

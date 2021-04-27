@@ -6,6 +6,7 @@ Main.loadConfig({
     gameHeight: 240,
     canvasScale: 4,
     backgroundColor: 0x000000,
+    fpsLimit: 30,
 
     preloadBackgroundColor: 0x000000,
     preloadProgressBarColor: 0xFFFFFF,
