@@ -19,17 +19,17 @@ namespace PhysicsWorldObject {
 }
 
 class PhysicsWorldObject extends WorldObject {
-    private _v: Pt;
+    private _v: Vector2;
     get v() { return this._v; }
-    set v(value: Pt) {
+    set v(value: Vector2) {
         this._v.x = value.x;
         this._v.y = value.y;
     }
     vz: number;
 
-    private _gravity: Pt;
+    private _gravity: Vector2;
     get gravity() { return this._gravity; }
-    set gravity(value: Pt) {
+    set gravity(value: Vector2) {
         this._gravity.x = value.x;
         this._gravity.y = value.y;
     }
