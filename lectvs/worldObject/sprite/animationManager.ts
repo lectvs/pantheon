@@ -55,17 +55,17 @@ class AnimationManager {
     getFrameByRef(ref: string) {
         let parts = ref.split('/');
         if (parts.length != 2) {
-            error(`Cannot get frame '${name}' on sprite`, this.sprite, "as it does not fit the form '[animation]/[frame]'");
+            error(`Cannot get frame '${ref}' on sprite`, this.sprite, "as it does not fit the form '[animation]/[frame]'");
             return null;
         }
         let animation = this.animations[parts[0]];
         if (!animation) {
-            error(`Cannot get frame '${name}' on sprite`, this.sprite, `as animation '${parts[0]}' does not exist`);
+            error(`Cannot get frame '${ref}' on sprite`, this.sprite, `as animation '${parts[0]}' does not exist`);
             return null;
         }
         let frame = parseInt(parts[1]);
         if (!isFinite(frame) || frame < 0 || frame >= animation.length) {
-            error(`Cannot get frame '${name}' on sprite`, this.sprite, `as animation '${parts[0]} does not have frame '${parts[1]}'`);
+            error(`Cannot get frame '${ref}' on sprite`, this.sprite, `as animation '${parts[0]} does not have frame '${parts[1]}'`);
             return null;
         }
         return animation[frame];

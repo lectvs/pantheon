@@ -2,7 +2,7 @@ const BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(100, 10, 10);
 
 var music: Sound;
 
-function getStages(): Dict<World.Factory> { return {
+function getStages(): Dict<Factory<World>> { return {
 
     'game': () => {
         let world = new World({

@@ -1,5 +1,5 @@
 class StageManager {
-    stages: Dict<World.Factory>;
+    stages: Dict<Factory<World>>;
 
     currentStageName: string;
     currentWorld: World;
@@ -10,7 +10,7 @@ class StageManager {
 
     private theater: Theater;
 
-    constructor(theater: Theater, stages: Dict<World.Factory>) {
+    constructor(theater: Theater, stages: Dict<Factory<World>>) {
         this.theater = theater;
         this.stages = stages;
         this.currentStageName = null;

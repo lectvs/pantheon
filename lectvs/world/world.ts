@@ -2,8 +2,6 @@
 /// <reference path="../worldObject/worldObject.ts" />
 
 namespace World {
-    export type Factory = () => World;
-
     export type Config = {
         layers?: World.LayerConfig[];
 

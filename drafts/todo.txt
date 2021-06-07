@@ -1,11 +1,14 @@
 todo
 - easier tilemap definition in assets?
 - vector class? replace v, gravity with vectors?
+    - controller
+    - physicsWorldObject
+    - v_vector
+    - replace pt?
 - rethink tilemap zMap? z on a per-tile basis rather than per-index?
 - better acceleration movement (smart clamping?)
 - normalize cnoise?
 - normalize angle deg/rad?
-- normalize direction/vectors
 - option for entities to only update within screen bounds?
 - limit sound effect count per effect
 - random pitch/speed variation on sfx
@@ -17,3 +20,5 @@ todo
 - make default volume 0.5?
 - test once more for memory leaks
 - fix debug menu overlay toggle when debug=false
+- fix hack in updateMousePosition()?
+- change getStages() etc. to non-functions?

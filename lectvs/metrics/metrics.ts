@@ -28,7 +28,7 @@ class Metrics {
 
     startRecording(recordingName: string) {
         if (this.isRecording) {
-            error(`Tried to start recording ${name} when recording ${this.currentRecording.name} was already started.`);
+            error(`Tried to start recording ${recordingName} when recording ${this.currentRecording.name} was already started.`);
             return;
         }
         this.startSpan(recordingName, true);
@@ -36,7 +36,7 @@ class Metrics {
 
     endRecording() {
         if (!this.isRecording) {
-            error(`Tried to end recording ${name} but no recording was happening.`);
+            error(`Tried to end recording but no recording was happening.`);
             return;
         }
         this.recordings.push(this.currentRecording);

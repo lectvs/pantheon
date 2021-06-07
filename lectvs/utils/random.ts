@@ -52,22 +52,22 @@ class RandomNumberGenerator {
     }
 
     /**
-     * Random point uniformly in a unit circle.
+     * Random Vector2 uniformly in a unit circle.
      * @param radius Default: 1
      */
-    inCircle(radius: number = 1): Pt {
+    inCircle(radius: number = 1) {
         let angle = this.float(0, 2*Math.PI);
         let r = radius * Math.sqrt(this.value);
-        return { x: r*Math.cos(angle), y: r*Math.sin(angle) };
+        return new Vector2(r*Math.cos(angle), r*Math.sin(angle));
     }
 
     /**
-     * Random point uniformly in a disc.
+     * Random Vector2 uniformly in a disc.
      */
-    inDisc(radiusSmall: number, radiusLarge: number): Pt {
+    inDisc(radiusSmall: number, radiusLarge: number) {
         let angle = this.float(0, 2*Math.PI);
         let r = radiusLarge * Math.sqrt(this.float(radiusSmall/radiusLarge, 1));
-        return { x: r*Math.cos(angle), y: r*Math.sin(angle) };
+        return new Vector2(r*Math.cos(angle), r*Math.sin(angle));
     }
 
     /**
@@ -85,12 +85,12 @@ class RandomNumberGenerator {
     }
 
     /**
-     * Random point on a unit circle.
+     * Random Vector2 on a unit circle.
      * @param radius Default: 1
      */
-    onCircle(radius: number = 1): Pt {
+    onCircle(radius: number = 1) {
         let angle = this.float(0, 2*Math.PI);
-        return { x: radius*Math.cos(angle), y: radius*Math.sin(angle) };
+        return new Vector2(radius*Math.cos(angle), radius*Math.sin(angle));
     }
 
     /**

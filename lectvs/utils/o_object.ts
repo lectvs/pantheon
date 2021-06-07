@@ -1,4 +1,5 @@
 namespace O {
+    /** Warning: make sure your object has no reference loops! */
     export function deepClone<T>(obj: T): T {
         return <T>deepCloneInternal(obj);
     }

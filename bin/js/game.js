@@ -359,14 +359,14 @@ var Metrics = /** @class */ (function () {
     };
     Metrics.prototype.startRecording = function (recordingName) {
         if (this.isRecording) {
-            error("Tried to start recording " + name + " when recording " + this.currentRecording.name + " was already started.");
+            error("Tried to start recording " + recordingName + " when recording " + this.currentRecording.name + " was already started.");
             return;
         }
         this.startSpan(recordingName, true);
     };
     Metrics.prototype.endRecording = function () {
         if (!this.isRecording) {
-            error("Tried to end recording " + name + " but no recording was happening.");
+            error("Tried to end recording but no recording was happening.");
             return;
         }
         this.recordings.push(this.currentRecording);
@@ -2272,22 +2272,22 @@ var RandomNumberGenerator = /** @class */ (function () {
         return array[this.index(array)];
     };
     /**
-     * Random point uniformly in a unit circle.
+     * Random Vector2 uniformly in a unit circle.
      * @param radius Default: 1
      */
     RandomNumberGenerator.prototype.inCircle = function (radius) {
         if (radius === void 0) { radius = 1; }
         var angle = this.float(0, 2 * Math.PI);
         var r = radius * Math.sqrt(this.value);
-        return { x: r * Math.cos(angle), y: r * Math.sin(angle) };
+        return new Vector2(r * Math.cos(angle), r * Math.sin(angle));
     };
     /**
-     * Random point uniformly in a disc.
+     * Random Vector2 uniformly in a disc.
      */
     RandomNumberGenerator.prototype.inDisc = function (radiusSmall, radiusLarge) {
         var angle = this.float(0, 2 * Math.PI);
         var r = radiusLarge * Math.sqrt(this.float(radiusSmall / radiusLarge, 1));
-        return { x: r * Math.cos(angle), y: r * Math.sin(angle) };
+        return new Vector2(r * Math.cos(angle), r * Math.sin(angle));
     };
     /**
      * Random int from {0} to {array.length - 1}.
@@ -2302,13 +2302,13 @@ var RandomNumberGenerator = /** @class */ (function () {
         return Math.floor(this.float(min, max + 1));
     };
     /**
-     * Random point on a unit circle.
+     * Random Vector2 on a unit circle.
      * @param radius Default: 1
      */
     RandomNumberGenerator.prototype.onCircle = function (radius) {
         if (radius === void 0) { radius = 1; }
         var angle = this.float(0, 2 * Math.PI);
-        return { x: radius * Math.cos(angle), y: radius * Math.sin(angle) };
+        return new Vector2(radius * Math.cos(angle), radius * Math.sin(angle));
     };
     /**
      * Random sign, -1 or +1.
@@ -5332,7 +5332,6 @@ var Draw = /** @class */ (function () {
     Draw.ALIGNMENT_OUTER = 1;
     return Draw;
 }());
-"\n\nDraw.pixel(texture, 34, 56, 0xFFF000, 0.5);\n\nDraw.color = 0xFFF000;\nDraw.alpha = 1;\nDraw.pixel(texture, 34, 56);\n\n";
 var EmptyTexture = /** @class */ (function () {
     function EmptyTexture() {
     }
@@ -6724,6 +6723,7 @@ var M;
 })(M || (M = {}));
 var O;
 (function (O) {
+    /** Warning: make sure your object has no reference loops! */
     function deepClone(obj) {
         return deepCloneInternal(obj);
     }
@@ -9616,17 +9616,17 @@ var AnimationManager = /** @class */ (function () {
     AnimationManager.prototype.getFrameByRef = function (ref) {
         var parts = ref.split('/');
         if (parts.length != 2) {
-            error("Cannot get frame '" + name + "' on sprite", this.sprite, "as it does not fit the form '[animation]/[frame]'");
+            error("Cannot get frame '" + ref + "' on sprite", this.sprite, "as it does not fit the form '[animation]/[frame]'");
             return null;
         }
         var animation = this.animations[parts[0]];
         if (!animation) {
-            error("Cannot get frame '" + name + "' on sprite", this.sprite, "as animation '" + parts[0] + "' does not exist");
+            error("Cannot get frame '" + ref + "' on sprite", this.sprite, "as animation '" + parts[0] + "' does not exist");
             return null;
         }
         var frame = parseInt(parts[1]);
         if (!isFinite(frame) || frame < 0 || frame >= animation.length) {
-            error("Cannot get frame '" + name + "' on sprite", this.sprite, "as animation '" + parts[0] + " does not have frame '" + parts[1] + "'");
+            error("Cannot get frame '" + ref + "' on sprite", this.sprite, "as animation '" + parts[0] + " does not have frame '" + parts[1] + "'");
             return null;
         }
         return animation[frame];

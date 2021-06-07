@@ -1,4 +1,3 @@
-
 namespace StateMachine {
     export type State = {
         callback?: () => any;

@@ -107,12 +107,3 @@ class Draw {
         return this._PIXEL_TEXTURE;
     }
 }
-`
-
-Draw.pixel(texture, 34, 56, 0xFFF000, 0.5);
-
-Draw.color = 0xFFF000;
-Draw.alpha = 1;
-Draw.pixel(texture, 34, 56);
-
-`
