@@ -1,7 +1,7 @@
 class Controller {
-    moveDirection?: Pt;
-    aimDirection?: Pt;
-    keys?: Dict<boolean>;
+    moveDirection: Vector2;
+    aimDirection: Vector2;
+    keys: Dict<boolean>;
 
     get left() { return this.keys.left; }
     set left(value: boolean) { this.keys.left = value; }

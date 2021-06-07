@@ -71,7 +71,8 @@ namespace Thwomp {
                 for (let direction of [Vector2.LEFT, Vector2.RIGHT, Vector2.UP, Vector2.DOWN]) {
                     let result = thwomp.world.select.raycast(thwomp.x, thwomp.y, direction.x, direction.y, ['player', 'walls', 'thwomps']);
                     if (_.size(result) > 1 && result[1].obj instanceof Player) {
-                        this.controller.moveDirection = { x: direction.x, y: direction.y };
+                        this.controller.moveDirection.x = direction.x;
+                        this.controller.moveDirection.y = direction.y;
                     }
                 }
             })

@@ -1,7 +1,6 @@
 todo
 - easier tilemap definition in assets?
 - vector class? replace v, gravity with vectors?
-    - controller
     - physicsWorldObject
     - v_vector
     - replace pt?
