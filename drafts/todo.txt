@@ -14,3 +14,6 @@ todo
 - worldobject tag system
 - variable hitboxes? (i.e. different hitboxes for wall collision vs enemy collision)
 - "max distance" step functionality for collisions
+- make default volume 0.5?
+- test once more for memory leaks
+- fix debug menu overlay toggle when debug=false
