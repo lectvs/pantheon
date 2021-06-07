@@ -150,10 +150,10 @@ class Player extends Sprite {
 
         if (!this.isGrappling && grappleKey && this.canGrapple) {
             let direction = {
-                'left': Direction2D.LEFT,
-                'right': Direction2D.RIGHT,
-                'up': Direction2D.UP,
-                'down': Direction2D.DOWN
+                'left': Vector2.LEFT,
+                'right': Vector2.RIGHT,
+                'up': Vector2.UP,
+                'down': Vector2.DOWN
             }[grappleKey];
 
             this.grapple = {
@@ -166,8 +166,8 @@ class Player extends Sprite {
 
         if (this.isGrappling) {
             if (this.grapple.grapple.isPulling) {
-                this.v.x = this.grapple.grapple.direction.h * this.PULL_SPEED;
-                this.v.y = this.grapple.grapple.direction.v * this.PULL_SPEED;
+                this.v.x = this.grapple.grapple.direction.x * this.PULL_SPEED;
+                this.v.y = this.grapple.grapple.direction.y * this.PULL_SPEED;
             } else {
                 this.v.x = 0;
                 this.v.y = 0;
@@ -192,7 +192,7 @@ class Player extends Sprite {
         if (this.lastIsInWater !== undefined && this.lastIsInWater !== isInWater) {
             this.world.playSound('enterwater1');
             this.world.playSound('enterwater2');
-            Puff.puffWater(this.world, this.x, this.y-4, { h: this.v.x, v: this.v.y });
+            Puff.puffWater(this.world, this.x, this.y-4, new Vector2(this.v.x, this.v.y));
         }
         this.lastIsInWater = isInWater;
     }

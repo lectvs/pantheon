@@ -84,239 +84,12 @@ var Point = PIXI.Point;
 var Rectangle = PIXI.Rectangle;
 function pt(x, y) {
     if (typeof (x) === 'number')
-        return { x: x, y: y };
-    return { x: x.x, y: x.y };
+        return new Vector2(x, y);
+    return new Vector2(x.x, x.y);
 }
 function rect(x, y, width, height) {
     return { x: x, y: y, width: width, height: height };
 }
-var Anchor = /** @class */ (function () {
-    function Anchor() {
-    }
-    Object.defineProperty(Anchor, "TOP_LEFT", {
-        get: function () { return { x: 0, y: 0 }; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Anchor, "TOP_CENTER", {
-        get: function () { return { x: 0.5, y: 0 }; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Anchor, "TOP_RIGHT", {
-        get: function () { return { x: 1, y: 0 }; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Anchor, "CENTER_LEFT", {
-        get: function () { return { x: 0, y: 0.5 }; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Anchor, "CENTER_CENTER", {
-        get: function () { return { x: 0.5, y: 0.5 }; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Anchor, "CENTER_RIGHT", {
-        get: function () { return { x: 1, y: 0.5 }; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Anchor, "BOTTOM_LEFT", {
-        get: function () { return { x: 0, y: 1 }; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Anchor, "BOTTOM_CENTER", {
-        get: function () { return { x: 0.5, y: 1 }; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Anchor, "BOTTOM_RIGHT", {
-        get: function () { return { x: 1, y: 1 }; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Anchor, "TOP", {
-        get: function () { return this.TOP_CENTER; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Anchor, "CENTER", {
-        get: function () { return this.CENTER_CENTER; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Anchor, "BOTTOM", {
-        get: function () { return this.BOTTOM_CENTER; },
-        enumerable: false,
-        configurable: true
-    });
-    return Anchor;
-}());
-var Direction2D = /** @class */ (function () {
-    function Direction2D() {
-    }
-    Object.defineProperty(Direction2D, "UP", {
-        get: function () { return Direction.TOP_CENTER; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction2D, "DOWN", {
-        get: function () { return Direction.BOTTOM_CENTER; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction2D, "LEFT", {
-        get: function () { return Direction.CENTER_LEFT; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction2D, "RIGHT", {
-        get: function () { return Direction.CENTER_RIGHT; },
-        enumerable: false,
-        configurable: true
-    });
-    return Direction2D;
-}());
-var Direction = /** @class */ (function () {
-    function Direction() {
-    }
-    Object.defineProperty(Direction, "TOP", {
-        get: function () { return -1; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction, "CENTER", {
-        get: function () { return 0; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction, "BOTTOM", {
-        get: function () { return 1; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction, "LEFT", {
-        get: function () { return -1; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction, "RIGHT", {
-        get: function () { return 1; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction, "UP", {
-        get: function () { return -1; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction, "DOWN", {
-        get: function () { return 1; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction, "NONE", {
-        get: function () { return 0; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction, "TOP_LEFT", {
-        get: function () { return { v: Direction.TOP, h: Direction.LEFT }; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction, "TOP_CENTER", {
-        get: function () { return { v: Direction.TOP, h: Direction.CENTER }; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction, "TOP_RIGHT", {
-        get: function () { return { v: Direction.TOP, h: Direction.RIGHT }; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction, "CENTER_LEFT", {
-        get: function () { return { v: Direction.CENTER, h: Direction.LEFT }; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction, "CENTER_CENTER", {
-        get: function () { return { v: Direction.CENTER, h: Direction.CENTER }; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction, "CENTER_RIGHT", {
-        get: function () { return { v: Direction.CENTER, h: Direction.RIGHT }; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction, "BOTTOM_LEFT", {
-        get: function () { return { v: Direction.BOTTOM, h: Direction.LEFT }; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction, "BOTTOM_CENTER", {
-        get: function () { return { v: Direction.BOTTOM, h: Direction.CENTER }; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Direction, "BOTTOM_RIGHT", {
-        get: function () { return { v: Direction.BOTTOM, h: Direction.RIGHT }; },
-        enumerable: false,
-        configurable: true
-    });
-    Direction.angleOf = function (direction) {
-        return V.angle({ x: direction.h, y: direction.v });
-    };
-    // static closestDirection(angle: number, cardinalOnly: boolean = false) {
-    //     let directions = [
-    //         Direction.TOP_CENTER,
-    //         Direction.CENTER_LEFT,
-    //         Direction.BOTTOM_CENTER,
-    //         Direction.CENTER_RIGHT
-    //     ];
-    //     if (!cardinalOnly) {
-    //         directions.push(
-    //             Direction.TOP_LEFT,
-    //             Direction.TOP_RIGHT,
-    //             Direction.BOTTOM_RIGHT,
-    //             Direction.BOTTOM_LEFT
-    //         );
-    //     }
-    //     return L.argmax(directions, direction => Math.abs(Phaser.Math.Angle.ShortestBetween(angle*Phaser.Math.RAD_TO_DEG, Direction.angleOf(direction)*Phaser.Math.RAD_TO_DEG)));
-    // }
-    Direction.equals = function (d1, d2) {
-        if (!d1 && !d2)
-            return true;
-        if (!d1 || !d2)
-            return false;
-        return d1.h == d2.h && d1.v == d2.v;
-    };
-    Direction.rotatePointByDirection = function (x, y, direction) {
-        if (Direction.equals(direction, Direction.CENTER_RIGHT)) {
-            return { x: x, y: y };
-        }
-        if (Direction.equals(direction, Direction.TOP_CENTER)) {
-            return { x: -y, y: x };
-        }
-        if (Direction.equals(direction, Direction.CENTER_LEFT)) {
-            return { x: -x, y: -y };
-        }
-        if (Direction.equals(direction, Direction.BOTTOM_CENTER)) {
-            return { x: y, y: -x };
-        }
-        debug("Direction", direction, "is not supported by rotatePointByDirection.");
-        return { x: x, y: y };
-    };
-    Direction.rotatePointBetweenDirections = function (x, y, startDirection, endDirection) {
-        var pointFromStart = Direction.rotatePointByDirection(x, y, { h: startDirection.h, v: -startDirection.v });
-        return Direction.rotatePointByDirection(pointFromStart.x, pointFromStart.y, endDirection);
-    };
-    return Direction;
-}());
 // Only meant to be populated by Preload
 var AssetCache = /** @class */ (function () {
     function AssetCache() {
@@ -3996,7 +3769,7 @@ var MetricsMenu = /** @class */ (function (_super) {
             name: 'graphxy',
             font: Debug.FONT,
             style: { color: 0x00FF00 },
-            anchor: Anchor.BOTTOM_LEFT,
+            anchor: Vector2.BOTTOM_LEFT,
         }));
         return _this;
     }
@@ -4041,7 +3814,7 @@ var SpriteText = /** @class */ (function (_super) {
         _this.lastStyle = O.deepClone(_this.style);
         _this.visibleCharCount = Infinity;
         _this.maxWidth = (_d = config.maxWidth) !== null && _d !== void 0 ? _d : Infinity;
-        _this.anchor = (_e = config.anchor) !== null && _e !== void 0 ? _e : Anchor.TOP_LEFT;
+        _this.anchor = (_e = config.anchor) !== null && _e !== void 0 ? _e : Vector2.TOP_LEFT;
         _this.effects = new Effects();
         _this.effects.updateFromConfig(config.effects);
         _this.mask = config.mask;
@@ -7360,6 +7133,127 @@ var V;
     }
     V.withMagnitude = withMagnitude;
 })(V || (V = {}));
+var Vector2 = /** @class */ (function () {
+    function Vector2(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+    Object.defineProperty(Vector2.prototype, "magnitude", {
+        get: function () {
+            return Math.sqrt(this.x * this.x + this.y * this.y);
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "UP_LEFT", {
+        // Directions
+        get: function () { return new Vector2(-1, -1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "UP", {
+        get: function () { return new Vector2(0, -1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "UP_RIGHT", {
+        get: function () { return new Vector2(1, -1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "LEFT", {
+        get: function () { return new Vector2(-1, 0); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "NONE", {
+        get: function () { return new Vector2(0, 0); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "RIGHT", {
+        get: function () { return new Vector2(1, 0); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "DOWN_LEFT", {
+        get: function () { return new Vector2(-1, 1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "DOWN", {
+        get: function () { return new Vector2(0, 1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "DOWN_RIGHT", {
+        get: function () { return new Vector2(1, 1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "TOP_LEFT", {
+        // Anchors
+        get: function () { return new Vector2(0, 0); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "TOP_CENTER", {
+        get: function () { return new Vector2(0.5, 0); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "TOP_RIGHT", {
+        get: function () { return new Vector2(1, 0); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "CENTER_LEFT", {
+        get: function () { return new Vector2(0, 0.5); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "CENTER_CENTER", {
+        get: function () { return new Vector2(0.5, 0.5); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "CENTER_RIGHT", {
+        get: function () { return new Vector2(1, 0.5); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "BOTTOM_LEFT", {
+        get: function () { return new Vector2(0, 1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "BOTTOM_CENTER", {
+        get: function () { return new Vector2(0.5, 1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "BOTTOM_RIGHT", {
+        get: function () { return new Vector2(1, 1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "TOP", {
+        get: function () { return new Vector2(0.5, 0); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "CENTER", {
+        get: function () { return new Vector2(0.5, 0.5); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "BOTTOM", {
+        get: function () { return new Vector2(0.5, 1); },
+        enumerable: false,
+        configurable: true
+    });
+    return Vector2;
+}());
 /// <reference path="../utils/o_object.ts"/>
 var Camera = /** @class */ (function () {
     function Camera(config, world) {
@@ -10405,27 +10299,27 @@ var Assets;
         // Fonts
         'deluxe16': { spritesheet: { frameWidth: 8, frameHeight: 15 } },
         // Game
-        'player': { anchor: Anchor.BOTTOM_CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
-        'grapple': { anchor: Anchor.CENTER },
-        'world': { anchor: Anchor.CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
-        'checkpoint': { anchor: Anchor.CENTER, frames: {
+        'player': { anchor: Vector2.BOTTOM, spritesheet: { frameWidth: 16, frameHeight: 16 } },
+        'grapple': { anchor: Vector2.CENTER },
+        'world': { anchor: Vector2.CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
+        'checkpoint': { anchor: Vector2.CENTER, frames: {
                 'checkpoint_low': { rect: rect(0, 0, 16, 16) },
                 'checkpoint_high': { rect: rect(16, 0, 16, 16) },
             } },
-        'spikes': { anchor: Anchor.CENTER },
-        'thwomp': { anchor: Anchor.CENTER, frames: {
+        'spikes': { anchor: Vector2.CENTER },
+        'thwomp': { anchor: Vector2.CENTER, frames: {
                 'thwomp_sleep': { rect: rect(0, 0, 16, 16) },
                 'thwomp_awake': { rect: rect(16, 0, 16, 16) },
                 'thwomp_active': { rect: rect(32, 0, 16, 16) },
             } },
-        'bat': { anchor: Anchor.CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
-        'mover': { anchor: Anchor.CENTER },
-        'cannon': { anchor: Anchor.CENTER },
-        'cannonball': { anchor: Anchor.CENTER },
-        'bubble': { anchor: Anchor.CENTER },
-        'grappledownhelp': { anchor: Anchor.CENTER },
+        'bat': { anchor: Vector2.CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
+        'mover': { anchor: Vector2.CENTER },
+        'cannon': { anchor: Vector2.CENTER },
+        'cannonball': { anchor: Vector2.CENTER },
+        'bubble': { anchor: Vector2.CENTER },
+        'grappledownhelp': { anchor: Vector2.CENTER },
         // UI
-        'dialogbox': { anchor: Anchor.CENTER },
+        'dialogbox': { anchor: Vector2.CENTER },
     };
     Assets.sounds = {
         // Debug
@@ -10550,9 +10444,9 @@ var Bat = /** @class */ (function (_super) {
         return _this;
     }
     Bat.prototype.damage = function (direction) {
-        this.v.x += direction.h * this.KNOCKBACK_SPEED;
-        this.v.y += direction.v * this.KNOCKBACK_SPEED;
-        var oppdir = { h: -direction.h, v: -direction.v };
+        this.v.x += direction.x * this.KNOCKBACK_SPEED;
+        this.v.y += direction.y * this.KNOCKBACK_SPEED;
+        var oppdir = new Vector2(-direction.x, -direction.y);
         Puff.puffDirection(this.world, this.x, this.y, 5, oppdir, 50, 50);
         this.world.playSound('bathit');
         this.setState('stunned');
@@ -10728,10 +10622,10 @@ var Player = /** @class */ (function (_super) {
             grappleKey = 'down';
         if (!this.isGrappling && grappleKey && this.canGrapple) {
             var direction = {
-                'left': Direction2D.LEFT,
-                'right': Direction2D.RIGHT,
-                'up': Direction2D.UP,
-                'down': Direction2D.DOWN
+                'left': Vector2.LEFT,
+                'right': Vector2.RIGHT,
+                'up': Vector2.UP,
+                'down': Vector2.DOWN
             }[grappleKey];
             this.grapple = {
                 grapple: this.world.addWorldObject(new Grapple(this, 0, -6, direction, this.grappleColor)),
@@ -10741,8 +10635,8 @@ var Player = /** @class */ (function (_super) {
         }
         if (this.isGrappling) {
             if (this.grapple.grapple.isPulling) {
-                this.v.x = this.grapple.grapple.direction.h * this.PULL_SPEED;
-                this.v.y = this.grapple.grapple.direction.v * this.PULL_SPEED;
+                this.v.x = this.grapple.grapple.direction.x * this.PULL_SPEED;
+                this.v.y = this.grapple.grapple.direction.y * this.PULL_SPEED;
             }
             else {
                 this.v.x = 0;
@@ -10770,7 +10664,7 @@ var Player = /** @class */ (function (_super) {
         if (this.lastIsInWater !== undefined && this.lastIsInWater !== isInWater) {
             this.world.playSound('enterwater1');
             this.world.playSound('enterwater2');
-            Puff.puffWater(this.world, this.x, this.y - 4, { h: this.v.x, v: this.v.y });
+            Puff.puffWater(this.world, this.x, this.y - 4, new Vector2(this.v.x, this.v.y));
         }
         this.lastIsInWater = isInWater;
     };
@@ -10843,9 +10737,9 @@ var Boss = /** @class */ (function (_super) {
         this.v = V.withMagnitude(V.scaled(dir, -1), this.KNOCKBACK_SPEED);
     };
     Boss.prototype.damage = function (direction) {
-        this.v.x += direction.h * this.KNOCKBACK_SPEED;
-        this.v.y += direction.v * this.KNOCKBACK_SPEED;
-        var oppdir = { h: -direction.h, v: -direction.v };
+        this.v.x += direction.x * this.KNOCKBACK_SPEED;
+        this.v.y += direction.y * this.KNOCKBACK_SPEED;
+        var oppdir = new Vector2(-direction.x, -direction.y);
         Puff.puffDirection(this.world, this.x, this.y, 5, oppdir, 50, 50);
         this.behavior.interrupt();
         this.health--;
@@ -11209,7 +11103,7 @@ var Cannonball = /** @class */ (function (_super) {
     };
     Cannonball.prototype.kill = function (d) {
         if (d === void 0) { d = { x: 0, y: 0 }; }
-        Puff.puffDirection(this.world, this.x + d.x * 5, this.y + d.y * 5, 10, { h: -d.x, v: -d.y }, 50, 50);
+        Puff.puffDirection(this.world, this.x + d.x * 5, this.y + d.y * 5, 10, new Vector2(-d.x, -d.y), 50, 50);
         this.world.playSound('thwomphit');
         _super.prototype.kill.call(this);
     };
@@ -11301,9 +11195,9 @@ var Grapple = /** @class */ (function (_super) {
             bounds: new RectBounds(-3, -3, 6, 6),
         }) || this;
         _this.SPEED = 800;
-        _this.v.x = direction.h * _this.SPEED;
-        _this.v.y = direction.v * _this.SPEED;
-        _this.angle = M.radToDeg(Direction.angleOf(direction));
+        _this.v.x = direction.x * _this.SPEED;
+        _this.v.y = direction.y * _this.SPEED;
+        _this.angle = M.radToDeg(V.angle(direction));
         _this.tint = color;
         _this.direction = direction;
         _this.isPulling = false;
@@ -11349,13 +11243,13 @@ var Grapple = /** @class */ (function (_super) {
                     }
                     if (wo.physicsGroup === 'walls') {
                         var bounds = wo.bounds.getBoundingBox();
-                        if (this.direction.h > 0)
+                        if (this.direction.x > 0)
                             this.x = bounds.left - 2;
-                        if (this.direction.h < 0)
+                        if (this.direction.x < 0)
                             this.x = bounds.right + 2;
-                        if (this.direction.v > 0)
+                        if (this.direction.y > 0)
                             this.y = bounds.top - 2;
-                        if (this.direction.v < 0)
+                        if (this.direction.y < 0)
                             this.y = bounds.bottom + 2;
                         this.isPulling = true;
                         this.world.playSound('grapplehit');
@@ -11433,7 +11327,7 @@ var IntroMenu = /** @class */ (function (_super) {
         var introtext = _this.addWorldObject(new SpriteText({
             x: global.gameWidth / 2, y: global.gameHeight / 2,
             text: "- a game by\nhayden mccraw -",
-            anchor: Anchor.CENTER
+            anchor: Vector2.CENTER
         }));
         _this.runScript(S.chain(S.wait(1.5), S.call(function () { return introtext.setText("- made in 48 hours\nfor ludum dare 48 -"); }), S.wait(1.5), S.call(function () { return menuSystem.loadMenu(MainMenu); })));
         return _this;
@@ -11845,7 +11739,7 @@ var Puff = /** @class */ (function (_super) {
     Puff.puff = puff;
     function puffDirection(world, x, y, count, direction, speed, spread) {
         return puff(world, x, y, count, function () {
-            var v = V.withMagnitude({ x: direction.h, y: direction.v }, speed);
+            var v = V.withMagnitude(direction, speed);
             var spreadv = Random.inCircle(spread);
             v.x += spreadv.x;
             v.y += spreadv.y;
@@ -12075,7 +11969,7 @@ function getStoryboard() {
                                 physicsGroup: 'walls',
                                 bounds: new RectBounds(0, 0, 48, 32),
                             }));
-                            Puff.puffDirection(global.world, 7 * 16 + 24, 222 * 16 + 32, 10, Direction2D.DOWN, 50, 50);
+                            Puff.puffDirection(global.world, 7 * 16 + 24, 222 * 16 + 32, 10, Vector2.DOWN, 50, 50);
                             player = global.world.select.name('player');
                             player.flipX = true;
                             oldMusic = music;
@@ -12246,11 +12140,11 @@ var Thwomp = /** @class */ (function (_super) {
             return _super.call(this, function () {
                 var e_52, _a;
                 try {
-                    for (var _b = __values([Direction2D.LEFT, Direction2D.RIGHT, Direction2D.UP, Direction2D.DOWN]), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    for (var _b = __values([Vector2.LEFT, Vector2.RIGHT, Vector2.UP, Vector2.DOWN]), _c = _b.next(); !_c.done; _c = _b.next()) {
                         var direction = _c.value;
-                        var result = thwomp.world.select.raycast(thwomp.x, thwomp.y, direction.h, direction.v, ['player', 'walls', 'thwomps']);
+                        var result = thwomp.world.select.raycast(thwomp.x, thwomp.y, direction.x, direction.y, ['player', 'walls', 'thwomps']);
                         if (_.size(result) > 1 && result[1].obj instanceof Player) {
-                            this.controller.moveDirection = { x: direction.h, y: direction.v };
+                            this.controller.moveDirection = { x: direction.x, y: direction.y };
                         }
                     }
                 }

@@ -25,7 +25,7 @@ function getStoryboard(): Storyboard { return {
                 bounds: new RectBounds(0, 0, 48, 32),
             }));
 
-            Puff.puffDirection(global.world, 7*16 + 24, 222*16 + 32, 10, Direction2D.DOWN, 50, 50);
+            Puff.puffDirection(global.world, 7*16 + 24, 222*16 + 32, 10, Vector2.DOWN, 50, 50);
 
             let player = global.world.select.name<Player>('player');
             player.flipX = true;

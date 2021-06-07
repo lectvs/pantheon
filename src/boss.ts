@@ -44,10 +44,10 @@ class Boss extends Player {
         this.v = V.withMagnitude(V.scaled(dir, -1), this.KNOCKBACK_SPEED);
     }
 
-    damage(direction: Direction2D) {
-        this.v.x += direction.h * this.KNOCKBACK_SPEED;
-        this.v.y += direction.v * this.KNOCKBACK_SPEED;
-        let oppdir = { h: -direction.h, v: -direction.v };
+    damage(direction: Vector2) {
+        this.v.x += direction.x * this.KNOCKBACK_SPEED;
+        this.v.y += direction.y * this.KNOCKBACK_SPEED;
+        let oppdir = new Vector2(-direction.x, -direction.y);
         Puff.puffDirection(this.world, this.x, this.y, 5, oppdir, 50, 50);
         this.behavior.interrupt();
 

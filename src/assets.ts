@@ -9,29 +9,29 @@ namespace Assets {
         'deluxe16': { spritesheet: { frameWidth: 8, frameHeight: 15 } },
 
         // Game
-        'player': { anchor: Anchor.BOTTOM_CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
-        'grapple': { anchor: Anchor.CENTER },
+        'player': { anchor: Vector2.BOTTOM, spritesheet: { frameWidth: 16, frameHeight: 16 } },
+        'grapple': { anchor: Vector2.CENTER },
 
-        'world': { anchor: Anchor.CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
-        'checkpoint': { anchor: Anchor.CENTER, frames: {
+        'world': { anchor: Vector2.CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
+        'checkpoint': { anchor: Vector2.CENTER, frames: {
             'checkpoint_low': { rect: rect(0, 0, 16, 16) },
             'checkpoint_high': { rect: rect(16, 0, 16, 16) },
         }},
-        'spikes': { anchor: Anchor.CENTER },
-        'thwomp': { anchor: Anchor.CENTER, frames: {
+        'spikes': { anchor: Vector2.CENTER },
+        'thwomp': { anchor: Vector2.CENTER, frames: {
             'thwomp_sleep': { rect: rect(0, 0, 16, 16) },
             'thwomp_awake': { rect: rect(16, 0, 16, 16) },
             'thwomp_active': { rect: rect(32, 0, 16, 16) },
         }},
-        'bat': { anchor: Anchor.CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
-        'mover': { anchor: Anchor.CENTER },
-        'cannon': { anchor: Anchor.CENTER },
-        'cannonball': { anchor: Anchor.CENTER },
-        'bubble': { anchor: Anchor.CENTER },
-        'grappledownhelp': { anchor: Anchor.CENTER },
+        'bat': { anchor: Vector2.CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
+        'mover': { anchor: Vector2.CENTER },
+        'cannon': { anchor: Vector2.CENTER },
+        'cannonball': { anchor: Vector2.CENTER },
+        'bubble': { anchor: Vector2.CENTER },
+        'grappledownhelp': { anchor: Vector2.CENTER },
 
         // UI
-        'dialogbox': { anchor: Anchor.CENTER },
+        'dialogbox': { anchor: Vector2.CENTER },
     }
 
     export const sounds: Dict<Preload.Sound> = {

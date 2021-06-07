@@ -20,7 +20,7 @@ class Cannonball extends Sprite {
     }
 
     kill(d: Pt = { x: 0, y: 0 }) {
-        Puff.puffDirection(this.world, this.x + d.x*5, this.y + d.y*5, 10, { h: -d.x, v: -d.y }, 50, 50);
+        Puff.puffDirection(this.world, this.x + d.x*5, this.y + d.y*5, 10, new Vector2(-d.x, -d.y), 50, 50);
         this.world.playSound('thwomphit')
         super.kill();
     }

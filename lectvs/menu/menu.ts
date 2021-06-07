@@ -31,7 +31,7 @@ class MetricsMenu extends Menu {
             name: 'graphxy',
             font: Debug.FONT,
             style: { color: 0x00FF00 },
-            anchor: Anchor.BOTTOM_LEFT,
+            anchor: Vector2.BOTTOM_LEFT,
         }));
     }
 

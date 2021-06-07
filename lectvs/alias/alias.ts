@@ -30,9 +30,9 @@ type Boundaries = {
 
 type ReplaceConfigCallbacks<SuperType extends WorldObject.Config, NewType extends WorldObject> = Omit<SuperType, WorldObject.CallbackKeys> & WorldObject.Callbacks<NewType>;
 
-function pt(x: number | Pt, y?: number) {
-    if (typeof(x) === 'number') return { x, y };
-    return { x: x.x, y: x.y };
+function pt(x: number | Pt, y?: number): Vector2 {
+    if (typeof(x) === 'number') return new Vector2(x, y);
+    return new Vector2(x.x, x.y);
 }
 
 function rect(x: number, y: number, width: number, height: number): Rect {

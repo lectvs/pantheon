@@ -1,7 +1,7 @@
 class Grapple extends Sprite {
     private readonly SPEED = 800;
 
-    direction: Direction2D;
+    direction: Vector2;
     isPulling: boolean;
     broken: boolean;
 
@@ -11,7 +11,7 @@ class Grapple extends Sprite {
 
     get isPlayers() { return !(this.player instanceof Boss); }
 
-    constructor(player: Player, offx: number, offy: number, direction: Direction2D, color: number) {
+    constructor(player: Player, offx: number, offy: number, direction: Vector2, color: number) {
         super({
             x: player.x + offx,
             y: player.y + offy,
@@ -21,10 +21,10 @@ class Grapple extends Sprite {
             bounds: new RectBounds(-3, -3, 6, 6),
         });
 
-        this.v.x = direction.h * this.SPEED;
-        this.v.y = direction.v * this.SPEED;
+        this.v.x = direction.x * this.SPEED;
+        this.v.y = direction.y * this.SPEED;
 
-        this.angle = M.radToDeg(Direction.angleOf(direction));
+        this.angle = M.radToDeg(V.angle(direction));
         this.tint = color;
 
         this.direction = direction;
@@ -67,10 +67,10 @@ class Grapple extends Sprite {
 
                 if (wo.physicsGroup === 'walls') {
                     let bounds = wo.bounds.getBoundingBox();
-                    if (this.direction.h > 0) this.x = bounds.left - 2;
-                    if (this.direction.h < 0) this.x = bounds.right + 2;
-                    if (this.direction.v > 0) this.y = bounds.top - 2;
-                    if (this.direction.v < 0) this.y = bounds.bottom + 2;
+                    if (this.direction.x > 0) this.x = bounds.left - 2;
+                    if (this.direction.x < 0) this.x = bounds.right + 2;
+                    if (this.direction.y > 0) this.y = bounds.top - 2;
+                    if (this.direction.y < 0) this.y = bounds.bottom + 2;
                     this.isPulling = true;
                     this.world.playSound('grapplehit');
                     this.world.playSound('grapplepull');

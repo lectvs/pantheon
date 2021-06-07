@@ -91,7 +91,7 @@ class SpriteText extends WorldObject {
 
         this.maxWidth = config.maxWidth ?? Infinity;
 
-        this.anchor = config.anchor ?? Anchor.TOP_LEFT;
+        this.anchor = config.anchor ?? Vector2.TOP_LEFT;
         this.effects = new Effects();
         this.effects.updateFromConfig(config.effects);
 

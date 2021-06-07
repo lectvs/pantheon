@@ -9,7 +9,7 @@ class IntroMenu extends Menu {
         let introtext = this.addWorldObject(new SpriteText({
             x: global.gameWidth/2, y: global.gameHeight/2,
             text: "- a game by\nhayden mccraw -",
-            anchor: Anchor.CENTER
+            anchor: Vector2.CENTER
         }));
 
         this.runScript(S.chain(
