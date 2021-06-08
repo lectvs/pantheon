@@ -5,16 +5,16 @@ class Grapple extends Sprite {
     isPulling: boolean;
     broken: boolean;
 
-    private player: Pt;
+    private source: Pt;
     private offx: number;
     private offy: number;
 
-    get isPlayers() { return !(this.player instanceof Boss); }
+    get isPlayers() { return !(this.source instanceof Boss); }
 
-    constructor(player: Player, offx: number, offy: number, direction: Vector2, color: number) {
+    constructor(source: Pt, offx: number, offy: number, direction: Vector2, color: number) {
         super({
-            x: player.x + offx,
-            y: player.y + offy,
+            x: source.x + offx,
+            y: source.y + offy,
             texture: 'grapple',
             layer: 'entities',
             physicsGroup: 'grapple',
@@ -31,7 +31,7 @@ class Grapple extends Sprite {
         this.isPulling = false;
         this.broken = false;
 
-        this.player = player;
+        this.source = source;
         this.offx = offx;
         this.offy = offy;
     }
@@ -83,8 +83,8 @@ class Grapple extends Sprite {
     render(texture: Texture, x: number, y: number) {
         super.render(texture, x, y);
 
-        let ox = x - this.x + this.player.x + this.offx;
-        let oy = y - this.y + this.player.y + this.offy;
+        let ox = x - this.x + this.source.x + this.offx;
+        let oy = y - this.y + this.source.y + this.offy;
 
         Draw.brush.color = this.tint;
         Draw.brush.alpha = this.alpha;
@@ -97,7 +97,7 @@ class Grapple extends Sprite {
     break() {
         this.broken = true;
         this.world.playSound('break');
-        this.player = { x: this.player.x, y: this.player.y };
+        this.source = new Vector2(this.source.x, this.source.y);
         this.v.x = this.v.y = 0;
 
         this.runScript(S.chain(

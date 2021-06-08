@@ -80,9 +80,206 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
+var Vector2 = /** @class */ (function () {
+    function Vector2(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+    Object.defineProperty(Vector2.prototype, "angle", {
+        get: function () {
+            var angle = M.atan2(this.y, this.x);
+            if (angle < 0) {
+                angle += 360;
+            }
+            return angle;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2.prototype, "magnitude", {
+        get: function () {
+            return Math.sqrt(this.x * this.x + this.y * this.y);
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Vector2.prototype.clampMagnitude = function (maxMagnitude) {
+        if (maxMagnitude < 0) {
+            error('Tried to clamp vector magnitude with negative maxMagnitude');
+            return;
+        }
+        if (this.magnitude > maxMagnitude) {
+            this.setMagnitude(maxMagnitude);
+        }
+    };
+    Vector2.prototype.clone = function () {
+        return new Vector2(this.x, this.y);
+    };
+    Vector2.prototype.isZero = function () {
+        return this.x === 0 && this.y === 0;
+    };
+    Vector2.prototype.normalize = function () {
+        var mag = this.magnitude;
+        if (mag !== 0) {
+            this.x /= mag;
+            this.y /= mag;
+        }
+    };
+    Vector2.prototype.normalized = function () {
+        var copy = this.clone();
+        copy.normalize();
+        return copy;
+    };
+    Vector2.prototype.rotate = function (angle) {
+        var sin = M.sin(angle);
+        var cos = M.cos(angle);
+        var x = this.x;
+        var y = this.y;
+        this.x = cos * x - sin * y;
+        this.y = sin * x + cos * y;
+    };
+    Vector2.prototype.rotated = function (angle) {
+        var copy = this.clone();
+        copy.rotate(angle);
+        return copy;
+    };
+    Vector2.prototype.scale = function (amount) {
+        this.x *= amount;
+        this.y *= amount;
+    };
+    Vector2.prototype.scaled = function (amount) {
+        var copy = this.clone();
+        copy.scale(amount);
+        return copy;
+    };
+    Vector2.prototype.setMagnitude = function (magnitude) {
+        this.normalize();
+        this.scale(magnitude);
+    };
+    Vector2.prototype.withMagnitude = function (magnitude) {
+        var copy = this.clone();
+        copy.setMagnitude(magnitude);
+        return copy;
+    };
+    Object.defineProperty(Vector2, "UP_LEFT", {
+        // Directions
+        get: function () { return new Vector2(-1, -1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "UP", {
+        get: function () { return new Vector2(0, -1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "UP_RIGHT", {
+        get: function () { return new Vector2(1, -1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "LEFT", {
+        get: function () { return new Vector2(-1, 0); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "NONE", {
+        get: function () { return new Vector2(0, 0); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "RIGHT", {
+        get: function () { return new Vector2(1, 0); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "DOWN_LEFT", {
+        get: function () { return new Vector2(-1, 1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "DOWN", {
+        get: function () { return new Vector2(0, 1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "DOWN_RIGHT", {
+        get: function () { return new Vector2(1, 1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "TOP_LEFT", {
+        // Anchors
+        get: function () { return new Vector2(0, 0); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "TOP_CENTER", {
+        get: function () { return new Vector2(0.5, 0); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "TOP_RIGHT", {
+        get: function () { return new Vector2(1, 0); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "CENTER_LEFT", {
+        get: function () { return new Vector2(0, 0.5); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "CENTER_CENTER", {
+        get: function () { return new Vector2(0.5, 0.5); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "CENTER_RIGHT", {
+        get: function () { return new Vector2(1, 0.5); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "BOTTOM_LEFT", {
+        get: function () { return new Vector2(0, 1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "BOTTOM_CENTER", {
+        get: function () { return new Vector2(0.5, 1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "BOTTOM_RIGHT", {
+        get: function () { return new Vector2(1, 1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "TOP", {
+        get: function () { return new Vector2(0.5, 0); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "CENTER", {
+        get: function () { return new Vector2(0.5, 0.5); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "BOTTOM", {
+        get: function () { return new Vector2(0.5, 1); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Vector2, "ZERO", {
+        // Misc
+        get: function () { return new Vector2(0, 0); },
+        enumerable: false,
+        configurable: true
+    });
+    return Vector2;
+}());
+/// <reference path="../utils/vector.ts"/>
 var Point = PIXI.Point;
 var Rectangle = PIXI.Rectangle;
-function pt(x, y) {
+function vec2(x, y) {
     if (typeof (x) === 'number')
         return new Vector2(x, y);
     return new Vector2(x.x, x.y);
@@ -696,7 +893,7 @@ var Input = /** @class */ (function () {
     });
     Object.defineProperty(Input, "mousePosition", {
         get: function () {
-            return { x: this.mouseX, y: this.mouseY };
+            return new Vector2(this.mouseX, this.mouseY);
         },
         enumerable: false,
         configurable: true
@@ -717,7 +914,7 @@ var Input = /** @class */ (function () {
     });
     Object.defineProperty(Input, "canvasMousePosition", {
         get: function () {
-            return { x: this.canvasMouseX, y: this.canvasMouseY };
+            return new Vector2(this.canvasMouseX, this.canvasMouseY);
         },
         enumerable: false,
         configurable: true
@@ -1856,10 +2053,10 @@ var S;
                         camera = global.world.camera;
                         if (!toMovement)
                             toMovement = camera.movement;
-                        cameraPoint = pt(camera.x, camera.y);
+                        cameraPoint = vec2(camera.x, camera.y);
                         camera.setModeFollow(cameraPoint);
                         camera.setMovementSnap();
-                        startPoint = pt(cameraPoint.x, cameraPoint.y);
+                        startPoint = vec2(cameraPoint.x, cameraPoint.y);
                         return [4 /*yield*/, S.doOverTime(duration, function (t) {
                                 var toPoint = toMode.getTargetPt(camera);
                                 cameraPoint.x = M.lerp(startPoint.x, toPoint.x, easingFunction(t));
@@ -2772,10 +2969,10 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         if (config === void 0) { config = {}; }
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
         var _this = _super.call(this, config) || this;
-        _this._v = config.v ? pt(config.v.x, config.v.y) : pt((_a = config.vx) !== null && _a !== void 0 ? _a : 0, (_b = config.vy) !== null && _b !== void 0 ? _b : 0);
+        _this._v = config.v ? vec2(config.v.x, config.v.y) : vec2((_a = config.vx) !== null && _a !== void 0 ? _a : 0, (_b = config.vy) !== null && _b !== void 0 ? _b : 0);
         _this.vz = (_c = config.vz) !== null && _c !== void 0 ? _c : 0;
         _this.mass = (_d = config.mass) !== null && _d !== void 0 ? _d : 1;
-        _this._gravity = pt((_e = config.gravityx) !== null && _e !== void 0 ? _e : 0, (_f = config.gravityy) !== null && _f !== void 0 ? _f : 0);
+        _this._gravity = vec2((_e = config.gravityx) !== null && _e !== void 0 ? _e : 0, (_f = config.gravityy) !== null && _f !== void 0 ? _f : 0);
         _this.gravityz = (_g = config.gravityz) !== null && _g !== void 0 ? _g : 0;
         _this.bounce = (_h = config.bounce) !== null && _h !== void 0 ? _h : 1;
         _this.bounds = (_j = config.bounds) !== null && _j !== void 0 ? _j : new NullBounds();
@@ -3064,7 +3261,10 @@ var World = /** @class */ (function () {
         this.backgroundColor = (_g = config.backgroundColor) !== null && _g !== void 0 ? _g : global.backgroundColor;
         this.backgroundAlpha = (_h = config.backgroundAlpha) !== null && _h !== void 0 ? _h : 1;
         this.layerTexture = new BasicTexture(this.width, this.height);
-        this.entryPoints = (_j = config.entryPoints) !== null && _j !== void 0 ? _j : {};
+        this.entryPoints = {};
+        for (var key in (_j = config.entryPoints) !== null && _j !== void 0 ? _j : {}) {
+            this.entryPoints[key] = vec2(config.entryPoints[key]);
+        }
         this.camera = new Camera((_k = config.camera) !== null && _k !== void 0 ? _k : {}, this);
     }
     Object.defineProperty(World.prototype, "delta", {
@@ -3267,7 +3467,7 @@ var World = /** @class */ (function () {
         return Input.mouseY + Math.floor(this.camera.worldOffsetY);
     };
     World.prototype.getWorldMousePosition = function () {
-        return { x: this.getWorldMouseX(), y: this.getWorldMouseY() };
+        return new Vector2(this.getWorldMouseX(), this.getWorldMouseY());
     };
     World.prototype.handleCollisions = function () {
         if (_.isEmpty(this.collisions))
@@ -3957,10 +4157,10 @@ var SpriteText = /** @class */ (function (_super) {
         var result = {};
         for (var y = 0; y < spriteFontCharList.length; y++) {
             for (var x = 0; x < spriteFontCharList[y].length; x++) {
-                result[spriteFontCharList[y][x]] = { x: x, y: y };
+                result[spriteFontCharList[y][x]] = vec2(x, y);
             }
         }
-        result[' '] = { x: -1, y: -1 };
+        result[' '] = new Vector2(-1, -1);
         return result;
     }
 })(SpriteText || (SpriteText = {}));
@@ -5597,7 +5797,7 @@ var DialogBox = /** @class */ (function (_super) {
         var _this = _super.call(this, config) || this;
         _this.textAreaFull = config.textAreaFull;
         _this.textAreaPortrait = config.textAreaPortrait;
-        _this.portraitPosition = config.portraitPosition;
+        _this.portraitPosition = vec2(config.portraitPosition);
         _this.startSound = config.startSound;
         _this.speakSound = config.speakSound;
         _this.isShowingPortrait = false;
@@ -7080,196 +7280,6 @@ var Utils;
     Utils.NOOP_RENDERTEXTURE = PIXI.RenderTexture.create({ width: 0, height: 0 });
     Utils.UID = new UIDGenerator();
 })(Utils || (Utils = {}));
-var Vector2 = /** @class */ (function () {
-    function Vector2(x, y) {
-        this.x = x;
-        this.y = y;
-    }
-    Object.defineProperty(Vector2.prototype, "angle", {
-        get: function () {
-            var angle = M.atan2(this.y, this.x);
-            if (angle < 0) {
-                angle += 360;
-            }
-            return angle;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2.prototype, "magnitude", {
-        get: function () {
-            return Math.sqrt(this.x * this.x + this.y * this.y);
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Vector2.prototype.clampMagnitude = function (maxMagnitude) {
-        if (maxMagnitude < 0) {
-            error('Tried to clamp vector magnitude with negative maxMagnitude');
-            return;
-        }
-        if (this.magnitude > maxMagnitude) {
-            this.setMagnitude(maxMagnitude);
-        }
-    };
-    Vector2.prototype.clone = function () {
-        return new Vector2(this.x, this.y);
-    };
-    Vector2.prototype.isZero = function () {
-        return this.x === 0 && this.y === 0;
-    };
-    Vector2.prototype.normalize = function () {
-        var mag = this.magnitude;
-        if (mag !== 0) {
-            this.x /= mag;
-            this.y /= mag;
-        }
-    };
-    Vector2.prototype.normalized = function () {
-        var copy = this.clone();
-        copy.normalize();
-        return copy;
-    };
-    Vector2.prototype.rotate = function (angle) {
-        var sin = M.sin(angle);
-        var cos = M.cos(angle);
-        var x = this.x;
-        var y = this.y;
-        this.x = cos * x - sin * y;
-        this.y = sin * x + cos * y;
-    };
-    Vector2.prototype.rotated = function (angle) {
-        var copy = this.clone();
-        copy.rotate(angle);
-        return copy;
-    };
-    Vector2.prototype.scale = function (amount) {
-        this.x *= amount;
-        this.y *= amount;
-    };
-    Vector2.prototype.scaled = function (amount) {
-        var copy = this.clone();
-        copy.scale(amount);
-        return copy;
-    };
-    Vector2.prototype.setMagnitude = function (magnitude) {
-        this.normalize();
-        this.scale(magnitude);
-    };
-    Vector2.prototype.withMagnitude = function (magnitude) {
-        var copy = this.clone();
-        copy.setMagnitude(magnitude);
-        return copy;
-    };
-    Object.defineProperty(Vector2, "UP_LEFT", {
-        // Directions
-        get: function () { return new Vector2(-1, -1); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "UP", {
-        get: function () { return new Vector2(0, -1); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "UP_RIGHT", {
-        get: function () { return new Vector2(1, -1); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "LEFT", {
-        get: function () { return new Vector2(-1, 0); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "NONE", {
-        get: function () { return new Vector2(0, 0); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "RIGHT", {
-        get: function () { return new Vector2(1, 0); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "DOWN_LEFT", {
-        get: function () { return new Vector2(-1, 1); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "DOWN", {
-        get: function () { return new Vector2(0, 1); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "DOWN_RIGHT", {
-        get: function () { return new Vector2(1, 1); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "TOP_LEFT", {
-        // Anchors
-        get: function () { return new Vector2(0, 0); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "TOP_CENTER", {
-        get: function () { return new Vector2(0.5, 0); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "TOP_RIGHT", {
-        get: function () { return new Vector2(1, 0); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "CENTER_LEFT", {
-        get: function () { return new Vector2(0, 0.5); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "CENTER_CENTER", {
-        get: function () { return new Vector2(0.5, 0.5); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "CENTER_RIGHT", {
-        get: function () { return new Vector2(1, 0.5); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "BOTTOM_LEFT", {
-        get: function () { return new Vector2(0, 1); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "BOTTOM_CENTER", {
-        get: function () { return new Vector2(0.5, 1); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "BOTTOM_RIGHT", {
-        get: function () { return new Vector2(1, 1); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "TOP", {
-        get: function () { return new Vector2(0.5, 0); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "CENTER", {
-        get: function () { return new Vector2(0.5, 0.5); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Vector2, "BOTTOM", {
-        get: function () { return new Vector2(0.5, 1); },
-        enumerable: false,
-        configurable: true
-    });
-    return Vector2;
-}());
 /// <reference path="../utils/o_object.ts"/>
 var Camera = /** @class */ (function () {
     function Camera(config, world) {
@@ -7306,9 +7316,9 @@ var Camera = /** @class */ (function () {
         var target = this.mode.getTargetPt(this);
         this.moveTowardsPoint(target.x, target.y);
         if (this.shakeIntensity > 0) {
-            var pt_1 = Random.inCircle(this.shakeIntensity);
-            this._shakeX = pt_1.x;
-            this._shakeY = pt_1.y;
+            var pt = Random.inCircle(this.shakeIntensity);
+            this._shakeX = pt.x;
+            this._shakeY = pt.y;
         }
         else {
             this._shakeX = 0;
@@ -7395,15 +7405,15 @@ var Camera = /** @class */ (function () {
                 getTargetPt: function (camera) {
                     if (_.isString(target)) {
                         var worldObject = camera.world.select.name(target, false);
-                        return worldObject ? pt(worldObject.x + offsetX, worldObject.y + offsetY) : pt(camera.x, camera.y);
+                        return worldObject ? vec2(worldObject.x + offsetX, worldObject.y + offsetY) : vec2(camera.x, camera.y);
                     }
-                    return pt(target.x + offsetX, target.y + offsetY);
+                    return vec2(target.x + offsetX, target.y + offsetY);
                 },
             };
         }
         Mode.FOLLOW = FOLLOW;
         function FOCUS(x, y) {
-            var focusPt = pt(x, y);
+            var focusPt = vec2(x, y);
             return {
                 getTargetPt: function (camera) { return focusPt; },
             };
@@ -7879,7 +7889,7 @@ var CircleBounds = /** @class */ (function () {
         this.x = x;
         this.y = y;
         this.radius = radius;
-        this.center = { x: x, y: y };
+        this.center = new Vector2(x, y);
         this.boundingBox = new Rectangle(0, 0, 0, 0);
     }
     CircleBounds.prototype.clone = function () {
@@ -8938,7 +8948,7 @@ var InvertedRectBounds = /** @class */ (function () {
 var NullBounds = /** @class */ (function () {
     function NullBounds(parent) {
         this.parent = parent;
-        this.position = { x: Infinity, y: Infinity };
+        this.position = new Vector2(Infinity, Infinity);
         this.boundingBox = new Rectangle(Infinity, Infinity, 0, 0);
     }
     NullBounds.prototype.clone = function () {
@@ -9502,8 +9512,8 @@ var ActionBehavior = /** @class */ (function () {
 }());
 var Controller = /** @class */ (function () {
     function Controller() {
-        this.moveDirection = pt(0, 0);
-        this.aimDirection = pt(0, 0);
+        this.moveDirection = vec2(0, 0);
+        this.aimDirection = vec2(0, 0);
         this.keys = {};
     }
     Object.defineProperty(Controller.prototype, "left", {
@@ -9765,7 +9775,7 @@ var SpriteTextConverter = /** @class */ (function () {
             return [];
         var result = [];
         var word = [];
-        var nextCharPosition = { x: 0, y: 0 };
+        var nextCharPosition = new Vector2(0, 0);
         var styleStack = [];
         for (var i = 0; i < text.length; i++) {
             if (text[i] === ' ') {
@@ -11118,7 +11128,7 @@ var Cannonball = /** @class */ (function (_super) {
         _super.prototype.update.call(this);
     };
     Cannonball.prototype.kill = function (d) {
-        if (d === void 0) { d = { x: 0, y: 0 }; }
+        if (d === void 0) { d = Vector2.ZERO; }
         Puff.puffDirection(this.world, this.x + d.x * 5, this.y + d.y * 5, 10, new Vector2(-d.x, -d.y), 50, 50);
         this.world.playSound('thwomphit');
         _super.prototype.kill.call(this);
@@ -11159,7 +11169,7 @@ var Checkpoint = /** @class */ (function (_super) {
         this.isCheckpointGot = true;
         Checkpoints.current = this.name;
         if (fanfare) {
-            Puff.puff(this.world, this.x, this.y, 10, function () { return pt(Random.float(-50, 50), Random.float(-40, 0)); });
+            Puff.puff(this.world, this.x, this.y, 10, function () { return vec2(Random.float(-50, 50), Random.float(-40, 0)); });
             this.world.playSound('checkpoint');
             //this.world.playSound('checkpoint2');
         }
@@ -11201,10 +11211,10 @@ var DepthFilter = /** @class */ (function (_super) {
 }(TextureFilter));
 var Grapple = /** @class */ (function (_super) {
     __extends(Grapple, _super);
-    function Grapple(player, offx, offy, direction, color) {
+    function Grapple(source, offx, offy, direction, color) {
         var _this = _super.call(this, {
-            x: player.x + offx,
-            y: player.y + offy,
+            x: source.x + offx,
+            y: source.y + offy,
             texture: 'grapple',
             layer: 'entities',
             physicsGroup: 'grapple',
@@ -11218,13 +11228,13 @@ var Grapple = /** @class */ (function (_super) {
         _this.direction = direction;
         _this.isPulling = false;
         _this.broken = false;
-        _this.player = player;
+        _this.source = source;
         _this.offx = offx;
         _this.offy = offy;
         return _this;
     }
     Object.defineProperty(Grapple.prototype, "isPlayers", {
-        get: function () { return !(this.player instanceof Boss); },
+        get: function () { return !(this.source instanceof Boss); },
         enumerable: false,
         configurable: true
     });
@@ -11285,8 +11295,8 @@ var Grapple = /** @class */ (function (_super) {
     };
     Grapple.prototype.render = function (texture, x, y) {
         _super.prototype.render.call(this, texture, x, y);
-        var ox = x - this.x + this.player.x + this.offx;
-        var oy = y - this.y + this.player.y + this.offy;
+        var ox = x - this.x + this.source.x + this.offx;
+        var oy = y - this.y + this.source.y + this.offy;
         Draw.brush.color = this.tint;
         Draw.brush.alpha = this.alpha;
         Draw.brush.thickness = 1;
@@ -11297,7 +11307,7 @@ var Grapple = /** @class */ (function (_super) {
         var _this = this;
         this.broken = true;
         this.world.playSound('break');
-        this.player = { x: this.player.x, y: this.player.y };
+        this.source = new Vector2(this.source.x, this.source.y);
         this.v.x = this.v.y = 0;
         this.runScript(S.chain(S.doOverTime(0.5, function (t) {
             _this.alpha = 1 - t;

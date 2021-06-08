@@ -14,7 +14,7 @@ namespace DialogBox {
 class DialogBox extends Sprite {
     private textAreaFull: Rect;
     private textAreaPortrait: Rect;
-    private portraitPosition: Pt;
+    private portraitPosition: Vector2;
 
     private startSound: string;
     private speakSound: string;
@@ -36,7 +36,7 @@ class DialogBox extends Sprite {
 
         this.textAreaFull = config.textAreaFull;
         this.textAreaPortrait = config.textAreaPortrait;
-        this.portraitPosition = config.portraitPosition;
+        this.portraitPosition = vec2(config.portraitPosition);
 
         this.startSound = config.startSound;
         this.speakSound = config.speakSound;

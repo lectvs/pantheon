@@ -82,7 +82,7 @@ namespace S {
         }
     }
 
-    export function tweenPt(duration: OrFactory<number>, pt: Pt, start: Pt, end: Pt, easingFunction: Tween.Easing.Function = Tween.Easing.Linear): Script.Function {
+    export function tweenPt(duration: OrFactory<number>, pt: Vector2, start: Vector2, end: Vector2, easingFunction: Tween.Easing.Function = Tween.Easing.Linear): Script.Function {
         let startx = start.x;
         let starty = start.y;
         let endx = end.x;

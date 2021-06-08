@@ -23,7 +23,7 @@ namespace Preload {
 
     export type TextureFrame = {
         rect?: Rect;
-        anchor?: Pt;
+        anchor?: Vector2;
     }
 
     export type Sound = {
@@ -35,7 +35,7 @@ namespace Preload {
         frameWidth: number;
         frameHeight: number;
         prefix?: string;
-        anchor?: Pt;
+        anchor?: Vector2;
     }
 
     export type PyxelTilemap = {

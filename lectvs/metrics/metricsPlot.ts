@@ -1,7 +1,7 @@
 namespace MetricsPlot {
     export type Plot = {
         texture: Texture;
-        dataPoints: {[x: number]: Pt};
+        dataPoints: {[x: number]: Vector2};
         graphBounds: Boundaries;
     }
 
@@ -43,7 +43,7 @@ namespace MetricsPlot {
         Draw.brush.color = 0xFF0000;
         Draw.brush.alpha = 1;
         for (let x in plot.dataPoints) {
-            let dataPoint: Pt = plot.dataPoints[x];
+            let dataPoint = plot.dataPoints[x];
             Draw.pixel(plot.texture, getPlotPixelX(plot, dataPoint.x), getPlotPixelY(plot, dataPoint.y));
         }
 

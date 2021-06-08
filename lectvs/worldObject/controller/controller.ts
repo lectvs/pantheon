@@ -17,8 +17,8 @@ class Controller {
     set attack(value: boolean) { this.keys.attack = value; }
 
     constructor() {
-        this.moveDirection = pt(0, 0);
-        this.aimDirection = pt(0, 0);
+        this.moveDirection = vec2(0, 0);
+        this.aimDirection = vec2(0, 0);
         this.keys = {};
     }
 

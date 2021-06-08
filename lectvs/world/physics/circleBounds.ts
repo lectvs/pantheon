@@ -5,7 +5,7 @@ class CircleBounds implements Bounds {
     y: number;
     radius: number;
 
-    private center: Pt;
+    private center: Vector2;
     private boundingBox: Rectangle;
 
     constructor(x: number, y: number, radius: number, parent?: Bounds.Parent) {
@@ -13,7 +13,7 @@ class CircleBounds implements Bounds {
         this.x = x;
         this.y = y;
         this.radius = radius;
-        this.center = { x, y };
+        this.center = new Vector2(x, y);
         this.boundingBox = new Rectangle(0, 0, 0, 0);
     }
 

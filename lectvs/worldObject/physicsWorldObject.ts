@@ -57,10 +57,10 @@ class PhysicsWorldObject extends WorldObject {
 
     constructor(config: PhysicsWorldObject.Config = {}) {
         super(config);
-        this._v = config.v ? pt(config.v.x, config.v.y) : pt(config.vx ?? 0, config.vy ?? 0);
+        this._v = config.v ? vec2(config.v.x, config.v.y) : vec2(config.vx ?? 0, config.vy ?? 0);
         this.vz = config.vz ?? 0;
         this.mass = config.mass ?? 1;
-        this._gravity = pt(config.gravityx ?? 0, config.gravityy ?? 0);
+        this._gravity = vec2(config.gravityx ?? 0, config.gravityy ?? 0);
         this.gravityz = config.gravityz ?? 0;
         this.bounce = config.bounce ?? 1;
 

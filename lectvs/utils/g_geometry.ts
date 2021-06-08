@@ -1,9 +1,9 @@
 namespace G {
-    export function distance(pt1: Pt, pt2: Pt) {
+    export function distance(pt1: Vector2, pt2: Vector2) {
         return M.distance(pt1.x, pt1.y, pt2.x, pt2.y);
     }
 
-    export function distanceSq(pt1: Pt, pt2: Pt) {
+    export function distanceSq(pt1: Vector2, pt2: Vector2) {
         return M.distanceSq(pt1.x, pt1.y, pt2.x, pt2.y);
     }
 
@@ -15,7 +15,7 @@ namespace G {
         return Math.abs(dy*ldx - dx*ldy) / (ldx*ldx + ldy*ldy);
     }
 
-    export function dot(v1: Pt, v2: Pt) {
+    export function dot(v1: Vector2, v2: Vector2) {
         return v1.x*v2.x + v1.y*v2.y;
     }
 
@@ -30,7 +30,7 @@ namespace G {
         return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y;
     }
 
-    export function rectContainsPt(rect: Rect, pt: Pt) {
+    export function rectContainsPt(rect: Rect, pt: Vector2) {
         return pt.x >= rect.x && pt.y >= rect.y && pt.x < rect.x + rect.width && pt.y < rect.y + rect.height;
     }
 

@@ -47,7 +47,7 @@ namespace World {
 class World {
     width: number;
     height: number;
-    entryPoints: Dict<Pt>;
+    entryPoints: Dict<Vector2>;
     worldObjects: WorldObject[];
 
     physicsGroups: Dict<World.PhysicsGroup>;
@@ -101,7 +101,10 @@ class World {
 
         this.layerTexture = new BasicTexture(this.width, this.height);
 
-        this.entryPoints = config.entryPoints ?? {};
+        this.entryPoints = {};
+        for (let key in config.entryPoints ?? {}) {
+            this.entryPoints[key] = vec2(config.entryPoints[key]);
+        }
 
         this.camera = new Camera(config.camera ?? {}, this);
     }
@@ -241,8 +244,8 @@ class World {
         return Input.mouseY + Math.floor(this.camera.worldOffsetY);
     }
 
-    getWorldMousePosition(): Pt {
-        return { x: this.getWorldMouseX(), y: this.getWorldMouseY() };
+    getWorldMousePosition() {
+        return new Vector2(this.getWorldMouseX(), this.getWorldMouseY());
     }
 
     handleCollisions() {

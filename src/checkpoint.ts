@@ -32,7 +32,7 @@ class Checkpoint extends Sprite {
         Checkpoints.current = this.name;
 
         if (fanfare) {
-            Puff.puff(this.world, this.x, this.y, 10, () => pt(Random.float(-50, 50), Random.float(-40, 0)));
+            Puff.puff(this.world, this.x, this.y, 10, () => vec2(Random.float(-50, 50), Random.float(-40, 0)));
             this.world.playSound('checkpoint');
             //this.world.playSound('checkpoint2');
         }

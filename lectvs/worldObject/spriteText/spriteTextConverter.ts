@@ -4,7 +4,7 @@ class SpriteTextConverter {
 
         let result: SpriteText.Character[] = [];
         let word: SpriteText.Character[] = [];
-        let nextCharPosition: Pt = { x: 0, y: 0 };
+        let nextCharPosition: Vector2 = new Vector2(0, 0);
         let styleStack: SpriteText.Style[] = [];
 
         for (let i = 0; i < text.length; i++) {
@@ -77,7 +77,7 @@ class SpriteTextConverter {
         return result;
     }
 
-    private static pushWord(word: SpriteText.Character[], result: SpriteText.Character[], position: Pt, maxWidth: number) {
+    private static pushWord(word: SpriteText.Character[], result: SpriteText.Character[], position: Vector2, maxWidth: number) {
         if (_.isEmpty(word)) return;
 
         let lastChar = _.last(word);

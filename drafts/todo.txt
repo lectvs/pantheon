@@ -1,7 +1,5 @@
 todo
 - easier tilemap definition in assets?
-- vector class
-    - replace pt?
 - rethink tilemap zMap? z on a per-tile basis rather than per-index?
 - better acceleration movement (smart clamping?)
 - normalize cnoise?

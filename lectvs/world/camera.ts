@@ -161,14 +161,14 @@ namespace Camera {
                 getTargetPt: (camera: Camera) => {
                     if (_.isString(target)) {
                         let worldObject = camera.world.select.name(target, false);
-                        return worldObject ? pt(worldObject.x + offsetX, worldObject.y + offsetY) : pt(camera.x, camera.y);
+                        return worldObject ? vec2(worldObject.x + offsetX, worldObject.y + offsetY) : vec2(camera.x, camera.y);
                     }
-                    return pt(target.x + offsetX, target.y + offsetY);
+                    return vec2(target.x + offsetX, target.y + offsetY);
                 },
             };
         }
         export function FOCUS(x: number, y: number): Mode {
-            let focusPt = pt(x, y);
+            let focusPt = vec2(x, y);
             return {
                 getTargetPt: (camera: Camera) => focusPt,
             };

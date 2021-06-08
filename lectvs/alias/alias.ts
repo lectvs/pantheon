@@ -1,3 +1,5 @@
+/// <reference path="../utils/vector.ts"/>
+
 type Dict<T> = {[name: string]: T};
 
 type Dimens = {
@@ -30,7 +32,7 @@ type Boundaries = {
 
 type ReplaceConfigCallbacks<SuperType extends WorldObject.Config, NewType extends WorldObject> = Omit<SuperType, WorldObject.CallbackKeys> & WorldObject.Callbacks<NewType>;
 
-function pt(x: number | Pt, y?: number): Vector2 {
+function vec2(x: number | Pt, y?: number): Vector2 {
     if (typeof(x) === 'number') return new Vector2(x, y);
     return new Vector2(x.x, x.y);
 }

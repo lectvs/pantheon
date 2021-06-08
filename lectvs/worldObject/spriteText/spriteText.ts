@@ -4,7 +4,7 @@ namespace SpriteText {
     export type Config = ReplaceConfigCallbacks<WorldObject.Config, SpriteText> & {
         font?: Font;
         text?: string;
-        anchor?: Pt;
+        anchor?: Vector2;
         maxWidth?: number;
         style?: Style;
         effects?: Effects.Config;
@@ -56,7 +56,7 @@ class SpriteText extends WorldObject {
         this.dirty = true;
     }
 
-    anchor: Pt;
+    anchor: Vector2;
 
     effects: Effects;
     mask: Mask.WorldObjectMaskConfig;
@@ -200,7 +200,7 @@ class SpriteText extends WorldObject {
 }
 
 namespace SpriteText {
-    export const charCodes: Dict<Pt> = getCharCodes();
+    export const charCodes: Dict<Vector2> = getCharCodes();
     function getCharCodes() {
         let spriteFontCharList = [
             ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
@@ -214,13 +214,13 @@ namespace SpriteText {
             ['\\','|', ';', ':', "'", '"', ',', '.', '<', '>'],
             ['/', '?', '`' ,'~'],
         ];
-        let result: Dict<Pt> = {};
+        let result: Dict<Vector2> = {};
         for (let y = 0; y < spriteFontCharList.length; y++) {
             for (let x = 0; x < spriteFontCharList[y].length; x++) {
-                result[spriteFontCharList[y][x]] = { x, y };
+                result[spriteFontCharList[y][x]] = vec2(x, y);
             }
         }
-        result[' '] = { x: -1, y: -1 };
+        result[' '] = new Vector2(-1, -1);
         return result;
     }
 }

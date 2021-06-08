@@ -113,4 +113,7 @@ class Vector2 {
     static get TOP() { return new Vector2(0.5, 0); }
     static get CENTER() { return new Vector2(0.5, 0.5); }
     static get BOTTOM() { return new Vector2(0.5, 1); }
+
+    // Misc
+    static get ZERO() { return new Vector2(0, 0); }
 }

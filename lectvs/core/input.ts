@@ -220,8 +220,8 @@ class Input {
         return this._mouseY;
     }
 
-    static get mousePosition(): Pt {
-        return { x: this.mouseX, y: this.mouseY };
+    static get mousePosition() {
+        return new Vector2(this.mouseX, this.mouseY);
     }
 
     static get canvasMouseX() {
@@ -232,8 +232,8 @@ class Input {
         return this._canvasMouseY;
     }
 
-    static get canvasMousePosition(): Pt {
-        return { x: this.canvasMouseX, y: this.canvasMouseY };
+    static get canvasMousePosition() {
+        return new Vector2(this.canvasMouseX, this.canvasMouseY);
     }
 
     static get isMouseOnCanvas() {

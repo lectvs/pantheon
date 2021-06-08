@@ -1,12 +1,12 @@
 class NullBounds implements Bounds {
     parent: Bounds.Parent;
 
-    private position: Pt;
+    private position: Vector2;
     private boundingBox: Rectangle;
 
     constructor(parent?: Bounds.Parent) {
         this.parent = parent;
-        this.position = { x: Infinity, y: Infinity };
+        this.position = new Vector2(Infinity, Infinity);
         this.boundingBox = new Rectangle(Infinity, Infinity, 0, 0);
     }
 

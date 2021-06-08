@@ -1,7 +1,7 @@
 class Cannonball extends Sprite {
     private readonly DRAG = 200;
 
-    constructor(x: number, y: number, v: Pt) {
+    constructor(x: number, y: number, v: Vector2) {
         super({
             x: x, y: y,
             texture: 'cannonball',
@@ -19,7 +19,7 @@ class Cannonball extends Sprite {
         super.update();
     }
 
-    kill(d: Pt = { x: 0, y: 0 }) {
+    kill(d: Vector2 = Vector2.ZERO) {
         Puff.puffDirection(this.world, this.x + d.x*5, this.y + d.y*5, 10, new Vector2(-d.x, -d.y), 50, 50);
         this.world.playSound('thwomphit')
         super.kill();

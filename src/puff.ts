@@ -21,7 +21,7 @@ class Puff extends Sprite {
 }
 
 namespace Puff {
-    export function puff(world: World, x: number, y: number, count: number, v: Factory<Pt>) {
+    export function puff(world: World, x: number, y: number, count: number, v: Factory<Vector2>) {
         let result: Puff[] = [];
         for (let i = 0; i < count; i++) {
             result.push(world.addWorldObject(new Puff(0.1, { x, y, v: v() })));

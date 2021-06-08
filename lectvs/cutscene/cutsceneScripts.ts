@@ -5,11 +5,11 @@ namespace S {
 
             if (!toMovement) toMovement = camera.movement;
 
-            let cameraPoint = pt(camera.x, camera.y);
+            let cameraPoint = vec2(camera.x, camera.y);
             camera.setModeFollow(cameraPoint);
             camera.setMovementSnap();
 
-            let startPoint = pt(cameraPoint.x, cameraPoint.y);
+            let startPoint = vec2(cameraPoint.x, cameraPoint.y);
 
             yield S.doOverTime(duration, t => {
                 let toPoint = toMode.getTargetPt(camera);
