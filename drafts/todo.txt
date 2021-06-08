@@ -1,12 +1,10 @@
 todo
 - easier tilemap definition in assets?
 - vector class
-    - v_vector
     - replace pt?
 - rethink tilemap zMap? z on a per-tile basis rather than per-index?
 - better acceleration movement (smart clamping?)
 - normalize cnoise?
-- normalize angle deg/rad?
 - option for entities to only update within screen bounds?
 - limit sound effect count per effect
 - random pitch/speed variation on sfx

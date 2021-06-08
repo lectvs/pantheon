@@ -111,7 +111,7 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     getSpeed() {
-        return V.magnitude(this.v);
+        return this.v.magnitude;
     }
 
     getWorldBounds(newX: number = this.x, newY: number = this.y) {
@@ -139,7 +139,7 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     setSpeed(speed: number) {
-        V.setMagnitude(this.v, speed);
+        this.v.setMagnitude(speed);
     }
 
     teleport(x: number, y: number) {

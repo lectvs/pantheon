@@ -7,7 +7,7 @@ class Mover extends Sprite {
             layer: 'entities',
             physicsGroup: 'movers',
             bounds: new RectBounds(-6, -6, 12, 12),
-            v: V.rotated({ x: 0, y: 32 }, M.degToRad(angle)),
+            v: new Vector2(0, 32).rotated(angle),
             bounce: 1,
         });
     }

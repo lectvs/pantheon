@@ -35,10 +35,10 @@ class Bat extends Sprite {
                 this.v.y = 100;
             },
             update: () => {
-                let a = V.withMagnitude(this.controller.moveDirection, this.ACCELERATION);
+                let a = this.controller.moveDirection.withMagnitude(this.ACCELERATION);
                 this.v.x += a.x * this.delta;
                 this.v.y += a.y * this.delta;
-                V.clampMagnitude(this.v, this.MAX_SPEED);
+                this.v.clampMagnitude(this.MAX_SPEED);
 
                 this.flipX = this.controller.moveDirection.x < 0;
                 this.playAnimation('fly');

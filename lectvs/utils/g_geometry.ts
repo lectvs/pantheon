@@ -15,6 +15,10 @@ namespace G {
         return Math.abs(dy*ldx - dx*ldy) / (ldx*ldx + ldy*ldy);
     }
 
+    export function dot(v1: Pt, v2: Pt) {
+        return v1.x*v2.x + v1.y*v2.y;
+    }
+
     export function expandRectangle(rect: Rect, amount: number) {
         rect.x -= amount;
         rect.y -= amount;

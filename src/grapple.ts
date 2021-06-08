@@ -24,7 +24,7 @@ class Grapple extends Sprite {
         this.v.x = direction.x * this.SPEED;
         this.v.y = direction.y * this.SPEED;
 
-        this.angle = M.radToDeg(V.angle(direction));
+        this.angle = direction.angle
         this.tint = color;
 
         this.direction = direction;

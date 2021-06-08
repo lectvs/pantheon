@@ -240,7 +240,7 @@ namespace Physics {
         if (momentumTransferMode === 'elastic') {
             if (collision.move.isImmovable() && collision.from.isImmovable()) return;
 
-            let d = V.normalized({ x: collision.collision.displacementX, y: collision.collision.displacementY });
+            let d = new Vector2(collision.collision.displacementX, collision.collision.displacementY).normalized();
 
             let mm = collision.move.mass;
             let mf = collision.from.mass;
@@ -249,8 +249,8 @@ namespace Physics {
                 mm = 1; mf = 1;
             }
 
-            let vmi_proj = V.dot(collision.move.v, d);
-            let vfi_proj = V.dot(collision.from.v, d);
+            let vmi_proj = G.dot(collision.move.v, d);
+            let vfi_proj = G.dot(collision.from.v, d);
 
             let mass_factor = (collision.move.mass + collision.from.mass === 0) ? 0.5 :
                                 collision.from.mass / (collision.move.mass + collision.from.mass);

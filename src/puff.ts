@@ -31,7 +31,7 @@ namespace Puff {
 
     export function puffDirection(world: World, x: number, y: number, count: number, direction: Vector2, speed: number, spread: number) {
         return puff(world, x, y, count, () => {
-            let v = V.withMagnitude(direction, speed);
+            let v = direction.withMagnitude(speed);
             let spreadv = Random.inCircle(spread);
             v.x += spreadv.x;
             v.y += spreadv.y;

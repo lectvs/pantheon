@@ -102,4 +102,34 @@ namespace M {
     export function vec3ToColor(vec3: [number, number, number]) {
         return (Math.round(vec3[0] * 255) << 16) + (Math.round(vec3[1] * 255) << 8) + Math.round(vec3[2] * 255);
     }
+
+
+    // Degree-based Trig
+    export function cos(angle: number) {
+        return Math.cos(degToRad(angle));
+    }
+
+    export function sin(angle: number) {
+        return Math.sin(degToRad(angle));
+    }
+
+    export function tan(angle: number) {
+        return Math.tan(degToRad(angle));
+    }
+
+    export function asin(sin: number) {
+        return radToDeg(Math.asin(sin));
+    }
+
+    export function acos(cos: number) {
+        return radToDeg(Math.acos(cos));
+    }
+
+    export function atan(tan: number) {
+        return radToDeg(Math.atan(tan));
+    }
+
+    export function atan2(tany: number, tanx: number) {
+        return radToDeg(Math.atan2(tany, tanx));
+    }
 }

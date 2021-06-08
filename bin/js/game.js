@@ -1169,7 +1169,7 @@ var BasicTexture = /** @class */ (function () {
         var _a, _b, _c;
         var scaleX = (_a = properties.scaleX) !== null && _a !== void 0 ? _a : 1;
         var scaleY = (_b = properties.scaleY) !== null && _b !== void 0 ? _b : 1;
-        var angle = M.degToRad((_c = properties.angle) !== null && _c !== void 0 ? _c : 0);
+        var angle = (_c = properties.angle) !== null && _c !== void 0 ? _c : 0;
         var width = this.width * scaleX;
         var height = this.height * scaleY;
         if (angle === 0) {
@@ -1177,10 +1177,10 @@ var BasicTexture = /** @class */ (function () {
         }
         var v1x = 0;
         var v1y = 0;
-        var v2x = width * Math.cos(angle);
-        var v2y = width * Math.sin(angle);
-        var v3x = -height * Math.sin(angle);
-        var v3y = height * Math.cos(angle);
+        var v2x = width * M.cos(angle);
+        var v2y = width * M.sin(angle);
+        var v3x = -height * M.sin(angle);
+        var v3y = height * M.cos(angle);
         var v4x = v2x + v3x;
         var v4y = v2y + v3y;
         var minx = Math.min(v1x, v2x, v3x, v4x);
@@ -2277,17 +2277,17 @@ var RandomNumberGenerator = /** @class */ (function () {
      */
     RandomNumberGenerator.prototype.inCircle = function (radius) {
         if (radius === void 0) { radius = 1; }
-        var angle = this.float(0, 2 * Math.PI);
+        var angle = this.float(0, 360);
         var r = radius * Math.sqrt(this.value);
-        return new Vector2(r * Math.cos(angle), r * Math.sin(angle));
+        return new Vector2(r * M.cos(angle), r * M.sin(angle));
     };
     /**
      * Random Vector2 uniformly in a disc.
      */
     RandomNumberGenerator.prototype.inDisc = function (radiusSmall, radiusLarge) {
-        var angle = this.float(0, 2 * Math.PI);
+        var angle = this.float(0, 360);
         var r = radiusLarge * Math.sqrt(this.float(radiusSmall / radiusLarge, 1));
-        return new Vector2(r * Math.cos(angle), r * Math.sin(angle));
+        return new Vector2(r * M.cos(angle), r * M.sin(angle));
     };
     /**
      * Random int from {0} to {array.length - 1}.
@@ -2307,8 +2307,8 @@ var RandomNumberGenerator = /** @class */ (function () {
      */
     RandomNumberGenerator.prototype.onCircle = function (radius) {
         if (radius === void 0) { radius = 1; }
-        var angle = this.float(0, 2 * Math.PI);
-        return new Vector2(radius * Math.cos(angle), radius * Math.sin(angle));
+        var angle = this.float(0, 360);
+        return new Vector2(radius * M.cos(angle), radius * M.sin(angle));
     };
     /**
      * Random sign, -1 or +1.
@@ -2847,7 +2847,7 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         _super.prototype.render.call(this, texture, x, y);
     };
     PhysicsWorldObject.prototype.getSpeed = function () {
-        return V.magnitude(this.v);
+        return this.v.magnitude;
     };
     PhysicsWorldObject.prototype.getWorldBounds = function (newX, newY) {
         if (newX === void 0) { newX = this.x; }
@@ -2869,7 +2869,7 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         this._immovable = immovable;
     };
     PhysicsWorldObject.prototype.setSpeed = function (speed) {
-        V.setMagnitude(this.v, speed);
+        this.v.setMagnitude(speed);
     };
     PhysicsWorldObject.prototype.teleport = function (x, y) {
         this.x = x;
@@ -5205,15 +5205,13 @@ var AnchoredTexture = /** @class */ (function () {
     AnchoredTexture.prototype.getAdjustmentX = function (angle, scaleX, scaleY) {
         var ax = Math.floor(this.anchorX * this.width) * scaleX;
         var ay = Math.floor(this.anchorY * this.height) * scaleY;
-        var rad = M.degToRad(angle);
-        var rotatedAndScaled_ax = (-ax) * Math.cos(rad) - (-ay) * Math.sin(rad);
+        var rotatedAndScaled_ax = (-ax) * M.cos(angle) - (-ay) * M.sin(angle);
         return rotatedAndScaled_ax;
     };
     AnchoredTexture.prototype.getAdjustmentY = function (angle, scaleX, scaleY) {
         var ax = Math.floor(this.anchorX * this.width) * scaleX;
         var ay = Math.floor(this.anchorY * this.height) * scaleY;
-        var rad = M.degToRad(angle);
-        var rotatedAndScaled_ay = (-ax) * Math.sin(rad) + (-ay) * Math.cos(rad);
+        var rotatedAndScaled_ay = (-ax) * M.sin(angle) + (-ay) * M.cos(angle);
         return rotatedAndScaled_ay;
     };
     return AnchoredTexture;
@@ -6565,6 +6563,10 @@ var G;
         return Math.abs(dy * ldx - dx * ldy) / (ldx * ldx + ldy * ldy);
     }
     G.distancePointToLine = distancePointToLine;
+    function dot(v1, v2) {
+        return v1.x * v2.x + v1.y * v2.y;
+    }
+    G.dot = dot;
     function expandRectangle(rect, amount) {
         rect.x -= amount;
         rect.y -= amount;
@@ -6720,6 +6722,35 @@ var M;
         return (Math.round(vec3[0] * 255) << 16) + (Math.round(vec3[1] * 255) << 8) + Math.round(vec3[2] * 255);
     }
     M.vec3ToColor = vec3ToColor;
+    // Degree-based Trig
+    function cos(angle) {
+        return Math.cos(degToRad(angle));
+    }
+    M.cos = cos;
+    function sin(angle) {
+        return Math.sin(degToRad(angle));
+    }
+    M.sin = sin;
+    function tan(angle) {
+        return Math.tan(degToRad(angle));
+    }
+    M.tan = tan;
+    function asin(sin) {
+        return radToDeg(Math.asin(sin));
+    }
+    M.asin = asin;
+    function acos(cos) {
+        return radToDeg(Math.acos(cos));
+    }
+    M.acos = acos;
+    function atan(tan) {
+        return radToDeg(Math.atan(tan));
+    }
+    M.atan = atan;
+    function atan2(tany, tanx) {
+        return radToDeg(Math.atan2(tany, tanx));
+    }
+    M.atan2 = atan2;
 })(M || (M = {}));
 var O;
 (function (O) {
@@ -7049,95 +7080,22 @@ var Utils;
     Utils.NOOP_RENDERTEXTURE = PIXI.RenderTexture.create({ width: 0, height: 0 });
     Utils.UID = new UIDGenerator();
 })(Utils || (Utils = {}));
-var V;
-(function (V) {
-    function angle(vector) {
-        var angle = Math.atan2(vector.y, vector.x);
-        if (angle < 0) {
-            angle += 2 * Math.PI;
-        }
-        return angle;
-    }
-    V.angle = angle;
-    function clampMagnitude(v, magnitude) {
-        if (magnitude >= 0 && V.magnitude(v) > magnitude) {
-            setMagnitude(v, magnitude);
-        }
-    }
-    V.clampMagnitude = clampMagnitude;
-    function dot(v1, v2) {
-        return v1.x * v2.x + v1.y * v2.y;
-    }
-    V.dot = dot;
-    function isZero(v) {
-        return v.x === 0 && v.y === 0;
-    }
-    V.isZero = isZero;
-    function magnitude(vector) {
-        return Math.sqrt(magnitudeSq(vector));
-    }
-    V.magnitude = magnitude;
-    function magnitudeSq(vector) {
-        return vector.x * vector.x + vector.y * vector.y;
-    }
-    V.magnitudeSq = magnitudeSq;
-    function normalize(vector) {
-        var mag = magnitude(vector);
-        if (mag !== 0) {
-            vector.x /= mag;
-            vector.y /= mag;
-        }
-    }
-    V.normalize = normalize;
-    function normalized(vector) {
-        var mag = magnitude(vector);
-        if (mag === 0) {
-            return pt(0, 0);
-        }
-        return pt(vector.x / mag, vector.y / mag);
-    }
-    V.normalized = normalized;
-    function rotate(vector, angle) {
-        var sin = Math.sin(angle);
-        var cos = Math.cos(angle);
-        var x = vector.x;
-        var y = vector.y;
-        vector.x = cos * x - sin * y;
-        vector.y = sin * x + cos * y;
-    }
-    V.rotate = rotate;
-    function rotated(vector, angle) {
-        var result = pt(vector);
-        rotate(result, angle);
-        return result;
-    }
-    V.rotated = rotated;
-    function scale(vector, amount) {
-        vector.x *= amount;
-        vector.y *= amount;
-    }
-    V.scale = scale;
-    function scaled(vector, amount) {
-        return pt(vector.x * amount, vector.y * amount);
-    }
-    V.scaled = scaled;
-    function setMagnitude(vector, magnitude) {
-        normalize(vector);
-        scale(vector, magnitude);
-    }
-    V.setMagnitude = setMagnitude;
-    function withMagnitude(vector, magnitude) {
-        var result = normalized(vector);
-        setMagnitude(result, magnitude);
-        return result;
-    }
-    V.withMagnitude = withMagnitude;
-})(V || (V = {}));
 var Vector2 = /** @class */ (function () {
     function Vector2(x, y) {
         this.x = x;
         this.y = y;
     }
+    Object.defineProperty(Vector2.prototype, "angle", {
+        get: function () {
+            var angle = M.atan2(this.y, this.x);
+            if (angle < 0) {
+                angle += 360;
+            }
+            return angle;
+        },
+        enumerable: false,
+        configurable: true
+    });
     Object.defineProperty(Vector2.prototype, "magnitude", {
         get: function () {
             return Math.sqrt(this.x * this.x + this.y * this.y);
@@ -7145,6 +7103,64 @@ var Vector2 = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
+    Vector2.prototype.clampMagnitude = function (maxMagnitude) {
+        if (maxMagnitude < 0) {
+            error('Tried to clamp vector magnitude with negative maxMagnitude');
+            return;
+        }
+        if (this.magnitude > maxMagnitude) {
+            this.setMagnitude(maxMagnitude);
+        }
+    };
+    Vector2.prototype.clone = function () {
+        return new Vector2(this.x, this.y);
+    };
+    Vector2.prototype.isZero = function () {
+        return this.x === 0 && this.y === 0;
+    };
+    Vector2.prototype.normalize = function () {
+        var mag = this.magnitude;
+        if (mag !== 0) {
+            this.x /= mag;
+            this.y /= mag;
+        }
+    };
+    Vector2.prototype.normalized = function () {
+        var copy = this.clone();
+        copy.normalize();
+        return copy;
+    };
+    Vector2.prototype.rotate = function (angle) {
+        var sin = M.sin(angle);
+        var cos = M.cos(angle);
+        var x = this.x;
+        var y = this.y;
+        this.x = cos * x - sin * y;
+        this.y = sin * x + cos * y;
+    };
+    Vector2.prototype.rotated = function (angle) {
+        var copy = this.clone();
+        copy.rotate(angle);
+        return copy;
+    };
+    Vector2.prototype.scale = function (amount) {
+        this.x *= amount;
+        this.y *= amount;
+    };
+    Vector2.prototype.scaled = function (amount) {
+        var copy = this.clone();
+        copy.scale(amount);
+        return copy;
+    };
+    Vector2.prototype.setMagnitude = function (magnitude) {
+        this.normalize();
+        this.scale(magnitude);
+    };
+    Vector2.prototype.withMagnitude = function (magnitude) {
+        var copy = this.clone();
+        copy.setMagnitude(magnitude);
+        return copy;
+    };
     Object.defineProperty(Vector2, "UP_LEFT", {
         // Directions
         get: function () { return new Vector2(-1, -1); },
@@ -7706,7 +7722,7 @@ var Physics;
         if (momentumTransferMode === 'elastic') {
             if (collision.move.isImmovable() && collision.from.isImmovable())
                 return;
-            var d = V.normalized({ x: collision.collision.displacementX, y: collision.collision.displacementY });
+            var d = new Vector2(collision.collision.displacementX, collision.collision.displacementY).normalized();
             var mm = collision.move.mass;
             var mf = collision.from.mass;
             if (mm + mf === 0) {
@@ -7714,8 +7730,8 @@ var Physics;
                 mm = 1;
                 mf = 1;
             }
-            var vmi_proj = V.dot(collision.move.v, d);
-            var vfi_proj = V.dot(collision.from.v, d);
+            var vmi_proj = G.dot(collision.move.v, d);
+            var vfi_proj = G.dot(collision.from.v, d);
             var mass_factor = (collision.move.mass + collision.from.mass === 0) ? 0.5 :
                 collision.from.mass / (collision.move.mass + collision.from.mass);
             var elastic_factor_m = collision.move.isImmovable() ? 0 : collision.from.isImmovable() ? 1 : mass_factor;
@@ -8154,8 +8170,8 @@ var Bounds;
             // Vertices
             function addVertexPos(vx, vy, ldx1, ldy1, ldx2, ldy2) {
                 var angle = closestPointOnCircle_angle(movePos.x, movePos.y, vx, vy);
-                var newX = vx + Math.cos(angle) * move.radius;
-                var newY = vy + Math.sin(angle) * move.radius;
+                var newX = vx + M.cos(angle) * move.radius;
+                var newY = vy + M.sin(angle) * move.radius;
                 if (vectorBetweenVectors(newX - vx, newY - vy, ldx1, ldy1, ldx2, ldy2)) {
                     newXs.push(newX);
                     newYs.push(newY);
@@ -8806,7 +8822,7 @@ var Bounds;
         function closestPointOnCircle_angle(px, py, cx, cy) {
             var dx = px - cx;
             var dy = py - cy;
-            return Math.atan2(dy, dx);
+            return M.atan2(dy, dx);
         }
         function closestPointOnLine_t(px, py, lx1, ly1, lx2, ly2) {
             var dx = px - lx1;
@@ -10413,10 +10429,10 @@ var Bat = /** @class */ (function (_super) {
                 _this.v.y = 100;
             },
             update: function () {
-                var a = V.withMagnitude(_this.controller.moveDirection, _this.ACCELERATION);
+                var a = _this.controller.moveDirection.withMagnitude(_this.ACCELERATION);
                 _this.v.x += a.x * _this.delta;
                 _this.v.y += a.y * _this.delta;
-                V.clampMagnitude(_this.v, _this.MAX_SPEED);
+                _this.v.clampMagnitude(_this.MAX_SPEED);
                 _this.flipX = _this.controller.moveDirection.x < 0;
                 _this.playAnimation('fly');
             }
@@ -10730,11 +10746,11 @@ var Boss = /** @class */ (function (_super) {
         }
     };
     Boss.prototype.shoot = function () {
-        var dir = V.normalized(this.controller.aimDirection);
+        var dir = this.controller.aimDirection.normalized();
         var off = 10;
-        this.world.addWorldObject(new Cannonball(this.x + dir.x * off, this.y + dir.y * off, V.withMagnitude(dir, this.SHOT_SPEED)));
+        this.world.addWorldObject(new Cannonball(this.x + dir.x * off, this.y + dir.y * off, dir.withMagnitude(this.SHOT_SPEED)));
         this.world.playSound('cannonshoot');
-        this.v = V.withMagnitude(V.scaled(dir, -1), this.KNOCKBACK_SPEED);
+        this.v = dir.scaled(-1).withMagnitude(this.KNOCKBACK_SPEED);
     };
     Boss.prototype.damage = function (direction) {
         this.v.x += direction.x * this.KNOCKBACK_SPEED;
@@ -11072,9 +11088,9 @@ var Cannon = /** @class */ (function (_super) {
         return _this;
     }
     Cannon.prototype.shoot = function () {
-        var dir = V.rotated({ x: -1, y: 0 }, M.degToRad(this.angle + 45));
+        var dir = new Vector2(-1, 0).rotated(this.angle + 45);
         var off = 10;
-        this.world.addWorldObject(new Cannonball(this.x + dir.x * off, this.y + dir.y * off, V.withMagnitude(dir, this.SHOT_SPEED)));
+        this.world.addWorldObject(new Cannonball(this.x + dir.x * off, this.y + dir.y * off, dir.withMagnitude(this.SHOT_SPEED)));
         this.world.playSound('cannonshoot');
     };
     return Cannon;
@@ -11109,7 +11125,7 @@ var Cannonball = /** @class */ (function (_super) {
     };
     Cannonball.prototype.onCollide = function (collision) {
         _super.prototype.onCollide.call(this, collision);
-        this.kill(V.withMagnitude({ x: collision.self.vx, y: collision.self.vy }, 1));
+        this.kill(new Vector2(collision.self.vx, collision.self.vy).normalized());
     };
     return Cannonball;
 }(Sprite));
@@ -11197,7 +11213,7 @@ var Grapple = /** @class */ (function (_super) {
         _this.SPEED = 800;
         _this.v.x = direction.x * _this.SPEED;
         _this.v.y = direction.y * _this.SPEED;
-        _this.angle = M.radToDeg(V.angle(direction));
+        _this.angle = direction.angle;
         _this.tint = color;
         _this.direction = direction;
         _this.isPulling = false;
@@ -11709,7 +11725,7 @@ var Mover = /** @class */ (function (_super) {
             layer: 'entities',
             physicsGroup: 'movers',
             bounds: new RectBounds(-6, -6, 12, 12),
-            v: V.rotated({ x: 0, y: 32 }, M.degToRad(angle)),
+            v: new Vector2(0, 32).rotated(angle),
             bounce: 1,
         }) || this;
     }
@@ -11739,7 +11755,7 @@ var Puff = /** @class */ (function (_super) {
     Puff.puff = puff;
     function puffDirection(world, x, y, count, direction, speed, spread) {
         return puff(world, x, y, count, function () {
-            var v = V.withMagnitude(direction, speed);
+            var v = direction.withMagnitude(speed);
             var spreadv = Random.inCircle(spread);
             v.x += spreadv.x;
             v.y += spreadv.y;
@@ -12095,7 +12111,7 @@ var Thwomp = /** @class */ (function (_super) {
         _this.stateMachine.addState('awake', {
             callback: function () { return _this.playAnimation('awake'); },
             transitions: [
-                { toState: 'active', condition: function () { return !V.isZero(_this.controller.moveDirection); } },
+                { toState: 'active', condition: function () { return !_this.controller.moveDirection.isZero(); } },
             ]
         });
         _this.stateMachine.addState('active', {
@@ -12119,13 +12135,13 @@ var Thwomp = /** @class */ (function (_super) {
         return _this;
     }
     Thwomp.prototype.update = function () {
-        V.clampMagnitude(this.v, this.MAX_SPEED);
+        this.v.clampMagnitude(this.MAX_SPEED);
         _super.prototype.update.call(this);
     };
     Thwomp.prototype.onCollide = function (collision) {
         _super.prototype.onCollide.call(this, collision);
         if (this.state !== 'sleep') {
-            var gdir = V.normalized(this.gravity);
+            var gdir = this.gravity.normalized();
             Puff.puff(this.world, this.x + gdir.x * 8, this.y + gdir.y * 8, 10, function () { return Random.inCircle(50); });
             this.world.playSound('thwomphit');
         }

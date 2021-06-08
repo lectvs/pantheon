@@ -37,11 +37,11 @@ class Boss extends Player {
     }
 
     shoot() {
-        let dir = V.normalized(this.controller.aimDirection);
+        let dir = this.controller.aimDirection.normalized();
         let off = 10;
-        this.world.addWorldObject(new Cannonball(this.x + dir.x*off, this.y + dir.y*off, V.withMagnitude(dir, this.SHOT_SPEED)));
+        this.world.addWorldObject(new Cannonball(this.x + dir.x*off, this.y + dir.y*off, dir.withMagnitude(this.SHOT_SPEED)));
         this.world.playSound('cannonshoot');
-        this.v = V.withMagnitude(V.scaled(dir, -1), this.KNOCKBACK_SPEED);
+        this.v = dir.scaled(-1).withMagnitude(this.KNOCKBACK_SPEED);
     }
 
     damage(direction: Vector2) {

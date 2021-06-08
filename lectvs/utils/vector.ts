@@ -7,8 +7,86 @@ class Vector2 {
         this.y = y;
     }
 
+    get angle() {
+        let angle = M.atan2(this.y, this.x);
+        if (angle < 0) {
+            angle += 360;
+        }
+        return angle;
+    }
+
     get magnitude() {
         return Math.sqrt(this.x*this.x + this.y*this.y);
+    }
+
+    clampMagnitude(maxMagnitude: number) {
+        if (maxMagnitude < 0) {
+            error('Tried to clamp vector magnitude with negative maxMagnitude');
+            return;
+        }
+        if (this.magnitude > maxMagnitude) {
+            this.setMagnitude(maxMagnitude);
+        } 
+    }
+
+    clone() {
+        return new Vector2(this.x, this.y);
+    }
+
+    isZero() {
+        return this.x === 0 && this.y === 0;
+    }
+
+    normalize() {
+        let mag = this.magnitude;
+        if (mag !== 0) {
+            this.x /= mag;
+            this.y /= mag;
+        }
+    }
+
+    normalized() {
+        let copy = this.clone();
+        copy.normalize();
+        return copy;
+    }
+
+    rotate(angle: number) {
+        let sin = M.sin(angle);
+        let cos = M.cos(angle);
+        let x = this.x;
+        let y = this.y;
+
+        this.x = cos * x - sin * y;
+        this.y = sin * x + cos * y;
+    }
+
+    rotated(angle: number) {
+        let copy = this.clone();
+        copy.rotate(angle);
+        return copy;
+    }
+
+    scale(amount: number) {
+        this.x *= amount;
+        this.y *= amount;
+    }
+
+    scaled(amount: number) {
+        let copy = this.clone();
+        copy.scale(amount);
+        return copy;
+    }
+
+    setMagnitude(magnitude: number) {
+        this.normalize();
+        this.scale(magnitude);
+    }
+
+    withMagnitude(magnitude: number) {
+        let copy = this.clone();
+        copy.setMagnitude(magnitude);
+        return copy;
     }
 
     // Directions

@@ -212,8 +212,8 @@ namespace Bounds.Collision {
         // Vertices
         function addVertexPos(vx: number, vy: number, ldx1: number, ldy1: number, ldx2: number, ldy2: number) {
             let angle = closestPointOnCircle_angle(movePos.x, movePos.y, vx, vy);
-            let newX = vx + Math.cos(angle) * move.radius;
-            let newY = vy + Math.sin(angle) * move.radius;
+            let newX = vx + M.cos(angle) * move.radius;
+            let newY = vy + M.sin(angle) * move.radius;
             
             if (vectorBetweenVectors(newX - vx, newY - vy, ldx1, ldy1, ldx2, ldy2)) {
                 newXs.push(newX);
@@ -920,7 +920,7 @@ namespace Bounds.Collision {
     function closestPointOnCircle_angle(px: number, py: number, cx: number, cy: number) {
         let dx = px - cx;
         let dy = py - cy;
-        return Math.atan2(dy, dx);
+        return M.atan2(dy, dx);
     }
 
     function closestPointOnLine_t(px: number, py: number, lx1: number, ly1: number, lx2: number, ly2: number) {

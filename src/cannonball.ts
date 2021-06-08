@@ -27,6 +27,6 @@ class Cannonball extends Sprite {
 
     onCollide(collision: Physics.CollisionInfo) {
         super.onCollide(collision);
-        this.kill(V.withMagnitude({ x: collision.self.vx, y: collision.self.vy }, 1));
+        this.kill(new Vector2(collision.self.vx, collision.self.vy).normalized());
     }
 }

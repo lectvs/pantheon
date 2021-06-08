@@ -78,16 +78,14 @@ class AnchoredTexture implements Texture {
     private getAdjustmentX(angle: number, scaleX: number, scaleY: number) {
         let ax = Math.floor(this.anchorX*this.width)*scaleX;
         let ay = Math.floor(this.anchorY*this.height)*scaleY;
-        let rad = M.degToRad(angle);
-        let rotatedAndScaled_ax = (-ax) * Math.cos(rad) - (-ay) * Math.sin(rad);
+        let rotatedAndScaled_ax = (-ax) * M.cos(angle) - (-ay) * M.sin(angle);
         return rotatedAndScaled_ax;
     }
 
     private getAdjustmentY(angle: number, scaleX: number, scaleY: number) {
         let ax = Math.floor(this.anchorX*this.width)*scaleX;
         let ay = Math.floor(this.anchorY*this.height)*scaleY;
-        let rad = M.degToRad(angle);
-        let rotatedAndScaled_ay = (-ax) * Math.sin(rad) + (-ay) * Math.cos(rad);
+        let rotatedAndScaled_ay = (-ax) * M.sin(angle) + (-ay) * M.cos(angle);
         return rotatedAndScaled_ay;
     }
 }

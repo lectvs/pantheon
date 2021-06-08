@@ -56,18 +56,18 @@ class RandomNumberGenerator {
      * @param radius Default: 1
      */
     inCircle(radius: number = 1) {
-        let angle = this.float(0, 2*Math.PI);
+        let angle = this.float(0, 360);
         let r = radius * Math.sqrt(this.value);
-        return new Vector2(r*Math.cos(angle), r*Math.sin(angle));
+        return new Vector2(r*M.cos(angle), r*M.sin(angle));
     }
 
     /**
      * Random Vector2 uniformly in a disc.
      */
     inDisc(radiusSmall: number, radiusLarge: number) {
-        let angle = this.float(0, 2*Math.PI);
+        let angle = this.float(0, 360);
         let r = radiusLarge * Math.sqrt(this.float(radiusSmall/radiusLarge, 1));
-        return new Vector2(r*Math.cos(angle), r*Math.sin(angle));
+        return new Vector2(r*M.cos(angle), r*M.sin(angle));
     }
 
     /**
@@ -89,8 +89,8 @@ class RandomNumberGenerator {
      * @param radius Default: 1
      */
     onCircle(radius: number = 1) {
-        let angle = this.float(0, 2*Math.PI);
-        return new Vector2(radius*Math.cos(angle), radius*Math.sin(angle));
+        let angle = this.float(0, 360);
+        return new Vector2(radius*M.cos(angle), radius*M.sin(angle));
     }
 
     /**

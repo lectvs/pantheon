@@ -33,7 +33,7 @@ class BasicTexture implements Texture {
     getLocalBounds(properties: Texture.Properties) {
         let scaleX = properties.scaleX ?? 1;
         let scaleY = properties.scaleY ?? 1;
-        let angle = M.degToRad(properties.angle ?? 0);
+        let angle = properties.angle ?? 0;
         let width = this.width * scaleX;
         let height = this.height * scaleY;
 
@@ -43,10 +43,10 @@ class BasicTexture implements Texture {
 
         let v1x = 0;
         let v1y = 0;
-        let v2x = width * Math.cos(angle);
-        let v2y = width * Math.sin(angle);
-        let v3x = -height * Math.sin(angle);
-        let v3y = height * Math.cos(angle);
+        let v2x = width * M.cos(angle);
+        let v2y = width * M.sin(angle);
+        let v3x = -height * M.sin(angle);
+        let v3y = height * M.cos(angle);
         let v4x = v2x + v3x;
         let v4y = v2y + v3y;
 

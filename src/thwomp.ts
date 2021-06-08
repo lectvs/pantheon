@@ -21,7 +21,7 @@ class Thwomp extends Sprite {
         this.stateMachine.addState('awake', {
             callback: () => this.playAnimation('awake'),
             transitions: [
-                { toState: 'active', condition: () => !V.isZero(this.controller.moveDirection) },
+                { toState: 'active', condition: () => !this.controller.moveDirection.isZero() },
             ]
         });
 
@@ -49,14 +49,14 @@ class Thwomp extends Sprite {
     }
 
     update() {
-        V.clampMagnitude(this.v, this.MAX_SPEED);
+        this.v.clampMagnitude(this.MAX_SPEED);
         super.update();
     }
 
     onCollide(collision: Physics.CollisionInfo) {
         super.onCollide(collision);
         if (this.state !== 'sleep') {
-            let gdir = V.normalized(this.gravity);
+            let gdir = this.gravity.normalized();
             Puff.puff(this.world, this.x + gdir.x*8, this.y + gdir.y*8, 10, () => Random.inCircle(50));
             this.world.playSound('thwomphit');
         }

@@ -30,9 +30,9 @@ class Cannon extends Sprite {
     }
 
     shoot() {
-        let dir = V.rotated({ x: -1, y: 0 }, M.degToRad(this.angle + 45));
+        let dir = new Vector2(-1, 0).rotated(this.angle + 45);
         let off = 10;
-        this.world.addWorldObject(new Cannonball(this.x + dir.x*off, this.y + dir.y*off, V.withMagnitude(dir, this.SHOT_SPEED)));
+        this.world.addWorldObject(new Cannonball(this.x + dir.x*off, this.y + dir.y*off, dir.withMagnitude(this.SHOT_SPEED)));
         this.world.playSound('cannonshoot');
     }
 }
