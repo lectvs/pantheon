@@ -3247,27 +3247,28 @@ var Sprite = /** @class */ (function (_super) {
 var World = /** @class */ (function () {
     function World(config) {
         if (config === void 0) { config = {}; }
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
         this.scriptManager = new ScriptManager();
         this.soundManager = new SoundManager();
         this.select = new WorldSelecter(this);
         this.volume = (_a = config.volume) !== null && _a !== void 0 ? _a : 1;
-        this.width = (_b = config.width) !== null && _b !== void 0 ? _b : global.gameWidth;
-        this.height = (_c = config.height) !== null && _c !== void 0 ? _c : global.gameHeight;
+        this.globalSoundHumanizePercent = (_b = config.globalSoundHumanizePercent) !== null && _b !== void 0 ? _b : 0;
+        this.width = (_c = config.width) !== null && _c !== void 0 ? _c : global.gameWidth;
+        this.height = (_d = config.height) !== null && _d !== void 0 ? _d : global.gameHeight;
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
-        this.collisions = (_d = config.collisions) !== null && _d !== void 0 ? _d : [];
-        this.collisionIterations = (_e = config.collisionIterations) !== null && _e !== void 0 ? _e : 1;
-        this.useRaycastDisplacementThreshold = (_f = config.useRaycastDisplacementThreshold) !== null && _f !== void 0 ? _f : 1;
+        this.collisions = (_e = config.collisions) !== null && _e !== void 0 ? _e : [];
+        this.collisionIterations = (_f = config.collisionIterations) !== null && _f !== void 0 ? _f : 1;
+        this.useRaycastDisplacementThreshold = (_g = config.useRaycastDisplacementThreshold) !== null && _g !== void 0 ? _g : 1;
         this.worldObjects = [];
         this.layers = this.createLayers(config.layers);
-        this.backgroundColor = (_g = config.backgroundColor) !== null && _g !== void 0 ? _g : global.backgroundColor;
-        this.backgroundAlpha = (_h = config.backgroundAlpha) !== null && _h !== void 0 ? _h : 1;
+        this.backgroundColor = (_h = config.backgroundColor) !== null && _h !== void 0 ? _h : global.backgroundColor;
+        this.backgroundAlpha = (_j = config.backgroundAlpha) !== null && _j !== void 0 ? _j : 1;
         this.layerTexture = new BasicTexture(this.width, this.height);
         this.entryPoints = {};
-        for (var key in (_j = config.entryPoints) !== null && _j !== void 0 ? _j : {}) {
+        for (var key in (_k = config.entryPoints) !== null && _k !== void 0 ? _k : {}) {
             this.entryPoints[key] = vec2(config.entryPoints[key]);
         }
-        this.camera = new Camera((_k = config.camera) !== null && _k !== void 0 ? _k : {}, this);
+        this.camera = new Camera((_l = config.camera) !== null && _l !== void 0 ? _l : {}, this);
     }
     Object.defineProperty(World.prototype, "delta", {
         get: function () {
@@ -3476,8 +3477,26 @@ var World = /** @class */ (function () {
             return;
         Physics.resolveCollisions(this);
     };
-    World.prototype.playSound = function (key) {
-        return this.soundManager.playSound(key);
+    /**
+     * By default, music is:
+     *   - Looped
+     */
+    World.prototype.playMusic = function (key) {
+        var music = this.soundManager.playSound(key);
+        music.loop = true;
+        return music;
+    };
+    /**
+     * By default, sounds are:
+     *   - Humanized (if applicable)
+     */
+    World.prototype.playSound = function (key, humanized) {
+        if (humanized === void 0) { humanized = true; }
+        var sound = this.soundManager.playSound(key);
+        if (humanized && this.globalSoundHumanizePercent > 0) {
+            sound.humanize(this.globalSoundHumanizePercent);
+        }
+        return sound;
     };
     World.prototype.removeWorldObject = function (obj) {
         if (!obj)
@@ -5060,6 +5079,10 @@ var Sound = /** @class */ (function () {
             this.webAudioSound.speed = this.speed;
         if (this.webAudioSound.loop !== this.loop)
             this.webAudioSound.loop = this.loop;
+    };
+    Sound.prototype.humanize = function (percent) {
+        if (percent === void 0) { percent = 0.05; }
+        this.speed *= Random.float(1 - percent, 1 + percent);
     };
     return Sound;
 }());
@@ -12001,6 +12024,7 @@ var stages = {
             ],
             collisionIterations: 4,
             useRaycastDisplacementThreshold: 4,
+            globalSoundHumanizePercent: 0.1,
         });
         extractEntities(AssetCache.tilemaps['world'].layers[0]);
         var tiles = world.addWorldObject(new Tilemap({
@@ -12079,9 +12103,8 @@ var stages = {
         world.camera.setModeFollow(player, 0, -8);
         world.camera.setMovementSnap();
         world.camera.snapPosition();
-        music = world.playSound('caves');
+        music = world.playMusic('caves');
         music.volume = 0;
-        music.loop = true;
         world.runScript(S.doOverTime(1, function (t) { return music.volume = t * t; }));
         return world;
     },
@@ -12181,7 +12204,8 @@ var storyboard = {
                         seenBossDialog = true;
                         _a.label = 11;
                     case 11:
-                        music = global.world.playSound('boss');
+                        music = global.world.playMusic('boss');
+                        music.volume = 0;
                         global.world.runScript(S.doOverTime(3, function (t) { return music.volume = t * t; }));
                         global.world.select.type(Boss).startFighting();
                         return [2 /*return*/];

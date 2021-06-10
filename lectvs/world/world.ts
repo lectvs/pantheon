@@ -21,6 +21,7 @@ namespace World {
         entryPoints?: Dict<Pt>;
 
         volume?: number;
+        globalSoundHumanizePercent?: number;
     }
 
     export type CollisionConfig = {
@@ -74,6 +75,7 @@ class World {
     }
 
     volume: number;
+    globalSoundHumanizePercent: number;
 
     constructor(config: World.Config = {}) {        
         this.scriptManager = new ScriptManager();
@@ -82,6 +84,7 @@ class World {
         this.select = new WorldSelecter(this);
 
         this.volume = config.volume ?? 1;
+        this.globalSoundHumanizePercent = config.globalSoundHumanizePercent ?? 0;
 
         this.width = config.width ?? global.gameWidth;
         this.height = config.height ?? global.gameHeight;
@@ -252,8 +255,26 @@ class World {
         Physics.resolveCollisions(this);
     }
 
-    playSound(key: string) {
-        return this.soundManager.playSound(key);
+    /**
+     * By default, music is:
+     *   - Looped
+     */
+    playMusic(key: string) {
+        let music = this.soundManager.playSound(key);
+        music.loop = true;
+        return music;
+    }
+
+    /**
+     * By default, sounds are:
+     *   - Humanized (if applicable)
+     */
+    playSound(key: string, humanized: boolean = true) {
+        let sound = this.soundManager.playSound(key);
+        if (humanized && this.globalSoundHumanizePercent > 0) {
+            sound.humanize(this.globalSoundHumanizePercent);
+        }
+        return sound;
     }
     
     removeWorldObject<T extends WorldObject>(obj: T | string): T {

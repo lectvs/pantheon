@@ -81,6 +81,10 @@ class Sound {
         if (this.webAudioSound.speed !== this.speed) this.webAudioSound.speed = this.speed;
         if (this.webAudioSound.loop !== this.loop) this.webAudioSound.loop = this.loop;
     }
+
+    humanize(percent: number = 0.05) {
+        this.speed *= Random.float(1 - percent, 1 + percent);
+    }
 }
 
 namespace Sound {

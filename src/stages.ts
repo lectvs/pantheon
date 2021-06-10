@@ -45,6 +45,7 @@ const stages: Dict<Factory<World>> = {
             ],
             collisionIterations: 4,
             useRaycastDisplacementThreshold: 4,
+            globalSoundHumanizePercent: 0.1,
         });
 
         extractEntities(AssetCache.tilemaps['world'].layers[0]);
@@ -118,9 +119,8 @@ const stages: Dict<Factory<World>> = {
         world.camera.setMovementSnap();
         world.camera.snapPosition();
 
-        music = world.playSound('caves');
+        music = world.playMusic('caves');
         music.volume = 0;
-        music.loop = true;
         world.runScript(S.doOverTime(1, t => music.volume = t*t));
 
         return world;

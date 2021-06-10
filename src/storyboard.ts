@@ -54,7 +54,8 @@ const storyboard: Storyboard = {
                 seenBossDialog = true;
             }
 
-            music = global.world.playSound('boss');
+            music = global.world.playMusic('boss');
+            music.volume = 0;
             global.world.runScript(S.doOverTime(3, t => music.volume = t*t));
             global.world.select.type(Boss).startFighting();
         },
