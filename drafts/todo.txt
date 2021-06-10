@@ -2,7 +2,6 @@ todo
 - easier tilemap definition in assets?
 - rethink tilemap zMap? z on a per-tile basis rather than per-index?
 - better acceleration movement (smart clamping?)
-- normalize cnoise?
 - option for entities to only update within screen bounds?
 - limit sound effect count per effect
 - random pitch/speed variation on sfx
@@ -10,7 +9,6 @@ todo
 - worldobject tag system
 - variable hitboxes? (i.e. different hitboxes for wall collision vs enemy collision)
 - "max distance" step functionality for collisions
-- make default volume 0.5?
 - test once more for memory leaks
 - fix debug menu overlay toggle when debug=false
 - fix hack in updateMousePosition()?

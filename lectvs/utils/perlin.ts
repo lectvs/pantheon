@@ -172,8 +172,10 @@ class Perlin {
             vec3 fade_xyz = fade(Pf0);
             vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);
             vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);
-            float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); 
-            return 2.2 * n_xyz;
+            float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x);
+            float negone_to_one = 2.2 * n_xyz;
+            float zero_to_one = (negone_to_one + 1.0) / 2.0;
+            return zero_to_one;
         }
     `;
 }
