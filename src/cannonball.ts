@@ -10,6 +10,7 @@ class Cannonball extends Sprite {
             bounds: new CircleBounds(0, 0, 4),
             v: v,
             gravityy: 400,
+            tags: ['deadly'],
         });
     }
 

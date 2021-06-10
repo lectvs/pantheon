@@ -8,6 +8,7 @@ class Spikes extends Sprite {
             layer: 'entities',
             physicsGroup: 'walls',
             bounds: new RectBounds(-7, -7, 14, 14),
+            tags: ['deadly'],
         });
     }
 }

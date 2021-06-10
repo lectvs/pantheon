@@ -22,6 +22,8 @@ class Boss extends Player {
         this.behavior = new NullBehavior();
 
         this.grappleColor = 0x00FF00;
+
+        this.tags.push('deadly');
     }
 
     startFighting() {
@@ -54,6 +56,7 @@ class Boss extends Player {
         this.health--;
         if (this.health <= 0) {
             this.dead = true;
+            this.removeTag('deadly');
             this.behavior = new NullBehavior();
         }
 

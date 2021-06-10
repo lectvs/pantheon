@@ -9,6 +9,7 @@ class Mover extends Sprite {
             bounds: new RectBounds(-6, -6, 12, 12),
             v: new Vector2(0, 32).rotated(angle),
             bounce: 1,
+            tags: ['deadly'],
         });
     }
 }

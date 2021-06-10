@@ -16,6 +16,7 @@ class Thwomp extends Sprite {
             layer: 'entities',
             physicsGroup: 'thwomps',
             bounds: new RectBounds(-8, -8, 16, 16),
+            tags: ['deadly'],
         });
 
         this.stateMachine.addState('awake', {

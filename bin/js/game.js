@@ -2575,6 +2575,7 @@ var WorldObject = /** @class */ (function () {
         this.matchParentLayer = (_k = config.matchParentLayer) !== null && _k !== void 0 ? _k : false;
         this.matchParentPhysicsGroup = (_l = config.matchParentPhysicsGroup) !== null && _l !== void 0 ? _l : false;
         this.alive = true;
+        this.tags = config.tags ? A.clone(config.tags) : [];
         this.lastx = this.x;
         this.lasty = this.y;
         this.lastz = this.z;
@@ -2794,6 +2795,11 @@ var WorldObject = /** @class */ (function () {
         this.modules.push(module);
         module.init(this);
     };
+    WorldObject.prototype.addTag = function (tag) {
+        if (!_.contains(this.tags, tag)) {
+            this.tags.push(tag);
+        }
+    };
     WorldObject.prototype.getChildByIndex = function (index) {
         if (this.children.length < index) {
             error("Parent has no child at index " + index + ":", this);
@@ -2840,6 +2846,9 @@ var WorldObject = /** @class */ (function () {
     };
     WorldObject.prototype.getVisibleScreenBounds = function () {
         return undefined;
+    };
+    WorldObject.prototype.hasTag = function (tag) {
+        return _.contains(this.tags, tag);
     };
     WorldObject.prototype.isOnScreen = function () {
         var bounds = this.getVisibleScreenBounds();
@@ -2890,6 +2899,9 @@ var WorldObject = /** @class */ (function () {
         if (!this.world)
             return this;
         return World.Actions.removeWorldObjectFromWorld(this);
+    };
+    WorldObject.prototype.removeTag = function (tag) {
+        A.removeAll(this.tags, tag);
     };
     WorldObject.prototype.runScript = function (script) {
         return this.scriptManager.runScript(script);
@@ -8234,6 +8246,9 @@ var WorldSelecter = /** @class */ (function () {
         }
         return result.sort(function (r1, r2) { return r1.t - r2.t; });
     };
+    WorldSelecter.prototype.tag = function (tag) {
+        return this.world.worldObjects.filter(function (obj) { return _.contains(obj.tags, tag); });
+    };
     WorldSelecter.prototype.type = function (type, checked) {
         if (checked === void 0) { checked = true; }
         var results = this.typeAll(type);
@@ -10786,6 +10801,7 @@ var Bat = /** @class */ (function (_super) {
             layer: 'entities',
             physicsGroup: 'enemies',
             bounds: new RectBounds(-4, -2, 8, 4),
+            tags: ['deadly'],
         }) || this;
         _this.ACCELERATION = 64;
         _this.MAX_SPEED = 32;
@@ -11065,17 +11081,8 @@ var Player = /** @class */ (function (_super) {
     };
     Player.prototype.onCollide = function (collision) {
         _super.prototype.onCollide.call(this, collision);
-        if (!this.isBoss && !this.dead) {
-            if (collision.other.obj instanceof Spikes ||
-                collision.other.obj instanceof Thwomp ||
-                collision.other.obj instanceof Bat ||
-                collision.other.obj instanceof Mover ||
-                collision.other.obj instanceof Lava ||
-                collision.other.obj instanceof Cannon ||
-                collision.other.obj instanceof Cannonball ||
-                (collision.other.obj instanceof Boss && !collision.other.obj.dead)) {
-                this.dead = true;
-            }
+        if (!this.isBoss && !this.dead && collision.other.obj.hasTag('deadly')) {
+            this.dead = true;
         }
     };
     Player.prototype.playGlitchSound = function (volume) {
@@ -11108,6 +11115,7 @@ var Boss = /** @class */ (function (_super) {
         _this.effects.updateFromConfig({ post: { filters: [new Boss.BossFilter(), _this.glitchFilter] } });
         _this.behavior = new NullBehavior();
         _this.grappleColor = 0x00FF00;
+        _this.tags.push('deadly');
         return _this;
     }
     Object.defineProperty(Boss.prototype, "startedFighting", {
@@ -11140,6 +11148,7 @@ var Boss = /** @class */ (function (_super) {
         this.health--;
         if (this.health <= 0) {
             this.dead = true;
+            this.removeTag('deadly');
             this.behavior = new NullBehavior();
         }
         var boss = this;
@@ -11443,6 +11452,7 @@ var Cannon = /** @class */ (function (_super) {
             layer: 'entities',
             physicsGroup: 'cannons',
             bounds: new RectBounds(-7, -7, 14, 14),
+            tags: ['deadly'],
         }) || this;
         _this.SHOT_SPEED = 250;
         var cannon = _this;
@@ -11485,6 +11495,7 @@ var Cannonball = /** @class */ (function (_super) {
             bounds: new CircleBounds(0, 0, 4),
             v: v,
             gravityy: 400,
+            tags: ['deadly'],
         }) || this;
         _this.DRAG = 200;
         return _this;
@@ -11631,7 +11642,7 @@ var Grapple = /** @class */ (function (_super) {
                         this.break();
                         break;
                     }
-                    if (wo instanceof Lava) {
+                    if (wo.hasTag('no_grapple')) {
                         this.world.playSound('grapplehit');
                         this.break();
                         break;
@@ -11697,6 +11708,7 @@ var Lava = /** @class */ (function (_super) {
             layer: 'water',
             physicsGroup: 'walls',
             bounds: new RectBounds(0, 0, tw * 16, th * 16),
+            tags: ['deadly', 'no_grapple'],
         }) || this;
     }
     return Lava;
@@ -12394,6 +12406,7 @@ var Mover = /** @class */ (function (_super) {
             bounds: new RectBounds(-6, -6, 12, 12),
             v: new Vector2(0, 32).rotated(angle),
             bounce: 1,
+            tags: ['deadly'],
         }) || this;
     }
     return Mover;
@@ -12462,6 +12475,7 @@ var Spikes = /** @class */ (function (_super) {
             layer: 'entities',
             physicsGroup: 'walls',
             bounds: new RectBounds(-7, -7, 14, 14),
+            tags: ['deadly'],
         }) || this;
     }
     return Spikes;
@@ -12481,6 +12495,7 @@ var Thwomp = /** @class */ (function (_super) {
             layer: 'entities',
             physicsGroup: 'thwomps',
             bounds: new RectBounds(-8, -8, 16, 16),
+            tags: ['deadly'],
         }) || this;
         _this.SLEEP_TIME = 0.7;
         _this.GRAVITY = 1000;

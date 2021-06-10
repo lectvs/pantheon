@@ -10,6 +10,7 @@ class Cannon extends Sprite {
             layer: 'entities',
             physicsGroup: 'cannons',
             bounds: new RectBounds(-7, -7, 14, 14),
+            tags: ['deadly'],
         });
         let cannon = this;
 

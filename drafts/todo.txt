@@ -6,7 +6,6 @@ todo
 - limit sound effect count per effect
 - random pitch/speed variation on sfx
 - better global variables
-- worldobject tag system
 - variable hitboxes? (i.e. different hitboxes for wall collision vs enemy collision)
 - "max distance" step functionality for collisions
 - test once more for memory leaks

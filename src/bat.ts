@@ -16,6 +16,7 @@ class Bat extends Sprite {
             layer: 'entities',
             physicsGroup: 'enemies',
             bounds: new RectBounds(-4, -2, 8, 4),
+            tags: ['deadly'],
         });
         let bat = this;
 

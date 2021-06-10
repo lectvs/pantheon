@@ -16,6 +16,7 @@ namespace WorldObject {
         matchParentPhysicsGroup?: boolean;
         zBehavior?: ZBehavior;
         timeScale?: number;
+        tags?: string[];
         data?: any;
     } & Callbacks<WorldObject>;
 
@@ -62,6 +63,8 @@ class WorldObject {
     set z(value: number) { this.localz = value - (this.parent ? this.parent.z : 0); }
 
     alive: boolean;
+
+    tags: string[];
 
     // World data
     private _world: World;
@@ -131,6 +134,8 @@ class WorldObject {
         this.matchParentPhysicsGroup = config.matchParentPhysicsGroup ?? false;
 
         this.alive = true;
+        
+        this.tags = config.tags ? A.clone(config.tags) : [];
 
         this.lastx = this.x;
         this.lasty = this.y;
@@ -277,6 +282,12 @@ class WorldObject {
         module.init(this);
     }
 
+    addTag(tag: string) {
+        if (!_.contains(this.tags, tag)) {
+            this.tags.push(tag);
+        }
+    }
+
     getChildByIndex<T extends WorldObject>(index: number) {
         if (this.children.length < index) {
             error(`Parent has no child at index ${index}:`, this);
@@ -302,6 +313,10 @@ class WorldObject {
 
     getVisibleScreenBounds() {
         return undefined;
+    }
+
+    hasTag(tag: string) {
+        return _.contains(this.tags, tag);
     }
 
     isOnScreen() {
@@ -353,6 +368,10 @@ class WorldObject {
     removeFromWorld(): this {
         if (!this.world) return this;
         return World.Actions.removeWorldObjectFromWorld(this);
+    }
+
+    removeTag(tag: string) {
+        A.removeAll(this.tags, tag);
     }
 
     runScript(script: Script | Script.Function) {

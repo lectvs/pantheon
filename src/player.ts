@@ -199,18 +199,8 @@ class Player extends Sprite {
 
     onCollide(collision: Physics.CollisionInfo) {
         super.onCollide(collision);
-        if (!this.isBoss && !this.dead) {
-            if (collision.other.obj instanceof Spikes ||
-                collision.other.obj instanceof Thwomp ||
-                collision.other.obj instanceof Bat ||
-                collision.other.obj instanceof Mover ||
-                collision.other.obj instanceof Lava ||
-                collision.other.obj instanceof Cannon ||
-                collision.other.obj instanceof Cannonball ||
-                (collision.other.obj instanceof Boss && !collision.other.obj.dead)
-                    ) {
-                this.dead = true;
-            }
+        if (!this.isBoss && !this.dead && collision.other.obj.hasTag('deadly')) {
+            this.dead = true;
         }
     }
 

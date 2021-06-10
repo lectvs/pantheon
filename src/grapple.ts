@@ -59,7 +59,7 @@ class Grapple extends Sprite {
                     break;
                 }
 
-                if (wo instanceof Lava) {
+                if (wo.hasTag('no_grapple')) {
                     this.world.playSound('grapplehit');
                     this.break();
                     break;

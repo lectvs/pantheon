@@ -58,6 +58,10 @@ class WorldSelecter {
         return result.sort((r1, r2) => r1.t - r2.t);
     }
 
+    tag<T extends WorldObject>(tag: string) {
+        return <T[]>this.world.worldObjects.filter(obj => _.contains(obj.tags, tag));
+    }
+
     type<T extends WorldObject>(type: new (...args) => T, checked: boolean = true) {
         let results = this.typeAll(type);
         if (_.isEmpty(results)) {

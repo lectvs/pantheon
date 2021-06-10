@@ -7,6 +7,7 @@ class Lava extends Sprite {
             layer: 'water',
             physicsGroup: 'walls',
             bounds: new RectBounds(0, 0, tw*16, th*16),
+            tags: ['deadly', 'no_grapple'],
         });
     }
 }
