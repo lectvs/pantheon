@@ -64,18 +64,17 @@ class WorldObject {
 
     alive: boolean;
 
+    name: string;
     tags: string[];
 
     // World data
     private _world: World;
-    private _name: string;
     private _layer: string;
     private _physicsGroup: string;
     private _children: WorldObject[];
     private _parent: WorldObject;
 
     get world() { return this._world; }
-    get name() { return this._name; }
     get layer() {
         this.resolveLayer();
         return this._layer;
@@ -87,7 +86,6 @@ class WorldObject {
     get children() { return <ReadonlyArray<WorldObject>>this._children; }
     get parent() { return this._parent; }
 
-    set name(value: string) { World.Actions.setName(this, value); }
     set layer(value: string) { World.Actions.setLayer(this, value); }
     set physicsGroup(value: string) { World.Actions.setPhysicsGroup(this, value); }
     //
@@ -135,6 +133,7 @@ class WorldObject {
 
         this.alive = true;
         
+        this.name = config.name;
         this.tags = config.tags ? A.clone(config.tags) : [];
 
         this.lastx = this.x;
@@ -152,7 +151,6 @@ class WorldObject {
         this._children = [];
         this._parent = null;
 
-        this.internalSetNameWorldObject(config.name);
         this.internalSetLayerWorldObject(config.layer);
         this.internalSetPhysicsGroupWorldObject(config.physicsGroup);
 
@@ -414,11 +412,6 @@ class WorldObject {
     // For use with World.Actions.removeWorldObjectFromWorld
     private internalRemoveWorldObjectFromWorldWorldObject(world: World) {
         this._world = null;
-    }
-
-    // For use with World.Actions.setName
-    private internalSetNameWorldObject(name: string) {
-        this._name = name;
     }
 
     // For use with World.Actions.setLayer

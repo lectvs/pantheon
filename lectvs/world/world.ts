@@ -55,7 +55,6 @@ class World {
     collisionIterations: number;
     useRaycastDisplacementThreshold: number;
 
-    worldObjectsByName: Dict<WorldObject[]>;
     layers: World.Layer[];
 
     backgroundColor: number;
@@ -93,7 +92,6 @@ class World {
         this.useRaycastDisplacementThreshold = config.useRaycastDisplacementThreshold ?? 1;
 
         this.worldObjects = [];
-        this.worldObjectsByName = {};
         this.layers = this.createLayers(config.layers);
 
         this.backgroundColor = config.backgroundColor ?? global.backgroundColor;
@@ -254,13 +252,6 @@ class World {
         Physics.resolveCollisions(this);
     }
 
-    hasWorldObject(obj: string | WorldObject) {
-        if (_.isString(obj)) {
-            return !_.isEmpty(this.worldObjectsByName[obj]);
-        }
-        return _.contains(this.worldObjects, obj);
-    }
-
     playSound(key: string) {
         return this.soundManager.playSound(key);
     }
@@ -330,10 +321,6 @@ class World {
     private internalAddWorldObjectToWorldWorld(obj: WorldObject) {
         this.worldObjects.push(obj);
 
-        if (obj.name) {
-            World.Actions.setName(obj, obj.name);
-        }
-
         if (obj.layer) {
             World.Actions.setLayer(obj, obj.layer);
         } else {
@@ -347,21 +334,9 @@ class World {
 
     // For use with World.Actions.removeWorldObjectFromWorld
     private internalRemoveWorldObjectFromWorldWorld(obj: WorldObject) {
-        this.removeName(obj);
         this.removeFromAllLayers(obj);
         this.removeFromAllPhysicsGroups(obj);
         A.removeAll(this.worldObjects, obj);
-    }
-
-    // For use with World.Actions.setName
-    private internalSetNameWorld(obj: WorldObject, name: string) {
-        this.removeName(obj);
-        if (!_.isEmpty(name)) {
-            if (!(name in this.worldObjectsByName)) {
-                this.worldObjectsByName[name] = [];
-            }
-            this.worldObjectsByName[name].push(obj);
-        }
     }
 
     // For use with World.Actions.setLayer
@@ -394,15 +369,6 @@ class World {
     // For use with World.Actions.removeChildFromParent
     private internalRemoveChildFromParentWorld(child: WorldObject) {
         
-    }
-
-    private removeName(obj: WorldObject) {
-        for (let name in this.worldObjectsByName) {
-            A.removeAll(this.worldObjectsByName[name], obj);
-            if (_.isEmpty(this.worldObjectsByName[name])) {
-                delete this.worldObjectsByName[name];
-            }
-        }
     }
 
     private removeFromAllLayers(obj: WorldObject) {
@@ -527,23 +493,6 @@ namespace World {
         export function removeWorldObjectsFromWorld<T extends WorldObject>(objs: ReadonlyArray<T>): T[] {
             if (_.isEmpty(objs)) return [];
             return A.clone(objs).filter(obj => removeWorldObjectFromWorld(obj));
-        }
-
-        /**
-         * Sets the name of a WorldObject. Returns the new name of the object.
-         */
-        export function setName(obj: WorldObject, name: string): string {
-            if (!obj) return undefined;
-
-            /// @ts-ignore
-            obj.internalSetNameWorldObject(name);
-
-            if (obj.world) {
-                /// @ts-ignore
-                obj.world.internalSetNameWorld(obj, name);
-            }
-
-            return obj.name;
         }
 
         /**

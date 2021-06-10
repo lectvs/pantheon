@@ -2575,6 +2575,7 @@ var WorldObject = /** @class */ (function () {
         this.matchParentLayer = (_k = config.matchParentLayer) !== null && _k !== void 0 ? _k : false;
         this.matchParentPhysicsGroup = (_l = config.matchParentPhysicsGroup) !== null && _l !== void 0 ? _l : false;
         this.alive = true;
+        this.name = config.name;
         this.tags = config.tags ? A.clone(config.tags) : [];
         this.lastx = this.x;
         this.lasty = this.y;
@@ -2586,7 +2587,6 @@ var WorldObject = /** @class */ (function () {
         this._world = null;
         this._children = [];
         this._parent = null;
-        this.internalSetNameWorldObject(config.name);
         this.internalSetLayerWorldObject(config.layer);
         this.internalSetPhysicsGroupWorldObject(config.physicsGroup);
         this.scriptManager = new ScriptManager();
@@ -2617,12 +2617,6 @@ var WorldObject = /** @class */ (function () {
     });
     Object.defineProperty(WorldObject.prototype, "world", {
         get: function () { return this._world; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(WorldObject.prototype, "name", {
-        get: function () { return this._name; },
-        set: function (value) { World.Actions.setName(this, value); },
         enumerable: false,
         configurable: true
     });
@@ -2940,10 +2934,6 @@ var WorldObject = /** @class */ (function () {
     // For use with World.Actions.removeWorldObjectFromWorld
     WorldObject.prototype.internalRemoveWorldObjectFromWorldWorldObject = function (world) {
         this._world = null;
-    };
-    // For use with World.Actions.setName
-    WorldObject.prototype.internalSetNameWorldObject = function (name) {
-        this._name = name;
     };
     // For use with World.Actions.setLayer
     WorldObject.prototype.internalSetLayerWorldObject = function (layer) {
@@ -3269,7 +3259,6 @@ var World = /** @class */ (function () {
         this.collisionIterations = (_e = config.collisionIterations) !== null && _e !== void 0 ? _e : 1;
         this.useRaycastDisplacementThreshold = (_f = config.useRaycastDisplacementThreshold) !== null && _f !== void 0 ? _f : 1;
         this.worldObjects = [];
-        this.worldObjectsByName = {};
         this.layers = this.createLayers(config.layers);
         this.backgroundColor = (_g = config.backgroundColor) !== null && _g !== void 0 ? _g : global.backgroundColor;
         this.backgroundAlpha = (_h = config.backgroundAlpha) !== null && _h !== void 0 ? _h : 1;
@@ -3487,12 +3476,6 @@ var World = /** @class */ (function () {
             return;
         Physics.resolveCollisions(this);
     };
-    World.prototype.hasWorldObject = function (obj) {
-        if (_.isString(obj)) {
-            return !_.isEmpty(this.worldObjectsByName[obj]);
-        }
-        return _.contains(this.worldObjects, obj);
-    };
     World.prototype.playSound = function (key) {
         return this.soundManager.playSound(key);
     };
@@ -3566,9 +3549,6 @@ var World = /** @class */ (function () {
     // For use with World.Actions.addWorldObjectToWorld
     World.prototype.internalAddWorldObjectToWorldWorld = function (obj) {
         this.worldObjects.push(obj);
-        if (obj.name) {
-            World.Actions.setName(obj, obj.name);
-        }
         if (obj.layer) {
             World.Actions.setLayer(obj, obj.layer);
         }
@@ -3581,20 +3561,9 @@ var World = /** @class */ (function () {
     };
     // For use with World.Actions.removeWorldObjectFromWorld
     World.prototype.internalRemoveWorldObjectFromWorldWorld = function (obj) {
-        this.removeName(obj);
         this.removeFromAllLayers(obj);
         this.removeFromAllPhysicsGroups(obj);
         A.removeAll(this.worldObjects, obj);
-    };
-    // For use with World.Actions.setName
-    World.prototype.internalSetNameWorld = function (obj, name) {
-        this.removeName(obj);
-        if (!_.isEmpty(name)) {
-            if (!(name in this.worldObjectsByName)) {
-                this.worldObjectsByName[name] = [];
-            }
-            this.worldObjectsByName[name].push(obj);
-        }
     };
     // For use with World.Actions.setLayer
     World.prototype.internalSetLayerWorld = function (obj, layerName) {
@@ -3633,14 +3602,6 @@ var World = /** @class */ (function () {
     // For use with World.Actions.removeChildFromParent
     World.prototype.internalRemoveChildFromParentWorld = function (child) {
     };
-    World.prototype.removeName = function (obj) {
-        for (var name_3 in this.worldObjectsByName) {
-            A.removeAll(this.worldObjectsByName[name_3], obj);
-            if (_.isEmpty(this.worldObjectsByName[name_3])) {
-                delete this.worldObjectsByName[name_3];
-            }
-        }
-    };
     World.prototype.removeFromAllLayers = function (obj) {
         var e_19, _a;
         try {
@@ -3658,8 +3619,8 @@ var World = /** @class */ (function () {
         }
     };
     World.prototype.removeFromAllPhysicsGroups = function (obj) {
-        for (var name_4 in this.physicsGroups) {
-            A.removeAll(this.physicsGroups[name_4].worldObjects, obj);
+        for (var name_3 in this.physicsGroups) {
+            A.removeAll(this.physicsGroups[name_3].worldObjects, obj);
         }
     };
     World.DEFAULT_LAYER = 'default';
@@ -3764,21 +3725,6 @@ var World = /** @class */ (function () {
             return A.clone(objs).filter(function (obj) { return removeWorldObjectFromWorld(obj); });
         }
         Actions.removeWorldObjectsFromWorld = removeWorldObjectsFromWorld;
-        /**
-         * Sets the name of a WorldObject. Returns the new name of the object.
-         */
-        function setName(obj, name) {
-            if (!obj)
-                return undefined;
-            /// @ts-ignore
-            obj.internalSetNameWorldObject(name);
-            if (obj.world) {
-                /// @ts-ignore
-                obj.world.internalSetNameWorld(obj, name);
-            }
-            return obj.name;
-        }
-        Actions.setName = setName;
         /**
          * Sets the layer of a WorldObject. Returns the new layer name of the object.
          */
@@ -6114,16 +6060,16 @@ var ShaderBuilder = /** @class */ (function () {
         var rootNodeList = _.isArray(rootNode) ? rootNode : [rootNode];
         var uniforms = {};
         var uniformTypes = this.getUniformTypes(rootNodeList);
-        for (var name_5 in uniformTypes) {
-            var type = uniformTypes[name_5];
-            var value = uniformDefaultsByName[name_5];
+        for (var name_4 in uniformTypes) {
+            var type = uniformTypes[name_4];
+            var value = uniformDefaultsByName[name_4];
             if (value === undefined)
                 continue;
             if (!this.typeCheck(type, value)) {
                 error('Shader failed type-checking type', type, 'against default value', value);
                 return undefined;
             }
-            uniforms[type + " " + name_5] = uniformDefaultsByName[name_5];
+            uniforms[type + " " + name_4] = uniformDefaultsByName[name_4];
         }
         return new TextureFilter({
             code: rootNodeList.map(function (rootNode) { return rootNode.build(); }).join('\n'),
@@ -6361,10 +6307,10 @@ var InteractionManager = /** @class */ (function () {
         var result = new Set();
         try {
             for (var interactableObjects_1 = __values(interactableObjects), interactableObjects_1_1 = interactableObjects_1.next(); !interactableObjects_1_1.done; interactableObjects_1_1 = interactableObjects_1.next()) {
-                var name_6 = interactableObjects_1_1.value;
-                if (!this.theater.currentWorld.hasWorldObject(name_6))
+                var name_5 = interactableObjects_1_1.value;
+                if (!this.theater.currentWorld.select.name(name_5, false))
                     continue;
-                result.add(name_6);
+                result.add(name_5);
             }
         }
         catch (e_30_1) { e_30 = { error: e_30_1 }; }
@@ -6499,9 +6445,9 @@ var StageManager = /** @class */ (function () {
         this.currentStageName = name;
         this.currentWorld = this.stages[name]();
         this.currentWorldAsWorldObject = new Theater.WorldAsWorldObject(this.currentWorld);
-        World.Actions.setName(this.currentWorldAsWorldObject, 'world');
-        World.Actions.setLayer(this.currentWorldAsWorldObject, Theater.LAYER_WORLD);
-        World.Actions.addWorldObjectToWorld(this.currentWorldAsWorldObject, this.theater);
+        this.currentWorldAsWorldObject.name = 'world';
+        this.currentWorldAsWorldObject.layer = Theater.LAYER_WORLD;
+        this.theater.addWorldObject(this.currentWorldAsWorldObject);
         this.theater.onStageLoad();
         this.currentWorld.update();
         var newSnapshot = this.currentWorld.takeSnapshot();
@@ -6509,8 +6455,8 @@ var StageManager = /** @class */ (function () {
         this.currentWorldAsWorldObject.visible = false;
         // this is outside the script to avoid 1-frame flicker
         this.transition = Transition.fromConfigAndSnapshots(transitionConfig, oldSnapshot, newSnapshot);
-        World.Actions.setLayer(this.transition, Theater.LAYER_TRANSITION);
-        World.Actions.addWorldObjectToWorld(this.transition, this.theater);
+        this.transition.layer = Theater.LAYER_TRANSITION;
+        this.theater.addWorldObject(this.transition);
         var stageManager = this;
         this.theater.runScript(function () {
             return __generator(this, function (_a) {
@@ -7510,9 +7456,9 @@ var StateMachine = /** @class */ (function () {
             this.currentState.update();
     };
     StateMachine.prototype.getCurrentStateName = function () {
-        for (var name_7 in this.states) {
-            if (this.states[name_7] === this.currentState) {
-                return name_7;
+        for (var name_6 in this.states) {
+            if (this.states[name_6] === this.currentState) {
+                return name_6;
             }
         }
         return undefined;
@@ -8183,19 +8129,21 @@ var WorldSelecter = /** @class */ (function () {
     };
     WorldSelecter.prototype.name = function (name, checked) {
         if (checked === void 0) { checked = true; }
-        var results = this.world.worldObjectsByName[name] || [];
+        var results = this.nameAll(name);
         if (_.isEmpty(results)) {
             if (checked)
                 error("No object with name " + name + " exists in world:", this.world);
             return undefined;
         }
         if (results.length > 1) {
-            debug("Multiple objects with name " + name + " exist in world. Returning one of them. World:", this.world);
+            error("Multiple objects with name " + name + " exist in world. Returning one of them. World:", this.world);
         }
         return results[0];
     };
     WorldSelecter.prototype.nameAll = function (name) {
-        return A.clone(this.world.worldObjectsByName[name] || []);
+        if (!name)
+            return [];
+        return this.world.worldObjects.filter(function (obj) { return obj.name === name; });
     };
     WorldSelecter.prototype.overlap = function (bounds, physicsGroups) {
         var e_44, _a;
@@ -8258,7 +8206,7 @@ var WorldSelecter = /** @class */ (function () {
             return undefined;
         }
         if (results.length > 1) {
-            debug("Multiple objects of type " + type.name + " exist in world. Returning one of them. World:", this.world);
+            error("Multiple objects of type " + type.name + " exist in world. Returning one of them. World:", this.world);
         }
         return results[0];
     };
@@ -10013,9 +9961,9 @@ var AnimationManager = /** @class */ (function () {
         configurable: true
     });
     AnimationManager.prototype.getCurrentAnimationName = function () {
-        for (var name_8 in this.animations) {
-            if (_.contains(this.animations[name_8], this.currentFrame)) {
-                return name_8;
+        for (var name_7 in this.animations) {
+            if (_.contains(this.animations[name_7], this.currentFrame)) {
+                return name_7;
             }
         }
         return null;

@@ -18,19 +18,20 @@ class WorldSelecter {
     }
 
     name<T extends WorldObject>(name: string, checked: boolean = true) {
-        let results = <T[]>this.world.worldObjectsByName[name] || [];
+        let results = this.nameAll<T>(name);
         if (_.isEmpty(results)) {
             if (checked) error(`No object with name ${name} exists in world:`, this.world);
             return undefined;
         }
         if (results.length > 1) {
-            debug(`Multiple objects with name ${name} exist in world. Returning one of them. World:`, this.world);
+            error(`Multiple objects with name ${name} exist in world. Returning one of them. World:`, this.world);
         }
         return results[0];
     }
 
     nameAll<T extends WorldObject>(name: string) {
-        return A.clone(<T[]>this.world.worldObjectsByName[name] || []);
+        if (!name) return [];
+        return <T[]>this.world.worldObjects.filter(obj => obj.name === name);
     }
 
     overlap(bounds: Bounds, physicsGroups: string[]): PhysicsWorldObject[] {
@@ -69,7 +70,7 @@ class WorldSelecter {
             return undefined;
         }
         if (results.length > 1) {
-            debug(`Multiple objects of type ${type.name} exist in world. Returning one of them. World:`, this.world);
+            error(`Multiple objects of type ${type.name} exist in world. Returning one of them. World:`, this.world);
         }
         return results[0];
     }

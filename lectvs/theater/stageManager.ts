@@ -41,9 +41,9 @@ class StageManager {
         this.currentStageName = name;
         this.currentWorld = this.stages[name]();
         this.currentWorldAsWorldObject = new Theater.WorldAsWorldObject(this.currentWorld);
-        World.Actions.setName(this.currentWorldAsWorldObject, 'world');
-        World.Actions.setLayer(this.currentWorldAsWorldObject, Theater.LAYER_WORLD);
-        World.Actions.addWorldObjectToWorld(this.currentWorldAsWorldObject, this.theater);
+        this.currentWorldAsWorldObject.name = 'world';
+        this.currentWorldAsWorldObject.layer = Theater.LAYER_WORLD;
+        this.theater.addWorldObject(this.currentWorldAsWorldObject);
 
         this.theater.onStageLoad();
         this.currentWorld.update();
@@ -55,8 +55,8 @@ class StageManager {
 
         // this is outside the script to avoid 1-frame flicker
         this.transition = Transition.fromConfigAndSnapshots(transitionConfig, oldSnapshot, newSnapshot);
-        World.Actions.setLayer(this.transition, Theater.LAYER_TRANSITION);
-        World.Actions.addWorldObjectToWorld(this.transition, this.theater);
+        this.transition.layer = Theater.LAYER_TRANSITION;
+        this.theater.addWorldObject(this.transition);
 
         let stageManager = this;
         this.theater.runScript(function* () {
