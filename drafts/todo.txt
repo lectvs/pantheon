@@ -14,4 +14,3 @@ todo
 - test once more for memory leaks
 - fix debug menu overlay toggle when debug=false
 - fix hack in updateMousePosition()?
-- change getStages() etc. to non-functions?

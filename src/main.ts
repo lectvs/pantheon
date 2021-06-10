@@ -1,4 +1,6 @@
 /// <reference path="./menus.ts"/>
+/// <reference path="./stages.ts"/>
+/// <reference path="./storyboard.ts"/>
 
 Main.loadConfig({
     gameCodeName: "LD48",
@@ -67,13 +69,13 @@ Main.loadConfig({
         entryPointMenuClass: IntroMenu,
         pauseMenuClass: PauseMenu,
         theaterConfig: {
-            getStages: getStages,
+            stages: stages,
             stageToLoad: 'game',
             stageEntryPoint: 'main',
             story: {
-                getStoryboard: getStoryboard,
+                storyboard: storyboard,
                 storyboardPath: ['start'],
-                getStoryEvents: () => ({}),
+                storyEvents: {},
             },
             dialogBox: () => new DialogBox({
                 x: 80, y: 50,

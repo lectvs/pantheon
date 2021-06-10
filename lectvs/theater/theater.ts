@@ -3,13 +3,13 @@
 
 namespace Theater {
     export type Config = {
-        getStages: () => Dict<Factory<World>>;
+        stages: Dict<Factory<World>>;
         stageToLoad: string;
         stageEntryPoint?: World.EntryPoint;
         story: {
-            getStoryboard: () => Storyboard;
+            storyboard: Storyboard;
             storyboardPath: string[];
-            getStoryEvents: () => StoryEvent.Map;
+            storyEvents: StoryEvent.Map;
         },
         dialogBox: Factory<DialogBox>;
         autoPlayScript?: () => IterableIterator<any>;
@@ -45,8 +45,8 @@ class Theater extends World {
 
         this.loadDialogBox(config.dialogBox);
 
-        this.storyManager = new StoryManager(this, config.story.getStoryboard(), config.story.storyboardPath, config.story.getStoryEvents());
-        this.stageManager = new StageManager(this, config.getStages());
+        this.storyManager = new StoryManager(this, config.story.storyboard, config.story.storyboardPath, config.story.storyEvents);
+        this.stageManager = new StageManager(this, config.stages);
         this.interactionManager = new InteractionManager(this);
         this.slideManager = new SlideManager(this);
 

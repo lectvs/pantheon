@@ -6596,8 +6596,8 @@ var Theater = /** @class */ (function (_super) {
             ]
         }) || this;
         _this.loadDialogBox(config.dialogBox);
-        _this.storyManager = new StoryManager(_this, config.story.getStoryboard(), config.story.storyboardPath, config.story.getStoryEvents());
-        _this.stageManager = new StageManager(_this, config.getStages());
+        _this.storyManager = new StoryManager(_this, config.story.storyboard, config.story.storyboardPath, config.story.storyEvents);
+        _this.stageManager = new StageManager(_this, config.stages);
         _this.interactionManager = new InteractionManager(_this);
         _this.slideManager = new SlideManager(_this);
         _this.endOfFrameQueue = [];
@@ -11995,7 +11995,295 @@ var ControlsMenu = /** @class */ (function (_super) {
     }
     return ControlsMenu;
 }(Menu));
+var BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(100, 10, 10);
+var music;
+var stages = {
+    'game': function () {
+        var e_52, _a;
+        var world = new World({
+            width: 192, height: 272,
+            backgroundColor: 0x000000,
+            entryPoints: { 'main': { x: 0, y: 0 } },
+            layers: [
+                { name: 'bg' },
+                { name: 'entities' },
+                { name: 'player' },
+                { name: 'puffs' },
+                { name: 'water' },
+                { name: 'walls', effects: { post: { filters: [new WorldFilter(), new DepthFilter()] } } },
+                { name: 'fg' },
+            ],
+            physicsGroups: {
+                'player': {},
+                'grapple': {},
+                'walls': { immovable: true },
+                'thwomps': {},
+                'movers': {},
+                'enemies': {},
+                'cannons': { immovable: true },
+                'cannonballs': {},
+                'checkpoints': {},
+                'water': {},
+            },
+            collisions: [
+                { move: 'player', from: 'walls' },
+                { move: 'thwomps', from: 'walls' },
+                { move: 'thwomps', from: 'thwomps' },
+                { move: 'movers', from: 'walls', momentumTransfer: 'elastic' },
+                { move: 'player', from: 'thwomps' },
+                { move: 'player', from: 'movers' },
+                { move: 'enemies', from: 'walls' },
+                { move: 'player', from: 'enemies' },
+                { move: 'cannonballs', from: 'walls' },
+                { move: 'player', from: 'cannons' },
+                { move: 'player', from: 'cannonballs' },
+            ],
+            collisionIterations: 4,
+            useRaycastDisplacementThreshold: 4,
+        });
+        extractEntities(AssetCache.tilemaps['world'].layers[0]);
+        var tiles = world.addWorldObject(new Tilemap({
+            x: -16, y: -16,
+            tilemap: 'world',
+            layer: 'walls',
+            physicsGroup: 'walls',
+        }));
+        try {
+            for (var worldEntities_1 = __values(worldEntities), worldEntities_1_1 = worldEntities_1.next(); !worldEntities_1_1.done; worldEntities_1_1 = worldEntities_1.next()) {
+                var entity = worldEntities_1_1.value;
+                if (entity.type === 'spikes') {
+                    world.addWorldObject(new Spikes(entity.tx, entity.ty, entity.angle));
+                }
+                else if (entity.type === 'thwomp') {
+                    world.addWorldObject(new Thwomp(entity.tx, entity.ty));
+                }
+                else if (entity.type === 'checkpoint') {
+                    world.addWorldObject(new Checkpoint(entity.tx, entity.ty, entity.angle));
+                }
+                else if (entity.type === 'bat') {
+                    world.addWorldObject(new Bat(entity.tx, entity.ty));
+                }
+                else if (entity.type === 'mover') {
+                    world.addWorldObject(new Mover(entity.tx, entity.ty, entity.angle));
+                }
+                else if (entity.type === 'cannon') {
+                    world.addWorldObject(new Cannon(entity.tx, entity.ty, entity.angle));
+                }
+                else if (entity.type === 'boss') {
+                    world.addWorldObject(new Boss(entity.tx, entity.ty));
+                }
+            }
+        }
+        catch (e_52_1) { e_52 = { error: e_52_1 }; }
+        finally {
+            try {
+                if (worldEntities_1_1 && !worldEntities_1_1.done && (_a = worldEntities_1.return)) _a.call(worldEntities_1);
+            }
+            finally { if (e_52) throw e_52.error; }
+        }
+        world.addWorldObject(new Water(0, 61.5, 10, 39));
+        world.addWorldObjects([
+            new Lava(2.5, 124.25, 5, 2.5),
+            new Lava(2.5, 134.25, 5, 2.5),
+            new Lava(8.25, 144.25, 2, 6),
+            new Lava(-0.25, 148.25, 2, 6),
+        ]);
+        Checkpoints.init(world.select.typeAll(Checkpoint));
+        world.addWorldObject(new Sprite({
+            x: 111, y: 1078,
+            texture: 'grappledownhelp',
+            layer: 'bg'
+        }));
+        world.addWorldObject(new Sprite({
+            x: 113, y: 2343,
+            texture: 'grappledownhelp',
+            layer: 'bg'
+        }));
+        world.addWorldObject(new Sprite({
+            x: 45, y: 2408,
+            texture: 'grappledownhelp',
+            layer: 'bg'
+        }));
+        var player = world.addWorldObject(new Player(3, 9));
+        player.name = 'player';
+        var currentCheckpoint = world.select.name(Checkpoints.current, false);
+        if (currentCheckpoint) {
+            player.x = currentCheckpoint.x;
+            player.y = currentCheckpoint.y + 7;
+        }
+        world.camera.bounds = {
+            left: 0, right: 160,
+            top: -Infinity, bottom: tiles.height - 32
+        };
+        world.camera.setModeFollow(player, 0, -8);
+        world.camera.setMovementSnap();
+        world.camera.snapPosition();
+        music = world.playSound('caves');
+        music.volume = 0;
+        music.loop = true;
+        world.runScript(S.doOverTime(1, function (t) { return music.volume = t * t; }));
+        return world;
+    },
+};
+var worldEntities;
+function extractEntities(layer) {
+    if (worldEntities)
+        return;
+    var indexToType = {
+        11: 'checkpoint',
+        12: 'bat',
+        13: 'mover',
+        14: 'cannon',
+        15: 'boss',
+        16: 'spikes',
+        17: 'thwomp',
+    };
+    worldEntities = [];
+    for (var ty = 0; ty < layer.length; ty++) {
+        for (var tx = 0; tx < layer[ty].length; tx++) {
+            var index = layer[ty][tx].index;
+            if (index > 10) {
+                worldEntities.push({ type: indexToType[index], tx: tx - 1, ty: ty - 1, angle: layer[ty][tx].angle });
+                layer[ty][tx].index = -1;
+            }
+        }
+    }
+}
+var seenBossDialog = false;
+var storyboard = {
+    'start': {
+        type: 'start',
+        transitions: [{ onStage: 'game', toNode: 'gameplay' }]
+    },
+    'gameplay': {
+        type: 'gameplay',
+        transitions: [
+            { condition: function () { return global.world.select.type(Boss).dead; }, toNode: 'win' },
+            { condition: function () { return global.world.select.name('player').dead; }, toNode: 'death' },
+            { condition: function () { return !global.world.select.type(Boss).startedFighting
+                    && global.world.select.name('player').y > 3618; }, toNode: 'introduce_boss' },
+        ]
+    },
+    'introduce_boss': {
+        type: 'cutscene',
+        script: function () {
+            var player, oldMusic;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        global.world.addWorldObject(new Sprite({
+                            x: 7 * 16, y: 222 * 16,
+                            texture: Texture.filledRect(48, 32, 0x000000),
+                            layer: 'walls',
+                            physicsGroup: 'walls',
+                            bounds: new RectBounds(0, 0, 48, 32),
+                        }));
+                        Puff.puffDirection(global.world, 7 * 16 + 24, 222 * 16 + 32, 10, Vector2.DOWN, 50, 50);
+                        player = global.world.select.name('player');
+                        player.flipX = true;
+                        oldMusic = music;
+                        global.world.runScript(S.doOverTime(2, function (t) { return oldMusic.volume = 1 - t; }));
+                        global.world.runScript(S.chain(S.waitUntil(function () { return player.y >= 3760; }), S.call(function () {
+                            global.world.camera.bounds.top = global.world.camera.bounds.bottom - global.world.camera.height;
+                        })));
+                        if (!!seenBossDialog) return [3 /*break*/, 11];
+                        return [4 /*yield*/, S.wait(2)];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("[g]Well, well. You've finally arrived.[/g]")];
+                    case 2:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("You! You're--!")];
+                    case 3:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("[g]You didn't think you'd get through this entire thing with no lore, did you?[/g]")];
+                    case 4:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("But, who are you?")];
+                    case 5:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("[g]I'm you, but digitized.[/g]")];
+                    case 6:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialogAdd(" [g]It's symbolic.[/g]")];
+                    case 7:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("What?")];
+                    case 8:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("[g]Look, I'm the final boss, so just fight me, okay?[/g]")];
+                    case 9:
+                        _a.sent();
+                        return [4 /*yield*/, S.wait(0.5)];
+                    case 10:
+                        _a.sent();
+                        seenBossDialog = true;
+                        _a.label = 11;
+                    case 11:
+                        music = global.world.playSound('boss');
+                        global.world.runScript(S.doOverTime(3, function (t) { return music.volume = t * t; }));
+                        global.world.select.type(Boss).startFighting();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [
+            { toNode: 'gameplay' }
+        ]
+    },
+    'win': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        music.paused = true;
+                        return [4 /*yield*/, S.wait(2)];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("[g]No! Defeated so easily?![/g]")];
+                    case 2:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("[g]Maybe I'll be harder in the post-jam versionn\nnnnnnnnnnnnnnnnnn\nnnnnnnnnnnnnn!!!![/g]")];
+                    case 3:
+                        _a.sent();
+                        return [4 /*yield*/, S.simul(S.shake(10, 5), S.fadeOut(5, 0xFFFFFF), S.doOverTime(5, function (t) { return global.world.volume = 1 - t; }))];
+                    case 4:
+                        _a.sent();
+                        return [4 /*yield*/, S.wait(3)];
+                    case 5:
+                        _a.sent();
+                        global.game.loadMainMenu();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: []
+    },
+    'death': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        music.paused = true;
+                        global.world.select.name('player').playGlitchSound();
+                        return [4 /*yield*/, S.shake(5, 1)];
+                    case 1:
+                        _a.sent();
+                        global.theater.loadStage('game');
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [
+            { toNode: 'gameplay' }
+        ]
+    }
+};
 /// <reference path="./menus.ts"/>
+/// <reference path="./stages.ts"/>
+/// <reference path="./storyboard.ts"/>
 Main.loadConfig({
     gameCodeName: "LD48",
     gameWidth: 160,
@@ -12054,13 +12342,13 @@ Main.loadConfig({
         entryPointMenuClass: IntroMenu,
         pauseMenuClass: PauseMenu,
         theaterConfig: {
-            getStages: getStages,
+            stages: stages,
             stageToLoad: 'game',
             stageEntryPoint: 'main',
             story: {
-                getStoryboard: getStoryboard,
+                storyboard: storyboard,
                 storyboardPath: ['start'],
-                getStoryEvents: function () { return ({}); },
+                storyEvents: {},
             },
             dialogBox: function () { return new DialogBox({
                 x: 80, y: 50,
@@ -12142,7 +12430,7 @@ var Puff = /** @class */ (function (_super) {
     }
     Puff.puffDirection = puffDirection;
     function puffWater(world, x, y, direction) {
-        var e_52, _a;
+        var e_53, _a;
         var puffs = puffDirection(world, x, y, 20, direction, 50, 50);
         try {
             for (var puffs_1 = __values(puffs), puffs_1_1 = puffs_1.next(); !puffs_1_1.done; puffs_1_1 = puffs_1.next()) {
@@ -12151,12 +12439,12 @@ var Puff = /** @class */ (function (_super) {
                 puff_1.alpha = 0.6;
             }
         }
-        catch (e_52_1) { e_52 = { error: e_52_1 }; }
+        catch (e_53_1) { e_53 = { error: e_53_1 }; }
         finally {
             try {
                 if (puffs_1_1 && !puffs_1_1.done && (_a = puffs_1.return)) _a.call(puffs_1);
             }
-            finally { if (e_52) throw e_52.error; }
+            finally { if (e_53) throw e_53.error; }
         }
         return puffs;
     }
@@ -12177,296 +12465,6 @@ var Spikes = /** @class */ (function (_super) {
     }
     return Spikes;
 }(Sprite));
-var BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(100, 10, 10);
-var music;
-function getStages() {
-    return {
-        'game': function () {
-            var e_53, _a;
-            var world = new World({
-                width: 192, height: 272,
-                backgroundColor: 0x000000,
-                entryPoints: { 'main': { x: 0, y: 0 } },
-                layers: [
-                    { name: 'bg' },
-                    { name: 'entities' },
-                    { name: 'player' },
-                    { name: 'puffs' },
-                    { name: 'water' },
-                    { name: 'walls', effects: { post: { filters: [new WorldFilter(), new DepthFilter()] } } },
-                    { name: 'fg' },
-                ],
-                physicsGroups: {
-                    'player': {},
-                    'grapple': {},
-                    'walls': { immovable: true },
-                    'thwomps': {},
-                    'movers': {},
-                    'enemies': {},
-                    'cannons': { immovable: true },
-                    'cannonballs': {},
-                    'checkpoints': {},
-                    'water': {},
-                },
-                collisions: [
-                    { move: 'player', from: 'walls' },
-                    { move: 'thwomps', from: 'walls' },
-                    { move: 'thwomps', from: 'thwomps' },
-                    { move: 'movers', from: 'walls', momentumTransfer: 'elastic' },
-                    { move: 'player', from: 'thwomps' },
-                    { move: 'player', from: 'movers' },
-                    { move: 'enemies', from: 'walls' },
-                    { move: 'player', from: 'enemies' },
-                    { move: 'cannonballs', from: 'walls' },
-                    { move: 'player', from: 'cannons' },
-                    { move: 'player', from: 'cannonballs' },
-                ],
-                collisionIterations: 4,
-                useRaycastDisplacementThreshold: 4,
-            });
-            extractEntities(AssetCache.tilemaps['world'].layers[0]);
-            var tiles = world.addWorldObject(new Tilemap({
-                x: -16, y: -16,
-                tilemap: 'world',
-                layer: 'walls',
-                physicsGroup: 'walls',
-            }));
-            try {
-                for (var worldEntities_1 = __values(worldEntities), worldEntities_1_1 = worldEntities_1.next(); !worldEntities_1_1.done; worldEntities_1_1 = worldEntities_1.next()) {
-                    var entity = worldEntities_1_1.value;
-                    if (entity.type === 'spikes') {
-                        world.addWorldObject(new Spikes(entity.tx, entity.ty, entity.angle));
-                    }
-                    else if (entity.type === 'thwomp') {
-                        world.addWorldObject(new Thwomp(entity.tx, entity.ty));
-                    }
-                    else if (entity.type === 'checkpoint') {
-                        world.addWorldObject(new Checkpoint(entity.tx, entity.ty, entity.angle));
-                    }
-                    else if (entity.type === 'bat') {
-                        world.addWorldObject(new Bat(entity.tx, entity.ty));
-                    }
-                    else if (entity.type === 'mover') {
-                        world.addWorldObject(new Mover(entity.tx, entity.ty, entity.angle));
-                    }
-                    else if (entity.type === 'cannon') {
-                        world.addWorldObject(new Cannon(entity.tx, entity.ty, entity.angle));
-                    }
-                    else if (entity.type === 'boss') {
-                        world.addWorldObject(new Boss(entity.tx, entity.ty));
-                    }
-                }
-            }
-            catch (e_53_1) { e_53 = { error: e_53_1 }; }
-            finally {
-                try {
-                    if (worldEntities_1_1 && !worldEntities_1_1.done && (_a = worldEntities_1.return)) _a.call(worldEntities_1);
-                }
-                finally { if (e_53) throw e_53.error; }
-            }
-            world.addWorldObject(new Water(0, 61.5, 10, 39));
-            world.addWorldObjects([
-                new Lava(2.5, 124.25, 5, 2.5),
-                new Lava(2.5, 134.25, 5, 2.5),
-                new Lava(8.25, 144.25, 2, 6),
-                new Lava(-0.25, 148.25, 2, 6),
-            ]);
-            Checkpoints.init(world.select.typeAll(Checkpoint));
-            world.addWorldObject(new Sprite({
-                x: 111, y: 1078,
-                texture: 'grappledownhelp',
-                layer: 'bg'
-            }));
-            world.addWorldObject(new Sprite({
-                x: 113, y: 2343,
-                texture: 'grappledownhelp',
-                layer: 'bg'
-            }));
-            world.addWorldObject(new Sprite({
-                x: 45, y: 2408,
-                texture: 'grappledownhelp',
-                layer: 'bg'
-            }));
-            var player = world.addWorldObject(new Player(3, 9));
-            player.name = 'player';
-            var currentCheckpoint = world.select.name(Checkpoints.current, false);
-            if (currentCheckpoint) {
-                player.x = currentCheckpoint.x;
-                player.y = currentCheckpoint.y + 7;
-            }
-            world.camera.bounds = {
-                left: 0, right: 160,
-                top: -Infinity, bottom: tiles.height - 32
-            };
-            world.camera.setModeFollow(player, 0, -8);
-            world.camera.setMovementSnap();
-            world.camera.snapPosition();
-            music = world.playSound('caves');
-            music.volume = 0;
-            music.loop = true;
-            world.runScript(S.doOverTime(1, function (t) { return music.volume = t * t; }));
-            return world;
-        },
-    };
-}
-var worldEntities;
-function extractEntities(layer) {
-    if (worldEntities)
-        return;
-    var indexToType = {
-        11: 'checkpoint',
-        12: 'bat',
-        13: 'mover',
-        14: 'cannon',
-        15: 'boss',
-        16: 'spikes',
-        17: 'thwomp',
-    };
-    worldEntities = [];
-    for (var ty = 0; ty < layer.length; ty++) {
-        for (var tx = 0; tx < layer[ty].length; tx++) {
-            var index = layer[ty][tx].index;
-            if (index > 10) {
-                worldEntities.push({ type: indexToType[index], tx: tx - 1, ty: ty - 1, angle: layer[ty][tx].angle });
-                layer[ty][tx].index = -1;
-            }
-        }
-    }
-}
-var seenBossDialog = false;
-function getStoryboard() {
-    return {
-        'start': {
-            type: 'start',
-            transitions: [{ onStage: 'game', toNode: 'gameplay' }]
-        },
-        'gameplay': {
-            type: 'gameplay',
-            transitions: [
-                { condition: function () { return global.world.select.type(Boss).dead; }, toNode: 'win' },
-                { condition: function () { return global.world.select.name('player').dead; }, toNode: 'death' },
-                { condition: function () { return !global.world.select.type(Boss).startedFighting
-                        && global.world.select.name('player').y > 3618; }, toNode: 'introduce_boss' },
-            ]
-        },
-        'introduce_boss': {
-            type: 'cutscene',
-            script: function () {
-                var player, oldMusic;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            global.world.addWorldObject(new Sprite({
-                                x: 7 * 16, y: 222 * 16,
-                                texture: Texture.filledRect(48, 32, 0x000000),
-                                layer: 'walls',
-                                physicsGroup: 'walls',
-                                bounds: new RectBounds(0, 0, 48, 32),
-                            }));
-                            Puff.puffDirection(global.world, 7 * 16 + 24, 222 * 16 + 32, 10, Vector2.DOWN, 50, 50);
-                            player = global.world.select.name('player');
-                            player.flipX = true;
-                            oldMusic = music;
-                            global.world.runScript(S.doOverTime(2, function (t) { return oldMusic.volume = 1 - t; }));
-                            global.world.runScript(S.chain(S.waitUntil(function () { return player.y >= 3760; }), S.call(function () {
-                                global.world.camera.bounds.top = global.world.camera.bounds.bottom - global.world.camera.height;
-                            })));
-                            if (!!seenBossDialog) return [3 /*break*/, 11];
-                            return [4 /*yield*/, S.wait(2)];
-                        case 1:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog("[g]Well, well. You've finally arrived.[/g]")];
-                        case 2:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog("You! You're--!")];
-                        case 3:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog("[g]You didn't think you'd get through this entire thing with no lore, did you?[/g]")];
-                        case 4:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog("But, who are you?")];
-                        case 5:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog("[g]I'm you, but digitized.[/g]")];
-                        case 6:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialogAdd(" [g]It's symbolic.[/g]")];
-                        case 7:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog("What?")];
-                        case 8:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog("[g]Look, I'm the final boss, so just fight me, okay?[/g]")];
-                        case 9:
-                            _a.sent();
-                            return [4 /*yield*/, S.wait(0.5)];
-                        case 10:
-                            _a.sent();
-                            seenBossDialog = true;
-                            _a.label = 11;
-                        case 11:
-                            music = global.world.playSound('boss');
-                            global.world.runScript(S.doOverTime(3, function (t) { return music.volume = t * t; }));
-                            global.world.select.type(Boss).startFighting();
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [
-                { toNode: 'gameplay' }
-            ]
-        },
-        'win': {
-            type: 'cutscene',
-            script: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            music.paused = true;
-                            return [4 /*yield*/, S.wait(2)];
-                        case 1:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog("[g]No! Defeated so easily?![/g]")];
-                        case 2:
-                            _a.sent();
-                            return [4 /*yield*/, S.dialog("[g]Maybe I'll be harder in the post-jam versionn\nnnnnnnnnnnnnnnnnn\nnnnnnnnnnnnnn!!!![/g]")];
-                        case 3:
-                            _a.sent();
-                            return [4 /*yield*/, S.simul(S.shake(10, 5), S.fadeOut(5, 0xFFFFFF), S.doOverTime(5, function (t) { return global.world.volume = 1 - t; }))];
-                        case 4:
-                            _a.sent();
-                            return [4 /*yield*/, S.wait(3)];
-                        case 5:
-                            _a.sent();
-                            global.game.loadMainMenu();
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: []
-        },
-        'death': {
-            type: 'cutscene',
-            script: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            music.paused = true;
-                            global.world.select.name('player').playGlitchSound();
-                            return [4 /*yield*/, S.shake(5, 1)];
-                        case 1:
-                            _a.sent();
-                            global.theater.loadStage('game');
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [
-                { toNode: 'gameplay' }
-            ]
-        }
-    };
-}
 var Thwomp = /** @class */ (function (_super) {
     __extends(Thwomp, _super);
     function Thwomp(tx, ty) {

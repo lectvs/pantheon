@@ -1,6 +1,6 @@
 var seenBossDialog: boolean = false;
 
-function getStoryboard(): Storyboard { return {
+const storyboard: Storyboard = {
     'start': {
         type: 'start',
         transitions: [{ onStage: 'game', toNode: 'gameplay' }]
@@ -97,4 +97,4 @@ function getStoryboard(): Storyboard { return {
             { toNode: 'gameplay' }
         ]
     }
-}}
+}
