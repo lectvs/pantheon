@@ -24,4 +24,8 @@ class SoundManager {
         this.sounds.push(sound);
         return sound;
     }
+
+    getSoundsByKey(key: string) {
+        return this.sounds.filter(sound => sound.key === key);
+    }
 }

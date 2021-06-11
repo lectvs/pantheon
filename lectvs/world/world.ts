@@ -43,6 +43,11 @@ namespace World {
     }
 
     export type EntryPoint = string | Pt;
+
+    export type PlaySoundConfig = {
+        humanized?: boolean;
+        limit?: number;
+    }
 }
 
 class World {
@@ -267,9 +272,17 @@ class World {
 
     /**
      * By default, sounds are:
-     *   - Humanized (if applicable)
+     *   - Humanized (if set globally)
      */
-    playSound(key: string, humanized: boolean = true) {
+    playSound(key: string, config?: World.PlaySoundConfig) {
+        let humanized = config?.humanized ?? true;
+        let limit = config?.limit ?? Infinity;
+
+        // Check limit
+        if (this.soundManager.getSoundsByKey(key).length >= limit) {
+            return new Sound(key);
+        }
+
         let sound = this.soundManager.playSound(key);
         if (humanized && this.globalSoundHumanizePercent > 0) {
             sound.humanize(this.globalSoundHumanizePercent);

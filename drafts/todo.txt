@@ -3,7 +3,6 @@ todo
 - rethink tilemap zMap? z on a per-tile basis rather than per-index?
 - better acceleration movement (smart clamping?)
 - option for entities to only update within screen bounds?
-- limit sound effect count per effect
 - better global variables
 - variable hitboxes? (i.e. different hitboxes for wall collision vs enemy collision)
 - "max distance" step functionality for collisions

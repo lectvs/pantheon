@@ -11,6 +11,8 @@ class Sound {
     private markedForDisable: boolean;
     get isMarkedForDisable() { return this.markedForDisable; }
 
+    key: string;
+
     paused: boolean;
     /** Must be between 0 and Sound.MAX_VOLUME */
     volume: number;
@@ -34,6 +36,7 @@ class Sound {
         }
         this.webAudioSound.pause();  // Start paused to avoid playing for one frame when not updating
         this.markedForDisable = false;
+        this.key = key;
         this.paused = false;
         this.pos = 0;
 

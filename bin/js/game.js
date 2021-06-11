@@ -3488,10 +3488,16 @@ var World = /** @class */ (function () {
     };
     /**
      * By default, sounds are:
-     *   - Humanized (if applicable)
+     *   - Humanized (if set globally)
      */
-    World.prototype.playSound = function (key, humanized) {
-        if (humanized === void 0) { humanized = true; }
+    World.prototype.playSound = function (key, config) {
+        var _a, _b;
+        var humanized = (_a = config === null || config === void 0 ? void 0 : config.humanized) !== null && _a !== void 0 ? _a : true;
+        var limit = (_b = config === null || config === void 0 ? void 0 : config.limit) !== null && _b !== void 0 ? _b : Infinity;
+        // Check limit
+        if (this.soundManager.getSoundsByKey(key).length >= limit) {
+            return new Sound(key);
+        }
         var sound = this.soundManager.playSound(key);
         if (humanized && this.globalSoundHumanizePercent > 0) {
             sound.humanize(this.globalSoundHumanizePercent);
@@ -5021,6 +5027,7 @@ var Sound = /** @class */ (function () {
         }
         this.webAudioSound.pause(); // Start paused to avoid playing for one frame when not updating
         this.markedForDisable = false;
+        this.key = key;
         this.paused = false;
         this.pos = 0;
         this.volume = 1;
@@ -5109,6 +5116,9 @@ var SoundManager = /** @class */ (function () {
         var sound = new Sound(key, this);
         this.sounds.push(sound);
         return sound;
+    };
+    SoundManager.prototype.getSoundsByKey = function (key) {
+        return this.sounds.filter(function (sound) { return sound.key === key; });
     };
     return SoundManager;
 }());
@@ -12507,7 +12517,7 @@ var Thwomp = /** @class */ (function (_super) {
         if (this.state !== 'sleep') {
             var gdir = this.gravity.normalized();
             Puff.puff(this.world, this.x + gdir.x * 8, this.y + gdir.y * 8, 10, function () { return Random.inCircle(50); });
-            this.world.playSound('thwomphit');
+            this.world.playSound('thwomphit', { limit: 7 });
         }
         this.setState('sleep');
     };

@@ -59,7 +59,7 @@ class Thwomp extends Sprite {
         if (this.state !== 'sleep') {
             let gdir = this.gravity.normalized();
             Puff.puff(this.world, this.x + gdir.x*8, this.y + gdir.y*8, 10, () => Random.inCircle(50));
-            this.world.playSound('thwomphit');
+            this.world.playSound('thwomphit', { limit: 7 });
         }
         this.setState('sleep');
     }
