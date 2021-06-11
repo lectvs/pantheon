@@ -2561,25 +2561,27 @@ var WorldObject = /** @class */ (function () {
     function WorldObject(config) {
         var _this = this;
         if (config === void 0) { config = {}; }
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
         this.localx = (_a = config.x) !== null && _a !== void 0 ? _a : 0;
         this.localy = (_b = config.y) !== null && _b !== void 0 ? _b : 0;
         this.localz = (_c = config.z) !== null && _c !== void 0 ? _c : 0;
         this.visible = (_d = config.visible) !== null && _d !== void 0 ? _d : true;
         this.active = (_e = config.active) !== null && _e !== void 0 ? _e : true;
-        this.life = new Timer((_f = config.life) !== null && _f !== void 0 ? _f : Infinity, function () { return _this.kill(); });
-        this.zBehavior = (_g = config.zBehavior) !== null && _g !== void 0 ? _g : WorldObject.DEFAULT_Z_BEHAVIOR;
-        this.timeScale = (_h = config.timeScale) !== null && _h !== void 0 ? _h : 1;
+        this.activeOutsideWorldBoundsBuffer = (_f = config.activeOutsideWorldBoundsBuffer) !== null && _f !== void 0 ? _f : Infinity;
+        this.life = new Timer((_g = config.life) !== null && _g !== void 0 ? _g : Infinity, function () { return _this.kill(); });
+        this.zBehavior = (_h = config.zBehavior) !== null && _h !== void 0 ? _h : WorldObject.DEFAULT_Z_BEHAVIOR;
+        this.timeScale = (_j = config.timeScale) !== null && _j !== void 0 ? _j : 1;
         this.data = config.data ? O.deepClone(config.data) : {};
-        this.ignoreCamera = (_j = config.ignoreCamera) !== null && _j !== void 0 ? _j : false;
-        this.matchParentLayer = (_k = config.matchParentLayer) !== null && _k !== void 0 ? _k : false;
-        this.matchParentPhysicsGroup = (_l = config.matchParentPhysicsGroup) !== null && _l !== void 0 ? _l : false;
+        this.ignoreCamera = (_k = config.ignoreCamera) !== null && _k !== void 0 ? _k : false;
+        this.matchParentLayer = (_l = config.matchParentLayer) !== null && _l !== void 0 ? _l : false;
+        this.matchParentPhysicsGroup = (_m = config.matchParentPhysicsGroup) !== null && _m !== void 0 ? _m : false;
         this.alive = true;
         this.name = config.name;
         this.tags = config.tags ? A.clone(config.tags) : [];
         this.lastx = this.x;
         this.lasty = this.y;
         this.lastz = this.z;
+        this._isInsideWorldBoundsBufferThisFrame = false;
         this.controller = new Controller();
         this.behavior = new NullBehavior();
         this.modules = [];
@@ -2844,14 +2846,15 @@ var WorldObject = /** @class */ (function () {
     WorldObject.prototype.hasTag = function (tag) {
         return _.contains(this.tags, tag);
     };
-    WorldObject.prototype.isOnScreen = function () {
+    WorldObject.prototype.isOnScreen = function (buffer) {
+        if (buffer === void 0) { buffer = 0; }
         var bounds = this.getVisibleScreenBounds();
         if (!bounds)
             return true;
-        return bounds.x + bounds.width >= 0
-            && bounds.x <= this.world.width
-            && bounds.y + bounds.height >= 0
-            && bounds.y <= this.world.height;
+        return bounds.x + bounds.width >= -buffer
+            && bounds.x <= this.world.width + buffer
+            && bounds.y + bounds.height >= -buffer
+            && bounds.y <= this.world.height + buffer;
     };
     WorldObject.prototype.kill = function () {
         this.alive = false;
@@ -2899,6 +2902,11 @@ var WorldObject = /** @class */ (function () {
     };
     WorldObject.prototype.runScript = function (script) {
         return this.scriptManager.runScript(script);
+    };
+    WorldObject.prototype.setIsInsideWorldBoundsBufferThisFrame = function () {
+        this._isInsideWorldBoundsBufferThisFrame = isFinite(this.activeOutsideWorldBoundsBuffer)
+            ? this.isOnScreen(this.activeOutsideWorldBoundsBuffer)
+            : true;
     };
     WorldObject.prototype.setState = function (state) {
         this.stateMachine.setState(state);
@@ -3286,7 +3294,8 @@ var World = /** @class */ (function () {
         try {
             for (var _d = __values(this.worldObjects), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var worldObject = _e.value;
-                if (worldObject.active) {
+                worldObject.setIsInsideWorldBoundsBufferThisFrame();
+                if (worldObject.active && worldObject._isInsideWorldBoundsBufferThisFrame) {
                     global.metrics.startSpan(worldObject);
                     worldObject.preUpdate();
                     global.metrics.endSpan(worldObject);
@@ -3305,7 +3314,7 @@ var World = /** @class */ (function () {
         try {
             for (var _f = __values(this.worldObjects), _g = _f.next(); !_g.done; _g = _f.next()) {
                 var worldObject = _g.value;
-                if (worldObject.active) {
+                if (worldObject.active && worldObject._isInsideWorldBoundsBufferThisFrame) {
                     global.metrics.startSpan(worldObject);
                     worldObject.update();
                     global.metrics.endSpan(worldObject);
@@ -3327,7 +3336,7 @@ var World = /** @class */ (function () {
         try {
             for (var _h = __values(this.worldObjects), _j = _h.next(); !_j.done; _j = _h.next()) {
                 var worldObject = _j.value;
-                if (worldObject.active) {
+                if (worldObject.active && worldObject._isInsideWorldBoundsBufferThisFrame) {
                     global.metrics.startSpan(worldObject);
                     worldObject.postUpdate();
                     global.metrics.endSpan(worldObject);
@@ -11553,7 +11562,7 @@ var Checkpoints;
         }
     }
     Checkpoints.init = init;
-    Checkpoints.current = 'checkpoint_12';
+    Checkpoints.current = 'checkpoint_0';
 })(Checkpoints || (Checkpoints = {}));
 var DepthFilter = /** @class */ (function (_super) {
     __extends(DepthFilter, _super);
@@ -12358,7 +12367,7 @@ Main.loadConfig({
         },
     },
     debug: {
-        debug: false,
+        debug: true,
         font: Assets.fonts.DELUXE16,
         fontStyle: { color: 0xFFFFFF },
         allPhysicsBounds: false,

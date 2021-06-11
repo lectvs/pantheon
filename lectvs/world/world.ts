@@ -117,10 +117,11 @@ class World {
 
     update() {
         this.updateScriptManager();
-        
+
         global.metrics.startSpan('preUpdate');
         for (let worldObject of this.worldObjects) {
-            if (worldObject.active) {
+            worldObject.setIsInsideWorldBoundsBufferThisFrame();
+            if (worldObject.active && worldObject._isInsideWorldBoundsBufferThisFrame) {
                 global.metrics.startSpan(worldObject);
                 worldObject.preUpdate();
                 global.metrics.endSpan(worldObject);
@@ -130,7 +131,7 @@ class World {
 
         global.metrics.startSpan('update');
         for (let worldObject of this.worldObjects) {
-            if (worldObject.active) {
+            if (worldObject.active && worldObject._isInsideWorldBoundsBufferThisFrame) {
                 global.metrics.startSpan(worldObject);
                 worldObject.update();
                 global.metrics.endSpan(worldObject);
@@ -144,7 +145,7 @@ class World {
 
         global.metrics.startSpan('postUpdate');
         for (let worldObject of this.worldObjects) {
-            if (worldObject.active) {
+            if (worldObject.active && worldObject._isInsideWorldBoundsBufferThisFrame) {
                 global.metrics.startSpan(worldObject);
                 worldObject.postUpdate();
                 global.metrics.endSpan(worldObject);

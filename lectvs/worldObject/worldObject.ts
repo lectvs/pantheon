@@ -10,6 +10,7 @@ namespace WorldObject {
         z?: number;
         visible?: boolean;
         active?: boolean;
+        activeOutsideWorldBoundsBuffer?: number;
         life?: number;
         ignoreCamera?: boolean;
         matchParentLayer?: boolean;
@@ -46,6 +47,7 @@ class WorldObject {
     localz: number;
     visible: boolean;
     active: boolean;
+    activeOutsideWorldBoundsBuffer: number;
     life: Timer;
     zBehavior: WorldObject.ZBehavior;
     timeScale: number;
@@ -96,6 +98,8 @@ class WorldObject {
     lasty: number;
     lastz: number;
 
+    _isInsideWorldBoundsBufferThisFrame: boolean;
+
     controller: Controller;
     get isControlRevoked() { return global.theater?.isCutscenePlaying; }
 
@@ -122,6 +126,7 @@ class WorldObject {
         this.localz = config.z ?? 0;
         this.visible = config.visible ?? true;
         this.active = config.active ?? true;
+        this.activeOutsideWorldBoundsBuffer = config.activeOutsideWorldBoundsBuffer ?? Infinity;
         this.life = new Timer(config.life ?? Infinity, () => this.kill());
         this.zBehavior = config.zBehavior ?? WorldObject.DEFAULT_Z_BEHAVIOR;
         this.timeScale = config.timeScale ?? 1;
@@ -139,6 +144,8 @@ class WorldObject {
         this.lastx = this.x;
         this.lasty = this.y;
         this.lastz = this.z;
+
+        this._isInsideWorldBoundsBufferThisFrame = false;
 
         this.controller = new Controller();
         this.behavior = new NullBehavior();
@@ -317,13 +324,13 @@ class WorldObject {
         return _.contains(this.tags, tag);
     }
 
-    isOnScreen() {
+    isOnScreen(buffer: number = 0) {
         let bounds = this.getVisibleScreenBounds();
         if (!bounds) return true;
-        return bounds.x + bounds.width >= 0
-            && bounds.x <= this.world.width
-            && bounds.y + bounds.height >= 0
-            && bounds.y <= this.world.height;
+        return bounds.x + bounds.width >= -buffer
+            && bounds.x <= this.world.width + buffer
+            && bounds.y + bounds.height >= -buffer
+            && bounds.y <= this.world.height + buffer;
     }
 
     kill() {
@@ -374,6 +381,12 @@ class WorldObject {
 
     runScript(script: Script | Script.Function) {
         return this.scriptManager.runScript(script);
+    }
+
+    setIsInsideWorldBoundsBufferThisFrame() {
+        this._isInsideWorldBoundsBufferThisFrame = isFinite(this.activeOutsideWorldBoundsBuffer)
+                    ? this.isOnScreen(this.activeOutsideWorldBoundsBuffer)
+                    : true;
     }
 
     setState(state: string) {

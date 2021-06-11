@@ -2,7 +2,6 @@ todo
 - easier tilemap definition in assets?
 - rethink tilemap zMap? z on a per-tile basis rather than per-index?
 - better acceleration movement (smart clamping?)
-- option for entities to only update within screen bounds?
 - better global variables
 - variable hitboxes? (i.e. different hitboxes for wall collision vs enemy collision)
 - "max distance" step functionality for collisions
