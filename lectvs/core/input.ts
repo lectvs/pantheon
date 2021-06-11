@@ -166,7 +166,7 @@ class Input {
                 let y1 = (ch - h) / 2;
                 this._canvasMouseY = ch * (this._canvasMouseY - y1) / h;
             } else if (ratioW > ratioH) {
-                let w = cw*cw*ratioH/window.innerWidth;
+                let w = cw*cw*ratioH/iw;
                 let x1 = (cw - w) / 2;
                 this._canvasMouseX = cw * (this._canvasMouseX - x1) / w;
             }

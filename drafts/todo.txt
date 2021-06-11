@@ -1,9 +1,7 @@
 todo
 - easier tilemap definition in assets?
-- rethink tilemap zMap? z on a per-tile basis rather than per-index?
-- better acceleration movement (smart clamping?)
 - better global variables
 - variable hitboxes? (i.e. different hitboxes for wall collision vs enemy collision)
 - "max distance" step functionality for collisions
-- fix debug menu overlay toggle when debug=false
-- fix hack in updateMousePosition()?
+- parse entities from pyxelTilemap?
+- music system

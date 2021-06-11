@@ -833,7 +833,7 @@ var Input = /** @class */ (function () {
                 this._canvasMouseY = ch * (this._canvasMouseY - y1) / h;
             }
             else if (ratioW > ratioH) {
-                var w = cw * cw * ratioH / window.innerWidth;
+                var w = cw * cw * ratioH / iw;
                 var x1 = (cw - w) / 2;
                 this._canvasMouseX = cw * (this._canvasMouseX - x1) / w;
             }
@@ -10690,6 +10690,19 @@ var SmartTilemap;
         }
     }
 })(SmartTilemap || (SmartTilemap = {}));
+var SmartAccelerate = /** @class */ (function () {
+    function SmartAccelerate() {
+    }
+    SmartAccelerate.accelerate = function (v, ax, ay, delta, maxSpeed) {
+        var oldMagnitude = v.magnitude;
+        v.x += ax * delta;
+        v.y += ay * delta;
+        if (v.magnitude > maxSpeed) {
+            v.clampMagnitude(oldMagnitude);
+        }
+    };
+    return SmartAccelerate;
+}());
 var Assets;
 (function (Assets) {
     Assets.textures = {
@@ -10811,13 +10824,11 @@ var Bat = /** @class */ (function (_super) {
         });
         _this.stateMachine.addState('active', {
             callback: function () {
-                _this.v.y = 100;
+                _this.v.y = _this.MAX_SPEED;
             },
             update: function () {
                 var a = _this.controller.moveDirection.withMagnitude(_this.ACCELERATION);
-                _this.v.x += a.x * _this.delta;
-                _this.v.y += a.y * _this.delta;
-                _this.v.clampMagnitude(_this.MAX_SPEED);
+                SmartAccelerate.accelerate(_this.v, a.x, a.y, _this.delta, _this.MAX_SPEED);
                 _this.flipX = _this.controller.moveDirection.x < 0;
                 _this.playAnimation('fly');
             }
@@ -11562,7 +11573,7 @@ var Checkpoints;
         }
     }
     Checkpoints.init = init;
-    Checkpoints.current = 'checkpoint_0';
+    Checkpoints.current = 'checkpoint_4';
 })(Checkpoints || (Checkpoints = {}));
 var DepthFilter = /** @class */ (function (_super) {
     __extends(DepthFilter, _super);

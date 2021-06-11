@@ -33,13 +33,11 @@ class Bat extends Sprite {
         });
         this.stateMachine.addState('active', {
             callback: () => {
-                this.v.y = 100;
+                this.v.y = this.MAX_SPEED;
             },
             update: () => {
                 let a = this.controller.moveDirection.withMagnitude(this.ACCELERATION);
-                this.v.x += a.x * this.delta;
-                this.v.y += a.y * this.delta;
-                this.v.clampMagnitude(this.MAX_SPEED);
+                SmartAccelerate.accelerate(this.v, a.x, a.y, this.delta, this.MAX_SPEED);
 
                 this.flipX = this.controller.moveDirection.x < 0;
                 this.playAnimation('fly');

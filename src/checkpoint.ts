@@ -55,5 +55,5 @@ namespace Checkpoints {
         }
     }
 
-    export var current: string = 'checkpoint_0';
+    export var current: string = 'checkpoint_4';
 }
