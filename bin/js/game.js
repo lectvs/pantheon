@@ -314,6 +314,12 @@ var AssetCache = /** @class */ (function () {
         }
         return this.sounds[key];
     };
+    AssetCache.getTileset = function (key) {
+        if (!this.tilesets[key]) {
+            error("Tileset '" + key + "' does not exist.");
+        }
+        return this.tilesets[key];
+    };
     AssetCache.getTilemap = function (key) {
         if (!this.tilemaps[key]) {
             error("Tilemap '" + key + "' does not exist.");
@@ -326,6 +332,7 @@ var AssetCache = /** @class */ (function () {
     AssetCache.pixiTextures = {};
     AssetCache.textures = {};
     AssetCache.sounds = {};
+    AssetCache.tilesets = {};
     AssetCache.tilemaps = {};
     return AssetCache;
 }());
@@ -1546,6 +1553,11 @@ var Preload = /** @class */ (function () {
                 this.preloadSound(key, options.sounds[key]);
             }
         }
+        if (options.tilesets) {
+            for (var key in options.tilesets) {
+                this.preloadTileset(key, options.tilesets[key]);
+            }
+        }
         if (options.pyxelTilemaps) {
             for (var key in options.pyxelTilemaps) {
                 this.preloadPyxelTilemap(key, options.pyxelTilemaps[key]);
@@ -1562,6 +1574,11 @@ var Preload = /** @class */ (function () {
         if (options.sounds) {
             for (var key in options.sounds) {
                 this.loadSound(key, options.sounds[key]);
+            }
+        }
+        if (options.tilesets) {
+            for (var key in options.tilesets) {
+                this.loadTileset(key, options.tilesets[key]);
             }
         }
         if (options.pyxelTilemaps) {
@@ -1582,11 +1599,11 @@ var Preload = /** @class */ (function () {
             done: false
         };
         this.resources.push(resource);
-        PIXI.Loader.shared.add(key, url, undefined, function () { return _this.onLoadResource(resource); });
+        PIXI.Loader.shared.add(key + this.TEXTURE_KEY_SUFFIX, url, undefined, function () { return _this.onLoadResource(resource); });
     };
     Preload.loadTexture = function (key, texture) {
         var _a;
-        var baseTexture = PIXI.utils.TextureCache[key];
+        var baseTexture = PIXI.utils.TextureCache[key + this.TEXTURE_KEY_SUFFIX];
         if (!baseTexture) {
             error("Failed to preload texture " + key);
             return;
@@ -1669,6 +1686,59 @@ var Preload = /** @class */ (function () {
             volume: volume
         };
     };
+    Preload.preloadTileset = function (key, tileset) {
+        var _this = this;
+        var url = tileset.url || "assets/" + key + ".png";
+        var resource = {
+            name: key,
+            src: url,
+            done: false
+        };
+        this.resources.push(resource);
+        PIXI.Loader.shared.add(key + this.TILESET_KEY_SUFFIX, url, function () { return _this.onLoadResource(resource); });
+    };
+    Preload.loadTileset = function (key, tileset) {
+        var baseTexture = PIXI.utils.TextureCache[key + this.TILESET_KEY_SUFFIX];
+        if (!baseTexture) {
+            error("Failed to preload tileset " + key);
+            return;
+        }
+        var frames = {};
+        var tiles = [];
+        var numFramesX = Math.floor(baseTexture.width / tileset.tileWidth);
+        var numFramesY = Math.floor(baseTexture.height / tileset.tileHeight);
+        for (var y = 0; y < numFramesY; y++) {
+            for (var x = 0; x < numFramesX; x++) {
+                var frameKeyPrefix = key + "_";
+                var frameKey = "" + frameKeyPrefix + (x + y * numFramesX);
+                frames[frameKey] = {
+                    rect: {
+                        x: x * tileset.tileWidth,
+                        y: y * tileset.tileHeight,
+                        width: tileset.tileWidth,
+                        height: tileset.tileHeight
+                    },
+                    anchor: Vector2.CENTER,
+                };
+                tiles.push(frameKey);
+            }
+        }
+        for (var frame in frames) {
+            var frameTexture = new PIXI.Texture(baseTexture);
+            var rect_2 = frames[frame].rect;
+            var anchor = frames[frame].anchor;
+            frameTexture.frame = new Rectangle(rect_2.x, rect_2.y, rect_2.width, rect_2.height);
+            frameTexture.defaultAnchor = new Point(anchor.x, anchor.y);
+            AssetCache.pixiTextures[frame] = frameTexture;
+            AssetCache.textures[frame] = Texture.fromPixiTexture(frameTexture);
+        }
+        AssetCache.tilesets[key] = {
+            tileWidth: tileset.tileWidth,
+            tileHeight: tileset.tileHeight,
+            tiles: tiles,
+            collisionIndices: tileset.collisionIndices,
+        };
+    };
     Preload.preloadPyxelTilemap = function (key, tilemap) {
         var _this = this;
         var url = tilemap.url || "assets/" + key + ".json";
@@ -1689,7 +1759,6 @@ var Preload = /** @class */ (function () {
         }
         var tilemapJson = PIXI.Loader.shared.resources[key + this.TILEMAP_KEY_SUFFIX].data;
         var tilemapForCache = {
-            tileset: tilemap.tileset,
             layers: [],
         };
         for (var i = 0; i < tilemapJson.layers.length; i++) {
@@ -1727,6 +1796,8 @@ var Preload = /** @class */ (function () {
     Preload.getPreloadProgress = function () {
         return this.resources.filter(function (r) { return r.done; }).length / this.resources.length;
     };
+    Preload.TEXTURE_KEY_SUFFIX = '_texture_';
+    Preload.TILESET_KEY_SUFFIX = '_tileset_';
     Preload.TILEMAP_KEY_SUFFIX = '_tilemap_';
     return Preload;
 }());
@@ -1787,6 +1858,7 @@ var Main = /** @class */ (function () {
         Preload.preload({
             textures: this.config.textures,
             sounds: this.config.sounds,
+            tilesets: this.config.tilesets,
             pyxelTilemaps: this.config.pyxelTilemaps,
             progressCallback: function (progress) { return _this.renderPreloadProgress(progress); },
             onLoad: function () {
@@ -10256,6 +10328,7 @@ var Tilemap = /** @class */ (function (_super) {
         var _this = _super.call(this, config) || this;
         _this.tilemap = Tilemap.cloneTilemap(_.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap);
         _this.tilemapLayer = (_a = config.tilemapLayer) !== null && _a !== void 0 ? _a : 0;
+        _this.tileset = AssetCache.getTileset(config.tileset);
         _this.zMap = (_b = config.zMap) !== null && _b !== void 0 ? _b : {};
         _this.animation = config.animation;
         _this.collisionOnly = (_c = config.collisionOnly) !== null && _c !== void 0 ? _c : false;
@@ -10266,11 +10339,6 @@ var Tilemap = /** @class */ (function (_super) {
     }
     Object.defineProperty(Tilemap.prototype, "currentTilemapLayer", {
         get: function () { return this.tilemap.layers[this.tilemapLayer]; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Tilemap.prototype, "tileset", {
-        get: function () { return this.tilemap.tileset; },
         enumerable: false,
         configurable: true
     });
@@ -10324,11 +10392,11 @@ var Tilemap = /** @class */ (function (_super) {
         Tilemap.optimizeCollisionRects(collisionRects, Tilemap.OPTIMIZE_ALL);
         try {
             for (var collisionRects_1 = __values(collisionRects), collisionRects_1_1 = collisionRects_1.next(); !collisionRects_1_1.done; collisionRects_1_1 = collisionRects_1.next()) {
-                var rect_2 = collisionRects_1_1.value;
+                var rect_3 = collisionRects_1_1.value;
                 var box = this.addChild(new PhysicsWorldObject());
                 box.x = this.x;
                 box.y = this.y;
-                box.bounds = new RectBounds(rect_2.x, rect_2.y, rect_2.width, rect_2.height);
+                box.bounds = new RectBounds(rect_3.x, rect_3.y, rect_3.width, rect_3.height);
                 box.matchParentPhysicsGroup = true;
                 box.setImmovable(true);
                 box.debugDrawBounds = this.debugDrawBounds;
@@ -10404,7 +10472,6 @@ var Tilemap = /** @class */ (function (_super) {
 (function (Tilemap) {
     function cloneTilemap(tilemap) {
         var result = {
-            tileset: tilemap.tileset,
             layers: [],
         };
         for (var i = 0; i < tilemap.layers.length; i++) {
@@ -10467,13 +10534,13 @@ var Tilemap = /** @class */ (function (_super) {
             for (var x = 0; x < tilemapLayer[y].length; x++) {
                 var tile = tilemapLayer[y][x];
                 if (_.contains(tileset.collisionIndices, tile.index)) {
-                    var rect_3 = {
+                    var rect_4 = {
                         x: x * tileset.tileWidth,
                         y: y * tileset.tileHeight,
                         width: tileset.tileWidth,
                         height: tileset.tileHeight
                     };
-                    result.push(rect_3);
+                    result.push(rect_4);
                 }
             }
         }
@@ -10594,7 +10661,6 @@ var SmartTilemap;
                 return;
         }
         return {
-            tileset: tilemap.tileset,
             layers: tilemap.layers.map(function (layer) { return getSmartTilemapLayer(layer, config); }),
         };
     }
@@ -10714,7 +10780,6 @@ var Assets;
         // Game
         'player': { anchor: Vector2.BOTTOM, spritesheet: { frameWidth: 16, frameHeight: 16 } },
         'grapple': { anchor: Vector2.CENTER },
-        'world': { anchor: Vector2.CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
         'checkpoint': { anchor: Vector2.CENTER, frames: {
                 'checkpoint_low': { rect: rect(0, 0, 16, 16) },
                 'checkpoint_high': { rect: rect(16, 0, 16, 16) },
@@ -10765,14 +10830,11 @@ var Assets;
         'world': {
             tileWidth: 16,
             tileHeight: 16,
-            tiles: Preload.allTilesWithPrefix('world_'),
             collisionIndices: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-        }
+        },
     };
     Assets.pyxelTilemaps = {
-        'world': {
-            tileset: Assets.tilesets['world'],
-        }
+        'world': { tileset: 'world' },
     };
     var fonts = /** @class */ (function () {
         function fonts() {
@@ -12060,6 +12122,7 @@ var stages = {
         var tiles = world.addWorldObject(new Tilemap({
             x: -16, y: -16,
             tilemap: 'world',
+            tileset: 'world',
             layer: 'walls',
             physicsGroup: 'walls',
         }));
@@ -12310,6 +12373,7 @@ Main.loadConfig({
     preloadProgressBarColor: 0xFFFFFF,
     textures: Assets.textures,
     sounds: Assets.sounds,
+    tilesets: Assets.tilesets,
     pyxelTilemaps: Assets.pyxelTilemaps,
     spriteTextTags: Assets.spriteTextTags,
     defaultZBehavior: 'threequarters',

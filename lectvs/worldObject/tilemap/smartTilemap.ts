@@ -47,7 +47,6 @@ namespace SmartTilemap {
             if (!tilemap) return;
         }
         return {
-            tileset: tilemap.tileset,
             layers: tilemap.layers.map(layer => getSmartTilemapLayer(layer, config)),
         };
     }

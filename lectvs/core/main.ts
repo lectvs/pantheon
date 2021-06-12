@@ -16,6 +16,7 @@ namespace Main {
 
         textures?: Dict<Preload.Texture>;
         sounds?: Dict<Preload.Sound>;
+        tilesets?: Dict<Preload.Tileset>;
         pyxelTilemaps?: Dict<Preload.PyxelTilemap>;
         spriteTextTags?: Dict<SpriteText.TagFunction>;
 
@@ -87,6 +88,7 @@ class Main {
         Preload.preload({
             textures: this.config.textures,
             sounds: this.config.sounds,
+            tilesets: this.config.tilesets,
             pyxelTilemaps: this.config.pyxelTilemaps,
             progressCallback: (progress) => this.renderPreloadProgress(progress),
             onLoad: () => {

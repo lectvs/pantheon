@@ -53,6 +53,7 @@ const stages: Dict<Factory<World>> = {
         let tiles = world.addWorldObject(new Tilemap({
             x: -16, y: -16,
             tilemap: 'world',
+            tileset: 'world',
             layer: 'walls',
             physicsGroup: 'walls',
         }));

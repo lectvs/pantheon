@@ -9,7 +9,8 @@ namespace Preload {
 
     export type Options = {
         textures?: Dict<Preload.Texture>;
-        sounds? : Dict<Preload.Sound>;
+        sounds?: Dict<Preload.Sound>;
+        tilesets?: Dict<Preload.Tileset>;
         pyxelTilemaps?: Dict<Preload.PyxelTilemap>;
         progressCallback?: (progress: number) => any;
         onLoad?: Function;
@@ -38,9 +39,16 @@ namespace Preload {
         anchor?: Vector2;
     }
 
+    export type Tileset = {
+        url?: string;
+        tileWidth: number;
+        tileHeight: number;
+        collisionIndices: number[];
+    }
+
     export type PyxelTilemap = {
         url?: string;
-        tileset: Tilemap.Tileset;
+        tileset: string;
     }
 
     export type PyxelTilemapJson = {
@@ -84,6 +92,12 @@ class Preload {
             }
         }
 
+        if (options.tilesets) {
+            for (let key in options.tilesets) {
+                this.preloadTileset(key, options.tilesets[key]);
+            }
+        }
+
         if (options.pyxelTilemaps) {
             for (let key in options.pyxelTilemaps) {
                 this.preloadPyxelTilemap(key, options.pyxelTilemaps[key]);
@@ -106,6 +120,12 @@ class Preload {
             }
         }
 
+        if (options.tilesets) {
+            for (let key in options.tilesets) {
+                this.loadTileset(key, options.tilesets[key]);
+            }
+        }
+
         if (options.pyxelTilemaps) {
             for (let key in options.pyxelTilemaps) {
                 this.loadPyxelTilemap(key, options.pyxelTilemaps[key]);
@@ -125,11 +145,11 @@ class Preload {
             done: false
         };
         this.resources.push(resource);
-        PIXI.Loader.shared.add(key, url, undefined, () => this.onLoadResource(resource));
+        PIXI.Loader.shared.add(key + this.TEXTURE_KEY_SUFFIX, url, undefined, () => this.onLoadResource(resource));
     }
 
     private static loadTexture(key: string, texture: Preload.Texture) {
-        let baseTexture: PIXI.BaseTexture = PIXI.utils.TextureCache[key];
+        let baseTexture: PIXI.BaseTexture = PIXI.utils.TextureCache[key + this.TEXTURE_KEY_SUFFIX];
         if (!baseTexture) {
             error(`Failed to preload texture ${key}`);
             return;
@@ -221,6 +241,65 @@ class Preload {
         };
     }
 
+    private static preloadTileset(key: string, tileset: Preload.Tileset) {
+        let url = tileset.url || `assets/${key}.png`;
+        let resource = {
+            name: key,
+            src: url,
+            done: false
+        };
+        this.resources.push(resource);
+        PIXI.Loader.shared.add(key + this.TILESET_KEY_SUFFIX, url, () => this.onLoadResource(resource));
+    }
+
+    private static loadTileset(key: string, tileset: Preload.Tileset) {
+        let baseTexture: PIXI.BaseTexture = PIXI.utils.TextureCache[key + this.TILESET_KEY_SUFFIX];
+        if (!baseTexture) {
+            error(`Failed to preload tileset ${key}`);
+            return;
+        }
+
+        let frames: Dict<Preload.TextureFrame> = {};
+        let tiles: string[] = [];
+
+        let numFramesX = Math.floor(baseTexture.width / tileset.tileWidth);
+        let numFramesY = Math.floor(baseTexture.height / tileset.tileHeight);
+
+        for (let y = 0; y < numFramesY; y++) {
+            for (let x = 0; x < numFramesX; x++) {
+                let frameKeyPrefix = `${key}_`;
+                let frameKey = `${frameKeyPrefix}${x + y*numFramesX}`;
+                frames[frameKey] = {
+                    rect: {
+                        x: x*tileset.tileWidth,
+                        y: y*tileset.tileHeight,
+                        width: tileset.tileWidth,
+                        height: tileset.tileHeight
+                    },
+                    anchor: Vector2.CENTER,
+                };
+                tiles.push(frameKey);
+            }
+        }
+
+        for (let frame in frames) {
+            let frameTexture: PIXI.Texture = new PIXI.Texture(baseTexture);
+            let rect = frames[frame].rect;
+            let anchor = frames[frame].anchor;
+            frameTexture.frame = new Rectangle(rect.x, rect.y, rect.width, rect.height);
+            frameTexture.defaultAnchor = new Point(anchor.x, anchor.y);
+            AssetCache.pixiTextures[frame] = frameTexture;
+            AssetCache.textures[frame] = Texture.fromPixiTexture(frameTexture);
+        }
+
+        AssetCache.tilesets[key] = {
+            tileWidth: tileset.tileWidth,
+            tileHeight: tileset.tileHeight,
+            tiles: tiles,
+            collisionIndices: tileset.collisionIndices,
+        };
+    }
+
     private static preloadPyxelTilemap(key: string, tilemap: Preload.PyxelTilemap) {
         let url = tilemap.url || `assets/${key}.json`;
         let resource = {
@@ -242,7 +321,6 @@ class Preload {
         let tilemapJson: Preload.PyxelTilemapJson = PIXI.Loader.shared.resources[key + this.TILEMAP_KEY_SUFFIX].data;
 
         let tilemapForCache: Tilemap.Tilemap = {
-            tileset: tilemap.tileset,
             layers: [],
         };
         for (let i = 0; i < tilemapJson.layers.length; i++) {
@@ -273,6 +351,8 @@ class Preload {
         return this.resources.filter(r => r.done).length / this.resources.length;
     }
 
+    private static TEXTURE_KEY_SUFFIX = '_texture_';
+    private static TILESET_KEY_SUFFIX = '_tileset_';
     private static TILEMAP_KEY_SUFFIX = '_tilemap_';
 }
 

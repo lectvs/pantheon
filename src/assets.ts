@@ -12,7 +12,6 @@ namespace Assets {
         'player': { anchor: Vector2.BOTTOM, spritesheet: { frameWidth: 16, frameHeight: 16 } },
         'grapple': { anchor: Vector2.CENTER },
 
-        'world': { anchor: Vector2.CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
         'checkpoint': { anchor: Vector2.CENTER, frames: {
             'checkpoint_low': { rect: rect(0, 0, 16, 16) },
             'checkpoint_high': { rect: rect(16, 0, 16, 16) },
@@ -66,19 +65,16 @@ namespace Assets {
         'boss': { volume: 0.5 },
     }
 
-    export const tilesets: Dict<Tilemap.Tileset> = {
+    export const tilesets: Dict<Preload.Tileset> = {
         'world': {
             tileWidth: 16,
             tileHeight: 16,
-            tiles: Preload.allTilesWithPrefix('world_'),
             collisionIndices: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-        }
+        },
     }
 
     export const pyxelTilemaps: Dict<Preload.PyxelTilemap> = {
-        'world': {
-            tileset: tilesets['world'],
-        }
+        'world': { tileset: 'world' },
     }
 
     export class fonts {

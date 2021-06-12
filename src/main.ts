@@ -15,6 +15,7 @@ Main.loadConfig({
 
     textures: Assets.textures,
     sounds: Assets.sounds,
+    tilesets: Assets.tilesets,
     pyxelTilemaps: Assets.pyxelTilemaps,
     spriteTextTags: Assets.spriteTextTags,
 

@@ -1,6 +1,7 @@
 namespace Tilemap {
     export type Config = ReplaceConfigCallbacks<WorldObject.Config, TilemapClass> &  {
         tilemap: string | Tilemap.Tilemap;
+        tileset: string;
         tilemapLayer?: number;
         zMap?: Tilemap.ZMap;
         animation?: Tilemap.Animation;
@@ -14,7 +15,6 @@ namespace Tilemap {
     }
 
     export type Tilemap = {
-        tileset: Tilemap.Tileset;
         layers: TilemapLayer[];
     }
 
@@ -45,6 +45,7 @@ namespace Tilemap {
 
 class Tilemap extends WorldObject {
     protected tilemap: Tilemap.Tilemap;
+    protected tileset: Tilemap.Tileset;
     protected animation: Tilemap.Animation;
     protected collisionOnly: boolean;
 
@@ -59,13 +60,13 @@ class Tilemap extends WorldObject {
 
     protected get currentTilemapLayer() { return this.tilemap.layers[this.tilemapLayer]; }
 
-    get tileset() { return this.tilemap.tileset; }
-
     constructor(config: Tilemap.Config) {
         super(config);
 
         this.tilemap = Tilemap.cloneTilemap(_.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap);
         this.tilemapLayer = config.tilemapLayer ?? 0;
+
+        this.tileset = AssetCache.getTileset(config.tileset);
 
         this.zMap = config.zMap ?? {};
         this.animation = config.animation;
@@ -198,7 +199,6 @@ type TilemapClass = Tilemap;
 namespace Tilemap {
     export function cloneTilemap(tilemap: Tilemap) {
         let result: Tilemap = {
-            tileset: tilemap.tileset,
             layers: [],
         };
 

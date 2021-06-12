@@ -3,6 +3,7 @@ class AssetCache {
     static pixiTextures: Dict<PIXI.Texture> = {};
     static textures: Dict<Texture> = {};
     static sounds: Dict<WebAudioSound.Asset> = {};
+    static tilesets: Dict<Tilemap.Tileset> = {};
     static tilemaps: Dict<Tilemap.Tilemap> = {};
 
     static getPixiTexture(key: string) {
@@ -29,6 +30,13 @@ class AssetCache {
             return { buffer: new AudioBuffer({ length: 0, sampleRate: 8000 }), volume: 1 };
         }
         return this.sounds[key];
+    }
+
+    static getTileset(key: string) {
+        if (!this.tilesets[key]) {
+            error(`Tileset '${key}' does not exist.`);
+        }
+        return this.tilesets[key];
     }
 
     static getTilemap(key: string) {
