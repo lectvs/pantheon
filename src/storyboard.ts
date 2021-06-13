@@ -18,7 +18,7 @@ const storyboard: Storyboard = {
         type: 'cutscene',
         script: function*() {
             global.world.addWorldObject(new Sprite({
-                x: 7*16, y: 222*16,
+                x: 6*16, y: 222*16,
                 texture: Texture.filledRect(48, 32, 0x000000),
                 layer: 'walls',
                 physicsGroup: 'walls',
@@ -70,7 +70,7 @@ const storyboard: Storyboard = {
             yield S.wait(2);
 
             yield S.dialog("[g]No! Defeated so easily?![/g]")
-            yield S.dialog("[g]Maybe I'll be harder in the post-jam versionn\nnnnnnnnnnnnnnnnnn\nnnnnnnnnnnnnn!!!![/g]");
+            yield S.dialog("[g]They told me I'd be harder in the post-jam versionn\nnnnnnnnnnnnnnnnnn\nnnnnnnnnnnnnn!!!![/g]");
 
             yield S.simul(
                 S.shake(10, 5),

@@ -6,8 +6,8 @@ class Boss extends Player {
 
     get startedFighting() { return this.dead || this.behavior instanceof Boss.BossBehavior; }
 
-    health: number = 5;
-    
+    health: number = 6;
+
     private glitchFilter: Boss.BossGlitchFilter;
 
     constructor(x: number, y: number) {
@@ -105,10 +105,12 @@ namespace Boss {
 
             this.addAction('interrupt', {
                 script: function*() {
-                    controller.up = true;
-                    yield S.wait(1);
-                    controller.up = false;
-                    yield S.wait(0.5);
+                    if (Random.boolean()) {
+                        controller.up = true;
+                        yield S.wait(1);
+                        controller.up = false;
+                        yield S.wait(0.5);
+                    }
 
                     if (boss.x < boss.world.width/2) {
                         controller.right = true;

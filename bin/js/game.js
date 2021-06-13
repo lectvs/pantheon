@@ -11015,7 +11015,7 @@ var Player = /** @class */ (function (_super) {
         _this.GRAVITY = 800;
         _this.FRICTION = 1000;
         _this.WATER_DRAG = 1000;
-        _this.GRAPPLE_BREAK_TIME = 0.5;
+        _this.GRAPPLE_BREAK_TIME = 0.7;
         _this.behavior = new ControllerBehavior(function () {
             this.controller.left = Input.isDown('left');
             this.controller.right = Input.isDown('right');
@@ -11211,7 +11211,7 @@ var Boss = /** @class */ (function (_super) {
         var _this = _super.call(this, x, y) || this;
         _this.SHOT_SPEED = 200;
         _this.KNOCKBACK_SPEED = 200;
-        _this.health = 5;
+        _this.health = 6;
         _this.layer = 'entities';
         _this.physicsGroup = 'enemies';
         _this.glitchFilter = new Boss.BossGlitchFilter();
@@ -11321,6 +11321,7 @@ var Boss = /** @class */ (function (_super) {
                     return __generator(this, function (_a) {
                         switch (_a.label) {
                             case 0:
+                                if (!Random.boolean()) return [3 /*break*/, 3];
                                 controller.up = true;
                                 return [4 /*yield*/, S.wait(1)];
                             case 1:
@@ -11329,21 +11330,23 @@ var Boss = /** @class */ (function (_super) {
                                 return [4 /*yield*/, S.wait(0.5)];
                             case 2:
                                 _a.sent();
-                                if (!(boss.x < boss.world.width / 2)) return [3 /*break*/, 4];
+                                _a.label = 3;
+                            case 3:
+                                if (!(boss.x < boss.world.width / 2)) return [3 /*break*/, 5];
                                 controller.right = true;
                                 return [4 /*yield*/, S.wait(0.3)];
-                            case 3:
+                            case 4:
                                 _a.sent();
                                 controller.right = false;
-                                return [3 /*break*/, 6];
-                            case 4:
+                                return [3 /*break*/, 7];
+                            case 5:
                                 controller.left = true;
                                 return [4 /*yield*/, S.wait(0.3)];
-                            case 5:
+                            case 6:
                                 _a.sent();
                                 controller.left = false;
-                                _a.label = 6;
-                            case 6: return [2 /*return*/];
+                                _a.label = 7;
+                            case 7: return [2 /*return*/];
                         }
                     });
                 },
@@ -11674,7 +11677,7 @@ var Checkpoints;
         }
     }
     Checkpoints.init = init;
-    Checkpoints.current = 'checkpoint_0';
+    Checkpoints.current = 'checkpoint_12';
 })(Checkpoints || (Checkpoints = {}));
 var DepthFilter = /** @class */ (function (_super) {
     __extends(DepthFilter, _super);
@@ -12248,7 +12251,7 @@ var storyboard = {
                 switch (_a.label) {
                     case 0:
                         global.world.addWorldObject(new Sprite({
-                            x: 7 * 16, y: 222 * 16,
+                            x: 6 * 16, y: 222 * 16,
                             texture: Texture.filledRect(48, 32, 0x000000),
                             layer: 'walls',
                             physicsGroup: 'walls',
@@ -12321,7 +12324,7 @@ var storyboard = {
                         return [4 /*yield*/, S.dialog("[g]No! Defeated so easily?![/g]")];
                     case 2:
                         _a.sent();
-                        return [4 /*yield*/, S.dialog("[g]Maybe I'll be harder in the post-jam versionn\nnnnnnnnnnnnnnnnnn\nnnnnnnnnnnnnn!!!![/g]")];
+                        return [4 /*yield*/, S.dialog("[g]They told me I'd be harder in the post-jam versionn\nnnnnnnnnnnnnnnnnn\nnnnnnnnnnnnnn!!!![/g]")];
                     case 3:
                         _a.sent();
                         return [4 /*yield*/, S.simul(S.shake(10, 5), S.fadeOut(5, 0xFFFFFF), S.doOverTime(5, function (t) { return global.world.volume = 1 - t; }))];

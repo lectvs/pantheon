@@ -13,7 +13,7 @@ class Player extends Sprite {
     private readonly GRAVITY = 800;
     private readonly FRICTION = 1000;
     private readonly WATER_DRAG = 1000;
-    private readonly GRAPPLE_BREAK_TIME = 0.5;
+    private readonly GRAPPLE_BREAK_TIME = 0.7;
 
     private grapple: Player.GrappleData;
     protected grappleColor: number;
