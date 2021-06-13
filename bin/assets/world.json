@@ -12340,7 +12340,7 @@
                 },
                 {
                     "x": 6,
-                    "tile": 11,
+                    "tile": -1,
                     "y": 128,
                     "flipX": false,
                     "index": 1542,
@@ -23047,8 +23047,8 @@
             "name": "Layer 0"
         }
     ],
-    "tileswide": 12,
-    "tilewidth": 16,
+    "tileshigh": 240,
     "tileheight": 16,
-    "tileshigh": 240
+    "tileswide": 12,
+    "tilewidth": 16
 }

@@ -86,8 +86,6 @@ const stages: Dict<Factory<World>> = {
             new Lava(-0.25, 148.25, 2, 6),
         ]);
 
-        Checkpoints.init(world.select.typeAll(Checkpoint));
-
         world.addWorldObject(new Sprite({
             x: 111, y: 1078,
             texture: 'grappledownhelp',
@@ -107,11 +105,15 @@ const stages: Dict<Factory<World>> = {
         let player = world.addWorldObject(new Player(3*16+8, 9*16+8));
         player.name = 'player';
 
+        Checkpoints.init(world.select.typeAll(Checkpoint));
+
         let currentCheckpoint = world.select.name(Checkpoints.current, false);
         if (currentCheckpoint) {
             player.x = currentCheckpoint.x;
             player.y = currentCheckpoint.y + 7;
         }
+
+        Checkpoints.killCheckpointsForHardMode(world.select.typeAll(Checkpoint));
 
         world.camera.bounds = {
             left: 0, right: 160,

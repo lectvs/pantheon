@@ -55,5 +55,20 @@ namespace Checkpoints {
         }
     }
 
+    export function killCheckpointsForHardMode(checkpoints: Checkpoint[]) {
+        if (!hardCheckpoints) return;
+        if (!current) return;
+
+        let current_i = checkpoints.findIndex(cp => cp.name === current);
+        if (current_i < 0) return;
+
+        for (let checkpoint of checkpoints.splice(0, current_i+1)) {
+            checkpoint.removeFromWorld();
+        }
+
+        this.current = undefined;
+    }
+
     export var current: string = 'checkpoint_12';
+    export var hardCheckpoints:  boolean = false;
 }

@@ -11677,7 +11677,33 @@ var Checkpoints;
         }
     }
     Checkpoints.init = init;
+    function killCheckpointsForHardMode(checkpoints) {
+        var e_51, _a;
+        if (!Checkpoints.hardCheckpoints)
+            return;
+        if (!Checkpoints.current)
+            return;
+        var current_i = checkpoints.findIndex(function (cp) { return cp.name === Checkpoints.current; });
+        if (current_i < 0)
+            return;
+        try {
+            for (var _b = __values(checkpoints.splice(0, current_i + 1)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var checkpoint = _c.value;
+                checkpoint.removeFromWorld();
+            }
+        }
+        catch (e_51_1) { e_51 = { error: e_51_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_51) throw e_51.error; }
+        }
+        this.current = undefined;
+    }
+    Checkpoints.killCheckpointsForHardMode = killCheckpointsForHardMode;
     Checkpoints.current = 'checkpoint_12';
+    Checkpoints.hardCheckpoints = false;
 })(Checkpoints || (Checkpoints = {}));
 var DepthFilter = /** @class */ (function (_super) {
     __extends(DepthFilter, _super);
@@ -11724,7 +11750,7 @@ var Grapple = /** @class */ (function (_super) {
         configurable: true
     });
     Grapple.prototype.update = function () {
-        var e_51, _a;
+        var e_52, _a;
         if (this.isPulling) {
             this.v.x = this.v.y = 0;
         }
@@ -11769,12 +11795,12 @@ var Grapple = /** @class */ (function (_super) {
                     }
                 }
             }
-            catch (e_51_1) { e_51 = { error: e_51_1 }; }
+            catch (e_52_1) { e_52 = { error: e_52_1 }; }
             finally {
                 try {
                     if (overlap_1_1 && !overlap_1_1.done && (_a = overlap_1.return)) _a.call(overlap_1);
                 }
-                finally { if (e_51) throw e_51.error; }
+                finally { if (e_52) throw e_52.error; }
             }
         }
     };
@@ -11834,8 +11860,9 @@ var Lava = /** @class */ (function (_super) {
 var IntroMenu = /** @class */ (function (_super) {
     __extends(IntroMenu, _super);
     function IntroMenu(menuSystem) {
-        var _this = _super.call(this, menuSystem) || this;
-        _this.backgroundColor = 0x000000;
+        var _this = _super.call(this, menuSystem, {
+            backgroundColor: 0x000000,
+        }) || this;
         var introtext = _this.addWorldObject(new SpriteText({
             x: global.gameWidth / 2, y: global.gameHeight / 2,
             text: "- a game by\nhayden mccraw -",
@@ -11849,19 +11876,21 @@ var IntroMenu = /** @class */ (function (_super) {
 var MainMenu = /** @class */ (function (_super) {
     __extends(MainMenu, _super);
     function MainMenu(menuSystem) {
-        var _this = _super.call(this, menuSystem) || this;
-        _this.backgroundColor = 0x000000;
-        _this.volume = 0;
+        var _this = _super.call(this, menuSystem, {
+            backgroundColor: 0x000000,
+            volume: 0,
+        }) || this;
         _this.addWorldObject(new SpriteText({
             x: 20, y: 20,
             text: "- GRAPPLE THE\nABYSS! -"
         }));
         _this.addWorldObject(new MenuTextButton({
             x: 20, y: 65,
-            text: "play",
+            text: "normal mode",
             onClick: function () {
                 music = undefined;
                 seenBossDialog = false;
+                Checkpoints.hardCheckpoints = false;
                 if (!Debug.DEBUG)
                     Checkpoints.current = undefined;
                 menuSystem.game.playSound('click');
@@ -11869,19 +11898,28 @@ var MainMenu = /** @class */ (function (_super) {
             }
         }));
         _this.addWorldObject(new MenuTextButton({
-            x: 20, y: 100,
-            text: "controls",
+            x: 20, y: 95,
+            text: "hard mode\n  (single-use\n   checkpoints)",
+            onClick: function () {
+                music = undefined;
+                seenBossDialog = false;
+                Checkpoints.hardCheckpoints = true;
+                if (!Debug.DEBUG)
+                    Checkpoints.current = undefined;
+                menuSystem.game.playSound('click');
+                menuSystem.game.startGame();
+            }
+        }));
+        _this.addWorldObject(new MenuTextButton({
+            x: 20, y: 155,
+            text: "controls\n  [g]^ read me! :)[/g]",
             onClick: function () {
                 menuSystem.game.playSound('click');
                 menuSystem.loadMenu(ControlsMenu);
             }
         }));
-        _this.addWorldObject(new SpriteText({
-            x: 40, y: 120,
-            text: "[g]^ read me! :)[/g]"
-        }));
         _this.addWorldObject(new MenuTextButton({
-            x: 20, y: 148,
+            x: 20, y: 200,
             text: "options",
             onClick: function () {
                 menuSystem.game.playSound('click');
@@ -11895,9 +11933,10 @@ var MainMenu = /** @class */ (function (_super) {
 var PauseMenu = /** @class */ (function (_super) {
     __extends(PauseMenu, _super);
     function PauseMenu(menuSystem) {
-        var _this = _super.call(this, menuSystem) || this;
-        _this.backgroundColor = 0x000000;
-        _this.volume = 0;
+        var _this = _super.call(this, menuSystem, {
+            backgroundColor: 0x000000,
+            volume: 0,
+        }) || this;
         _this.addWorldObject(new SpriteText({
             x: 20, y: 20,
             text: "- paused -"
@@ -11941,9 +11980,10 @@ var PauseMenu = /** @class */ (function (_super) {
 var OptionsMenu = /** @class */ (function (_super) {
     __extends(OptionsMenu, _super);
     function OptionsMenu(menuSystem) {
-        var _this = _super.call(this, menuSystem) || this;
-        _this.backgroundColor = 0x000000;
-        _this.volume = 0;
+        var _this = _super.call(this, menuSystem, {
+            backgroundColor: 0x000000,
+            volume: 0,
+        }) || this;
         _this.addWorldObject(new SpriteText({
             x: 20, y: 20,
             text: "- options -"
@@ -11994,9 +12034,10 @@ var OptionsMenu = /** @class */ (function (_super) {
 var DebugOptionsMenu = /** @class */ (function (_super) {
     __extends(DebugOptionsMenu, _super);
     function DebugOptionsMenu(menuSystem) {
-        var _this = _super.call(this, menuSystem) || this;
-        _this.backgroundColor = 0x000000;
-        _this.volume = 0;
+        var _this = _super.call(this, menuSystem, {
+            backgroundColor: 0x000000,
+            volume: 0,
+        }) || this;
         _this.addWorldObject(new SpriteText({
             x: 20, y: 20,
             text: "- debug options -"
@@ -12033,6 +12074,7 @@ var ControlsMenu = /** @class */ (function (_super) {
     __extends(ControlsMenu, _super);
     function ControlsMenu(menuSystem) {
         var _this = _super.call(this, menuSystem, {
+            backgroundColor: 0x000000,
             layers: [
                 { name: 'bg' },
                 { name: 'entities' },
@@ -12050,8 +12092,6 @@ var ControlsMenu = /** @class */ (function (_super) {
             collisionIterations: 4,
             useRaycastDisplacementThreshold: 4
         }) || this;
-        _this.backgroundColor = 0x000000;
-        //this.volume = 0;
         _this.addWorldObject(new Sprite({
             x: 0, y: 0,
             texture: Texture.filledRect(16, global.gameHeight, 0x000000),
@@ -12090,7 +12130,7 @@ var ControlsMenu = /** @class */ (function (_super) {
         }));
         _this.addWorldObject(new SpriteText({
             x: 30, y: 60,
-            text: "WASD/ARROWS\n\n => grapple"
+            text: "WASD/ARROWS\n to grapple"
         }));
         _this.addWorldObject(new SpriteText({
             x: 36, y: 170,
@@ -12100,7 +12140,7 @@ var ControlsMenu = /** @class */ (function (_super) {
             x: 36, y: 172,
             text: "\nv"
         }));
-        _this.addWorldObject(new Player(2, 12));
+        _this.addWorldObject(new Player(2 * 16 + 8, 12 * 16 + 16));
         _this.addWorldObject(new MenuTextButton({
             x: 16, y: 226,
             text: "back",
@@ -12192,7 +12232,6 @@ var stages = {
             new Lava(8.25, 144.25, 2, 6),
             new Lava(-0.25, 148.25, 2, 6),
         ]);
-        Checkpoints.init(world.select.typeAll(Checkpoint));
         world.addWorldObject(new Sprite({
             x: 111, y: 1078,
             texture: 'grappledownhelp',
@@ -12210,11 +12249,13 @@ var stages = {
         }));
         var player = world.addWorldObject(new Player(3 * 16 + 8, 9 * 16 + 8));
         player.name = 'player';
+        Checkpoints.init(world.select.typeAll(Checkpoint));
         var currentCheckpoint = world.select.name(Checkpoints.current, false);
         if (currentCheckpoint) {
             player.x = currentCheckpoint.x;
             player.y = currentCheckpoint.y + 7;
         }
+        Checkpoints.killCheckpointsForHardMode(world.select.typeAll(Checkpoint));
         world.camera.bounds = {
             left: 0, right: 160,
             top: -Infinity, bottom: tiles.height - 32
@@ -12444,7 +12485,7 @@ Main.loadConfig({
         },
     },
     debug: {
-        debug: true,
+        debug: false,
         font: Assets.fonts.DELUXE16,
         fontStyle: { color: 0xFFFFFF },
         allPhysicsBounds: false,
@@ -12511,7 +12552,7 @@ var Puff = /** @class */ (function (_super) {
     }
     Puff.puffDirection = puffDirection;
     function puffWater(world, x, y, direction) {
-        var e_52, _a;
+        var e_53, _a;
         var puffs = puffDirection(world, x, y, 20, direction, 50, 50);
         try {
             for (var puffs_1 = __values(puffs), puffs_1_1 = puffs_1.next(); !puffs_1_1.done; puffs_1_1 = puffs_1.next()) {
@@ -12520,12 +12561,12 @@ var Puff = /** @class */ (function (_super) {
                 puff_1.alpha = 0.6;
             }
         }
-        catch (e_52_1) { e_52 = { error: e_52_1 }; }
+        catch (e_53_1) { e_53 = { error: e_53_1 }; }
         finally {
             try {
                 if (puffs_1_1 && !puffs_1_1.done && (_a = puffs_1.return)) _a.call(puffs_1);
             }
-            finally { if (e_52) throw e_52.error; }
+            finally { if (e_53) throw e_53.error; }
         }
         return puffs;
     }
@@ -12611,7 +12652,7 @@ var Thwomp = /** @class */ (function (_super) {
         __extends(ThwompBehavior, _super);
         function ThwompBehavior(thwomp) {
             return _super.call(this, function () {
-                var e_53, _a;
+                var e_54, _a;
                 try {
                     for (var _b = __values([Vector2.LEFT, Vector2.RIGHT, Vector2.UP, Vector2.DOWN]), _c = _b.next(); !_c.done; _c = _b.next()) {
                         var direction = _c.value;
@@ -12622,12 +12663,12 @@ var Thwomp = /** @class */ (function (_super) {
                         }
                     }
                 }
-                catch (e_53_1) { e_53 = { error: e_53_1 }; }
+                catch (e_54_1) { e_54 = { error: e_54_1 }; }
                 finally {
                     try {
                         if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                     }
-                    finally { if (e_53) throw e_53.error; }
+                    finally { if (e_54) throw e_54.error; }
                 }
             }) || this;
         }

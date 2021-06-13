@@ -2,10 +2,10 @@
 
 class IntroMenu extends Menu {
     constructor(menuSystem: MenuSystem) {
-        super(menuSystem);
+        super(menuSystem, {
+            backgroundColor: 0x000000,
+        });
         
-        this.backgroundColor = 0x000000;
-
         let introtext = this.addWorldObject(new SpriteText({
             x: global.gameWidth/2, y: global.gameHeight/2,
             text: "- a game by\nhayden mccraw -",
@@ -23,10 +23,10 @@ class IntroMenu extends Menu {
 
 class MainMenu extends Menu {
     constructor(menuSystem: MenuSystem) {
-        super(menuSystem);
-
-        this.backgroundColor = 0x000000;
-        this.volume = 0;
+        super(menuSystem, {
+            backgroundColor: 0x000000,
+            volume: 0,
+        });
 
         this.addWorldObject(new SpriteText({
             x: 20, y: 20,
@@ -35,10 +35,11 @@ class MainMenu extends Menu {
 
         this.addWorldObject(new MenuTextButton({
             x: 20, y: 65,
-            text: "play",
+            text: "normal mode",
             onClick: () => {
                 music = undefined;
                 seenBossDialog = false;
+                Checkpoints.hardCheckpoints = false;
                 if (!Debug.DEBUG) Checkpoints.current = undefined;
                 menuSystem.game.playSound('click');
                 menuSystem.game.startGame();
@@ -46,21 +47,29 @@ class MainMenu extends Menu {
         }));
 
         this.addWorldObject(new MenuTextButton({
-            x: 20, y: 100,
-            text: "controls",
+            x: 20, y: 95,
+            text: "hard mode\n  (single-use\n   checkpoints)",
+            onClick: () => {
+                music = undefined;
+                seenBossDialog = false;
+                Checkpoints.hardCheckpoints = true;
+                if (!Debug.DEBUG) Checkpoints.current = undefined;
+                menuSystem.game.playSound('click');
+                menuSystem.game.startGame();
+            }
+        }));
+
+        this.addWorldObject(new MenuTextButton({
+            x: 20, y: 155,
+            text: "controls\n  [g]^ read me! :)[/g]",
             onClick: () => {
                 menuSystem.game.playSound('click');
                 menuSystem.loadMenu(ControlsMenu);
             }
         }));
 
-        this.addWorldObject(new SpriteText({
-            x: 40, y: 120,
-            text: "[g]^ read me! :)[/g]"
-        }));
-
         this.addWorldObject(new MenuTextButton({
-            x: 20, y: 148,
+            x: 20, y: 200,
             text: "options",
             onClick: () => {
                 menuSystem.game.playSound('click');
@@ -72,10 +81,10 @@ class MainMenu extends Menu {
 
 class PauseMenu extends Menu {
     constructor(menuSystem: MenuSystem) {
-        super(menuSystem);
-
-        this.backgroundColor = 0x000000;
-        this.volume = 0;
+        super(menuSystem, {
+            backgroundColor: 0x000000,
+            volume: 0,
+        });
 
         this.addWorldObject(new SpriteText({
             x: 20, y: 20,
@@ -123,10 +132,10 @@ class PauseMenu extends Menu {
 
 class OptionsMenu extends Menu {
     constructor(menuSystem: MenuSystem) {
-        super(menuSystem);
-
-        this.backgroundColor = 0x000000;
-        this.volume = 0;
+        super(menuSystem, {
+            backgroundColor: 0x000000,
+            volume: 0,
+        });
 
         this.addWorldObject(new SpriteText({
             x: 20, y: 20,
@@ -183,10 +192,10 @@ class OptionsMenu extends Menu {
 
 class DebugOptionsMenu extends Menu {
     constructor(menuSystem: MenuSystem) {
-        super(menuSystem);
-
-        this.backgroundColor = 0x000000;
-        this.volume = 0;
+        super(menuSystem, {
+            backgroundColor: 0x000000,
+            volume: 0,
+        });
 
         this.addWorldObject(new SpriteText({
             x: 20, y: 20,
@@ -226,6 +235,7 @@ class DebugOptionsMenu extends Menu {
 class ControlsMenu extends Menu {
     constructor(menuSystem: MenuSystem) {
         super(menuSystem, {
+            backgroundColor: 0x000000,
             layers: [
                 { name: 'bg' },
                 { name: 'entities' },
@@ -243,9 +253,6 @@ class ControlsMenu extends Menu {
             collisionIterations: 4,
             useRaycastDisplacementThreshold: 4
         });
-
-        this.backgroundColor = 0x000000;
-        //this.volume = 0;
 
         this.addWorldObject(new Sprite({
             x: 0, y: 0,
@@ -288,7 +295,7 @@ class ControlsMenu extends Menu {
 
         this.addWorldObject(new SpriteText({
             x: 30, y: 60,
-            text: "WASD/ARROWS\n\n => grapple"
+            text: "WASD/ARROWS\n to grapple"
         }));
 
         this.addWorldObject(new SpriteText({
@@ -300,7 +307,7 @@ class ControlsMenu extends Menu {
             text: "\nv"
         }));
 
-        this.addWorldObject(new Player(2, 12));
+        this.addWorldObject(new Player(2*16+8, 12*16+16));
 
         this.addWorldObject(new MenuTextButton({
             x: 16, y: 226,
