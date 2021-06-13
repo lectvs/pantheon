@@ -3,6 +3,7 @@ namespace Tilemap {
         tilemap: string | Tilemap.Tilemap;
         tileset: string;
         tilemapLayer?: number;
+        entities?: Dict<any>;
         zMap?: Tilemap.ZMap;
         animation?: Tilemap.Animation;
         collisionOnly?: boolean;
@@ -64,6 +65,7 @@ class Tilemap extends WorldObject {
         super(config);
 
         this.tilemap = Tilemap.cloneTilemap(_.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap);
+        this.scrubTilemapEntities(config.entities);
         this.tilemapLayer = config.tilemapLayer ?? 0;
 
         this.tileset = AssetCache.getTileset(config.tileset);
@@ -193,6 +195,19 @@ class Tilemap extends WorldObject {
         World.Actions.removeWorldObjectsFromWorld(this.zTextures);
         this.zTextures = [];
     }
+
+    private scrubTilemapEntities(entities: Dict<any>) {
+        if (_.isEmpty(entities)) return;
+        for (let layer = 0; layer < this.tilemap.layers.length; layer++) {
+            for (let y = 0; y < this.tilemap.layers[layer].length; y++) {
+                for (let x = 0; x < this.tilemap.layers[layer][y].length; x++) {
+                    if (this.tilemap.layers[layer][y][x].index in entities) {
+                        this.tilemap.layers[layer][y][x].index = -1;
+                    }
+                }
+            }
+        }
+    }
 }
 type TilemapClass = Tilemap;
 
@@ -203,7 +218,7 @@ namespace Tilemap {
         };
 
         for (let i = 0; i < tilemap.layers.length; i++) {
-            result.layers.push(A.clone2D(tilemap.layers[i]));
+            result.layers.push(O.deepClone(tilemap.layers[i]));
         }
 
         return result;

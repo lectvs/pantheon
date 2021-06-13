@@ -10,8 +10,8 @@ class Boss extends Player {
     
     private glitchFilter: Boss.BossGlitchFilter;
 
-    constructor(tx: number, ty: number) {
-        super(tx, ty);
+    constructor(x: number, y: number) {
+        super(x, y);
 
         this.layer = 'entities';
         this.physicsGroup = 'enemies';

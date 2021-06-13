@@ -1,10 +1,9 @@
 class Cannon extends Sprite {
     private readonly SHOT_SPEED = 250;
     
-    constructor(tx: number, ty: number, angle: number) {
+    constructor(x: number, y: number, angle: number) {
         super({
-            x: tx*16 + 8,
-            y: ty*16 + 8,
+            x: x, y: y,
             texture: 'cannon',
             angle: angle,
             layer: 'entities',

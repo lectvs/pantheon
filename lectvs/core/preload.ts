@@ -332,7 +332,7 @@ class Preload {
                     flipX: tile.flipX,
                 };
             }
-            tilemapForCache.layers.push(tilemapLayer);
+            tilemapForCache.layers.unshift(tilemapLayer);
         }
         AssetCache.tilemaps[key] = tilemapForCache;
     }

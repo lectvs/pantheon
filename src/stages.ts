@@ -48,33 +48,34 @@ const stages: Dict<Factory<World>> = {
             globalSoundHumanizePercent: 0.1,
         });
 
-        extractEntities(AssetCache.tilemaps['world'].layers[0]);
+        let entityMap: Dict<TilemapEntities.SpawnFunction> = {
+            11: (x, y, tile) => new Checkpoint(x+8, y+8, tile.angle),
+            12: (x, y, tile) => new Bat(x+8, y+8),
+            13: (x, y, tile) => new Mover(x+8, y+8, tile.angle),
+            14: (x, y, tile) => new Cannon(x+8, y+8, tile.angle),
+            15: (x, y, tile) => new Boss(x+8, y+8),
+            16: (x, y, tile) => new Spikes(x+8, y+8, tile.angle),
+            17: (x, y, tile) => new Thwomp(x+8, y+8),
+        };
 
         let tiles = world.addWorldObject(new Tilemap({
             x: -16, y: -16,
             tilemap: 'world',
             tileset: 'world',
+            entities: entityMap,
             layer: 'walls',
             physicsGroup: 'walls',
         }));
 
-        for (let entity of worldEntities) {
-            if (entity.type === 'spikes') {
-                world.addWorldObject(new Spikes(entity.tx, entity.ty, entity.angle));
-            } else if (entity.type === 'thwomp') {
-                world.addWorldObject(new Thwomp(entity.tx, entity.ty));
-            } else if (entity.type === 'checkpoint') {
-                world.addWorldObject(new Checkpoint(entity.tx, entity.ty, entity.angle));
-            } else if (entity.type === 'bat') {
-                world.addWorldObject(new Bat(entity.tx, entity.ty));
-            } else if (entity.type === 'mover') {
-                world.addWorldObject(new Mover(entity.tx, entity.ty, entity.angle));
-            } else if (entity.type === 'cannon') {
-                world.addWorldObject(new Cannon(entity.tx, entity.ty, entity.angle));
-            } else if (entity.type === 'boss') {
-                world.addWorldObject(new Boss(entity.tx, entity.ty));
-            }
-        }
+        let entities = TilemapEntities.getEntities({
+            tilemap: 'world',
+            tilemapLayer: 0,
+            tileset: 'world',
+            offsetX: -16,
+            offsetY: -16,
+            entities: entityMap
+        });
+        world.addWorldObjects(entities);
 
         world.addWorldObject(new Water(0, 61.5, 10, 39));
 
@@ -103,7 +104,7 @@ const stages: Dict<Factory<World>> = {
             layer: 'bg'
         }));
 
-        let player = world.addWorldObject(new Player(3, 9));
+        let player = world.addWorldObject(new Player(3*16+8, 9*16+8));
         player.name = 'player';
 
         let currentCheckpoint = world.select.name(Checkpoints.current, false);
@@ -126,29 +127,4 @@ const stages: Dict<Factory<World>> = {
 
         return world;
     },
-}
-
-var worldEntities: { type: string, tx: number, ty: number, angle: number }[];
-
-function extractEntities(layer: Tilemap.TilemapLayer) {
-    if (worldEntities) return;
-    let indexToType = {
-        11: 'checkpoint',
-        12: 'bat',
-        13: 'mover',
-        14: 'cannon',
-        15: 'boss',
-        16: 'spikes',
-        17: 'thwomp',
-    };
-    worldEntities = [];
-    for (let ty = 0; ty < layer.length; ty++) {
-        for (let tx = 0; tx < layer[ty].length; tx++) {
-            let index = layer[ty][tx].index;
-            if (index > 10) {
-                worldEntities.push({ type: indexToType[index], tx: tx-1, ty: ty-1, angle: layer[ty][tx].angle });
-                layer[ty][tx].index = -1;
-            }
-        }
-    }
 }

@@ -3,10 +3,9 @@ class Thwomp extends Sprite {
     private readonly GRAVITY = 1000;
     private readonly MAX_SPEED = 300;
 
-    constructor(tx: number, ty: number) {
+    constructor(x: number, y: number) {
         super({
-            x: tx*16 + 8,
-            y: ty*16 + 8,
+            x: x, y: y,
             animations: [
                 Animations.fromTextureList({ name: 'sleep',  texturePrefix: 'thwomp', textures: ['sleep'], frameRate: 1 }),
                 Animations.fromTextureList({ name: 'awake',  texturePrefix: 'thwomp', textures: ['awake'], frameRate: 1 }),

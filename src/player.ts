@@ -28,9 +28,9 @@ class Player extends Sprite {
     get isBoss() { return this instanceof Boss; }
     get canGrapple() { return this.state !== 'cant_grapple'; }
 
-    constructor(tx: number, ty: number) {
+    constructor(x: number, y: number) {
         super({
-            x: tx*16 + 8, y: ty*16 + 16,
+            x: x, y: y,
             layer: 'player',
             physicsGroup: 'player',
             bounds: new RectBounds(-4, -12, 8, 12),

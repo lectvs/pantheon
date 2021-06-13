@@ -2,9 +2,9 @@ class Checkpoint extends Sprite {
 
     isCheckpointGot: boolean;
 
-    constructor(tx: number, ty: number, angle: number) {
+    constructor(x: number, y: number, angle: number) {
         super({
-            x: tx*16 + 8, y: ty*16 + 8,
+            x: x, y: y,
             texture: 'checkpoint_low',
             angle: angle,
             layer: 'entities',
@@ -55,5 +55,5 @@ namespace Checkpoints {
         }
     }
 
-    export var current: string = 'checkpoint_4';
+    export var current: string = 'checkpoint_0';
 }

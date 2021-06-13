@@ -1780,7 +1780,7 @@ var Preload = /** @class */ (function () {
                 }
                 finally { if (e_3) throw e_3.error; }
             }
-            tilemapForCache.layers.push(tilemapLayer);
+            tilemapForCache.layers.unshift(tilemapLayer);
         }
         AssetCache.tilemaps[key] = tilemapForCache;
     };
@@ -10327,6 +10327,7 @@ var Tilemap = /** @class */ (function (_super) {
         var _a, _b, _c;
         var _this = _super.call(this, config) || this;
         _this.tilemap = Tilemap.cloneTilemap(_.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap);
+        _this.scrubTilemapEntities(config.entities);
         _this.tilemapLayer = (_a = config.tilemapLayer) !== null && _a !== void 0 ? _a : 0;
         _this.tileset = AssetCache.getTileset(config.tileset);
         _this.zMap = (_b = config.zMap) !== null && _b !== void 0 ? _b : {};
@@ -10467,6 +10468,19 @@ var Tilemap = /** @class */ (function (_super) {
         World.Actions.removeWorldObjectsFromWorld(this.zTextures);
         this.zTextures = [];
     };
+    Tilemap.prototype.scrubTilemapEntities = function (entities) {
+        if (_.isEmpty(entities))
+            return;
+        for (var layer = 0; layer < this.tilemap.layers.length; layer++) {
+            for (var y = 0; y < this.tilemap.layers[layer].length; y++) {
+                for (var x = 0; x < this.tilemap.layers[layer][y].length; x++) {
+                    if (this.tilemap.layers[layer][y][x].index in entities) {
+                        this.tilemap.layers[layer][y][x].index = -1;
+                    }
+                }
+            }
+        }
+    };
     return Tilemap;
 }(WorldObject));
 (function (Tilemap) {
@@ -10475,7 +10489,7 @@ var Tilemap = /** @class */ (function (_super) {
             layers: [],
         };
         for (var i = 0; i < tilemap.layers.length; i++) {
-            result.layers.push(A.clone2D(tilemap.layers[i]));
+            result.layers.push(O.deepClone(tilemap.layers[i]));
         }
         return result;
     }
@@ -10756,6 +10770,32 @@ var SmartTilemap;
         }
     }
 })(SmartTilemap || (SmartTilemap = {}));
+var TilemapEntities = /** @class */ (function () {
+    function TilemapEntities() {
+    }
+    TilemapEntities.getEntities = function (config) {
+        var _a, _b;
+        var tilemap = _.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap;
+        var tilemapLayer = config.tilemapLayer;
+        var tileset = AssetCache.getTileset(config.tileset);
+        var entities = config.entities;
+        var offsetX = (_a = config.offsetX) !== null && _a !== void 0 ? _a : 0;
+        var offsetY = (_b = config.offsetY) !== null && _b !== void 0 ? _b : 0;
+        var layer = tilemap.layers[tilemapLayer];
+        var result = [];
+        for (var y = 0; y < layer.length; y++) {
+            for (var x = 0; x < layer[y].length; x++) {
+                var tile = layer[y][x];
+                if (!entities[tile.index])
+                    continue;
+                var entity = entities[tile.index](offsetX + x * tileset.tileWidth, offsetY + y * tileset.tileHeight, tile);
+                result.push(entity);
+            }
+        }
+        return result;
+    };
+    return TilemapEntities;
+}());
 var SmartAccelerate = /** @class */ (function () {
     function SmartAccelerate() {
     }
@@ -10855,9 +10895,9 @@ var Assets;
 })(Assets || (Assets = {}));
 var Bat = /** @class */ (function (_super) {
     __extends(Bat, _super);
-    function Bat(tx, ty) {
+    function Bat(x, y) {
         var _this = _super.call(this, {
-            x: tx * 16 + 8, y: ty * 16 + 8,
+            x: x, y: y,
             animations: [
                 Animations.fromTextureList({ name: 'sleep', texturePrefix: 'bat', textures: [0], frameRate: 1 }),
                 Animations.fromTextureList({ name: 'fly', texturePrefix: 'bat', textures: [1, 2, 3, 3, 4], frameRate: 12, count: -1 }),
@@ -10953,9 +10993,9 @@ var Bat = /** @class */ (function (_super) {
 })(Bat || (Bat = {}));
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
-    function Player(tx, ty) {
+    function Player(x, y) {
         var _this = _super.call(this, {
-            x: tx * 16 + 8, y: ty * 16 + 16,
+            x: x, y: y,
             layer: 'player',
             physicsGroup: 'player',
             bounds: new RectBounds(-4, -12, 8, 12),
@@ -11167,8 +11207,8 @@ var Player = /** @class */ (function (_super) {
 /// <reference path="./player.ts" />
 var Boss = /** @class */ (function (_super) {
     __extends(Boss, _super);
-    function Boss(tx, ty) {
-        var _this = _super.call(this, tx, ty) || this;
+    function Boss(x, y) {
+        var _this = _super.call(this, x, y) || this;
         _this.SHOT_SPEED = 200;
         _this.KNOCKBACK_SPEED = 200;
         _this.health = 5;
@@ -11506,10 +11546,9 @@ var Bubble = /** @class */ (function (_super) {
 }(Sprite));
 var Cannon = /** @class */ (function (_super) {
     __extends(Cannon, _super);
-    function Cannon(tx, ty, angle) {
+    function Cannon(x, y, angle) {
         var _this = _super.call(this, {
-            x: tx * 16 + 8,
-            y: ty * 16 + 8,
+            x: x, y: y,
             texture: 'cannon',
             angle: angle,
             layer: 'entities',
@@ -11585,9 +11624,9 @@ var Cannonball = /** @class */ (function (_super) {
 var Cheat = {};
 var Checkpoint = /** @class */ (function (_super) {
     __extends(Checkpoint, _super);
-    function Checkpoint(tx, ty, angle) {
+    function Checkpoint(x, y, angle) {
         var _this = _super.call(this, {
-            x: tx * 16 + 8, y: ty * 16 + 8,
+            x: x, y: y,
             texture: 'checkpoint_low',
             angle: angle,
             layer: 'entities',
@@ -11635,7 +11674,7 @@ var Checkpoints;
         }
     }
     Checkpoints.init = init;
-    Checkpoints.current = 'checkpoint_4';
+    Checkpoints.current = 'checkpoint_0';
 })(Checkpoints || (Checkpoints = {}));
 var DepthFilter = /** @class */ (function (_super) {
     __extends(DepthFilter, _super);
@@ -12075,7 +12114,6 @@ var BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(100, 10, 10);
 var music;
 var stages = {
     'game': function () {
-        var e_52, _a;
         var world = new World({
             width: 192, height: 272,
             backgroundColor: 0x000000,
@@ -12118,47 +12156,32 @@ var stages = {
             useRaycastDisplacementThreshold: 4,
             globalSoundHumanizePercent: 0.1,
         });
-        extractEntities(AssetCache.tilemaps['world'].layers[0]);
+        var entityMap = {
+            11: function (x, y, tile) { return new Checkpoint(x + 8, y + 8, tile.angle); },
+            12: function (x, y, tile) { return new Bat(x + 8, y + 8); },
+            13: function (x, y, tile) { return new Mover(x + 8, y + 8, tile.angle); },
+            14: function (x, y, tile) { return new Cannon(x + 8, y + 8, tile.angle); },
+            15: function (x, y, tile) { return new Boss(x + 8, y + 8); },
+            16: function (x, y, tile) { return new Spikes(x + 8, y + 8, tile.angle); },
+            17: function (x, y, tile) { return new Thwomp(x + 8, y + 8); },
+        };
         var tiles = world.addWorldObject(new Tilemap({
             x: -16, y: -16,
             tilemap: 'world',
             tileset: 'world',
+            entities: entityMap,
             layer: 'walls',
             physicsGroup: 'walls',
         }));
-        try {
-            for (var worldEntities_1 = __values(worldEntities), worldEntities_1_1 = worldEntities_1.next(); !worldEntities_1_1.done; worldEntities_1_1 = worldEntities_1.next()) {
-                var entity = worldEntities_1_1.value;
-                if (entity.type === 'spikes') {
-                    world.addWorldObject(new Spikes(entity.tx, entity.ty, entity.angle));
-                }
-                else if (entity.type === 'thwomp') {
-                    world.addWorldObject(new Thwomp(entity.tx, entity.ty));
-                }
-                else if (entity.type === 'checkpoint') {
-                    world.addWorldObject(new Checkpoint(entity.tx, entity.ty, entity.angle));
-                }
-                else if (entity.type === 'bat') {
-                    world.addWorldObject(new Bat(entity.tx, entity.ty));
-                }
-                else if (entity.type === 'mover') {
-                    world.addWorldObject(new Mover(entity.tx, entity.ty, entity.angle));
-                }
-                else if (entity.type === 'cannon') {
-                    world.addWorldObject(new Cannon(entity.tx, entity.ty, entity.angle));
-                }
-                else if (entity.type === 'boss') {
-                    world.addWorldObject(new Boss(entity.tx, entity.ty));
-                }
-            }
-        }
-        catch (e_52_1) { e_52 = { error: e_52_1 }; }
-        finally {
-            try {
-                if (worldEntities_1_1 && !worldEntities_1_1.done && (_a = worldEntities_1.return)) _a.call(worldEntities_1);
-            }
-            finally { if (e_52) throw e_52.error; }
-        }
+        var entities = TilemapEntities.getEntities({
+            tilemap: 'world',
+            tilemapLayer: 0,
+            tileset: 'world',
+            offsetX: -16,
+            offsetY: -16,
+            entities: entityMap
+        });
+        world.addWorldObjects(entities);
         world.addWorldObject(new Water(0, 61.5, 10, 39));
         world.addWorldObjects([
             new Lava(2.5, 124.25, 5, 2.5),
@@ -12182,7 +12205,7 @@ var stages = {
             texture: 'grappledownhelp',
             layer: 'bg'
         }));
-        var player = world.addWorldObject(new Player(3, 9));
+        var player = world.addWorldObject(new Player(3 * 16 + 8, 9 * 16 + 8));
         player.name = 'player';
         var currentCheckpoint = world.select.name(Checkpoints.current, false);
         if (currentCheckpoint) {
@@ -12202,30 +12225,6 @@ var stages = {
         return world;
     },
 };
-var worldEntities;
-function extractEntities(layer) {
-    if (worldEntities)
-        return;
-    var indexToType = {
-        11: 'checkpoint',
-        12: 'bat',
-        13: 'mover',
-        14: 'cannon',
-        15: 'boss',
-        16: 'spikes',
-        17: 'thwomp',
-    };
-    worldEntities = [];
-    for (var ty = 0; ty < layer.length; ty++) {
-        for (var tx = 0; tx < layer[ty].length; tx++) {
-            var index = layer[ty][tx].index;
-            if (index > 10) {
-                worldEntities.push({ type: indexToType[index], tx: tx - 1, ty: ty - 1, angle: layer[ty][tx].angle });
-                layer[ty][tx].index = -1;
-            }
-        }
-    }
-}
 var seenBossDialog = false;
 var storyboard = {
     'start': {
@@ -12462,10 +12461,9 @@ Main.loadConfig({
 });
 var Mover = /** @class */ (function (_super) {
     __extends(Mover, _super);
-    function Mover(tx, ty, angle) {
+    function Mover(x, y, angle) {
         return _super.call(this, {
-            x: tx * 16 + 8,
-            y: ty * 16 + 8,
+            x: x, y: y,
             texture: 'mover',
             layer: 'entities',
             physicsGroup: 'movers',
@@ -12510,7 +12508,7 @@ var Puff = /** @class */ (function (_super) {
     }
     Puff.puffDirection = puffDirection;
     function puffWater(world, x, y, direction) {
-        var e_53, _a;
+        var e_52, _a;
         var puffs = puffDirection(world, x, y, 20, direction, 50, 50);
         try {
             for (var puffs_1 = __values(puffs), puffs_1_1 = puffs_1.next(); !puffs_1_1.done; puffs_1_1 = puffs_1.next()) {
@@ -12519,12 +12517,12 @@ var Puff = /** @class */ (function (_super) {
                 puff_1.alpha = 0.6;
             }
         }
-        catch (e_53_1) { e_53 = { error: e_53_1 }; }
+        catch (e_52_1) { e_52 = { error: e_52_1 }; }
         finally {
             try {
                 if (puffs_1_1 && !puffs_1_1.done && (_a = puffs_1.return)) _a.call(puffs_1);
             }
-            finally { if (e_53) throw e_53.error; }
+            finally { if (e_52) throw e_52.error; }
         }
         return puffs;
     }
@@ -12532,10 +12530,9 @@ var Puff = /** @class */ (function (_super) {
 })(Puff || (Puff = {}));
 var Spikes = /** @class */ (function (_super) {
     __extends(Spikes, _super);
-    function Spikes(tx, ty, angle) {
+    function Spikes(x, y, angle) {
         return _super.call(this, {
-            x: tx * 16 + 8,
-            y: ty * 16 + 8,
+            x: x, y: y,
             texture: 'spikes',
             angle: angle,
             layer: 'entities',
@@ -12548,10 +12545,9 @@ var Spikes = /** @class */ (function (_super) {
 }(Sprite));
 var Thwomp = /** @class */ (function (_super) {
     __extends(Thwomp, _super);
-    function Thwomp(tx, ty) {
+    function Thwomp(x, y) {
         var _this = _super.call(this, {
-            x: tx * 16 + 8,
-            y: ty * 16 + 8,
+            x: x, y: y,
             animations: [
                 Animations.fromTextureList({ name: 'sleep', texturePrefix: 'thwomp', textures: ['sleep'], frameRate: 1 }),
                 Animations.fromTextureList({ name: 'awake', texturePrefix: 'thwomp', textures: ['awake'], frameRate: 1 }),
@@ -12612,7 +12608,7 @@ var Thwomp = /** @class */ (function (_super) {
         __extends(ThwompBehavior, _super);
         function ThwompBehavior(thwomp) {
             return _super.call(this, function () {
-                var e_54, _a;
+                var e_53, _a;
                 try {
                     for (var _b = __values([Vector2.LEFT, Vector2.RIGHT, Vector2.UP, Vector2.DOWN]), _c = _b.next(); !_c.done; _c = _b.next()) {
                         var direction = _c.value;
@@ -12623,12 +12619,12 @@ var Thwomp = /** @class */ (function (_super) {
                         }
                     }
                 }
-                catch (e_54_1) { e_54 = { error: e_54_1 }; }
+                catch (e_53_1) { e_53 = { error: e_53_1 }; }
                 finally {
                     try {
                         if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                     }
-                    finally { if (e_54) throw e_54.error; }
+                    finally { if (e_53) throw e_53.error; }
                 }
             }) || this;
         }

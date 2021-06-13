@@ -1,8 +1,7 @@
 class Mover extends Sprite {
-    constructor(tx: number, ty: number, angle: number) {
+    constructor(x: number, y: number, angle: number) {
         super({
-            x: tx*16 + 8,
-            y: ty*16 + 8,
+            x: x, y: y,
             texture: 'mover',
             layer: 'entities',
             physicsGroup: 'movers',

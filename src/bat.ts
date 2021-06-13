@@ -5,9 +5,9 @@ class Bat extends Sprite {
 
     private health: number = 2;
 
-    constructor(tx: number, ty: number) {
+    constructor(x: number, y: number) {
         super({
-            x: tx*16 + 8, y: ty*16 + 8,
+            x: x, y: y,
             animations: [
                 Animations.fromTextureList({ name: 'sleep', texturePrefix: 'bat', textures: [0], frameRate: 1 }),
                 Animations.fromTextureList({ name: 'fly', texturePrefix: 'bat', textures: [1, 2, 3, 3, 4], frameRate: 12, count: -1 }),
