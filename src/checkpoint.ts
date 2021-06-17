@@ -69,6 +69,6 @@ namespace Checkpoints {
         this.current = undefined;
     }
 
-    export var current: string = 'checkpoint_12';
+    export var current: string = 'checkpoint_4';
     export var hardCheckpoints:  boolean = false;
 }

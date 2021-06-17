@@ -30,8 +30,8 @@ const storyboard: Storyboard = {
             let player = global.world.select.name<Player>('player');
             player.flipX = true;
 
-            let oldMusic = music;
-            global.world.runScript(S.doOverTime(2, t => oldMusic.volume = 1-t));
+            global.theater.stopMusic(2);
+
             global.world.runScript(S.chain(
                 S.waitUntil(() => player.y >= 3760),
                 S.call(() => {
@@ -54,9 +54,7 @@ const storyboard: Storyboard = {
                 seenBossDialog = true;
             }
 
-            music = global.world.playMusic('boss');
-            music.volume = 0;
-            global.world.runScript(S.doOverTime(3, t => music.volume = t*t));
+            global.theater.playMusic('boss', 2);
             global.world.select.type(Boss).startFighting();
         },
         transitions: [
@@ -66,7 +64,7 @@ const storyboard: Storyboard = {
     'win': {
         type: 'cutscene',
         script: function*() {
-            music.paused = true;
+            global.theater.stopMusic();
             yield S.wait(2);
 
             yield S.dialog("[g]No! Defeated so easily?![/g]")
@@ -87,12 +85,13 @@ const storyboard: Storyboard = {
     'death': {
         type: 'cutscene',
         script: function*() {
-            music.paused = true;
+            global.theater.pauseMusic();
             global.world.select.name<Player>('player').playGlitchSound();
 
             yield S.shake(5, 1);
 
             global.theater.loadStage('game');
+            global.theater.unpauseMusic();
         },
         transitions: [
             { toNode: 'gameplay' }

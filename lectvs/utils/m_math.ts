@@ -95,6 +95,11 @@ namespace M {
         return Math.pow(2, Math.ceil(Math.log2(num)));
     }
 
+    export function mod(num: number, mod: number) {
+        mod = Math.abs(mod);
+        return num - Math.floor(num/mod) * mod;
+    }
+
     export function radToDeg(rad: number) {
         return 180 / Math.PI * rad;
     }

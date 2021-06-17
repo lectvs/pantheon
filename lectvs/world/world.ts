@@ -262,16 +262,6 @@ class World {
     }
 
     /**
-     * By default, music is:
-     *   - Looped
-     */
-    playMusic(key: string) {
-        let music = this.soundManager.playSound(key);
-        music.loop = true;
-        return music;
-    }
-
-    /**
      * By default, sounds are:
      *   - Humanized (if set globally)
      */

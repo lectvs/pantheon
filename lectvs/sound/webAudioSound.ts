@@ -76,7 +76,7 @@ class WebAudioSound implements WebAudioSoundI{
 
     pause() {
         if (this.paused) return;
-        this.pausedPosition = this.context.currentTime - this.startTime;
+        this.pausedPosition = M.mod(this.context.currentTime - this.startTime, this.duration);
         this.sourceNode.onended = undefined;
         this.sourceNode.stop();
     }

@@ -35,7 +35,7 @@ Main.loadConfig({
             'down':                      ['ArrowDown', 's'],
 
             // Presets
-            'game_advanceCutscene':      ['MouseLeft', 'e', ' '],
+            'game_advanceCutscene':      ['MouseLeft', 'e', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'a', 'd', 'w', 's'],
             'game_pause':                ['Escape', 'Backspace'],
             'game_closeMenu':            ['Escape', 'Backspace'],
             'game_select':               ['MouseLeft'],
@@ -92,7 +92,7 @@ Main.loadConfig({
     },
 
     debug: {
-        debug: false,
+        debug: true,
         font: Assets.fonts.DELUXE16,
         fontStyle: { color: 0xFFFFFF },
         allPhysicsBounds: false,

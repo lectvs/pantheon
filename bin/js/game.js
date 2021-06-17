@@ -3559,15 +3559,6 @@ var World = /** @class */ (function () {
         Physics.resolveCollisions(this);
     };
     /**
-     * By default, music is:
-     *   - Looped
-     */
-    World.prototype.playMusic = function (key) {
-        var music = this.soundManager.playSound(key);
-        music.loop = true;
-        return music;
-    };
-    /**
      * By default, sounds are:
      *   - Humanized (if set globally)
      */
@@ -5097,6 +5088,91 @@ var GlobalSoundManager = /** @class */ (function () {
     };
     return GlobalSoundManager;
 }());
+var MusicManager = /** @class */ (function () {
+    function MusicManager() {
+        this.musics = [];
+        this.paused = false;
+        this.volume = 1;
+    }
+    Object.defineProperty(MusicManager.prototype, "currentMusic", {
+        get: function () { return _.last(this.musics); },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(MusicManager.prototype, "currentMusicKey", {
+        get: function () { var _a; return (_a = this.currentMusic) === null || _a === void 0 ? void 0 : _a.key; },
+        enumerable: false,
+        configurable: true
+    });
+    MusicManager.prototype.update = function (delta) {
+        if (this.transitionScript) {
+            this.transitionScript.update(delta);
+            if (this.transitionScript.done) {
+                this.transitionScript = null;
+            }
+        }
+        for (var i = this.musics.length - 1; i >= 0; i--) {
+            if (!this.paused && !this.musics[i].paused) {
+                this.musics[i].update(delta);
+            }
+            if (this.musics[i].done) {
+                this.musics.splice(i, 1);
+            }
+        }
+    };
+    MusicManager.prototype.pauseMusic = function () {
+        this.paused = true;
+    };
+    MusicManager.prototype.playMusic = function (key, fadeTime) {
+        var _this = this;
+        if (fadeTime === void 0) { fadeTime = 0; }
+        if (this.currentMusicKey === key && !this.transitionScript) {
+            return this.currentMusic;
+        }
+        var music = new Sound(key, this);
+        music.loop = true;
+        if (fadeTime <= 0) {
+            this.musics = [music];
+            this.transitionScript = null;
+        }
+        else {
+            this.musics.push(music);
+            music.volume = 0;
+            var startVolumes_1 = this.musics.map(function (m) { return m.volume; });
+            this.transitionScript = new Script(S.chain(S.doOverTime(fadeTime, function (t) {
+                for (var i = 0; i < _this.musics.length - 1; i++) {
+                    _this.musics[i].volume = startVolumes_1[i] * (1 - t);
+                }
+                music.volume = t;
+            }), S.call(function () {
+                _this.musics = [music];
+            })));
+        }
+        return music;
+    };
+    MusicManager.prototype.stopMusic = function (fadeTime) {
+        var _this = this;
+        if (fadeTime === void 0) { fadeTime = 0; }
+        if (fadeTime <= 0) {
+            this.musics = [];
+            this.transitionScript = null;
+        }
+        else {
+            var startVolumes_2 = this.musics.map(function (m) { return m.volume; });
+            this.transitionScript = new Script(S.chain(S.doOverTime(fadeTime, function (t) {
+                for (var i = 0; i < _this.musics.length; i++) {
+                    _this.musics[i].volume = startVolumes_2[i] * (1 - t);
+                }
+            }), S.call(function () {
+                _this.musics = [];
+            })));
+        }
+    };
+    MusicManager.prototype.unpauseMusic = function () {
+        this.paused = false;
+    };
+    return MusicManager;
+}());
 var Sound = /** @class */ (function () {
     function Sound(key, controller) {
         var asset = AssetCache.getSoundAsset(key);
@@ -5311,7 +5387,7 @@ var WebAudioSound = /** @class */ (function () {
     WebAudioSound.prototype.pause = function () {
         if (this.paused)
             return;
-        this.pausedPosition = this.context.currentTime - this.startTime;
+        this.pausedPosition = M.mod(this.context.currentTime - this.startTime, this.duration);
         this.sourceNode.onended = undefined;
         this.sourceNode.stop();
     };
@@ -6673,6 +6749,7 @@ var Theater = /** @class */ (function (_super) {
         _this.stageManager = new StageManager(_this, config.stages);
         _this.interactionManager = new InteractionManager(_this);
         _this.slideManager = new SlideManager(_this);
+        _this.musicManager = new MusicManager();
         _this.endOfFrameQueue = [];
         _this.isSkippingCutscene = false;
         _this.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
@@ -6701,12 +6778,19 @@ var Theater = /** @class */ (function (_super) {
         enumerable: false,
         configurable: true
     });
+    Object.defineProperty(Theater.prototype, "currentMusicKey", {
+        get: function () { return this.musicManager ? this.musicManager.currentMusicKey : undefined; },
+        enumerable: false,
+        configurable: true
+    });
     Theater.prototype.update = function () {
         this.storyManager.update();
         _super.prototype.update.call(this);
         while (!_.isEmpty(this.endOfFrameQueue)) {
             this.endOfFrameQueue.shift()();
         }
+        this.musicManager.volume = this.volume * global.game.volume;
+        this.musicManager.update(this.delta);
     };
     Theater.prototype.render = function (screen) {
         this.interactionManager.preRender();
@@ -6724,6 +6808,13 @@ var Theater = /** @class */ (function (_super) {
         var _this = this;
         if (transition === void 0) { transition = Transition.INSTANT; }
         this.runAtEndOfFrame(function () { return _this.stageManager.internalLoadStage(name, transition, entryPoint); });
+    };
+    Theater.prototype.pauseMusic = function () {
+        this.musicManager.pauseMusic();
+    };
+    Theater.prototype.playMusic = function (key, fadeTime) {
+        if (fadeTime === void 0) { fadeTime = 0; }
+        this.musicManager.playMusic(key, fadeTime);
     };
     Theater.prototype.runAtEndOfFrame = function (fn) {
         this.endOfFrameQueue.push(fn);
@@ -6745,6 +6836,13 @@ var Theater = /** @class */ (function (_super) {
                 error('Cutscene skip exceeded max frames!');
             }
         }
+    };
+    Theater.prototype.stopMusic = function (fadeTime) {
+        if (fadeTime === void 0) { fadeTime = 0; }
+        this.musicManager.stopMusic(fadeTime);
+    };
+    Theater.prototype.unpauseMusic = function () {
+        this.musicManager.unpauseMusic();
     };
     Theater.prototype.onStageLoad = function () {
         this.storyManager.onStageLoad();
@@ -7355,6 +7453,11 @@ var M;
         return Math.pow(2, Math.ceil(Math.log2(num)));
     }
     M.minPowerOf2 = minPowerOf2;
+    function mod(num, mod) {
+        mod = Math.abs(mod);
+        return num - Math.floor(num / mod) * mod;
+    }
+    M.mod = mod;
     function radToDeg(rad) {
         return 180 / Math.PI * rad;
     }
@@ -11702,7 +11805,7 @@ var Checkpoints;
         this.current = undefined;
     }
     Checkpoints.killCheckpointsForHardMode = killCheckpointsForHardMode;
-    Checkpoints.current = 'checkpoint_12';
+    Checkpoints.current = 'checkpoint_4';
     Checkpoints.hardCheckpoints = false;
 })(Checkpoints || (Checkpoints = {}));
 var DepthFilter = /** @class */ (function (_super) {
@@ -11888,7 +11991,6 @@ var MainMenu = /** @class */ (function (_super) {
             x: 20, y: 65,
             text: "normal mode",
             onClick: function () {
-                music = undefined;
                 seenBossDialog = false;
                 Checkpoints.hardCheckpoints = false;
                 if (!Debug.DEBUG)
@@ -11901,7 +12003,6 @@ var MainMenu = /** @class */ (function (_super) {
             x: 20, y: 95,
             text: "hard mode\n  (single-use\n   checkpoints)",
             onClick: function () {
-                music = undefined;
                 seenBossDialog = false;
                 Checkpoints.hardCheckpoints = true;
                 if (!Debug.DEBUG)
@@ -12154,7 +12255,6 @@ var ControlsMenu = /** @class */ (function (_super) {
     return ControlsMenu;
 }(Menu));
 var BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(100, 10, 10);
-var music;
 var stages = {
     'game': function () {
         var world = new World({
@@ -12263,9 +12363,10 @@ var stages = {
         world.camera.setModeFollow(player, 0, -8);
         world.camera.setMovementSnap();
         world.camera.snapPosition();
-        music = world.playMusic('caves');
-        music.volume = 0;
-        world.runScript(S.doOverTime(1, function (t) { return music.volume = t * t; }));
+        if (global.theater.currentMusicKey !== 'caves') {
+            global.theater.stopMusic();
+        }
+        global.theater.playMusic('caves', 1);
         return world;
     },
 };
@@ -12287,7 +12388,7 @@ var storyboard = {
     'introduce_boss': {
         type: 'cutscene',
         script: function () {
-            var player, oldMusic;
+            var player;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -12301,8 +12402,7 @@ var storyboard = {
                         Puff.puffDirection(global.world, 7 * 16 + 24, 222 * 16 + 32, 10, Vector2.DOWN, 50, 50);
                         player = global.world.select.name('player');
                         player.flipX = true;
-                        oldMusic = music;
-                        global.world.runScript(S.doOverTime(2, function (t) { return oldMusic.volume = 1 - t; }));
+                        global.theater.stopMusic(2);
                         global.world.runScript(S.chain(S.waitUntil(function () { return player.y >= 3760; }), S.call(function () {
                             global.world.camera.bounds.top = global.world.camera.bounds.bottom - global.world.camera.height;
                         })));
@@ -12340,9 +12440,7 @@ var storyboard = {
                         seenBossDialog = true;
                         _a.label = 11;
                     case 11:
-                        music = global.world.playMusic('boss');
-                        music.volume = 0;
-                        global.world.runScript(S.doOverTime(3, function (t) { return music.volume = t * t; }));
+                        global.theater.playMusic('boss', 2);
                         global.world.select.type(Boss).startFighting();
                         return [2 /*return*/];
                 }
@@ -12358,7 +12456,7 @@ var storyboard = {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        music.paused = true;
+                        global.theater.stopMusic();
                         return [4 /*yield*/, S.wait(2)];
                     case 1:
                         _a.sent();
@@ -12387,12 +12485,13 @@ var storyboard = {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        music.paused = true;
+                        global.theater.pauseMusic();
                         global.world.select.name('player').playGlitchSound();
                         return [4 /*yield*/, S.shake(5, 1)];
                     case 1:
                         _a.sent();
                         global.theater.loadStage('game');
+                        global.theater.unpauseMusic();
                         return [2 /*return*/];
                 }
             });
@@ -12432,7 +12531,7 @@ Main.loadConfig({
             'up': ['ArrowUp', 'w'],
             'down': ['ArrowDown', 's'],
             // Presets
-            'game_advanceCutscene': ['MouseLeft', 'e', ' '],
+            'game_advanceCutscene': ['MouseLeft', 'e', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'a', 'd', 'w', 's'],
             'game_pause': ['Escape', 'Backspace'],
             'game_closeMenu': ['Escape', 'Backspace'],
             'game_select': ['MouseLeft'],
@@ -12485,7 +12584,7 @@ Main.loadConfig({
         },
     },
     debug: {
-        debug: false,
+        debug: true,
         font: Assets.fonts.DELUXE16,
         fontStyle: { color: 0xFFFFFF },
         allPhysicsBounds: false,

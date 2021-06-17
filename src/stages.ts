@@ -1,7 +1,5 @@
 const BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(100, 10, 10);
 
-var music: Sound;
-
 const stages: Dict<Factory<World>> = {
 
     'game': () => {
@@ -123,9 +121,10 @@ const stages: Dict<Factory<World>> = {
         world.camera.setMovementSnap();
         world.camera.snapPosition();
 
-        music = world.playMusic('caves');
-        music.volume = 0;
-        world.runScript(S.doOverTime(1, t => music.volume = t*t));
+        if (global.theater.currentMusicKey !== 'caves') {
+            global.theater.stopMusic();
+        }
+        global.theater.playMusic('caves', 1);
 
         return world;
     },

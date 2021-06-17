@@ -37,7 +37,6 @@ class MainMenu extends Menu {
             x: 20, y: 65,
             text: "normal mode",
             onClick: () => {
-                music = undefined;
                 seenBossDialog = false;
                 Checkpoints.hardCheckpoints = false;
                 if (!Debug.DEBUG) Checkpoints.current = undefined;
@@ -50,7 +49,6 @@ class MainMenu extends Menu {
             x: 20, y: 95,
             text: "hard mode\n  (single-use\n   checkpoints)",
             onClick: () => {
-                music = undefined;
                 seenBossDialog = false;
                 Checkpoints.hardCheckpoints = true;
                 if (!Debug.DEBUG) Checkpoints.current = undefined;

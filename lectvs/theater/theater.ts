@@ -23,11 +23,13 @@ class Theater extends World {
     stageManager: StageManager;
     interactionManager: InteractionManager;
     slideManager: SlideManager;
+    musicManager: MusicManager;
 
     get currentStageName() { return this.stageManager ? this.stageManager.currentStageName : undefined; }
     get currentWorld() { return this.stageManager ? this.stageManager.currentWorld : undefined; }
     get isCutscenePlaying() { return this.storyManager ? this.storyManager.cutsceneManager.isCutscenePlaying : false; }
     get slides() { return this.slideManager ? this.slideManager.slides : []; }
+    get currentMusicKey() { return this.musicManager ? this.musicManager.currentMusicKey : undefined; }
 
     endOfFrameQueue: (() => any)[];
 
@@ -49,6 +51,7 @@ class Theater extends World {
         this.stageManager = new StageManager(this, config.stages);
         this.interactionManager = new InteractionManager(this);
         this.slideManager = new SlideManager(this);
+        this.musicManager = new MusicManager();
 
         this.endOfFrameQueue = [];
 
@@ -65,10 +68,12 @@ class Theater extends World {
         this.storyManager.update();
 
         super.update();
-
         while (!_.isEmpty(this.endOfFrameQueue)) {
             this.endOfFrameQueue.shift()();
         }
+
+        this.musicManager.volume = this.volume * global.game.volume;
+        this.musicManager.update(this.delta);
     }
 
     render(screen: Texture) {
@@ -87,6 +92,14 @@ class Theater extends World {
 
     loadStage(name: string, transition: Transition.Config = Transition.INSTANT, entryPoint?: World.EntryPoint) {
         this.runAtEndOfFrame(() => this.stageManager.internalLoadStage(name, transition, entryPoint));
+    }
+
+    pauseMusic() {
+        this.musicManager.pauseMusic();
+    }
+
+    playMusic(key: string, fadeTime: number = 0) {
+        this.musicManager.playMusic(key, fadeTime);
     }
 
     runAtEndOfFrame(fn: () => any) {
@@ -111,6 +124,14 @@ class Theater extends World {
                 error('Cutscene skip exceeded max frames!');
             }
         }
+    }
+
+    stopMusic(fadeTime: number = 0) {
+        this.musicManager.stopMusic(fadeTime);
+    }
+
+    unpauseMusic() {
+        this.musicManager.unpauseMusic();
     }
 
     onStageLoad() {
