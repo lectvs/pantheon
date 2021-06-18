@@ -50,16 +50,13 @@ class Grapple extends Sprite {
     }
 
     isCollidingWith(other: PhysicsWorldObject) {
+        if (this.isPulling || this.broken) return false;
         if (this.isPlayers)  return true;
         if (other.physicsGroup === 'enemies') return false;
         return true;
     }
 
     onCollide(collision: Physics.CollisionInfo) {
-        if (this.isPulling || this.broken) {
-            return;
-        }
-
         let wo = collision.other.obj;
         if (this.isPlayers && (wo instanceof Bat || wo instanceof Boss)) {
             wo.damage(this.direction);

@@ -11895,6 +11895,8 @@ var Grapple = /** @class */ (function (_super) {
             this.y = this.source.y + this.offy;
     };
     Grapple.prototype.isCollidingWith = function (other) {
+        if (this.isPulling || this.broken)
+            return false;
         if (this.isPlayers)
             return true;
         if (other.physicsGroup === 'enemies')
@@ -11902,9 +11904,6 @@ var Grapple = /** @class */ (function (_super) {
         return true;
     };
     Grapple.prototype.onCollide = function (collision) {
-        if (this.isPulling || this.broken) {
-            return;
-        }
         var wo = collision.other.obj;
         if (this.isPlayers && (wo instanceof Bat || wo instanceof Boss)) {
             wo.damage(this.direction);
