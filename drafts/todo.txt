@@ -1,3 +1,1 @@
 todo
-- variable hitboxes? (i.e. different hitboxes for wall collision vs enemy collision)
-- "max distance" step functionality for collisions

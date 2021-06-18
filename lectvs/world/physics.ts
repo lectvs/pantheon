@@ -30,8 +30,31 @@ namespace Physics {
     export type MomentumTransferMode = 'zero_velocity_global' | 'zero_velocity_local' | 'elastic';
 
     export function resolveCollisions(world: World) {
+        let dpos: Vector2[] = [];
+
+        for (let worldObject of world.worldObjects) {
+            let d = worldObject instanceof PhysicsWorldObject
+                        ? vec2(worldObject.x - worldObject.physicslastx, worldObject.y - worldObject.physicslasty)
+                        : vec2(worldObject.x - worldObject.lastx, worldObject.y - worldObject.lasty);
+            dpos.push(d);
+
+            worldObject.x -= d.x;
+            worldObject.y -= d.y;
+        }
+
         let resultCollisions: RaycastCollision[] = [];
-        for (let iter = 0; iter < world.collisionIterations; iter++) {
+
+        let iters = Math.max(1, M.max(dpos, d => Math.ceil(d.magnitude / world.maxDistancePerCollisionStep)));
+
+        for (let iter = 0; iter < iters; iter++) {
+            for (let i = 0; i < world.worldObjects.length; i++) {
+                world.worldObjects[i].x += dpos[i].x / iters;
+                world.worldObjects[i].y += dpos[i].y / iters;
+            }
+            performNormalIteration(world, resultCollisions);
+        }
+
+        for (let iter = 0; iter < world.collisionIterations - iters; iter++) {
             performNormalIteration(world, resultCollisions);
         }
         performFinalIteration(world, resultCollisions);

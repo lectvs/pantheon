@@ -40,9 +40,13 @@ const stages: Dict<Factory<World>> = {
                 { move: 'cannonballs', from: 'walls' },
                 { move: 'player', from: 'cannons' },
                 { move: 'player', from: 'cannonballs' },
+                { move: 'grapple', from: 'walls' },
+                { move: 'grapple', from: 'enemies' },
             ],
             collisionIterations: 4,
-            useRaycastDisplacementThreshold: 4,
+            // TODO: rethink this? does it actually help?
+            useRaycastDisplacementThreshold: Infinity,
+            maxDistancePerCollisionStep: 8,
             globalSoundHumanizePercent: 0.1,
         });
 

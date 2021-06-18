@@ -41,42 +41,49 @@ class Grapple extends Sprite {
             this.v.x = this.v.y = 0;
         }
         super.update();
+    }
 
-        if (!this.isPulling && !this.broken) {
-            let overlap = this.world.select.overlap(this.bounds, ['walls', 'enemies']);
+    postUpdate() {
+        super.postUpdate();
+        if (this.direction.x === 0) this.x = this.source.x + this.offx;
+        if (this.direction.y === 0) this.y = this.source.y + this.offy;
+    }
 
-            overlap.sort((a,b) => {
-                if (a.physicsGroup === 'walls') return 1;
-                if (b.physicsGroup === 'walls') return -1;
-                return 0;
-            });
+    isCollidingWith(other: PhysicsWorldObject) {
+        if (this.isPlayers)  return true;
+        if (other.physicsGroup === 'enemies') return false;
+        return true;
+    }
 
-            for (let wo of overlap) {
-                if (this.isPlayers && (wo instanceof Bat || wo instanceof Boss)) {
-                    wo.damage(this.direction);
-                    this.world.playSound('grapplehit');
-                    this.break();
-                    break;
-                }
+    onCollide(collision: Physics.CollisionInfo) {
+        if (this.isPulling || this.broken) {
+            return;
+        }
 
-                if (wo.hasTag('no_grapple')) {
-                    this.world.playSound('grapplehit');
-                    this.break();
-                    break;
-                }
+        let wo = collision.other.obj;
+        if (this.isPlayers && (wo instanceof Bat || wo instanceof Boss)) {
+            wo.damage(this.direction);
+            this.world.playSound('grapplehit');
+            this.break();
+            return;
+        }
 
-                if (wo.physicsGroup === 'walls') {
-                    let bounds = wo.bounds.getBoundingBox();
-                    if (this.direction.x > 0) this.x = bounds.left - 2;
-                    if (this.direction.x < 0) this.x = bounds.right + 2;
-                    if (this.direction.y > 0) this.y = bounds.top - 2;
-                    if (this.direction.y < 0) this.y = bounds.bottom + 2;
-                    this.isPulling = true;
-                    this.world.playSound('grapplehit');
-                    this.world.playSound('grapplepull');
-                    break;
-                }
-            }
+        if (wo.hasTag('no_grapple')) {
+            this.world.playSound('grapplehit');
+            this.break();
+            return;
+        }
+
+        if (wo.physicsGroup === 'walls') {
+            // let bounds = wo.bounds.getBoundingBox();
+            // if (this.direction.x > 0) this.x = bounds.left - 2;
+            // if (this.direction.x < 0) this.x = bounds.right + 2;
+            // if (this.direction.y > 0) this.y = bounds.top - 2;
+            // if (this.direction.y < 0) this.y = bounds.bottom + 2;
+            this.isPulling = true;
+            this.world.playSound('grapplehit');
+            this.world.playSound('grapplepull');
+            return;
         }
     }
 
