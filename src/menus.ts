@@ -14,7 +14,7 @@ class IntroMenu extends Menu {
 
         this.runScript(S.chain(
             S.wait(1.5),
-            S.call(() => introtext.setText("- made in 48 hours\nfor ludum dare 48 -")),
+            S.call(() => introtext.setText("- originally made\n   in 48 hours\nfor ludum dare 48 -")),
             S.wait(1.5),
             S.call(() => menuSystem.loadMenu(MainMenu)),
         ));
@@ -98,6 +98,15 @@ class PauseMenu extends Menu {
             }
         }));
 
+        this.addWorldObject(new MenuTextButton({
+            x: 20, y: 70,
+            text: "main menu",
+            onClick: () => {
+                this.menuSystem.game.playSound('click');
+                menuSystem.game.menuSystem.loadMenu(MainMenu);
+            }
+        }));
+
         // this.addWorldObject(new MenuTextButton({
         //     x: 20, y: 80,
         //     text: "skip current cutscene",
@@ -156,7 +165,7 @@ class OptionsMenu extends Menu {
 
         this.addWorldObject(new SpriteText({
             x: 20, y: 90,
-            text: "toggle fullscreen\n => F"
+            text: "toggle fullscreen\n with F"
         }));
 
         this.addWorldObject(new MenuTextButton({
@@ -243,13 +252,15 @@ class ControlsMenu extends Menu {
             physicsGroups: {
                 'player': {},
                 'grapple': {},
-                'walls': { immovable: true }
+                'walls': { immovable: true },
             },
             collisions: [
-                { move: 'player', from: 'walls' }
+                { move: 'player', from: 'walls' },
+                { move: 'grapple', from: 'walls' },
             ],
             collisionIterations: 4,
-            useRaycastDisplacementThreshold: 4
+            useRaycastDisplacementThreshold: Infinity,
+            maxDistancePerCollisionStep: 16,
         });
 
         this.addWorldObject(new Sprite({
@@ -315,6 +326,15 @@ class ControlsMenu extends Menu {
                 menuSystem.back();
             }
         }));
+    }
+
+    update() {
+        super.update();
+
+        if (Input.justDown(Input.GAME_CLOSE_MENU)) {
+            Input.consume(Input.GAME_CLOSE_MENU);
+            this.menuSystem.back();
+        }
     }
 }
 

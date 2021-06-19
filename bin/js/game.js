@@ -11992,7 +11992,7 @@ var IntroMenu = /** @class */ (function (_super) {
             text: "- a game by\nhayden mccraw -",
             anchor: Vector2.CENTER
         }));
-        _this.runScript(S.chain(S.wait(1.5), S.call(function () { return introtext.setText("- made in 48 hours\nfor ludum dare 48 -"); }), S.wait(1.5), S.call(function () { return menuSystem.loadMenu(MainMenu); })));
+        _this.runScript(S.chain(S.wait(1.5), S.call(function () { return introtext.setText("- originally made\n   in 48 hours\nfor ludum dare 48 -"); }), S.wait(1.5), S.call(function () { return menuSystem.loadMenu(MainMenu); })));
         return _this;
     }
     return IntroMenu;
@@ -12071,6 +12071,14 @@ var PauseMenu = /** @class */ (function (_super) {
                 menuSystem.game.unpauseGame();
             }
         }));
+        _this.addWorldObject(new MenuTextButton({
+            x: 20, y: 70,
+            text: "main menu",
+            onClick: function () {
+                _this.menuSystem.game.playSound('click');
+                menuSystem.game.menuSystem.loadMenu(MainMenu);
+            }
+        }));
         // this.addWorldObject(new MenuTextButton({
         //     x: 20, y: 80,
         //     text: "skip current cutscene",
@@ -12124,7 +12132,7 @@ var OptionsMenu = /** @class */ (function (_super) {
         }));
         _this.addWorldObject(new SpriteText({
             x: 20, y: 90,
-            text: "toggle fullscreen\n => F"
+            text: "toggle fullscreen\n with F"
         }));
         _this.addWorldObject(new MenuTextButton({
             x: 20, y: 130,
@@ -12206,13 +12214,15 @@ var ControlsMenu = /** @class */ (function (_super) {
             physicsGroups: {
                 'player': {},
                 'grapple': {},
-                'walls': { immovable: true }
+                'walls': { immovable: true },
             },
             collisions: [
-                { move: 'player', from: 'walls' }
+                { move: 'player', from: 'walls' },
+                { move: 'grapple', from: 'walls' },
             ],
             collisionIterations: 4,
-            useRaycastDisplacementThreshold: 4
+            useRaycastDisplacementThreshold: Infinity,
+            maxDistancePerCollisionStep: 16,
         }) || this;
         _this.addWorldObject(new Sprite({
             x: 0, y: 0,
@@ -12273,6 +12283,13 @@ var ControlsMenu = /** @class */ (function (_super) {
         }));
         return _this;
     }
+    ControlsMenu.prototype.update = function () {
+        _super.prototype.update.call(this);
+        if (Input.justDown(Input.GAME_CLOSE_MENU)) {
+            Input.consume(Input.GAME_CLOSE_MENU);
+            this.menuSystem.back();
+        }
+    };
     return ControlsMenu;
 }(Menu));
 var BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(100, 10, 10);
