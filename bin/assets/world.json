@@ -21140,7 +21140,7 @@
                 },
                 {
                     "x": 2,
-                    "tile": -1,
+                    "tile": 1,
                     "y": 220,
                     "flipX": false,
                     "index": 2642,
@@ -21148,7 +21148,7 @@
                 },
                 {
                     "x": 3,
-                    "tile": -1,
+                    "tile": 1,
                     "y": 220,
                     "flipX": false,
                     "index": 2643,
@@ -21156,7 +21156,7 @@
                 },
                 {
                     "x": 4,
-                    "tile": -1,
+                    "tile": 1,
                     "y": 220,
                     "flipX": false,
                     "index": 2644,
@@ -21164,7 +21164,7 @@
                 },
                 {
                     "x": 5,
-                    "tile": -1,
+                    "tile": 8,
                     "y": 220,
                     "flipX": false,
                     "index": 2645,
@@ -21172,7 +21172,7 @@
                 },
                 {
                     "x": 6,
-                    "tile": -1,
+                    "tile": 1,
                     "y": 220,
                     "flipX": false,
                     "index": 2646,
@@ -21180,7 +21180,7 @@
                 },
                 {
                     "x": 7,
-                    "tile": -1,
+                    "tile": 9,
                     "y": 220,
                     "flipX": false,
                     "index": 2647,
@@ -21188,7 +21188,7 @@
                 },
                 {
                     "x": 8,
-                    "tile": -1,
+                    "tile": 5,
                     "y": 220,
                     "flipX": false,
                     "index": 2648,
@@ -21300,7 +21300,7 @@
                 },
                 {
                     "x": 10,
-                    "tile": 10,
+                    "tile": 7,
                     "y": 221,
                     "flipX": false,
                     "index": 2662,
@@ -21340,7 +21340,7 @@
                 },
                 {
                     "x": 3,
-                    "tile": -1,
+                    "tile": 11,
                     "y": 222,
                     "flipX": false,
                     "index": 2667,
@@ -21356,7 +21356,7 @@
                 },
                 {
                     "x": 5,
-                    "tile": 11,
+                    "tile": -1,
                     "y": 222,
                     "flipX": false,
                     "index": 2669,
@@ -21436,7 +21436,7 @@
                 },
                 {
                     "x": 3,
-                    "tile": 7,
+                    "tile": 1,
                     "y": 223,
                     "flipX": false,
                     "index": 2679,
@@ -21444,7 +21444,7 @@
                 },
                 {
                     "x": 4,
-                    "tile": 1,
+                    "tile": 10,
                     "y": 223,
                     "flipX": false,
                     "index": 2680,
@@ -21468,7 +21468,7 @@
                 },
                 {
                     "x": 7,
-                    "tile": 5,
+                    "tile": 1,
                     "y": 223,
                     "flipX": false,
                     "index": 2683,
@@ -21556,7 +21556,7 @@
                 },
                 {
                     "x": 6,
-                    "tile": 9,
+                    "tile": 1,
                     "y": 224,
                     "flipX": false,
                     "index": 2694,
@@ -21564,7 +21564,7 @@
                 },
                 {
                     "x": 7,
-                    "tile": 1,
+                    "tile": 7,
                     "y": 224,
                     "flipX": false,
                     "index": 2695,
@@ -23047,8 +23047,8 @@
             "name": "Layer 0"
         }
     ],
-    "tileshigh": 240,
-    "tileheight": 16,
     "tileswide": 12,
-    "tilewidth": 16
+    "tilewidth": 16,
+    "tileheight": 16,
+    "tileshigh": 240
 }

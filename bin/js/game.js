@@ -11834,7 +11834,7 @@ var Checkpoints;
         this.current = undefined;
     }
     Checkpoints.killCheckpointsForHardMode = killCheckpointsForHardMode;
-    Checkpoints.current = 'checkpoint_4';
+    Checkpoints.current = 'checkpoint_10';
     Checkpoints.hardCheckpoints = false;
 })(Checkpoints || (Checkpoints = {}));
 var DepthFilter = /** @class */ (function (_super) {
@@ -12441,7 +12441,7 @@ var storyboard = {
                             physicsGroup: 'walls',
                             bounds: new RectBounds(0, 0, 48, 32),
                         }));
-                        Puff.puffDirection(global.world, 7 * 16 + 24, 222 * 16 + 32, 10, Vector2.DOWN, 50, 50);
+                        Puff.puffDirection(global.world, 6 * 16 + 24, 222 * 16 + 32, 10, Vector2.DOWN, 50, 50);
                         player = global.world.select.name('player');
                         player.flipX = true;
                         global.theater.stopMusic(2);
@@ -12563,7 +12563,7 @@ Main.loadConfig({
     defaultZBehavior: 'threequarters',
     defaultSpriteTextFont: Assets.fonts.DELUXE16,
     defaultOptions: {
-        volume: 1,
+        volume: 0.5,
         controls: {
             // General
             'fullscreen': ['f', 'g'],

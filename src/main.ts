@@ -23,7 +23,7 @@ Main.loadConfig({
     defaultSpriteTextFont: Assets.fonts.DELUXE16,
 
     defaultOptions: {
-        volume: 1,
+        volume: 0.5,
         controls: {
             // General
             'fullscreen':                ['f', 'g'],
