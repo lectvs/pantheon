@@ -3,9 +3,9 @@
 /// <reference path="./storyboard.ts"/>
 
 Main.loadConfig({
-    gameCodeName: "LD48",
-    gameWidth: 160,
-    gameHeight: 240,
+    gameCodeName: "grappletest",
+    gameWidth: 240,
+    gameHeight: 160,
     canvasScale: 4,
     backgroundColor: 0x000000,
     fpsLimit: 30,
@@ -31,8 +31,7 @@ Main.loadConfig({
             // Game
             'left':                      ['ArrowLeft', 'a'],
             'right':                     ['ArrowRight', 'd'],
-            'up':                        ['ArrowUp', 'w'],
-            'down':                      ['ArrowDown', 's'],
+            'jump':                      ['ArrowUp', 'w', ' '],
 
             // Presets
             'game_advanceCutscene':      ['MouseLeft', 'e', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'a', 'd', 'w', 's'],
@@ -92,7 +91,7 @@ Main.loadConfig({
     },
 
     debug: {
-        debug: false,
+        debug: true,
         font: Assets.fonts.DELUXE16,
         fontStyle: { color: 0xFFFFFF },
         allPhysicsBounds: false,

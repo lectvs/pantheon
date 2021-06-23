@@ -69,17 +69,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var Vector2 = /** @class */ (function () {
     function Vector2(x, y) {
         this.x = x;
@@ -10952,22 +10941,6 @@ var Assets;
         // Game
         'player': { anchor: Vector2.BOTTOM, spritesheet: { frameWidth: 16, frameHeight: 16 } },
         'grapple': { anchor: Vector2.CENTER },
-        'checkpoint': { anchor: Vector2.CENTER, frames: {
-                'checkpoint_low': { rect: rect(0, 0, 16, 16) },
-                'checkpoint_high': { rect: rect(16, 0, 16, 16) },
-            } },
-        'spikes': { anchor: Vector2.CENTER },
-        'thwomp': { anchor: Vector2.CENTER, frames: {
-                'thwomp_sleep': { rect: rect(0, 0, 16, 16) },
-                'thwomp_awake': { rect: rect(16, 0, 16, 16) },
-                'thwomp_active': { rect: rect(32, 0, 16, 16) },
-            } },
-        'bat': { anchor: Vector2.CENTER, spritesheet: { frameWidth: 16, frameHeight: 16 } },
-        'mover': { anchor: Vector2.CENTER },
-        'cannon': { anchor: Vector2.CENTER },
-        'cannonball': { anchor: Vector2.CENTER },
-        'bubble': { anchor: Vector2.CENTER },
-        'grappledownhelp': { anchor: Vector2.CENTER },
         // UI
         'dialogbox': { anchor: Vector2.CENTER },
     };
@@ -10979,30 +10952,12 @@ var Assets;
         // Game
         'dialogstart': { url: 'assets/click.wav', volume: 0.5 },
         'dialogspeak': { volume: 0.25 },
-        'grappleshoot': {},
-        'grapplehit': {},
-        'grapplepull': {},
-        'thwomphit': { volume: 0.5 },
-        'bathit': { volume: 0.5 },
-        'break': { volume: 0.5 },
-        'enterwater1': { volume: 0.1 },
-        'enterwater2': { volume: 0.3 },
-        'checkpoint': { volume: 0.4 },
-        'checkpoint2': { volume: 0.5 },
-        'cannonshoot': { volume: 0.5 },
-        'glitch1': {},
-        'glitch2': {},
-        'glitch3': {},
-        'glitch4': {},
-        // Music
-        'caves': { volume: 0.5 },
-        'boss': { volume: 0.5 },
     };
     Assets.tilesets = {
         'world': {
             tileWidth: 16,
             tileHeight: 16,
-            collisionIndices: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            collisionIndices: [1],
         },
     };
     Assets.pyxelTilemaps = {
@@ -11025,961 +10980,7 @@ var Assets;
         'g': function (args) { return ({ color: 0x00FF00 }); },
     };
 })(Assets || (Assets = {}));
-var Bat = /** @class */ (function (_super) {
-    __extends(Bat, _super);
-    function Bat(x, y) {
-        var _this = _super.call(this, {
-            x: x, y: y,
-            animations: [
-                Animations.fromTextureList({ name: 'sleep', texturePrefix: 'bat', textures: [0], frameRate: 1 }),
-                Animations.fromTextureList({ name: 'fly', texturePrefix: 'bat', textures: [1, 2, 3, 3, 4], frameRate: 12, count: -1 }),
-            ],
-            defaultAnimation: 'sleep',
-            layer: 'entities',
-            physicsGroup: 'enemies',
-            bounds: new RectBounds(-4, -2, 8, 4),
-            tags: ['deadly'],
-        }) || this;
-        _this.ACCELERATION = 64;
-        _this.MAX_SPEED = 32;
-        _this.KNOCKBACK_SPEED = 100;
-        _this.health = 2;
-        var bat = _this;
-        _this.stateMachine.addState('sleep', {
-            update: function () {
-                _this.playAnimation('sleep');
-            },
-            transitions: [
-                { toState: 'active', condition: function () {
-                        var player = _this.world.select.name('player');
-                        return player && _this.world.select.raycast(_this.x, _this.y, player.x - _this.x, player.y - _this.y, ['walls']).every(function (rr) { return rr.t > 1; });
-                    } }
-            ]
-        });
-        _this.stateMachine.addState('active', {
-            callback: function () {
-                _this.v.y = _this.MAX_SPEED;
-            },
-            update: function () {
-                var a = _this.controller.moveDirection.withMagnitude(_this.ACCELERATION);
-                SmartAccelerate.accelerate(_this.v, a.x, a.y, _this.delta, _this.MAX_SPEED);
-                _this.flipX = _this.controller.moveDirection.x < 0;
-                _this.playAnimation('fly');
-            }
-        });
-        _this.stateMachine.addState('stunned', {
-            script: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            bat.effects.addSilhouette.color = 0x000000;
-                            bat.effects.addOutline.color = 0xFFFFFF;
-                            return [4 /*yield*/, S.wait(0.2)];
-                        case 1:
-                            _a.sent();
-                            bat.effects.silhouette.enabled = false;
-                            bat.effects.outline.enabled = false;
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [{ toState: 'active' }]
-        });
-        _this.setState('sleep');
-        _this.behavior = new Bat.BatBehavior(_this);
-        return _this;
-    }
-    Bat.prototype.damage = function (direction) {
-        this.v.x += direction.x * this.KNOCKBACK_SPEED;
-        this.v.y += direction.y * this.KNOCKBACK_SPEED;
-        var oppdir = new Vector2(-direction.x, -direction.y);
-        Puff.puffDirection(this.world, this.x, this.y, 5, oppdir, 50, 50);
-        this.world.playSound('bathit');
-        this.setState('stunned');
-        this.health--;
-        if (this.health <= 0) {
-            this.kill();
-        }
-    };
-    Bat.prototype.kill = function () {
-        Puff.puff(this.world, this.x, this.y, 20, function () { return Random.inCircle(50); });
-        _super.prototype.kill.call(this);
-    };
-    return Bat;
-}(Sprite));
-(function (Bat) {
-    var BatBehavior = /** @class */ (function (_super) {
-        __extends(BatBehavior, _super);
-        function BatBehavior(bat) {
-            return _super.call(this, function () {
-                var player = bat.world.select.name('player');
-                if (!player)
-                    return;
-                this.controller.moveDirection.x = player.x - bat.x;
-                this.controller.moveDirection.y = player.y - bat.y;
-            }) || this;
-        }
-        return BatBehavior;
-    }(ControllerBehavior));
-    Bat.BatBehavior = BatBehavior;
-})(Bat || (Bat = {}));
-var Player = /** @class */ (function (_super) {
-    __extends(Player, _super);
-    function Player(x, y) {
-        var _this = _super.call(this, {
-            x: x, y: y,
-            layer: 'player',
-            physicsGroup: 'player',
-            bounds: new RectBounds(-4, -12, 8, 12),
-            animations: [
-                Animations.fromTextureList({ name: 'idle', texturePrefix: 'player', textures: [0, 1, 2, 3], frameRate: 12, count: -1 }),
-                Animations.fromTextureList({ name: 'run', texturePrefix: 'player', textures: [5, 6, 7, 8, 9], frameRate: 12, count: -1 }),
-                Animations.fromTextureList({ name: 'grapple_horiz', texturePrefix: 'player', textures: [17, 18], frameRate: 16, count: -1 }),
-                Animations.fromTextureList({ name: 'jump', texturePrefix: 'player', textures: [11, 12], frameRate: 12, count: -1 }),
-                Animations.fromTextureList({ name: 'fall', texturePrefix: 'player', textures: [13, 14], frameRate: 12, count: -1 }),
-                Animations.fromTextureList({ name: 'dead', texturePrefix: 'player', textures: [15], frameRate: 8, count: -1 }),
-            ],
-            defaultAnimation: 'idle',
-        }) || this;
-        _this.RUN_SPEED = 64;
-        _this.JUMP_SPEED = 200;
-        _this.PULL_SPEED = 200;
-        _this.GRAVITY = 800;
-        _this.FRICTION = 1000;
-        _this.WATER_DRAG = 1000;
-        _this.GRAPPLE_BREAK_TIME = 0.7;
-        _this.behavior = new ControllerBehavior(function () {
-            this.controller.left = Input.isDown('left');
-            this.controller.right = Input.isDown('right');
-            this.controller.up = Input.isDown('up');
-            this.controller.down = Input.isDown('down');
-        });
-        _this.stateMachine.addState('can_grapple', {});
-        _this.stateMachine.addState('cant_grapple', {
-            script: S.wait(_this.GRAPPLE_BREAK_TIME),
-            transitions: [{ toState: 'can_grapple' }]
-        });
-        _this.setState('can_grapple');
-        _this.dead = false;
-        _this.grappleColor = 0xFFFFFF;
-        _this.bubbleTimer = new Timer(1, function () {
-            _this.world.addWorldObject(new Bubble(_this.x, _this.y - 12));
-            _this.world.addWorldObject(new Bubble(_this.x, _this.y - 10));
-        }, true);
-        return _this;
-    }
-    Object.defineProperty(Player.prototype, "isGrappling", {
-        get: function () { return this.grapple; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Player.prototype, "isBoss", {
-        get: function () { return this instanceof Boss; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Player.prototype, "canGrapple", {
-        get: function () { return this.state !== 'cant_grapple'; },
-        enumerable: false,
-        configurable: true
-    });
-    Player.prototype.update = function () {
-        var grounded = this.isGrounded();
-        this.haxis = (this.controller.keys.runLeft ? -1 : 0) + (this.controller.keys.runRight ? 1 : 0);
-        if (this.haxis !== 0) {
-            this.v.x = this.haxis * this.RUN_SPEED;
-        }
-        if (this.controller.jump) {
-            this.v.y = -this.JUMP_SPEED;
-        }
-        this.updateGrapple();
-        this.updateWater();
-        if (grounded) {
-            if (this.v.x > 0)
-                this.v.x = Math.max(this.v.x - this.FRICTION * this.delta, 0);
-            if (this.v.x < 0)
-                this.v.x = Math.min(this.v.x + this.FRICTION * this.delta, 0);
-        }
-        if (!this.isBoss && this.dead) {
-            this.v.x = this.v.y = 0;
-        }
-        this.v.y = M.clamp(this.v.y, -400, 400);
-        _super.prototype.update.call(this);
-        if (this.controller.left || this.controller.keys.runLeft)
-            this.flipX = true;
-        if (this.controller.right || this.controller.keys.runRight)
-            this.flipX = false;
-        // Patch to prevent some softlocks
-        var tilemap = this.world.select.type(Tilemap, false);
-        if (this.x < -16 || this.x >= 192 || (tilemap && this.y >= tilemap.height + 32)) {
-            this.dead = true;
-        }
-    };
-    Player.prototype.postUpdate = function () {
-        _super.prototype.postUpdate.call(this);
-        if (this.dead) {
-            this.playAnimation('dead');
-        }
-        else if (!this.canGrapple) {
-            this.playAnimation('fall');
-        }
-        else if (this.isGrappling) {
-            if (this.grapple.grappleKey === 'left' || this.grapple.grappleKey === 'right') {
-                this.playAnimation('grapple_horiz');
-            }
-            else if (this.grapple.grappleKey === 'up') {
-                this.playAnimation('jump');
-            }
-            else {
-                this.playAnimation('fall');
-            }
-        }
-        else {
-            if (this.v.y < -10)
-                this.playAnimation('jump');
-            else if (this.v.y > 20)
-                this.playAnimation('fall');
-            else if (this.haxis !== 0)
-                this.playAnimation('run');
-            else
-                this.playAnimation('idle');
-        }
-    };
-    Player.prototype.updateGrapple = function () {
-        if (this.isGrappling) {
-            if (this.dead || this.grapple.grapple.broken || !this.controller.keys[this.grapple.grappleKey]) {
-                if (this.dead || this.grapple.grapple.broken) {
-                    this.setState('cant_grapple');
-                }
-                if (!this.grapple.grapple.broken) {
-                    this.grapple.grapple.removeFromWorld();
-                }
-                this.grapple = undefined;
-            }
-        }
-        var grappleKey = undefined;
-        if (this.controller.left)
-            grappleKey = 'left';
-        if (this.controller.right)
-            grappleKey = 'right';
-        if (this.controller.up)
-            grappleKey = 'up';
-        if (this.controller.down)
-            grappleKey = 'down';
-        if (!this.isGrappling && grappleKey && this.canGrapple) {
-            var direction = {
-                'left': Vector2.LEFT,
-                'right': Vector2.RIGHT,
-                'up': Vector2.UP,
-                'down': Vector2.DOWN
-            }[grappleKey];
-            this.grapple = {
-                grapple: this.world.addWorldObject(new Grapple(this, 0, -6, direction, this.grappleColor)),
-                grappleKey: grappleKey
-            };
-            this.world.playSound('grappleshoot');
-        }
-        if (this.isGrappling) {
-            if (this.grapple.grapple.isPulling) {
-                this.v.x = this.grapple.grapple.direction.x * this.PULL_SPEED;
-                this.v.y = this.grapple.grapple.direction.y * this.PULL_SPEED;
-            }
-            else {
-                this.v.x = 0;
-                this.v.y = 0;
-            }
-            this.gravity.y = 0;
-        }
-        else {
-            this.gravity.y = this.GRAVITY;
-        }
-    };
-    Player.prototype.updateWater = function () {
-        var isInWater = this.isInWater();
-        if (isInWater) {
-            this.timeScale = 0.5;
-            if (this.v.x > 0)
-                this.v.x = Math.max(this.v.x - this.WATER_DRAG * this.delta, 0);
-            if (this.v.x < 0)
-                this.v.x = Math.min(this.v.x + this.WATER_DRAG * this.delta, 0);
-            this.bubbleTimer.update(this.delta * 2);
-        }
-        else {
-            this.timeScale = 1;
-        }
-        if (this.lastIsInWater !== undefined && this.lastIsInWater !== isInWater) {
-            this.world.playSound('enterwater1');
-            this.world.playSound('enterwater2');
-            Puff.puffWater(this.world, this.x, this.y - 4, new Vector2(this.v.x, this.v.y));
-        }
-        this.lastIsInWater = isInWater;
-    };
-    Player.prototype.onCollide = function (collision) {
-        _super.prototype.onCollide.call(this, collision);
-        if (!this.isBoss && !this.dead && collision.other.obj.hasTag('deadly')) {
-            this.dead = true;
-        }
-    };
-    Player.prototype.playGlitchSound = function (volume) {
-        if (volume === void 0) { volume = 1; }
-        this.world.playSound('glitch3').volume = volume;
-        this.world.playSound(Random.element(['glitch1', 'glitch4'])).volume = volume;
-    };
-    Player.prototype.isGrounded = function () {
-        this.bounds.y++;
-        var ground = this.world.select.overlap(this.bounds, ['walls']);
-        this.bounds.y--;
-        return !_.isEmpty(ground);
-    };
-    Player.prototype.isInWater = function () {
-        return !_.isEmpty(this.world.select.overlap(this.bounds, ['water']));
-    };
-    return Player;
-}(Sprite));
-/// <reference path="./player.ts" />
-var Boss = /** @class */ (function (_super) {
-    __extends(Boss, _super);
-    function Boss(x, y) {
-        var _this = _super.call(this, x, y) || this;
-        _this.SHOT_SPEED = 200;
-        _this.KNOCKBACK_SPEED = 200;
-        _this.health = 6;
-        _this.layer = 'entities';
-        _this.physicsGroup = 'enemies';
-        _this.glitchFilter = new Boss.BossGlitchFilter();
-        _this.effects.updateFromConfig({ post: { filters: [new Boss.BossFilter(), _this.glitchFilter] } });
-        _this.behavior = new NullBehavior();
-        _this.grappleColor = 0x00FF00;
-        _this.tags.push('deadly');
-        return _this;
-    }
-    Object.defineProperty(Boss.prototype, "startedFighting", {
-        get: function () { return this.dead || this.behavior instanceof Boss.BossBehavior; },
-        enumerable: false,
-        configurable: true
-    });
-    Boss.prototype.startFighting = function () {
-        this.behavior = new Boss.BossBehavior(this);
-    };
-    Boss.prototype.update = function () {
-        _super.prototype.update.call(this);
-        if (this.controller.attack) {
-            this.shoot();
-        }
-    };
-    Boss.prototype.shoot = function () {
-        var dir = this.controller.aimDirection.normalized();
-        var off = 10;
-        this.world.addWorldObject(new Cannonball(this.x + dir.x * off, this.y + dir.y * off, dir.withMagnitude(this.SHOT_SPEED)));
-        this.world.playSound('cannonshoot');
-        this.v = dir.scaled(-1).withMagnitude(this.KNOCKBACK_SPEED);
-    };
-    Boss.prototype.damage = function (direction) {
-        this.v.x += direction.x * this.KNOCKBACK_SPEED;
-        this.v.y += direction.y * this.KNOCKBACK_SPEED;
-        var oppdir = new Vector2(-direction.x, -direction.y);
-        Puff.puffDirection(this.world, this.x, this.y, 5, oppdir, 50, 50);
-        this.behavior.interrupt();
-        this.health--;
-        if (this.health <= 0) {
-            this.dead = true;
-            this.removeTag('deadly');
-            this.behavior = new NullBehavior();
-        }
-        var boss = this;
-        if (this.dead) {
-            this.runScript(function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            boss.playGlitchSound(0.5);
-                            boss.glitchFilter.amount = 1;
-                            return [4 /*yield*/, S.wait(0.5)];
-                        case 1:
-                            _a.sent();
-                            _a.label = 2;
-                        case 2:
-                            if (!true) return [3 /*break*/, 4];
-                            boss.playGlitchSound(Random.float(0.1, 0.5));
-                            return [4 /*yield*/, S.wait(Random.float(0.2, 0.35))];
-                        case 3:
-                            _a.sent();
-                            return [3 /*break*/, 2];
-                        case 4: return [2 /*return*/];
-                    }
-                });
-            });
-        }
-        else {
-            this.runScript(function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            boss.playGlitchSound(0.5);
-                            boss.glitchFilter.amount = 1;
-                            return [4 /*yield*/, S.wait(0.5)];
-                        case 1:
-                            _a.sent();
-                            boss.glitchFilter.amount = 0;
-                            return [2 /*return*/];
-                    }
-                });
-            });
-        }
-    };
-    return Boss;
-}(Player));
-(function (Boss) {
-    var BossBehavior = /** @class */ (function (_super) {
-        __extends(BossBehavior, _super);
-        function BossBehavior(boss) {
-            var _this = _super.call(this, 'start', 0) || this;
-            var controller = _this.controller;
-            var nextAction = function () {
-                if (boss.x < boss.world.width / 2) {
-                    return Random.element(['grappleright', 'attackright']);
-                }
-                else {
-                    return Random.element(['grappleleft', 'attackleft']);
-                }
-            };
-            _this.addAction('start', {
-                interrupt: 'interrupt',
-                wait: 0.5,
-                nextAction: 'grappleright'
-            });
-            _this.addAction('interrupt', {
-                script: function () {
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                if (!Random.boolean()) return [3 /*break*/, 3];
-                                controller.up = true;
-                                return [4 /*yield*/, S.wait(1)];
-                            case 1:
-                                _a.sent();
-                                controller.up = false;
-                                return [4 /*yield*/, S.wait(0.5)];
-                            case 2:
-                                _a.sent();
-                                _a.label = 3;
-                            case 3:
-                                if (!(boss.x < boss.world.width / 2)) return [3 /*break*/, 5];
-                                controller.right = true;
-                                return [4 /*yield*/, S.wait(0.3)];
-                            case 4:
-                                _a.sent();
-                                controller.right = false;
-                                return [3 /*break*/, 7];
-                            case 5:
-                                controller.left = true;
-                                return [4 /*yield*/, S.wait(0.3)];
-                            case 6:
-                                _a.sent();
-                                controller.left = false;
-                                _a.label = 7;
-                            case 7: return [2 /*return*/];
-                        }
-                    });
-                },
-                interrupt: 'interrupt',
-                wait: 0.5,
-                nextAction: nextAction
-            });
-            _this.addAction('grappleleft', {
-                script: function () {
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                controller.left = true;
-                                return [4 /*yield*/, S.wait(0.7)];
-                            case 1:
-                                _a.sent();
-                                controller.left = false;
-                                return [2 /*return*/];
-                        }
-                    });
-                },
-                interrupt: 'interrupt',
-                wait: 1,
-                nextAction: nextAction
-            });
-            _this.addAction('grappleright', {
-                script: function () {
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0: return [4 /*yield*/, S.wait(0.5)];
-                            case 1:
-                                _a.sent();
-                                controller.right = true;
-                                return [4 /*yield*/, S.wait(0.7)];
-                            case 2:
-                                _a.sent();
-                                controller.right = false;
-                                return [2 /*return*/];
-                        }
-                    });
-                },
-                interrupt: 'interrupt',
-                wait: 1,
-                nextAction: nextAction
-            });
-            _this.addAction('attackright', {
-                script: function () {
-                    var player;
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                controller.keys.runRight = true;
-                                return [4 /*yield*/, S.wait(0.25)];
-                            case 1:
-                                _a.sent();
-                                controller.jump = true;
-                                return [4 /*yield*/];
-                            case 2:
-                                _a.sent();
-                                controller.jump = false;
-                                return [4 /*yield*/, S.wait(0.25)];
-                            case 3:
-                                _a.sent();
-                                controller.keys.runRight = false;
-                                controller.up = true;
-                                return [4 /*yield*/, S.wait(1)];
-                            case 4:
-                                _a.sent();
-                                controller.up = false;
-                                return [4 /*yield*/, S.wait(0.5)];
-                            case 5:
-                                _a.sent();
-                                controller.right = true;
-                                return [4 /*yield*/, S.wait(0.3)];
-                            case 6:
-                                _a.sent();
-                                controller.right = false;
-                                player = boss.world.select.name('player');
-                                if (!player)
-                                    return [2 /*return*/];
-                                controller.aimDirection.x = player.x - boss.x;
-                                controller.aimDirection.y = player.y - boss.y;
-                                controller.attack = true;
-                                return [4 /*yield*/];
-                            case 7:
-                                _a.sent();
-                                controller.attack = false;
-                                return [2 /*return*/];
-                        }
-                    });
-                },
-                interrupt: 'interrupt',
-                wait: 0.5,
-                nextAction: nextAction
-            });
-            _this.addAction('attackleft', {
-                script: function () {
-                    var player;
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                controller.keys.runLeft = true;
-                                return [4 /*yield*/, S.wait(0.25)];
-                            case 1:
-                                _a.sent();
-                                controller.jump = true;
-                                return [4 /*yield*/];
-                            case 2:
-                                _a.sent();
-                                controller.jump = false;
-                                return [4 /*yield*/, S.wait(0.25)];
-                            case 3:
-                                _a.sent();
-                                controller.keys.runLeft = false;
-                                controller.up = true;
-                                return [4 /*yield*/, S.wait(1)];
-                            case 4:
-                                _a.sent();
-                                controller.up = false;
-                                return [4 /*yield*/, S.wait(0.5)];
-                            case 5:
-                                _a.sent();
-                                controller.left = true;
-                                return [4 /*yield*/, S.wait(0.3)];
-                            case 6:
-                                _a.sent();
-                                controller.left = false;
-                                player = boss.world.select.name('player');
-                                if (!player)
-                                    return [2 /*return*/];
-                                controller.aimDirection.x = player.x - boss.x;
-                                controller.aimDirection.y = player.y - boss.y;
-                                controller.attack = true;
-                                return [4 /*yield*/];
-                            case 7:
-                                _a.sent();
-                                controller.attack = false;
-                                return [2 /*return*/];
-                        }
-                    });
-                },
-                interrupt: 'interrupt',
-                wait: 0.5,
-                nextAction: nextAction
-            });
-            return _this;
-        }
-        return BossBehavior;
-    }(ActionBehavior));
-    Boss.BossBehavior = BossBehavior;
-    var BossFilter = /** @class */ (function (_super) {
-        __extends(BossFilter, _super);
-        function BossFilter() {
-            return _super.call(this, {
-                code: "\n                    if (inp.rgb == vec3(1.0, 0.0, 0.0)) {\n                        outp.rgb = vec3(0.0, 1.0, 0.0);\n                    }\n                "
-            }) || this;
-        }
-        return BossFilter;
-    }(TextureFilter));
-    Boss.BossFilter = BossFilter;
-    var BossGlitchFilter = /** @class */ (function (_super) {
-        __extends(BossGlitchFilter, _super);
-        function BossGlitchFilter() {
-            return _super.call(this, {
-                uniforms: {
-                    'float amount': 0
-                },
-                code: "\n                    if (y > 8.0) {\n                        outp = getColor(x + amount * 16.0 * cnoise(vec3(t*100.0, 0.0, 0.0)), y);\n                    } else {\n                        outp = getColor(x + amount * 16.0 * cnoise(vec3(t*100.0, 100.0, 0.0)), y);\n                    }\n                "
-            }) || this;
-        }
-        Object.defineProperty(BossGlitchFilter.prototype, "amount", {
-            set: function (value) { this.setUniform('amount', value); },
-            enumerable: false,
-            configurable: true
-        });
-        return BossGlitchFilter;
-    }(TextureFilter));
-    Boss.BossGlitchFilter = BossGlitchFilter;
-})(Boss || (Boss = {}));
-var Bubble = /** @class */ (function (_super) {
-    __extends(Bubble, _super);
-    function Bubble(x, y) {
-        var _this = _super.call(this, {
-            x: x, y: y,
-            texture: 'bubble',
-            layer: 'puffs',
-            life: 1,
-            vx: Random.float(-4, 4)
-        }) || this;
-        _this.vvx = Random.float(-4, 4);
-        _this.vvy = Random.float(-40, -20);
-        return _this;
-    }
-    Bubble.prototype.update = function () {
-        this.v.x = this.vvx * (1 - this.life.progress);
-        this.v.y = this.vvy * (1 - this.life.progress);
-        _super.prototype.update.call(this);
-    };
-    return Bubble;
-}(Sprite));
-var Cannon = /** @class */ (function (_super) {
-    __extends(Cannon, _super);
-    function Cannon(x, y, angle) {
-        var _this = _super.call(this, {
-            x: x, y: y,
-            texture: 'cannon',
-            angle: angle,
-            layer: 'entities',
-            physicsGroup: 'cannons',
-            bounds: new RectBounds(-7, -7, 14, 14),
-            tags: ['deadly'],
-        }) || this;
-        _this.SHOT_SPEED = 250;
-        var cannon = _this;
-        _this.stateMachine.addState('shoot', {
-            script: function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, S.wait(1)];
-                        case 1:
-                            _a.sent();
-                            if (cannon.world.camera.y - 120 < cannon.y && cannon.y < cannon.world.camera.y + 120)
-                                cannon.shoot();
-                            return [2 /*return*/];
-                    }
-                });
-            },
-            transitions: [
-                { toState: 'shoot' },
-            ]
-        });
-        _this.runScript(S.chain(S.wait(Random.float(_this.x / 160)), S.call(function () { return _this.setState('shoot'); })));
-        return _this;
-    }
-    Cannon.prototype.shoot = function () {
-        var dir = new Vector2(-1, 0).rotated(this.angle + 45);
-        var off = 10;
-        this.world.addWorldObject(new Cannonball(this.x + dir.x * off, this.y + dir.y * off, dir.withMagnitude(this.SHOT_SPEED)));
-        this.world.playSound('cannonshoot');
-    };
-    return Cannon;
-}(Sprite));
-var Cannonball = /** @class */ (function (_super) {
-    __extends(Cannonball, _super);
-    function Cannonball(x, y, v) {
-        var _this = _super.call(this, {
-            x: x, y: y,
-            texture: 'cannonball',
-            layer: 'entities',
-            physicsGroup: 'cannonballs',
-            bounds: new CircleBounds(0, 0, 4),
-            v: v,
-            gravityy: 400,
-            tags: ['deadly'],
-        }) || this;
-        _this.DRAG = 200;
-        return _this;
-    }
-    Cannonball.prototype.update = function () {
-        if (this.v.x > 0)
-            this.v.x = Math.max(this.v.x - this.DRAG * this.delta, 0);
-        if (this.v.x < 0)
-            this.v.x = Math.min(this.v.x + this.DRAG * this.delta, 0);
-        _super.prototype.update.call(this);
-    };
-    Cannonball.prototype.kill = function (d) {
-        if (d === void 0) { d = Vector2.ZERO; }
-        Puff.puffDirection(this.world, this.x + d.x * 5, this.y + d.y * 5, 10, new Vector2(-d.x, -d.y), 50, 50);
-        this.world.playSound('thwomphit');
-        _super.prototype.kill.call(this);
-    };
-    Cannonball.prototype.onCollide = function (collision) {
-        _super.prototype.onCollide.call(this, collision);
-        this.kill(new Vector2(collision.self.vx, collision.self.vy).normalized());
-    };
-    return Cannonball;
-}(Sprite));
 var Cheat = {};
-var Checkpoint = /** @class */ (function (_super) {
-    __extends(Checkpoint, _super);
-    function Checkpoint(x, y, angle) {
-        var _this = _super.call(this, {
-            x: x, y: y,
-            texture: 'checkpoint_low',
-            angle: angle,
-            layer: 'entities',
-            physicsGroup: 'checkpoints',
-            bounds: new RectBounds(-8, -16, 16, 16),
-        }) || this;
-        _this.isCheckpointGot = false;
-        return _this;
-    }
-    Checkpoint.prototype.update = function () {
-        _super.prototype.update.call(this);
-        if (!this.isCheckpointGot) {
-            var players = this.world.select.overlap(this.bounds, ['player']);
-            if (!_.isEmpty(players)) {
-                this.checkpointGet(true);
-            }
-        }
-    };
-    Checkpoint.prototype.checkpointGet = function (fanfare) {
-        this.world.select.typeAll(Checkpoint).forEach(function (checkpoint) { return checkpoint.checkpointUnget(); });
-        this.setTexture('checkpoint_high');
-        this.isCheckpointGot = true;
-        Checkpoints.current = this.name;
-        if (fanfare) {
-            Puff.puff(this.world, this.x, this.y, 10, function () { return vec2(Random.float(-50, 50), Random.float(-40, 0)); });
-            this.world.playSound('checkpoint');
-            //this.world.playSound('checkpoint2');
-        }
-    };
-    Checkpoint.prototype.checkpointUnget = function () {
-        this.setTexture('checkpoint_low');
-        this.isCheckpointGot = false;
-    };
-    return Checkpoint;
-}(Sprite));
-var Checkpoints;
-(function (Checkpoints) {
-    function init(checkpoints) {
-        checkpoints.sort(function (a, b) { return a.y - b.y; });
-        for (var i = 0; i < checkpoints.length; i++) {
-            checkpoints[i].name = "checkpoint_" + (i + 1);
-            if (checkpoints[i].name === Checkpoints.current) {
-                checkpoints[i].checkpointGet(false);
-            }
-        }
-    }
-    Checkpoints.init = init;
-    function killCheckpointsForHardMode(checkpoints) {
-        var e_52, _a;
-        if (!Checkpoints.hardCheckpoints)
-            return;
-        if (!Checkpoints.current)
-            return;
-        var current_i = checkpoints.findIndex(function (cp) { return cp.name === Checkpoints.current; });
-        if (current_i < 0)
-            return;
-        try {
-            for (var _b = __values(checkpoints.splice(0, current_i + 1)), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var checkpoint = _c.value;
-                checkpoint.removeFromWorld();
-            }
-        }
-        catch (e_52_1) { e_52 = { error: e_52_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_52) throw e_52.error; }
-        }
-        this.current = undefined;
-    }
-    Checkpoints.killCheckpointsForHardMode = killCheckpointsForHardMode;
-    Checkpoints.current = 'checkpoint_10';
-    Checkpoints.hardCheckpoints = false;
-})(Checkpoints || (Checkpoints = {}));
-var DepthFilter = /** @class */ (function (_super) {
-    __extends(DepthFilter, _super);
-    function DepthFilter() {
-        return _super.call(this, {
-            uniforms: {
-                'float cameray': 0
-            },
-            code: "\n                float depth = y + cameray;\n\n                float transition = 64.0;\n\n                float digitalDepth = 3200.0;\n                float castleDepth = 1700.0;\n                float waterDepth = 1100.0;\n                float cavesDepth = 400.0;\n                float topDepth = 180.0;\n\n                vec3 digitalColor = vec3(0.0, 1.0, 0.0);\n                vec3 castleColor = vec3(0.7, 0.7, 0.7);\n                vec3 waterColor = vec3(0.0, 0.0, 1.0);\n                vec3 cavesColor = vec3(0.89, 0.61, 0.45);\n                vec3 topColor = vec3(1.0, 1.0, 1.0);\n                vec3 blackColor = vec3(0.0, 0.0, 0.0);\n\n                vec3 multcolor;\n                if (depth > digitalDepth + transition) {\n                    multcolor = digitalColor;\n                } else if (depth > digitalDepth) {\n                    float t = (depth - digitalDepth) / transition;\n                    multcolor = castleColor * (1.0-t) + digitalColor * t;\n                } else if (depth > castleDepth + transition) {\n                    multcolor = castleColor;\n                } else if (depth > castleDepth) {\n                    float t = (depth - castleDepth) / transition;\n                    multcolor = waterColor * (1.0-t) + castleColor * t;\n                } else if (depth > waterDepth + transition) {\n                    multcolor = waterColor;\n                } else if (depth > waterDepth) {\n                    float t = (depth - waterDepth) / transition;\n                    multcolor = cavesColor * (1.0-t) + waterColor * t;\n                } else if (depth > cavesDepth + transition) {\n                    multcolor = cavesColor;\n                } else if (depth > cavesDepth) {\n                    float t = (depth - cavesDepth) / transition;\n                    multcolor = topColor * (1.0-t) + cavesColor * t;\n                } else if (depth > topDepth + transition) {\n                    multcolor = topColor;\n                } else if (depth > topDepth) {\n                    float t = (depth - topDepth) / transition;\n                    multcolor = blackColor * (1.0-t) + topColor * t;\n                } else {\n                    multcolor = blackColor;\n                }\n                outp.rgb *= multcolor;\n            ",
-        }) || this;
-    }
-    DepthFilter.prototype.update = function () {
-        this.setUniform('cameray', global.world.camera.y);
-    };
-    return DepthFilter;
-}(TextureFilter));
-var Grapple = /** @class */ (function (_super) {
-    __extends(Grapple, _super);
-    function Grapple(source, offx, offy, direction, color) {
-        var _this = _super.call(this, {
-            x: source.x + offx,
-            y: source.y + offy,
-            texture: 'grapple',
-            layer: 'entities',
-            physicsGroup: 'grapple',
-            bounds: new RectBounds(-3, -3, 6, 6),
-        }) || this;
-        _this.SPEED = 800;
-        _this.v.x = direction.x * _this.SPEED;
-        _this.v.y = direction.y * _this.SPEED;
-        _this.angle = direction.angle;
-        _this.tint = color;
-        _this.direction = direction;
-        _this.isPulling = false;
-        _this.broken = false;
-        _this.source = source;
-        _this.offx = offx;
-        _this.offy = offy;
-        return _this;
-    }
-    Object.defineProperty(Grapple.prototype, "isPlayers", {
-        get: function () { return !(this.source instanceof Boss); },
-        enumerable: false,
-        configurable: true
-    });
-    Grapple.prototype.update = function () {
-        if (this.isPulling) {
-            this.v.x = this.v.y = 0;
-        }
-        _super.prototype.update.call(this);
-    };
-    Grapple.prototype.postUpdate = function () {
-        _super.prototype.postUpdate.call(this);
-        if (this.direction.x === 0)
-            this.x = this.source.x + this.offx;
-        if (this.direction.y === 0)
-            this.y = this.source.y + this.offy;
-    };
-    Grapple.prototype.isCollidingWith = function (other) {
-        if (this.isPulling || this.broken)
-            return false;
-        if (this.isPlayers)
-            return true;
-        if (other.physicsGroup === 'enemies')
-            return false;
-        return true;
-    };
-    Grapple.prototype.onCollide = function (collision) {
-        var wo = collision.other.obj;
-        if (this.isPlayers && (wo instanceof Bat || wo instanceof Boss)) {
-            wo.damage(this.direction);
-            this.world.playSound('grapplehit');
-            this.break();
-            return;
-        }
-        if (wo.hasTag('no_grapple')) {
-            this.world.playSound('grapplehit');
-            this.break();
-            return;
-        }
-        if (wo.physicsGroup === 'walls') {
-            // let bounds = wo.bounds.getBoundingBox();
-            // if (this.direction.x > 0) this.x = bounds.left - 2;
-            // if (this.direction.x < 0) this.x = bounds.right + 2;
-            // if (this.direction.y > 0) this.y = bounds.top - 2;
-            // if (this.direction.y < 0) this.y = bounds.bottom + 2;
-            this.isPulling = true;
-            this.world.playSound('grapplehit');
-            this.world.playSound('grapplepull');
-            return;
-        }
-    };
-    Grapple.prototype.render = function (texture, x, y) {
-        _super.prototype.render.call(this, texture, x, y);
-        var ox = x - this.x + this.source.x + this.offx;
-        var oy = y - this.y + this.source.y + this.offy;
-        Draw.brush.color = this.tint;
-        Draw.brush.alpha = this.alpha;
-        Draw.brush.thickness = 1;
-        Draw.line(texture, ox, oy, x, y);
-        Draw.line(texture, ox + 1, oy + 1, x + 1, y + 1);
-    };
-    Grapple.prototype.break = function () {
-        var _this = this;
-        this.broken = true;
-        this.world.playSound('break');
-        this.source = new Vector2(this.source.x, this.source.y);
-        this.v.x = this.v.y = 0;
-        this.runScript(S.chain(S.doOverTime(0.5, function (t) {
-            _this.alpha = 1 - t;
-        }), S.call(function () { return _this.kill(); })));
-    };
-    Grapple.prototype.getVisibleScreenBounds = function () {
-        return undefined;
-    };
-    return Grapple;
-}(Sprite));
-var Lava = /** @class */ (function (_super) {
-    __extends(Lava, _super);
-    function Lava(tx, ty, tw, th) {
-        return _super.call(this, {
-            x: tx * 16, y: ty * 16,
-            texture: Texture.filledRect(tw * 16, th * 16, 0xFF6A00),
-            effects: { post: { filters: [new Lava.LavaFilter()] } },
-            layer: 'water',
-            physicsGroup: 'walls',
-            bounds: new RectBounds(0, 0, tw * 16, th * 16),
-            tags: ['deadly', 'no_grapple'],
-        }) || this;
-    }
-    return Lava;
-}(Sprite));
-(function (Lava) {
-    var LavaFilter = /** @class */ (function (_super) {
-        __extends(LavaFilter, _super);
-        function LavaFilter() {
-            return _super.call(this, {
-                code: "\n                    float xx = x + (sin(2.0*t+4.0) + 4.0) * cnoise(vec3(y/10.0 - t, 0.0, 0.0));\n                    float yy = y + (sin(2.0*t) + 4.0) * cnoise(vec3(x/10.0, t, 0.0));\n                    outp = getColor(xx, yy);\n                "
-            }) || this;
-        }
-        return LavaFilter;
-    }(TextureFilter));
-    Lava.LavaFilter = LavaFilter;
-})(Lava || (Lava = {}));
 /// <reference path="../lectvs/menu/menu.ts" />
 var IntroMenu = /** @class */ (function (_super) {
     __extends(IntroMenu, _super);
@@ -12010,24 +11011,8 @@ var MainMenu = /** @class */ (function (_super) {
         }));
         _this.addWorldObject(new MenuTextButton({
             x: 20, y: 65,
-            text: "normal mode",
+            text: "play",
             onClick: function () {
-                seenBossDialog = false;
-                Checkpoints.hardCheckpoints = false;
-                if (!Debug.DEBUG)
-                    Checkpoints.current = undefined;
-                menuSystem.game.playSound('click');
-                menuSystem.game.startGame();
-            }
-        }));
-        _this.addWorldObject(new MenuTextButton({
-            x: 20, y: 95,
-            text: "hard mode\n  (single-use\n   checkpoints)",
-            onClick: function () {
-                seenBossDialog = false;
-                Checkpoints.hardCheckpoints = true;
-                if (!Debug.DEBUG)
-                    Checkpoints.current = undefined;
                 menuSystem.game.playSound('click');
                 menuSystem.game.startGame();
             }
@@ -12296,44 +11281,23 @@ var BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(100, 10, 10);
 var stages = {
     'game': function () {
         var world = new World({
-            width: 192, height: 272,
+            width: 272, height: 192,
             backgroundColor: 0x000000,
             entryPoints: { 'main': { x: 0, y: 0 } },
             layers: [
                 { name: 'bg' },
-                { name: 'entities' },
-                { name: 'player' },
-                { name: 'puffs' },
-                { name: 'water' },
-                { name: 'walls', effects: { post: { filters: [new WorldFilter(), new DepthFilter()] } } },
+                { name: 'main' },
+                { name: 'walls', effects: { post: { filters: [new WorldFilter()] } } },
                 { name: 'fg' },
             ],
             physicsGroups: {
                 'player': {},
                 'grapple': {},
                 'walls': { immovable: true },
-                'thwomps': {},
-                'movers': {},
-                'enemies': {},
-                'cannons': { immovable: true },
-                'cannonballs': {},
-                'checkpoints': {},
-                'water': {},
             },
             collisions: [
                 { move: 'player', from: 'walls' },
-                { move: 'thwomps', from: 'walls' },
-                { move: 'thwomps', from: 'thwomps' },
-                { move: 'movers', from: 'walls', momentumTransfer: 'elastic' },
-                { move: 'player', from: 'thwomps' },
-                { move: 'player', from: 'movers' },
-                { move: 'enemies', from: 'walls' },
-                { move: 'player', from: 'enemies' },
-                { move: 'cannonballs', from: 'walls' },
-                { move: 'player', from: 'cannons' },
-                { move: 'player', from: 'cannonballs' },
                 { move: 'grapple', from: 'walls' },
-                { move: 'grapple', from: 'enemies' },
             ],
             collisionIterations: 4,
             // TODO: rethink this? does it actually help?
@@ -12341,78 +11305,19 @@ var stages = {
             maxDistancePerCollisionStep: 8,
             globalSoundHumanizePercent: 0.1,
         });
-        var entityMap = {
-            11: function (x, y, tile) { return new Checkpoint(x + 8, y + 8, tile.angle); },
-            12: function (x, y, tile) { return new Bat(x + 8, y + 8); },
-            13: function (x, y, tile) { return new Mover(x + 8, y + 8, tile.angle); },
-            14: function (x, y, tile) { return new Cannon(x + 8, y + 8, tile.angle); },
-            15: function (x, y, tile) { return new Boss(x + 8, y + 8); },
-            16: function (x, y, tile) { return new Spikes(x + 8, y + 8, tile.angle); },
-            17: function (x, y, tile) { return new Thwomp(x + 8, y + 8); },
-        };
-        var tiles = world.addWorldObject(new Tilemap({
+        world.addWorldObject(new Tilemap({
             x: -16, y: -16,
             tilemap: 'world',
             tileset: 'world',
-            entities: entityMap,
             layer: 'walls',
             physicsGroup: 'walls',
         }));
-        var entities = TilemapEntities.getEntities({
-            tilemap: 'world',
-            tilemapLayer: 0,
-            tileset: 'world',
-            offsetX: -16,
-            offsetY: -16,
-            entities: entityMap
-        });
-        world.addWorldObjects(entities);
-        world.addWorldObject(new Water(0, 61.5, 10, 39));
-        world.addWorldObjects([
-            new Lava(2.5, 124.25, 5, 2.5),
-            new Lava(2.5, 134.25, 5, 2.5),
-            new Lava(8.25, 144.25, 2, 6),
-            new Lava(-0.25, 148.25, 2, 6),
-        ]);
-        world.addWorldObject(new Sprite({
-            x: 111, y: 1078,
-            texture: 'grappledownhelp',
-            layer: 'bg'
-        }));
-        world.addWorldObject(new Sprite({
-            x: 113, y: 2343,
-            texture: 'grappledownhelp',
-            layer: 'bg'
-        }));
-        world.addWorldObject(new Sprite({
-            x: 45, y: 2408,
-            texture: 'grappledownhelp',
-            layer: 'bg'
-        }));
-        var player = world.addWorldObject(new Player(3 * 16 + 8, 9 * 16 + 8));
+        var player = world.addWorldObject(new Player(3 * 16 + 8, 8 * 16 + 8));
         player.name = 'player';
-        Checkpoints.init(world.select.typeAll(Checkpoint));
-        var currentCheckpoint = world.select.name(Checkpoints.current, false);
-        if (currentCheckpoint) {
-            player.x = currentCheckpoint.x;
-            player.y = currentCheckpoint.y + 7;
-        }
-        Checkpoints.killCheckpointsForHardMode(world.select.typeAll(Checkpoint));
-        world.camera.bounds = {
-            left: 0, right: 160,
-            top: -Infinity, bottom: tiles.height - 32
-        };
-        world.camera.setModeFollow(player, 0, -8);
-        world.camera.setMovementSnap();
         world.camera.snapPosition();
-        if (global.theater.currentMusicKey !== 'caves') {
-            global.theater.stopMusic();
-        }
-        global.theater.playMusic('caves', 1);
         return world;
     },
 };
-var seenBossDialog = false;
 var storyboard = {
     'start': {
         type: 'start',
@@ -12420,136 +11325,16 @@ var storyboard = {
     },
     'gameplay': {
         type: 'gameplay',
-        transitions: [
-            { condition: function () { return global.world.select.type(Boss).dead; }, toNode: 'win' },
-            { condition: function () { return global.world.select.name('player').dead; }, toNode: 'death' },
-            { condition: function () { return !global.world.select.type(Boss).startedFighting
-                    && global.world.select.name('player').y > 3618; }, toNode: 'introduce_boss' },
-        ]
-    },
-    'introduce_boss': {
-        type: 'cutscene',
-        script: function () {
-            var player;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        global.world.addWorldObject(new Sprite({
-                            x: 6 * 16, y: 222 * 16,
-                            texture: Texture.filledRect(48, 32, 0x000000),
-                            layer: 'walls',
-                            physicsGroup: 'walls',
-                            bounds: new RectBounds(0, 0, 48, 32),
-                        }));
-                        Puff.puffDirection(global.world, 6 * 16 + 24, 222 * 16 + 32, 10, Vector2.DOWN, 50, 50);
-                        player = global.world.select.name('player');
-                        player.flipX = true;
-                        global.theater.stopMusic(2);
-                        global.world.runScript(S.chain(S.waitUntil(function () { return player.y >= 3760; }), S.call(function () {
-                            global.world.camera.bounds.top = global.world.camera.bounds.bottom - global.world.camera.height;
-                        })));
-                        if (!!seenBossDialog) return [3 /*break*/, 11];
-                        return [4 /*yield*/, S.wait(2)];
-                    case 1:
-                        _a.sent();
-                        return [4 /*yield*/, S.dialog("[g]Well, well. You've finally arrived.[/g]")];
-                    case 2:
-                        _a.sent();
-                        return [4 /*yield*/, S.dialog("You! You're--!")];
-                    case 3:
-                        _a.sent();
-                        return [4 /*yield*/, S.dialog("[g]You didn't think you'd get through this entire thing with no lore, did you?[/g]")];
-                    case 4:
-                        _a.sent();
-                        return [4 /*yield*/, S.dialog("But, who are you?")];
-                    case 5:
-                        _a.sent();
-                        return [4 /*yield*/, S.dialog("[g]I'm you, but digitized.[/g]")];
-                    case 6:
-                        _a.sent();
-                        return [4 /*yield*/, S.dialogAdd(" [g]It's symbolic.[/g]")];
-                    case 7:
-                        _a.sent();
-                        return [4 /*yield*/, S.dialog("What?")];
-                    case 8:
-                        _a.sent();
-                        return [4 /*yield*/, S.dialog("[g]Look, I'm the final boss, so just fight me, okay?[/g]")];
-                    case 9:
-                        _a.sent();
-                        return [4 /*yield*/, S.wait(0.5)];
-                    case 10:
-                        _a.sent();
-                        seenBossDialog = true;
-                        _a.label = 11;
-                    case 11:
-                        global.theater.playMusic('boss', 2);
-                        global.world.select.type(Boss).startFighting();
-                        return [2 /*return*/];
-                }
-            });
-        },
-        transitions: [
-            { toNode: 'gameplay' }
-        ]
-    },
-    'win': {
-        type: 'cutscene',
-        script: function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        global.theater.stopMusic();
-                        return [4 /*yield*/, S.wait(2)];
-                    case 1:
-                        _a.sent();
-                        return [4 /*yield*/, S.dialog("[g]No! Defeated so easily?![/g]")];
-                    case 2:
-                        _a.sent();
-                        return [4 /*yield*/, S.dialog("[g]They told me I'd be harder in the post-jam versionn\nnnnnnnnnnnnnnnnnn\nnnnnnnnnnnnnn!!!![/g]")];
-                    case 3:
-                        _a.sent();
-                        return [4 /*yield*/, S.simul(S.shake(10, 5), S.fadeOut(5, 0xFFFFFF), S.doOverTime(5, function (t) { return global.world.volume = 1 - t; }))];
-                    case 4:
-                        _a.sent();
-                        return [4 /*yield*/, S.wait(3)];
-                    case 5:
-                        _a.sent();
-                        global.game.loadMainMenu();
-                        return [2 /*return*/];
-                }
-            });
-        },
         transitions: []
-    },
-    'death': {
-        type: 'cutscene',
-        script: function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        global.theater.pauseMusic();
-                        global.world.select.name('player').playGlitchSound();
-                        return [4 /*yield*/, S.shake(5, 1)];
-                    case 1:
-                        _a.sent();
-                        global.theater.loadStage('game');
-                        global.theater.unpauseMusic();
-                        return [2 /*return*/];
-                }
-            });
-        },
-        transitions: [
-            { toNode: 'gameplay' }
-        ]
     }
 };
 /// <reference path="./menus.ts"/>
 /// <reference path="./stages.ts"/>
 /// <reference path="./storyboard.ts"/>
 Main.loadConfig({
-    gameCodeName: "LD48",
-    gameWidth: 160,
-    gameHeight: 240,
+    gameCodeName: "grappletest",
+    gameWidth: 240,
+    gameHeight: 160,
     canvasScale: 4,
     backgroundColor: 0x000000,
     fpsLimit: 30,
@@ -12570,8 +11355,7 @@ Main.loadConfig({
             // Game
             'left': ['ArrowLeft', 'a'],
             'right': ['ArrowRight', 'd'],
-            'up': ['ArrowUp', 'w'],
-            'down': ['ArrowDown', 's'],
+            'jump': ['ArrowUp', 'w', ' '],
             // Presets
             'game_advanceCutscene': ['MouseLeft', 'e', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'a', 'd', 'w', 's'],
             'game_pause': ['Escape', 'Backspace'],
@@ -12626,7 +11410,7 @@ Main.loadConfig({
         },
     },
     debug: {
-        debug: false,
+        debug: true,
         font: Assets.fonts.DELUXE16,
         fontStyle: { color: 0xFFFFFF },
         allPhysicsBounds: false,
@@ -12644,206 +11428,80 @@ Main.loadConfig({
         experiments: {},
     },
 });
-var Mover = /** @class */ (function (_super) {
-    __extends(Mover, _super);
-    function Mover(x, y, angle) {
-        return _super.call(this, {
-            x: x, y: y,
-            texture: 'mover',
-            layer: 'entities',
-            physicsGroup: 'movers',
-            bounds: new RectBounds(-6, -6, 12, 12),
-            v: new Vector2(0, 32).rotated(angle),
-            bounce: 1,
-            tags: ['deadly'],
-        }) || this;
-    }
-    return Mover;
-}(Sprite));
-var Puff = /** @class */ (function (_super) {
-    __extends(Puff, _super);
-    function Puff(scale, config) {
-        var _this = _super.call(this, __assign({ texture: AnchoredTexture.fromBaseTexture(Texture.filledCircle(24, 0xFFFFFF), 0.55, 0.55), scaleX: scale, scaleY: scale, layer: 'puffs', life: 0.5 }, config)) || this;
-        _this.scale = scale;
-        return _this;
-    }
-    Puff.prototype.update = function () {
-        _super.prototype.update.call(this);
-        this.scaleX = this.scaleY = this.scale * (1 - Math.pow(this.life.progress, 2));
-    };
-    return Puff;
-}(Sprite));
-(function (Puff) {
-    function puff(world, x, y, count, v) {
-        var result = [];
-        for (var i = 0; i < count; i++) {
-            result.push(world.addWorldObject(new Puff(0.1, { x: x, y: y, v: v() })));
-        }
-        return result;
-    }
-    Puff.puff = puff;
-    function puffDirection(world, x, y, count, direction, speed, spread) {
-        return puff(world, x, y, count, function () {
-            var v = direction.withMagnitude(speed);
-            var spreadv = Random.inCircle(spread);
-            v.x += spreadv.x;
-            v.y += spreadv.y;
-            return v;
-        });
-    }
-    Puff.puffDirection = puffDirection;
-    function puffWater(world, x, y, direction) {
-        var e_53, _a;
-        var puffs = puffDirection(world, x, y, 20, direction, 50, 50);
-        try {
-            for (var puffs_1 = __values(puffs), puffs_1_1 = puffs_1.next(); !puffs_1_1.done; puffs_1_1 = puffs_1.next()) {
-                var puff_1 = puffs_1_1.value;
-                puff_1.tint = 0x00C6FF;
-                puff_1.alpha = 0.6;
-            }
-        }
-        catch (e_53_1) { e_53 = { error: e_53_1 }; }
-        finally {
-            try {
-                if (puffs_1_1 && !puffs_1_1.done && (_a = puffs_1.return)) _a.call(puffs_1);
-            }
-            finally { if (e_53) throw e_53.error; }
-        }
-        return puffs;
-    }
-    Puff.puffWater = puffWater;
-})(Puff || (Puff = {}));
-var Spikes = /** @class */ (function (_super) {
-    __extends(Spikes, _super);
-    function Spikes(x, y, angle) {
-        return _super.call(this, {
-            x: x, y: y,
-            texture: 'spikes',
-            angle: angle,
-            layer: 'entities',
-            physicsGroup: 'walls',
-            bounds: new RectBounds(-7, -7, 14, 14),
-            tags: ['deadly'],
-        }) || this;
-    }
-    return Spikes;
-}(Sprite));
-var Thwomp = /** @class */ (function (_super) {
-    __extends(Thwomp, _super);
-    function Thwomp(x, y) {
+var Player = /** @class */ (function (_super) {
+    __extends(Player, _super);
+    function Player(x, y) {
         var _this = _super.call(this, {
             x: x, y: y,
+            layer: 'main',
+            physicsGroup: 'player',
+            gravityy: 400,
+            bounds: new RectBounds(-4, -12, 8, 12),
             animations: [
-                Animations.fromTextureList({ name: 'sleep', texturePrefix: 'thwomp', textures: ['sleep'], frameRate: 1 }),
-                Animations.fromTextureList({ name: 'awake', texturePrefix: 'thwomp', textures: ['awake'], frameRate: 1 }),
-                Animations.fromTextureList({ name: 'active', texturePrefix: 'thwomp', textures: ['active'], frameRate: 1 }),
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'player', textures: [0, 1, 2, 3], frameRate: 12, count: -1 }),
+                Animations.fromTextureList({ name: 'run', texturePrefix: 'player', textures: [5, 6, 7, 8, 9], frameRate: 16, count: -1 }),
+                Animations.fromTextureList({ name: 'grapple_horiz', texturePrefix: 'player', textures: [17, 18], frameRate: 16, count: -1 }),
+                Animations.fromTextureList({ name: 'jump', texturePrefix: 'player', textures: [11, 12], frameRate: 12, count: -1 }),
+                Animations.fromTextureList({ name: 'fall', texturePrefix: 'player', textures: [13, 14], frameRate: 12, count: -1 }),
+                Animations.fromTextureList({ name: 'midair', texturePrefix: 'player', textures: [5], frameRate: 12, count: -1 }),
             ],
-            defaultAnimation: 'awake',
-            layer: 'entities',
-            physicsGroup: 'thwomps',
-            bounds: new RectBounds(-8, -8, 16, 16),
-            tags: ['deadly'],
+            defaultAnimation: 'idle',
         }) || this;
-        _this.SLEEP_TIME = 0.7;
-        _this.GRAVITY = 1000;
-        _this.MAX_SPEED = 300;
-        _this.stateMachine.addState('awake', {
-            callback: function () { return _this.playAnimation('awake'); },
-            transitions: [
-                { toState: 'active', condition: function () { return !_this.controller.moveDirection.isZero(); } },
-            ]
+        _this.RUN_SPEED = 64;
+        _this.JUMP_SPEED = 200;
+        _this.AIR_FRICTION = 100;
+        _this.GROUND_FRICTION = 1000;
+        _this.behavior = new ControllerBehavior(function () {
+            this.controller.left = Input.isDown('left');
+            this.controller.right = Input.isDown('right');
+            this.controller.jump = Input.justDown('jump');
         });
-        _this.stateMachine.addState('active', {
-            callback: function () {
-                _this.playAnimation('active');
-                _this.gravity.x = _this.controller.moveDirection.x * _this.GRAVITY;
-                _this.gravity.y = _this.controller.moveDirection.y * _this.GRAVITY;
-            }
-        });
-        _this.stateMachine.addState('sleep', {
-            callback: function () {
-                _this.playAnimation('sleep');
-                _this.gravity.x = 0;
-                _this.gravity.y = 0;
-            },
-            script: S.wait(_this.SLEEP_TIME),
-            transitions: [{ toState: 'awake' }]
-        });
-        _this.setState('awake');
-        _this.behavior = new Thwomp.ThwompBehavior(_this);
         return _this;
     }
-    Thwomp.prototype.update = function () {
-        this.v.clampMagnitude(this.MAX_SPEED);
+    Player.prototype.update = function () {
+        var grounded = this.isGrounded();
+        var haxis = (this.controller.left ? -1 : 0) + (this.controller.right ? 1 : 0);
+        if (haxis !== 0) {
+            this.v.x = haxis * this.RUN_SPEED;
+        }
+        var friction = grounded ? this.GROUND_FRICTION : this.AIR_FRICTION;
+        if (this.v.x > 0)
+            this.v.x = Math.max(this.v.x - friction * this.delta, 0);
+        if (this.v.x < 0)
+            this.v.x = Math.min(this.v.x + friction * this.delta, 0);
+        if (grounded) {
+            if (this.controller.jump) {
+                this.v.y = -this.JUMP_SPEED;
+            }
+        }
         _super.prototype.update.call(this);
+        if (this.controller.left || this.controller.keys.runLeft)
+            this.flipX = true;
+        if (this.controller.right || this.controller.keys.runRight)
+            this.flipX = false;
+        if (grounded) {
+            if (haxis !== 0)
+                this.playAnimation('run');
+            else
+                this.playAnimation('idle');
+        }
+        else {
+            if (this.v.y < -10)
+                this.playAnimation('jump');
+            else if (this.v.y > 20)
+                this.playAnimation('fall');
+            else
+                this.playAnimation('midair');
+        }
     };
-    Thwomp.prototype.onCollide = function (collision) {
-        _super.prototype.onCollide.call(this, collision);
-        if (this.state !== 'sleep') {
-            var gdir = this.gravity.normalized();
-            Puff.puff(this.world, this.x + gdir.x * 8, this.y + gdir.y * 8, 10, function () { return Random.inCircle(50); });
-            this.world.playSound('thwomphit', { limit: 7 });
-        }
-        this.setState('sleep');
+    Player.prototype.isGrounded = function () {
+        this.bounds.y++;
+        var ground = this.world.select.overlap(this.bounds, ['walls']);
+        this.bounds.y--;
+        return !_.isEmpty(ground);
     };
-    return Thwomp;
+    return Player;
 }(Sprite));
-(function (Thwomp) {
-    var ThwompBehavior = /** @class */ (function (_super) {
-        __extends(ThwompBehavior, _super);
-        function ThwompBehavior(thwomp) {
-            return _super.call(this, function () {
-                var e_54, _a;
-                try {
-                    for (var _b = __values([Vector2.LEFT, Vector2.RIGHT, Vector2.UP, Vector2.DOWN]), _c = _b.next(); !_c.done; _c = _b.next()) {
-                        var direction = _c.value;
-                        var result = thwomp.world.select.raycast(thwomp.x, thwomp.y, direction.x, direction.y, ['player', 'walls', 'thwomps']);
-                        if (_.size(result) > 1 && result[1].obj instanceof Player) {
-                            this.controller.moveDirection.x = direction.x;
-                            this.controller.moveDirection.y = direction.y;
-                        }
-                    }
-                }
-                catch (e_54_1) { e_54 = { error: e_54_1 }; }
-                finally {
-                    try {
-                        if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-                    }
-                    finally { if (e_54) throw e_54.error; }
-                }
-            }) || this;
-        }
-        return ThwompBehavior;
-    }(ControllerBehavior));
-    Thwomp.ThwompBehavior = ThwompBehavior;
-})(Thwomp || (Thwomp = {}));
-var Water = /** @class */ (function (_super) {
-    __extends(Water, _super);
-    function Water(tx, ty, tw, th) {
-        return _super.call(this, {
-            x: tx * 16, y: ty * 16,
-            texture: Texture.filledRect(tw * 16, th * 16, 0x00C6FF),
-            alpha: 0.6,
-            effects: { post: { filters: [new Water.WaterFilter()] } },
-            layer: 'water',
-            physicsGroup: 'water',
-            bounds: new RectBounds(0, 0, tw * 16, th * 16),
-        }) || this;
-    }
-    return Water;
-}(Sprite));
-(function (Water) {
-    var WaterFilter = /** @class */ (function (_super) {
-        __extends(WaterFilter, _super);
-        function WaterFilter() {
-            return _super.call(this, {
-                code: "\n                    outp = getColor(x, y + (sin(2.0*t) + 4.0) * cnoise(vec3(x/10.0, t, 0.0)));\n                "
-            }) || this;
-        }
-        return WaterFilter;
-    }(TextureFilter));
-    Water.WaterFilter = WaterFilter;
-})(Water || (Water = {}));
 var WorldFilter = /** @class */ (function (_super) {
     __extends(WorldFilter, _super);
     function WorldFilter() {

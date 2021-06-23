@@ -35,23 +35,8 @@ class MainMenu extends Menu {
 
         this.addWorldObject(new MenuTextButton({
             x: 20, y: 65,
-            text: "normal mode",
+            text: "play",
             onClick: () => {
-                seenBossDialog = false;
-                Checkpoints.hardCheckpoints = false;
-                if (!Debug.DEBUG) Checkpoints.current = undefined;
-                menuSystem.game.playSound('click');
-                menuSystem.game.startGame();
-            }
-        }));
-
-        this.addWorldObject(new MenuTextButton({
-            x: 20, y: 95,
-            text: "hard mode\n  (single-use\n   checkpoints)",
-            onClick: () => {
-                seenBossDialog = false;
-                Checkpoints.hardCheckpoints = true;
-                if (!Debug.DEBUG) Checkpoints.current = undefined;
                 menuSystem.game.playSound('click');
                 menuSystem.game.startGame();
             }
