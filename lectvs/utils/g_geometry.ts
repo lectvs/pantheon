@@ -1,9 +1,9 @@
 namespace G {
-    export function distance(pt1: Vector2, pt2: Vector2) {
+    export function distance(pt1: Pt, pt2: Pt) {
         return M.distance(pt1.x, pt1.y, pt2.x, pt2.y);
     }
 
-    export function distanceSq(pt1: Vector2, pt2: Vector2) {
+    export function distanceSq(pt1: Pt, pt2: Pt) {
         return M.distanceSq(pt1.x, pt1.y, pt2.x, pt2.y);
     }
 

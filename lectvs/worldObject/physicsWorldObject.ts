@@ -10,6 +10,7 @@ namespace PhysicsWorldObject {
         gravityx?: number;
         gravityy?: number;
         gravityz?: number;
+        affectedByGravity?: boolean;
         bounce?: number;
         bounds?: Bounds;
         immovable?: boolean;
@@ -34,6 +35,7 @@ class PhysicsWorldObject extends WorldObject {
         this._gravity.y = value.y;
     }
     gravityz: number;
+    affectedByGravity: boolean;
 
     mass: number;
     bounce: number;
@@ -62,6 +64,7 @@ class PhysicsWorldObject extends WorldObject {
         this.mass = config.mass ?? 1;
         this._gravity = vec2(config.gravityx ?? 0, config.gravityy ?? 0);
         this.gravityz = config.gravityz ?? 0;
+        this.affectedByGravity = config.affectedByGravity ?? true;
         this.bounce = config.bounce ?? 1;
 
         this.bounds = config.bounds ?? new NullBounds();
@@ -162,7 +165,7 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     simulate() {
-        this.applyGravity();
+        if (this.affectedByGravity) this.applyGravity();
         this.move();
     }
 

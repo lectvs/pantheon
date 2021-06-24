@@ -6,10 +6,11 @@ const stages: Dict<Factory<World>> = {
         let world = new World({
             width: 272, height: 192,
             backgroundColor: 0x000000,
-            entryPoints: { 'main': { x: 0, y: 0 } },
             layers: [
                 { name: 'bg' },
                 { name: 'main' },
+                { name: 'player' },
+                { name: 'grapple' },
                 { name: 'walls', effects: { post: { filters: [new WorldFilter()] }} },
                 { name: 'fg' },
             ],
@@ -37,7 +38,9 @@ const stages: Dict<Factory<World>> = {
             physicsGroup: 'walls',
         }));
 
-        let player = world.addWorldObject(new Player(3*16+8, 8*16+8));
+        //world.addWorldObject(new Chain(A.range(20).map(i => vec2(120 - 1*i, 48 + 2.5*i))));
+
+        let player = world.addWorldObject(new Player(2*16+8, 6*16+16));
         player.name = 'player';
 
         world.camera.snapPosition();

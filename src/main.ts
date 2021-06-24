@@ -29,12 +29,13 @@ Main.loadConfig({
             'fullscreen':                ['f', 'g'],
 
             // Game
-            'left':                      ['ArrowLeft', 'a'],
-            'right':                     ['ArrowRight', 'd'],
-            'jump':                      ['ArrowUp', 'w', ' '],
+            'left':                      ['ArrowLeft'],
+            'right':                     ['ArrowRight'],
+            'jump':                      ['z'],
+            'grab':                      ['x'],
 
             // Presets
-            'game_advanceCutscene':      ['MouseLeft', 'e', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'a', 'd', 'w', 's'],
+            'game_advanceCutscene':      ['MouseLeft', 'e', ' '],
             'game_pause':                ['Escape', 'Backspace'],
             'game_closeMenu':            ['Escape', 'Backspace'],
             'game_select':               ['MouseLeft'],

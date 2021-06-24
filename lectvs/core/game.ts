@@ -33,7 +33,7 @@ class Game {
         this.loadMainMenu();
 
         this.overlay = new DebugOverlay();
-        this.isShowingOverlay = true;
+        this.isShowingOverlay = false;
 
         if (Debug.SKIP_MAIN_MENU) {
             this.startGame();

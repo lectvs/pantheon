@@ -92,6 +92,13 @@ var Vector2 = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
+    Object.defineProperty(Vector2.prototype, "magnitudeSq", {
+        get: function () {
+            return this.x * this.x + this.y * this.y;
+        },
+        enumerable: false,
+        configurable: true
+    });
     Vector2.prototype.clampMagnitude = function (maxMagnitude) {
         if (maxMagnitude < 0) {
             error('Tried to clamp vector magnitude with negative maxMagnitude');
@@ -117,6 +124,16 @@ var Vector2 = /** @class */ (function () {
     Vector2.prototype.normalized = function () {
         var copy = this.clone();
         copy.normalize();
+        return copy;
+    };
+    Vector2.prototype.projectOnto = function (other) {
+        var factor = G.dot(this, other) / other.magnitudeSq;
+        this.x = other.x * factor;
+        this.y = other.y * factor;
+    };
+    Vector2.prototype.projectedOnto = function (other) {
+        var copy = this.clone();
+        copy.projectOnto(other);
         return copy;
     };
     Vector2.prototype.rotate = function (angle) {
@@ -369,7 +386,7 @@ var Game = /** @class */ (function () {
         this.menuSystem = new MenuSystem(this);
         this.loadMainMenu();
         this.overlay = new DebugOverlay();
-        this.isShowingOverlay = true;
+        this.isShowingOverlay = false;
         if (Debug.SKIP_MAIN_MENU) {
             this.startGame();
         }
@@ -3039,18 +3056,19 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
     __extends(PhysicsWorldObject, _super);
     function PhysicsWorldObject(config) {
         if (config === void 0) { config = {}; }
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
         var _this = _super.call(this, config) || this;
         _this._v = config.v ? vec2(config.v.x, config.v.y) : vec2((_a = config.vx) !== null && _a !== void 0 ? _a : 0, (_b = config.vy) !== null && _b !== void 0 ? _b : 0);
         _this.vz = (_c = config.vz) !== null && _c !== void 0 ? _c : 0;
         _this.mass = (_d = config.mass) !== null && _d !== void 0 ? _d : 1;
         _this._gravity = vec2((_e = config.gravityx) !== null && _e !== void 0 ? _e : 0, (_f = config.gravityy) !== null && _f !== void 0 ? _f : 0);
         _this.gravityz = (_g = config.gravityz) !== null && _g !== void 0 ? _g : 0;
-        _this.bounce = (_h = config.bounce) !== null && _h !== void 0 ? _h : 1;
-        _this.bounds = (_j = config.bounds) !== null && _j !== void 0 ? _j : new NullBounds();
-        _this._immovable = (_k = config.immovable) !== null && _k !== void 0 ? _k : false;
-        _this.colliding = (_l = config.colliding) !== null && _l !== void 0 ? _l : true;
-        _this.simulating = (_m = config.simulating) !== null && _m !== void 0 ? _m : true;
+        _this.affectedByGravity = (_h = config.affectedByGravity) !== null && _h !== void 0 ? _h : true;
+        _this.bounce = (_j = config.bounce) !== null && _j !== void 0 ? _j : 1;
+        _this.bounds = (_k = config.bounds) !== null && _k !== void 0 ? _k : new NullBounds();
+        _this._immovable = (_l = config.immovable) !== null && _l !== void 0 ? _l : false;
+        _this.colliding = (_m = config.colliding) !== null && _m !== void 0 ? _m : true;
+        _this.simulating = (_o = config.simulating) !== null && _o !== void 0 ? _o : true;
         _this.physicslastx = _this.x;
         _this.physicslasty = _this.y;
         _this.debugDrawBounds = false;
@@ -3157,7 +3175,8 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
         this.z += this.vz * this.delta;
     };
     PhysicsWorldObject.prototype.simulate = function () {
-        this.applyGravity();
+        if (this.affectedByGravity)
+            this.applyGravity();
         this.move();
     };
     PhysicsWorldObject.prototype.drawBounds = function (texture, x, y) {
@@ -9541,6 +9560,34 @@ var NullBounds = /** @class */ (function () {
     };
     return NullBounds;
 }());
+var PhysicsUtils = /** @class */ (function () {
+    function PhysicsUtils() {
+    }
+    PhysicsUtils.applyFriction = function (v, fx, fy, delta) {
+        if (v.x > 0)
+            v.x = Math.max(v.x - fx * delta, 0);
+        if (v.x < 0)
+            v.x = Math.min(v.x + fx * delta, 0);
+        if (v.y > 0)
+            v.y = Math.max(v.y - fy * delta, 0);
+        if (v.y < 0)
+            v.y = Math.min(v.y + fy * delta, 0);
+    };
+    PhysicsUtils.smartAccelerate = function (v, ax, ay, delta, maxSpeed) {
+        var oldMagnitude = v.magnitude;
+        v.x += ax * delta;
+        v.y += ay * delta;
+        if (v.magnitude > maxSpeed) {
+            v.clampMagnitude(oldMagnitude);
+        }
+    };
+    PhysicsUtils.smartAccelerate1d = function (v, a, delta, maxSpeed) {
+        var vv = vec2(v, 0);
+        this.smartAccelerate(vv, a, 0, delta, maxSpeed);
+        return vv.x;
+    };
+    return PhysicsUtils;
+}());
 var RectBounds = /** @class */ (function () {
     function RectBounds(x, y, width, height, parent) {
         this.parent = parent;
@@ -10917,19 +10964,6 @@ var TilemapEntities = /** @class */ (function () {
     };
     return TilemapEntities;
 }());
-var SmartAccelerate = /** @class */ (function () {
-    function SmartAccelerate() {
-    }
-    SmartAccelerate.accelerate = function (v, ax, ay, delta, maxSpeed) {
-        var oldMagnitude = v.magnitude;
-        v.x += ax * delta;
-        v.y += ay * delta;
-        if (v.magnitude > maxSpeed) {
-            v.clampMagnitude(oldMagnitude);
-        }
-    };
-    return SmartAccelerate;
-}());
 var Assets;
 (function (Assets) {
     Assets.textures = {
@@ -10980,7 +11014,162 @@ var Assets;
         'g': function (args) { return ({ color: 0x00FF00 }); },
     };
 })(Assets || (Assets = {}));
+var Chain = /** @class */ (function (_super) {
+    __extends(Chain, _super);
+    function Chain(nodes) {
+        var _this = _super.call(this, {
+            x: nodes[0].x, y: nodes[0].y,
+            layer: 'main',
+        }) || this;
+        _this.nodes = nodes.map(function (node) { return _this.newNode(node.x, node.y); });
+        _this.springLengths = A.range(_this.nodes.length - 1).map(function (i) { return G.distance(_this.nodes[i].p, _this.nodes[i + 1].p); });
+        _this.gravity = 200;
+        return _this;
+    }
+    Chain.prototype.update = function () {
+        var e_52, _a;
+        _super.prototype.update.call(this);
+        try {
+            for (var _b = __values(this.nodes), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var node = _c.value;
+                var dx = node.p.x - node.lastp.x;
+                var dy = node.p.y - node.lastp.y;
+                var drag = Math.pow(0.99, 60 * this.delta);
+                dx *= drag;
+                dy *= drag;
+                dy += this.gravity * Math.pow(this.delta, 2);
+                node.lastp.x = node.p.x;
+                node.lastp.y = node.p.y;
+                node.p.x += dx;
+                node.p.y += dy;
+            }
+        }
+        catch (e_52_1) { e_52 = { error: e_52_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_52) throw e_52.error; }
+        }
+        for (var iter = 0; iter < 20; iter++) {
+            for (var i = 0; i < this.springLengths.length; i++) {
+                var node = this.nodes[i];
+                var nextNode = this.nodes[i + 1];
+                var restDistance = this.springLengths[i];
+                var d = vec2(nextNode.p.x - node.p.x, nextNode.p.y - node.p.y);
+                var restd = d.withMagnitude(restDistance);
+                var dd = vec2(d.x - restd.x, d.y - restd.y);
+                node.p.x += dd.x / 2;
+                node.p.y += dd.y / 2;
+                nextNode.p.x -= dd.x / 2;
+                nextNode.p.y -= dd.y / 2;
+            }
+        }
+        this.nodes[0].p.x = this.x;
+        this.nodes[0].p.y = this.y;
+        if (Input.isDown('lmb')) {
+            this.nodes[this.nodes.length - 1].p.x = this.world.getWorldMouseX();
+            this.nodes[this.nodes.length - 1].p.y = this.world.getWorldMouseY();
+        }
+    };
+    Chain.prototype.render = function (texture, x, y) {
+        Draw.brush.color = 0xFFFFFF;
+        Draw.brush.alpha = 1;
+        Draw.brush.thickness = 2;
+        for (var i = 1; i < this.nodes.length; i++) {
+            var node = this.nodes[i];
+            var previousNode = this.nodes[i - 1];
+            Draw.line(texture, x + previousNode.p.x - this.x, y + previousNode.p.y - this.y, x + node.p.x - this.x, y + node.p.y - this.y);
+        }
+        // Draw.brush.color = 0x00FF00;
+        // for (let node of this.nodes) {
+        //     Draw.pixel(texture, x + node.p.x - this.x, y + node.p.y - this.y);
+        // }
+        _super.prototype.render.call(this, texture, x, y);
+    };
+    Chain.prototype.getClosestNodeTo = function (x, y) {
+        var _this = this;
+        return M.argmin(A.range(this.nodes.length - 1), function (i) { return M.distance(_this.nodes[i + 1].p.x, _this.nodes[i + 1].p.y, x, y); });
+    };
+    Chain.prototype.getNodePosition = function (index) {
+        return this.nodes[index].p.clone();
+    };
+    Chain.prototype.getNodeVelocity = function (index) {
+        if (this.delta === 0)
+            return Vector2.ZERO;
+        var node = this.nodes[index];
+        var v = vec2(node.p.x - node.lastp.x, node.p.y - node.lastp.y);
+        v.scale(1 / this.delta);
+        return v;
+    };
+    Chain.prototype.applyNodeAcceleration = function (index, v) {
+        var node = this.nodes[index];
+        var dx = node.p.x - node.lastp.x;
+        var dy = node.p.y - node.lastp.y;
+        var nodeDir = this.averageDir();
+        var cnodeDir = vec2(-nodeDir.y, nodeDir.x);
+        var vp = v.projectedOnto(cnodeDir);
+        dx += vp.x * Math.pow(this.delta, 2);
+        dy += vp.y * Math.pow(this.delta, 2);
+        node.lastp.x = node.p.x - dx;
+        node.lastp.y = node.p.y - dy;
+    };
+    Chain.prototype.averageDir = function () {
+        var result = Vector2.ZERO;
+        for (var i = 0; i < this.nodes.length - 1; i++) {
+            result.x += this.nodes[i + 1].p.x - this.nodes[i].p.x;
+            result.y += this.nodes[i + 1].p.y - this.nodes[i].p.y;
+        }
+        result.scale(1 / (this.nodes.length - 1));
+        return result;
+    };
+    Chain.prototype.newNode = function (x, y) {
+        return {
+            p: vec2(x, y),
+            lastp: vec2(x, y),
+        };
+    };
+    return Chain;
+}(WorldObject));
 var Cheat = {};
+var Grapple = /** @class */ (function (_super) {
+    __extends(Grapple, _super);
+    function Grapple(source) {
+        var _this = _super.call(this, {
+            x: source.x, y: source.y - 8,
+            texture: 'grapple',
+            layer: 'grapple',
+            vx: 600,
+            physicsGroup: 'grapple',
+            bounds: new RectBounds(-2, -2, 4, 4),
+        }) || this;
+        _this.finished = false;
+        _this.source = source;
+        return _this;
+    }
+    Grapple.prototype.render = function (texture, x, y) {
+        if (!this.finished) {
+            var dx = this.x - this.source.x;
+            var dy = this.y - (this.source.y - 8);
+            Draw.brush.color = 0xFFFFFF;
+            Draw.brush.thickness = 2;
+            Draw.line(texture, x - dx, y - dy, x, y);
+        }
+        _super.prototype.render.call(this, texture, x, y);
+    };
+    Grapple.prototype.onCollide = function (collision) {
+        var _this = this;
+        _super.prototype.onCollide.call(this, collision);
+        var dx = this.x - this.source.x;
+        var chainNodes = A.range(21).map(function (i) { return vec2(_this.x - dx / 20 * i, _this.y); });
+        this.world.addWorldObject(new Chain(chainNodes));
+        this.finished = true;
+    };
+    Grapple.prototype.getVisibleScreenBounds = function () {
+        return undefined;
+    };
+    return Grapple;
+}(Sprite));
 /// <reference path="../lectvs/menu/menu.ts" />
 var IntroMenu = /** @class */ (function (_super) {
     __extends(IntroMenu, _super);
@@ -11283,10 +11472,11 @@ var stages = {
         var world = new World({
             width: 272, height: 192,
             backgroundColor: 0x000000,
-            entryPoints: { 'main': { x: 0, y: 0 } },
             layers: [
                 { name: 'bg' },
                 { name: 'main' },
+                { name: 'player' },
+                { name: 'grapple' },
                 { name: 'walls', effects: { post: { filters: [new WorldFilter()] } } },
                 { name: 'fg' },
             ],
@@ -11312,7 +11502,8 @@ var stages = {
             layer: 'walls',
             physicsGroup: 'walls',
         }));
-        var player = world.addWorldObject(new Player(3 * 16 + 8, 8 * 16 + 8));
+        //world.addWorldObject(new Chain(A.range(20).map(i => vec2(120 - 1*i, 48 + 2.5*i))));
+        var player = world.addWorldObject(new Player(2 * 16 + 8, 6 * 16 + 16));
         player.name = 'player';
         world.camera.snapPosition();
         return world;
@@ -11353,11 +11544,12 @@ Main.loadConfig({
             // General
             'fullscreen': ['f', 'g'],
             // Game
-            'left': ['ArrowLeft', 'a'],
-            'right': ['ArrowRight', 'd'],
-            'jump': ['ArrowUp', 'w', ' '],
+            'left': ['ArrowLeft'],
+            'right': ['ArrowRight'],
+            'jump': ['z'],
+            'grab': ['x'],
             // Presets
-            'game_advanceCutscene': ['MouseLeft', 'e', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'a', 'd', 'w', 's'],
+            'game_advanceCutscene': ['MouseLeft', 'e', ' '],
             'game_pause': ['Escape', 'Backspace'],
             'game_closeMenu': ['Escape', 'Backspace'],
             'game_select': ['MouseLeft'],
@@ -11433,7 +11625,7 @@ var Player = /** @class */ (function (_super) {
     function Player(x, y) {
         var _this = _super.call(this, {
             x: x, y: y,
-            layer: 'main',
+            layer: 'player',
             physicsGroup: 'player',
             gravityy: 400,
             bounds: new RectBounds(-4, -12, 8, 12),
@@ -11448,38 +11640,47 @@ var Player = /** @class */ (function (_super) {
             defaultAnimation: 'idle',
         }) || this;
         _this.RUN_SPEED = 64;
+        _this.RUN_ACCELERATION = 400;
         _this.JUMP_SPEED = 200;
-        _this.AIR_FRICTION = 100;
+        _this.AIR_FRICTION = 50;
         _this.GROUND_FRICTION = 1000;
         _this.behavior = new ControllerBehavior(function () {
             this.controller.left = Input.isDown('left');
             this.controller.right = Input.isDown('right');
             this.controller.jump = Input.justDown('jump');
+            this.controller.keys.grab = Input.isDown('grab');
         });
+        _this.grab = null;
+        _this.grapple = null;
+        _this.stateMachine.addState('canGrab', {});
+        _this.stateMachine.addState('jumpedFromGrab', {
+            transitions: [{ toState: 'canGrab', delay: 0.5 }]
+        });
+        _this.stateMachine.setState('canGrab');
         return _this;
     }
     Player.prototype.update = function () {
         var grounded = this.isGrounded();
         var haxis = (this.controller.left ? -1 : 0) + (this.controller.right ? 1 : 0);
-        if (haxis !== 0) {
-            this.v.x = haxis * this.RUN_SPEED;
+        this.v.x = PhysicsUtils.smartAccelerate1d(this.v.x, haxis * this.RUN_ACCELERATION, this.delta, this.RUN_SPEED);
+        if (haxis === 0) {
+            PhysicsUtils.applyFriction(this.v, grounded ? this.GROUND_FRICTION : this.AIR_FRICTION, 0, this.delta);
         }
-        var friction = grounded ? this.GROUND_FRICTION : this.AIR_FRICTION;
-        if (this.v.x > 0)
-            this.v.x = Math.max(this.v.x - friction * this.delta, 0);
-        if (this.v.x < 0)
-            this.v.x = Math.min(this.v.x + friction * this.delta, 0);
         if (grounded) {
             if (this.controller.jump) {
-                this.v.y = -this.JUMP_SPEED;
+                this.jump();
             }
         }
+        this.updateGrab(haxis);
         _super.prototype.update.call(this);
         if (this.controller.left || this.controller.keys.runLeft)
             this.flipX = true;
         if (this.controller.right || this.controller.keys.runRight)
             this.flipX = false;
-        if (grounded) {
+        if (this.grab) {
+            this.playAnimation('jump');
+        }
+        else if (grounded) {
             if (haxis !== 0)
                 this.playAnimation('run');
             else
@@ -11493,6 +11694,84 @@ var Player = /** @class */ (function (_super) {
             else
                 this.playAnimation('midair');
         }
+    };
+    Player.prototype.jump = function () {
+        this.v.y = -this.JUMP_SPEED;
+    };
+    Player.prototype.updateGrab = function (haxis) {
+        // Grab state changes
+        if (this.grab) {
+            if (this.controller.jump) {
+                this.grab = null;
+                this.setState('jumpedFromGrab');
+                this.jump();
+            }
+            else if (!this.controller.keys.grab) {
+                this.grab = null;
+            }
+        }
+        else if (this.grapple) {
+            if (!this.controller.keys.grab) {
+                this.grapple.grapple.removeFromWorld();
+                this.grapple = null;
+            }
+            else if (this.grapple.grapple.finished) {
+                this.grapple = null;
+            }
+        }
+        else {
+            if (this.controller.keys.grab && this.state === 'canGrab') {
+                this.grab = this.getClosestGrab();
+                if (!this.grab) {
+                    var grapple = this.world.addWorldObject(new Grapple(this));
+                    this.grapple = { grapple: grapple };
+                }
+            }
+        }
+        // Grab physics
+        this.affectedByGravity = true;
+        if (this.grab) {
+            var nodePos = this.grab.chain.getNodePosition(this.grab.node);
+            this.x = M.lerpTime(this.x, nodePos.x, 20, this.delta);
+            this.y = M.lerpTime(this.y, nodePos.y + 8, 20, this.delta);
+            var nodeVelocity = this.grab.chain.getNodeVelocity(this.grab.node);
+            this.v.x = nodeVelocity.x;
+            this.v.y = nodeVelocity.y;
+            if (haxis !== 0) {
+                this.grab.chain.applyNodeAcceleration(this.grab.node, vec2(haxis * 1000, 0));
+            }
+        }
+        else if (this.grapple) {
+            this.v.x = 0;
+            this.v.y = 0;
+            this.affectedByGravity = false;
+        }
+    };
+    Player.prototype.getClosestGrab = function () {
+        var e_53, _a;
+        var chains = this.world.select.typeAll(Chain);
+        var closestGrab = undefined;
+        var minDist = 10;
+        try {
+            for (var chains_1 = __values(chains), chains_1_1 = chains_1.next(); !chains_1_1.done; chains_1_1 = chains_1.next()) {
+                var chain = chains_1_1.value;
+                var node = chain.getClosestNodeTo(this.x, this.y - 8);
+                var nodePos = chain.getNodePosition(node);
+                var dist = M.distance(nodePos.x, nodePos.y, this.x, this.y - 8);
+                if (dist < minDist) {
+                    closestGrab = { chain: chain, node: node };
+                    minDist = dist;
+                }
+            }
+        }
+        catch (e_53_1) { e_53 = { error: e_53_1 }; }
+        finally {
+            try {
+                if (chains_1_1 && !chains_1_1.done && (_a = chains_1.return)) _a.call(chains_1);
+            }
+            finally { if (e_53) throw e_53.error; }
+        }
+        return closestGrab;
     };
     Player.prototype.isGrounded = function () {
         this.bounds.y++;

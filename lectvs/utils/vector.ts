@@ -19,6 +19,10 @@ class Vector2 {
         return Math.sqrt(this.x*this.x + this.y*this.y);
     }
 
+    get magnitudeSq() {
+        return this.x*this.x + this.y*this.y;
+    }
+
     clampMagnitude(maxMagnitude: number) {
         if (maxMagnitude < 0) {
             error('Tried to clamp vector magnitude with negative maxMagnitude');
@@ -48,6 +52,18 @@ class Vector2 {
     normalized() {
         let copy = this.clone();
         copy.normalize();
+        return copy;
+    }
+
+    projectOnto(other: Vector2) {
+        let factor = G.dot(this, other) / other.magnitudeSq;
+        this.x = other.x * factor;
+        this.y = other.y * factor;
+    }
+
+    projectedOnto(other: Vector2) {
+        let copy = this.clone();
+        copy.projectOnto(other);
         return copy;
     }
 
