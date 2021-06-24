@@ -11502,8 +11502,9 @@ var stages = {
             layer: 'walls',
             physicsGroup: 'walls',
         }));
-        //world.addWorldObject(new Chain(A.range(20).map(i => vec2(120 - 1*i, 48 + 2.5*i))));
-        var player = world.addWorldObject(new Player(2 * 16 + 8, 6 * 16 + 16));
+        world.addWorldObject(new Chain(A.range(20).map(function (i) { return vec2(86 - 1 * i, 48 + 2.5 * i); })));
+        world.addWorldObject(new Chain(A.range(20).map(function (i) { return vec2(144 - 1 * i, 48 + 2.5 * i); })));
+        var player = world.addWorldObject(new Player(1 * 16 + 8, 6 * 16 + 16));
         player.name = 'player';
         world.camera.snapPosition();
         return world;
