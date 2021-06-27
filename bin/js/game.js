@@ -10973,8 +10973,6 @@ var Assets;
         // Fonts
         'deluxe16': { spritesheet: { frameWidth: 8, frameHeight: 15 } },
         // Game
-        'player': { anchor: Vector2.BOTTOM, spritesheet: { frameWidth: 16, frameHeight: 16 } },
-        'grapple': { anchor: Vector2.CENTER },
         // UI
         'dialogbox': { anchor: Vector2.CENTER },
     };
@@ -10987,16 +10985,8 @@ var Assets;
         'dialogstart': { url: 'assets/click.wav', volume: 0.5 },
         'dialogspeak': { volume: 0.25 },
     };
-    Assets.tilesets = {
-        'world': {
-            tileWidth: 16,
-            tileHeight: 16,
-            collisionIndices: [1],
-        },
-    };
-    Assets.pyxelTilemaps = {
-        'world': { tileset: 'world' },
-    };
+    Assets.tilesets = {};
+    Assets.pyxelTilemaps = {};
     var fonts = /** @class */ (function () {
         function fonts() {
         }
@@ -11014,162 +11004,7 @@ var Assets;
         'g': function (args) { return ({ color: 0x00FF00 }); },
     };
 })(Assets || (Assets = {}));
-var Chain = /** @class */ (function (_super) {
-    __extends(Chain, _super);
-    function Chain(nodes) {
-        var _this = _super.call(this, {
-            x: nodes[0].x, y: nodes[0].y,
-            layer: 'main',
-        }) || this;
-        _this.nodes = nodes.map(function (node) { return _this.newNode(node.x, node.y); });
-        _this.springLengths = A.range(_this.nodes.length - 1).map(function (i) { return G.distance(_this.nodes[i].p, _this.nodes[i + 1].p); });
-        _this.gravity = 200;
-        return _this;
-    }
-    Chain.prototype.update = function () {
-        var e_52, _a;
-        _super.prototype.update.call(this);
-        try {
-            for (var _b = __values(this.nodes), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var node = _c.value;
-                var dx = node.p.x - node.lastp.x;
-                var dy = node.p.y - node.lastp.y;
-                var drag = Math.pow(0.99, 60 * this.delta);
-                dx *= drag;
-                dy *= drag;
-                dy += this.gravity * Math.pow(this.delta, 2);
-                node.lastp.x = node.p.x;
-                node.lastp.y = node.p.y;
-                node.p.x += dx;
-                node.p.y += dy;
-            }
-        }
-        catch (e_52_1) { e_52 = { error: e_52_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_52) throw e_52.error; }
-        }
-        for (var iter = 0; iter < 20; iter++) {
-            for (var i = 0; i < this.springLengths.length; i++) {
-                var node = this.nodes[i];
-                var nextNode = this.nodes[i + 1];
-                var restDistance = this.springLengths[i];
-                var d = vec2(nextNode.p.x - node.p.x, nextNode.p.y - node.p.y);
-                var restd = d.withMagnitude(restDistance);
-                var dd = vec2(d.x - restd.x, d.y - restd.y);
-                node.p.x += dd.x / 2;
-                node.p.y += dd.y / 2;
-                nextNode.p.x -= dd.x / 2;
-                nextNode.p.y -= dd.y / 2;
-            }
-        }
-        this.nodes[0].p.x = this.x;
-        this.nodes[0].p.y = this.y;
-        if (Input.isDown('lmb')) {
-            this.nodes[this.nodes.length - 1].p.x = this.world.getWorldMouseX();
-            this.nodes[this.nodes.length - 1].p.y = this.world.getWorldMouseY();
-        }
-    };
-    Chain.prototype.render = function (texture, x, y) {
-        Draw.brush.color = 0xFFFFFF;
-        Draw.brush.alpha = 1;
-        Draw.brush.thickness = 2;
-        for (var i = 1; i < this.nodes.length; i++) {
-            var node = this.nodes[i];
-            var previousNode = this.nodes[i - 1];
-            Draw.line(texture, x + previousNode.p.x - this.x, y + previousNode.p.y - this.y, x + node.p.x - this.x, y + node.p.y - this.y);
-        }
-        // Draw.brush.color = 0x00FF00;
-        // for (let node of this.nodes) {
-        //     Draw.pixel(texture, x + node.p.x - this.x, y + node.p.y - this.y);
-        // }
-        _super.prototype.render.call(this, texture, x, y);
-    };
-    Chain.prototype.getClosestNodeTo = function (x, y) {
-        var _this = this;
-        return M.argmin(A.range(this.nodes.length - 1), function (i) { return M.distance(_this.nodes[i + 1].p.x, _this.nodes[i + 1].p.y, x, y); });
-    };
-    Chain.prototype.getNodePosition = function (index) {
-        return this.nodes[index].p.clone();
-    };
-    Chain.prototype.getNodeVelocity = function (index) {
-        if (this.delta === 0)
-            return Vector2.ZERO;
-        var node = this.nodes[index];
-        var v = vec2(node.p.x - node.lastp.x, node.p.y - node.lastp.y);
-        v.scale(1 / this.delta);
-        return v;
-    };
-    Chain.prototype.applyNodeAcceleration = function (index, v) {
-        var node = this.nodes[index];
-        var dx = node.p.x - node.lastp.x;
-        var dy = node.p.y - node.lastp.y;
-        var nodeDir = this.averageDir();
-        var cnodeDir = vec2(-nodeDir.y, nodeDir.x);
-        var vp = v.projectedOnto(cnodeDir);
-        dx += vp.x * Math.pow(this.delta, 2);
-        dy += vp.y * Math.pow(this.delta, 2);
-        node.lastp.x = node.p.x - dx;
-        node.lastp.y = node.p.y - dy;
-    };
-    Chain.prototype.averageDir = function () {
-        var result = Vector2.ZERO;
-        for (var i = 0; i < this.nodes.length - 1; i++) {
-            result.x += this.nodes[i + 1].p.x - this.nodes[i].p.x;
-            result.y += this.nodes[i + 1].p.y - this.nodes[i].p.y;
-        }
-        result.scale(1 / (this.nodes.length - 1));
-        return result;
-    };
-    Chain.prototype.newNode = function (x, y) {
-        return {
-            p: vec2(x, y),
-            lastp: vec2(x, y),
-        };
-    };
-    return Chain;
-}(WorldObject));
 var Cheat = {};
-var Grapple = /** @class */ (function (_super) {
-    __extends(Grapple, _super);
-    function Grapple(source) {
-        var _this = _super.call(this, {
-            x: source.x, y: source.y - 8,
-            texture: 'grapple',
-            layer: 'grapple',
-            vx: 600,
-            physicsGroup: 'grapple',
-            bounds: new RectBounds(-2, -2, 4, 4),
-        }) || this;
-        _this.finished = false;
-        _this.source = source;
-        return _this;
-    }
-    Grapple.prototype.render = function (texture, x, y) {
-        if (!this.finished) {
-            var dx = this.x - this.source.x;
-            var dy = this.y - (this.source.y - 8);
-            Draw.brush.color = 0xFFFFFF;
-            Draw.brush.thickness = 2;
-            Draw.line(texture, x - dx, y - dy, x, y);
-        }
-        _super.prototype.render.call(this, texture, x, y);
-    };
-    Grapple.prototype.onCollide = function (collision) {
-        var _this = this;
-        _super.prototype.onCollide.call(this, collision);
-        var dx = this.x - this.source.x;
-        var chainNodes = A.range(21).map(function (i) { return vec2(_this.x - dx / 20 * i, _this.y); });
-        this.world.addWorldObject(new Chain(chainNodes));
-        this.finished = true;
-    };
-    Grapple.prototype.getVisibleScreenBounds = function () {
-        return undefined;
-    };
-    return Grapple;
-}(Sprite));
 /// <reference path="../lectvs/menu/menu.ts" />
 var IntroMenu = /** @class */ (function (_super) {
     __extends(IntroMenu, _super);
@@ -11387,12 +11222,10 @@ var ControlsMenu = /** @class */ (function (_super) {
             ],
             physicsGroups: {
                 'player': {},
-                'grapple': {},
                 'walls': { immovable: true },
             },
             collisions: [
                 { move: 'player', from: 'walls' },
-                { move: 'grapple', from: 'walls' },
             ],
             collisionIterations: 4,
             useRaycastDisplacementThreshold: Infinity,
@@ -11446,7 +11279,6 @@ var ControlsMenu = /** @class */ (function (_super) {
             x: 36, y: 172,
             text: "\nv"
         }));
-        _this.addWorldObject(new Player(2 * 16 + 8, 12 * 16 + 16));
         _this.addWorldObject(new MenuTextButton({
             x: 16, y: 226,
             text: "back",
@@ -11475,19 +11307,14 @@ var stages = {
             layers: [
                 { name: 'bg' },
                 { name: 'main' },
-                { name: 'player' },
-                { name: 'grapple' },
-                { name: 'walls', effects: { post: { filters: [new WorldFilter()] } } },
                 { name: 'fg' },
             ],
             physicsGroups: {
                 'player': {},
-                'grapple': {},
-                'walls': { immovable: true },
+                'walls': {},
             },
             collisions: [
                 { move: 'player', from: 'walls' },
-                { move: 'grapple', from: 'walls' },
             ],
             collisionIterations: 4,
             // TODO: rethink this? does it actually help?
@@ -11495,17 +11322,6 @@ var stages = {
             maxDistancePerCollisionStep: 8,
             globalSoundHumanizePercent: 0.1,
         });
-        world.addWorldObject(new Tilemap({
-            x: -16, y: -16,
-            tilemap: 'world',
-            tileset: 'world',
-            layer: 'walls',
-            physicsGroup: 'walls',
-        }));
-        world.addWorldObject(new Chain(A.range(20).map(function (i) { return vec2(86 - 1 * i, 48 + 2.5 * i); })));
-        world.addWorldObject(new Chain(A.range(20).map(function (i) { return vec2(144 - 1 * i, 48 + 2.5 * i); })));
-        var player = world.addWorldObject(new Player(1 * 16 + 8, 6 * 16 + 16));
-        player.name = 'player';
         world.camera.snapPosition();
         return world;
     },
@@ -11524,7 +11340,7 @@ var storyboard = {
 /// <reference path="./stages.ts"/>
 /// <reference path="./storyboard.ts"/>
 Main.loadConfig({
-    gameCodeName: "grappletest",
+    gameCodeName: "ruse",
     gameWidth: 240,
     gameHeight: 160,
     canvasScale: 4,
@@ -11543,12 +11359,12 @@ Main.loadConfig({
         volume: 0.5,
         controls: {
             // General
-            'fullscreen': ['f', 'g'],
+            'fullscreen': ['f'],
             // Game
-            'left': ['ArrowLeft'],
-            'right': ['ArrowRight'],
-            'jump': ['z'],
-            'grab': ['x'],
+            'left': ['ArrowLeft', 'a'],
+            'right': ['ArrowRight', 'd'],
+            'up': ['ArrowRight', 'w'],
+            'down': ['ArrowRight', 's'],
             // Presets
             'game_advanceCutscene': ['MouseLeft', 'e', ' '],
             'game_pause': ['Escape', 'Backspace'],
@@ -11609,9 +11425,7 @@ Main.loadConfig({
         allPhysicsBounds: false,
         moveCameraWithArrows: true,
         showOverlay: true,
-        overlayFeeds: [
-            function (world) { return "t: " + Math.floor(world.getWorldMouseX() / 16) + ", " + Math.floor(world.getWorldMouseY() / 16); }
-        ],
+        overlayFeeds: [],
         skipRate: 1,
         programmaticInput: false,
         autoplay: true,
@@ -11621,173 +11435,3 @@ Main.loadConfig({
         experiments: {},
     },
 });
-var Player = /** @class */ (function (_super) {
-    __extends(Player, _super);
-    function Player(x, y) {
-        var _this = _super.call(this, {
-            x: x, y: y,
-            layer: 'player',
-            physicsGroup: 'player',
-            gravityy: 400,
-            bounds: new RectBounds(-4, -12, 8, 12),
-            animations: [
-                Animations.fromTextureList({ name: 'idle', texturePrefix: 'player', textures: [0, 1, 2, 3], frameRate: 12, count: -1 }),
-                Animations.fromTextureList({ name: 'run', texturePrefix: 'player', textures: [5, 6, 7, 8, 9], frameRate: 16, count: -1 }),
-                Animations.fromTextureList({ name: 'grapple_horiz', texturePrefix: 'player', textures: [17, 18], frameRate: 16, count: -1 }),
-                Animations.fromTextureList({ name: 'jump', texturePrefix: 'player', textures: [11, 12], frameRate: 12, count: -1 }),
-                Animations.fromTextureList({ name: 'fall', texturePrefix: 'player', textures: [13, 14], frameRate: 12, count: -1 }),
-                Animations.fromTextureList({ name: 'midair', texturePrefix: 'player', textures: [5], frameRate: 12, count: -1 }),
-            ],
-            defaultAnimation: 'idle',
-        }) || this;
-        _this.RUN_SPEED = 64;
-        _this.RUN_ACCELERATION = 400;
-        _this.JUMP_SPEED = 200;
-        _this.AIR_FRICTION = 50;
-        _this.GROUND_FRICTION = 1000;
-        _this.behavior = new ControllerBehavior(function () {
-            this.controller.left = Input.isDown('left');
-            this.controller.right = Input.isDown('right');
-            this.controller.jump = Input.justDown('jump');
-            this.controller.keys.grab = Input.isDown('grab');
-        });
-        _this.grab = null;
-        _this.grapple = null;
-        _this.stateMachine.addState('canGrab', {});
-        _this.stateMachine.addState('jumpedFromGrab', {
-            transitions: [{ toState: 'canGrab', delay: 0.5 }]
-        });
-        _this.stateMachine.setState('canGrab');
-        return _this;
-    }
-    Player.prototype.update = function () {
-        var grounded = this.isGrounded();
-        var haxis = (this.controller.left ? -1 : 0) + (this.controller.right ? 1 : 0);
-        this.v.x = PhysicsUtils.smartAccelerate1d(this.v.x, haxis * this.RUN_ACCELERATION, this.delta, this.RUN_SPEED);
-        if (haxis === 0) {
-            PhysicsUtils.applyFriction(this.v, grounded ? this.GROUND_FRICTION : this.AIR_FRICTION, 0, this.delta);
-        }
-        if (grounded) {
-            if (this.controller.jump) {
-                this.jump();
-            }
-        }
-        this.updateGrab(haxis);
-        _super.prototype.update.call(this);
-        if (this.controller.left || this.controller.keys.runLeft)
-            this.flipX = true;
-        if (this.controller.right || this.controller.keys.runRight)
-            this.flipX = false;
-        if (this.grab) {
-            this.playAnimation('jump');
-        }
-        else if (grounded) {
-            if (haxis !== 0)
-                this.playAnimation('run');
-            else
-                this.playAnimation('idle');
-        }
-        else {
-            if (this.v.y < -10)
-                this.playAnimation('jump');
-            else if (this.v.y > 20)
-                this.playAnimation('fall');
-            else
-                this.playAnimation('midair');
-        }
-    };
-    Player.prototype.jump = function () {
-        this.v.y = -this.JUMP_SPEED;
-    };
-    Player.prototype.updateGrab = function (haxis) {
-        // Grab state changes
-        if (this.grab) {
-            if (this.controller.jump) {
-                this.grab = null;
-                this.setState('jumpedFromGrab');
-                this.jump();
-            }
-            else if (!this.controller.keys.grab) {
-                this.grab = null;
-            }
-        }
-        else if (this.grapple) {
-            if (!this.controller.keys.grab) {
-                this.grapple.grapple.removeFromWorld();
-                this.grapple = null;
-            }
-            else if (this.grapple.grapple.finished) {
-                this.grapple = null;
-            }
-        }
-        else {
-            if (this.controller.keys.grab && this.state === 'canGrab') {
-                this.grab = this.getClosestGrab();
-                if (!this.grab) {
-                    var grapple = this.world.addWorldObject(new Grapple(this));
-                    this.grapple = { grapple: grapple };
-                }
-            }
-        }
-        // Grab physics
-        this.affectedByGravity = true;
-        if (this.grab) {
-            var nodePos = this.grab.chain.getNodePosition(this.grab.node);
-            this.x = M.lerpTime(this.x, nodePos.x, 20, this.delta);
-            this.y = M.lerpTime(this.y, nodePos.y + 8, 20, this.delta);
-            var nodeVelocity = this.grab.chain.getNodeVelocity(this.grab.node);
-            this.v.x = nodeVelocity.x;
-            this.v.y = nodeVelocity.y;
-            if (haxis !== 0) {
-                this.grab.chain.applyNodeAcceleration(this.grab.node, vec2(haxis * 1000, 0));
-            }
-        }
-        else if (this.grapple) {
-            this.v.x = 0;
-            this.v.y = 0;
-            this.affectedByGravity = false;
-        }
-    };
-    Player.prototype.getClosestGrab = function () {
-        var e_53, _a;
-        var chains = this.world.select.typeAll(Chain);
-        var closestGrab = undefined;
-        var minDist = 10;
-        try {
-            for (var chains_1 = __values(chains), chains_1_1 = chains_1.next(); !chains_1_1.done; chains_1_1 = chains_1.next()) {
-                var chain = chains_1_1.value;
-                var node = chain.getClosestNodeTo(this.x, this.y - 8);
-                var nodePos = chain.getNodePosition(node);
-                var dist = M.distance(nodePos.x, nodePos.y, this.x, this.y - 8);
-                if (dist < minDist) {
-                    closestGrab = { chain: chain, node: node };
-                    minDist = dist;
-                }
-            }
-        }
-        catch (e_53_1) { e_53 = { error: e_53_1 }; }
-        finally {
-            try {
-                if (chains_1_1 && !chains_1_1.done && (_a = chains_1.return)) _a.call(chains_1);
-            }
-            finally { if (e_53) throw e_53.error; }
-        }
-        return closestGrab;
-    };
-    Player.prototype.isGrounded = function () {
-        this.bounds.y++;
-        var ground = this.world.select.overlap(this.bounds, ['walls']);
-        this.bounds.y--;
-        return !_.isEmpty(ground);
-    };
-    return Player;
-}(Sprite));
-var WorldFilter = /** @class */ (function (_super) {
-    __extends(WorldFilter, _super);
-    function WorldFilter() {
-        return _super.call(this, {
-            code: "\n                if (inp.a == 1.0 && (\n                       getColor(x-1.0, y).a == 0.0\n                    || getColor(x+1.0, y).a == 0.0\n                    || getColor(x, y-1.0).a == 0.0\n                    || getColor(x, y+1.0).a == 0.0\n                    || getColor(x+1.0, y+1.0).a == 0.0\n                    || getColor(x+1.0, y-1.0).a == 0.0\n                    || getColor(x-1.0, y+1.0).a == 0.0\n                    || getColor(x-1.0, y-1.0).a == 0.0\n                    )) {\n                    outp = vec4(1.0, 1.0, 1.0, 1.0);\n                }\n            ",
-        }) || this;
-    }
-    return WorldFilter;
-}(TextureFilter));

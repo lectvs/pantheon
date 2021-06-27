@@ -3,7 +3,7 @@
 /// <reference path="./storyboard.ts"/>
 
 Main.loadConfig({
-    gameCodeName: "grappletest",
+    gameCodeName: "ruse",
     gameWidth: 240,
     gameHeight: 160,
     canvasScale: 4,
@@ -26,13 +26,13 @@ Main.loadConfig({
         volume: 0.5,
         controls: {
             // General
-            'fullscreen':                ['f', 'g'],
+            'fullscreen':                ['f'],
 
             // Game
-            'left':                      ['ArrowLeft'],
-            'right':                     ['ArrowRight'],
-            'jump':                      ['z'],
-            'grab':                      ['x'],
+            'left':                      ['ArrowLeft', 'a'],
+            'right':                     ['ArrowRight', 'd'],
+            'up':                        ['ArrowRight', 'w'],
+            'down':                      ['ArrowRight', 's'],
 
             // Presets
             'game_advanceCutscene':      ['MouseLeft', 'e', ' '],
@@ -99,7 +99,6 @@ Main.loadConfig({
         moveCameraWithArrows: true,
         showOverlay: true,
         overlayFeeds: [
-            (world: World) => `t: ${Math.floor(world.getWorldMouseX()/16)}, ${Math.floor(world.getWorldMouseY()/16)}`
         ],
         skipRate: 1,
         programmaticInput: false,

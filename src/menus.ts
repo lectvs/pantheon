@@ -236,12 +236,10 @@ class ControlsMenu extends Menu {
             ],
             physicsGroups: {
                 'player': {},
-                'grapple': {},
                 'walls': { immovable: true },
             },
             collisions: [
                 { move: 'player', from: 'walls' },
-                { move: 'grapple', from: 'walls' },
             ],
             collisionIterations: 4,
             useRaycastDisplacementThreshold: Infinity,
@@ -301,7 +299,6 @@ class ControlsMenu extends Menu {
             text: "\nv"
         }));
 
-        this.addWorldObject(new Player(2*16+8, 12*16+16));
 
         this.addWorldObject(new MenuTextButton({
             x: 16, y: 226,
