@@ -56,6 +56,7 @@ class World {
     height: number;
     entryPoints: Dict<Vector2>;
     worldObjects: WorldObject[];
+    time: number;
 
     physicsGroups: Dict<World.PhysicsGroup>;
     collisions: World.CollisionConfig[];
@@ -95,6 +96,7 @@ class World {
 
         this.width = config.width ?? global.gameWidth;
         this.height = config.height ?? global.gameHeight;
+        this.time = 0;
 
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
         this.collisions = config.collisions ?? [];
@@ -162,6 +164,8 @@ class World {
 
         this.soundManager.volume = this.volume * global.game.volume;
         this.soundManager.update(this.delta);
+
+        this.time += this.delta;
     }
 
     protected updateScriptManager() {

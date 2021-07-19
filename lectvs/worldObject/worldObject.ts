@@ -101,7 +101,6 @@ class WorldObject {
     _isInsideWorldBoundsBufferThisFrame: boolean;
 
     controller: Controller;
-    get isControlRevoked() { return global.theater?.isCutscenePlaying; }
 
     behavior: Behavior;
 
@@ -324,6 +323,10 @@ class WorldObject {
         return _.contains(this.tags, tag);
     }
 
+    isControlRevoked() {
+        return global.theater?.isCutscenePlaying;
+    }
+
     isOnScreen(buffer: number = 0) {
         let bounds = this.getVisibleScreenBounds();
         if (!bounds) return true;
@@ -412,7 +415,7 @@ class WorldObject {
     }
 
     private updateController() {
-        if (this.isControlRevoked) return;
+        if (this.isControlRevoked()) return;
         this.controller.updateFromBehavior(this.behavior);
     }
 

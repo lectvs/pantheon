@@ -2734,11 +2734,6 @@ var WorldObject = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
-    Object.defineProperty(WorldObject.prototype, "isControlRevoked", {
-        get: function () { var _a; return (_a = global.theater) === null || _a === void 0 ? void 0 : _a.isCutscenePlaying; },
-        enumerable: false,
-        configurable: true
-    });
     Object.defineProperty(WorldObject.prototype, "state", {
         get: function () { return this.stateMachine.getCurrentStateName(); },
         enumerable: false,
@@ -2924,6 +2919,10 @@ var WorldObject = /** @class */ (function () {
     WorldObject.prototype.hasTag = function (tag) {
         return _.contains(this.tags, tag);
     };
+    WorldObject.prototype.isControlRevoked = function () {
+        var _a;
+        return (_a = global.theater) === null || _a === void 0 ? void 0 : _a.isCutscenePlaying;
+    };
     WorldObject.prototype.isOnScreen = function (buffer) {
         if (buffer === void 0) { buffer = 0; }
         var bounds = this.getVisibleScreenBounds();
@@ -3007,7 +3006,7 @@ var WorldObject = /** @class */ (function () {
         }
     };
     WorldObject.prototype.updateController = function () {
-        if (this.isControlRevoked)
+        if (this.isControlRevoked())
             return;
         this.controller.updateFromBehavior(this.behavior);
     };
@@ -3343,6 +3342,7 @@ var World = /** @class */ (function () {
         this.globalSoundHumanizePercent = (_b = config.globalSoundHumanizePercent) !== null && _b !== void 0 ? _b : 0;
         this.width = (_c = config.width) !== null && _c !== void 0 ? _c : global.gameWidth;
         this.height = (_d = config.height) !== null && _d !== void 0 ? _d : global.gameHeight;
+        this.time = 0;
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
         this.collisions = (_e = config.collisions) !== null && _e !== void 0 ? _e : [];
         this.collisionIterations = (_f = config.collisionIterations) !== null && _f !== void 0 ? _f : 1;
@@ -3436,6 +3436,7 @@ var World = /** @class */ (function () {
         this.camera.update();
         this.soundManager.volume = this.volume * global.game.volume;
         this.soundManager.update(this.delta);
+        this.time += this.delta;
     };
     World.prototype.updateScriptManager = function () {
         this.scriptManager.update(this.delta);
@@ -6337,7 +6338,7 @@ var DialogBox = /** @class */ (function (_super) {
             var p = _this.getDialogProgression() < 0.9 ? 0.85 : 1; // 85% normally, but 100% if dialog is close to ending
             if (_this.speakSound && Debug.SKIP_RATE < 2 && !_this.isPageComplete() && Random.boolean(p)) {
                 var sound = _this.world.playSound(_this.speakSound);
-                sound.speed = Random.float(0.95, 1.05);
+                sound.speed = Random.float(0.95, 1.05) + 0.5;
             }
         }, true);
         return _this;
@@ -7911,12 +7912,22 @@ var Camera = /** @class */ (function () {
         if (Math.abs(dx) > hw) {
             var tx = Math.abs(hw / dx);
             var targetx = this.x + (1 - tx) * dx;
-            this.x = M.lerpTime(this.x, targetx, this.movement.speed, this.world.delta);
+            if (this.movement.speed === Infinity) {
+                this.x = targetx;
+            }
+            else {
+                this.x = M.lerpTime(this.x, targetx, this.movement.speed, this.world.delta);
+            }
         }
         if (Math.abs(dy) > hh) {
             var ty = Math.abs(hh / dy);
             var targety = this.y + (1 - ty) * dy;
-            this.y = M.lerpTime(this.y, targety, this.movement.speed, this.world.delta);
+            if (this.movement.speed === Infinity) {
+                this.y = targety;
+            }
+            else {
+                this.y = M.lerpTime(this.y, targety, this.movement.speed, this.world.delta);
+            }
         }
     };
     Camera.prototype.snapPosition = function () {
@@ -10166,6 +10177,12 @@ var Controller = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
+    Object.defineProperty(Controller.prototype, "interact", {
+        get: function () { return this.keys.interact; },
+        set: function (value) { this.keys.interact = value; },
+        enumerable: false,
+        configurable: true
+    });
     Controller.prototype.updateFromBehavior = function (behavior) {
         if (behavior instanceof NullBehavior)
             return;
@@ -10358,10 +10375,11 @@ var Animations = /** @class */ (function () {
         if (_.isEmpty(textures)) {
             return result;
         }
+        var texturePrefix = !config.texturePrefix ? "" : config.texturePrefix + "_";
         for (var i = 0; i < textures.length; i++) {
             var animationFrame = {
                 duration: frameDuration,
-                texture: (_.isString(textures[i]) || _.isNumber(textures[i])) ? config.texturePrefix + "_" + textures[i] : textures[i],
+                texture: (_.isString(textures[i]) || _.isNumber(textures[i])) ? "" + texturePrefix + textures[i] : textures[i],
                 nextFrameRef: config.name + "/" + (i + 1),
                 forceRequired: config.oneOff,
             };
@@ -10972,9 +10990,82 @@ var Assets;
         'debug': {},
         // Fonts
         'deluxe16': { spritesheet: { frameWidth: 8, frameHeight: 15 } },
+        'andrfw': { spritesheet: { frameWidth: 8, frameHeight: 19 } },
+        // Menus
+        'titlescreen': {},
         // Game
+        'mirigram': {
+            anchor: Vector2.BOTTOM,
+            spritesheet: { frameWidth: 40, frameHeight: 40 },
+            frames: {
+                'spin': { rect: rect(80, 80, 40, 40), anchor: Vector2.CENTER },
+            }
+        },
+        'diggur': {
+            anchor: Vector2.CENTER,
+            spritesheet: { frameWidth: 40, frameHeight: 40 },
+        },
+        'scammir': {
+            anchor: Vector2.CENTER,
+            spritesheet: { frameWidth: 40, frameHeight: 40 },
+        },
+        'gobbor': {
+            anchor: Vector2.CENTER,
+            spritesheet: { frameWidth: 40, frameHeight: 40 },
+        },
+        'world_bg': {},
+        'doors': {
+            anchor: Vector2.CENTER,
+            frames: {
+                'reddoor': { rect: rect(0, 0, 16, 32) },
+                'blackdoor': { rect: rect(16, 0, 16, 32) },
+                'wooddoor': { rect: rect(32, 0, 16, 32) },
+                'wooddoor_side': { rect: rect(0, 32, 48, 16) },
+                'movabledoor': { rect: rect(48, 0, 16, 32) },
+            }
+        },
+        'lever': { anchor: Vector2.BOTTOM },
+        'glass': {},
+        'crackedwall': {},
+        'smoke': {
+            anchor: Vector2.CENTER,
+            frames: {
+                'smoke1': { rect: rect(0, 0, 112, 71) },
+                'smoke2': { rect: rect(112, 0, 95, 77) },
+                'smoke3': { rect: rect(0, 71, 76, 36) },
+            }
+        },
+        'orb': { anchor: Vector2.CENTER },
+        'lgdoor_open': {},
+        'chest': {
+            anchor: Vector2.BOTTOM,
+            frames: {
+                'chest_closed': { rect: rect(0, 0, 56, 72) },
+                'chest_open': { rect: rect(56, 0, 56, 72) },
+            }
+        },
+        'prank': { anchor: Vector2.BOTTOM },
+        'note': { anchor: Vector2.CENTER },
+        // Cutscene
+        'THE': { anchor: Vector2.CENTER },
+        'UNDERMINE': { anchor: Vector2.CENTER },
         // UI
         'dialogbox': { anchor: Vector2.CENTER },
+        'itemboxes': {},
+        'itemicons': {
+            anchor: Vector2.CENTER,
+            frames: {
+                'cane': { rect: rect(0, 0, 16, 16) },
+                'wad': { rect: rect(16, 0, 16, 16) },
+                'redkey': { rect: rect(32, 0, 16, 16) },
+                'blackkey': { rect: rect(48, 0, 16, 16) },
+                'blackkey_upsidedown': { rect: rect(0, 16, 16, 16) },
+                'string': { rect: rect(16, 16, 16, 16) },
+                'nickel': { rect: rect(32, 16, 16, 16) },
+            }
+        },
+        'pressx': { anchor: Vector2.CENTER },
+        'pressright': { anchor: Vector2.CENTER },
     };
     Assets.sounds = {
         // Debug
@@ -10983,10 +11074,32 @@ var Assets;
         'click': {},
         // Game
         'dialogstart': { url: 'assets/click.wav', volume: 0.5 },
-        'dialogspeak': { volume: 0.25 },
+        'dialogspeak': { url: 'assets/non_npc_text_blip_sound.ogg', volume: 2 },
+        'jump': { url: 'assets/newjump_sound.ogg', volume: 0.7 },
+        'walk': { url: 'assets/smaller_tap_sound.ogg', volume: 0.3 },
+        'land': { url: 'assets/medium_crush_sound.ogg', volume: 0.4 },
+        'door': { url: 'assets/door_shuffle.ogg', volume: 1 },
+        'crush': { url: 'assets/crush_sound.ogg', volume: 1 },
+        'theundermine': { url: 'assets/fwhaaaaah.ogg', volume: 1 },
+        'item_get': { url: 'assets/item_get.ogg', volume: 0.5 },
+        'menu_blip': { url: 'assets/menu_blip_sound.ogg', volume: 0.5 },
+        'trip': { url: 'assets/newjump_sound.ogg', volume: 1 },
+        'hjonk': { url: 'assets/hjonk.ogg', volume: 0.75 },
+        // Music
+        'house': { url: 'assets/Barry_s_Bungalow.ogg', volume: 0.3 },
+        'caverns': { url: 'assets/main_cavern_bgm.ogg', volume: 0.75 },
+        'credits': { url: 'assets/factsetc.ogg', volume: 0.75 },
     };
-    Assets.tilesets = {};
-    Assets.pyxelTilemaps = {};
+    Assets.tilesets = {
+        'tiles': {
+            tileWidth: 16,
+            tileHeight: 16,
+            collisionIndices: [1],
+        },
+    };
+    Assets.pyxelTilemaps = {
+        'world': { tileset: 'tiles' },
+    };
     var fonts = /** @class */ (function () {
         function fonts() {
         }
@@ -10997,6 +11110,13 @@ var Assets;
             spaceWidth: 8,
             newlineHeight: 15,
         };
+        fonts.ANDRFW = {
+            texturePrefix: 'andrfw',
+            charWidth: 8,
+            charHeight: 19,
+            spaceWidth: 8,
+            newlineHeight: 16,
+        };
         return fonts;
     }());
     Assets.fonts = fonts;
@@ -11004,24 +11124,398 @@ var Assets;
         'g': function (args) { return ({ color: 0x00FF00 }); },
     };
 })(Assets || (Assets = {}));
-var Cheat = {};
-/// <reference path="../lectvs/menu/menu.ts" />
-var IntroMenu = /** @class */ (function (_super) {
-    __extends(IntroMenu, _super);
-    function IntroMenu(menuSystem) {
-        var _this = _super.call(this, menuSystem, {
-            backgroundColor: 0x000000,
-        }) || this;
-        var introtext = _this.addWorldObject(new SpriteText({
-            x: global.gameWidth / 2, y: global.gameHeight / 2,
-            text: "- a game by\nhayden mccraw -",
-            anchor: Vector2.CENTER
-        }));
-        _this.runScript(S.chain(S.wait(1.5), S.call(function () { return introtext.setText("- originally made\n   in 48 hours\nfor ludum dare 48 -"); }), S.wait(1.5), S.call(function () { return menuSystem.loadMenu(MainMenu); })));
+var CameraController = /** @class */ (function (_super) {
+    __extends(CameraController, _super);
+    function CameraController(target) {
+        var _this = _super.call(this) || this;
+        _this.target = target;
         return _this;
     }
-    return IntroMenu;
-}(Menu));
+    CameraController.prototype.onAdd = function () {
+        this.sectorOffset = new Vector2(1, 0);
+        this.sector = this.getTargetSector();
+    };
+    CameraController.prototype.postUpdate = function () {
+        _super.prototype.postUpdate.call(this);
+        var newSector = this.getTargetSector();
+        var needToReposition = TransitionScripts.executeTransition(this.world, this.sector, newSector);
+        if (needToReposition)
+            newSector = this.getTargetSector();
+        this.sector = newSector;
+        this.world.camera.setModeFocus((this.sector.x + this.sectorOffset.x + 0.5) * this.world.width, (this.sector.y + this.sectorOffset.y + 0.5) * this.world.height);
+    };
+    CameraController.prototype.getTargetSector = function () {
+        return new Vector2(Math.floor(this.target.x / this.world.width) - this.sectorOffset.x, Math.floor(this.target.y / this.world.height) - this.sectorOffset.y);
+    };
+    return CameraController;
+}(WorldObject));
+var Cheat = {};
+var Chest = /** @class */ (function (_super) {
+    __extends(Chest, _super);
+    function Chest(x, y) {
+        var _this = _super.call(this, {
+            name: 'chest',
+            x: x, y: y,
+            animations: [
+                Animations.fromTextureList({ name: 'closed', textures: ['chest_closed'], frameRate: 1, count: Infinity }),
+                Animations.fromTextureList({ name: 'open', textures: ['chest_open'], frameRate: 1, count: Infinity }),
+            ],
+            defaultAnimation: 'closed',
+            layer: 'bg',
+        }) || this;
+        _this.addChild(new CutsceneInteractable(0, -32, 'i_chest')).setBoundsSize(64, 64);
+        return _this;
+    }
+    Chest.prototype.open = function () {
+        this.playAnimation('open');
+        this.world.playSound('crush');
+    };
+    Chest.prototype.close = function () {
+        this.playAnimation('closed');
+        this.world.playSound('crush');
+    };
+    return Chest;
+}(Sprite));
+var CrackedWall = /** @class */ (function (_super) {
+    __extends(CrackedWall, _super);
+    function CrackedWall(x, y) {
+        var _this = _super.call(this, {
+            x: x, y: y,
+            texture: 'crackedwall',
+            layer: 'doors',
+            physicsGroup: 'walls',
+            bounds: new RectBounds(0, 0, 32, 64),
+            immovable: true
+        }) || this;
+        _this.addChild(new CutsceneInteractable(0, 48, 'i_crackedwall'));
+        return _this;
+    }
+    return CrackedWall;
+}(Sprite));
+var Interactable = /** @class */ (function (_super) {
+    __extends(Interactable, _super);
+    function Interactable(config) {
+        var _this = _super.call(this, config) || this;
+        _this.pressTexture = 'pressx';
+        return _this;
+    }
+    Interactable.prototype.interact = function () {
+        if (this.onInteract)
+            this.onInteract();
+    };
+    return Interactable;
+}(PhysicsWorldObject));
+/// <reference path="./interactable.ts" />
+var CutsceneInteractable = /** @class */ (function (_super) {
+    __extends(CutsceneInteractable, _super);
+    function CutsceneInteractable(x, y, cutscene) {
+        var _this = _super.call(this, {
+            name: "ci_" + cutscene,
+            x: x, y: y,
+            bounds: new RectBounds(-8, -8, 16, 16),
+        }) || this;
+        _this.cutscene = cutscene;
+        return _this;
+    }
+    CutsceneInteractable.prototype.interact = function () {
+        if (this.pressTexture === 'pressx') {
+            global.theater.storyManager.cutsceneManager.playCutscene(this.cutscene);
+        }
+    };
+    CutsceneInteractable.prototype.setBoundsSize = function (w, h) {
+        this.bounds = new RectBounds(-w / 2, -h / 2, w, h);
+    };
+    return CutsceneInteractable;
+}(Interactable));
+var Diggur = /** @class */ (function (_super) {
+    __extends(Diggur, _super);
+    function Diggur(x, y) {
+        var _this = _super.call(this, {
+            name: 'diggur',
+            x: x, y: y,
+            animations: [
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'diggur', textures: [0, 1], frameRate: 2.2, count: Infinity }),
+                Animations.fromTextureList({ name: 'run', texturePrefix: 'diggur', textures: [4, 5, 6], frameRate: 4, count: Infinity, overrides: {
+                        0: { callback: function () { _this.world.playSound('walk'); } },
+                        1: { callback: function () { _this.world.playSound('walk'); } },
+                        2: { callback: function () { _this.world.playSound('walk'); } },
+                    } }),
+                Animations.fromTextureList({ name: 'spin', texturePrefix: 'diggur', textures: [8], frameRate: 1, count: Infinity }),
+                Animations.fromTextureList({ name: 'laying', texturePrefix: 'diggur', textures: [9], frameRate: 1, count: Infinity }),
+            ],
+            defaultAnimation: 'idle',
+            layer: 'main',
+            physicsGroup: 'npcs',
+            bounds: new RectBounds(-12, -4, 24, 24),
+            gravityy: 400,
+        }) || this;
+        _this.MAX_SPEED = 100;
+        _this.spinning = false;
+        _this.laying = false;
+        return _this;
+    }
+    Diggur.prototype.update = function () {
+        var grounded = this.isGrounded();
+        var haxis = (this.controller.left ? -1 : 0) + (this.controller.right ? 1 : 0);
+        this.v.x = haxis * this.MAX_SPEED;
+        if (this.spinning) {
+            this.angle += 720 * this.delta;
+            if (grounded) {
+                this.spinning = false;
+                this.laying = true;
+                this.angle = 0;
+            }
+        }
+        _super.prototype.update.call(this);
+        if (haxis < 0) {
+            this.flipX = true;
+        }
+        else {
+            this.flipX = false;
+        }
+        if (this.laying) {
+            this.playAnimation('laying');
+        }
+        else if (this.spinning) {
+            this.playAnimation('spin');
+        }
+        else if (haxis === 0) {
+            this.playAnimation('idle');
+        }
+        else {
+            this.playAnimation('run');
+        }
+    };
+    Diggur.prototype.onCollide = function (collison) {
+        _super.prototype.onCollide.call(this, collison);
+        if (collison.other.obj instanceof CrackedWall) {
+            collison.other.obj.removeFromWorld();
+            global.theater.runScript(S.loopFor(3, S.chain(S.call(function () { return global.world.playSound('crush'); }), S.wait(0.15))));
+            global.theater.runScript(S.chain(S.fadeOut(0, 0xFFFFFF), S.call(function () {
+                global.world.addWorldObject(new Sprite({ x: 3567, y: 1152, texture: 'smoke1', life: 2, update: function () { this.alpha = 0.8 * (1 - this.life.progress); }, vx: -10, vy: -10 }));
+                global.world.addWorldObject(new Sprite({ x: 3567, y: 1152, texture: 'smoke2', life: 2, update: function () { this.alpha = 0.8 * (1 - this.life.progress); }, vx: 10, vy: 0 }));
+                global.world.addWorldObject(new Sprite({ x: 3567, y: 1152, texture: 'smoke3', life: 2, update: function () { this.alpha = 0.8 * (1 - this.life.progress); }, vx: -20, vy: 20 }));
+            }), S.wait(0.2), S.fadeSlides(0), S.shake(4, 1)));
+        }
+    };
+    Diggur.prototype.isGrounded = function () {
+        this.bounds.y++;
+        var ground = this.world.select.overlap(this.bounds, ['walls']);
+        this.bounds.y--;
+        return !_.isEmpty(ground);
+    };
+    return Diggur;
+}(Sprite));
+/// <reference path="./interactable.ts" />
+var Door = /** @class */ (function (_super) {
+    __extends(Door, _super);
+    function Door(x, y, toX, toY) {
+        var _this = _super.call(this, {
+            x: x, y: y,
+            bounds: new RectBounds(-8, -8, 16, 16),
+        }) || this;
+        _this.toX = toX;
+        _this.toY = toY;
+        return _this;
+    }
+    Door.prototype.interact = function () {
+        _super.prototype.interact.call(this);
+        var player = this.world.select.type(Player);
+        player.teleport(this.toX, this.toY);
+        global.world.playSound('door');
+    };
+    return Door;
+}(Interactable));
+var Gobbor = /** @class */ (function (_super) {
+    __extends(Gobbor, _super);
+    function Gobbor(x, y) {
+        return _super.call(this, {
+            name: 'gobbor',
+            x: x, y: y,
+            animations: [
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'gobbor', textures: [0, 1], frameRate: 3, count: Infinity }),
+            ],
+            defaultAnimation: 'idle',
+            layer: 'main',
+            physicsGroup: 'npcs',
+            bounds: new RectBounds(-12, -4, 24, 24),
+            gravityy: 400,
+        }) || this;
+    }
+    return Gobbor;
+}(Sprite));
+var ITEMS = {
+    'cane': { icon: 'cane', name: "Valiant Cane", description: "Your knees just don't work like they used to. This cane helps you jump six tiles into the air, like the good ole days." },
+    'wad': { icon: 'wad', name: "Crumpled Wad", description: "it's funny" },
+    'redkey': { icon: 'redkey', name: "Red Key", description: "Can be used to open the Red Door." },
+    'blackkey': { icon: 'blackkey', name: "Black Key", description: "If it were any more black, you wouldn't be able to see it against the background." },
+    'blackkey_upsidedown': { icon: 'blackkey_upsidedown', name: "Black Key (upside down)", description: "It's been turned upside down, and should now be able to open the Black Door with ease." },
+    'blackkey_rightsideup': { icon: 'blackkey', name: "Black Key (rightside up)", description: "It's been turned upside down, then upside down again, rendering it identical to its previous orientation." },
+    'string': { icon: 'string', name: "String", description: "Reminds you of the days before string cheese and string theory. String was just string, and that was good enough for you." },
+    'nickel': { icon: 'nickel', name: "Shiny Nickel", description: "A shiny nickel worth $5. This makes sense because of inflation." },
+};
+var INVENTORY = ['cane', 'wad', 'nickel'];
+function GIVE_ITEM(item) {
+    INVENTORY.push(item);
+}
+function CONSUME_ITEM(item) {
+    INVENTORY.splice(INVENTORY.lastIndexOf(item), 1);
+}
+function REPLACE_ITEM(item, newItem) {
+    INVENTORY[INVENTORY.lastIndexOf(item)] = newItem;
+}
+var InventorySelect = /** @class */ (function (_super) {
+    __extends(InventorySelect, _super);
+    function InventorySelect(message) {
+        var _this = _super.call(this, {
+            texture: 'itemboxes',
+            layer: Theater.LAYER_DIALOG,
+        }) || this;
+        _this.ITEMS_START = vec2(48, 34);
+        _this.ITEM_NAME_DX = 20;
+        _this.ITEM_DY = 24;
+        _this.DESCRIPTION_POS = vec2(218, 53);
+        _this.DESCRIPTION_WIDTH = 148;
+        _this.MESSAGE_POS = vec2(12, 248);
+        _this.index = 0;
+        _this.selectedItem = undefined;
+        _this.message = message;
+        _this.inventory = A.clone(INVENTORY);
+        return _this;
+    }
+    Object.defineProperty(InventorySelect.prototype, "hasSelected", {
+        get: function () { return this.selectedItem !== undefined; },
+        enumerable: false,
+        configurable: true
+    });
+    InventorySelect.prototype.onAdd = function () {
+        for (var i = 0; i < this.inventory.length; i++) {
+            var id = this.inventory[i];
+            var item = ITEMS[id];
+            this.addChild(new Sprite({ x: this.ITEMS_START.x, y: this.ITEMS_START.y + i * this.ITEM_DY, texture: item.icon, matchParentLayer: true }));
+            this.addChild(new SpriteText({ x: this.ITEMS_START.x + this.ITEM_NAME_DX, y: this.ITEMS_START.y + i * this.ITEM_DY - 6, text: item.name, matchParentLayer: true }));
+        }
+        this.description = this.addChild(new SpriteText({ x: this.DESCRIPTION_POS.x, y: this.DESCRIPTION_POS.y, text: this.message, maxWidth: this.DESCRIPTION_WIDTH, matchParentLayer: true }));
+        this.addChild(new SpriteText({ x: this.MESSAGE_POS.x, y: this.MESSAGE_POS.y, text: this.message, matchParentLayer: true }));
+        var selectionTexture = AnchoredTexture.fromBaseTexture(Texture.outlineRect(20, 20, 0xFFFFFF, 1, 1), 0.5, 0.5);
+        this.selection = this.addChild(new Sprite({ texture: selectionTexture, matchParentLayer: true }));
+    };
+    InventorySelect.prototype.update = function () {
+        _super.prototype.update.call(this);
+        if (Input.justDown('up')) {
+            this.index = M.mod(this.index - 1, this.inventory.length);
+            this.world.playSound('menu_blip');
+        }
+        if (Input.justDown('down')) {
+            this.index = M.mod(this.index + 1, this.inventory.length);
+            this.world.playSound('menu_blip');
+        }
+        this.selection.x = this.ITEMS_START.x;
+        this.selection.y = this.ITEMS_START.y + this.index * this.ITEM_DY;
+        this.description.setText(ITEMS[this.inventory[this.index]].description);
+        if (Input.justDown('game_advanceCutscene')) {
+            Input.consume('game_advanceCutscene');
+            this.selectedItem = this.inventory[this.index];
+            this.world.playSound('menu_blip');
+        }
+    };
+    return InventorySelect;
+}(Sprite));
+var S;
+(function (S) {
+    function chooseItem(message, result) {
+        return function () {
+            var selector;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        selector = global.theater.addWorldObject(new InventorySelect(message));
+                        _a.label = 1;
+                    case 1:
+                        if (!!selector.hasSelected) return [3 /*break*/, 3];
+                        return [4 /*yield*/];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3:
+                        result.item = selector.selectedItem;
+                        selector.removeFromWorld();
+                        return [2 /*return*/];
+                }
+            });
+        };
+    }
+    S.chooseItem = chooseItem;
+})(S || (S = {}));
+var Item = /** @class */ (function (_super) {
+    __extends(Item, _super);
+    function Item(x, y, name) {
+        var _this = _super.call(this, {
+            name: name,
+            x: x, y: y,
+            texture: name,
+            layer: 'items',
+        }) || this;
+        _this.addChild(new CutsceneInteractable(0, 0, "item_" + name));
+        return _this;
+    }
+    return Item;
+}(Sprite));
+var JaggyRemoverFilter = /** @class */ (function (_super) {
+    __extends(JaggyRemoverFilter, _super);
+    function JaggyRemoverFilter() {
+        return _super.call(this, {
+            code: "\n                vec4 gcxp = getColor(x + 1.0, y);\n                vec4 gcxn = getColor(x - 1.0, y);\n                vec4 gcyp = getColor(x, y + 1.0);\n                vec4 gcyn = getColor(x, y - 1.0);\n                if (gcxp.a == 0.0 && gcxn.a == 0.0) {\n                    outp.a = 0.0;\n                }\n                if (gcyp.a == 0.0 && gcyn.a == 0.0) {\n                    outp.a = 0.0;\n                }\n            ",
+        }) || this;
+    }
+    return JaggyRemoverFilter;
+}(TextureFilter));
+var Lever = /** @class */ (function (_super) {
+    __extends(Lever, _super);
+    function Lever(x, y, cutscene) {
+        var _this = _super.call(this, {
+            x: x, y: y,
+            texture: 'lever',
+        }) || this;
+        var i = _this.addChild(new Interactable({ x: 0, y: -8, bounds: new RectBounds(-1, -8, 2, 16) }));
+        i.onInteract = function () {
+            _this.flip();
+        };
+        _this.cutscene = cutscene;
+        return _this;
+    }
+    Lever.prototype.flip = function () {
+        this.flipX = true;
+        if (this.flipX) {
+            global.theater.storyManager.cutsceneManager.playCutscene(this.cutscene);
+        }
+        this.world.playSound('crush');
+        global.theater.runScript(S.shake(2, 0.3));
+    };
+    return Lever;
+}(Sprite));
+var LockedDoor = /** @class */ (function (_super) {
+    __extends(LockedDoor, _super);
+    function LockedDoor(x, y, name, movable) {
+        var _this = _super.call(this, {
+            name: name,
+            x: x, y: y,
+            texture: name,
+            layer: 'doors',
+            physicsGroup: 'walls',
+            bounds: new RectBounds(-8, -16, 16, 32),
+            immovable: !movable,
+        }) || this;
+        var i = _this.addChild(new CutsceneInteractable(0, 0, "i_" + name));
+        i.setBoundsSize(24, 24);
+        if (movable) {
+            i.pressTexture = 'pressright';
+        }
+        return _this;
+    }
+    return LockedDoor;
+}(Sprite));
+/// <reference path="../lectvs/menu/menu.ts" />
 var MainMenu = /** @class */ (function (_super) {
     __extends(MainMenu, _super);
     function MainMenu(menuSystem) {
@@ -11029,36 +11523,39 @@ var MainMenu = /** @class */ (function (_super) {
             backgroundColor: 0x000000,
             volume: 0,
         }) || this;
+        _this.addWorldObject(new Sprite({
+            texture: 'titlescreen',
+        }));
+        var title = new BasicTexture(200, 160);
+        new SpriteText({
+            text: 'On\nUndermining.',
+        }).render(title, 15, 40);
+        _this.addWorldObject(new Sprite({
+            texture: title,
+            scaleX: 2,
+            scaleY: 2,
+        }));
         _this.addWorldObject(new SpriteText({
-            x: 20, y: 20,
-            text: "- GRAPPLE THE\nABYSS! -"
+            x: 30, y: 160,
+            text: 'A Sequel to a Game by Andrfw',
         }));
-        _this.addWorldObject(new MenuTextButton({
-            x: 20, y: 65,
-            text: "play",
-            onClick: function () {
-                menuSystem.game.playSound('click');
-                menuSystem.game.startGame();
-            }
+        _this.addWorldObject(new SpriteText({
+            x: 30, y: 184,
+            text: 'By lectvs',
         }));
-        _this.addWorldObject(new MenuTextButton({
-            x: 20, y: 155,
-            text: "controls\n  [g]^ read me! :)[/g]",
-            onClick: function () {
-                menuSystem.game.playSound('click');
-                menuSystem.loadMenu(ControlsMenu);
-            }
-        }));
-        _this.addWorldObject(new MenuTextButton({
-            x: 20, y: 200,
-            text: "options",
-            onClick: function () {
-                menuSystem.game.playSound('click');
-                menuSystem.loadMenu(OptionsMenu);
-            }
+        _this.addWorldObject(new SpriteText({
+            x: 30, y: 240,
+            text: 'Click to Start',
         }));
         return _this;
     }
+    MainMenu.prototype.update = function () {
+        _super.prototype.update.call(this);
+        if (Input.justDown('game_select')) {
+            Input.consume('game_select');
+            this.menuSystem.game.startGame();
+        }
+    };
     return MainMenu;
 }(Menu));
 var PauseMenu = /** @class */ (function (_super) {
@@ -11209,112 +11706,31 @@ var DebugOptionsMenu = /** @class */ (function (_super) {
     };
     return DebugOptionsMenu;
 }(Menu));
-var ControlsMenu = /** @class */ (function (_super) {
-    __extends(ControlsMenu, _super);
-    function ControlsMenu(menuSystem) {
-        var _this = _super.call(this, menuSystem, {
-            backgroundColor: 0x000000,
-            layers: [
-                { name: 'bg' },
-                { name: 'entities' },
-                { name: 'player' },
-                { name: 'walls' },
-            ],
-            physicsGroups: {
-                'player': {},
-                'walls': { immovable: true },
-            },
-            collisions: [
-                { move: 'player', from: 'walls' },
-            ],
-            collisionIterations: 4,
-            useRaycastDisplacementThreshold: Infinity,
-            maxDistancePerCollisionStep: 16,
-        }) || this;
-        _this.addWorldObject(new Sprite({
-            x: 0, y: 0,
-            texture: Texture.filledRect(16, global.gameHeight, 0x000000),
-            layer: 'walls',
-            physicsGroup: 'walls',
-            bounds: new RectBounds(0, 0, 16, global.gameHeight)
-        }));
-        _this.addWorldObject(new Sprite({
-            x: 0, y: 0,
-            texture: Texture.filledRect(global.gameWidth, 16, 0x000000),
-            layer: 'walls',
-            physicsGroup: 'walls',
-            bounds: new RectBounds(0, 0, global.gameWidth, 16)
-        }));
-        _this.addWorldObject(new Sprite({
-            x: global.gameWidth - 16, y: 0,
-            texture: Texture.filledRect(16, global.gameHeight, 0x000000),
-            layer: 'walls',
-            physicsGroup: 'walls',
-            bounds: new RectBounds(0, 0, 16, global.gameHeight)
-        }));
-        _this.addWorldObject(new Sprite({
-            x: 0, y: global.gameHeight - 16,
-            texture: Texture.filledRect(global.gameWidth, 16, 0x000000),
-            layer: 'walls',
-            physicsGroup: 'walls',
-            bounds: new RectBounds(0, 0, global.gameWidth, 16)
-        }));
-        _this.addWorldObject(new Sprite({
-            x: 15, y: 15,
-            texture: Texture.outlineRect(global.gameWidth - 30, global.gameHeight - 30, 0xFFFFFF),
-        }));
-        _this.addWorldObject(new SpriteText({
-            x: 30, y: 24,
-            text: "controls:"
-        }));
-        _this.addWorldObject(new SpriteText({
-            x: 30, y: 60,
-            text: "WASD/ARROWS\n to grapple"
-        }));
-        _this.addWorldObject(new SpriteText({
-            x: 36, y: 170,
-            text: "try it :)\n|"
-        }));
-        _this.addWorldObject(new SpriteText({
-            x: 36, y: 172,
-            text: "\nv"
-        }));
-        _this.addWorldObject(new MenuTextButton({
-            x: 16, y: 226,
-            text: "back",
-            onClick: function () {
-                menuSystem.game.playSound('click');
-                menuSystem.back();
-            }
-        }));
-        return _this;
-    }
-    ControlsMenu.prototype.update = function () {
-        _super.prototype.update.call(this);
-        if (Input.justDown(Input.GAME_CLOSE_MENU)) {
-            Input.consume(Input.GAME_CLOSE_MENU);
-            this.menuSystem.back();
-        }
-    };
-    return ControlsMenu;
-}(Menu));
-var BASE_CAMERA_MOVEMENT = Camera.Movement.SMOOTH(100, 10, 10);
 var stages = {
     'game': function () {
         var world = new World({
-            width: 272, height: 192,
-            backgroundColor: 0x000000,
+            backgroundColor: 0x62ADBB,
+            camera: {
+                movement: Camera.Movement.SNAP()
+            },
             layers: [
                 { name: 'bg' },
+                { name: 'doors' },
+                { name: 'walls', effects: { post: { filters: [new WallFilter(), new JaggyRemoverFilter()] } } },
                 { name: 'main' },
+                { name: 'items' },
+                { name: 'pressx' },
+                { name: 'player' },
                 { name: 'fg' },
             ],
             physicsGroups: {
                 'player': {},
+                'npcs': {},
                 'walls': {},
             },
             collisions: [
                 { move: 'player', from: 'walls' },
+                { move: 'npcs', from: 'walls' },
             ],
             collisionIterations: 4,
             // TODO: rethink this? does it actually help?
@@ -11322,10 +11738,92 @@ var stages = {
             maxDistancePerCollisionStep: 8,
             globalSoundHumanizePercent: 0.1,
         });
-        world.camera.snapPosition();
+        world.addWorldObject(new Tilemap({
+            tileset: 'tiles',
+            tilemap: 'world',
+            layer: 'walls',
+            physicsGroup: 'walls',
+        }));
+        world.addWorldObject(new Sprite({ texture: 'world_bg', layer: 'bg' }));
+        // Tutorials
+        world.addWorldObject(new Tutorial(600, 292, 0, 0, "Press the arrow keys to move"));
+        world.addWorldObject(new Tutorial(1000, 292, 1, 0, "Press Z to jump, hold it to jump higher"));
+        // NPCs
+        var diggur = world.addWorldObject(new Diggur(2127, 255));
+        diggur.addChild(new CutsceneInteractable(0, 0, 'i_diggur_surface')).setBoundsSize(32, 32);
+        var scammir = world.addWorldObject(new Scammir(2330, 255));
+        scammir.flipX = true;
+        scammir.addChild(new CutsceneInteractable(0, 0, 'i_scammir_surface')).setBoundsSize(32, 32);
+        var gobbor = world.addWorldObject(new Gobbor(120, 224));
+        gobbor.addChild(new CutsceneInteractable(0, 0, 'i_gobbor_surface')).setBoundsSize(32, 32);
+        var scammir_tele = world.addWorldObject(new Scammir(3664, 1471));
+        scammir_tele.name = "scammir_tele";
+        scammir_tele.flipX = true;
+        scammir_tele.addChild(new CutsceneInteractable(0, 0, 'i_scammir_tele')).setBoundsSize(32, 32);
+        // Doors
+        world.addWorldObject(new Door(570, 240, 266, 224));
+        world.addWorldObject(new Door(278, 207, 579, 256));
+        // Locked Doors
+        world.addWorldObject(new LockedDoor(1800, 880, 'reddoor', false));
+        world.addWorldObject(new LockedDoor(2538, 1184, 'blackdoor', false));
+        world.addWorldObject(new Sprite({ x: 3144, y: 1520, name: 'pitdoor1', texture: 'wooddoor', layer: 'doors', physicsGroup: 'walls', bounds: new RectBounds(-8, -16, 16, 32), immovable: true }));
+        world.addWorldObject(new Sprite({ x: 3000, y: 1512, name: 'pitdoor2', texture: 'wooddoor_side', layer: 'doors', physicsGroup: 'walls', bounds: new RectBounds(-24, -8, 48, 16), immovable: true }));
+        var movableDoor = world.addWorldObject(new LockedDoor(1800, 880, 'movabledoor', true));
+        movableDoor.visible = false;
+        movableDoor.physicsGroup = undefined;
+        // Levers
+        world.addWorldObject(new Lever(3000, 1504, 'lever_pit'));
+        // Items
+        world.addWorldObject(new Item(2600, 728, 'redkey'));
+        world.addWorldObject(new Item(4180, 728, 'redkey'));
+        world.addWorldObject(new Item(3412, 1456, 'blackkey'));
+        world.addWorldObject(new Item(2183, 1475, 'string'));
+        // Signs
+        world.addWorldObject(new CutsceneInteractable(644, 244, 'i_mgsign'));
+        world.addWorldObject(new CutsceneInteractable(1774, 244, 'i_jdsign'));
+        world.addWorldObject(new CutsceneInteractable(1832, 182, 'i_ssign'));
+        world.addWorldObject(new CutsceneInteractable(2177, 211, 'i_umsign'));
+        world.addWorldObject(new CutsceneInteractable(2460, 243, 'i_hsign'));
+        world.addWorldObject(new CutsceneInteractable(2890, 1555, 'i_leversign'));
+        // Door Cutscenes
+        world.addWorldObject(new CutsceneInteractable(1680, 240, 'i_jdhouse'));
+        world.addWorldObject(new CutsceneInteractable(1910, 178, 'i_shouse'));
+        world.addWorldObject(new CutsceneInteractable(2550, 240, 'i_hhouse'));
+        world.addWorldObject(new CutsceneInteractable(2172, 1215, 'i_loominggate')).setBoundsSize(64, 64);
+        // Etc.
+        world.addWorldObject(new Sprite({ x: 3744, y: 1408, texture: 'glass', physicsGroup: 'walls', bounds: new RectBounds(0, 0, 16, 64), immovable: true }));
+        world.addWorldObject(new CutsceneInteractable(3696, 1456, 'i_telescope')).setBoundsSize(64, 64);
+        world.addWorldObject(new CutsceneInteractable(3400, 1172, 'i_grass')).setBoundsSize(64, 64);
+        world.addWorldObject(new CrackedWall(3568, 1120));
+        world.addWorldObject(new Chest(200, 512));
+        world.addWorldObject(new Note(1900, 888)).visible = false;
+        // Orbs
+        world.addWorldObject(new Orb(2119, 1157, 'orb1_final', 0.45, 'bg'));
+        world.addWorldObject(new Orb(2172, 1144, 'orb2_final', 0.45, 'bg'));
+        world.addWorldObject(new Orb(2225, 1156, 'orb3_final', 0.45, 'fg')).visible = false;
+        world.addWorldObject(new Orb(3808, 1056, 'orb3', 0.5, 'fg'));
+        var player = world.addWorldObject(new Player(692, 255)); // Start
+        //let player = world.addWorldObject(new Player(2094, 255));  // Pit
+        //let player = world.addWorldObject(new Player(2273, 920));  // Start of UM
+        //let player = world.addWorldObject(new Player(2374, 1135)); // Orbs
+        //let player = world.addWorldObject(new Player(2848, 1567)); // Lever
+        //let player = world.addWorldObject(new Player(2480, 1567)); // String
+        //let player = world.addWorldObject(new Player(3296, 1183)); GIVE_ITEM('string'); // Grass
+        //let player = world.addWorldObject(new Player(290, 524));   // Chest
+        world.addWorldObject(new PressX(player));
+        world.addWorldObject(new CameraController(player));
         return world;
     },
 };
+function isOnSector(x, y) {
+    var cc = global.world.select.type(CameraController);
+    if (!cc)
+        return false;
+    return cc.sector.x === x && cc.sector.y === y;
+}
+var isResult = {};
+var scammirDoorInteractions = 0;
+var hasFallen = false;
 var storyboard = {
     'start': {
         type: 'start',
@@ -11334,16 +11832,917 @@ var storyboard = {
     'gameplay': {
         type: 'gameplay',
         transitions: []
+    },
+    'intro_undermine': {
+        type: 'cutscene',
+        script: function () {
+            var player, waitTime, THE, UNDERMINE;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        player = global.world.select.type(Player);
+                        return [4 /*yield*/, S.waitUntil(function () { return player.isGrounded(); })];
+                    case 1:
+                        _a.sent();
+                        global.world.playSound('crush');
+                        global.theater.runScript(S.shake(4, 0.5));
+                        waitTime = hasFallen ? 3 : 2;
+                        return [4 /*yield*/, S.wait(waitTime)];
+                    case 2:
+                        _a.sent();
+                        THE = global.theater.addWorldObject(new Sprite({
+                            x: global.gameWidth / 2,
+                            y: global.gameHeight / 2 - 40,
+                            texture: 'THE',
+                            alpha: 0,
+                        }));
+                        UNDERMINE = global.theater.addWorldObject(new Sprite({
+                            x: global.gameWidth / 2,
+                            y: global.gameHeight / 2,
+                            texture: 'UNDERMINE',
+                            alpha: 0,
+                            scaleX: 2,
+                            scaleY: 4,
+                        }));
+                        global.world.playSound('theundermine', { humanized: false });
+                        return [4 /*yield*/, S.simul(S.doOverTime(1, function (t) {
+                                THE.alpha = t;
+                                UNDERMINE.alpha = t;
+                            }), S.doOverTime(4, function (t) {
+                                UNDERMINE.scaleX = 2 + 2 * Tween.Easing.OutCubic(t);
+                            }))];
+                    case 3:
+                        _a.sent();
+                        //yield S.wait(2);
+                        return [4 /*yield*/, S.doOverTime(1, function (t) {
+                                THE.alpha = 1 - t;
+                                UNDERMINE.alpha = 1 - t;
+                            })];
+                    case 4:
+                        //yield S.wait(2);
+                        _a.sent();
+                        THE.removeFromWorld();
+                        UNDERMINE.removeFromWorld();
+                        global.theater.playMusic('caverns');
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    /* Items */
+    'item_redkey': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        GIVE_ITEM('redkey');
+                        global.world.select.nameAll('redkey').forEach(function (key) { return key.removeFromWorld(); });
+                        global.world.playSound('item_get');
+                        return [4 /*yield*/, S.dialog("Feeling moderately bamboozled, you pick up the Red Key.")];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("It can be used to open the Red Door.")];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'item_blackkey': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        GIVE_ITEM('blackkey');
+                        global.world.select.nameAll('blackkey').forEach(function (key) { return key.removeFromWorld(); });
+                        global.world.playSound('item_get');
+                        return [4 /*yield*/, S.dialog("After a long trek back through the Undermine, there's nothing more refreshing than an ice-cold Black Key.")];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'item_string': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        GIVE_ITEM('string');
+                        global.world.select.nameAll('string').forEach(function (key) { return key.removeFromWorld(); });
+                        global.world.playSound('item_get');
+                        return [4 /*yield*/, S.dialog("String!! Ha ha. This used to make you laugh so hard back in the day.")];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("Pocketed the string for later use.")];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    /* Locked Doors */
+    'i_reddoor': {
+        type: 'cutscene',
+        script: function () {
+            var _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0: return [4 /*yield*/, S.chooseItem("Which item?", isResult)];
+                    case 1:
+                        _b.sent();
+                        if (!(isResult.item === 'redkey')) return [3 /*break*/, 4];
+                        return [4 /*yield*/, S.dialog("The Red Key slides snugly into the keyhole.")];
+                    case 2:
+                        _b.sent();
+                        (_a = global.world.select.name('reddoor')) === null || _a === void 0 ? void 0 : _a.removeFromWorld();
+                        global.world.playSound('crush');
+                        global.theater.runScript(S.shake(2, 0.3));
+                        return [4 /*yield*/, S.dialog("This sure was a hassle to unlock. You can't believe you have to do this every time you come down here.")];
+                    case 3:
+                        _b.sent();
+                        return [3 /*break*/, 8];
+                    case 4:
+                        if (!(isResult.item === 'cane')) return [3 /*break*/, 6];
+                        return [4 /*yield*/, S.dialog("Let's not resort to this just yet.")];
+                    case 5:
+                        _b.sent();
+                        return [3 /*break*/, 8];
+                    case 6: return [4 /*yield*/, S.dialog("That doesn't really strike you as a \"door opening item\".")];
+                    case 7:
+                        _b.sent();
+                        _b.label = 8;
+                    case 8: return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_blackdoor': {
+        type: 'cutscene',
+        script: function () {
+            var _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0: return [4 /*yield*/, S.chooseItem("Which item?", isResult)];
+                    case 1:
+                        _b.sent();
+                        if (!(isResult.item === 'blackkey')) return [3 /*break*/, 5];
+                        return [4 /*yield*/, S.dialog("You insert the Black Key, but it doesn't turn.")];
+                    case 2:
+                        _b.sent();
+                        return [4 /*yield*/, S.dialog("Upon closer inspection, it appears the keyhole on this door is upside down.")];
+                    case 3:
+                        _b.sent();
+                        return [4 /*yield*/, S.dialog("Try using the key upside down.")];
+                    case 4:
+                        _b.sent();
+                        REPLACE_ITEM('blackkey', 'blackkey_upsidedown');
+                        return [3 /*break*/, 21];
+                    case 5:
+                        if (!(isResult.item === 'blackkey_upsidedown')) return [3 /*break*/, 10];
+                        return [4 /*yield*/, S.dialog("You insert the Black Key upside down")];
+                    case 6:
+                        _b.sent();
+                        return [4 /*yield*/, S.dialog("but it still doesn't turn.")];
+                    case 7:
+                        _b.sent();
+                        return [4 /*yield*/, S.dialog("this is peculiar.")];
+                    case 8:
+                        _b.sent();
+                        return [4 /*yield*/, S.dialog("Hold on, try inserting the key rightside up again...")];
+                    case 9:
+                        _b.sent();
+                        REPLACE_ITEM('blackkey_upsidedown', 'blackkey_rightsideup');
+                        return [3 /*break*/, 21];
+                    case 10:
+                        if (!(isResult.item === 'blackkey_rightsideup')) return [3 /*break*/, 13];
+                        (_a = global.world.select.name('blackdoor')) === null || _a === void 0 ? void 0 : _a.removeFromWorld();
+                        global.world.playSound('crush');
+                        global.theater.runScript(S.shake(2, 0.3));
+                        return [4 /*yield*/, S.dialog("That's the ticket! The door unlocks.")];
+                    case 11:
+                        _b.sent();
+                        return [4 /*yield*/, S.dialog("Unfortunately, so much reorientation in such a small amount of time has caused the key to disintegrate.")];
+                    case 12:
+                        _b.sent();
+                        CONSUME_ITEM('blackkey_rightsideup');
+                        return [3 /*break*/, 21];
+                    case 13:
+                        if (!(isResult.item === 'redkey')) return [3 /*break*/, 17];
+                        return [4 /*yield*/, S.dialog("The Red Key slides snugly into the keyhole.")];
+                    case 14:
+                        _b.sent();
+                        return [4 /*yield*/, S.dialog(".................................")];
+                    case 15:
+                        _b.sent();
+                        return [4 /*yield*/, S.dialog("... just kidding.")];
+                    case 16:
+                        _b.sent();
+                        return [3 /*break*/, 21];
+                    case 17:
+                        if (!(isResult.item === 'cane')) return [3 /*break*/, 19];
+                        return [4 /*yield*/, S.dialog("Let's not resort to this just yet.")];
+                    case 18:
+                        _b.sent();
+                        return [3 /*break*/, 21];
+                    case 19: return [4 /*yield*/, S.dialog("That doesn't really strike you as a \"door opening item\".")];
+                    case 20:
+                        _b.sent();
+                        _b.label = 21;
+                    case 21: return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    /* Levers */
+    'lever_pit': {
+        type: 'cutscene',
+        script: function () {
+            var _a, _b;
+            return __generator(this, function (_c) {
+                (_a = global.world.select.name('pitdoor1', false)) === null || _a === void 0 ? void 0 : _a.removeFromWorld();
+                (_b = global.world.select.name('pitdoor2', false)) === null || _b === void 0 ? void 0 : _b.removeFromWorld();
+                return [2 /*return*/];
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    /* Interactions */
+    'i_mgsign': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, S.dialog("Mirigram and Gobbor's House")];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_jdsign': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, S.dialog("Jergol and Diggur's Cool Science House")];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_jdhouse': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, S.dialog("It's locked.")];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_ssign': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, S.dialog("Scammir's House")];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("A note scrawled on the sign in nearly illegible handwriting reads: \"Come on in! Door's unlocked :)\".")];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_shouse': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        scammirDoorInteractions++;
+                        if (!(scammirDoorInteractions <= 1)) return [3 /*break*/, 3];
+                        global.theater.runScript(S.shake(2, 0.3));
+                        global.world.playSound('crush');
+                        return [4 /*yield*/, S.dialog("YEOWCH!!")];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("... the handle shocked you. Kids these days and their electronic devices...")];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 9];
+                    case 3:
+                        if (!(scammirDoorInteractions === 2)) return [3 /*break*/, 6];
+                        global.theater.runScript(S.shake(2, 0.3));
+                        global.world.playSound('crush');
+                        return [4 /*yield*/, S.dialog("YEOWCH!!")];
+                    case 4:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("The electric shock resonating through your body makes you inexplicably feel 20 years younger.")];
+                    case 5:
+                        _a.sent();
+                        return [3 /*break*/, 9];
+                    case 6: return [4 /*yield*/, S.dialog("...........................")];
+                    case 7:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("... the handle has run out of battery.")];
+                    case 8:
+                        _a.sent();
+                        _a.label = 9;
+                    case 9: return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_umsign': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, S.dialog("The Undermine: Adventurers only beyond this point!")];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_hsign': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, S.dialog("Huntar's House")];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_hhouse': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, S.dialog("It's locked.")];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_diggur_surface': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, S.dialog("Another day, another quest... I wonder, what adventures await us today?")];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("Are you coming down too, Mrs M? What a pleasant surprise.")];
+                    case 2:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("Perhaps our paths may cross down below.")];
+                    case 3:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_scammir_surface': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, S.dialog("pssst")];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("fancy a lil scam~?")];
+                    case 2:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("first ones on the house")];
+                    case 3:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialogAdd(" ... not!! psyche!")];
+                    case 4:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_gobbor_surface': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, S.dialog(".....................")];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("Gobbor doesn't say anything, like usual.")];
+                    case 2:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("Such a polite young man.")];
+                    case 3:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_leversign': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, S.dialog("The sign reads: \"the door ahead is locked!! quick, pull the lever to unlock it!!\"")];
+                    case 1:
+                        _a.sent();
+                        if (!hasFallen) return [3 /*break*/, 6];
+                        return [4 /*yield*/, S.dialog("...........................")];
+                    case 2:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("... you can't believe you actually pulled that lever.")];
+                    case 3:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("But you can't be too mad about it, as your attention shifts toward the lever, now floating inexplicably in mid air.")];
+                    case 4:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("Truly, we are living in the future.")];
+                    case 5:
+                        _a.sent();
+                        return [3 /*break*/, 8];
+                    case 6: return [4 /*yield*/, S.dialog("... the prank is so obvious. no one would ever pull that lever.")];
+                    case 7:
+                        _a.sent();
+                        _a.label = 8;
+                    case 8: return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_note': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, S.dialog("get scammed ~")];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_scammir_tele': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, S.dialog("teehee")];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("free telescope viewings, just $5 per view ~")];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_telescope': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, S.chooseItem("Which item?", isResult)];
+                    case 1:
+                        _a.sent();
+                        if (!(isResult.item === 'nickel')) return [3 /*break*/, 5];
+                        return [4 /*yield*/, S.dialog("Using the nickel, you peer into the telescope, and are offered the sight of new areas far and wide...")];
+                    case 2:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("... a glimpse of jokes that have not been and would never be...")];
+                    case 3:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("... you can even see part of the subworld sticking out.")];
+                    case 4:
+                        _a.sent();
+                        CONSUME_ITEM('nickel');
+                        return [3 /*break*/, 8];
+                    case 5: return [4 /*yield*/, S.dialog("i dont know what that is")];
+                    case 6:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("sounds like a scam to me")];
+                    case 7:
+                        _a.sent();
+                        _a.label = 8;
+                    case 8: return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_grass': {
+        type: 'cutscene',
+        script: function () {
+            var player_1;
+            var _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0: return [4 /*yield*/, S.dialog("A discreet patch of grass, rife with humorous potential.")];
+                    case 1:
+                        _b.sent();
+                        return [4 /*yield*/, S.dialog("If only you had some String...")];
+                    case 2:
+                        _b.sent();
+                        return [4 /*yield*/, S.chooseItem("Which item?", isResult)];
+                    case 3:
+                        _b.sent();
+                        if (!(isResult.item === 'string')) return [3 /*break*/, 5];
+                        global.world.addWorldObject(new Sprite({
+                            x: 3383, y: 1175,
+                            texture: Texture.filledRect(35, 1, 0xFFFFFF, 1),
+                            layer: 'bg',
+                        }));
+                        (_a = global.world.select.name('ci_i_grass')) === null || _a === void 0 ? void 0 : _a.removeFromWorld();
+                        CONSUME_ITEM('string');
+                        return [4 /*yield*/, S.dialog("You tie the string to each post. The grass does a particularly bad job of hiding it, but you'd be surprised what people fall for these days.")];
+                    case 4:
+                        _b.sent();
+                        player_1 = global.world.select.type(Player);
+                        global.theater.runScript(S.chain(S.waitUntil(function () { return player_1.x < 3272; }), S.call(function () { return global.theater.storyManager.cutsceneManager.playCutscene('diggur_trip'); })));
+                        return [3 /*break*/, 7];
+                    case 5: return [4 /*yield*/, S.dialog("That is not string. How foolish of you to even consider it.")];
+                    case 6:
+                        _b.sent();
+                        _b.label = 7;
+                    case 7: return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_crackedwall': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, S.dialog("This section of wall appears cracked. You wonder what could be on the other side?")];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("Unfortunately, it would take a considerable amount of force to destroy it.")];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_diggur_fall': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, S.dialog("Oof... Mrs M... help...")];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_loominggate': {
+        type: 'cutscene',
+        script: function () {
+            var loomingGateOpen, player;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        loomingGateOpen = global.world.select.name('orb3_final').visible;
+                        if (!loomingGateOpen) return [3 /*break*/, 1];
+                        player = global.world.select.type(Player);
+                        player.teleport(248, 1567);
+                        return [3 /*break*/, 4];
+                    case 1: return [4 /*yield*/, S.dialog("The looming Gate is closed.")];
+                    case 2:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("Luckily, two of the orbs happen to be inserted already.")];
+                    case 3:
+                        _a.sent();
+                        _a.label = 4;
+                    case 4: return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'i_chest': {
+        type: 'cutscene',
+        script: function () {
+            var player, chest, prank;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        player = global.world.select.type(Player);
+                        chest = global.world.select.type(Chest);
+                        chest.open();
+                        return [4 /*yield*/, S.wait(2)];
+                    case 1:
+                        _a.sent();
+                        _a.label = 2;
+                    case 2:
+                        if (!(player.x > 166)) return [3 /*break*/, 4];
+                        player.controller.left = true;
+                        return [4 /*yield*/];
+                    case 3:
+                        _a.sent();
+                        return [3 /*break*/, 2];
+                    case 4: return [4 /*yield*/, S.wait(1)];
+                    case 5:
+                        _a.sent();
+                        player.flipX = false;
+                        return [4 /*yield*/, S.wait(0.5)];
+                    case 6:
+                        _a.sent();
+                        player.flipX = true;
+                        return [4 /*yield*/, S.wait(0.5)];
+                    case 7:
+                        _a.sent();
+                        player.flipX = false;
+                        return [4 /*yield*/, S.wait(1)];
+                    case 8:
+                        _a.sent();
+                        return [4 /*yield*/, S.playAnimation(player, 'grab', true, true)];
+                    case 9:
+                        _a.sent();
+                        prank = global.world.addWorldObject(new Sprite({
+                            x: player.x,
+                            y: player.y - 5,
+                            texture: 'prank',
+                            layer: 'fg',
+                            scaleX: 0,
+                            scaleY: 0,
+                        }));
+                        global.world.playSound('hjonk');
+                        player.playAnimation('hold', true);
+                        return [4 /*yield*/, S.simul(S.tweenPt(0.5, prank, vec2(prank.x, prank.y), vec2(player.x, player.y - 32), Tween.Easing.OutCubic), S.tween(0.5, prank, 'scaleX', 0, 1), S.tween(0.5, prank, 'scaleY', 0, 1))];
+                    case 10:
+                        _a.sent();
+                        return [4 /*yield*/, S.wait(1)];
+                    case 11:
+                        _a.sent();
+                        player.playAnimation('slam', true);
+                        return [4 /*yield*/, S.simul(S.tweenPt(0.3, prank, vec2(prank.x, prank.y), vec2(chest.x, chest.y - 20), Tween.Easing.OutCubic), S.tween(0.3, prank, 'scaleX', 1, 0), S.tween(0.3, prank, 'scaleY', 1, 0), S.wait(0.5))];
+                    case 12:
+                        _a.sent();
+                        player.playAnimation('idle', true);
+                        return [4 /*yield*/, S.wait(1)];
+                    case 13:
+                        _a.sent();
+                        player.playAnimation('slam', true);
+                        chest.close();
+                        return [4 /*yield*/, S.wait(0.5)];
+                    case 14:
+                        _a.sent();
+                        player.playAnimation('idle', true);
+                        return [4 /*yield*/, S.wait(1)];
+                    case 15:
+                        _a.sent();
+                        global.theater.addWorldObject(new Sprite({ texture: Texture.filledRect(global.gameWidth, global.gameHeight, 0x000000), layer: Theater.LAYER_SLIDES }));
+                        global.theater.runScript(function () {
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0: return [4 /*yield*/];
+                                    case 1:
+                                        _a.sent();
+                                        global.theater.storyManager.cutsceneManager.playCutscene('credits');
+                                        return [2 /*return*/];
+                                }
+                            });
+                        });
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'credits' }]
+    },
+    'diggur_trip': {
+        type: 'cutscene',
+        script: function () {
+            var player, diggur, startx, endx, basey;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        global.theater.musicManager.stopMusic(0.5);
+                        global.world.select.typeAll(Diggur).forEach(function (diggur) { return diggur.removeFromWorld(); });
+                        player = global.world.select.type(Player);
+                        diggur = global.world.addWorldObject(new Diggur(3120, 1150));
+                        return [4 /*yield*/, S.loopUntil(function () { return diggur.x > 3392; }, function () {
+                                return __generator(this, function (_a) {
+                                    switch (_a.label) {
+                                        case 0:
+                                            diggur.controller.right = true;
+                                            if (diggur.x > player.x) {
+                                                player.flipX = false;
+                                            }
+                                            return [4 /*yield*/];
+                                        case 1:
+                                            _a.sent();
+                                            return [2 /*return*/];
+                                    }
+                                });
+                            })];
+                    case 1:
+                        _a.sent();
+                        diggur.y -= 5;
+                        diggur.v.y = -300;
+                        diggur.spinning = true;
+                        startx = diggur.x;
+                        endx = 3576;
+                        basey = diggur.y;
+                        global.world.playSound('trip');
+                        return [4 /*yield*/, S.doOverTime(1, function (t) {
+                                diggur.x = M.lerp(startx, endx, t);
+                                diggur.y = basey + M.jumpParabola(0, -80, 0, t);
+                            })];
+                    case 2:
+                        _a.sent();
+                        diggur.addChild(new CutsceneInteractable(-16, 0, 'i_diggur_fall')).setBoundsSize(32, 32);
+                        return [4 /*yield*/, S.wait(2.5)];
+                    case 3:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("Ha ha")];
+                    case 4:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("Always good for a laugh.")];
+                    case 5:
+                        _a.sent();
+                        global.theater.musicManager.playMusic('caverns', 0.5);
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'collect_orb': {
+        type: 'cutscene',
+        script: function () {
+            var orb, player, orbfinal;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        orb = global.world.select.name('orb3');
+                        player = global.world.select.type(Player);
+                        global.world.playSound('theundermine', { humanized: false });
+                        orb.shaking = true;
+                        return [4 /*yield*/, S.doOverTime(2, function (t) {
+                                orb.scaleX = 0.5 - 0.25 * Tween.Easing.OutCubic(t);
+                                orb.scaleY = 0.5 - 0.25 * Tween.Easing.OutCubic(t);
+                            })];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, S.wait(1)];
+                    case 2:
+                        _a.sent();
+                        return [4 /*yield*/, S.doOverTime(2, function (t) {
+                                orb.scaleX = 0.25 + 40 * t;
+                                orb.scaleY = 0.25 + 40 * t;
+                            })];
+                    case 3:
+                        _a.sent();
+                        player.x = 2166;
+                        player.y = 1247;
+                        orb.removeFromWorld();
+                        global.theater.playMusic('caverns');
+                        orbfinal = global.world.select.name('orb3_final');
+                        orbfinal.visible = true;
+                        orbfinal.scaleX = 50;
+                        orbfinal.scaleY = 50;
+                        return [4 /*yield*/, S.doOverTime(2, function (t) {
+                                orbfinal.scaleX = 0.45 + 50 * (1 - t);
+                                orbfinal.scaleY = 0.45 + 50 * (1 - t);
+                            })];
+                    case 4:
+                        _a.sent();
+                        orbfinal.layer = 'bg';
+                        return [4 /*yield*/, S.wait(1)];
+                    case 5:
+                        _a.sent();
+                        return [4 /*yield*/, S.dialog("You obtained the Orb of Craftsmanship.")];
+                    case 6:
+                        _a.sent();
+                        global.world.addWorldObject(new Sprite({
+                            x: 2134,
+                            y: 1179,
+                            texture: 'lgdoor_open',
+                            layer: 'bg',
+                        }));
+                        global.world.playSound('crush');
+                        global.theater.runScript(S.shake(2, 0.3));
+                        return [2 /*return*/];
+                }
+            });
+        },
+        transitions: [{ toNode: 'gameplay' }]
+    },
+    'credits': {
+        type: 'cutscene',
+        script: function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        global.theater.playMusic('credits');
+                        return [4 /*yield*/, S.fadeOut(0, 0x000000)];
+                    case 1:
+                        _a.sent();
+                        global.theater.addWorldObject(new SpriteText({ x: global.gameWidth / 2, y: 24, text: 'On Undermining.', anchor: Vector2.TOP_CENTER, layer: Theater.LAYER_SLIDES }));
+                        return [4 /*yield*/, S.wait(2)];
+                    case 2:
+                        _a.sent();
+                        global.theater.addWorldObject(new SpriteText({ x: global.gameWidth / 2, y: 56, text: 'A Game by Hayden "lectvs" McCraw', anchor: Vector2.TOP_CENTER, layer: Theater.LAYER_SLIDES }));
+                        return [4 /*yield*/, S.wait(2)];
+                    case 3:
+                        _a.sent();
+                        global.theater.addWorldObject(new SpriteText({ x: global.gameWidth / 2, y: 88, text: 'Based on the "On Being Undermined."\ncinematic universe created by Andrfw', anchor: Vector2.TOP_CENTER, layer: Theater.LAYER_SLIDES }));
+                        return [4 /*yield*/, S.wait(2)];
+                    case 4:
+                        _a.sent();
+                        global.theater.addWorldObject(new SpriteText({ x: global.gameWidth / 2, y: 152, text: 'Special Thanks:', anchor: Vector2.TOP_CENTER, layer: Theater.LAYER_SLIDES }));
+                        return [4 /*yield*/, S.wait(2)];
+                    case 5:
+                        _a.sent();
+                        global.theater.addWorldObject(new SpriteText({ x: global.gameWidth / 2, y: 184, text: 'Andrew Murray           Original Game\n                             + Assets', anchor: Vector2.TOP_CENTER, layer: Theater.LAYER_SLIDES }));
+                        return [4 /*yield*/, S.wait(2)];
+                    case 6:
+                        _a.sent();
+                        global.theater.addWorldObject(new SpriteText({ x: global.gameWidth / 2, y: 232, text: 'Andrew Murray             Playtesting', anchor: Vector2.TOP_CENTER, layer: Theater.LAYER_SLIDES }));
+                        return [4 /*yield*/, S.wait(2)];
+                    case 7:
+                        _a.sent();
+                        global.theater.addWorldObject(new SpriteText({ x: global.gameWidth / 2, y: 272, text: 'Thanks for Playing!', anchor: Vector2.TOP_CENTER, layer: Theater.LAYER_SLIDES }));
+                        _a.label = 8;
+                    case 8:
+                        if (!true) return [3 /*break*/, 10];
+                        return [4 /*yield*/];
+                    case 9:
+                        _a.sent();
+                        return [3 /*break*/, 8];
+                    case 10: return [2 /*return*/];
+                }
+            });
+        },
+        transitions: []
     }
 };
 /// <reference path="./menus.ts"/>
 /// <reference path="./stages.ts"/>
 /// <reference path="./storyboard.ts"/>
 Main.loadConfig({
-    gameCodeName: "ruse",
-    gameWidth: 240,
-    gameHeight: 160,
-    canvasScale: 4,
+    gameCodeName: "mirigram",
+    gameWidth: 400,
+    gameHeight: 320,
+    canvasScale: 2,
     backgroundColor: 0x000000,
     fpsLimit: 30,
     preloadBackgroundColor: 0x000000,
@@ -11353,21 +12752,23 @@ Main.loadConfig({
     tilesets: Assets.tilesets,
     pyxelTilemaps: Assets.pyxelTilemaps,
     spriteTextTags: Assets.spriteTextTags,
-    defaultZBehavior: 'threequarters',
-    defaultSpriteTextFont: Assets.fonts.DELUXE16,
+    defaultZBehavior: 'noop',
+    defaultSpriteTextFont: Assets.fonts.ANDRFW,
     defaultOptions: {
         volume: 0.5,
         controls: {
             // General
             'fullscreen': ['f'],
             // Game
-            'left': ['ArrowLeft', 'a'],
-            'right': ['ArrowRight', 'd'],
-            'up': ['ArrowRight', 'w'],
-            'down': ['ArrowRight', 's'],
+            'left': ['ArrowLeft'],
+            'right': ['ArrowRight'],
+            'up': ['ArrowUp'],
+            'down': ['ArrowDown'],
+            'jump': ['z'],
+            'interact': ['x'],
             // Presets
-            'game_advanceCutscene': ['MouseLeft', 'e', ' '],
-            'game_pause': ['Escape', 'Backspace'],
+            'game_advanceCutscene': ['x', 'z'],
+            'game_pause': [],
             'game_closeMenu': ['Escape', 'Backspace'],
             'game_select': ['MouseLeft'],
             'debug_moveCameraUp': ['i'],
@@ -11395,7 +12796,7 @@ Main.loadConfig({
         }
     },
     game: {
-        entryPointMenuClass: IntroMenu,
+        entryPointMenuClass: MainMenu,
         pauseMenuClass: PauseMenu,
         theaterConfig: {
             stages: stages,
@@ -11407,25 +12808,32 @@ Main.loadConfig({
                 storyEvents: {},
             },
             dialogBox: function () { return new DialogBox({
-                x: 80, y: 50,
+                x: 200, y: 280,
                 texture: 'dialogbox',
-                dialogFont: Assets.fonts.DELUXE16,
-                textAreaFull: { x: -70, y: -42, width: 140, height: 84 },
+                dialogFont: Assets.fonts.ANDRFW,
+                textAreaFull: { x: -190, y: -34, width: 380, height: 68 },
                 textAreaPortrait: { x: -70, y: -42, width: 140, height: 84 },
                 portraitPosition: { x: 78, y: 0 },
-                startSound: 'click',
+                //startSound: 'click',
                 speakSound: 'dialogspeak'
             }); },
         },
     },
     debug: {
-        debug: true,
-        font: Assets.fonts.DELUXE16,
+        debug: false,
+        font: Assets.fonts.ANDRFW,
         fontStyle: { color: 0xFFFFFF },
         allPhysicsBounds: false,
         moveCameraWithArrows: true,
         showOverlay: true,
-        overlayFeeds: [],
+        overlayFeeds: [
+            function (world) {
+                var cc = world.select.type(CameraController, false);
+                if (!cc)
+                    return '';
+                return "sec: " + cc.sector.x + " " + cc.sector.y;
+            },
+        ],
         skipRate: 1,
         programmaticInput: false,
         autoplay: true,
@@ -11435,3 +12843,382 @@ Main.loadConfig({
         experiments: {},
     },
 });
+var Note = /** @class */ (function (_super) {
+    __extends(Note, _super);
+    function Note(x, y) {
+        var _this = _super.call(this, {
+            name: 'note',
+            x: x, y: y,
+            texture: 'note',
+            layer: 'bg',
+        }) || this;
+        _this.addChild(new CutsceneInteractable(0, 0, 'i_note'));
+        return _this;
+    }
+    return Note;
+}(Sprite));
+var Orb = /** @class */ (function (_super) {
+    __extends(Orb, _super);
+    function Orb(x, y, name, scale, layer) {
+        var _this = _super.call(this, {
+            name: name,
+            x: x, y: y,
+            texture: 'orb',
+            layer: layer,
+            scaleX: scale,
+            scaleY: scale,
+        }) || this;
+        _this.shaking = false;
+        _this.twitchTimer = new Timer(0.2, function () { return _this.angle = Random.int(0, 3) * 90; }, true);
+        return _this;
+    }
+    Orb.prototype.update = function () {
+        _super.prototype.update.call(this);
+        this.twitchTimer.update(this.delta);
+        if (this.shaking) {
+            this.offsetX = Random.int(-5, 5) * (1 - this.scaleX);
+            this.offsetY = Random.int(-5, 5) * (1 - this.scaleY);
+        }
+    };
+    return Orb;
+}(Sprite));
+var Player = /** @class */ (function (_super) {
+    __extends(Player, _super);
+    function Player(x, y) {
+        var _this = _super.call(this, {
+            x: x, y: y,
+            animations: [
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'mirigram', textures: [0, 1], frameRate: 2, count: Infinity }),
+                Animations.fromTextureList({ name: 'run', texturePrefix: 'mirigram', textures: [4, 5], frameRate: 4, count: Infinity, overrides: {
+                        0: { callback: function () { return _this.world.playSound('walk'); } },
+                        1: { callback: function () { return _this.world.playSound('walk'); } },
+                    } }),
+                Animations.fromTextureList({ name: 'jump', texturePrefix: 'mirigram', textures: [8], frameRate: 1, count: Infinity }),
+                Animations.fromTextureList({ name: 'fall', texturePrefix: 'mirigram', textures: [9], frameRate: 1, count: Infinity }),
+                Animations.fromTextureList({ name: 'spin', textures: ['spin'], frameRate: 1, count: Infinity }),
+                Animations.fromTextureList({ name: 'laying', texturePrefix: 'mirigram', textures: [11], frameRate: 1, count: Infinity }),
+                Animations.fromTextureList({ name: 'grab', texturePrefix: 'mirigram', textures: [12, 12, 12, 12, 12, 13, 12, 13, 12, 13, 12, 13], frameRate: 4, count: 1, oneOff: true, overrides: {
+                        5: { callback: function () { return _this.world.playSound('land'); } },
+                        6: { callback: function () { return _this.world.playSound('land').volume = 0.5; } },
+                        7: { callback: function () { return _this.world.playSound('land'); } },
+                        8: { callback: function () { return _this.world.playSound('land').volume = 0.5; } },
+                        9: { callback: function () { return _this.world.playSound('land'); } },
+                        10: { callback: function () { return _this.world.playSound('land').volume = 0.5; } },
+                        11: { callback: function () { return _this.world.playSound('land'); } },
+                    } }),
+                Animations.fromTextureList({ name: 'hold', texturePrefix: 'mirigram', textures: [14], frameRate: 1, count: Infinity, oneOff: true }),
+                Animations.fromTextureList({ name: 'slam', texturePrefix: 'mirigram', textures: [15], frameRate: 1, count: Infinity, oneOff: true }),
+            ],
+            defaultAnimation: 'idle',
+            layer: 'player',
+            physicsGroup: 'player',
+            bounds: new RectBounds(-8, -24, 16, 24),
+        }) || this;
+        _this.MAX_SPEED = 150;
+        _this.JUMP_FORCE = 440;
+        _this.GRAVITY_NORMAL = 800;
+        _this.GRAVITY_SPIN = 400;
+        _this.lastGrounded = true;
+        _this.midjump = false;
+        _this.spinning = false;
+        _this.laying = false;
+        _this.vylimit = Infinity;
+        _this.behavior = new ControllerBehavior(function () {
+            this.controller.left = Input.isDown('left');
+            this.controller.right = Input.isDown('right');
+            this.controller.jump = Input.justDown('jump');
+            this.controller.keys.holdingJump = Input.isDown('jump');
+            this.controller.interact = Input.justDown('interact');
+        });
+        return _this;
+    }
+    Player.prototype.update = function () {
+        var haxis = (this.controller.left ? -1 : 0) + (this.controller.right ? 1 : 0);
+        var grounded = this.isGrounded();
+        this.v.x = haxis * this.MAX_SPEED;
+        if (grounded) {
+            if (!this.lastGrounded)
+                this.world.playSound('land');
+            this.midjump = false;
+        }
+        if (this.controller.jump && grounded) {
+            this.v.y = -this.JUMP_FORCE;
+            this.midjump = true;
+            this.world.playSound('jump');
+        }
+        if (this.midjump && this.v.y < 0 && !this.controller.keys.holdingJump) {
+            this.v.y /= 2;
+            this.midjump = false;
+        }
+        if (this.spinning) {
+            this.angle += 720 * this.delta;
+            if (grounded) {
+                this.spinning = false;
+                this.laying = true;
+                this.angle = 0;
+            }
+        }
+        if (this.laying && haxis !== 0) {
+            this.laying = false;
+        }
+        this.gravity.y = this.spinning ? this.GRAVITY_SPIN : this.GRAVITY_NORMAL;
+        if (this.v.y > this.vylimit) {
+            this.v.y = this.vylimit;
+        }
+        _super.prototype.update.call(this);
+        this.updateInteract(grounded);
+        this.updateAnimation(haxis, grounded);
+        this.updateOrb();
+        this.lastGrounded = grounded;
+    };
+    Player.prototype.isControlRevoked = function () {
+        if (this.spinning)
+            return true;
+        return _super.prototype.isControlRevoked.call(this);
+    };
+    Player.prototype.updateInteract = function (grounded) {
+        var _this = this;
+        if (grounded) {
+            var interactables = this.world
+                .select.typeAll(Interactable)
+                .filter(function (i) { return i.visible && (!i.parent || i.parent.visible) && _this.bounds.isOverlapping(i.bounds); });
+            this.closestInteractable = M.argmin(interactables, function (i) { return G.distance(_this, i); });
+        }
+        else {
+            this.closestInteractable = undefined;
+        }
+        if (this.controller.interact && this.closestInteractable) {
+            this.controller.interact = false;
+            this.closestInteractable.interact();
+        }
+    };
+    Player.prototype.updateAnimation = function (haxis, grounded) {
+        if (haxis < 0) {
+            this.flipX = true;
+        }
+        else if (haxis > 0) {
+            this.flipX = false;
+        }
+        var vscale = M.clamp(this.v.y / this.JUMP_FORCE, -1, 1);
+        if (vscale < 0)
+            vscale *= 2;
+        this.scaleX = 1 + 0.2 * vscale;
+        if (this.spinning) {
+            this.playAnimation('spin');
+        }
+        else if (this.laying) {
+            this.playAnimation('laying');
+        }
+        else if (!grounded) {
+            if (this.v.y < 0) {
+                this.playAnimation('jump');
+            }
+            else {
+                this.playAnimation('fall');
+            }
+        }
+        else if (haxis === 0) {
+            this.playAnimation('idle');
+        }
+        else {
+            this.playAnimation('run');
+        }
+    };
+    Player.prototype.updateOrb = function () {
+        if (this.isControlRevoked())
+            return;
+        if (global.world.select.name('orb3_final').visible)
+            return;
+        var cc = this.world.select.type(CameraController);
+        if (cc.sector.x === 8 && cc.sector.y === 3 && this.x > 3808) {
+            global.theater.storyManager.cutsceneManager.playCutscene('collect_orb');
+        }
+    };
+    Player.prototype.isGrounded = function () {
+        this.bounds.y++;
+        var ground = this.world.select.overlap(this.bounds, ['walls']);
+        this.bounds.y--;
+        return !_.isEmpty(ground);
+    };
+    return Player;
+}(Sprite));
+var PressX = /** @class */ (function (_super) {
+    __extends(PressX, _super);
+    function PressX(player) {
+        var _this = _super.call(this, {
+            texture: 'pressx',
+            layer: 'pressx',
+            visible: false,
+        }) || this;
+        _this.player = player;
+        _this.currentTextureKey = 'pressx';
+        return _this;
+    }
+    PressX.prototype.update = function () {
+        _super.prototype.update.call(this);
+        if (this.player.closestInteractable && !global.theater.isCutscenePlaying) {
+            this.x = this.player.closestInteractable.x;
+            this.y = this.player.closestInteractable.y - 40;
+            this.visible = true;
+            if (this.player.closestInteractable.pressTexture !== this.currentTextureKey) {
+                this.setTexture(this.player.closestInteractable.pressTexture);
+                this.currentTextureKey = this.player.closestInteractable.pressTexture;
+            }
+        }
+        else {
+            this.visible = false;
+        }
+    };
+    return PressX;
+}(Sprite));
+var Scammir = /** @class */ (function (_super) {
+    __extends(Scammir, _super);
+    function Scammir(x, y) {
+        return _super.call(this, {
+            name: 'scammir',
+            x: x, y: y,
+            animations: [
+                Animations.fromTextureList({ name: 'idle', texturePrefix: 'scammir', textures: [0, 1], frameRate: 2.5, count: Infinity }),
+            ],
+            defaultAnimation: 'idle',
+            layer: 'main',
+            physicsGroup: 'npcs',
+            bounds: new RectBounds(-12, -4, 24, 24),
+            gravityy: 400,
+        }) || this;
+    }
+    return Scammir;
+}(Sprite));
+var TransitionScripts;
+(function (TransitionScripts) {
+    var startFallingTime = undefined;
+    function executeTransition(world, oldSector, newSector) {
+        var _a;
+        var player = world.select.type(Player);
+        if (oldSector.x === 0 && oldSector.y === 0 && newSector.x === -1 && newSector.y === 0) {
+            global.theater.playMusic('house', 0.5);
+            return false;
+        }
+        if (oldSector.x === -1 && oldSector.y === 0 && newSector.x === 0 && newSector.y === 0) {
+            global.theater.stopMusic(0.5);
+            return false;
+        }
+        if (oldSector.x === 4 && oldSector.y === 0 && newSector.x === 4 && newSector.y === 1) {
+            player.spinning = true;
+            return false;
+        }
+        if (oldSector.x === 4 && oldSector.y === 1 && newSector.x === 4 && newSector.y > 1) {
+            if (startFallingTime === undefined) {
+                startFallingTime = world.time;
+            }
+            if (world.time > startFallingTime + 5) {
+                player.v.y = Math.min(player.v.y, 800);
+                player.vylimit = Infinity;
+                global.theater.storyManager.cutsceneManager.playCutscene('intro_undermine');
+                return false;
+            }
+            player.teleport(player.x, player.y - world.height * (newSector.y - oldSector.y));
+            return true;
+        }
+        if (oldSector.x === 6 && oldSector.y === 1 && newSector.x === 6 && newSector.y === 2) {
+            player.teleport(player.x + 2 * world.width, player.y);
+            return true;
+        }
+        if (oldSector.x === 8 && oldSector.y === 2 && newSector.x === 7 && newSector.y === 2) {
+            player.teleport(player.x - 2 * world.width, player.y);
+            return true;
+        }
+        if (oldSector.x === 8 && oldSector.y === 2 && newSector.x === 9 && newSector.y === 2) {
+            if (player.y > 777) { // Lucky??
+                player.teleport(player.x - 2 * world.width, player.y);
+                return true;
+            }
+        }
+        if (oldSector.x === 6 && oldSector.y === 4 && newSector.x === 6 && newSector.y === 5) {
+            player.spinning = true;
+            player.vylimit = 400;
+            return false;
+        }
+        if (oldSector.x === 6 && oldSector.y === 5 && newSector.x === 6 && newSector.y === 6) {
+            global.theater.stopMusic(0.3);
+            return false;
+        }
+        if (oldSector.x === 6 && oldSector.y === 6 && newSector.x === 6 && newSector.y > 6) {
+            // :)
+            player.teleport(2215, -318);
+            hasFallen = true;
+            (_a = global.world.select.name('scammir', false)) === null || _a === void 0 ? void 0 : _a.removeFromWorld();
+            var movabledoor = global.world.select.name('movabledoor');
+            movabledoor.visible = true;
+            movabledoor.physicsGroup = 'walls';
+            global.world.select.name('note').visible = true;
+            return true;
+        }
+        if (oldSector.x === 7 && oldSector.y === 3 && newSector.x === 8 && newSector.y === 3) {
+            global.theater.stopMusic(0.5);
+            return false;
+        }
+        if (oldSector.x === 8 && oldSector.y === 3 && newSector.x === 7 && newSector.y === 3) {
+            global.theater.playMusic('caverns', 0.5);
+            return false;
+        }
+        if (oldSector.x === 4 && oldSector.y === 3 && newSector.x === -1 && newSector.y === 4) {
+            global.theater.stopMusic(0.5);
+            return false;
+        }
+        return false;
+    }
+    TransitionScripts.executeTransition = executeTransition;
+})(TransitionScripts || (TransitionScripts = {}));
+var Tutorial = /** @class */ (function (_super) {
+    __extends(Tutorial, _super);
+    function Tutorial(x, y, sectorx, sectory, text) {
+        var _this = _super.call(this, {
+            x: x, y: y, text: text,
+            style: { alpha: 0 },
+            anchor: Vector2.TOP_CENTER,
+        }) || this;
+        _this.sectorx = sectorx;
+        _this.sectory = sectory;
+        return _this;
+    }
+    Tutorial.prototype.update = function () {
+        _super.prototype.update.call(this);
+        var visible = true;
+        var cc = global.world.select.type(CameraController);
+        if (cc.sector.x !== this.sectorx || cc.sector.y !== this.sectory) {
+            visible = false;
+        }
+        if (visible) {
+            this.style.alpha = Math.min(this.style.alpha + 2 * this.delta, 1);
+        }
+        else {
+            this.style.alpha = 0;
+        }
+    };
+    return Tutorial;
+}(SpriteText));
+var WallFilter = /** @class */ (function (_super) {
+    __extends(WallFilter, _super);
+    function WallFilter() {
+        return _super.call(this, {
+            uniforms: {
+                'float camx': 0,
+                'float camy': 0,
+                'float camox': 0,
+                'float camoy': 0,
+            },
+            code: "\n                float n = cnoise(vec3((camx + camox + x)/8.0, (camy + camoy + y)/8.0, 0.0));\n                if (n >= 0.0) {\n                    vec4 gcxp = getColor(x + 1.0, y);\n                    vec4 gcxn = getColor(x - 1.0, y);\n                    vec4 gcyp = getColor(x, y + 1.0);\n                    vec4 gcyn = getColor(x, y - 1.0);\n                    if (gcxp.a > 0.0) {\n                        outp = gcxp;\n                    } else if (gcxn.a > 0.0) {\n                        outp = gcxn;\n                    } else if (gcyp.a > 0.0) {\n                        outp = gcyp;\n                    } else if (gcyn.a > 0.0) {\n                        outp = gcyn;\n                    }\n                }\n            ",
+        }) || this;
+    }
+    WallFilter.prototype.update = function () {
+        var cc = global.world.select.type(CameraController, false);
+        if (!cc)
+            return;
+        this.setUniform('camx', cc.sector.x * global.gameWidth);
+        this.setUniform('camy', cc.sector.y * global.gameHeight);
+        this.setUniform('camox', global.world.camera.worldOffsetX - global.world.camera.x);
+        this.setUniform('camoy', global.world.camera.worldOffsetY - global.world.camera.y);
+    };
+    return WallFilter;
+}(TextureFilter));

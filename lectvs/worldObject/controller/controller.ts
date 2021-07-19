@@ -15,6 +15,8 @@ class Controller {
     set jump(value: boolean) { this.keys.jump = value; }
     get attack() { return this.keys.attack; }
     set attack(value: boolean) { this.keys.attack = value; }
+    get interact() { return this.keys.interact; }
+    set interact(value: boolean) { this.keys.interact = value; }
 
     constructor() {
         this.moveDirection = vec2(0, 0);

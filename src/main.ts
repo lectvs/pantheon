@@ -3,10 +3,10 @@
 /// <reference path="./storyboard.ts"/>
 
 Main.loadConfig({
-    gameCodeName: "ruse",
-    gameWidth: 240,
-    gameHeight: 160,
-    canvasScale: 4,
+    gameCodeName: "mirigram",
+    gameWidth: 400,
+    gameHeight: 320,
+    canvasScale: 2,
     backgroundColor: 0x000000,
     fpsLimit: 30,
 
@@ -19,8 +19,8 @@ Main.loadConfig({
     pyxelTilemaps: Assets.pyxelTilemaps,
     spriteTextTags: Assets.spriteTextTags,
 
-    defaultZBehavior: 'threequarters',
-    defaultSpriteTextFont: Assets.fonts.DELUXE16,
+    defaultZBehavior: 'noop',
+    defaultSpriteTextFont: Assets.fonts.ANDRFW,
 
     defaultOptions: {
         volume: 0.5,
@@ -29,14 +29,16 @@ Main.loadConfig({
             'fullscreen':                ['f'],
 
             // Game
-            'left':                      ['ArrowLeft', 'a'],
-            'right':                     ['ArrowRight', 'd'],
-            'up':                        ['ArrowRight', 'w'],
-            'down':                      ['ArrowRight', 's'],
+            'left':                      ['ArrowLeft'],
+            'right':                     ['ArrowRight'],
+            'up':                        ['ArrowUp'],
+            'down':                      ['ArrowDown'],
+            'jump':                      ['z'],
+            'interact':                  ['x'],
 
             // Presets
-            'game_advanceCutscene':      ['MouseLeft', 'e', ' '],
-            'game_pause':                ['Escape', 'Backspace'],
+            'game_advanceCutscene':      ['x', 'z'],
+            'game_pause':                [],
             'game_closeMenu':            ['Escape', 'Backspace'],
             'game_select':               ['MouseLeft'],
 
@@ -67,7 +69,7 @@ Main.loadConfig({
     },
 
     game: {
-        entryPointMenuClass: IntroMenu,
+        entryPointMenuClass: MainMenu,
         pauseMenuClass: PauseMenu,
         theaterConfig: {
             stages: stages,
@@ -79,26 +81,31 @@ Main.loadConfig({
                 storyEvents: {},
             },
             dialogBox: () => new DialogBox({
-                x: 80, y: 50,
+                x: 200, y: 280,
                 texture: 'dialogbox',
-                dialogFont: Assets.fonts.DELUXE16,
-                textAreaFull: { x: -70, y: -42, width: 140, height: 84 },
+                dialogFont: Assets.fonts.ANDRFW,
+                textAreaFull: { x: -190, y: -34, width: 380, height: 68 },
                 textAreaPortrait: { x: -70, y: -42, width: 140, height: 84 },
                 portraitPosition: { x: 78, y: 0 },
-                startSound: 'click',
+                //startSound: 'click',
                 speakSound: 'dialogspeak'
             }),
         },
     },
 
     debug: {
-        debug: true,
-        font: Assets.fonts.DELUXE16,
+        debug: false,
+        font: Assets.fonts.ANDRFW,
         fontStyle: { color: 0xFFFFFF },
         allPhysicsBounds: false,
         moveCameraWithArrows: true,
         showOverlay: true,
         overlayFeeds: [
+            world => {
+                let cc = world.select.type(CameraController, false);
+                if (!cc) return '';
+                return `sec: ${cc.sector.x} ${cc.sector.y}`;
+            },
         ],
         skipRate: 1,
         programmaticInput: false,

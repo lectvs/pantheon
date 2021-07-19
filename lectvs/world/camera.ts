@@ -113,13 +113,21 @@ class Camera {
         if (Math.abs(dx) > hw) {
             let tx = Math.abs(hw / dx);
             let targetx = this.x + (1-tx)*dx;
-            this.x = M.lerpTime(this.x, targetx, this.movement.speed, this.world.delta);
+            if (this.movement.speed === Infinity) {
+                this.x = targetx;
+            } else {
+                this.x = M.lerpTime(this.x, targetx, this.movement.speed, this.world.delta);
+            }
         }
 
         if (Math.abs(dy) > hh) {
             let ty = Math.abs(hh / dy);
             let targety = this.y + (1-ty)*dy;
-            this.y = M.lerpTime(this.y, targety, this.movement.speed, this.world.delta);
+            if (this.movement.speed === Infinity) {
+                this.y = targety;
+            } else {
+                this.y = M.lerpTime(this.y, targety, this.movement.speed, this.world.delta);
+            }
         }
     }
     

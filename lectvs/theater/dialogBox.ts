@@ -56,7 +56,7 @@ class DialogBox extends Sprite {
             let p = this.getDialogProgression() < 0.9 ? 0.85 : 1;  // 85% normally, but 100% if dialog is close to ending
             if (this.speakSound && Debug.SKIP_RATE < 2 && !this.isPageComplete() && Random.boolean(p)) {
                 let sound = this.world.playSound(this.speakSound);
-                sound.speed = Random.float(0.95, 1.05);
+                sound.speed = Random.float(0.95, 1.05) + 0.5;
             }
         }, true);
     }
