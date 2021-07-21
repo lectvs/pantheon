@@ -45,8 +45,6 @@ class WorldObject {
     localx: number;
     localy: number;
     localz: number;
-    visible: boolean;
-    active: boolean;
     activeOutsideWorldBoundsBuffer: number;
     life: Timer;
     zBehavior: WorldObject.ZBehavior;
@@ -63,6 +61,9 @@ class WorldObject {
     set x(value: number) { this.localx = value - (this.parent ? this.parent.x : 0); }
     set y(value: number) { this.localy = value - (this.parent ? this.parent.y : 0); }
     set z(value: number) { this.localz = value - (this.parent ? this.parent.z : 0); }
+
+    private _visible: boolean;
+    private _active: boolean;
 
     alive: boolean;
 
@@ -123,13 +124,14 @@ class WorldObject {
         this.localx = config.x ?? 0;
         this.localy = config.y ?? 0;
         this.localz = config.z ?? 0;
-        this.visible = config.visible ?? true;
-        this.active = config.active ?? true;
         this.activeOutsideWorldBoundsBuffer = config.activeOutsideWorldBoundsBuffer ?? Infinity;
         this.life = new Timer(config.life ?? Infinity, () => this.kill());
         this.zBehavior = config.zBehavior ?? WorldObject.DEFAULT_Z_BEHAVIOR;
         this.timeScale = config.timeScale ?? 1;
         this.data = config.data ? O.deepClone(config.data) : {};
+
+        this.setVisible(config.visible ?? true);
+        this.setActive(config.active ?? true);
 
         this.ignoreCamera = config.ignoreCamera ?? false;
         this.matchParentLayer = config.matchParentLayer ?? false;
@@ -323,6 +325,10 @@ class WorldObject {
         return _.contains(this.tags, tag);
     }
 
+    isActive() {
+        return this._active && (!this.parent || this.parent.isActive());
+    }
+
     isControlRevoked() {
         return global.theater?.isCutscenePlaying;
     }
@@ -334,6 +340,10 @@ class WorldObject {
             && bounds.x <= this.world.width + buffer
             && bounds.y + bounds.height >= -buffer
             && bounds.y <= this.world.height + buffer;
+    }
+
+    isVisible() {
+        return this._visible && (!this.parent || this.parent.isVisible());
     }
 
     kill() {
@@ -386,6 +396,10 @@ class WorldObject {
         return this.scriptManager.runScript(script);
     }
 
+    setActive(active: boolean) {
+        this._active = active;
+    }
+
     setIsInsideWorldBoundsBufferThisFrame() {
         this._isInsideWorldBoundsBufferThisFrame = isFinite(this.activeOutsideWorldBoundsBuffer)
                     ? this.isOnScreen(this.activeOutsideWorldBoundsBuffer)
@@ -394,6 +408,10 @@ class WorldObject {
 
     setState(state: string) {
         this.stateMachine.setState(state);
+    }
+
+    setVisible(visible: boolean) {
+        this._visible = visible;
     }
 
     private shouldIgnoreCamera() {

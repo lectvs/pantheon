@@ -17,15 +17,14 @@ class PressX extends Sprite {
         super.update();
 
         if (this.player.closestInteractable && !global.theater.isCutscenePlaying) {
-            this.x = this.player.closestInteractable.x;
-            this.y = this.player.closestInteractable.y - 40;
-            this.visible = true;
+            this.teleport(this.player.closestInteractable.x, this.player.closestInteractable.y - 40);
+            this.setVisible(true);
             if (this.player.closestInteractable.pressTexture !== this.currentTextureKey) {
                 this.setTexture(this.player.closestInteractable.pressTexture);
                 this.currentTextureKey = this.player.closestInteractable.pressTexture;
             }
         } else {
-            this.visible = false;
+            this.setVisible(false);
         }
     }
 }

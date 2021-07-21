@@ -8,6 +8,13 @@ namespace DialogBox {
         portraitPosition: Pt;
         startSound?: string;
         speakSound?: string;
+        nameProps?: NameConfig;
+    }
+
+    export type NameConfig = {
+        texture: string;
+        position: Pt;
+        textOffset: Pt;
     }
 }
 
@@ -18,8 +25,13 @@ class DialogBox extends Sprite {
 
     private startSound: string;
     private speakSound: string;
+
+    private nameTexture: string;
+    private namePosition: Vector2;
+    private nameTextOffset: Vector2;
     
     private isShowingPortrait: boolean;
+    private isShowingName: boolean;
     private get textArea() { return this.isShowingPortrait ? this.textAreaPortrait : this.textAreaFull; }
 
     done: boolean;
@@ -27,6 +39,8 @@ class DialogBox extends Sprite {
     private spriteText: SpriteText;
     private spriteTextOffset: number;
     private portraitSprite: Sprite;
+    private nameSprite: Sprite;
+    private nameText: SpriteText;
 
     private characterTimer: Timer;
     private speakSoundTimer: Timer;
@@ -41,7 +55,14 @@ class DialogBox extends Sprite {
         this.startSound = config.startSound;
         this.speakSound = config.speakSound;
 
+        if (config.nameProps) {
+            this.nameTexture = config.nameProps.texture;
+            this.namePosition = vec2(config.nameProps.position);
+            this.nameTextOffset = vec2(config.nameProps.textOffset);
+        }
+
         this.isShowingPortrait = false;
+        this.isShowingName = false;
         this.done = true;
 
         this.spriteText = this.addChild(new SpriteText({ font: config.dialogFont }));
@@ -50,13 +71,17 @@ class DialogBox extends Sprite {
         this.portraitSprite = this.addChild(new Sprite());
         this.showPortrait('none');
 
+        this.nameSprite = this.addChild(new Sprite({ texture: this.nameTexture }));
+        this.nameText = this.nameSprite.addChild(new SpriteText({ font: config.dialogFont, anchor: Vector2.CENTER }));
+        this.showName(undefined);
+
         this.characterTimer = new Timer(0.05, () => this.advanceCharacter(), true);
 
         this.speakSoundTimer = new Timer(0.05, () => {
             let p = this.getDialogProgression() < 0.9 ? 0.85 : 1;  // 85% normally, but 100% if dialog is close to ending
             if (this.speakSound && Debug.SKIP_RATE < 2 && !this.isPageComplete() && Random.boolean(p)) {
                 let sound = this.world.playSound(this.speakSound);
-                sound.speed = Random.float(0.95, 1.05) + 0.5;
+                sound.speed = Random.float(0.95, 1.05);
             }
         }, true);
     }
@@ -65,9 +90,10 @@ class DialogBox extends Sprite {
         super.update();
 
         // Visibility must be set before dialog progression to avoid a 1-frame flicker.
-        this.visible = !this.done;
-        this.spriteText.visible = !this.done;
-        this.portraitSprite.visible = !this.done && this.isShowingPortrait;
+        this.setVisible(!this.done);
+        this.spriteText.setVisible(!this.done);
+        this.portraitSprite.setVisible(!this.done && this.isShowingPortrait);
+        this.nameSprite.setVisible(!this.done && this.isShowingName);
 
         if (!this.done) {
             this.updateDialogProgression();
@@ -86,8 +112,12 @@ class DialogBox extends Sprite {
     render(texture: Texture, x: number, y: number) {
         super.render(texture, x, y);
 
-        if (this.portraitSprite.visible) {
+        if (this.portraitSprite.isVisible()) {
             this.setPortraitSpriteProperties();
+        }
+
+        if (this.nameSprite.isVisible()) {
+            this.setNameSpriteProperties();
         }
 
         this.setSpriteTextProperties();
@@ -141,6 +171,20 @@ class DialogBox extends Sprite {
         this.spriteText.maxWidth = this.textArea.width;
     }
 
+    showName(name: string) {
+        if (!name) {
+            this.isShowingName = false;
+            return;
+        }
+
+        this.isShowingName = true;
+        this.nameText.setText(name);
+    }
+
+    setSpeakSound(key: string) {
+        this.speakSound = key;
+    }
+
     complete() {
         while (!this.done) {
             this.completePage();
@@ -177,6 +221,13 @@ class DialogBox extends Sprite {
     private setPortraitSpriteProperties() {
         this.portraitSprite.localx = this.portraitPosition.x;
         this.portraitSprite.localy = this.portraitPosition.y;
+    }
+
+    private setNameSpriteProperties() {
+        this.nameSprite.localx = this.namePosition.x;
+        this.nameSprite.localy = this.namePosition.y;
+        this.nameText.localx = this.nameTextOffset.x;
+        this.nameText.localy = this.nameTextOffset.y;
     }
 
     private setSpriteTextProperties() {

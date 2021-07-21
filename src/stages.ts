@@ -68,7 +68,7 @@ const stages: Dict<Factory<World>> = {
         world.addWorldObject(new Sprite({ x: 3144, y: 1520, name: 'pitdoor1', texture: 'wooddoor', layer: 'doors', physicsGroup: 'walls', bounds: new RectBounds(-8, -16, 16, 32), immovable: true }));
         world.addWorldObject(new Sprite({ x: 3000, y: 1512, name: 'pitdoor2', texture: 'wooddoor_side', layer: 'doors', physicsGroup: 'walls', bounds: new RectBounds(-24, -8, 48, 16), immovable: true }));
         let movableDoor = world.addWorldObject(new LockedDoor(1800, 880, 'movabledoor', true));
-        movableDoor.visible = false;
+        movableDoor.setVisible(false);
         movableDoor.physicsGroup = undefined;
 
         // Levers
@@ -100,12 +100,12 @@ const stages: Dict<Factory<World>> = {
         world.addWorldObject(new CutsceneInteractable(3400, 1172, 'i_grass')).setBoundsSize(64, 64);
         world.addWorldObject(new CrackedWall(3568, 1120));
         world.addWorldObject(new Chest(200, 512));
-        world.addWorldObject(new Note(1900, 888)).visible = false;
+        world.addWorldObject(new Note(1900, 888)).setVisible(false);
 
         // Orbs
         world.addWorldObject(new Orb(2119, 1157, 'orb1_final', 0.45, 'bg'));
         world.addWorldObject(new Orb(2172, 1144, 'orb2_final', 0.45, 'bg'));
-        world.addWorldObject(new Orb(2225, 1156, 'orb3_final', 0.45, 'fg')).visible = false;
+        world.addWorldObject(new Orb(2225, 1156, 'orb3_final', 0.45, 'fg')).setVisible(false);
         world.addWorldObject(new Orb(3808, 1056, 'orb3', 0.5, 'fg'));
 
         let player = world.addWorldObject(new Player(692, 255));   // Start

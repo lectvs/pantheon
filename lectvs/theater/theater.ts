@@ -140,7 +140,7 @@ class Theater extends World {
     
     private loadDialogBox(factory: Factory<DialogBox>) {
         this.dialogBox = this.addWorldObject(factory());
-        this.dialogBox.visible = false;
+        this.dialogBox.setVisible(false);
         World.Actions.setLayer(this.dialogBox, Theater.LAYER_DIALOG);
     }
 

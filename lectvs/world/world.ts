@@ -126,7 +126,7 @@ class World {
         global.metrics.startSpan('preUpdate');
         for (let worldObject of this.worldObjects) {
             worldObject.setIsInsideWorldBoundsBufferThisFrame();
-            if (worldObject.active && worldObject._isInsideWorldBoundsBufferThisFrame) {
+            if (worldObject.isActive() && worldObject._isInsideWorldBoundsBufferThisFrame) {
                 global.metrics.startSpan(worldObject);
                 worldObject.preUpdate();
                 global.metrics.endSpan(worldObject);
@@ -136,7 +136,7 @@ class World {
 
         global.metrics.startSpan('update');
         for (let worldObject of this.worldObjects) {
-            if (worldObject.active && worldObject._isInsideWorldBoundsBufferThisFrame) {
+            if (worldObject.isActive() && worldObject._isInsideWorldBoundsBufferThisFrame) {
                 global.metrics.startSpan(worldObject);
                 worldObject.update();
                 global.metrics.endSpan(worldObject);
@@ -150,7 +150,7 @@ class World {
 
         global.metrics.startSpan('postUpdate');
         for (let worldObject of this.worldObjects) {
-            if (worldObject.active && worldObject._isInsideWorldBoundsBufferThisFrame) {
+            if (worldObject.isActive() && worldObject._isInsideWorldBoundsBufferThisFrame) {
                 global.metrics.startSpan(worldObject);
                 worldObject.postUpdate();
                 global.metrics.endSpan(worldObject);
@@ -199,7 +199,7 @@ class World {
         layer.sort();
 
         for (let worldObject of layer.worldObjects) {
-            if (worldObject.visible && worldObject.isOnScreen()) {
+            if (worldObject.isVisible() && worldObject.isOnScreen()) {
                 global.metrics.startSpan(worldObject);
                 worldObject.render(texture, worldObject.renderScreenX, worldObject.renderScreenY);
                 global.metrics.endSpan(worldObject);

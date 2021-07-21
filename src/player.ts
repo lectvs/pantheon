@@ -111,7 +111,7 @@ class Player extends Sprite {
         if (grounded) {
             let interactables = this.world
                                     .select.typeAll(Interactable)
-                                    .filter(i => i.visible && (!i.parent || i.parent.visible) && this.bounds.isOverlapping(i.bounds));
+                                    .filter(i => i.isVisible() && this.bounds.isOverlapping(i.bounds));
             this.closestInteractable = M.argmin(interactables, i => G.distance(this, i));
         } else {
             this.closestInteractable = undefined;
@@ -153,7 +153,7 @@ class Player extends Sprite {
 
     private updateOrb() {
         if (this.isControlRevoked()) return;
-        if (global.world.select.name<Orb>('orb3_final').visible) return;
+        if (global.world.select.name<Orb>('orb3_final').isVisible()) return;
         let cc = this.world.select.type(CameraController);
         if (cc.sector.x === 8 && cc.sector.y === 3 && this.x > 3808) {
             global.theater.storyManager.cutsceneManager.playCutscene('collect_orb');

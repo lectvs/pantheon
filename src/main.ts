@@ -84,11 +84,16 @@ Main.loadConfig({
                 x: 200, y: 280,
                 texture: 'dialogbox',
                 dialogFont: Assets.fonts.ANDRFW,
-                textAreaFull: { x: -190, y: -34, width: 380, height: 68 },
+                textAreaFull: { x: -186, y: -30, width: 372, height: 64 },
                 textAreaPortrait: { x: -70, y: -42, width: 140, height: 84 },
                 portraitPosition: { x: 78, y: 0 },
                 //startSound: 'click',
-                speakSound: 'dialogspeak'
+                speakSound: 'dialogspeak',
+                nameProps: {
+                    texture: 'dialogbox_name',
+                    position: { x: -150, y: -40 },
+                    textOffset: { x: 0, y: -2 },
+                }
             }),
         },
     },

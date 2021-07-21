@@ -30,6 +30,7 @@ namespace Preload {
     export type Sound = {
         url?: string;
         volume?: number;
+        speed?: number;
     }
 
     export type TextureSpritesheet = {
@@ -235,9 +236,16 @@ class Preload {
             volume = M.clamp(volume, 0, Sound.MAX_VOLUME);
         }
 
+        let speed = sound.speed ?? 1;
+        if (speed < 0 || speed > Sound.MAX_SPEED) {
+            error(`Sound ${key} has invalid speed:`, sound);
+            speed = M.clamp(speed, 0, Sound.MAX_SPEED);
+        }
+
         AssetCache.sounds[key] = {
             buffer: preloadedSound.buffer,
-            volume: volume
+            volume: volume,
+            speed: speed
         };
     }
 

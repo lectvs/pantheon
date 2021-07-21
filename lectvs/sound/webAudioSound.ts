@@ -2,6 +2,7 @@ namespace WebAudioSound {
     export type Asset = {
         buffer: AudioBuffer;
         volume: number;
+        speed: number;
     }
 }
 
@@ -32,21 +33,21 @@ class WebAudioSound implements WebAudioSoundI{
         return this._volume;
     }
     set volume(value: number) {
-        this._volume = M.clamp(value, 0, Sound.MAX_VOLUME);
+        this._volume = this.asset.volume === 0 ? value : M.clamp(value, 0, Sound.MAX_VOLUME / this.asset.volume);
         this.gainNode.gain.value = this._volume * this.asset.volume;
     }
 
     private _speed: number;
     get speed() {
-        return this.sourceNode ? this.sourceNode.playbackRate.value : this._speed;
+        return this._speed;
     }
     set speed(value: number) {
-        this._speed = M.clamp(value, 0, Sound.MAX_SPEED);
-        if (this.sourceNode) this.sourceNode.playbackRate.value = this._speed;
+        this._speed = this.asset.speed === 0 ? value : M.clamp(value, 0, Sound.MAX_SPEED / this.asset.speed);
+        if (this.sourceNode) this.sourceNode.playbackRate.value = this._speed * this.asset.speed;
     }
 
     private _loop: boolean;
-    get loop() { return this.sourceNode ? this.sourceNode.loop : this._loop; }
+    get loop() { return this._loop; }
     set loop(value: boolean) {
         this._loop = value;
         if (this.sourceNode) this.sourceNode.loop = value;
@@ -68,6 +69,7 @@ class WebAudioSound implements WebAudioSoundI{
         this.gainNode = this.context.createGain();
         this.gainNode.connect(this.context.destination);
 
+        this._volume = 1;
         this._speed = 1;
         this._loop = false;
 

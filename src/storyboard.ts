@@ -206,12 +206,16 @@ const storyboard: Storyboard = {
             if (scammirDoorInteractions <= 1) {
                 global.theater.runScript(S.shake(2, 0.3));
                 global.world.playSound('crush');
+                global.theater.dialogBox.setSpeakSound(undefined);
                 yield S.dialog("YEOWCH!!");
+                global.theater.dialogBox.setSpeakSound('dialogspeak');
                 yield S.dialog("... the handle shocked you. Kids these days and their electronic devices...");
             } else if (scammirDoorInteractions === 2) {
                 global.theater.runScript(S.shake(2, 0.3));
                 global.world.playSound('crush');
+                global.theater.dialogBox.setSpeakSound(undefined);
                 yield S.dialog("YEOWCH!!");
+                global.theater.dialogBox.setSpeakSound('dialogspeak');
                 yield S.dialog("The electric shock resonating through your body makes you inexplicably feel 20 years younger.");
             } else {
                 yield S.dialog("...........................");
@@ -244,27 +248,41 @@ const storyboard: Storyboard = {
     'i_diggur_surface': {
         type: 'cutscene',
         script: function*() {
+            global.theater.dialogBox.showName('Diggur');
+            global.theater.dialogBox.setSpeakSound('dialogspeak_diggur');
             yield S.dialog("Another day, another quest... I wonder, what adventures await us today?");
             yield S.dialog("Are you coming down too, Mrs M? What a pleasant surprise.");
             yield S.dialog("Perhaps our paths may cross down below.");
+            global.theater.dialogBox.showName(undefined);
+            global.theater.dialogBox.setSpeakSound('dialogspeak');
+
+
         },
         transitions: [{ toNode: 'gameplay' }]
     },
     'i_scammir_surface': {
         type: 'cutscene',
         script: function*() {
+            global.theater.dialogBox.showName('Scammir');
+            global.theater.dialogBox.setSpeakSound('dialogspeak_scammir');
             yield S.dialog("pssst");
             yield S.dialog("fancy a lil scam~?");
             yield S.dialog("first ones on the house");
             yield S.dialogAdd(" ... not!! psyche!");
+            global.theater.dialogBox.showName(undefined);
+            global.theater.dialogBox.setSpeakSound('dialogspeak');
         },
         transitions: [{ toNode: 'gameplay' }]
     },
     'i_gobbor_surface': {
         type: 'cutscene',
         script: function*() {
+            global.theater.dialogBox.showName('Gobbor');
+            global.theater.dialogBox.setSpeakSound(undefined);
             yield S.dialog(".....................");
-            yield S.dialog("Gobbor doesn't say anything, like usual.");
+            global.theater.dialogBox.showName(undefined);
+            global.theater.dialogBox.setSpeakSound('dialogspeak');
+            yield S.dialog("Gobbor doesn't say anything, being the silent protagonist he is.");
             yield S.dialog("Such a polite young man.");
         },
         transitions: [{ toNode: 'gameplay' }]
@@ -294,8 +312,12 @@ const storyboard: Storyboard = {
     'i_scammir_tele': {
         type: 'cutscene',
         script: function*() {
+            global.theater.dialogBox.showName('Scammir');
+            global.theater.dialogBox.setSpeakSound('dialogspeak_scammir');
             yield S.dialog("teehee");
             yield S.dialog("free telescope viewings, just $5 per view ~");
+            global.theater.dialogBox.showName('Scammir');
+            global.theater.dialogBox.setSpeakSound('dialogspeak');
         },
         transitions: [{ toNode: 'gameplay' }]
     },
@@ -310,8 +332,12 @@ const storyboard: Storyboard = {
                 yield S.dialog("... you can even see part of the subworld sticking out.");
                 CONSUME_ITEM('nickel');
             } else {
+                global.theater.dialogBox.showName('Scammir');
+                global.theater.dialogBox.setSpeakSound('dialogspeak_scammir');
                 yield S.dialog("i dont know what that is");
                 yield S.dialog("sounds like a scam to me");
+                global.theater.dialogBox.showName(undefined);
+                global.theater.dialogBox.setSpeakSound('dialogspeak');
             }
         },
         transitions: [{ toNode: 'gameplay' }]
@@ -332,7 +358,7 @@ const storyboard: Storyboard = {
                 }));
                 global.world.select.name('ci_i_grass')?.removeFromWorld();
                 CONSUME_ITEM('string');
-                yield S.dialog("You tie the string to each post. The grass does a particularly bad job of hiding it, but you'd be surprised what people fall for these days.");
+                yield S.dialog("You tie the string to each post. The grass does a bad job of hiding it, but you'd be surprised what people fall for these days.");
 
                 let player = global.world.select.type(Player);
                 global.theater.runScript(S.chain(
@@ -356,14 +382,18 @@ const storyboard: Storyboard = {
     'i_diggur_fall': {
         type: 'cutscene',
         script: function*() {
+            global.theater.dialogBox.showName('Diggur');
+            global.theater.dialogBox.setSpeakSound('dialogspeak_diggur');
             yield S.dialog("Oof... Mrs M... help...");
+            global.theater.dialogBox.showName(undefined);
+            global.theater.dialogBox.setSpeakSound('dialogspeak');
         },
         transitions: [{ toNode: 'gameplay' }]
     },
     'i_loominggate': {
         type: 'cutscene',
         script: function*() {
-            let loomingGateOpen = global.world.select.name('orb3_final').visible;
+            let loomingGateOpen = global.world.select.name('orb3_final').isVisible();
             if (loomingGateOpen) {
                 let player = global.world.select.type(Player);
                 player.teleport(248, 1567);
@@ -506,7 +536,7 @@ const storyboard: Storyboard = {
             global.theater.playMusic('caverns');
 
             let orbfinal = global.world.select.name<Orb>('orb3_final');
-            orbfinal.visible = true;
+            orbfinal.setVisible(true);
             orbfinal.scaleX = 50;
             orbfinal.scaleY = 50;
 

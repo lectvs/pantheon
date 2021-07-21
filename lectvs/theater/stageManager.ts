@@ -50,8 +50,8 @@ class StageManager {
         
         let newSnapshot = this.currentWorld.takeSnapshot();
 
-        this.currentWorldAsWorldObject.active = false;
-        this.currentWorldAsWorldObject.visible = false;
+        this.currentWorldAsWorldObject.setActive(false);
+        this.currentWorldAsWorldObject.setVisible(false);
 
         // this is outside the script to avoid 1-frame flicker
         this.transition = Transition.fromConfigAndSnapshots(transitionConfig, oldSnapshot, newSnapshot);
@@ -66,8 +66,8 @@ class StageManager {
 
             World.Actions.removeWorldObjectFromWorld(stageManager.transition);
             stageManager.transition = null;
-            stageManager.currentWorldAsWorldObject.active = true;
-            stageManager.currentWorldAsWorldObject.visible = true;
+            stageManager.currentWorldAsWorldObject.setActive(true);
+            stageManager.currentWorldAsWorldObject.setVisible(true);
         });
     }
 }

@@ -72,6 +72,7 @@ namespace Assets {
 
         // UI
         'dialogbox': { anchor: Vector2.CENTER },
+        'dialogbox_name': { anchor: Vector2.CENTER },
         'itemboxes': {},
         'itemicons': {
             anchor: Vector2.CENTER,
@@ -98,7 +99,9 @@ namespace Assets {
 
         // Game
         'dialogstart': { url: 'assets/click.wav', volume: 0.5 },
-        'dialogspeak': { url: 'assets/non_npc_text_blip_sound.ogg', volume: 2 },
+        'dialogspeak': { url: 'assets/non_npc_text_blip_sound.ogg', volume: 2, speed: 1.5 },
+        'dialogspeak_diggur': { url: 'assets/npc_talk_sound.ogg', volume: 2 },
+        'dialogspeak_scammir': { url: 'assets/npc_talk_sound.ogg', volume: 2, speed: 1.25},
         'jump': { url: 'assets/newjump_sound.ogg', volume: 0.7 },
         'walk': { url: 'assets/smaller_tap_sound.ogg', volume: 0.3 },
         'land': { url: 'assets/medium_crush_sound.ogg', volume: 0.4 },

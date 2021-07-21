@@ -67,9 +67,9 @@ namespace TransitionScripts {
             hasFallen = true;
             global.world.select.name('scammir', false)?.removeFromWorld();
             let movabledoor = global.world.select.name<LockedDoor>('movabledoor');
-            movabledoor.visible = true;
+            movabledoor.setVisible(true);
             movabledoor.physicsGroup = 'walls';
-            global.world.select.name('note').visible = true;
+            global.world.select.name('note').setVisible(true);
             return true;
         }
 

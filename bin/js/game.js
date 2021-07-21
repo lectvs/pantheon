@@ -316,7 +316,7 @@ var AssetCache = /** @class */ (function () {
     AssetCache.getSoundAsset = function (key) {
         if (!this.sounds[key]) {
             error("Sound '" + key + "' does not exist.");
-            return { buffer: new AudioBuffer({ length: 0, sampleRate: 8000 }), volume: 1 };
+            return { buffer: new AudioBuffer({ length: 0, sampleRate: 8000 }), volume: 1, speed: 1 };
         }
         return this.sounds[key];
     };
@@ -1676,7 +1676,7 @@ var Preload = /** @class */ (function () {
         WebAudio.preloadSound(key, url, function () { return _this.onLoadResource(resource); });
     };
     Preload.loadSound = function (key, sound) {
-        var _a;
+        var _a, _b;
         var preloadedSound = WebAudio.preloadedSounds[key];
         if (!preloadedSound) {
             error("Failed to preload sound " + key);
@@ -1687,9 +1687,15 @@ var Preload = /** @class */ (function () {
             error("Sound " + key + " has invalid volume:", sound);
             volume = M.clamp(volume, 0, Sound.MAX_VOLUME);
         }
+        var speed = (_b = sound.speed) !== null && _b !== void 0 ? _b : 1;
+        if (speed < 0 || speed > Sound.MAX_SPEED) {
+            error("Sound " + key + " has invalid speed:", sound);
+            speed = M.clamp(speed, 0, Sound.MAX_SPEED);
+        }
         AssetCache.sounds[key] = {
             buffer: preloadedSound.buffer,
-            volume: volume
+            volume: volume,
+            speed: speed
         };
     };
     Preload.preloadTileset = function (key, tileset) {
@@ -2643,13 +2649,13 @@ var WorldObject = /** @class */ (function () {
         this.localx = (_a = config.x) !== null && _a !== void 0 ? _a : 0;
         this.localy = (_b = config.y) !== null && _b !== void 0 ? _b : 0;
         this.localz = (_c = config.z) !== null && _c !== void 0 ? _c : 0;
-        this.visible = (_d = config.visible) !== null && _d !== void 0 ? _d : true;
-        this.active = (_e = config.active) !== null && _e !== void 0 ? _e : true;
-        this.activeOutsideWorldBoundsBuffer = (_f = config.activeOutsideWorldBoundsBuffer) !== null && _f !== void 0 ? _f : Infinity;
-        this.life = new Timer((_g = config.life) !== null && _g !== void 0 ? _g : Infinity, function () { return _this.kill(); });
-        this.zBehavior = (_h = config.zBehavior) !== null && _h !== void 0 ? _h : WorldObject.DEFAULT_Z_BEHAVIOR;
-        this.timeScale = (_j = config.timeScale) !== null && _j !== void 0 ? _j : 1;
+        this.activeOutsideWorldBoundsBuffer = (_d = config.activeOutsideWorldBoundsBuffer) !== null && _d !== void 0 ? _d : Infinity;
+        this.life = new Timer((_e = config.life) !== null && _e !== void 0 ? _e : Infinity, function () { return _this.kill(); });
+        this.zBehavior = (_f = config.zBehavior) !== null && _f !== void 0 ? _f : WorldObject.DEFAULT_Z_BEHAVIOR;
+        this.timeScale = (_g = config.timeScale) !== null && _g !== void 0 ? _g : 1;
         this.data = config.data ? O.deepClone(config.data) : {};
+        this.setVisible((_h = config.visible) !== null && _h !== void 0 ? _h : true);
+        this.setActive((_j = config.active) !== null && _j !== void 0 ? _j : true);
         this.ignoreCamera = (_k = config.ignoreCamera) !== null && _k !== void 0 ? _k : false;
         this.matchParentLayer = (_l = config.matchParentLayer) !== null && _l !== void 0 ? _l : false;
         this.matchParentPhysicsGroup = (_m = config.matchParentPhysicsGroup) !== null && _m !== void 0 ? _m : false;
@@ -2919,6 +2925,9 @@ var WorldObject = /** @class */ (function () {
     WorldObject.prototype.hasTag = function (tag) {
         return _.contains(this.tags, tag);
     };
+    WorldObject.prototype.isActive = function () {
+        return this._active && (!this.parent || this.parent.isActive());
+    };
     WorldObject.prototype.isControlRevoked = function () {
         var _a;
         return (_a = global.theater) === null || _a === void 0 ? void 0 : _a.isCutscenePlaying;
@@ -2932,6 +2941,9 @@ var WorldObject = /** @class */ (function () {
             && bounds.x <= this.world.width + buffer
             && bounds.y + bounds.height >= -buffer
             && bounds.y <= this.world.height + buffer;
+    };
+    WorldObject.prototype.isVisible = function () {
+        return this._visible && (!this.parent || this.parent.isVisible());
     };
     WorldObject.prototype.kill = function () {
         this.alive = false;
@@ -2980,6 +2992,9 @@ var WorldObject = /** @class */ (function () {
     WorldObject.prototype.runScript = function (script) {
         return this.scriptManager.runScript(script);
     };
+    WorldObject.prototype.setActive = function (active) {
+        this._active = active;
+    };
     WorldObject.prototype.setIsInsideWorldBoundsBufferThisFrame = function () {
         this._isInsideWorldBoundsBufferThisFrame = isFinite(this.activeOutsideWorldBoundsBuffer)
             ? this.isOnScreen(this.activeOutsideWorldBoundsBuffer)
@@ -2987,6 +3002,9 @@ var WorldObject = /** @class */ (function () {
     };
     WorldObject.prototype.setState = function (state) {
         this.stateMachine.setState(state);
+    };
+    WorldObject.prototype.setVisible = function (visible) {
+        this._visible = visible;
     };
     WorldObject.prototype.shouldIgnoreCamera = function () {
         if (this.ignoreCamera)
@@ -3376,7 +3394,7 @@ var World = /** @class */ (function () {
             for (var _d = __values(this.worldObjects), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var worldObject = _e.value;
                 worldObject.setIsInsideWorldBoundsBufferThisFrame();
-                if (worldObject.active && worldObject._isInsideWorldBoundsBufferThisFrame) {
+                if (worldObject.isActive() && worldObject._isInsideWorldBoundsBufferThisFrame) {
                     global.metrics.startSpan(worldObject);
                     worldObject.preUpdate();
                     global.metrics.endSpan(worldObject);
@@ -3395,7 +3413,7 @@ var World = /** @class */ (function () {
         try {
             for (var _f = __values(this.worldObjects), _g = _f.next(); !_g.done; _g = _f.next()) {
                 var worldObject = _g.value;
-                if (worldObject.active && worldObject._isInsideWorldBoundsBufferThisFrame) {
+                if (worldObject.isActive() && worldObject._isInsideWorldBoundsBufferThisFrame) {
                     global.metrics.startSpan(worldObject);
                     worldObject.update();
                     global.metrics.endSpan(worldObject);
@@ -3417,7 +3435,7 @@ var World = /** @class */ (function () {
         try {
             for (var _h = __values(this.worldObjects), _j = _h.next(); !_j.done; _j = _h.next()) {
                 var worldObject = _j.value;
-                if (worldObject.active && worldObject._isInsideWorldBoundsBufferThisFrame) {
+                if (worldObject.isActive() && worldObject._isInsideWorldBoundsBufferThisFrame) {
                     global.metrics.startSpan(worldObject);
                     worldObject.postUpdate();
                     global.metrics.endSpan(worldObject);
@@ -3479,7 +3497,7 @@ var World = /** @class */ (function () {
         try {
             for (var _b = __values(layer.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var worldObject = _c.value;
-                if (worldObject.visible && worldObject.isOnScreen()) {
+                if (worldObject.isVisible() && worldObject.isOnScreen()) {
                     global.metrics.startSpan(worldObject);
                     worldObject.render(texture, worldObject.renderScreenX, worldObject.renderScreenY);
                     global.metrics.endSpan(worldObject);
@@ -5335,6 +5353,7 @@ var WebAudioSound = /** @class */ (function () {
         this.asset = asset;
         this.gainNode = this.context.createGain();
         this.gainNode.connect(this.context.destination);
+        this._volume = 1;
         this._speed = 1;
         this._loop = false;
         this.start();
@@ -5349,7 +5368,7 @@ var WebAudioSound = /** @class */ (function () {
             return this._volume;
         },
         set: function (value) {
-            this._volume = M.clamp(value, 0, Sound.MAX_VOLUME);
+            this._volume = this.asset.volume === 0 ? value : M.clamp(value, 0, Sound.MAX_VOLUME / this.asset.volume);
             this.gainNode.gain.value = this._volume * this.asset.volume;
         },
         enumerable: false,
@@ -5357,18 +5376,18 @@ var WebAudioSound = /** @class */ (function () {
     });
     Object.defineProperty(WebAudioSound.prototype, "speed", {
         get: function () {
-            return this.sourceNode ? this.sourceNode.playbackRate.value : this._speed;
+            return this._speed;
         },
         set: function (value) {
-            this._speed = M.clamp(value, 0, Sound.MAX_SPEED);
+            this._speed = this.asset.speed === 0 ? value : M.clamp(value, 0, Sound.MAX_SPEED / this.asset.speed);
             if (this.sourceNode)
-                this.sourceNode.playbackRate.value = this._speed;
+                this.sourceNode.playbackRate.value = this._speed * this.asset.speed;
         },
         enumerable: false,
         configurable: true
     });
     Object.defineProperty(WebAudioSound.prototype, "loop", {
-        get: function () { return this.sourceNode ? this.sourceNode.loop : this._loop; },
+        get: function () { return this._loop; },
         set: function (value) {
             this._loop = value;
             if (this.sourceNode)
@@ -6327,18 +6346,27 @@ var DialogBox = /** @class */ (function (_super) {
         _this.portraitPosition = vec2(config.portraitPosition);
         _this.startSound = config.startSound;
         _this.speakSound = config.speakSound;
+        if (config.nameProps) {
+            _this.nameTexture = config.nameProps.texture;
+            _this.namePosition = vec2(config.nameProps.position);
+            _this.nameTextOffset = vec2(config.nameProps.textOffset);
+        }
         _this.isShowingPortrait = false;
+        _this.isShowingName = false;
         _this.done = true;
         _this.spriteText = _this.addChild(new SpriteText({ font: config.dialogFont }));
         _this.spriteTextOffset = 0;
         _this.portraitSprite = _this.addChild(new Sprite());
         _this.showPortrait('none');
+        _this.nameSprite = _this.addChild(new Sprite({ texture: _this.nameTexture }));
+        _this.nameText = _this.nameSprite.addChild(new SpriteText({ font: config.dialogFont, anchor: Vector2.CENTER }));
+        _this.showName(undefined);
         _this.characterTimer = new Timer(0.05, function () { return _this.advanceCharacter(); }, true);
         _this.speakSoundTimer = new Timer(0.05, function () {
             var p = _this.getDialogProgression() < 0.9 ? 0.85 : 1; // 85% normally, but 100% if dialog is close to ending
             if (_this.speakSound && Debug.SKIP_RATE < 2 && !_this.isPageComplete() && Random.boolean(p)) {
                 var sound = _this.world.playSound(_this.speakSound);
-                sound.speed = Random.float(0.95, 1.05) + 0.5;
+                sound.speed = Random.float(0.95, 1.05);
             }
         }, true);
         return _this;
@@ -6351,9 +6379,10 @@ var DialogBox = /** @class */ (function (_super) {
     DialogBox.prototype.update = function () {
         _super.prototype.update.call(this);
         // Visibility must be set before dialog progression to avoid a 1-frame flicker.
-        this.visible = !this.done;
-        this.spriteText.visible = !this.done;
-        this.portraitSprite.visible = !this.done && this.isShowingPortrait;
+        this.setVisible(!this.done);
+        this.spriteText.setVisible(!this.done);
+        this.portraitSprite.setVisible(!this.done && this.isShowingPortrait);
+        this.nameSprite.setVisible(!this.done && this.isShowingName);
         if (!this.done) {
             this.updateDialogProgression();
             this.speakSoundTimer.update(this.delta);
@@ -6368,8 +6397,11 @@ var DialogBox = /** @class */ (function (_super) {
     };
     DialogBox.prototype.render = function (texture, x, y) {
         _super.prototype.render.call(this, texture, x, y);
-        if (this.portraitSprite.visible) {
+        if (this.portraitSprite.isVisible()) {
             this.setPortraitSpriteProperties();
+        }
+        if (this.nameSprite.isVisible()) {
+            this.setNameSpriteProperties();
         }
         this.setSpriteTextProperties();
     };
@@ -6411,6 +6443,17 @@ var DialogBox = /** @class */ (function (_super) {
         this.isShowingPortrait = !AssetCache.isNoneTexture(portrait);
         this.spriteText.maxWidth = this.textArea.width;
     };
+    DialogBox.prototype.showName = function (name) {
+        if (!name) {
+            this.isShowingName = false;
+            return;
+        }
+        this.isShowingName = true;
+        this.nameText.setText(name);
+    };
+    DialogBox.prototype.setSpeakSound = function (key) {
+        this.speakSound = key;
+    };
     DialogBox.prototype.complete = function () {
         while (!this.done) {
             this.completePage();
@@ -6443,6 +6486,12 @@ var DialogBox = /** @class */ (function (_super) {
     DialogBox.prototype.setPortraitSpriteProperties = function () {
         this.portraitSprite.localx = this.portraitPosition.x;
         this.portraitSprite.localy = this.portraitPosition.y;
+    };
+    DialogBox.prototype.setNameSpriteProperties = function () {
+        this.nameSprite.localx = this.namePosition.x;
+        this.nameSprite.localy = this.namePosition.y;
+        this.nameText.localx = this.nameTextOffset.x;
+        this.nameText.localy = this.nameTextOffset.y;
     };
     DialogBox.prototype.setSpriteTextProperties = function () {
         this.spriteText.localx = this.textArea.x;
@@ -6651,8 +6700,8 @@ var StageManager = /** @class */ (function () {
         this.theater.onStageLoad();
         this.currentWorld.update();
         var newSnapshot = this.currentWorld.takeSnapshot();
-        this.currentWorldAsWorldObject.active = false;
-        this.currentWorldAsWorldObject.visible = false;
+        this.currentWorldAsWorldObject.setActive(false);
+        this.currentWorldAsWorldObject.setVisible(false);
         // this is outside the script to avoid 1-frame flicker
         this.transition = Transition.fromConfigAndSnapshots(transitionConfig, oldSnapshot, newSnapshot);
         this.transition.layer = Theater.LAYER_TRANSITION;
@@ -6670,8 +6719,8 @@ var StageManager = /** @class */ (function () {
                     case 2:
                         World.Actions.removeWorldObjectFromWorld(stageManager.transition);
                         stageManager.transition = null;
-                        stageManager.currentWorldAsWorldObject.active = true;
-                        stageManager.currentWorldAsWorldObject.visible = true;
+                        stageManager.currentWorldAsWorldObject.setActive(true);
+                        stageManager.currentWorldAsWorldObject.setVisible(true);
                         return [2 /*return*/];
                 }
             });
@@ -6859,7 +6908,7 @@ var Theater = /** @class */ (function (_super) {
     };
     Theater.prototype.loadDialogBox = function (factory) {
         this.dialogBox = this.addWorldObject(factory());
-        this.dialogBox.visible = false;
+        this.dialogBox.setVisible(false);
         World.Actions.setLayer(this.dialogBox, Theater.LAYER_DIALOG);
     };
     Theater.LAYER_WORLD = 'world';
@@ -11051,6 +11100,7 @@ var Assets;
         'UNDERMINE': { anchor: Vector2.CENTER },
         // UI
         'dialogbox': { anchor: Vector2.CENTER },
+        'dialogbox_name': { anchor: Vector2.CENTER },
         'itemboxes': {},
         'itemicons': {
             anchor: Vector2.CENTER,
@@ -11074,7 +11124,9 @@ var Assets;
         'click': {},
         // Game
         'dialogstart': { url: 'assets/click.wav', volume: 0.5 },
-        'dialogspeak': { url: 'assets/non_npc_text_blip_sound.ogg', volume: 2 },
+        'dialogspeak': { url: 'assets/non_npc_text_blip_sound.ogg', volume: 2, speed: 1.5 },
+        'dialogspeak_diggur': { url: 'assets/npc_talk_sound.ogg', volume: 2 },
+        'dialogspeak_scammir': { url: 'assets/npc_talk_sound.ogg', volume: 2, speed: 1.25 },
         'jump': { url: 'assets/newjump_sound.ogg', volume: 0.7 },
         'walk': { url: 'assets/smaller_tap_sound.ogg', volume: 0.3 },
         'land': { url: 'assets/medium_crush_sound.ogg', volume: 0.4 },
@@ -11769,7 +11821,7 @@ var stages = {
         world.addWorldObject(new Sprite({ x: 3144, y: 1520, name: 'pitdoor1', texture: 'wooddoor', layer: 'doors', physicsGroup: 'walls', bounds: new RectBounds(-8, -16, 16, 32), immovable: true }));
         world.addWorldObject(new Sprite({ x: 3000, y: 1512, name: 'pitdoor2', texture: 'wooddoor_side', layer: 'doors', physicsGroup: 'walls', bounds: new RectBounds(-24, -8, 48, 16), immovable: true }));
         var movableDoor = world.addWorldObject(new LockedDoor(1800, 880, 'movabledoor', true));
-        movableDoor.visible = false;
+        movableDoor.setVisible(false);
         movableDoor.physicsGroup = undefined;
         // Levers
         world.addWorldObject(new Lever(3000, 1504, 'lever_pit'));
@@ -11796,11 +11848,11 @@ var stages = {
         world.addWorldObject(new CutsceneInteractable(3400, 1172, 'i_grass')).setBoundsSize(64, 64);
         world.addWorldObject(new CrackedWall(3568, 1120));
         world.addWorldObject(new Chest(200, 512));
-        world.addWorldObject(new Note(1900, 888)).visible = false;
+        world.addWorldObject(new Note(1900, 888)).setVisible(false);
         // Orbs
         world.addWorldObject(new Orb(2119, 1157, 'orb1_final', 0.45, 'bg'));
         world.addWorldObject(new Orb(2172, 1144, 'orb2_final', 0.45, 'bg'));
-        world.addWorldObject(new Orb(2225, 1156, 'orb3_final', 0.45, 'fg')).visible = false;
+        world.addWorldObject(new Orb(2225, 1156, 'orb3_final', 0.45, 'fg')).setVisible(false);
         world.addWorldObject(new Orb(3808, 1056, 'orb3', 0.5, 'fg'));
         var player = world.addWorldObject(new Player(692, 255)); // Start
         //let player = world.addWorldObject(new Player(2094, 255));  // Pit
@@ -12149,9 +12201,11 @@ var storyboard = {
                         if (!(scammirDoorInteractions <= 1)) return [3 /*break*/, 3];
                         global.theater.runScript(S.shake(2, 0.3));
                         global.world.playSound('crush');
+                        global.theater.dialogBox.setSpeakSound(undefined);
                         return [4 /*yield*/, S.dialog("YEOWCH!!")];
                     case 1:
                         _a.sent();
+                        global.theater.dialogBox.setSpeakSound('dialogspeak');
                         return [4 /*yield*/, S.dialog("... the handle shocked you. Kids these days and their electronic devices...")];
                     case 2:
                         _a.sent();
@@ -12160,9 +12214,11 @@ var storyboard = {
                         if (!(scammirDoorInteractions === 2)) return [3 /*break*/, 6];
                         global.theater.runScript(S.shake(2, 0.3));
                         global.world.playSound('crush');
+                        global.theater.dialogBox.setSpeakSound(undefined);
                         return [4 /*yield*/, S.dialog("YEOWCH!!")];
                     case 4:
                         _a.sent();
+                        global.theater.dialogBox.setSpeakSound('dialogspeak');
                         return [4 /*yield*/, S.dialog("The electric shock resonating through your body makes you inexplicably feel 20 years younger.")];
                     case 5:
                         _a.sent();
@@ -12227,7 +12283,10 @@ var storyboard = {
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, S.dialog("Another day, another quest... I wonder, what adventures await us today?")];
+                    case 0:
+                        global.theater.dialogBox.showName('Diggur');
+                        global.theater.dialogBox.setSpeakSound('dialogspeak_diggur');
+                        return [4 /*yield*/, S.dialog("Another day, another quest... I wonder, what adventures await us today?")];
                     case 1:
                         _a.sent();
                         return [4 /*yield*/, S.dialog("Are you coming down too, Mrs M? What a pleasant surprise.")];
@@ -12236,6 +12295,8 @@ var storyboard = {
                         return [4 /*yield*/, S.dialog("Perhaps our paths may cross down below.")];
                     case 3:
                         _a.sent();
+                        global.theater.dialogBox.showName(undefined);
+                        global.theater.dialogBox.setSpeakSound('dialogspeak');
                         return [2 /*return*/];
                 }
             });
@@ -12247,7 +12308,10 @@ var storyboard = {
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, S.dialog("pssst")];
+                    case 0:
+                        global.theater.dialogBox.showName('Scammir');
+                        global.theater.dialogBox.setSpeakSound('dialogspeak_scammir');
+                        return [4 /*yield*/, S.dialog("pssst")];
                     case 1:
                         _a.sent();
                         return [4 /*yield*/, S.dialog("fancy a lil scam~?")];
@@ -12259,6 +12323,8 @@ var storyboard = {
                         return [4 /*yield*/, S.dialogAdd(" ... not!! psyche!")];
                     case 4:
                         _a.sent();
+                        global.theater.dialogBox.showName(undefined);
+                        global.theater.dialogBox.setSpeakSound('dialogspeak');
                         return [2 /*return*/];
                 }
             });
@@ -12270,10 +12336,15 @@ var storyboard = {
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, S.dialog(".....................")];
+                    case 0:
+                        global.theater.dialogBox.showName('Gobbor');
+                        global.theater.dialogBox.setSpeakSound(undefined);
+                        return [4 /*yield*/, S.dialog(".....................")];
                     case 1:
                         _a.sent();
-                        return [4 /*yield*/, S.dialog("Gobbor doesn't say anything, like usual.")];
+                        global.theater.dialogBox.showName(undefined);
+                        global.theater.dialogBox.setSpeakSound('dialogspeak');
+                        return [4 /*yield*/, S.dialog("Gobbor doesn't say anything, being the silent protagonist he is.")];
                     case 2:
                         _a.sent();
                         return [4 /*yield*/, S.dialog("Such a polite young man.")];
@@ -12336,12 +12407,17 @@ var storyboard = {
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, S.dialog("teehee")];
+                    case 0:
+                        global.theater.dialogBox.showName('Scammir');
+                        global.theater.dialogBox.setSpeakSound('dialogspeak_scammir');
+                        return [4 /*yield*/, S.dialog("teehee")];
                     case 1:
                         _a.sent();
                         return [4 /*yield*/, S.dialog("free telescope viewings, just $5 per view ~")];
                     case 2:
                         _a.sent();
+                        global.theater.dialogBox.showName('Scammir');
+                        global.theater.dialogBox.setSpeakSound('dialogspeak');
                         return [2 /*return*/];
                 }
             });
@@ -12368,12 +12444,17 @@ var storyboard = {
                         _a.sent();
                         CONSUME_ITEM('nickel');
                         return [3 /*break*/, 8];
-                    case 5: return [4 /*yield*/, S.dialog("i dont know what that is")];
+                    case 5:
+                        global.theater.dialogBox.showName('Scammir');
+                        global.theater.dialogBox.setSpeakSound('dialogspeak_scammir');
+                        return [4 /*yield*/, S.dialog("i dont know what that is")];
                     case 6:
                         _a.sent();
                         return [4 /*yield*/, S.dialog("sounds like a scam to me")];
                     case 7:
                         _a.sent();
+                        global.theater.dialogBox.showName(undefined);
+                        global.theater.dialogBox.setSpeakSound('dialogspeak');
                         _a.label = 8;
                     case 8: return [2 /*return*/];
                 }
@@ -12405,7 +12486,7 @@ var storyboard = {
                         }));
                         (_a = global.world.select.name('ci_i_grass')) === null || _a === void 0 ? void 0 : _a.removeFromWorld();
                         CONSUME_ITEM('string');
-                        return [4 /*yield*/, S.dialog("You tie the string to each post. The grass does a particularly bad job of hiding it, but you'd be surprised what people fall for these days.")];
+                        return [4 /*yield*/, S.dialog("You tie the string to each post. The grass does a bad job of hiding it, but you'd be surprised what people fall for these days.")];
                     case 4:
                         _b.sent();
                         player_1 = global.world.select.type(Player);
@@ -12443,9 +12524,14 @@ var storyboard = {
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, S.dialog("Oof... Mrs M... help...")];
+                    case 0:
+                        global.theater.dialogBox.showName('Diggur');
+                        global.theater.dialogBox.setSpeakSound('dialogspeak_diggur');
+                        return [4 /*yield*/, S.dialog("Oof... Mrs M... help...")];
                     case 1:
                         _a.sent();
+                        global.theater.dialogBox.showName(undefined);
+                        global.theater.dialogBox.setSpeakSound('dialogspeak');
                         return [2 /*return*/];
                 }
             });
@@ -12459,7 +12545,7 @@ var storyboard = {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        loomingGateOpen = global.world.select.name('orb3_final').visible;
+                        loomingGateOpen = global.world.select.name('orb3_final').isVisible();
                         if (!loomingGateOpen) return [3 /*break*/, 1];
                         player = global.world.select.type(Player);
                         player.teleport(248, 1567);
@@ -12656,7 +12742,7 @@ var storyboard = {
                         orb.removeFromWorld();
                         global.theater.playMusic('caverns');
                         orbfinal = global.world.select.name('orb3_final');
-                        orbfinal.visible = true;
+                        orbfinal.setVisible(true);
                         orbfinal.scaleX = 50;
                         orbfinal.scaleY = 50;
                         return [4 /*yield*/, S.doOverTime(2, function (t) {
@@ -12811,11 +12897,16 @@ Main.loadConfig({
                 x: 200, y: 280,
                 texture: 'dialogbox',
                 dialogFont: Assets.fonts.ANDRFW,
-                textAreaFull: { x: -190, y: -34, width: 380, height: 68 },
+                textAreaFull: { x: -186, y: -30, width: 372, height: 64 },
                 textAreaPortrait: { x: -70, y: -42, width: 140, height: 84 },
                 portraitPosition: { x: 78, y: 0 },
                 //startSound: 'click',
-                speakSound: 'dialogspeak'
+                speakSound: 'dialogspeak',
+                nameProps: {
+                    texture: 'dialogbox_name',
+                    position: { x: -150, y: -40 },
+                    textOffset: { x: 0, y: -2 },
+                }
             }); },
         },
     },
@@ -12981,7 +13072,7 @@ var Player = /** @class */ (function (_super) {
         if (grounded) {
             var interactables = this.world
                 .select.typeAll(Interactable)
-                .filter(function (i) { return i.visible && (!i.parent || i.parent.visible) && _this.bounds.isOverlapping(i.bounds); });
+                .filter(function (i) { return i.isVisible() && _this.bounds.isOverlapping(i.bounds); });
             this.closestInteractable = M.argmin(interactables, function (i) { return G.distance(_this, i); });
         }
         else {
@@ -13027,7 +13118,7 @@ var Player = /** @class */ (function (_super) {
     Player.prototype.updateOrb = function () {
         if (this.isControlRevoked())
             return;
-        if (global.world.select.name('orb3_final').visible)
+        if (global.world.select.name('orb3_final').isVisible())
             return;
         var cc = this.world.select.type(CameraController);
         if (cc.sector.x === 8 && cc.sector.y === 3 && this.x > 3808) {
@@ -13057,16 +13148,15 @@ var PressX = /** @class */ (function (_super) {
     PressX.prototype.update = function () {
         _super.prototype.update.call(this);
         if (this.player.closestInteractable && !global.theater.isCutscenePlaying) {
-            this.x = this.player.closestInteractable.x;
-            this.y = this.player.closestInteractable.y - 40;
-            this.visible = true;
+            this.teleport(this.player.closestInteractable.x, this.player.closestInteractable.y - 40);
+            this.setVisible(true);
             if (this.player.closestInteractable.pressTexture !== this.currentTextureKey) {
                 this.setTexture(this.player.closestInteractable.pressTexture);
                 this.currentTextureKey = this.player.closestInteractable.pressTexture;
             }
         }
         else {
-            this.visible = false;
+            this.setVisible(false);
         }
     };
     return PressX;
@@ -13149,9 +13239,9 @@ var TransitionScripts;
             hasFallen = true;
             (_a = global.world.select.name('scammir', false)) === null || _a === void 0 ? void 0 : _a.removeFromWorld();
             var movabledoor = global.world.select.name('movabledoor');
-            movabledoor.visible = true;
+            movabledoor.setVisible(true);
             movabledoor.physicsGroup = 'walls';
-            global.world.select.name('note').visible = true;
+            global.world.select.name('note').setVisible(true);
             return true;
         }
         if (oldSector.x === 7 && oldSector.y === 3 && newSector.x === 8 && newSector.y === 3) {

@@ -1,22 +1,16 @@
 todo
 - tileset in tilemap asset definition?
 - make isOnGround generic?
-- generic one-way platforms?
 - better layer control?
 - text scale/alpha/etc.
 - i still don't understand slides :(
 - playing cutscenes is not the same as story nodes??
 - load fonts like we load tilesets?
-- revert dialog speed increase... + more flexible dialog speech options?
+- decouple dialog from theater? (+ revamp)
 - humanize only "short" sounds?
 - generic camerax/y for texture filters
 - sprite currentTextureKey?
 - inactive objects should not participate in collision
 - optimize collision handling... really
 - 9-patch sprite
-
-jam
-- dialog character names
-- dialog speech
-- "made for the sidequester's sequel jam"
-- recursive telescope
+- maximum collision distance? (avoid pressx hang)
