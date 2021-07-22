@@ -7,7 +7,6 @@ todo
 - playing cutscenes is not the same as story nodes??
 - load fonts like we load tilesets?
 - decouple dialog from theater? (+ revamp)
-- humanize only "short" sounds?
 - generic camerax/y for texture filters
 - inactive objects should not participate in collision
 - 9-patch sprite

@@ -270,10 +270,9 @@ class World {
 
     /**
      * By default, sounds are:
-     *   - Humanized (if set globally)
+     *   - Humanized (if set globally and sound duration less than 1 second)
      */
     playSound(key: string, config?: World.PlaySoundConfig) {
-        let humanized = config?.humanized ?? true;
         let limit = config?.limit ?? Infinity;
 
         // Check limit
@@ -282,6 +281,7 @@ class World {
         }
 
         let sound = this.soundManager.playSound(key);
+        let humanized = config?.humanized ?? (sound.duration < 1);
         if (humanized && this.globalSoundHumanizePercent > 0) {
             sound.humanize(this.globalSoundHumanizePercent);
         }

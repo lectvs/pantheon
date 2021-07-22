@@ -3592,17 +3592,17 @@ var World = /** @class */ (function () {
     };
     /**
      * By default, sounds are:
-     *   - Humanized (if set globally)
+     *   - Humanized (if set globally and sound duration less than 1 second)
      */
     World.prototype.playSound = function (key, config) {
         var _a, _b;
-        var humanized = (_a = config === null || config === void 0 ? void 0 : config.humanized) !== null && _a !== void 0 ? _a : true;
-        var limit = (_b = config === null || config === void 0 ? void 0 : config.limit) !== null && _b !== void 0 ? _b : Infinity;
+        var limit = (_a = config === null || config === void 0 ? void 0 : config.limit) !== null && _a !== void 0 ? _a : Infinity;
         // Check limit
         if (this.soundManager.getSoundsByKey(key).length >= limit) {
             return new Sound(key);
         }
         var sound = this.soundManager.playSound(key);
+        var humanized = (_b = config === null || config === void 0 ? void 0 : config.humanized) !== null && _b !== void 0 ? _b : (sound.duration < 1);
         if (humanized && this.globalSoundHumanizePercent > 0) {
             sound.humanize(this.globalSoundHumanizePercent);
         }
