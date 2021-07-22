@@ -9,7 +9,6 @@ todo
 - decouple dialog from theater? (+ revamp)
 - humanize only "short" sounds?
 - generic camerax/y for texture filters
-- sprite currentTextureKey?
 - inactive objects should not participate in collision
 - optimize collision handling... really
 - 9-patch sprite

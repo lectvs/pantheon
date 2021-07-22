@@ -1,6 +1,5 @@
 class PressX extends Sprite {
     private player: Player;
-    private currentTextureKey: string;
 
     constructor(player: Player) {
         super({
@@ -10,7 +9,6 @@ class PressX extends Sprite {
         });
 
         this.player = player;
-        this.currentTextureKey = 'pressx';
     }
 
     update() {
@@ -19,10 +17,7 @@ class PressX extends Sprite {
         if (this.player.closestInteractable && !global.theater.isCutscenePlaying) {
             this.teleport(this.player.closestInteractable.x, this.player.closestInteractable.y - 40);
             this.setVisible(true);
-            if (this.player.closestInteractable.pressTexture !== this.currentTextureKey) {
-                this.setTexture(this.player.closestInteractable.pressTexture);
-                this.currentTextureKey = this.player.closestInteractable.pressTexture;
-            }
+            this.setTexture(this.player.closestInteractable.pressTexture);
         } else {
             this.setVisible(false);
         }

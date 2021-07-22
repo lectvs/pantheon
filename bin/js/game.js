@@ -3309,6 +3309,9 @@ var Sprite = /** @class */ (function (_super) {
     Sprite.prototype.getTexture = function () {
         return this.texture;
     };
+    Sprite.prototype.getTextureKey = function () {
+        return this.textureKey;
+    };
     Sprite.prototype.getTextureWorldBounds = function () {
         var bounds = this.getTextureLocalBounds();
         bounds.x += this.x + this.offsetX;
@@ -3330,11 +3333,11 @@ var Sprite = /** @class */ (function (_super) {
     Sprite.prototype.setTexture = function (key) {
         if (!key) {
             this.texture = Texture.NONE;
+            this.textureKey = undefined;
             return;
         }
-        if (_.isString(key))
-            key = AssetCache.getTexture(key);
-        this.texture = key;
+        this.textureKey = _.isString(key) ? key : undefined;
+        this.texture = _.isString(key) ? AssetCache.getTexture(key) : key;
     };
     Sprite.prototype.getTextureLocalBounds = function () {
         if (!this.texture)
@@ -13016,7 +13019,6 @@ var PressX = /** @class */ (function (_super) {
             visible: false,
         }) || this;
         _this.player = player;
-        _this.currentTextureKey = 'pressx';
         return _this;
     }
     PressX.prototype.update = function () {
@@ -13024,10 +13026,7 @@ var PressX = /** @class */ (function (_super) {
         if (this.player.closestInteractable && !global.theater.isCutscenePlaying) {
             this.teleport(this.player.closestInteractable.x, this.player.closestInteractable.y - 40);
             this.setVisible(true);
-            if (this.player.closestInteractable.pressTexture !== this.currentTextureKey) {
-                this.setTexture(this.player.closestInteractable.pressTexture);
-                this.currentTextureKey = this.player.closestInteractable.pressTexture;
-            }
+            this.setTexture(this.player.closestInteractable.pressTexture);
         }
         else {
             this.setVisible(false);

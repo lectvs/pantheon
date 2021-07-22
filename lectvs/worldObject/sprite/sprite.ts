@@ -22,6 +22,7 @@ namespace Sprite {
 
 class Sprite extends PhysicsWorldObject {
     private texture: Texture;
+    private textureKey: string;
     protected animationManager: AnimationManager;
 
     flipX: boolean;
@@ -108,6 +109,10 @@ class Sprite extends PhysicsWorldObject {
         return this.texture;
     }
 
+    getTextureKey() {
+        return this.textureKey;
+    }
+
     getTextureWorldBounds() {
         let bounds = this.getTextureLocalBounds();
         bounds.x += this.x + this.offsetX;
@@ -131,10 +136,12 @@ class Sprite extends PhysicsWorldObject {
     setTexture(key: string | Texture) {
         if (!key) {
             this.texture = Texture.NONE;
+            this.textureKey = undefined;
             return;
         }
-        if (_.isString(key)) key = AssetCache.getTexture(key);
-        this.texture = key;
+
+        this.textureKey = _.isString(key) ? key : undefined;
+        this.texture = _.isString(key) ? AssetCache.getTexture(key) : key;
     }
 
     private getTextureLocalBounds() {
