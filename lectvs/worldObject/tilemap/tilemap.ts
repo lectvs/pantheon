@@ -119,12 +119,14 @@ class Tilemap extends WorldObject {
         Tilemap.optimizeCollisionRects(collisionRects);  // Not optimizing entire array first to save some cycles.
         Tilemap.optimizeCollisionRects(collisionRects, Tilemap.OPTIMIZE_ALL);
         for (let rect of collisionRects) {
-            let box = this.addChild(new PhysicsWorldObject());
-            box.x = this.x;
-            box.y = this.y;
-            box.bounds = new RectBounds(rect.x, rect.y, rect.width, rect.height);
-            box.matchParentPhysicsGroup = true;
-            box.setImmovable(true);
+            let box = this.addChild(new PhysicsWorldObject({
+                x: this.x,
+                y: this.y,
+                bounds: new RectBounds(rect.x, rect.y, rect.width, rect.height),
+                matchParentPhysicsGroup: true,
+                immovable: true,
+                simulating: false,
+            }));
             box.debugDrawBounds = this.debugDrawBounds;
             this.collisionBoxes.push(box);
         }

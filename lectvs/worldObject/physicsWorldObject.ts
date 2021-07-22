@@ -133,7 +133,7 @@ class PhysicsWorldObject extends WorldObject {
         return this.bounds.isOverlapping(bounds);
     }
     
-    onCollide(collision: Physics.CollisionInfo) {
+    onCollide(collision: Physics.Collision) {
 
     }
 

@@ -59,7 +59,7 @@ class Diggur extends Sprite {
         }
     }
 
-    onCollide(collison: Physics.CollisionInfo) {
+    onCollide(collison: Physics.Collision) {
         super.onCollide(collison);
 
         if (collison.other.obj instanceof CrackedWall) {

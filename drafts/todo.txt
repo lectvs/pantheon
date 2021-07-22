@@ -10,6 +10,6 @@ todo
 - humanize only "short" sounds?
 - generic camerax/y for texture filters
 - inactive objects should not participate in collision
-- optimize collision handling... really
 - 9-patch sprite
 - maximum collision distance? (avoid pressx hang)
+- seperate engine from game repo

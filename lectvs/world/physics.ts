@@ -1,63 +1,66 @@
 namespace Physics {
+    export type CollisionCallback = (collision: Collision) => any;
+
     export type Collision = {
-        move: PhysicsWorldObject;
-        from: PhysicsWorldObject;
-    }
-
-    export type RaycastCollision = Collision & {
-        collision: Bounds.RaycastCollision;
-        callback?: Physics.CollisionCallback;
-        momentumTransfer?: MomentumTransferMode;
-    }
-
-    export type DisplacementCollision = Collision & {
-        collision: Bounds.DisplacementCollision;
-    }
-
-    export type CollisionCallback = (collision: CollisionInfo) => any;
-
-    export type CollisionInfo = {
         self: CollisionObject;
         other: CollisionObject;
     }
 
-    export type CollisionObject = {
+    export type MomentumTransferMode = 'zero_velocity_global' | 'zero_velocity_local' | 'elastic';
+
+    type CollisionData = {
+        move: PhysicsWorldObject;
+        from: PhysicsWorldObject;
+    }
+
+    type RaycastCollisionData = CollisionData & {
+        collision: Bounds.RaycastCollision;
+        callback?: CollisionCallback;
+        momentumTransfer?: MomentumTransferMode;
+    }
+
+    type DisplacementCollisionData = CollisionData & {
+        collision: Bounds.DisplacementCollision;
+    }
+
+    type CollisionObject = {
         obj: PhysicsWorldObject;
         vx: number;
         vy: number;
     }
 
-    export type MomentumTransferMode = 'zero_velocity_global' | 'zero_velocity_local' | 'elastic';
+    type PhysicsObjectDataCache = {
+        dpos: Dict<Vector2>;
+        boundingBoxes: Dict<Rect>;
+    }
 
     export function resolveCollisions(world: World) {
-        let dpos: Vector2[] = [];
+        let collidingPhysicsWorldObjects = getCollidingPhysicsObjects(world);
+        let physicsObjectDataCache = cachePhysicsObjectData(collidingPhysicsWorldObjects);
 
-        for (let worldObject of world.worldObjects) {
-            let d = worldObject instanceof PhysicsWorldObject
-                        ? vec2(worldObject.x - worldObject.physicslastx, worldObject.y - worldObject.physicslasty)
-                        : vec2(worldObject.x - worldObject.lastx, worldObject.y - worldObject.lasty);
-            dpos.push(d);
-
+        let iters = 1;
+        for (let worldObject of collidingPhysicsWorldObjects) {
+            let d = physicsObjectDataCache.dpos[worldObject.uid];
             worldObject.x -= d.x;
             worldObject.y -= d.y;
+            iters = Math.max(iters, Math.ceil(d.magnitude / world.maxDistancePerCollisionStep));
         }
 
-        let resultCollisions: RaycastCollision[] = [];
-
-        let iters = Math.max(1, M.max(dpos, d => Math.ceil(d.magnitude / world.maxDistancePerCollisionStep)));
+        let resultCollisions: RaycastCollisionData[] = [];
 
         for (let iter = 0; iter < iters; iter++) {
-            for (let i = 0; i < world.worldObjects.length; i++) {
-                world.worldObjects[i].x += dpos[i].x / iters;
-                world.worldObjects[i].y += dpos[i].y / iters;
+            for (let worldObject of collidingPhysicsWorldObjects) {
+                let d = physicsObjectDataCache.dpos[worldObject.uid];
+                worldObject.x += d.x / iters;
+                worldObject.y += d.y / iters;
             }
-            performNormalIteration(world, resultCollisions);
+            performNormalIteration(world, physicsObjectDataCache, resultCollisions);
         }
 
         for (let iter = 0; iter < world.collisionIterations - iters; iter++) {
-            performNormalIteration(world, resultCollisions);
+            performNormalIteration(world, physicsObjectDataCache, resultCollisions);
         }
-        performFinalIteration(world, resultCollisions);
+        performFinalIteration(world, physicsObjectDataCache, resultCollisions);
 
         // Collect any duplicate collisions for the same entities.
         let collectedCollisions = collectCollisions(resultCollisions);
@@ -66,18 +69,18 @@ namespace Physics {
         applyCollisionEffects(collectedCollisions, world.delta);
     }
 
-    function performNormalIteration(world: World, resultCollisions: RaycastCollision[]) {
-        let collisions = getRaycastCollisions(world)
+    function performNormalIteration(world: World, physicsObjectDataCache: PhysicsObjectDataCache, resultCollisions: RaycastCollisionData[]) {
+        let collisions = getRaycastCollisions(world, physicsObjectDataCache)
                 .sort((a,b) => a.collision.t - b.collision.t);
 
         for (let collision of collisions) {
-            let success = resolveCollision(world, collision);
+            let success = resolveCollision(world, physicsObjectDataCache, collision);
             if (success) resultCollisions.push(collision);
         }
     }
 
-    function performFinalIteration(world: World, resultCollisions: RaycastCollision[]) {
-        let collisions = getRaycastCollisions(world);
+    function performFinalIteration(world: World, physicsObjectDataCache: PhysicsObjectDataCache, resultCollisions: RaycastCollisionData[]) {
+        let collisions = getRaycastCollisions(world, physicsObjectDataCache);
 
         let currentSet = new Set<PhysicsWorldObject>();
         for (let collision of collisions) {
@@ -93,14 +96,14 @@ namespace Physics {
                 let hasFrom = currentSet.has(collision.from);
 
                 if (hasMove && !hasFrom) {
-                    let success = resolveCollision(world, collision, collision.move);
+                    let success = resolveCollision(world, physicsObjectDataCache, collision, collision.move);
                     if (success) resultCollisions.push(collision);
                     currentSet.add(collision.from);
                     doneWithCollisions = false;
                 }
 
                 if (hasFrom && !hasMove) {
-                    let success = resolveCollision(world, collision, collision.from);
+                    let success = resolveCollision(world, physicsObjectDataCache, collision, collision.from);
                     if (success) resultCollisions.push(collision);
                     currentSet.add(collision.move);
                     doneWithCollisions = false;
@@ -110,8 +113,8 @@ namespace Physics {
     }
 
     // Return true iff the collision actually happened.
-    function resolveCollision(world: World, collision: RaycastCollision, forceImmovable?: PhysicsWorldObject) {
-        let raycastCollision: RaycastCollision = {
+    function resolveCollision(world: World, physicsObjectDataCache: PhysicsObjectDataCache, collision: RaycastCollisionData, forceImmovable?: PhysicsWorldObject) {
+        let raycastCollision: RaycastCollisionData = {
             move: collision.move,
             from: collision.from,
             collision: collision.move.bounds.getRaycastCollision(collision.move.x-collision.move.physicslastx, collision.move.y-collision.move.physicslasty, collision.from.bounds, collision.from.x-collision.from.physicslastx, collision.from.y-collision.from.physicslasty),
@@ -119,7 +122,7 @@ namespace Physics {
         
         if (!raycastCollision.collision) return false;
 
-        let displacementCollision: DisplacementCollision = {
+        let displacementCollision: DisplacementCollisionData = {
             move: raycastCollision.move,
             from: raycastCollision.from,
             collision: undefined
@@ -139,19 +142,19 @@ namespace Physics {
 
         if (!displacementCollision.collision) return false;
 
-        applyDisplacementForCollision(displacementCollision, forceImmovable);
+        applyDisplacementForCollision(physicsObjectDataCache, displacementCollision, forceImmovable);
 
         return true;
     }
 
-    function getRaycastCollisions(world: World): RaycastCollision[] {
-        let raycastCollisions: RaycastCollision[] = [];
+    function getRaycastCollisions(world: World, physicsObjectDataCache: PhysicsObjectDataCache): RaycastCollisionData[] {
+        let raycastCollisions: RaycastCollisionData[] = [];
 
         for (let collision of world.collisions) {
             for (let move of world.physicsGroups[collision.move].worldObjects) {
                 for (let from of world.physicsGroups[collision.from].worldObjects) {
                     if (move === from) continue;
-                    if (!G.overlapRectangles(move.bounds.getBoundingBox(), from.bounds.getBoundingBox())) continue;
+                    if (!G.overlapRectangles(physicsObjectDataCache.boundingBoxes[move.uid], physicsObjectDataCache.boundingBoxes[from.uid])) continue;
                     if (!move.colliding || !from.colliding) continue;
                     if (!move.isCollidingWith(from) || !from.isCollidingWith(move)) continue;
                     let raycastCollision = move.bounds.getRaycastCollision(move.x-move.physicslastx, move.y-move.physicslasty, from.bounds, from.x-from.physicslastx, from.y-from.physicslasty);
@@ -169,21 +172,28 @@ namespace Physics {
         return raycastCollisions;
     }
 
-    function applyDisplacementForCollision(collision: Physics.DisplacementCollision, forceImmovable?: PhysicsWorldObject) {
+    function applyDisplacementForCollision(physicsObjectDataCache: PhysicsObjectDataCache, collision: DisplacementCollisionData, forceImmovable?: PhysicsWorldObject) {
         let moveImmovable = collision.move.isImmovable() || collision.move === forceImmovable;
         let fromImmovable = collision.from.isImmovable() || collision.from === forceImmovable;
 
         if (moveImmovable && fromImmovable) return;
 
+        let cachedMoveBounds = physicsObjectDataCache.boundingBoxes[collision.move.uid];
+        let cachedFromBounds = physicsObjectDataCache.boundingBoxes[collision.from.uid];
+
         if (moveImmovable) {
             collision.from.x -= collision.collision.displacementX;
             collision.from.y -= collision.collision.displacementY;
+            cachedFromBounds.x -= collision.collision.displacementX;
+            cachedFromBounds.y -= collision.collision.displacementY;
             return;
         }
 
         if (fromImmovable) {
             collision.move.x += collision.collision.displacementX;
             collision.move.y += collision.collision.displacementY;
+            cachedMoveBounds.x += collision.collision.displacementX;
+            cachedMoveBounds.y += collision.collision.displacementY;
             return;
         }
 
@@ -192,12 +202,16 @@ namespace Physics {
 
         collision.move.x += massFactor * collision.collision.displacementX;
         collision.move.y += massFactor * collision.collision.displacementY;
+        cachedMoveBounds.x += massFactor * collision.collision.displacementX;
+        cachedMoveBounds.y += massFactor * collision.collision.displacementY;
         collision.from.x -= (1-massFactor) * collision.collision.displacementX;
         collision.from.y -= (1-massFactor) * collision.collision.displacementY;
+        cachedFromBounds.x -= (1-massFactor) * collision.collision.displacementX;
+        cachedFromBounds.y -= (1-massFactor) * collision.collision.displacementY;
     }
 
-    function collectCollisions(collisions: RaycastCollision[]) {
-        let collisionGroups: RaycastCollision[][] = [];
+    function collectCollisions(collisions: RaycastCollisionData[]) {
+        let collisionGroups: RaycastCollisionData[][] = [];
 
         for (let collision of collisions) {
             let collisionFoundInList = false;
@@ -214,7 +228,7 @@ namespace Physics {
         }
 
         return collisionGroups.map(collisionList => {
-            return <RaycastCollision>{
+            return <RaycastCollisionData>{
                 move: collisionList[0].move,
                 from: collisionList[0].from,
                 callback: collisionList[0].callback,
@@ -230,9 +244,9 @@ namespace Physics {
         });
     }
 
-    function applyCollisionEffects(collisions: RaycastCollision[], delta: number) {
+    function applyCollisionEffects(collisions: RaycastCollisionData[], delta: number) {
         for (let collision of collisions) {
-            let moveCollisionInfo: Physics.CollisionInfo = {
+            let moveCollisionInfo: Physics.Collision = {
                 self: {
                     obj: collision.move,
                     vx: collision.move.v.x,
@@ -245,7 +259,7 @@ namespace Physics {
                 }
             };
 
-            let fromCollisionInfo: Physics.CollisionInfo = {
+            let fromCollisionInfo: Physics.Collision = {
                 self: moveCollisionInfo.other,
                 other: moveCollisionInfo.self
             };
@@ -258,7 +272,7 @@ namespace Physics {
         }
     }
 
-    function applyMomentumTransferForCollision(collision: Physics.DisplacementCollision, momentumTransferMode: MomentumTransferMode, delta: number,) {
+    function applyMomentumTransferForCollision(collision: DisplacementCollisionData, momentumTransferMode: MomentumTransferMode, delta: number,) {
 
         if (momentumTransferMode === 'elastic') {
             if (collision.move.isImmovable() && collision.from.isImmovable()) return;
@@ -326,5 +340,29 @@ namespace Physics {
         let factor = dot / M.magnitudeSq(dx, dy);
         obj.v.x -= factor * dx;
         obj.v.y -= factor * dy;
+    }
+
+    function getCollidingPhysicsObjects(world: World): PhysicsWorldObject[] {
+        return <PhysicsWorldObject[]>world.worldObjects.filter(worldObject => {
+            if (!(worldObject instanceof PhysicsWorldObject)) return false;
+            if (!worldObject.physicsGroup) return false;
+            if (!worldObject.isActive()) return false;
+            if (!worldObject.colliding) return false;
+            return true;
+        });
+    }
+
+    function cachePhysicsObjectData(physicsWorldObjects: PhysicsWorldObject[]): PhysicsObjectDataCache {
+        let dpos: Dict<Vector2> = {};
+        let boundingBoxes: Dict<Rect> = {};
+
+        for (let worldObject of physicsWorldObjects) {
+            dpos[worldObject.uid] = vec2(worldObject.x - worldObject.physicslastx, worldObject.y - worldObject.physicslasty);
+
+            let bb = worldObject.bounds.getBoundingBox();
+            boundingBoxes[worldObject.uid] = rect(bb.x, bb.y, bb.width, bb.height);
+        }
+
+        return { dpos, boundingBoxes };
     }
 }

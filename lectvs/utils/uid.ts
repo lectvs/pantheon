@@ -2,17 +2,20 @@
 
 class UIDGenerator {
     private rng: RandomNumberGenerator;
-    private tick: number;
+    private pastUIDs: Set<string>;
 
     constructor() {
         this.rng = new RandomNumberGenerator();
-        this.tick = 0;
+        this.pastUIDs = new Set();
     }
 
     generate() {
-        this.rng.seed(this.tick);
-        this.tick++;
-        return this.generateUid();
+        let uid: string;
+        do {
+            uid = this.generateUid();
+        } while (this.pastUIDs.has(uid));
+        this.pastUIDs.add(uid);
+        return uid;
     }
 
     private generateUid() {

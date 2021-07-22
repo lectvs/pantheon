@@ -2614,12 +2614,15 @@ var Random = new RandomNumberGenerator();
 var UIDGenerator = /** @class */ (function () {
     function UIDGenerator() {
         this.rng = new RandomNumberGenerator();
-        this.tick = 0;
+        this.pastUIDs = new Set();
     }
     UIDGenerator.prototype.generate = function () {
-        this.rng.seed(this.tick);
-        this.tick++;
-        return this.generateUid();
+        var uid;
+        do {
+            uid = this.generateUid();
+        } while (this.pastUIDs.has(uid));
+        this.pastUIDs.add(uid);
+        return uid;
     };
     UIDGenerator.prototype.generateUid = function () {
         var result = '';
@@ -7935,68 +7938,78 @@ var Camera = /** @class */ (function () {
 var Physics;
 (function (Physics) {
     function resolveCollisions(world) {
-        var e_33, _a;
-        var dpos = [];
+        var e_33, _a, e_34, _b;
+        var collidingPhysicsWorldObjects = getCollidingPhysicsObjects(world);
+        var physicsObjectDataCache = cachePhysicsObjectData(collidingPhysicsWorldObjects);
+        var iters = 1;
         try {
-            for (var _b = __values(world.worldObjects), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var worldObject = _c.value;
-                var d = worldObject instanceof PhysicsWorldObject
-                    ? vec2(worldObject.x - worldObject.physicslastx, worldObject.y - worldObject.physicslasty)
-                    : vec2(worldObject.x - worldObject.lastx, worldObject.y - worldObject.lasty);
-                dpos.push(d);
+            for (var collidingPhysicsWorldObjects_1 = __values(collidingPhysicsWorldObjects), collidingPhysicsWorldObjects_1_1 = collidingPhysicsWorldObjects_1.next(); !collidingPhysicsWorldObjects_1_1.done; collidingPhysicsWorldObjects_1_1 = collidingPhysicsWorldObjects_1.next()) {
+                var worldObject = collidingPhysicsWorldObjects_1_1.value;
+                var d = physicsObjectDataCache.dpos[worldObject.uid];
                 worldObject.x -= d.x;
                 worldObject.y -= d.y;
+                iters = Math.max(iters, Math.ceil(d.magnitude / world.maxDistancePerCollisionStep));
             }
         }
         catch (e_33_1) { e_33 = { error: e_33_1 }; }
         finally {
             try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                if (collidingPhysicsWorldObjects_1_1 && !collidingPhysicsWorldObjects_1_1.done && (_a = collidingPhysicsWorldObjects_1.return)) _a.call(collidingPhysicsWorldObjects_1);
             }
             finally { if (e_33) throw e_33.error; }
         }
         var resultCollisions = [];
-        var iters = Math.max(1, M.max(dpos, function (d) { return Math.ceil(d.magnitude / world.maxDistancePerCollisionStep); }));
         for (var iter = 0; iter < iters; iter++) {
-            for (var i = 0; i < world.worldObjects.length; i++) {
-                world.worldObjects[i].x += dpos[i].x / iters;
-                world.worldObjects[i].y += dpos[i].y / iters;
+            try {
+                for (var collidingPhysicsWorldObjects_2 = (e_34 = void 0, __values(collidingPhysicsWorldObjects)), collidingPhysicsWorldObjects_2_1 = collidingPhysicsWorldObjects_2.next(); !collidingPhysicsWorldObjects_2_1.done; collidingPhysicsWorldObjects_2_1 = collidingPhysicsWorldObjects_2.next()) {
+                    var worldObject = collidingPhysicsWorldObjects_2_1.value;
+                    var d = physicsObjectDataCache.dpos[worldObject.uid];
+                    worldObject.x += d.x / iters;
+                    worldObject.y += d.y / iters;
+                }
             }
-            performNormalIteration(world, resultCollisions);
+            catch (e_34_1) { e_34 = { error: e_34_1 }; }
+            finally {
+                try {
+                    if (collidingPhysicsWorldObjects_2_1 && !collidingPhysicsWorldObjects_2_1.done && (_b = collidingPhysicsWorldObjects_2.return)) _b.call(collidingPhysicsWorldObjects_2);
+                }
+                finally { if (e_34) throw e_34.error; }
+            }
+            performNormalIteration(world, physicsObjectDataCache, resultCollisions);
         }
         for (var iter = 0; iter < world.collisionIterations - iters; iter++) {
-            performNormalIteration(world, resultCollisions);
+            performNormalIteration(world, physicsObjectDataCache, resultCollisions);
         }
-        performFinalIteration(world, resultCollisions);
+        performFinalIteration(world, physicsObjectDataCache, resultCollisions);
         // Collect any duplicate collisions for the same entities.
         var collectedCollisions = collectCollisions(resultCollisions);
         // Apply momentum transfer/callbacks
         applyCollisionEffects(collectedCollisions, world.delta);
     }
     Physics.resolveCollisions = resolveCollisions;
-    function performNormalIteration(world, resultCollisions) {
-        var e_34, _a;
-        var collisions = getRaycastCollisions(world)
+    function performNormalIteration(world, physicsObjectDataCache, resultCollisions) {
+        var e_35, _a;
+        var collisions = getRaycastCollisions(world, physicsObjectDataCache)
             .sort(function (a, b) { return a.collision.t - b.collision.t; });
         try {
             for (var collisions_1 = __values(collisions), collisions_1_1 = collisions_1.next(); !collisions_1_1.done; collisions_1_1 = collisions_1.next()) {
                 var collision = collisions_1_1.value;
-                var success = resolveCollision(world, collision);
+                var success = resolveCollision(world, physicsObjectDataCache, collision);
                 if (success)
                     resultCollisions.push(collision);
             }
         }
-        catch (e_34_1) { e_34 = { error: e_34_1 }; }
+        catch (e_35_1) { e_35 = { error: e_35_1 }; }
         finally {
             try {
                 if (collisions_1_1 && !collisions_1_1.done && (_a = collisions_1.return)) _a.call(collisions_1);
             }
-            finally { if (e_34) throw e_34.error; }
+            finally { if (e_35) throw e_35.error; }
         }
     }
-    function performFinalIteration(world, resultCollisions) {
-        var e_35, _a, e_36, _b;
-        var collisions = getRaycastCollisions(world);
+    function performFinalIteration(world, physicsObjectDataCache, resultCollisions) {
+        var e_36, _a, e_37, _b;
+        var collisions = getRaycastCollisions(world, physicsObjectDataCache);
         var currentSet = new Set();
         try {
             for (var collisions_2 = __values(collisions), collisions_2_1 = collisions_2.next(); !collisions_2_1.done; collisions_2_1 = collisions_2.next()) {
@@ -8007,30 +8020,30 @@ var Physics;
                     currentSet.add(collision.from);
             }
         }
-        catch (e_35_1) { e_35 = { error: e_35_1 }; }
+        catch (e_36_1) { e_36 = { error: e_36_1 }; }
         finally {
             try {
                 if (collisions_2_1 && !collisions_2_1.done && (_a = collisions_2.return)) _a.call(collisions_2);
             }
-            finally { if (e_35) throw e_35.error; }
+            finally { if (e_36) throw e_36.error; }
         }
         var doneWithCollisions = false;
         while (!doneWithCollisions) {
             doneWithCollisions = true;
             try {
-                for (var collisions_3 = (e_36 = void 0, __values(collisions)), collisions_3_1 = collisions_3.next(); !collisions_3_1.done; collisions_3_1 = collisions_3.next()) {
+                for (var collisions_3 = (e_37 = void 0, __values(collisions)), collisions_3_1 = collisions_3.next(); !collisions_3_1.done; collisions_3_1 = collisions_3.next()) {
                     var collision = collisions_3_1.value;
                     var hasMove = currentSet.has(collision.move);
                     var hasFrom = currentSet.has(collision.from);
                     if (hasMove && !hasFrom) {
-                        var success = resolveCollision(world, collision, collision.move);
+                        var success = resolveCollision(world, physicsObjectDataCache, collision, collision.move);
                         if (success)
                             resultCollisions.push(collision);
                         currentSet.add(collision.from);
                         doneWithCollisions = false;
                     }
                     if (hasFrom && !hasMove) {
-                        var success = resolveCollision(world, collision, collision.from);
+                        var success = resolveCollision(world, physicsObjectDataCache, collision, collision.from);
                         if (success)
                             resultCollisions.push(collision);
                         currentSet.add(collision.move);
@@ -8038,17 +8051,17 @@ var Physics;
                     }
                 }
             }
-            catch (e_36_1) { e_36 = { error: e_36_1 }; }
+            catch (e_37_1) { e_37 = { error: e_37_1 }; }
             finally {
                 try {
                     if (collisions_3_1 && !collisions_3_1.done && (_b = collisions_3.return)) _b.call(collisions_3);
                 }
-                finally { if (e_36) throw e_36.error; }
+                finally { if (e_37) throw e_37.error; }
             }
         }
     }
     // Return true iff the collision actually happened.
-    function resolveCollision(world, collision, forceImmovable) {
+    function resolveCollision(world, physicsObjectDataCache, collision, forceImmovable) {
         var raycastCollision = {
             move: collision.move,
             from: collision.from,
@@ -8075,24 +8088,24 @@ var Physics;
         }
         if (!displacementCollision.collision)
             return false;
-        applyDisplacementForCollision(displacementCollision, forceImmovable);
+        applyDisplacementForCollision(physicsObjectDataCache, displacementCollision, forceImmovable);
         return true;
     }
-    function getRaycastCollisions(world) {
-        var e_37, _a, e_38, _b, e_39, _c;
+    function getRaycastCollisions(world, physicsObjectDataCache) {
+        var e_38, _a, e_39, _b, e_40, _c;
         var raycastCollisions = [];
         try {
             for (var _d = __values(world.collisions), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var collision = _e.value;
                 try {
-                    for (var _f = (e_38 = void 0, __values(world.physicsGroups[collision.move].worldObjects)), _g = _f.next(); !_g.done; _g = _f.next()) {
+                    for (var _f = (e_39 = void 0, __values(world.physicsGroups[collision.move].worldObjects)), _g = _f.next(); !_g.done; _g = _f.next()) {
                         var move = _g.value;
                         try {
-                            for (var _h = (e_39 = void 0, __values(world.physicsGroups[collision.from].worldObjects)), _j = _h.next(); !_j.done; _j = _h.next()) {
+                            for (var _h = (e_40 = void 0, __values(world.physicsGroups[collision.from].worldObjects)), _j = _h.next(); !_j.done; _j = _h.next()) {
                                 var from = _j.value;
                                 if (move === from)
                                     continue;
-                                if (!G.overlapRectangles(move.bounds.getBoundingBox(), from.bounds.getBoundingBox()))
+                                if (!G.overlapRectangles(physicsObjectDataCache.boundingBoxes[move.uid], physicsObjectDataCache.boundingBoxes[from.uid]))
                                     continue;
                                 if (!move.colliding || !from.colliding)
                                     continue;
@@ -8109,64 +8122,74 @@ var Physics;
                                 });
                             }
                         }
-                        catch (e_39_1) { e_39 = { error: e_39_1 }; }
+                        catch (e_40_1) { e_40 = { error: e_40_1 }; }
                         finally {
                             try {
                                 if (_j && !_j.done && (_c = _h.return)) _c.call(_h);
                             }
-                            finally { if (e_39) throw e_39.error; }
+                            finally { if (e_40) throw e_40.error; }
                         }
                     }
                 }
-                catch (e_38_1) { e_38 = { error: e_38_1 }; }
+                catch (e_39_1) { e_39 = { error: e_39_1 }; }
                 finally {
                     try {
                         if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
                     }
-                    finally { if (e_38) throw e_38.error; }
+                    finally { if (e_39) throw e_39.error; }
                 }
             }
         }
-        catch (e_37_1) { e_37 = { error: e_37_1 }; }
+        catch (e_38_1) { e_38 = { error: e_38_1 }; }
         finally {
             try {
                 if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
             }
-            finally { if (e_37) throw e_37.error; }
+            finally { if (e_38) throw e_38.error; }
         }
         return raycastCollisions;
     }
-    function applyDisplacementForCollision(collision, forceImmovable) {
+    function applyDisplacementForCollision(physicsObjectDataCache, collision, forceImmovable) {
         var moveImmovable = collision.move.isImmovable() || collision.move === forceImmovable;
         var fromImmovable = collision.from.isImmovable() || collision.from === forceImmovable;
         if (moveImmovable && fromImmovable)
             return;
+        var cachedMoveBounds = physicsObjectDataCache.boundingBoxes[collision.move.uid];
+        var cachedFromBounds = physicsObjectDataCache.boundingBoxes[collision.from.uid];
         if (moveImmovable) {
             collision.from.x -= collision.collision.displacementX;
             collision.from.y -= collision.collision.displacementY;
+            cachedFromBounds.x -= collision.collision.displacementX;
+            cachedFromBounds.y -= collision.collision.displacementY;
             return;
         }
         if (fromImmovable) {
             collision.move.x += collision.collision.displacementX;
             collision.move.y += collision.collision.displacementY;
+            cachedMoveBounds.x += collision.collision.displacementX;
+            cachedMoveBounds.y += collision.collision.displacementY;
             return;
         }
         var massFactor = (collision.move.mass + collision.from.mass === 0) ? 0.5 :
             collision.from.mass / (collision.move.mass + collision.from.mass);
         collision.move.x += massFactor * collision.collision.displacementX;
         collision.move.y += massFactor * collision.collision.displacementY;
+        cachedMoveBounds.x += massFactor * collision.collision.displacementX;
+        cachedMoveBounds.y += massFactor * collision.collision.displacementY;
         collision.from.x -= (1 - massFactor) * collision.collision.displacementX;
         collision.from.y -= (1 - massFactor) * collision.collision.displacementY;
+        cachedFromBounds.x -= (1 - massFactor) * collision.collision.displacementX;
+        cachedFromBounds.y -= (1 - massFactor) * collision.collision.displacementY;
     }
     function collectCollisions(collisions) {
-        var e_40, _a, e_41, _b;
+        var e_41, _a, e_42, _b;
         var collisionGroups = [];
         try {
             for (var collisions_4 = __values(collisions), collisions_4_1 = collisions_4.next(); !collisions_4_1.done; collisions_4_1 = collisions_4.next()) {
                 var collision = collisions_4_1.value;
                 var collisionFoundInList = false;
                 try {
-                    for (var collisionGroups_1 = (e_41 = void 0, __values(collisionGroups)), collisionGroups_1_1 = collisionGroups_1.next(); !collisionGroups_1_1.done; collisionGroups_1_1 = collisionGroups_1.next()) {
+                    for (var collisionGroups_1 = (e_42 = void 0, __values(collisionGroups)), collisionGroups_1_1 = collisionGroups_1.next(); !collisionGroups_1_1.done; collisionGroups_1_1 = collisionGroups_1.next()) {
                         var collisionList = collisionGroups_1_1.value;
                         if (collisionList[0].move === collision.move && collisionList[0].from === collision.from) {
                             collisionList.push(collision);
@@ -8175,24 +8198,24 @@ var Physics;
                         }
                     }
                 }
-                catch (e_41_1) { e_41 = { error: e_41_1 }; }
+                catch (e_42_1) { e_42 = { error: e_42_1 }; }
                 finally {
                     try {
                         if (collisionGroups_1_1 && !collisionGroups_1_1.done && (_b = collisionGroups_1.return)) _b.call(collisionGroups_1);
                     }
-                    finally { if (e_41) throw e_41.error; }
+                    finally { if (e_42) throw e_42.error; }
                 }
                 if (!collisionFoundInList) {
                     collisionGroups.push([collision]);
                 }
             }
         }
-        catch (e_40_1) { e_40 = { error: e_40_1 }; }
+        catch (e_41_1) { e_41 = { error: e_41_1 }; }
         finally {
             try {
                 if (collisions_4_1 && !collisions_4_1.done && (_a = collisions_4.return)) _a.call(collisions_4);
             }
-            finally { if (e_40) throw e_40.error; }
+            finally { if (e_41) throw e_41.error; }
         }
         return collisionGroups.map(function (collisionList) {
             return {
@@ -8211,7 +8234,7 @@ var Physics;
         });
     }
     function applyCollisionEffects(collisions, delta) {
-        var e_42, _a;
+        var e_43, _a;
         try {
             for (var collisions_5 = __values(collisions), collisions_5_1 = collisions_5.next(); !collisions_5_1.done; collisions_5_1 = collisions_5.next()) {
                 var collision = collisions_5_1.value;
@@ -8238,12 +8261,12 @@ var Physics;
                 collision.from.onCollide(fromCollisionInfo);
             }
         }
-        catch (e_42_1) { e_42 = { error: e_42_1 }; }
+        catch (e_43_1) { e_43 = { error: e_43_1 }; }
         finally {
             try {
                 if (collisions_5_1 && !collisions_5_1.done && (_a = collisions_5.return)) _a.call(collisions_5);
             }
-            finally { if (e_42) throw e_42.error; }
+            finally { if (e_43) throw e_43.error; }
         }
     }
     function applyMomentumTransferForCollision(collision, momentumTransferMode, delta) {
@@ -8308,6 +8331,40 @@ var Physics;
         obj.v.x -= factor * dx;
         obj.v.y -= factor * dy;
     }
+    function getCollidingPhysicsObjects(world) {
+        return world.worldObjects.filter(function (worldObject) {
+            if (!(worldObject instanceof PhysicsWorldObject))
+                return false;
+            if (!worldObject.physicsGroup)
+                return false;
+            if (!worldObject.isActive())
+                return false;
+            if (!worldObject.colliding)
+                return false;
+            return true;
+        });
+    }
+    function cachePhysicsObjectData(physicsWorldObjects) {
+        var e_44, _a;
+        var dpos = {};
+        var boundingBoxes = {};
+        try {
+            for (var physicsWorldObjects_1 = __values(physicsWorldObjects), physicsWorldObjects_1_1 = physicsWorldObjects_1.next(); !physicsWorldObjects_1_1.done; physicsWorldObjects_1_1 = physicsWorldObjects_1.next()) {
+                var worldObject = physicsWorldObjects_1_1.value;
+                dpos[worldObject.uid] = vec2(worldObject.x - worldObject.physicslastx, worldObject.y - worldObject.physicslasty);
+                var bb = worldObject.bounds.getBoundingBox();
+                boundingBoxes[worldObject.uid] = rect(bb.x, bb.y, bb.width, bb.height);
+            }
+        }
+        catch (e_44_1) { e_44 = { error: e_44_1 }; }
+        finally {
+            try {
+                if (physicsWorldObjects_1_1 && !physicsWorldObjects_1_1.done && (_a = physicsWorldObjects_1.return)) _a.call(physicsWorldObjects_1);
+            }
+            finally { if (e_44) throw e_44.error; }
+        }
+        return { dpos: dpos, boundingBoxes: boundingBoxes };
+    }
 })(Physics || (Physics = {}));
 var WorldSelecter = /** @class */ (function () {
     function WorldSelecter(world) {
@@ -8337,37 +8394,37 @@ var WorldSelecter = /** @class */ (function () {
         return this.world.worldObjects.filter(function (obj) { return obj.name === name; });
     };
     WorldSelecter.prototype.overlap = function (bounds, physicsGroups) {
-        var e_43, _a;
+        var e_45, _a;
         var result = [];
         for (var physicsGroup in this.world.physicsGroups) {
             if (!_.contains(physicsGroups, physicsGroup))
                 continue;
             try {
-                for (var _b = (e_43 = void 0, __values(this.world.physicsGroups[physicsGroup].worldObjects)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                for (var _b = (e_45 = void 0, __values(this.world.physicsGroups[physicsGroup].worldObjects)), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var obj = _c.value;
                     if (!obj.isOverlapping(bounds))
                         continue;
                     result.push(obj);
                 }
             }
-            catch (e_43_1) { e_43 = { error: e_43_1 }; }
+            catch (e_45_1) { e_45 = { error: e_45_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_43) throw e_43.error; }
+                finally { if (e_45) throw e_45.error; }
             }
         }
         return result;
     };
     WorldSelecter.prototype.raycast = function (x, y, dx, dy, physicsGroups) {
-        var e_44, _a;
+        var e_46, _a;
         var result = [];
         for (var physicsGroup in this.world.physicsGroups) {
             if (!_.contains(physicsGroups, physicsGroup))
                 continue;
             try {
-                for (var _b = (e_44 = void 0, __values(this.world.physicsGroups[physicsGroup].worldObjects)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                for (var _b = (e_46 = void 0, __values(this.world.physicsGroups[physicsGroup].worldObjects)), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var obj = _c.value;
                     var t = obj.bounds.raycast(x, y, dx, dy);
                     if (!isFinite(t))
@@ -8375,12 +8432,12 @@ var WorldSelecter = /** @class */ (function () {
                     result.push({ obj: obj, t: t });
                 }
             }
-            catch (e_44_1) { e_44 = { error: e_44_1 }; }
+            catch (e_46_1) { e_46 = { error: e_46_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_44) throw e_44.error; }
+                finally { if (e_46) throw e_46.error; }
             }
         }
         return result.sort(function (r1, r2) { return r1.t - r2.t; });
@@ -9804,7 +9861,7 @@ var Effects = /** @class */ (function () {
         return false;
     };
     Effects.prototype.updateEffects = function (delta) {
-        var e_45, _a, e_46, _b;
+        var e_47, _a, e_48, _b;
         if (this.effects[Effects.SILHOUETTE_I])
             this.effects[Effects.SILHOUETTE_I].updateTime(delta);
         if (this.effects[Effects.OUTLINE_I])
@@ -9815,12 +9872,12 @@ var Effects = /** @class */ (function () {
                 filter_1.updateTime(delta);
             }
         }
-        catch (e_45_1) { e_45 = { error: e_45_1 }; }
+        catch (e_47_1) { e_47 = { error: e_47_1 }; }
         finally {
             try {
                 if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
             }
-            finally { if (e_45) throw e_45.error; }
+            finally { if (e_47) throw e_47.error; }
         }
         try {
             for (var _e = __values(this.post.filters), _f = _e.next(); !_f.done; _f = _e.next()) {
@@ -9828,12 +9885,12 @@ var Effects = /** @class */ (function () {
                 filter_2.updateTime(delta);
             }
         }
-        catch (e_46_1) { e_46 = { error: e_46_1 }; }
+        catch (e_48_1) { e_48 = { error: e_48_1 }; }
         finally {
             try {
                 if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
             }
-            finally { if (e_46) throw e_46.error; }
+            finally { if (e_48) throw e_48.error; }
         }
     };
     Effects.prototype.updateFromConfig = function (config) {
@@ -10402,7 +10459,7 @@ var SpriteTextConverter = /** @class */ (function () {
         return result;
     };
     SpriteTextConverter.pushWord = function (word, result, position, maxWidth) {
-        var e_47, _a;
+        var e_49, _a;
         if (_.isEmpty(word))
             return;
         var lastChar = _.last(word);
@@ -10416,12 +10473,12 @@ var SpriteTextConverter = /** @class */ (function () {
                     char.y -= diffy;
                 }
             }
-            catch (e_47_1) { e_47 = { error: e_47_1 }; }
+            catch (e_49_1) { e_49 = { error: e_49_1 }; }
             finally {
                 try {
                     if (word_1_1 && !word_1_1.done && (_a = word_1.return)) _a.call(word_1);
                 }
-                finally { if (e_47) throw e_47.error; }
+                finally { if (e_49) throw e_49.error; }
             }
             position.x -= diffx;
             position.y -= diffy;
@@ -10497,7 +10554,7 @@ var Tilemap = /** @class */ (function (_super) {
         configurable: true
     });
     Tilemap.prototype.createCollisionBoxes = function () {
-        var e_48, _a;
+        var e_50, _a;
         World.Actions.removeWorldObjectsFromWorld(this.collisionBoxes);
         this.collisionBoxes = [];
         var collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tileset);
@@ -10506,22 +10563,24 @@ var Tilemap = /** @class */ (function (_super) {
         try {
             for (var collisionRects_1 = __values(collisionRects), collisionRects_1_1 = collisionRects_1.next(); !collisionRects_1_1.done; collisionRects_1_1 = collisionRects_1.next()) {
                 var rect_3 = collisionRects_1_1.value;
-                var box = this.addChild(new PhysicsWorldObject());
-                box.x = this.x;
-                box.y = this.y;
-                box.bounds = new RectBounds(rect_3.x, rect_3.y, rect_3.width, rect_3.height);
-                box.matchParentPhysicsGroup = true;
-                box.setImmovable(true);
+                var box = this.addChild(new PhysicsWorldObject({
+                    x: this.x,
+                    y: this.y,
+                    bounds: new RectBounds(rect_3.x, rect_3.y, rect_3.width, rect_3.height),
+                    matchParentPhysicsGroup: true,
+                    immovable: true,
+                    simulating: false,
+                }));
                 box.debugDrawBounds = this.debugDrawBounds;
                 this.collisionBoxes.push(box);
             }
         }
-        catch (e_48_1) { e_48 = { error: e_48_1 }; }
+        catch (e_50_1) { e_50 = { error: e_50_1 }; }
         finally {
             try {
                 if (collisionRects_1_1 && !collisionRects_1_1.done && (_a = collisionRects_1.return)) _a.call(collisionRects_1);
             }
-            finally { if (e_48) throw e_48.error; }
+            finally { if (e_50) throw e_50.error; }
         }
     };
     Tilemap.prototype.createTilemap = function () {
@@ -10804,7 +10863,7 @@ var SmartTilemap;
     }
     SmartTilemap.getSmartTilemapLayer = getSmartTilemapLayer;
     function getSmartTile(tilemap, x, y, config) {
-        var e_49, _a;
+        var e_51, _a;
         try {
             for (var _b = __values(config.rules), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var rule = _c.value;
@@ -10813,12 +10872,12 @@ var SmartTilemap;
                 }
             }
         }
-        catch (e_49_1) { e_49 = { error: e_49_1 }; }
+        catch (e_51_1) { e_51 = { error: e_51_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_49) throw e_49.error; }
+            finally { if (e_51) throw e_51.error; }
         }
         return tilemap[y][x];
     }
