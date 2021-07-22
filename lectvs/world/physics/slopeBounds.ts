@@ -4,6 +4,7 @@ namespace SlopeBounds {
 
 class SlopeBounds implements Bounds {
     parent: Bounds.Parent;
+    private frozen: boolean;
 
     x: number;
     y: number;
@@ -21,20 +22,26 @@ class SlopeBounds implements Bounds {
         this.height = height;
         this.direction = direction;
         this.boundingBox = new Rectangle(0, 0, 0, 0);
+        this.frozen = false;
     }
 
     clone(): SlopeBounds {
         return new SlopeBounds(this.x, this.y, this.width, this.height, this.direction, this.parent);
     }
 
-    getBoundingBox(x?: number, y?: number) {
-        x = x ?? (this.parent ? this.parent.x : 0);
-        y = y ?? (this.parent ? this.parent.y : 0);
+    freeze() {
+        this.frozen = false;
+        this.getBoundingBox();
+        this.frozen = true;
+    }
 
-        this.boundingBox.x = x + this.x;
-        this.boundingBox.y = y + this.y;
-        this.boundingBox.width = this.width;
-        this.boundingBox.height = this.height;
+    getBoundingBox() {
+        if (!this.frozen) {
+            this.boundingBox.x = (this.parent ? this.parent.x : 0) + this.x;
+            this.boundingBox.y = (this.parent ? this.parent.y : 0) + this.y;
+            this.boundingBox.width = this.width;
+            this.boundingBox.height = this.height;
+        }
         return this.boundingBox;
     }
 
@@ -127,5 +134,9 @@ class SlopeBounds implements Bounds {
         if (t < 0) return Infinity;
 
         return t;
+    }
+
+    unfreeze() {
+        this.frozen = false;
     }
 }

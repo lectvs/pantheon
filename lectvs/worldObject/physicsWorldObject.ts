@@ -117,8 +117,8 @@ class PhysicsWorldObject extends WorldObject {
         return this.v.magnitude;
     }
 
-    getWorldBounds(newX: number = this.x, newY: number = this.y) {
-        return this.bounds.getBoundingBox(newX, newY);
+    getWorldBounds() {
+        return this.bounds.getBoundingBox();
     }
 
     isCollidingWith(other: PhysicsWorldObject) {

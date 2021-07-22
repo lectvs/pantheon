@@ -26,9 +26,17 @@ namespace Bounds {
 interface Bounds {
     parent: Pt;
     clone(): Bounds;
-    getBoundingBox(x?: number, y?: number): Rectangle;
+    /**
+     * FOR USE WITH PHYSICS RESOLVECOLLISIONS ONLY.
+     */
+    freeze(): void;
+    getBoundingBox(): Rectangle;
     getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision;
     getDisplacementCollision(other: Bounds): Bounds.DisplacementCollision;
     isOverlapping(other: Bounds): boolean;
     raycast(x: number, y: number, dx: number, dy: number): number;
+    /**
+     * FOR USE WITH PHYSICS RESOLVECOLLISIONS ONLY.
+     */
+    unfreeze(): void;
 }

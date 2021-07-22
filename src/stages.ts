@@ -25,7 +25,7 @@ const stages: Dict<Factory<World>> = {
                 { move: 'player', from: 'walls' },
                 { move: 'npcs', from: 'walls' },
             ],
-            collisionIterations: 4,
+            collisionIterations: 2,
             // TODO: rethink this? does it actually help?
             useRaycastDisplacementThreshold: Infinity,
             maxDistancePerCollisionStep: 8,

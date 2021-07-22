@@ -1,5 +1,6 @@
 class InvertedRectBounds implements Bounds {
     parent: Bounds.Parent;
+    private frozen: boolean;
 
     x: number;
     y: number;
@@ -7,6 +8,7 @@ class InvertedRectBounds implements Bounds {
     height: number;
 
     private boundingBox: Rectangle;
+    private innerBox: Rectangle;
 
     constructor(x: number, y: number, width: number, height: number, parent?: Bounds.Parent) {
         this.parent = parent;
@@ -14,22 +16,34 @@ class InvertedRectBounds implements Bounds {
         this.y = y;
         this.width = width;
         this.height = height;
-        this.boundingBox = new Rectangle(0, 0, 0, 0);
+        // Big numbers because I don't trust Infinity :)
+        this.boundingBox = new Rectangle(-1_000_000, -1_000_000, 2_000_000, 2_000_000);
+        this.innerBox = new Rectangle(0, 0, 0, 0);
+        this.frozen = false;
     }
 
     clone(): InvertedRectBounds {
         return new InvertedRectBounds(this.x, this.y, this.width, this.height, this.parent);
     }
 
-    getBoundingBox(x?: number, y?: number) {
-        x = x ?? (this.parent ? this.parent.x : 0);
-        y = y ?? (this.parent ? this.parent.y : 0);
+    freeze() {
+        this.frozen = false;
+        this.getInnerBox();
+        this.frozen = true;
+    }
 
-        this.boundingBox.x = x + this.x;
-        this.boundingBox.y = y + this.y;
-        this.boundingBox.width = this.width;
-        this.boundingBox.height = this.height;
+    getBoundingBox() {
         return this.boundingBox;
+    }
+
+    getInnerBox() {
+        if (!this.frozen) {
+            this.innerBox.x = (this.parent ? this.parent.x : 0) + this.x;
+            this.innerBox.y = (this.parent ? this.parent.y : 0) + this.y;
+            this.innerBox.width = this.width;
+            this.innerBox.height = this.height;
+        }
+        return this.innerBox;
     }
 
     getDisplacementCollision(other: Bounds): Bounds.DisplacementCollision {
@@ -57,7 +71,7 @@ class InvertedRectBounds implements Bounds {
     }
 
     raycast(x: number, y: number, dx: number, dy: number) {
-        let box = this.getBoundingBox();
+        let box = this.getInnerBox();
 
         if (dx === 0 && dy === 0) {
             return box.contains(x, y) ? Infinity : 0;
@@ -71,5 +85,9 @@ class InvertedRectBounds implements Bounds {
         let t = Math.min(left_t, right_t, top_t, bottom_t);
 
         return t;
+    }
+
+    unfreeze() {
+        this.frozen = false;
     }
 }

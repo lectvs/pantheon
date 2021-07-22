@@ -1,5 +1,6 @@
 class CircleBounds implements Bounds {
     parent: Bounds.Parent;
+    private frozen: boolean;
 
     x: number;
     y: number;
@@ -15,29 +16,35 @@ class CircleBounds implements Bounds {
         this.radius = radius;
         this.center = new Vector2(x, y);
         this.boundingBox = new Rectangle(0, 0, 0, 0);
+        this.frozen = false;
     }
 
     clone(): CircleBounds {
         return new CircleBounds(this.x, this.y, this.radius, this.parent);
     }
 
-    getCenter() {
-        let x = this.parent ? this.parent.x : 0;
-        let y = this.parent ? this.parent.y : 0;
+    freeze() {
+        this.frozen = false;
+        this.getCenter();
+        this.getBoundingBox();
+        this.frozen = true;
+    }
 
-        this.center.x = x + this.x;
-        this.center.y = y + this.y;
+    getCenter() {
+        if (!this.frozen) {
+            this.center.x = (this.parent ? this.parent.x : 0) + this.x;
+            this.center.y = (this.parent ? this.parent.y : 0) + this.y;
+        }
         return this.center;
     }
 
-    getBoundingBox(x?: number, y?: number) {
-        x = x ?? (this.parent ? this.parent.x : 0);
-        y = y ?? (this.parent ? this.parent.y : 0);
-
-        this.boundingBox.x = x + this.x - this.radius;
-        this.boundingBox.y = y + this.y - this.radius;
-        this.boundingBox.width = this.radius*2;
-        this.boundingBox.height = this.radius*2;
+    getBoundingBox() {
+        if (!this.frozen) {
+            this.boundingBox.x = (this.parent ? this.parent.x : 0) + this.x - this.radius;
+            this.boundingBox.y = (this.parent ? this.parent.y : 0) + this.y - this.radius;
+            this.boundingBox.width = this.radius*2;
+            this.boundingBox.height = this.radius*2;
+        }
         return this.boundingBox;
     }
 
@@ -88,5 +95,9 @@ class CircleBounds implements Bounds {
         if (t < 0) return Infinity;
 
         return t;
+    }
+
+    unfreeze() {
+        this.frozen = false;
     }
 }

@@ -1,3 +1,5 @@
+var sectorModifier = 0;
+
 class WallFilter extends TextureFilter {
     constructor() {
         super({
@@ -31,7 +33,7 @@ class WallFilter extends TextureFilter {
     update() {
         let cc = global.world.select.type(CameraController, false);
         if (!cc) return;
-        this.setUniform('camx', cc.sector.x * global.gameWidth);
+        this.setUniform('camx', (cc.sector.x + sectorModifier) * global.gameWidth);
         this.setUniform('camy', cc.sector.y * global.gameHeight);
 
         this.setUniform('camox', global.world.camera.worldOffsetX - global.world.camera.x);

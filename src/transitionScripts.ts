@@ -30,6 +30,7 @@ namespace TransitionScripts {
                 return false;
             }
             player.teleport(player.x, player.y - world.height * (newSector.y - oldSector.y));
+            sectorModifier++;
             return true;
         }
 

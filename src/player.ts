@@ -1,6 +1,6 @@
 class Player extends Sprite {
     readonly MAX_SPEED = 150;
-    readonly JUMP_FORCE = 440;
+    readonly JUMP_FORCE = 420;
     readonly GRAVITY_NORMAL = 800;
     readonly GRAVITY_SPIN = 400;
 
@@ -57,7 +57,7 @@ class Player extends Sprite {
         this.v.x = haxis * this.MAX_SPEED;
 
         if (grounded) {
-            if (!this.lastGrounded) this.world.playSound('land');
+            if (!this.lastGrounded && this.v.y >= 0) this.world.playSound('land');
             this.midjump = false;
         }
 

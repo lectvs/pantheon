@@ -1,12 +1,10 @@
 class NullBounds implements Bounds {
     parent: Bounds.Parent;
 
-    private position: Vector2;
     private boundingBox: Rectangle;
 
     constructor(parent?: Bounds.Parent) {
         this.parent = parent;
-        this.position = new Vector2(Infinity, Infinity);
         this.boundingBox = new Rectangle(Infinity, Infinity, 0, 0);
     }
 
@@ -14,11 +12,11 @@ class NullBounds implements Bounds {
         return new NullBounds();
     }
 
-    getPosition(x?: number, y?: number) {
-        return this.position;
+    freeze() {
+        // Noop
     }
 
-    getBoundingBox(x?: number, y?: number) {
+    getBoundingBox() {
         return this.boundingBox;
     }
 
@@ -36,5 +34,9 @@ class NullBounds implements Bounds {
 
     raycast(x: number, y: number, dx: number, dy: number) {
         return Infinity;
+    }
+
+    unfreeze() {
+        // Noop
     }
 }

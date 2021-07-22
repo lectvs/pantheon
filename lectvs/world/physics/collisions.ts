@@ -428,6 +428,11 @@ namespace Bounds.Collision {
         let result = <Bounds.RaycastCollision>getDisplacementCollisionCircleCircle(move, from);
         result.t = t;
 
+        movePos.x += movedx;
+        movePos.y += movedy;
+        fromPos.x += fromdx;
+        fromPos.y += fromdy;
+
         return result;
     }
 
@@ -455,6 +460,11 @@ namespace Bounds.Collision {
 
         let result = <Bounds.RaycastCollision>getDisplacementCollisionCircleRect(move, from);
         result.t = t;
+
+        movePos.x += movedx;
+        movePos.y += movedy;
+        fromBox.x += fromdx;
+        fromBox.y += fromdy;
 
         return result;
     }
@@ -500,6 +510,11 @@ namespace Bounds.Collision {
         let result = <Bounds.RaycastCollision>getDisplacementCollisionCircleSlope(move, from);
         result.t = t;
 
+        movePos.x += movedx;
+        movePos.y += movedy;
+        fromBox.x += fromdx;
+        fromBox.y += fromdy;
+
         return result;
     }
 
@@ -519,6 +534,11 @@ namespace Bounds.Collision {
         let bottom_t = movePos.y + move.radius + movedy > fromBox.bottom ? (movePos.y + move.radius - fromBox.bottom) / (fromdy - movedy) : Infinity;
 
         let t = Math.min(left_t, right_t, top_t, bottom_t);
+
+        movePos.x += movedx;
+        movePos.y += movedy;
+        fromBox.x += fromdx;
+        fromBox.y += fromdy;
 
         if (!isFinite(t)) {
             error(`Failed to detect time of collision between circle and inverted rect:`, move.parent, { x: movePos.x, y: movePos.y, radius: move.radius }, movedx, movedy, from.parent, fromBox, fromdx, fromdy);
@@ -571,22 +591,24 @@ namespace Bounds.Collision {
 
         let min_t = Math.min(topbot_t, bottop_t, leftright_t, rightleft_t);
 
+        box.x += movedx;
+        box.y += movedy;
+        otherbox.x += fromdx;
+        otherbox.y += fromdy;
+
         if (min_t === Infinity) return undefined;
 
         let displacementX = 0;
         let displacementY = 0;
 
-        let currentBox = move.getBoundingBox();
-        let currentOtherBox = from.getBoundingBox();
-
         if (min_t === topbot_t) {
-            displacementY = currentOtherBox.bottom - currentBox.top;
+            displacementY = otherbox.bottom - box.top;
         } else if (min_t === bottop_t) {
-            displacementY = currentOtherBox.top - currentBox.bottom;
+            displacementY = otherbox.top - box.bottom;
         } else if (min_t === leftright_t) {
-            displacementX = currentOtherBox.right - currentBox.left;
+            displacementX = otherbox.right - box.left;
         } else if (min_t === rightleft_t) {
-            displacementX = currentOtherBox.left - currentBox.right;
+            displacementX = otherbox.left - box.right;
         }
 
         if (displacementX !== 0 && displacementY !== 0) {
@@ -646,11 +668,13 @@ namespace Bounds.Collision {
         let bottomleft_t = from.direction !== 'downleft' ? Infinity : raycastTimePointSegment(moveBox.right-fromBox.left, moveBox.top-fromBox.top, movedx-fromdx, movedy-fromdy, fromBox.width, fromBox.height);
         let bottomright_t = from.direction !== 'downright' ? Infinity : raycastTimePointSegment(moveBox.left-fromBox.left, moveBox.top-fromBox.bottom, movedx-fromdx, movedy-fromdy, fromBox.width, -fromBox.height);
 
+        moveBox.x += movedx;
+        moveBox.y += movedy;
+        fromBox.x += fromdx;
+        fromBox.y += fromdy;
+
         let t = Math.min(left_t, right_t, top_t, bottom_t, topleft_t, topright_t, bottomleft_t, bottomright_t);
         if (!isFinite(t)) return undefined;
-
-        moveBox = move.getBoundingBox();
-        fromBox = from.getBoundingBox();
 
         let ww = fromBox.width*fromBox.width;
         let hh = fromBox.height*fromBox.height;
@@ -717,6 +741,11 @@ namespace Bounds.Collision {
         let bottom_t = moveBox.bottom + movedy > fromBox.bottom ? (moveBox.bottom - fromBox.bottom) / (fromdy - movedy) : Infinity;
 
         let t = Math.min(left_t, right_t, top_t, bottom_t);
+
+        moveBox.x += movedx;
+        moveBox.y += movedy;
+        fromBox.x += fromdx;
+        fromBox.y += fromdy;
 
         if (!isFinite(t)) {
             error(`Failed to detect time of collision between rect and inverted rect:`, move.parent, moveBox, movedx, movedy, from.parent, fromBox, fromdx, fromdy);
