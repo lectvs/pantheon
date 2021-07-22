@@ -35,7 +35,6 @@ class StageManager {
         if (this.currentWorld) {
             World.Actions.removeWorldObjectFromWorld(this.currentWorldAsWorldObject);
         }
-        this.theater.interactionManager.reset();
 
         // Create new stuff
         this.currentStageName = name;

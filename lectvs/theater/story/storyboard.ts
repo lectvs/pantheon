@@ -33,7 +33,6 @@ namespace Storyboard {
         condition?: () => any;
         delay?: number;
         onStage?: string;
-        onInteract?: string;
     }
 
     export function arbitraryPathToNode(storyboard: Storyboard, endNode: string) {

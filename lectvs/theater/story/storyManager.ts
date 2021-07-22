@@ -40,14 +40,6 @@ class StoryManager {
                     condition: () => {
                         if (transition.condition && !transition.condition()) return false;
                         if (transition.onStage && (this.theater.currentStageName !== transition.onStage || this.theater.stageManager.transitioning)) return false;
-
-                        // All conditions met. Handle interaction.
-                        if (transition.onInteract) {
-                            if (this.theater.interactionManager.interactRequested !== transition.onInteract) {
-                                return false;
-                            }
-                            this.theater.interactionManager.consumeInteraction();
-                        }
                         return true;
                     },
                     delay: transition.delay,
@@ -64,10 +56,6 @@ class StoryManager {
     update() {
         this.cutsceneManager.update();
         this.stateMachine.update(this.theater.delta);
-    }
-
-    getCurrentInteractableObjects(stageName?: string) {
-        return this.getInteractableObjectsForNode(this.currentNode, stageName);
     }
 
     onStageLoad() {
@@ -90,24 +78,6 @@ class StoryManager {
             }
         }
         return _.last(path);
-    }
-
-    private getInteractableObjectsForNode(node: Storyboard.Node, stageName?: string) {
-        let result = new Set<string>();
-
-        if (!node) return result;
-
-        for (let transition of node.transitions) {
-            if (!transition.onInteract) continue;
-            if (stageName && transition.onStage && stageName !== transition.onStage) continue;
-            
-            let toNode = this.getNodeByName(transition.toNode);
-            if (toNode.type === 'cutscene' && !this.cutsceneManager.canPlayCutscene(transition.toNode)) continue;
-
-            result.add(transition.onInteract);
-        }
-
-        return result;
     }
 
     private getNodeByName(name: string) {

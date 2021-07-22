@@ -21,7 +21,6 @@ class Theater extends World {
     
     storyManager: StoryManager;
     stageManager: StageManager;
-    interactionManager: InteractionManager;
     slideManager: SlideManager;
     musicManager: MusicManager;
 
@@ -49,7 +48,6 @@ class Theater extends World {
 
         this.storyManager = new StoryManager(this, config.story.storyboard, config.story.storyboardPath, config.story.storyEvents);
         this.stageManager = new StageManager(this, config.stages);
-        this.interactionManager = new InteractionManager(this);
         this.slideManager = new SlideManager(this);
         this.musicManager = new MusicManager();
 
@@ -74,12 +72,6 @@ class Theater extends World {
 
         this.musicManager.volume = this.volume * global.game.volume;
         this.musicManager.update(this.delta);
-    }
-
-    render(screen: Texture) {
-        this.interactionManager.preRender();
-        super.render(screen);
-        this.interactionManager.postRender();
     }
 
     addSlide(slide: Slide) {
