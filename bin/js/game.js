@@ -332,6 +332,12 @@ var AssetCache = /** @class */ (function () {
         }
         return this.tilemaps[key];
     };
+    AssetCache.getFont = function (key) {
+        if (!this.fonts[key]) {
+            error("Font '" + key + "' does not exist.");
+        }
+        return this.fonts[key];
+    };
     AssetCache.isNoneTexture = function (key) {
         return !key || key === 'none' || key.startsWith('none_');
     };
@@ -340,6 +346,7 @@ var AssetCache = /** @class */ (function () {
     AssetCache.sounds = {};
     AssetCache.tilesets = {};
     AssetCache.tilemaps = {};
+    AssetCache.fonts = {};
     return AssetCache;
 }());
 var Fullscreen = /** @class */ (function () {
@@ -1569,6 +1576,11 @@ var Preload = /** @class */ (function () {
                 this.preloadPyxelTilemap(key, options.pyxelTilemaps[key]);
             }
         }
+        if (options.fonts) {
+            for (var key in options.fonts) {
+                this.preloadFont(key, options.fonts[key]);
+            }
+        }
         PIXI.Loader.shared.load();
     };
     Preload.load = function (options) {
@@ -1590,6 +1602,11 @@ var Preload = /** @class */ (function () {
         if (options.pyxelTilemaps) {
             for (var key in options.pyxelTilemaps) {
                 this.loadPyxelTilemap(key, options.pyxelTilemaps[key]);
+            }
+        }
+        if (options.fonts) {
+            for (var key in options.fonts) {
+                this.loadFont(key, options.fonts[key]);
             }
         }
         if (options.onLoad) {
@@ -1796,6 +1813,60 @@ var Preload = /** @class */ (function () {
         }
         AssetCache.tilemaps[key] = tilemapForCache;
     };
+    Preload.preloadFont = function (key, font) {
+        var _this = this;
+        var url = font.url || "assets/" + key + ".png";
+        var resource = {
+            name: key,
+            src: url,
+            done: false
+        };
+        this.resources.push(resource);
+        PIXI.Loader.shared.add(key + this.FONT_KEY_SUFFIX, url, function () { return _this.onLoadResource(resource); });
+    };
+    Preload.loadFont = function (key, font) {
+        var baseTexture = PIXI.utils.TextureCache[key + this.FONT_KEY_SUFFIX];
+        if (!baseTexture) {
+            error("Failed to preload font " + key);
+            return;
+        }
+        var frames = {};
+        var charTextures = [];
+        var numFramesX = Math.floor(baseTexture.width / font.charWidth);
+        var numFramesY = Math.floor(baseTexture.height / font.charHeight);
+        for (var y = 0; y < numFramesY; y++) {
+            for (var x = 0; x < numFramesX; x++) {
+                var frameKeyPrefix = key + "_";
+                var frameKey = "" + frameKeyPrefix + (x + y * numFramesX);
+                frames[frameKey] = {
+                    rect: {
+                        x: x * font.charWidth,
+                        y: y * font.charHeight,
+                        width: font.charWidth,
+                        height: font.charHeight
+                    },
+                    anchor: Vector2.TOP_LEFT,
+                };
+                charTextures.push(frameKey);
+            }
+        }
+        for (var frame in frames) {
+            var frameTexture = new PIXI.Texture(baseTexture);
+            var rect_3 = frames[frame].rect;
+            var anchor = frames[frame].anchor;
+            frameTexture.frame = new Rectangle(rect_3.x, rect_3.y, rect_3.width, rect_3.height);
+            frameTexture.defaultAnchor = new Point(anchor.x, anchor.y);
+            AssetCache.pixiTextures[frame] = frameTexture;
+            AssetCache.textures[frame] = Texture.fromPixiTexture(frameTexture);
+        }
+        AssetCache.fonts[key] = {
+            charTextures: charTextures,
+            charWidth: font.charWidth,
+            charHeight: font.charHeight,
+            spaceWidth: font.spaceWidth,
+            newlineHeight: font.newlineHeight
+        };
+    };
     Preload.onLoadResource = function (resource) {
         resource.done = true;
         if (this.preloadOptions.progressCallback) {
@@ -1811,6 +1882,7 @@ var Preload = /** @class */ (function () {
     Preload.TEXTURE_KEY_SUFFIX = '_texture_';
     Preload.TILESET_KEY_SUFFIX = '_tileset_';
     Preload.TILEMAP_KEY_SUFFIX = '_tilemap_';
+    Preload.FONT_KEY_SUFFIX = '_font_';
     return Preload;
 }());
 (function (Preload) {
@@ -1872,6 +1944,7 @@ var Main = /** @class */ (function () {
             sounds: this.config.sounds,
             tilesets: this.config.tilesets,
             pyxelTilemaps: this.config.pyxelTilemaps,
+            fonts: this.config.fonts,
             progressCallback: function (progress) { return _this.renderPreloadProgress(progress); },
             onLoad: function () {
                 Main.load();
@@ -4082,36 +4155,41 @@ var MetricsMenu = /** @class */ (function (_super) {
 var SpriteText = /** @class */ (function (_super) {
     __extends(SpriteText, _super);
     function SpriteText(config) {
-        var _a, _b, _c, _d, _e, _f;
+        var _a, _b, _c, _d, _e;
         var _this = _super.call(this, config) || this;
-        if (!config.font && !SpriteText.DEFAULT_FONT) {
+        if (config.font || SpriteText.DEFAULT_FONT) {
+            _this.font = AssetCache.getFont((_a = config.font) !== null && _a !== void 0 ? _a : SpriteText.DEFAULT_FONT);
+        }
+        else {
             error("SpriteText must have a font provided, or a default font set");
         }
-        _this._font = (_b = (_a = config.font) !== null && _a !== void 0 ? _a : SpriteText.DEFAULT_FONT) !== null && _b !== void 0 ? _b : {
-            texturePrefix: 'none',
-            charWidth: 0,
-            charHeight: 0,
-            spaceWidth: 0,
-            newlineHeight: 0
-        };
-        _this._style = _.defaults(O.deepClone((_c = config.style) !== null && _c !== void 0 ? _c : {}), {
+        if (!_this.font) {
+            _this.font = {
+                charTextures: A.repeat(['none'], Object.keys(SpriteText.charCodes).length),
+                charWidth: 0,
+                charHeight: 0,
+                spaceWidth: 0,
+                newlineHeight: 0
+            };
+        }
+        _this._style = _.defaults(O.deepClone((_b = config.style) !== null && _b !== void 0 ? _b : {}), {
             color: 0xFFFFFF,
             alpha: 1,
             offset: 0,
         });
         _this.lastStyle = O.deepClone(_this.style);
         _this.visibleCharCount = Infinity;
-        _this.maxWidth = (_d = config.maxWidth) !== null && _d !== void 0 ? _d : Infinity;
-        _this.anchor = (_e = config.anchor) !== null && _e !== void 0 ? _e : Vector2.TOP_LEFT;
+        _this.maxWidth = (_c = config.maxWidth) !== null && _c !== void 0 ? _c : Infinity;
+        _this.anchor = (_d = config.anchor) !== null && _d !== void 0 ? _d : Vector2.TOP_LEFT;
         _this.effects = new Effects();
         _this.effects.updateFromConfig(config.effects);
         _this.mask = config.mask;
-        _this.setText((_f = config.text) !== null && _f !== void 0 ? _f : "");
+        _this.setText((_e = config.text) !== null && _e !== void 0 ? _e : "");
         _this.dirty = true;
         return _this;
     }
-    Object.defineProperty(SpriteText.prototype, "font", {
-        get: function () { return this._font; },
+    Object.defineProperty(SpriteText.prototype, "fontKey", {
+        get: function () { return this._fontKey; },
         enumerable: false,
         configurable: true
     });
@@ -4176,7 +4254,7 @@ var SpriteText = /** @class */ (function (_super) {
             var char = this.chars[i];
             global.metrics.startSpan("char_" + char.char);
             var char_i = SpriteText.charCodes[char.char].y * 10 + SpriteText.charCodes[char.char].x;
-            var charTexture = AssetCache.getTexture(this.font.texturePrefix + "_" + char_i);
+            var charTexture = AssetCache.getTexture(this.font.charTextures[char_i]);
             charTexture.renderTo(this.staticTexture, {
                 x: char.x,
                 y: char.y + ((_a = char.style.offset) !== null && _a !== void 0 ? _a : this.style.offset),
@@ -4224,7 +4302,7 @@ var SpriteText = /** @class */ (function (_super) {
         this.currentText = text;
         this.dirty = true;
     };
-    SpriteText.DEFAULT_FONT = null;
+    SpriteText.DEFAULT_FONT = undefined;
     return SpriteText;
 }(WorldObject));
 (function (SpriteText) {
@@ -4394,7 +4472,7 @@ var MenuNumericSelector = /** @class */ (function (_super) {
         _this.getValue = config.getValue;
         _this.setValue = config.setValue;
         var leftButton = _this.addChild(new MenuTextButton({
-            font: _this.font,
+            font: _this.fontKey,
             text: "<",
             onClick: function () {
                 global.game.playSound('click');
@@ -4407,7 +4485,7 @@ var MenuNumericSelector = /** @class */ (function (_super) {
         }));
         leftButton.style = _this.style;
         var rightButton = _this.addChild(new MenuTextButton({
-            font: _this.font,
+            font: _this.fontKey,
             text: ">",
             onClick: function () {
                 global.game.playSound('click');
@@ -4485,7 +4563,7 @@ var MenuControlMapper = /** @class */ (function (_super) {
             var bindingName = this_1.getBindingName(binding);
             var bindingButton = this_1.addChild(new MenuTextButton({
                 name: this_1.getBindingMappingObjectName(binding),
-                font: this_1.font,
+                font: this_1.fontKey,
                 text: bindingName,
                 onClick: function () {
                     global.game.playSound('click');
@@ -10642,11 +10720,11 @@ var Tilemap = /** @class */ (function (_super) {
         Tilemap.optimizeCollisionRects(collisionRects, Tilemap.OPTIMIZE_ALL);
         try {
             for (var collisionRects_1 = __values(collisionRects), collisionRects_1_1 = collisionRects_1.next(); !collisionRects_1_1.done; collisionRects_1_1 = collisionRects_1.next()) {
-                var rect_3 = collisionRects_1_1.value;
+                var rect_4 = collisionRects_1_1.value;
                 var box = this.addChild(new PhysicsWorldObject({
                     x: this.x,
                     y: this.y,
-                    bounds: new RectBounds(rect_3.x, rect_3.y, rect_3.width, rect_3.height),
+                    bounds: new RectBounds(rect_4.x, rect_4.y, rect_4.width, rect_4.height),
                     matchParentPhysicsGroup: true,
                     immovable: true,
                     simulating: false,
@@ -10799,13 +10877,13 @@ var Tilemap = /** @class */ (function (_super) {
             for (var x = 0; x < tilemapLayer[y].length; x++) {
                 var tile = tilemapLayer[y][x];
                 if (_.contains(tileset.collisionIndices, tile.index)) {
-                    var rect_4 = {
+                    var rect_5 = {
                         x: x * tileset.tileWidth,
                         y: y * tileset.tileHeight,
                         width: tileset.tileWidth,
                         height: tileset.tileHeight
                     };
-                    result.push(rect_4);
+                    result.push(rect_5);
                 }
             }
         }
@@ -11168,26 +11246,20 @@ var Assets;
     Assets.pyxelTilemaps = {
         'world': { tileset: 'tiles' },
     };
-    var fonts = /** @class */ (function () {
-        function fonts() {
-        }
-        fonts.DELUXE16 = {
-            texturePrefix: 'deluxe16',
+    Assets.fonts = {
+        'deluxe16': {
             charWidth: 8,
             charHeight: 15,
             spaceWidth: 8,
             newlineHeight: 15,
-        };
-        fonts.ANDRFW = {
-            texturePrefix: 'andrfw',
+        },
+        'andrfw': {
             charWidth: 8,
             charHeight: 19,
             spaceWidth: 8,
             newlineHeight: 16,
-        };
-        return fonts;
-    }());
-    Assets.fonts = fonts;
+        },
+    };
     Assets.spriteTextTags = {
         'g': function (args) { return ({ color: 0x00FF00 }); },
     };
@@ -12853,9 +12925,10 @@ Main.loadConfig({
     sounds: Assets.sounds,
     tilesets: Assets.tilesets,
     pyxelTilemaps: Assets.pyxelTilemaps,
+    fonts: Assets.fonts,
     spriteTextTags: Assets.spriteTextTags,
     defaultZBehavior: 'noop',
-    defaultSpriteTextFont: Assets.fonts.ANDRFW,
+    defaultSpriteTextFont: 'andrfw',
     defaultOptions: {
         volume: 0.5,
         controls: {
@@ -12912,7 +12985,7 @@ Main.loadConfig({
             dialogBox: function () { return new DialogBox({
                 x: 200, y: 280,
                 texture: 'dialogbox',
-                dialogFont: Assets.fonts.ANDRFW,
+                dialogFont: 'andrfw',
                 textAreaFull: { x: -186, y: -30, width: 372, height: 64 },
                 textAreaPortrait: { x: -70, y: -42, width: 140, height: 84 },
                 portraitPosition: { x: 78, y: 0 },
@@ -12927,8 +13000,8 @@ Main.loadConfig({
         },
     },
     debug: {
-        debug: false,
-        font: Assets.fonts.ANDRFW,
+        debug: true,
+        font: 'andrfw',
         fontStyle: { color: 0xFFFFFF },
         allPhysicsBounds: false,
         moveCameraWithArrows: true,

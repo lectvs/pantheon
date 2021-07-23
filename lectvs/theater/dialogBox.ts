@@ -2,7 +2,7 @@
 
 namespace DialogBox {
     export type Config = Sprite.Config & {
-        dialogFont: SpriteText.Font;
+        dialogFont: string;
         textAreaFull: Rect;
         textAreaPortrait: Rect;
         portraitPosition: Pt;

@@ -1,7 +1,7 @@
 namespace Debug {
     export type Config = {
         debug: boolean;
-        font: SpriteText.Font;
+        font: string;
         fontStyle: SpriteText.Style;
         allPhysicsBounds: boolean;
         moveCameraWithArrows: boolean; 
@@ -47,7 +47,7 @@ class Debug {
     static set DEBUG(value: boolean) { this._DEBUG = value; }
     static DEBUG_TOGGLE_ENABLED: boolean;
     
-    static FONT: SpriteText.Font;
+    static FONT: string;
     static FONT_STYLE: SpriteText.Style;
 
     private static _ALL_PHYSICS_BOUNDS: boolean;

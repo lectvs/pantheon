@@ -58,7 +58,7 @@ class MenuNumericSelector extends SpriteText {
         this.setValue = config.setValue;
 
         let leftButton = this.addChild(new MenuTextButton({
-            font: this.font,
+            font: this.fontKey,
             text: "<",
             onClick: () => {
                 global.game.playSound('click');
@@ -72,7 +72,7 @@ class MenuNumericSelector extends SpriteText {
         leftButton.style = this.style;
 
         let rightButton = this.addChild(new MenuTextButton({
-            font: this.font,
+            font: this.fontKey,
             text: ">",
             onClick: () => {
                 global.game.playSound('click');
@@ -165,7 +165,7 @@ class MenuControlMapper extends SpriteText {
 
             let bindingButton = this.addChild(new MenuTextButton({
                 name: this.getBindingMappingObjectName(binding),
-                font: this.font,
+                font: this.fontKey,
                 text: bindingName,
                 onClick: () => {
                     global.game.playSound('click');

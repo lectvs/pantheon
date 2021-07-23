@@ -5,6 +5,7 @@ class AssetCache {
     static sounds: Dict<WebAudioSound.Asset> = {};
     static tilesets: Dict<Tilemap.Tileset> = {};
     static tilemaps: Dict<Tilemap.Tilemap> = {};
+    static fonts: Dict<SpriteText.Font> = {};
 
     static getPixiTexture(key: string) {
         if (!this.pixiTextures[key]) {
@@ -44,6 +45,13 @@ class AssetCache {
             error(`Tilemap '${key}' does not exist.`);
         }
         return this.tilemaps[key];
+    }
+
+    static getFont(key: string) {
+        if (!this.fonts[key]) {
+            error(`Font '${key}' does not exist.`);
+        }
+        return this.fonts[key];
     }
 
     static isNoneTexture(key: string) {

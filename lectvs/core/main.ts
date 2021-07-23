@@ -9,7 +9,7 @@ namespace Main {
         backgroundColor: number;
         fpsLimit: number;
         defaultZBehavior?: WorldObject.ZBehavior;
-        defaultSpriteTextFont?: SpriteText.Font;
+        defaultSpriteTextFont?: string;
 
         preloadBackgroundColor: number;
         preloadProgressBarColor: number;
@@ -18,6 +18,7 @@ namespace Main {
         sounds?: Dict<Preload.Sound>;
         tilesets?: Dict<Preload.Tileset>;
         pyxelTilemaps?: Dict<Preload.PyxelTilemap>;
+        fonts?: Dict<Preload.Font>;
         spriteTextTags?: Dict<SpriteText.TagFunction>;
 
         defaultOptions: Options.Options;
@@ -90,6 +91,7 @@ class Main {
             sounds: this.config.sounds,
             tilesets: this.config.tilesets,
             pyxelTilemaps: this.config.pyxelTilemaps,
+            fonts: this.config.fonts,
             progressCallback: (progress) => this.renderPreloadProgress(progress),
             onLoad: () => {
                 Main.load();

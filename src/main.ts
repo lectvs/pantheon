@@ -17,10 +17,11 @@ Main.loadConfig({
     sounds: Assets.sounds,
     tilesets: Assets.tilesets,
     pyxelTilemaps: Assets.pyxelTilemaps,
+    fonts: Assets.fonts,
     spriteTextTags: Assets.spriteTextTags,
 
     defaultZBehavior: 'noop',
-    defaultSpriteTextFont: Assets.fonts.ANDRFW,
+    defaultSpriteTextFont: 'andrfw',
 
     defaultOptions: {
         volume: 0.5,
@@ -83,7 +84,7 @@ Main.loadConfig({
             dialogBox: () => new DialogBox({
                 x: 200, y: 280,
                 texture: 'dialogbox',
-                dialogFont: Assets.fonts.ANDRFW,
+                dialogFont: 'andrfw',
                 textAreaFull: { x: -186, y: -30, width: 372, height: 64 },
                 textAreaPortrait: { x: -70, y: -42, width: 140, height: 84 },
                 portraitPosition: { x: 78, y: 0 },
@@ -99,8 +100,8 @@ Main.loadConfig({
     },
 
     debug: {
-        debug: false,
-        font: Assets.fonts.ANDRFW,
+        debug: true,
+        font: 'andrfw',
         fontStyle: { color: 0xFFFFFF },
         allPhysicsBounds: false,
         moveCameraWithArrows: true,

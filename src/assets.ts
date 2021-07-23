@@ -131,21 +131,19 @@ namespace Assets {
         'world': { tileset: 'tiles' },
     }
 
-    export class fonts {
-        static DELUXE16: SpriteText.Font = {
-            texturePrefix: 'deluxe16',
+    export const fonts: Dict<Preload.Font> = {
+        'deluxe16': {
             charWidth: 8,
             charHeight: 15,
             spaceWidth: 8,
             newlineHeight: 15,
-        };
-        static ANDRFW: SpriteText.Font = {
-            texturePrefix: 'andrfw',
+        },
+        'andrfw': {
             charWidth: 8,
             charHeight: 19,
             spaceWidth: 8,
             newlineHeight: 16,
-        };
+        },
     }
 
     export const spriteTextTags: Dict<SpriteText.TagFunction> = {

@@ -12,6 +12,7 @@ namespace Preload {
         sounds?: Dict<Preload.Sound>;
         tilesets?: Dict<Preload.Tileset>;
         pyxelTilemaps?: Dict<Preload.PyxelTilemap>;
+        fonts?: Dict<Preload.Font>;
         progressCallback?: (progress: number) => any;
         onLoad?: Function;
     }
@@ -70,6 +71,14 @@ namespace Preload {
             }[];
         }[];
     }
+
+    export type Font = {
+        url?: string;
+        charWidth: number;
+        charHeight: number;
+        spaceWidth: number;
+        newlineHeight: number;
+    }
 }
 
 class Preload {
@@ -105,6 +114,12 @@ class Preload {
             }
         }
 
+        if (options.fonts) {
+            for (let key in options.fonts) {
+                this.preloadFont(key, options.fonts[key]);
+            }
+        }
+
         PIXI.Loader.shared.load();
     }
 
@@ -130,6 +145,12 @@ class Preload {
         if (options.pyxelTilemaps) {
             for (let key in options.pyxelTilemaps) {
                 this.loadPyxelTilemap(key, options.pyxelTilemaps[key]);
+            }
+        }
+
+        if (options.fonts) {
+            for (let key in options.fonts) {
+                this.loadFont(key, options.fonts[key]);
             }
         }
 
@@ -345,6 +366,66 @@ class Preload {
         AssetCache.tilemaps[key] = tilemapForCache;
     }
 
+    private static preloadFont(key: string, font: Preload.Font) {
+        let url = font.url || `assets/${key}.png`;
+        let resource = {
+            name: key,
+            src: url,
+            done: false
+        };
+        this.resources.push(resource);
+        PIXI.Loader.shared.add(key + this.FONT_KEY_SUFFIX, url, () => this.onLoadResource(resource));
+    }
+
+    private static loadFont(key: string, font: Preload.Font) {
+        let baseTexture: PIXI.BaseTexture = PIXI.utils.TextureCache[key + this.FONT_KEY_SUFFIX];
+        if (!baseTexture) {
+            error(`Failed to preload font ${key}`);
+            return;
+        }
+
+        let frames: Dict<Preload.TextureFrame> = {};
+        let charTextures: string[] = [];
+
+        let numFramesX = Math.floor(baseTexture.width / font.charWidth);
+        let numFramesY = Math.floor(baseTexture.height / font.charHeight);
+
+        for (let y = 0; y < numFramesY; y++) {
+            for (let x = 0; x < numFramesX; x++) {
+                let frameKeyPrefix = `${key}_`;
+                let frameKey = `${frameKeyPrefix}${x + y*numFramesX}`;
+                frames[frameKey] = {
+                    rect: {
+                        x: x*font.charWidth,
+                        y: y*font.charHeight,
+                        width: font.charWidth,
+                        height: font.charHeight
+                    },
+                    anchor: Vector2.TOP_LEFT,
+                };
+                charTextures.push(frameKey);
+            }
+        }
+
+        for (let frame in frames) {
+            let frameTexture: PIXI.Texture = new PIXI.Texture(baseTexture);
+            let rect = frames[frame].rect;
+            let anchor = frames[frame].anchor;
+            frameTexture.frame = new Rectangle(rect.x, rect.y, rect.width, rect.height);
+            frameTexture.defaultAnchor = new Point(anchor.x, anchor.y);
+            AssetCache.pixiTextures[frame] = frameTexture;
+            AssetCache.textures[frame] = Texture.fromPixiTexture(frameTexture);
+        }
+
+        AssetCache.fonts[key] = {
+            charTextures: charTextures,
+            charWidth: font.charWidth,
+            charHeight: font.charHeight,
+            spaceWidth: font.spaceWidth,
+            newlineHeight: font.newlineHeight
+        };
+    }
+
     private static onLoadResource(resource: Preload.Resource) {
         resource.done = true;
         if (this.preloadOptions.progressCallback) {
@@ -362,6 +443,7 @@ class Preload {
     private static TEXTURE_KEY_SUFFIX = '_texture_';
     private static TILESET_KEY_SUFFIX = '_tileset_';
     private static TILEMAP_KEY_SUFFIX = '_tilemap_';
+    private static FONT_KEY_SUFFIX = '_font_';
 }
 
 namespace Preload {

@@ -2,7 +2,7 @@
 
 namespace SpriteText {
     export type Config = ReplaceConfigCallbacks<WorldObject.Config, SpriteText> & {
-        font?: Font;
+        font?: string;
         text?: string;
         anchor?: Vector2;
         maxWidth?: number;
@@ -12,7 +12,7 @@ namespace SpriteText {
     }
 
     export type Font = {
-        texturePrefix: string;
+        charTextures: string[];
         charWidth: number;
         charHeight: number;
         spaceWidth: number;
@@ -29,8 +29,9 @@ namespace SpriteText {
 }
 
 class SpriteText extends WorldObject {
-    private _font: SpriteText.Font;
-    get font() { return this._font; }
+    protected font: SpriteText.Font;
+    private _fontKey: string;
+    get fontKey() { return this._fontKey; }
     private chars: SpriteText.Character[];
 
     private _style: SpriteText.Style;
@@ -68,17 +69,21 @@ class SpriteText extends WorldObject {
     constructor(config: SpriteText.Config) {
         super(config);
 
-        if (!config.font && !SpriteText.DEFAULT_FONT) {
+        if (config.font || SpriteText.DEFAULT_FONT) {
+            this.font = AssetCache.getFont(config.font ?? SpriteText.DEFAULT_FONT);
+        } else {
             error("SpriteText must have a font provided, or a default font set");
         }
 
-        this._font = config.font ?? SpriteText.DEFAULT_FONT ?? {
-            texturePrefix: 'none',
-            charWidth: 0,
-            charHeight: 0,
-            spaceWidth: 0,
-            newlineHeight: 0
-        };
+        if (!this.font) {
+            this.font = {
+                charTextures: A.repeat(['none'], Object.keys(SpriteText.charCodes).length),
+                charWidth: 0,
+                charHeight: 0,
+                spaceWidth: 0,
+                newlineHeight: 0
+            };
+        }
 
         this._style = _.defaults(O.deepClone(config.style ?? {}), {
             color: 0xFFFFFF,
@@ -140,7 +145,7 @@ class SpriteText extends WorldObject {
             let char = this.chars[i];
             global.metrics.startSpan(`char_${char.char}`);
             let char_i = SpriteText.charCodes[char.char].y * 10 + SpriteText.charCodes[char.char].x;
-            let charTexture = AssetCache.getTexture(`${this.font.texturePrefix}_${char_i}`);
+            let charTexture = AssetCache.getTexture(this.font.charTextures[char_i]);
             charTexture.renderTo(this.staticTexture, {
                 x: char.x,
                 y: char.y + (char.style.offset ?? this.style.offset),
@@ -196,7 +201,7 @@ class SpriteText extends WorldObject {
         this.dirty = true;
     }
 
-    static DEFAULT_FONT: SpriteText.Font = null;
+    static DEFAULT_FONT: string = undefined;
 }
 
 namespace SpriteText {
