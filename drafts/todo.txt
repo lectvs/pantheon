@@ -1,6 +1,5 @@
 todo
 - better layer control?
-- text scale/alpha/etc.
 - i still don't understand slides :(
 - playing cutscenes is not the same as story nodes??
 - decouple dialog from theater? (+ revamp)

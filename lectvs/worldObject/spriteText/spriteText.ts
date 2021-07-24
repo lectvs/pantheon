@@ -5,6 +5,12 @@ namespace SpriteText {
         font?: string;
         text?: string;
         anchor?: Vector2;
+        alpha?: number;
+        flipX?: boolean;
+        flipY?: boolean;
+        scaleX?: number;
+        scaleY?: number;
+        angle?: number;
         maxWidth?: number;
         style?: Style;
         effects?: Effects.Config;
@@ -59,10 +65,17 @@ class SpriteText extends WorldObject {
 
     anchor: Vector2;
 
+    alpha: number;
+    flipX: boolean;
+    flipY: boolean;
+    scaleX: number;
+    scaleY: number;
+    angle: number;
+
     effects: Effects;
     mask: Mask.WorldObjectMaskConfig;
 
-    private staticTexture: Texture;
+    private staticTexture: AnchoredTexture;
     private currentText: string;
     private dirty: boolean;
 
@@ -97,6 +110,14 @@ class SpriteText extends WorldObject {
         this.maxWidth = config.maxWidth ?? Infinity;
 
         this.anchor = config.anchor ?? Vector2.TOP_LEFT;
+
+        this.alpha = config.alpha ?? 1;
+        this.flipX = config.flipX ?? false;
+        this.flipY = config.flipY ?? false;
+        this.scaleX = config.scaleX ?? 1;
+        this.scaleY = config.scaleY ?? 1;
+        this.angle = config.angle ?? 0;
+
         this.effects = new Effects();
         this.effects.updateFromConfig(config.effects);
 
@@ -117,17 +138,21 @@ class SpriteText extends WorldObject {
     }
 
     render(texture: Texture, x: number, y: number) {
-        let textWidth = this.getTextWidth();
-        let textHeight = this.getTextHeight();
-
         if (this.dirty) {
             this.renderSpriteText();
             this.dirty = false;
         }
 
+        this.staticTexture.anchorX = this.anchor.x;
+        this.staticTexture.anchorY = this.anchor.y;
+
         this.staticTexture.renderTo(texture, {
-            x: x - this.anchor.x * textWidth,
-            y: y - this.anchor.y * textHeight,
+            x: x,
+            y: y,
+            alpha: this.alpha,
+            scaleX: (this.flipX ? -1 : 1) * this.scaleX,
+            scaleY: (this.flipY ? -1 : 1) * this.scaleY,
+            angle: this.angle,
             filters: this.effects.getFilterList(),
             mask: Mask.getTextureMaskForWorldObject(this.mask, this),
         });
@@ -138,7 +163,7 @@ class SpriteText extends WorldObject {
     renderSpriteText() {
         let textWidth = this.getTextWidth();
         let textHeight = this.getTextHeight();
-        this.staticTexture = new BasicTexture(textWidth, textHeight);
+        this.staticTexture = new AnchoredTexture(textWidth, textHeight);
 
         let charCount = Math.min(this.visibleCharCount, this.chars.length);
         for (let i = 0; i < charCount; i++) {

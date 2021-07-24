@@ -4161,7 +4161,7 @@ var MetricsMenu = /** @class */ (function (_super) {
 var SpriteText = /** @class */ (function (_super) {
     __extends(SpriteText, _super);
     function SpriteText(config) {
-        var _a, _b, _c, _d, _e;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
         var _this = _super.call(this, config) || this;
         if (config.font || SpriteText.DEFAULT_FONT) {
             _this.font = AssetCache.getFont((_a = config.font) !== null && _a !== void 0 ? _a : SpriteText.DEFAULT_FONT);
@@ -4187,10 +4187,16 @@ var SpriteText = /** @class */ (function (_super) {
         _this.visibleCharCount = Infinity;
         _this.maxWidth = (_c = config.maxWidth) !== null && _c !== void 0 ? _c : Infinity;
         _this.anchor = (_d = config.anchor) !== null && _d !== void 0 ? _d : Vector2.TOP_LEFT;
+        _this.alpha = (_e = config.alpha) !== null && _e !== void 0 ? _e : 1;
+        _this.flipX = (_f = config.flipX) !== null && _f !== void 0 ? _f : false;
+        _this.flipY = (_g = config.flipY) !== null && _g !== void 0 ? _g : false;
+        _this.scaleX = (_h = config.scaleX) !== null && _h !== void 0 ? _h : 1;
+        _this.scaleY = (_j = config.scaleY) !== null && _j !== void 0 ? _j : 1;
+        _this.angle = (_k = config.angle) !== null && _k !== void 0 ? _k : 0;
         _this.effects = new Effects();
         _this.effects.updateFromConfig(config.effects);
         _this.mask = config.mask;
-        _this.setText((_e = config.text) !== null && _e !== void 0 ? _e : "");
+        _this.setText((_l = config.text) !== null && _l !== void 0 ? _l : "");
         _this.dirty = true;
         return _this;
     }
@@ -4236,15 +4242,19 @@ var SpriteText = /** @class */ (function (_super) {
         }
     };
     SpriteText.prototype.render = function (texture, x, y) {
-        var textWidth = this.getTextWidth();
-        var textHeight = this.getTextHeight();
         if (this.dirty) {
             this.renderSpriteText();
             this.dirty = false;
         }
+        this.staticTexture.anchorX = this.anchor.x;
+        this.staticTexture.anchorY = this.anchor.y;
         this.staticTexture.renderTo(texture, {
-            x: x - this.anchor.x * textWidth,
-            y: y - this.anchor.y * textHeight,
+            x: x,
+            y: y,
+            alpha: this.alpha,
+            scaleX: (this.flipX ? -1 : 1) * this.scaleX,
+            scaleY: (this.flipY ? -1 : 1) * this.scaleY,
+            angle: this.angle,
             filters: this.effects.getFilterList(),
             mask: Mask.getTextureMaskForWorldObject(this.mask, this),
         });
@@ -4254,7 +4264,7 @@ var SpriteText = /** @class */ (function (_super) {
         var _a, _b, _c;
         var textWidth = this.getTextWidth();
         var textHeight = this.getTextHeight();
-        this.staticTexture = new BasicTexture(textWidth, textHeight);
+        this.staticTexture = new AnchoredTexture(textWidth, textHeight);
         var charCount = Math.min(this.visibleCharCount, this.chars.length);
         for (var i = 0; i < charCount; i++) {
             var char = this.chars[i];
@@ -5667,6 +5677,11 @@ var AnchoredTexture = /** @class */ (function () {
     AnchoredTexture.prototype.transform = function (properties) {
         var transformedBaseTexture = this.baseTexture.transform(properties);
         return AnchoredTexture.fromBaseTexture(transformedBaseTexture, this.anchorX, this.anchorY);
+    };
+    AnchoredTexture.prototype.withAnchor = function (anchorX, anchorY) {
+        this.anchorX = anchorX;
+        this.anchorY = anchorY;
+        return this;
     };
     AnchoredTexture.prototype.getAdjustmentX = function (angle, scaleX, scaleY) {
         var ax = Math.floor(this.anchorX * this.width) * scaleX;

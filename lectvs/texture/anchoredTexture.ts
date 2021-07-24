@@ -75,6 +75,12 @@ class AnchoredTexture implements Texture {
         return AnchoredTexture.fromBaseTexture(transformedBaseTexture, this.anchorX, this.anchorY);
     }
 
+    withAnchor(anchorX: number, anchorY: number) {
+        this.anchorX = anchorX;
+        this.anchorY = anchorY;
+        return this;
+    }
+
     private getAdjustmentX(angle: number, scaleX: number, scaleY: number) {
         let ax = Math.floor(this.anchorX*this.width)*scaleX;
         let ay = Math.floor(this.anchorY*this.height)*scaleY;
