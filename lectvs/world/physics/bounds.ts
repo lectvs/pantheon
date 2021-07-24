@@ -25,6 +25,8 @@ namespace Bounds {
 
 interface Bounds {
     parent: Pt;
+    x: number;
+    y: number;
     clone(): Bounds;
     /**
      * FOR USE WITH PHYSICS RESOLVECOLLISIONS ONLY.

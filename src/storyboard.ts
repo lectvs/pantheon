@@ -21,7 +21,7 @@ const storyboard: Storyboard = {
         type: 'cutscene',
         script: function*() {
             let player = global.world.select.type(Player);
-            yield S.waitUntil(() => player.isGrounded());
+            yield S.waitUntil(() => player.isGrounded(['walls']));
             global.world.playSound('crush');
             global.theater.runScript(S.shake(4, 0.5));
 

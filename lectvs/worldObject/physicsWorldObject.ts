@@ -125,6 +125,13 @@ class PhysicsWorldObject extends WorldObject {
         return this.isOverlapping(other.bounds);
     }
 
+    isGrounded(groundGroups: string[]) {
+        this.bounds.y++;
+        let ground = this.world.select.overlap(this.bounds, groundGroups);
+        this.bounds.y--;
+        return !_.isEmpty(ground);
+    }
+
     isImmovable() {
         return this._immovable || (this.world && this.world.getPhysicsGroupByName(this.physicsGroup).immovable);
     }

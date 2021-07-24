@@ -3235,6 +3235,12 @@ var PhysicsWorldObject = /** @class */ (function (_super) {
     PhysicsWorldObject.prototype.isCollidingWith = function (other) {
         return this.isOverlapping(other.bounds);
     };
+    PhysicsWorldObject.prototype.isGrounded = function (groundGroups) {
+        this.bounds.y++;
+        var ground = this.world.select.overlap(this.bounds, groundGroups);
+        this.bounds.y--;
+        return !_.isEmpty(ground);
+    };
     PhysicsWorldObject.prototype.isImmovable = function () {
         return this._immovable || (this.world && this.world.getPhysicsGroupByName(this.physicsGroup).immovable);
     };
@@ -9666,6 +9672,8 @@ var InvertedRectBounds = /** @class */ (function () {
 var NullBounds = /** @class */ (function () {
     function NullBounds(parent) {
         this.parent = parent;
+        this.x = 0;
+        this.y = 0;
         this.boundingBox = new Rectangle(Infinity, Infinity, 0, 0);
     }
     NullBounds.prototype.clone = function () {
@@ -11395,7 +11403,7 @@ var Diggur = /** @class */ (function (_super) {
         return _this;
     }
     Diggur.prototype.update = function () {
-        var grounded = this.isGrounded();
+        var grounded = this.isGrounded(['walls']);
         var haxis = (this.controller.left ? -1 : 0) + (this.controller.right ? 1 : 0);
         this.v.x = haxis * this.MAX_SPEED;
         if (this.spinning) {
@@ -11437,12 +11445,6 @@ var Diggur = /** @class */ (function (_super) {
                 global.world.addWorldObject(new Sprite({ x: 3567, y: 1152, texture: 'smoke3', life: 2, update: function () { this.alpha = 0.8 * (1 - this.life.progress); }, vx: -20, vy: 20 }));
             }), S.wait(0.2), S.fadeSlides(0), S.shake(4, 1)));
         }
-    };
-    Diggur.prototype.isGrounded = function () {
-        this.bounds.y++;
-        var ground = this.world.select.overlap(this.bounds, ['walls']);
-        this.bounds.y--;
-        return !_.isEmpty(ground);
     };
     return Diggur;
 }(Sprite));
@@ -11981,7 +11983,7 @@ var storyboard = {
                 switch (_a.label) {
                     case 0:
                         player = global.world.select.type(Player);
-                        return [4 /*yield*/, S.waitUntil(function () { return player.isGrounded(); })];
+                        return [4 /*yield*/, S.waitUntil(function () { return player.isGrounded(['walls']); })];
                     case 1:
                         _a.sent();
                         global.world.playSound('crush');
@@ -13114,7 +13116,7 @@ var Player = /** @class */ (function (_super) {
     }
     Player.prototype.update = function () {
         var haxis = (this.controller.left ? -1 : 0) + (this.controller.right ? 1 : 0);
-        var grounded = this.isGrounded();
+        var grounded = this.isGrounded(['walls']);
         this.v.x = haxis * this.MAX_SPEED;
         if (grounded) {
             if (!this.lastGrounded && this.v.y >= 0)
@@ -13213,12 +13215,6 @@ var Player = /** @class */ (function (_super) {
         if (cc.sector.x === 8 && cc.sector.y === 3 && this.x > 3808) {
             global.theater.storyManager.cutsceneManager.playCutscene('collect_orb');
         }
-    };
-    Player.prototype.isGrounded = function () {
-        this.bounds.y++;
-        var ground = this.world.select.overlap(this.bounds, ['walls']);
-        this.bounds.y--;
-        return !_.isEmpty(ground);
     };
     return Player;
 }(Sprite));

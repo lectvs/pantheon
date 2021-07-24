@@ -1,10 +1,14 @@
 class NullBounds implements Bounds {
     parent: Bounds.Parent;
+    x: number;
+    y: number;
 
     private boundingBox: Rectangle;
 
     constructor(parent?: Bounds.Parent) {
         this.parent = parent;
+        this.x = 0;
+        this.y = 0;
         this.boundingBox = new Rectangle(Infinity, Infinity, 0, 0);
     }
 

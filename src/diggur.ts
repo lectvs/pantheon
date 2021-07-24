@@ -27,7 +27,7 @@ class Diggur extends Sprite {
     }
 
     update() {
-        let grounded = this.isGrounded();
+        let grounded = this.isGrounded(['walls']);
         let haxis = (this.controller.left ? -1 : 0) + (this.controller.right ? 1 : 0);
         this.v.x = haxis * this.MAX_SPEED;
 
@@ -80,12 +80,5 @@ class Diggur extends Sprite {
                 S.shake(4, 1),
             ));
         }
-    }
-
-    private isGrounded() {
-        (<RectBounds>this.bounds).y++;
-        let ground = this.world.select.overlap(this.bounds, ['walls']);
-        (<RectBounds>this.bounds).y--;
-        return !_.isEmpty(ground);
     }
 }

@@ -53,7 +53,7 @@ class Player extends Sprite {
 
     update() {
         let haxis = (this.controller.left ? -1 : 0) + (this.controller.right ? 1 : 0);
-        let grounded = this.isGrounded();
+        let grounded = this.isGrounded(['walls']);
         this.v.x = haxis * this.MAX_SPEED;
 
         if (grounded) {
@@ -158,12 +158,5 @@ class Player extends Sprite {
         if (cc.sector.x === 8 && cc.sector.y === 3 && this.x > 3808) {
             global.theater.storyManager.cutsceneManager.playCutscene('collect_orb');
         }
-    }
-
-    isGrounded() {
-        (<RectBounds>this.bounds).y++;
-        let ground = this.world.select.overlap(this.bounds, ['walls']);
-        (<RectBounds>this.bounds).y--;
-        return !_.isEmpty(ground);
     }
 }
