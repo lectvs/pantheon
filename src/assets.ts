@@ -128,7 +128,7 @@ namespace Assets {
     }
 
     export const pyxelTilemaps: Dict<Preload.PyxelTilemap> = {
-        'world': { tileset: 'tiles' },
+        'world': {},
     }
 
     export const fonts: Dict<Preload.Font> = {

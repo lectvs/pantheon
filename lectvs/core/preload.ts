@@ -50,7 +50,6 @@ namespace Preload {
 
     export type PyxelTilemap = {
         url?: string;
-        tileset: string;
     }
 
     export type PyxelTilemapJson = {

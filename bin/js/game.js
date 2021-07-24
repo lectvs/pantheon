@@ -11244,7 +11244,7 @@ var Assets;
         },
     };
     Assets.pyxelTilemaps = {
-        'world': { tileset: 'tiles' },
+        'world': {},
     };
     Assets.fonts = {
         'deluxe16': {

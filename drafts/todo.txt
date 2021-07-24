@@ -1,5 +1,4 @@
 todo
-- tileset in tilemap asset definition?
 - make isOnGround generic?
 - better layer control?
 - text scale/alpha/etc.
