@@ -63,6 +63,8 @@ interface Texture {
 }
 
 namespace Texture {
+    export const NONE = new EmptyTexture();
+
     export function filledCircle(radius: number, fillColor: number, fillAlpha: number = 1) {
         let result = new BasicTexture(radius*2, radius*2);
         Draw.circleSolid(result, radius, radius, radius, { color: fillColor, alpha: fillAlpha, thickness: 0 })
@@ -87,7 +89,57 @@ namespace Texture {
         return texture;
     }
 
-    export const NONE = new EmptyTexture();
+    export function ninepatch(sourceTexture: Texture, innerRect: Rect, targetWidth: number, targetHeight: number, tiled: boolean = false) {
+        let result = new BasicTexture(targetWidth, targetHeight);
+
+        let remwidth = sourceTexture.width - (innerRect.x + innerRect.width);
+        let remheight = sourceTexture.height - (innerRect.y + innerRect.height);
+
+        let innerScaleX = (targetWidth - innerRect.x - remwidth) / (innerRect.width);
+        let innerScaleY = (targetHeight - innerRect.y - remheight) / (innerRect.height);
+
+        if (tiled) {
+            let countX = Math.max(1, Math.floor(innerScaleX));
+            let countY = Math.max(1, Math.floor(innerScaleY));
+            let pieceScaleX = innerScaleX / countX;
+            let pieceScaleY = innerScaleY / countY;
+
+            // Center
+            for (let i = 0; i < countX; i++) {
+                for (let j = 0; j < countY; j++) {
+                    sourceTexture.renderTo(result, { x: innerRect.x + i*innerRect.width*pieceScaleX, y: innerRect.y + j*innerRect.height*pieceScaleY, scaleX: pieceScaleX, scaleY: pieceScaleY, slice: rect(pieceScaleX * innerRect.x, pieceScaleY * innerRect.y, pieceScaleX * innerRect.width, pieceScaleY * innerRect.height) });
+                }
+            }
+
+            // Edges
+            for (let i = 0; i < countX; i++) {
+                sourceTexture.renderTo(result, { x: innerRect.x + i*innerRect.width*pieceScaleX, y: 0, scaleX: pieceScaleX, slice: rect(pieceScaleX * innerRect.x, 0, pieceScaleX * innerRect.width, innerRect.y) });
+                sourceTexture.renderTo(result, { x: innerRect.x + i*innerRect.width*pieceScaleX, y: targetHeight - remheight, scaleX: pieceScaleX, slice: rect(pieceScaleX * innerRect.x, innerRect.y + innerRect.width, pieceScaleX * innerRect.width, remheight) });
+            }
+            for (let j = 0; j < countY; j++) {
+                sourceTexture.renderTo(result, { x: 0, y: innerRect.y + j*innerRect.height*pieceScaleY, scaleY: pieceScaleY, slice: rect(0, pieceScaleY * innerRect.y, innerRect.x, pieceScaleY * innerRect.height) });
+                sourceTexture.renderTo(result, { x: targetWidth - remwidth, y: innerRect.y + j*innerRect.height*pieceScaleY, scaleY: pieceScaleY, slice: rect(innerRect.x + innerRect.width, pieceScaleY * innerRect.y, remwidth, pieceScaleY * innerRect.height) });
+            }
+
+        } else {
+            // Center
+            sourceTexture.renderTo(result, { x: innerRect.x, y: innerRect.y, scaleX: innerScaleX, scaleY: innerScaleY, slice: rect(innerScaleX * innerRect.x, innerScaleY * innerRect.y, innerScaleX * innerRect.width, innerScaleY * innerRect.height) });
+
+            // Edges
+            sourceTexture.renderTo(result, { x: innerRect.x, y: 0, scaleX: innerScaleX, slice: rect(innerScaleX * innerRect.x, 0, innerScaleX * innerRect.width, innerRect.y) });
+            sourceTexture.renderTo(result, { x: innerRect.x, y: targetHeight - remheight, scaleX: innerScaleX, slice: rect(innerScaleX * innerRect.x, innerRect.y + innerRect.width, innerScaleX * innerRect.width, remheight) });
+            sourceTexture.renderTo(result, { x: 0, y: innerRect.y, scaleY: innerScaleY, slice: rect(0, innerScaleY * innerRect.y, innerRect.x, innerScaleY * innerRect.height) });
+            sourceTexture.renderTo(result, { x: targetWidth - remwidth, y: innerRect.y, scaleY: innerScaleY, slice: rect(innerRect.x + innerRect.width, innerScaleY * innerRect.y, remwidth, innerScaleY * innerRect.height) });
+        }
+
+        // Corners
+        sourceTexture.renderTo(result, { x: 0, y: 0, slice: rect(0, 0, innerRect.x, innerRect.y) });
+        sourceTexture.renderTo(result, { x: targetWidth - remwidth, y: 0, slice: rect(innerRect.x + innerRect.width, 0, remwidth, innerRect.y) });
+        sourceTexture.renderTo(result, { x: 0, y: targetHeight - remheight, slice: rect(0, innerRect.y + innerRect.height, innerRect.x, remheight) });
+        sourceTexture.renderTo(result, { x: targetWidth - remwidth, y: targetHeight - remheight, slice: rect(innerRect.x + innerRect.width, innerRect.y + innerRect.height, remwidth, remheight) });
+
+        return result;
+    }
 
     export function outlineRect(width: number, height: number, outlineColor: number, outlineAlpha: number = 1, outlineThickness = 1) {
         let result = new BasicTexture(width, height);
