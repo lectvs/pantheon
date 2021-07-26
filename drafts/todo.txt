@@ -4,5 +4,4 @@ todo
 - playing cutscenes is not the same as story nodes??
 - decouple dialog from theater? (+ revamp)
 - generic camerax/y for texture filters
-- maximum collision distance? (avoid pressx hang)
 - seperate engine from game repo

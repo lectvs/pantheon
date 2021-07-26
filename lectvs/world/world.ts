@@ -18,6 +18,7 @@ namespace World {
         collisionIterations?: number;
         useRaycastDisplacementThreshold?: number;
         maxDistancePerCollisionStep?: number;
+        minDistanceIgnoreCollisionStepCalculation?: number;
 
         entryPoints?: Dict<Pt>;
 
@@ -63,6 +64,7 @@ class World {
     collisionIterations: number;
     useRaycastDisplacementThreshold: number;
     maxDistancePerCollisionStep: number;
+    minDistanceIgnoreCollisionStepCalculation: number;
 
     layers: World.Layer[];
 
@@ -103,6 +105,7 @@ class World {
         this.collisionIterations = config.collisionIterations ?? 1;
         this.useRaycastDisplacementThreshold = config.useRaycastDisplacementThreshold ?? 1;
         this.maxDistancePerCollisionStep = config.maxDistancePerCollisionStep ?? Infinity;
+        this.minDistanceIgnoreCollisionStepCalculation = config.minDistanceIgnoreCollisionStepCalculation ?? Infinity;
 
         this.worldObjects = [];
         this.layers = this.createLayers(config.layers);

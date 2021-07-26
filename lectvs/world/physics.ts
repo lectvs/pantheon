@@ -42,9 +42,15 @@ namespace Physics {
             let d = physicsObjectDataCache.dpos[worldObject.uid];
             worldObject.x -= d.x;
             worldObject.y -= d.y;
-            iters = Math.max(iters, Math.ceil(d.magnitude / world.maxDistancePerCollisionStep));
+
+            if (d.magnitude < world.minDistanceIgnoreCollisionStepCalculation) {
+                iters = Math.max(iters, Math.ceil(d.magnitude / world.maxDistancePerCollisionStep));
+            }
+
             worldObject.bounds.freeze();
         }
+
+        debug(iters);
 
         let resultCollisions: RaycastCollisionData[] = [];
 

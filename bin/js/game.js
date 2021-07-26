@@ -3435,7 +3435,7 @@ var Sprite = /** @class */ (function (_super) {
 var World = /** @class */ (function () {
     function World(config) {
         if (config === void 0) { config = {}; }
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
         this.scriptManager = new ScriptManager();
         this.soundManager = new SoundManager();
         this.select = new WorldSelecter(this);
@@ -3449,16 +3449,17 @@ var World = /** @class */ (function () {
         this.collisionIterations = (_f = config.collisionIterations) !== null && _f !== void 0 ? _f : 1;
         this.useRaycastDisplacementThreshold = (_g = config.useRaycastDisplacementThreshold) !== null && _g !== void 0 ? _g : 1;
         this.maxDistancePerCollisionStep = (_h = config.maxDistancePerCollisionStep) !== null && _h !== void 0 ? _h : Infinity;
+        this.minDistanceIgnoreCollisionStepCalculation = (_j = config.minDistanceIgnoreCollisionStepCalculation) !== null && _j !== void 0 ? _j : Infinity;
         this.worldObjects = [];
         this.layers = this.createLayers(config.layers);
-        this.backgroundColor = (_j = config.backgroundColor) !== null && _j !== void 0 ? _j : global.backgroundColor;
-        this.backgroundAlpha = (_k = config.backgroundAlpha) !== null && _k !== void 0 ? _k : 1;
+        this.backgroundColor = (_k = config.backgroundColor) !== null && _k !== void 0 ? _k : global.backgroundColor;
+        this.backgroundAlpha = (_l = config.backgroundAlpha) !== null && _l !== void 0 ? _l : 1;
         this.layerTexture = new BasicTexture(this.width, this.height);
         this.entryPoints = {};
-        for (var key in (_l = config.entryPoints) !== null && _l !== void 0 ? _l : {}) {
+        for (var key in (_m = config.entryPoints) !== null && _m !== void 0 ? _m : {}) {
             this.entryPoints[key] = vec2(config.entryPoints[key]);
         }
-        this.camera = new Camera((_m = config.camera) !== null && _m !== void 0 ? _m : {}, this);
+        this.camera = new Camera((_o = config.camera) !== null && _o !== void 0 ? _o : {}, this);
     }
     Object.defineProperty(World.prototype, "delta", {
         get: function () {
@@ -8090,7 +8091,9 @@ var Physics;
                 var d = physicsObjectDataCache.dpos[worldObject.uid];
                 worldObject.x -= d.x;
                 worldObject.y -= d.y;
-                iters = Math.max(iters, Math.ceil(d.magnitude / world.maxDistancePerCollisionStep));
+                if (d.magnitude < world.minDistanceIgnoreCollisionStepCalculation) {
+                    iters = Math.max(iters, Math.ceil(d.magnitude / world.maxDistancePerCollisionStep));
+                }
                 worldObject.bounds.freeze();
             }
         }
@@ -8101,6 +8104,7 @@ var Physics;
             }
             finally { if (e_33) throw e_33.error; }
         }
+        debug(iters);
         var resultCollisions = [];
         for (var iter = 0; iter < iters; iter++) {
             try {
@@ -11938,6 +11942,7 @@ var stages = {
             // TODO: rethink this? does it actually help?
             useRaycastDisplacementThreshold: Infinity,
             maxDistancePerCollisionStep: 8,
+            minDistanceIgnoreCollisionStepCalculation: 400,
             globalSoundHumanizePercent: 0.1,
         });
         world.addWorldObject(new Tilemap({

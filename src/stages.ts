@@ -29,6 +29,7 @@ const stages: Dict<Factory<World>> = {
             // TODO: rethink this? does it actually help?
             useRaycastDisplacementThreshold: Infinity,
             maxDistancePerCollisionStep: 8,
+            minDistanceIgnoreCollisionStepCalculation: 400,
             globalSoundHumanizePercent: 0.1,
         });
 
