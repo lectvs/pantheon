@@ -2113,11 +2113,9 @@ var Options = /** @class */ (function () {
     return Options;
 }());
 var CutsceneManager = /** @class */ (function () {
-    function CutsceneManager(theater, storyboard) {
+    function CutsceneManager(theater) {
         this.theater = theater;
-        this.storyboard = storyboard;
         this.current = null;
-        this.playedCutscenes = new Set();
     }
     Object.defineProperty(CutsceneManager.prototype, "isCutscenePlaying", {
         get: function () { return !!this.current; },
@@ -2135,33 +2133,24 @@ var CutsceneManager = /** @class */ (function () {
             }
         }
     };
-    CutsceneManager.prototype.canPlayCutscene = function (name) {
-        var cutscene = this.getCutsceneByName(name);
+    CutsceneManager.prototype.canPlayCutscene = function (cutscene) {
         if (!cutscene)
-            return false;
-        if (cutscene.type !== 'cutscene')
-            return false;
-        if (cutscene.playOnlyOnce && this.playedCutscenes.has(name))
             return false;
         return true;
     };
     CutsceneManager.prototype.canSkipCurrentCutscene = function () {
         return this.current && this.current.node.skippable;
     };
-    CutsceneManager.prototype.fastForwardCutscene = function (name) {
-        this.playCutscene(name);
+    CutsceneManager.prototype.fastForwardCutscene = function (cutscene) {
+        this.playCutscene(cutscene);
         this.finishCurrentCutscene();
     };
-    CutsceneManager.prototype.playCutscene = function (name) {
-        var cutscene = this.getCutsceneByName(name);
-        if (!cutscene)
-            return;
+    CutsceneManager.prototype.playCutscene = function (cutscene) {
         if (this.current) {
             error("Cannot play cutscene " + name + " because a cutscene is already playing:", this.current);
             return;
         }
         this.current = {
-            name: name,
             node: cutscene,
             script: new Script(cutscene.script),
         };
@@ -2179,23 +2168,9 @@ var CutsceneManager = /** @class */ (function () {
     CutsceneManager.prototype.finishCurrentCutscene = function () {
         if (!this.isCutscenePlaying)
             return;
-        var completed = this.current;
         this.current = null;
-        this.playedCutscenes.add(completed.name);
         this.theater.dialogBox.complete();
         this.theater.clearSlides();
-    };
-    CutsceneManager.prototype.getCutsceneByName = function (name) {
-        var node = this.storyboard[name];
-        if (!node) {
-            error("Cannot get cutscene " + name + " because it does not exist on storyboard:", this.storyboard);
-            return undefined;
-        }
-        if (node.type !== 'cutscene') {
-            error("Tried to play node " + name + " as a cutscene when it is not one", node);
-            return undefined;
-        }
-        return node;
     };
     return CutsceneManager;
 }());
@@ -6870,7 +6845,7 @@ var Theater = /** @class */ (function (_super) {
             ]
         }) || this;
         _this.loadDialogBox(config.dialogBox);
-        _this.cutsceneManager = new CutsceneManager(_this, config.storyboard);
+        _this.cutsceneManager = new CutsceneManager(_this);
         _this.stageManager = new StageManager(_this, config.stages);
         _this.slideManager = new SlideManager(_this);
         _this.musicManager = new MusicManager();
@@ -6942,8 +6917,8 @@ var Theater = /** @class */ (function (_super) {
     Theater.prototype.skipCurrentCutscene = function () {
         var _this = this;
         if (this.cutsceneManager.canSkipCurrentCutscene()) {
-            var currentCutscene_1 = this.cutsceneManager.current.name;
-            var cutsceneFinished = function () { return !_this.cutsceneManager.current || _this.cutsceneManager.current.name !== currentCutscene_1; };
+            var currentCutscene_1 = this.cutsceneManager.current;
+            var cutsceneFinished = function () { return !_this.cutsceneManager.current || _this.cutsceneManager.current !== currentCutscene_1; };
             this.isSkippingCutscene = true;
             var iters = 0;
             while (iters < Theater.SKIP_CUTSCENE_MAX_FRAMES && !cutsceneFinished()) {
@@ -6999,37 +6974,6 @@ var Theater = /** @class */ (function (_super) {
     }(WorldObject));
     Theater.WorldAsWorldObject = WorldAsWorldObject;
 })(Theater || (Theater = {}));
-var Storyboard;
-(function (Storyboard) {
-    function arbitraryPathToNode(storyboard, endNode) {
-        if (!storyboard[endNode]) {
-            error("Cannot make path to end node " + endNode + " since it doesn't exist in storyboard", storyboard);
-            return [];
-        }
-        var result = [endNode];
-        var currentNode = endNode;
-        while (storyboard[currentNode].type !== 'start') {
-            var foundNode = undefined;
-            for (var node in storyboard) {
-                var transition = storyboard[node].transitions.find(function (t) { return t.toNode === currentNode; });
-                if (transition) {
-                    foundNode = node;
-                    break;
-                }
-            }
-            if (foundNode) {
-                result.unshift(foundNode);
-                currentNode = foundNode;
-            }
-            else {
-                error("Could not find a path to " + endNode + " in storyboard", storyboard);
-                return [];
-            }
-        }
-        return result;
-    }
-    Storyboard.arbitraryPathToNode = arbitraryPathToNode;
-})(Storyboard || (Storyboard = {}));
 var A;
 (function (A) {
     function clone(array) {
@@ -11019,9 +10963,6 @@ var Assets;
         'blank': {},
         // Debug
         'debug': {},
-        // Fonts
-        'deluxe16': { spritesheet: { frameWidth: 8, frameHeight: 15 } },
-        'andrfw': { spritesheet: { frameWidth: 8, frameHeight: 19 } },
         // Menus
         'titlescreen': {},
         // Game
@@ -11247,7 +11188,7 @@ var CutsceneInteractable = /** @class */ (function (_super) {
     }
     CutsceneInteractable.prototype.interact = function () {
         if (this.pressTexture === 'pressx') {
-            global.theater.cutsceneManager.playCutscene(this.cutscene);
+            global.theater.cutsceneManager.playCutscene(storyboard[this.cutscene]);
         }
     };
     CutsceneInteractable.prototype.setBoundsSize = function (w, h) {
@@ -11509,7 +11450,7 @@ var Lever = /** @class */ (function (_super) {
     Lever.prototype.flip = function () {
         this.flipX = true;
         if (this.flipX) {
-            global.theater.cutsceneManager.playCutscene(this.cutscene);
+            global.theater.cutsceneManager.playCutscene(storyboard[this.cutscene]);
         }
         this.world.playSound('crush');
         global.theater.runScript(S.shake(2, 0.3));
@@ -11848,16 +11789,7 @@ var isResult = {};
 var scammirDoorInteractions = 0;
 var hasFallen = false;
 var storyboard = {
-    'start': {
-        type: 'start',
-        transitions: [{ onStage: 'game', toNode: 'gameplay' }]
-    },
-    'gameplay': {
-        type: 'gameplay',
-        transitions: []
-    },
     'intro_undermine': {
-        type: 'cutscene',
         script: function () {
             var player, waitTime, THE, UNDERMINE;
             return __generator(this, function (_a) {
@@ -11910,12 +11842,10 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     /* Items */
     'item_redkey': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -11932,11 +11862,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'item_blackkey': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -11950,11 +11878,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'item_string': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -11971,12 +11897,10 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     /* Locked Doors */
     'i_reddoor': {
-        type: 'cutscene',
         script: function () {
             var _a;
             return __generator(this, function (_b) {
@@ -12008,11 +11932,9 @@ var storyboard = {
                     case 8: return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_blackdoor': {
-        type: 'cutscene',
         script: function () {
             var _a;
             return __generator(this, function (_b) {
@@ -12086,12 +12008,10 @@ var storyboard = {
                     case 21: return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     /* Levers */
     'lever_pit': {
-        type: 'cutscene',
         script: function () {
             var _a, _b;
             return __generator(this, function (_c) {
@@ -12099,12 +12019,10 @@ var storyboard = {
                 (_b = global.world.select.name('pitdoor2', false)) === null || _b === void 0 ? void 0 : _b.removeFromWorld();
                 return [2 /*return*/];
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     /* Interactions */
     'i_mgsign': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -12114,11 +12032,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_jdsign': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -12128,11 +12044,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_jdhouse': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -12142,11 +12056,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_ssign': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -12159,11 +12071,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_shouse': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -12204,11 +12114,9 @@ var storyboard = {
                     case 9: return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_umsign': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -12218,11 +12126,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_hsign': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -12232,11 +12138,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_hhouse': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -12246,11 +12150,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_diggur_surface': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -12271,11 +12173,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_scammir_surface': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -12299,11 +12199,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_gobbor_surface': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -12324,11 +12222,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_leversign': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -12356,11 +12252,9 @@ var storyboard = {
                     case 8: return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_note': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -12370,11 +12264,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_scammir_tele': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -12392,11 +12284,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_telescope': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -12430,11 +12320,9 @@ var storyboard = {
                     case 8: return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_grass': {
-        type: 'cutscene',
         script: function () {
             var player_1;
             var _a;
@@ -12461,7 +12349,7 @@ var storyboard = {
                     case 4:
                         _b.sent();
                         player_1 = global.world.select.type(Player);
-                        global.theater.runScript(S.chain(S.waitUntil(function () { return player_1.x < 3272; }), S.call(function () { return global.theater.cutsceneManager.playCutscene('diggur_trip'); })));
+                        global.theater.runScript(S.chain(S.waitUntil(function () { return player_1.x < 3272; }), S.call(function () { return global.theater.cutsceneManager.playCutscene(storyboard['diggur_trip']); })));
                         return [3 /*break*/, 7];
                     case 5: return [4 /*yield*/, S.dialog("That is not string. How foolish of you to even consider it.")];
                     case 6:
@@ -12470,11 +12358,9 @@ var storyboard = {
                     case 7: return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_crackedwall': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -12487,11 +12373,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_diggur_fall': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -12506,11 +12390,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_loominggate': {
-        type: 'cutscene',
         script: function () {
             var loomingGateOpen, player;
             return __generator(this, function (_a) {
@@ -12531,11 +12413,9 @@ var storyboard = {
                     case 4: return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_chest': {
-        type: 'cutscene',
         script: function () {
             var player, chest, prank;
             return __generator(this, function (_a) {
@@ -12613,7 +12493,7 @@ var storyboard = {
                                     case 0: return [4 /*yield*/];
                                     case 1:
                                         _a.sent();
-                                        global.theater.cutsceneManager.playCutscene('credits');
+                                        global.theater.cutsceneManager.playCutscene(storyboard['credits']);
                                         return [2 /*return*/];
                                 }
                             });
@@ -12621,11 +12501,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'credits' }]
+        }
     },
     'diggur_trip': {
-        type: 'cutscene',
         script: function () {
             var player, diggur, startx, endx, basey;
             return __generator(this, function (_a) {
@@ -12679,11 +12557,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'collect_orb': {
-        type: 'cutscene',
         script: function () {
             var orb, player, orbfinal;
             return __generator(this, function (_a) {
@@ -12740,11 +12616,9 @@ var storyboard = {
                         return [2 /*return*/];
                 }
             });
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'credits': {
-        type: 'cutscene',
         script: function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -12788,8 +12662,7 @@ var storyboard = {
                     case 10: return [2 /*return*/];
                 }
             });
-        },
-        transitions: []
+        }
     }
 };
 /// <reference path="./menus.ts"/>
@@ -12860,7 +12733,6 @@ Main.loadConfig({
             stages: stages,
             stageToLoad: 'game',
             stageEntryPoint: 'main',
-            storyboard: storyboard,
             dialogBox: function () { return new DialogBox({
                 x: 200, y: 280,
                 texture: 'dialogbox',
@@ -13090,7 +12962,7 @@ var Player = /** @class */ (function (_super) {
             return;
         var cc = this.world.select.type(CameraController);
         if (cc.sector.x === 8 && cc.sector.y === 3 && this.x > 3808) {
-            global.theater.cutsceneManager.playCutscene('collect_orb');
+            global.theater.cutsceneManager.playCutscene(storyboard['collect_orb']);
         }
     };
     return Player;
@@ -13162,7 +13034,7 @@ var TransitionScripts;
             if (world.time > startFallingTime + 5) {
                 player.v.y = Math.min(player.v.y, 800);
                 player.vylimit = Infinity;
-                global.theater.cutsceneManager.playCutscene('intro_undermine');
+                global.theater.cutsceneManager.playCutscene(storyboard['intro_undermine']);
                 return false;
             }
             player.teleport(player.x, player.y - world.height * (newSector.y - oldSector.y));

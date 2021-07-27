@@ -6,7 +6,6 @@ namespace Theater {
         stages: Dict<Factory<World>>;
         stageToLoad: string;
         stageEntryPoint?: World.EntryPoint;
-        storyboard: Storyboard;
         dialogBox: Factory<DialogBox>;
         autoPlayScript?: () => IterableIterator<any>;
     }
@@ -42,7 +41,7 @@ class Theater extends World {
 
         this.loadDialogBox(config.dialogBox);
 
-        this.cutsceneManager = new CutsceneManager(this, config.storyboard);
+        this.cutsceneManager = new CutsceneManager(this);
         this.stageManager = new StageManager(this, config.stages);
         this.slideManager = new SlideManager(this);
         this.musicManager = new MusicManager();
@@ -97,8 +96,8 @@ class Theater extends World {
     // Rapidly update theater until cutscene is completed.
     skipCurrentCutscene() {
         if (this.cutsceneManager.canSkipCurrentCutscene()) {
-            let currentCutscene = this.cutsceneManager.current.name;
-            let cutsceneFinished = () => !this.cutsceneManager.current || this.cutsceneManager.current.name !== currentCutscene;
+            let currentCutscene = this.cutsceneManager.current;
+            let cutsceneFinished = () => !this.cutsceneManager.current || this.cutsceneManager.current !== currentCutscene;
 
             this.isSkippingCutscene = true;
             let iters = 0;

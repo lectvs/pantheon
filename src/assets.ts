@@ -5,10 +5,6 @@ namespace Assets {
         // Debug
         'debug': {},
 
-        // Fonts
-        'deluxe16': { spritesheet: { frameWidth: 8, frameHeight: 15 } },
-        'andrfw': { spritesheet: { frameWidth: 8, frameHeight: 19 } },
-
         // Menus
         'titlescreen': {},
 

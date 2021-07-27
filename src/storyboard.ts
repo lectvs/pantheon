@@ -8,17 +8,8 @@ var isResult: ISResult = {};
 var scammirDoorInteractions = 0;
 var hasFallen = false;
 
-const storyboard: Storyboard = {
-    'start': {
-        type: 'start',
-        transitions: [{ onStage: 'game', toNode: 'gameplay' }]
-    },
-    'gameplay': {
-        type: 'gameplay',
-        transitions: []
-    },
+const storyboard: Dict<Cutscene> = {
     'intro_undermine': {
-        type: 'cutscene',
         script: function*() {
             let player = global.world.select.type(Player);
             yield S.waitUntil(() => player.isGrounded(['walls']));
@@ -64,47 +55,39 @@ const storyboard: Storyboard = {
             UNDERMINE.removeFromWorld();
 
             global.theater.playMusic('caverns');
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
 
     /* Items */
     'item_redkey': {
-        type: 'cutscene',
         script: function*() {
             GIVE_ITEM('redkey');
             global.world.select.nameAll('redkey').forEach(key => key.removeFromWorld());
             global.world.playSound('item_get');
             yield S.dialog("Feeling moderately bamboozled, you pick up the Red Key.");
             yield S.dialog("It can be used to open the Red Door.");
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'item_blackkey': {
-        type: 'cutscene',
         script: function*() {
             GIVE_ITEM('blackkey');
             global.world.select.nameAll('blackkey').forEach(key => key.removeFromWorld());
             global.world.playSound('item_get');
             yield S.dialog("After a long trek back through the Undermine, there's nothing more refreshing than an ice-cold Black Key.");
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'item_string': {
-        type: 'cutscene',
         script: function*() {
             GIVE_ITEM('string');
             global.world.select.nameAll('string').forEach(key => key.removeFromWorld());
             global.world.playSound('item_get');
             yield S.dialog("String!! Ha ha. This used to make you laugh so hard back in the day.");
             yield S.dialog("Pocketed the string for later use.");
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
 
     /* Locked Doors */
     'i_reddoor': {
-        type: 'cutscene',
         script: function*() {
             yield S.chooseItem("Which item?", isResult);
 
@@ -119,11 +102,9 @@ const storyboard: Storyboard = {
             } else {
                 yield S.dialog("That doesn't really strike you as a \"door opening item\".");
             }
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_blackdoor': {
-        type: 'cutscene',
         script: function*() {
             yield S.chooseItem("Which item?", isResult);
 
@@ -154,52 +135,40 @@ const storyboard: Storyboard = {
             } else {
                 yield S.dialog("That doesn't really strike you as a \"door opening item\".");
             }
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
 
     /* Levers */
     'lever_pit': {
-        type: 'cutscene',
         script: function*() {
             global.world.select.name('pitdoor1', false)?.removeFromWorld();
             global.world.select.name('pitdoor2', false)?.removeFromWorld();
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
 
     /* Interactions */
     'i_mgsign': {
-        type: 'cutscene',
         script: function*() {
             yield S.dialog("Mirigram and Gobbor's House");
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_jdsign': {
-        type: 'cutscene',
         script: function*() {
             yield S.dialog("Jergol and Diggur's Cool Science House");
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_jdhouse': {
-        type: 'cutscene',
         script: function*() {
             yield S.dialog("It's locked.");
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_ssign': {
-        type: 'cutscene',
         script: function*() {
             yield S.dialog("Scammir's House");
             yield S.dialog("A note scrawled on the sign in nearly illegible handwriting reads: \"Come on in! Door's unlocked :)\".");
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_shouse': {
-        type: 'cutscene',
         script: function*() {
             scammirDoorInteractions++;
 
@@ -221,32 +190,24 @@ const storyboard: Storyboard = {
                 yield S.dialog("...........................");
                 yield S.dialog("... the handle has run out of battery.");
             }
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_umsign': {
-        type: 'cutscene',
         script: function*() {
             yield S.dialog("The Undermine: Adventurers only beyond this point!");
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_hsign': {
-        type: 'cutscene',
         script: function*() {
             yield S.dialog("Huntar's House");
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_hhouse': {
-        type: 'cutscene',
         script: function*() {
             yield S.dialog("It's locked.");
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_diggur_surface': {
-        type: 'cutscene',
         script: function*() {
             global.theater.dialogBox.showName('Diggur');
             global.theater.dialogBox.setSpeakSound('dialogspeak_diggur');
@@ -255,13 +216,9 @@ const storyboard: Storyboard = {
             yield S.dialog("Perhaps our paths may cross down below.");
             global.theater.dialogBox.showName(undefined);
             global.theater.dialogBox.setSpeakSound('dialogspeak');
-
-
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_scammir_surface': {
-        type: 'cutscene',
         script: function*() {
             global.theater.dialogBox.showName('Scammir');
             global.theater.dialogBox.setSpeakSound('dialogspeak_scammir');
@@ -271,11 +228,9 @@ const storyboard: Storyboard = {
             yield S.dialogAdd(" ... not!! psyche!");
             global.theater.dialogBox.showName(undefined);
             global.theater.dialogBox.setSpeakSound('dialogspeak');
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_gobbor_surface': {
-        type: 'cutscene',
         script: function*() {
             global.theater.dialogBox.showName('Gobbor');
             global.theater.dialogBox.setSpeakSound(undefined);
@@ -284,11 +239,9 @@ const storyboard: Storyboard = {
             global.theater.dialogBox.setSpeakSound('dialogspeak');
             yield S.dialog("Gobbor doesn't say anything, being the silent protagonist he is.");
             yield S.dialog("Such a polite young man.");
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_leversign': {
-        type: 'cutscene',
         script: function*() {
             yield S.dialog("The sign reads: \"the door ahead is locked!! quick, pull the lever to unlock it!!\"");
             if (hasFallen) {
@@ -299,18 +252,14 @@ const storyboard: Storyboard = {
             } else {
                 yield S.dialog("... the prank is so obvious. no one would ever pull that lever.");
             }
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_note': {
-        type: 'cutscene',
         script: function*() {
             yield S.dialog("get scammed ~");
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_scammir_tele': {
-        type: 'cutscene',
         script: function*() {
             global.theater.dialogBox.showName('Scammir');
             global.theater.dialogBox.setSpeakSound('dialogspeak_scammir');
@@ -318,11 +267,9 @@ const storyboard: Storyboard = {
             yield S.dialog("free telescope viewings, just $5 per view ~");
             global.theater.dialogBox.showName('Scammir');
             global.theater.dialogBox.setSpeakSound('dialogspeak');
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_telescope': {
-        type: 'cutscene',
         script: function*() {
             yield S.chooseItem("Which item?", isResult);
 
@@ -339,11 +286,9 @@ const storyboard: Storyboard = {
                 global.theater.dialogBox.showName(undefined);
                 global.theater.dialogBox.setSpeakSound('dialogspeak');
             }
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_grass': {
-        type: 'cutscene',
         script: function*() {
             yield S.dialog("A discreet patch of grass, rife with humorous potential.");
             yield S.dialog("If only you had some String...");
@@ -363,35 +308,29 @@ const storyboard: Storyboard = {
                 let player = global.world.select.type(Player);
                 global.theater.runScript(S.chain(
                     S.waitUntil(() => player.x < 3272),
-                    S.call(() => global.theater.cutsceneManager.playCutscene('diggur_trip')),
+                    S.call(() => global.theater.cutsceneManager.playCutscene(storyboard['diggur_trip'])),
                 ));
             } else {
                 yield S.dialog("That is not string. How foolish of you to even consider it.");
             }
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_crackedwall': {
-        type: 'cutscene',
         script: function*() {
             yield S.dialog("This section of wall appears cracked. You wonder what could be on the other side?");
             yield S.dialog("Unfortunately, it would take a considerable amount of force to destroy it.");
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_diggur_fall': {
-        type: 'cutscene',
         script: function*() {
             global.theater.dialogBox.showName('Diggur');
             global.theater.dialogBox.setSpeakSound('dialogspeak_diggur');
             yield S.dialog("Oof... Mrs M... help...");
             global.theater.dialogBox.showName(undefined);
             global.theater.dialogBox.setSpeakSound('dialogspeak');
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_loominggate': {
-        type: 'cutscene',
         script: function*() {
             let loomingGateOpen = global.world.select.name('orb3_final').isVisible();
             if (loomingGateOpen) {
@@ -401,11 +340,9 @@ const storyboard: Storyboard = {
                 yield S.dialog("The looming Gate is closed.");
                 yield S.dialog("Luckily, two of the orbs happen to be inserted already.");
             }
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'i_chest': {
-        type: 'cutscene',
         script: function*() {
             let player = global.world.select.type(Player);
             let chest = global.world.select.type(Chest);
@@ -468,14 +405,12 @@ const storyboard: Storyboard = {
             
             global.theater.runScript(function*() {
                 yield;
-                global.theater.cutsceneManager.playCutscene('credits');
+                global.theater.cutsceneManager.playCutscene(storyboard['credits']);
             });
-        },
-        transitions: [{ toNode: 'credits' }]
+        }
     },
 
     'diggur_trip': {
-        type: 'cutscene',
         script: function*() {
             global.theater.musicManager.stopMusic(0.5);
             global.world.select.typeAll(Diggur).forEach(diggur => diggur.removeFromWorld());
@@ -509,11 +444,9 @@ const storyboard: Storyboard = {
             yield S.dialog("Always good for a laugh.");
 
             global.theater.musicManager.playMusic('caverns', 0.5);
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'collect_orb': {
-        type: 'cutscene',
         script: function*() {
             let orb = global.world.select.name<Orb>('orb3');
             let player = global.world.select.type(Player);
@@ -558,11 +491,9 @@ const storyboard: Storyboard = {
             }));
             global.world.playSound('crush');
             global.theater.runScript(S.shake(2, 0.3));
-        },
-        transitions: [{ toNode: 'gameplay' }]
+        }
     },
     'credits': {
-        type: 'cutscene',
         script: function*() {
             global.theater.playMusic('credits');
             yield S.fadeOut(0, 0x000000);
@@ -583,7 +514,6 @@ const storyboard: Storyboard = {
 
             // Loop indefinitely.
             while (true) yield;
-        },
-        transitions: []
+        }
     }
 }

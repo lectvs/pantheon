@@ -76,7 +76,6 @@ Main.loadConfig({
             stages: stages,
             stageToLoad: 'game',
             stageEntryPoint: 'main',
-            storyboard: storyboard,
             dialogBox: () => new DialogBox({
                 x: 200, y: 280,
                 texture: 'dialogbox',

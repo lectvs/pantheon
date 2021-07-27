@@ -156,7 +156,7 @@ class Player extends Sprite {
         if (global.world.select.name<Orb>('orb3_final').isVisible()) return;
         let cc = this.world.select.type(CameraController);
         if (cc.sector.x === 8 && cc.sector.y === 3 && this.x > 3808) {
-            global.theater.cutsceneManager.playCutscene('collect_orb');
+            global.theater.cutsceneManager.playCutscene(storyboard['collect_orb']);
         }
     }
 }

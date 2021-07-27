@@ -1,17 +1,18 @@
+type Cutscene = {
+    script: Script.Function;
+    skippable?: boolean;
+}
+
 class CutsceneManager {
     theater: Theater;
-    storyboard: Storyboard;
 
-    current: { name: string, node: Storyboard.Nodes.Cutscene, script: Script };
-    playedCutscenes: Set<string>;
+    current: { node: Cutscene, script: Script };
 
     get isCutscenePlaying() { return !!this.current; }
 
-    constructor(theater: Theater, storyboard: Storyboard) {
+    constructor(theater: Theater) {
         this.theater = theater;
-        this.storyboard = storyboard;
         this.current = null;
-        this.playedCutscenes = new Set<string>();
     }
 
     update() {
@@ -27,11 +28,8 @@ class CutsceneManager {
         }
     }
 
-    canPlayCutscene(name: string) {
-        let cutscene = this.getCutsceneByName(name);
+    canPlayCutscene(cutscene: Cutscene) {
         if (!cutscene) return false;
-        if (cutscene.type !== 'cutscene') return false;
-        if (cutscene.playOnlyOnce && this.playedCutscenes.has(name)) return false;
         return true;
     }
 
@@ -39,22 +37,18 @@ class CutsceneManager {
         return this.current && this.current.node.skippable;
     }
 
-    fastForwardCutscene(name: string) {
-        this.playCutscene(name);
+    fastForwardCutscene(cutscene: Cutscene) {
+        this.playCutscene(cutscene);
         this.finishCurrentCutscene();
     }
 
-    playCutscene(name: string) {
-        let cutscene = this.getCutsceneByName(name);
-        if (!cutscene) return;
-
+    playCutscene(cutscene: Cutscene) {
         if (this.current) {
             error(`Cannot play cutscene ${name} because a cutscene is already playing:`, this.current);
             return;
         }
 
         this.current = {
-            name: name,
             node: cutscene,
             script: new Script(cutscene.script),
         };
@@ -76,25 +70,9 @@ class CutsceneManager {
     private finishCurrentCutscene() {
         if (!this.isCutscenePlaying) return;
         
-        let completed = this.current;
         this.current = null;
-
-        this.playedCutscenes.add(completed.name);
 
         this.theater.dialogBox.complete();
         this.theater.clearSlides();
-    }
-
-    private getCutsceneByName(name: string) {
-        let node = this.storyboard[name];
-        if (!node) {
-            error(`Cannot get cutscene ${name} because it does not exist on storyboard:`, this.storyboard);
-            return undefined;
-        }
-        if (node.type !== 'cutscene') {
-            error(`Tried to play node ${name} as a cutscene when it is not one`, node);
-            return undefined;
-        }
-        return node;
     }
 }
