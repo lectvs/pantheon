@@ -26,7 +26,7 @@ namespace TransitionScripts {
             if (world.time > startFallingTime + 5) {
                 player.v.y = Math.min(player.v.y, 800);
                 player.vylimit = Infinity;
-                global.theater.storyManager.cutsceneManager.playCutscene('intro_undermine');
+                global.theater.cutsceneManager.playCutscene('intro_undermine');
                 return false;
             }
             player.teleport(player.x, player.y - world.height * (newSector.y - oldSector.y));

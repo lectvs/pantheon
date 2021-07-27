@@ -18,7 +18,7 @@ class Lever extends Sprite {
     flip() {
         this.flipX = true;
         if (this.flipX) {
-            global.theater.storyManager.cutsceneManager.playCutscene(this.cutscene);
+            global.theater.cutsceneManager.playCutscene(this.cutscene);
         }
         this.world.playSound('crush');
         global.theater.runScript(S.shake(2, 0.3));

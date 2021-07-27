@@ -6,11 +6,7 @@ namespace Theater {
         stages: Dict<Factory<World>>;
         stageToLoad: string;
         stageEntryPoint?: World.EntryPoint;
-        story: {
-            storyboard: Storyboard;
-            storyboardPath: string[];
-            storyEvents: StoryEvent.Map;
-        },
+        storyboard: Storyboard;
         dialogBox: Factory<DialogBox>;
         autoPlayScript?: () => IterableIterator<any>;
     }
@@ -19,14 +15,14 @@ namespace Theater {
 class Theater extends World {
     dialogBox: DialogBox;
     
-    storyManager: StoryManager;
+    cutsceneManager: CutsceneManager;
     stageManager: StageManager;
     slideManager: SlideManager;
     musicManager: MusicManager;
 
     get currentStageName() { return this.stageManager ? this.stageManager.currentStageName : undefined; }
     get currentWorld() { return this.stageManager ? this.stageManager.currentWorld : undefined; }
-    get isCutscenePlaying() { return this.storyManager ? this.storyManager.cutsceneManager.isCutscenePlaying : false; }
+    get isCutscenePlaying() { return this.cutsceneManager ? this.cutsceneManager.isCutscenePlaying : false; }
     get slides() { return this.slideManager ? this.slideManager.slides : []; }
     get currentMusicKey() { return this.musicManager ? this.musicManager.currentMusicKey : undefined; }
 
@@ -46,7 +42,7 @@ class Theater extends World {
 
         this.loadDialogBox(config.dialogBox);
 
-        this.storyManager = new StoryManager(this, config.story.storyboard, config.story.storyboardPath, config.story.storyEvents);
+        this.cutsceneManager = new CutsceneManager(this, config.storyboard);
         this.stageManager = new StageManager(this, config.stages);
         this.slideManager = new SlideManager(this);
         this.musicManager = new MusicManager();
@@ -63,7 +59,7 @@ class Theater extends World {
     }
 
     update() {
-        this.storyManager.update();
+        this.cutsceneManager.update();
 
         super.update();
         while (!_.isEmpty(this.endOfFrameQueue)) {
@@ -100,9 +96,9 @@ class Theater extends World {
 
     // Rapidly update theater until cutscene is completed.
     skipCurrentCutscene() {
-        if (this.storyManager.cutsceneManager.canSkipCurrentCutscene()) {
-            let currentCutscene = this.storyManager.cutsceneManager.current.name;
-            let cutsceneFinished = () => !this.storyManager.cutsceneManager.current || this.storyManager.cutsceneManager.current.name !== currentCutscene;
+        if (this.cutsceneManager.canSkipCurrentCutscene()) {
+            let currentCutscene = this.cutsceneManager.current.name;
+            let cutsceneFinished = () => !this.cutsceneManager.current || this.cutsceneManager.current.name !== currentCutscene;
 
             this.isSkippingCutscene = true;
             let iters = 0;
@@ -127,7 +123,7 @@ class Theater extends World {
     }
 
     onStageLoad() {
-        this.storyManager.onStageLoad();
+        this.cutsceneManager.onStageLoad();
     }
     
     private loadDialogBox(factory: Factory<DialogBox>) {

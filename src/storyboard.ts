@@ -363,7 +363,7 @@ const storyboard: Storyboard = {
                 let player = global.world.select.type(Player);
                 global.theater.runScript(S.chain(
                     S.waitUntil(() => player.x < 3272),
-                    S.call(() => global.theater.storyManager.cutsceneManager.playCutscene('diggur_trip')),
+                    S.call(() => global.theater.cutsceneManager.playCutscene('diggur_trip')),
                 ));
             } else {
                 yield S.dialog("That is not string. How foolish of you to even consider it.");
@@ -468,7 +468,7 @@ const storyboard: Storyboard = {
             
             global.theater.runScript(function*() {
                 yield;
-                global.theater.storyManager.cutsceneManager.playCutscene('credits');
+                global.theater.cutsceneManager.playCutscene('credits');
             });
         },
         transitions: [{ toNode: 'credits' }]

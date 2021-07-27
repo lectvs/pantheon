@@ -15,7 +15,7 @@ class CutsceneInteractable extends Interactable {
 
     interact() {
         if (this.pressTexture === 'pressx') {
-            global.theater.storyManager.cutsceneManager.playCutscene(this.cutscene);
+            global.theater.cutsceneManager.playCutscene(this.cutscene);
         }
     }
 

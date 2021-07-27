@@ -50,8 +50,6 @@ namespace Physics {
             worldObject.bounds.freeze();
         }
 
-        debug(iters);
-
         let resultCollisions: RaycastCollisionData[] = [];
 
         for (let iter = 0; iter < iters; iter++) {
