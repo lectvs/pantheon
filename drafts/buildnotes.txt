@@ -1,4 +1,0 @@
-build notes
-
-itch
-- game height should be the height of the canvas minus 3
