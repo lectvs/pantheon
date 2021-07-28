@@ -21,13 +21,11 @@ class StageManager {
     /**
      * Loads a stage immediately. If you are calling from inside your game, you probably want to call Theater.loadStage
      */
-    internalLoadStage(name: string, transitionConfig: Transition.Config, entryPoint?: World.EntryPoint) {
+    internalLoadStage(name: string, transitionConfig: Transition.Config) {
         if (!this.stages[name]) {
             error(`Cannot load world '${name}' because it does not exist:`, this.stages);
             return;
         }
-
-        if (!entryPoint) entryPoint = { x: this.theater.width/2, y: this.theater.height/2 };
 
         let oldSnapshot = this.currentWorld ? this.currentWorld.takeSnapshot() : Texture.filledRect(global.gameWidth, global.gameHeight, global.backgroundColor);
 

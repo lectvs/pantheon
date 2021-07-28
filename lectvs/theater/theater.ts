@@ -5,7 +5,6 @@ namespace Theater {
     export type Config = {
         stages: Dict<Factory<World>>;
         stageToLoad: string;
-        stageEntryPoint?: World.EntryPoint;
         dialogBox: Factory<DialogBox>;
         autoPlayScript?: () => IterableIterator<any>;
     }
@@ -50,7 +49,7 @@ class Theater extends World {
 
         this.isSkippingCutscene = false;
 
-        this.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
+        this.loadStage(config.stageToLoad, Transition.INSTANT);
 
         if (Debug.AUTOPLAY && config.autoPlayScript) {
             this.runScript(config.autoPlayScript);
@@ -77,8 +76,8 @@ class Theater extends World {
         this.slideManager.clearSlides(exceptLast);
     }
 
-    loadStage(name: string, transition: Transition.Config = Transition.INSTANT, entryPoint?: World.EntryPoint) {
-        this.runAtEndOfFrame(() => this.stageManager.internalLoadStage(name, transition, entryPoint));
+    loadStage(name: string, transition: Transition.Config = Transition.INSTANT) {
+        this.runAtEndOfFrame(() => this.stageManager.internalLoadStage(name, transition));
     }
 
     pauseMusic() {

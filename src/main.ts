@@ -75,7 +75,6 @@ Main.loadConfig({
         theaterConfig: {
             stages: stages,
             stageToLoad: 'game',
-            stageEntryPoint: 'main',
             dialogBox: () => new DialogBox({
                 x: 200, y: 280,
                 texture: 'dialogbox',

@@ -3410,7 +3410,7 @@ var Sprite = /** @class */ (function (_super) {
 var World = /** @class */ (function () {
     function World(config) {
         if (config === void 0) { config = {}; }
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
         this.scriptManager = new ScriptManager();
         this.soundManager = new SoundManager();
         this.select = new WorldSelecter(this);
@@ -3430,11 +3430,7 @@ var World = /** @class */ (function () {
         this.backgroundColor = (_k = config.backgroundColor) !== null && _k !== void 0 ? _k : global.backgroundColor;
         this.backgroundAlpha = (_l = config.backgroundAlpha) !== null && _l !== void 0 ? _l : 1;
         this.layerTexture = new BasicTexture(this.width, this.height);
-        this.entryPoints = {};
-        for (var key in (_m = config.entryPoints) !== null && _m !== void 0 ? _m : {}) {
-            this.entryPoints[key] = vec2(config.entryPoints[key]);
-        }
-        this.camera = new Camera((_o = config.camera) !== null && _o !== void 0 ? _o : {}, this);
+        this.camera = new Camera((_m = config.camera) !== null && _m !== void 0 ? _m : {}, this);
     }
     Object.defineProperty(World.prototype, "delta", {
         get: function () {
@@ -3579,13 +3575,6 @@ var World = /** @class */ (function () {
     };
     World.prototype.getDeadWorldObjects = function () {
         return this.worldObjects.filter(function (obj) { return !obj.alive; });
-    };
-    World.prototype.getEntryPoint = function (entryPointKey) {
-        if (!this.entryPoints || !this.entryPoints[entryPointKey]) {
-            error("World does not have an entry point named '" + entryPointKey + "':", this);
-            return undefined;
-        }
-        return this.entryPoints[entryPointKey];
     };
     World.prototype.getLayerByName = function (name) {
         var e_15, _a;
@@ -6719,13 +6708,11 @@ var StageManager = /** @class */ (function () {
     /**
      * Loads a stage immediately. If you are calling from inside your game, you probably want to call Theater.loadStage
      */
-    StageManager.prototype.internalLoadStage = function (name, transitionConfig, entryPoint) {
+    StageManager.prototype.internalLoadStage = function (name, transitionConfig) {
         if (!this.stages[name]) {
             error("Cannot load world '" + name + "' because it does not exist:", this.stages);
             return;
         }
-        if (!entryPoint)
-            entryPoint = { x: this.theater.width / 2, y: this.theater.height / 2 };
         var oldSnapshot = this.currentWorld ? this.currentWorld.takeSnapshot() : Texture.filledRect(global.gameWidth, global.gameHeight, global.backgroundColor);
         // Remove old stuff
         if (this.currentWorld) {
@@ -6851,7 +6838,7 @@ var Theater = /** @class */ (function (_super) {
         _this.musicManager = new MusicManager();
         _this.endOfFrameQueue = [];
         _this.isSkippingCutscene = false;
-        _this.loadStage(config.stageToLoad, Transition.INSTANT, config.stageEntryPoint);
+        _this.loadStage(config.stageToLoad, Transition.INSTANT);
         if (Debug.AUTOPLAY && config.autoPlayScript) {
             _this.runScript(config.autoPlayScript);
         }
@@ -6898,10 +6885,10 @@ var Theater = /** @class */ (function (_super) {
         if (exceptLast === void 0) { exceptLast = 0; }
         this.slideManager.clearSlides(exceptLast);
     };
-    Theater.prototype.loadStage = function (name, transition, entryPoint) {
+    Theater.prototype.loadStage = function (name, transition) {
         var _this = this;
         if (transition === void 0) { transition = Transition.INSTANT; }
-        this.runAtEndOfFrame(function () { return _this.stageManager.internalLoadStage(name, transition, entryPoint); });
+        this.runAtEndOfFrame(function () { return _this.stageManager.internalLoadStage(name, transition); });
     };
     Theater.prototype.pauseMusic = function () {
         this.musicManager.pauseMusic();
@@ -9996,21 +9983,6 @@ var Module = /** @class */ (function () {
     Module.prototype.render = function (texture, x, y) { };
     return Module;
 }());
-var Warp = /** @class */ (function (_super) {
-    __extends(Warp, _super);
-    function Warp(stage, entryPoint, transition) {
-        if (transition === void 0) { transition = Transition.INSTANT; }
-        var _this = _super.call(this) || this;
-        _this.stage = stage;
-        _this.entryPoint = entryPoint;
-        _this.transition = transition;
-        return _this;
-    }
-    Warp.prototype.warp = function () {
-        global.theater.loadStage(this.stage, this.transition, this.entryPoint);
-    };
-    return Warp;
-}(PhysicsWorldObject));
 var ActionBehavior = /** @class */ (function () {
     function ActionBehavior(startAction, startWait) {
         this.controller = new Controller();
@@ -12732,7 +12704,6 @@ Main.loadConfig({
         theaterConfig: {
             stages: stages,
             stageToLoad: 'game',
-            stageEntryPoint: 'main',
             dialogBox: function () { return new DialogBox({
                 x: 200, y: 280,
                 texture: 'dialogbox',

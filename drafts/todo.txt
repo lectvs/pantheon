@@ -1,4 +1,2 @@
 todo
-- i still don't understand slides :(
-- playing cutscenes is not the same as story nodes??
 - seperate engine from game repo

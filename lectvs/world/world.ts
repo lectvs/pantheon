@@ -20,8 +20,6 @@ namespace World {
         maxDistancePerCollisionStep?: number;
         minDistanceIgnoreCollisionStepCalculation?: number;
 
-        entryPoints?: Dict<Pt>;
-
         volume?: number;
         globalSoundHumanizePercent?: number;
     }
@@ -44,8 +42,6 @@ namespace World {
         immovable?: boolean;
     }
 
-    export type EntryPoint = string | Pt;
-
     export type PlaySoundConfig = {
         humanized?: boolean;
         limit?: number;
@@ -55,7 +51,6 @@ namespace World {
 class World {
     width: number;
     height: number;
-    entryPoints: Dict<Vector2>;
     worldObjects: WorldObject[];
     time: number;
 
@@ -114,11 +109,6 @@ class World {
         this.backgroundAlpha = config.backgroundAlpha ?? 1;
 
         this.layerTexture = new BasicTexture(this.width, this.height);
-
-        this.entryPoints = {};
-        for (let key in config.entryPoints ?? {}) {
-            this.entryPoints[key] = vec2(config.entryPoints[key]);
-        }
 
         this.camera = new Camera(config.camera ?? {}, this);
     }
@@ -220,14 +210,6 @@ class World {
 
     getDeadWorldObjects() {
         return this.worldObjects.filter(obj => !obj.alive);
-    }
-
-    getEntryPoint(entryPointKey: string) {
-        if (!this.entryPoints || !this.entryPoints[entryPointKey]) {
-            error(`World does not have an entry point named '${entryPointKey}':`, this);
-            return undefined;
-        }
-        return this.entryPoints[entryPointKey];
     }
 
     getLayerByName(name: string) {
