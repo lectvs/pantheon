@@ -1,7 +1,7 @@
 /// <reference path="../utils/uid.ts" />
 
 namespace WorldObject {
-    export type Config = { 
+    export type Config = {
         name?: string;
         layer?: string;
         physicsGroup?: string;
