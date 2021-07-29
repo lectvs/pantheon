@@ -1,6 +1,6 @@
 /// <reference path="../utils/uid.ts" />
 
-namespace WorldObject {
+namespace WorldObject { 
     export type Config = {
         name?: string;
         layer?: string;
