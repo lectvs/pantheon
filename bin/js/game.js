@@ -12722,7 +12722,7 @@ Main.loadConfig({
         },
     },
     debug: {
-        debug: true,
+        debug: false,
         font: 'andrfw',
         fontStyle: { color: 0xFFFFFF },
         allPhysicsBounds: false,
