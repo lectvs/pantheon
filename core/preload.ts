@@ -159,7 +159,7 @@ class Preload {
     }
 
     private static preloadTexture(key: string, texture: Preload.Texture) {
-        let url = texture.url || `assets/${key}.png`;
+        let url = 'assets/' + (texture.url ?? `${key}.png`);
         let resource = {
             name: key,
             src: url,
@@ -233,7 +233,7 @@ class Preload {
     }
 
     private static preloadSound(key: string, sound: Preload.Sound) {
-        let url = sound.url || `assets/${key}.wav`;
+        let url = 'assets/' + (sound.url ?? `${key}.wav`);
         let resource = {
             name: key,
             src: url,
@@ -270,7 +270,7 @@ class Preload {
     }
 
     private static preloadTileset(key: string, tileset: Preload.Tileset) {
-        let url = tileset.url || `assets/${key}.png`;
+        let url = 'assets/' + (tileset.url ?? `${key}.png`);
         let resource = {
             name: key,
             src: url,
@@ -329,7 +329,7 @@ class Preload {
     }
 
     private static preloadPyxelTilemap(key: string, tilemap: Preload.PyxelTilemap) {
-        let url = tilemap.url || `assets/${key}.json`;
+        let url = 'assets/' + (tilemap.url ?? `${key}.json`);
         let resource = {
             name: key,
             src: url,
@@ -366,7 +366,7 @@ class Preload {
     }
 
     private static preloadFont(key: string, font: Preload.Font) {
-        let url = font.url || `assets/${key}.png`;
+        let url = 'assets/' + (font.url ?? `${key}.png`);
         let resource = {
             name: key,
             src: url,

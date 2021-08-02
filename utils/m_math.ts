@@ -19,6 +19,10 @@ namespace M {
         return result;
     }
 
+    export function axis(neg: boolean, pos: boolean) {
+        return (neg ? -1 : 0) + (pos ? 1 : 0);
+    }
+
     export function clamp(val: number, min: number, max: number) {
         return val < min ? min : (val > max ? max : val);
     }
