@@ -17,6 +17,11 @@ class WorldSelecter {
         return <PhysicsWorldObject[]>_.flatten(groups.map(group => this.world.physicsGroups[group].worldObjects));
     }
 
+    modules<T extends WorldObject, S extends Module<T>>(moduleType: new (...args) => S): S[] {
+        if (!moduleType) return [];
+        return this.world.worldObjects.map(obj => obj.getModule(moduleType)).filter(m => m);
+    }
+
     name<T extends WorldObject>(name: string, checked: boolean = true) {
         let results = this.nameAll<T>(name);
         if (_.isEmpty(results)) {

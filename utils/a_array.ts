@@ -61,6 +61,9 @@ namespace A {
         return result;
     }
 
+    /**
+     * An array of integers from 0 to n-1, inclusive.
+     */
     export function range(n: number) {
         return [...Array(n).keys()];
     }

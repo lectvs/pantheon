@@ -84,6 +84,10 @@ class Theater extends World {
         this.musicManager.pauseMusic();
     }
 
+    playCutscene(cutscene: Cutscene) {
+        this.cutsceneManager.playCutscene(cutscene);
+    }
+
     playMusic(key: string, fadeTime: number = 0) {
         this.musicManager.playMusic(key, fadeTime);
     }

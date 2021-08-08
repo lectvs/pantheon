@@ -8,6 +8,9 @@ namespace Transition {
         preTime: number;
         time: number;
         postTime: number;
+    } | {
+        type: 'custom';
+        factory: (oldSnapshot: Texture, newSnapshot: Texture) => Transition;
     }
 }
 
@@ -35,6 +38,10 @@ namespace Transition {
 
         if (config.type === 'fade') {
             return new Fade(oldSnapshot, newSnapshot, config.preTime, config.time, config.postTime);
+        }
+
+        if (config.type === 'custom') {
+            return config.factory(oldSnapshot, newSnapshot);
         }
 
         // @ts-ignore

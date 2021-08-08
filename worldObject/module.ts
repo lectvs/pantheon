@@ -1,6 +1,8 @@
 class Module<T extends WorldObject> {
     protected type: new (...args) => T;
-    protected worldObject: T;
+    protected _worldObject: T;
+
+    get worldObject() { return this._worldObject; }
 
     constructor(type: new (...args) => T) {
         this.type = type;
@@ -11,7 +13,7 @@ class Module<T extends WorldObject> {
             error(`Tried to add Module<${this.type.name}> to a world object of incompatible type:`, worldObject);
             return;
         }
-        this.worldObject = worldObject;
+        this._worldObject = worldObject;
     }
 
     update(): void {}

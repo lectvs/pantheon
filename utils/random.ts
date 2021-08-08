@@ -94,6 +94,30 @@ class RandomNumberGenerator {
     }
 
     /**
+     * Shuffles an array in place using the Fischer-Yates shuffle.
+     * See https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
+     */
+    shuffle<T>(array: T[]) {
+        if (_.isEmpty(array)) return array;
+        for (let i = 0; i < array.length-1; i++) {
+            let j = this.int(i, array.length-1);
+            let temp = array[i];
+            array[i] = array[j];
+            array[j] = temp;
+        }
+    }
+
+    /**
+     * Returns a new array using the elements of the input array shuffled using the Fischer-Yates shuffle.
+     * See https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
+     */
+    shuffled<T>(array: T[]): T[] {
+        let result = A.clone(array);
+        this.shuffle(result);
+        return result;
+    }
+
+    /**
      * Random sign, -1 or +1.
      */
     sign() {

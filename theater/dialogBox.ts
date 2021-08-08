@@ -75,7 +75,7 @@ class DialogBox extends Sprite {
         this.nameText = this.nameSprite.addChild(new SpriteText({ font: config.dialogFont, anchor: Vector2.CENTER }));
         this.showName(undefined);
 
-        this.characterTimer = new Timer(0.05, () => this.advanceCharacter(), true);
+        this.characterTimer = new Timer(0.05, () => this.advanceCharacter(), Infinity);
 
         this.speakSoundTimer = new Timer(0.05, () => {
             let p = this.getDialogProgression() < 0.9 ? 0.85 : 1;  // 85% normally, but 100% if dialog is close to ending
@@ -83,7 +83,7 @@ class DialogBox extends Sprite {
                 let sound = this.world.playSound(this.speakSound);
                 sound.speed = Random.float(0.95, 1.05);
             }
-        }, true);
+        }, Infinity);
     }
 
     update() {
