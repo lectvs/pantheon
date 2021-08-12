@@ -5,20 +5,23 @@ namespace Effects {
         pre?: PreConfig;
         silhouette?: SilhouetteConfig;
         outline?: OutlineConfig;
+        invertColors?: InvertColorsConfig;
         post?: PostConfig;
     }
 
     export type PreConfig = { filters?: TextureFilter[], enabled?: boolean };
     export type SilhouetteConfig = { color?: number, alpha?: number, amount?: number,  enabled?: boolean };
     export type OutlineConfig = { color?: number, alpha?: number, enabled?: boolean };
+    export type InvertColorsConfig = { enabled?: boolean };
     export type PostConfig = { filters?: TextureFilter[], enabled?: boolean };
 }
 
 
 class Effects {
-    private effects: [Effects.Filters.Silhouette, Effects.Filters.Outline];
+    private effects: [Effects.Filters.Silhouette, Effects.Filters.Outline, Effects.Filters.InvertColors];
     private static SILHOUETTE_I: number = 0;
     private static OUTLINE_I: number = 1;
+    private static INVERT_COLORS_I: number = 2;
 
     pre: Effects.FilterList;
     post: Effects.FilterList;
@@ -37,6 +40,13 @@ class Effects {
         }
         return <Effects.Filters.Outline>this.effects[Effects.OUTLINE_I];
     }
+    get invertColors(): Effects.Filters.Outline {
+        if (!this.effects[Effects.INVERT_COLORS_I]) {
+            this.effects[Effects.INVERT_COLORS_I] = new Effects.Filters.InvertColors();
+            this.effects[Effects.INVERT_COLORS_I].enabled = false;
+        }
+        return <Effects.Filters.Outline>this.effects[Effects.INVERT_COLORS_I];
+    }
 
     get addSilhouette(): Effects.Filters.Silhouette {
         this.silhouette.enabled = true;
@@ -49,7 +59,7 @@ class Effects {
     }
 
     constructor(config: Effects.Config = {}) {
-        this.effects = [undefined, undefined];
+        this.effects = [undefined, undefined, undefined];
         this.pre = { filters: [], enabled: true };
         this.post = { filters: [], enabled: true };
         this.updateFromConfig(config);
@@ -69,6 +79,7 @@ class Effects {
     updateEffects(delta: number) {
         if (this.effects[Effects.SILHOUETTE_I]) this.effects[Effects.SILHOUETTE_I].updateTime(delta);
         if (this.effects[Effects.OUTLINE_I]) this.effects[Effects.OUTLINE_I].updateTime(delta);
+        if (this.effects[Effects.INVERT_COLORS_I]) this.effects[Effects.INVERT_COLORS_I].updateTime(delta);
         for (let filter of this.pre.filters) filter.updateTime(delta);
         for (let filter of this.post.filters) filter.updateTime(delta);
     }
@@ -92,6 +103,10 @@ class Effects {
             this.outline.color = config.outline.color ?? 0x000000;
             this.outline.alpha = config.outline.alpha ?? 1;
             this.outline.enabled = config.outline.enabled ?? true;
+        }
+
+        if (config.invertColors) {
+            this.invertColors.enabled = config.invertColors.enabled ?? true;
         }
 
         if (config.post) {
@@ -150,6 +165,18 @@ namespace Effects {
                 });
                 this.color = color;
                 this.alpha = alpha;
+            }
+        }
+
+        export class InvertColors extends TextureFilter {
+            constructor() {
+                super({
+                    code: `
+                        outp.r = 1.0 - inp.r;
+                        outp.g = 1.0 - inp.g;
+                        outp.b = 1.0 - inp.b;
+                    `
+                });
             }
         }
     }

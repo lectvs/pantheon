@@ -52,17 +52,20 @@ namespace SmartTilemap {
     }
 
     export function getSmartTilemapLayer(tilemapLayer: Tilemap.TilemapLayer, config: RuleConfig): Tilemap.TilemapLayer {
-        let result = [];
+        let tiles: Tilemap.Tile[][] = [];
 
-        for (let y = 0; y < tilemapLayer.length; y++) {
-            let line = [];
-            for (let x = 0; x < tilemapLayer[y].length; x++) {
+        for (let y = 0; y < tilemapLayer.tiles.length; y++) {
+            let line: Tilemap.Tile[] = [];
+            for (let x = 0; x < tilemapLayer.tiles[y].length; x++) {
                 line.push(getSmartTile(tilemapLayer, x, y, config));
             }
-            result.push(line);
+            tiles.push(line);
         }
 
-        return result;
+        return {
+            name: tilemapLayer.name,
+            tiles: tiles,
+        };
     }
 
     function getSmartTile(tilemap: Tilemap.TilemapLayer, x: number, y: number, config: RuleConfig): Tilemap.Tile {
@@ -112,14 +115,14 @@ namespace SmartTilemap {
         return 1;
     }
 
-    function getTileIndex(tilemap: Tilemap.TilemapLayer, x: number, y: number, config: RuleConfig): number {
-        if (0 <= y && y < tilemap.length && 0 <= x && x < tilemap[y].length) {
-            if (tilemap[y][x].index >= 0) {
-                return tilemap[y][x].index;
+    function getTileIndex(tilemapLayer: Tilemap.TilemapLayer, x: number, y: number, config: RuleConfig): number {
+        if (0 <= y && y < tilemapLayer.tiles.length && 0 <= x && x < tilemapLayer.tiles[y].length) {
+            if (tilemapLayer.tiles[y][x].index >= 0) {
+                return tilemapLayer.tiles[y][x].index;
             }
 
             if (!config.emptyRule || config.emptyRule.type === 'noop') {
-                return tilemap[y][x].index;
+                return tilemapLayer.tiles[y][x].index;
             }
             
             if (config.emptyRule.type === 'constant') {
@@ -132,9 +135,9 @@ namespace SmartTilemap {
         }
         
         if (config.outsideRule.type === 'extend') {
-            let nearesty = M.clamp(y, 0, tilemap.length-1);
-            let nearestx = M.clamp(x, 0, tilemap[nearesty].length-1);
-            return tilemap[nearesty][nearestx].index;
+            let nearesty = M.clamp(y, 0, tilemapLayer.tiles.length-1);
+            let nearestx = M.clamp(x, 0, tilemapLayer.tiles[nearesty].length-1);
+            return tilemapLayer.tiles[nearesty][nearestx].index;
         }
     }
 }

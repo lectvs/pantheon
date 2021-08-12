@@ -2,7 +2,7 @@ namespace Tilemap {
     export type Config = ReplaceConfigCallbacks<WorldObject.Config, TilemapClass> & {
         tilemap: string | Tilemap.Tilemap;
         tileset: string;
-        tilemapLayer?: number;
+        tilemapLayer?: number | string;
         entities?: Dict<any>;
         zMap?: Tilemap.ZMap;
         animation?: Tilemap.Animation;
@@ -19,8 +19,10 @@ namespace Tilemap {
         layers: TilemapLayer[];
     }
 
-    // [y][x]-oriented array
-    export type TilemapLayer = Tile[][];
+    export type TilemapLayer = {
+        name: string;
+        tiles: Tile[][];  // [y][x]-oriented array
+    }
 
     export type Tileset = {
         tiles: string[];
@@ -66,7 +68,7 @@ class Tilemap extends WorldObject {
 
         this.tilemap = Tilemap.cloneTilemap(_.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap);
         this.scrubTilemapEntities(config.entities);
-        this.tilemapLayer = config.tilemapLayer ?? 0;
+        this.setTilemapLayer(config.tilemapLayer ?? 0);
 
         this.tileset = AssetCache.getTileset(config.tileset);
 
@@ -88,11 +90,11 @@ class Tilemap extends WorldObject {
     }
 
     getTile(x: number, y: number) {
-        return this.currentTilemapLayer[y][x];
+        return this.currentTilemapLayer.tiles[y][x];
     }
 
     setTile(x: number, y: number, tile: Tilemap.Tile) {
-        this.currentTilemapLayer[y][x] = O.deepClone(tile);
+        this.currentTilemapLayer.tiles[y][x] = O.deepClone(tile);
         this.dirty = true;
     }
 
@@ -105,11 +107,11 @@ class Tilemap extends WorldObject {
     }
 
     get widthInTiles() {
-        return this.tilemap.layers[this.tilemapLayer][0].length;
+        return this.tilemap.layers[this.tilemapLayer].tiles[0].length;
     }
 
     get heightInTiles() {
-        return this.tilemap.layers[this.tilemapLayer].length;
+        return this.tilemap.layers[this.tilemapLayer].tiles.length;
     }
 
     private createCollisionBoxes() {
@@ -146,11 +148,11 @@ class Tilemap extends WorldObject {
         
         let zTextures = this.createZTextures(zTileIndices);
 
-        for (let y = 0; y < this.currentTilemapLayer.length; y++) {
-            for (let x = 0; x < this.currentTilemapLayer[y].length; x++) {
+        for (let y = 0; y < this.currentTilemapLayer.tiles.length; y++) {
+            for (let x = 0; x < this.currentTilemapLayer.tiles[y].length; x++) {
                 let zValue = Tilemap.getZValue(zTileIndices, y, x);
                 if (!zTextures[zValue]) continue;
-                this.drawTile(this.currentTilemapLayer[y][x], x - zTextures[zValue].tileBounds.left, y - zTextures[zValue].tileBounds.top, zTextures[zValue].frames);
+                this.drawTile(this.currentTilemapLayer.tiles[y][x], x - zTextures[zValue].tileBounds.left, y - zTextures[zValue].tileBounds.top, zTextures[zValue].frames);
             }
         }
     }
@@ -169,6 +171,22 @@ class Tilemap extends WorldObject {
                 scaleX: tile.flipX ? -1 : 1,
             });
         }
+    }
+
+    private setTilemapLayer(tilemapLayer: number | string) {
+        if (_.isNumber(tilemapLayer)) {
+            this.tilemapLayer = tilemapLayer;
+            return;
+        }
+
+        let layerIndex = this.tilemap.layers.findIndex(layer => layer.name === tilemapLayer);
+        if (layerIndex >= 0) {
+            this.tilemapLayer = layerIndex;
+            return;
+        }
+
+        error(`Could not find layer '${tilemapLayer}' in tilemap`, this);
+        this.tilemapLayer = 0;
     }
 
     private createZTextures(zTileIndices: number[][]) {
@@ -201,10 +219,10 @@ class Tilemap extends WorldObject {
     private scrubTilemapEntities(entities: Dict<any>) {
         if (_.isEmpty(entities)) return;
         for (let layer = 0; layer < this.tilemap.layers.length; layer++) {
-            for (let y = 0; y < this.tilemap.layers[layer].length; y++) {
-                for (let x = 0; x < this.tilemap.layers[layer][y].length; x++) {
-                    if (this.tilemap.layers[layer][y][x].index in entities) {
-                        this.tilemap.layers[layer][y][x].index = -1;
+            for (let y = 0; y < this.tilemap.layers[layer].tiles.length; y++) {
+                for (let x = 0; x < this.tilemap.layers[layer].tiles[y].length; x++) {
+                    if (this.tilemap.layers[layer].tiles[y][x].index in entities) {
+                        this.tilemap.layers[layer].tiles[y][x].index = -1;
                     }
                 }
             }
@@ -268,9 +286,9 @@ namespace Tilemap {
     export function getCollisionRects(tilemapLayer: Tilemap.TilemapLayer, tileset: Tileset) {
         if (_.isEmpty(tileset.collisionIndices)) return [];
         let result: Rect[] = [];
-        for (let y = 0; y < tilemapLayer.length; y++) {
-            for (let x = 0; x < tilemapLayer[y].length; x++) {
-                let tile = tilemapLayer[y][x];
+        for (let y = 0; y < tilemapLayer.tiles.length; y++) {
+            for (let x = 0; x < tilemapLayer.tiles[y].length; x++) {
+                let tile = tilemapLayer.tiles[y][x];
                 if (_.contains(tileset.collisionIndices, tile.index)) {
                     let rect = {
                         x: x*tileset.tileWidth,
@@ -343,18 +361,18 @@ namespace Tilemap {
     }
 
     function getInitialZTileIndicies(layer: Tilemap.TilemapLayer, zMap: Tilemap.ZMap) {
-        let zTileIndices = A.filledArray2D<number>(layer.length, layer[0].length, undefined);
+        let zTileIndices = A.filledArray2D<number>(layer.tiles.length, layer.tiles[0].length, undefined);
 
         if (_.isEmpty(zMap)) {
-            for (let x = 0; x < layer[0].length; x++) {
+            for (let x = 0; x < layer.tiles[0].length; x++) {
                 zTileIndices[0][x] = 0;
             }
             return zTileIndices;
         }
 
-        for (let y = 0; y < layer.length; y++) {
-            for (let x = 0; x < layer[y].length; x++) {
-                let tile = layer[y][x];
+        for (let y = 0; y < layer.tiles.length; y++) {
+            for (let x = 0; x < layer.tiles[y].length; x++) {
+                let tile = layer.tiles[y][x];
                 zTileIndices[y][x] = tile.index === -1 ? -Infinity : lookupZMapValue(tile, zMap);
             }
         }

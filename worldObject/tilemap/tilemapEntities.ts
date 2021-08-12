@@ -26,9 +26,9 @@ class TilemapEntities {
 
         let result: WorldObject[] = [];
 
-        for (let y = 0; y < layer.length; y++) {
-            for (let x = 0; x < layer[y].length; x++) {
-                let tile = layer[y][x];
+        for (let y = 0; y < layer.tiles.length; y++) {
+            for (let x = 0; x < layer.tiles[y].length; x++) {
+                let tile = layer.tiles[y][x];
                 if (!entities[tile.index]) continue;
 
                 let entity = entities[tile.index](offsetX + x*tileset.tileWidth, offsetY + y*tileset.tileHeight, tile);

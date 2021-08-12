@@ -352,15 +352,18 @@ class Preload {
             layers: [],
         };
         for (let i = 0; i < tilemapJson.layers.length; i++) {
-            let tilemapLayer: Tilemap.TilemapLayer = A.filledArray2D(tilemapJson.tileshigh, tilemapJson.tileswide);
+            let tiles: Tilemap.Tile[][] = A.filledArray2D(tilemapJson.tileshigh, tilemapJson.tileswide);
             for (let tile of tilemapJson.layers[i].tiles) {
-                tilemapLayer[tile.y][tile.x] = {
+                tiles[tile.y][tile.x] = {
                     index: Math.max(tile.tile, -1),
                     angle: tile.rot * 90,
                     flipX: tile.flipX,
                 };
             }
-            tilemapForCache.layers.unshift(tilemapLayer);
+            tilemapForCache.layers.unshift({
+                name: tilemapJson.layers[i].name,
+                tiles: tiles,
+            });
         }
         AssetCache.tilemaps[key] = tilemapForCache;
     }
