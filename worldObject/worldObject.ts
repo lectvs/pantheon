@@ -12,6 +12,7 @@ namespace WorldObject {
         active?: boolean;
         activeOutsideWorldBoundsBuffer?: number;
         life?: number;
+        timers?: Timer[];
         ignoreCamera?: boolean;
         matchParentLayer?: boolean;
         matchParentPhysicsGroup?: boolean;
@@ -107,6 +108,8 @@ class WorldObject {
 
     modules: Module<WorldObject>[];
 
+    protected timers: Timer[];
+
     readonly uid: string;
 
     protected scriptManager: ScriptManager;
@@ -152,6 +155,8 @@ class WorldObject {
         this.behavior = new NullBehavior();
 
         this.modules = [];
+
+        this.timers = config.timers ? A.clone(config.timers) : [];
 
         this.uid = WorldObject.UID.generate();
 
@@ -201,6 +206,10 @@ class WorldObject {
 
         for (let module of this.modules) {
             module.update();
+        }
+
+        for (let timer of this.timers) {
+            timer.update(this.delta);
         }
 
         this.life.update(this.delta);
@@ -292,6 +301,10 @@ class WorldObject {
         if (!_.contains(this.tags, tag)) {
             this.tags.push(tag);
         }
+    }
+
+    addTimer(timer: Timer) {
+        this.timers.push(timer);
     }
 
     getChildByIndex<T extends WorldObject>(index: number) {
