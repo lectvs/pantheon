@@ -194,7 +194,7 @@ class World {
         for (let worldObject of layer.worldObjects) {
             if (worldObject.isVisible() && worldObject.isOnScreen()) {
                 global.metrics.startSpan(worldObject);
-                worldObject.render(texture, worldObject.renderScreenX, worldObject.renderScreenY);
+                worldObject.render(texture, worldObject.getRenderScreenX(), worldObject.getRenderScreenY());
                 global.metrics.endSpan(worldObject);
             }
         }

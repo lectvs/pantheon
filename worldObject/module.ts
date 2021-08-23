@@ -18,4 +18,8 @@ class Module<T extends WorldObject> {
 
     update(): void {}
     render(texture: Texture, x: number, y: number): void {}
+
+    remove(): void {
+        A.removeAll(this.worldObject.modules, this);
+    }
 }

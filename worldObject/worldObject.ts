@@ -232,11 +232,11 @@ class WorldObject {
         this.postUpdate();
     }
 
-    get renderScreenX() {
+    getRenderScreenX() {
         let result: number;
 
         if (this.parent) {
-            result = this.parent.renderScreenX;
+            result = this.parent.getRenderScreenX();
         } else {
             result = this.shouldIgnoreCamera() ? 0 : -Math.round(this.world.camera.worldOffsetX);
         }
@@ -246,11 +246,11 @@ class WorldObject {
         return result;
     }
 
-    get renderScreenY() {
+    getRenderScreenY() {
         let result: number;
 
         if (this.parent) {
-            result = this.parent.renderScreenY;
+            result = this.parent.getRenderScreenY();
         } else {
             result = this.shouldIgnoreCamera() ? 0 : -Math.round(this.world.camera.worldOffsetY);
         }

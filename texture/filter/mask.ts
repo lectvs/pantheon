@@ -111,8 +111,8 @@ namespace Mask {
             x = mask.offsetx;
             y = mask.offsety;
         } else if (mask.type === 'local') {
-            x = worldObject.renderScreenX + mask.offsetx;
-            y = worldObject.renderScreenY + mask.offsety;
+            x = worldObject.getRenderScreenX() + mask.offsetx;
+            y = worldObject.getRenderScreenY() + mask.offsety;
         } else if (mask.type === 'world') {
             let worldx = worldObject.world ? -Math.round(worldObject.world.camera.worldOffsetX) : 0;
             let worldy = worldObject.world ? -Math.round(worldObject.world.camera.worldOffsetY) : 0;

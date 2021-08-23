@@ -214,8 +214,8 @@ class SpriteText extends WorldObject {
 
     getVisibleScreenBounds() {
         let bounds = this.getTextWorldBounds();
-        bounds.x += this.renderScreenX - this.x;
-        bounds.y += this.renderScreenY - this.y;
+        bounds.x += this.getRenderScreenX() - this.x;
+        bounds.y += this.getRenderScreenY() - this.y;
         return bounds;
     }
 
