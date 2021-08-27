@@ -196,7 +196,7 @@ class Preload {
 
             for (let y = 0; y < numFramesY; y++) {
                 for (let x = 0; x < numFramesX; x++) {
-                    let frameKeyPrefix = texture.spritesheet.prefix ?? `${key}_`;
+                    let frameKeyPrefix = texture.spritesheet.prefix ?? `${key}/`;
                     let frameKey = `${frameKeyPrefix}${x + y*numFramesX}`;
                     frames[frameKey] = {
                         rect: {
@@ -295,7 +295,7 @@ class Preload {
 
         for (let y = 0; y < numFramesY; y++) {
             for (let x = 0; x < numFramesX; x++) {
-                let frameKeyPrefix = `${key}_`;
+                let frameKeyPrefix = `${key}/`;
                 let frameKey = `${frameKeyPrefix}${x + y*numFramesX}`;
                 frames[frameKey] = {
                     rect: {
@@ -394,7 +394,7 @@ class Preload {
 
         for (let y = 0; y < numFramesY; y++) {
             for (let x = 0; x < numFramesX; x++) {
-                let frameKeyPrefix = `${key}_`;
+                let frameKeyPrefix = `${key}/`;
                 let frameKey = `${frameKeyPrefix}${x + y*numFramesX}`;
                 frames[frameKey] = {
                     rect: {

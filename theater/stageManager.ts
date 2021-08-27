@@ -21,7 +21,7 @@ class StageManager {
     /**
      * Loads a stage immediately. If you are calling from inside your game, you probably want to call Theater.loadStage
      */
-    internalLoadStage(name: string, transitionConfig: Transition.Config) {
+    internalLoadStage(name: string, transition: Transition) {
         if (!this.stages[name]) {
             error(`Cannot load world '${name}' because it does not exist:`, this.stages);
             return;
@@ -51,9 +51,10 @@ class StageManager {
         this.currentWorldAsWorldObject.setVisible(false);
 
         // this is outside the script to avoid 1-frame flicker
-        this.transition = Transition.fromConfigAndSnapshots(transitionConfig, oldSnapshot, newSnapshot);
+        this.transition = transition.withSnapshots(oldSnapshot, newSnapshot)
         this.transition.layer = Theater.LAYER_TRANSITION;
         this.theater.addWorldObject(this.transition);
+        this.transition.start();
 
         let stageManager = this;
         this.theater.runScript(function* () {

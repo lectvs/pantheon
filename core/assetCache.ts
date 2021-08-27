@@ -55,6 +55,6 @@ class AssetCache {
     }
 
     static isNoneTexture(key: string) {
-        return !key || key === 'none' || key.startsWith('none_');
+        return !key || key === 'none' || key.startsWith('none/');
     }
 }

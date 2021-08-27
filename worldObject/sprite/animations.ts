@@ -19,7 +19,7 @@ namespace Animation {
         export type FromTextureList = {
             name: string;
             textures: (string | Texture | number)[];
-            texturePrefix?: string;
+            textureRoot?: string;
             frameRate: number;
             nextFrameRef?: string;
             count?: number;
@@ -37,7 +37,6 @@ class Animations {
 
     static fromTextureList(config: Animation.Configs.FromTextureList): Animation.Config {
         _.defaults(config, {
-            texturePrefix: "",
             count: 1,
         });
 
@@ -58,7 +57,7 @@ class Animations {
             return result;
         }
 
-        let texturePrefix = !config.texturePrefix ? "" : `${config.texturePrefix}_`;
+        let texturePrefix = !config.textureRoot ? "" : `${config.textureRoot}/`;
 
         for (let i = 0; i < textures.length; i++) {
             let animationFrame: Animation.Frame = {

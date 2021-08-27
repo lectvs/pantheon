@@ -49,7 +49,7 @@ class Theater extends World {
 
         this.isSkippingCutscene = false;
 
-        this.loadStage(config.stageToLoad, Transition.INSTANT);
+        this.loadStage(config.stageToLoad, new Transitions.Instant());
 
         if (Debug.AUTOPLAY && config.autoPlayScript) {
             this.runScript(config.autoPlayScript);
@@ -76,7 +76,7 @@ class Theater extends World {
         this.slideManager.clearSlides(exceptLast);
     }
 
-    loadStage(name: string, transition: Transition.Config = Transition.INSTANT) {
+    loadStage(name: string, transition: Transition = new Transitions.Instant()) {
         this.runAtEndOfFrame(() => this.stageManager.internalLoadStage(name, transition));
     }
 
