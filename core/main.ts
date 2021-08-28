@@ -1,4 +1,4 @@
-/// <reference path="../core/preload.ts" />
+/// <reference path="../load/preload.ts" />
 
 namespace Main {
     export type Config = {
@@ -14,12 +14,12 @@ namespace Main {
         preloadBackgroundColor: number;
         preloadProgressBarColor: number;
 
-        textures?: Dict<Preload.Texture>;
-        sounds?: Dict<Preload.Sound>;
-        tilesets?: Dict<Preload.Tileset>;
-        pyxelTilemaps?: Dict<Preload.PyxelTilemap>;
-        fonts?: Dict<Preload.Font>;
-        spriteTextTags?: Dict<SpriteText.TagFunction>;
+        textures: Dict<Preload.Texture>;
+        sounds: Dict<Preload.Sound>;
+        tilesets: Dict<Preload.Tileset>;
+        pyxelTilemaps: Dict<Preload.PyxelTilemap>;
+        fonts: Dict<Preload.Font>;
+        spriteTextTags: Dict<SpriteText.TagFunction>;
 
         defaultOptions: Options.Options;
 

@@ -112,7 +112,7 @@ namespace A {
         return A.sort(A.clone(array), key, reverse);
     }
 
-    export function sum(array: any[], key: (e: any) => number = (e => e)) {
+    export function sum<T>(array: T[], key: (e: T) => number = (e => <any>e)) {
         if (_.isEmpty(array)) return 0;
         let result = 0;
         for (let i = 0; i < array.length; i++) {
