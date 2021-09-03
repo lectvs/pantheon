@@ -52,6 +52,7 @@ class SpriteText extends WorldObject {
     private _maxWidth: number;
     get maxWidth() { return this._maxWidth; }
     set maxWidth(value: number) {
+        if (this._maxWidth === value) return;
         this._maxWidth = value;
         this.dirty = true;
     }
@@ -83,7 +84,8 @@ class SpriteText extends WorldObject {
         super(config);
 
         if (config.font || SpriteText.DEFAULT_FONT) {
-            this.font = AssetCache.getFont(config.font ?? SpriteText.DEFAULT_FONT);
+            this._fontKey = config.font ?? SpriteText.DEFAULT_FONT;
+            this.font = AssetCache.getFont(this._fontKey);
         } else {
             error("SpriteText must have a font provided, or a default font set");
         }
@@ -217,6 +219,18 @@ class SpriteText extends WorldObject {
         bounds.x += this.getRenderScreenX() - this.x;
         bounds.y += this.getRenderScreenY() - this.y;
         return bounds;
+    }
+
+    setFont(fontKey: string) {
+        if (fontKey === this.fontKey) return;
+        let font = AssetCache.getFont(fontKey);
+        if (!font) {
+            error(`Cannot set SpriteText font, font not found: ${fontKey}`);
+            return;
+        }
+        this.font = font;
+        this._fontKey = fontKey;
+        this.dirty = true;
     }
 
     setText(text: string) {

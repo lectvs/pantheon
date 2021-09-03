@@ -63,8 +63,6 @@ interface Texture {
 }
 
 namespace Texture {
-    export const NONE = new EmptyTexture();
-
     export function filledCircle(radius: number, fillColor: number, fillAlpha: number = 1) {
         let result = new BasicTexture(radius*2, radius*2);
         Draw.circleSolid(result, radius, radius, radius, { color: fillColor, alpha: fillAlpha, thickness: 0 })
@@ -171,4 +169,7 @@ namespace Texture {
             this._renderTexture.resize(width, height);
         }
     }
+
+    export const NONE = new EmptyTexture();
+    export const EFFECT_ONLY = new BasicTexture(0, 0);
 }

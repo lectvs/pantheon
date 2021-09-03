@@ -31,10 +31,10 @@ namespace S {
         }
     }
 
-    export function loopFor(count: number, scriptFunction: Script.Function): Script.Function {
+    export function loopFor(count: number, scriptFunctionIter: (i: number) => Script.Function): Script.Function {
         return function*() {
             for (let i = 0; i < count; i++) {
-                yield scriptFunction;
+                yield scriptFunctionIter(i);
             }
         }
     }

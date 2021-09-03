@@ -16,6 +16,8 @@ namespace TextureFilter {
      *               float t - time in seconds
      *               vec4 getColor(float x, float y) - get the color at local x/y
      *               vec4 getDestColor(float destx, float desty) - get the color at x/y in dest space
+     *               float pnoise(vec3 p) - perlin noise at a point, normalized to [-1, 1]
+     *               float pnoise(float x, float y, float z) - perlin noise at a point, normalized to [-1, 1]
      */
     export type Config = {
         uniforms?: Dict<any>;

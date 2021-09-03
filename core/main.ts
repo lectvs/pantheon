@@ -20,6 +20,7 @@ namespace Main {
         pyxelTilemaps: Dict<Preload.PyxelTilemap>;
         fonts: Dict<Preload.Font>;
         spriteTextTags: Dict<SpriteText.TagFunction>;
+        dialogProfiles: Dict<DialogProfile.Config>;
 
         defaultOptions: Options.Options;
 
@@ -64,6 +65,7 @@ class Main {
         WorldObject.DEFAULT_Z_BEHAVIOR = this.config.defaultZBehavior ?? 'noop';
         SpriteText.addTags(this.config.spriteTextTags ?? {});
         SpriteText.DEFAULT_FONT = this.config.defaultSpriteTextFont;
+        DialogProfiles.initProfiles(this.config.dialogProfiles);
 
         Main.renderer = PIXI.autoDetectRenderer({
             width: global.gameWidth,

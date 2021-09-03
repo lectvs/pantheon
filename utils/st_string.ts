@@ -1,4 +1,12 @@
 namespace St {
+    export function isEmpty(text: string) {
+        return !text;
+    }
+
+    export function isBlank(text: string) {
+        return isEmpty(text) || isEmpty(text.trim());
+    }
+
     export function padLeft(text: string, minLength: number, padString: string = ' ') {
         while (text.length < minLength) {
             text = padString + text;

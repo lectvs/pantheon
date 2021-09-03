@@ -6,6 +6,7 @@ class AssetCache {
     static tilesets: Dict<Tilemap.Tileset> = {};
     static tilemaps: Dict<Tilemap.Tilemap> = {};
     static fonts: Dict<SpriteText.Font> = {};
+    static lciDocuments: Dict<Lci.Document> = {};
 
     static getPixiTexture(key: string) {
         if (!this.pixiTextures[key]) {
@@ -52,6 +53,13 @@ class AssetCache {
             error(`Font '${key}' does not exist.`);
         }
         return this.fonts[key];
+    }
+
+    static getLciDocument(key: string) {
+        if (!this.lciDocuments[key]) {
+            error(`LCI document '${key}' does not exist.`);
+        }
+        return this.lciDocuments[key];
     }
 
     static isNoneTexture(key: string) {

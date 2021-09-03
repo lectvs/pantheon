@@ -6,7 +6,7 @@ namespace Preload {
         pyxelTilemaps: Dict<Preload.PyxelTilemap>;
         fonts: Dict<Preload.Font>;
         progressCallback: (progress: number) => any;
-        onLoad: Function;
+        onLoad: () => void;
     }
 
     export type Texture = {
@@ -73,51 +73,37 @@ namespace Preload {
 }
 
 class Preload {
-    private static preloadOptions: Preload.Options;
-    private static loaders: Loader[];
+    private static loaderSystem: LoaderSystem;
 
     static preload(options: Preload.Options) {
-        this.preloadOptions = options;
-        this.loaders = [];
+        let loaders: Loader[] = [];
 
         for (let key in options.textures) {
-            this.load(new TextureLoader(key, options.textures[key]));
+            let texture = options.textures[key];
+            if (texture.url && texture.url.endsWith('.lci')) {
+                loaders.push(new LciLoader(key, options.textures[key]));
+            } else {
+                loaders.push(new TextureLoader(key, options.textures[key]));
+            }
         }
 
         for (let key in options.sounds) {
-            this.load(new SoundLoader(key, options.sounds[key]));
+            loaders.push(new SoundLoader(key, options.sounds[key]));
         }
 
         for (let key in options.tilesets) {
-            this.load(new TilesetLoader(key, options.tilesets[key]));
+            loaders.push(new TilesetLoader(key, options.tilesets[key]));
         }
 
         for (let key in options.pyxelTilemaps) {
-            this.load(new PyxelTilemapLoader(key, options.pyxelTilemaps[key]));
+            loaders.push(new PyxelTilemapLoader(key, options.pyxelTilemaps[key]));
         }
 
         for (let key in options.fonts) {
-            this.load(new FontLoader(key, options.fonts[key]));
+            loaders.push(new FontLoader(key, options.fonts[key]));
         }
-    }
 
-    private static load(loader: Loader) {
-        this.loaders.push(loader);
-        loader.load(() => this.onLoaderLoad());
-    }
-
-    private static onLoaderLoad() {
-        this.preloadOptions.progressCallback(this.getLoadProgress());
-        if (this.isLoadComplete()) {
-            this.preloadOptions.onLoad();
-        }
-    }
-
-    private static getLoadProgress() {
-        return A.sum(this.loaders, loader => loader.completionPercent) / this.loaders.length;
-    }
-
-    private static isLoadComplete() {
-        return this.loaders.every(loader => loader.completionPercent >= 1);
+        this.loaderSystem = new LoaderSystem(loaders);
+        this.loaderSystem.load(options.progressCallback, options.onLoad);
     }
 }

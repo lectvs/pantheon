@@ -155,6 +155,10 @@ class World {
 
         this.camera.update();
 
+        for (let layer of this.layers) {
+            layer.effects.updateEffects(this.delta);
+        }
+
         this.soundManager.volume = this.volume * global.game.volume;
         this.soundManager.update(this.delta);
 

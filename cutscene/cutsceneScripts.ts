@@ -23,22 +23,21 @@ namespace S {
         }
     }
 
-    export function dialog(p1: string, p2?: string): Script.Function {
+    export function dialog(profileKey: string, text: string): Script.Function {
         return function*() {
-            if (p2) {
-                global.theater.dialogBox.showPortrait(p1);
-                global.theater.dialogBox.showDialog(p2);
-            } else {
-                global.theater.dialogBox.showDialog(p1);
-            }
+            let [profile, entry] = DialogProfile.splitKey(profileKey);
+            global.theater.dialogBox.setProfile(profile, entry);
+            global.theater.dialogBox.showDialog(text);
             while (!global.theater.dialogBox.done) {
                 yield;
             }
         }
     }
 
-    export function dialogAdd(text: string): Script.Function {
+    export function dialogAdd(profileKey: string, text: string): Script.Function {
         return function*() {
+            let [profile, entry] = DialogProfile.splitKey(profileKey);
+            global.theater.dialogBox.setProfile(profile, entry);
             global.theater.dialogBox.addToDialog(text);
             while (!global.theater.dialogBox.done) {
                 yield;

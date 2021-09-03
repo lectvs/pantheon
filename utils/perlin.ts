@@ -110,7 +110,7 @@ class Perlin {
         vec3 fade(vec3 t) {return t*t*t*(t*(t*6.0-15.0)+10.0);}
 
         // Normalized to (-1, 1)
-        float cnoise(vec3 P){
+        float pnoise(vec3 P) {
             vec3 Pi0 = floor(P); // Integer part for indexing
             vec3 Pi1 = Pi0 + vec3(1.0); // Integer part + 1
             Pi0 = mod(Pi0, 289.0);
@@ -176,6 +176,11 @@ class Perlin {
             vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);
             float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x);
             return 2.2 * n_xyz;
+        }
+
+        // Normalized to (-1, 1)
+        float pnoise(float x, float y, float z) {
+            return pnoise(vec3(x, y, z));
         }
     `;
 }

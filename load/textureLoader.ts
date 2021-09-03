@@ -13,7 +13,7 @@ class TextureLoader implements Loader {
     }
 
     load(callback?: () => void) {
-        let url = 'assets/' + (this.texture.url ?? `${this.key}.png`);
+        let url = this.getUrl();
         this.pixiLoader = new PIXI.Loader();
         this.pixiLoader.add(this.key, url);
         this.pixiLoader.load(() => {
@@ -21,6 +21,11 @@ class TextureLoader implements Loader {
             this._completionPercent = 1;
             if (callback) callback();
         });
+    }
+
+    private getUrl() {
+        if (this.texture.url && this.texture.url.startsWith('data:')) return this.texture.url;
+        return 'assets/' + (this.texture.url ?? `${this.key}.png`);
     }
 
     private onLoad() {
@@ -42,34 +47,7 @@ class TextureLoader implements Loader {
         AssetCache.pixiTextures[this.key] = mainTexture;
         AssetCache.textures[this.key] = Texture.fromPixiTexture(mainTexture);
 
-        let frames: Dict<Preload.TextureFrame> = {};
-
-        if (this.texture.spritesheet) {
-            let numFramesX = Math.floor(baseTexture.width / this.texture.spritesheet.frameWidth);
-            let numFramesY = Math.floor(baseTexture.height / this.texture.spritesheet.frameHeight);
-
-            for (let y = 0; y < numFramesY; y++) {
-                for (let x = 0; x < numFramesX; x++) {
-                    let frameKeyPrefix = this.texture.spritesheet.prefix ?? `${this.key}/`;
-                    let frameKey = `${frameKeyPrefix}${x + y*numFramesX}`;
-                    frames[frameKey] = {
-                        rect: {
-                            x: x*this.texture.spritesheet.frameWidth,
-                            y: y*this.texture.spritesheet.frameHeight,
-                            width: this.texture.spritesheet.frameWidth,
-                            height: this.texture.spritesheet.frameHeight
-                        },
-                        anchor: this.texture.spritesheet.anchor,
-                    };
-                }
-            }
-        }
-
-        if (this.texture.frames) {
-            for (let frame in this.texture.frames) {
-                frames[frame] = this.texture.frames[frame];
-            }
-        }
+        let frames = TextureLoader.getAllFrames(this.key, this.texture);
 
         for (let frame in frames) {
             let frameTexture: PIXI.Texture = new PIXI.Texture(baseTexture);
@@ -84,5 +62,38 @@ class TextureLoader implements Loader {
             AssetCache.pixiTextures[frame] = frameTexture;
             AssetCache.textures[frame] = Texture.fromPixiTexture(frameTexture);
         }
+    }
+
+    static getAllFrames(key: string, texture: Preload.Texture, width: number = AssetCache.textures[key].width, height: number = AssetCache.textures[key].height) {
+        let frames: Dict<Preload.TextureFrame> = {};
+
+        if (texture.spritesheet) {
+            let numFramesX = Math.floor(width / texture.spritesheet.frameWidth);
+            let numFramesY = Math.floor(height / texture.spritesheet.frameHeight);
+
+            for (let y = 0; y < numFramesY; y++) {
+                for (let x = 0; x < numFramesX; x++) {
+                    let frameKeyPrefix = texture.spritesheet.prefix ?? `${key}/`;
+                    let frameKey = `${frameKeyPrefix}${x + y*numFramesX}`;
+                    frames[frameKey] = {
+                        rect: {
+                            x: x*texture.spritesheet.frameWidth,
+                            y: y*texture.spritesheet.frameHeight,
+                            width: texture.spritesheet.frameWidth,
+                            height: texture.spritesheet.frameHeight
+                        },
+                        anchor: texture.spritesheet.anchor,
+                    };
+                }
+            }
+        }
+
+        if (texture.frames) {
+            for (let frame in texture.frames) {
+                frames[frame] = texture.frames[frame];
+            }
+        }
+
+        return frames;
     }
 }
