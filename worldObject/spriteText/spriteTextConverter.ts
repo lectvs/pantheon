@@ -1,18 +1,18 @@
-class SpriteTextConverter {
-    static textToCharListWithWordWrap(text: string, font: SpriteText.Font, maxWidth: number) {
+namespace SpriteTextConverter {
+    export function textToCharListWithWordWrap(text: string, font: SpriteText.Font, maxWidth: number) {
         if (!text) return [];
 
         let result: SpriteText.Character[] = [];
         let word: SpriteText.Character[] = [];
         let nextCharPosition: Vector2 = new Vector2(0, 0);
-        let styleStack: SpriteText.Style[] = [];
+        let tagStack: SpriteText.TagData[] = [];
 
         for (let i = 0; i < text.length; i++) {
             if (text[i] === ' ') {
-                this.pushWord(word, result, nextCharPosition, maxWidth);
+                pushWord(word, result, nextCharPosition, maxWidth);
                 nextCharPosition.x += font.spaceWidth;
             } else if (text[i] === '\n') {
-                this.pushWord(word, result, nextCharPosition, maxWidth);
+                pushWord(word, result, nextCharPosition, maxWidth);
                 nextCharPosition.x = 0;
                 // TODO: properly newline
                 nextCharPosition.y += font.newlineHeight; //SpriteText.getHeightOfCharList(result);
@@ -23,52 +23,42 @@ class SpriteTextConverter {
                     continue;
                 }
 
-                let parts = this.parseTag(text.substring(i+1, closingBracketIndex));
+                let parts = parseTag(text.substring(i+1, closingBracketIndex));
                 if (parts[0].startsWith('/')) {
-                    if (!_.isEmpty(styleStack)) {
-                        styleStack.pop();
+                    if (!_.isEmpty(tagStack)) {
+                        tagStack.pop();
                     }
                 } else {
                     let tag = parts.shift();
-                    let newStyle = this.getStyleFromTag(tag, parts);
-                    styleStack.push(newStyle);
+                    tagStack.push({ tag, params: parts });
                 }
 
                 i = closingBracketIndex;
             } else {
                 if (text[i] === '\\' && i < text.length-1) i++;
-                let style = this.getFullStyleFromStack(styleStack);
-                let char = this.createCharacter(text[i], nextCharPosition.x, nextCharPosition.y, font, style);
+                let char = createCharacter(text[i], nextCharPosition.x, nextCharPosition.y, font.charWidth, font.charHeight, tagStack);
                 word.push(char);
                 nextCharPosition.x += char.width;
             }
         }
 
-        this.pushWord(word, result, nextCharPosition, maxWidth);
+        pushWord(word, result, nextCharPosition, maxWidth);
 
         return result;
     }
 
-    private static createCharacter(char: string, x: number, y: number, font: SpriteText.Font, style: SpriteText.Style) {
+    function createCharacter(char: string, x: number, y: number, width: number, height: number, tagData: SpriteText.TagData[]) {
         let character = new SpriteText.Character();
         character.char = char;
         character.x = x;
         character.y = y;
-        character.font = font;
-        character.style = style;
+        character.width = width;
+        character.height = height;
+        character.tagData = A.clone(tagData);
         return character;
     }
 
-    private static getFullStyleFromStack(styleStack: SpriteText.Style[]) {
-        return _.extend({}, ...styleStack);
-    }
-
-    private static getStyleFromTag(tag: string, params: string[]) {
-        let tagFunction = SpriteText.TAGS[tag] || SpriteText.TAGS[SpriteText.NOOP_TAG];
-        return tagFunction(params);
-    }
-
-    private static parseTag(tag: string) {
+    function parseTag(tag: string) {
         let result = St.splitOnWhitespace(tag);
         if (_.isEmpty(result)) {
             error(`Tag ${tag} must have the tag part specified.`);
@@ -77,7 +67,7 @@ class SpriteTextConverter {
         return result;
     }
 
-    private static pushWord(word: SpriteText.Character[], result: SpriteText.Character[], position: Vector2, maxWidth: number) {
+    function pushWord(word: SpriteText.Character[], result: SpriteText.Character[], position: Vector2, maxWidth: number) {
         if (_.isEmpty(word)) return;
 
         let lastChar = _.last(word);
@@ -97,5 +87,36 @@ class SpriteTextConverter {
         }
 
         return;
+    }
+
+    export function getStaticTexturesForCharList(chars: SpriteText.Character[], visibleChars: number) {
+        let bounds: Dict<Boundaries> = {};
+        let tagStringToTagData: Dict<SpriteText.TagData[]> = {};
+        for (let i = 0; i < visibleChars; i++) {
+            let char = chars[i];
+            let tagString = char.getTagString();
+            if (tagString in bounds) {
+                bounds[tagString].left = Math.min(bounds[tagString].left, char.left);
+                bounds[tagString].top = Math.min(bounds[tagString].top, char.top);
+                bounds[tagString].right = Math.max(bounds[tagString].right, char.right);
+                bounds[tagString].bottom = Math.max(bounds[tagString].bottom, char.bottom);
+            } else {
+                bounds[tagString] = { left: char.left, top: char.top, right: char.right, bottom: char.bottom };
+            }
+            tagStringToTagData[tagString] = char.tagData;
+        }
+
+        let textures: Dict<SpriteText.StaticTextureData> = {};
+
+        for (let tagString in bounds) {
+            textures[tagString] = {
+                x: bounds[tagString].left,
+                y: bounds[tagString].top,
+                texture: new BasicTexture(bounds[tagString].right - bounds[tagString].left, bounds[tagString].bottom - bounds[tagString].top),
+                tagData: tagStringToTagData[tagString],
+            };
+        }
+
+        return textures;
     }
 }

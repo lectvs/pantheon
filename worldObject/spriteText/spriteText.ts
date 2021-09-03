@@ -18,7 +18,7 @@ namespace SpriteText {
     }
 
     export type Font = {
-        charTextures: string[];
+        charTextures: Dict<string>;
         charWidth: number;
         charHeight: number;
         spaceWidth: number;
@@ -28,10 +28,21 @@ namespace SpriteText {
     export type Style = {
         color?: number;
         alpha?: number;
-        offset?: number;
+        filters?: TextureFilter[];
     }
 
+    export type TagData = {
+        tag: string;
+        params: string[];
+    }
     export type TagFunction = (params: string[]) => SpriteText.Style;
+
+    export type StaticTextureData = {
+        x: number;
+        y: number;
+        texture: Texture;
+        tagData: TagData[];
+    }
 }
 
 class SpriteText extends WorldObject {
@@ -40,14 +51,13 @@ class SpriteText extends WorldObject {
     get fontKey() { return this._fontKey; }
     private chars: SpriteText.Character[];
 
-    private _style: SpriteText.Style;
+    private _style: Required<SpriteText.Style>;
     get style() { return this._style; }
-    set style(value: SpriteText.Style) {
+    set style(value: Required<SpriteText.Style>) {
         this._style.alpha = value.alpha;
         this._style.color = value.color;
-        this._style.offset = value.offset;
     }
-    private lastStyle: SpriteText.Style;
+    private lastStyle: Required<SpriteText.Style>;
 
     private _maxWidth: number;
     get maxWidth() { return this._maxWidth; }
@@ -76,7 +86,7 @@ class SpriteText extends WorldObject {
     effects: Effects;
     mask: Mask.WorldObjectMaskConfig;
 
-    private staticTexture: AnchoredTexture;
+    private staticTextures: Dict<SpriteText.StaticTextureData>;
     private currentText: string;
     private dirty: boolean;
 
@@ -92,7 +102,7 @@ class SpriteText extends WorldObject {
 
         if (!this.font) {
             this.font = {
-                charTextures: A.repeat(['none'], Object.keys(SpriteText.charCodes).length),
+                charTextures: {},
                 charWidth: 0,
                 charHeight: 0,
                 spaceWidth: 0,
@@ -103,7 +113,7 @@ class SpriteText extends WorldObject {
         this._style = _.defaults(O.deepClone(config.style ?? {}), {
             color: 0xFFFFFF,
             alpha: 1,
-            offset: 0,
+            filters: [],
         });
         this.lastStyle = O.deepClone(this.style);
 
@@ -137,6 +147,13 @@ class SpriteText extends WorldObject {
             this.lastStyle = O.deepClone(this.style);
             this.dirty = true;
         }
+
+        for (let key in this.tagCache) {
+            if (_.isEmpty(this.tagCache[key].filters)) continue;
+            for (let filter of this.tagCache[key].filters) {
+                filter.updateTime(this.delta);
+            }
+        }
     }
 
     render(texture: Texture, x: number, y: number) {
@@ -145,41 +162,41 @@ class SpriteText extends WorldObject {
             this.dirty = false;
         }
 
-        this.staticTexture.anchorX = this.anchor.x;
-        this.staticTexture.anchorY = this.anchor.y;
-
-        this.staticTexture.renderTo(texture, {
-            x: x,
-            y: y,
-            alpha: this.alpha,
-            scaleX: (this.flipX ? -1 : 1) * this.scaleX,
-            scaleY: (this.flipY ? -1 : 1) * this.scaleY,
-            angle: this.angle,
-            filters: this.effects.getFilterList(),
-            mask: Mask.getTextureMaskForWorldObject(this.mask, this),
-        });
+        for (let key in this.staticTextures) {
+            let data = this.staticTextures[key];
+            let style = this.getStyleFromTags(data.tagData, this.style);
+            data.texture.renderTo(texture, {
+                x: x + data.x,
+                y: y + data.y,
+                tint: style.color,
+                alpha: this.alpha * style.alpha,
+                scaleX: (this.flipX ? -1 : 1) * this.scaleX,
+                scaleY: (this.flipY ? -1 : 1) * this.scaleY,
+                angle: this.angle,
+                filters: [...style.filters, ...this.effects.getFilterList()],
+                mask: Mask.getTextureMaskForWorldObject(this.mask, this),
+            });
+        }
 
         super.render(texture, x, y);
     }
 
     renderSpriteText() {
-        let textWidth = this.getTextWidth();
-        let textHeight = this.getTextHeight();
-        this.staticTexture = new AnchoredTexture(textWidth, textHeight);
-
         let charCount = Math.min(this.visibleCharCount, this.chars.length);
+
+        this.staticTextures = SpriteTextConverter.getStaticTexturesForCharList(this.chars, charCount);
+
         for (let i = 0; i < charCount; i++) {
             let char = this.chars[i];
-            global.metrics.startSpan(`char_${char.char}`);
-            let char_i = SpriteText.charCodes[char.char].y * 10 + SpriteText.charCodes[char.char].x;
-            let charTexture = AssetCache.getTexture(this.font.charTextures[char_i]);
-            charTexture.renderTo(this.staticTexture, {
-                x: char.x,
-                y: char.y + (char.style.offset ?? this.style.offset),
-                tint: char.style.color ?? this.style.color,
-                alpha: char.style.alpha ?? this.style.alpha,
+            let charTexture = AssetCache.getTexture(this.font.charTextures[char.char]);
+
+            let tagString = char.getTagString();
+            let staticTextureData = this.staticTextures[tagString];
+
+            charTexture.renderTo(staticTextureData.texture, {
+                x: char.x - staticTextureData.x,
+                y: char.y - staticTextureData.y,
             });
-            global.metrics.endSpan(`char_${char.char}`);
         }
     }
 
@@ -240,33 +257,38 @@ class SpriteText extends WorldObject {
         this.dirty = true;
     }
 
-    static DEFAULT_FONT: string = undefined;
-}
-
-namespace SpriteText {
-    export const charCodes: Dict<Vector2> = getCharCodes();
-    function getCharCodes() {
-        let spriteFontCharList = [
-            ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
-            ['K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T'],
-            ['U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd'],
-            ['e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'],
-            ['o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x'],
-            ['y', 'z', '0', '1', '2', '3', '4', '5', '6', '7'],
-            ['8', '9', '!', '@', '#', '$', '%', '^', '&', '*'],
-            ['(', ')', '-', '_', '=', '+', '{', '}', '[', ']'],
-            ['\\','|', ';', ':', "'", '"', ',', '.', '<', '>'],
-            ['/', '?', '`' ,'~'],
-        ];
-        let result: Dict<Vector2> = {};
-        for (let y = 0; y < spriteFontCharList.length; y++) {
-            for (let x = 0; x < spriteFontCharList[y].length; x++) {
-                result[spriteFontCharList[y][x]] = vec2(x, y);
-            }
+    private getStyleFromTags(tagData: SpriteText.TagData[], defaults: Required<SpriteText.Style>) {
+        let result: SpriteText.Style = { filters: [] };
+        for (let data of tagData) {
+            let style = this.getTagStyle(data.tag, data.params);
+            if (style.color !== undefined) result.color = style.color;
+            if (style.alpha !== undefined) result.alpha = style.alpha;
+            if (!_.isEmpty(style.filters)) result.filters.push(...style.filters);
         }
-        result[' '] = new Vector2(-1, -1);
+
+        _.defaults(result, defaults);
         return result;
     }
+
+    private getTagStyle(name: string, params: string[]) {
+        let cacheKey = [name, ...params].join(' ');
+        if (cacheKey in this.tagCache) {
+            return this.tagCache[cacheKey];
+        }
+        let tag = SpriteText.TAGS[name];
+        if (!tag) {
+            error(`Tag not found: ${name}`);
+            tag = SpriteText.TAGS[SpriteText.NOOP_TAG];
+        }
+
+        let style = tag(params);
+        this.tagCache[cacheKey] = style;
+        return style;
+    }
+
+    private readonly tagCache: Dict<SpriteText.Style> = {};
+
+    static DEFAULT_FONT: string = undefined;
 }
 
 namespace SpriteText {
@@ -274,16 +296,9 @@ namespace SpriteText {
         char: string;
         x: number;
         y: number;
-        font: SpriteText.Font;
-        style: Style;
-
-        get width() {
-            return this.font.charWidth;
-        }
-
-        get height() {
-            return this.font.charHeight;
-        }
+        width: number;
+        height: number;
+        tagData: TagData[];
 
         get left() {
             return this.x;
@@ -299,6 +314,11 @@ namespace SpriteText {
 
         get bottom() {
             return this.y + this.height;
+        }
+
+        getTagString() {
+            if (_.isEmpty(this.tagData)) return '';
+            return '[' + this.tagData.map(data => `${[data.tag, ...data.params].join(' ')}`).join('][') + ']';
         }
     }
 
@@ -345,9 +365,6 @@ namespace SpriteText {
         },
         'color': (params) => {
             return { color: getInt(params[0], undefined) };
-        },
-        'o': (params) => {
-            return { offset: getInt(params[0], 0) };
         },
     }
 
