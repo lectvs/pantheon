@@ -258,7 +258,7 @@ namespace Bounds.Collision {
         if (!move.isOverlapping(from)) return undefined;
 
         let movePos = move.getCenter();
-        let fromBox = from.getBoundingBox();
+        let fromBox = from.getInnerBox();
 
         let displacementX = 0;
         if (movePos.x - move.radius < fromBox.left) displacementX = fromBox.left - (movePos.x - move.radius);
@@ -395,7 +395,7 @@ namespace Bounds.Collision {
         if (!move.isOverlapping(from)) return undefined;
 
         let moveBox = move.getBoundingBox();
-        let fromBox = from.getBoundingBox();
+        let fromBox = from.getInnerBox();
 
         let displacementX = 0;
         if (moveBox.left < fromBox.left) displacementX = fromBox.left - moveBox.left;
@@ -524,7 +524,7 @@ namespace Bounds.Collision {
         let movePos = move.getCenter();
         movePos.x -= movedx;
         movePos.y -= movedy;
-        let fromBox = from.getBoundingBox();
+        let fromBox = from.getInnerBox();
         fromBox.x -= fromdx;
         fromBox.y -= fromdy;
 
@@ -731,7 +731,7 @@ namespace Bounds.Collision {
         let moveBox = move.getBoundingBox();
         moveBox.x -= movedx;
         moveBox.y -= movedy;
-        let fromBox = from.getBoundingBox();
+        let fromBox = from.getInnerBox();
         fromBox.x -= fromdx;
         fromBox.y -= fromdy;
 
@@ -866,7 +866,7 @@ namespace Bounds.Collision {
 
     export function isOverlappingCircleInvertedRect(move: CircleBounds, from: InvertedRectBounds) {
         let movePos = move.getCenter();
-        let fromBox = from.getBoundingBox();
+        let fromBox = from.getInnerBox();
 
         if (movePos.x - move.radius < fromBox.left) return true;
         if (movePos.x + move.radius > fromBox.right) return true;
@@ -896,7 +896,7 @@ namespace Bounds.Collision {
 
     export function isOverlappingRectInvertedRect(move: RectBounds, from: InvertedRectBounds) {
         let moveBox = move.getBoundingBox();
-        let fromBox = from.getBoundingBox();
+        let fromBox = from.getInnerBox();
 
         if (moveBox.left < fromBox.left) return true;
         if (moveBox.right > fromBox.right) return true;

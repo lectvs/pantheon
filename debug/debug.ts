@@ -40,6 +40,10 @@ class Debug {
         for (let experiment in Debug.EXPERIMENTS) {
             Debug.EXPERIMENTS[experiment].update(experiment);
         }
+
+        if (Input.justDown(Input.DEBUG_FRAME_SKIP_STEP) || Input.justDown(Input.DEBUG_FRAME_SKIP_RUN)) {
+            Debug.FRAME_STEP_ENABLED = true;
+        }
     }
 
     private static _DEBUG: boolean;
