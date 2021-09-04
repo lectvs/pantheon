@@ -211,6 +211,8 @@ namespace TextureFilter {
     `;
 
     const fragEndFunc = `
+            // Clamp output to the interval [0,1] to avoid issues with alpha premultiplication.
+            outp = clamp(outp, vec4(0.0, 0.0, 0.0, 0.0), vec4(1.0, 1.0, 1.0, 1.0));
             // Premultiply alpha again.
             outp.rgb *= outp.a;
             gl_FragColor = outp;
