@@ -1,4 +1,8 @@
 namespace SpriteTextConverter {
+    type CurrentData = {
+        part: number;
+    }
+
     export function textToCharListWithWordWrap(text: string, font: SpriteText.Font, maxWidth: number) {
         if (!text) return [];
 
@@ -6,13 +10,14 @@ namespace SpriteTextConverter {
         let word: SpriteText.Character[] = [];
         let nextCharPosition: Vector2 = new Vector2(0, 0);
         let tagStack: SpriteText.TagData[] = [];
+        let current: CurrentData =  { part: 0 };
 
         for (let i = 0; i < text.length; i++) {
             if (text[i] === ' ') {
-                pushWord(word, result, nextCharPosition, maxWidth);
+                pushWord(word, result, nextCharPosition, maxWidth, current);
                 nextCharPosition.x += font.spaceWidth;
             } else if (text[i] === '\n') {
-                pushWord(word, result, nextCharPosition, maxWidth);
+                pushWord(word, result, nextCharPosition, maxWidth, current);
                 nextCharPosition.x = 0;
                 // TODO: properly newline
                 nextCharPosition.y += font.newlineHeight; //SpriteText.getHeightOfCharList(result);
@@ -33,27 +38,29 @@ namespace SpriteTextConverter {
                     tagStack.push({ tag, params: parts });
                 }
 
+                current.part++;
                 i = closingBracketIndex;
             } else {
                 if (text[i] === '\\' && i < text.length-1) i++;
-                let char = createCharacter(text[i], nextCharPosition.x, nextCharPosition.y, font.charWidth, font.charHeight, tagStack);
+                let char = createCharacter(text[i], nextCharPosition.x, nextCharPosition.y, font.charWidth, font.charHeight, current.part, tagStack);
                 word.push(char);
                 nextCharPosition.x += char.width;
             }
         }
 
-        pushWord(word, result, nextCharPosition, maxWidth);
+        pushWord(word, result, nextCharPosition, maxWidth, current);
 
         return result;
     }
 
-    function createCharacter(char: string, x: number, y: number, width: number, height: number, tagData: SpriteText.TagData[]) {
+    function createCharacter(char: string, x: number, y: number, width: number, height: number, part: number, tagData: SpriteText.TagData[]) {
         let character = new SpriteText.Character();
         character.char = char;
         character.x = x;
         character.y = y;
         character.width = width;
         character.height = height;
+        character.part = part;
         character.tagData = A.clone(tagData);
         return character;
     }
@@ -67,7 +74,7 @@ namespace SpriteTextConverter {
         return result;
     }
 
-    function pushWord(word: SpriteText.Character[], result: SpriteText.Character[], position: Vector2, maxWidth: number) {
+    function pushWord(word: SpriteText.Character[], result: SpriteText.Character[], position: Vector2, maxWidth: number, current: CurrentData) {
         if (_.isEmpty(word)) return;
 
         let lastChar = _.last(word);
@@ -77,9 +84,11 @@ namespace SpriteTextConverter {
             for (let char of word) {
                 char.x -= diffx;
                 char.y -= diffy;
+                char.part++;
             }
             position.x -= diffx;
             position.y -= diffy;
+            current.part++;
         }
 
         while (word.length > 0) {
@@ -91,29 +100,28 @@ namespace SpriteTextConverter {
 
     export function getStaticTexturesForCharList(chars: SpriteText.Character[], visibleChars: number) {
         let bounds: Dict<Boundaries> = {};
-        let tagStringToTagData: Dict<SpriteText.TagData[]> = {};
+        let partToTagData: Dict<SpriteText.TagData[]> = {};
         for (let i = 0; i < visibleChars; i++) {
             let char = chars[i];
-            let tagString = char.getTagString();
-            if (tagString in bounds) {
-                bounds[tagString].left = Math.min(bounds[tagString].left, char.left);
-                bounds[tagString].top = Math.min(bounds[tagString].top, char.top);
-                bounds[tagString].right = Math.max(bounds[tagString].right, char.right);
-                bounds[tagString].bottom = Math.max(bounds[tagString].bottom, char.bottom);
-            } else {
-                bounds[tagString] = { left: char.left, top: char.top, right: char.right, bottom: char.bottom };
+            if (char.part in bounds) {
+                bounds[char.part].left = Math.min(bounds[char.part].left, char.left);
+                bounds[char.part].top = Math.min(bounds[char.part].top, char.top);
+                bounds[char.part].right = Math.max(bounds[char.part].right, char.right);
+                bounds[char.part].bottom = Math.max(bounds[char.part].bottom, char.bottom);
+            } else {char.part
+                bounds[char.part] = { left: char.left, top: char.top, right: char.right, bottom: char.bottom };
             }
-            tagStringToTagData[tagString] = char.tagData;
+            partToTagData[char.part] = char.tagData;
         }
 
         let textures: Dict<SpriteText.StaticTextureData> = {};
 
-        for (let tagString in bounds) {
-            textures[tagString] = {
-                x: bounds[tagString].left,
-                y: bounds[tagString].top,
-                texture: new BasicTexture(bounds[tagString].right - bounds[tagString].left, bounds[tagString].bottom - bounds[tagString].top),
-                tagData: tagStringToTagData[tagString],
+        for (let part in bounds) {
+            textures[part] = {
+                x: bounds[part].left,
+                y: bounds[part].top,
+                texture: new BasicTexture(bounds[part].right - bounds[part].left, bounds[part].bottom - bounds[part].top),
+                tagData: partToTagData[part],
             };
         }
 

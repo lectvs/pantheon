@@ -162,12 +162,15 @@ class SpriteText extends WorldObject {
             this.dirty = false;
         }
 
+        let anchorOffsetX = Math.round(-this.anchor.x * this.getTextWidth());
+        let anchorOffsetY = Math.round(-this.anchor.y * this.getTextHeight());
+
         for (let key in this.staticTextures) {
             let data = this.staticTextures[key];
             let style = this.getStyleFromTags(data.tagData, this.style);
             data.texture.renderTo(texture, {
-                x: x + data.x,
-                y: y + data.y,
+                x: x + anchorOffsetX + data.x,
+                y: y + anchorOffsetY + data.y,
                 tint: style.color,
                 alpha: this.alpha * style.alpha,
                 scaleX: (this.flipX ? -1 : 1) * this.scaleX,
@@ -190,8 +193,7 @@ class SpriteText extends WorldObject {
             let char = this.chars[i];
             let charTexture = AssetCache.getTexture(this.font.charTextures[char.char]);
 
-            let tagString = char.getTagString();
-            let staticTextureData = this.staticTextures[tagString];
+            let staticTextureData = this.staticTextures[char.part];
 
             charTexture.renderTo(staticTextureData.texture, {
                 x: char.x - staticTextureData.x,
@@ -298,6 +300,7 @@ namespace SpriteText {
         y: number;
         width: number;
         height: number;
+        part: number;
         tagData: TagData[];
 
         get left() {
@@ -314,11 +317,6 @@ namespace SpriteText {
 
         get bottom() {
             return this.y + this.height;
-        }
-
-        getTagString() {
-            if (_.isEmpty(this.tagData)) return '';
-            return '[' + this.tagData.map(data => `${[data.tag, ...data.params].join(' ')}`).join('][') + ']';
         }
     }
 
