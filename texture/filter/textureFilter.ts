@@ -162,13 +162,23 @@ namespace TextureFilter {
         vec4 getColor(float localx, float localy) {
             float tx = (localx + posx) / destWidth;
             float ty = (localy + posy) / destHeight;
-            return texture2D(uSampler, vec2(tx, ty));
+            vec4 color = texture2D(uSampler, vec2(tx, ty));
+            if (color.a > 0.0) {
+                // Un-premultiply alpha, like inp.
+                color.rgb /= color.a;
+            }
+            return color;
         }
 
         vec4 getDestColor(float destx, float desty) {
             float tx = destx / destWidth;
             float ty = desty / destHeight;
-            return texture2D(uSampler, vec2(tx, ty));
+            vec4 color = texture2D(uSampler, vec2(tx, ty));
+            if (color.a > 0.0) {
+                // Un-premultiply alpha, like inp.
+                color.rgb /= color.a;
+            }
+            return color;
         }
 
         // Source: https://stackoverflow.com/a/17897228

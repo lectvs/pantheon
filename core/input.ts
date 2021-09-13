@@ -271,7 +271,8 @@ class Input {
                 // Prevent game-clicks outside the canvas
                 this.isDownByKeyCode[keyCode] = true;
             }
-            event.preventDefault();
+            // Prevent default for all inputs except LMB
+            if (event.button !== 0) event.preventDefault();
         }
     }
 

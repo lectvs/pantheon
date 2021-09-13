@@ -85,6 +85,10 @@ class Sound {
         if (this.webAudioSound.loop !== this.loop) this.webAudioSound.loop = this.loop;
     }
 
+    stop() {
+        this.webAudioSound.stop();
+    }
+
     humanize(percent: number = 0.05) {
         this.speed *= Random.float(1 - percent, 1 + percent);
     }

@@ -8,6 +8,8 @@ namespace Lci {
     export type Layer = {
         name: string;
         image: string;
+        opacity: number;
+        visible: boolean;
         position: Pt;
         isDataLayer: boolean;
         properties: LayerProperties;

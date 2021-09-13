@@ -46,13 +46,18 @@ class LciLoader implements Loader {
 
         for (let layer of this.lci.layers) {
             if (layer.isDataLayer) continue;
+            if (!layer.visible) continue;
 
             let layerTexture = AssetCache.textures[Lci.getLayerTextureKey(this.key, layer.name)];
             if (!layerTexture) {
                 error(`Failed to load LCI layer texture: ${Lci.getLayerTextureKey(this.key, layer.name)}`);
                 continue;
             }
-            layerTexture.renderTo(fullTexture, { x: layer.position.x, y: layer.position.y });
+            layerTexture.renderTo(fullTexture, {
+                x: layer.position.x,
+                y: layer.position.y,
+                alpha: layer.opacity/255,
+            });
         }
         AssetCache.textures[this.key] = fullTexture;
     }

@@ -27,7 +27,7 @@ namespace M {
         return val < min ? min : (val > max ? max : val);
     }
 
-    export function colorToVec3(color: number) {
+    export function colorToVec3(color: number): [number, number, number] {
         let r = (color >> 16) & 255;
         let g = (color >> 8) & 255;
         let b = color & 255;
