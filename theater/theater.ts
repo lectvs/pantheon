@@ -3,8 +3,7 @@
 
 namespace Theater {
     export type Config = {
-        stages: Dict<Factory<World>>;
-        stageToLoad: string;
+        stageToLoad: () => World;
         dialogBox: Factory<DialogBox>;
         autoPlayScript?: () => IterableIterator<any>;
     }
@@ -18,7 +17,6 @@ class Theater extends World {
     slideManager: SlideManager;
     musicManager: MusicManager;
 
-    get currentStageName() { return this.stageManager ? this.stageManager.currentStageName : undefined; }
     get currentWorld() { return this.stageManager ? this.stageManager.currentWorld : undefined; }
     get isCutscenePlaying() { return this.cutsceneManager ? this.cutsceneManager.isCutscenePlaying : false; }
     get slides() { return this.slideManager ? this.slideManager.slides : []; }
@@ -41,7 +39,7 @@ class Theater extends World {
         this.loadDialogBox(config.dialogBox);
 
         this.cutsceneManager = new CutsceneManager(this);
-        this.stageManager = new StageManager(this, config.stages);
+        this.stageManager = new StageManager(this);
         this.slideManager = new SlideManager(this);
         this.musicManager = new MusicManager();
 
@@ -76,8 +74,8 @@ class Theater extends World {
         this.slideManager.clearSlides(exceptLast);
     }
 
-    loadStage(name: string, transition: Transition = new Transitions.Instant()) {
-        this.runAtEndOfFrame(() => this.stageManager.internalLoadStage(name, transition));
+    loadStage(stage: () => World, transition: Transition = new Transitions.Instant()) {
+        this.runAtEndOfFrame(() => this.stageManager.internalLoadStage(stage, transition));
     }
 
     pauseMusic() {

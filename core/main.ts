@@ -31,6 +31,7 @@ namespace Main {
 }
 
 class Main {
+    private static configFactory: () => Main.Config;
     private static config: Main.Config;
 
     static game: Game;
@@ -40,15 +41,16 @@ class Main {
     static screen: BasicTexture;
     static delta: number;
 
-    static loadConfig(config: Main.Config) {
-        this.config = config;
+    static loadConfig(configFactory: () => Main.Config) {
+        this.configFactory = configFactory;
     }
 
     private static start() {
-        if (!this.config) {
+        if (!this.configFactory) {
             error('No main config loaded! Must load config by calling `Main.loadConfig(config);`');
             return;
         }
+        this.config = this.configFactory();
         this.preload();
     }
 

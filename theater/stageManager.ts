@@ -1,7 +1,4 @@
 class StageManager {
-    stages: Dict<Factory<World>>;
-
-    currentStageName: string;
     currentWorld: World;
     currentWorldAsWorldObject: Theater.WorldAsWorldObject;
 
@@ -10,10 +7,8 @@ class StageManager {
 
     private theater: Theater;
 
-    constructor(theater: Theater, stages: Dict<Factory<World>>) {
+    constructor(theater: Theater) {
         this.theater = theater;
-        this.stages = stages;
-        this.currentStageName = null;
         this.currentWorld = null;
         this.currentWorldAsWorldObject = null;
     }
@@ -21,12 +16,7 @@ class StageManager {
     /**
      * Loads a stage immediately. If you are calling from inside your game, you probably want to call Theater.loadStage
      */
-    internalLoadStage(name: string, transition: Transition) {
-        if (!this.stages[name]) {
-            error(`Cannot load world '${name}' because it does not exist:`, this.stages);
-            return;
-        }
-
+    internalLoadStage(stage: () => World, transition: Transition) {
         let oldSnapshot = this.currentWorld ? this.currentWorld.takeSnapshot() : Texture.filledRect(global.gameWidth, global.gameHeight, global.backgroundColor);
 
         // Remove old stuff
@@ -35,8 +25,7 @@ class StageManager {
         }
 
         // Create new stuff
-        this.currentStageName = name;
-        this.currentWorld = this.stages[name]();
+        this.currentWorld = stage();
         this.currentWorldAsWorldObject = new Theater.WorldAsWorldObject(this.currentWorld);
         this.currentWorldAsWorldObject.name = 'world';
         this.currentWorldAsWorldObject.layer = Theater.LAYER_WORLD;
