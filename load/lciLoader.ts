@@ -18,14 +18,10 @@ class LciLoader implements Loader {
         let url = 'assets/' + (this.texture.url ?? `${this.key}.lci`);
         this.pixiLoader = new PIXI.Loader();
         this.pixiLoader.add(this.key, url);
-        this.pixiLoader.load(() => {
-            this.onLoadLci();
-            this._completionPercent = 1;
-            if (callback) callback();
-        });
+        this.pixiLoader.load(() => this.onLoadLci(callback));
     }
 
-    private onLoadLci() {
+    private onLoadLci(callback?: () => void) {
         this.lci = Lci.parseDocument(this.pixiLoader.resources[this.key].data);
         AssetCache.lciDocuments[this.key] = this.lci;
         new LoaderSystem(this.lci.layers
@@ -34,7 +30,11 @@ class LciLoader implements Loader {
             ...this.texture,
             anchor: layer.properties.anchor ? vec2(layer.properties.anchor) : this.texture.anchor,
             url: layer.image
-        }))).load(t => null, () => this.onLoadTextures());
+        }))).load(t => null, () => {
+            this.onLoadTextures();
+            this._completionPercent = 1;
+            if (callback) callback();
+        });
     }
 
     private onLoadTextures() {
