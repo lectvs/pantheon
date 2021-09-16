@@ -23,6 +23,16 @@ class Vector2 {
         return this.x*this.x + this.y*this.y;
     }
 
+    add(x: Pt | number, y?: number) {
+        if (typeof(x) === 'number') {
+            this.x += x;
+            this.y += y;
+        } else {
+            this.x += x.x;
+            this.y += x.y;
+        }
+    }
+
     clampMagnitude(maxMagnitude: number) {
         if (maxMagnitude < 0) {
             error('Tried to clamp vector magnitude with negative maxMagnitude');
@@ -37,8 +47,28 @@ class Vector2 {
         return new Vector2(this.x, this.y);
     }
 
+    divide(x: Pt | number, y?: number) {
+        if (typeof(x) === 'number') {
+            this.x /= x;
+            this.y /= y;
+        } else {
+            this.x /= x.x;
+            this.y /= x.y;
+        }
+    }
+
     isZero() {
         return this.x === 0 && this.y === 0;
+    }
+
+    multiply(x: Pt | number, y?: number) {
+        if (typeof(x) === 'number') {
+            this.x *= x;
+            this.y *= y;
+        } else {
+            this.x *= x.x;
+            this.y *= x.y;
+        }
     }
 
     normalize() {
@@ -97,6 +127,16 @@ class Vector2 {
     setMagnitude(magnitude: number) {
         this.normalize();
         this.scale(magnitude);
+    }
+
+    subtract(x: Pt | number, y?: number) {
+        if (typeof(x) === 'number') {
+            this.x -= x;
+            this.y -= y;
+        } else {
+            this.x -= x.x;
+            this.y -= x.y;
+        }
     }
 
     withMagnitude(magnitude: number) {

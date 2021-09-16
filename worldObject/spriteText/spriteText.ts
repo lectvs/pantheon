@@ -215,11 +215,11 @@ class SpriteText extends WorldObject {
     }
 
     getTextWidth() {
-        return SpriteText.getWidthOfCharList(this.chars, this.visibleCharCount);
+        return SpriteText.getWidthOfCharList(this.chars, this.visibleCharCount) * this.scaleX;
     }
 
     getTextHeight() {
-        return SpriteText.getHeightOfCharList(this.chars, this.visibleCharCount);
+        return SpriteText.getHeightOfCharList(this.chars, this.visibleCharCount) * this.scaleY;
     }
 
     getTextWorldBounds() {
