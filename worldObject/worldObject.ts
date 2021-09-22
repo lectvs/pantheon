@@ -305,6 +305,7 @@ class WorldObject {
 
     addTimer(timer: Timer) {
         this.timers.push(timer);
+        return timer;
     }
 
     getChildByIndex<T extends WorldObject>(index: number) {

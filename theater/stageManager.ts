@@ -17,7 +17,7 @@ class StageManager {
      * Loads a stage immediately. If you are calling from inside your game, you probably want to call Theater.loadStage
      */
     internalLoadStage(stage: () => World, transition: Transition) {
-        let oldSnapshot = this.currentWorld ? this.currentWorld.takeSnapshot() : Texture.filledRect(global.gameWidth, global.gameHeight, global.backgroundColor);
+        let oldWorld = this.currentWorld;
 
         // Remove old stuff
         if (this.currentWorld) {
@@ -34,15 +34,16 @@ class StageManager {
         this.theater.onStageLoad();
         this.currentWorld.update();
         
-        let newSnapshot = this.currentWorld.takeSnapshot();
+        let newWorld = this.currentWorld;
 
         this.currentWorldAsWorldObject.setActive(false);
         this.currentWorldAsWorldObject.setVisible(false);
 
         // this is outside the script to avoid 1-frame flicker
-        this.transition = transition.withSnapshots(oldSnapshot, newSnapshot)
+        this.transition = transition.withData(oldWorld, newWorld);
         this.transition.layer = Theater.LAYER_TRANSITION;
         this.theater.addWorldObject(this.transition);
+        this.transition.takeWorldSnapshots();
         this.transition.start();
 
         let stageManager = this;

@@ -16,6 +16,13 @@ namespace Animation {
     }
 
     export namespace Configs {
+        export type FromSingleTexture = {
+            name: string;
+            texture: string | Texture;
+            oneOff?: boolean;
+            override?: Frame;
+        }
+
         export type FromTextureList = {
             name: string;
             textures: (string | Texture | number)[];
@@ -33,6 +40,24 @@ class Animations {
     static emptyList(...names: string[]): Animation.Config[] {
         if (_.isEmpty(names)) return [];
         return names.map(name => { return { name: name, frames: [] }; })
+    }
+
+    static fromSingleTexture(config: Animation.Configs.FromSingleTexture): Animation.Config {
+        let result: Animation.Config = {
+            name: config.name,
+            frames: [{
+                duration: 1,
+                texture: config.texture,
+                nextFrameRef: `${config.name}/0`,
+                forceRequired: config.oneOff,
+            }],
+        };
+
+        if (config.override) {
+            result.frames[0] = this.overrideFrame(result.frames[0], config.override);
+        }
+
+        return result;
     }
 
     static fromTextureList(config: Animation.Configs.FromTextureList): Animation.Config {
