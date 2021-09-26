@@ -57,6 +57,7 @@ class LciLoader implements Loader {
                 x: layer.position.x,
                 y: layer.position.y,
                 alpha: layer.opacity/255,
+                blendMode: <Texture.BlendMode><any>(layer.blendMode ?? 0),
             });
         }
         AssetCache.textures[this.key] = fullTexture;

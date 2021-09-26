@@ -17,6 +17,7 @@ namespace Sprite {
         alpha?: number;
         effects?: Effects.Config;
         mask?: Mask.WorldObjectMaskConfig;
+        blendMode?: Texture.BlendMode;
     }
 }
 
@@ -39,6 +40,7 @@ class Sprite extends PhysicsWorldObject {
 
     effects: Effects;
     mask: Mask.WorldObjectMaskConfig;
+    blendMode: Texture.BlendMode;
 
     onScreenPadding: number;
 
@@ -70,6 +72,7 @@ class Sprite extends PhysicsWorldObject {
         this.effects.updateFromConfig(config.effects);
 
         this.mask = config.mask;
+        this.blendMode = config.blendMode;
 
         this.onScreenPadding = 1;
     }
@@ -93,6 +96,7 @@ class Sprite extends PhysicsWorldObject {
             alpha: this.alpha,
             filters: this.effects.getFilterList(),
             mask: Mask.getTextureMaskForWorldObject(this.mask, this),
+            blendMode: this.blendMode,
         });
         super.render(texture, x, y);
     }

@@ -10,6 +10,7 @@ namespace Lci {
         image: string;
         opacity: number;
         visible: boolean;
+        blendMode: number;
         position: Pt;
         isDataLayer: boolean;
         properties: LayerProperties;

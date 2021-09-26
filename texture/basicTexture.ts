@@ -190,6 +190,7 @@ class BasicTexture implements Texture {
             alpha: 1,
             slice: undefined,
             filters: [],
+            blendMode: Texture.BlendModes.NORMAL,
         });
 
         let sliceRect = this.getSliceRect(properties);
@@ -204,6 +205,7 @@ class BasicTexture implements Texture {
         this.renderTextureSprite.angle = properties.angle;
         this.renderTextureSprite.tint = properties.tint;
         this.renderTextureSprite.alpha = properties.alpha;
+        this.renderTextureSprite.blendMode = <number><any>properties.blendMode;
 
         return properties;
     }

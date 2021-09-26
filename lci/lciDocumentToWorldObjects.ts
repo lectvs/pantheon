@@ -45,6 +45,8 @@ function lciDocumentToWorldObjects(key: string) {
             x: layer.position.x,
             y: layer.position.y,
             texture: Lci.getLayerTextureKey(key, layer.name),
+            blendMode: <Texture.BlendMode><any>(layer.blendMode ?? 0),
+            alpha: layer.opacity/255,
             layer: worldLayer,
             physicsGroup: physicsGroup,
             bounds: bounds ? new RectBounds(bounds.x, bounds.y, bounds.width, bounds.height) : undefined,

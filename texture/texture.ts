@@ -10,6 +10,7 @@ namespace Texture {
         slice?: Rect;  // Slice currently only works with unscaled, unrotated textures. Undefined behavior otherwise.
         mask?: MaskProperties;
         filters?: TextureFilter[];
+        blendMode?: BlendMode;
     }
 
     export type MaskProperties = {
@@ -38,6 +39,9 @@ namespace Texture {
         offsetx: number;
         offsety: number;
     }
+
+    export type BlendMode = typeof BlendModes.ADD;
+    export const BlendModes = PIXI.BLEND_MODES;
 }
 
 interface Texture {
