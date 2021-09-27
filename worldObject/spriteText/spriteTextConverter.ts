@@ -14,13 +14,12 @@ namespace SpriteTextConverter {
 
         for (let i = 0; i < text.length; i++) {
             if (text[i] === ' ') {
-                pushWord(word, result, nextCharPosition, maxWidth, current);
+                pushWord(word, result, nextCharPosition, font, maxWidth, current);
                 nextCharPosition.x += font.spaceWidth;
             } else if (text[i] === '\n') {
-                pushWord(word, result, nextCharPosition, maxWidth, current);
+                pushWord(word, result, nextCharPosition, font, maxWidth, current);
                 nextCharPosition.x = 0;
-                // TODO: properly newline
-                nextCharPosition.y += font.newlineHeight; //SpriteText.getHeightOfCharList(result);
+                nextCharPosition.y += getNewLineHeightDiff(nextCharPosition.y, SpriteText.getHeightOfCharList(result), font.newlineHeight);
             } else if (text[i] === '[') {
                 let closingBracketIndex = text.indexOf(']', i); 
                 if (closingBracketIndex < i+1) {
@@ -48,7 +47,7 @@ namespace SpriteTextConverter {
             }
         }
 
-        pushWord(word, result, nextCharPosition, maxWidth, current);
+        pushWord(word, result, nextCharPosition, font, maxWidth, current);
 
         return result;
     }
@@ -74,20 +73,20 @@ namespace SpriteTextConverter {
         return result;
     }
 
-    function pushWord(word: SpriteText.Character[], result: SpriteText.Character[], position: Vector2, maxWidth: number, current: CurrentData) {
+    function pushWord(word: SpriteText.Character[], result: SpriteText.Character[], position: Vector2, font: SpriteText.Font, maxWidth: number, current: CurrentData) {
         if (_.isEmpty(word)) return;
 
         let lastChar = _.last(word);
         if (maxWidth > 0 && lastChar.right > maxWidth) {
-            let diffx = word[0].x;
-            let diffy = word[0].y - SpriteText.getHeightOfCharList(result);
+            let diffx = -word[0].x;
+            let diffy = getNewLineHeightDiff(word[0].y, SpriteText.getHeightOfCharList(result), font.newlineHeight);
             for (let char of word) {
-                char.x -= diffx;
-                char.y -= diffy;
+                char.x += diffx;
+                char.y += diffy;
                 char.part++;
             }
-            position.x -= diffx;
-            position.y -= diffy;
+            position.x += diffx;
+            position.y += diffy;
             current.part++;
         }
 
@@ -96,6 +95,10 @@ namespace SpriteTextConverter {
         }
 
         return;
+    }
+
+    function getNewLineHeightDiff(lastLineY: number, heightOfCharList: number, fontNewLineHeight: number) {
+        return Math.max(heightOfCharList - lastLineY, fontNewLineHeight);
     }
 
     export function getStaticTexturesForCharList(chars: SpriteText.Character[], visibleChars: number) {
