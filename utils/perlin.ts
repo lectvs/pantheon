@@ -5,6 +5,7 @@ class Perlin {
         this.random = new RandomNumberGenerator(seed);
     }
 
+    // Normalized to [-1, 1].
     // Algorithm taken from https://adrianb.io/2014/08/09/perlinnoise.html
     get(x: number, y: number = 0, z: number = 0) {
         let xi = Math.floor(x) & 255;
@@ -33,7 +34,7 @@ class Perlin {
         let y1 = M.lerp(x11, x12, v);
         let y2 = M.lerp(x21, x22, v);
 
-        return (M.lerp(y1, y2, w)+1)/2;
+        return M.lerp(y1, y2, w);
     }
 
     seed(seed: any) {
