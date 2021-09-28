@@ -83,7 +83,7 @@ class DialogBox extends Sprite {
         this.spriteText.maxWidth = this.textArea.width;
         this.spriteText.mask = {
             type: 'world',
-            texture: Texture.filledRect(this.textArea.width, this.textArea.height, 0xFFFFFF),
+            texture: this.spriteText.mask ? this.spriteText.mask.texture : Texture.filledRect(this.textArea.width, this.textArea.height, 0xFFFFFF),
             offsetx: this.x + this.textArea.x,
             offsety: this.y + this.textArea.y,
         };

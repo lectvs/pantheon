@@ -1,3 +1,4 @@
+/// <reference path="./textureCreationData.ts"/>
 /// <reference path="./filter/textureFilter.ts"/>
 /// <reference path="./filter/slice.ts"/>
 
@@ -9,9 +10,10 @@ class BasicTexture implements Texture {
 
     renderTextureSprite: Texture.PIXIRenderTextureSprite;
 
-    constructor(width: number, height: number, immutable: boolean = false) {
+    constructor(width: number, height: number, immutable: boolean = false, source?: string) {
         this.renderTextureSprite = new Texture.PIXIRenderTextureSprite(width, height);
         this.immutable = immutable;
+        TextureCreationData.logCreateTexture(this, source ?? arguments?.callee?.caller?.name ?? "none");
     }
 
     clear() {
@@ -28,6 +30,7 @@ class BasicTexture implements Texture {
 
     free() {
         this.renderTextureSprite.renderTexture.destroy(true);
+        TextureCreationData.logFreeTexture(this);
     }
 
     getLocalBounds(properties: Texture.Properties) {

@@ -11,7 +11,7 @@ class AnchoredTexture implements Texture {
     set immutable(value: boolean) { this.baseTexture.immutable = value; }
 
     constructor(width: number, height: number, baseTexture?: Texture) {
-        this.baseTexture = baseTexture ?? new BasicTexture(width, height);
+        this.baseTexture = baseTexture ?? new BasicTexture(width, height, false, arguments?.callee?.caller?.name ?? "none");
         this.anchorX = 0;
         this.anchorY = 0;
     }

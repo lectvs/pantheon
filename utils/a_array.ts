@@ -1,4 +1,12 @@
 namespace A {
+    export function batch<T>(array: ReadonlyArray<T>, batchSize: number) {
+        let result: T[][] = A.range(Math.ceil(array.length / batchSize)).map(i => []);
+        for (let i = 0; i < array.length; i++) {
+            result[Math.floor(i / batchSize)].push(array[i]);
+        }
+        return result;
+    }
+
     export function clone<T>(array: ReadonlyArray<T>) {
         if (_.isEmpty(array)) return [];
         return Array.from(array);

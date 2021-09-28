@@ -46,16 +46,16 @@ class StageManager {
         this.transition.takeWorldSnapshots();
         this.transition.start();
 
-        let stageManager = this;
-        this.theater.runScript(function* () {
-            while (!stageManager.transition.done) {
-                yield;
-            }
+        this.theater.runScript(S.chain(
+            S.waitUntil(() => this.transition.done),
+            S.call(() => {
+                World.Actions.removeWorldObjectFromWorld(this.transition);
+                this.transition.freeWorldSnapshots();
+                this.transition = null;
+                this.currentWorldAsWorldObject.setActive(true);
+                this.currentWorldAsWorldObject.setVisible(true);
+            }),
 
-            World.Actions.removeWorldObjectFromWorld(stageManager.transition);
-            stageManager.transition = null;
-            stageManager.currentWorldAsWorldObject.setActive(true);
-            stageManager.currentWorldAsWorldObject.setVisible(true);
-        });
+        )).update(this.theater.delta);  // Update once in case the transition is already done (i.e. instant)
     }
 }
