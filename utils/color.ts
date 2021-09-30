@@ -1,5 +1,7 @@
 namespace Color {
     export function lerpColorByLch(color1: number, color2: number, t: number): number {
+        if (color1 === color2) return color1;
+
         let vec3color1 = M.colorToVec3(color1);
         let vec3color2 = M.colorToVec3(color2);
 
@@ -13,6 +15,8 @@ namespace Color {
     }
 
     export function lerpColorByRgb(color1: number, color2: number, t: number): number {
+        if (color1 === color2) return color1;
+
         let vec3color1 = M.colorToVec3(color1);
         let vec3color2 = M.colorToVec3(color2);
 

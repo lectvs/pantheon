@@ -51,6 +51,12 @@ class FontLoader implements Loader {
             }
         }
 
+        if (this.font.customCharacters) {
+            for (let char in this.font.customCharacters) {
+                charTextures[char] = this.font.customCharacters[char];
+            }
+        }
+
         AssetCache.fonts[this.key] = {
             charTextures: charTextures,
             charWidth: this.font.charWidth,
@@ -70,6 +76,6 @@ class FontLoader implements Loader {
         ['8', '9', '!', '@', '#', '$', '%', '^', '&', '*'],
         ['(', ')', '-', '_', '=', '+', '{', '}', '[', ']'],
         ['\\','|', ';', ':', "'", '"', ',', '.', '<', '>'],
-        ['/', '?', '`' ,'~'],
+        ['/', '?', '`' ,'~', 'garbage1', 'garbage2', 'garbage3', 'garbage4', 'garbage5', 'missing'],
     ];
 }

@@ -69,6 +69,7 @@ namespace Preload {
         charHeight: number;
         spaceWidth: number;
         newlineHeight: number;
+        customCharacters?: Dict<string>;
     }
 }
 

@@ -39,9 +39,20 @@ namespace SpriteTextConverter {
 
                 current.part++;
                 i = closingBracketIndex;
+            } else if (text[i] === '<') {
+                let closingBracketIndex = text.indexOf('>', i); 
+                if (closingBracketIndex < i+1) {
+                    error(`Text '${text}' has an unclosed custom character bracket.`);
+                    continue;
+                }
+
+                let char = createCharacter(font, text.substring(i+1, closingBracketIndex), nextCharPosition.x, nextCharPosition.y, current.part, tagStack);
+                word.push(char);
+                nextCharPosition.x += char.width;
+                i = closingBracketIndex;
             } else {
                 if (text[i] === '\\' && i < text.length-1) i++;
-                let char = createCharacter(text[i], nextCharPosition.x, nextCharPosition.y, font.charWidth, font.charHeight, current.part, tagStack);
+                let char = createCharacter(font, text[i], nextCharPosition.x, nextCharPosition.y, current.part, tagStack);
                 word.push(char);
                 nextCharPosition.x += char.width;
             }
@@ -52,13 +63,19 @@ namespace SpriteTextConverter {
         return result;
     }
 
-    function createCharacter(char: string, x: number, y: number, width: number, height: number, part: number, tagData: SpriteText.TagData[]) {
+    function createCharacter(font: SpriteText.Font, char: string, x: number, y: number, part: number, tagData: SpriteText.TagData[]) {
+        let charTexture = AssetCache.getTexture(font.charTextures[char]);
+        if (!font.charTextures[char] || !charTexture) {
+            error(`Font does not have character '${char}':`, font);
+            char = 'missing';
+            charTexture = AssetCache.getTexture(font.charTextures[char]);
+        }
         let character = new SpriteText.Character();
         character.char = char;
         character.x = x;
         character.y = y;
-        character.width = width;
-        character.height = height;
+        character.width = charTexture.width;
+        character.height = charTexture.height;
         character.part = part;
         character.tagData = A.clone(tagData);
         return character;
