@@ -133,6 +133,10 @@ class Sprite extends PhysicsWorldObject {
         return bounds;
     }
 
+    hasAnimation(name: string) {
+        return this.animationManager.hasAnimation(name);
+    }
+
     playAnimation(name: string, force: boolean = false) {
         this.animationManager.playAnimation(name, force);
     }

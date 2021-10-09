@@ -292,9 +292,10 @@ class WorldObject {
         return World.Actions.addChildrenToParent(children, this);
     }
 
-    addModule(module: Module<WorldObject>) {
+    addModule<T extends Module<WorldObject>>(module: T): T {
         this.modules.push(module);
         module.init(this);
+        return module;
     }
 
     addTag(tag: string) {
@@ -329,6 +330,10 @@ class WorldObject {
             if (module instanceof type) return module;
         }
         return undefined;
+    }
+
+    getPosition() {
+        return vec2(this.x, this.y);
     }
 
     getVisibleScreenBounds() {

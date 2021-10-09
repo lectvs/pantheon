@@ -13,8 +13,8 @@ namespace PuffSystem {
     }
 
     export type Puff = {
-        localx: number;
-        localy: number;
+        x: number;
+        y: number;
         vx: number;
         vy: number;
         t: number;
@@ -41,8 +41,8 @@ class PuffSystem extends WorldObject {
 
         for (let i = this.puffs.length-1; i >= 0; i--) {
             let puff = this.puffs[i];
-            puff.localx += puff.vx * this.delta;
-            puff.localy += puff.vy * this.delta;
+            puff.x += puff.vx * this.delta;
+            puff.y += puff.vy * this.delta;
             
             puff.t += this.delta;
             if (this.puffs[i].t > this.puffs[i].maxLife) {
@@ -61,7 +61,7 @@ class PuffSystem extends WorldObject {
 
             Draw.brush.color = color;
             Draw.brush.alpha = alpha;
-            Draw.circleSolid(texture, x + puff.localx, y + puff.localy, radius);
+            Draw.circleSolid(texture, x - this.x + puff.x, y - this.y + puff.y, radius);
         }
 
         super.render(texture, x, y);
@@ -69,8 +69,8 @@ class PuffSystem extends WorldObject {
 
     protected addPuff(config: PuffSystem.PuffConfig) {
         this.puffs.push({
-            localx: config.p?.x ?? 0,
-            localy: config.p?.y ?? 0,
+            x: this.x + (config.p?.x ?? 0),
+            y: this.y + (config.p?.y ?? 0),
             vx: config.v.x,
             vy: config.v.y,
             t: 0,

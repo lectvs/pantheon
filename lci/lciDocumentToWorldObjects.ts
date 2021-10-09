@@ -18,6 +18,7 @@ function lciDocumentToWorldObjects(key: string) {
             let worldObject: WorldObject;
             try {
                 worldObject = new constructor(layer.position.x, layer.position.y);
+                worldObject.name = layer.name;
             } catch (err) {
                 error(`Cannot instantiate LCI placeholder '${layer.properties.placeholder}':`, err);
                 continue;

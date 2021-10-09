@@ -4,6 +4,7 @@
 namespace ContinuousPuffSystem {
     export type Config = ReplaceConfigCallbacks<WorldObject.Config, ContinuousPuffSystem> & {
         startEnabled?: boolean;
+        startDelay?: number;
         puffRate: number;
         puffConfigFactory: Factory<PuffSystem.PuffConfig>;
     }
@@ -16,10 +17,13 @@ class ContinuousPuffSystem extends PuffSystem {
         super(config);
 
         this.enabled = config.startEnabled ?? true;
-        this.addTimer(new Timer(1/config.puffRate, () => {
+
+        let puffTimer = new Timer(1/config.puffRate, () => {
             if (this.enabled) {
                 this.addPuff(config.puffConfigFactory());
             }
-        }, Infinity));
+        }, Infinity);
+
+        this.addTimer(new Timer(config.startDelay ?? 0, () => this.addTimer(puffTimer)));
     }
 }

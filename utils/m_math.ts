@@ -1,9 +1,9 @@
 namespace M {
-    export function argmax<T>(array: T[], key: (x: T) => number) {
+    export function argmax<T>(array: T[], key: (x: T) => number): T {
         return this.argmin(array, x => -key(x));
     }
 
-    export function argmin<T>(array: T[], key: (x: T) => number) {
+    export function argmin<T>(array: T[], key: (x: T) => number): T {
         if (!array || array.length == 0) return null;
         let result = array[0];
         let resultValue = key(array[0]);

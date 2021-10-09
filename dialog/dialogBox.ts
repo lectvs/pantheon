@@ -181,6 +181,8 @@ class DialogBox extends Sprite {
 
         this.currentProfileKey = profileKey;
         this.currentProfileEntry = entry;
+
+        this.update();
     }
 
     complete() {
