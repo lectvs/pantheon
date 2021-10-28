@@ -145,8 +145,8 @@ class Camera {
         this.setMode(Camera.Mode.FOCUS(x, y));
     }
 
-    setModeFollow(target: string | Pt, offsetX: number = 0, offsetY: number = 0) {
-        this.setMode(Camera.Mode.FOLLOW(target, offsetX, offsetY));
+    setModeFollow(target: string | Pt, offsetX: number = 0, offsetY: number = 0, snapToScreenBounds: boolean = false) {
+        this.setMode(Camera.Mode.FOLLOW(target, offsetX, offsetY, snapToScreenBounds));
     }
 
     setMovement(movement: Camera.Movement) {
@@ -164,14 +164,23 @@ class Camera {
 
 namespace Camera {
     export namespace Mode {
-        export function FOLLOW(target: string | Pt, offsetX: number = 0, offsetY: number = 0): Mode {
+        export function FOLLOW(target: string | Pt, offsetX: number = 0, offsetY: number = 0, snapToScreenBounds: boolean = false): Mode {
             return {
                 getTargetPt: (camera: Camera) => {
+                    let position: Vector2;
                     if (_.isString(target)) {
                         let worldObject = camera.world.select.name(target, false);
-                        return worldObject ? vec2(worldObject.x + offsetX, worldObject.y + offsetY) : vec2(camera.x, camera.y);
+                        position = worldObject ? vec2(worldObject.x + offsetX, worldObject.y + offsetY) : vec2(camera.x, camera.y);
+                    } else {
+                        position = vec2(target.x + offsetX, target.y + offsetY);
                     }
-                    return vec2(target.x + offsetX, target.y + offsetY);
+
+                    if (snapToScreenBounds) {
+                        position.x = Math.floor(position.x / camera.width) * camera.width + camera.width/2;
+                        position.y = Math.floor(position.y / camera.height) * camera.height + camera.height/2;
+                    }
+
+                    return position;
                 },
             };
         }

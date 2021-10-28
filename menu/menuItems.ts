@@ -59,7 +59,7 @@ class MenuNumericSelector extends SpriteText {
 
         let leftButton = this.addChild(new MenuTextButton({
             font: this.fontKey,
-            text: "<",
+            text: "\\<",
             onClick: () => {
                 global.game.playSound('click');
                 let bars = this.getFullBarsForValue(this.getValue());
