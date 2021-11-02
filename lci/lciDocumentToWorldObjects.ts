@@ -46,6 +46,8 @@ function lciDocumentToWorldObjects(key: string) {
             x: layer.position.x,
             y: layer.position.y,
             texture: Lci.getLayerTextureKey(key, layer.name),
+            offsetX: layer.properties.offset?.x ?? 0,
+            offsetY: layer.properties.offset?.y ?? 0,
             blendMode: <Texture.BlendMode><any>(layer.blendMode ?? 0),
             alpha: layer.opacity/255,
             layer: worldLayer,

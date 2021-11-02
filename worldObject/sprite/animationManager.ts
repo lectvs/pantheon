@@ -1,6 +1,7 @@
 class AnimationManager {
     sprite: Sprite;
     animations: Dict<Animation.Frame[]>;
+    speed: number;
 
     private currentFrame: Animation.Frame;
     private currentFrameTime: number;
@@ -8,6 +9,7 @@ class AnimationManager {
     constructor(sprite: Sprite) {
         this.sprite = sprite;
         this.animations = {};
+        this.speed = 1;
 
         this.currentFrame = null;
         this.currentFrameTime = 0;
@@ -15,7 +17,7 @@ class AnimationManager {
 
     update(delta: number) {
         if (this.currentFrame) {
-            this.currentFrameTime += delta;
+            this.currentFrameTime += delta * this.speed;
 
             if (this.currentFrameTime >= this.currentFrame.duration) {
                 this.currentFrameTime -= this.currentFrame.duration;

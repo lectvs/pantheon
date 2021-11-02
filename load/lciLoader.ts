@@ -54,8 +54,8 @@ class LciLoader implements Loader {
                 continue;
             }
             layerTexture.renderTo(fullTexture, {
-                x: layer.position.x,
-                y: layer.position.y,
+                x: layer.position.x + (layer.properties.offset?.x ?? 0),
+                y: layer.position.y + (layer.properties.offset?.y ?? 0),
                 alpha: layer.opacity/255,
                 blendMode: <Texture.BlendMode><any>(layer.blendMode ?? 0),
             });

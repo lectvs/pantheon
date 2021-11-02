@@ -4,6 +4,7 @@
 namespace World {
     export type Config = {
         layers?: World.LayerConfig[];
+        effects?: Effects.Config;
 
         camera?: Camera.Config;
 
@@ -62,11 +63,13 @@ class World {
     minDistanceIgnoreCollisionStepCalculation: number;
 
     layers: World.Layer[];
+    effects: Effects;
 
     backgroundColor: number;
     backgroundAlpha: number;
 
     camera: Camera;
+    private worldTexture: Texture;
     private layerTexture: Texture;
 
     protected scriptManager: ScriptManager;
@@ -104,13 +107,19 @@ class World {
 
         this.worldObjects = [];
         this.layers = this.createLayers(config.layers);
+        this.effects = new Effects(config.effects);
 
         this.backgroundColor = config.backgroundColor ?? global.backgroundColor;
         this.backgroundAlpha = config.backgroundAlpha ?? 1;
 
+        this.worldTexture = new BasicTexture(this.width, this.height);
         this.layerTexture = new BasicTexture(this.width, this.height);
 
         this.camera = new Camera(config.camera ?? {}, this);
+    }
+
+    onStart() {
+        
     }
 
     update() {
@@ -170,10 +179,12 @@ class World {
     }
 
     render(screen: Texture) {
+        this.worldTexture.clear();
+
         // Render background color.
         Draw.brush.color = this.backgroundColor;
         Draw.brush.alpha = this.backgroundAlpha;
-        Draw.rectangleSolid(screen, 0, 0, screen.width, screen.height);
+        Draw.rectangleSolid(this.worldTexture, 0, 0, this.width, this.height);
 
         for (let layer of this.layers) {
             global.metrics.startSpan(`layer_${layer.name}`);
@@ -181,15 +192,19 @@ class World {
             if (layer.shouldRenderToOwnLayer) {
                 this.layerTexture.clear();
                 this.renderLayerToTexture(layer, this.layerTexture);
-                this.layerTexture.renderTo(screen, {
+                this.layerTexture.renderTo(this.worldTexture, {
                     filters: layer.effects.getFilterList()
                 });
             } else {
-                this.renderLayerToTexture(layer, screen);
+                this.renderLayerToTexture(layer, this.worldTexture);
             }
             global.metrics.endSpan(`layer_${layer.name}`);
-
         }
+
+        // Apply world effects.
+        this.worldTexture.renderTo(screen, {
+            filters: this.effects.getFilterList(),
+        });
     }
 
     renderLayerToTexture(layer: World.Layer, texture: Texture) {

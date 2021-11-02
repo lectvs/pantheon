@@ -19,6 +19,7 @@ namespace Lci {
     export type LayerProperties = {
         layer: string;
         anchor: Pt;
+        offset: Pt;
         physicsGroup: string;
         bounds: Rect;
         placeholder: string;

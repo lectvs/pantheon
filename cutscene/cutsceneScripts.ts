@@ -72,12 +72,12 @@ namespace S {
         });
     }
 
-    export function jumpZ(sprite: Sprite, peakDelta: number, time: number, landOnGround: boolean = false): Script.Function {
+    export function jumpZ(duration: number, sprite: Sprite, peakDelta: number, landOnGround: boolean = false): Script.Function {
         return function*() {
             let start = sprite.z;
             let groundDelta = landOnGround ? start : 0;
 
-            yield S.doOverTime(time, t => {
+            yield S.doOverTime(duration, t => {
                 sprite.z = M.jumpParabola(start, peakDelta, groundDelta, t);
             });
         }

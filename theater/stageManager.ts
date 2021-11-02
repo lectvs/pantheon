@@ -32,6 +32,7 @@ class StageManager {
         this.theater.addWorldObject(this.currentWorldAsWorldObject);
 
         this.theater.onStageLoad();
+        this.currentWorld.onStart();
         this.currentWorld.update();
         
         let newWorld = this.currentWorld;

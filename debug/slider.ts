@@ -1,10 +1,10 @@
-function addSlider(get: () => number, set: (v: number) => void, min: number, max: number, step: number) {
+function addSlider(startValue: number, set: (v: number) => void, min: number, max: number, step: number) {
     let slider = document.createElement('input');
     slider.type = 'range';
     slider.min = `${min}`;
     slider.max = `${max}`;
     slider.step = `${step}`;
-    slider.value = `${get()}`;
+    slider.value = `${startValue}`;
     slider.oninput = function() {
         set(parseFloat(slider.value));
     }

@@ -1,5 +1,6 @@
 namespace Script {
-    export type Function = () => IterableIterator<Script.Function | (() => IterableIterator<Script.Function>)[]>;
+    export type Function = () => IterableIterator<FunctionInner>;
+    type FunctionInner = Script.Function | (() => IterableIterator<FunctionInner>)[];
 }
 
 class Script {

@@ -1,6 +1,6 @@
 type Cutscene = {
     script: Script.Function;
-    skippable?: boolean;
+    unskippable?: boolean;
 }
 
 class CutsceneManager {
@@ -34,7 +34,7 @@ class CutsceneManager {
     }
 
     canSkipCurrentCutscene() {
-        return this.current && this.current.node.skippable;
+        return this.current && !this.current.node.unskippable;
     }
 
     fastForwardCutscene(cutscene: Cutscene) {

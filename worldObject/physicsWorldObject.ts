@@ -152,7 +152,11 @@ class PhysicsWorldObject extends WorldObject {
         this.v.setMagnitude(speed);
     }
 
-    teleport(x: number, y: number) {
+    teleport(x: Pt | number, y?: number) {
+        if (!_.isNumber(x)) {
+            y = x.y;
+            x = x.x;
+        }
         this.x = x;
         this.y = y;
         this.physicslastx = x;
