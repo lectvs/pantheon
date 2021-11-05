@@ -1,18 +1,21 @@
 type Cutscene = {
     script: Script.Function;
     unskippable?: boolean;
+    seenKey?: string;
 }
 
 class CutsceneManager {
     theater: Theater;
-
     current: { node: Cutscene, script: Script };
 
     get isCutscenePlaying() { return !!this.current; }
 
+    private seenCutsceneKeys: Set<string>;
+
     constructor(theater: Theater) {
         this.theater = theater;
         this.current = null;
+        this.seenCutsceneKeys = new Set();
     }
 
     update() {
@@ -42,9 +45,19 @@ class CutsceneManager {
         this.finishCurrentCutscene();
     }
 
+    hasSeenCutscene(cutscene: Cutscene) {
+        if (!cutscene.seenKey) return false;
+        return this.seenCutsceneKeys.has(cutscene.seenKey);
+    }
+
+    markCutsceneAsSeen(cutscene: Cutscene) {
+        if (!cutscene.seenKey) return;
+        this.seenCutsceneKeys.add(cutscene.seenKey);
+    }
+
     playCutscene(cutscene: Cutscene) {
         if (this.current) {
-            error(`Cannot play cutscene ${name} because a cutscene is already playing:`, this.current);
+            error('Cannot play cutscene:', cutscene, 'because a cutscene is already playing:', this.current);
             return;
         }
 
@@ -54,6 +67,11 @@ class CutsceneManager {
         };
 
         this.updateCurrentCutscene();
+    }
+
+    playCutsceneIfNotSeen(cutscene: Cutscene) {
+        if (this.hasSeenCutscene(cutscene)) return;
+        this.playCutscene(cutscene);
     }
 
     reset() {
@@ -70,6 +88,7 @@ class CutsceneManager {
     private finishCurrentCutscene() {
         if (!this.isCutscenePlaying) return;
         
+        this.markCutsceneAsSeen(this.current.node);
         this.current = null;
 
         this.theater.dialogBox.complete();
