@@ -28,17 +28,16 @@ interface Bounds {
     x: number;
     y: number;
     clone(): Bounds;
-    /**
-     * FOR USE WITH PHYSICS RESOLVECOLLISIONS ONLY.
-     */
+    containsPoint(x: number | Pt, y?: number): boolean;
+    /** FOR USE WITH PHYSICS RESOLVECOLLISIONS ONLY. */
     freeze(): void;
     getBoundingBox(): Rectangle;
     getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision;
     getDisplacementCollision(other: Bounds): Bounds.DisplacementCollision;
     isOverlapping(other: Bounds): boolean;
+    /** FOR USE WITH PHYSICS RESOLVECOLLISIONS ONLY. */
+    move(dx: number, dy: number): void;
     raycast(x: number, y: number, dx: number, dy: number): number;
-    /**
-     * FOR USE WITH PHYSICS RESOLVECOLLISIONS ONLY.
-     */
+    /** FOR USE WITH PHYSICS RESOLVECOLLISIONS ONLY. */
     unfreeze(): void;
 }

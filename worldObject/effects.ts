@@ -40,12 +40,12 @@ class Effects {
         }
         return <Effects.Filters.Outline>this.effects[Effects.OUTLINE_I];
     }
-    get invertColors(): Effects.Filters.Outline {
+    get invertColors(): Effects.Filters.InvertColors {
         if (!this.effects[Effects.INVERT_COLORS_I]) {
             this.effects[Effects.INVERT_COLORS_I] = new Effects.Filters.InvertColors();
             this.effects[Effects.INVERT_COLORS_I].enabled = false;
         }
-        return <Effects.Filters.Outline>this.effects[Effects.INVERT_COLORS_I];
+        return <Effects.Filters.InvertColors>this.effects[Effects.INVERT_COLORS_I];
     }
 
     get addSilhouette(): Effects.Filters.Silhouette {

@@ -402,6 +402,22 @@ class WorldObject {
         return children.map(child => this.removeChild(child)).filter(child => child);
     }
 
+    removeFromParent(): this {
+        if (!this.parent) return this;
+        return this.parent.removeChild(this);
+    }
+
+    removeFromParentKeepWorldPosition(): this {
+        let x = this.x;
+        let y = this.y;
+        let z = this.z;
+        let result = this.removeFromParent();
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        return result;
+    }
+
     removeFromWorld(): this {
         if (!this.world) return this;
         return World.Actions.removeWorldObjectFromWorld(this);

@@ -29,6 +29,23 @@ class SlopeBounds implements Bounds {
         return new SlopeBounds(this.x, this.y, this.width, this.height, this.direction, this.parent);
     }
 
+    containsPoint(x: number | Pt, y?: number) {
+        if (!_.isNumber(x)) {
+            y = x.y;
+            x = x.x;
+        }
+
+        let box = this.getBoundingBox();
+
+        if (!box.contains(x, y)) return false;
+        if (this.direction === 'upleft' && y - box.bottom < (x - box.left) * (-box.height / box.width)) return false;
+        if (this.direction === 'downright' && y - box.bottom > (x - box.left) * (-box.height / box.width)) return false;
+        if (this.direction === 'upright' && y - box.top < (x - box.left) * (box.height / box.width)) return false;
+        if (this.direction === 'downleft' && y - box.top > (x - box.left) * (box.height / box.width)) return false;
+
+        return true;
+    }
+
     freeze() {
         this.frozen = false;
         this.getBoundingBox();
@@ -67,6 +84,12 @@ class SlopeBounds implements Bounds {
         if (other instanceof NullBounds) return undefined;
         error("No overlap supported between these bounds", this, other);
         return false;
+    }
+
+    move(dx: number, dy: number) {
+        let box = this.getBoundingBox();
+        box.x += dx;
+        box.y += dy;
     }
 
     raycast(x: number, y: number, dx: number, dy: number) {

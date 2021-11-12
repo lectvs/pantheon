@@ -425,13 +425,13 @@ namespace Bounds.Collision {
 
         let t = raycastTimeCircleCircle(movePos.x - fromPos.x, movePos.y - fromPos.y, movedx - fromdx, movedy - fromdy, move.radius + from.radius);
 
-        let result = <Bounds.RaycastCollision>getDisplacementCollisionCircleCircle(move, from);
-        result.t = t;
-
         movePos.x += movedx;
         movePos.y += movedy;
         fromPos.x += fromdx;
         fromPos.y += fromdy;
+
+        let result = <Bounds.RaycastCollision>getDisplacementCollisionCircleCircle(move, from);
+        result.t = t;
 
         return result;
     }
@@ -458,13 +458,13 @@ namespace Bounds.Collision {
 
         let t = Math.min(topleft_t, topright_t, bottomright_t, bottomleft_t, left_t, right_t, top_t, bottom_t);
 
-        let result = <Bounds.RaycastCollision>getDisplacementCollisionCircleRect(move, from);
-        result.t = t;
-
         movePos.x += movedx;
         movePos.y += movedy;
         fromBox.x += fromdx;
         fromBox.y += fromdy;
+
+        let result = <Bounds.RaycastCollision>getDisplacementCollisionCircleRect(move, from);
+        result.t = t;
 
         return result;
     }
@@ -507,13 +507,13 @@ namespace Bounds.Collision {
 
         let t = Math.min(topleft_t, topright_t, bottomright_t, bottomleft_t, line1_t, line2_t, line3_t);
 
-        let result = <Bounds.RaycastCollision>getDisplacementCollisionCircleSlope(move, from);
-        result.t = t;
-
         movePos.x += movedx;
         movePos.y += movedy;
         fromBox.x += fromdx;
         fromBox.y += fromdy;
+
+        let result = <Bounds.RaycastCollision>getDisplacementCollisionCircleSlope(move, from);
+        result.t = t;
 
         return result;
     }

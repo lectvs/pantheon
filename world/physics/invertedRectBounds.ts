@@ -26,6 +26,15 @@ class InvertedRectBounds implements Bounds {
         return new InvertedRectBounds(this.x, this.y, this.width, this.height, this.parent);
     }
 
+    containsPoint(x: number | Pt, y?: number) {
+        if (!_.isNumber(x)) {
+            y = x.y;
+            x = x.x;
+        }
+
+        return !this.getInnerBox().contains(x, y);
+    }
+
     freeze() {
         this.frozen = false;
         this.getInnerBox();
@@ -68,6 +77,15 @@ class InvertedRectBounds implements Bounds {
         if (other instanceof NullBounds) return undefined;
         error("No overlap supported between these bounds", this, other);
         return false;
+    }
+
+    move(dx: number, dy: number) {
+        let box = this.getBoundingBox();
+        box.x += dx;
+        box.y += dy;
+        let ibox = this.getInnerBox();
+        ibox.x += dx;
+        ibox.y += dy;
     }
 
     raycast(x: number, y: number, dx: number, dy: number) {

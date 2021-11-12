@@ -23,6 +23,15 @@ class RectBounds implements Bounds {
         return new RectBounds(this.x, this.y, this.width, this.height, this.parent);
     }
 
+    containsPoint(x: number | Pt, y?: number) {
+        if (!_.isNumber(x)) {
+            y = x.y;
+            x = x.x;
+        }
+
+        return this.getBoundingBox().contains(x, y);
+    }
+
     freeze() {
         this.frozen = false;
         this.getBoundingBox();
@@ -67,6 +76,12 @@ class RectBounds implements Bounds {
         if (other instanceof NullBounds) return undefined;
         error("No overlap supported between these bounds", this, other);
         return false;
+    }
+
+    move(dx: number, dy: number) {
+        let box = this.getBoundingBox();
+        box.x += dx;
+        box.y += dy;
     }
 
     raycast(x: number, y: number, dx: number, dy: number) {

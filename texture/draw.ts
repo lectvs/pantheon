@@ -79,6 +79,24 @@ class Draw {
         texture.renderPIXIDisplayObject(this.graphics);
     }
 
+    static polygonOutline(texture: Texture, points: Pt[], alignment: number = this.ALIGNMENT_INNER, brush: Draw.Brush = Draw.brush) {
+        this.graphics.lineStyle(brush.thickness, brush.color, brush.alpha, alignment);
+        this.graphics.clear();
+        this.graphics.beginFill(0, 0);
+        this.graphics.drawPolygon(points.map(point => new PIXI.Point(point.x, point.y)));
+        this.graphics.endFill();
+        texture.renderPIXIDisplayObject(this.graphics);
+    }
+
+    static polygonSolid(texture: Texture, points: Pt[], brush: Draw.Brush = Draw.brush) {
+        this.graphics.lineStyle(0, 0, 0);
+        this.graphics.clear();
+        this.graphics.beginFill(brush.color, brush.alpha);
+        this.graphics.drawPolygon(points.map(point => new PIXI.Point(point.x, point.y)));
+        this.graphics.endFill();
+        texture.renderPIXIDisplayObject(this.graphics);
+    }
+
     static rectangleOutline(texture: Texture, x: number, y: number, width: number, height: number, alignment: number = this.ALIGNMENT_INNER, brush: Draw.Brush = Draw.brush) {
         this.graphics.lineStyle(brush.thickness, brush.color, brush.alpha, alignment);
         this.graphics.clear();

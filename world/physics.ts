@@ -57,9 +57,7 @@ namespace Physics {
                 let d = physicsObjectDataCache.dpos[worldObject.uid];
                 worldObject.x += d.x / iters;
                 worldObject.y += d.y / iters;
-                let bounds = worldObject.bounds.getBoundingBox();
-                bounds.x += d.x / iters;
-                bounds.y += d.y / iters;
+                worldObject.bounds.move(d.x / iters, d.y / iters);
             }
             performNormalIteration(world, resultCollisions);
         }
@@ -162,8 +160,12 @@ namespace Physics {
         let raycastCollisions: RaycastCollisionData[] = [];
 
         for (let collision of world.collisions) {
-            for (let move of world.physicsGroups[collision.move].worldObjects) {
-                for (let from of world.physicsGroups[collision.from].worldObjects) {
+            for (let imove = 0; imove < world.physicsGroups[collision.move].worldObjects.length; imove++) {
+                let fromStart = collision.move === collision.from ? imove + 1 : 0;  // Don't double-count collisions between members of the same physics group.
+                for (let ifrom = fromStart; ifrom < world.physicsGroups[collision.from].worldObjects.length; ifrom++) {
+                    let move = world.physicsGroups[collision.move].worldObjects[imove];
+                    let from = world.physicsGroups[collision.from].worldObjects[ifrom];
+
                     if (move === from) continue;
                     if (!G.overlapRectangles(move.bounds.getBoundingBox(), from.bounds.getBoundingBox())) continue;
                     if (!move.colliding || !from.colliding) continue;
@@ -189,36 +191,30 @@ namespace Physics {
 
         if (moveImmovable && fromImmovable) return;
 
-        let moveBounds = collision.move.bounds.getBoundingBox();
-        let fromBounds = collision.from.bounds.getBoundingBox();
-
         if (moveImmovable) {
             collision.from.x -= collision.collision.displacementX;
             collision.from.y -= collision.collision.displacementY;
-            fromBounds.x -= collision.collision.displacementX;
-            fromBounds.y -= collision.collision.displacementY;
+            collision.from.bounds.move(-collision.collision.displacementX, -collision.collision.displacementY);
             return;
         }
 
         if (fromImmovable) {
             collision.move.x += collision.collision.displacementX;
             collision.move.y += collision.collision.displacementY;
-            moveBounds.x += collision.collision.displacementX;
-            moveBounds.y += collision.collision.displacementY;
+            collision.move.bounds.move(collision.collision.displacementX, collision.collision.displacementY);
             return;
         }
+
 
         let massFactor = (collision.move.mass + collision.from.mass === 0) ? 0.5 :
                             collision.from.mass / (collision.move.mass + collision.from.mass);
 
         collision.move.x += massFactor * collision.collision.displacementX;
         collision.move.y += massFactor * collision.collision.displacementY;
-        moveBounds.x += massFactor * collision.collision.displacementX;
-        moveBounds.y += massFactor * collision.collision.displacementY;
+        collision.move.bounds.move(massFactor * collision.collision.displacementX, massFactor * collision.collision.displacementY);
         collision.from.x -= (1-massFactor) * collision.collision.displacementX;
         collision.from.y -= (1-massFactor) * collision.collision.displacementY;
-        fromBounds.x -= (1-massFactor) * collision.collision.displacementX;
-        fromBounds.y -= (1-massFactor) * collision.collision.displacementY;
+        collision.from.bounds.move(-(1-massFactor) * collision.collision.displacementX, -(1-massFactor) * collision.collision.displacementY);
     }
 
     function collectCollisions(collisions: RaycastCollisionData[]) {

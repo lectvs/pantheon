@@ -23,6 +23,16 @@ class CircleBounds implements Bounds {
         return new CircleBounds(this.x, this.y, this.radius, this.parent);
     }
 
+    containsPoint(x: number | Pt, y?: number) {
+        if (!_.isNumber(x)) {
+            y = x.y;
+            x = x.x;
+        }
+
+        let center = this.getCenter();
+        return M.distanceSq(center.x, center.y, x, y) <= this.radius * this.radius;
+    }
+
     freeze() {
         this.frozen = false;
         this.getCenter();
@@ -76,6 +86,15 @@ class CircleBounds implements Bounds {
         if (other instanceof NullBounds) return undefined;
         error("No overlap supported between these bounds", this, other);
         return false;
+    }
+
+    move(dx: number, dy: number) {
+        let box = this.getBoundingBox();
+        box.x += dx;
+        box.y += dy;
+        let center = this.getCenter();
+        center.x += dx;
+        center.y += dy;
     }
 
     raycast(x: number, y: number, dx: number, dy: number) {

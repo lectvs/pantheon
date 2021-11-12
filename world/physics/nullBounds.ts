@@ -16,6 +16,10 @@ class NullBounds implements Bounds {
         return new NullBounds();
     }
 
+    containsPoint(x: number | Pt, y?: number) {
+        return false;
+    }
+
     freeze() {
         // Noop
     }
@@ -34,6 +38,10 @@ class NullBounds implements Bounds {
 
     isOverlapping(other: Bounds) {
         return false;
+    }
+
+    move(dx: number, dy: number) {
+        // Noop
     }
 
     raycast(x: number, y: number, dx: number, dy: number) {

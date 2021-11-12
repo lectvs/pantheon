@@ -113,6 +113,15 @@ class Vector2 {
         return copy;
     }
 
+    set(x: number | Pt, y?: number) {
+        if (!_.isNumber(x)) {
+            y = x.y;
+            x = x.x;
+        }
+        this.x = x;
+        this.y = y;
+    }
+
     scale(amount: number) {
         this.x *= amount;
         this.y *= amount;
