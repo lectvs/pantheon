@@ -23,6 +23,8 @@ namespace World {
 
         volume?: number;
         globalSoundHumanizePercent?: number;
+
+        timescale?: number;
     }
 
     export type CollisionConfig = {
@@ -54,6 +56,7 @@ class World {
     height: number;
     worldObjects: WorldObject[];
     time: number;
+    timescale: number;
 
     physicsGroups: Dict<World.PhysicsGroup>;
     collisions: World.CollisionConfig[];
@@ -79,7 +82,7 @@ class World {
     
     get delta() {
         if (global.skippingCutscene) return Theater.SKIP_CUTSCENE_DELTA;
-        return global.game.delta;
+        return global.game.delta * this.timescale;
     }
 
     volume: number;
@@ -97,6 +100,7 @@ class World {
         this.width = config.width ?? global.gameWidth;
         this.height = config.height ?? global.gameHeight;
         this.time = 0;
+        this.timescale = config.timescale ?? 1;
 
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
         this.collisions = config.collisions ?? [];

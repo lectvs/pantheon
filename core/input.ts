@@ -32,6 +32,8 @@ class Input {
     private static _canvasMouseX: number = 0;
     private static _canvasMouseY: number = 0;
 
+    static preventRegularKeyboardInput: boolean = false;
+
     static init() {
         this.keyCodesByName = O.deepClone(Options.getOption('controls'));
         this.isDownByKeyCode = {};
@@ -141,7 +143,11 @@ class Input {
 
     private static updateKeys() {
         for (let keyCode in this.keysByKeycode) {
-            this.keysByKeycode[keyCode].update(this.isDownByKeyCode[keyCode]);
+            if (!this.preventRegularKeyboardInput || keyCode.includes('Mouse')) {
+                this.keysByKeycode[keyCode].update(this.isDownByKeyCode[keyCode]);
+            } else {
+                this.keysByKeycode[keyCode].setUp();
+            }
         }
     }
 
@@ -212,6 +218,10 @@ class Input {
                 && this.keyCodesByName[key].every(keyCode => this.keysByKeycode[keyCode].isUp || this.keysByKeycode[keyCode].justUp);
     }
 
+    static isKeyCodeDown(keyCode: string) {
+        return this.isDownByKeyCode[keyCode];
+    }
+
     static get mouseX() {
         return this._mouseX;
     }
@@ -244,12 +254,12 @@ class Input {
         let keyCode = Input.getKeyFromEventKey(event.key);
         this.eventKey = keyCode;
         if (this.isDownByKeyCode[keyCode] !== undefined) {
-            this.isDownByKeyCode[keyCode] = true;
             event.preventDefault();
         }
+        this.isDownByKeyCode[keyCode] = true;
 
         // Handle fullscreen toggle
-        if (_.contains(this.keyCodesByName[Input.FULLSCREEN], keyCode)) {
+        if (!this.preventRegularKeyboardInput && _.contains(this.keyCodesByName[Input.FULLSCREEN], keyCode)) {
             Fullscreen.toggleFullscreen();
         }
     }
@@ -258,9 +268,9 @@ class Input {
         let keyCode = Input.getKeyFromEventKey(event.key);
         if (this.eventKey === keyCode) this.eventKey = undefined;
         if (this.isDownByKeyCode[keyCode] !== undefined) {
-            this.isDownByKeyCode[keyCode] = false;
             event.preventDefault();
         }
+        this.isDownByKeyCode[keyCode] = false;
     }
 
     static handleMouseDownEvent(event: MouseEvent) {

@@ -53,5 +53,6 @@ class Timer {
 
     reset() {
         this.time = 0;
+        this.currentIter = 0;
     }
 }

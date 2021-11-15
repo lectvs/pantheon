@@ -361,6 +361,12 @@ namespace SpriteText {
         'y': (params) => {
             return { color: 0xFFFF00 };
         },
+        'g': (params) => {
+            return { color: 0x00FF00 };
+        },
+        'r': (params) => {
+            return { color: 0xFF0000 };
+        },
         'color': (params) => {
             return { color: getInt(params[0], undefined) };
         },
