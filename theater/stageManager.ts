@@ -32,7 +32,6 @@ class StageManager {
         this.theater.addWorldObject(this.currentWorldAsWorldObject);
 
         this.theater.onStageLoad();
-        this.currentWorld.onStart();
         this.currentWorld.update();
         
         let newWorld = this.currentWorld;
@@ -55,8 +54,8 @@ class StageManager {
                 this.transition = null;
                 this.currentWorldAsWorldObject.setActive(true);
                 this.currentWorldAsWorldObject.setVisible(true);
+                this.currentWorld.onTransitioned();
             }),
-
         )).update(this.theater.delta);  // Update once in case the transition is already done (i.e. instant)
     }
 }

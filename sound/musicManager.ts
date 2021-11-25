@@ -37,6 +37,8 @@ class MusicManager {
     }
 
     playMusic(key: string, fadeTime: number = 0) {
+        this.paused = false;
+
         if (this.currentMusicKey === key && !this.transitionScript) {
             return this.currentMusic;
         }

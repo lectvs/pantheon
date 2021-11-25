@@ -122,7 +122,7 @@ class World {
         this.camera = new Camera(config.camera ?? {}, this);
     }
 
-    onStart() {
+    onTransitioned() {
         
     }
 

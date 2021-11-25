@@ -211,5 +211,12 @@ class Main {
         window.addEventListener("blur", event => {
             Input.reset();
         });
+        window.addEventListener(PageVisibility.VISIBILITY_CHANGE, () => {
+            if (document[PageVisibility.HIDDEN]) {
+                global.soundManager.pause();
+            } else {
+                global.soundManager.unpause();
+            }
+        }, false);
     }
 }
