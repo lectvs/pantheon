@@ -57,5 +57,7 @@ namespace Tween {
         export const InExp = InExpPow(1);
         export const OutExp = OutExpPow(1);
         export const InOutExp = InOutExpPow(1);
+
+        export const OscillateSine: (cyclesPerSecond: number) => Function = cyclesPerSecond => (t => (1 - M.cos(t * 360 * cyclesPerSecond))/2);
     }
 }
