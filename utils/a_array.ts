@@ -76,6 +76,10 @@ namespace A {
         return [...Array(n).keys()];
     }
 
+    /**
+     * Removes all occurrences of a value from the array.
+     * Returns the number of elements removed.
+     */
     export function removeAll<T>(array: T[], obj: T, startingAt: number = 0) {
         if (!array) return 0;
 

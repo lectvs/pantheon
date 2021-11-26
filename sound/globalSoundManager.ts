@@ -9,7 +9,8 @@ class GlobalSoundManager {
 
     pause() {
         for (let i = this.activeSounds.length-1; i >= 0; i--) {
-            this.ensureSoundDisabled(this.activeSounds[i]);
+            let r = this.ensureSoundDisabled(this.activeSounds[i]);
+            i -= r-1;
         }
         this.paused = true;
     }
@@ -28,14 +29,15 @@ class GlobalSoundManager {
         for (let i = this.activeSounds.length-1; i >= 0; i--) {
             let sound = this.activeSounds[i];
             if (sound.isMarkedForDisable || this.paused) {
-                this.ensureSoundDisabled(sound);
+                let r = this.ensureSoundDisabled(sound);
+                i -= r-1;
             }
         }
     }
 
     ensureSoundDisabled(sound: Sound) {
         sound.ensureDisabled();
-        A.removeAll(this.activeSounds, sound);
+        return A.removeAll(this.activeSounds, sound);
     }
 
     ensureSoundEnabled(sound: Sound) {
