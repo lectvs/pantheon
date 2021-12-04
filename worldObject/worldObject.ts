@@ -18,6 +18,7 @@ namespace WorldObject {
         matchParentPhysicsGroup?: boolean;
         zBehavior?: ZBehavior;
         timeScale?: number;
+        useGlobalTime?: boolean;
         tags?: string[];
         data?: any;
     } & Callbacks<WorldObject>;
@@ -50,6 +51,7 @@ class WorldObject {
     life: Timer;
     zBehavior: WorldObject.ZBehavior;
     timeScale: number;
+    useGlobalTime: boolean;
     data: any;
 
     ignoreCamera: boolean;
@@ -94,7 +96,7 @@ class WorldObject {
     set physicsGroup(value: string) { World.Actions.setPhysicsGroup(this, value); }
     //
 
-    get delta() { return (this.world ? this.world.delta : global.game.delta) * this.timeScale;}
+    get delta() { return ((this.useGlobalTime || !this.world) ? global.game.delta : this.world.delta) * this.timeScale;}
 
     lastx: number;
     lasty: number;
@@ -131,6 +133,7 @@ class WorldObject {
         this.life = new Timer(config.life ?? Infinity, () => this.kill());
         this.zBehavior = config.zBehavior ?? WorldObject.DEFAULT_Z_BEHAVIOR;
         this.timeScale = config.timeScale ?? 1;
+        this.useGlobalTime = config.useGlobalTime ?? false;
         this.data = config.data ? O.deepClone(config.data) : {};
 
         this.setVisible(config.visible ?? true);
