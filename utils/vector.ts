@@ -154,6 +154,10 @@ class Vector2 {
         return copy;
     }
 
+    static fromPolar(radius: number, angle: number) {
+        return new Vector2(radius * M.cos(angle), radius * M.sin(angle));
+    }
+
     // Directions
     static get UP_LEFT() { return new Vector2(-1, -1); }
     static get UP() { return new Vector2(0, -1); }

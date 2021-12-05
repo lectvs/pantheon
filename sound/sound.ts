@@ -68,11 +68,11 @@ class Sound {
         this.pos += delta;
         
         if (WebAudio.started && this.webAudioSound instanceof WebAudioSoundDummy) {
-            if (this.pos < this.duration) {
+            if (this.pos < this.duration || this.loop) {
                 // Generate WebAudioSound from dummy
                 this.webAudioSound = this.webAudioSound.toWebAudioSound();
             }
-            this.webAudioSound.seek(this.pos);
+            this.webAudioSound.seek(this.loop ? M.mod(this.pos, this.duration) : this.pos);
         }
 
         this.volume = M.clamp(this.volume, 0, Sound.MAX_VOLUME);
