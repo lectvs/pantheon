@@ -67,7 +67,7 @@ class Game {
         global.metrics.startSpan('soundManager');
         this.soundManager.volume = this.volume * Options.sfxVolume;
         this.soundManager.update(this.delta);
-        this.musicManager.volume = this.volume * Options.musicVolume;
+        this.musicManager.baseVolume = this.volume * Options.musicVolume;
         this.musicManager.update(this.delta);
         global.metrics.endSpan('soundManager');
     }

@@ -1,9 +1,12 @@
 class MusicManager {
     private musics: Sound[];
     private transitionScript: Script;
-    private paused: boolean;
+    paused: boolean;
 
-    volume: number;
+    get volume() { return this.baseVolume * this.volumeScale; }
+
+    baseVolume: number;
+    volumeScale: number;
 
     get currentMusic() { return _.last(this.musics); }
     get currentMusicKey() { return this.currentMusic?.key; }
@@ -11,7 +14,8 @@ class MusicManager {
     constructor() {
         this.musics = [];
         this.paused = false;
-        this.volume = 1;
+        this.baseVolume = 1;
+        this.volumeScale = 1;
     }
 
     update(delta: number) {

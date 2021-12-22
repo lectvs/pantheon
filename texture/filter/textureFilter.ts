@@ -204,8 +204,8 @@ namespace TextureFilter {
         ${Perlin.SHADER_SOURCE}
 
         void main(void) {
-            float PI = 3.14159265358979;
-            float TWOPI = 6.28318530717958;
+            #define PI 3.14159265358979
+            #define TWOPI 6.28318530717958
 
             width = dimx;
             height = dimy;
