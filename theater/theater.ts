@@ -15,12 +15,10 @@ class Theater extends World {
     cutsceneManager: CutsceneManager;
     stageManager: StageManager;
     slideManager: SlideManager;
-    musicManager: MusicManager;
 
     get currentWorld() { return this.stageManager ? this.stageManager.currentWorld : undefined; }
     get isCutscenePlaying() { return this.cutsceneManager ? this.cutsceneManager.isCutscenePlaying : false; }
     get slides() { return this.slideManager ? this.slideManager.slides : []; }
-    get currentMusicKey() { return this.musicManager ? this.musicManager.currentMusicKey : undefined; }
 
     endOfFrameQueue: (() => any)[];
 
@@ -41,7 +39,6 @@ class Theater extends World {
         this.cutsceneManager = new CutsceneManager(this);
         this.stageManager = new StageManager(this);
         this.slideManager = new SlideManager(this);
-        this.musicManager = new MusicManager();
 
         this.endOfFrameQueue = [];
 
@@ -61,9 +58,6 @@ class Theater extends World {
         while (!_.isEmpty(this.endOfFrameQueue)) {
             this.endOfFrameQueue.shift()();
         }
-
-        this.musicManager.volume = this.volume * global.game.volume;
-        this.musicManager.update(this.delta);
     }
 
     addSlide(slide: Slide) {
@@ -78,20 +72,12 @@ class Theater extends World {
         this.runAtEndOfFrame(() => this.stageManager.internalLoadStage(stage, transition));
     }
 
-    pauseMusic() {
-        this.musicManager.pauseMusic();
-    }
-
     playCutscene(cutscene: Cutscene) {
         this.cutsceneManager.playCutscene(cutscene);
     }
 
     playCutsceneIfNotSeen(cutscene: Cutscene) {
         this.cutsceneManager.playCutsceneIfNotSeen(cutscene);
-    }
-
-    playMusic(key: string, fadeTime: number = 0) {
-        this.musicManager.playMusic(key, fadeTime);
     }
 
     runAtEndOfFrame(fn: () => any) {
@@ -116,14 +102,6 @@ class Theater extends World {
                 error('Cutscene skip exceeded max frames!');
             }
         }
-    }
-
-    stopMusic(fadeTime: number = 0) {
-        this.musicManager.stopMusic(fadeTime);
-    }
-
-    unpauseMusic() {
-        this.musicManager.unpauseMusic();
     }
 
     onStageLoad() {

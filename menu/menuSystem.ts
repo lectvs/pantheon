@@ -30,8 +30,8 @@ class MenuSystem {
         this.menuStack = [];
     }
 
-    loadMenu(menuClass: Menu.MenuClass) {
-        let instance = new menuClass(this);
+    loadMenu(menuFactory: Factory<Menu>) {
+        let instance = menuFactory();
         this.menuStack.push(instance);
     }
 }

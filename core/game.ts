@@ -1,7 +1,7 @@
 namespace Game {
     export type Config = {
-        entryPointMenuClass: Menu.MenuClass;
-        pauseMenuClass: Menu.MenuClass;
+        entryPointMenu: Factory<Menu>;
+        pauseMenu: Factory<Menu>;
         theaterConfig: Theater.Config;
     }
 }
@@ -13,28 +13,33 @@ class Game {
     private overlay: DebugOverlay;
     private isShowingOverlay: boolean;
 
-    private entryPointMenuClass: Menu.MenuClass;
-    private pauseMenuClass: Menu.MenuClass;
+    private entryPointMenu: Factory<Menu>;
+    private pauseMenu: Factory<Menu>;
     private theaterConfig: Theater.Config;
 
-    private soundManager: SoundManager;
+    soundManager: SoundManager;
+    musicManager: MusicManager;
     get volume(): number { return Options.volume; };
+    get currentMusicKey() { return this.musicManager ? this.musicManager.currentMusicKey : undefined; }
 
     get delta(): number { return Main.delta; }
 
     constructor(config: Game.Config) {
-        this.entryPointMenuClass = config.entryPointMenuClass;
-        this.pauseMenuClass = config.pauseMenuClass;
+        this.entryPointMenu = config.entryPointMenu;
+        this.pauseMenu = config.pauseMenu;
         this.theaterConfig = config.theaterConfig;
 
         this.soundManager = new SoundManager();
+        this.musicManager = new MusicManager();
 
         this.menuSystem = new MenuSystem(this);
-        this.loadMainMenu();
 
         this.overlay = new DebugOverlay();
         this.isShowingOverlay = false;
+    }
 
+    start() {
+        this.loadMainMenu();
         if (Debug.SKIP_MAIN_MENU) {
             this.startGame();
         }
@@ -60,8 +65,10 @@ class Game {
         global.metrics.endSpan('debugOverlay');
 
         global.metrics.startSpan('soundManager');
-        this.soundManager.volume = this.volume;
+        this.soundManager.volume = this.volume * Options.sfxVolume;
         this.soundManager.update(this.delta);
+        this.musicManager.volume = this.volume * Options.musicVolume;
+        this.musicManager.update(this.delta);
         global.metrics.endSpan('soundManager');
     }
 
@@ -74,7 +81,7 @@ class Game {
 
     private updateMetrics() {
         if (Debug.DEBUG && Input.justDown(Input.DEBUG_SHOW_METRICS_MENU)) {
-            global.game.menuSystem.loadMenu(MetricsMenu);
+            global.game.menuSystem.loadMenu(() => new MetricsMenu());
         }
     }
 
@@ -110,7 +117,7 @@ class Game {
     }
 
     loadMainMenu() {
-        this.menuSystem.loadMenu(this.entryPointMenuClass);
+        this.menuSystem.loadMenu(this.entryPointMenu);
     }
 
     loadTheater() {
@@ -118,7 +125,15 @@ class Game {
     }
 
     pauseGame() {
-        this.menuSystem.loadMenu(this.pauseMenuClass);
+        this.menuSystem.loadMenu(this.pauseMenu);
+    }
+
+    pauseMusic() {
+        this.musicManager.pauseMusic();
+    }
+
+    playMusic(key: string, fadeTime: number = 0) {
+        this.musicManager.playMusic(key, fadeTime);
     }
 
     playSound(key: string) {
@@ -130,7 +145,15 @@ class Game {
         this.menuSystem.clear();
     }
 
+    stopMusic(fadeTime: number = 0) {
+        this.musicManager.stopMusic(fadeTime);
+    }
+
     unpauseGame() {
         this.menuSystem.clear();
+    }
+
+    unpauseMusic() {
+        this.musicManager.unpauseMusic();
     }
 }

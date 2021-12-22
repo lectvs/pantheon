@@ -79,6 +79,11 @@ namespace M {
         return dx*dx + dy*dy;
     }
 
+    export function map(value: number, fromMin: number, fromMax: number, toMin: number, toMax: number) {
+        let p = (value - fromMin) / (fromMax - fromMin);
+        return lerp(toMin, toMax, p);
+    }
+
     export function max<T>(array: T[], key: (x: T) => number) {
         return -this.min(array, x => -key(x));
     }

@@ -1,19 +1,32 @@
 namespace Options {
     export type Options = {
-        volume: number;
-        controls: Input.KeyCodesByName;
+        [Options.VOLUME]: number;
+        [Options.SFX_VOLUME]: number;
+        [Options.MUSIC_VOLUME]: number;
+        [Options.CONTROLS]: Input.KeyCodesByName;
     } & Dict<any>;
 }
 
 class Options {
+    static readonly VOLUME = 'volume';
+    static readonly SFX_VOLUME = 'sfx_volume';
+    static readonly MUSIC_VOLUME = 'music_volume';
+    static readonly CONTROLS = 'controls';
+
     static optionsName: string;
     private static options: Options.Options;
     private static defaultOptions: Options.Options;
 
     static updateCallbacks: (() => any)[] = [];
 
-    static get volume() { return this.getOption('volume'); }
-    static set volume(value: number) { this.updateOption('volume', value); }
+    static get volume() { return this.getOption(Options.VOLUME); }
+    static set volume(value: number) { this.updateOption(Options.VOLUME, value); }
+
+    static get sfxVolume() { return this.getOption(Options.SFX_VOLUME); }
+    static set sfxVolume(value: number) { this.updateOption(Options.SFX_VOLUME, value); }
+
+    static get musicVolume() { return this.getOption(Options.MUSIC_VOLUME); }
+    static set musicVolume(value: number) { this.updateOption(Options.MUSIC_VOLUME, value); }
 
     static init(name: string, defaultOptions: Options.Options) {
         this.optionsName = name;

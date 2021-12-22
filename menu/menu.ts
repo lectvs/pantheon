@@ -1,23 +1,16 @@
 /// <reference path="../world/world.ts" />
 
-namespace Menu {
-    export type MenuClass = new (menuSystem: MenuSystem) => Menu;
-}
-
 class Menu extends World {
-    menuSystem: MenuSystem;
-
-    constructor(menuSystem: MenuSystem, config: World.Config = {}) {
+    constructor(config: World.Config = {}) {
         super(config);
-        this.menuSystem = menuSystem;
     }
 }
 
 class MetricsMenu extends Menu {
     private plot: MetricsPlot.Plot;
 
-    constructor(menuSystem: MenuSystem) {
-        super(menuSystem);
+    constructor() {
+        super();
 
         this.backgroundColor = 0x000000;
 
@@ -40,7 +33,7 @@ class MetricsMenu extends Menu {
 
         if (Input.justDown(Input.GAME_CLOSE_MENU)) {
             Input.consume(Input.GAME_CLOSE_MENU);
-            this.menuSystem.game.unpauseGame();
+            global.game.unpauseGame();
         }
 
         this.select.name<SpriteText>('graphxy')

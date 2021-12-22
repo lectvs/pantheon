@@ -35,7 +35,7 @@ class Input {
     static preventRegularKeyboardInput: boolean = false;
 
     static init() {
-        this.keyCodesByName = O.deepClone(Options.getOption('controls'));
+        this.keyCodesByName = O.deepClone(Options.getOption(Options.CONTROLS));
         this.isDownByKeyCode = {};
         this.keysByKeycode = {};
 
@@ -88,7 +88,7 @@ class Input {
     }
 
     static addControlBinding(controlName: string, keyCode: string) {
-        let controls: Dict<string[]> = Options.getOption('controls');
+        let controls: Dict<string[]> = Options.getOption(Options.CONTROLS);
         let controlBindings = controls[controlName];
         if (!controlBindings) {
             error(`Cannot add control binding for '${controlName}' since the control does not exist`);
@@ -102,7 +102,7 @@ class Input {
     }
 
     static removeControlBinding(controlName: string, keyCode: string) {
-        let controls: Dict<string[]> = Options.getOption('controls');
+        let controls: Dict<string[]> = Options.getOption(Options.CONTROLS);
         let controlBindings = controls[controlName];
         if (!controlBindings) {
             error(`Cannot remove control binding for '${controlName}' since the control does not exist`);
@@ -114,7 +114,7 @@ class Input {
     }
 
     static updateControlBinding(controlName: string, oldKeyCode: string, newKeyCode: string) {
-        let controls: Dict<string[]> = Options.getOption('controls');
+        let controls: Dict<string[]> = Options.getOption(Options.CONTROLS);
         let controlBindings = controls[controlName];
         if (!controlBindings) {
             error(`Cannot update control binding for '${controlName}' since the control does not exist`);

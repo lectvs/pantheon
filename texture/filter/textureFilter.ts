@@ -52,7 +52,7 @@ class TextureFilter {
     }
 
     borrowPixiFilter() {
-        this.borrowedPixiFilter = TextureFilter.cache.borrow(this, this);
+        this.borrowedPixiFilter = TextureFilter.cache.borrow(this);
         for (let uniform in this.uniforms) {
             this.borrowedPixiFilter.uniforms[uniform] = this.uniforms[uniform];
         }

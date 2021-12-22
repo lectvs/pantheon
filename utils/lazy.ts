@@ -17,3 +17,23 @@ class LazyValue<T> {
         return this.value;
     }
 }
+
+class LazyDict<T> {
+    private factory: (key: string) => T;
+    private values: Dict<T>;
+    private resolvedKeys: Set<string>;
+
+    constructor(factory: (key: string) => T) {
+        this.factory = factory;
+        this.values = {};
+        this.resolvedKeys = new Set();
+    }
+
+    get(key: string) {
+        if (!this.resolvedKeys.has(key)) {
+            this.values[key] = this.factory(key);
+            this.resolvedKeys.add(key);
+        }
+        return this.values[key];
+    }
+}

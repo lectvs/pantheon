@@ -25,6 +25,7 @@ namespace World {
         globalSoundHumanizePercent?: number;
 
         timescale?: number;
+        data?: any;
     }
 
     export type CollisionConfig = {
@@ -57,6 +58,7 @@ class World {
     worldObjects: WorldObject[];
     time: number;
     timescale: number;
+    data: any;
 
     physicsGroups: Dict<World.PhysicsGroup>;
     collisions: World.CollisionConfig[];
@@ -101,6 +103,7 @@ class World {
         this.height = config.height ?? global.gameHeight;
         this.time = 0;
         this.timescale = config.timescale ?? 1;
+        this.data = config.data ? O.deepClone(config.data) : {};
 
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
         this.collisions = config.collisions ?? [];
@@ -172,7 +175,7 @@ class World {
             layer.effects.updateEffects(this.delta);
         }
 
-        this.soundManager.volume = this.volume * global.game.volume;
+        this.soundManager.volume = this.volume * global.game.volume * Options.sfxVolume;
         this.soundManager.update(this.delta);
 
         this.time += this.delta;

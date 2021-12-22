@@ -136,7 +136,7 @@ class MenuControlMapper extends SpriteText {
         if (this.selectedBinding) {
             let pressedKey = Input.getEventKey();
             if (pressedKey) {
-                let controls = Options.getOption<Input.KeyCodesByName>('controls');
+                let controls = Options.getOption<Input.KeyCodesByName>(Options.CONTROLS);
                 let pressedKeyAlreadyBound = _.contains(controls[this.controlName], pressedKey);
                 let pressedKeyIsSelect = _.contains(controls[Input.GAME_SELECT], pressedKey);
                 if (pressedKeyAlreadyBound) {
@@ -154,7 +154,7 @@ class MenuControlMapper extends SpriteText {
     private setBindings() {
         World.Actions.removeWorldObjectsFromWorld(this.children);
 
-        let controls = <Input.KeyCodesByName>Options.getOption('controls');
+        let controls = <Input.KeyCodesByName>Options.getOption(Options.CONTROLS);
         let controlBindings = controls[this.controlName];
 
         let bindingx = 0;

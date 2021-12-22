@@ -105,8 +105,9 @@ class Main {
     }
 
     private static load() {
-        Options.updateCallbacks.push(() => Input.init());
+        //Options.updateCallbacks.push(() => Input.init()); // TODO: fix this for continuous volume slider
         Options.init(global.gameCodeName, this.config.defaultOptions);
+        Input.init(); // TODO: remove this when fixed above
 
         this.initEvents();
 
@@ -114,6 +115,7 @@ class Main {
 
         this.delta = 0;
         this.game = new Game(this.config.game);
+        this.game.start();
         this.game.update(); // Update game once just to make sure everything is set up correctly.
     }
 

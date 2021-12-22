@@ -30,6 +30,9 @@ type Boundaries = {
     right?: number;
 }
 
+type Getter<T> = () => T;
+type Setter<T> = (value: T) => void;
+
 type ReplaceConfigCallbacks<SuperType extends WorldObject.Config, NewType extends WorldObject> = Omit<SuperType, WorldObject.CallbackKeys> & WorldObject.Callbacks<NewType>;
 
 function vec2(x: number | Pt, y?: number): Vector2 {
