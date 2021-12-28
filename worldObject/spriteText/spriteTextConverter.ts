@@ -6,7 +6,7 @@ namespace SpriteTextConverter {
     export function textToCharListWithWordWrap(text: string, font: SpriteText.Font, maxWidth: number) {
         if (!text) return [];
 
-        let result: SpriteText.Character[] = [];
+        let result: SpriteText.Character[][] = [[]];
         let word: SpriteText.Character[] = [];
         let nextCharPosition: Vector2 = new Vector2(0, 0);
         let tagStack: SpriteText.TagData[] = [];
@@ -19,7 +19,8 @@ namespace SpriteTextConverter {
             } else if (text[i] === '\n') {
                 pushWord(word, result, nextCharPosition, font, maxWidth, current);
                 nextCharPosition.x = 0;
-                nextCharPosition.y += getNewLineHeightDiff(nextCharPosition.y, SpriteText.getHeightOfCharList(result), font.newlineHeight);
+                nextCharPosition.y += getNewLineHeightDiff(nextCharPosition.y, SpriteText.getHeightOfCharList(_.flatten(result)), font.newlineHeight);
+                result.push([]);
             } else if (text[i] === '[') {
                 let closingBracketIndex = text.indexOf(']', i); 
                 if (closingBracketIndex < i+1) {
@@ -64,18 +65,29 @@ namespace SpriteTextConverter {
     }
 
     function createCharacter(font: SpriteText.Font, char: string, x: number, y: number, part: number, tagData: SpriteText.TagData[]) {
-        let charTexture = AssetCache.getTexture(font.charTextures[char]);
-        if (!font.charTextures[char] || !charTexture) {
-            error(`Font does not have character '${char}':`, font);
-            char = 'missing';
-            charTexture = AssetCache.getTexture(font.charTextures[char]);
+        let charWidth: number;
+        let charHeight: number;
+
+        if (char === ' ') {
+            charWidth = font.spaceWidth;
+            charHeight = font.charHeight;
+        } else {
+            let charTexture = AssetCache.getTexture(font.charTextures[char]);
+            if (!font.charTextures[char] || !charTexture) {
+                error(`Font does not have character '${char}':`, font);
+                char = 'missing';
+                charTexture = AssetCache.getTexture(font.charTextures[char]);
+            }
+            charWidth = charTexture.width;
+            charHeight = charTexture.height;
         }
+        
         let character = new SpriteText.Character();
         character.char = char;
         character.x = x;
         character.y = y;
-        character.width = charTexture.width;
-        character.height = charTexture.height;
+        character.width = charWidth;
+        character.height = charHeight;
         character.part = part;
         character.tagData = A.clone(tagData);
         return character;
@@ -90,13 +102,13 @@ namespace SpriteTextConverter {
         return result;
     }
 
-    function pushWord(word: SpriteText.Character[], result: SpriteText.Character[], position: Vector2, font: SpriteText.Font, maxWidth: number, current: CurrentData) {
+    function pushWord(word: SpriteText.Character[], resultLines: SpriteText.Character[][], position: Vector2, font: SpriteText.Font, maxWidth: number, current: CurrentData) {
         if (_.isEmpty(word)) return;
 
         let lastChar = _.last(word);
         if (maxWidth > 0 && lastChar.right > maxWidth) {
             let diffx = -word[0].x;
-            let diffy = getNewLineHeightDiff(word[0].y, SpriteText.getHeightOfCharList(result), font.newlineHeight);
+            let diffy = getNewLineHeightDiff(word[0].y, SpriteText.getHeightOfCharList(_.flatten(resultLines)), font.newlineHeight);
             for (let char of word) {
                 char.x += diffx;
                 char.y += diffy;
@@ -105,13 +117,12 @@ namespace SpriteTextConverter {
             position.x += diffx;
             position.y += diffy;
             current.part++;
+            resultLines.push([]);
         }
 
         while (word.length > 0) {
-            result.push(word.shift());
+            _.last(resultLines).push(word.shift());
         }
-
-        return;
     }
 
     function getNewLineHeightDiff(lastLineY: number, heightOfCharList: number, fontNewLineHeight: number) {

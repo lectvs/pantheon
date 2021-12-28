@@ -4,6 +4,7 @@ namespace SpriteText {
     export type Config = ReplaceConfigCallbacks<WorldObject.Config, SpriteText> & {
         font?: string;
         text?: string;
+        justify?: Justify;
         anchor?: Vector2;
         alpha?: number;
         flipX?: boolean;
@@ -24,6 +25,8 @@ namespace SpriteText {
         spaceWidth: number;
         newlineHeight: number;
     }
+
+    export type Justify = 'left' | 'center' | 'right';
 
     export type Style = {
         color?: number;
@@ -49,7 +52,7 @@ class SpriteText extends WorldObject {
     protected font: SpriteText.Font;
     private _fontKey: string;
     get fontKey() { return this._fontKey; }
-    private chars: SpriteText.Character[];
+    private chars: SpriteText.Character[][];
 
     private _style: Required<SpriteText.Style>;
     get style() { return this._style; }
@@ -71,6 +74,13 @@ class SpriteText extends WorldObject {
     get visibleCharCount() { return this._visibleCharCount; }
     set visibleCharCount(value: number) {
         this._visibleCharCount = value;
+        this.dirty = true;
+    }
+
+    private _justify: SpriteText.Justify;
+    get justify() { return this._justify; }
+    set justify(value: SpriteText.Justify) {
+        this._justify = value;
         this.dirty = true;
     }
 
@@ -122,6 +132,7 @@ class SpriteText extends WorldObject {
         this.maxWidth = config.maxWidth ?? Infinity;
 
         this.anchor = config.anchor ?? Vector2.TOP_LEFT;
+        this.justify = config.justify ?? 'left';
 
         this.alpha = config.alpha ?? 1;
         this.flipX = config.flipX ?? false;
@@ -185,12 +196,15 @@ class SpriteText extends WorldObject {
     }
 
     renderSpriteText() {
-        let charCount = Math.min(this.visibleCharCount, this.chars.length);
+        SpriteText.justify(this.chars, this.justify);
 
-        this.staticTextures = SpriteTextConverter.getStaticTexturesForCharList(this.chars, charCount);
+        let chars = _.flatten(this.chars);
+        let charCount = Math.min(this.visibleCharCount, chars.length);
+
+        this.staticTextures = SpriteTextConverter.getStaticTexturesForCharList(chars, charCount);
 
         for (let i = 0; i < charCount; i++) {
-            let char = this.chars[i];
+            let char = chars[i];
             let charTexture = AssetCache.getTexture(this.font.charTextures[char.char]);
 
             let staticTextureData = this.staticTextures[char.part];
@@ -207,7 +221,7 @@ class SpriteText extends WorldObject {
     }
 
     getCharList() {
-        return this.chars;
+        return _.flatten(this.chars);
     }
 
     getCurrentText() {
@@ -215,11 +229,11 @@ class SpriteText extends WorldObject {
     }
 
     getTextWidth() {
-        return SpriteText.getWidthOfCharList(this.chars, this.visibleCharCount) * this.scaleX;
+        return SpriteText.getWidthOfCharList(_.flatten(this.chars), this.visibleCharCount) * this.scaleX;
     }
 
     getTextHeight() {
-        return SpriteText.getHeightOfCharList(this.chars, this.visibleCharCount) * this.scaleY;
+        return SpriteText.getHeightOfCharList(_.flatten(this.chars), this.visibleCharCount) * this.scaleY;
     }
 
     getTextWorldBounds() {
@@ -333,12 +347,10 @@ namespace SpriteText {
         if (_.isEmpty(list)) return 0;
         charCount = Math.min(charCount ?? list.length, list.length);
 
-        let result = 0;
-        for (let i = 0; i < charCount; i++) {
-            if (list[i].right > result) result = list[i].right;
-        }
+        let min = M.min(list, char => char.left);
+        let max = M.max(list, char => char.right);
 
-        return result;
+        return max - min;
     }
 
     export function getHeightOfCharList(list: SpriteText.Character[], charCount?: number) {
@@ -351,6 +363,26 @@ namespace SpriteText {
         }
 
         return result;
+    }
+
+    export function justify(lines: SpriteText.Character[][], justify: SpriteText.Justify) {
+        let maxWidth = SpriteText.getWidthOfCharList(_.flatten(lines));
+        for (let line of lines) {
+            if (line.length === 0) continue;
+            let lineWidth = SpriteText.getWidthOfCharList(line);
+            let lineX = (maxWidth - lineWidth) * justifyToX(justify);
+            let minX = M.min(line, char => char.x);
+            let dx = lineX - minX;
+            for (let char of line) {
+                char.x += dx;
+            }
+        }
+    }
+
+    function justifyToX(justify: SpriteText.Justify) {
+        if (justify === 'left') return 0;
+        if (justify === 'center') return 0.5;
+        return 1;
     }
 
     export const NOOP_TAG = 'noop';
