@@ -13,6 +13,8 @@ class Game {
     private overlay: DebugOverlay;
     private isShowingOverlay: boolean;
 
+    allowPauseWithPauseKey: boolean;
+
     private entryPointMenu: Factory<Menu>;
     private pauseMenu: Factory<Menu>;
     private theaterConfig: Theater.Config;
@@ -36,6 +38,7 @@ class Game {
 
         this.overlay = new DebugOverlay();
         this.isShowingOverlay = false;
+        this.allowPauseWithPauseKey = true;
     }
 
     start() {
@@ -73,7 +76,7 @@ class Game {
     }
 
     private updatePause() {
-        if (Input.justDown(Input.GAME_PAUSE) && !this.menuSystem.inMenu) {
+        if (this.allowPauseWithPauseKey && Input.justDown(Input.GAME_PAUSE) && !this.menuSystem.inMenu) {
             Input.consume(Input.GAME_PAUSE);
             this.pauseGame();
         }
