@@ -84,6 +84,11 @@ namespace M {
         return lerp(toMin, toMax, p);
     }
 
+    export function mapClamp(value: number, fromMin: number, fromMax: number, toMin: number, toMax: number) {
+        let p = (value - fromMin) / (fromMax - fromMin);
+        return clamp(lerp(toMin, toMax, p), toMin, toMax);
+    }
+
     export function max<T>(array: T[], key: (x: T) => number) {
         return -this.min(array, x => -key(x));
     }

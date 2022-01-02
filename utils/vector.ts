@@ -31,16 +31,18 @@ class Vector2 {
             this.x += x.x;
             this.y += x.y;
         }
+        return this;
     }
 
     clampMagnitude(maxMagnitude: number) {
         if (maxMagnitude < 0) {
             error('Tried to clamp vector magnitude with negative maxMagnitude');
-            return;
+            return this;
         }
         if (this.magnitude > maxMagnitude) {
             this.setMagnitude(maxMagnitude);
         } 
+        return this;
     }
 
     clone() {
@@ -55,6 +57,7 @@ class Vector2 {
             this.x /= x.x;
             this.y /= x.y;
         }
+        return this;
     }
 
     isZero() {
@@ -69,6 +72,7 @@ class Vector2 {
             this.x *= x.x;
             this.y *= x.y;
         }
+        return this;
     }
 
     normalize() {
@@ -77,6 +81,7 @@ class Vector2 {
             this.x /= mag;
             this.y /= mag;
         }
+        return this;
     }
 
     normalized() {
@@ -89,6 +94,7 @@ class Vector2 {
         let factor = G.dot(this, other) / other.magnitudeSq;
         this.x = other.x * factor;
         this.y = other.y * factor;
+        return this;
     }
 
     projectedOnto(other: Vector2) {
@@ -105,6 +111,7 @@ class Vector2 {
 
         this.x = cos * x - sin * y;
         this.y = sin * x + cos * y;
+        return this;
     }
 
     rotated(angle: number) {
@@ -120,11 +127,13 @@ class Vector2 {
         }
         this.x = x;
         this.y = y;
+        return this;
     }
 
     scale(amount: number) {
         this.x *= amount;
         this.y *= amount;
+        return this;
     }
 
     scaled(amount: number) {
@@ -136,6 +145,7 @@ class Vector2 {
     setMagnitude(magnitude: number) {
         this.normalize();
         this.scale(magnitude);
+        return this;
     }
 
     subtract(x: Pt | number, y?: number) {
@@ -146,6 +156,7 @@ class Vector2 {
             this.x -= x.x;
             this.y -= x.y;
         }
+        return this;
     }
 
     withMagnitude(magnitude: number) {
