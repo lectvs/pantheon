@@ -44,6 +44,10 @@ class Debug {
         if (Input.justDown(Input.DEBUG_FRAME_SKIP_STEP) || Input.justDown(Input.DEBUG_FRAME_SKIP_RUN)) {
             Debug.FRAME_STEP_ENABLED = true;
         }
+
+        if (Input.justDown(Input.DEBUG_FRAME_SKIP_DISABLE)) {
+            Debug.FRAME_STEP_ENABLED = false;
+        }
     }
 
     private static _DEBUG: boolean;
