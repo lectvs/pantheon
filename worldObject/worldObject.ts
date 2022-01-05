@@ -115,7 +115,7 @@ class WorldObject {
     readonly uid: string;
 
     protected scriptManager: ScriptManager;
-    protected stateMachine: StateMachine;
+    stateMachine: StateMachine;
     get state() { return this.stateMachine.getCurrentStateName(); }
 
     onAddCallback: WorldObject.OnAddCallback<this>;
@@ -307,9 +307,12 @@ class WorldObject {
         }
     }
 
-    addTimer(timer: Timer) {
-        this.timers.push(timer);
-        return timer;
+    addTimer(durationOrTimer: number | Timer, callback?: () => any, count: number = 1) {
+        if (_.isNumber(durationOrTimer)) {
+            durationOrTimer = new Timer(durationOrTimer, callback, count);
+        }
+        this.timers.push(durationOrTimer);
+        return durationOrTimer;
     }
 
     getChildByIndex<T extends WorldObject>(index: number) {

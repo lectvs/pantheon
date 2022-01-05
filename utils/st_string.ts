@@ -14,6 +14,18 @@ namespace St {
         return text;
     }
 
+    export function padLeftRight(text: string, minLength: number, extraPadBias: 'left' | 'right' | 'both' | 'none', padString: string = ' ', ) {
+        while (text.length < minLength-1) {
+            text = padString + text + padString;
+        }
+        if (text.length === minLength-1) {
+            if (extraPadBias === 'left') return padString + text;
+            if (extraPadBias === 'right') return text + padString;
+            if (extraPadBias === 'both') return padString + text + padString;
+        }
+        return text;
+    }
+
     export function padRight(text: string, minLength: number, padString: string = ' ') {
         while (text.length < minLength) {
             text = text + padString;
