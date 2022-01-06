@@ -19,7 +19,7 @@ class AnimationManager {
         if (this.currentFrame) {
             this.currentFrameTime += delta * this.speed;
 
-            if (this.currentFrameTime >= this.currentFrame.duration) {
+            while (this.currentFrame && this.currentFrameTime >= this.currentFrame.duration) {
                 this.currentFrameTime -= this.currentFrame.duration;
                 this.setCurrentFrame(this.currentFrame.nextFrameRef, false, true);
             }
