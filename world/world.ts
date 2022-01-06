@@ -305,6 +305,7 @@ class World {
             obj = this.select.name<T>(obj);
             if (!obj) return;
         }
+        if (!obj.world) return;
         if (obj.world !== this) {
             error(`Cannot remove object ${obj.name} from world because it does not exist in the world. World:`, this);
             return undefined;

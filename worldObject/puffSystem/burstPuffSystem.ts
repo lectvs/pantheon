@@ -25,7 +25,7 @@ class BurstPuffSystem extends PuffSystem {
         super.update();
 
         if (this.deleteOnComplete && _.isEmpty(this.puffs)) {
-            this.removeFromWorld();
+            this.kill();
         }
     }
 }

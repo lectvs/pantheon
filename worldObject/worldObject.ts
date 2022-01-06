@@ -424,6 +424,10 @@ class WorldObject {
         return result;
     }
 
+    /**
+     * @deprecated Please use kill() whenever possible. This method immediately removes the object from its
+     *             world, which has been known to cause problems in the past if this occurs during the update loop.
+     */
     removeFromWorld(): this {
         if (!this.world) return this;
         return World.Actions.removeWorldObjectFromWorld(this);
