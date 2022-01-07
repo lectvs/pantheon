@@ -67,16 +67,29 @@ interface Texture {
 }
 
 namespace Texture {
+    const cache_filledCircle: Dict<BasicTexture> = {};
     export function filledCircle(radius: number, fillColor: number, fillAlpha: number = 1) {
-        let result = new BasicTexture(radius*2, radius*2);
-        Draw.circleSolid(result, radius, radius, radius, { color: fillColor, alpha: fillAlpha, thickness: 0 })
-        return result;
+        let key = `${radius},${fillColor},${fillAlpha}`;
+        if (!cache_filledCircle[key]) {
+            let result = new BasicTexture(radius*2, radius*2);
+            Draw.circleSolid(result, radius, radius, radius, { color: fillColor, alpha: fillAlpha, thickness: 0 });
+            result.immutable = true;
+            cache_filledCircle[key] = result;
+        }
+        
+        return cache_filledCircle[key];
     }
 
+    const cache_filledRect: Dict<BasicTexture> = {};
     export function filledRect(width: number, height: number, fillColor: number, fillAlpha: number = 1) {
-        let result = new BasicTexture(width, height);
-        Draw.fill(result, { color: fillColor, alpha: fillAlpha, thickness: 0 });
-        return result;
+        let key = `${width},${height},${fillColor},${fillAlpha}`;
+        if (!cache_filledRect[key]) {
+            let result = new BasicTexture(width, height);
+            Draw.fill(result, { color: fillColor, alpha: fillAlpha, thickness: 0 });
+            result.immutable = true;
+            cache_filledRect[key] = result;
+        }
+        return cache_filledRect[key];
     }
 
     export function fromPixiTexture(pixiTexture: PIXI.Texture) {
@@ -143,10 +156,16 @@ namespace Texture {
         return result;
     }
 
-    export function outlineRect(width: number, height: number, outlineColor: number, outlineAlpha: number = 1, outlineThickness = 1) {
-        let result = new BasicTexture(width, height);
-        Draw.rectangleOutline(result, 0, 0, width, height, Draw.ALIGNMENT_INNER, { color: outlineColor, alpha: outlineAlpha, thickness: outlineThickness });
-        return result;
+    const cache_outlineRect: Dict<BasicTexture> = {};
+    export function outlineRect(width: number, height: number, outlineColor: number, outlineAlpha: number = 1, outlineThickness: number = 1) {
+        let key = `${width},${height},${outlineColor},${outlineAlpha},${outlineThickness}`;
+        if (!cache_outlineRect[key]) {
+            let result = new BasicTexture(width, height);
+            Draw.rectangleOutline(result, 0, 0, width, height, Draw.ALIGNMENT_INNER, { color: outlineColor, alpha: outlineAlpha, thickness: outlineThickness });
+            result.immutable = true;
+            cache_outlineRect[key] = result;
+        }
+        return cache_outlineRect[key];
     }
 
     export function setFilterProperties(filter: TextureFilter, posx: number, posy: number, dimx: number, dimy: number) {

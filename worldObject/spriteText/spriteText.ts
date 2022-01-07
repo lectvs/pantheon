@@ -150,6 +150,13 @@ class SpriteText extends WorldObject {
         this.dirty = true;
     }
 
+    onRemove(): void {
+        super.onRemove();
+        SpriteTextConverter.returnStaticTextures(this.staticTextures);
+        this.staticTextures = undefined;
+        this.dirty = true;
+    }
+
     update() {
         super.update();
         this.effects.updateEffects(this.delta);
@@ -201,6 +208,7 @@ class SpriteText extends WorldObject {
         let chars = _.flatten(this.chars);
         let charCount = Math.min(this.visibleCharCount, chars.length);
 
+        SpriteTextConverter.returnStaticTextures(this.staticTextures);
         this.staticTextures = SpriteTextConverter.getStaticTexturesForCharList(chars, charCount);
 
         for (let i = 0; i < charCount; i++) {

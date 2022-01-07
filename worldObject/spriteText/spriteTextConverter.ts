@@ -148,14 +148,25 @@ namespace SpriteTextConverter {
         let textures: Dict<SpriteText.StaticTextureData> = {};
 
         for (let part in bounds) {
+            let texture = cache_staticTextures.borrow(bounds[part].right - bounds[part].left, bounds[part].bottom - bounds[part].top);
+            texture.clear();
             textures[part] = {
                 x: bounds[part].left,
                 y: bounds[part].top,
-                texture: new BasicTexture(bounds[part].right - bounds[part].left, bounds[part].bottom - bounds[part].top),
+                texture: texture,
                 tagData: partToTagData[part],
             };
         }
 
         return textures;
     }
+
+    export function returnStaticTextures(textures: Dict<SpriteText.StaticTextureData>) {
+        if (!textures) return;
+        for (let part in textures) {
+            cache_staticTextures.return(textures[part].texture.width, textures[part].texture.height, textures[part].texture);
+        }
+    }
+
+    export const cache_staticTextures = new DualKeyCache<number, number, Texture>((w, h) => new BasicTexture(w, h, false, 'getStaticTexturesForCharList'), (w, h) => `${w},${h}`);
 }

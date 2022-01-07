@@ -30,10 +30,9 @@ class Draw {
     static eraseRect(texture: Texture, x: number, y: number, width: number, height: number) {
         let newTexture = texture.clone();
 
-        let maskTexture = Texture.filledRect(width, height, 0xFFFFFF);
         let mask = new MaskFilter({
             type: 'local',
-            mask: maskTexture,
+            mask: Texture.filledRect(width, height, 0xFFFFFF),
             offsetX: x, offsetY: y,
             invert: true,
         });

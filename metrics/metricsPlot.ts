@@ -7,7 +7,7 @@ namespace MetricsPlot {
 
     export function plotRecording(recording: Metrics.Span, width: number, height: number): Plot {
         let plot = {
-            texture: Texture.filledRect(width, height, 0xFFFFFF),
+            texture: Texture.filledRect(width, height, 0xFFFFFF).clone(),
             dataPoints: {},
             graphBounds: { left: 0, right: width, bottom: 0, top: height },
         };
