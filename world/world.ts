@@ -547,6 +547,7 @@ namespace World {
 
             if (obj.world && !obj.world.getLayerByName(layerName)) {
                 error(`Cannot set layer on object '${obj.name}' as no layer named ${layerName} exists in world!`, obj.world);
+                setLayer(obj, World.DEFAULT_LAYER);
                 return obj.layer;
             }
 
