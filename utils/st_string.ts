@@ -1,4 +1,32 @@
 namespace St {
+    export function asciiToBinary(ascii: string) {
+        let result = "";
+        for (var i = 0; i < ascii.length; i++) {
+            var bin = ascii[i].charCodeAt(0).toString(2);
+            result += Array(8 - bin.length + 1).join("0") + bin;
+        }
+        return result;
+    }
+
+    export function binaryToAscii(binary: string) {
+        var result = "";
+            var arr = binary.match(/.{1,8}/g);
+            for (var i = 0; i < arr.length; i++) {
+                result += String.fromCharCode(parseInt(arr[i], 2));
+            }
+            return result;
+    }
+
+    export function encodeB64S(text: string) {
+        let binary = St.asciiToBinary(text);
+        return btoa(St.binaryToAscii(binary[binary.length-1] + binary.substring(0, binary.length-1)));
+    }
+
+    export function decodeB64S(text: string) {
+        let binary = St.asciiToBinary(atob(text));
+        return St.binaryToAscii(binary.substring(1) + binary[0]);
+    }
+
     export function isEmpty(text: string) {
         return !text;
     }
