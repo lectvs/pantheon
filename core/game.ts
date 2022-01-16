@@ -2,7 +2,7 @@ namespace Game {
     export type Config = {
         entryPointMenu: Factory<Menu>;
         pauseMenu: Factory<Menu>;
-        theaterConfig: Theater.Config;
+        theaterFactory: Factory<Theater>;
     }
 }
 
@@ -17,7 +17,7 @@ class Game {
 
     private entryPointMenu: Factory<Menu>;
     private pauseMenu: Factory<Menu>;
-    private theaterConfig: Theater.Config;
+    private theaterFactory: Factory<Theater>;
 
     soundManager: SoundManager;
     musicManager: MusicManager;
@@ -29,7 +29,7 @@ class Game {
     constructor(config: Game.Config) {
         this.entryPointMenu = config.entryPointMenu;
         this.pauseMenu = config.pauseMenu;
-        this.theaterConfig = config.theaterConfig;
+        this.theaterFactory = config.theaterFactory;
 
         this.soundManager = new SoundManager();
         this.musicManager = new MusicManager();
@@ -124,7 +124,7 @@ class Game {
     }
 
     loadTheater() {
-        this.theater = new Theater(this.theaterConfig);
+        this.theater = this.theaterFactory();
     }
 
     pauseGame() {
