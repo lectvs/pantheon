@@ -31,6 +31,8 @@ namespace SpriteText {
     export type Style = {
         color?: number;
         alpha?: number;
+        offsetX?: number;
+        offsetY?: number;
         filters?: TextureFilter[];
     }
 
@@ -120,11 +122,13 @@ class SpriteText extends WorldObject {
             };
         }
 
-        this._style = _.defaults(O.deepClone(config.style ?? {}), {
+        this._style = _.defaults(O.deepClone(config.style ?? {}), requireType<Required<SpriteText.Style>>({
             color: 0xFFFFFF,
             alpha: 1,
+            offsetX: 0,
+            offsetY: 0,
             filters: [],
-        });
+        }));
         this.lastStyle = O.deepClone(this.style);
 
         this.visibleCharCount = Infinity;
@@ -187,8 +191,8 @@ class SpriteText extends WorldObject {
             let data = this.staticTextures[key];
             let style = this.getStyleFromTags(data.tagData, this.style);
             data.texture.renderTo(texture, {
-                x: x + anchorOffsetX + data.x,
-                y: y + anchorOffsetY + data.y,
+                x: x + anchorOffsetX + data.x + style.offsetX,
+                y: y + anchorOffsetY + data.y + style.offsetY,
                 tint: style.color,
                 alpha: this.alpha * style.alpha,
                 scaleX: (this.flipX ? -1 : 1) * this.scaleX,
@@ -287,6 +291,8 @@ class SpriteText extends WorldObject {
             let style = this.getTagStyle(data.tag, data.params);
             if (style.color !== undefined) result.color = style.color;
             if (style.alpha !== undefined) result.alpha = style.alpha;
+            if (style.offsetX !== undefined) result.offsetX = style.offsetX;
+            if (style.offsetY !== undefined) result.offsetY = style.offsetY;
             if (!_.isEmpty(style.filters)) result.filters.push(...style.filters);
         }
 

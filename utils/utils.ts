@@ -5,3 +5,7 @@ namespace Utils {
 
     export const UID = new UIDGenerator();
 }
+
+function requireType<T>(param: T) {
+    return param;
+}
