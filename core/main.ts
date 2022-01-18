@@ -32,7 +32,7 @@ namespace Main {
 
 class Main {
     private static configFactory: () => Main.Config;
-    private static config: Main.Config;
+    static config: Main.Config;
 
     static game: Game;
     static soundManager: GlobalSoundManager;
@@ -160,6 +160,12 @@ class Main {
     private static renderScreenToCanvas() {
         Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
         Main.renderer.render(Main.screen.renderTextureSprite);
+    }
+
+    static forceRender() {
+        Main.screen.clear();
+        Main.game.render(Main.screen);
+        Main.renderScreenToCanvas();
     }
 
     // For use in preload.

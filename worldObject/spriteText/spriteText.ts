@@ -61,6 +61,9 @@ class SpriteText extends WorldObject {
     set style(value: Required<SpriteText.Style>) {
         this._style.alpha = value.alpha;
         this._style.color = value.color;
+        this._style.offsetX = value.offsetX;
+        this._style.offsetY = value.offsetY;
+        this._style.filters = A.clone(value.filters);
     }
     private lastStyle: Required<SpriteText.Style>;
 
