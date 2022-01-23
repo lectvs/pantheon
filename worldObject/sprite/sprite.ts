@@ -11,6 +11,7 @@ namespace Sprite {
         offsetY?: number;
         angle?: number;
         vangle?: number;
+        scale?: number;
         scaleX?: number;
         scaleY?: number;
         tint?: number;
@@ -32,8 +33,13 @@ class Sprite extends PhysicsWorldObject {
     offsetY: number;
     angle: number;
     vangle: number;
+
     scaleX: number;
     scaleY: number;
+    set scale(value: number) {
+        this.scaleX = value;
+        this.scaleY = value;
+    }
 
     tint: number;
     alpha: number;
@@ -62,8 +68,8 @@ class Sprite extends PhysicsWorldObject {
         this.offsetY = config.offsetY ?? 0;
         this.angle = config.angle ?? 0;
         this.vangle = config.vangle ?? 0;
-        this.scaleX = config.scaleX ?? 1;
-        this.scaleY = config.scaleY ?? 1;
+        this.scaleX = config.scaleX ?? (config.scale ?? 1);
+        this.scaleY = config.scaleY ?? (config.scale ?? 1);
 
         this.tint = config.tint ?? 0xFFFFFF;
         this.alpha = config.alpha ?? 1;

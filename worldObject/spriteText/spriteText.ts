@@ -9,6 +9,7 @@ namespace SpriteText {
         alpha?: number;
         flipX?: boolean;
         flipY?: boolean;
+        scale?: number;
         scaleX?: number;
         scaleY?: number;
         angle?: number;
@@ -94,9 +95,14 @@ class SpriteText extends WorldObject {
     alpha: number;
     flipX: boolean;
     flipY: boolean;
+    angle: number;
+
     scaleX: number;
     scaleY: number;
-    angle: number;
+    set scale(value: number) {
+        this.scaleX = value;
+        this.scaleY = value;
+    }
 
     effects: Effects;
     mask: Mask.WorldObjectMaskConfig;
@@ -144,8 +150,8 @@ class SpriteText extends WorldObject {
         this.alpha = config.alpha ?? 1;
         this.flipX = config.flipX ?? false;
         this.flipY = config.flipY ?? false;
-        this.scaleX = config.scaleX ?? 1;
-        this.scaleY = config.scaleY ?? 1;
+        this.scaleX = config.scaleX ?? (config.scale ?? 1);
+        this.scaleY = config.scaleY ?? (config.scale ?? 1);
         this.angle = config.angle ?? 0;
 
         this.effects = new Effects();
