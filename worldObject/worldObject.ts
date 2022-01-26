@@ -14,8 +14,7 @@ namespace WorldObject {
         life?: number;
         timers?: Timer[];
         ignoreCamera?: boolean;
-        matchParentLayer?: boolean;
-        matchParentPhysicsGroup?: boolean;
+        copyFromParent?: string[];
         zBehavior?: ZBehavior;
         timeScale?: number;
         useGlobalTime?: boolean;
@@ -55,8 +54,7 @@ class WorldObject {
     data: any;
 
     ignoreCamera: boolean;
-    matchParentLayer: boolean;
-    matchParentPhysicsGroup: boolean;
+    copyFromParent: string[];
 
     get x() { return this.localx + (this.parent ? this.parent.x : 0); }
     get y() { return this.localy + (this.parent ? this.parent.y : 0); }
@@ -140,8 +138,7 @@ class WorldObject {
         this.setActive(config.active ?? true);
 
         this.ignoreCamera = config.ignoreCamera ?? false;
-        this.matchParentLayer = config.matchParentLayer ?? false;
-        this.matchParentPhysicsGroup = config.matchParentPhysicsGroup ?? false;
+        this.copyFromParent = config.copyFromParent ? A.clone(config.copyFromParent) : [];
 
         this.alive = true;
         
@@ -225,8 +222,7 @@ class WorldObject {
     postUpdate() {
         this.controller.reset();
 
-        this.resolveLayer();
-        this.resolvePhysicsGroup();
+        this.resolveCopyFromParent();
     }
 
     fullUpdate() {
@@ -466,14 +462,36 @@ class WorldObject {
     }
 
     private resolveLayer() {
-        if (this.matchParentLayer && this.parent && this._layer !== this.parent.layer) {
+        if (_.contains(this.copyFromParent, 'layer') && this.parent && this._layer !== this.parent.layer) {
             this.layer = this.parent.layer;
         }
     }
 
     private resolvePhysicsGroup() {
-        if (this.matchParentPhysicsGroup && this.parent && this._physicsGroup !== this.parent.physicsGroup) {
+        if (_.contains(this.copyFromParent, 'physicsGroup') && this.parent && this._physicsGroup !== this.parent.physicsGroup) {
             this.physicsGroup = this.parent.physicsGroup;
+        }
+    }
+
+    private resolveCopyFromParent() {
+        if (!this.parent) return;
+        for (let path of this.copyFromParent) {
+            if (path === 'layer') {
+                this.resolveLayer();
+                continue;
+            }
+            if (path === 'physicsGroup') {
+                this.resolvePhysicsGroup();
+                continue;
+            }
+            if (!O.hasPath(this, path) || !O.hasPath(this.parent, path)) {
+                error('Cannot copy from parent because path does not exist on both objects:', path, this, this.parent);
+                continue;
+            }
+            let thisValue = O.getPath(this, path);
+            let parentValue = O.getPath(this.parent, path);
+            if (thisValue === parentValue) continue;
+            O.setPath(this, path, parentValue);
         }
     }
 

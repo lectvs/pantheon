@@ -70,6 +70,44 @@ namespace A {
     }
 
     /**
+     * Moves an element of a list before another element of the list.
+     */
+    export function moveBefore<T>(list: T[], obj: T, before: T) {
+        let obji = list.indexOf(obj);
+        let beforei = list.indexOf(before);
+
+        if (obji < 0 || beforei < 0) return;
+        if (obji === beforei-1) return;
+
+        if (obji < beforei) {
+            list.splice(obji, 1);
+            list.splice(beforei-1, 0, obj);
+        } else {
+            list.splice(obji, 1);
+            list.splice(beforei, 0, obj);
+        }
+    }
+
+    /**
+     * Moves an element of a list after another element of the list.
+     */
+    export function moveAfter<T>(list: T[], obj: T, after: T) {
+        let obji = list.indexOf(obj);
+        let afteri = list.indexOf(after);
+
+        if (obji < 0 || afteri < 0) return;
+        if (obji === afteri+1) return;
+
+        if (obji < afteri) {
+            list.splice(obji, 1);
+            list.splice(afteri, 0, obj);
+        } else {
+            list.splice(obji, 1);
+            list.splice(afteri+1, 0, obj);
+        }
+    }
+
+    /**
      * An array of integers from 0 to n-1, inclusive.
      */
     export function range(n: number) {

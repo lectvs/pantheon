@@ -44,6 +44,37 @@ namespace O {
         return obj.constructor;
     }
 
+    export function getPath(obj: Object, path: string) {
+        let pathParts = path.split('.');
+        let current = obj;
+        for (let part of pathParts) {
+            if (!current || !(part in current)) return undefined;
+            current = current[part];
+        }
+        return current;
+    }
+
+    export function setPath(obj: Object, path: string, value: any) {
+        let pathParts = path.split('.');
+        let lastPart = pathParts.pop();
+        let current = obj;
+        for (let part of pathParts) {
+            if (!current || !(part in current)) return;
+            current = current[part];
+        }
+        current[lastPart] = value;
+    }
+
+    export function hasPath(obj: Object, path: string) {
+        let pathParts = path.split('.');
+        let current = obj;
+        for (let part of pathParts) {
+            if (!(part in current)) return false;
+            current = current[part];
+        }
+        return true;
+    }
+
     export function mergeObject<T>(obj: T, into: T, combine: (e: any, into: any) => any = ((e, into) => e)) {
         let result = _.clone(into);
         for (let key in obj) {

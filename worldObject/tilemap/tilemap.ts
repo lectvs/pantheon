@@ -125,7 +125,7 @@ class Tilemap extends WorldObject {
                 x: this.x,
                 y: this.y,
                 bounds: new RectBounds(rect.x, rect.y, rect.width, rect.height),
-                matchParentPhysicsGroup: true,
+                copyFromParent: ['layer'],
                 immovable: true,
                 simulating: false,
             }));
@@ -197,7 +197,7 @@ class Tilemap extends WorldObject {
             let zTexture = this.addChild(new Sprite());
             zTexture.x = this.x + texturesByZ[zValue].bounds.x;
             zTexture.y = this.y + texturesByZ[zValue].bounds.y + zHeight;
-            zTexture.matchParentLayer = true;
+            zTexture.copyFromParent.push('layer');
             zTexture.offsetY = -zHeight;
             zTexture.setTexture(this.animation ? undefined : texturesByZ[zValue].frames[0]);
             if (this.animation) {

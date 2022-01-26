@@ -661,5 +661,35 @@ namespace World {
             if (_.isEmpty(children)) return [];
             return A.clone(children).filter(child => removeChildFromParent(child));
         }
+
+        /**
+         * Orders a WorldObject before another WorldObject so that it is rendered earlier.
+         */
+        export function orderWorldObjectBefore(obj: WorldObject, before: WorldObject) {
+            if (!obj || !before) return;
+            if (!obj.world || obj.world !== before.world) {
+                error('Cannot reorder objects due to null or mismatched worlds:', obj.world, before.world);
+                return;
+            }
+
+            if (obj.layer === before.layer) {
+                A.moveBefore(obj.world.getLayerByName(obj.layer).worldObjects, obj, before);
+            }
+        }
+
+        /**
+         * Orders a WorldObject after another WorldObject so that it is rendered later.
+         */
+        export function orderWorldObjectAfter(obj: WorldObject, after: WorldObject) {
+            if (!obj || !after) return;
+            if (!obj.world || obj.world !== after.world) {
+                error('Cannot reorder objects due to null or mismatched worlds:', obj.world, after.world);
+                return;
+            }
+
+            if (obj.layer === after.layer) {
+                A.moveAfter(obj.world.getLayerByName(obj.layer).worldObjects, obj, after);
+            }
+        }
     }
 }
