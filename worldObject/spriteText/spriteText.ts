@@ -99,6 +99,10 @@ class SpriteText extends WorldObject {
 
     scaleX: number;
     scaleY: number;
+    get scale() {
+        if (this.scaleX !== this.scaleY) error('Warning: scaleX and scaleY differ! Attempted to get scale!');
+        return this.scaleX;
+    }
     set scale(value: number) {
         this.scaleX = value;
         this.scaleY = value;
