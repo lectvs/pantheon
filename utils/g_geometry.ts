@@ -1,4 +1,20 @@
 namespace G {
+    export function circleIntersectsSegment(cx: number, cy: number, r: number, lx1: number, ly1: number, lx2: number, ly2: number) {
+        let dx = cx - lx1;
+        let dy = cy - ly1;
+        let ldx = lx2 - lx1;
+        let ldy = ly2 - ly1;
+        let t = (dx*ldx + dy*ldy) / (ldx*ldx + ldy*ldy);
+        
+        if (M.distanceSq(dx, dy, ldx*t, ldy*t) > r*r) return false;
+
+        let tInRange = 0 < t && t < 1;
+        let intersectsVertex1 = M.distanceSq(0, 0, dx, dy) < r*r;
+        let intersectsVertex2 = M.distanceSq(ldx, ldy, dx, dy) < r*r;
+
+        return tInRange || intersectsVertex1 || intersectsVertex2;
+    }
+
     export function distance(pt1: Pt, pt2: Pt) {
         return M.distance(pt1.x, pt1.y, pt2.x, pt2.y);
     }
@@ -24,6 +40,10 @@ namespace G {
         rect.y -= amount;
         rect.width += 2*amount;
         rect.height += 2*amount;
+    }
+
+    export function lerpPt(pt1: Pt, pt2: Pt, t: number) {
+        return vec2(M.lerp(pt1.x, pt2.x, t), M.lerp(pt1.y, pt2.y, t));
     }
 
     export function overlapRectangles(rect1: Rect, rect2: Rect) {
