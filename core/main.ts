@@ -89,6 +89,7 @@ class Main {
         this.soundManager = new GlobalSoundManager();
         
         WebAudio.initContext();
+        Analytics.init();
 
         Preload.preload({
             textures: this.config.textures,
@@ -141,6 +142,7 @@ class Main {
                 global.metrics.endSpan('game');
                 Main.soundManager.postGameUpdate();
             }
+            Analytics.update(frameDelta/60);
             global.metrics.endSpan('update');
 
             global.metrics.startSpan('render');
@@ -226,5 +228,8 @@ class Main {
                 global.soundManager.unpause();
             }
         }, false);
+        window.addEventListener("beforeunload", event => {
+            Analytics.submit();
+        }, false)
     }
 }
