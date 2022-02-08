@@ -72,7 +72,9 @@ namespace Analytics {
         let profileEncoded = encodeURIComponent(St.encodeB64S(JSON.stringify(profileData)));
         let sessionEncoded = encodeURIComponent(St.encodeB64S(JSON.stringify(sessionData)));
         Network.httpRequest(`${LAMBDA_URL}?operation=submit&game=${global.gameCodeName}&profile=${profileEncoded}&session=${sessionEncoded}`, null, (responseJson: any, err: string) => {
-            if (err) error(err);
+            if (err) {
+                if (err !== 'Requested resource not found' || Debug.DEBUG) error(err);
+            }
         });
     }
 
