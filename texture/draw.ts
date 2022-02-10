@@ -44,6 +44,22 @@ class Draw {
         });
     }
 
+    static annulusSolid(texture: Texture, x: number, y: number, innerRadius: number, outerRadius: number, brush: Draw.Brush = Draw.brush) {
+        if (innerRadius <= 0) {
+            this.circleSolid(texture, x, y, outerRadius, brush);
+            return;
+        }
+        this.graphics.lineStyle(0, 0, 0);
+        this.graphics.clear();
+        this.graphics.beginFill(brush.color, brush.alpha);
+        this.graphics.drawCircle(x, y, outerRadius);
+        this.graphics.endFill();
+        this.graphics.beginHole();
+        this.graphics.drawCircle(x, y, innerRadius);
+        this.graphics.endHole();
+        texture.renderPIXIDisplayObject(this.graphics);
+    }
+
     static circleOutline(texture: Texture, x: number, y: number, radius: number, alignment: number = this.ALIGNMENT_INNER, brush: Draw.Brush = Draw.brush) {
         this.graphics.lineStyle(brush.thickness, brush.color, brush.alpha, alignment);
         this.graphics.clear();

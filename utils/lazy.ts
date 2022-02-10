@@ -57,3 +57,12 @@ class LazyDictNumber<T> {
         return this.values[key];
     }
 }
+
+const LAZY_CACHE: Dict<LazyValue<any>> = {};
+function lazy<T>(key: string, factory: Factory<T>) {
+    if (!(key in LAZY_CACHE)) {
+        LAZY_CACHE[key] = new LazyValue(factory);
+    }
+
+    return (<LazyValue<T>>LAZY_CACHE[key]).get();
+}
