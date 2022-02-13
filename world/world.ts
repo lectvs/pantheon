@@ -505,7 +505,7 @@ namespace World {
         /**
          * Removes a WorldObject from its containing world. Returns the object removed.
          */
-        export function removeWorldObjectFromWorld<T extends WorldObject>(obj: T): T {
+        export function removeWorldObjectFromWorld<T extends WorldObject>(obj: T, unlinkFromParent: boolean = true): T {
             if (!obj) return obj;
 
             if (!obj.world) {
@@ -521,10 +521,9 @@ namespace World {
             /// @ts-ignore
             world.internalRemoveWorldObjectFromWorldWorld(obj);
             
-            World.Actions.removeWorldObjectsFromWorld(obj.children);
+            World.Actions.removeWorldObjectsFromWorld(obj.children, false);
 
-            /* No longer unlinking child from parent due to self-mutating iterator issue*/
-            if (obj.parent) {
+            if (unlinkFromParent && obj.parent) {
                 World.Actions.removeChildFromParent(obj);
             }
             
@@ -534,9 +533,9 @@ namespace World {
         /**
          * Removes a list of WorldObjects from their containing worlds. Returns as a list the objects successfully removed.
          */
-        export function removeWorldObjectsFromWorld<T extends WorldObject>(objs: ReadonlyArray<T>): T[] {
+        export function removeWorldObjectsFromWorld<T extends WorldObject>(objs: ReadonlyArray<T>, unlinkFromParent: boolean = true): T[] {
             if (_.isEmpty(objs)) return [];
-            return A.clone(objs).filter(obj => removeWorldObjectFromWorld(obj));
+            return A.clone(objs).filter(obj => removeWorldObjectFromWorld(obj, unlinkFromParent));
         }
 
         /**
@@ -668,7 +667,7 @@ namespace World {
         export function orderWorldObjectBefore(obj: WorldObject, before: WorldObject) {
             if (!obj || !before) return;
             if (!obj.world || obj.world !== before.world) {
-                error('Cannot reorder objects due to null or mismatched worlds:', obj.world, before.world);
+                error('Cannot reorder objects due to null or mismatched worlds:', obj, before);
                 return;
             }
 
@@ -683,7 +682,7 @@ namespace World {
         export function orderWorldObjectAfter(obj: WorldObject, after: WorldObject) {
             if (!obj || !after) return;
             if (!obj.world || obj.world !== after.world) {
-                error('Cannot reorder objects due to null or mismatched worlds:', obj.world, after.world);
+                error('Cannot reorder objects due to null or mismatched worlds:', obj, after);
                 return;
             }
 
