@@ -100,6 +100,13 @@ namespace Mask {
         invert?: boolean;
     }
 
+    export type WorldMaskConfig = {
+        texture: Texture;
+        offsetx: number;
+        offsety: number;
+        invert?: boolean;
+    }
+
     export type WorldObjectMaskType = 'local' | 'screen' | 'world';
 
     export function getTextureMaskForWorldObject(mask: WorldObjectMaskConfig, worldObject: WorldObject): Texture.MaskProperties {
@@ -123,6 +130,16 @@ namespace Mask {
         return {
             texture: mask.texture,
             x: x, y: y,
+            invert: mask.invert ?? false,
+        };
+    }
+
+    export function getTextureMaskForWorld(mask: WorldMaskConfig): Texture.MaskProperties {
+        if (!mask || !mask.texture) return undefined;
+
+        return {
+            texture: mask.texture,
+            x: mask.offsetx, y: mask.offsety,
             invert: mask.invert ?? false,
         };
     }

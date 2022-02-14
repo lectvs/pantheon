@@ -126,10 +126,12 @@ class Theater extends World {
 namespace Theater {
     export class WorldAsWorldObject extends WorldObject {
         containedWorld: World;
+        mask: Mask.WorldMaskConfig;
 
         constructor(containedWorld: World) {
             super();
             this.containedWorld = containedWorld;
+            this.mask = undefined;
         }
 
         update() {
@@ -138,8 +140,15 @@ namespace Theater {
         }
 
         render(texture: Texture, x: number, y: number) {
+            let currentMask = this.containedWorld.mask;
+            if (this.mask !== undefined) {
+                this.containedWorld.mask = this.mask;
+            }
+
             this.containedWorld.render(texture);
             super.render(texture, x, y);
+
+            this.containedWorld.mask = currentMask;
         }
     }
 }

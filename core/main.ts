@@ -8,6 +8,7 @@ namespace Main {
         canvasScale: number;
         backgroundColor: number;
         fpsLimit: number;
+        preventScrollOnCanvas: boolean;
         defaultZBehavior?: WorldObject.ZBehavior;
         defaultSpriteTextFont?: string;
 
@@ -141,6 +142,7 @@ class Main {
                 Main.game.update();
                 global.metrics.endSpan('game');
                 Main.soundManager.postGameUpdate();
+                Input.postUpdate();
             }
             Analytics.update(frameDelta/60);
             global.metrics.endSpan('update');
@@ -214,6 +216,9 @@ class Main {
             WebAudio.start();
             Input.handleMouseUpEvent(event);
         });
+        window.addEventListener("wheel", event => {
+            Input.handleMouseScrollEvent(event, this.config.preventScrollOnCanvas);
+        }, { passive: false });
         window.addEventListener("contextmenu", event => {
             WebAudio.start();
             event.preventDefault();

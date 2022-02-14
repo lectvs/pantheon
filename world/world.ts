@@ -5,6 +5,7 @@ namespace World {
     export type Config = {
         layers?: World.LayerConfig[];
         effects?: Effects.Config;
+        mask?: Mask.WorldMaskConfig;
 
         camera?: Camera.Config;
 
@@ -40,6 +41,7 @@ namespace World {
         sortKey?: (worldObject: WorldObject) => number;
         reverseSort?: boolean;
         effects?: Effects.Config;
+        mask?: Mask.WorldMaskConfig;
     }
 
     export type PhysicsGroupConfig = {
@@ -69,6 +71,7 @@ class World {
 
     layers: World.Layer[];
     effects: Effects;
+    mask: Mask.WorldMaskConfig;
 
     backgroundColor: number;
     backgroundAlpha: number;
@@ -115,6 +118,7 @@ class World {
         this.worldObjects = [];
         this.layers = this.createLayers(config.layers);
         this.effects = new Effects(config.effects);
+        this.mask = config.mask;
 
         this.backgroundColor = config.backgroundColor ?? global.backgroundColor;
         this.backgroundAlpha = config.backgroundAlpha ?? 1;
@@ -200,7 +204,8 @@ class World {
                 this.layerTexture.clear();
                 this.renderLayerToTexture(layer, this.layerTexture);
                 this.layerTexture.renderTo(this.worldTexture, {
-                    filters: layer.effects.getFilterList()
+                    filters: layer.effects.getFilterList(),
+                    mask: Mask.getTextureMaskForWorld(layer.mask),
                 });
             } else {
                 this.renderLayerToTexture(layer, this.worldTexture);
@@ -211,6 +216,7 @@ class World {
         // Apply world effects.
         this.worldTexture.renderTo(screen, {
             filters: this.effects.getFilterList(),
+            mask: Mask.getTextureMaskForWorld(this.mask),
         });
     }
 
@@ -438,9 +444,10 @@ namespace World {
         reverseSort: boolean;
 
         effects: Effects;
+        mask: Mask.WorldMaskConfig;
 
         get shouldRenderToOwnLayer() {
-            return this.effects.hasEffects();
+            return this.effects.hasEffects() || !!this.mask;
         }
         
         constructor(name: string, config: World.LayerConfig) {
@@ -450,6 +457,7 @@ namespace World {
             this.reverseSort = config.reverseSort ?? false;
 
             this.effects = new Effects(config.effects);
+            this.mask = config.mask;
         }
 
         sort() {

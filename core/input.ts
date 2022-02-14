@@ -32,6 +32,7 @@ class Input {
     private static _mouseY: number = 0;
     private static _canvasMouseX: number = 0;
     private static _canvasMouseY: number = 0;
+    private static _mouseScrollDelta: number = 0;
 
     static preventRegularKeyboardInput: boolean = false;
 
@@ -54,6 +55,10 @@ class Input {
         }
         this.updateKeys();
         this.updateMousePosition();
+    }
+
+    static postUpdate() {
+        this._mouseScrollDelta = 0;
     }
 
     static consume(key: string) {
@@ -251,6 +256,10 @@ class Input {
         return 0 <= this.canvasMouseX && this.canvasMouseX < global.gameWidth && 0 <= this.canvasMouseY && this.canvasMouseY < global.gameHeight;
     }
 
+    static get mouseScrollDelta() {
+        return this._mouseScrollDelta;
+    }
+
     static handleKeyDownEvent(event: KeyboardEvent) {
         let keyCode = Input.getKeyFromEventKey(event.key);
         this.eventKey = keyCode;
@@ -292,6 +301,13 @@ class Input {
         if (this.eventKey === keyCode) this.eventKey = undefined;
         if (keyCode && this.isDownByKeyCode[keyCode] !== undefined) {
             this.isDownByKeyCode[keyCode] = false;
+            event.preventDefault();
+        }
+    }
+
+    static handleMouseScrollEvent(event: WheelEvent, preventScrollOnCanvas: boolean) {
+        this._mouseScrollDelta = Math.sign(event.deltaY);
+        if (preventScrollOnCanvas && this.isMouseOnCanvas) {
             event.preventDefault();
         }
     }
