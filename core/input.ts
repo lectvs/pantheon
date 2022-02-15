@@ -307,7 +307,7 @@ class Input {
 
     static handleMouseScrollEvent(event: WheelEvent, preventScrollOnCanvas: boolean) {
         this._mouseScrollDelta = Math.sign(event.deltaY);
-        if (preventScrollOnCanvas && this.isMouseOnCanvas) {
+        if (preventScrollOnCanvas && this.isMouseOnCanvas && !event.ctrlKey && !event.metaKey) {
             event.preventDefault();
         }
     }
