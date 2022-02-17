@@ -63,11 +63,27 @@ class Options {
     }
 
     private static loadOptions() {
-        this.options = LocalStorage.getJson<Options.Options>(this.getOptionsLocalStorageName());
+        this.resetOptions();
+        let loadedOptions = LocalStorage.getJson<Options.Options>(this.getOptionsLocalStorageName()) || {};
+
+        for (let option in this.options) {
+            if (option in loadedOptions) {
+                if (option === Options.CONTROLS) {
+                    /* NOOP FOR NOW, DEAL WITH CONTROLS OVERRIDING LATER */
+                    // let controls = this.options[Options.CONTROLS];
+                    // let loadedControls = loadedOptions[Options.CONTROLS]
+                    // for (let control in controls) {
+                    //     if (control in loadedControls) {
+                    //         controls[control] = loadedControls[controls];
+                    //     }
+                    // }
+                } else {
+                    this.options[option] = loadedOptions[option];
+                }
+            }
+        }
         
-        if (_.isEmpty(this.options)) {
-            this.resetOptions();
-        } else {
+        if (_.isEmpty(loadedOptions)) {
             this.onUpdate();
         }
     }
