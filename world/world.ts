@@ -14,6 +14,8 @@ namespace World {
 
         width?: number;
         height?: number;
+        scaleX?: number;
+        scaleY?: number;
 
         physicsGroups?: Dict<World.PhysicsGroupConfig>;
         collisions?: CollisionConfig[];
@@ -62,6 +64,9 @@ class World {
     timescale: number;
     data: any;
 
+    scaleX: number;
+    scaleY: number;
+
     physicsGroups: Dict<World.PhysicsGroup>;
     collisions: World.CollisionConfig[];
     collisionIterations: number;
@@ -107,6 +112,9 @@ class World {
         this.time = 0;
         this.timescale = config.timescale ?? 1;
         this.data = config.data ? O.deepClone(config.data) : {};
+
+        this.scaleX = config.scaleX ?? 1;
+        this.scaleY = config.scaleY ?? 1;
 
         this.physicsGroups = this.createPhysicsGroups(config.physicsGroups);
         this.collisions = config.collisions ?? [];
@@ -215,6 +223,8 @@ class World {
 
         // Apply world effects.
         this.worldTexture.renderTo(screen, {
+            scaleX: this.scaleX,
+            scaleY: this.scaleY,
             filters: this.effects.getFilterList(),
             mask: Mask.getTextureMaskForWorld(this.mask),
         });
@@ -268,11 +278,11 @@ class World {
     }
 
     getWorldMouseX() {
-        return Input.mouseX + Math.floor(this.camera.worldOffsetX);
+        return Math.floor(Input.mouseX / this.scaleX + this.camera.worldOffsetX);
     }
 
     getWorldMouseY() {
-        return Input.mouseY + Math.floor(this.camera.worldOffsetY);
+        return Math.floor(Input.mouseY / this.scaleY + this.camera.worldOffsetY);
     }
 
     getWorldMousePosition() {

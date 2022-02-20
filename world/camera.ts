@@ -45,8 +45,8 @@ class Camera {
     constructor(config: Camera.Config, world: World) {
         this.world = world;
 
-        this.width = config.width ?? global.gameWidth;
-        this.height = config.height ?? global.gameHeight;
+        this.width = config.width ?? world.width;
+        this.height = config.height ?? world.height;
 
         this.bounds = O.withDefaults(config.bounds ?? {}, {
             top: -Infinity,
