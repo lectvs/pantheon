@@ -339,7 +339,7 @@ class World {
     }
 
     takeSnapshot() {
-        let screen = new BasicTexture(this.camera.width, this.camera.height);
+        let screen = new BasicTexture(this.width * this.scaleX, this.height * this.scaleY);
         this.render(screen);
         return screen;
     }
