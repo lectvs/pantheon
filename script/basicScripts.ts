@@ -51,6 +51,26 @@ namespace S {
         return function*() {}
     }
 
+    export function schedule(...schedule: [number, Script.Function, ...Array<number | Script.Function>]): Script.Function {
+        let fns: { t: number, s: Script.Function }[] = [];
+        for (let i = 0; i < schedule.length; /* no incr */) {
+            let t = schedule[i];
+            let s = i+1 < schedule.length ? schedule[i+1] : S.noop();
+
+            if (!_.isNumber(t)) {
+                fns.push({ t: 0, s: t });
+                i++;
+            } else if (_.isNumber(s)) {
+                fns.push({ t: t, s: S.noop() });
+                i++;
+            } else {
+                fns.push({ t: t, s: s });
+                i += 2;
+            }
+        }
+        return S.simul(...fns.map(fn => S.chain(S.wait(fn.t), fn.s)));
+    }
+
     export function setData(prop: string, value: any): Script.Function {
         return function*() {
             global.script.data[prop] = value;

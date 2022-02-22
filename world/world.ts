@@ -186,6 +186,7 @@ class World {
         for (let layer of this.layers) {
             layer.effects.updateEffects(this.delta);
         }
+        this.effects.updateEffects(this.delta);
 
         this.soundManager.volume = this.volume * global.game.volume * Options.sfxVolume;
         this.soundManager.update(this.delta);
