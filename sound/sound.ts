@@ -1,7 +1,5 @@
 namespace Sound {
-    export type Controller = {
-        volume: number;
-    };
+    export type Controller = SoundManager | MusicManager;
 }
 
 class Sound {
