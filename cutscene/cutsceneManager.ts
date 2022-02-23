@@ -82,7 +82,7 @@ class CutsceneManager {
     }
 
     onStageLoad() {
-        this.finishCurrentCutscene();
+        
     }
 
     private finishCurrentCutscene() {

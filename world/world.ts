@@ -86,7 +86,7 @@ class World {
     private layerTexture: Texture;
 
     protected scriptManager: ScriptManager;
-    protected soundManager: SoundManager;
+    soundManager: SoundManager;
 
     select: WorldSelecter;
     
