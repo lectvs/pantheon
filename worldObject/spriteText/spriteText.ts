@@ -429,6 +429,12 @@ namespace SpriteText {
         'color': (params) => {
             return { color: getInt(params[0], undefined) };
         },
+        'offsetx': (params) => {
+            return { offsetX: getInt(params[0], undefined) };
+        },
+        'offsety': (params) => {
+            return { offsetY: getInt(params[0], undefined) };
+        },
     }
 
     function getInt(text: string, def: number) {
