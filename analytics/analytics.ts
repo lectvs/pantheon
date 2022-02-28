@@ -88,6 +88,10 @@ namespace Analytics {
         });
     }
 
+    export function getProfileId() {
+        return profileData.profileId;
+    }
+
     export function registerUpdater<T>(key: string, initialValue: T): RegisteredUpdater<T> {
         if (key in registeredUpdaters) {
             error(`Analytic Updater '${key}' has already been registered`);
