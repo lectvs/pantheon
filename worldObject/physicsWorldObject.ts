@@ -170,9 +170,9 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     move() {
-        this.x += this.v.x * this.delta;
-        this.y += this.v.y * this.delta;
-        this.z += this.vz * this.delta;
+        this.localx += this.v.x * this.delta;
+        this.localy += this.v.y * this.delta;
+        this.localz += this.vz * this.delta;
     }
 
     simulate() {
