@@ -1,6 +1,6 @@
 namespace M {
     export function argmax<T>(array: T[], key: (x: T) => number): T {
-        return this.argmin(array, x => -key(x));
+        return argmin(array, x => -key(x));
     }
 
     export function argmin<T>(array: T[], key: (x: T) => number): T {
@@ -72,7 +72,7 @@ namespace M {
     }
 
     export function magnitude(dx: number, dy: number) {
-        return Math.sqrt(this.magnitudeSq(dx, dy));
+        return Math.sqrt(magnitudeSq(dx, dy));
     }
 
     export function magnitudeSq(dx: number, dy: number) {
@@ -89,7 +89,7 @@ namespace M {
     }
 
     export function max<T>(array: T[], key: (x: T) => number) {
-        return -this.min(array, x => -key(x));
+        return -min(array, x => -key(x));
     }
 
     export function min<T>(array: T[], key: (x: T) => number) {

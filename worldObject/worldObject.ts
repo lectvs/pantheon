@@ -346,7 +346,7 @@ class WorldObject {
         return _.contains(this.tags, tag);
     }
 
-    isActive() {
+    isActive(): boolean {
         return this._active && (!this.parent || this.parent.isActive());
     }
 
