@@ -2,6 +2,7 @@ namespace Analytics {
     type ProfileData = {
         profileId: string;
         totalPlayTime: number;
+        lastPlayed: number;
     } & Dict<any>;
 
     type SessionData = {
@@ -21,6 +22,7 @@ namespace Analytics {
     export const profileData: ProfileData = {
         profileId: '',
         totalPlayTime: 0,
+        lastPlayed: 0,
     };
 
     export const sessionData: SessionData = {
@@ -48,6 +50,8 @@ namespace Analytics {
                 profileData[key] = loadedData[key];
             }
         }
+
+        profileData.lastPlayed = now;
 
         sessionData.profileId = profileData.profileId;
         sessionData.startTime = now;

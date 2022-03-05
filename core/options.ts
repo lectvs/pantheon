@@ -63,7 +63,7 @@ class Options {
     }
 
     private static loadOptions() {
-        this.resetOptions();
+        this.options = O.deepClone(this.defaultOptions);
         let loadedOptions = LocalStorage.getJson<Options.Options>(this.getOptionsLocalStorageName()) || {};
 
         for (let option in this.options) {
