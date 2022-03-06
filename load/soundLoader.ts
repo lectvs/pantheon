@@ -12,7 +12,7 @@ class SoundLoader implements Loader {
     }
 
     load(callback?: () => void) {
-        let url = 'assets/' + (this.sound.url ?? `${this.key}.wav`);
+        let url = 'assets/' + (this.sound.url ?? `${this.key}.ogg`);
         WebAudio.preloadSound(this.key, url, () => {
             this.onLoad();
             this._completionPercent = 1;
