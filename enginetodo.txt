@@ -28,3 +28,4 @@
 - print errors on screen?
 - report game errors through lambda API?
 - "humanized" option in sound asset definition
+- loading messages
