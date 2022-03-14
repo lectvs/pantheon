@@ -3,7 +3,6 @@
 
 namespace Theater {
     export type Config = {
-        stageToLoad: () => World;
         dialogBox: Factory<DialogBox>;
         autoPlayScript?: () => IterableIterator<any>;
     }
@@ -43,8 +42,6 @@ class Theater extends World {
         this.endOfFrameQueue = [];
 
         this.isSkippingCutscene = false;
-
-        this.loadStage(config.stageToLoad, new Transitions.Instant());
 
         if (Debug.AUTOPLAY && config.autoPlayScript) {
             this.runScript(config.autoPlayScript);

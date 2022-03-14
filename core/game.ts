@@ -43,8 +43,8 @@ class Game {
 
     start() {
         this.loadMainMenu();
-        if (Debug.SKIP_MAIN_MENU) {
-            this.startGame();
+        if (Debug.SKIP_MAIN_MENU_STAGE) {
+            this.startGame(Debug.SKIP_MAIN_MENU_STAGE);
         }
     }
 
@@ -123,8 +123,9 @@ class Game {
         this.menuSystem.loadMenu(this.entryPointMenu);
     }
 
-    loadTheater() {
+    loadTheater(stageToLoad: () => World) {
         this.theater = this.theaterFactory();
+        this.theater.loadStage(stageToLoad);
     }
 
     pauseGame() {
@@ -143,8 +144,8 @@ class Game {
         return this.soundManager.playSound(key);
     }
 
-    startGame() {
-        this.loadTheater();
+    startGame(stageToLoad: () => World) {
+        this.loadTheater(stageToLoad);
         this.menuSystem.clear();
     }
 

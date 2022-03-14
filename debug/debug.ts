@@ -10,7 +10,7 @@ namespace Debug {
         skipRate: number;
         programmaticInput: boolean;
         autoplay: boolean;
-        skipMainMenu: boolean;
+        skipMainMenuStage: () => World;
         frameStepEnabled: boolean;
         resetOptionsAtStart: boolean;
         experiments: Dict<Experiment>;
@@ -30,7 +30,7 @@ class Debug {
         Debug.SKIP_RATE = config.skipRate;
         Debug.PROGRAMMATIC_INPUT = config.programmaticInput;
         Debug.AUTOPLAY = config.autoplay;
-        Debug.SKIP_MAIN_MENU = config.skipMainMenu;
+        Debug.SKIP_MAIN_MENU_STAGE = config.skipMainMenuStage;
         Debug.FRAME_STEP_ENABLED = config.frameStepEnabled;
         Debug.RESET_OPTIONS_AT_START = config.resetOptionsAtStart;
         Debug.EXPERIMENTS = config.experiments;
@@ -81,9 +81,9 @@ class Debug {
     static get AUTOPLAY() { return this.DEBUG && this._AUTOPLAY; }
     static set AUTOPLAY(value: boolean) { this._AUTOPLAY = value; }
 
-    private static _SKIP_MAIN_MENU: boolean;
-    static get SKIP_MAIN_MENU() { return this.DEBUG && this._SKIP_MAIN_MENU; }
-    static set SKIP_MAIN_MENU(value: boolean) { this._SKIP_MAIN_MENU = value; }
+    private static _SKIP_MAIN_MENU_STAGE: () => World;
+    static get SKIP_MAIN_MENU_STAGE() { return this.DEBUG ? this._SKIP_MAIN_MENU_STAGE : undefined; }
+    static set SKIP_MAIN_MENU_STAGE(value: () => World) { this._SKIP_MAIN_MENU_STAGE = value; }
 
     private static _FRAME_STEP_ENABLED: boolean;
     static get FRAME_STEP_ENABLED() { return this.DEBUG && this._FRAME_STEP_ENABLED; }
