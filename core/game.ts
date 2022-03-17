@@ -120,6 +120,7 @@ class Game {
     }
 
     loadMainMenu() {
+        this.menuSystem.clear();
         this.menuSystem.loadMenu(this.entryPointMenu);
     }
 
