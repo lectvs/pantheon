@@ -9,6 +9,7 @@ namespace Analytics {
         profileId: string;
         startTime: number;
         playTime: number;
+        averageFrameRate: number;
     } & Dict<any>;
 
     type RegisteredUpdater<T> = {
@@ -29,12 +30,14 @@ namespace Analytics {
         profileId: '',
         startTime: 0,
         playTime: 0,
+        averageFrameRate: 0,
     };
 
     const registeredUpdaters: Dict<RegisteredUpdater<any>> = {};
     const registeredSubmitters: Dict<RegisteredSubmitter<any>> = {};
 
     var submitTimer: Timer;
+    var sessionFrames: number;
 
     const MAX_SUBMIT_TIME = 5000;
     var last_submit_time = 0;
@@ -56,13 +59,18 @@ namespace Analytics {
         sessionData.profileId = profileData.profileId;
         sessionData.startTime = now;
         sessionData.playTime = 0;
+        sessionData.averageFrameRate = 0;
 
         submitTimer = new Timer(300, () => submit(), Infinity);
+        sessionFrames = 0;
     }
 
     export function update(delta: number) {
         profileData.totalPlayTime += delta;
+
         sessionData.playTime += delta;
+        sessionFrames++;
+        if (sessionData.playTime > 0) sessionData.averageFrameRate = sessionFrames / sessionData.playTime;
 
         submitTimer.update(delta);
     }
@@ -94,6 +102,10 @@ namespace Analytics {
 
     export function getProfileId() {
         return profileData.profileId;
+    }
+
+    export function getAverageFrameRate() {
+        return sessionData.averageFrameRate;
     }
 
     export function registerUpdater<T>(key: string, initialValue: T): RegisteredUpdater<T> {
