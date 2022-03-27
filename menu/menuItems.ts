@@ -8,15 +8,17 @@ namespace MenuTextButton {
 
 class MenuTextButton extends SpriteText {
     onClick: () => any;
+    enabled: boolean;
 
     constructor(config: MenuTextButton.Config) {
         super(config);
         this.onClick = config.onClick ?? Utils.NOOP;
+        this.enabled = true;
     }
 
     update() {
         super.update();
-        if (this.isHovered()) {
+        if (this.enabled && this.isHovered()) {
             this.style.alpha = 0.5;
             if (Input.justDown(Input.GAME_SELECT)) {
                 Input.consume(Input.GAME_SELECT);

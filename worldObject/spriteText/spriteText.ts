@@ -66,7 +66,6 @@ class SpriteText extends WorldObject {
         this._style.offsetY = value.offsetY;
         this._style.filters = A.clone(value.filters);
     }
-    private lastStyle: Required<SpriteText.Style>;
 
     private _maxWidth: number;
     get maxWidth() { return this._maxWidth; }
@@ -142,7 +141,6 @@ class SpriteText extends WorldObject {
             offsetY: 0,
             filters: [],
         }));
-        this.lastStyle = O.deepClone(this.style);
 
         this.visibleCharCount = Infinity;
 
@@ -177,11 +175,6 @@ class SpriteText extends WorldObject {
     update() {
         super.update();
         this.effects.updateEffects(this.delta);
-
-        if (!_.isEqual(this.lastStyle, this.style)) {
-            this.lastStyle = O.deepClone(this.style);
-            this.dirty = true;
-        }
 
         for (let key in this.tagCache) {
             if (_.isEmpty(this.tagCache[key].filters)) continue;
