@@ -16,7 +16,7 @@ class StageManager {
     /**
      * Loads a stage immediately. If you are calling from inside your game, you probably want to call Theater.loadStage
      */
-    internalLoadStage(stage: () => World, transition: Transition) {
+    internalLoadStage(stage: () => World, transition: Transition, onTransitioned: (world: World) => void) {
         let oldWorld = this.currentWorld;
 
         // Remove old stuff
@@ -55,6 +55,7 @@ class StageManager {
                 this.currentWorldAsWorldObject.setActive(true);
                 this.currentWorldAsWorldObject.setVisible(true);
                 this.currentWorld.onTransitioned();
+                onTransitioned(this.currentWorld);
             }),
         )).update(this.theater.delta);  // Update once in case the transition is already done (i.e. instant)
     }
