@@ -1,4 +1,8 @@
 class LocalStorage {
+    static delete(key: string) {
+        localStorage.removeItem(key);
+    }
+
     static getJson<T>(key: string) {
         let str = this.getString(key);
         return _.isEmpty(str) ? undefined : <T>JSON.parse(str);

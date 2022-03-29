@@ -3,29 +3,43 @@
 namespace MenuTextButton {
     export type Config = SpriteText.Config & {
         onClick?: () => any;
+        hoverColor?: number;
+        hoverAlpha?: number;
     }
 }
 
 class MenuTextButton extends SpriteText {
     onClick: () => any;
+    hoverColor: number;
+    hoverAlpha: number;
+
+    normalColor: number;
+    normalAlpha: number;
     enabled: boolean;
 
     constructor(config: MenuTextButton.Config) {
         super(config);
         this.onClick = config.onClick ?? Utils.NOOP;
+        this.hoverColor = config.hoverColor ?? 0xFFFFFF;
+        this.hoverAlpha = config.hoverAlpha ?? 0.5;
+
+        this.normalColor = this.style.color;
+        this.normalAlpha = this.style.alpha;
         this.enabled = true;
     }
 
     update() {
         super.update();
         if (this.enabled && this.isHovered()) {
-            this.style.alpha = 0.5;
+            this.style.color = this.hoverColor;
+            this.style.alpha = this.hoverAlpha;
             if (Input.justDown(Input.GAME_SELECT)) {
                 Input.consume(Input.GAME_SELECT);
                 this.onClick();
             }
         } else {
-            this.style.alpha = 1;
+            this.style.color = this.normalColor;
+            this.style.alpha = this.normalAlpha;
         }
     }
 
