@@ -125,15 +125,27 @@ namespace Theater {
         containedWorld: World;
         mask: Mask.WorldMaskConfig;
 
+        randomExecutionTimescale: number;
+
         constructor(containedWorld: World) {
             super();
             this.containedWorld = containedWorld;
             this.mask = undefined;
+            this.randomExecutionTimescale = 1;
         }
 
         update() {
             super.update();
-            this.containedWorld.update();
+
+            let updates = this.randomExecutionTimescale;
+            while (updates >= 1) {
+                this.containedWorld.update();
+                updates -= 1;
+            }
+
+            if (Random.boolean(updates)) {
+                this.containedWorld.update();
+            }
         }
 
         render(texture: Texture, x: number, y: number) {
