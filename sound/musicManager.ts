@@ -61,7 +61,15 @@ class MusicManager {
         this.paused = false;
 
         if (this.currentMusicKey === key && !this.transitionScript) {
-            return this.currentMusic;
+            let music = this.currentMusic;
+            let currentVolume = music.volume;
+            music.volume = 0;
+            this.transitionScript = new Script(S.chain(
+                S.doOverTime(fadeTime, t => {
+                    music.volume = t * currentVolume;
+                }),
+            ));
+            return music;
         }
 
         let music = new Sound(key, this);

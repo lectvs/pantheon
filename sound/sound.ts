@@ -19,6 +19,9 @@ class Sound {
     loop: boolean;
 
     get done() { return this.webAudioSound.done; }
+    
+    get onDone() { return this.webAudioSound.onDone; }
+    set onDone(value) { this.webAudioSound.onDone = value; }
 
     private pos: number;
     get duration() { return this.webAudioSound.duration; }

@@ -11,6 +11,7 @@ interface WebAudioSoundI {
     volume: number;
     speed: number;
     loop: boolean;
+    onDone: () => void;
     duration: number;
     done: boolean;
     paused: boolean;
@@ -58,6 +59,8 @@ class WebAudioSound implements WebAudioSoundI{
     private _done: boolean;
     get done() { return this._done; }
 
+    onDone: () => void;
+
     private startTime: number;
     private pausedPosition: number;
     get paused() { return this.pausedPosition !== undefined; };
@@ -72,6 +75,7 @@ class WebAudioSound implements WebAudioSoundI{
         this._volume = 1;
         this._speed = 1;
         this._loop = false;
+        this.onDone = Utils.NOOP;
 
         this.start();
     }
@@ -113,6 +117,7 @@ class WebAudioSound implements WebAudioSoundI{
         this.sourceNode.connect(this.gainNode);
         this.sourceNode.onended = () => {
             this._done = true;
+            this.onDone();
         }
         this.sourceNode.playbackRate.value = this._speed;
         this.sourceNode.loop = this._loop;
@@ -128,6 +133,7 @@ class WebAudioSoundDummy implements WebAudioSoundI {
     volume: number;
     speed: number;
     loop: boolean;
+    onDone: () => void;
     duration: number;
     done: boolean;
     paused: boolean;
@@ -137,6 +143,7 @@ class WebAudioSoundDummy implements WebAudioSoundI {
         this.volume = 1;
         this.speed = 1;
         this.loop = false;
+        this.onDone = Utils.NOOP;
         this.duration = asset.buffer.duration;
         this.done = false;
         this.paused = false;
@@ -166,6 +173,7 @@ class WebAudioSoundDummy implements WebAudioSoundI {
         sound.volume = this.volume;
         sound.speed = this.speed;
         sound.loop = this.loop;
+        sound.onDone = this.onDone;
         sound.paused = this.paused;
         return sound;
     }
