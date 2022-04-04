@@ -16,6 +16,10 @@ class LazyValue<T> {
         }
         return this.value;
     }
+
+    has() {
+        return !!this.resolved;
+    }
 }
 
 class LazyDict<T> {
@@ -36,6 +40,10 @@ class LazyDict<T> {
         }
         return this.values[key];
     }
+
+    has(key: string) {
+        return this.resolvedKeys.has(key);
+    }
 }
 
 class LazyDictNumber<T> {
@@ -55,6 +63,10 @@ class LazyDictNumber<T> {
             this.resolvedKeys.add(key);
         }
         return this.values[key];
+    }
+
+    has(key: number) {
+        return this.resolvedKeys.has(key);
     }
 }
 

@@ -36,11 +36,18 @@ class Camera {
     private _shakeX: number;
     private _shakeY: number;
 
+    waverIntensityX: number;
+    waverIntensityY: number;
+    waverSpeed: number;
+    private _waverX: number;
+    private _waverY: number;
+    private waverPerlin: Perlin;
+
     private debugOffsetX: number;
     private debugOffsetY: number;
 
-    get worldOffsetX() { return this.x - this.width/2 + this._shakeX + this.debugOffsetX; }
-    get worldOffsetY() { return this.y - this.height/2 + this._shakeY + this.debugOffsetY; }
+    get worldOffsetX() { return this.x - this.width/2 + this._shakeX + this._waverX + this.debugOffsetX; }
+    get worldOffsetY() { return this.y - this.height/2 + this._shakeY + this._waverY + this.debugOffsetY; }
 
     constructor(config: Camera.Config, world: World) {
         this.world = world;
@@ -60,6 +67,14 @@ class Camera {
         this.shakeIntensity = 0;
         this._shakeX = 0;
         this._shakeY = 0;
+
+        this.waverIntensityX = 0;
+        this.waverIntensityY = 0;
+        this.waverSpeed = 1;
+        this._waverX = 0;
+        this._waverY = 0;
+        this.waverPerlin = new Perlin();
+
         this.debugOffsetX = 0;
         this.debugOffsetY = 0;
 
@@ -77,6 +92,16 @@ class Camera {
         } else {
             this._shakeX = 0;
             this._shakeY = 0;
+        }
+
+        if (this.waverIntensityX > 0 || this.waverIntensityY > 0) {
+            let xf = this.waverPerlin.get(this.world.time * this.waverSpeed, -101.5);
+            let yf = this.waverPerlin.get(this.world.time * this.waverSpeed, 402.7);
+            this._waverX = this.waverIntensityX * xf;
+            this._waverY = this.waverIntensityY * yf;
+        } else {
+            this._waverX = 0;
+            this._waverY = 0;
         }
 
         this.clampToBounds();
