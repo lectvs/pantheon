@@ -36,8 +36,25 @@ class MusicManager {
         }
     }
 
-    pauseMusic() {
-        this.paused = true;
+    pauseMusic(fadeTime: number = 0) {
+        if (fadeTime <= 0) {
+            this.paused = true;
+        } else {
+            let startVolumes = this.musics.map(m => m.volume);
+            this.transitionScript = new Script(S.chain(
+                S.doOverTime(fadeTime, t => {
+                    for (let i = 0; i < this.musics.length; i++) {
+                        this.musics[i].volume = startVolumes[i] * (1-t);
+                    }
+                }),
+                S.call(() => {
+                    for (let i = 0; i < this.musics.length; i++) {
+                        this.musics[i].volume = startVolumes[i];
+                    }
+                    this.paused = true;
+                })
+            ));
+        }
     }
 
     playMusic(key: string, fadeTime: number = 0) {

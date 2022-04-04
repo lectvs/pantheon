@@ -133,8 +133,8 @@ class Game {
         this.menuSystem.loadMenu(this.pauseMenu);
     }
 
-    pauseMusic() {
-        this.musicManager.pauseMusic();
+    pauseMusic(fadeTime: number = 0) {
+        this.musicManager.pauseMusic(fadeTime);
     }
 
     playMusic(key: string, fadeTime: number = 0) {

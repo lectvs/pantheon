@@ -6,6 +6,7 @@ namespace Effects {
         silhouette?: SilhouetteConfig;
         outline?: OutlineConfig;
         invertColors?: InvertColorsConfig;
+        glitch?: GlitchConfig;
         post?: PostConfig;
     }
 
@@ -13,15 +14,17 @@ namespace Effects {
     export type SilhouetteConfig = { color?: number, alpha?: number, amount?: number,  enabled?: boolean };
     export type OutlineConfig = { color?: number, alpha?: number, enabled?: boolean };
     export type InvertColorsConfig = { enabled?: boolean };
+    export type GlitchConfig = { strength?: number, speed?: number, spread?: number, enabled?: boolean };
     export type PostConfig = { filters?: TextureFilter[], enabled?: boolean };
 }
 
 
 class Effects {
-    private effects: [Effects.Filters.Silhouette, Effects.Filters.Outline, Effects.Filters.InvertColors];
+    private effects: [Effects.Filters.Silhouette, Effects.Filters.Outline, Effects.Filters.InvertColors, Effects.Filters.Glitch];
     private static SILHOUETTE_I: number = 0;
     private static OUTLINE_I: number = 1;
     private static INVERT_COLORS_I: number = 2;
+    private static GLITCH_I: number = 3;
 
     pre: Effects.FilterList;
     post: Effects.FilterList;
@@ -47,6 +50,13 @@ class Effects {
         }
         return <Effects.Filters.InvertColors>this.effects[Effects.INVERT_COLORS_I];
     }
+    get glitch(): Effects.Filters.Glitch {
+        if (!this.effects[Effects.GLITCH_I]) {
+            this.effects[Effects.GLITCH_I] = new Effects.Filters.Glitch(2, 1, 2);
+            this.effects[Effects.GLITCH_I].enabled = false;
+        }
+        return <Effects.Filters.Glitch>this.effects[Effects.GLITCH_I];
+    }
 
     get addSilhouette(): Effects.Filters.Silhouette {
         this.silhouette.enabled = true;
@@ -59,7 +69,7 @@ class Effects {
     }
 
     constructor(config: Effects.Config = {}) {
-        this.effects = [undefined, undefined, undefined];
+        this.effects = [undefined, undefined, undefined, undefined];
         this.pre = { filters: [], enabled: true };
         this.post = { filters: [], enabled: true };
         this.updateFromConfig(config);
@@ -80,6 +90,7 @@ class Effects {
         if (this.effects[Effects.SILHOUETTE_I]) this.effects[Effects.SILHOUETTE_I].updateTime(delta);
         if (this.effects[Effects.OUTLINE_I]) this.effects[Effects.OUTLINE_I].updateTime(delta);
         if (this.effects[Effects.INVERT_COLORS_I]) this.effects[Effects.INVERT_COLORS_I].updateTime(delta);
+        if (this.effects[Effects.GLITCH_I]) this.effects[Effects.GLITCH_I].updateTime(delta);
         for (let filter of this.pre.filters) filter.updateTime(delta);
         for (let filter of this.post.filters) filter.updateTime(delta);
     }
@@ -107,6 +118,13 @@ class Effects {
 
         if (config.invertColors) {
             this.invertColors.enabled = config.invertColors.enabled ?? true;
+        }
+
+        if (config.glitch) {
+            this.glitch.strength = config.glitch.strength ?? 2;
+            this.glitch.speed = config.glitch.speed ?? 1;
+            this.glitch.spread = config.glitch.spread ?? 2;
+            this.glitch.enabled = config.glitch.enabled ?? true;
         }
 
         if (config.post) {
@@ -177,6 +195,50 @@ namespace Effects {
                         outp.b = 1.0 - inp.b;
                     `
                 });
+            }
+        }
+
+        export class Glitch extends TextureFilter {
+            private _strength: number;
+            get strength() { return this._strength; }
+            set strength(value: number) {
+                this._strength = value;
+                this.setUniform('strength', value);
+            }
+
+            private _speed: number;
+            get speed() { return this._speed; }
+            set speed(value: number) {
+                this._speed = value;
+                this.setUniform('speed', value);
+            }
+
+            private _spread: number;
+            get spread() { return this._spread; }
+            set spread(value: number) {
+                this._spread = value;
+                this.setUniform('spread', value);
+            }
+
+            /**
+             * @param strength - the amplitude of the offset
+             * @param speed - the speed at which the offset cycles
+             * @param spread - the average length of the bands
+             */
+            constructor(strength: number, speed: number, spread: number) {
+                super({
+                    uniforms: { 'float strength': strength, 'float speed': speed, 'float spread': spread },
+                    code: `
+                        float tt = floor((5.4 + t) * speed);
+                        float yy = floor(y / spread) * spread;
+                        float offset = pnoise(0.0, yy*1.1, tt*5.1) * strength;
+                        outp = getColor(x + offset, y);
+                    `
+                });
+
+                this._strength = strength;
+                this._speed = speed;
+                this._spread = spread;
             }
         }
     }

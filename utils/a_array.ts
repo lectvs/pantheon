@@ -170,4 +170,10 @@ namespace A {
         }
         return result;
     }
+
+    export function swap<T>(array: T[], i: number, j: number) {
+        let temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
 }

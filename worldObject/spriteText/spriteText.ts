@@ -197,8 +197,8 @@ class SpriteText extends WorldObject {
             let data = this.staticTextures[key];
             let style = this.getStyleFromTags(data.tagData, this.style);
             data.texture.renderTo(texture, {
-                x: x + anchorOffsetX + data.x + style.offsetX,
-                y: y + anchorOffsetY + data.y + style.offsetY,
+                x: x + anchorOffsetX + (data.x + style.offsetX) * (this.flipX ? -1 : 1) * this.scaleX,
+                y: y + anchorOffsetY + (data.y + style.offsetY) * (this.flipY ? -1 : 1) * this.scaleY,
                 tint: style.color,
                 alpha: this.alpha * style.alpha,
                 scaleX: (this.flipX ? -1 : 1) * this.scaleX,
@@ -239,7 +239,7 @@ class SpriteText extends WorldObject {
     }
 
     getCharList() {
-        return _.flatten(this.chars);
+        return <SpriteText.Character[]>_.flatten(this.chars);
     }
 
     getCurrentText() {

@@ -48,6 +48,10 @@ namespace M {
         return dx*dx + dy*dy;
     }
 
+    export function isInt(n: string) {
+        return /^[+-]?\d+$/.test(n);
+    }
+
     /** 
      * Calculates the height of a parabola that starts at startHeight, increases to startHeight + peakDelta, then falls to startHeight + groundDelta.
      * 0 <= t <= 1 is the percent completion of the jump.
