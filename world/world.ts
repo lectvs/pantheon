@@ -296,6 +296,10 @@ class World {
         Physics.resolveCollisions(this);
     }
 
+    nonUpdate() {
+
+    }
+
     /**
      * By default, sounds are:
      *   - Humanized (if set globally and sound duration less than 1 second)

@@ -540,6 +540,10 @@ namespace Bounds.Collision {
         fromBox.x += fromdx;
         fromBox.y += fromdy;
 
+        if (!isFinite(t) && fromdx === movedx && fromdy === movedy) {
+            t = 0;
+        }
+
         if (!isFinite(t)) {
             error(`Failed to detect time of collision between circle and inverted rect:`, move.parent, { x: movePos.x, y: movePos.y, radius: move.radius }, movedx, movedy, from.parent, fromBox, fromdx, fromdy);
         }
@@ -746,6 +750,10 @@ namespace Bounds.Collision {
         moveBox.y += movedy;
         fromBox.x += fromdx;
         fromBox.y += fromdy;
+
+        if (!isFinite(t) && fromdx === movedx && fromdy === movedy) {
+            t = 0;
+        }
 
         if (!isFinite(t)) {
             error(`Failed to detect time of collision between rect and inverted rect:`, move.parent, moveBox, movedx, movedy, from.parent, fromBox, fromdx, fromdy);
