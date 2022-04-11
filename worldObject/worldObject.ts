@@ -363,7 +363,7 @@ class WorldObject {
             && bounds.y <= this.world.height + buffer;
     }
 
-    isVisible() {
+    isVisible(): boolean {
         return this._visible && (!this.parent || this.parent.isVisible());
     }
 
