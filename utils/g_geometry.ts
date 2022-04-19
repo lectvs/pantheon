@@ -6,7 +6,7 @@ namespace G {
         let ldy = ly2 - ly1;
         let t = (dx*ldx + dy*ldy) / (ldx*ldx + ldy*ldy);
         
-        if (M.distanceSq(dx, dy, ldx*t, ldy*t) > r*r) return false;
+        if (M.distanceSq(dx, dy, ldx*t, ldy*t) >= r*r - 0.00000001) return false;
 
         let tInRange = 0 < t && t < 1;
         let intersectsVertex1 = M.distanceSq(0, 0, dx, dy) < r*r;

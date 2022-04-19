@@ -52,6 +52,27 @@ class RandomNumberGenerator {
     }
 
     /**
+     * Random element from array, weighted by a given weights array.
+     */
+    elementWeighted<T>(array: T[], weights: number[]) {
+        if (_.isEmpty(array)) return undefined;
+        if (_.isEmpty(weights)) {
+            error(`Weights are empty, using uniform weighting:`, array, weights);
+            return this.element(array);
+        }
+        if (weights.length !== array.length) {
+            error(`Weights length does not match array length:`, array, weights);
+        }
+        let weightSum = A.sum(weights);
+        let value = this.float(0, weightSum);
+        for (let i = 0; i < array.length; i++) {
+            if (value < weights[i]) return array[i];
+            value -= weights[i];
+        }
+        return _.last(array);
+    }
+
+    /**
      * Random Vector2 uniformly in a unit circle.
      * @param radius Default: 1
      */
