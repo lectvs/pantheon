@@ -28,6 +28,7 @@ namespace World {
         globalSoundHumanizePercent?: number;
 
         timescale?: number;
+        allowPause?: boolean;
         data?: any;
     }
 
@@ -98,6 +99,8 @@ class World {
     volume: number;
     globalSoundHumanizePercent: number;
 
+    allowPause: boolean;
+
     constructor(config: World.Config = {}) {        
         this.scriptManager = new ScriptManager();
         this.soundManager = new SoundManager();
@@ -111,6 +114,7 @@ class World {
         this.height = config.height ?? global.gameHeight;
         this.time = 0;
         this.timescale = config.timescale ?? 1;
+        this.allowPause = config.allowPause ?? true;
         this.data = config.data ? O.deepClone(config.data) : {};
 
         this.scaleX = config.scaleX ?? 1;

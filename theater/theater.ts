@@ -18,6 +18,7 @@ class Theater extends World {
     get currentWorld() { return this.stageManager ? this.stageManager.currentWorld : undefined; }
     get isCutscenePlaying() { return this.cutsceneManager ? this.cutsceneManager.isCutscenePlaying : false; }
     get slides() { return this.slideManager ? this.slideManager.slides : []; }
+    get canPause() { return this.allowPause && this.currentWorld?.allowPause; }
 
     endOfFrameQueue: (() => any)[];
 

@@ -76,7 +76,7 @@ class Game {
     }
 
     private updatePause() {
-        if (this.allowPauseWithPauseKey && Input.justDown(Input.GAME_PAUSE) && !this.menuSystem.inMenu) {
+        if (!this.menuSystem.inMenu && this.allowPauseWithPauseKey && this.theater.canPause && Input.justDown(Input.GAME_PAUSE)) {
             Input.consume(Input.GAME_PAUSE);
             this.pauseGame();
         }
