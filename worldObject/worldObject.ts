@@ -338,6 +338,10 @@ class WorldObject {
         return vec2(this.x, this.y);
     }
 
+    getTimers() {
+        return A.clone(this.timers);
+    }
+
     getVisibleScreenBounds() {
         return undefined;
     }
