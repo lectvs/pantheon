@@ -62,6 +62,16 @@ namespace Tween {
         export const OutBounce: (bounceScale: number) => Function = bounceScale => outFromIn(InBounce(bounceScale));
         export const InOutBounce: (bounceScale: number) => Function = bounceScale => inOutFromIn(InBounce(bounceScale));
 
+        export const InElastic: (elasticity: number) => Function = elasticity => t => {
+            if (elasticity === 0) return t;
+            if (t === 0) return 0;
+            if (t === 1) return 1;
+            return -Math.pow(2, (10*t - 10)/elasticity) * M.sin((10*t - 10.75) * 120);
+        };
+        export const OutElastic: (elasticity: number) => Function = elasticity => outFromIn(InElastic(elasticity));
+        export const InOutElastic: (elasticity: number) => Function = elasticity => inOutFromIn(InElastic(elasticity));
+
+
         export const OscillateSine: (cyclesPerSecond: number) => Function = cyclesPerSecond => (t => (1 - M.cos(t * 360 * cyclesPerSecond))/2);
     }
 }

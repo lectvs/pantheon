@@ -99,8 +99,11 @@ class Debug {
     static EXPERIMENTS: Dict<Experiment>;
 }
 
-function get(name: string) {
-    let worldObject = global.game.theater.currentWorld.select.name(name);
-    if (worldObject) return worldObject;
-    return undefined;
+function get(nameOrType: string | (new (...args) => WorldObject)) {
+    let worldObject = _.isString(nameOrType)
+                        ? global.world.select.nameAll(nameOrType)
+                        : global.world.select.typeAll(nameOrType);
+    if (_.isEmpty(worldObject)) return undefined;
+    if (worldObject.length === 1) return worldObject[0];
+    return worldObject;
 }

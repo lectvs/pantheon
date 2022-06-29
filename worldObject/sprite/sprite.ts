@@ -10,6 +10,7 @@ namespace Sprite {
         offsetX?: number;
         offsetY?: number;
         angle?: number;
+        angleOffset?: number;
         vangle?: number;
         scale?: number;
         scaleX?: number;
@@ -32,6 +33,7 @@ class Sprite extends PhysicsWorldObject {
     offsetX: number;
     offsetY: number;
     angle: number;
+    angleOffset: number;
     vangle: number;
 
     scaleX: number;
@@ -71,6 +73,7 @@ class Sprite extends PhysicsWorldObject {
         this.offsetX = config.offsetX ?? 0;
         this.offsetY = config.offsetY ?? 0;
         this.angle = config.angle ?? 0;
+        this.angleOffset = config.angleOffset ?? 0;
         this.vangle = config.vangle ?? 0;
         this.scaleX = config.scaleX ?? (config.scale ?? 1);
         this.scaleY = config.scaleY ?? (config.scale ?? 1);
@@ -101,7 +104,7 @@ class Sprite extends PhysicsWorldObject {
             y: y + this.offsetY,
             scaleX: (this.flipX ? -1 : 1) * this.scaleX,
             scaleY: (this.flipY ? -1 : 1) * this.scaleY,
-            angle: this.angle,
+            angle: this.angle + this.angleOffset,
             tint: this.tint,
             alpha: this.alpha,
             filters: this.effects.getFilterList(),
@@ -168,7 +171,7 @@ class Sprite extends PhysicsWorldObject {
     private getTextureLocalBounds() {
         if (!this.texture) return rect(0, 0, 0, 0);
         return this.texture.getLocalBounds({
-            angle: this.angle,
+            angle: this.angle + this.angleOffset,
             scaleX: this.scaleX,
             scaleY: this.scaleY,
         });
