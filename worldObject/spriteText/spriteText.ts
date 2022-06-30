@@ -13,6 +13,7 @@ namespace SpriteText {
         scaleX?: number;
         scaleY?: number;
         angle?: number;
+        angleOffset?: number;
         maxWidth?: number;
         style?: Style;
         effects?: Effects.Config;
@@ -95,6 +96,7 @@ class SpriteText extends WorldObject {
     flipX: boolean;
     flipY: boolean;
     angle: number;
+    angleOffset: number;
 
     scaleX: number;
     scaleY: number;
@@ -155,6 +157,7 @@ class SpriteText extends WorldObject {
         this.scaleX = config.scaleX ?? (config.scale ?? 1);
         this.scaleY = config.scaleY ?? (config.scale ?? 1);
         this.angle = config.angle ?? 0;
+        this.angleOffset = config.angleOffset ?? 0;
 
         this.effects = new Effects();
         this.effects.updateFromConfig(config.effects);
@@ -203,7 +206,7 @@ class SpriteText extends WorldObject {
                 alpha: this.alpha * style.alpha,
                 scaleX: (this.flipX ? -1 : 1) * this.scaleX,
                 scaleY: (this.flipY ? -1 : 1) * this.scaleY,
-                angle: this.angle,
+                angle: this.angle + this.angleOffset,
                 filters: [...style.filters, ...this.effects.getFilterList()],
                 mask: Mask.getTextureMaskForWorldObject(this.mask, this),
             });
@@ -289,6 +292,19 @@ class SpriteText extends WorldObject {
         this.chars = SpriteTextConverter.textToCharListWithWordWrap(text, this.font, this.maxWidth);
         this.currentText = text;
         this.dirty = true;
+    }
+
+    // May still need work
+    toTexture() {
+        let width = this.getTextWidth();
+        let height = this.getTextHeight();
+        let texture = new BasicTexture(width, height);
+
+        let anchorOffsetX = Math.round(this.anchor.x * width);
+        let anchorOffsetY = Math.round(this.anchor.y * height);
+        this.render(texture, anchorOffsetX, anchorOffsetY);
+
+        return AnchoredTexture.fromBaseTexture(texture, this.anchor.x, this.anchor.y);
     }
 
     private getStyleFromTags(tagData: SpriteText.TagData[], defaults: Required<SpriteText.Style>) {
