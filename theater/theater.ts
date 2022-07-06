@@ -78,6 +78,10 @@ class Theater extends World {
         this.cutsceneManager.playCutsceneIfNotSeen(cutscene);
     }
 
+    reloadCurrentStage(transition: Transition = new Transitions.Instant()) {
+        this.runAtEndOfFrame(() => this.stageManager.internalReloadCurrentStage(transition));
+    }
+
     runAtEndOfFrame(fn: () => any) {
         this.endOfFrameQueue.push(fn);
     }

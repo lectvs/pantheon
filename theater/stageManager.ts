@@ -1,6 +1,7 @@
 class StageManager {
     currentWorld: World;
     currentWorldAsWorldObject: Theater.WorldAsWorldObject;
+    currentWorldFactory: () => World;
 
     private transition: Transition;
     get transitioning() { return !!this.transition; }
@@ -25,6 +26,7 @@ class StageManager {
         }
 
         // Create new stuff
+        this.currentWorldFactory = stage;
         this.currentWorld = stage();
         this.currentWorldAsWorldObject = new Theater.WorldAsWorldObject(this.currentWorld);
         this.currentWorldAsWorldObject.name = 'world';
@@ -58,5 +60,12 @@ class StageManager {
                 onTransitioned(this.currentWorld);
             }),
         )).update(this.theater.delta);  // Update once in case the transition is already done (i.e. instant)
+    }
+
+    /**
+     * Reloads the current stage immediately. If you are calling from inside your game, you probably want to call Theater.reloadCurrentStage
+     */
+    internalReloadCurrentStage(transition: Transition) {
+        this.internalLoadStage(this.currentWorldFactory, transition, Utils.NOOP);
     }
 }

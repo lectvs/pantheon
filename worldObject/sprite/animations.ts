@@ -19,6 +19,7 @@ namespace Animation {
         export type FromSingleTexture = {
             name: string;
             texture: string | Texture;
+            duration?: number;
             oneOff?: boolean;
             override?: Frame;
         }
@@ -46,9 +47,8 @@ class Animations {
         let result: Animation.Config = {
             name: config.name,
             frames: [{
-                duration: 1,
+                duration: config.duration ?? Infinity,
                 texture: config.texture,
-                nextFrameRef: `${config.name}/0`,
                 forceRequired: config.oneOff,
             }],
         };

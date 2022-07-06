@@ -10,6 +10,8 @@ class BasicTexture implements Texture {
 
     renderTextureSprite: Texture.PIXIRenderTextureSprite;
 
+    private cachedPixelsARGB: number[][];
+
     constructor(width: number, height: number, immutable: boolean = false, source?: string) {
         this.renderTextureSprite = new Texture.PIXIRenderTextureSprite(width, height);
         this.immutable = immutable;
@@ -64,6 +66,53 @@ class BasicTexture implements Texture {
             width: maxx - minx,
             height: maxy - miny,
         };
+    }
+
+    getPixelAbsoluteARGB(x: number, y: number, extendMode: Texture.ExtendMode = 'transparent') {
+        if (this.width === 0 || this.height === 0) return 0x00000000
+
+        let pixels = this.getPixelsARGB();
+
+        x = Math.round(x);
+        y = Math.round(y);
+
+        if (extendMode === 'transparent') {
+            if (x < 0 || x >= pixels[0].length || y < 0 || y >= pixels.length) return 0x00000000;
+        } else if (extendMode === 'clamp') {
+            x = M.clamp(x, 0, pixels[0].length);
+            y = M.clamp(y, 0, pixels.length);
+        }
+
+        return pixels[y][x];
+    }
+
+    getPixelRelativeARGB(x: number, y: number, extendMode: Texture.ExtendMode = 'transparent') {
+        return this.getPixelAbsoluteARGB(x, y, extendMode);
+    }
+
+    getPixelsARGB() {
+        if (this.immutable && this.cachedPixelsARGB) return this.cachedPixelsARGB;
+
+        let pixels = Main.renderer.plugins.extract.pixels(this.renderTextureSprite.renderTexture);
+
+        let result: number[][] = [];
+        for (let y = 0; y < this.height; y++) {
+            let line: number[] = [];
+            for (let x = 0; x < this.width; x++) {
+                let i = x + y * this.width;
+                let r = pixels[4*i + 0];
+                let g = pixels[4*i + 1];
+                let b = pixels[4*i + 2];
+                let a = pixels[4*i + 3];
+
+                let color = (a << 24 >>> 0) + (r << 16) + (g << 8) + b;
+                line.push(color);
+            }
+            result.push(line);
+        }
+
+        this.cachedPixelsARGB = result;
+        return result;
     }
 
     renderTo(texture: Texture, properties?: Texture.Properties) {

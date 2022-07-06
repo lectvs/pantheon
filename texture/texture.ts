@@ -42,6 +42,8 @@ namespace Texture {
 
     export type BlendMode = typeof BlendModes.ADD;
     export const BlendModes = PIXI.BLEND_MODES;
+
+    export type ExtendMode = 'transparent' | 'clamp';
 }
 
 interface Texture {
@@ -55,6 +57,10 @@ interface Texture {
     free(): void;
 
     getLocalBounds(properties: Texture.Properties): Rect;
+
+    getPixelAbsoluteARGB(x: number, y: number, extendMode?: Texture.ExtendMode): number;
+    getPixelRelativeARGB(x: number, y: number, extendMode?: Texture.ExtendMode): number;
+    getPixelsARGB(): number[][];
 
     renderTo(texture: Texture, properties?: Texture.Properties): void;
     renderPIXIDisplayObject(displayObject: PIXI.DisplayObject): void;

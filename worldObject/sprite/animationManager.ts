@@ -112,7 +112,10 @@ class AnimationManager {
         }
 
         let frame = this.getFrameByRef(frameRef);
-        if (!frame) return;
+        if (!frame) {
+            error('No animation frame found:', frameRef);
+            return;
+        }
 
         this.currentFrame = frame;
 

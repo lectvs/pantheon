@@ -4,16 +4,33 @@ class AnchoredTexture implements Texture {
     get width() { return this.baseTexture.width; }
     get height() { return this.baseTexture.height; }
 
-    anchorX: number;
-    anchorY: number;
+    private _anchorX: number;
+    get anchorX() { return this._anchorX; }
+    set anchorX(v: number) {
+        if (this.immutable) {
+            error('Cannot set anchorX on immutable texture:', this);
+            return;
+        }
+        this._anchorX = v;
+    }
+
+    private _anchorY: number;
+    get anchorY() { return this._anchorY; }
+    set anchorY(v: number) {
+        if (this.immutable) {
+            error('Cannot set anchorY on immutable texture:', this);
+            return;
+        }
+        this._anchorY = v;
+    }
 
     get immutable() { return this.baseTexture.immutable; }
     set immutable(value: boolean) { this.baseTexture.immutable = value; }
 
-    constructor(width: number, height: number, baseTexture?: Texture) {
+    constructor(width: number, height: number, baseTexture?: Texture, anchorX: number = 0, anchorY: number = 0) {
         this.baseTexture = baseTexture ?? new BasicTexture(width, height, false, arguments?.callee?.caller?.name ?? "none");
-        this.anchorX = 0;
-        this.anchorY = 0;
+        this._anchorX = anchorX;
+        this._anchorY = anchorY;
     }
 
     clear() {
@@ -33,6 +50,18 @@ class AnchoredTexture implements Texture {
         baseBounds.x += this.getAdjustmentX(properties.angle ?? 0, properties.scaleX ?? 1, properties.scaleY ?? 1);
         baseBounds.y += this.getAdjustmentY(properties.angle ?? 0, properties.scaleX ?? 1, properties.scaleY ?? 1);
         return baseBounds;
+    }
+
+    getPixelAbsoluteARGB(x: number, y: number, extendMode: Texture.ExtendMode = 'transparent') {
+        return this.baseTexture.getPixelAbsoluteARGB(x, y, extendMode);
+    }
+
+    getPixelRelativeARGB(x: number, y: number, extendMode: Texture.ExtendMode = 'transparent') {
+        return this.baseTexture.getPixelAbsoluteARGB(x + this.anchorX*this.width, y + this.anchorY*this.height, extendMode);
+    }
+
+    getPixelsARGB() {
+        return this.baseTexture.getPixelsARGB();
     }
 
     renderTo(texture: Texture, properties: Texture.Properties = {}) {
@@ -98,9 +127,6 @@ class AnchoredTexture implements Texture {
 
 namespace AnchoredTexture {
     export function fromBaseTexture(baseTexture: Texture, anchorX: number = 0, anchorY: number = 0) {
-        let result = new AnchoredTexture(0, 0, baseTexture);
-        result.anchorX = anchorX;
-        result.anchorY = anchorY;
-        return result;
+        return new AnchoredTexture(0, 0, baseTexture, anchorX, anchorY);
     }
 }

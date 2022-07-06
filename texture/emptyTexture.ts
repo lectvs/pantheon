@@ -20,6 +20,18 @@ class EmptyTexture implements Texture {
         return rect(0, 0, 0, 0);
     }
 
+    getPixelAbsoluteARGB(x: number, y: number, extendMode: Texture.ExtendMode = 'transparent') {
+        return 0x00000000;
+    }
+
+    getPixelRelativeARGB(x: number, y: number, extendMode: Texture.ExtendMode = 'transparent') {
+        return 0x00000000;
+    }
+
+    getPixelsARGB() {
+        return [];
+    }
+
     renderTo(texture: Texture, properties: Texture.Properties = {}) { }
 
     renderPIXIDisplayObject(displayObject: PIXI.DisplayObject) { }
