@@ -343,8 +343,12 @@ class World {
         return objs.map(obj => this.removeWorldObject(obj)).filter(obj => obj);
     }
 
-    runScript(script: Script | Script.Function) {
-        return this.scriptManager.runScript(script);
+    runScript(script: Script | Script.Function, name?: string) {
+        return this.scriptManager.runScript(script, name);
+    }
+
+    stopScriptByName(name: string) {
+        this.scriptManager.stopScriptByName(name);
     }
 
     takeSnapshot() {

@@ -67,6 +67,7 @@ interface Texture {
 
     subdivide(h: number, v: number): Texture.Subdivision[];
 
+    toCanvas(): HTMLCanvasElement;
     toMask(): Texture.TextureToMask;
 
     transform(properties?: Texture.TransformProperties): Texture;
@@ -172,6 +173,19 @@ namespace Texture {
             cache_outlineRect[key] = result;
         }
         return cache_outlineRect[key];
+    }
+
+    const cache_outlineCircle: Dict<BasicTexture> = {};
+    export function outlineCircle(radius: number, outlineColor: number, outlineAlpha: number = 1, outlineThickness: number = 1) {
+        let key = `${radius},${outlineColor},${outlineAlpha},${outlineThickness}`;
+        if (!cache_outlineCircle[key]) {
+            let result = new BasicTexture(radius*2, radius*2);
+            Draw.circleOutline(result, radius, radius, radius, Draw.ALIGNMENT_INNER, { color: outlineColor, alpha: outlineAlpha, thickness: outlineThickness });
+            result.immutable = true;
+            cache_outlineCircle[key] = result;
+        }
+        
+        return cache_outlineCircle[key];
     }
 
     export function setFilterProperties(filter: TextureFilter, posx: number, posy: number, dimx: number, dimy: number) {

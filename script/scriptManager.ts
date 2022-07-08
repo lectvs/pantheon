@@ -18,14 +18,19 @@ class ScriptManager {
         this.activeScripts = [];
     }
 
-    runScript(script: Script | Script.Function) {
+    runScript(script: Script | Script.Function, name?: string) {
         if (script instanceof Script) {
             if (script.done) return;
         } else {
-            script = new Script(script);
+            script = new Script(script, name);
         }
         this.activeScripts.push(script);
         return script;
     }
 
+    stopScriptByName(name: string) {
+        for (let script of this.activeScripts) {
+            if (script.name === name) script.stop();
+        }
+    }
 }

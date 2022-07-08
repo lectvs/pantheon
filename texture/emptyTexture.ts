@@ -47,6 +47,10 @@ class EmptyTexture implements Texture {
         return result;
     }
 
+    toCanvas() {
+        return document.createElement('canvas');
+    }
+
     toMask() {
         return {
             renderTexture: Utils.NOOP_RENDERTEXTURE,

@@ -166,6 +166,10 @@ class BasicTexture implements Texture {
         return result;
     }
 
+    toCanvas() {
+        return Main.renderer.plugins.extract.canvas(this.renderTextureSprite.renderTexture);
+    }
+
     toMask() {
         return {
             renderTexture: this.renderTextureSprite.renderTexture,

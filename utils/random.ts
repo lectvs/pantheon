@@ -126,6 +126,7 @@ class RandomNumberGenerator {
             array[i] = array[j];
             array[j] = temp;
         }
+        return array;
     }
 
     /**

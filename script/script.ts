@@ -5,6 +5,7 @@ namespace Script {
 
 class Script {
     iterator: IterableIterator<any>;
+    name: string;
 
     paused: boolean;
     done: boolean;
@@ -13,8 +14,9 @@ class Script {
     delta: number;
     data: any;
 
-    constructor(scriptFunction: Script.Function) {
+    constructor(scriptFunction: Script.Function, name?: string) {
         this.iterator = this.buildIterator(scriptFunction)();
+        this.name = name;
         this.data = {};
     }
 

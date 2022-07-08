@@ -206,6 +206,22 @@ namespace TextureFilter {
             return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
         }
 
+        float lerp(float a, float b, float t) {
+            return a*(1.0-t) + b*t;
+        }
+
+        vec2 lerp(vec2 a, vec2 b, float t) {
+            return a*(1.0-t) + b*t;
+        }
+
+        vec3 lerp(vec3 a, vec3 b, float t) {
+            return a*(1.0-t) + b*t;
+        }
+
+        vec4 lerp(vec4 a, vec4 b, float t) {
+            return a*(1.0-t) + b*t;
+        }
+
         ${Perlin.SHADER_SOURCE}
 
         void main(void) {
