@@ -60,6 +60,7 @@ class MusicManager {
     playMusic(key: string, fadeTime: number = 0) {
         this.paused = false;
 
+        // TODO: this really needs to be fixed
         if (this.currentMusicKey === key && !this.transitionScript) {
             let music = this.currentMusic;
             let currentVolume = music.volume;
