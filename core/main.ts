@@ -56,6 +56,14 @@ class Main {
     }
 
     private static preload() {
+        if (!PIXI.utils.isWebGLSupported()) {
+            let errorText = document.createElement('p');
+            errorText.innerHTML = "Error: WebGL is not supported in your browser.<br/><br/>The most common fix for this is to enable \"Use hardware acceleration\"<br/>in your browser's settings.";
+            errorText.style.color = "#FF0000";
+            document.body.appendChild(errorText);
+            return;
+        }
+
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
