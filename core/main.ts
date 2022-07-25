@@ -15,6 +15,7 @@ namespace Main {
         preloadBackgroundColor: number;
         preloadProgressBarColor: number;
 
+        remoteRootPath?: string;
         textures: Dict<Preload.Texture>;
         sounds: Dict<Preload.Sound>;
         tilesets: Dict<Preload.Tileset>;
@@ -257,5 +258,12 @@ class Main {
         window.addEventListener("beforeunload", event => {
             Analytics.submit();
         }, false)
+    }
+
+    static getRootPath() {
+        if (!IS_REMOTE || !Main.config.remoteRootPath || window.location.href.includes('localhost')) {
+            return '';
+        }
+        return Main.config.remoteRootPath;
     }
 }

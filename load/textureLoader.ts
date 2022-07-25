@@ -25,7 +25,7 @@ class TextureLoader implements Loader {
 
     private getUrl() {
         if (this.texture.url && this.texture.url.startsWith('data:')) return this.texture.url;
-        return 'assets/' + (this.texture.url ?? `${this.key}.png`);
+        return Main.getRootPath() + 'assets/' + (this.texture.url ?? `${this.key}.png`);
     }
 
     private onLoad() {

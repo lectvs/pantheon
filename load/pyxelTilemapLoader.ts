@@ -13,7 +13,7 @@ class PyxelTilemapLoader implements Loader {
     }
 
     load(callback?: () => void) {
-        let url = 'assets/' + (this.tilemap.url ?? `${this.key}.json`);
+        let url = Main.getRootPath() + 'assets/' + (this.tilemap.url ?? `${this.key}.json`);
         this.pixiLoader = new PIXI.Loader();
         this.pixiLoader.add(this.key, url);
         this.pixiLoader.load(() => {
