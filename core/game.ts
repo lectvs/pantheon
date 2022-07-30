@@ -37,7 +37,7 @@ class Game {
         this.menuSystem = new MenuSystem(this);
 
         this.overlay = new DebugOverlay();
-        this.isShowingOverlay = false;
+        this.isShowingOverlay = true;
         this.allowPauseWithPauseKey = true;
     }
 
@@ -115,7 +115,10 @@ class Game {
             global.metrics.startSpan('debugOverlay');
             this.overlay.render(screen);
             global.metrics.endSpan('debugOverlay');
+        }
 
+        if (Debug.SHOW_TOUCHES) {
+            this.renderTouches(screen);
         }
     }
 
@@ -160,5 +163,14 @@ class Game {
 
     unpauseMusic() {
         this.musicManager.unpauseMusic();
+    }
+
+    private renderTouches(screen: Texture) {
+        if (IS_MOBILE && Input.isKeyCodeDown(Input.MOUSE_KEYCODES[0])) {
+            Draw.brush.color = 0xFF0000;
+            Draw.brush.alpha = 1;
+            Draw.brush.thickness = 1;
+            Draw.circleOutline(screen, Input.mouseX, Input.mouseY, Input.mouseRadius, Draw.ALIGNMENT_INNER);
+        }
     }
 }

@@ -24,6 +24,7 @@ namespace Main {
         spriteTextTags: Dict<SpriteText.TagFunction>;
         dialogProfiles: Dict<DialogProfile.Config>;
 
+        simulateMouseWithTouches: boolean;
         defaultOptions: Options.Options;
 
         game: Game.Config;
@@ -120,6 +121,7 @@ class Main {
         //Options.updateCallbacks.push(() => Input.init()); // TODO: fix this for continuous volume slider
         Options.init(global.gameCodeName, this.config.defaultOptions);
         Input.init(); // TODO: remove this when fixed above
+        Input.simulateMouseWithTouches = this.config.simulateMouseWithTouches;
 
         this.initEvents();
 
@@ -241,6 +243,18 @@ class Main {
         window.addEventListener("wheel", event => {
             Input.handleMouseScrollEvent(event, this.config.preventScrollOnCanvas);
         }, { passive: false });
+        window.addEventListener("touchstart", event => {
+            TouchManager.handleTouchStartEvent(event);
+        });
+        window.addEventListener("touchmove", event => {
+            TouchManager.handleTouchMoveEvent(event);
+        });
+        window.addEventListener("touchend", event => {
+            TouchManager.handleTouchEndEvent(event);
+        });
+        window.addEventListener("touchcancel", event => {
+            TouchManager.handleTouchCancelEvent(event);
+        });
         window.addEventListener("contextmenu", event => {
             WebAudio.start();
             event.preventDefault();

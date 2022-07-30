@@ -78,6 +78,24 @@ class Draw {
         texture.renderPIXIDisplayObject(this.graphics);
     }
 
+    static ellipseOutline(texture: Texture, x: number, y: number, radiusX: number, radiusY: number, alignment: number = this.ALIGNMENT_INNER, brush: Draw.Brush = Draw.brush) {
+        this.graphics.lineStyle(brush.thickness, brush.color, brush.alpha, alignment);
+        this.graphics.clear();
+        this.graphics.beginFill(0, 0);
+        this.graphics.drawEllipse(x, y, radiusX, radiusY);
+        this.graphics.endFill();
+        texture.renderPIXIDisplayObject(this.graphics);
+    }
+
+    static ellipseSolid(texture: Texture, x: number, y: number, radiusX: number, radiusY: number, brush: Draw.Brush = Draw.brush) {
+        this.graphics.lineStyle(0, 0, 0);
+        this.graphics.clear();
+        this.graphics.beginFill(brush.color, brush.alpha);
+        this.graphics.drawEllipse(x, y, radiusX, radiusY);
+        this.graphics.endFill();
+        texture.renderPIXIDisplayObject(this.graphics);
+    }
+
     static pixel(texture: Texture, x: number, y: number, brush: Draw.Brush = Draw.brush) {
         Draw.PIXEL_TEXTURE.renderTo(texture, {
             x: x, y: y,

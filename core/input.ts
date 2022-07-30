@@ -32,8 +32,13 @@ class Input {
     private static _mouseY: number = 0;
     private static _canvasMouseX: number = 0;
     private static _canvasMouseY: number = 0;
+    private static _mouseRadius: number = 0;
     private static _mouseScrollDelta: number = 0;
 
+    private static isUsingTouch: boolean = false;
+    private static touchWentUp: boolean = false; // Did a touch event happen this frame that caused touch to stop?
+
+    static simulateMouseWithTouches: boolean = false;
     static preventRegularKeyboardInput: boolean = false;
 
     static init() {
@@ -47,6 +52,9 @@ class Input {
                 this.setupKeyCode(keyCode);
             }
         }
+
+        TouchManager.onTouchDown = () => this.handleTouchDown();
+        TouchManager.onTouchUp = () => this.handleTouchUp();
     }
 
     static update() {
@@ -59,6 +67,12 @@ class Input {
 
     static postUpdate() {
         this._mouseScrollDelta = 0;
+
+        if (this.touchWentUp) {
+            this._canvasMouseX = 0;
+            this._canvasMouseY = 0;
+            this.touchWentUp = false;
+        }
     }
 
     static consume(key: string) {
@@ -164,8 +178,26 @@ class Input {
     }
 
     private static updateMousePosition() {
-        this._canvasMouseX = global.renderer.plugins.interaction.mouse.global.x;
-        this._canvasMouseY = global.renderer.plugins.interaction.mouse.global.y;
+        if (this.isUsingTouch && this.simulateMouseWithTouches) {
+            if (TouchManager.isTouching) {
+                this._canvasMouseX = TouchManager.touch.x;
+                this._canvasMouseY = TouchManager.touch.y;
+                this._mouseRadius = TouchManager.touch.radius;
+            } else {
+                this._mouseRadius = 0;
+            }
+        } else if (IS_MOBILE) {
+            if (this.isDownByKeyCode[this.MOUSE_KEYCODES[0]]) {
+                this._canvasMouseX = global.renderer.plugins.interaction.mouse.global.x;
+                this._canvasMouseY = global.renderer.plugins.interaction.mouse.global.y;
+                this._mouseRadius = IS_MOBILE ? 10 : 0;
+            } else {
+                this._mouseRadius = 0;
+            }
+        } else {
+            this._canvasMouseX = global.renderer.plugins.interaction.mouse.global.x;
+            this._canvasMouseY = global.renderer.plugins.interaction.mouse.global.y;
+        }
         if (Fullscreen.enabled) {
             let cw = global.renderer.width / global.renderer.resolution;
             let ch = global.renderer.height / global.renderer.resolution;
@@ -260,6 +292,10 @@ class Input {
         return this._mouseScrollDelta;
     }
 
+    static get mouseRadius() {
+        return this._mouseRadius;
+    }
+
     static handleKeyDownEvent(event: KeyboardEvent) {
         let keyCode = Input.getKeyFromEventKey(event.key);
         this.eventKey = keyCode;
@@ -303,12 +339,29 @@ class Input {
             this.isDownByKeyCode[keyCode] = false;
             event.preventDefault();
         }
+        if (IS_MOBILE && keyCode === this.MOUSE_KEYCODES[0]) {
+            this.touchWentUp = true;
+        }
     }
 
     static handleMouseScrollEvent(event: WheelEvent, preventScrollOnCanvas: boolean) {
         this._mouseScrollDelta = Math.sign(event.deltaY);
         if (preventScrollOnCanvas && this.isMouseOnCanvas && !event.ctrlKey && !event.metaKey) {
             event.preventDefault();
+        }
+    }
+
+    static handleTouchDown() {
+        if (this.simulateMouseWithTouches) {
+            this.isDownByKeyCode[this.MOUSE_KEYCODES[0]] = true;
+            this.isUsingTouch = true;
+        }
+    }
+
+    static handleTouchUp() {
+        if (this.simulateMouseWithTouches) {
+            this.isDownByKeyCode[this.MOUSE_KEYCODES[0]] = false;
+            this.touchWentUp = true;
         }
     }
 

@@ -3,7 +3,8 @@ namespace Debug {
         debug: boolean;
         font: string;
         fontStyle: SpriteText.Style;
-        allPhysicsBounds: boolean;
+        showAllPhysicsBounds: boolean;
+        showTouches: boolean;
         moveCameraWithArrows: boolean; 
         showOverlay: boolean;
         overlayFeeds: ((world: World) => string)[];
@@ -23,7 +24,8 @@ class Debug {
         Debug.DEBUG_TOGGLE_ENABLED = Debug.DEBUG;
         Debug.FONT = config.font;
         Debug.FONT_STYLE = config.fontStyle;
-        Debug.ALL_PHYSICS_BOUNDS = config.allPhysicsBounds;
+        Debug.SHOW_ALL_PHYSICS_BOUNDS = config.showAllPhysicsBounds;
+        Debug.SHOW_TOUCHES = config.showTouches;
         Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
         Debug.SHOW_OVERLAY = Debug.DEBUG && config.showOverlay;
         Debug.OVERLAY_FEEDS = config.overlayFeeds;
@@ -58,9 +60,13 @@ class Debug {
     static FONT: string;
     static FONT_STYLE: SpriteText.Style;
 
-    private static _ALL_PHYSICS_BOUNDS: boolean;
-    static get ALL_PHYSICS_BOUNDS() { return this.DEBUG && this._ALL_PHYSICS_BOUNDS; }
-    static set ALL_PHYSICS_BOUNDS(value: boolean) { this._ALL_PHYSICS_BOUNDS = value; }
+    private static _SHOW_ALL_PHYSICS_BOUNDS: boolean;
+    static get SHOW_ALL_PHYSICS_BOUNDS() { return this.DEBUG && this._SHOW_ALL_PHYSICS_BOUNDS; }
+    static set SHOW_ALL_PHYSICS_BOUNDS(value: boolean) { this._SHOW_ALL_PHYSICS_BOUNDS = value; }
+
+    private static _SHOW_TOUCHES: boolean;
+    static get SHOW_TOUCHES() { return this.DEBUG && this._SHOW_TOUCHES; }
+    static set SHOW_TOUCHES(value: boolean) { this._SHOW_TOUCHES = value; }
 
     private static _MOVE_CAMERA_WITH_ARROWS: boolean;
     static get MOVE_CAMERA_WITH_ARROWS() { return this.DEBUG && this._MOVE_CAMERA_WITH_ARROWS; }
