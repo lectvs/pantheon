@@ -294,6 +294,13 @@ class World {
         return new Vector2(this.getWorldMouseX(), this.getWorldMouseY());
     }
 
+    getWorldMouseSpeed() {
+        if (this.delta === 0) return 0;
+        let lastMouseX = Math.floor(Input.lastMouseX / this.scaleX + this.camera.worldOffsetX);
+        let lastMouseY = Math.floor(Input.lastMouseY / this.scaleY + this.camera.worldOffsetY);
+        return M.distance(this.getWorldMouseX(), this.getWorldMouseY(), lastMouseX, lastMouseY) / this.delta;
+    }
+
     handleCollisions() {
         if (_.isEmpty(this.collisions)) return;
 

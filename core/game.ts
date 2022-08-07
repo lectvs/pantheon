@@ -12,6 +12,7 @@ class Game {
 
     private overlay: DebugOverlay;
     private isShowingOverlay: boolean;
+    private fpsText: SpriteText;
 
     allowPauseWithPauseKey: boolean;
 
@@ -39,6 +40,7 @@ class Game {
         this.overlay = new DebugOverlay();
         this.isShowingOverlay = true;
         this.allowPauseWithPauseKey = true;
+        this.fpsText = new SpriteText({ effects: { outline: {} } });
     }
 
     start() {
@@ -116,6 +118,13 @@ class Game {
             this.overlay.render(screen);
             global.metrics.endSpan('debugOverlay');
         }
+
+        // TODO: remove
+        let fpsText = global.fpsCalculator.fpsAvg.toFixed(0) + " "
+            + "(-" + (global.fpsCalculator.fpsAvg - global.fpsCalculator.fpsP).toFixed(0) + ")";
+        this.fpsText.setText(fpsText);
+        this.fpsText.render(screen, 30, 224);
+
 
         if (Debug.SHOW_TOUCHES) {
             this.renderTouches(screen);

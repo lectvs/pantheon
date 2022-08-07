@@ -35,7 +35,11 @@ class Input {
     private static _mouseRadius: number = 0;
     private static _mouseScrollDelta: number = 0;
 
+    private static _lastMouseX: number;
+    private static _lastMouseY: number;
+
     private static isUsingTouch: boolean = false;
+    private static touchWentDown: boolean = false; // Did a touch event happen this frame that caused touch to start?
     private static touchWentUp: boolean = false; // Did a touch event happen this frame that caused touch to stop?
 
     static simulateMouseWithTouches: boolean = false;
@@ -215,9 +219,19 @@ class Input {
                 this._canvasMouseX = cw * (this._canvasMouseX - x1) / w;
             }
         }
+
+        this._lastMouseX = this._mouseX;
+        this._lastMouseY = this._mouseY;
+
         if (this.isMouseOnCanvas) {
             this._mouseX = Math.floor(this._canvasMouseX);
             this._mouseY = Math.floor(this._canvasMouseY);
+        }
+
+        if (this.touchWentDown) {
+            this._lastMouseX = this._mouseX;
+            this._lastMouseY = this._mouseY;
+            this.touchWentDown = false;
         }
     }
 
@@ -272,6 +286,18 @@ class Input {
         return new Vector2(this.mouseX, this.mouseY);
     }
 
+    static get lastMouseX() {
+        return this._lastMouseX;
+    }
+
+    static get lastMouseY() {
+        return this._lastMouseY;
+    }
+
+    static get lastMousePosition() {
+        return new Vector2(this.lastMouseX, this.lastMouseY);
+    }
+
     static get canvasMouseX() {
         return this._canvasMouseX;
     }
@@ -294,6 +320,11 @@ class Input {
 
     static get mouseRadius() {
         return this._mouseRadius;
+    }
+
+    static get mouseSpeed() {
+        if (Main.delta === 0) return 0;
+        return M.distance(this.mouseX, this.mouseY, this.lastMouseX, this.lastMouseY) / Main.delta;
     }
 
     static handleKeyDownEvent(event: KeyboardEvent) {
@@ -330,6 +361,9 @@ class Input {
             // Prevent default for all inputs except LMB
             if (event.button !== 0) event.preventDefault();
         }
+        if (IS_MOBILE && keyCode === this.MOUSE_KEYCODES[0]) {
+            this.touchWentDown = true;
+        }
     }
 
     static handleMouseUpEvent(event: MouseEvent) {
@@ -355,6 +389,7 @@ class Input {
         if (this.simulateMouseWithTouches) {
             this.isDownByKeyCode[this.MOUSE_KEYCODES[0]] = true;
             this.isUsingTouch = true;
+            this.touchWentDown = true;
         }
     }
 

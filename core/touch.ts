@@ -57,13 +57,11 @@ class TouchManager {
 
     private static getTouchData(touch: Touch): TouchData {
         let bounds = Main.renderer.view.getBoundingClientRect();
-        let radiusX = M.map(touch.radiusX, 0, bounds.width, 0, global.gameWidth);
-        let radiusY = M.map(touch.radiusY, 0, bounds.height, 0, global.gameHeight);
         return {
             id: touch.identifier,
             x: M.map(touch.pageX, bounds.left, bounds.right, 0, global.gameWidth),
             y: M.map(touch.pageY, bounds.top, bounds.bottom, 0, global.gameHeight),
-            radius: (radiusX + radiusY)/2,
+            radius: 10, // TODO: touch radius issues on Android?
         };
     }
 }

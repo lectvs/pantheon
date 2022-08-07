@@ -48,6 +48,10 @@ namespace M {
         return dx*dx + dy*dy;
     }
 
+    export function equidistantLine(middle: number, d: number, n: number, i: number) {
+        return middle - d*(n-1)/2 + d*i;
+    }
+
     export function isInt(n: string) {
         return /^[+-]?\d+$/.test(n);
     }
