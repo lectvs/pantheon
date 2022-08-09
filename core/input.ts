@@ -75,6 +75,7 @@ class Input {
         if (this.touchWentUp) {
             this._canvasMouseX = 0;
             this._canvasMouseY = 0;
+            this._mouseRadius = 0;
             this.touchWentUp = false;
         }
     }
@@ -187,16 +188,12 @@ class Input {
                 this._canvasMouseX = TouchManager.touch.x;
                 this._canvasMouseY = TouchManager.touch.y;
                 this._mouseRadius = TouchManager.touch.radius;
-            } else {
-                this._mouseRadius = 0;
             }
         } else if (IS_MOBILE) {
             if (this.isDownByKeyCode[this.MOUSE_KEYCODES[0]]) {
                 this._canvasMouseX = global.renderer.plugins.interaction.mouse.global.x;
                 this._canvasMouseY = global.renderer.plugins.interaction.mouse.global.y;
                 this._mouseRadius = IS_MOBILE ? 10 : 0;
-            } else {
-                this._mouseRadius = 0;
             }
         } else {
             this._canvasMouseX = global.renderer.plugins.interaction.mouse.global.x;

@@ -9,42 +9,44 @@ namespace MenuTextButton {
 }
 
 class MenuTextButton extends SpriteText {
-    onClick: () => any;
-    hoverColor: number;
-    hoverAlpha: number;
+    private bounds: RectBounds;
 
-    normalColor: number;
-    normalAlpha: number;
-    enabled: boolean;
+    get tint() { return this.style.color; }
+    set tint(value: number) { this.style.color = value; }
+
+    get enabled() { return this.getModule(Button)?.enabled; }
+    set enabled(value: boolean) {
+        let button = this.getModule(Button);
+        if (button) button.enabled = value;
+    }
 
     constructor(config: MenuTextButton.Config) {
         super(config);
-        this.onClick = config.onClick ?? Utils.NOOP;
-        this.hoverColor = config.hoverColor ?? 0xFFFFFF;
-        this.hoverAlpha = config.hoverAlpha ?? 0.5;
+        this.bounds = new RectBounds(0, 0, 0, 0, this);
 
-        this.normalColor = this.style.color;
-        this.normalAlpha = this.style.alpha;
-        this.enabled = true;
+        let button = this.addModule(new Button({
+            hoverTint: config.hoverColor ?? 0xFFFFFF,
+            hoverAlpha: config.hoverAlpha ?? 0.5,
+            clickTint: config.hoverColor ?? 0xFFFFFF,
+            clickAlpha: config.hoverAlpha ?? 0.5,
+            onClick: () => {
+                if (config.onClick) config.onClick();
+            }
+        }));
+        button.baseTint = this.tint;
     }
 
     update() {
         super.update();
-        if (this.enabled && this.isHovered()) {
-            this.style.color = this.hoverColor;
-            this.style.alpha = this.hoverAlpha;
-            if (Input.justDown(Input.GAME_SELECT)) {
-                Input.consume(Input.GAME_SELECT);
-                this.onClick();
-            }
-        } else {
-            this.style.color = this.normalColor;
-            this.style.alpha = this.normalAlpha;
-        }
+        this.setBounds();
     }
 
-    isHovered() {
-        return G.rectContainsPt(this.getTextWorldBounds(), this.world.getWorldMousePosition());
+    private setBounds() {
+        let textBounds = this.getTextWorldBounds();
+        this.bounds.x = textBounds.x - this.x;
+        this.bounds.y = textBounds.y - this.y;
+        this.bounds.width = textBounds.width;
+        this.bounds.height = textBounds.height;
     }
 }
 
@@ -120,107 +122,5 @@ class MenuNumericSelector extends SpriteText {
     protected getValueForFullBars(fullBars: number) {
         let fullBarsNormalized = fullBars / this.barLength;
         return this.minValue + (this.maxValue - this.minValue) * fullBarsNormalized;
-    }
-}
-
-namespace MenuControlMapper {
-    export type Config = SpriteText.Config & {
-        controlName: string;
-    }
-}
-
-class MenuControlMapper extends SpriteText {
-    controlName: string;
-    selectedBinding: string;
-
-    constructor(config: MenuControlMapper.Config) {
-        super(config);
-        this.controlName = config.controlName;
-        this.selectedBinding = undefined;
-
-        this.setBindings();
-    }
-
-    update() {
-        super.update();
-
-        if (this.selectedBinding && Input.justDown(Input.GAME_CLOSE_MENU)) {
-            Input.consume(Input.GAME_CLOSE_MENU);
-            this.unselectBinding();
-        }
-
-        if (this.selectedBinding) {
-            let pressedKey = Input.getEventKey();
-            if (pressedKey) {
-                let controls = Options.getOption<Input.KeyCodesByName>(Options.CONTROLS);
-                let pressedKeyAlreadyBound = _.contains(controls[this.controlName], pressedKey);
-                let pressedKeyIsSelect = _.contains(controls[Input.GAME_SELECT], pressedKey);
-                if (pressedKeyAlreadyBound) {
-                    Input.consumeEventKey();
-                } else if (pressedKeyIsSelect && this.children.some((button: MenuTextButton) => button.isHovered())) {
-                    // No-op, will fall through and select the other key
-                } else {
-                    Input.updateControlBinding(this.controlName, this.selectedBinding, pressedKey);
-                    this.setBindings();
-                }
-            }
-        }
-    }
-
-    private setBindings() {
-        World.Actions.removeWorldObjectsFromWorld(this.children);
-
-        let controls = <Input.KeyCodesByName>Options.getOption(Options.CONTROLS);
-        let controlBindings = controls[this.controlName];
-
-        let bindingx = 0;
-        let text = "";
-        for (let binding of controlBindings) {
-            let bindingId = binding;
-            let bindingName = this.getBindingName(binding);
-
-            let bindingButton = this.addChild(new MenuTextButton({
-                name: this.getBindingMappingObjectName(binding),
-                font: this.fontKey,
-                text: bindingName,
-                onClick: () => {
-                    global.game.playSound('click');
-                    this.selectBinding(bindingId);
-                }
-            }));
-            bindingButton.localx = bindingx;
-            bindingButton.style = this.style;
-
-            bindingx += (bindingName.length + 3) * this.font.charWidth;
-            text += " ".repeat(bindingName.length) + " / ";
-        }
-
-        this.setText(text.substr(0, text.length-3));
-        this.selectedBinding = undefined;
-    }
-
-    private selectBinding(binding: string) {
-        if (this.selectedBinding) this.unselectBinding();
-        this.selectedBinding = binding;
-        let bindingObject = this.getChildByName<MenuTextButton>(this.getBindingMappingObjectName(binding));
-        bindingObject.style.color = 0xFFFF00;
-        Input.consumeEventKey();
-    }
-
-    private unselectBinding() {
-        let bindingObject = this.getChildByName<MenuTextButton>(this.getBindingMappingObjectName(this.selectedBinding));
-        bindingObject.style.color = this.style.color;
-        this.selectedBinding = undefined;
-    }
-
-    private getBindingName(binding: string) {
-        if (_.isEmpty(binding)) return 'Empty';
-        if (binding === ' ') return 'Space';
-        if (binding.length === 1) return binding.toUpperCase();
-        return binding;
-    }
-
-    private getBindingMappingObjectName(binding: string) {
-        return `binding::${this.controlName}::${binding}`;
     }
 }
