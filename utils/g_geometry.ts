@@ -31,7 +31,7 @@ namespace G {
         return Math.abs(dy*ldx - dx*ldy) / (ldx*ldx + ldy*ldy);
     }
 
-    export function dot(v1: Vector2, v2: Vector2) {
+    export function dot(v1: Pt, v2: Pt) {
         return v1.x*v2.x + v1.y*v2.y;
     }
 
@@ -50,7 +50,7 @@ namespace G {
         return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y;
     }
 
-    export function rectContainsPt(rect: Rect, pt: Vector2) {
+    export function rectContainsPt(rect: Rect, pt: Pt) {
         return pt.x >= rect.x && pt.y >= rect.y && pt.x < rect.x + rect.width && pt.y < rect.y + rect.height;
     }
 

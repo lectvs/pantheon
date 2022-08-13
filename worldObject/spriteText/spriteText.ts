@@ -438,6 +438,9 @@ namespace SpriteText {
         'color': (params) => {
             return { color: getInt(params[0], undefined) };
         },
+        'offset': (params) => {
+            return { offsetX: getInt(params[0], undefined), offsetY: getInt(params[1], undefined) };
+        },
         'offsetx': (params) => {
             return { offsetX: getInt(params[0], undefined) };
         },

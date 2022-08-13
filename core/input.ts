@@ -220,10 +220,10 @@ class Input {
         this._lastMouseX = this._mouseX;
         this._lastMouseY = this._mouseY;
 
-        if (this.isMouseOnCanvas) {
+        //if (this.isMouseOnCanvas) {
             this._mouseX = Math.floor(this._canvasMouseX);
             this._mouseY = Math.floor(this._canvasMouseY);
-        }
+        //}
 
         if (this.touchWentDown) {
             this._lastMouseX = this._mouseX;

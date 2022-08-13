@@ -40,7 +40,13 @@ class Game {
         this.overlay = new DebugOverlay();
         this.isShowingOverlay = true;
         this.allowPauseWithPauseKey = true;
-        this.fpsText = new SpriteText({ effects: { outline: {} } });
+        this.fpsText = new SpriteText({
+            font: 'smallnumbers',
+            style: { color: 0x00FF00 },
+            effects: { outline: {} },
+            anchor: Vector2.BOTTOM_RIGHT,
+            justify: 'right',
+        });
     }
 
     start() {
@@ -120,10 +126,11 @@ class Game {
         }
 
         // TODO: remove
-        let fpsText = global.fpsCalculator.fpsAvg.toFixed(0) + " "
-            + "(-" + (global.fpsCalculator.fpsAvg - global.fpsCalculator.fpsP).toFixed(0) + ")";
-        this.fpsText.setText(fpsText);
-        this.fpsText.render(screen, 30, 224);
+        if (IS_MOBILE) {
+            let fpsText = 'FPS\n' + global.fpsCalculator.fpsAvg.toFixed(0);
+            this.fpsText.setText(fpsText);
+            this.fpsText.render(screen, global.gameWidth - 1, global.gameHeight - 1);
+        }
 
 
         if (Debug.SHOW_TOUCHES) {

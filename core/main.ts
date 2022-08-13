@@ -58,6 +58,10 @@ class Main {
     }
 
     private static preload() {
+        if (MobileUtils.isMobileBrowser()) {
+            IS_MOBILE = true;
+        }
+
         if (!PIXI.utils.isWebGLSupported()) {
             let errorText = document.createElement('p');
             errorText.innerHTML = "Error: WebGL is not supported in your browser.<br/><br/>The most common fix for this is to enable \"Use hardware acceleration\" in your browser's settings.";
@@ -90,6 +94,12 @@ class Main {
         document.body.appendChild(Main.renderer.view);
         Main.renderer.view.style.setProperty('image-rendering', 'pixelated');  // Chrome
         Main.renderer.view.style.setProperty('image-rendering', 'crisp-edges');  // Firefox
+
+        if (MobileUtils.isMobileBrowser()) {
+            let scale = window.innerHeight/720;
+            Main.renderer.view.style.transform = `scale(${scale})`;
+            document.body.style.backgroundColor = "black";
+        }
 
         // AccessibilityManager causes game to crash when Tab is pressed.
         // Deleting it as per https://github.com/pixijs/pixi.js/issues/5111#issuecomment-420047824

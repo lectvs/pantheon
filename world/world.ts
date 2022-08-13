@@ -101,6 +101,8 @@ class World {
 
     allowPause: boolean;
 
+    private mouseBounds: CircleBounds;
+
     constructor(config: World.Config = {}) {        
         this.scriptManager = new ScriptManager();
         this.soundManager = new SoundManager();
@@ -139,6 +141,8 @@ class World {
         this.layerTexture = new BasicTexture(this.width, this.height);
 
         this.camera = new Camera(config.camera ?? {}, this);
+
+        this.mouseBounds = new CircleBounds(0, 0, 0);
     }
 
     onTransitioned() {
@@ -292,6 +296,16 @@ class World {
 
     getWorldMousePosition() {
         return new Vector2(this.getWorldMouseX(), this.getWorldMouseY());
+    }
+
+    getWorldMouseBounds() {
+        this.mouseBounds.x = this.getWorldMouseX();
+        this.mouseBounds.y = this.getWorldMouseY();
+
+        let scale = (this.scaleX + this.scaleY)/2;
+        this.mouseBounds.radius = Input.mouseRadius / scale;
+        
+        return this.mouseBounds;
     }
 
     getWorldMouseSpeed() {

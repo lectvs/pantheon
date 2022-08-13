@@ -47,9 +47,7 @@ class Button extends Module<WorldObject> {
     update() {
         super.update();
 
-        let mouseX = this.worldObject.world.getWorldMouseX();
-        let mouseY = this.worldObject.world.getWorldMouseY();
-        let mouseBounds = new CircleBounds(mouseX, mouseY, Input.mouseRadius);
+        let mouseBounds = this.worldObject.world.getWorldMouseBounds();
 
         let hovered: boolean;
         if (IS_MOBILE) {
