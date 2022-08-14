@@ -168,5 +168,5 @@ namespace SpriteTextConverter {
         }
     }
 
-    export const cache_staticTextures = new DualKeyCache<number, number, Texture>((w, h) => new BasicTexture(w, h, false, 'getStaticTexturesForCharList'), (w, h) => `${w},${h}`);
+    export const cache_staticTextures = new DualKeyPool<number, number, Texture>((w, h) => new BasicTexture(w, h, false, 'getStaticTexturesForCharList'), (w, h) => `${w},${h}`);
 }

@@ -1,4 +1,4 @@
-///<reference path="../../utils/cache.ts"/>
+///<reference path="../../utils/pool.ts"/>
 ///<reference path="../../utils/perlin.ts"/>
 
 namespace TextureFilter {
@@ -132,7 +132,7 @@ class TextureFilter {
 }
 
 namespace TextureFilter {
-    export const cache = new SingleKeyCache(
+    export const cache = new SingleKeyPool(
         (filter: TextureFilter) => filter.constructPixiFilter(),
         (filter: TextureFilter) => filter.getCacheCode(),
     );

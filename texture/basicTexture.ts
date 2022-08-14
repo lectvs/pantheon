@@ -13,6 +13,11 @@ class BasicTexture implements Texture {
     private cachedPixelsARGB: number[][];
 
     constructor(width: number, height: number, immutable: boolean = false, source?: string) {
+        if (width > 10000 || height > 10000) {
+            error(`Texture dimensions exceed bounds: (${width}, ${height}), limiting to bounds`);
+            width = Math.min(width, 10000);
+            height = Math.min(height, 10000);
+        }
         this.renderTextureSprite = new Texture.PIXIRenderTextureSprite(width, height);
         this.immutable = immutable;
         TextureCreationData.logCreateTexture(this, source ?? arguments?.callee?.caller?.name ?? "none");
