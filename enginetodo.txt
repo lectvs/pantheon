@@ -1,31 +1,34 @@
-- documentation and API cleanup
-- implement metroid-style transitions
+TODO
 - theater not a world (for real this time)
 - camera zoom/rotate
-- normal-map/lighting
-- controller revamp
 - animation revamp (animation/script parity?)
-- module system
-- "window" filters
-- boundless textures
-    - optimize tilemap editing with boundless textures
-- unit tests c:
+- revamp module system to work with compound types
+- controller revamp
 - easier global width/height
-- relative layers/object ordering??
 - apply filter before texture transformation during render? (rotate, scale, etc.)
 - allow S scripts to be run in non-global worlds (global.script.world? how do we handle cutscenes?)
 - transitions from main menu to game
-- better keyboard text input
 - custom font characters -> general textures instead?
 - vs code tasks?
 - fix: Options.updateCallbacks.push(() => Input.init());
 - turn screen shake into a shader (to get edge continuation)
 - redo kill() ... not flag the object as being dead? how to remove object then re-add it later?
-- pythonify build script
-- game initialization logic (in Main?)
 - methods to take a screenshot of the canvas (full-size and 1:1 scale? copy to clipboard?)
+- "humanized" option in sound asset definition
+- better world and object management (freeing)
+- better performance on large spritetexts
+- menus in separate files
+
+stretch
+- documentation and API cleanup
+- implement metroid-style transitions
+- normal-map/lighting
+- "window" filters
+- boundless textures
+    - optimize tilemap editing with boundless textures
+- game initialization logic (in Main?)
+- better keyboard text input
 - fix initial spaces not counting toward alignment?
 - print errors on screen?
 - report game errors through lambda API?
-- "humanized" option in sound asset definition
 - loading messages

@@ -139,7 +139,7 @@ namespace SpriteTextConverter {
                 bounds[char.part].top = Math.min(bounds[char.part].top, char.top);
                 bounds[char.part].right = Math.max(bounds[char.part].right, char.right);
                 bounds[char.part].bottom = Math.max(bounds[char.part].bottom, char.bottom);
-            } else {char.part
+            } else {
                 bounds[char.part] = { left: char.left, top: char.top, right: char.right, bottom: char.bottom };
             }
             partToTagData[char.part] = char.tagData;
