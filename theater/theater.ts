@@ -67,7 +67,11 @@ class Theater extends World {
     }
 
     loadStage(stage: () => World, transition: Transition = new Transitions.Instant(), onTransitioned: (world: World) => void = Utils.NOOP) {
-        this.runAtEndOfFrame(() => this.stageManager.internalLoadStage(stage, transition, onTransitioned));
+        this.runAtEndOfFrame(() => this.loadStageImmediate(stage, transition, onTransitioned));
+    }
+
+    loadStageImmediate(stage: () => World, transition: Transition = new Transitions.Instant(), onTransitioned: (world: World) => void = Utils.NOOP) {
+        this.stageManager.internalLoadStage(stage, transition, onTransitioned)
     }
 
     playCutscene(cutscene: Cutscene) {

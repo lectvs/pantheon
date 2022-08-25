@@ -4,7 +4,6 @@ namespace MenuTextButton {
     export type Config = SpriteText.Config & {
         onClick?: () => any;
         hoverColor?: number;
-        hoverAlpha?: number;
     }
 }
 
@@ -25,10 +24,8 @@ class MenuTextButton extends SpriteText {
         this.bounds = new RectBounds(0, 0, 0, 0, this);
 
         let button = this.addModule(new Button({
-            hoverTint: config.hoverColor ?? 0xFFFFFF,
-            hoverAlpha: config.hoverAlpha ?? 0.5,
-            clickTint: config.hoverColor ?? 0xFFFFFF,
-            clickAlpha: config.hoverAlpha ?? 0.5,
+            hoverTint: config.hoverColor ?? 0x808080,
+            clickTint: config.hoverColor ?? 0x808080,
             onClick: () => {
                 if (config.onClick) config.onClick();
             }

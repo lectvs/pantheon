@@ -4,16 +4,13 @@ namespace Button {
     export type Config = {
         onClick: () => void;
         hoverTint: number;
-        hoverAlpha?: number;
         clickTint: number;
-        clickAlpha?: number;
         onHover?: () => void;
     }
 
     export type CompatibleWorldObject = WorldObject & {
         bounds: Bounds;
         tint: number;
-        alpha: number;
     }
 }
 
@@ -21,11 +18,8 @@ class Button extends Module<WorldObject> {
     onClick: () => void;
     onHover: () => void;
     private hoverTint: number;
-    private hoverAlpha: number;
     private clickTint: number;
-    private clickAlpha: number;
     baseTint: number = 0xFFFFFF;
-    baseAlpha: number = 1;
 
     enabled: boolean = true;
 
@@ -39,9 +33,7 @@ class Button extends Module<WorldObject> {
         this.onClick = config.onClick;
         this.onHover = config.onHover;
         this.hoverTint = config.hoverTint;
-        this.hoverAlpha = config.hoverAlpha ?? 1;
         this.clickTint = config.clickTint;
-        this.clickAlpha = config.clickAlpha ?? 1;
     }
 
     update() {
@@ -59,7 +51,6 @@ class Button extends Module<WorldObject> {
         let clicked = this.clickedDownOn && Input.isDown(Input.GAME_SELECT);
         
         this.worldObject.tint = hovered ? (clicked ? this.clickTint : this.hoverTint) : this.baseTint;
-        this.worldObject.alpha = hovered ? (clicked ? this.clickAlpha : this.hoverAlpha) : this.baseAlpha;
 
         if (hovered && this.onHover) {
             this.onHover();

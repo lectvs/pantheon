@@ -145,7 +145,7 @@ class Game {
 
     loadTheater(stageToLoad: () => World) {
         this.theater = this.theaterFactory();
-        this.theater.loadStage(stageToLoad);
+        this.theater.loadStageImmediate(stageToLoad);
     }
 
     pauseGame() {

@@ -29,6 +29,9 @@ namespace Main {
 
         game: Game.Config;
 
+        beforePreload?: () => void;
+        onExit?: () => void;
+
         debug: Debug.Config;
     }
 }
@@ -112,6 +115,8 @@ class Main {
         
         WebAudio.initContext();
         Analytics.init();
+
+        if (this.config.beforePreload) this.config.beforePreload();
 
         Preload.preload({
             textures: this.config.textures,
@@ -280,8 +285,9 @@ class Main {
             }
         }, false);
         window.addEventListener("beforeunload", event => {
+            if (this.config.onExit) this.config.onExit();
             Analytics.submit();
-        }, false)
+        }, false);
     }
 
     static getRootPath() {
