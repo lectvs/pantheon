@@ -36,7 +36,7 @@ class Vector2 {
 
     clampMagnitude(maxMagnitude: number) {
         if (maxMagnitude < 0) {
-            error('Tried to clamp vector magnitude with negative maxMagnitude');
+            console.error('Tried to clamp vector magnitude with negative maxMagnitude');
             return this;
         }
         if (this.magnitude > maxMagnitude) {

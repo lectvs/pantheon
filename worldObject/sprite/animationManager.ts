@@ -28,7 +28,7 @@ class AnimationManager {
 
     addAnimation(name: string, frames: Animation.Frame[]) {
         if (this.animations[name]) {
-            error(`Cannot add animation '${name}' to sprite`, this.sprite, "since it already exists");
+            console.error(`Cannot add animation '${name}' to sprite`, this.sprite, "since it already exists");
             return;
         }
         this.animations[name] = _.defaults(frames, {
@@ -57,17 +57,17 @@ class AnimationManager {
     getFrameByRef(ref: string) {
         let parts = ref.split('/');
         if (parts.length != 2) {
-            error(`Cannot get frame '${ref}' on sprite`, this.sprite, "as it does not fit the form '[animation]/[frame]'");
+            console.error(`Cannot get frame '${ref}' on sprite`, this.sprite, "as it does not fit the form '[animation]/[frame]'");
             return null;
         }
         let animation = this.animations[parts[0]];
         if (!animation) {
-            error(`Cannot get frame '${ref}' on sprite`, this.sprite, `as animation '${parts[0]}' does not exist`);
+            console.error(`Cannot get frame '${ref}' on sprite`, this.sprite, `as animation '${parts[0]}' does not exist`);
             return null;
         }
         let frame = parseInt(parts[1]);
         if (!isFinite(frame) || frame < 0 || frame >= animation.length) {
-            error(`Cannot get frame '${ref}' on sprite`, this.sprite, `as animation '${parts[0]} does not have frame '${parts[1]}'`);
+            console.error(`Cannot get frame '${ref}' on sprite`, this.sprite, `as animation '${parts[0]} does not have frame '${parts[1]}'`);
             return null;
         }
         return animation[frame];
@@ -113,7 +113,7 @@ class AnimationManager {
 
         let frame = this.getFrameByRef(frameRef);
         if (!frame) {
-            error('No animation frame found:', frameRef);
+            console.error('No animation frame found:', frameRef);
             return;
         }
 

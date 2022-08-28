@@ -28,7 +28,7 @@ class Metrics {
 
     startRecording(recordingName: string) {
         if (this.isRecording) {
-            error(`Tried to start recording ${recordingName} when recording ${this.currentRecording.name} was already started.`);
+            console.error(`Tried to start recording ${recordingName} when recording ${this.currentRecording.name} was already started.`);
             return;
         }
         this.startSpan(recordingName, true);
@@ -36,7 +36,7 @@ class Metrics {
 
     endRecording() {
         if (!this.isRecording) {
-            error(`Tried to end recording but no recording was happening.`);
+            console.error(`Tried to end recording but no recording was happening.`);
             return;
         }
         this.recordings.push(this.currentRecording);
@@ -69,11 +69,11 @@ class Metrics {
             name = this.getWorldObjectSpanName(name);
         }
         if (!this.currentSpan) {
-            error(`Tried to end span ${name} but there was no span to end! Span stack:`, this.spanStack);
+            console.error(`Tried to end span ${name} but there was no span to end! Span stack:`, this.spanStack);
             return;
         }
         if (this.currentSpan.name !== name) {
-            error(`Tried to end span ${name} but the current span is named ${this.currentSpan.name}! Span stack:`, this.spanStack);
+            console.error(`Tried to end span ${name} but the current span is named ${this.currentSpan.name}! Span stack:`, this.spanStack);
             return;
         }
         this.currentSpan.end = this.getCurrentTimeMilliseconds();

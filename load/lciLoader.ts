@@ -50,7 +50,7 @@ class LciLoader implements Loader {
 
             let layerTexture = AssetCache.textures[Lci.getLayerTextureKey(this.key, layer.name)];
             if (!layerTexture) {
-                error(`Failed to load LCI layer texture: ${Lci.getLayerTextureKey(this.key, layer.name)}`);
+                console.error(`Failed to load LCI layer texture: ${Lci.getLayerTextureKey(this.key, layer.name)}`);
                 continue;
             }
             layerTexture.renderTo(fullTexture, {

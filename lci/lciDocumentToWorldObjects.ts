@@ -12,7 +12,7 @@ function lciDocumentToWorldObjects(key: string) {
         if (!St.isBlank(layer.properties.placeholder)) {
             let constructor: new (x: number, y: number) => WorldObject = window[layer.properties.placeholder];
             if (!constructor || !constructor.prototype || !constructor.prototype.constructor.name) {
-                error(`LCI placeholder '${layer.properties.placeholder}' does not exist.`);
+                console.error(`LCI placeholder '${layer.properties.placeholder}' does not exist.`);
                 continue;
             }
             let worldObject: WorldObject;
@@ -20,7 +20,7 @@ function lciDocumentToWorldObjects(key: string) {
                 worldObject = new constructor(layer.position.x, layer.position.y);
                 worldObject.name = layer.name;
             } catch (err) {
-                error(`Cannot instantiate LCI placeholder '${layer.properties.placeholder}':`, err);
+                console.error(`Cannot instantiate LCI placeholder '${layer.properties.placeholder}':`, err);
                 continue;
             }
             worldObjects.push(worldObject);

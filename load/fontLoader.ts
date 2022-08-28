@@ -27,7 +27,7 @@ class FontLoader implements Loader {
     private onLoad() {
         let mainTexture = AssetCache.textures[this.key];
         if (!mainTexture) {
-            error(`Failed to load tileset texture ${this.key}`);
+            console.error(`Failed to load tileset texture ${this.key}`);
             return;
         }
 
@@ -35,7 +35,7 @@ class FontLoader implements Loader {
         let numCharsY = Math.floor(mainTexture.height / this.font.charHeight);
 
         if (numCharsX !== FontLoader.FONT_CHARACTERS[0].length || numCharsY !== FontLoader.FONT_CHARACTERS.length) {
-            error(`Font '${this.key}' does not have the proper number of characters in each dimension: ${numCharsX},${numCharsY} (should be ${FontLoader.FONT_CHARACTERS[0].length},${FontLoader.FONT_CHARACTERS.length})`);
+            console.error(`Font '${this.key}' does not have the proper number of characters in each dimension: ${numCharsX},${numCharsY} (should be ${FontLoader.FONT_CHARACTERS[0].length},${FontLoader.FONT_CHARACTERS.length})`);
             return;
         }
 

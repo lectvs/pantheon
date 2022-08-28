@@ -31,7 +31,7 @@ namespace Lci {
 
     export function parseDocument(lciString: string): Document {
         if (!lciString.startsWith(HEADER)) {
-            error('Error loading LCI: bad header', lciString);
+            console.error('Error loading LCI: bad header', lciString);
             return undefined;
         }
         let lciJson = lciString.substr(HEADER.length);

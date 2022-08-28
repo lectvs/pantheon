@@ -105,7 +105,7 @@ class Theater extends World {
             this.isSkippingCutscene = false;
 
             if (iters >= Theater.SKIP_CUTSCENE_MAX_FRAMES) {
-                error('Cutscene skip exceeded max frames!');
+                console.error('Cutscene skip exceeded max frames!');
             }
         }
     }

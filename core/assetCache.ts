@@ -10,7 +10,7 @@ class AssetCache {
 
     static getPixiTexture(key: string) {
         if (!this.pixiTextures[key]) {
-            error(`Texture '${key}' does not exist.`);
+            console.error(`Texture '${key}' does not exist.`);
         }
         return this.pixiTextures[key];
     }
@@ -20,7 +20,7 @@ class AssetCache {
             return Texture.NONE;
         }
         if (!this.textures[key]) {
-            error(`Texture '${key}' does not exist.`);
+            console.error(`Texture '${key}' does not exist.`);
             return Texture.NONE;
         }
         return this.textures[key];
@@ -28,7 +28,7 @@ class AssetCache {
 
     static getSoundAsset(key: string): WebAudioSound.Asset {
         if (!this.sounds[key]) {
-            error(`Sound '${key}' does not exist.`);
+            console.error(`Sound '${key}' does not exist.`);
             return { buffer: new AudioBuffer({ length: 1, sampleRate: 8000 }), volume: 1, speed: 1 };
         }
         return this.sounds[key];
@@ -36,28 +36,28 @@ class AssetCache {
 
     static getTileset(key: string) {
         if (!this.tilesets[key]) {
-            error(`Tileset '${key}' does not exist.`);
+            console.error(`Tileset '${key}' does not exist.`);
         }
         return this.tilesets[key];
     }
 
     static getTilemap(key: string) {
         if (!this.tilemaps[key]) {
-            error(`Tilemap '${key}' does not exist.`);
+            console.error(`Tilemap '${key}' does not exist.`);
         }
         return this.tilemaps[key];
     }
 
     static getFont(key: string) {
         if (!this.fonts[key]) {
-            error(`Font '${key}' does not exist.`);
+            console.error(`Font '${key}' does not exist.`);
         }
         return this.fonts[key];
     }
 
     static getLciDocument(key: string) {
         if (!this.lciDocuments[key]) {
-            error(`LCI document '${key}' does not exist.`);
+            console.error(`LCI document '${key}' does not exist.`);
         }
         return this.lciDocuments[key];
     }

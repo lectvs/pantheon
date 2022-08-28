@@ -71,7 +71,7 @@ class StateMachine {
 
     private getState(name: string) {
         if (!this.states[name]) {
-            error(`No state named ${name} exists on state machine`, this);
+            console.error(`No state named ${name} exists on state machine`, this);
         }
         return this.states[name];
     }

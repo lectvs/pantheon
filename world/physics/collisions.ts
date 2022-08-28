@@ -545,7 +545,7 @@ namespace Bounds.Collision {
         }
 
         if (!isFinite(t)) {
-            error(`Failed to detect time of collision between circle and inverted rect:`, move.parent, { x: movePos.x, y: movePos.y, radius: move.radius }, movedx, movedy, from.parent, fromBox, fromdx, fromdy);
+            console.error(`Failed to detect time of collision between circle and inverted rect:`, move.parent, { x: movePos.x, y: movePos.y, radius: move.radius }, movedx, movedy, from.parent, fromBox, fromdx, fromdy);
         }
 
         let result = <Bounds.RaycastCollision>getDisplacementCollisionCircleInvertedRect(move, from);
@@ -616,7 +616,7 @@ namespace Bounds.Collision {
         }
 
         if (displacementX !== 0 && displacementY !== 0) {
-            error("Warning: rect displacement in both axes");
+            console.error("Warning: rect displacement in both axes");
         }
 
         return {
@@ -756,7 +756,7 @@ namespace Bounds.Collision {
         }
 
         if (!isFinite(t)) {
-            error(`Failed to detect time of collision between rect and inverted rect:`, move.parent, moveBox, movedx, movedy, from.parent, fromBox, fromdx, fromdy);
+            console.error(`Failed to detect time of collision between rect and inverted rect:`, move.parent, moveBox, movedx, movedy, from.parent, fromBox, fromdx, fromdy);
         }
 
         let result = <Bounds.RaycastCollision>getDisplacementCollisionRectInvertedRect(move, from);

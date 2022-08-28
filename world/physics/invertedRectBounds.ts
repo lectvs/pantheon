@@ -59,7 +59,7 @@ class InvertedRectBounds implements Bounds {
         if (other instanceof RectBounds) return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionRectInvertedRect(other, this));
         if (other instanceof CircleBounds) return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionCircleInvertedRect(other, this));
         if (other instanceof NullBounds) return undefined;
-        error("No collision supported between these bounds", this, other);
+        console.error("No collision supported between these bounds", this, other);
         return undefined;
     }
 
@@ -67,7 +67,7 @@ class InvertedRectBounds implements Bounds {
         if (other instanceof RectBounds) return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionRectInvertedRect(other, otherdx, otherdy, this, dx, dy));
         if (other instanceof CircleBounds) return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionCircleInvertedRect(other, otherdx, otherdy, this, dx, dy));
         if (other instanceof NullBounds) return undefined;
-        error("No collision supported between these bounds", this, other);
+        console.error("No collision supported between these bounds", this, other);
         return undefined;
     }
 
@@ -75,7 +75,7 @@ class InvertedRectBounds implements Bounds {
         if (other instanceof RectBounds) return Bounds.Collision.isOverlappingRectInvertedRect(other, this);
         if (other instanceof CircleBounds) return Bounds.Collision.isOverlappingCircleInvertedRect(other, this);
         if (other instanceof NullBounds) return undefined;
-        error("No overlap supported between these bounds", this, other);
+        console.error("No overlap supported between these bounds", this, other);
         return false;
     }
 

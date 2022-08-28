@@ -101,7 +101,7 @@ class SpriteText extends WorldObject {
     scaleX: number;
     scaleY: number;
     get scale() {
-        if (this.scaleX !== this.scaleY) error('Warning: scaleX and scaleY differ! Attempted to get scale!');
+        if (this.scaleX !== this.scaleY) console.error('Warning: scaleX and scaleY differ! Attempted to get scale!');
         return this.scaleX;
     }
     set scale(value: number) {
@@ -123,7 +123,7 @@ class SpriteText extends WorldObject {
             this._fontKey = config.font ?? SpriteText.DEFAULT_FONT;
             this.font = AssetCache.getFont(this._fontKey);
         } else {
-            error("SpriteText must have a font provided, or a default font set");
+            console.error("SpriteText must have a font provided, or a default font set");
         }
 
         if (!this.font) {
@@ -279,7 +279,7 @@ class SpriteText extends WorldObject {
         if (fontKey === this.fontKey) return;
         let font = AssetCache.getFont(fontKey);
         if (!font) {
-            error(`Cannot set SpriteText font, font not found: ${fontKey}`);
+            console.error(`Cannot set SpriteText font, font not found: ${fontKey}`);
             return;
         }
         this.font = font;
@@ -329,7 +329,7 @@ class SpriteText extends WorldObject {
         }
         let tag = SpriteText.TAGS[name];
         if (!tag) {
-            error(`Tag not found: ${name}`);
+            console.error(`Tag not found: ${name}`);
             tag = SpriteText.TAGS[SpriteText.NOOP_TAG];
         }
 

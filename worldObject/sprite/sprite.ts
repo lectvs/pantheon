@@ -39,7 +39,7 @@ class Sprite extends PhysicsWorldObject {
     scaleX: number;
     scaleY: number;
     get scale() {
-        if (this.scaleX !== this.scaleY) error('Warning: scaleX and scaleY differ! Attempted to get scale!');
+        if (this.scaleX !== this.scaleY) console.error('Warning: scaleX and scaleY differ! Attempted to get scale!');
         return this.scaleX;
     }
     set scale(value: number) {

@@ -20,7 +20,7 @@ class WebAudio {
             window.AudioContext = window.AudioContext || window.webkitAudioContext;
             this.context = new AudioContext();
         } catch(e) {
-            error('Web Audio API is not supported in this browser. Sounds will not be able to play.');
+            console.error('Web Audio API is not supported in this browser. Sounds will not be able to play.');
         }
     }
 
@@ -38,7 +38,7 @@ class WebAudio {
                     if (cb) cb();
                 },
                 (e) => {
-                    error(`Could not decode sound ${key}:`, e);
+                    console.error(`Could not decode sound ${key}:`, e);
                 }
             );
         }

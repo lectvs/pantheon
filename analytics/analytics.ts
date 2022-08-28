@@ -86,7 +86,7 @@ namespace Analytics {
 
         var time = Date.now();
         if (last_submit_time > 0 && time - last_submit_time < MAX_SUBMIT_TIME) {
-            error("Throttled");
+            console.error("Throttled");
             return;
         }
         last_submit_time = time;
@@ -95,7 +95,7 @@ namespace Analytics {
         let sessionEncoded = encodeURIComponent(St.encodeB64S(JSON.stringify(sessionData)));
         Network.httpRequest(`${LAMBDA_URL}?operation=submit&game=${global.gameCodeName}&profile=${profileEncoded}&session=${sessionEncoded}`, null, (responseJson: any, err: string) => {
             if (err) {
-                if (err !== 'Requested resource not found' || Debug.DEBUG) error(err);
+                if (err !== 'Requested resource not found' || Debug.DEBUG) console.error(err);
             }
         });
     }
@@ -110,7 +110,7 @@ namespace Analytics {
 
     export function registerUpdater<T>(key: string, initialValue: T): RegisteredUpdater<T> {
         if (key in registeredUpdaters) {
-            error(`Analytic Updater '${key}' has already been registered`);
+            console.error(`Analytic Updater '${key}' has already been registered`);
             return registeredUpdaters[key];
         }
 
@@ -130,7 +130,7 @@ namespace Analytics {
 
     export function registerSubmitter<T>(key: string, get: Getter<T>) {
         if (key in registeredSubmitters) {
-            error(`Analytic Submitter '${key}' has already been registered`);
+            console.error(`Analytic Submitter '${key}' has already been registered`);
             return;
         }
 

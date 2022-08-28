@@ -8,7 +8,7 @@ class AnchoredTexture implements Texture {
     get anchorX() { return this._anchorX; }
     set anchorX(v: number) {
         if (this.immutable) {
-            error('Cannot set anchorX on immutable texture:', this);
+            console.error('Cannot set anchorX on immutable texture:', this);
             return;
         }
         this._anchorX = v;
@@ -18,7 +18,7 @@ class AnchoredTexture implements Texture {
     get anchorY() { return this._anchorY; }
     set anchorY(v: number) {
         if (this.immutable) {
-            error('Cannot set anchorY on immutable texture:', this);
+            console.error('Cannot set anchorY on immutable texture:', this);
             return;
         }
         this._anchorY = v;

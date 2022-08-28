@@ -44,7 +44,7 @@ class Script {
         }
         
         if (!this.done) {
-            error('Warning: script finishImmediately exceeded max iters!', this);
+            console.error('Warning: script finishImmediately exceeded max iters!', this);
             this.done = true;
         }
     }

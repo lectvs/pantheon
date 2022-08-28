@@ -57,7 +57,7 @@ class CutsceneManager {
 
     playCutscene(cutscene: Cutscene) {
         if (this.current) {
-            error('Cannot play cutscene:', cutscene, 'because a cutscene is already playing:', this.current);
+            console.error('Cannot play cutscene:', cutscene, 'because a cutscene is already playing:', this.current);
             return;
         }
 

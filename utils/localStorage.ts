@@ -12,7 +12,7 @@ class LocalStorage {
         try {
             return localStorage.getItem(key);
         } catch (e) {
-            error('Unable to get localStorage:', e);
+            console.error('Unable to get localStorage:', e);
         }
         return undefined;
     }
@@ -25,7 +25,7 @@ class LocalStorage {
         try {
             localStorage.setItem(key, value);
         } catch (e) {
-            error('Unable to set localStorage:', e);
+            console.error('Unable to set localStorage:', e);
         }
     }
 }

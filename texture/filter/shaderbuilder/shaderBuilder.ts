@@ -14,7 +14,7 @@ class ShaderBuilder {
             if (value === undefined) continue;
 
             if (!this.typeCheck(type, value)) {
-                error('Shader failed type-checking type', type, 'against default value', value);
+                console.error('Shader failed type-checking type', type, 'against default value', value);
                 return undefined;
             }
 

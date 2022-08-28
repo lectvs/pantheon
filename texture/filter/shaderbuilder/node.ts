@@ -1,7 +1,7 @@
 namespace SB {
     export class Node {
         build() {
-            error('Tried to build base Node class. Did you override build()?');
+            console.error('Tried to build base Node class. Did you override build()?');
             return undefined;
         }
 
@@ -275,7 +275,7 @@ namespace SB {
         for (let uniformTypesList of uniformTypesToAdd) {
             for (let uniform in uniformTypesList) {
                 if (uniform in result && result[uniform] !== uniformTypesList[uniform]) {
-                    error('Multiple uniforms defined with conflicting types:', uniform, result[uniform], uniformTypesList[uniform]);
+                    console.error('Multiple uniforms defined with conflicting types:', uniform, result[uniform], uniformTypesList[uniform]);
                     return undefined;
                 }
                 result[uniform] = uniformTypesList[uniform];

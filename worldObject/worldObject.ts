@@ -1,3 +1,4 @@
+/// <reference path="../utils/timer.ts" />
 /// <reference path="../utils/uid.ts" />
 
 namespace WorldObject {
@@ -47,7 +48,7 @@ class WorldObject {
     localy: number;
     localz: number;
     activeOutsideWorldBoundsBuffer: number;
-    life: Timer;
+    life: WorldObject.LifeTimer;
     zBehavior: WorldObject.ZBehavior;
     timeScale: number;
     useGlobalTime: boolean;
@@ -128,7 +129,7 @@ class WorldObject {
         this.localy = config.y ?? 0;
         this.localz = config.z ?? 0;
         this.activeOutsideWorldBoundsBuffer = config.activeOutsideWorldBoundsBuffer ?? Infinity;
-        this.life = new Timer(config.life ?? Infinity, () => this.kill());
+        this.life = new WorldObject.LifeTimer(config.life ?? Infinity, () => this.kill());
         this.zBehavior = config.zBehavior ?? WorldObject.DEFAULT_Z_BEHAVIOR;
         this.timeScale = config.timeScale ?? 1;
         this.useGlobalTime = config.useGlobalTime ?? false;
@@ -311,9 +312,17 @@ class WorldObject {
         return durationOrTimer;
     }
 
+    everyNFrames(n: number) {
+        return Math.floor((this.life.frames + 1)/n) !== Math.floor(this.life.frames/n);
+    }
+
+    everyNSeconds(n: number) {
+        return Math.floor((this.life.time + this.delta)/n) !== Math.floor(this.life.time/n);
+    }
+
     getChildByIndex<T extends WorldObject>(index: number) {
         if (this.children.length < index) {
-            error(`Parent has no child at index ${index}:`, this);
+            console.error(`Parent has no child at index ${index}:`, this);
             return undefined;
         }
         return <T>this.children[index];
@@ -323,7 +332,7 @@ class WorldObject {
         for (let child of this.children) {
             if (child.name === name) return <T>child;
         }
-        error(`Cannot find child named ${name} on parent:`, this);
+        console.error(`Cannot find child named ${name} on parent:`, this);
         return undefined;
     }
 
@@ -386,7 +395,7 @@ class WorldObject {
             if (!child) return undefined;
         }
         if (child.parent !== this) {
-            error(`Cannot remove child ${child.name} from parent ${this.name}, but no such relationship exists`);
+            console.error(`Cannot remove child ${child.name} from parent ${this.name}, but no such relationship exists`);
             return undefined;
         }
         return World.Actions.removeChildFromParent(child);
@@ -489,7 +498,7 @@ class WorldObject {
                 continue;
             }
             if (!O.hasPath(this, path) || !O.hasPath(this.parent, path)) {
-                error('Cannot copy from parent because path does not exist on both objects:', path, this, this.parent);
+                console.error('Cannot copy from parent because path does not exist on both objects:', path, this, this.parent);
                 continue;
             }
             let thisValue = O.getPath(this, path);
@@ -550,4 +559,18 @@ class WorldObject {
 
 namespace WorldObject {
     export const UID = new UIDGenerator();
+
+    export class LifeTimer extends Timer {
+        frames: number;
+
+        constructor(life: number, onFinish: () => void) {
+            super(life, onFinish);
+            this.frames = 0;
+        }
+
+        update(delta: number): void {
+            super.update(delta);
+            this.frames++;
+        }
+    }
 }

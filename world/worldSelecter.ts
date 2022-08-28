@@ -25,11 +25,11 @@ class WorldSelecter {
     name<T extends WorldObject>(name: string, checked: boolean = true) {
         let results = this.nameAll<T>(name);
         if (_.isEmpty(results)) {
-            if (checked) error(`No object with name ${name} exists in world:`, this.world);
+            if (checked) console.error(`No object with name ${name} exists in world:`, this.world);
             return undefined;
         }
         if (results.length > 1) {
-            error(`Multiple objects with name ${name} exist in world. Returning one of them. World:`, this.world);
+            console.error(`Multiple objects with name ${name} exist in world. Returning one of them. World:`, this.world);
         }
         return results[0];
     }
@@ -71,11 +71,11 @@ class WorldSelecter {
     type<T extends WorldObject>(type: new (...args) => T, checked: boolean = true) {
         let results = this.typeAll(type);
         if (_.isEmpty(results)) {
-            if (checked) error(`No object of type ${type.name} exists in world:`, this.world);
+            if (checked) console.error(`No object of type ${type.name} exists in world:`, this.world);
             return undefined;
         }
         if (results.length > 1) {
-            error(`Multiple objects of type ${type.name} exist in world. Returning one of them. World:`, this.world);
+            console.error(`Multiple objects of type ${type.name} exist in world. Returning one of them. World:`, this.world);
         }
         return results[0];
     }

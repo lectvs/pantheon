@@ -24,7 +24,7 @@ namespace SpriteTextConverter {
             } else if (text[i] === '[') {
                 let closingBracketIndex = text.indexOf(']', i); 
                 if (closingBracketIndex < i+1) {
-                    error(`Text '${text}' has an unclosed tag bracket.`);
+                    console.error(`Text '${text}' has an unclosed tag bracket.`);
                     continue;
                 }
 
@@ -43,7 +43,7 @@ namespace SpriteTextConverter {
             } else if (text[i] === '<') {
                 let closingBracketIndex = text.indexOf('>', i); 
                 if (closingBracketIndex < i+1) {
-                    error(`Text '${text}' has an unclosed custom character bracket.`);
+                    console.error(`Text '${text}' has an unclosed custom character bracket.`);
                     continue;
                 }
 
@@ -74,7 +74,7 @@ namespace SpriteTextConverter {
         } else {
             let charTexture = AssetCache.getTexture(font.charTextures[char]);
             if (!font.charTextures[char] || !charTexture) {
-                error(`Font does not have character '${char}':`, font);
+                console.error(`Font does not have character '${char}':`, font);
                 char = 'missing';
                 charTexture = AssetCache.getTexture(font.charTextures[char]);
             }
@@ -96,7 +96,7 @@ namespace SpriteTextConverter {
     function parseTag(tag: string) {
         let result = St.splitOnWhitespace(tag);
         if (_.isEmpty(result)) {
-            error(`Tag ${tag} must have the tag part specified.`);
+            console.error(`Tag ${tag} must have the tag part specified.`);
             return [SpriteText.NOOP_TAG];
         }
         return result;

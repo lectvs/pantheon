@@ -53,7 +53,7 @@ class Main {
 
     private static start() {
         if (!this.configFactory) {
-            error('No main config loaded! Must load config by calling `Main.loadConfig(config);`');
+            console.error('No main config loaded! Must load config by calling `Main.loadConfig(config);`');
             return;
         }
         this.config = this.configFactory();

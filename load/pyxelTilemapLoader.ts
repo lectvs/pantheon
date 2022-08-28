@@ -26,7 +26,7 @@ class PyxelTilemapLoader implements Loader {
     private onLoad() {
         let tilemapResource = this.pixiLoader.resources[this.key];
         if (!tilemapResource || !tilemapResource.data) {
-            error(`Failed to load PyxelTilemap ${this.key}`);
+            console.error(`Failed to load PyxelTilemap ${this.key}`);
             return;
         }
 

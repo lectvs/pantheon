@@ -353,7 +353,7 @@ class World {
         }
         if (!obj.world) return;
         if (obj.world !== this) {
-            error(`Cannot remove object ${obj.name} from world because it does not exist in the world. World:`, this);
+            console.error(`Cannot remove object ${obj.name} from world because it does not exist in the world. World:`, this);
             return undefined;
         }
         return World.Actions.removeWorldObjectFromWorld(obj);
@@ -531,7 +531,7 @@ namespace World {
             if (!obj || !world) return obj;
 
             if (obj.world) {
-                error(`Cannot add object ${obj.name} to world because it aleady exists in another world! You must remove object from previous world first. World:`, world, 'Previous world:', obj.world);
+                console.error(`Cannot add object ${obj.name} to world because it aleady exists in another world! You must remove object from previous world first. World:`, world, 'Previous world:', obj.world);
                 return undefined;
             }
 
@@ -597,7 +597,7 @@ namespace World {
             if (!obj) return undefined;
 
             if (obj.world && !obj.world.getLayerByName(layerName)) {
-                error(`Cannot set layer on object '${obj.name}' as no layer named ${layerName} exists in world!`, obj.world);
+                console.error(`Cannot set layer on object '${obj.name}' as no layer named ${layerName} exists in world!`, obj.world);
                 setLayer(obj, World.DEFAULT_LAYER);
                 return obj.layer;
             }
@@ -620,7 +620,7 @@ namespace World {
             if (!obj) return undefined;
 
             if (obj.world && !_.isEmpty(physicsGroupName) && !obj.world.getPhysicsGroupByName(physicsGroupName)) {
-                error(`Cannot set physicsGroup on object '${obj.name}' as no physicsGroup named ${physicsGroupName} exists in world!`, obj.world);
+                console.error(`Cannot set physicsGroup on object '${obj.name}' as no physicsGroup named ${physicsGroupName} exists in world!`, obj.world);
                 return obj.physicsGroup;
             }
 
@@ -642,19 +642,19 @@ namespace World {
             if (!child || !obj) return child;
 
             if (child.parent) {
-                error(`Cannot add child ${child.name} to parent ${obj.name} becase the child is already the child of another parent!`, child.parent);
+                console.error(`Cannot add child ${child.name} to parent ${obj.name} becase the child is already the child of another parent!`, child.parent);
                 return undefined;
             }
 
             if (child.world && child.world !== obj.world) {
-                error(`Cannot add child ${child.name} to parent ${obj.name} becase the child exists in a different world!`, child.world);
+                console.error(`Cannot add child ${child.name} to parent ${obj.name} becase the child exists in a different world!`, child.world);
                 return undefined;
             }
 
             let cyclicCheckParent = obj.parent;
             while (cyclicCheckParent) {
                 if (cyclicCheckParent === child) {
-                    error(`Cannot add child ${child.name} to parent ${obj.name} because this would result in a cyclic hierarchy`);
+                    console.error(`Cannot add child ${child.name} to parent ${obj.name} because this would result in a cyclic hierarchy`);
                     return undefined;
                 }
                 cyclicCheckParent = cyclicCheckParent.parent;
@@ -719,7 +719,7 @@ namespace World {
         export function orderWorldObjectBefore(obj: WorldObject, before: WorldObject) {
             if (!obj || !before) return;
             if (!obj.world || obj.world !== before.world) {
-                error('Cannot reorder objects due to null or mismatched worlds:', obj, before);
+                console.error('Cannot reorder objects due to null or mismatched worlds:', obj, before);
                 return;
             }
 
@@ -734,7 +734,7 @@ namespace World {
         export function orderWorldObjectAfter(obj: WorldObject, after: WorldObject) {
             if (!obj || !after) return;
             if (!obj.world || obj.world !== after.world) {
-                error('Cannot reorder objects due to null or mismatched worlds:', obj, after);
+                console.error('Cannot reorder objects due to null or mismatched worlds:', obj, after);
                 return;
             }
 

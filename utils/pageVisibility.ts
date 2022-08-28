@@ -10,7 +10,7 @@ namespace PageVisibility {
         } else if (typeof document.webkitHidden !== "undefined") {
             return "webkitHidden";
         }
-        error("Page Visibility API unsupported!");
+        console.error("Page Visibility API unsupported!");
         return undefined;
     }
 

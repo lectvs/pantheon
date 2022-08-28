@@ -54,7 +54,7 @@ class RectBounds implements Bounds {
         if (other instanceof SlopeBounds) return Bounds.Collision.getDisplacementCollisionRectSlope(this, other);
         if (other instanceof InvertedRectBounds) return Bounds.Collision.getDisplacementCollisionRectInvertedRect(this, other);
         if (other instanceof NullBounds) return undefined;
-        error("No collision supported between these bounds", this, other);
+        console.error("No collision supported between these bounds", this, other);
         return undefined;
     }
 
@@ -64,7 +64,7 @@ class RectBounds implements Bounds {
         if (other instanceof SlopeBounds) return Bounds.Collision.getRaycastCollisionRectSlope(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof InvertedRectBounds) return Bounds.Collision.getRaycastCollisionRectInvertedRect(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof NullBounds) return undefined;
-        error("No collision supported between these bounds", this, other);
+        console.error("No collision supported between these bounds", this, other);
         return undefined;
     }
 
@@ -74,7 +74,7 @@ class RectBounds implements Bounds {
         if (other instanceof SlopeBounds) return Bounds.Collision.isOverlappingRectSlope(this, other);
         if (other instanceof InvertedRectBounds) return Bounds.Collision.isOverlappingRectInvertedRect(this, other);
         if (other instanceof NullBounds) return undefined;
-        error("No overlap supported between these bounds", this, other);
+        console.error("No overlap supported between these bounds", this, other);
         return false;
     }
 

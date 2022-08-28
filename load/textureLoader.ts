@@ -31,7 +31,7 @@ class TextureLoader implements Loader {
     private onLoad() {
         let baseTexture: PIXI.BaseTexture = this.pixiLoader.resources[this.key].texture.baseTexture;
         if (!baseTexture) {
-            error(`Failed to load texture ${this.key}`);
+            console.error(`Failed to load texture ${this.key}`);
             return;
         }
 

@@ -95,7 +95,7 @@ class PhysicsWorldObject extends WorldObject {
     postUpdate() {
         super.postUpdate();
         if (!isFinite(this.v.x) || !isFinite(this.v.y)) {
-            error(`Non-finite velocity ${this.v} on object`, this);
+            console.error(`Non-finite velocity ${this.v} on object`, this);
             if (!isFinite(this.v.x)) this.v.x = 0;
             if (!isFinite(this.v.y)) this.v.y = 0;
         }

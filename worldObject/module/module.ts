@@ -10,7 +10,7 @@ class Module<T extends WorldObject> {
 
     init(worldObject: WorldObject): void {
         if (!(worldObject instanceof this.type)) {
-            error(`Tried to add Module<${this.type.name}> to a world object of incompatible type:`, worldObject);
+            console.error(`Tried to add Module<${this.type.name}> to a world object of incompatible type:`, worldObject);
             return;
         }
         this._worldObject = worldObject;

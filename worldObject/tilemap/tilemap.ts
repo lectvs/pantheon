@@ -185,7 +185,7 @@ class Tilemap extends WorldObject {
             return;
         }
 
-        error(`Could not find layer '${tilemapLayer}' in tilemap`, this);
+        console.error(`Could not find layer '${tilemapLayer}' in tilemap`, this);
         this.tilemapLayer = 0;
     }
 

@@ -71,7 +71,7 @@ class DialogProfile {
             return [parts[0], 'default'];
         }
         if (parts.length > 2) {
-            error(`Dialog profile key has more than two parts: ${profileKey}`);
+            console.error(`Dialog profile key has more than two parts: ${profileKey}`);
         }
         return [parts[0], parts[1]];
     }
@@ -89,7 +89,7 @@ namespace DialogProfiles {
     export function getProfile(profileKey: string) {
         let profile = profilesByCharacter[profileKey];
         if (!profile) {
-            error(`No profile found for: ${profileKey}`);
+            console.error(`No profile found for: ${profileKey}`);
             return undefined;
         }
 

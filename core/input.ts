@@ -116,7 +116,7 @@ class Input {
         let controls: Dict<string[]> = Options.getOption(Options.CONTROLS);
         let controlBindings = controls[controlName];
         if (!controlBindings) {
-            error(`Cannot add control binding for '${controlName}' since the control does not exist`);
+            console.error(`Cannot add control binding for '${controlName}' since the control does not exist`);
             return;
         }
         if (!_.contains(controlBindings, keyCode)) {
@@ -130,7 +130,7 @@ class Input {
         let controls: Dict<string[]> = Options.getOption(Options.CONTROLS);
         let controlBindings = controls[controlName];
         if (!controlBindings) {
-            error(`Cannot remove control binding for '${controlName}' since the control does not exist`);
+            console.error(`Cannot remove control binding for '${controlName}' since the control does not exist`);
             return;
         }
         A.removeAll(controlBindings, keyCode);
@@ -142,12 +142,12 @@ class Input {
         let controls: Dict<string[]> = Options.getOption(Options.CONTROLS);
         let controlBindings = controls[controlName];
         if (!controlBindings) {
-            error(`Cannot update control binding for '${controlName}' since the control does not exist`);
+            console.error(`Cannot update control binding for '${controlName}' since the control does not exist`);
             return;
         }
 
         if (!_.contains(controlBindings, oldKeyCode)) {
-            error(`Cannot update control binding '${oldKeyCode}' for '${controlName}' since that key is not bound to that control`);
+            console.error(`Cannot update control binding '${oldKeyCode}' for '${controlName}' since that key is not bound to that control`);
             return;
         }
 

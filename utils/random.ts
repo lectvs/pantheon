@@ -57,11 +57,11 @@ class RandomNumberGenerator {
     elementWeighted<T>(array: T[], weights: number[]) {
         if (_.isEmpty(array)) return undefined;
         if (_.isEmpty(weights)) {
-            error(`Weights are empty, using uniform weighting:`, array, weights);
+            console.error(`Weights are empty, using uniform weighting:`, array, weights);
             return this.element(array);
         }
         if (weights.length !== array.length) {
-            error(`Weights length does not match array length:`, array, weights);
+            console.error(`Weights length does not match array length:`, array, weights);
         }
         let weightSum = A.sum(weights);
         let value = this.float(0, weightSum);

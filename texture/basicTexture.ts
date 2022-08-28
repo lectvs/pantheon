@@ -14,7 +14,7 @@ class BasicTexture implements Texture {
 
     constructor(width: number, height: number, immutable: boolean = false, source?: string) {
         if (width > 10000 || height > 10000) {
-            error(`Texture dimensions exceed bounds: (${width}, ${height}), limiting to bounds`);
+            console.error(`Texture dimensions exceed bounds: (${width}, ${height}), limiting to bounds`);
             width = Math.min(width, 10000);
             height = Math.min(height, 10000);
         }
@@ -25,7 +25,7 @@ class BasicTexture implements Texture {
 
     clear() {
         if (this.immutable) {
-            error('Cannot clear immutable texture!');
+            console.error('Cannot clear immutable texture!');
             return;
         }
         this.renderTextureSprite.clear();
@@ -123,7 +123,7 @@ class BasicTexture implements Texture {
     renderTo(texture: Texture, properties?: Texture.Properties) {
         if (!texture) return;
         if (texture.immutable) {
-            error('Cannot render to immutable texture!');
+            console.error('Cannot render to immutable texture!');
             return;
         }
 
@@ -135,7 +135,7 @@ class BasicTexture implements Texture {
 
     renderPIXIDisplayObject(displayObject: PIXI.DisplayObject) {
         if (this.immutable) {
-            error('Cannot render to immutable texture!');
+            console.error('Cannot render to immutable texture!');
             return;
         }
         global.renderer.render(displayObject, this.renderTextureSprite.renderTexture, false);

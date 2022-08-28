@@ -64,7 +64,7 @@ class CircleBounds implements Bounds {
         if (other instanceof SlopeBounds) return Bounds.Collision.getDisplacementCollisionCircleSlope(this, other);
         if (other instanceof InvertedRectBounds) return Bounds.Collision.getDisplacementCollisionCircleInvertedRect(this, other);
         if (other instanceof NullBounds) return undefined;
-        error("No collision supported between these bounds", this, other);
+        console.error("No collision supported between these bounds", this, other);
         return undefined;
     }
 
@@ -74,7 +74,7 @@ class CircleBounds implements Bounds {
         if (other instanceof SlopeBounds) return Bounds.Collision.getRaycastCollisionCircleSlope(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof InvertedRectBounds) return Bounds.Collision.getRaycastCollisionCircleInvertedRect(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof NullBounds) return undefined;
-        error("No collision supported between these bounds", this, other);
+        console.error("No collision supported between these bounds", this, other);
         return undefined;
     }
 
@@ -84,7 +84,7 @@ class CircleBounds implements Bounds {
         if (other instanceof SlopeBounds) return Bounds.Collision.isOverlappingCircleSlope(this, other);
         if (other instanceof InvertedRectBounds) return Bounds.Collision.isOverlappingCircleInvertedRect(this, other);
         if (other instanceof NullBounds) return undefined;
-        error("No overlap supported between these bounds", this, other);
+        console.error("No overlap supported between these bounds", this, other);
         return false;
     }
 
