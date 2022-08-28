@@ -18,6 +18,7 @@ TODO
 - better world and object management (freeing)
 - better performance on large spritetexts
 - menus in separate files
+- figure out true upper bound for textures
 
 stretch
 - documentation and API cleanup
