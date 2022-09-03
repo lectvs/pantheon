@@ -13,10 +13,11 @@ class BasicTexture implements Texture {
     private cachedPixelsARGB: number[][];
 
     constructor(width: number, height: number, immutable: boolean = false, source?: string) {
-        if (width > 10000 || height > 10000) {
+        // TODO: find the true texture bounds across devices
+        if (width > 2048 || height > 2048) {
             console.error(`Texture dimensions exceed bounds: (${width}, ${height}), limiting to bounds`);
-            width = Math.min(width, 10000);
-            height = Math.min(height, 10000);
+            width = Math.min(width, 2048);
+            height = Math.min(height, 2048);
         }
         this.renderTextureSprite = new Texture.PIXIRenderTextureSprite(width, height);
         this.immutable = immutable;

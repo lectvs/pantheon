@@ -29,8 +29,10 @@ namespace Main {
 
         game: Game.Config;
 
+        persistIntervalSeconds: number;
+        persist: () => void;
+
         beforePreload?: () => void;
-        onExit?: () => void;
 
         debug: Debug.Config;
     }
@@ -138,6 +140,8 @@ class Main {
         Input.init(); // TODO: remove this when fixed above
         Input.simulateMouseWithTouches = this.config.simulateMouseWithTouches;
 
+        Persist.init(this.config.persistIntervalSeconds, () => this.config.persist());
+
         this.initEvents();
 
         this.metricsManager = new MetricsManager();
@@ -184,6 +188,7 @@ class Main {
                 Input.postUpdate();
             }
             Analytics.update(frameDelta/60);
+            Persist.update(frameDelta/60);
             global.metrics.endSpan('update');
 
             global.metrics.startSpan('render');
@@ -285,8 +290,7 @@ class Main {
             }
         }, false);
         window.addEventListener("beforeunload", event => {
-            if (this.config.onExit) this.config.onExit();
-            Analytics.submit();
+            Persist.persist();
         }, false);
     }
 

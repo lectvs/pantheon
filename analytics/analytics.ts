@@ -36,7 +36,6 @@ namespace Analytics {
     const registeredUpdaters: Dict<RegisteredUpdater<any>> = {};
     const registeredSubmitters: Dict<RegisteredSubmitter<any>> = {};
 
-    var submitTimer: Timer;
     var sessionFrames: number;
 
     const MAX_SUBMIT_TIME = 5000;
@@ -61,7 +60,6 @@ namespace Analytics {
         sessionData.playTime = 0;
         sessionData.averageFrameRate = 0;
 
-        submitTimer = new Timer(300, () => submit(), Infinity);
         sessionFrames = 0;
     }
 
@@ -71,8 +69,6 @@ namespace Analytics {
         sessionData.playTime += delta;
         sessionFrames++;
         if (sessionData.playTime > 0) sessionData.averageFrameRate = sessionFrames / sessionData.playTime;
-
-        submitTimer.update(delta);
     }
 
     export function submit() {

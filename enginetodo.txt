@@ -19,6 +19,7 @@ TODO
 - better performance on large spritetexts
 - menus in separate files
 - figure out true upper bound for textures
+- delete useless bloat
 
 stretch
 - documentation and API cleanup
