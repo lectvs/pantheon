@@ -281,6 +281,7 @@ class Main {
         });
         window.addEventListener("blur", event => {
             Input.reset();
+            Persist.persist();
         });
         window.addEventListener(PageVisibility.VISIBILITY_CHANGE, () => {
             if (document[PageVisibility.HIDDEN]) {
