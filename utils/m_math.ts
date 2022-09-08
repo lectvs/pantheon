@@ -96,6 +96,11 @@ namespace M {
         return clamp(map(value, fromMin, fromMax, toMin, toMax), toMin, toMax);
     }
 
+    export function mapTween(value: number, fromMin: number, fromMax: number, toMin: number, toMax: number, tweenFn: Tween.Easing.Function) {
+        let p = (value - fromMin) / (fromMax - fromMin);
+        return lerp(toMin, toMax, tweenFn(p));
+    }
+
     export function max<T>(array: T[], key: (x: T) => number) {
         return -min(array, x => -key(x));
     }

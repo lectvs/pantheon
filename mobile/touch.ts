@@ -16,6 +16,9 @@ class TouchManager {
     static onTouchUp: () => void;
 
     static handleTouchStartEvent(event: TouchEvent) {
+        // TODO: handle multiple touches at some point
+        if (this.isTouching) return;
+
         for (let i = 0; i < event.changedTouches.length; i++) {
             let touch = event.changedTouches[i];
             this.touches.push(this.getTouchData(touch));

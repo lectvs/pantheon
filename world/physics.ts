@@ -25,8 +25,10 @@ namespace Physics {
 
     type CollisionObject = {
         obj: PhysicsWorldObject;
-        vx: number;
-        vy: number;
+        pre_vx: number;
+        pre_vy: number;
+        post_vx: number;
+        post_vy: number;
     }
 
     type PhysicsObjectDataCache = {
@@ -256,13 +258,17 @@ namespace Physics {
             let moveCollisionInfo: Physics.Collision = {
                 self: {
                     obj: collision.move,
-                    vx: collision.move.v.x,
-                    vy: collision.move.v.y,
+                    pre_vx: collision.move.v.x,
+                    pre_vy: collision.move.v.y,
+                    post_vx: collision.move.v.x,  // Will be modified after momentum transfer
+                    post_vy: collision.move.v.y,  // Will be modified after momentum transfer
                 },
                 other: {
                     obj: collision.from,
-                    vx: collision.from.v.x,
-                    vy: collision.from.v.y,
+                    pre_vx: collision.from.v.x,
+                    pre_vy: collision.from.v.y,
+                    post_vx: collision.from.v.x,  // Will be modified after momentum transfer
+                    post_vy: collision.from.v.y,  // Will be modified after momentum transfer
                 }
             };
 
@@ -272,6 +278,11 @@ namespace Physics {
             };
 
             applyMomentumTransferForCollision(collision, collision.momentumTransfer, delta);
+
+            moveCollisionInfo.self.post_vx = collision.move.v.x;
+            moveCollisionInfo.self.post_vy = collision.move.v.y;
+            moveCollisionInfo.other.post_vx = collision.from.v.x;
+            moveCollisionInfo.other.post_vy = collision.from.v.y;
 
             if (collision.callback) collision.callback(moveCollisionInfo);
             collision.move.onCollide(moveCollisionInfo);

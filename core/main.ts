@@ -15,7 +15,6 @@ namespace Main {
         preloadBackgroundColor: number;
         preloadProgressBarColor: number;
 
-        remoteRootPath?: string;
         textures: Dict<Preload.Texture>;
         sounds: Dict<Preload.Sound>;
         tilesets: Dict<Preload.Tileset>;
@@ -101,9 +100,8 @@ class Main {
         Main.renderer.view.style.setProperty('image-rendering', 'crisp-edges');  // Firefox
 
         if (MobileUtils.isMobileBrowser()) {
-            let scale = window.innerHeight/720;
-            Main.renderer.view.style.transform = `scale(${scale})`;
             document.body.style.backgroundColor = "black";
+            MobileScaleManager.init();
         }
 
         // AccessibilityManager causes game to crash when Tab is pressed.
@@ -189,6 +187,9 @@ class Main {
             }
             Analytics.update(frameDelta/60);
             Persist.update(frameDelta/60);
+            if (MobileUtils.isMobileBrowser()) {
+                MobileScaleManager.update();
+            }
             global.metrics.endSpan('update');
 
             global.metrics.startSpan('render');
@@ -281,7 +282,9 @@ class Main {
         });
         window.addEventListener("blur", event => {
             Input.reset();
-            Persist.persist();
+            if (IS_MOBILE) {
+                Persist.persist();
+            }
         });
         window.addEventListener(PageVisibility.VISIBILITY_CHANGE, () => {
             if (document[PageVisibility.HIDDEN]) {
@@ -295,10 +298,30 @@ class Main {
         }, false);
     }
 
+    private static getRemotePath() {
+        let node = document.getElementById("data-remote-root");
+        if (!node) return undefined;
+        let path = node.getAttribute("data-remote-root");
+        if (St.isBlank(path)) return undefined;
+        return path;
+    }
+
+    static hasRemotePath() {
+        return !St.isBlank(Main.getRemotePath());
+    }
+
     static getRootPath() {
-        if (!IS_REMOTE || !Main.config.remoteRootPath || window.location.href.includes('localhost')) {
+        if (window.location.href.includes('localhost') || !Main.hasRemotePath()) {
             return '';
         }
-        return Main.config.remoteRootPath;
+        return Main.getRemotePath();
+    }
+
+    static getScaledWidth() {
+        return global.gameWidth * Main.config.canvasScale;
+    }
+
+    static getScaledHeight() {
+        return global.gameHeight * Main.config.canvasScale;
     }
 }

@@ -9,6 +9,7 @@ class Persist {
 
     static persist() {
         this.doPersist();
+        this.timer.reset();
     }
 
     static update(delta: number) {

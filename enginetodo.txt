@@ -20,6 +20,8 @@ TODO
 - menus in separate files
 - figure out true upper bound for textures
 - delete useless bloat
+- look into more performant graphics libraries
+- preload anything (custom textures, objects, etc) at load time
 
 stretch
 - documentation and API cleanup
