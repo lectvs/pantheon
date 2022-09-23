@@ -70,7 +70,7 @@ class Main {
             let errorText = document.createElement('p');
             errorText.innerHTML = "Error: WebGL is not supported in your browser.<br/><br/>The most common fix for this is to enable \"Use hardware acceleration\" in your browser's settings.";
             errorText.style.fontSize = "24px";
-            errorText.style.color = "#FF0000";
+            errorText.style.color = "#FFFFFF";
             document.body.appendChild(errorText);
             return;
         }
