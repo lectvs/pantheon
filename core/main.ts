@@ -43,7 +43,6 @@ class Main {
 
     static game: Game;
     static soundManager: GlobalSoundManager;
-    static metricsManager: MetricsManager;
     static renderer: PIXI.Renderer;
     static screen: BasicTexture;
     static delta: number;
@@ -142,8 +141,6 @@ class Main {
 
         this.initEvents();
 
-        this.metricsManager = new MetricsManager();
-
         this.delta = 0;
         this.game = new Game(this.config.game);
         this.game.start();
@@ -166,22 +163,16 @@ class Main {
                 while (Main.fixedDeltaBucket >= Main.fixedDelta) Main.fixedDeltaBucket -= Main.fixedDelta;
             }
 
-            this.metricsManager.update();
-
-            global.metrics.startSpan('frame');
             global.fpsCalculator.update();
 
             global.clearStacks();
-            global.metrics.startSpan('update');
 
             for (let i = 0; i < Debug.SKIP_RATE; i++) {
                 Input.update();
                 Debug.update();
                 if (Debug.frameStepSkipFrame()) break;
                 Main.soundManager.preGameUpdate();
-                global.metrics.startSpan('game');
                 Main.game.update();
-                global.metrics.endSpan('game');
                 Main.soundManager.postGameUpdate();
                 Input.postUpdate();
             }
@@ -190,19 +181,12 @@ class Main {
             if (MobileUtils.isMobileBrowser()) {
                 MobileScaleManager.update();
             }
-            global.metrics.endSpan('update');
 
-            global.metrics.startSpan('render');
             Main.screen.clear();
 
-            global.metrics.startSpan('game');
             Main.game.render(Main.screen);
-            global.metrics.endSpan('game');
 
             Main.renderScreenToCanvas();
-            global.metrics.endSpan('render');
-
-            global.metrics.endSpan('frame');
         });
     }
 

@@ -58,41 +58,26 @@ class Game {
 
     update() {
         this.updatePause();
-        this.updateMetrics();
 
         if (this.menuSystem.inMenu) {
-            global.metrics.startSpan('menu');
             this.menuSystem.update();
-            global.metrics.endSpan('menu');
         } else {
-            global.metrics.startSpan('theater');
             this.theater.isSkippingCutscene = false;  // Safeguard
             this.theater.update();
-            global.metrics.endSpan('theater');
         }
 
-        global.metrics.startSpan('debugOverlay');
         this.updateOverlay();
-        global.metrics.endSpan('debugOverlay');
 
-        global.metrics.startSpan('soundManager');
         this.soundManager.volume = this.volume * Options.sfxVolume;
         this.soundManager.update(this.delta);
         this.musicManager.baseVolume = this.volume * Options.musicVolume;
         this.musicManager.update(this.delta);
-        global.metrics.endSpan('soundManager');
     }
 
     private updatePause() {
         if (!this.menuSystem.inMenu && this.allowPauseWithPauseKey && this.theater.canPause && Input.justDown(Input.GAME_PAUSE)) {
             Input.consume(Input.GAME_PAUSE);
             this.pauseGame();
-        }
-    }
-
-    private updateMetrics() {
-        if (Debug.DEBUG && Input.justDown(Input.DEBUG_SHOW_METRICS_MENU)) {
-            global.game.menuSystem.loadMenu(() => new MetricsMenu());
         }
     }
 
@@ -109,20 +94,14 @@ class Game {
 
     render(screen: Texture) {
         if (this.menuSystem.inMenu) {
-            global.metrics.startSpan('menu');
             this.menuSystem.render(screen);
-            global.metrics.endSpan('menu');
 
         } else {
-            global.metrics.startSpan('theater');
             this.theater.render(screen);
-            global.metrics.endSpan('theater');
         }
 
         if (this.isShowingOverlay && Debug.SHOW_OVERLAY) {
-            global.metrics.startSpan('debugOverlay');
             this.overlay.render(screen);
-            global.metrics.endSpan('debugOverlay');
         }
 
         // TODO: remove

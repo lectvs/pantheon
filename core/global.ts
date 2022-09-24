@@ -1,5 +1,4 @@
 /// <reference path="../metrics/fps.ts"/>
-/// <reference path="../metrics/metrics.ts"/>
 
 class global {
     static clearStacks() {
@@ -21,7 +20,6 @@ class global {
 
     static get renderer() { return Main.renderer; }
     static get soundManager() { return Main.soundManager; }
-    static metrics: Metrics = new Metrics();
     static fpsCalculator: FPSCalculator = new FPSCalculator(1);
 
     static gameCodeName: string;

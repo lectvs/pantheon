@@ -34,11 +34,10 @@ class DebugOverlay extends World {
         let fpsText = "fps: "
             + global.fpsCalculator.fpsAvg.toFixed(0) + " "
             + "(-" + (global.fpsCalculator.fpsAvg - global.fpsCalculator.fpsP).toFixed(0) + ")";
-        let recordingText = global.metrics.isRecording ? "\nrecording" : "";
         let feedText = "";
         for (let feed of Debug.OVERLAY_FEEDS) {
             feedText += feed(this.currentWorldToDebug) + "\n";
         }
-        return `${mousePositionText}\n${fpsText}\n${recordingText}\n${feedText}`;
+        return `${mousePositionText}\n${fpsText}\n${feedText}`;
     }
 }

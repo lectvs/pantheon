@@ -152,40 +152,26 @@ class World {
     update() {
         this.updateScriptManager();
 
-        global.metrics.startSpan('preUpdate');
         for (let worldObject of this.worldObjects) {
             worldObject.setIsInsideWorldBoundsBufferThisFrame();
             if (worldObject.isActive() && worldObject._isInsideWorldBoundsBufferThisFrame) {
-                global.metrics.startSpan(worldObject);
                 worldObject.preUpdate();
-                global.metrics.endSpan(worldObject);
             }
         }
-        global.metrics.endSpan('preUpdate');
 
-        global.metrics.startSpan('update');
         for (let worldObject of this.worldObjects) {
             if (worldObject.isActive() && worldObject._isInsideWorldBoundsBufferThisFrame) {
-                global.metrics.startSpan(worldObject);
                 worldObject.update();
-                global.metrics.endSpan(worldObject);
             }
         }
-        global.metrics.endSpan('update');
 
-        global.metrics.startSpan('handleCollisions');
         this.handleCollisions();
-        global.metrics.endSpan('handleCollisions');
 
-        global.metrics.startSpan('postUpdate');
         for (let worldObject of this.worldObjects) {
             if (worldObject.isActive() && worldObject._isInsideWorldBoundsBufferThisFrame) {
-                global.metrics.startSpan(worldObject);
                 worldObject.postUpdate();
-                global.metrics.endSpan(worldObject);
             }
         }
-        global.metrics.endSpan('postUpdate');
 
         this.removeDeadWorldObjects();
 
@@ -215,8 +201,6 @@ class World {
         Draw.rectangleSolid(this.worldTexture, 0, 0, this.width, this.height);
 
         for (let layer of this.layers) {
-            global.metrics.startSpan(`layer_${layer.name}`);
-            global.metrics.recordMetric('renderToOwnLayer', layer.shouldRenderToOwnLayer ? 0 : 1);
             if (layer.shouldRenderToOwnLayer) {
                 this.layerTexture.clear();
                 this.renderLayerToTexture(layer, this.layerTexture);
@@ -227,7 +211,6 @@ class World {
             } else {
                 this.renderLayerToTexture(layer, this.worldTexture);
             }
-            global.metrics.endSpan(`layer_${layer.name}`);
         }
 
         // Apply world effects.
@@ -244,9 +227,7 @@ class World {
 
         for (let worldObject of layer.worldObjects) {
             if (worldObject.isVisible() && worldObject.isOnScreen()) {
-                global.metrics.startSpan(worldObject);
                 worldObject.render(texture, worldObject.getRenderScreenX(), worldObject.getRenderScreenY());
-                global.metrics.endSpan(worldObject);
             }
         }
     }
