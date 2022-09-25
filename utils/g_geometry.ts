@@ -1,4 +1,12 @@
 namespace G {
+    export function angle(p1: Pt, p2: Pt) {
+        let angle = M.atan2(p2.y - p1.y, p2.x - p1.x);
+        if (angle < 0) {
+            angle += 360;
+        }
+        return angle;
+    }
+
     export function circleIntersectsSegment(cx: number, cy: number, r: number, lx1: number, ly1: number, lx2: number, ly2: number) {
         let dx = cx - lx1;
         let dy = cy - ly1;

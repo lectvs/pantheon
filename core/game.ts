@@ -12,7 +12,6 @@ class Game {
 
     private overlay: DebugOverlay;
     private isShowingOverlay: boolean;
-    private fpsText: SpriteText;
 
     allowPauseWithPauseKey: boolean;
 
@@ -40,13 +39,6 @@ class Game {
         this.overlay = new DebugOverlay();
         this.isShowingOverlay = true;
         this.allowPauseWithPauseKey = true;
-        this.fpsText = new SpriteText({
-            font: 'smallnumbers',
-            style: { color: 0x00FF00 },
-            effects: { outline: {} },
-            anchor: Vector2.BOTTOM_RIGHT,
-            justify: 'right',
-        });
     }
 
     start() {
@@ -103,14 +95,6 @@ class Game {
         if (this.isShowingOverlay && Debug.SHOW_OVERLAY) {
             this.overlay.render(screen);
         }
-
-        // TODO: remove
-        if (IS_MOBILE) {
-            let fpsText = 'FPS\n' + global.fpsCalculator.fpsAvg.toFixed(0);
-            this.fpsText.setText(fpsText);
-            this.fpsText.render(screen, global.gameWidth - 1, global.gameHeight - 1);
-        }
-
 
         if (Debug.SHOW_TOUCHES) {
             this.renderTouches(screen);

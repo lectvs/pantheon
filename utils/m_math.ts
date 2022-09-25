@@ -126,6 +126,12 @@ namespace M {
         return num - Math.floor(num/mod) * mod;
     }
 
+    export function moveToClamp(current: number, to: number, speed: number, delta: number) {
+        if (to > current) return Math.min(current + speed * delta, to);
+        if (to < current) return Math.max(current - speed * delta, to);
+        return current;
+    }
+
     export function radToDeg(rad: number) {
         return 180 / Math.PI * rad;
     }
