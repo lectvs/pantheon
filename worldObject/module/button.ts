@@ -39,15 +39,7 @@ class Button extends Module<WorldObject> {
     update() {
         super.update();
 
-        let mouseBounds = this.worldObject.world.getWorldMouseBounds();
-
-        let hovered: boolean;
-        if (IS_MOBILE) {
-            hovered = this.enabled && this.worldObject.bounds.isOverlapping(mouseBounds) && Button.getClosestButton(mouseBounds, this.worldObject.world) === this;
-        } else {
-            hovered = this.enabled && this.worldObject.bounds.isOverlapping(mouseBounds);
-        }
-
+        let hovered = this.isHovered();
         let clicked = this.clickedDownOn && Input.isDown(Input.GAME_SELECT);
         
         this.worldObject.tint = hovered ? (clicked ? this.clickTint : this.hoverTint) : this.baseTint;
@@ -70,6 +62,20 @@ class Button extends Module<WorldObject> {
 
     click() {
         this.onClick();
+    }
+
+    isHovered() {
+        if (!this.enabled) return false;
+
+        let mouseBounds = this.worldObject.world.getWorldMouseBounds();
+
+        if (!this.worldObject.bounds.isOverlapping(mouseBounds)) return false;
+
+        if (IS_MOBILE) {
+            return Button.getClosestButton(mouseBounds, this.worldObject.world) === this;
+        }
+        
+        return true;
     }
 }
 

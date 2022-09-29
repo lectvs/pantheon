@@ -19,6 +19,7 @@ namespace WorldObject {
         zBehavior?: ZBehavior;
         timeScale?: number;
         useGlobalTime?: boolean;
+        updateOnNonUpdate?: boolean;
         tags?: string[];
         data?: any;
     } & Callbacks<WorldObject>;
@@ -52,6 +53,7 @@ class WorldObject {
     zBehavior: WorldObject.ZBehavior;
     timeScale: number;
     useGlobalTime: boolean;
+    updateOnNonUpdate: boolean;
     data: any;
 
     ignoreCamera: boolean;
@@ -133,6 +135,7 @@ class WorldObject {
         this.zBehavior = config.zBehavior ?? WorldObject.DEFAULT_Z_BEHAVIOR;
         this.timeScale = config.timeScale ?? 1;
         this.useGlobalTime = config.useGlobalTime ?? false;
+        this.updateOnNonUpdate = config.updateOnNonUpdate ?? false;
         this.data = config.data ? O.deepClone(config.data) : {};
 
         this.setVisible(config.visible ?? true);

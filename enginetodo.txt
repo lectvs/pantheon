@@ -24,6 +24,8 @@ TODO
 - preload anything (custom textures, objects, etc) at load time
 - attach arbitrary "update"/"render" objects to worldobjects (e.g. timers, new module system?)
 - make game files group-downloadable with https://stuk.github.io/jszip/
+- integrate debug assets into code?
+- improve compile time
 
 stretch
 - documentation and API cleanup
