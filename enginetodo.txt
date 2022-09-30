@@ -1,13 +1,15 @@
 TODO
 - theater not a world (for real this time)
-- camera zoom/rotate
+    - better slides (for real this time)
+- camera zoom/rotate?
 - animation revamp (animation/script parity?)
+    - squash/stretch/transform/etc actions
 - revamp module system to work with compound types
 - controller revamp
 - easier global width/height
 - apply filter before texture transformation during render? (rotate, scale, etc.)
 - allow S scripts to be run in non-global worlds (global.script.world? how do we handle cutscenes?)
-- transitions from main menu to game
+- revamp menu system, transitions from main menu to game
 - custom font characters -> general textures instead?
 - vs code tasks?
 - fix: Options.updateCallbacks.push(() => Input.init());
@@ -17,15 +19,15 @@ TODO
 - "humanized" option in sound asset definition
 - better world and object management (freeing)
 - better performance on large spritetexts
-- menus in separate files
 - figure out true upper bound for textures
 - delete useless bloat
 - look into more performant graphics libraries
 - preload anything (custom textures, objects, etc) at load time
 - attach arbitrary "update"/"render" objects to worldobjects (e.g. timers, new module system?)
 - make game files group-downloadable with https://stuk.github.io/jszip/
-- integrate debug assets into code?
 - improve compile time
+- clean up fixed framerate/nonupdate stuff
+- integrate debug textures/sfx into the engine?
 
 stretch
 - documentation and API cleanup
