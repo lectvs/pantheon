@@ -24,6 +24,10 @@ class StateMachine {
     }
 
     addState(name: string, state: StateMachine.State) {
+        if (name in this.states) {
+            console.error(`State ${name} already exists on state machine`, this);
+            return;
+        }
         this.states[name] = state;
     }
 

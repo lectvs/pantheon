@@ -115,6 +115,26 @@ class RandomNumberGenerator {
     }
 
     /**
+     * Random sample of {count} elements from an array.
+     */
+    sample<T>(array: T[], count: number) {
+        if (count > _.size(array)) {
+            console.error('Trying to sample an array for more elements than it contains', array, count);
+            count = _.size(array);
+        }
+        if (_.isEmpty(array)) return [];
+
+        let copiedArray = A.clone(array);
+        let result: T[] = [];
+        for (let i = 0; i < count; i++) {
+            let j = this.int(0, copiedArray.length-1);
+            result.push(copiedArray.splice(j, 1)[0]);
+        }
+
+        return result;
+    }
+
+    /**
      * Shuffles an array in place using the Fischer-Yates shuffle.
      * See https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
      */

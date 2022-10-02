@@ -28,6 +28,8 @@ TODO
 - improve compile time
 - clean up fixed framerate/nonupdate stuff
 - integrate debug textures/sfx into the engine?
+- yield multiple comma-separated values, yield number to wait, script revamp??
+- bounce vs elastic tween
 
 stretch
 - documentation and API cleanup

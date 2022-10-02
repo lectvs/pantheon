@@ -111,10 +111,14 @@ namespace A {
     }
 
     /**
-     * An array of integers from 0 to n-1, inclusive.
+     * An array of integers from 0 to n-1 or n to m-1, inclusive.
      */
-    export function range(n: number) {
-        return [...Array(n).keys()];
+    export function range(n: number, m?: number) {
+        if (m === undefined) {
+            m = n;
+            n = 0;
+        }
+        return [...Array(m-n).keys()].map(i => i + n);
     }
 
     /**

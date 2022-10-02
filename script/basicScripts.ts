@@ -52,6 +52,17 @@ namespace S {
         return function*() {}
     }
 
+    export function revealText(text: SpriteText, rate: number): Script.Function {
+        return function*() {
+            text.visibleCharCount = 0;
+            yield;
+            while (!text.allCharactersVisible()) {
+                text.visibleCharCount++;
+                yield S.wait(1/rate);
+            }
+        }
+    }
+
     export function schedule(...schedule: [number, Script.Function, ...Array<number | Script.Function>]): Script.Function {
         let fns: { t: number, s: Script.Function }[] = [];
         for (let i = 0; i < schedule.length; /* no incr */) {

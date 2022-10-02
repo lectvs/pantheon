@@ -6,6 +6,7 @@ namespace Button {
         hoverTint: number;
         clickTint: number;
         onHover?: () => void;
+        enabled?: boolean;
     }
 
     export type CompatibleWorldObject = WorldObject & {
@@ -21,7 +22,7 @@ class Button extends Module<WorldObject> {
     private clickTint: number;
     baseTint: number = 0xFFFFFF;
 
-    enabled: boolean = true;
+    enabled: boolean;
 
     private clickedDownOn: boolean = false;
 
@@ -34,6 +35,7 @@ class Button extends Module<WorldObject> {
         this.onHover = config.onHover;
         this.hoverTint = config.hoverTint;
         this.clickTint = config.clickTint;
+        this.enabled = config.enabled ?? true;
     }
 
     update() {

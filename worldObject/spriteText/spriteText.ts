@@ -237,6 +237,10 @@ class SpriteText extends WorldObject {
         }
     }
 
+    allCharactersVisible() {
+        return this.visibleCharCount >= this.getCharList().length;
+    }
+
     clear() {
         this.setText("");
     }

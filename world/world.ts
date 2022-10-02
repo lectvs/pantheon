@@ -738,5 +738,35 @@ namespace World {
                 A.moveAfter(obj.world.getLayerByName(obj.layer).worldObjects, obj, after);
             }
         }
+
+        /**
+         * Moves a WorldObject to the front of its layer so it is rendered later.
+         */
+        export function moveWorldObjectToFront(obj: WorldObject) {
+            if (!obj) return;
+            if (!obj.world) {
+                console.error('Cannot move object since it is not in a world:', obj);
+                return;
+            }
+            let layerObjects = obj.world.getLayerByName(obj.layer).worldObjects;
+            let i = layerObjects.indexOf(obj);
+            if (i === layerObjects.length-1) return;
+            layerObjects.push(layerObjects.splice(i, 1)[0]);
+        }
+
+        /**
+         * Moves a WorldObject to the front of its layer so it is rendered earlier.
+         */
+         export function moveWorldObjectToBack(obj: WorldObject) {
+            if (!obj) return;
+            if (!obj.world) {
+                console.error('Cannot move object since it is not in a world:', obj);
+                return;
+            }
+            let layerObjects = obj.world.getLayerByName(obj.layer).worldObjects;
+            let i = layerObjects.indexOf(obj);
+            if (i === 0) return;
+            layerObjects.unshift(layerObjects.splice(i, 1)[0]);
+        }
     }
 }
