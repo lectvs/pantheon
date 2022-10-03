@@ -23,6 +23,7 @@ class Theater extends World {
     endOfFrameQueue: (() => any)[];
 
     isSkippingCutscene: boolean;
+    shouldStopSkippingCutscene: boolean;
     
     constructor(config: Theater.Config) {
         super({
@@ -43,6 +44,7 @@ class Theater extends World {
         this.endOfFrameQueue = [];
 
         this.isSkippingCutscene = false;
+        this.shouldStopSkippingCutscene = false;
 
         if (Debug.AUTOPLAY && config.autoPlayScript) {
             this.runScript(config.autoPlayScript);
@@ -96,13 +98,15 @@ class Theater extends World {
             let currentCutscene = this.cutsceneManager.current;
             let cutsceneFinished = () => !this.cutsceneManager.current || this.cutsceneManager.current !== currentCutscene;
 
+            this.shouldStopSkippingCutscene = false;
             this.isSkippingCutscene = true;
             let iters = 0;
-            while (iters < Theater.SKIP_CUTSCENE_MAX_FRAMES && !cutsceneFinished()) {
+            while (iters < Theater.SKIP_CUTSCENE_MAX_FRAMES && !cutsceneFinished() && !this.shouldStopSkippingCutscene) {
                 this.update();
                 iters++;
             }
             this.isSkippingCutscene = false;
+            this.shouldStopSkippingCutscene = false;
 
             if (iters >= Theater.SKIP_CUTSCENE_MAX_FRAMES) {
                 console.error('Cutscene skip exceeded max frames!');

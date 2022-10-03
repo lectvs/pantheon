@@ -326,6 +326,8 @@ class World {
      *   - Humanized (if set globally and sound duration less than 1 second)
      */
     playSound(key: string, config?: World.PlaySoundConfig) {
+        if (global.theater.isSkippingCutscene) return new Sound(key);
+        
         let limit = config?.limit ?? Infinity;
 
         // Check limit

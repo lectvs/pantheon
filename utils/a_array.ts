@@ -111,6 +111,17 @@ namespace A {
     }
 
     /**
+     * Returns true iff the arrays contain a common element.
+     */
+    export function overlaps<T,S>(array1: T[], array2: S[]) {
+        if (_.isEmpty(array1) || _.isEmpty(array2)) return false;
+        for (let e of array1){
+            if (_.includes(array2, e)) return true;
+        }
+        return false;
+    }
+
+    /**
      * An array of integers from 0 to n-1 or n to m-1, inclusive.
      */
     export function range(n: number, m?: number) {

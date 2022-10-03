@@ -30,6 +30,9 @@ TODO
 - integrate debug textures/sfx into the engine?
 - yield multiple comma-separated values, yield number to wait, script revamp??
 - bounce vs elastic tween
+- deprecate underscore.js
+- texture crop method
+- calculate text width/height while not all chars visible
 
 stretch
 - documentation and API cleanup

@@ -125,6 +125,7 @@ class Game {
     }
 
     playSound(key: string) {
+        if (global.theater?.isSkippingCutscene) return new Sound(key);
         return this.soundManager.playSound(key);
     }
 
