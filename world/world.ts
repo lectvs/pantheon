@@ -280,6 +280,9 @@ class World {
         return Math.floor(Input.mouseY / this.scaleY + this.camera.worldOffsetY);
     }
 
+    /**
+     * @deprecated Use getWorldMouseBounds instead
+     */
     getWorldMousePosition() {
         return new Vector2(this.getWorldMouseX(), this.getWorldMouseY());
     }

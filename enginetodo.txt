@@ -33,6 +33,13 @@ TODO
 - deprecate underscore.js
 - texture crop method
 - calculate text width/height while not all chars visible
+- disable analytics on localhost?
+- outline match texture's alpha by default?
+- remake build script
+    - add LICENSE to build, keep it from bloating src/lectvs/assets/etc
+- analytic for mobile usage
+- supertextures ("detective+hat")
+- game initialization logic (in Main?)
 
 stretch
 - documentation and API cleanup
@@ -41,7 +48,6 @@ stretch
 - "window" filters
 - boundless textures
     - optimize tilemap editing with boundless textures
-- game initialization logic (in Main?)
 - better keyboard text input
 - fix initial spaces not counting toward alignment?
 - print errors on screen?
