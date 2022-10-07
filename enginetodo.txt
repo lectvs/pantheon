@@ -40,6 +40,7 @@ TODO
 - analytic for mobile usage
 - supertextures ("detective+hat")
 - game initialization logic (in Main?)
+- rename removeChild* to detachChild*
 
 stretch
 - documentation and API cleanup
