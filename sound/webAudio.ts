@@ -1,6 +1,7 @@
 namespace WebAudio {
     export type PreloadedSound = {
         buffer: AudioBuffer;
+        url: string;
     }
 }
 
@@ -34,6 +35,7 @@ class WebAudio {
                 (buffer: AudioBuffer) => {
                     WebAudio.preloadedSounds[key] = {
                         buffer: buffer,
+                        url: url,
                     };
                     if (cb) cb();
                 },
