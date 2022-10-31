@@ -1,4 +1,18 @@
 namespace Color {
+    export function blendAlpha(bgColor: number, fgColor: number, alpha: number) {
+        let bgColorArray = M.colorToVec3(bgColor);
+        let fgColorArray = M.colorToVec3(fgColor);
+
+        let a = M.clamp(alpha, 0, 1);
+        let blendedColorArray: [number, number, number] = [
+            M.lerp(bgColorArray[0], fgColorArray[0], a),
+            M.lerp(bgColorArray[1], fgColorArray[1], a),
+            M.lerp(bgColorArray[2], fgColorArray[2], a),
+        ];
+
+        return M.vec3ToColor(blendedColorArray);
+    }
+
     export function lerpColorByLch(color1: number, color2: number, t: number): number {
         if (color1 === color2) return color1;
 

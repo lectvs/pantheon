@@ -1,6 +1,7 @@
 /// <reference path="../utils/vector.ts"/>
 
 type Dict<T> = {[name: string]: T};
+type DictNumber<T> = {[name: number]: T};
 
 type Dimens = {
     width: number;
