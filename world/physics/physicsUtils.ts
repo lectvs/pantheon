@@ -13,6 +13,20 @@ class PhysicsUtils {
         return 0;
     }
 
+    static inverseLinear(v: Vector2, G: number) {
+        let mag = v.magnitude;
+        if (mag === 0) return v;
+        v.setMagnitude(G / mag);
+        return v;
+    }
+
+    static inverseSquare(v: Vector2, G: number) {
+        let magSq = v.magnitudeSq;
+        if (magSq === 0) return v;
+        v.setMagnitude(G / magSq);
+        return v;
+    }
+
     static smartAccelerate(v: Vector2, ax: number, ay: number, delta: number, maxSpeed: number) {
         let oldMagnitude = v.magnitude;
 

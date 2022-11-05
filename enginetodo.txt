@@ -41,9 +41,9 @@ TODO
 - supertextures ("detective+hat")
 - game initialization logic (in Main?)
 - rename removeChild* to detachChild*
+- documentation and API cleanup
 
 stretch
-- documentation and API cleanup
 - implement metroid-style transitions
 - normal-map/lighting
 - "window" filters

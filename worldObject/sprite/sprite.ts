@@ -65,7 +65,11 @@ class Sprite extends PhysicsWorldObject {
         for (let animation of config.animations || []) {
             this.addAnimation(animation);
         }
-        if (config.defaultAnimation) this.playAnimation(config.defaultAnimation);
+        if (config.defaultAnimation) {
+            this.playAnimation(config.defaultAnimation);
+        } else if (!_.isEmpty(config.animations)) {
+            this.playAnimation(config.animations[0].name);
+        }
 
         this.flipX = config.flipX ?? false;
         this.flipY = config.flipY ?? false;
