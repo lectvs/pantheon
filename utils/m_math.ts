@@ -1,4 +1,16 @@
 namespace M {
+    /**
+     * Computes the difference between angles, such that [from] + [diff] is
+     * an equivalent angle to [to]
+     */
+    export function angleDiff(from: number, to: number) {
+        from = M.mod(from, 360);
+        to = M.mod(to, 360);
+        if (Math.abs(to - from) < 180) return to - from;
+        else if (to > from) return to - from - 360;
+        else return  to - from + 360;
+    }
+
     export function argmax<T>(array: T[], key: (x: T) => number): T {
         return argmin(array, x => -key(x));
     }
@@ -124,6 +136,15 @@ namespace M {
     export function mod(num: number, mod: number) {
         mod = Math.abs(mod);
         return num - Math.floor(num/mod) * mod;
+    }
+
+    export function moveToAngleClamp(current: number, to: number, speed: number, delta: number) {
+        let diff = angleDiff(current, to);
+        let d = speed * delta;
+
+        if (diff > Math.abs(d)) return Math.min(current + d, to);
+        if (diff < Math.abs(d)) return Math.max(current - d, to);
+        return current + diff;
     }
 
     export function moveToClamp(current: number, to: number, speed: number, delta: number) {
