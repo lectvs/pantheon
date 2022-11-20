@@ -44,6 +44,7 @@ TODO
 - documentation and API cleanup
 - template for new games
 - fix initial spaces not counting toward alignment?
+- find true texture limit and re-enable in BasicTexture
 
 stretch
 - normal-map/lighting

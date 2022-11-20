@@ -14,11 +14,11 @@ class BasicTexture implements Texture {
 
     constructor(width: number, height: number, immutable: boolean = false, source?: string) {
         // TODO: find the true texture bounds across devices
-        if (width > 2048 || height > 2048) {
-            console.error(`Texture dimensions exceed bounds: (${width}, ${height}), limiting to bounds`);
-            width = Math.min(width, 2048);
-            height = Math.min(height, 2048);
-        }
+        // if (width > 2048 || height > 2048) {
+        //     console.error(`Texture dimensions exceed bounds: (${width}, ${height}), limiting to bounds`);
+        //     width = Math.min(width, 2048);
+        //     height = Math.min(height, 2048);
+        // }
         this.renderTextureSprite = new Texture.PIXIRenderTextureSprite(width, height);
         this.immutable = immutable;
         TextureCreationData.logCreateTexture(this, source ?? arguments?.callee?.caller?.name ?? "none");
