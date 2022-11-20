@@ -45,6 +45,8 @@ TODO
 - template for new games
 - fix initial spaces not counting toward alignment?
 - find true texture limit and re-enable in BasicTexture
+- worldobject that centers/anchors its children (useful for UI)
+- remove Draw.brush?
 
 stretch
 - normal-map/lighting

@@ -31,6 +31,22 @@ namespace S {
         }
     }
 
+    /**
+     * Runs a list of script functions and stops when one of them ends.
+     */
+    export function either(...scriptFunctions: Script.Function[]): Script.Function {
+        return function*() {
+            let scripts: Script[] = scriptFunctions.map(sfn => new Script(sfn));
+            if (_.isEmpty(scripts)) return;
+            while (!scripts.some(s => s.done)) {
+                for (let script of scripts) {
+                    script.update(global.script.delta);
+                }
+                if (!scripts.some(s => s.done)) yield;
+            }
+        }
+    }
+
     export function loopFor(count: number, scriptFunctionIter: (i: number) => Script.Function, yieldAfterLoop: boolean = false): Script.Function {
         return function*() {
             for (let i = 0; i < count; i++) {
