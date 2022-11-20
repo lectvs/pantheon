@@ -42,15 +42,15 @@ TODO
 - game initialization logic (in Main?)
 - rename removeChild* to detachChild*
 - documentation and API cleanup
+- template for new games
+- fix initial spaces not counting toward alignment?
 
 stretch
-- implement metroid-style transitions
 - normal-map/lighting
 - "window" filters
 - boundless textures
     - optimize tilemap editing with boundless textures
 - better keyboard text input
-- fix initial spaces not counting toward alignment?
 - print errors on screen?
 - report game errors through lambda API?
 - loading messages

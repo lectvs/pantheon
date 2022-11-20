@@ -86,7 +86,7 @@ class AnimationManager {
     }
 
     playAnimation(name: string, force: boolean = false) {
-        if (!force && (this.forceRequired || this.getCurrentAnimationName() == name)) {
+        if (!force && (this.forceRequired || this.getCurrentAnimationName()?.startsWith(name))) {
             return;
         }
         if (this.hasAnimation(name) && this.isAnimationEmpty(name)) {
