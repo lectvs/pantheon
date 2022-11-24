@@ -109,7 +109,7 @@ namespace Mask {
 
     export type WorldObjectMaskType = 'local' | 'screen' | 'world';
 
-    export function getTextureMaskForWorldObject(mask: WorldObjectMaskConfig, worldObject: WorldObject): Texture.MaskProperties {
+    export function getTextureMaskForWorldObject(mask: WorldObjectMaskConfig, worldObject: WorldObject, renderX: number, renderY: number): Texture.MaskProperties {
         if (!mask || !mask.texture) return undefined;
 
         let x = 0;
@@ -118,8 +118,8 @@ namespace Mask {
             x = mask.offsetx;
             y = mask.offsety;
         } else if (mask.type === 'local') {
-            x = worldObject.getRenderScreenX() + mask.offsetx;
-            y = worldObject.getRenderScreenY() + mask.offsety;
+            x = renderX + mask.offsetx;
+            y = renderY + mask.offsety;
         } else if (mask.type === 'world') {
             let worldx = worldObject.world ? -Math.round(worldObject.world.camera.worldOffsetX) : 0;
             let worldy = worldObject.world ? -Math.round(worldObject.world.camera.worldOffsetY) : 0;

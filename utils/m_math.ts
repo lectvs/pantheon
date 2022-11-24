@@ -105,7 +105,9 @@ namespace M {
     }
 
     export function mapClamp(value: number, fromMin: number, fromMax: number, toMin: number, toMax: number) {
-        return clamp(map(value, fromMin, fromMax, toMin, toMax), toMin, toMax);
+        let clampMin = toMin <= toMax ? toMin : toMax;
+        let clampMax = toMin <= toMax ? toMax : toMin;
+        return clamp(map(value, fromMin, fromMax, toMin, toMax), clampMin, clampMax);
     }
 
     export function mapTween(value: number, fromMin: number, fromMax: number, toMin: number, toMax: number, tweenFn: Tween.Easing.Function) {

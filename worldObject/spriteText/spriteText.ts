@@ -208,7 +208,7 @@ class SpriteText extends WorldObject {
                 scaleY: (this.flipY ? -1 : 1) * this.scaleY,
                 angle: this.angle + this.angleOffset,
                 filters: [...style.filters, ...this.effects.getFilterList()],
-                mask: Mask.getTextureMaskForWorldObject(this.mask, this),
+                mask: Mask.getTextureMaskForWorldObject(this.mask, this, x, y),
             });
         }
 

@@ -21,6 +21,7 @@ namespace TextureFilter {
      *               vec3 rgb2hsv(vec3 rgb) - converts RGB to HSV. all values are in the range [0, 1]
      *               vec3 hsv2rgb(vec3 hsv) - converts HSV to RGB. all values are in the range [0, 1]
      *               float map(float value, float min1, float max1, float min2, float max2) - linearly map a value between ranges
+     *               float mapClamp(float value, float min1, float max1, float min2, float max2) - map and clamp a value between ranges
      */
     export type Config = {
         uniforms?: Dict<any>;
@@ -204,6 +205,10 @@ namespace TextureFilter {
 
         float map(float value, float min1, float max1, float min2, float max2) {
             return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+        }
+
+        float mapClamp(float value, float min1, float max1, float min2, float max2) {
+            return clamp(map(value, min1, max1, min2, max2), min2, max2);
         }
 
         float lerp(float a, float b, float t) {

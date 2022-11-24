@@ -112,7 +112,7 @@ class Sprite extends PhysicsWorldObject {
             tint: this.tint,
             alpha: this.alpha,
             filters: this.effects.getFilterList(),
-            mask: Mask.getTextureMaskForWorldObject(this.mask, this),
+            mask: Mask.getTextureMaskForWorldObject(this.mask, this, x, y),
             blendMode: this.blendMode,
         });
         super.render(texture, x, y);
