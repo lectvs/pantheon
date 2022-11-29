@@ -354,7 +354,7 @@ class WorldObject {
         return A.clone(this.timers);
     }
 
-    getVisibleScreenBounds() {
+    getVisibleScreenBounds(): Rect {
         return undefined;
     }
 
@@ -385,6 +385,14 @@ class WorldObject {
 
     kill() {
         this.alive = false;
+    }
+
+    oscillateNFrames(n: number) {
+        return Math.floor(this.life.frames/n) % 2 === 1;
+    }
+
+    oscillateNSeconds(n: number) {
+        return Math.floor(this.life.time/n) % 2 === 1;
     }
 
     removeAllChildren<T extends WorldObject>(): T[] {

@@ -19,7 +19,6 @@ TODO
 - "humanized" option in sound asset definition
 - better world and object management (freeing)
 - better performance on large spritetexts
-- figure out true upper bound for textures
 - delete useless bloat
 - look into more performant graphics libraries
 - preload anything (custom textures, objects, etc) at load time
@@ -47,6 +46,10 @@ TODO
 - find true texture limit and re-enable in BasicTexture
 - worldobject that centers/anchors its children (useful for UI)
 - remove Draw.brush?
+- https://stackoverflow.com/questions/13897659/extending-functionality-in-typescript
+- figure out why we have lost auto-complete for class methods
+- create better worldbounds/localbounds/visiblescreenbounds system
+- good temporary object system
 
 stretch
 - normal-map/lighting

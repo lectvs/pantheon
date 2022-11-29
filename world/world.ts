@@ -773,5 +773,55 @@ namespace World {
             if (i === 0) return;
             layerObjects.unshift(layerObjects.splice(i, 1)[0]);
         }
+
+        /**
+         * Shifts provided WorldObjects equally to balance them around a point.
+         * @return the new bounds containing all of the objects
+         */
+        export function balanceWorldObjects(objs: ReadonlyArray<WorldObject>, aroundX: number, aroundY: number, anchor: Vector2 = Vector2.CENTER, deep: boolean = false) {
+            if (_.isEmpty(objs)) return;
+
+            let bounds: Boundaries = {
+                left: objs[0].x,
+                right: objs[0].x,
+                top: objs[0].y,
+                bottom: objs[0].y,
+            };
+
+            for (let obj of objs) {
+                expandWorldObjectBounds(bounds, obj, deep);
+            }
+
+            let anchorPoint = vec2(M.lerp(bounds.left, bounds.right, anchor.x), M.lerp(bounds.top, bounds.bottom, anchor.y));
+
+            if (!isFinite(anchorPoint.x) || !isFinite(anchorPoint.y)) {
+                console.error('Non-finite anchorPoint for balancing:', objs, anchorPoint);
+            }
+
+            for (let obj of objs) {
+                obj.x += aroundX - anchorPoint.x;
+                obj.y += aroundY - anchorPoint.y;
+            }
+
+            bounds.left += aroundX - anchorPoint.x;
+            bounds.right += aroundX - anchorPoint.x;
+            bounds.top += aroundY - anchorPoint.y;
+            bounds.bottom += aroundY - anchorPoint.y;
+
+            return bounds;
+        }
+
+        function expandWorldObjectBounds(bounds: Boundaries, obj: WorldObject, deep: boolean) {
+            bounds.left = Math.min(bounds.left, obj.x);
+            bounds.right = Math.max(bounds.right, obj.x);
+            bounds.top = Math.min(bounds.top, obj.y);
+            bounds.bottom = Math.max(bounds.bottom, obj.y);
+
+            if (deep) {
+                for (let child of obj.children) {
+                    expandWorldObjectBounds(bounds, child, deep);
+                }
+            }
+        }
     }
 }
