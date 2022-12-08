@@ -50,6 +50,7 @@ TODO
 - figure out why we have lost auto-complete for class methods
 - create better worldbounds/localbounds/visiblescreenbounds system
 - good temporary object system
+- fix everyNSeconds and oscillateNSeconds for very low framerates
 
 stretch
 - normal-map/lighting
