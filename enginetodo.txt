@@ -51,6 +51,7 @@ TODO
 - create better worldbounds/localbounds/visiblescreenbounds system
 - good temporary object system
 - fix everyNSeconds and oscillateNSeconds for very low framerates
+- enable strictNullChecks, noImplicitOverride
 
 stretch
 - normal-map/lighting

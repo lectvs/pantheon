@@ -122,6 +122,22 @@ namespace A {
     }
 
     /**
+     * Pushes an object onto the array in the correct sorted order. Assumes the array is already sorted.
+     * If there is a tie, uses the last possible position, similar to a normal push.
+     * Returns the new length of the array.
+     */
+    export function pushSorted<T>(array: T[], obj: T, key: (t: T) => number, reverse: boolean = false) {
+        let r = reverse ? -1 : 1;
+        let i = array.findIndex(e => r*key(obj) < r*key(e));
+        if (i < 0) {
+            array.push(obj);
+        } else {
+            array.splice(i, 0, obj);
+        }
+        return array.length;
+    }
+
+    /**
      * An array of integers from 0 to n-1 or n to m-1, inclusive.
      */
     export function range(n: number, m?: number) {

@@ -44,7 +44,7 @@ namespace SmartTilemap {
     export function getSmartTilemap(tilemap: string | Tilemap.Tilemap, config: RuleConfig): Tilemap.Tilemap {
         if (_.isString(tilemap)) {
             tilemap = AssetCache.getTilemap(tilemap);
-            if (!tilemap) return;
+            if (!tilemap) return undefined;
         }
         return {
             layers: tilemap.layers.map(layer => getSmartTilemapLayer(layer, config)),
@@ -139,5 +139,7 @@ namespace SmartTilemap {
             let nearestx = M.clamp(x, 0, tilemapLayer.tiles[nearesty].length-1);
             return tilemapLayer.tiles[nearesty][nearestx].index;
         }
+
+        return -1;
     }
 }

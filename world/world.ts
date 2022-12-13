@@ -350,9 +350,9 @@ class World {
         if (!obj) return undefined;
         if (_.isString(obj)) {
             obj = this.select.name<T>(obj);
-            if (!obj) return;
+            if (!obj) return undefined;
         }
-        if (!obj.world) return;
+        if (!obj.world) return undefined;
         if (obj.world !== this) {
             console.error(`Cannot remove object ${obj.name} from world because it does not exist in the world. World:`, this);
             return undefined;
@@ -779,7 +779,7 @@ namespace World {
          * @return the new bounds containing all of the objects
          */
         export function balanceWorldObjects(objs: ReadonlyArray<WorldObject>, aroundX: number, aroundY: number, anchor: Vector2 = Vector2.CENTER, deep: boolean = false) {
-            if (_.isEmpty(objs)) return;
+            if (_.isEmpty(objs)) return undefined;
 
             let bounds: Boundaries = {
                 left: objs[0].x,
