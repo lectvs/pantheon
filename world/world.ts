@@ -62,7 +62,7 @@ class World {
     height: number;
     worldObjects: WorldObject[];
     time: number;
-    timescale: number;
+    timeScale: number;
     data: any;
 
     scaleX: number;
@@ -93,7 +93,7 @@ class World {
     
     get delta() {
         if (global.skippingCutscene) return Theater.SKIP_CUTSCENE_DELTA;
-        return global.game.delta * this.timescale;
+        return global.game.delta * this.timeScale;
     }
 
     volume: number;
@@ -118,7 +118,7 @@ class World {
         this.width = config.width ?? global.gameWidth;
         this.height = config.height ?? global.gameHeight;
         this.time = 0;
-        this.timescale = config.timescale ?? 1;
+        this.timeScale = config.timescale ?? 1;
         this.allowPause = config.allowPause ?? true;
         this.data = config.data ? O.deepClone(config.data) : {};
 

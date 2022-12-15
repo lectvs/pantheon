@@ -138,21 +138,21 @@ namespace Theater {
         containedWorld: World;
         mask: Mask.WorldMaskConfig;
 
-        multiExecutionTimescale: number;
+        multiExecutionTimeScale: number;
         private multiExecutionPool: number;
 
         constructor(containedWorld: World) {
             super();
             this.containedWorld = containedWorld;
             this.mask = undefined;
-            this.multiExecutionTimescale = 1;
+            this.multiExecutionTimeScale = 1;
             this.multiExecutionPool = 0;
         }
 
         update() {
             super.update();
 
-            this.multiExecutionPool += this.multiExecutionTimescale;
+            this.multiExecutionPool += this.multiExecutionTimeScale;
 
             let isNonUpdate = true;
             while (this.multiExecutionPool >= 1) {
