@@ -52,6 +52,8 @@ namespace World {
     }
 
     export type PlaySoundConfig = {
+        volume?: number;
+        speed?: number;
         humanized?: boolean;
         limit?: number;
     }
@@ -339,6 +341,10 @@ class World {
         }
 
         let sound = this.soundManager.playSound(key);
+
+        sound.volume = config?.volume ?? 1;
+        sound.speed = config?.speed ?? 1;
+
         let humanized = config?.humanized ?? (sound.duration < 1);
         if (humanized && this.globalSoundHumanizePercent > 0) {
             sound.humanize(this.globalSoundHumanizePercent);
