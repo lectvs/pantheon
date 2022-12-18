@@ -39,16 +39,15 @@ class WorldSelecter {
         return <T[]>this.world.worldObjects.filter(obj => obj.name === name);
     }
 
-    overlap(bounds: Bounds, physicsGroups: string[]): PhysicsWorldObject[] {
-        let result = [];
-        for (let physicsGroup in this.world.physicsGroups) {
-            if (!_.contains(physicsGroups, physicsGroup)) continue;
-            for (let obj of this.world.physicsGroups[physicsGroup].worldObjects) {
-                if (!obj.isOverlapping(bounds)) continue;
-                result.push(obj);
-            }
-        }
-        return result;
+    overlap(bounds: Bounds, physicsGroups?: string[]): PhysicsWorldObject[] {
+        let objs = physicsGroups
+                    ? _.flatten(Object.keys(this.world.physicsGroups)
+                                    .filter(pg => _.contains(physicsGroups, pg))
+                                    .map(pg => this.world.physicsGroups[pg].worldObjects)) as PhysicsWorldObject[]
+                    : this.world.select.typeAll(PhysicsWorldObject);
+
+        if (_.isEmpty(objs)) return [];
+        return objs.filter(obj => obj.isOverlapping(bounds));
     }
 
     raycast(x: number, y: number, dx: number, dy: number, physicsGroups: string[]): WorldSelecter.RaycastResult[] {
