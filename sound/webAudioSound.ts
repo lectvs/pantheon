@@ -20,11 +20,14 @@ interface WebAudioSoundI {
     unpause(): void;
     seek(pos: number): void;
     stop(): void;
+
+    setFilter(filter: WebAudioFilter);
 }
 
-class WebAudioSound implements WebAudioSoundI{
+class WebAudioSound implements WebAudioSoundI {
     asset: WebAudioSound.Asset;
     private sourceNode: AudioBufferSourceNode;
+    private filter: WebAudioFilter;
 
     private get context() { return WebAudio.context; }
 
@@ -126,6 +129,22 @@ class WebAudioSound implements WebAudioSoundI{
         this.pausedPosition = undefined;
         this._done = false;
     }
+
+    setFilter(filter: WebAudioFilter) {
+        this.gainNode.disconnect();
+        if (this.filter) {
+            this.filter.exitNode().disconnect();
+        }
+
+        if (filter) {
+            this.gainNode.connect(filter.entryNode());
+            filter.entryNode().connect(this.context.destination);
+        } else {
+            this.gainNode.connect(this.context.destination);
+        }
+        
+        this.filter = filter;
+    }
 }
 
 class WebAudioSoundDummy implements WebAudioSoundI {
@@ -137,6 +156,7 @@ class WebAudioSoundDummy implements WebAudioSoundI {
     duration: number;
     done: boolean;
     paused: boolean;
+    filter: WebAudioFilter;
 
     constructor(asset: WebAudioSound.Asset) {
         this.asset = asset;
@@ -168,6 +188,10 @@ class WebAudioSoundDummy implements WebAudioSoundI {
         this.done = true;
     }
 
+    setFilter(filter: WebAudioFilter) {
+        this.filter = filter;
+    }
+
     toWebAudioSound() {
         let sound = new WebAudioSound(this.asset);
         sound.volume = this.volume;
@@ -175,6 +199,9 @@ class WebAudioSoundDummy implements WebAudioSoundI {
         sound.loop = this.loop;
         sound.onDone = this.onDone;
         sound.paused = this.paused;
+        if (this.filter) {
+            sound.setFilter(this.filter);
+        }
         return sound;
     }
 }

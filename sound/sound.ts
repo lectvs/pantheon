@@ -93,6 +93,10 @@ class Sound {
     humanize(percent: number = 0.05) {
         this.speed *= Random.float(1 - percent, 1 + percent);
     }
+
+    setFilter(filter: WebAudioFilter) {
+        this.webAudioSound.setFilter(filter);
+    }
 }
 
 namespace Sound {

@@ -443,18 +443,24 @@ namespace SpriteText {
             return { color: getInt(params[0], undefined) };
         },
         'offset': (params) => {
-            return { offsetX: getInt(params[0], undefined), offsetY: getInt(params[1], undefined) };
+            return { offsetX: getFloat(params[0], undefined), offsetY: getFloat(params[1], undefined) };
         },
         'offsetx': (params) => {
-            return { offsetX: getInt(params[0], undefined) };
+            return { offsetX: getFloat(params[0], undefined) };
         },
         'offsety': (params) => {
-            return { offsetY: getInt(params[0], undefined) };
+            return { offsetY: getFloat(params[0], undefined) };
         },
     }
 
     function getInt(text: string, def: number) {
         let result = parseInt(text);
+        if (!isFinite(result)) return def;
+        return result;
+    }
+
+    function getFloat(text: string, def: number) {
+        let result = parseFloat(text);
         if (!isFinite(result)) return def;
         return result;
     }
