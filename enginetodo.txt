@@ -28,7 +28,7 @@ TODO
 - clean up fixed framerate/nonupdate stuff
 - integrate debug textures/sfx into the engine?
 - yield multiple comma-separated values, yield number to wait, script revamp??
-- bounce vs elastic tween
+- bounce vs elastic tween confusion
 - deprecate underscore.js
 - texture crop method
 - calculate text width/height while not all chars visible
@@ -52,6 +52,7 @@ TODO
 - good temporary object system
 - fix everyNSeconds and oscillateNSeconds for very low framerates
 - enable strictNullChecks, noImplicitOverride
+- better resolution of copyFromParent and render ordering (polarity inverter bug)
 
 stretch
 - normal-map/lighting
