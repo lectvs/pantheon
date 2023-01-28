@@ -21,7 +21,6 @@ TODO
 - better performance on large spritetexts
 - delete useless bloat
 - look into more performant graphics libraries
-- preload anything (custom textures, objects, etc) at load time
 - attach arbitrary "update"/"render" objects to worldobjects (e.g. timers, new module system?)
 - make game files group-downloadable with https://stuk.github.io/jszip/
 - improve compile time

@@ -10,4 +10,8 @@ function requireType<T>(param: T) {
     return param;
 }
 
+function async(fn: Function) {
+    setTimeout(fn, 1);
+}
+
 type KeyOfType<T, U> = {[P in keyof T]: T[P] extends U ? P: never}[keyof T]

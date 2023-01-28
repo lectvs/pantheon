@@ -20,6 +20,7 @@ namespace Main {
         tilesets: Dict<Preload.Tileset>;
         pyxelTilemaps: Dict<Preload.PyxelTilemap>;
         fonts: Dict<Preload.Font>;
+        customResources: Dict<Preload.CustomResource>;
         spriteTextTags: Dict<SpriteText.TagFunction>;
         dialogProfiles: Dict<DialogProfile.Config>;
 
@@ -123,6 +124,7 @@ class Main {
             tilesets: this.config.tilesets,
             pyxelTilemaps: this.config.pyxelTilemaps,
             fonts: this.config.fonts,
+            custom: this.config.customResources,
             progressCallback: (progress) => this.renderPreloadProgress(progress),
             onLoad: () => {
                 Main.load();

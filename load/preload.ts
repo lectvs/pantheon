@@ -5,6 +5,7 @@ namespace Preload {
         tilesets: Dict<Preload.Tileset>;
         pyxelTilemaps: Dict<Preload.PyxelTilemap>;
         fonts: Dict<Preload.Font>;
+        custom: Dict<Preload.CustomResource>;
         progressCallback: (progress: number) => any;
         onLoad: () => void;
     }
@@ -71,6 +72,10 @@ namespace Preload {
         newlineHeight: number;
         customCharacters?: Dict<string>;
     }
+
+    export type CustomResource = {
+        load: () => void;
+    }
 }
 
 class Preload {
@@ -102,6 +107,10 @@ class Preload {
 
         for (let key in options.fonts) {
             loaders.push(new FontLoader(key, options.fonts[key]));
+        }
+
+        for (let key in options.custom) {
+            loaders.push(new CustomResourceLoader(options.custom[key].load));
         }
 
         this.loaderSystem = new LoaderSystem(loaders);
