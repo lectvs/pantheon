@@ -53,6 +53,8 @@ TODO
 - fix everyNSeconds and oscillateNSeconds for very low framerates
 - enable strictNullChecks, noImplicitOverride
 - better resolution of copyFromParent and render ordering (polarity inverter bug)
+- revisit temp approx/convolute44 methods in TextureFilter
+- ability to define custom TextureFilter helper methods in shader
 
 stretch
 - normal-map/lighting

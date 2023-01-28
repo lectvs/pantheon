@@ -227,6 +227,17 @@ namespace TextureFilter {
             return a*(1.0-t) + b*t;
         }
 
+        bool approx(float x, float y) {
+            return abs(x - y) < 0.0001;
+        }
+
+        bool convolute44(float x, float y, float p00, float p10, float p20, float p30, float p01, float p11, float p21, float p31, float p02, float p12, float p22, float p32, float p03, float p13, float p23, float p33) {
+            return approx(getColor(x, y).a, p00) && approx(getColor(x+1.0, y).a, p10) && approx(getColor(x+2.0, y).a, p20) && approx(getColor(x+3.0, y).a, p30)
+                && approx(getColor(x, y+1.0).a, p01) && approx(getColor(x+1.0, y+1.0).a, p11) && approx(getColor(x+2.0, y+1.0).a, p21) && approx(getColor(x+3.0, y+1.0).a, p31)
+                && approx(getColor(x, y+2.0).a, p02) && approx(getColor(x+1.0, y+2.0).a, p12) && approx(getColor(x+2.0, y+2.0).a, p22) && approx(getColor(x+3.0, y+2.0).a, p32)
+                && approx(getColor(x, y+3.0).a, p03) && approx(getColor(x+1.0, y+3.0).a, p13) && approx(getColor(x+2.0, y+3.0).a, p23) && approx(getColor(x+3.0, y+3.0).a, p33);
+        }
+
         ${Perlin.SHADER_SOURCE}
 
         void main(void) {
