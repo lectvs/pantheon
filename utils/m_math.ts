@@ -155,6 +155,10 @@ namespace M {
         return current;
     }
 
+    export function periodic(fn: (x: number) => number, period: number) {
+        return (x: number) => fn(mod(x, period));
+    }
+
     export function radToDeg(rad: number) {
         return 180 / Math.PI * rad;
     }

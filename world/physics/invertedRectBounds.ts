@@ -38,6 +38,7 @@ class InvertedRectBounds implements Bounds {
     freeze() {
         this.frozen = false;
         this.getInnerBox();
+        this.getBoundingBox();
         this.frozen = true;
     }
 
