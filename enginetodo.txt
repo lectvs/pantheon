@@ -57,6 +57,7 @@ TODO
 - update paint.net (+ plugins?)
 - simplify pre- and post- effects (remove filters field?)
 - better WorldAsWorldObject (containers?)
+- world and worldobject hooks/events (onDeath, onLoad, etc.)
 
 stretch
 - normal-map/lighting
