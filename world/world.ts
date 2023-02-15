@@ -199,7 +199,7 @@ class World {
         this.scriptManager.update(this.delta);
     }
 
-    render(screen: Texture) {
+    render(screen: Texture, x: number, y: number) {
         this.worldTexture.clear();
 
         // Render background color.
@@ -222,6 +222,7 @@ class World {
 
         // Apply world effects.
         this.worldTexture.renderTo(screen, {
+            x: x, y: y,
             scaleX: this.scaleX,
             scaleY: this.scaleY,
             filters: this.effects.getFilterList(),
@@ -381,7 +382,7 @@ class World {
 
     takeSnapshot() {
         let screen = new BasicTexture(this.width * this.scaleX, this.height * this.scaleY);
-        this.render(screen);
+        this.render(screen, 0, 0);
         return screen;
     }
 

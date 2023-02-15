@@ -56,6 +56,7 @@ TODO
 - ability to define custom TextureFilter helper methods in shader
 - update paint.net (+ plugins?)
 - simplify pre- and post- effects (remove filters field?)
+- better WorldAsWorldObject (containers?)
 
 stretch
 - normal-map/lighting

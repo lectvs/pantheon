@@ -18,7 +18,7 @@ class MenuSystem {
 
     render(screen: Texture) {
         if (this.inMenu) {
-            this.currentMenu.render(screen);
+            this.currentMenu.render(screen, 0, 0);
         }
     }
 

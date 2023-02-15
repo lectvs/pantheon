@@ -172,7 +172,7 @@ namespace Theater {
                 this.containedWorld.mask = this.mask;
             }
 
-            this.containedWorld.render(texture);
+            this.containedWorld.render(texture, x, y);
             super.render(texture, x, y);
 
             this.containedWorld.mask = currentMask;

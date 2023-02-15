@@ -89,11 +89,11 @@ class Game {
             this.menuSystem.render(screen);
 
         } else {
-            this.theater.render(screen);
+            this.theater.render(screen, 0, 0);
         }
 
         if (this.isShowingOverlay && Debug.SHOW_OVERLAY) {
-            this.overlay.render(screen);
+            this.overlay.render(screen, 0, 0);
         }
 
         if (Debug.SHOW_TOUCHES) {
