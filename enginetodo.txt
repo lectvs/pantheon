@@ -58,6 +58,7 @@ TODO
 - simplify pre- and post- effects (remove filters field?)
 - better WorldAsWorldObject (containers?)
 - world and worldobject hooks/events (onDeath, onLoad, etc.)
+- spritetext tags are technically not assets
 
 stretch
 - normal-map/lighting
