@@ -59,6 +59,8 @@ TODO
 - better WorldAsWorldObject (containers?)
 - world and worldobject hooks/events (onDeath, onLoad, etc.)
 - spritetext tags are technically not assets
+- set up audacity to use aac
+- combined Draw.circleSolid + Draw.circleOutline etc?
 
 stretch
 - normal-map/lighting
