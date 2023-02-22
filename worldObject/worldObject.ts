@@ -315,6 +315,13 @@ class WorldObject {
         return durationOrTimer;
     }
 
+    doAfterTime(time: number, callback: Function) {
+        this.runScript(function*() {
+            yield S.wait(time);
+            callback();
+        });
+    }
+
     everyNFrames(n: number) {
         return Math.floor((this.life.frames + 1)/n) !== Math.floor(this.life.frames/n);
     }
