@@ -61,6 +61,7 @@ TODO
 - spritetext tags are technically not assets
 - set up audacity to use aac
 - combined Draw.circleSolid + Draw.circleOutline etc?
+- map shader pnoise to [0, 1]?
 
 stretch
 - normal-map/lighting
