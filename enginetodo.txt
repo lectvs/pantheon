@@ -62,6 +62,7 @@ TODO
 - set up audacity to use aac
 - combined Draw.circleSolid + Draw.circleOutline etc?
 - map shader pnoise to [0, 1]?
+- Texture.filledCircle/outlineCircle not having center anchor keeps tripping me up
 
 stretch
 - normal-map/lighting

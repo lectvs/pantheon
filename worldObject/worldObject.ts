@@ -6,6 +6,7 @@ namespace WorldObject {
         name?: string;
         layer?: string;
         physicsGroup?: string;
+        p?: Pt;
         x?: number;
         y?: number;
         z?: number;
@@ -127,9 +128,10 @@ class WorldObject {
     debugFollowMouse: boolean;
 
     constructor(config: WorldObject.Config = {}) {
-        this.localx = config.x ?? 0;
-        this.localy = config.y ?? 0;
+        this.localx = config.x ?? (config.p ? config.p.x : 0);
+        this.localy = config.y ?? (config.p ? config.p.y : 0);
         this.localz = config.z ?? 0;
+
         this.activeOutsideWorldBoundsBuffer = config.activeOutsideWorldBoundsBuffer ?? Infinity;
         this.life = new WorldObject.LifeTimer(config.life ?? Infinity, () => this.kill());
         this.zBehavior = config.zBehavior ?? WorldObject.DEFAULT_Z_BEHAVIOR;
