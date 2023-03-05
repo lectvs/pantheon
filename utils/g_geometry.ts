@@ -54,6 +54,12 @@ namespace G {
         return vec2(M.lerp(pt1.x, pt2.x, t), M.lerp(pt1.y, pt2.y, t));
     }
 
+    export function moveToClamp(current: Vector2, to: Vector2, speed: number, delta: number) {
+        if (G.distance(current, to) <= speed * delta) current.set(to);
+        current.add(vec2(to.x - current.x, to.y - current.y).withMagnitude(speed * delta));
+        return current;
+    }
+
     export function overlapRectangles(rect1: Rect, rect2: Rect) {
         return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y;
     }
