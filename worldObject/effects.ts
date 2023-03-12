@@ -70,8 +70,8 @@ class Effects {
 
     constructor(config: Effects.Config = {}) {
         this.effects = [undefined, undefined, undefined, undefined];
-        this.pre = { filters: [], enabled: true };
-        this.post = { filters: [], enabled: true };
+        this.pre = { filters: [] };
+        this.post = { filters: [] };
         this.updateFromConfig(config);
     }
 
@@ -81,8 +81,8 @@ class Effects {
 
     hasEffects() {
         if (this.effects.some(effect => effect && effect.enabled)) return true;
-        if (this.pre.enabled && this.pre.filters.some(filter => filter && filter.enabled)) return true;
-        if (this.post.enabled && this.post.filters.some(filter => filter && filter.enabled)) return true;
+        if (this.pre.filters.some(filter => filter && filter.enabled)) return true;
+        if (this.post.filters.some(filter => filter && filter.enabled)) return true;
         return false;
     }
 
@@ -100,7 +100,6 @@ class Effects {
 
         if (config.pre) {
             this.pre.filters = config.pre.filters ?? [];
-            this.pre.enabled = config.pre.enabled ?? true;
         }
 
         if (config.silhouette) {
@@ -129,13 +128,12 @@ class Effects {
 
         if (config.post) {
             this.post.filters = config.post.filters ?? [];
-            this.post.enabled = config.post.enabled ?? true;
         }
     }
 }
 
 namespace Effects {
-    export type FilterList = { filters: TextureFilter[], enabled: boolean };
+    export type FilterList = { filters: TextureFilter[] };
     export namespace Filters {
         export class Silhouette extends TextureFilter {
             get color() { return M.vec3ToColor(this.getUniform('color')); }

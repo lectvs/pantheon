@@ -1,6 +1,7 @@
 namespace Game {
     export type Config = {
         entryPointMenu: Factory<Menu>;
+        mainMenu: Factory<Menu>;
         pauseMenu: Factory<Menu>;
         theaterFactory: Factory<Theater>;
     }
@@ -16,6 +17,7 @@ class Game {
     allowPauseWithPauseKey: boolean;
 
     private entryPointMenu: Factory<Menu>;
+    private mainMenu: Factory<Menu>;
     private pauseMenu: Factory<Menu>;
     private theaterFactory: Factory<Theater>;
 
@@ -28,6 +30,7 @@ class Game {
 
     constructor(config: Game.Config) {
         this.entryPointMenu = config.entryPointMenu;
+        this.mainMenu = config.mainMenu;
         this.pauseMenu = config.pauseMenu;
         this.theaterFactory = config.theaterFactory;
 
@@ -42,7 +45,8 @@ class Game {
     }
 
     start() {
-        this.loadMainMenu();
+        this.menuSystem.clear();
+        this.menuSystem.loadMenu(this.entryPointMenu);
         if (Debug.SKIP_MAIN_MENU_STAGE) {
             this.startGame(Debug.SKIP_MAIN_MENU_STAGE);
         }
@@ -103,7 +107,7 @@ class Game {
 
     loadMainMenu() {
         this.menuSystem.clear();
-        this.menuSystem.loadMenu(this.entryPointMenu);
+        this.menuSystem.loadMenu(this.mainMenu);
         Persist.persist();
     }
 

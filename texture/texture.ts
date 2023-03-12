@@ -214,5 +214,6 @@ namespace Texture {
     }
 
     export const NONE = new EmptyTexture();
+    export const NOOP = new BasicTexture(0, 0);
     export const EFFECT_ONLY = new BasicTexture(0, 0);
 }
