@@ -5,6 +5,7 @@ namespace Button {
         onClick: () => void;
         hoverTint: number;
         clickTint: number;
+        baseTint?: number;
         onHover?: () => void;
         enabled?: boolean;
     }
@@ -18,9 +19,9 @@ namespace Button {
 class Button extends Module<WorldObject> {
     onClick: () => void;
     onHover: () => void;
-    private hoverTint: number;
-    private clickTint: number;
-    baseTint: number = 0xFFFFFF;
+    hoverTint: number;
+    clickTint: number;
+    baseTint: number;
 
     enabled: boolean;
 
@@ -35,6 +36,7 @@ class Button extends Module<WorldObject> {
         this.onHover = config.onHover;
         this.hoverTint = config.hoverTint;
         this.clickTint = config.clickTint;
+        this.baseTint = config.baseTint ?? 0xFFFFFF;
         this.enabled = config.enabled ?? true;
     }
 

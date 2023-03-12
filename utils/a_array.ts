@@ -120,6 +120,15 @@ namespace A {
         }
     }
 
+    export function normalize(list: number[]) {
+        let s = A.sum(list);
+        if (s === 0) return list;
+        for (let i = 0; i < list.length; i++) {
+            list[i] /= s;
+        }
+        return list;
+    }
+
     /**
      * Returns true iff the arrays contain a common element.
      */
