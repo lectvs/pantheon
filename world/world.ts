@@ -99,6 +99,7 @@ class World {
     }
 
     volume: number;
+    allowSounds: boolean;
     globalSoundHumanizePercent: number;
 
     allowPause: boolean;
@@ -115,6 +116,7 @@ class World {
         this.select = new WorldSelecter(this);
 
         this.volume = config.volume ?? 1;
+        this.allowSounds = true;
         this.globalSoundHumanizePercent = config.globalSoundHumanizePercent ?? 0;
 
         this.width = config.width ?? global.gameWidth;
@@ -332,7 +334,7 @@ class World {
      *   - Humanized (if set globally and sound duration less than 1 second)
      */
     playSound(key: string, config?: World.PlaySoundConfig) {
-        if (global.theater?.isSkippingCutscene) return new Sound(key);
+        if (global.theater?.isSkippingCutscene || !this.allowSounds) return new Sound(key);
         
         let limit = config?.limit ?? Infinity;
 

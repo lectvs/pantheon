@@ -2,11 +2,12 @@
 
 namespace Button {
     export type Config = {
-        onClick: () => void;
+        onClick: (this: Button) => void;
         hoverTint: number;
         clickTint: number;
         baseTint?: number;
-        onHover?: () => void;
+        onHover?: (this: Button) => void;
+        onJustHovered?: (this: Button) => void;
         enabled?: boolean;
     }
 
@@ -17,14 +18,16 @@ namespace Button {
 }
 
 class Button extends Module<WorldObject> {
-    onClick: () => void;
-    onHover: () => void;
+    onClick: (this: Button) => void;
+    onHover: (this: Button) => void;
+    onJustHovered: (this: Button) => void;
     hoverTint: number;
     clickTint: number;
     baseTint: number;
 
     enabled: boolean;
 
+    private lastHovered: boolean = false;
     private clickedDownOn: boolean = false;
 
     get worldObject() { return <Button.CompatibleWorldObject>this._worldObject; }
@@ -33,7 +36,8 @@ class Button extends Module<WorldObject> {
         super(WorldObject);
 
         this.onClick = config.onClick;
-        this.onHover = config.onHover;
+        this.onHover = config.onHover ?? Utils.NOOP;
+        this.onJustHovered = config.onJustHovered ?? Utils.NOOP;
         this.hoverTint = config.hoverTint;
         this.clickTint = config.clickTint;
         this.baseTint = config.baseTint ?? 0xFFFFFF;
@@ -48,8 +52,11 @@ class Button extends Module<WorldObject> {
         
         this.worldObject.tint = hovered ? (clicked ? this.clickTint : this.hoverTint) : this.baseTint;
 
-        if (hovered && this.onHover) {
+        if (hovered) {
             this.onHover();
+            if (!this.lastHovered) {
+                this.onJustHovered();
+            }
         }
 
         if (hovered && Input.justDown(Input.GAME_SELECT)) {
@@ -62,6 +69,8 @@ class Button extends Module<WorldObject> {
             }
             this.clickedDownOn = false;
         }
+
+        this.lastHovered = hovered;
     }
 
     click() {
