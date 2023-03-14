@@ -2,7 +2,9 @@
 
 namespace MenuTextButton {
     export type Config = SpriteText.Config & {
-        onClick?: () => any;
+        onClick?: (this: MenuTextButton) => void;
+        onHover?: (this: MenuTextButton) => void;
+        onJustHovered?: (this: MenuTextButton) => void;
         hoverColor?: number;
     }
 }
@@ -26,8 +28,14 @@ class MenuTextButton extends SpriteText {
         let button = this.addModule(new Button({
             hoverTint: config.hoverColor ?? 0x808080,
             clickTint: config.hoverColor ?? 0x808080,
+            onHover: () => {
+                if (config.onHover) config.onHover.apply(this);
+            },
+            onJustHovered: () => {
+                if (config.onJustHovered) config.onJustHovered.apply(this);
+            },
             onClick: () => {
-                if (config.onClick) config.onClick();
+                if (config.onClick) config.onClick.apply(this);
             }
         }));
         button.baseTint = this.tint;
