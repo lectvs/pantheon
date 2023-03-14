@@ -225,7 +225,8 @@ class BasicTexture implements Texture {
             allFilters.push(maskFilter);
         }
 
-        properties.filters.forEach(filter => filter && Texture.setFilterProperties(filter, properties.x, properties.y, this.width, this.height));
+        properties.filters.forEach(filter => filter && Texture.setFilterProperties(filter,
+                                    properties.x, properties.y, this.width * properties.scaleX, this.height * properties.scaleY));
         allFilters.push(...properties.filters);
 
         return allFilters.filter(filter => filter && filter.enabled);
