@@ -158,7 +158,7 @@ class BasicTexture implements Texture {
                 let ty = y * frameh;
                 let tw = x === h-1 ? lastframew : framew;
                 let th = y === v-1 ? lastframeh : frameh;
-                let texture = new BasicTexture(tw, th);
+                let texture = new BasicTexture(tw, th, false, 'BasicTexture.subdivide');
                 this.renderTo(texture, {
                     x: -tx,
                     y: -ty,
@@ -195,7 +195,7 @@ class BasicTexture implements Texture {
             filters: [],
         });
 
-        let result = new BasicTexture(this.width * Math.abs(properties.scaleX), this.height * Math.abs(properties.scaleY));
+        let result = new BasicTexture(this.width * Math.abs(properties.scaleX), this.height * Math.abs(properties.scaleY), false, 'BasicTexture.transform');
         this.renderTo(result, {
             x: this.width/2 * (Math.abs(properties.scaleX) - properties.scaleX),
             y: this.height/2 * (Math.abs(properties.scaleY) - properties.scaleY),

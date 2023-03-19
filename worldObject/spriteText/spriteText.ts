@@ -302,7 +302,7 @@ class SpriteText extends WorldObject {
     toTexture() {
         let width = this.getTextWidth();
         let height = this.getTextHeight();
-        let texture = new BasicTexture(width, height);
+        let texture = new BasicTexture(width, height, false, 'SpriteText.toTexture');
 
         let anchorOffsetX = Math.round(this.anchor.x * width);
         let anchorOffsetY = Math.round(this.anchor.y * height);

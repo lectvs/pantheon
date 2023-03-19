@@ -65,6 +65,7 @@ TODO
 - Texture.filledCircle/outlineCircle not having center anchor keeps tripping me up
 - force user to provide a source in new BasicTexture
 - asset dependencies?
+- easier window event integration (onbeforeunload, etc.)
 
 stretch
 - normal-map/lighting
