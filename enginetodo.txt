@@ -66,6 +66,9 @@ TODO
 - force user to provide a source in new BasicTexture
 - asset dependencies?
 - easier window event integration (onbeforeunload, etc.)
+- figure out what is defined in the world constructor vs what is defined in onTransitioned
+- well-defined visual boundaries for every object + better World.Actions.balanceWorldObjects
+- why does the developer console not open when i press F12 sometimes?
 
 stretch
 - normal-map/lighting
