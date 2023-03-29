@@ -78,6 +78,7 @@ class Main {
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
+        LocalStorage.init();
         Debug.init(this.config.debug);
 
         global.gameCodeName = this.config.gameCodeName;
