@@ -19,10 +19,15 @@ class LocalStorage {
     }
 
     private static doesLocalStorageWork() {
-        localStorage.setItem('_lsc', 'checked');
-        let result = localStorage.getItem('_lsc') === 'checked';
-        localStorage.removeItem('_lsc');
-        return result;
+        try {
+            localStorage.setItem('_lsc', 'checked');
+            let result = localStorage.getItem('_lsc') === 'checked';
+            localStorage.removeItem('_lsc');
+            return result;
+        } catch (e) {
+            console.error('Unable to get localStorage:', e);
+            return false;
+        }
     }
 
     static delete(key: string) {
