@@ -40,7 +40,7 @@ namespace Texture {
         offsety: number;
     }
 
-    export type BlendMode = typeof BlendModes.ADD;
+    export type BlendMode = PIXI.BLEND_MODES;
     export const BlendModes = PIXI.BLEND_MODES;
 
     export type ExtendMode = 'transparent' | 'clamp';
