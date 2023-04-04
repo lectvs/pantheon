@@ -39,6 +39,16 @@ class WorldSelecter {
         return <T[]>this.world.worldObjects.filter(obj => obj.name === name);
     }
 
+    names<T extends WorldObject, K extends string, O extends {[key in K]: T}>(type: new () => T, ...names: K[]): O {
+        let result: Dict<T> = {};
+
+        for (let name of names) {
+            result[name] = this.name(name as string);
+        }
+
+        return result as O;
+    }
+
     overlap(bounds: Bounds, physicsGroups?: string[]): PhysicsWorldObject[] {
         let objs = physicsGroups
                     ? _.flatten(Object.keys(this.world.physicsGroups)

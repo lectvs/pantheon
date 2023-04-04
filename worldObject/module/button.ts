@@ -2,12 +2,14 @@
 
 namespace Button {
     export type Config = {
-        onClick: (this: Button) => void;
-        hoverTint: number;
-        clickTint: number;
+        onClick: Callback;
+        onHover?: Callback;
+        onJustHovered?: Callback;
+        onUnhover?: Callback;
+        onJustUnhovered?: Callback;
+        hoverTint?: number;
+        clickTint?: number;
         baseTint?: number;
-        onHover?: (this: Button) => void;
-        onJustHovered?: (this: Button) => void;
         enabled?: boolean;
     }
 
@@ -15,15 +17,20 @@ namespace Button {
         bounds: Bounds;
         tint: number;
     }
+
+    export type Callback = (this: Button) => void;
 }
 
 class Button extends Module<WorldObject> {
-    onClick: (this: Button) => void;
-    onHover: (this: Button) => void;
-    onJustHovered: (this: Button) => void;
-    hoverTint: number;
-    clickTint: number;
-    baseTint: number;
+    onClick: Button.Callback;
+    onHover: Button.Callback;
+    onJustHovered: Button.Callback;
+    onUnhover: Button.Callback;
+    onJustUnhovered: Button.Callback;
+
+    hoverTint?: number;
+    clickTint?: number;
+    baseTint?: number;
 
     enabled: boolean;
 
@@ -38,10 +45,20 @@ class Button extends Module<WorldObject> {
         this.onClick = config.onClick;
         this.onHover = config.onHover ?? Utils.NOOP;
         this.onJustHovered = config.onJustHovered ?? Utils.NOOP;
+        this.onUnhover = config.onUnhover ?? Utils.NOOP;
+        this.onJustUnhovered = config.onJustUnhovered ?? Utils.NOOP;
         this.hoverTint = config.hoverTint;
         this.clickTint = config.clickTint;
-        this.baseTint = config.baseTint ?? 0xFFFFFF;
+        this.baseTint = config.baseTint;
         this.enabled = config.enabled ?? true;
+    }
+
+    init(worldObject: WorldObject): void {
+        super.init(worldObject);
+
+        if (this.baseTint === undefined) {
+            this.baseTint = this.worldObject.tint;
+        }
     }
 
     update() {
@@ -50,12 +67,25 @@ class Button extends Module<WorldObject> {
         let hovered = this.isHovered();
         let clicked = this.clickedDownOn && Input.isDown(Input.GAME_SELECT);
         
-        this.worldObject.tint = hovered ? (clicked ? this.clickTint : this.hoverTint) : this.baseTint;
+        if (hovered) {
+            if (clicked) {
+                if (this.clickTint !== undefined) this.worldObject.tint = this.clickTint;
+            } else {
+                if (this.hoverTint !== undefined) this.worldObject.tint = this.hoverTint;
+            }
+        } else {
+            if (this.baseTint !== undefined) this.worldObject.tint = this.baseTint;
+        }
 
         if (hovered) {
             this.onHover();
             if (!this.lastHovered) {
                 this.onJustHovered();
+            }
+        } else {
+            this.onUnhover();
+            if (this.lastHovered) {
+                this.onJustUnhovered();
             }
         }
 
