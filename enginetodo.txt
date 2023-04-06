@@ -69,6 +69,8 @@ TODO
 - figure out what is defined in the world constructor vs what is defined in onTransitioned
 - well-defined visual boundaries for every object + better World.Actions.balanceWorldObjects
 - why does the developer console not open when i press F12 sometimes?
+- general solution to prevent sprites from jittering relative to camera movement
+- move colorToVec3 and vec3ToColor to Color util
 
 stretch
 - normal-map/lighting

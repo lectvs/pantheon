@@ -1,4 +1,12 @@
 namespace Color {
+    export function argbToVec4(argb: number): [number, number, number, number] {
+        let a = (argb >> 24) & 255;
+        let r = (argb >> 16) & 255;
+        let g = (argb >> 8) & 255;
+        let b = argb & 255;
+        return [a/255, r/255, g/255, b/255];
+    }
+
     export function blendAlpha(bgColor: number, fgColor: number, alpha: number) {
         let bgColorArray = M.colorToVec3(bgColor);
         let fgColorArray = M.colorToVec3(fgColor);
@@ -41,5 +49,9 @@ namespace Color {
         let rgbf = chromaf.rgb();
 
         return M.vec3ToColor([rgbf[0] / 255, rgbf[1] / 255, rgbf[2] / 255]);
+    }
+
+    export function vec4ToArgb(vec3: [number, number, number, number]) {
+        return (Math.round(vec3[0] * 255) << 24) + (Math.round(vec3[1] * 255) << 16) + (Math.round(vec3[2] * 255) << 8) + Math.round(vec3[3] * 255);
     }
 }

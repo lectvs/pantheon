@@ -35,6 +35,10 @@ namespace M {
         return (neg ? -1 : 0) + (pos ? 1 : 0);
     }
 
+    export function ceilRelative(n: number, relativeTo: number) {
+        return Math.ceil(n - relativeTo) + relativeTo;
+    }
+
     export function clamp(val: number, min: number, max: number) {
         return val < min ? min : (val > max ? max : val);
     }
@@ -62,6 +66,10 @@ namespace M {
 
     export function equidistantLine(middle: number, d: number, n: number, i: number) {
         return middle - d*(n-1)/2 + d*i;
+    }
+
+    export function floorRelative(n: number, relativeTo: number) {
+        return Math.floor(n - relativeTo) + relativeTo;
     }
 
     export function isInt(n: string) {
@@ -161,6 +169,10 @@ namespace M {
 
     export function radToDeg(rad: number) {
         return 180 / Math.PI * rad;
+    }
+
+    export function roundRelative(n: number, relativeTo: number) {
+        return Math.round(n - relativeTo) + relativeTo;
     }
 
     export function vec3ToColor(vec3: [number, number, number]) {
