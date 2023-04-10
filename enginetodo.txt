@@ -71,6 +71,7 @@ TODO
 - why does the developer console not open when i press F12 sometimes?
 - general solution to prevent sprites from jittering relative to camera movement
 - move colorToVec3 and vec3ToColor to Color util
+- use shaders for puff system
 
 stretch
 - normal-map/lighting

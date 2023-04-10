@@ -50,12 +50,6 @@ class InvertedCircleBounds implements Bounds {
     }
 
     getBoundingBox() {
-        if (!this.frozen) {
-            this.boundingBox.x = (this.parent ? this.parent.x : 0) + this.x - this.radius;
-            this.boundingBox.y = (this.parent ? this.parent.y : 0) + this.y - this.radius;
-            this.boundingBox.width = this.radius*2;
-            this.boundingBox.height = this.radius*2;
-        }
         return this.boundingBox;
     }
 
