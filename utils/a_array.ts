@@ -20,6 +20,14 @@ namespace A {
         return array.map(line => clone(line));
     }
 
+    export function create<T>(count: number, fillFn: (i: number) => T): T[] {
+        let result: T[] = [];
+        for (let i = 0; i < count; i++) {
+            result.push(fillFn(i));
+        }
+        return result;
+    }
+
     export function emptyArray<T>(n: number) {
         return filledArray<T>(n);
     }

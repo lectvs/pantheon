@@ -35,6 +35,17 @@ namespace M {
         return (neg ? -1 : 0) + (pos ? 1 : 0);
     }
 
+    export function batch(count: number, maxCount: number) {
+        if (count <= maxCount) {
+            return A.create(count, i => 1);
+        }
+    
+        let q = Math.floor(count / maxCount);
+        let r = count % maxCount;
+    
+        return A.create(maxCount, i => i < r ? q+1 : q);
+    }
+
     export function ceilRelative(n: number, relativeTo: number) {
         return Math.ceil(n - relativeTo) + relativeTo;
     }
