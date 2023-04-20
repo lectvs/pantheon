@@ -4,13 +4,20 @@ TODO
 - camera zoom/rotate?
 - animation revamp (animation/script parity?)
     - squash/stretch/transform/etc actions
+- improve spritetext
+    - better performance on large spritetexts
+    - spritetext tags are technically not assets
+    - remove spritetext "style" field for constructor - input individual color/alpha/etc. fields instead
+    - specify spritetext typing speed as a tag?
+    - custom font characters -> general textures instead?
+    - calculate text width/height while not all chars visible
+    - fix initial spaces not counting toward alignment?
 - revamp module system to work with compound types
 - controller revamp
 - easier global width/height
 - apply filter before texture transformation during render? (rotate, scale, etc.)
 - allow S scripts to be run in non-global worlds (global.script.world? how do we handle cutscenes?)
 - revamp menu system, transitions from main menu to game
-- custom font characters -> general textures instead?
 - vs code tasks?
 - fix: Options.updateCallbacks.push(() => Input.init());
 - turn screen shake into a shader (to get edge continuation)
@@ -18,19 +25,16 @@ TODO
 - methods to take a screenshot of the canvas (full-size and 1:1 scale? copy to clipboard?)
 - "humanized" option in sound asset definition
 - better world and object management (freeing)
-- better performance on large spritetexts
 - delete useless bloat
 - look into more performant graphics libraries
 - attach arbitrary "update"/"render" objects to worldobjects (e.g. timers, new module system?)
-- make game files group-downloadable with https://stuk.github.io/jszip/
 - improve compile time
 - clean up fixed framerate/nonupdate stuff
 - integrate debug textures/sfx into the engine?
 - yield multiple comma-separated values, yield number to wait, script revamp??
 - bounce vs elastic tween confusion
 - deprecate underscore.js
-- texture crop method
-- calculate text width/height while not all chars visible
+- texture crop() method
 - disable analytics on localhost?
 - outline match texture's alpha by default?
 - remake build script
@@ -41,7 +45,6 @@ TODO
 - rename removeChild* to detachChild*
 - documentation and API cleanup
 - template for new games
-- fix initial spaces not counting toward alignment?
 - find true texture limit and re-enable in BasicTexture
 - worldobject that centers/anchors its children (useful for UI)
 - remove Draw.brush?
@@ -58,7 +61,6 @@ TODO
 - simplify pre- and post- effects (remove filters field?)
 - better WorldAsWorldObject (containers?)
 - world and worldobject hooks/events (onDeath, onLoad, etc.)
-- spritetext tags are technically not assets
 - set up audacity and fl studio to use aac
 - combined Draw.circleSolid + Draw.circleOutline etc?
 - map shader pnoise to [0, 1]?
@@ -72,8 +74,8 @@ TODO
 - general solution to prevent sprites from jittering relative to camera movement
 - move colorToVec3 and vec3ToColor to Color util
 - use shaders for puff system
-- remove spritetext "style" field for constructor - input individual color/alpha/etc. fields instead
 - games do not work on Opera mobile browser (AAC audio encoding?)
+- simple mask shapes (like rectangle)
 
 stretch
 - normal-map/lighting
@@ -84,3 +86,4 @@ stretch
 - print errors on screen?
 - report game errors through lambda API?
 - loading messages
+- make game files group-downloadable with https://stuk.github.io/jszip/

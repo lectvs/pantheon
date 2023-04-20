@@ -1,6 +1,6 @@
 /// <reference path="./textureCreationData.ts"/>
 /// <reference path="./filter/textureFilter.ts"/>
-/// <reference path="./filter/slice.ts"/>
+/// <reference path="./filter/filters/slice.ts"/>
 
 class BasicTexture implements Texture {
     get width() { return this.renderTextureSprite._renderTexture.width; }
@@ -220,7 +220,7 @@ class BasicTexture implements Texture {
         }
 
         if (properties.mask && properties.mask.texture) {
-            let maskFilter = Mask.SHARED(properties.mask.texture, 'global', properties.mask.x, properties.mask.y, properties.mask.invert);
+            let maskFilter = TextureFilters.Mask.SHARED(properties.mask.texture, 'global', properties.mask.x, properties.mask.y, properties.mask.invert);
             Texture.setFilterProperties(maskFilter, properties.x, properties.y, this.width, this.height);
             allFilters.push(maskFilter);
         }

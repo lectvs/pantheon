@@ -5,7 +5,7 @@ namespace World {
     export type Config = {
         layers?: World.LayerConfig[];
         effects?: Effects.Config;
-        mask?: Mask.WorldMaskConfig;
+        mask?: TextureFilters.Mask.WorldMaskConfig;
 
         camera?: Camera.Config;
 
@@ -44,7 +44,7 @@ namespace World {
         sortKey?: (worldObject: WorldObject) => number;
         reverseSort?: boolean;
         effects?: Effects.Config;
-        mask?: Mask.WorldMaskConfig;
+        mask?: TextureFilters.Mask.WorldMaskConfig;
     }
 
     export type PhysicsGroupConfig = {
@@ -79,7 +79,7 @@ class World {
 
     layers: World.Layer[];
     effects: Effects;
-    mask: Mask.WorldMaskConfig;
+    mask: TextureFilters.Mask.WorldMaskConfig;
 
     backgroundColor: number;
     backgroundAlpha: number;
@@ -215,7 +215,7 @@ class World {
                 this.renderLayerToTexture(layer, this.layerTexture);
                 this.layerTexture.renderTo(this.worldTexture, {
                     filters: layer.effects.getFilterList(),
-                    mask: Mask.getTextureMaskForWorld(layer.mask),
+                    mask: TextureFilters.Mask.getTextureMaskForWorld(layer.mask),
                 });
             } else {
                 this.renderLayerToTexture(layer, this.worldTexture);
@@ -228,7 +228,7 @@ class World {
             scaleX: this.scaleX,
             scaleY: this.scaleY,
             filters: this.effects.getFilterList(),
-            mask: Mask.getTextureMaskForWorld(this.mask),
+            mask: TextureFilters.Mask.getTextureMaskForWorld(this.mask),
         });
     }
 
@@ -498,7 +498,7 @@ namespace World {
         reverseSort: boolean;
 
         effects: Effects;
-        mask: Mask.WorldMaskConfig;
+        mask: TextureFilters.Mask.WorldMaskConfig;
 
         get shouldRenderToOwnLayer() {
             return this.effects.hasEffects() || !!this.mask;

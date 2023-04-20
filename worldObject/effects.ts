@@ -227,7 +227,7 @@ namespace Effects {
                 super({
                     uniforms: { 'float strength': strength, 'float speed': speed, 'float spread': spread },
                     code: `
-                        float tt = floor((5.4 + t) * speed);
+                        float tt = floor(5.4 + t * speed);
                         float yy = floor(y / spread) * spread;
                         float offset = pnoise(0.0, yy*1.1, tt*5.1) * strength;
                         outp = getColor(x + offset, y);

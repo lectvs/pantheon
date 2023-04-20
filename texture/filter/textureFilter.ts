@@ -269,10 +269,10 @@ namespace TextureFilter {
         }
     `;
 
-    var _sliceFilter: SliceFilter;
+    var _sliceFilter: TextureFilters.Slice;
     export function SLICE_FILTER(rect: Rect) {
         if (!_sliceFilter) {
-            _sliceFilter = new SliceFilter(rect);
+            _sliceFilter = new TextureFilters.Slice(rect);
         } else {
             _sliceFilter.setSlice(rect);
         }

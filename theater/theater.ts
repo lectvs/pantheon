@@ -136,7 +136,7 @@ class Theater extends World {
 namespace Theater {
     export class WorldAsWorldObject extends WorldObject {
         containedWorld: World;
-        mask: Mask.WorldMaskConfig;
+        mask: TextureFilters.Mask.WorldMaskConfig;
 
         multiExecutionTimeScale: number;
         private multiExecutionPool: number;
