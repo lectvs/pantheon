@@ -76,6 +76,7 @@ TODO
 - use shaders for puff system
 - games do not work on Opera mobile browser (AAC audio encoding?)
 - simple mask shapes (like rectangle)
+- better ways to move the camera (without needing to call setModeFocus)
 
 stretch
 - normal-map/lighting
