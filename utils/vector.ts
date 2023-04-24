@@ -34,6 +34,10 @@ class Vector2 {
         return this;
     }
 
+    addMagnitude(amount: number) {
+        return this.setMagnitude(this.magnitude + amount);
+    }
+
     clampMagnitude(maxMagnitude: number) {
         if (maxMagnitude < 0) {
             console.error('Tried to clamp vector magnitude with negative maxMagnitude');

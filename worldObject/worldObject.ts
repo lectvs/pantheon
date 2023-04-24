@@ -29,11 +29,13 @@ namespace WorldObject {
         'onAdd'
       | 'onRemove'
       | 'update'
+      | 'postUpdate'
       | 'render';
     export type Callbacks<T> = {
         onAdd?: OnAddCallback<T>;
         onRemove?: OnRemoveCallback<T>;
         update?: UpdateCallback<T>;
+        postUpdate?: PostUpdateCallback<T>;
         render?: RenderCallback<T>;
     }
 
@@ -42,6 +44,7 @@ namespace WorldObject {
     export type OnAddCallback<T> = (this: T) => any;
     export type OnRemoveCallback<T> = (this: T) => any;
     export type UpdateCallback<T> = (this: T) => any;
+    export type PostUpdateCallback<T> = (this: T) => any;
     export type RenderCallback<T> = (this: T, screen: Texture, x: number, y: number) => any;
 }
 
@@ -123,6 +126,7 @@ class WorldObject {
     onAddCallback: WorldObject.OnAddCallback<this>;
     onRemoveCallback: WorldObject.OnRemoveCallback<this>;
     updateCallback: WorldObject.UpdateCallback<this>;
+    postUpdateCallback: WorldObject.PostUpdateCallback<this>;
     renderCallback: WorldObject.RenderCallback<this>;
 
     debugFollowMouse: boolean;
@@ -179,6 +183,7 @@ class WorldObject {
         this.onAddCallback = config.onAdd;
         this.onRemoveCallback = config.onRemove;
         this.updateCallback = config.update;
+        this.postUpdateCallback = config.postUpdate;
         this.renderCallback = config.render;
 
         this.debugFollowMouse = false;
@@ -227,6 +232,8 @@ class WorldObject {
 
     postUpdate() {
         this.controller.reset();
+
+        if (this.postUpdateCallback) this.postUpdateCallback();
 
         this.resolveCopyFromParent();
     }
