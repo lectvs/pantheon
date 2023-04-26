@@ -24,9 +24,11 @@ class Sound {
     set onDone(value) { this.webAudioSound.onDone = value; }
 
     private pos: number;
+    get position() { return this.pos; }
     get duration() { return this.webAudioSound.duration; }
 
     controller: Sound.Controller;
+    private hanging: boolean;
 
     constructor(key: string, controller?: Sound.Controller) {
         let asset = AssetCache.getSoundAsset(key);
@@ -44,8 +46,36 @@ class Sound {
         this.volume = 1;
         this.speed = 1;
         this.loop = false;
+        this.hanging = false;
 
         this.controller = controller;
+    }
+
+    update(delta: number) {
+        this.soundManager.ensureSoundEnabled(this);
+        this.pos += delta;
+
+        if (this.hanging) {
+            this.pos -= delta;
+            this.webAudioSound.seek(this.loop ? M.mod(this.pos, this.duration) : this.pos);
+        }
+        
+        if (WebAudio.started && this.webAudioSound instanceof WebAudioSoundDummy) {
+            if (this.pos < this.duration || this.loop) {
+                // Generate WebAudioSound from dummy
+                this.webAudioSound = this.webAudioSound.toWebAudioSound();
+            }
+            this.webAudioSound.seek(this.loop ? M.mod(this.pos, this.duration) : this.pos);
+        }
+
+        this.volume = M.clamp(this.volume, 0, Sound.MAX_VOLUME);
+        this.speed = M.clamp(this.speed, 0, Sound.MAX_SPEED);
+
+        let volume = this.volume * (this.controller ? this.controller.volume : 1);
+        if (this.webAudioSound.volume !== volume) this.webAudioSound.volume = volume;
+
+        if (this.webAudioSound.speed !== this.speed) this.webAudioSound.speed = this.speed;
+        if (this.webAudioSound.loop !== this.loop) this.webAudioSound.loop = this.loop;
     }
 
     markForDisable() {
@@ -64,26 +94,16 @@ class Sound {
         this.webAudioSound.unpause();
     }
 
-    update(delta: number) {
-        this.soundManager.ensureSoundEnabled(this);
-        this.pos += delta;
-        
-        if (WebAudio.started && this.webAudioSound instanceof WebAudioSoundDummy) {
-            if (this.pos < this.duration || this.loop) {
-                // Generate WebAudioSound from dummy
-                this.webAudioSound = this.webAudioSound.toWebAudioSound();
-            }
-            this.webAudioSound.seek(this.loop ? M.mod(this.pos, this.duration) : this.pos);
+    hang() {
+        this.hanging = true;
+    }
+
+    seek(position: number) {
+        this.pos = position;
+        if (this.loop) {
+            this.pos = M.mod(this.pos, this.duration);
         }
-
-        this.volume = M.clamp(this.volume, 0, Sound.MAX_VOLUME);
-        this.speed = M.clamp(this.speed, 0, Sound.MAX_SPEED);
-
-        let volume = this.volume * (this.controller ? this.controller.volume : 1);
-        if (this.webAudioSound.volume !== volume) this.webAudioSound.volume = volume;
-
-        if (this.webAudioSound.speed !== this.speed) this.webAudioSound.speed = this.speed;
-        if (this.webAudioSound.loop !== this.loop) this.webAudioSound.loop = this.loop;
+        this.webAudioSound.seek(this.pos);
     }
 
     stop() {
