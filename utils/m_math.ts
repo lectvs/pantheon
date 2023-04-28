@@ -186,6 +186,10 @@ namespace M {
         return Math.round(n - relativeTo) + relativeTo;
     }
 
+    export function roundToNearest(n: number, unit: number) {
+        return Math.round(n / unit) * unit;
+    }
+
     export function vec3ToColor(vec3: [number, number, number]) {
         return (Math.round(vec3[0] * 255) << 16) + (Math.round(vec3[1] * 255) << 8) + Math.round(vec3[2] * 255);
     }

@@ -77,6 +77,8 @@ TODO
 - games do not work on Opera mobile browser (AAC audio encoding?)
 - simple mask shapes (like rectangle)
 - better ways to move the camera (without needing to call setModeFocus)
+- collision mode that has no separation or momentum transfer (e.g. checking if a bullet hits the player)
+- handle playing a music track if the track is already playing
 
 stretch
 - normal-map/lighting

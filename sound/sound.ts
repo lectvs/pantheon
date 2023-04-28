@@ -107,6 +107,7 @@ class Sound {
     }
 
     stop() {
+        this.hanging = false;
         this.webAudioSound.stop();
     }
 
