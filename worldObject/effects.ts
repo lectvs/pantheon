@@ -159,6 +159,13 @@ namespace Effects {
                 this.color = color;
                 this.alpha = alpha;
             }
+
+            enable(color: number, alpha: number, amount: number) {
+                this.color = color;
+                this.alpha = alpha;
+                this.amount = amount;
+                this.enabled = true;
+            }
         }
 
         export class Outline extends TextureFilter {
@@ -182,6 +189,12 @@ namespace Effects {
                 this.color = color;
                 this.alpha = alpha;
             }
+
+            enable(color: number, alpha: number) {
+                this.color = color;
+                this.alpha = alpha;
+                this.enabled = true;
+            }
         }
 
         export class InvertColors extends TextureFilter {
@@ -193,6 +206,10 @@ namespace Effects {
                         outp.b = 1.0 - inp.b;
                     `
                 });
+            }
+
+            enable() {
+                this.enabled = true;
             }
         }
 
@@ -237,6 +254,13 @@ namespace Effects {
                 this._strength = strength;
                 this._speed = speed;
                 this._spread = spread;
+            }
+
+            enable(strength: number, speed: number, spread: number) {
+                this.strength = strength;
+                this.speed = speed;
+                this.spread = spread;
+                this.enabled = true;
             }
         }
     }
