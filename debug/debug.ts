@@ -50,6 +50,8 @@ class Debug {
         if (Input.justDown(Input.DEBUG_FRAME_SKIP_DISABLE)) {
             Debug.FRAME_STEP_ENABLED = false;
         }
+
+        Debug._SKIP_RATE_KEY_MODIFIER = Input.isDown(Input.DEBUG_SKIP_RATE) ? 10 : 1;
     }
 
     private static _DEBUG: boolean;
@@ -76,7 +78,8 @@ class Debug {
     static OVERLAY_FEEDS: ((world: World) => string)[];
 
     private static _SKIP_RATE: number;
-    static get SKIP_RATE() { return this.DEBUG ? this._SKIP_RATE : 1; }
+    private static _SKIP_RATE_KEY_MODIFIER: number = 1;
+    static get SKIP_RATE() { return this.DEBUG ? this._SKIP_RATE * this._SKIP_RATE_KEY_MODIFIER : 1; }
     static set SKIP_RATE(value: number) { this._SKIP_RATE = value; }
 
     private static _PROGRAMMATIC_INPUT: boolean;

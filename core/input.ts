@@ -20,6 +20,7 @@ namespace Input {
         [Input.DEBUG_FRAME_SKIP_STEP]: string[],
         [Input.DEBUG_FRAME_SKIP_RUN]: string[],
         [Input.DEBUG_FRAME_SKIP_DISABLE]: string[],
+        [Input.DEBUG_SKIP_RATE]: string[],
     } & Dict<string[]>;
 }
 
@@ -420,6 +421,7 @@ namespace Input {
     export const DEBUG_FRAME_SKIP_STEP = 'debug_frameSkipStep';
     export const DEBUG_FRAME_SKIP_RUN = 'debug_frameSkipRun';
     export const DEBUG_FRAME_SKIP_DISABLE = 'debug_frameSkipDisable';
+    export const DEBUG_SKIP_RATE = 'debug_skipRate';
 
     export class Key {
         private _isDown: boolean;
