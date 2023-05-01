@@ -33,6 +33,7 @@ namespace Main {
         persist: () => void;
 
         beforePreload?: () => void;
+        beforeStart?: () => void;
 
         debug: Debug.Config;
     }
@@ -146,6 +147,9 @@ class Main {
 
         this.delta = 0;
         this.game = new Game(this.config.game);
+
+        if (this.config.beforeStart) this.config.beforeStart();
+
         this.game.start();
         this.game.update(); // Update game once just to make sure everything is set up correctly.
     }

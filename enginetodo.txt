@@ -80,6 +80,7 @@ TODO
 - collision mode that has no separation or momentum transfer (e.g. checking if a bullet hits the player)
 - handle playing a music track if the track is already playing
 - look into moving from localstorage to indexeddb: https://web.dev/indexeddb/
+- preload/load overhaul + get off of pixi's preload system
 
 stretch
 - normal-map/lighting
