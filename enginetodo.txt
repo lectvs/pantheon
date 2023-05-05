@@ -83,6 +83,7 @@ TODO
 - look into moving from localstorage to indexeddb: https://web.dev/indexeddb/
 - preload/load overhaul + get off of pixi's preload system
 - debug show overlay with O key doesn't always work. sometimes i need to call Debug.SHOW_OVERLAY=true
+- add velocity properties to WorldObject
 
 stretch
 - normal-map/lighting
