@@ -306,13 +306,13 @@ class SpriteText extends WorldObject {
     toTexture() {
         let width = this.getTextWidth();
         let height = this.getTextHeight();
-        let texture = new BasicTexture(width, height, false, 'SpriteText.toTexture');
+        let texture = new BasicTexture(width, height, 'SpriteText.toTexture', false);
 
         let anchorOffsetX = Math.round(this.anchor.x * width);
         let anchorOffsetY = Math.round(this.anchor.y * height);
         this.render(texture, anchorOffsetX, anchorOffsetY);
 
-        return AnchoredTexture.fromBaseTexture(texture, this.anchor.x, this.anchor.y);
+        return new AnchoredTexture(texture, this.anchor.x, this.anchor.y);
     }
 
     private getStyleFromTags(tagData: SpriteText.TagData[], defaults: Required<SpriteText.Style>) {

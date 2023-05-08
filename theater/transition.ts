@@ -34,7 +34,7 @@ abstract class Transition extends WorldObject {
     }
 
     takeWorldSnapshots() {
-        this.oldSnapshot = this.oldWorld ? this.oldWorld.takeSnapshot() : Texture.filledRect(global.gameWidth, global.gameHeight, global.backgroundColor).clone();
+        this.oldSnapshot = this.oldWorld ? this.oldWorld.takeSnapshot() : Texture.filledRect(global.gameWidth, global.gameHeight, global.backgroundColor).clone('Transition.takeWorldSnapshots');
         this.newSnapshot = this.newWorld.takeSnapshot();
     }
 

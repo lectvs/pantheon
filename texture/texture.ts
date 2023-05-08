@@ -53,7 +53,7 @@ interface Texture {
     immutable: boolean;
 
     clear(): void;
-    clone(): Texture;
+    clone(source: string): Texture;
     free(): void;
 
     getLocalBounds(properties: Texture.Properties): Rect;
@@ -65,12 +65,12 @@ interface Texture {
     renderTo(texture: Texture, properties?: Texture.Properties): void;
     renderPIXIDisplayObject(displayObject: PIXI.DisplayObject): void;
 
-    subdivide(h: number, v: number): Texture.Subdivision[];
+    subdivide(h: number, v: number, source: string): Texture.Subdivision[];
 
     toCanvas(): HTMLCanvasElement;
     toMask(): Texture.TextureToMask;
 
-    transform(properties?: Texture.TransformProperties): Texture;
+    transform(properties: Texture.TransformProperties, source: string): Texture;
 }
 
 namespace Texture {
@@ -78,7 +78,7 @@ namespace Texture {
     export function filledCircle(radius: number, fillColor: number, fillAlpha: number = 1) {
         let key = `${radius},${fillColor},${fillAlpha}`;
         if (!cache_filledCircle[key]) {
-            let result = new BasicTexture(radius*2, radius*2);
+            let result = new BasicTexture(radius*2, radius*2, 'Texture.filledCircle');
             Draw.circleSolid(result, radius, radius, radius, { color: fillColor, alpha: fillAlpha, thickness: 0 });
             result.immutable = true;
             cache_filledCircle[key] = result;
@@ -91,7 +91,7 @@ namespace Texture {
     export function filledRect(width: number, height: number, fillColor: number, fillAlpha: number = 1) {
         let key = `${width},${height},${fillColor},${fillAlpha}`;
         if (!cache_filledRect[key]) {
-            let result = new BasicTexture(width, height);
+            let result = new BasicTexture(width, height, 'Texture.filledRect');
             Draw.fill(result, { color: fillColor, alpha: fillAlpha, thickness: 0 });
             result.immutable = true;
             cache_filledRect[key] = result;
@@ -101,7 +101,7 @@ namespace Texture {
 
     export function fromPixiTexture(pixiTexture: PIXI.Texture) {
         let sprite = new PIXI.Sprite(pixiTexture);
-        let texture = new AnchoredTexture(pixiTexture.width, pixiTexture.height);
+        let texture = new AnchoredTexture(new BasicTexture(pixiTexture.width, pixiTexture.height, 'Texture.fromPixiTexture'));
         texture.anchorX = pixiTexture.defaultAnchor.x;
         texture.anchorY = pixiTexture.defaultAnchor.y;
         sprite.x = texture.anchorX * texture.width;
@@ -112,7 +112,7 @@ namespace Texture {
     }
 
     export function ninepatch(sourceTexture: Texture, innerRect: Rect, targetWidth: number, targetHeight: number, tiled: boolean = false) {
-        let result = new BasicTexture(targetWidth, targetHeight);
+        let result = new BasicTexture(targetWidth, targetHeight, 'Texture.ninepatch');
 
         let remwidth = sourceTexture.width - (innerRect.x + innerRect.width);
         let remheight = sourceTexture.height - (innerRect.y + innerRect.height);
@@ -167,7 +167,7 @@ namespace Texture {
     export function outlineRect(width: number, height: number, outlineColor: number, outlineAlpha: number = 1, outlineThickness: number = 1) {
         let key = `${width},${height},${outlineColor},${outlineAlpha},${outlineThickness}`;
         if (!cache_outlineRect[key]) {
-            let result = new BasicTexture(width, height);
+            let result = new BasicTexture(width, height, 'Texture.outlineRect');
             Draw.rectangleOutline(result, 0, 0, width, height, Draw.ALIGNMENT_INNER, { color: outlineColor, alpha: outlineAlpha, thickness: outlineThickness });
             result.immutable = true;
             cache_outlineRect[key] = result;
@@ -179,7 +179,7 @@ namespace Texture {
     export function outlineCircle(radius: number, outlineColor: number, outlineAlpha: number = 1, outlineThickness: number = 1) {
         let key = `${radius},${outlineColor},${outlineAlpha},${outlineThickness}`;
         if (!cache_outlineCircle[key]) {
-            let result = new BasicTexture(radius*2, radius*2);
+            let result = new BasicTexture(radius*2, radius*2, 'Texture.outlineCircle');
             Draw.circleOutline(result, radius, radius, radius, Draw.ALIGNMENT_INNER, { color: outlineColor, alpha: outlineAlpha, thickness: outlineThickness });
             result.immutable = true;
             cache_outlineCircle[key] = result;
@@ -214,6 +214,6 @@ namespace Texture {
     }
 
     export const NONE = new EmptyTexture();
-    export const NOOP = new BasicTexture(0, 0);
-    export const EFFECT_ONLY = new BasicTexture(0, 0);
+    export const NOOP = new BasicTexture(0, 0, 'Texture.NOOP');
+    export const EFFECT_ONLY = new BasicTexture(0, 0, 'Texture.EFFECT_ONLY');
 }

@@ -28,7 +28,7 @@ class Draw {
     }
 
     static eraseRect(texture: Texture, x: number, y: number, width: number, height: number) {
-        let newTexture = texture.clone();
+        let newTexture = texture.clone('Draw.eraseRect');
 
         let mask = new TextureFilters.Mask({
             type: 'local',

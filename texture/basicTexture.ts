@@ -12,7 +12,7 @@ class BasicTexture implements Texture {
 
     private cachedPixelsARGB: number[][];
 
-    constructor(width: number, height: number, immutable: boolean = false, source?: string) {
+    constructor(width: number, height: number, source: string, immutable: boolean = false) {
         // TODO: find the true texture bounds across devices
         // if (width > 2048 || height > 2048) {
         //     console.error(`Texture dimensions exceed bounds: (${width}, ${height}), limiting to bounds`);
@@ -21,7 +21,7 @@ class BasicTexture implements Texture {
         // }
         this.renderTextureSprite = new Texture.PIXIRenderTextureSprite(width, height);
         this.immutable = immutable;
-        TextureCreationData.logCreateTexture(this, source ?? arguments?.callee?.caller?.name ?? "none");
+        TextureCreationData.logCreateTexture(this, source);
     }
 
     clear() {
@@ -32,8 +32,8 @@ class BasicTexture implements Texture {
         this.renderTextureSprite.clear();
     }
 
-    clone() {
-        return this.transform();
+    clone(source: string) {
+        return this.transform({}, source);
     }
 
     free() {
@@ -142,7 +142,7 @@ class BasicTexture implements Texture {
         global.renderer.render(displayObject, this.renderTextureSprite.renderTexture, false);
     }
 
-    subdivide(h: number, v: number): Texture.Subdivision[] {
+    subdivide(h: number, v: number, source: string): Texture.Subdivision[] {
         if (h <= 0 || v <= 0) return [];
 
         let result: Texture.Subdivision[] = [];
@@ -158,7 +158,7 @@ class BasicTexture implements Texture {
                 let ty = y * frameh;
                 let tw = x === h-1 ? lastframew : framew;
                 let th = y === v-1 ? lastframeh : frameh;
-                let texture = new BasicTexture(tw, th, false, 'BasicTexture.subdivide');
+                let texture = new BasicTexture(tw, th, source, false);
                 this.renderTo(texture, {
                     x: -tx,
                     y: -ty,
@@ -186,7 +186,7 @@ class BasicTexture implements Texture {
     /**
      * Returns a NEW texture which is transformed from the original.
      */
-    transform(properties: Texture.TransformProperties = {}) {
+    transform(properties: Texture.TransformProperties, source: string) {
         _.defaults(properties, {
             scaleX: 1,
             scaleY: 1,
@@ -195,7 +195,7 @@ class BasicTexture implements Texture {
             filters: [],
         });
 
-        let result = new BasicTexture(this.width * Math.abs(properties.scaleX), this.height * Math.abs(properties.scaleY), false, 'BasicTexture.transform');
+        let result = new BasicTexture(this.width * Math.abs(properties.scaleX), this.height * Math.abs(properties.scaleY), source, false);
         this.renderTo(result, {
             x: this.width/2 * (Math.abs(properties.scaleX) - properties.scaleX),
             y: this.height/2 * (Math.abs(properties.scaleY) - properties.scaleY),

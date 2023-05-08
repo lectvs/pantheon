@@ -111,7 +111,7 @@ class Main {
         Main.renderer.plugins.accessibility.destroy();
         delete Main.renderer.plugins.accessibility;
 
-        Main.screen = new BasicTexture(global.gameWidth, global.gameHeight);
+        Main.screen = new BasicTexture(global.gameWidth, global.gameHeight, 'Main.screen');
 
         this.soundManager = new GlobalSoundManager();
         

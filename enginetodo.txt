@@ -66,7 +66,6 @@ TODO
 - combined Draw.circleSolid + Draw.circleOutline etc?
 - map shader pnoise to [0, 1]?
 - Texture.filledCircle/outlineCircle not having center anchor keeps tripping me up
-- force user to provide a source in new BasicTexture
 - asset dependencies?
 - easier window event integration (onbeforeunload, etc.)
 - figure out what is defined in the world constructor vs what is defined in onTransitioned

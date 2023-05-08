@@ -38,7 +38,7 @@ class LciLoader implements Loader {
     }
 
     private onLoadTextures() {
-        let fullTexture = new AnchoredTexture(this.lci.width, this.lci.height);
+        let fullTexture = new AnchoredTexture(new BasicTexture(this.lci.width, this.lci.height, 'LciLoader.onLoadTextures'));
         if (this.texture.anchor) {
             fullTexture.anchorX = this.texture.anchor.x;
             fullTexture.anchorY = this.texture.anchor.y;

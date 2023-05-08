@@ -275,7 +275,7 @@ namespace Tilemap {
             zTextureSlots[zValue].bounds.width = (zTextureSlots[zValue].tileBounds.right - zTextureSlots[zValue].tileBounds.left + 1) * tileset.tileWidth;
             zTextureSlots[zValue].bounds.height = (zTextureSlots[zValue].tileBounds.bottom - zTextureSlots[zValue].tileBounds.top + 1) * tileset.tileHeight;
             let numFrames = animation ? animation.frames : 1;
-            zTextureSlots[zValue].frames = A.range(numFrames).map(i => new BasicTexture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height));
+            zTextureSlots[zValue].frames = A.range(numFrames).map(i => new BasicTexture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height, 'Tilemap.createEmptyZTextures'));
         }
 
         return zTextureSlots;

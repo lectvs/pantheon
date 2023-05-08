@@ -144,8 +144,8 @@ class World {
         this.backgroundColor = config.backgroundColor ?? global.backgroundColor;
         this.backgroundAlpha = config.backgroundAlpha ?? 1;
 
-        this.worldTexture = new BasicTexture(this.width, this.height);
-        this.layerTexture = new BasicTexture(this.width, this.height);
+        this.worldTexture = new BasicTexture(this.width, this.height, 'World.worldTexture');
+        this.layerTexture = new BasicTexture(this.width, this.height, 'World.layerTexture');
 
         this.camera = new Camera(config.camera ?? {}, this);
 
@@ -383,7 +383,7 @@ class World {
     }
 
     takeSnapshot() {
-        let screen = new BasicTexture(this.width * this.scaleX, this.height * this.scaleY, false, 'World.takeSnapshot');
+        let screen = new BasicTexture(this.width * this.scaleX, this.height * this.scaleY, 'World.takeSnapshot', false);
         this.render(screen, 0, 0);
         return screen;
     }

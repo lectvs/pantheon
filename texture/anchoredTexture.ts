@@ -27,8 +27,8 @@ class AnchoredTexture implements Texture {
     get immutable() { return this.baseTexture.immutable; }
     set immutable(value: boolean) { this.baseTexture.immutable = value; }
 
-    constructor(width: number, height: number, baseTexture?: Texture, anchorX: number = 0, anchorY: number = 0) {
-        this.baseTexture = baseTexture ?? new BasicTexture(width, height, false, arguments?.callee?.caller?.name ?? "none");
+    constructor(baseTexture: Texture, anchorX: number = 0, anchorY: number = 0) {
+        this.baseTexture = baseTexture;
         this._anchorX = anchorX;
         this._anchorY = anchorY;
     }
@@ -37,8 +37,8 @@ class AnchoredTexture implements Texture {
         this.baseTexture.clear();
     }
 
-    clone() {
-        return AnchoredTexture.fromBaseTexture(this.baseTexture.clone(), this.anchorX, this.anchorY);
+    clone(source: string) {
+        return new AnchoredTexture(this.baseTexture.clone(source), this.anchorX, this.anchorY);
     }
 
     free() {
@@ -84,10 +84,10 @@ class AnchoredTexture implements Texture {
         this.baseTexture.renderPIXIDisplayObject(displayObject);
     }
 
-    subdivide(h: number, v: number, anchorX: number = 0, anchorY: number = 0) {
-        let result = this.baseTexture.subdivide(h, v);
+    subdivide(h: number, v: number, source: string, anchorX: number = 0, anchorY: number = 0) {
+        let result = this.baseTexture.subdivide(h, v, source);
         for (let subdivision of result) {
-            subdivision.texture = AnchoredTexture.fromBaseTexture(subdivision.texture, anchorX, anchorY);
+            subdivision.texture = new AnchoredTexture(subdivision.texture, anchorX, anchorY);
         }
         return result;
     }
@@ -103,9 +103,9 @@ class AnchoredTexture implements Texture {
         return mask;
     }
 
-    transform(properties?: Texture.TransformProperties) {
-        let transformedBaseTexture = this.baseTexture.transform(properties);
-        return AnchoredTexture.fromBaseTexture(transformedBaseTexture, this.anchorX, this.anchorY);
+    transform(properties: Texture.TransformProperties, source: string) {
+        let transformedBaseTexture = this.baseTexture.transform(properties, source);
+        return new AnchoredTexture(transformedBaseTexture, this.anchorX, this.anchorY);
     }
 
     withAnchor(anchorX: number, anchorY: number) {
@@ -126,11 +126,5 @@ class AnchoredTexture implements Texture {
         let ay = Math.floor(this.anchorY*this.height)*scaleY;
         let rotatedAndScaled_ay = (-ax) * M.sin(angle) + (-ay) * M.cos(angle);
         return rotatedAndScaled_ay;
-    }
-}
-
-namespace AnchoredTexture {
-    export function fromBaseTexture(baseTexture: Texture, anchorX: number = 0, anchorY: number = 0) {
-        return new AnchoredTexture(0, 0, baseTexture, anchorX, anchorY);
     }
 }
