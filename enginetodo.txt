@@ -36,11 +36,14 @@ TODO
 - bounce vs elastic tween confusion
 - deprecate underscore.js
 - texture crop() method
-- disable analytics on localhost?
+- analytics
+    - consider removing analytics in engine
+    - disable analytics on localhost?
+    - analytic for mobile usage
+    - track plays on each platform (web, mobile)
 - outline match texture's alpha by default?
 - remake build script
     - add LICENSE to build, keep it from bloating src/lectvs/assets/etc
-- analytic for mobile usage
 - supertextures ("detective+hat")
 - game initialization logic (in Main?)
 - rename removeChild* to detachChild*
