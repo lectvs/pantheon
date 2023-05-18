@@ -86,6 +86,8 @@ TODO
 - preload/load overhaul + get off of pixi's preload system
 - debug show overlay with O key doesn't always work. sometimes i need to call Debug.SHOW_OVERLAY=true
 - add velocity properties to WorldObject
+- rename Vector2 constants to Anchor and Direction
+- why does physicslastx/y exist? can we make a reliable lastx/y or dx/y that works regardless of update order?
 
 stretch
 - normal-map/lighting
