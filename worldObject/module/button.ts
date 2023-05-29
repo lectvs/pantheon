@@ -2,14 +2,18 @@
 
 namespace Button {
     export type Config = {
-        onClick: Callback;
+        onClick?: Callback;
         onHover?: Callback;
         onJustHovered?: Callback;
         onUnhover?: Callback;
         onJustUnhovered?: Callback;
+
+        canHover?: () => boolean;
+
         hoverTint?: number;
         clickTint?: number;
         baseTint?: number;
+
         enabled?: boolean;
     }
 
@@ -28,6 +32,8 @@ class Button extends Module<WorldObject> {
     onUnhover: Button.Callback;
     onJustUnhovered: Button.Callback;
 
+    canHover: () => boolean;
+
     hoverTint?: number;
     clickTint?: number;
     baseTint?: number;
@@ -42,11 +48,12 @@ class Button extends Module<WorldObject> {
     constructor(config: Button.Config) {
         super(WorldObject);
 
-        this.onClick = config.onClick;
+        this.onClick = config.onClick ?? Utils.NOOP;
         this.onHover = config.onHover ?? Utils.NOOP;
         this.onJustHovered = config.onJustHovered ?? Utils.NOOP;
         this.onUnhover = config.onUnhover ?? Utils.NOOP;
         this.onJustUnhovered = config.onJustUnhovered ?? Utils.NOOP;
+        this.canHover = config.canHover ?? (() => true);
         this.hoverTint = config.hoverTint;
         this.clickTint = config.clickTint;
         this.baseTint = config.baseTint;
@@ -109,22 +116,23 @@ class Button extends Module<WorldObject> {
 
     isHovered() {
         if (!this.enabled) return false;
+        if (!this.canHover()) return false;
+
+        if (!this.isOverlappingMouse()) return false;
 
         let mouseBounds = this.worldObject.world.getWorldMouseBounds();
+        return Button.getClosestButton(mouseBounds, this.worldObject.world) === this;
+    }
 
-        if (!this.worldObject.bounds.isOverlapping(mouseBounds)) return false;
-
-        if (IS_MOBILE) {
-            return Button.getClosestButton(mouseBounds, this.worldObject.world) === this;
-        }
-        
-        return true;
+    isOverlappingMouse() {
+        let mouseBounds = this.worldObject.world.getWorldMouseBounds();
+        return this.worldObject.bounds.isOverlapping(mouseBounds);
     }
 }
 
 namespace Button {
     export function getClosestButton(targetBounds: CircleBounds, world: World) {
-        let buttons = world.select.modules(Button).filter(button => button.worldObject.isActive() && button.enabled && button.worldObject.bounds.isOverlapping(targetBounds));
+        let buttons = world.select.modules(Button).filter(button => button.worldObject.isActive() && button.enabled && button.worldObject.bounds.isOverlapping(targetBounds) && button.canHover());
         return M.argmin(buttons, button => distanceTo(targetBounds.x, targetBounds.y, button.worldObject.bounds.getBoundingBox()));
     }
 

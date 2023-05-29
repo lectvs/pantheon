@@ -163,6 +163,10 @@ class Vector2 {
         return this;
     }
 
+    toPolar() {
+        return new Vector2Polar(this.angle, this.magnitude);
+    }
+
     withMagnitude(magnitude: number) {
         let copy = this.clone();
         copy.setMagnitude(magnitude);
@@ -200,4 +204,23 @@ class Vector2 {
 
     // Misc
     static get ZERO() { return new Vector2(0, 0); }
+}
+
+class Vector2Polar {
+    angle: number;
+    radius: number;
+
+    constructor(angle: number, radius: number) {
+        this.angle = angle;
+        this.radius = radius;
+    }
+
+    scale(amount: number) {
+        this.radius *= amount;
+        return this;
+    }
+
+    toCartesian() {
+        return Vector2.fromPolar(this.radius, this.angle);
+    }
 }
