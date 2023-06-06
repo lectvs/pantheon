@@ -58,7 +58,7 @@ class LocalStorageTrueBackend implements LocalStorageBackend {
 
     getJson<T>(key: string) {
         let str = this.getString(key);
-        return _.isEmpty(str) ? undefined : <T>JSON.parse(str);
+        return _.isEmpty(str) || str === 'undefined' ? undefined : <T>JSON.parse(str);
     }
 
     getString(key: string) {
