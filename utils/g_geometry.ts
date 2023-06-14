@@ -7,6 +7,19 @@ namespace G {
         return angle;
     }
 
+    export function average(...ps: Pt[]) {
+        if (_.isEmpty(ps)) {
+            return undefined;
+        }
+
+        let sum = vec2(0, 0);
+        for (let p of ps) {
+            sum.add(p);
+        }
+        sum.scale(1 / ps.length);
+        return sum;
+    }
+
     export function circleIntersectsSegment(cx: number, cy: number, r: number, lx1: number, ly1: number, lx2: number, ly2: number) {
         let dx = cx - lx1;
         let dy = cy - ly1;
