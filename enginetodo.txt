@@ -89,6 +89,7 @@ TODO
 - rename Vector2 constants to Anchor and Direction
 - why does physicslastx/y exist? can we make a reliable lastx/y or dx/y that works regardless of update order?
 - invert parameters lerp(a, b, t) -> lerp(t, a, b)?
+- new visualUpdate() method similar to preUpdate, update, postUpdate specifically for updating visuals?
 
 stretch
 - normal-map/lighting
