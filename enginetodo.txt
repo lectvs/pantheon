@@ -28,6 +28,7 @@ TODO
 - better world and object management (freeing)
 - delete useless bloat
 - look into more performant graphics libraries
+- look into pixi gpu usage: https://www.google.com/search?q=pixijs+uses+gpu
 - attach arbitrary "update"/"render" objects to worldobjects (e.g. timers, new module system?)
 - improve compile time
 - clean up fixed framerate/nonupdate stuff
@@ -91,6 +92,7 @@ TODO
 - invert parameters lerp(a, b, t) -> lerp(t, a, b)?
 - new visualUpdate() method similar to preUpdate, update, postUpdate specifically for updating visuals?
 - refactor A.sort to use parameter `reverse?: 'reverse'`
+- Network.httpRequest should return some kind of error if the user is not connected to the internet
 
 stretch
 - normal-map/lighting
