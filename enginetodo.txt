@@ -93,6 +93,7 @@ TODO
 - new visualUpdate() method similar to preUpdate, update, postUpdate specifically for updating visuals?
 - refactor A.sort to use parameter `reverse?: 'reverse'`
 - Network.httpRequest should return some kind of error if the user is not connected to the internet
+- "Failed to detect time of collision between circle and inverted rect", maybe with changing bounds?
 
 stretch
 - normal-map/lighting
