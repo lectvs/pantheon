@@ -7,6 +7,8 @@ namespace Button {
         onJustHovered?: Callback;
         onUnhover?: Callback;
         onJustUnhovered?: Callback;
+        onClickedDown?: Callback;
+        onJustClickedDown?: Callback;
 
         canHover?: () => boolean;
 
@@ -14,6 +16,7 @@ namespace Button {
         clickTint?: number;
         baseTint?: number;
 
+        priority?: number;
         enabled?: boolean;
     }
 
@@ -31,6 +34,8 @@ class Button extends Module<WorldObject> {
     onJustHovered: Button.Callback;
     onUnhover: Button.Callback;
     onJustUnhovered: Button.Callback;
+    onClickedDown: Button.Callback;
+    onJustClickedDown: Button.Callback;
 
     canHover: () => boolean;
 
@@ -38,10 +43,12 @@ class Button extends Module<WorldObject> {
     clickTint?: number;
     baseTint?: number;
 
+    priority: number;
     enabled: boolean;
 
     private lastHovered: boolean = false;
-    private clickedDownOn: boolean = false;
+    private lastClickedDown: boolean = false;
+    private clickedDown: boolean = false;
 
     get worldObject() { return <Button.CompatibleWorldObject>this._worldObject; }
 
@@ -53,10 +60,13 @@ class Button extends Module<WorldObject> {
         this.onJustHovered = config.onJustHovered ?? Utils.NOOP;
         this.onUnhover = config.onUnhover ?? Utils.NOOP;
         this.onJustUnhovered = config.onJustUnhovered ?? Utils.NOOP;
+        this.onClickedDown = config.onClickedDown ?? Utils.NOOP;
+        this.onJustClickedDown = config.onJustClickedDown ?? Utils.NOOP;
         this.canHover = config.canHover ?? (() => true);
         this.hoverTint = config.hoverTint;
         this.clickTint = config.clickTint;
         this.baseTint = config.baseTint;
+        this.priority = config.priority ?? 0;
         this.enabled = config.enabled ?? true;
     }
 
@@ -72,10 +82,20 @@ class Button extends Module<WorldObject> {
         super.update();
 
         let hovered = this.isHovered();
-        let clicked = this.clickedDownOn && Input.isDown(Input.GAME_SELECT);
+
+        if (hovered && Input.justDown(Input.GAME_SELECT)) {
+            this.clickedDown = true;
+        }
+
+        if (Input.justUp(Input.GAME_SELECT)) {
+            if (hovered && this.clickedDown) {
+                this.click();
+            }
+            this.clickedDown = false;
+        }
         
         if (hovered) {
-            if (clicked) {
+            if (this.clickedDown) {
                 if (this.clickTint !== undefined) this.worldObject.tint = this.clickTint;
             } else {
                 if (this.hoverTint !== undefined) this.worldObject.tint = this.hoverTint;
@@ -89,6 +109,12 @@ class Button extends Module<WorldObject> {
             if (!this.lastHovered) {
                 this.onJustHovered();
             }
+            if (this.clickedDown) {
+                this.onClickedDown();
+                if (!this.lastClickedDown) {
+                    this.onJustClickedDown();
+                }
+            }
         } else {
             this.onUnhover();
             if (this.lastHovered) {
@@ -96,18 +122,8 @@ class Button extends Module<WorldObject> {
             }
         }
 
-        if (hovered && Input.justDown(Input.GAME_SELECT)) {
-            if (hovered) this.clickedDownOn = true;
-        }
-
-        if (Input.justUp(Input.GAME_SELECT)) {
-            if (hovered && this.clickedDownOn) {
-                this.click();
-            }
-            this.clickedDownOn = false;
-        }
-
         this.lastHovered = hovered;
+        this.lastClickedDown = this.clickedDown;
     }
 
     click() {
@@ -133,7 +149,17 @@ class Button extends Module<WorldObject> {
 namespace Button {
     export function getClosestButton(targetBounds: CircleBounds, world: World) {
         let buttons = world.select.modules(Button).filter(button => button.worldObject.isActive() && button.enabled && button.worldObject.bounds.isOverlapping(targetBounds) && button.canHover());
-        return M.argmin(buttons, button => distanceTo(targetBounds.x, targetBounds.y, button.worldObject.bounds.getBoundingBox()));
+        if (_.isEmpty(buttons)) {
+            return undefined;
+        }
+
+        buttons.sort((b1, b2) => {
+            if (b1.priority !== b2.priority) return b2.priority - b1.priority;
+            let b1dist = distanceTo(targetBounds.x, targetBounds.y, b1.worldObject.bounds.getBoundingBox());
+            let b2dist = distanceTo(targetBounds.x, targetBounds.y, b2.worldObject.bounds.getBoundingBox());
+            return b1dist - b2dist;
+        });
+        return buttons[0];
     }
 
     function distanceTo(x: number, y: number, rect: Rect) {
