@@ -95,6 +95,7 @@ TODO
 - Network.httpRequest should return some kind of error if the user is not connected to the internet
 - "Failed to detect time of collision between circle and inverted rect", maybe with changing bounds?
 - lci bounds=allcircle
+- asset texture default anchor center
 
 stretch
 - normal-map/lighting
