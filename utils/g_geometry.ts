@@ -63,6 +63,10 @@ namespace G {
         rect.height += 2*amount;
     }
 
+    export function generatePolygonVertices(cx: number, cy: number, r: number, n: number, angle: number = 0) {
+        return A.range(n).map(i => vec2(cx + r*M.cos(angle + 360/n*(i+0.5)), cy + r*M.sin(angle + 360/n*(i+0.5))));
+    }
+
     export function lerpPt(pt1: Pt, pt2: Pt, t: number) {
         return vec2(M.lerp(pt1.x, pt2.x, t), M.lerp(pt1.y, pt2.y, t));
     }
