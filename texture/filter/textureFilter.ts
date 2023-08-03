@@ -231,6 +231,22 @@ namespace TextureFilter {
             return abs(x - y) < 0.0001;
         }
 
+        float round(float x) {
+            return floor(x + 0.5);
+        }
+
+        vec2 round(vec2 x) {
+            return vec2(round(x.x), round(x.y));
+        }
+
+        vec3 round(vec3 x) {
+            return vec3(round(x.x), round(x.y), round(x.z));
+        }
+
+        vec4 round(vec4 x) {
+            return vec4(round(x.x), round(x.y), round(x.z), round(x.w));
+        }
+
         bool convolute44(float x, float y, float p00, float p10, float p20, float p30, float p01, float p11, float p21, float p31, float p02, float p12, float p22, float p32, float p03, float p13, float p23, float p33) {
             return approx(getColor(x, y).a, p00) && approx(getColor(x+1.0, y).a, p10) && approx(getColor(x+2.0, y).a, p20) && approx(getColor(x+3.0, y).a, p30)
                 && approx(getColor(x, y+1.0).a, p01) && approx(getColor(x+1.0, y+1.0).a, p11) && approx(getColor(x+2.0, y+1.0).a, p21) && approx(getColor(x+3.0, y+1.0).a, p31)
