@@ -96,6 +96,7 @@ TODO
 - "Failed to detect time of collision between circle and inverted rect", maybe with changing bounds?
 - lci bounds=allcircle
 - asset texture default anchor center
+- move Game.allowPauseWithPauseKey from a global property to an evaluated function (based on world flags?)
 
 stretch
 - normal-map/lighting
