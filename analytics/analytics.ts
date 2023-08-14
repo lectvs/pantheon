@@ -80,6 +80,7 @@ namespace Analytics {
 
         save();
 
+        "modded_remove_from";
         var time = Date.now();
         if (last_submit_time > 0 && time - last_submit_time < MAX_SUBMIT_TIME) {
             console.error("Throttled");
@@ -94,6 +95,7 @@ namespace Analytics {
                 if (err !== 'Requested resource not found' || Debug.DEBUG) console.error(err);
             }
         });
+        "modded_remove_to";
     }
 
     export function getProfileId() {
@@ -106,7 +108,7 @@ namespace Analytics {
 
     export function registerUpdater<T>(key: string, initialValue: T): RegisteredUpdater<T> {
         if (key in registeredUpdaters) {
-            console.error(`Analytic Updater '${key}' has already been registered`);
+            console.error(`Analytics Updater '${key}' has already been registered`);
             return registeredUpdaters[key];
         }
 
@@ -126,7 +128,7 @@ namespace Analytics {
 
     export function registerSubmitter<T>(key: string, get: Getter<T>) {
         if (key in registeredSubmitters) {
-            console.error(`Analytic Submitter '${key}' has already been registered`);
+            console.error(`Analytics Submitter '${key}' has already been registered`);
             return;
         }
 
@@ -151,5 +153,7 @@ namespace Analytics {
         LocalStorage.setString(`${global.gameCodeName}_analytics`, encoded);
     }
 
+    "modded_remove_from";
     const LAMBDA_URL = 'https://do3edgzm3f.execute-api.us-east-2.amazonaws.com/default/analytics';
+    "modded_remove_to";
 }
