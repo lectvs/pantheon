@@ -38,9 +38,6 @@ namespace Analytics {
 
     var sessionFrames: number;
 
-    const MAX_SUBMIT_TIME = 5000;
-    var last_submit_time = 0;
-
     export function init() {
         let now = Date.now();
         profileData.profileId = `${now}_${new UIDGenerator().generate()}`;
@@ -79,21 +76,6 @@ namespace Analytics {
         }
 
         save();
-
-        var time = Date.now();
-        if (last_submit_time > 0 && time - last_submit_time < MAX_SUBMIT_TIME) {
-            console.error("Throttled");
-            return;
-        }
-        last_submit_time = time;
-
-        let profileEncoded = encodeURIComponent(St.encodeB64S(JSON.stringify(profileData)));
-        let sessionEncoded = encodeURIComponent(St.encodeB64S(JSON.stringify(sessionData)));
-        Network.httpRequest(`${LAMBDA_URL}?operation=submit&game=${global.gameCodeName}&profile=${profileEncoded}&session=${sessionEncoded}`, null, (responseJson: any, err: string) => {
-            if (err) {
-                if (err !== 'Requested resource not found' || Debug.DEBUG) console.error(err);
-            }
-        });
     }
 
     export function getProfileId() {
@@ -150,6 +132,4 @@ namespace Analytics {
         let encoded = St.encodeB64S(JSON.stringify(profileData));
         LocalStorage.setString(`${global.gameCodeName}_analytics`, encoded);
     }
-
-    const LAMBDA_URL = 'https://do3edgzm3f.execute-api.us-east-2.amazonaws.com/default/analytics';
 }
