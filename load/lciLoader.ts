@@ -15,7 +15,7 @@ class LciLoader implements Loader {
     }
 
     load(callback?: () => void) {
-        let url = Main.getRootPath() + 'assets/' + (this.texture.url ?? `${this.key}.lci`);
+        let url = Preload.getAssetUrl(this.key, this.texture.url, 'lci');
         this.pixiLoader = new PIXI.Loader();
         this.pixiLoader.add(this.key, url);
         this.pixiLoader.load(() => this.onLoadLci(callback));

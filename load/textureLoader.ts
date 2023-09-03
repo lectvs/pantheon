@@ -13,7 +13,7 @@ class TextureLoader implements Loader {
     }
 
     load(callback?: () => void) {
-        let url = this.getUrl();
+        let url = Preload.getAssetUrl(this.key, this.texture.url, 'png');
         this.pixiLoader = new PIXI.Loader();
         this.pixiLoader.add(this.key, url);
         this.pixiLoader.load(() => {
@@ -21,11 +21,6 @@ class TextureLoader implements Loader {
             this._completionPercent = 1;
             if (callback) callback();
         });
-    }
-
-    private getUrl() {
-        if (this.texture.url && this.texture.url.startsWith('data:')) return this.texture.url;
-        return Main.getRootPath() + 'assets/' + (this.texture.url ?? `${this.key}.png`);
     }
 
     private onLoad() {

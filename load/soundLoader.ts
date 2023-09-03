@@ -12,7 +12,7 @@ class SoundLoader implements Loader {
     }
 
     load(callback?: () => void) {
-        let url = Main.getRootPath() + 'assets/' + (this.sound.url ?? `${this.key}.aac`);
+        let url = Preload.getAssetUrl(this.key, this.sound.url, 'aac');
         if (url.endsWith('.ogg')) {
             console.error("Do not use .ogg!", url);
         }

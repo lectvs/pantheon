@@ -79,14 +79,15 @@ namespace Preload {
 }
 
 class Preload {
+    static assetUrlOverrides: Dict<string> = {};
+
     private static loaderSystem: LoaderSystem;
 
     static preload(options: Preload.Options) {
         let loaders: Loader[] = [];
 
         for (let key in options.textures) {
-            let texture = options.textures[key];
-            if (texture.url && texture.url.endsWith('.lci')) {
+            if (this.isLciImage(options.textures[key].url)) {
                 loaders.push(new LciLoader(key, options.textures[key]));
             } else {
                 loaders.push(new TextureLoader(key, options.textures[key]));
@@ -115,5 +116,18 @@ class Preload {
 
         this.loaderSystem = new LoaderSystem(loaders);
         this.loaderSystem.load(options.progressCallback, options.onLoad);
+    }
+
+    private static isLciImage(url: string) {
+        if (!url) return false;
+        return url.endsWith('.lci') || url.startsWith('data:image/lci;');
+    }
+
+    static getAssetUrl(key: string, url: string | undefined, defaultExtension: string) {
+        let baseUrl = url || `${key}.${defaultExtension}`;
+        let overridenUrl = this.assetUrlOverrides[baseUrl] || baseUrl;
+        if (overridenUrl.startsWith('data:')) return overridenUrl;
+
+        return Main.getRootPath() + 'assets/' + overridenUrl;
     }
 }

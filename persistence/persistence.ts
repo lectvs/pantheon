@@ -1,4 +1,4 @@
-namespace Analytics {
+namespace Persistence {
     type ProfileData = {
         profileId: string;
         totalPlayTime: number;
@@ -88,7 +88,7 @@ namespace Analytics {
 
     export function registerUpdater<T>(key: string, initialValue: T): RegisteredUpdater<T> {
         if (key in registeredUpdaters) {
-            console.error(`Analytics Updater '${key}' has already been registered`);
+            console.error(`Persistence Updater '${key}' has already been registered`);
             return registeredUpdaters[key];
         }
 
@@ -108,7 +108,7 @@ namespace Analytics {
 
     export function registerSubmitter<T>(key: string, get: Getter<T>) {
         if (key in registeredSubmitters) {
-            console.error(`Analytics Submitter '${key}' has already been registered`);
+            console.error(`Persistence Submitter '${key}' has already been registered`);
             return;
         }
 

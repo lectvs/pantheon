@@ -12,16 +12,18 @@ class FontLoader implements Loader {
     }
 
     load(callback?: () => void) {
-        let url = this.font.url ?? `${this.key}.png`;
-
         new TextureLoader(this.key, {
-            url: url,
+            url: this.getUrl(),
             spritesheet: { frameWidth: this.font.charWidth, frameHeight: this.font.charHeight, anchor: Vector2.TOP_LEFT },
         }).load(() => {
             this.onLoad();
             this._completionPercent = 1;
             if (callback) callback();
         });
+    }
+
+    private getUrl() {
+        return this.font.url ?? `${this.key}.png`;
     }
 
     private onLoad() {

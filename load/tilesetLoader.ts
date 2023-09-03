@@ -12,16 +12,18 @@ class TilesetLoader implements Loader {
     }
 
     load(callback?: () => void) {
-        let url = this.tileset.url ?? `${this.key}.png`;
-
         new TextureLoader(this.key, {
-            url: url,
+            url: this.getUrl(),
             spritesheet: { frameWidth: this.tileset.tileWidth, frameHeight: this.tileset.tileHeight, anchor: Vector2.CENTER },
         }).load(() => {
             this.onLoad();
             this._completionPercent = 1;
             if (callback) callback();
         });
+    }
+
+    private getUrl() {
+        return this.tileset.url ?? `${this.key}.png`;
     }
 
     private onLoad() {

@@ -116,7 +116,7 @@ class Main {
         this.soundManager = new GlobalSoundManager();
         
         WebAudio.initContext();
-        Analytics.init();
+        Persistence.init();
 
         if (this.config.beforePreload) this.config.beforePreload();
 
@@ -183,7 +183,7 @@ class Main {
                 Main.soundManager.postGameUpdate();
                 Input.postUpdate();
             }
-            Analytics.update(frameDelta/60);
+            Persistence.update(frameDelta/60);
             Persist.update(frameDelta/60);
             if (MobileUtils.isMobileBrowser()) {
                 MobileScaleManager.update();
