@@ -85,6 +85,7 @@ TODO
 - handle playing a music track if the track is already playing
 - look into moving from localstorage to indexeddb: https://web.dev/indexeddb/
 - preload/load overhaul + get off of pixi's preload system
+    - load from zip file?
 - debug show overlay with O key doesn't always work. sometimes i need to call Debug.SHOW_OVERLAY=true
 - add velocity properties to WorldObject
 - rename Vector2 constants to Anchor and Direction
@@ -97,6 +98,7 @@ TODO
 - lci bounds=allcircle
 - asset texture default anchor center
 - move Game.allowPauseWithPauseKey from a global property to an evaluated function (based on world flags?)
+- new paint.net 5.x plugin capabilities: https://boltbait.com/pdn/CodeLab/help/tutorial.php
 
 stretch
 - normal-map/lighting
