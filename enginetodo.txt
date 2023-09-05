@@ -62,7 +62,6 @@ TODO
 - better resolution of copyFromParent and render ordering (polarity inverter bug)
 - revisit temp approx/convolute44 methods in TextureFilter
 - ability to define custom TextureFilter helper methods in shader
-- update paint.net (+ plugins?)
 - simplify pre- and post- effects (remove filters field?)
 - better WorldAsWorldObject (containers?)
 - world and worldobject hooks/events (onDeath, onLoad, etc.)
