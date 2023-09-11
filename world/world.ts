@@ -23,9 +23,10 @@ namespace World {
         useRaycastDisplacementThreshold?: number;
         maxDistancePerCollisionStep?: number;
         minDistanceIgnoreCollisionStepCalculation?: number;
+        defaultZBehavior?: WorldObject.ZBehavior;
 
         volume?: number;
-        globalSoundHumanizePercent?: number;
+        globalSoundHumanizeFactor?: number;
 
         timescale?: number;
         allowPause?: boolean;
@@ -76,6 +77,7 @@ class World {
     useRaycastDisplacementThreshold: number;
     maxDistancePerCollisionStep: number;
     minDistanceIgnoreCollisionStepCalculation: number;
+    defaultZBehavior: WorldObject.ZBehavior;
 
     layers: World.Layer[];
     effects: Effects;
@@ -100,7 +102,7 @@ class World {
 
     volume: number;
     allowSounds: boolean;
-    globalSoundHumanizePercent: number;
+    globalSoundHumanizeFactor: number;
 
     allowPause: boolean;
 
@@ -117,7 +119,7 @@ class World {
 
         this.volume = config.volume ?? 1;
         this.allowSounds = true;
-        this.globalSoundHumanizePercent = config.globalSoundHumanizePercent ?? 0;
+        this.globalSoundHumanizeFactor = config.globalSoundHumanizeFactor ?? 0;
 
         this.width = config.width ?? global.gameWidth;
         this.height = config.height ?? global.gameHeight;
@@ -135,6 +137,7 @@ class World {
         this.useRaycastDisplacementThreshold = config.useRaycastDisplacementThreshold ?? 1;
         this.maxDistancePerCollisionStep = config.maxDistancePerCollisionStep ?? Infinity;
         this.minDistanceIgnoreCollisionStepCalculation = config.minDistanceIgnoreCollisionStepCalculation ?? Infinity;
+        this.defaultZBehavior = config.defaultZBehavior ?? 'noop';
 
         this.worldObjects = [];
         this.layers = this.createLayers(config.layers);
@@ -349,8 +352,8 @@ class World {
         sound.speed = config?.speed ?? 1;
 
         let humanized = config?.humanized ?? (sound.duration < 1);
-        if (humanized && this.globalSoundHumanizePercent > 0) {
-            sound.humanize(this.globalSoundHumanizePercent);
+        if (humanized && this.globalSoundHumanizeFactor > 0) {
+            sound.humanize(this.globalSoundHumanizeFactor);
         }
         return sound;
     }

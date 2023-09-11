@@ -54,7 +54,7 @@ class WorldObject {
     localz: number;
     activeOutsideWorldBoundsBuffer: number;
     life: WorldObject.LifeTimer;
-    zBehavior: WorldObject.ZBehavior;
+    zBehavior?: WorldObject.ZBehavior;
     timeScale: number;
     useGlobalTime: boolean;
     updateOnNonUpdate: boolean;
@@ -138,7 +138,7 @@ class WorldObject {
 
         this.activeOutsideWorldBoundsBuffer = config.activeOutsideWorldBoundsBuffer ?? Infinity;
         this.life = new WorldObject.LifeTimer(config.life ?? Infinity, () => this.kill());
-        this.zBehavior = config.zBehavior ?? WorldObject.DEFAULT_Z_BEHAVIOR;
+        this.zBehavior = config.zBehavior;
         this.timeScale = config.timeScale ?? 1;
         this.useGlobalTime = config.useGlobalTime ?? false;
         this.updateOnNonUpdate = config.updateOnNonUpdate ?? false;
@@ -269,7 +269,7 @@ class WorldObject {
 
         result += Math.round(this.localy);
 
-        if (this.zBehavior === 'threequarters') {
+        if (this.getZBehavior() === 'threequarters') {
             let parentz = this.parent ? this.parent.z : 0;
             result += parentz - this.z;
         }
@@ -372,6 +372,12 @@ class WorldObject {
 
     getVisibleScreenBounds(): Rect {
         return undefined;
+    }
+
+    getZBehavior(): WorldObject.ZBehavior {
+        if (this.zBehavior) return this.zBehavior;
+        if (this.world) return this.world.defaultZBehavior;
+        return 'noop';
     }
 
     hasTag(tag: string) {
@@ -576,8 +582,6 @@ class WorldObject {
     private internalRemoveChildFromParentWorldObjectParent(child: WorldObject) {
         A.removeAll(this._children, child);
     }
-
-    static DEFAULT_Z_BEHAVIOR: WorldObject.ZBehavior = 'noop';
 }
 
 namespace WorldObject {

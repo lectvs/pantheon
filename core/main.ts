@@ -9,7 +9,6 @@ namespace Main {
         backgroundColor: number;
         fpsLimit: number;
         preventScrollOnCanvas: boolean;
-        defaultZBehavior?: WorldObject.ZBehavior;
         defaultSpriteTextFont?: string;
 
         preloadBackgroundColor: number;
@@ -86,7 +85,6 @@ class Main {
         global.gameWidth = this.config.gameWidth;
         global.gameHeight = this.config.gameHeight;
         global.backgroundColor = this.config.backgroundColor;
-        WorldObject.DEFAULT_Z_BEHAVIOR = this.config.defaultZBehavior ?? 'noop';
         SpriteText.addTags(this.config.spriteTextTags ?? {});
         SpriteText.DEFAULT_FONT = this.config.defaultSpriteTextFont;
         DialogProfiles.initProfiles(this.config.dialogProfiles);
