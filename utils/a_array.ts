@@ -172,7 +172,18 @@ namespace A {
             m = n;
             n = 0;
         }
+        if (n === m) return [];
         return [...Array(m-n).keys()].map(i => i + n);
+    }
+
+    /**
+     * An array of integers from n to m, inclusive.
+     * Supports cases where n < m, n = m, or n > m.
+     */
+    export function rangeInclusive(n: number, m: number) {
+        if (n === m) return [n];
+        if (n > m) return [...Array(n-m+1).keys()].map(i => n - i);
+        return [...Array(m-n+1).keys()].map(i => i + n);
     }
 
     /**
