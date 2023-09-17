@@ -28,28 +28,16 @@ namespace A {
         return result;
     }
 
-    export function emptyArray<T>(n: number) {
-        return filledArray<T>(n);
+    export function emptyArray<T>(count: number) {
+        return filledArray<T>(count);
     }
 
-    export function filledArray<T>(n: number, fillWith?: T) {
-        let result: T[] = [];
-        for (let i = 0; i < n; i++) {
-            result.push(fillWith);
-        }
-        return result;
+    export function filledArray<T>(count: number, fillWith?: T) {
+        return sequence(count, i => fillWith);
     }
 
     export function filledArray2D<T>(rows: number, cols: number, fillWith?: T) {
-        let result: T[][] = [];
-        for (let i = 0; i < rows; i++) {
-            let line: T[] = [];
-            for (let j = 0; j < cols; j++) {
-                line.push(fillWith);
-            }
-            result.push(line);
-        }
-        return result;
+        return sequence2D(rows, cols, (i, j) => fillWith);
     }
 
     export function filterInPlace<T>(array: T[], predicate: (value: T, index: number, array: T[]) => any) {
@@ -173,7 +161,7 @@ namespace A {
             n = 0;
         }
         if (n === m) return [];
-        return [...Array(m-n).keys()].map(i => i + n);
+        return sequence(m-n, i => i+n);
     }
 
     /**
@@ -181,9 +169,8 @@ namespace A {
      * Supports cases where n < m, n = m, or n > m.
      */
     export function rangeInclusive(n: number, m: number) {
-        if (n === m) return [n];
-        if (n > m) return [...Array(n-m+1).keys()].map(i => n - i);
-        return [...Array(m-n+1).keys()].map(i => i + n);
+        if (n >= m) return sequence(n-m+1, i => n-i);
+        return sequence(m-n+1, i => i+n);
     }
 
     /**
@@ -217,6 +204,21 @@ namespace A {
             result.push(...array);
         }
         return result;
+    }
+
+    /**
+     * Creates a new array equal to: [f(0), f(1), f(2), ..., f(count-1)]
+     */
+    export function sequence<T>(count: number, f: (i: number) => T) {
+        let result: T[] = [];
+        for (let i = 0; i < count; i++) {
+            result.push(f(i));
+        }
+        return result;
+    }
+
+    export function sequence2D<T>(rows: number, cols: number, f: (i: number, j: number) => T) {
+        return sequence(rows, i => sequence(cols, j => f(i, j)));
     }
 
     /**
