@@ -13,8 +13,8 @@ namespace S {
 
             yield S.doOverTime(duration, t => {
                 let toPoint = toMode.getTargetPt(camera);
-                cameraPoint.x = M.lerp(startPoint.x, toPoint.x, easingFunction(t));
-                cameraPoint.y = M.lerp(startPoint.y, toPoint.y, easingFunction(t));
+                cameraPoint.x = M.lerp(t, startPoint.x, toPoint.x, easingFunction);
+                cameraPoint.y = M.lerp(t, startPoint.y, toPoint.y, easingFunction);
                 camera.snapPosition();
             });
 

@@ -68,7 +68,7 @@ namespace G {
     }
 
     export function lerpPt(pt1: Pt, pt2: Pt, t: number) {
-        return vec2(M.lerp(pt1.x, pt2.x, t), M.lerp(pt1.y, pt2.y, t));
+        return vec2(M.lerp(t, pt1.x, pt2.x), M.lerp(t, pt1.y, pt2.y));
     }
 
     export function moveToClamp(current: Vector2, to: Vector2, speed: number, delta: number) {

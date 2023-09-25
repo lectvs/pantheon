@@ -101,13 +101,14 @@ namespace M {
         return Math.sqrt(2*height*Math.abs(gravity));
     }
 
-    export function lerp(a: number, b: number, t: number) {
+    export function lerp(t: number, a: number, b: number, fn?: Tween.Easing.Function) {
+        if (fn) t = fn(t);
         return a*(1-t) + b*t;
     }
 
     export function lerpTime(a: number, b: number, speed: number, delta: number) {
         // From https://www.gamasutra.com/blogs/ScottLembcke/20180404/316046/Improved_Lerp_Smoothing.php
-        return lerp(a, b, 1-Math.pow(2, -speed*delta));
+        return lerp(1-Math.pow(2, -speed*delta), a, b);
     }
 
     export function magnitude(dx: number, dy: number) {
@@ -118,20 +119,15 @@ namespace M {
         return dx*dx + dy*dy;
     }
 
-    export function map(value: number, fromMin: number, fromMax: number, toMin: number, toMax: number) {
+    export function map(value: number, fromMin: number, fromMax: number, toMin: number, toMax: number, tweenFn?: Tween.Easing.Function) {
         let p = (value - fromMin) / (fromMax - fromMin);
-        return lerp(toMin, toMax, p);
+        return lerp(p, toMin, toMax, tweenFn);
     }
 
-    export function mapClamp(value: number, fromMin: number, fromMax: number, toMin: number, toMax: number) {
+    export function mapClamp(value: number, fromMin: number, fromMax: number, toMin: number, toMax: number, tweenFn?: Tween.Easing.Function) {
         let clampMin = toMin <= toMax ? toMin : toMax;
         let clampMax = toMin <= toMax ? toMax : toMin;
-        return clamp(map(value, fromMin, fromMax, toMin, toMax), clampMin, clampMax);
-    }
-
-    export function mapTween(value: number, fromMin: number, fromMax: number, toMin: number, toMax: number, tweenFn: Tween.Easing.Function) {
-        let p = (value - fromMin) / (fromMax - fromMin);
-        return lerp(toMin, toMax, tweenFn(p));
+        return clamp(map(value, fromMin, fromMax, toMin, toMax, tweenFn), clampMin, clampMax);
     }
 
     export function max<T>(array: T[], key: (x: T) => number) {

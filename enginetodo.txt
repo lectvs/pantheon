@@ -1,6 +1,4 @@
 TODO
-- invert parameters lerp(a, b, t) -> lerp(t, a, b)?
-    - lerp optional parameter for tween function
 - handle playing a music track if the track is already playing
 - simple mask shapes (like rectangle)
 - move colorToVec3 and vec3ToColor to Color util

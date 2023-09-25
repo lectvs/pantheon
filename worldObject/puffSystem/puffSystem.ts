@@ -55,9 +55,9 @@ class PuffSystem extends WorldObject {
         for (let puff of this.puffs) {
             let progress = puff.t / puff.maxLife;
 
-            let radius = M.lerp(puff.initialRadius, puff.finalRadius, progress);
-            let color = Color.lerpColorByLch(puff.initialColor, puff.finalColor, progress);
-            let alpha = M.lerp(puff.initialAlpha, puff.finalAlpha, progress);
+            let radius = M.lerp(progress, puff.initialRadius, puff.finalRadius);
+            let color = Color.lerpColorByLch(progress, puff.initialColor, puff.finalColor);
+            let alpha = M.lerp(progress, puff.initialAlpha, puff.finalAlpha);
 
             Draw.brush.color = color;
             Draw.brush.alpha = alpha;

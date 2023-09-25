@@ -786,7 +786,7 @@ namespace World {
                 expandWorldObjectBounds(bounds, obj, deep);
             }
 
-            let anchorPoint = vec2(M.lerp(bounds.left, bounds.right, anchor.x), M.lerp(bounds.top, bounds.bottom, anchor.y));
+            let anchorPoint = vec2(M.lerp(anchor.x, bounds.left, bounds.right), M.lerp(anchor.y, bounds.top, bounds.bottom));
 
             if (!isFinite(anchorPoint.x) || !isFinite(anchorPoint.y)) {
                 console.error('Non-finite anchorPoint for balancing:', objs, anchorPoint);

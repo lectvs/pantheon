@@ -13,15 +13,15 @@ namespace Color {
 
         let a = M.clamp(alpha, 0, 1);
         let blendedColorArray: [number, number, number] = [
-            M.lerp(bgColorArray[0], fgColorArray[0], a),
-            M.lerp(bgColorArray[1], fgColorArray[1], a),
-            M.lerp(bgColorArray[2], fgColorArray[2], a),
+            M.lerp(a, bgColorArray[0], fgColorArray[0]),
+            M.lerp(a, bgColorArray[1], fgColorArray[1]),
+            M.lerp(a, bgColorArray[2], fgColorArray[2]),
         ];
 
         return M.vec3ToColor(blendedColorArray);
     }
 
-    export function lerpColorByLch(color1: number, color2: number, t: number): number {
+    export function lerpColorByLch(t: number, color1: number, color2: number): number {
         if (color1 === color2) return color1;
 
         let vec3color1 = M.colorToVec3(color1);
@@ -36,7 +36,7 @@ namespace Color {
         return M.vec3ToColor([rgbf[0] / 255, rgbf[1] / 255, rgbf[2] / 255]);
     }
 
-    export function lerpColorByRgb(color1: number, color2: number, t: number): number {
+    export function lerpColorByRgb(t: number, color1: number, color2: number): number {
         if (color1 === color2) return color1;
 
         let vec3color1 = M.colorToVec3(color1);

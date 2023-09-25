@@ -27,14 +27,14 @@ class Perlin {
         let bab = this.hash(xi+1, yi  , zi+1);
         let bbb = this.hash(xi+1, yi+1, zi+1);
 
-        let x11 = M.lerp(this.grad(aaa, xf, yf  , zf  ), this.grad(baa, xf-1, yf  , zf  ), u);
-        let x12 = M.lerp(this.grad(aba, xf, yf-1, zf  ), this.grad(bba, xf-1, yf-1, zf  ), u);
-        let x21 = M.lerp(this.grad(aab, xf, yf  , zf-1), this.grad(bab, xf-1, yf  , zf-1), u);
-        let x22 = M.lerp(this.grad(abb, xf, yf-1, zf-1), this.grad(bbb, xf-1, yf-1, zf-1), u);
-        let y1 = M.lerp(x11, x12, v);
-        let y2 = M.lerp(x21, x22, v);
+        let x11 = M.lerp(u, this.grad(aaa, xf, yf  , zf  ), this.grad(baa, xf-1, yf  , zf  ));
+        let x12 = M.lerp(u, this.grad(aba, xf, yf-1, zf  ), this.grad(bba, xf-1, yf-1, zf  ));
+        let x21 = M.lerp(u, this.grad(aab, xf, yf  , zf-1), this.grad(bab, xf-1, yf  , zf-1));
+        let x22 = M.lerp(u, this.grad(abb, xf, yf-1, zf-1), this.grad(bbb, xf-1, yf-1, zf-1));
+        let y1 = M.lerp(v, x11, x12);
+        let y2 = M.lerp(v, x21, x22);
 
-        return M.lerp(y1, y2, w);
+        return M.lerp(w, y1, y2);
     }
 
     seed(seed: any) {
