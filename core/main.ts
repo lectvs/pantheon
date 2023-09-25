@@ -114,7 +114,6 @@ class Main {
         this.soundManager = new GlobalSoundManager();
         
         WebAudio.initContext();
-        Persistence.init();
 
         if (this.config.beforePreload) this.config.beforePreload();
 
@@ -181,7 +180,6 @@ class Main {
                 Main.soundManager.postGameUpdate();
                 Input.postUpdate();
             }
-            Persistence.update(frameDelta/60);
             Persist.update(frameDelta/60);
             if (MobileUtils.isMobileBrowser()) {
                 MobileScaleManager.update();
@@ -234,9 +232,6 @@ class Main {
         window.addEventListener("keydown", event => {
             WebAudio.start();
             Input.handleKeyDownEvent(event);
-            if (event.key === 'Tab') {
-                event.preventDefault();
-            }
         });
         window.addEventListener("keyup", event => {
             WebAudio.start();

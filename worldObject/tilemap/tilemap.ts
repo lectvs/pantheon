@@ -125,7 +125,6 @@ class Tilemap extends WorldObject {
                 bounds: new RectBounds(rect.x, rect.y, rect.width, rect.height),
                 copyFromParent: ['layer', 'physicsGroup'],
                 immovable: true,
-                simulating: false,
             }));
             box.debugDrawBounds = this.debugDrawBounds;
             this.collisionBoxes.push(box);

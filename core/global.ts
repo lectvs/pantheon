@@ -27,3 +27,19 @@ class global {
     static gameHeight: number;
     static backgroundColor: number;
 }
+
+Object.defineProperty(window, 'W', {
+    get: () => global.gameWidth,
+});
+
+Object.defineProperty(window, 'H', {
+    get: () => global.gameHeight,
+});
+
+Object.defineProperty(window, 'HW', {
+    get: () => global.gameWidth/2,
+});
+
+Object.defineProperty(window, 'HH', {
+    get: () => global.gameHeight/2,
+});

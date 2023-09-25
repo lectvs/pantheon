@@ -224,7 +224,7 @@ namespace A {
     /**
      * Sorts in ascending order by default.
      */
-    export function sort<T>(array: T[], key: (t: T) => number, reverse: boolean = false) {
+    export function sort<T>(array: T[], key: (t: T) => number, reverse?: 'reverse') {
         let r = reverse ? -1 : 1;
         return array.sort((a,b) => r*(key(a)-key(b)));
     }
@@ -232,7 +232,7 @@ namespace A {
     /**
      * Sorts in ascending order by default.
      */
-    export function sorted<T>(array: T[], key: (t: T) => number, reverse: boolean = false) {
+    export function sorted<T>(array: T[], key: (t: T) => number, reverse?: 'reverse') {
         return A.sort(A.clone(array), key, reverse);
     }
 

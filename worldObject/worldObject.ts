@@ -10,6 +10,10 @@ namespace WorldObject {
         x?: number;
         y?: number;
         z?: number;
+        v?: Pt;
+        vx?: number;
+        vy?: number;
+        vz?: number;
         visible?: boolean;
         active?: boolean;
         activeOutsideWorldBoundsBuffer?: number;
@@ -69,6 +73,14 @@ class WorldObject {
     set x(value: number) { this.localx = value - (this.parent ? this.parent.x : 0); }
     set y(value: number) { this.localy = value - (this.parent ? this.parent.y : 0); }
     set z(value: number) { this.localz = value - (this.parent ? this.parent.z : 0); }
+
+    private _v: Vector2;
+    get v() { return this._v; }
+    set v(value: Vector2) {
+        this._v.x = value.x;
+        this._v.y = value.y;
+    }
+    vz: number;
 
     private _visible: boolean;
     private _active: boolean;
@@ -136,6 +148,9 @@ class WorldObject {
         this.localy = config.y ?? (config.p ? config.p.y : 0);
         this.localz = config.z ?? 0;
 
+        this._v = config.v ? vec2(config.v.x, config.v.y) : vec2(config.vx ?? 0, config.vy ?? 0);
+        this.vz = config.vz ?? 0;
+
         this.activeOutsideWorldBoundsBuffer = config.activeOutsideWorldBoundsBuffer ?? Infinity;
         this.life = new WorldObject.LifeTimer(config.life ?? Infinity, () => this.kill());
         this.zBehavior = config.zBehavior;
@@ -174,8 +189,8 @@ class WorldObject {
         this._children = [];
         this._parent = null;
 
-        this.internalSetLayerWorldObject(config.layer);
-        this.internalSetPhysicsGroupWorldObject(config.physicsGroup);
+        this.zinternal_setLayerWorldObject(config.layer);
+        this.zinternal_setPhysicsGroupWorldObject(config.physicsGroup);
 
         this.scriptManager = new ScriptManager();
         this.stateMachine = new StateMachine();
@@ -206,6 +221,8 @@ class WorldObject {
     }
 
     update() {
+        this.applyVelocity();
+
         this.scriptManager.update(this.delta);
         this.stateMachine.update(this.delta);
 
@@ -230,17 +247,28 @@ class WorldObject {
         }
     }
 
+    visualUpdate() {
+
+    }
+
     postUpdate() {
         this.controller.reset();
 
         if (this.postUpdateCallback) this.postUpdateCallback();
 
         this.resolveCopyFromParent();
+
+        if (!isFinite(this.v.x) || !isFinite(this.v.y)) {
+            console.error(`Non-finite velocity ${this.v} on object`, this);
+            if (!isFinite(this.v.x)) this.v.x = 0;
+            if (!isFinite(this.v.y)) this.v.y = 0;
+        }
     }
 
     fullUpdate() {
         this.preUpdate();
         this.update();
+        this.visualUpdate();
         this.postUpdate();
     }
 
@@ -324,6 +352,55 @@ class WorldObject {
         return durationOrTimer;
     }
 
+    detachAllChildren<T extends WorldObject>(): T[] {
+        return this.detachChildren(<ReadonlyArray<T>>this.children);
+    }
+
+    detachChild<T extends WorldObject>(child: T | string): T {
+        if (!child) return undefined;
+        if (_.isString(child)) {
+            child = this.getChildByName<T>(child);
+            if (!child) return undefined;
+        }
+        if (child.parent !== this) {
+            console.error(`Cannot detach child ${child.name} from parent ${this.name} because no such relationship exists`);
+            return undefined;
+        }
+        return World.Actions.detachChildFromParent(child);
+    }
+
+    detachChildKeepWorldPosition<T extends WorldObject>(child: T): T {
+        let x = child.x;
+        let y = child.y;
+        let z = child.z;
+        let result = this.detachChild(child);
+        child.x = x;
+        child.y = y;
+        child.z = z;
+        return result;
+    }
+
+    detachChildren<T extends WorldObject>(children: ReadonlyArray<T>): T[] {
+        if (_.isEmpty(children)) return [];
+        return children.map(child => this.detachChild(child)).filter(child => child);
+    }
+
+    detachFromParent(): this {
+        if (!this.parent) return this;
+        return this.parent.detachChild(this);
+    }
+
+    detachFromParentKeepWorldPosition(): this {
+        let x = this.x;
+        let y = this.y;
+        let z = this.z;
+        let result = this.detachFromParent();
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        return result;
+    }
+
     doAfterTime(time: number, callback: Function) {
         this.runScript(function*() {
             yield S.wait(time);
@@ -364,6 +441,10 @@ class WorldObject {
 
     getPosition() {
         return vec2(this.x, this.y);
+    }
+
+    getSpeed() {
+        return this.v.magnitude;
     }
 
     getTimers() {
@@ -417,55 +498,6 @@ class WorldObject {
         return Math.floor(this.life.time/n) % 2 === 1;
     }
 
-    removeAllChildren<T extends WorldObject>(): T[] {
-        return this.removeChildren(<ReadonlyArray<T>>this.children);
-    }
-
-    removeChild<T extends WorldObject>(child: T | string): T {
-        if (!child) return undefined;
-        if (_.isString(child)) {
-            child = this.getChildByName<T>(child);
-            if (!child) return undefined;
-        }
-        if (child.parent !== this) {
-            console.error(`Cannot remove child ${child.name} from parent ${this.name}, but no such relationship exists`);
-            return undefined;
-        }
-        return World.Actions.removeChildFromParent(child);
-    }
-
-    removeChildKeepWorldPosition<T extends WorldObject>(child: T): T {
-        let x = child.x;
-        let y = child.y;
-        let z = child.z;
-        let result = this.removeChild(child);
-        child.x = x;
-        child.y = y;
-        child.z = z;
-        return result;
-    }
-
-    removeChildren<T extends WorldObject>(children: ReadonlyArray<T>): T[] {
-        if (_.isEmpty(children)) return [];
-        return children.map(child => this.removeChild(child)).filter(child => child);
-    }
-
-    removeFromParent(): this {
-        if (!this.parent) return this;
-        return this.parent.removeChild(this);
-    }
-
-    removeFromParentKeepWorldPosition(): this {
-        let x = this.x;
-        let y = this.y;
-        let z = this.z;
-        let result = this.removeFromParent();
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        return result;
-    }
-
     removeFromWorld(): this {
         if (!this.world) return this;
         return World.Actions.removeWorldObjectFromWorld(this);
@@ -489,6 +521,10 @@ class WorldObject {
                     : true;
     }
 
+    setSpeed(speed: number) {
+        this.v.setMagnitude(speed);
+    }
+
     setState(state: string) {
         this.stateMachine.setState(state);
     }
@@ -497,10 +533,10 @@ class WorldObject {
         this._visible = visible;
     }
 
-    private shouldIgnoreCamera() {
-        if (this.ignoreCamera) return true;
-        if (this.parent) return this.parent.shouldIgnoreCamera();
-        return false;
+    private applyVelocity() {
+        this.localx += this.v.x * this.delta;
+        this.localy += this.v.y * this.delta;
+        this.localz += this.vz * this.delta;
     }
 
     private resolveLayer() {
@@ -537,49 +573,55 @@ class WorldObject {
         }
     }
 
+    private shouldIgnoreCamera() {
+        if (this.ignoreCamera) return true;
+        if (this.parent) return this.parent.shouldIgnoreCamera();
+        return false;
+    }
+
     private updateController() {
         if (this.isControlRevoked()) return;
         this.controller.updateFromBehavior(this.behavior);
     }
 
     // For use with World.Actions.addWorldObjectToWorld
-    private internalAddWorldObjectToWorldWorldObject(world: World) {
+    zinternal_addWorldObjectToWorldWorldObject(world: World) {
         this._world = world;
         if (!this._layer) this._layer = World.DEFAULT_LAYER;
     }
 
     // For use with World.Actions.removeWorldObjectFromWorld
-    private internalRemoveWorldObjectFromWorldWorldObject(world: World) {
+    zinternal_removeWorldObjectFromWorldWorldObject(world: World) {
         this._world = null;
     }
 
     // For use with World.Actions.setLayer
-    private internalSetLayerWorldObject(layer: string) {
+    zinternal_setLayerWorldObject(layer: string) {
         this._layer = layer;
     }
 
     // For use with World.Actions.setPhysicsGroup
-    private internalSetPhysicsGroupWorldObject(physicsGroup: string) {
+    zinternal_setPhysicsGroupWorldObject(physicsGroup: string) {
         this._physicsGroup = physicsGroup;
     }
 
     // For use with World.Actions.addChildToParent
-    private internalAddChildToParentWorldObjectChild(parent: WorldObject) {
+    zinternal_addChildToParentWorldObjectChild(parent: WorldObject) {
         this._parent = parent;
     }
 
     // For use with World.Actions.addChildToParent
-    private internalAddChildToParentWorldObjectParent(child: WorldObject) {
+    zinternal_addChildToParentWorldObjectParent(child: WorldObject) {
         this._children.push(child);
     }
 
     // For use with World.Actions.removeChildFromParent
-    private internalRemoveChildFromParentWorldObjectChild() {
+    zinternal_removeChildFromParentWorldObjectChild() {
         this._parent = null;
     }
 
     // For use with World.Actions.removeChildFromParent
-    private internalRemoveChildFromParentWorldObjectParent(child: WorldObject) {
+    zinternal_removeChildFromParentWorldObjectParent(child: WorldObject) {
         A.removeAll(this._children, child);
     }
 }

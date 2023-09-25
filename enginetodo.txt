@@ -13,9 +13,13 @@ TODO
     - calculate text width/height while not all chars visible
     - fix initial spaces not counting toward alignment?
     - support rainbow text
+- preload/load overhaul + get off of pixi's preload system
+    - load from zip file?
+    - asset dependencies?
+- remake build script in node
+    - add LICENSE to build, keep it from bloating src/lectvs/assets/etc
 - revamp module system to work with compound types
 - controller revamp
-- easier global width/height
 - apply filter before texture transformation during render? (rotate, scale, etc.)
 - allow S scripts to be run in non-global worlds (global.script.world? how do we handle cutscenes?)
 - revamp menu system, transitions from main menu to game
@@ -26,7 +30,6 @@ TODO
 - methods to take a screenshot of the canvas (full-size and 1:1 scale? copy to clipboard?)
 - "humanized" option in sound asset definition
 - better world and object management (freeing)
-- delete useless bloat
 - look into more performant graphics libraries
 - look into pixi gpu usage: https://www.google.com/search?q=pixijs+uses+gpu
 - attach arbitrary "update"/"render" objects to worldobjects (e.g. timers, new module system?)
@@ -37,17 +40,9 @@ TODO
 - bounce vs elastic tween confusion
 - deprecate underscore.js
 - texture crop() method
-- analytics
-    - consider removing analytics in engine
-    - disable analytics on localhost?
-    - analytic for mobile usage
-    - track plays on each platform (web, mobile)
 - outline match texture's alpha by default?
-- remake build script
-    - add LICENSE to build, keep it from bloating src/lectvs/assets/etc
 - supertextures ("detective+hat")
 - game initialization logic (in Main?)
-- rename removeChild* to detachChild*
 - documentation and API cleanup
 - template for new games
 - find true texture limit and re-enable in BasicTexture
@@ -65,15 +60,12 @@ TODO
 - simplify pre- and post- effects (remove filters field?)
 - better WorldAsWorldObject (containers?)
 - world and worldobject hooks/events (onDeath, onLoad, etc.)
-- set up audacity and fl studio to use aac
 - combined Draw.circleSolid + Draw.circleOutline etc?
 - map shader pnoise to [0, 1]?
 - Texture.filledCircle/outlineCircle not having center anchor keeps tripping me up
-- asset dependencies?
 - easier window event integration (onbeforeunload, etc.)
 - figure out what is defined in the world constructor vs what is defined in onTransitioned
 - well-defined visual boundaries for every object + better World.Actions.balanceWorldObjects
-- why does the developer console not open when i press F12 sometimes?
 - general solution to prevent sprites from jittering relative to camera movement
 - move colorToVec3 and vec3ToColor to Color util
 - use shaders for puff system
@@ -83,15 +75,10 @@ TODO
 - collision mode that has no separation or momentum transfer (e.g. checking if a bullet hits the player)
 - handle playing a music track if the track is already playing
 - look into moving from localstorage to indexeddb: https://web.dev/indexeddb/
-- preload/load overhaul + get off of pixi's preload system
-    - load from zip file?
 - debug show overlay with O key doesn't always work. sometimes i need to call Debug.SHOW_OVERLAY=true
-- add velocity properties to WorldObject
 - rename Vector2 constants to Anchor and Direction
 - why does physicslastx/y exist? can we make a reliable lastx/y or dx/y that works regardless of update order?
 - invert parameters lerp(a, b, t) -> lerp(t, a, b)?
-- new visualUpdate() method similar to preUpdate, update, postUpdate specifically for updating visuals?
-- refactor A.sort to use parameter `reverse?: 'reverse'`
 - Network.httpRequest should return some kind of error if the user is not connected to the internet
 - "Failed to detect time of collision between circle and inverted rect", maybe with changing bounds?
 - lci bounds=allcircle

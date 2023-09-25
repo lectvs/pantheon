@@ -179,6 +179,12 @@ class World {
 
         for (let worldObject of this.worldObjects) {
             if (worldObject.isActive() && worldObject._isInsideWorldBoundsBufferThisFrame) {
+                worldObject.visualUpdate();
+            }
+        }
+
+        for (let worldObject of this.worldObjects) {
+            if (worldObject.isActive() && worldObject._isInsideWorldBoundsBufferThisFrame) {
                 worldObject.postUpdate();
             }
         }
@@ -325,6 +331,7 @@ class World {
             if (worldObject.isActive() && worldObject._isInsideWorldBoundsBufferThisFrame) {
                 worldObject.preUpdate();
                 worldObject.update();
+                worldObject.visualUpdate();
                 worldObject.postUpdate();
             }
         }
@@ -424,8 +431,20 @@ class World {
         this.removeWorldObjects(this.getDeadWorldObjects());
     }
 
+    private removeFromAllLayers(obj: WorldObject) {
+        for (let layer of this.layers) {
+            A.removeAll(layer.worldObjects, obj);
+        }
+    }
+
+    private removeFromAllPhysicsGroups(obj: WorldObject) {
+        for (let name in this.physicsGroups) {
+            A.removeAll(this.physicsGroups[name].worldObjects, obj);
+        }
+    }
+
     // For use with World.Actions.addWorldObjectToWorld
-    private internalAddWorldObjectToWorldWorld(obj: WorldObject) {
+    zinternal_addWorldObjectToWorldWorld(obj: WorldObject) {
         this.worldObjects.push(obj);
 
         if (obj.layer) {
@@ -440,14 +459,14 @@ class World {
     }
 
     // For use with World.Actions.removeWorldObjectFromWorld
-    private internalRemoveWorldObjectFromWorldWorld(obj: WorldObject) {
+    zinternal_removeWorldObjectFromWorldWorld(obj: WorldObject) {
         this.removeFromAllLayers(obj);
         this.removeFromAllPhysicsGroups(obj);
         A.removeAll(this.worldObjects, obj);
     }
 
     // For use with World.Actions.setLayer
-    private internalSetLayerWorld(obj: WorldObject, layerName: string) {
+    zinternal_setLayerWorld(obj: WorldObject, layerName: string) {
         this.removeFromAllLayers(obj);
 
         for (let layer of this.layers) {
@@ -459,7 +478,7 @@ class World {
     }
 
     // For use with World.Actions.setPhysicsGroup
-    private internalSetPhysicsGroupWorld(obj: PhysicsWorldObject, physicsGroupName: string) {
+    zinternal_setPhysicsGroupWorld(obj: PhysicsWorldObject, physicsGroupName: string) {
         this.removeFromAllPhysicsGroups(obj);
         if (!_.isEmpty(physicsGroupName)) {
             this.getPhysicsGroupByName(physicsGroupName).worldObjects.push(obj);
@@ -467,27 +486,15 @@ class World {
     }
 
     // For use with World.Actions.addChildToParent
-    private internalAddChildToParentWorld(child: WorldObject, obj: WorldObject) {
+    zinternal_addChildToParentWorld(child: WorldObject, obj: WorldObject) {
         if (child.world !== this) {
             World.Actions.addWorldObjectToWorld(child, this);
         }
     }
 
     // For use with World.Actions.removeChildFromParent
-    private internalRemoveChildFromParentWorld(child: WorldObject) {
+    zinternal_removeChildFromParentWorld(child: WorldObject) {
         
-    }
-
-    private removeFromAllLayers(obj: WorldObject) {
-        for (let layer of this.layers) {
-            A.removeAll(layer.worldObjects, obj);
-        }
-    }
-
-    private removeFromAllPhysicsGroups(obj: WorldObject) {
-        for (let name in this.physicsGroups) {
-            A.removeAll(this.physicsGroups[name].worldObjects, obj);
-        }
     }
 
     static DEFAULT_LAYER: string = 'default';
@@ -548,10 +555,8 @@ namespace World {
                 return undefined;
             }
 
-            /// @ts-ignore
-            obj.internalAddWorldObjectToWorldWorldObject(world);
-            /// @ts-ignore
-            world.internalAddWorldObjectToWorldWorld(obj);
+            obj.zinternal_addWorldObjectToWorldWorldObject(world);
+            world.zinternal_addWorldObjectToWorldWorld(obj);
 
             World.Actions.addWorldObjectsToWorld(obj.children, world);
 
@@ -570,7 +575,7 @@ namespace World {
         /**
          * Removes a WorldObject from its containing world. Returns the object removed.
          */
-        export function removeWorldObjectFromWorld<T extends WorldObject>(obj: T, unlinkFromParent: boolean = true): T {
+        export function removeWorldObjectFromWorld<T extends WorldObject>(obj: T, detachFromParent: boolean = true): T {
             if (!obj) return obj;
 
             if (!obj.world) {
@@ -581,15 +586,13 @@ namespace World {
 
             let world = obj.world;
 
-            /// @ts-ignore
-            obj.internalRemoveWorldObjectFromWorldWorldObject(world);
-            /// @ts-ignore
-            world.internalRemoveWorldObjectFromWorldWorld(obj);
+            obj.zinternal_removeWorldObjectFromWorldWorldObject(world);
+            world.zinternal_removeWorldObjectFromWorldWorld(obj);
             
             World.Actions.removeWorldObjectsFromWorld(obj.children, false);
 
-            if (unlinkFromParent && obj.parent) {
-                World.Actions.removeChildFromParent(obj);
+            if (detachFromParent && obj.parent) {
+                World.Actions.detachChildFromParent(obj);
             }
             
             return obj;
@@ -615,12 +618,10 @@ namespace World {
                 return obj.layer;
             }
 
-            /// @ts-ignore
-            obj.internalSetLayerWorldObject(layerName);
+            obj.zinternal_setLayerWorldObject(layerName);
 
             if (obj.world) {
-                /// @ts-ignore
-                obj.world.internalSetLayerWorld(obj, layerName);
+                obj.world.zinternal_setLayerWorld(obj, layerName);
             }
 
             return obj.layer;
@@ -633,16 +634,19 @@ namespace World {
             if (!obj) return undefined;
 
             if (obj.world && !_.isEmpty(physicsGroupName) && !obj.world.getPhysicsGroupByName(physicsGroupName)) {
-                console.error(`Cannot set physicsGroup on object '${obj.name}' as no physicsGroup named ${physicsGroupName} exists in world!`, obj.world);
+                console.error(`Cannot set physicsGroup on object '${obj.name}' as no physicsGroup named ${physicsGroupName} exists in world`, obj.world);
                 return obj.physicsGroup;
             }
 
-            /// @ts-ignore
-            obj.internalSetPhysicsGroupWorldObject(physicsGroupName);
+            if (!(obj instanceof PhysicsWorldObject)) {
+                console.error(`Cannot set physicsGroup on object because it is not a PhysicsWorldObject`, obj);
+                return obj.physicsGroup;
+            }
+
+            obj.zinternal_setPhysicsGroupWorldObject(physicsGroupName);
 
             if (obj.world) {
-                /// @ts-ignore
-                obj.world.internalSetPhysicsGroupWorld(obj, physicsGroupName);
+                obj.world.zinternal_setPhysicsGroupWorld(obj, physicsGroupName);
             }
 
             return obj.physicsGroup;
@@ -673,14 +677,11 @@ namespace World {
                 cyclicCheckParent = cyclicCheckParent.parent;
             }
 
-            /// @ts-ignore
-            child.internalAddChildToParentWorldObjectChild(obj);
-            /// @ts-ignore
-            obj.internalAddChildToParentWorldObjectParent(child);
+            child.zinternal_addChildToParentWorldObjectChild(obj);
+            obj.zinternal_addChildToParentWorldObjectParent(child);
 
             if (obj.world) {
-                /// @ts-ignore
-                obj.world.internalAddChildToParentWorld(child, obj);
+                obj.world.zinternal_addChildToParentWorld(child, obj);
             }
 
             return child;
@@ -695,9 +696,9 @@ namespace World {
         }
 
         /**
-         * Removes a child from its parent. Returns the child if successfully removed.
+         * Detaches a child from its parent. Returns the child if successfully removed.
          */
-        export function removeChildFromParent<T extends WorldObject>(child: T): T {
+        export function detachChildFromParent<T extends WorldObject>(child: T): T {
             if (!child) return child;
 
             if (!child.parent) {
@@ -705,25 +706,22 @@ namespace World {
                 return child;
             }
 
-            /// @ts-ignore
-            child.parent.internalRemoveChildFromParentWorldObjectParent(child);
-            /// @ts-ignore
-            child.internalRemoveChildFromParentWorldObjectChild();
+            child.parent.zinternal_removeChildFromParentWorldObjectParent(child);
+            child.zinternal_removeChildFromParentWorldObjectChild();
 
             if (child.world) {
-                /// @ts-ignore
-                child.world.internalRemoveChildFromParentWorld(child);
+                child.world.zinternal_removeChildFromParentWorld(child);
             }
 
             return child;
         }
 
         /**
-         * Removes a list of children from their parents. Returns as a list the children successfully removed.
+         * Detaches a list of children from their parents. Returns as a list the children successfully removed.
          */
-        export function removeChildrenFromParent<T extends WorldObject>(children: ReadonlyArray<T>): T[] {
+        export function detachChildrenFromParent<T extends WorldObject>(children: ReadonlyArray<T>): T[] {
             if (_.isEmpty(children)) return [];
-            return A.clone(children).filter(child => removeChildFromParent(child));
+            return A.clone(children).filter(child => detachChildFromParent(child));
         }
 
         /**

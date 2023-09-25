@@ -2,10 +2,6 @@
 
 namespace PhysicsWorldObject {
     export type Config = ReplaceConfigCallbacks<WorldObject.Config, PhysicsWorldObject> & {
-        v?: Pt;
-        vx?: number;
-        vy?: number;
-        vz?: number;
         mass?: number;
         gravityx?: number;
         gravityy?: number;
@@ -15,19 +11,10 @@ namespace PhysicsWorldObject {
         bounds?: Bounds;
         immovable?: boolean;
         colliding?: boolean;
-        simulating?: boolean;
     }
 }
 
 class PhysicsWorldObject extends WorldObject {
-    private _v: Vector2;
-    get v() { return this._v; }
-    set v(value: Vector2) {
-        this._v.x = value.x;
-        this._v.y = value.y;
-    }
-    vz: number;
-
     private _gravity: Vector2;
     get gravity() { return this._gravity; }
     set gravity(value: Vector2) {
@@ -40,8 +27,6 @@ class PhysicsWorldObject extends WorldObject {
     mass: number;
     bounce: number;
     colliding: boolean;
-
-    simulating: boolean;
 
     physicslastx: number;
     physicslasty: number;
@@ -59,8 +44,6 @@ class PhysicsWorldObject extends WorldObject {
 
     constructor(config: PhysicsWorldObject.Config = {}) {
         super(config);
-        this._v = config.v ? vec2(config.v.x, config.v.y) : vec2(config.vx ?? 0, config.vy ?? 0);
-        this.vz = config.vz ?? 0;
         this.mass = config.mass ?? 1;
         this._gravity = vec2(config.gravityx ?? 0, config.gravityy ?? 0);
         this.gravityz = config.gravityz ?? 0;
@@ -71,7 +54,6 @@ class PhysicsWorldObject extends WorldObject {
 
         this._immovable = config.immovable ?? false;
         this.colliding = config.colliding ?? true;
-        this.simulating = config.simulating ?? true;
 
         this.physicslastx = this.x;
         this.physicslasty = this.y;
@@ -86,19 +68,8 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     update() {
+        this.applyGravity();
         super.update();
-        if (this.simulating) {
-            this.simulate();
-        }
-    }
-
-    postUpdate() {
-        super.postUpdate();
-        if (!isFinite(this.v.x) || !isFinite(this.v.y)) {
-            console.error(`Non-finite velocity ${this.v} on object`, this);
-            if (!isFinite(this.v.x)) this.v.x = 0;
-            if (!isFinite(this.v.y)) this.v.y = 0;
-        }
     }
 
     render(texture: Texture, x: number, y: number) {
@@ -111,10 +82,6 @@ class PhysicsWorldObject extends WorldObject {
             this.drawBounds(texture, x, y - zoffset);
         }
         super.render(texture, x, y);
-    }
-
-    getSpeed() {
-        return this.v.magnitude;
     }
 
     getWorldBounds() {
@@ -148,10 +115,6 @@ class PhysicsWorldObject extends WorldObject {
         this._immovable = immovable;
     }
 
-    setSpeed(speed: number) {
-        this.v.setMagnitude(speed);
-    }
-
     teleport(x: Pt | number, y?: number) {
         if (!_.isNumber(x)) {
             y = x.y;
@@ -163,21 +126,10 @@ class PhysicsWorldObject extends WorldObject {
         this.physicslasty = y;
     }
 
-    applyGravity() {
+    private applyGravity() {
         this.v.x += this.gravity.x * this.delta;
         this.v.y += this.gravity.y * this.delta;
         this.vz += this.gravityz * this.delta;
-    }
-
-    move() {
-        this.localx += this.v.x * this.delta;
-        this.localy += this.v.y * this.delta;
-        this.localz += this.vz * this.delta;
-    }
-
-    simulate() {
-        if (this.affectedByGravity) this.applyGravity();
-        this.move();
     }
 
     private drawBounds(texture: Texture, x: number, y: number) {

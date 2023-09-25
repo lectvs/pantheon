@@ -38,7 +38,7 @@ namespace SmartTilemap {
     }
 
     export function sortedRules(rules: Rule.Rule[]) {
-        return A.sort(rules, rule => getPatternSpecificity(rule.pattern), true);
+        return A.sort(rules, rule => getPatternSpecificity(rule.pattern), 'reverse');
     }
 
     export function getSmartTilemap(tilemap: string | Tilemap.Tilemap, config: RuleConfig): Tilemap.Tilemap {

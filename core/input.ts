@@ -328,7 +328,7 @@ class Input {
     static handleKeyDownEvent(event: KeyboardEvent) {
         let keyCode = Input.getKeyFromEventKey(event.key);
         this.eventKey = keyCode;
-        if (this.isDownByKeyCode[keyCode] !== undefined) {
+        if (this.isDownByKeyCode[keyCode] !== undefined && event.key === 'Tab') {
             event.preventDefault();
         }
         this.isDownByKeyCode[keyCode] = true;
