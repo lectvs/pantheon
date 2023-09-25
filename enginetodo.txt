@@ -1,7 +1,39 @@
 TODO
-- theater not a world (for real this time)
+- invert parameters lerp(a, b, t) -> lerp(t, a, b)?
+    - lerp optional parameter for tween function
+- handle playing a music track if the track is already playing
+- simple mask shapes (like rectangle)
+- move colorToVec3 and vec3ToColor to Color util
+- Texture.filledCircle/outlineCircle not having center anchor keeps tripping me up
+- asset texture default anchor center
+- rename Vector2 constants to Anchor and Direction
+- map shader pnoise to [0, 1]?
+- combined Draw.circleSolid + Draw.circleOutline etc?
+- simplify pre- and post- effects (remove filters field?)
+- revisit temp approx/convolute44 methods in TextureFilter
+- move Game.allowPauseWithPauseKey from a global property to an evaluated function (based on world flags?)
+- remove Draw.brush?
+- outline match texture's alpha by default?
+- lci bounds=allcircle
+- texture crop() method
+- deprecate underscore.js
+    - https://stackoverflow.com/questions/13897659/extending-functionality-in-typescript
+- "humanized" option in sound asset definition
+- collision mode that has no separation or momentum transfer (e.g. checking if a bullet hits the player)
+- game/theater revamp
+    - theater not a world (for real this time)
     - better slides (for real this time)
-- camera zoom/rotate?
+    - figure out what is defined in the world constructor vs what is defined in onTransitioned
+    - revamp menu system, transitions from main menu to game
+- world and worldobject hooks/events (onDeath, onLoad, etc.)
+- ability to define custom TextureFilter helper methods in shader
+- remake build script in node
+    - add LICENSE to build, keep it from bloating src/lectvs/assets/etc
+- improve compile time
+- integrate debug textures/sfx into the engine?
+- preload/load overhaul + get off of pixi's preload system
+    - load from zip file?
+    - asset dependencies?
 - animation revamp (animation/script parity?)
     - squash/stretch/transform/etc actions
 - improve spritetext
@@ -13,79 +45,55 @@ TODO
     - calculate text width/height while not all chars visible
     - fix initial spaces not counting toward alignment?
     - support rainbow text
-- preload/load overhaul + get off of pixi's preload system
-    - load from zip file?
-    - asset dependencies?
-- remake build script in node
-    - add LICENSE to build, keep it from bloating src/lectvs/assets/etc
-- revamp module system to work with compound types
-- controller revamp
-- apply filter before texture transformation during render? (rotate, scale, etc.)
-- allow S scripts to be run in non-global worlds (global.script.world? how do we handle cutscenes?)
-- revamp menu system, transitions from main menu to game
-- vs code tasks?
-- fix: Options.updateCallbacks.push(() => Input.init());
-- turn screen shake into a shader (to get edge continuation)
-- redo kill() ... not flag the object as being dead? how to remove object then re-add it later?
-- methods to take a screenshot of the canvas (full-size and 1:1 scale? copy to clipboard?)
-- "humanized" option in sound asset definition
-- better world and object management (freeing)
-- look into more performant graphics libraries
-- look into pixi gpu usage: https://www.google.com/search?q=pixijs+uses+gpu
-- attach arbitrary "update"/"render" objects to worldobjects (e.g. timers, new module system?)
-- improve compile time
-- integrate debug textures/sfx into the engine?
-- yield multiple comma-separated values, yield number to wait, script revamp??
-- bounce vs elastic tween confusion
-- deprecate underscore.js
-- texture crop() method
-- outline match texture's alpha by default?
-- supertextures ("detective+hat")
-- game initialization logic (in Main?)
-- documentation and API cleanup
-- template for new games
-- find true texture limit and re-enable in BasicTexture
-- worldobject that centers/anchors its children (useful for UI)
-- remove Draw.brush?
-- https://stackoverflow.com/questions/13897659/extending-functionality-in-typescript
-- figure out why we have lost auto-complete for class methods
-- create better worldbounds/localbounds/visiblescreenbounds system
-- good temporary object system
-- fix everyNSeconds and oscillateNSeconds for very low framerates
-- enable strictNullChecks, noImplicitOverride
-- better resolution of copyFromParent and render ordering (polarity inverter bug)
-- revisit temp approx/convolute44 methods in TextureFilter
-- ability to define custom TextureFilter helper methods in shader
-- simplify pre- and post- effects (remove filters field?)
-- better WorldAsWorldObject (containers?)
-- world and worldobject hooks/events (onDeath, onLoad, etc.)
-- combined Draw.circleSolid + Draw.circleOutline etc?
-- map shader pnoise to [0, 1]?
-- Texture.filledCircle/outlineCircle not having center anchor keeps tripping me up
-- easier window event integration (onbeforeunload, etc.)
-- figure out what is defined in the world constructor vs what is defined in onTransitioned
-- well-defined visual boundaries for every object + better World.Actions.balanceWorldObjects
-- general solution to prevent sprites from jittering relative to camera movement
-- move colorToVec3 and vec3ToColor to Color util
-- use shaders for puff system
-- games do not work on Opera mobile browser (AAC audio encoding?)
-- simple mask shapes (like rectangle)
-- better ways to move the camera (without needing to call setModeFocus)
-- collision mode that has no separation or momentum transfer (e.g. checking if a bullet hits the player)
-- handle playing a music track if the track is already playing
-- look into moving from localstorage to indexeddb: https://web.dev/indexeddb/
-- debug show overlay with O key doesn't always work. sometimes i need to call Debug.SHOW_OVERLAY=true
-- rename Vector2 constants to Anchor and Direction
+- script revamp
+    - yield multiple comma-separated values, yield number to wait
 - why does physicslastx/y exist? can we make a reliable lastx/y or dx/y that works regardless of update order?
-- invert parameters lerp(a, b, t) -> lerp(t, a, b)?
-- Network.httpRequest should return some kind of error if the user is not connected to the internet
 - "Failed to detect time of collision between circle and inverted rect", maybe with changing bounds?
-- lci bounds=allcircle
-- asset texture default anchor center
-- move Game.allowPauseWithPauseKey from a global property to an evaluated function (based on world flags?)
-- new paint.net 5.x plugin capabilities: https://boltbait.com/pdn/CodeLab/help/tutorial.php
+- better resolution of copyFromParent and render ordering (polarity inverter bug)
+- redo kill() ... not flag the object as being dead? how to remove object then re-add it later?
+- turn screen shake into a shader (to get edge continuation)
+- fix everyNSeconds and oscillateNSeconds for very low framerates
+- ui balancer
+    - create better worldbounds/localbounds/visiblescreenbounds system
+    - well-defined visual boundaries for every object + better World.Actions.balanceWorldObjects
+    - worldobject that centers/anchors its children (useful for UI)
+- allow S scripts to be run in non-global worlds (global.script.world? how do we handle cutscenes?)
+- general solution to prevent sprites from jittering relative to camera movement
+- find true texture limit and re-enable in BasicTexture
+- apply filter before texture transformation during render? (rotate, scale, etc.)
+- module system revamp
+    - revamp module system to work with compound types
+    - attach arbitrary "update"/"render" objects to worldobjects (e.g. timers, new module system?)
+- performance
+    - look into more performant graphics libraries
+    - look into pixi gpu usage: https://www.google.com/search?q=pixijs+uses+gpu
+    - use shaders for puff system
+- debug show overlay with O key doesn't always work. sometimes i need to call Debug.SHOW_OVERLAY=true
+- better ways to move the camera (without needing to call setModeFocus)
+- supertextures ("detective+hat")
+- better WorldAsWorldObject (containers?)
+- methods to take a screenshot of the canvas (full-size and 1:1 scale? copy to clipboard?)
+- figure out why we lose auto-complete for class methods sometimes
+- easier window event integration (onbeforeunload, etc.)
+- Network.httpRequest should return some kind of error if the user is not connected to the internet
+- better world and object management (freeing)
+    - good temporary object system
+- controller revamp
+- fix: Options.updateCallbacks.push(() => Input.init());
+- enable strictNullChecks, noImplicitOverride
+- template for new games
+- documentation and API cleanup
+- games do not work on Opera mobile browser (AAC audio encoding?)
+- camera zoom/rotate?
+- vs code tasks?
+
+
+
+
 
 stretch
+- look into moving from localstorage to indexeddb: https://web.dev/indexeddb/
+- new paint.net 5.x plugin capabilities: https://boltbait.com/pdn/CodeLab/help/tutorial.php
 - normal-map/lighting
 - "window" filters
 - boundless textures
