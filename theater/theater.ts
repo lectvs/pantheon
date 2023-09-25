@@ -138,32 +138,15 @@ namespace Theater {
         containedWorld: World;
         mask: TextureFilters.Mask.WorldMaskConfig;
 
-        multiExecutionTimeScale: number;
-        private multiExecutionPool: number;
-
         constructor(containedWorld: World) {
             super();
             this.containedWorld = containedWorld;
             this.mask = undefined;
-            this.multiExecutionTimeScale = 1;
-            this.multiExecutionPool = 0;
         }
 
         update() {
             super.update();
-
-            this.multiExecutionPool += this.multiExecutionTimeScale;
-
-            let isNonUpdate = true;
-            while (this.multiExecutionPool >= 1) {
-                this.containedWorld.update();
-                this.multiExecutionPool -= 1;
-                isNonUpdate = false;
-            }
-
-            if (isNonUpdate) {
-                this.containedWorld.nonUpdate();
-            }
+            this.containedWorld.update();
         }
 
         render(texture: Texture, x: number, y: number) {

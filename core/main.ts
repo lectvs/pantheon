@@ -151,21 +151,9 @@ class Main {
         this.game.update(); // Update game once just to make sure everything is set up correctly.
     }
 
-    static fixedDelta: number;
-    private static fixedDeltaBucket = 0;
-
     private static play() {
         PIXI.Ticker.shared.add(frameDelta => {
             Main.delta = M.clamp(frameDelta/60, 0, 1/this.config.fpsLimit);
-
-            if (Main.fixedDelta > 0) {
-                Main.fixedDeltaBucket += Main.delta;
-                Main.delta = Main.fixedDelta;
-                if (Main.fixedDeltaBucket < Main.fixedDelta) {
-                    return;
-                }
-                while (Main.fixedDeltaBucket >= Main.fixedDelta) Main.fixedDeltaBucket -= Main.fixedDelta;
-            }
 
             global.fpsCalculator.update();
 

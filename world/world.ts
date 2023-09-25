@@ -109,7 +109,6 @@ class World {
     private mouseBounds: CircleBounds;
 
     updateCallback: (this: World) => any;
-    nonUpdateCallback: (this: World) => any;
 
     constructor(config: World.Config = {}) {        
         this.scriptManager = new ScriptManager();
@@ -322,21 +321,6 @@ class World {
         if (_.isEmpty(this.collisions)) return;
 
         Physics.resolveCollisions(this);
-    }
-
-    nonUpdate() {
-        for (let worldObject of this.worldObjects) {
-            if (!worldObject.updateOnNonUpdate) continue;
-            worldObject.setIsInsideWorldBoundsBufferThisFrame();
-            if (worldObject.isActive() && worldObject._isInsideWorldBoundsBufferThisFrame) {
-                worldObject.preUpdate();
-                worldObject.update();
-                worldObject.visualUpdate();
-                worldObject.postUpdate();
-            }
-        }
-
-        if (this.nonUpdateCallback) this.nonUpdateCallback();
     }
 
     /**

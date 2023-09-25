@@ -34,7 +34,6 @@ TODO
 - look into pixi gpu usage: https://www.google.com/search?q=pixijs+uses+gpu
 - attach arbitrary "update"/"render" objects to worldobjects (e.g. timers, new module system?)
 - improve compile time
-- clean up fixed framerate/nonupdate stuff
 - integrate debug textures/sfx into the engine?
 - yield multiple comma-separated values, yield number to wait, script revamp??
 - bounce vs elastic tween confusion
