@@ -69,7 +69,7 @@ class RandomNumberGenerator {
             if (value < weights[i]) return array[i];
             value -= weights[i];
         }
-        return A.last(array);
+        return array.last();
     }
 
     /**

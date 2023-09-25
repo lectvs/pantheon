@@ -63,11 +63,6 @@ namespace A {
         return !array || array.length === 0;
     }
 
-    export function last<T>(array: T[]): T {
-        if (isEmpty(array)) return undefined;
-        return array[array.length-1];
-    }
-
     export function map2D<T,S>(array: T[][], fn: (a: T) => S) {
         if (isEmpty(array)) return [];
         return array.map(line => isEmpty(line) ? [] : line.map(fn));

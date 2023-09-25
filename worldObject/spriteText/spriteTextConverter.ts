@@ -105,7 +105,7 @@ namespace SpriteTextConverter {
     function pushWord(word: SpriteText.Character[], resultLines: SpriteText.Character[][], position: Vector2, font: SpriteText.Font, maxWidth: number, current: CurrentData) {
         if (A.isEmpty(word)) return;
 
-        let lastChar = A.last(word);
+        let lastChar = word.last();
         if (maxWidth > 0 && lastChar.right > maxWidth) {
             let diffx = -word[0].x;
             let diffy = getNewLineHeightDiff(word[0].y, SpriteText.getHeightOfCharList(resultLines.flat()), font.newlineHeight);
@@ -121,7 +121,7 @@ namespace SpriteTextConverter {
         }
 
         while (word.length > 0) {
-            A.last(resultLines).push(word.shift());
+            resultLines.last().push(word.shift());
         }
     }
 

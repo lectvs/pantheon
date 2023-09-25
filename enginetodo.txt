@@ -14,7 +14,6 @@ TODO
 - outline match texture's alpha by default?
 - lci bounds=allcircle
 - texture crop() method
-    - https://stackoverflow.com/questions/13897659/extending-functionality-in-typescript
 - "humanized" option in sound asset definition
 - collision mode that has no separation or momentum transfer (e.g. checking if a bullet hits the player)
 - game/theater revamp

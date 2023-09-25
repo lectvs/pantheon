@@ -8,7 +8,7 @@ class MusicManager {
     baseVolume: number;
     volumeScale: number;
 
-    get currentMusic() { return A.last(this.musics); }
+    get currentMusic() { return this.musics.last(); }
     get currentMusicKey() { return this.currentMusic?.key; }
 
     constructor() {
