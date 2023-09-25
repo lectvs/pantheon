@@ -8,7 +8,7 @@ namespace G {
     }
 
     export function average(...ps: Pt[]) {
-        if (_.isEmpty(ps)) {
+        if (A.isEmpty(ps)) {
             return undefined;
         }
 

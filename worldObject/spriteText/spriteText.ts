@@ -136,13 +136,13 @@ class SpriteText extends WorldObject {
             };
         }
 
-        this._style = _.defaults(O.deepClone(config.style ?? {}), requireType<Required<SpriteText.Style>>({
+        this._style = O.defaults(O.deepClone(config.style ?? {}), requireType<Required<SpriteText.Style>>({
             color: 0xFFFFFF,
             alpha: 1,
             offsetX: 0,
             offsetY: 0,
             filters: [],
-        }));
+        })) as Required<SpriteText.Style>;
 
         this.visibleCharCount = Infinity;
 
@@ -180,7 +180,7 @@ class SpriteText extends WorldObject {
         this.effects.updateEffects(this.delta);
 
         for (let key in this.tagCache) {
-            if (_.isEmpty(this.tagCache[key].filters)) continue;
+            if (A.isEmpty(this.tagCache[key].filters)) continue;
             for (let filter of this.tagCache[key].filters) {
                 filter.updateTime(this.delta);
             }
@@ -218,7 +218,7 @@ class SpriteText extends WorldObject {
     renderSpriteText() {
         SpriteText.justify(this.chars, this.justify);
 
-        let chars = _.flatten(this.chars);
+        let chars = this.chars.flat();
         let charCount = Math.min(this.visibleCharCount, chars.length);
 
         SpriteTextConverter.returnStaticTextures(this.staticTextures);
@@ -250,7 +250,7 @@ class SpriteText extends WorldObject {
     }
 
     getCharList() {
-        return <SpriteText.Character[]>_.flatten(this.chars);
+        return this.chars.flat();
     }
 
     getCurrentText() {
@@ -258,11 +258,11 @@ class SpriteText extends WorldObject {
     }
 
     getTextWidth() {
-        return SpriteText.getWidthOfCharList(_.flatten(this.chars), this.visibleCharCount) * this.scaleX;
+        return SpriteText.getWidthOfCharList(this.getCharList(), this.visibleCharCount) * this.scaleX;
     }
 
     getTextHeight() {
-        return SpriteText.getHeightOfCharList(_.flatten(this.chars), this.visibleCharCount) * this.scaleY;
+        return SpriteText.getHeightOfCharList(this.getCharList(), this.visibleCharCount) * this.scaleY;
     }
 
     getTextWorldBounds() {
@@ -323,10 +323,10 @@ class SpriteText extends WorldObject {
             if (style.alpha !== undefined) result.alpha = style.alpha;
             if (style.offsetX !== undefined) result.offsetX = style.offsetX;
             if (style.offsetY !== undefined) result.offsetY = style.offsetY;
-            if (!_.isEmpty(style.filters)) result.filters.push(...style.filters);
+            if (!A.isEmpty(style.filters)) result.filters.push(...style.filters);
         }
 
-        _.defaults(result, defaults);
+        O.defaults(result, defaults);
         return result;
     }
 
@@ -388,7 +388,7 @@ namespace SpriteText {
     }
 
     export function getWidthOfCharList(list: SpriteText.Character[], charCount?: number) {
-        if (_.isEmpty(list)) return 0;
+        if (A.isEmpty(list)) return 0;
         charCount = Math.min(charCount ?? list.length, list.length);
 
         let min = M.min(list, char => char.left);
@@ -398,7 +398,7 @@ namespace SpriteText {
     }
 
     export function getHeightOfCharList(list: SpriteText.Character[], charCount?: number) {
-        if (_.isEmpty(list)) return 0;
+        if (A.isEmpty(list)) return 0;
         charCount = Math.min(charCount ?? list.length, list.length);
 
         let result = 0;
@@ -410,7 +410,7 @@ namespace SpriteText {
     }
 
     export function justify(lines: SpriteText.Character[][], justify: SpriteText.Justify) {
-        let maxWidth = SpriteText.getWidthOfCharList(_.flatten(lines));
+        let maxWidth = SpriteText.getWidthOfCharList(lines.flat());
         for (let line of lines) {
             if (line.length === 0) continue;
             let lineWidth = SpriteText.getWidthOfCharList(line);

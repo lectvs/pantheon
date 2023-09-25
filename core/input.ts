@@ -120,7 +120,7 @@ class Input {
             console.error(`Cannot add control binding for '${controlName}' since the control does not exist`);
             return;
         }
-        if (!_.contains(controlBindings, keyCode)) {
+        if (!controlBindings.includes(keyCode)) {
             controlBindings.push(keyCode);
         }
         Options.saveOptions();
@@ -147,7 +147,7 @@ class Input {
             return;
         }
 
-        if (!_.contains(controlBindings, oldKeyCode)) {
+        if (!controlBindings.includes(oldKeyCode)) {
             console.error(`Cannot update control binding '${oldKeyCode}' for '${controlName}' since that key is not bound to that control`);
             return;
         }
@@ -334,7 +334,7 @@ class Input {
         this.isDownByKeyCode[keyCode] = true;
 
         // Handle fullscreen toggle
-        if (!this.preventRegularKeyboardInput && _.contains(this.keyCodesByName[Input.FULLSCREEN], keyCode)) {
+        if (!this.preventRegularKeyboardInput && this.keyCodesByName[Input.FULLSCREEN].includes(keyCode)) {
             Fullscreen.toggleFullscreen();
         }
     }

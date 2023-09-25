@@ -81,7 +81,7 @@ class Options {
             }
         }
         
-        if (_.isEmpty(loadedOptions)) {
+        if (O.isEmpty(loadedOptions)) {
             this.onUpdate();
         }
     }

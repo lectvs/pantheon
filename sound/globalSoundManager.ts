@@ -42,7 +42,7 @@ class GlobalSoundManager {
 
     ensureSoundEnabled(sound: Sound) {
         if (this.paused) return;
-        if (!_.contains(this.activeSounds, sound)) {
+        if (!this.activeSounds.includes(sound)) {
             this.activeSounds.push(sound);
         }
         sound.unmarkForDisable();

@@ -61,8 +61,8 @@ class Camera {
             left: -Infinity,
             right: Infinity,
         });
-        this.mode = _.clone(config.mode) ?? Camera.Mode.FOCUS(this.width/2, this.height/2);
-        this.movement = _.clone(config.movement) ?? Camera.Movement.SNAP();
+        this.mode = config.mode ? O.clone(config.mode) : Camera.Mode.FOCUS(this.width/2, this.height/2);
+        this.movement = config.movement ? O.clone(config.movement) : Camera.Movement.SNAP();
 
         this.shakeIntensity = 0;
         this._shakeX = 0;
@@ -193,7 +193,7 @@ namespace Camera {
             return {
                 getTargetPt: (camera: Camera) => {
                     let position: Vector2;
-                    if (_.isString(target)) {
+                    if (St.isString(target)) {
                         let worldObject = camera.world.select.name(target, false);
                         position = worldObject ? vec2(worldObject.x + offsetX, worldObject.y + offsetY) : vec2(camera.x, camera.y);
                     } else {

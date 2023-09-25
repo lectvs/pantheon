@@ -47,7 +47,7 @@ class RandomNumberGenerator {
      * Random element from array, uniformly.
      */
     element<T>(array: T[]) {
-        if (_.isEmpty(array)) return undefined;
+        if (A.isEmpty(array)) return undefined;
         return array[this.index(array)];
     }
 
@@ -55,8 +55,8 @@ class RandomNumberGenerator {
      * Random element from array, weighted by a given weights array.
      */
     elementWeighted<T>(array: T[], weights: number[]) {
-        if (_.isEmpty(array)) return undefined;
-        if (_.isEmpty(weights)) {
+        if (A.isEmpty(array)) return undefined;
+        if (A.isEmpty(weights)) {
             console.error(`Weights are empty, using uniform weighting:`, array, weights);
             return this.element(array);
         }
@@ -69,7 +69,7 @@ class RandomNumberGenerator {
             if (value < weights[i]) return array[i];
             value -= weights[i];
         }
-        return _.last(array);
+        return A.last(array);
     }
 
     /**
@@ -118,11 +118,11 @@ class RandomNumberGenerator {
      * Random sample of {count} elements from an array.
      */
     sample<T>(array: T[], count: number) {
-        if (count > _.size(array)) {
+        if (count > A.size(array)) {
             console.error('Trying to sample an array for more elements than it contains', array, count);
-            count = _.size(array);
+            count = A.size(array);
         }
-        if (_.isEmpty(array)) return [];
+        if (A.isEmpty(array)) return [];
 
         let copiedArray = A.clone(array);
         let result: T[] = [];
@@ -139,7 +139,7 @@ class RandomNumberGenerator {
      * See https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
      */
     shuffle<T>(array: T[]) {
-        if (_.isEmpty(array)) return array;
+        if (A.isEmpty(array)) return array;
         for (let i = 0; i < array.length-1; i++) {
             let j = this.int(i, array.length-1);
             let temp = array[i];

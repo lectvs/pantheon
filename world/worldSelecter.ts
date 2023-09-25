@@ -14,7 +14,7 @@ class WorldSelecter {
 
     collidesWith(physicsGroup: string) {
         let groups = this.world.getPhysicsGroupsThatCollideWith(physicsGroup);
-        return <PhysicsWorldObject[]>_.flatten(groups.map(group => this.world.physicsGroups[group].worldObjects));
+        return groups.map(group => this.world.physicsGroups[group].worldObjects).flat();
     }
 
     modules<T extends WorldObject, S extends Module<T>>(moduleType: new (...args) => S): S[] {
@@ -24,7 +24,7 @@ class WorldSelecter {
 
     name<T extends WorldObject>(name: string, checked: boolean = true) {
         let results = this.nameAll<T>(name);
-        if (_.isEmpty(results)) {
+        if (A.isEmpty(results)) {
             if (checked) console.error(`No object with name ${name} exists in world:`, this.world);
             return undefined;
         }
@@ -51,19 +51,20 @@ class WorldSelecter {
 
     overlap(bounds: Bounds, physicsGroups?: string[]): PhysicsWorldObject[] {
         let objs = physicsGroups
-                    ? _.flatten(Object.keys(this.world.physicsGroups)
-                                    .filter(pg => _.contains(physicsGroups, pg))
-                                    .map(pg => this.world.physicsGroups[pg].worldObjects)) as PhysicsWorldObject[]
+                    ? Object.keys(this.world.physicsGroups)
+                        .filter(pg => physicsGroups.includes(pg))
+                        .map(pg => this.world.physicsGroups[pg].worldObjects)
+                        .flat()
                     : this.world.select.typeAll(PhysicsWorldObject);
 
-        if (_.isEmpty(objs)) return [];
+        if (A.isEmpty(objs)) return [];
         return objs.filter(obj => obj.isOverlapping(bounds));
     }
 
     raycast(x: number, y: number, dx: number, dy: number, physicsGroups: string[]): WorldSelecter.RaycastResult[] {
         let result: WorldSelecter.RaycastResult[] = [];
         for (let physicsGroup in this.world.physicsGroups) {
-            if (!_.contains(physicsGroups, physicsGroup)) continue;
+            if (!physicsGroups.includes(physicsGroup)) continue;
             for (let obj of this.world.physicsGroups[physicsGroup].worldObjects) {
                 let t = obj.bounds.raycast(x, y, dx, dy);
                 if (!isFinite(t)) continue;
@@ -74,12 +75,12 @@ class WorldSelecter {
     }
 
     tag<T extends WorldObject>(tag: string) {
-        return <T[]>this.world.worldObjects.filter(obj => _.contains(obj.tags, tag));
+        return <T[]>this.world.worldObjects.filter(obj => obj.tags.includes(tag));
     }
 
     type<T extends WorldObject>(type: new (...args) => T, checked: boolean = true) {
         let results = this.typeAll(type);
-        if (_.isEmpty(results)) {
+        if (A.isEmpty(results)) {
             if (checked) console.error(`No object of type ${type.name} exists in world:`, this.world);
             return undefined;
         }

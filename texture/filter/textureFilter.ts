@@ -113,7 +113,7 @@ class TextureFilter {
     }
 
     private constructUniformCode(uniformDeclarations: Dict<any>) {
-        if (_.isEmpty(uniformDeclarations)) return '';
+        if (O.isEmpty(uniformDeclarations)) return '';
         let uniformCode = '';
         for (let decl in uniformDeclarations) {
             uniformCode += `uniform ${decl};`;
@@ -122,7 +122,7 @@ class TextureFilter {
     }
 
     protected constructUniforms(uniformDeclarations: Dict<any>) {
-        if (_.isEmpty(uniformDeclarations)) return {};
+        if (O.isEmpty(uniformDeclarations)) return {};
         let uniformMap = {};
         for (let decl in uniformDeclarations) {
             let uniformName = decl.trim().substring(decl.lastIndexOf(' ') + 1);

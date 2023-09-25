@@ -187,7 +187,7 @@ class BasicTexture implements Texture {
      * Returns a NEW texture which is transformed from the original.
      */
     transform(properties: Texture.TransformProperties, source: string) {
-        _.defaults(properties, {
+        O.defaults(properties, {
             scaleX: 1,
             scaleY: 1,
             tint: 0xFFFFFF,
@@ -243,7 +243,7 @@ class BasicTexture implements Texture {
     private setRenderTextureSpriteProperties(properties: Texture.Properties) {
         if (!properties) properties = {};
 
-        _.defaults(properties, {
+        O.defaults(properties, {
             x: 0,
             y: 0,
             scaleX: 1,

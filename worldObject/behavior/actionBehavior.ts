@@ -90,12 +90,12 @@ class ActionBehavior implements Behavior {
     }
 
     private getNextAction(nextAction: ActionBehavior.NextAction): string {
-        if (_.isString(nextAction)) return nextAction;
+        if (St.isString(nextAction)) return nextAction;
         return nextAction.call(this);
     }
 
     private getInterruptAction(action: ActionBehavior.Action) {
-        if (_.isString(action.interrupt)) return action.interrupt;
+        if (St.isString(action.interrupt)) return action.interrupt;
         return this.getNextAction(action.nextAction);
     }
 

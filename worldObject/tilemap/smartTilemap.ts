@@ -42,7 +42,7 @@ namespace SmartTilemap {
     }
 
     export function getSmartTilemap(tilemap: string | Tilemap.Tilemap, config: RuleConfig): Tilemap.Tilemap {
-        if (_.isString(tilemap)) {
+        if (St.isString(tilemap)) {
             tilemap = AssetCache.getTilemap(tilemap);
             if (!tilemap) return undefined;
         }
@@ -71,7 +71,7 @@ namespace SmartTilemap {
     function getSmartTile(tilemap: Tilemap.TilemapLayer, x: number, y: number, config: RuleConfig): Tilemap.Tile {
         for (let rule of config.rules) {
             if (matchTilePattern(tilemap, x, y, config, rule.pattern)) {
-                return _.isNumber(rule.tile) ? { index: rule.tile, angle: 0, flipX: false } : rule.tile;
+                return M.isNumber(rule.tile) ? { index: rule.tile, angle: 0, flipX: false } : rule.tile;
             }
         }
 
@@ -92,7 +92,7 @@ namespace SmartTilemap {
 
     function matchTilePatternTile(patternTile: SmartTilemap.Rule.PatternTile, tileIndex: number): boolean {
         if (patternTile === undefined) return true;
-        if (_.isNumber(patternTile)) return patternTile === tileIndex;
+        if (M.isNumber(patternTile)) return patternTile === tileIndex;
         if (patternTile.type === 'is') return patternTile.index === tileIndex;
         if (patternTile.type === 'not') return patternTile.index !== tileIndex;
         return false;

@@ -24,7 +24,7 @@ class CircleBounds implements Bounds {
     }
 
     containsPoint(x: number | Pt, y?: number) {
-        if (!_.isNumber(x)) {
+        if (!M.isNumber(x)) {
             y = x.y;
             x = x.x;
         }

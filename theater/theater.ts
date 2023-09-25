@@ -55,7 +55,7 @@ class Theater extends World {
         this.cutsceneManager.update();
 
         super.update();
-        while (!_.isEmpty(this.endOfFrameQueue)) {
+        while (!A.isEmpty(this.endOfFrameQueue)) {
             this.endOfFrameQueue.shift()();
         }
     }

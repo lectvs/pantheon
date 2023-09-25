@@ -96,7 +96,7 @@ class PhysicsWorldObject extends WorldObject {
         this.bounds.y++;
         let ground = this.world.select.overlap(this.bounds, groundGroups);
         this.bounds.y--;
-        return !_.isEmpty(ground);
+        return !A.isEmpty(ground);
     }
 
     isImmovable() {
@@ -116,7 +116,7 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     teleport(x: Pt | number, y?: number) {
-        if (!_.isNumber(x)) {
+        if (!M.isNumber(x)) {
             y = x.y;
             x = x.x;
         }

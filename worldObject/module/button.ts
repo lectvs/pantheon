@@ -149,7 +149,7 @@ class Button extends Module<WorldObject> {
 namespace Button {
     export function getClosestButton(targetBounds: CircleBounds, world: World) {
         let buttons = world.select.modules(Button).filter(button => button.worldObject.isActive() && button.enabled && button.worldObject.bounds.isOverlapping(targetBounds) && button.canHover());
-        if (_.isEmpty(buttons)) {
+        if (A.isEmpty(buttons)) {
             return undefined;
         }
 

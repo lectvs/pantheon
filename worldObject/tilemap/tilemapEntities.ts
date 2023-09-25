@@ -15,7 +15,7 @@ namespace TilemapEntities {
 class TilemapEntities {
 
     static getEntities(config: TilemapEntities.GetEntitiesConfig): WorldObject[] {
-        let tilemap = _.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap;
+        let tilemap = St.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap;
         let tilemapLayer = config.tilemapLayer;
         let tileset = AssetCache.getTileset(config.tileset);
         let entities = config.entities;

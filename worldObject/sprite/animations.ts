@@ -39,7 +39,7 @@ namespace Animation {
 
 class Animations {
     static emptyList(...names: string[]): Animation.Config[] {
-        if (_.isEmpty(names)) return [];
+        if (A.isEmpty(names)) return [];
         return names.map(name => { return { name: name, frames: [] }; })
     }
 
@@ -61,7 +61,7 @@ class Animations {
     }
 
     static fromTextureList(config: Animation.Configs.FromTextureList): Animation.Config {
-        _.defaults(config, {
+        O.defaults(config, {
             count: 1,
         });
 
@@ -78,7 +78,7 @@ class Animations {
             frames: [],
         };
 
-        if (_.isEmpty(textures)) {
+        if (A.isEmpty(textures)) {
             return result;
         }
 
@@ -87,7 +87,7 @@ class Animations {
         for (let i = 0; i < textures.length; i++) {
             let animationFrame: Animation.Frame = {
                 duration: frameDuration,
-                texture: (_.isString(textures[i]) || _.isNumber(textures[i])) ? `${texturePrefix}${textures[i]}` : <Texture>textures[i],
+                texture: (St.isString(textures[i]) || M.isNumber(textures[i])) ? `${texturePrefix}${textures[i]}` : <Texture>textures[i],
                 nextFrameRef: `${config.name}/${i+1}`,
                 forceRequired: config.oneOff,
             };

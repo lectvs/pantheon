@@ -47,7 +47,7 @@ namespace S {
 
     export function fadeSlides(duration: number): Script.Function {
         return function*() {
-            if (_.isEmpty(global.theater.slides)) return;
+            if (A.isEmpty(global.theater.slides)) return;
 
             let slideAlphas = global.theater.slides.map(slide => slide.alpha);
 

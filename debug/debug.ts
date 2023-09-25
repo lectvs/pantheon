@@ -109,10 +109,10 @@ class Debug {
 }
 
 function get(nameOrType: string | (new (...args) => WorldObject)) {
-    let worldObject = _.isString(nameOrType)
+    let worldObjects = St.isString(nameOrType)
                         ? global.world.select.nameAll(nameOrType)
                         : global.world.select.typeAll(nameOrType);
-    if (_.isEmpty(worldObject)) return undefined;
-    if (worldObject.length === 1) return worldObject[0];
-    return worldObject;
+    if (A.isEmpty(worldObjects)) return undefined;
+    if (worldObjects.length === 1) return worldObjects[0];
+    return worldObjects;
 }

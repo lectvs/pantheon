@@ -61,7 +61,7 @@ class Script {
             while (true) {
                 let result = iterator.next();
                 if (result.value) {
-                    if (_.isArray(result.value)) {
+                    if (Array.isArray(result.value)) {
                         result.value = S.simul(...result.value.map(scr => s.buildIterator(scr)));
                     }
                     let script = new Script(result.value);

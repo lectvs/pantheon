@@ -27,12 +27,16 @@ namespace St {
         return St.binaryToAscii(binary.substring(1) + binary[0]);
     }
 
-    export function isEmpty(text: string) {
-        return !text;
-    }
-
     export function isBlank(text: string) {
         return isEmpty(text) || isEmpty(text.trim());
+    }
+
+    export function isEmpty(text: string) {
+        return !text || text.length === 0;
+    }
+
+    export function isString(obj: any): obj is string {
+        return typeof obj === 'string';
     }
 
     export function padLeft(text: string, minLength: number, padString: string = ' ') {
@@ -67,7 +71,7 @@ namespace St {
     }
 
     export function splitOnWhitespace(str: string) {
-        if (_.isEmpty(str)) return [];
+        if (isEmpty(str)) return [];
         return str.match(/\S+/g) || [];
     }
 }

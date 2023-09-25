@@ -66,7 +66,7 @@ class Tilemap extends WorldObject {
     constructor(config: Tilemap.Config) {
         super(config);
 
-        this.tilemap = Tilemap.cloneTilemap(_.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap);
+        this.tilemap = Tilemap.cloneTilemap(St.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap);
         this.scrubTilemapEntities(config.entities);
         this.setTilemapLayer(config.tilemapLayer ?? 0);
 
@@ -171,7 +171,7 @@ class Tilemap extends WorldObject {
     }
 
     private setTilemapLayer(tilemapLayer: number | string) {
-        if (_.isNumber(tilemapLayer)) {
+        if (M.isNumber(tilemapLayer)) {
             this.tilemapLayer = tilemapLayer;
             return;
         }
@@ -214,7 +214,7 @@ class Tilemap extends WorldObject {
     }
 
     private scrubTilemapEntities(entities: Dict<any>) {
-        if (_.isEmpty(entities)) return;
+        if (O.isEmpty(entities)) return;
         for (let layer = 0; layer < this.tilemap.layers.length; layer++) {
             for (let y = 0; y < this.tilemap.layers[layer].tiles.length; y++) {
                 for (let x = 0; x < this.tilemap.layers[layer].tiles[y].length; x++) {
@@ -281,12 +281,12 @@ namespace Tilemap {
     }
 
     export function getCollisionRects(tilemapLayer: Tilemap.TilemapLayer, tileset: Tileset) {
-        if (_.isEmpty(tileset.collisionIndices)) return [];
+        if (A.isEmpty(tileset.collisionIndices)) return [];
         let result: Rect[] = [];
         for (let y = 0; y < tilemapLayer.tiles.length; y++) {
             for (let x = 0; x < tilemapLayer.tiles[y].length; x++) {
                 let tile = tilemapLayer.tiles[y][x];
-                if (_.contains(tileset.collisionIndices, tile.index)) {
+                if (tileset.collisionIndices.includes(tile.index)) {
                     let rect = {
                         x: x*tileset.tileWidth,
                         y: y*tileset.tileHeight,
@@ -360,7 +360,7 @@ namespace Tilemap {
     function getInitialZTileIndicies(layer: Tilemap.TilemapLayer, zMap: Tilemap.ZMap) {
         let zTileIndices = A.filledArray2D<number>(layer.tiles.length, layer.tiles[0].length, undefined);
 
-        if (_.isEmpty(zMap)) {
+        if (O.isEmpty(zMap)) {
             for (let x = 0; x < layer.tiles[0].length; x++) {
                 zTileIndices[0][x] = 0;
             }

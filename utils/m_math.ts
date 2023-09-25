@@ -87,6 +87,10 @@ namespace M {
         return /^[+-]?\d+$/.test(n);
     }
 
+    export function isNumber(obj: any): obj is number {
+        return typeof obj === 'number';
+    }
+
     /** 
      * Calculates the height of a parabola that starts at startHeight, increases to startHeight + peakDelta, then falls to startHeight + groundDelta.
      * 0 <= t <= 1 is the percent completion of the jump.
@@ -135,7 +139,7 @@ namespace M {
     }
 
     export function min<T>(array: T[], key: (x: T) => number) {
-        if (_.isEmpty(array)) return NaN;
+        if (A.isEmpty(array)) return NaN;
         let result = key(array[0]);
 
         for (let i = 1; i < array.length; i++) {

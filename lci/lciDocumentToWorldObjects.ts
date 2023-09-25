@@ -27,7 +27,7 @@ function lciDocumentToWorldObjects(key: string) {
             continue;
         }
 
-        if (!_.isEmpty(layer.properties.multiBounds)) {
+        if (!A.isEmpty(layer.properties.multiBounds)) {
             for (let rect of layer.properties.multiBounds) {
                 let bounds = new PhysicsWorldObject({
                     x: rect.x, y: rect.y,

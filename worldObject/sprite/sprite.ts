@@ -67,7 +67,7 @@ class Sprite extends PhysicsWorldObject {
         }
         if (config.defaultAnimation) {
             this.playAnimation(config.defaultAnimation);
-        } else if (!_.isEmpty(config.animations)) {
+        } else if (!A.isEmpty(config.animations)) {
             this.playAnimation(config.animations[0].name);
         }
 
@@ -168,8 +168,8 @@ class Sprite extends PhysicsWorldObject {
             return;
         }
 
-        this.textureKey = _.isString(key) ? key : undefined;
-        this.texture = _.isString(key) ? AssetCache.getTexture(key) : key;
+        this.textureKey = St.isString(key) ? key : undefined;
+        this.texture = St.isString(key) ? AssetCache.getTexture(key) : key;
     }
 
     private getTextureLocalBounds() {

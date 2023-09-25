@@ -38,6 +38,6 @@ class Monitor {
     }
 
     isEmpty() {
-        return _.isEmpty(this.points);
+        return A.isEmpty(this.points);
     }
 }

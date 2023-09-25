@@ -31,10 +31,13 @@ class AnimationManager {
             console.error(`Cannot add animation '${name}' to sprite`, this.sprite, "since it already exists");
             return;
         }
-        this.animations[name] = _.defaults(frames, {
+
+        frames.forEach(frame => O.defaults(frame, {
             duration: 0,
             forceRequired: false,
-        });
+        }));
+
+        this.animations[name] = frames;
     }
 
     get forceRequired() {
@@ -43,7 +46,7 @@ class AnimationManager {
 
     getCurrentAnimationName() {
         for (let name in this.animations) {
-            if (_.contains(this.animations[name], this.currentFrame)) {
+            if (this.animations[name].includes(this.currentFrame)) {
                 return name;
             }
         }
@@ -78,7 +81,7 @@ class AnimationManager {
     }
 
     isAnimationEmpty(name: string) {
-        return _.isEmpty(this.animations[name]);
+        return A.isEmpty(this.animations[name]);
     }
 
     get isPlaying() {

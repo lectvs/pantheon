@@ -318,7 +318,7 @@ class World {
     }
 
     handleCollisions() {
-        if (_.isEmpty(this.collisions)) return;
+        if (A.isEmpty(this.collisions)) return;
 
         Physics.resolveCollisions(this);
     }
@@ -351,7 +351,7 @@ class World {
     
     removeWorldObject<T extends WorldObject>(obj: T | string): T {
         if (!obj) return undefined;
-        if (_.isString(obj)) {
+        if (St.isString(obj)) {
             obj = this.select.name<T>(obj);
             if (!obj) return undefined;
         }
@@ -364,7 +364,7 @@ class World {
     }
     
     removeWorldObjects<T extends WorldObject>(objs: ReadonlyArray<T | string>): T[] {
-        if (_.isEmpty(objs)) return [];
+        if (A.isEmpty(objs)) return [];
         return objs.map(obj => this.removeWorldObject(obj)).filter(obj => obj);
     }
 
@@ -383,13 +383,13 @@ class World {
     }
 
     private createLayers(layers: World.LayerConfig[]) {
-        if (_.isEmpty(layers)) layers = [];
+        if (A.isEmpty(layers)) layers = [];
 
         layers.push({ name: World.DEFAULT_LAYER });
 
         let result: World.Layer[] = [];
         for (let layer of layers) {
-            _.defaults(layer, {
+            O.defaults(layer, {
                 reverseSort: false,
             });
             result.push(new World.Layer(layer.name, layer));
@@ -399,13 +399,10 @@ class World {
     }
 
     private createPhysicsGroups(physicsGroups: Dict<World.PhysicsGroupConfig>) {
-        if (_.isEmpty(physicsGroups)) return {};
+        if (O.isEmpty(physicsGroups)) return {};
 
         let result: Dict<World.PhysicsGroup> = {};
         for (let name in physicsGroups) {
-            _.defaults(physicsGroups[name], {
-                collidesWith: [],
-            });
             result[name] = new World.PhysicsGroup(name, physicsGroups[name]);
         }
         return result;
@@ -464,7 +461,7 @@ class World {
     // For use with World.Actions.setPhysicsGroup
     zinternal_setPhysicsGroupWorld(obj: PhysicsWorldObject, physicsGroupName: string) {
         this.removeFromAllPhysicsGroups(obj);
-        if (!_.isEmpty(physicsGroupName)) {
+        if (!St.isEmpty(physicsGroupName)) {
             this.getPhysicsGroupByName(physicsGroupName).worldObjects.push(obj);
         }
     }
@@ -552,7 +549,7 @@ namespace World {
          * Adds a list of WorldObjects to a world. Returns as a list the objects added successfully.
          */
         export function addWorldObjectsToWorld<T extends WorldObject>(objs: ReadonlyArray<T>, world: World): T[] {
-            if (_.isEmpty(objs)) return [];
+            if (A.isEmpty(objs)) return [];
             return objs.filter(obj => addWorldObjectToWorld(obj, world));
         }
 
@@ -586,7 +583,7 @@ namespace World {
          * Removes a list of WorldObjects from their containing worlds. Returns as a list the objects successfully removed.
          */
         export function removeWorldObjectsFromWorld<T extends WorldObject>(objs: ReadonlyArray<T>, unlinkFromParent: boolean = true): T[] {
-            if (_.isEmpty(objs)) return [];
+            if (A.isEmpty(objs)) return [];
             return A.clone(objs).filter(obj => removeWorldObjectFromWorld(obj, unlinkFromParent));
         }
 
@@ -617,7 +614,7 @@ namespace World {
         export function setPhysicsGroup(obj: WorldObject, physicsGroupName: string): string {
             if (!obj) return undefined;
 
-            if (obj.world && !_.isEmpty(physicsGroupName) && !obj.world.getPhysicsGroupByName(physicsGroupName)) {
+            if (obj.world && !St.isEmpty(physicsGroupName) && !obj.world.getPhysicsGroupByName(physicsGroupName)) {
                 console.error(`Cannot set physicsGroup on object '${obj.name}' as no physicsGroup named ${physicsGroupName} exists in world`, obj.world);
                 return obj.physicsGroup;
             }
@@ -675,7 +672,7 @@ namespace World {
          * Adds a list of WorldObjects as children to a parent. Returns as a list the children successfully added.
          */
         export function addChildrenToParent<T extends WorldObject>(children: ReadonlyArray<T>, obj: WorldObject): T[] {
-            if (_.isEmpty(children)) return [];
+            if (A.isEmpty(children)) return [];
             return children.filter(child => addChildToParent(child, obj));
         }
 
@@ -704,7 +701,7 @@ namespace World {
          * Detaches a list of children from their parents. Returns as a list the children successfully removed.
          */
         export function detachChildrenFromParent<T extends WorldObject>(children: ReadonlyArray<T>): T[] {
-            if (_.isEmpty(children)) return [];
+            if (A.isEmpty(children)) return [];
             return A.clone(children).filter(child => detachChildFromParent(child));
         }
 
@@ -773,7 +770,7 @@ namespace World {
          * @return the new bounds containing all of the objects
          */
         export function balanceWorldObjects(objs: ReadonlyArray<WorldObject>, aroundX: number, aroundY: number, anchor: Vector2 = Vector2.CENTER, deep: boolean = false) {
-            if (_.isEmpty(objs)) return undefined;
+            if (A.isEmpty(objs)) return undefined;
 
             let bounds: Boundaries = {
                 left: objs[0].x,

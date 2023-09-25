@@ -14,7 +14,6 @@ TODO
 - outline match texture's alpha by default?
 - lci bounds=allcircle
 - texture crop() method
-- deprecate underscore.js
     - https://stackoverflow.com/questions/13897659/extending-functionality-in-typescript
 - "humanized" option in sound asset definition
 - collision mode that has no separation or momentum transfer (e.g. checking if a bullet hits the player)
@@ -79,6 +78,7 @@ TODO
 - controller revamp
 - fix: Options.updateCallbacks.push(() => Input.init());
 - enable strictNullChecks, noImplicitOverride
+- full nodejs/bun setup
 - template for new games
 - documentation and API cleanup
 - games do not work on Opera mobile browser (AAC audio encoding?)

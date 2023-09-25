@@ -2,7 +2,7 @@ class MenuSystem {
     game: Game;
     menuStack: Menu[];
 
-    get currentMenu() { return _.last(this.menuStack); }
+    get currentMenu() { return A.last(this.menuStack); }
     get inMenu() { return !!this.currentMenu; }
 
     constructor(game: Game) {

@@ -37,7 +37,7 @@ namespace S {
     export function either(...scriptFunctions: Script.Function[]): Script.Function {
         return function*() {
             let scripts: Script[] = scriptFunctions.map(sfn => new Script(sfn));
-            if (_.isEmpty(scripts)) return;
+            if (A.isEmpty(scripts)) return;
             while (!scripts.some(s => s.done)) {
                 for (let script of scripts) {
                     script.update(global.script.delta);
@@ -86,10 +86,10 @@ namespace S {
             let t = schedule[i];
             let s = i+1 < schedule.length ? schedule[i+1] : S.noop();
 
-            if (!_.isNumber(t)) {
+            if (!M.isNumber(t)) {
                 fns.push({ t: 0, s: t });
                 i++;
-            } else if (_.isNumber(s)) {
+            } else if (M.isNumber(s)) {
                 fns.push({ t: t, s: S.noop() });
                 i++;
             } else {
@@ -109,12 +109,12 @@ namespace S {
     export function simul(...scriptFunctions: Script.Function[]): Script.Function {
         return function*() {
             let scripts: Script[] = scriptFunctions.map(sfn => new Script(sfn));
-            while (!_.isEmpty(scripts)) {
+            while (!A.isEmpty(scripts)) {
                 scripts = scripts.filter(script => {
                     script.update(global.script.delta);
                     return !script.done;
                 });
-                if (!_.isEmpty(scripts)) yield;
+                if (!A.isEmpty(scripts)) yield;
             }
         }
     }

@@ -336,13 +336,13 @@ class WorldObject {
     }
 
     addTag(tag: string) {
-        if (!_.contains(this.tags, tag)) {
+        if (!this.tags.includes(tag)) {
             this.tags.push(tag);
         }
     }
 
     addTimer(durationOrTimer: number | Timer, callback?: () => any, count: number = 1) {
-        if (_.isNumber(durationOrTimer)) {
+        if (M.isNumber(durationOrTimer)) {
             durationOrTimer = new Timer(durationOrTimer, callback, count);
         }
         this.timers.push(durationOrTimer);
@@ -355,7 +355,7 @@ class WorldObject {
 
     detachChild<T extends WorldObject>(child: T | string): T {
         if (!child) return undefined;
-        if (_.isString(child)) {
+        if (St.isString(child)) {
             child = this.getChildByName<T>(child);
             if (!child) return undefined;
         }
@@ -378,7 +378,7 @@ class WorldObject {
     }
 
     detachChildren<T extends WorldObject>(children: ReadonlyArray<T>): T[] {
-        if (_.isEmpty(children)) return [];
+        if (A.isEmpty(children)) return [];
         return children.map(child => this.detachChild(child)).filter(child => child);
     }
 
@@ -459,7 +459,7 @@ class WorldObject {
     }
 
     hasTag(tag: string) {
-        return _.contains(this.tags, tag);
+        return this.tags.includes(tag);
     }
 
     isActive(): boolean {
@@ -537,13 +537,13 @@ class WorldObject {
     }
 
     private resolveLayer() {
-        if (_.contains(this.copyFromParent, 'layer') && this.parent && this._layer !== this.parent.layer) {
+        if (this.copyFromParent.includes('layer') && this.parent && this._layer !== this.parent.layer) {
             this.layer = this.parent.layer;
         }
     }
 
     private resolvePhysicsGroup() {
-        if (_.contains(this.copyFromParent, 'physicsGroup') && this.parent && this._physicsGroup !== this.parent.physicsGroup) {
+        if (this.copyFromParent.includes('physicsGroup') && this.parent && this._physicsGroup !== this.parent.physicsGroup) {
             this.physicsGroup = this.parent.physicsGroup;
         }
     }

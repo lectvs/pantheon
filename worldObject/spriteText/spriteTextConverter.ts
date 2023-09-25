@@ -19,7 +19,7 @@ namespace SpriteTextConverter {
             } else if (text[i] === '\n') {
                 pushWord(word, result, nextCharPosition, font, maxWidth, current);
                 nextCharPosition.x = 0;
-                nextCharPosition.y += getNewLineHeightDiff(nextCharPosition.y, SpriteText.getHeightOfCharList(_.flatten(result)), font.newlineHeight);
+                nextCharPosition.y += getNewLineHeightDiff(nextCharPosition.y, SpriteText.getHeightOfCharList(result.flat()), font.newlineHeight);
                 result.push([]);
             } else if (text[i] === '[') {
                 let closingBracketIndex = text.indexOf(']', i); 
@@ -30,7 +30,7 @@ namespace SpriteTextConverter {
 
                 let parts = parseTag(text.substring(i+1, closingBracketIndex));
                 if (parts[0].startsWith('/')) {
-                    if (!_.isEmpty(tagStack)) {
+                    if (!A.isEmpty(tagStack)) {
                         tagStack.pop();
                     }
                 } else {
@@ -95,7 +95,7 @@ namespace SpriteTextConverter {
 
     function parseTag(tag: string) {
         let result = St.splitOnWhitespace(tag);
-        if (_.isEmpty(result)) {
+        if (A.isEmpty(result)) {
             console.error(`Tag ${tag} must have the tag part specified.`);
             return [SpriteText.NOOP_TAG];
         }
@@ -103,12 +103,12 @@ namespace SpriteTextConverter {
     }
 
     function pushWord(word: SpriteText.Character[], resultLines: SpriteText.Character[][], position: Vector2, font: SpriteText.Font, maxWidth: number, current: CurrentData) {
-        if (_.isEmpty(word)) return;
+        if (A.isEmpty(word)) return;
 
-        let lastChar = _.last(word);
+        let lastChar = A.last(word);
         if (maxWidth > 0 && lastChar.right > maxWidth) {
             let diffx = -word[0].x;
-            let diffy = getNewLineHeightDiff(word[0].y, SpriteText.getHeightOfCharList(_.flatten(resultLines)), font.newlineHeight);
+            let diffy = getNewLineHeightDiff(word[0].y, SpriteText.getHeightOfCharList(resultLines.flat()), font.newlineHeight);
             for (let char of word) {
                 char.x += diffx;
                 char.y += diffy;
@@ -121,7 +121,7 @@ namespace SpriteTextConverter {
         }
 
         while (word.length > 0) {
-            _.last(resultLines).push(word.shift());
+            A.last(resultLines).push(word.shift());
         }
     }
 

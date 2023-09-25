@@ -11,12 +11,12 @@ namespace A {
     }
 
     export function clone<T>(array: ReadonlyArray<T>) {
-        if (_.isEmpty(array)) return [];
+        if (isEmpty(array)) return [];
         return Array.from(array);
     }
 
     export function clone2D<T>(array: T[][]) {
-        if (_.isEmpty(array)) return [];
+        if (isEmpty(array)) return [];
         return array.map(line => clone(line));
     }
 
@@ -41,7 +41,7 @@ namespace A {
     }
 
     export function filterInPlace<T>(array: T[], predicate: (value: T, index: number, array: T[]) => any) {
-        if (_.isEmpty(array)) return array;
+        if (isEmpty(array)) return array;
         for (let i = array.length-1; i >= 0; i--) {
             if (!predicate(array[i], i, array)) {
                 array.splice(i, 1);
@@ -51,13 +51,26 @@ namespace A {
     }
 
     export function get2DArrayDimensions(array: any[][]): Dimens {
-        if (_.isEmpty(array)) return { width: 0, height: 0 };
-        return { width: M.max(array, line => _.isEmpty(line) ? 0 : line.length), height: array.length };
+        if (isEmpty(array)) return { width: 0, height: 0 };
+        return { width: M.max(array, line => isEmpty(line) ? 0 : line.length), height: array.length };
+    }
+
+    export function isArray(obj: any): obj is any[] {
+        return Array.isArray(obj);
+    }
+
+    export function isEmpty(array: ReadonlyArray<any>) {
+        return !array || array.length === 0;
+    }
+
+    export function last<T>(array: T[]): T {
+        if (isEmpty(array)) return undefined;
+        return array[array.length-1];
     }
 
     export function map2D<T,S>(array: T[][], fn: (a: T) => S) {
-        if (_.isEmpty(array)) return [];
-        return array.map(line => _.isEmpty(line) ? [] : line.map(fn));
+        if (isEmpty(array)) return [];
+        return array.map(line => isEmpty(line) ? [] : line.map(fn));
     }
 
     export function mergeArray<T>(array: T[], into: T[], key: (element: T) => any, combine: (e: T, into: T) => T = ((e, into) => e)) {
@@ -128,10 +141,10 @@ namespace A {
     /**
      * Returns true iff the arrays contain a common element.
      */
-    export function overlaps<T,S>(array1: T[], array2: S[]) {
-        if (_.isEmpty(array1) || _.isEmpty(array2)) return false;
+    export function overlaps(array1: any[], array2: any[]) {
+        if (isEmpty(array1) || isEmpty(array2)) return false;
         for (let e of array1){
-            if (_.includes(array2, e)) return true;
+            if (array2.includes(e)) return true;
         }
         return false;
     }
@@ -221,6 +234,11 @@ namespace A {
         return sequence(rows, i => sequence(cols, j => f(i, j)));
     }
 
+    export function size(array: any[]) {
+        if (isEmpty(array)) return 0;
+        return array.length;
+    }
+
     /**
      * Sorts in ascending order by default.
      */
@@ -237,7 +255,7 @@ namespace A {
     }
 
     export function sum<T>(array: T[], key: (e: T) => number = (e => <any>e)) {
-        if (_.isEmpty(array)) return 0;
+        if (isEmpty(array)) return 0;
         let result = 0;
         for (let i = 0; i < array.length; i++) {
             result += key(array[i]);
