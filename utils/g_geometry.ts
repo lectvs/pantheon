@@ -7,6 +7,10 @@ namespace G {
         return angle;
     }
 
+    export function areRectanglesOverlapping(rect1: Rect, rect2: Rect) {
+        return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y;
+    }
+
     export function average(...ps: Pt[]) {
         if (A.isEmpty(ps)) {
             return undefined;
@@ -67,6 +71,15 @@ namespace G {
         return A.range(n).map(i => vec2(cx + r*M.cos(angle + 360/n*(i+0.5)), cy + r*M.sin(angle + 360/n*(i+0.5))));
     }
 
+    export function getRectangleOverlap(rect1: Rect, rect2: Rect) {
+        let x = Math.max(rect1.x, rect2.x);
+        let w = Math.min(rect1.x + rect1.width, rect2.x + rect2.width) - x;
+        let y = Math.max(rect1.y, rect2.y);
+        let h = Math.min(rect1.y + rect1.height, rect2.y + rect2.height) - y;
+        if (w < 0 || h < 0) return undefined;
+        return rect(x, y, w, h);
+    }
+
     export function lerpPt(pt1: Pt, pt2: Pt, t: number) {
         return vec2(M.lerp(t, pt1.x, pt2.x), M.lerp(t, pt1.y, pt2.y));
     }
@@ -75,10 +88,6 @@ namespace G {
         if (G.distance(current, to) <= speed * delta) current.set(to);
         current.add(vec2(to.x - current.x, to.y - current.y).withMagnitude(speed * delta));
         return current;
-    }
-
-    export function overlapRectangles(rect1: Rect, rect2: Rect) {
-        return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y;
     }
 
     export function rectContainsPt(rect: Rect, pt: Pt) {

@@ -183,5 +183,15 @@ class Perlin {
         float pnoise(float x, float y, float z) {
             return pnoise(vec3(x, y, z));
         }
+
+        // Normalized to (0, 1)
+        float pnoisePos(vec3 P) {
+            return map(pnoise(P), -1.0, 1.0, 0.0, 1.0);
+        }
+
+        // Normalized to (0, 1)
+        float pnoisePos(float x, float y, float z) {
+            return map(pnoise(x, y, z), -1.0, 1.0, 0.0, 1.0);
+        }
     `;
 }

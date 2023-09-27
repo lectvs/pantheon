@@ -54,13 +54,6 @@ namespace M {
         return val < min ? min : (val > max ? max : val);
     }
 
-    export function colorToVec3(color: number): [number, number, number] {
-        let r = (color >> 16) & 255;
-        let g = (color >> 8) & 255;
-        let b = color & 255;
-        return [r/255, g/255, b/255];
-    }
-
     export function degToRad(deg: number) {
         return Math.PI * deg / 180;
     }
@@ -188,10 +181,6 @@ namespace M {
 
     export function roundToNearest(n: number, unit: number) {
         return Math.round(n / unit) * unit;
-    }
-
-    export function vec3ToColor(vec3: [number, number, number]) {
-        return (Math.round(vec3[0] * 255) << 16) + (Math.round(vec3[1] * 255) << 8) + Math.round(vec3[2] * 255);
     }
 
 

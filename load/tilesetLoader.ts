@@ -14,7 +14,8 @@ class TilesetLoader implements Loader {
     load(callback?: () => void) {
         new TextureLoader(this.key, {
             url: this.getUrl(),
-            spritesheet: { frameWidth: this.tileset.tileWidth, frameHeight: this.tileset.tileHeight, anchor: Vector2.CENTER },
+            anchor: Anchor.CENTER,
+            spritesheet: { frameWidth: this.tileset.tileWidth, frameHeight: this.tileset.tileHeight },
         }).load(() => {
             this.onLoad();
             this._completionPercent = 1;

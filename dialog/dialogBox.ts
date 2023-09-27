@@ -62,7 +62,7 @@ class DialogBox extends Sprite {
         this.portrait = this.addChild(new WorldObject({ x: config.portraitPosition.x, y: config.portraitPosition.y }));
 
         this.nameSprite = this.addChild(new Sprite({ x: config.namePosition.x, y: config.namePosition.y, texture: config.nameTexture }));
-        this.nameText = this.nameSprite.addChild(new SpriteText({ x: config.nameTextOffset.x, y: config.nameTextOffset.y, font: config.nameFont, anchor: Vector2.CENTER }));
+        this.nameText = this.nameSprite.addChild(new SpriteText({ x: config.nameTextOffset.x, y: config.nameTextOffset.y, font: config.nameFont, anchor: Anchor.CENTER }));
 
         this.characterTimer = new Timer(0.05, () => this.advanceCharacter(), Infinity);
 

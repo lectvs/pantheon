@@ -769,7 +769,7 @@ namespace World {
          * Shifts provided WorldObjects equally to balance them around a point.
          * @return the new bounds containing all of the objects
          */
-        export function balanceWorldObjects(objs: ReadonlyArray<WorldObject>, aroundX: number, aroundY: number, anchor: Vector2 = Vector2.CENTER, deep: boolean = false) {
+        export function balanceWorldObjects(objs: ReadonlyArray<WorldObject>, aroundX: number, aroundY: number, anchor: Vector2 = Anchor.CENTER, deep: boolean = false) {
             if (A.isEmpty(objs)) return undefined;
 
             let bounds: Boundaries = {

@@ -32,13 +32,11 @@ class TextureLoader implements Loader {
 
         let mainTexture = new PIXI.Texture(baseTexture);
         let rect = this.texture.rect;
-        let anchor = this.texture.anchor;
+        let anchor = this.texture.anchor || Anchor.CENTER;
         if (rect) {
             mainTexture.frame = new Rectangle(rect.x, rect.y, rect.width, rect.height);
         }
-        if (anchor) {
-            mainTexture.defaultAnchor = new Point(anchor.x, anchor.y);
-        }
+        mainTexture.defaultAnchor = new Point(anchor.x, anchor.y);
         AssetCache.pixiTextures[this.key] = mainTexture;
         AssetCache.textures[this.key] = Texture.fromPixiTexture(mainTexture);
 
@@ -47,13 +45,11 @@ class TextureLoader implements Loader {
         for (let frame in frames) {
             let frameTexture: PIXI.Texture = new PIXI.Texture(baseTexture);
             let rect = frames[frame].rect || this.texture.rect;
-            let anchor = frames[frame].anchor || this.texture.anchor;
+            let anchor = frames[frame].anchor || this.texture.anchor || Anchor.CENTER;
             if (rect) {
                 frameTexture.frame = new Rectangle(rect.x, rect.y, rect.width, rect.height);
             }
-            if (anchor) {
-                frameTexture.defaultAnchor = new Point(anchor.x, anchor.y);
-            }
+            frameTexture.defaultAnchor = new Point(anchor.x, anchor.y);
             AssetCache.pixiTextures[frame] = frameTexture;
             AssetCache.textures[frame] = Texture.fromPixiTexture(frameTexture);
         }

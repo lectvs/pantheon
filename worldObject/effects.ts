@@ -2,20 +2,18 @@
 
 namespace Effects {
     export type Config = {
-        pre?: PreConfig;
+        pre?: TextureFilter[];
         silhouette?: SilhouetteConfig;
         outline?: OutlineConfig;
         invertColors?: InvertColorsConfig;
         glitch?: GlitchConfig;
-        post?: PostConfig;
+        post?: TextureFilter[];
     }
 
-    export type PreConfig = { filters?: TextureFilter[], enabled?: boolean };
     export type SilhouetteConfig = { color?: number, alpha?: number, amount?: number,  enabled?: boolean };
     export type OutlineConfig = { color?: number, alpha?: number, enabled?: boolean };
     export type InvertColorsConfig = { enabled?: boolean };
     export type GlitchConfig = { strength?: number, speed?: number, spread?: number, enabled?: boolean };
-    export type PostConfig = { filters?: TextureFilter[], enabled?: boolean };
 }
 
 
@@ -26,8 +24,8 @@ class Effects {
     private static INVERT_COLORS_I: number = 2;
     private static GLITCH_I: number = 3;
 
-    pre: Effects.FilterList;
-    post: Effects.FilterList;
+    pre: TextureFilter[];
+    post: TextureFilter[];
 
     get silhouette(): Effects.Filters.Silhouette {
         if (!this.effects[Effects.SILHOUETTE_I]) {
@@ -70,19 +68,19 @@ class Effects {
 
     constructor(config: Effects.Config = {}) {
         this.effects = [undefined, undefined, undefined, undefined];
-        this.pre = { filters: [] };
-        this.post = { filters: [] };
+        this.pre = [];
+        this.post = [];
         this.updateFromConfig(config);
     }
 
     getFilterList() {
-        return this.pre.filters.concat(this.effects).concat(this.post.filters);
+        return this.pre.concat(this.effects).concat(this.post);
     }
 
     hasEffects() {
         if (this.effects.some(effect => effect && effect.enabled)) return true;
-        if (this.pre.filters.some(filter => filter && filter.enabled)) return true;
-        if (this.post.filters.some(filter => filter && filter.enabled)) return true;
+        if (this.pre.some(filter => filter && filter.enabled)) return true;
+        if (this.post.some(filter => filter && filter.enabled)) return true;
         return false;
     }
 
@@ -91,15 +89,15 @@ class Effects {
         if (this.effects[Effects.OUTLINE_I]) this.effects[Effects.OUTLINE_I].updateTime(delta);
         if (this.effects[Effects.INVERT_COLORS_I]) this.effects[Effects.INVERT_COLORS_I].updateTime(delta);
         if (this.effects[Effects.GLITCH_I]) this.effects[Effects.GLITCH_I].updateTime(delta);
-        for (let filter of this.pre.filters) filter.updateTime(delta);
-        for (let filter of this.post.filters) filter.updateTime(delta);
+        for (let filter of this.pre) filter.updateTime(delta);
+        for (let filter of this.post) filter.updateTime(delta);
     }
 
     updateFromConfig(config: Effects.Config) {
         if (!config) return;
 
         if (config.pre) {
-            this.pre.filters = config.pre.filters ?? [];
+            this.pre = config.pre;
         }
 
         if (config.silhouette) {
@@ -127,17 +125,16 @@ class Effects {
         }
 
         if (config.post) {
-            this.post.filters = config.post.filters ?? [];
+            this.post = config.post;
         }
     }
 }
 
 namespace Effects {
-    export type FilterList = { filters: TextureFilter[] };
     export namespace Filters {
         export class Silhouette extends TextureFilter {
-            get color() { return M.vec3ToColor(this.getUniform('color')); }
-            set color(value: number) { this.setUniform('color', M.colorToVec3(value)); }
+            get color() { return Color.vec3ToColor(this.getUniform('color')); }
+            set color(value: number) { this.setUniform('color', Color.colorToVec3(value)); }
             get alpha() { return this.getUniform('alpha'); }
             set alpha(value: number) { this.setUniform('alpha', value); }
             get amount() { return this.getUniform('amount'); }
@@ -146,7 +143,7 @@ namespace Effects {
             constructor(color: number, alpha: number) {
                 super({
                     uniforms: {
-                        "vec3 color": M.colorToVec3(0x000000),
+                        "vec3 color": Color.colorToVec3(0x000000),
                         "float alpha": 1.0,
                         "float amount": 1.0
                     },
@@ -169,15 +166,15 @@ namespace Effects {
         }
 
         export class Outline extends TextureFilter {
-            get color() { return M.vec3ToColor(this.getUniform('color')); }
-            set color(value: number) { this.setUniform('color', M.colorToVec3(value)); }
+            get color() { return Color.vec3ToColor(this.getUniform('color')); }
+            set color(value: number) { this.setUniform('color', Color.colorToVec3(value)); }
             get alpha() { return this.getUniform('alpha'); }
             set alpha(value: number) { this.setUniform('alpha', value); }
 
             constructor(color: number, alpha: number) {
                 super({
                     uniforms: {
-                        "vec3 color": M.colorToVec3(0x000000),
+                        "vec3 color": Color.colorToVec3(0x000000),
                         "float alpha": 1.0
                     },
                     code: `

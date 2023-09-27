@@ -177,31 +177,6 @@ class Vector2 {
         return new Vector2(radius * M.cos(angle), radius * M.sin(angle));
     }
 
-    // Directions
-    static get UP_LEFT() { return new Vector2(-1, -1); }
-    static get UP() { return new Vector2(0, -1); }
-    static get UP_RIGHT() { return new Vector2(1, -1); }
-    static get LEFT() { return new Vector2(-1, 0); }
-    static get NONE() { return new Vector2(0, 0); }
-    static get RIGHT() { return new Vector2(1, 0); }
-    static get DOWN_LEFT() { return new Vector2(-1, 1); }
-    static get DOWN() { return new Vector2(0, 1); }
-    static get DOWN_RIGHT() { return new Vector2(1, 1); }
-
-    // Anchors
-    static get TOP_LEFT() { return new Vector2(0, 0); }
-    static get TOP_CENTER() { return new Vector2(0.5, 0); }
-    static get TOP_RIGHT() { return new Vector2(1, 0); }
-    static get CENTER_LEFT() { return new Vector2(0, 0.5); }
-    static get CENTER_CENTER() { return new Vector2(0.5, 0.5); }
-    static get CENTER_RIGHT() { return new Vector2(1, 0.5); }
-    static get BOTTOM_LEFT() { return new Vector2(0, 1); }
-    static get BOTTOM_CENTER() { return new Vector2(0.5, 1); }
-    static get BOTTOM_RIGHT() { return new Vector2(1, 1); }
-    static get TOP() { return new Vector2(0.5, 0); }
-    static get CENTER() { return new Vector2(0.5, 0.5); }
-    static get BOTTOM() { return new Vector2(0.5, 1); }
-
     // Misc
     static get ZERO() { return new Vector2(0, 0); }
 }
@@ -223,4 +198,33 @@ class Vector2Polar {
     toCartesian() {
         return Vector2.fromPolar(this.radius, this.angle);
     }
+}
+
+class Anchor {
+    static get TOP_LEFT() { return new Vector2(0, 0); }
+    static get TOP_CENTER() { return new Vector2(0.5, 0); }
+    static get TOP_RIGHT() { return new Vector2(1, 0); }
+    static get CENTER_LEFT() { return new Vector2(0, 0.5); }
+    static get CENTER_CENTER() { return new Vector2(0.5, 0.5); }
+    static get CENTER_RIGHT() { return new Vector2(1, 0.5); }
+    static get BOTTOM_LEFT() { return new Vector2(0, 1); }
+    static get BOTTOM_CENTER() { return new Vector2(0.5, 1); }
+    static get BOTTOM_RIGHT() { return new Vector2(1, 1); }
+    static get TOP() { return new Vector2(0.5, 0); }
+    static get CENTER() { return new Vector2(0.5, 0.5); }
+    static get BOTTOM() { return new Vector2(0.5, 1); }
+    static get LEFT() { return new Vector2(0, 0.5); }
+    static get RIGHT() { return new Vector2(1, 0.5); }
+}
+
+class Direction {
+    static get UP_LEFT() { return new Vector2(-1, -1); }
+    static get UP() { return new Vector2(0, -1); }
+    static get UP_RIGHT() { return new Vector2(1, -1); }
+    static get LEFT() { return new Vector2(-1, 0); }
+    static get NONE() { return new Vector2(0, 0); }
+    static get RIGHT() { return new Vector2(1, 0); }
+    static get DOWN_LEFT() { return new Vector2(-1, 1); }
+    static get DOWN() { return new Vector2(0, 1); }
+    static get DOWN_RIGHT() { return new Vector2(1, 1); }
 }

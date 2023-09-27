@@ -74,11 +74,11 @@ interface Texture {
 }
 
 namespace Texture {
-    const cache_filledCircle: Dict<BasicTexture> = {};
+    const cache_filledCircle: Dict<AnchoredTexture> = {};
     export function filledCircle(radius: number, fillColor: number, fillAlpha: number = 1) {
         let key = `${radius},${fillColor},${fillAlpha}`;
         if (!cache_filledCircle[key]) {
-            let result = new BasicTexture(radius*2, radius*2, 'Texture.filledCircle');
+            let result = new AnchoredTexture(new BasicTexture(radius*2, radius*2, 'Texture.filledCircle'), 0.5, 0.5);
             Draw.circleSolid(result, radius, radius, radius, { color: fillColor, alpha: fillAlpha, thickness: 0 });
             result.immutable = true;
             cache_filledCircle[key] = result;
@@ -175,11 +175,11 @@ namespace Texture {
         return cache_outlineRect[key];
     }
 
-    const cache_outlineCircle: Dict<BasicTexture> = {};
+    const cache_outlineCircle: Dict<AnchoredTexture> = {};
     export function outlineCircle(radius: number, outlineColor: number, outlineAlpha: number = 1, outlineThickness: number = 1) {
         let key = `${radius},${outlineColor},${outlineAlpha},${outlineThickness}`;
         if (!cache_outlineCircle[key]) {
-            let result = new BasicTexture(radius*2, radius*2, 'Texture.outlineCircle');
+            let result = new AnchoredTexture(new BasicTexture(radius*2, radius*2, 'Texture.outlineCircle'));
             Draw.circleOutline(result, radius, radius, radius, Draw.ALIGNMENT_INNER, { color: outlineColor, alpha: outlineAlpha, thickness: outlineThickness });
             result.immutable = true;
             cache_outlineCircle[key] = result;

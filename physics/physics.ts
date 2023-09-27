@@ -169,7 +169,7 @@ namespace Physics {
                     let from = world.physicsGroups[collision.from].worldObjects[ifrom];
 
                     if (move === from) continue;
-                    if (!G.overlapRectangles(move.bounds.getBoundingBox(), from.bounds.getBoundingBox())) continue;
+                    if (!G.areRectanglesOverlapping(move.bounds.getBoundingBox(), from.bounds.getBoundingBox())) continue;
                     if (!move.colliding || !from.colliding) continue;
                     if (!move.isCollidingWith(from) || !from.isCollidingWith(move)) continue;
                     let raycastCollision = move.bounds.getRaycastCollision(move.x-move.physicslastx, move.y-move.physicslasty, from.bounds, from.x-from.physicslastx, from.y-from.physicslasty);

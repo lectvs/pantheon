@@ -1,28 +1,22 @@
 TODO
-- handle playing a music track if the track is already playing
 - simple mask shapes (like rectangle)
-- move colorToVec3 and vec3ToColor to Color util
-- Texture.filledCircle/outlineCircle not having center anchor keeps tripping me up
-- asset texture default anchor center
-- rename Vector2 constants to Anchor and Direction
-- map shader pnoise to [0, 1]?
-- combined Draw.circleSolid + Draw.circleOutline etc?
-- simplify pre- and post- effects (remove filters field?)
-- revisit temp approx/convolute44 methods in TextureFilter
 - move Game.allowPauseWithPauseKey from a global property to an evaluated function (based on world flags?)
 - remove Draw.brush?
+    - combined Draw.circleSolid + Draw.circleOutline etc?
 - outline match texture's alpha by default?
 - lci bounds=allcircle
 - texture crop() method
 - "humanized" option in sound asset definition
 - collision mode that has no separation or momentum transfer (e.g. checking if a bullet hits the player)
+- rewrite musicmanager, handle playing a music track if the track is already playing
+- animation revamp (animation/script parity?)
+    - squash/stretch/transform/etc actions
 - game/theater revamp
     - theater not a world (for real this time)
     - better slides (for real this time)
     - figure out what is defined in the world constructor vs what is defined in onTransitioned
     - revamp menu system, transitions from main menu to game
 - world and worldobject hooks/events (onDeath, onLoad, etc.)
-- ability to define custom TextureFilter helper methods in shader
 - remake build script in node
     - add LICENSE to build, keep it from bloating src/lectvs/assets/etc
 - improve compile time
@@ -30,8 +24,6 @@ TODO
 - preload/load overhaul + get off of pixi's preload system
     - load from zip file?
     - asset dependencies?
-- animation revamp (animation/script parity?)
-    - squash/stretch/transform/etc actions
 - improve spritetext
     - better performance on large spritetexts
     - spritetext tags are technically not assets
@@ -77,7 +69,7 @@ TODO
 - controller revamp
 - fix: Options.updateCallbacks.push(() => Input.init());
 - enable strictNullChecks, noImplicitOverride
-- full nodejs/bun setup
+- full nodejs setup
 - template for new games
 - documentation and API cleanup
 - games do not work on Opera mobile browser (AAC audio encoding?)

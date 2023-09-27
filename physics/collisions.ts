@@ -1010,14 +1010,14 @@ namespace Bounds.Collision {
     }
 
     export function isOverlappingRectRect(move: RectBounds, from: RectBounds) {
-        return G.overlapRectangles(move.getBoundingBox(), from.getBoundingBox());
+        return G.areRectanglesOverlapping(move.getBoundingBox(), from.getBoundingBox());
     }
 
     export function isOverlappingRectSlope(move: RectBounds, from: SlopeBounds) {
         let moveBox = move.getBoundingBox();
         let fromBox = from.getBoundingBox();
 
-        if (!G.overlapRectangles(moveBox, fromBox)) return false;
+        if (!G.areRectanglesOverlapping(moveBox, fromBox)) return false;
 
         if (from.direction === 'upleft' && moveBox.bottom <= -fromBox.height/fromBox.width * (moveBox.right - fromBox.left) + fromBox.bottom) return false;
         if (from.direction === 'upright' && moveBox.bottom <= fromBox.height/fromBox.width * (moveBox.left - fromBox.left) + fromBox.top) return false;

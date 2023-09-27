@@ -18,6 +18,8 @@ namespace TextureFilter {
      *               vec4 getDestColor(float destx, float desty) - get the color at x/y in dest space
      *               float pnoise(vec3 p) - perlin noise at a point, normalized to [-1, 1]
      *               float pnoise(float x, float y, float z) - perlin noise at a point, normalized to [-1, 1]
+     *               float pnoisePos(vec3 p) - perlin noise at a point, normalized to [0, 1]
+     *               float pnoisePos(float x, float y, float z) - perlin noise at a point, normalized to [0, 1]
      *               vec3 rgb2hsv(vec3 rgb) - converts RGB to HSV. all values are in the range [0, 1]
      *               vec3 hsv2rgb(vec3 hsv) - converts HSV to RGB. all values are in the range [0, 1]
      *               float map(float value, float min1, float max1, float min2, float max2) - linearly map a value between ranges
@@ -25,6 +27,7 @@ namespace TextureFilter {
      */
     export type Config = {
         uniforms?: Dict<any>;
+        helperMethods?: string;
         code?: string;
     }
 }
@@ -33,6 +36,7 @@ class TextureFilter {
     enabled: boolean;
     
     private code: string;
+    private helperMethods: string;
     private uniformCode: string;
     private uniforms: Dict<any>;
 
@@ -40,6 +44,7 @@ class TextureFilter {
 
     constructor(config: TextureFilter.Config) {
         this.code = config.code ?? '';
+        this.helperMethods = config.helperMethods ?? '';
         this.uniformCode = this.constructUniformCode(config.uniforms);
         this.uniforms = this.constructUniforms(config.uniforms);
 
@@ -68,11 +73,11 @@ class TextureFilter {
     }
 
     constructPixiFilter(): PIXI.Filter {
-        return new PIXI.Filter(PIXI.Filter.defaultVertexSrc, TextureFilter.constructFragCode(this.uniformCode, this.code), {});
+        return new PIXI.Filter(PIXI.Filter.defaultVertexSrc, TextureFilter.constructFragCode(this.uniformCode, this.helperMethods, this.code), {});
     }
 
     getCacheCode() {
-        return `TextureFilter:${this.uniformCode}${this.code}`;
+        return `TextureFilter:${this.uniformCode}${this.helperMethods}${this.code}`;
     }
 
     getUniform(uniform: string) {
@@ -138,12 +143,22 @@ namespace TextureFilter {
         (filter: TextureFilter) => filter.getCacheCode(),
     );
 
-    export function constructFragCode(uniformCode: string, code: string) {
-        return fragPreUniforms + uniformCode + fragStartFunc + code + fragEndFunc;
+    export function constructFragCode(uniformCode: string, helperMethods: string, code: string) {
+        return fragPrecision
+            + fragCoreUniforms
+            + uniformCode
+            + fragCoreHelperMethods
+            + helperMethods
+            + fragStartMain
+            + code
+            + fragEndFunc;
     }
 
-    const fragPreUniforms = `
+    const fragPrecision = `
         precision highp float;
+    `;
+
+    const fragCoreUniforms = `
         varying vec2 vTextureCoord;
         uniform vec4 inputSize;
         uniform sampler2D uSampler;
@@ -160,7 +175,7 @@ namespace TextureFilter {
         float destHeight;
     `;
 
-    const fragStartFunc = `
+    const fragCoreHelperMethods = `
         vec4 getColor(float localx, float localy) {
             float tx = (localx + posx) / destWidth;
             float ty = (localy + posy) / destHeight;
@@ -183,6 +198,34 @@ namespace TextureFilter {
             return color;
         }
 
+        bool isApprox(float x, float y) {
+            return abs(x - y) < 0.0001;
+        }
+
+        float lerp(float a, float b, float t) {
+            return a*(1.0-t) + b*t;
+        }
+
+        vec2 lerp(vec2 a, vec2 b, float t) {
+            return a*(1.0-t) + b*t;
+        }
+
+        vec3 lerp(vec3 a, vec3 b, float t) {
+            return a*(1.0-t) + b*t;
+        }
+
+        vec4 lerp(vec4 a, vec4 b, float t) {
+            return a*(1.0-t) + b*t;
+        }
+
+        float map(float value, float min1, float max1, float min2, float max2) {
+            return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+        }
+
+        float mapClamp(float value, float min1, float max1, float min2, float max2) {
+            return clamp(map(value, min1, max1, min2, max2), min2, max2);
+        }
+
         // Source: https://stackoverflow.com/a/17897228
         // All components are in the range [0,1], including hue.
         vec3 rgb2hsv(vec3 c) {
@@ -203,34 +246,6 @@ namespace TextureFilter {
             return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
         }
 
-        float map(float value, float min1, float max1, float min2, float max2) {
-            return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
-        }
-
-        float mapClamp(float value, float min1, float max1, float min2, float max2) {
-            return clamp(map(value, min1, max1, min2, max2), min2, max2);
-        }
-
-        float lerp(float a, float b, float t) {
-            return a*(1.0-t) + b*t;
-        }
-
-        vec2 lerp(vec2 a, vec2 b, float t) {
-            return a*(1.0-t) + b*t;
-        }
-
-        vec3 lerp(vec3 a, vec3 b, float t) {
-            return a*(1.0-t) + b*t;
-        }
-
-        vec4 lerp(vec4 a, vec4 b, float t) {
-            return a*(1.0-t) + b*t;
-        }
-
-        bool approx(float x, float y) {
-            return abs(x - y) < 0.0001;
-        }
-
         float round(float x) {
             return floor(x + 0.5);
         }
@@ -247,15 +262,10 @@ namespace TextureFilter {
             return vec4(round(x.x), round(x.y), round(x.z), round(x.w));
         }
 
-        bool convolute44(float x, float y, float p00, float p10, float p20, float p30, float p01, float p11, float p21, float p31, float p02, float p12, float p22, float p32, float p03, float p13, float p23, float p33) {
-            return approx(getColor(x, y).a, p00) && approx(getColor(x+1.0, y).a, p10) && approx(getColor(x+2.0, y).a, p20) && approx(getColor(x+3.0, y).a, p30)
-                && approx(getColor(x, y+1.0).a, p01) && approx(getColor(x+1.0, y+1.0).a, p11) && approx(getColor(x+2.0, y+1.0).a, p21) && approx(getColor(x+3.0, y+1.0).a, p31)
-                && approx(getColor(x, y+2.0).a, p02) && approx(getColor(x+1.0, y+2.0).a, p12) && approx(getColor(x+2.0, y+2.0).a, p22) && approx(getColor(x+3.0, y+2.0).a, p32)
-                && approx(getColor(x, y+3.0).a, p03) && approx(getColor(x+1.0, y+3.0).a, p13) && approx(getColor(x+2.0, y+3.0).a, p23) && approx(getColor(x+3.0, y+3.0).a, p33);
-        }
-
         ${Perlin.SHADER_SOURCE}
+    `;
 
+    const fragStartMain = `
         void main(void) {
             #define PI 3.14159265358979
             #define TWOPI 6.28318530717958

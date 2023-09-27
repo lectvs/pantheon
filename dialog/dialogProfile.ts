@@ -101,7 +101,7 @@ namespace DialogProfiles {
     }
 
     export function simplePortraitWithOutline(key: string): Factory<Sprite> {
-        return () => new Sprite({ texture: key, effects: { pre: { filters: [new DialogOutlineFilter()] }}});
+        return () => new Sprite({ texture: key, effects: { pre: [new DialogOutlineFilter()] }});
     }
 
     class DialogOutlineFilter extends TextureFilter {

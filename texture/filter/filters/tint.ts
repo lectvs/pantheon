@@ -5,12 +5,12 @@ namespace TextureFilters {
         set tint(v) {
             if (v === this._tint) return;
             this._tint = v;
-            this.setUniform('tint', M.colorToVec3(v));
+            this.setUniform('tint', Color.colorToVec3(v));
         }
 
         constructor(tint: number) {
             super({
-                uniforms: { 'vec3 tint': M.colorToVec3(tint) },
+                uniforms: { 'vec3 tint': Color.colorToVec3(tint) },
                 code: `outp.rgb = inp.rgb * tint;`,
             });
 
