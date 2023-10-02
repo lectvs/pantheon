@@ -15,8 +15,6 @@ type Pt = {
     y: number;
 }
 
-type Rectangle = PIXI.Rectangle;
-const Rectangle = PIXI.Rectangle;
 type Rect = {
     x: number;
     y: number;

@@ -34,7 +34,7 @@ class TextureLoader implements Loader {
         let rect = this.texture.rect;
         let anchor = this.texture.anchor || Anchor.CENTER;
         if (rect) {
-            mainTexture.frame = new Rectangle(rect.x, rect.y, rect.width, rect.height);
+            mainTexture.frame = new PIXI.Rectangle(rect.x, rect.y, rect.width, rect.height);
         }
         mainTexture.defaultAnchor = new Point(anchor.x, anchor.y);
         AssetCache.pixiTextures[this.key] = mainTexture;
@@ -47,7 +47,7 @@ class TextureLoader implements Loader {
             let rect = frames[frame].rect || this.texture.rect;
             let anchor = frames[frame].anchor || this.texture.anchor || Anchor.CENTER;
             if (rect) {
-                frameTexture.frame = new Rectangle(rect.x, rect.y, rect.width, rect.height);
+                frameTexture.frame = new PIXI.Rectangle(rect.x, rect.y, rect.width, rect.height);
             }
             frameTexture.defaultAnchor = new Point(anchor.x, anchor.y);
             AssetCache.pixiTextures[frame] = frameTexture;
