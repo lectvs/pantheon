@@ -1,5 +1,5 @@
 class NullBounds implements Bounds {
-    parent: Bounds.Parent;
+    parent?: Bounds.Parent;
     x: number;
     y: number;
 
@@ -28,11 +28,11 @@ class NullBounds implements Bounds {
         return this.boundingBox;
     }
 
-    getDisplacementCollision(other: Bounds): Bounds.DisplacementCollision {
+    getDisplacementCollision(other: Bounds) {
         return undefined;
     }
 
-    getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision {
+    getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number) {
         return undefined;
     }
 

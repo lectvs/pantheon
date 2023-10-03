@@ -14,13 +14,13 @@ namespace Physics {
     }
 
     type RaycastCollisionData = CollisionData & {
-        collision: Bounds.RaycastCollision;
+        collision: Bounds.RaycastCollision | undefined;
         callback?: CollisionCallback;
         momentumTransfer?: MomentumTransferMode;
     }
 
     type DisplacementCollisionData = CollisionData & {
-        collision: Bounds.DisplacementCollision;
+        collision: Bounds.DisplacementCollision | undefined;
     }
 
     type CollisionObject = {
@@ -82,7 +82,7 @@ namespace Physics {
 
     function performNormalIteration(world: World, resultCollisions: RaycastCollisionData[]) {
         let collisions = getRaycastCollisions(world)
-                .sort((a,b) => a.collision.t - b.collision.t);
+                .sort((a,b) => (a.collision?.t ?? -Infinity) - (b.collision?.t ?? -Infinity));
 
         for (let collision of collisions) {
             let success = resolveCollision(world, collision);
@@ -192,6 +192,7 @@ namespace Physics {
         let fromImmovable = collision.from.isImmovable() || collision.from === forceImmovable;
 
         if (moveImmovable && fromImmovable) return;
+        if (!collision.collision) return;
 
         if (moveImmovable) {
             collision.from.x -= collision.collision.displacementX;
@@ -245,9 +246,9 @@ namespace Physics {
                 collision: {
                     bounds1: collisionList[0].move.bounds,
                     bounds2: collisionList[0].from.bounds,
-                    displacementX: A.sum(collisionList, collision => collision.collision.displacementX),
-                    displacementY: A.sum(collisionList, collision => collision.collision.displacementY),
-                    t: M.min(collisionList, collision => collision.collision.t),
+                    displacementX: A.sum(collisionList, collision => collision.collision?.displacementX ?? 0),
+                    displacementY: A.sum(collisionList, collision => collision.collision?.displacementY ?? 0),
+                    t: M.min(collisionList, collision => collision.collision?.t ?? -Infinity),
                 }
             };
         });
@@ -290,8 +291,9 @@ namespace Physics {
         }
     }
 
-    function applyMomentumTransferForCollision(collision: DisplacementCollisionData, momentumTransferMode: MomentumTransferMode, delta: number,) {
-
+    function applyMomentumTransferForCollision(collision: DisplacementCollisionData, momentumTransferMode: MomentumTransferMode | undefined, delta: number,) {
+        if (!collision.collision) return;
+        
         if (momentumTransferMode === 'elastic') {
             if (collision.move.isImmovable() && collision.from.isImmovable()) return;
 

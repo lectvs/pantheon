@@ -2,7 +2,7 @@
 
 namespace DialogProfile {
     export type Config = {
-        name: string;
+        name?: string | undefined;
         font?: string;
         dialogStart?: string;
         dialogSpeak?: string;
@@ -20,11 +20,11 @@ namespace DialogProfile {
 }
 
 class DialogProfile {
-    private name: string;
-    private font: string;
-    private dialogStart: string;
-    private dialogSpeak: string;
-    private defaultPortrait: Factory<WorldObject>;
+    private name?: string;
+    private font?: string;
+    private dialogStart?: string;
+    private dialogSpeak?: string;
+    private defaultPortrait?: Factory<WorldObject>;
     private entries: Dict<DialogProfile.Entry>;
 
     constructor(config: DialogProfile.Config) {

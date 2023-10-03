@@ -26,7 +26,7 @@ class Vector2 {
     add(x: Pt | number, y?: number) {
         if (typeof(x) === 'number') {
             this.x += x;
-            this.y += y;
+            this.y += y ?? x;
         } else {
             this.x += x.x;
             this.y += x.y;
@@ -56,7 +56,7 @@ class Vector2 {
     divide(x: Pt | number, y?: number) {
         if (typeof(x) === 'number') {
             this.x /= x;
-            this.y /= y;
+            this.y /= y ?? x;
         } else {
             this.x /= x.x;
             this.y /= x.y;
@@ -71,7 +71,7 @@ class Vector2 {
     multiply(x: Pt | number, y?: number) {
         if (typeof(x) === 'number') {
             this.x *= x;
-            this.y *= y;
+            this.y *= y ?? x;
         } else {
             this.x *= x.x;
             this.y *= x.y;
@@ -130,7 +130,7 @@ class Vector2 {
             x = x.x;
         }
         this.x = x;
-        this.y = y;
+        this.y = y ?? x;
         return this;
     }
 
@@ -155,7 +155,7 @@ class Vector2 {
     subtract(x: Pt | number, y?: number) {
         if (typeof(x) === 'number') {
             this.x -= x;
-            this.y -= y;
+            this.y -= y ?? x;
         } else {
             this.x -= x.x;
             this.y -= x.y;

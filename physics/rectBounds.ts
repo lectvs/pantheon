@@ -1,5 +1,5 @@
 class RectBounds implements Bounds {
-    parent: Bounds.Parent;
+    parent?: Bounds.Parent;
     private frozen: boolean;
 
     x: number;
@@ -48,7 +48,7 @@ class RectBounds implements Bounds {
         return this.boundingBox;
     }
 
-    getDisplacementCollision(other: Bounds): Bounds.DisplacementCollision {
+    getDisplacementCollision(other: Bounds) {
         if (other instanceof RectBounds) return Bounds.Collision.getDisplacementCollisionRectRect(this, other);
         if (other instanceof CircleBounds) return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionCircleRect(other, this));
         if (other instanceof SlopeBounds) return Bounds.Collision.getDisplacementCollisionRectSlope(this, other);
@@ -59,7 +59,7 @@ class RectBounds implements Bounds {
         return undefined;
     }
 
-    getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision {
+    getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number) {
         if (other instanceof RectBounds) return Bounds.Collision.getRaycastCollisionRectRect(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof CircleBounds) return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionCircleRect(other, otherdx, otherdy, this, dx, dy));
         if (other instanceof SlopeBounds) return Bounds.Collision.getRaycastCollisionRectSlope(this, dx, dy, other, otherdx, otherdy);
@@ -76,7 +76,7 @@ class RectBounds implements Bounds {
         if (other instanceof SlopeBounds) return Bounds.Collision.isOverlappingRectSlope(this, other);
         if (other instanceof InvertedRectBounds) return Bounds.Collision.isOverlappingRectInvertedRect(this, other);
         if (other instanceof InvertedCircleBounds) return Bounds.Collision.isOverlappingRectInvertedCircle(this, other);
-        if (other instanceof NullBounds) return undefined;
+        if (other instanceof NullBounds) return false;
         console.error("No overlap supported between these bounds", this, other);
         return false;
     }

@@ -1,6 +1,6 @@
 class LazyValue<T> {
     private factory: Factory<T>;
-    private value: T;
+    private value?: T;
     private resolved: boolean;
 
     constructor(factory: Factory<T>) {
@@ -9,15 +9,15 @@ class LazyValue<T> {
         this.resolved = false;
     }
 
-    get() {
+    get(): T {
         if (!this.resolved) {
             this.value = this.factory();
             this.resolved = true;
         }
-        return this.value;
+        return this.value!;
     }
 
-    has() {
+    has(): boolean {
         return !!this.resolved;
     }
 }
@@ -33,7 +33,7 @@ class LazyDict<T> {
         this.resolvedKeys = new Set();
     }
 
-    get(key: string) {
+    get(key: string): T {
         if (!this.resolvedKeys.has(key)) {
             this.values[key] = this.factory(key);
             this.resolvedKeys.add(key);
@@ -41,7 +41,7 @@ class LazyDict<T> {
         return this.values[key];
     }
 
-    has(key: string) {
+    has(key: string): boolean {
         return this.resolvedKeys.has(key);
     }
 }
@@ -57,7 +57,7 @@ class LazyDictNumber<T> {
         this.resolvedKeys = new Set();
     }
 
-    get(key: number) {
+    get(key: number): T {
         if (!this.resolvedKeys.has(key)) {
             this.values[key] = this.factory(key);
             this.resolvedKeys.add(key);
@@ -65,13 +65,13 @@ class LazyDictNumber<T> {
         return this.values[key];
     }
 
-    has(key: number) {
+    has(key: number): boolean {
         return this.resolvedKeys.has(key);
     }
 }
 
 const LAZY_CACHE: Dict<LazyValue<any>> = {};
-function lazy<T>(key: string, factory: Factory<T>) {
+function lazy<T>(key: string, factory: Factory<T>): T {
     if (!(key in LAZY_CACHE)) {
         LAZY_CACHE[key] = new LazyValue(factory);
     }

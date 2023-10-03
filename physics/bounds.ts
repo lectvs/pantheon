@@ -24,7 +24,7 @@ namespace Bounds {
 }
 
 interface Bounds {
-    parent: Pt;
+    parent?: Pt;
     x: number;
     y: number;
     clone(): Bounds;
@@ -32,8 +32,8 @@ interface Bounds {
     /** FOR USE WITH PHYSICS RESOLVECOLLISIONS ONLY. */
     freeze(): void;
     getBoundingBox(): Rectangle;
-    getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision;
-    getDisplacementCollision(other: Bounds): Bounds.DisplacementCollision;
+    getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision | undefined;
+    getDisplacementCollision(other: Bounds): Bounds.DisplacementCollision | undefined;
     isOverlapping(other: Bounds): boolean;
     /** FOR USE WITH PHYSICS RESOLVECOLLISIONS ONLY. REQUIRES BOUNDS TO BE FROZEN TO BE USEFUL. */
     move(dx: number, dy: number): void;

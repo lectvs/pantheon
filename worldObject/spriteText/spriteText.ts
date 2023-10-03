@@ -110,9 +110,9 @@ class SpriteText extends WorldObject {
     }
 
     effects: Effects;
-    mask: TextureFilters.Mask.WorldObjectMaskConfig;
+    mask?: TextureFilters.Mask.WorldObjectMaskConfig;
 
-    private staticTextures: Dict<SpriteText.StaticTextureData>;
+    private staticTextures?: Dict<SpriteText.StaticTextureData>;
     private currentText: string;
     private dirty: boolean;
 
@@ -180,8 +180,9 @@ class SpriteText extends WorldObject {
         this.effects.updateEffects(this.delta);
 
         for (let key in this.tagCache) {
-            if (A.isEmpty(this.tagCache[key].filters)) continue;
-            for (let filter of this.tagCache[key].filters) {
+            let filters = this.tagCache[key].filters;
+            if (A.isEmpty(filters)) continue;
+            for (let filter of filters) {
                 filter.updateTime(this.delta);
             }
         }
@@ -323,11 +324,10 @@ class SpriteText extends WorldObject {
             if (style.alpha !== undefined) result.alpha = style.alpha;
             if (style.offsetX !== undefined) result.offsetX = style.offsetX;
             if (style.offsetY !== undefined) result.offsetY = style.offsetY;
-            if (!A.isEmpty(style.filters)) result.filters.push(...style.filters);
+            if (!A.isEmpty(style.filters)) result.filters!.push(...style.filters);
         }
 
-        O.defaults(result, defaults);
-        return result;
+        return O.defaults(result, defaults);
     }
 
     private getTagStyle(name: string, params: string[]) {
@@ -348,7 +348,7 @@ class SpriteText extends WorldObject {
 
     private readonly tagCache: Dict<SpriteText.Style> = {};
 
-    static DEFAULT_FONT: string = undefined;
+    static DEFAULT_FONT: string = 'deluxe16';
 }
 
 namespace SpriteText {
@@ -457,13 +457,13 @@ namespace SpriteText {
         },
     }
 
-    function getInt(text: string, def: number) {
+    function getInt(text: string, def: number | undefined) {
         let result = parseInt(text);
         if (!isFinite(result)) return def;
         return result;
     }
 
-    function getFloat(text: string, def: number) {
+    function getFloat(text: string, def: number | undefined) {
         let result = parseFloat(text);
         if (!isFinite(result)) return def;
         return result;

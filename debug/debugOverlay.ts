@@ -1,7 +1,7 @@
 /// <reference path="../world/world.ts" />
 
 class DebugOverlay extends World {
-    private currentWorldToDebug: World;
+    private currentWorldToDebug: World | undefined;
 
     constructor() {
         super();
@@ -22,7 +22,7 @@ class DebugOverlay extends World {
         }));
     }
 
-    setCurrentWorldToDebug(world: World) {
+    setCurrentWorldToDebug(world: World | undefined) {
         this.currentWorldToDebug = world;
     }
 

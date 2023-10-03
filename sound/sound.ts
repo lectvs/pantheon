@@ -27,7 +27,7 @@ class Sound {
     get position() { return this.pos; }
     get duration() { return this.webAudioSound.duration; }
 
-    controller: Sound.Controller;
+    controller?: Sound.Controller;
     private hanging: boolean;
 
     constructor(key: string, controller?: Sound.Controller) {

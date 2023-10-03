@@ -29,7 +29,7 @@ namespace Lci {
 
     const HEADER = '.LCI';
 
-    export function parseDocument(lciString: string): Document {
+    export function parseDocument(lciString: string): Document | undefined {
         if (!lciString.startsWith(HEADER)) {
             console.error('Error loading LCI: bad header', lciString);
             return undefined;

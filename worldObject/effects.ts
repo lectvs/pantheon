@@ -18,7 +18,12 @@ namespace Effects {
 
 
 class Effects {
-    private effects: [Effects.Filters.Silhouette, Effects.Filters.Outline, Effects.Filters.InvertColors, Effects.Filters.Glitch];
+    private effects: [
+        Effects.Filters.Silhouette | undefined,
+        Effects.Filters.Outline | undefined,
+        Effects.Filters.InvertColors | undefined,
+        Effects.Filters.Glitch | undefined,
+    ];
     private static SILHOUETTE_I: number = 0;
     private static OUTLINE_I: number = 1;
     private static INVERT_COLORS_I: number = 2;
@@ -30,28 +35,28 @@ class Effects {
     get silhouette(): Effects.Filters.Silhouette {
         if (!this.effects[Effects.SILHOUETTE_I]) {
             this.effects[Effects.SILHOUETTE_I] = new Effects.Filters.Silhouette(0x000000, 1);
-            this.effects[Effects.SILHOUETTE_I].enabled = false;
+            this.effects[Effects.SILHOUETTE_I]!.enabled = false;
         }
         return <Effects.Filters.Silhouette>this.effects[Effects.SILHOUETTE_I];
     }
     get outline(): Effects.Filters.Outline {
         if (!this.effects[Effects.OUTLINE_I]) {
             this.effects[Effects.OUTLINE_I] = new Effects.Filters.Outline(0x000000, 1);
-            this.effects[Effects.OUTLINE_I].enabled = false;
+            this.effects[Effects.OUTLINE_I]!.enabled = false;
         }
         return <Effects.Filters.Outline>this.effects[Effects.OUTLINE_I];
     }
     get invertColors(): Effects.Filters.InvertColors {
         if (!this.effects[Effects.INVERT_COLORS_I]) {
             this.effects[Effects.INVERT_COLORS_I] = new Effects.Filters.InvertColors();
-            this.effects[Effects.INVERT_COLORS_I].enabled = false;
+            this.effects[Effects.INVERT_COLORS_I]!.enabled = false;
         }
         return <Effects.Filters.InvertColors>this.effects[Effects.INVERT_COLORS_I];
     }
     get glitch(): Effects.Filters.Glitch {
         if (!this.effects[Effects.GLITCH_I]) {
             this.effects[Effects.GLITCH_I] = new Effects.Filters.Glitch(2, 1, 2);
-            this.effects[Effects.GLITCH_I].enabled = false;
+            this.effects[Effects.GLITCH_I]!.enabled = false;
         }
         return <Effects.Filters.Glitch>this.effects[Effects.GLITCH_I];
     }
@@ -74,7 +79,7 @@ class Effects {
     }
 
     getFilterList() {
-        return this.pre.concat(this.effects).concat(this.post);
+        return this.pre.concat(this.effects.filter(e => e) as TextureFilter[]).concat(this.post);
     }
 
     hasEffects() {
@@ -85,15 +90,15 @@ class Effects {
     }
 
     updateEffects(delta: number) {
-        if (this.effects[Effects.SILHOUETTE_I]) this.effects[Effects.SILHOUETTE_I].updateTime(delta);
-        if (this.effects[Effects.OUTLINE_I]) this.effects[Effects.OUTLINE_I].updateTime(delta);
-        if (this.effects[Effects.INVERT_COLORS_I]) this.effects[Effects.INVERT_COLORS_I].updateTime(delta);
-        if (this.effects[Effects.GLITCH_I]) this.effects[Effects.GLITCH_I].updateTime(delta);
+        this.effects[Effects.SILHOUETTE_I]?.updateTime(delta);
+        this.effects[Effects.OUTLINE_I]?.updateTime(delta);
+        this.effects[Effects.INVERT_COLORS_I]?.updateTime(delta);
+        this.effects[Effects.GLITCH_I]?.updateTime(delta);
         for (let filter of this.pre) filter.updateTime(delta);
         for (let filter of this.post) filter.updateTime(delta);
     }
 
-    updateFromConfig(config: Effects.Config) {
+    updateFromConfig(config: Effects.Config | undefined) {
         if (!config) return;
 
         if (config.pre) {

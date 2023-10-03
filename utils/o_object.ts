@@ -14,25 +14,25 @@ namespace O {
         return <T>deepCloneInternal(obj);
     }
 
-    function deepCloneInternal(obj: any): any {
+    function deepCloneInternal<T>(obj: T): T {
         if (Array.isArray(obj)) {
-            if (isEmpty(obj)) return [];
-            let result = [];
+            if (isEmpty(obj)) return [] as T;
+            let result: any[] = [];
             for (let el of obj) {
                 result.push(deepCloneInternal(el));
             }
-            return result;
+            return result as T;
         }
 
         if (isFunction(obj)) return obj;
 
         if (isObject(obj)) {
-            if (isEmpty(obj)) return {};
-            let result = {};
+            if (isEmpty(obj)) return {} as T;
+            let result: any = {};
             for (let key in obj) {
                 result[key] = deepCloneInternal(obj[key]);
             }
-            return result;
+            return result as T;
         }
 
         return obj;
@@ -50,13 +50,13 @@ namespace O {
         }
     }
 
-    export function defaults<T>(obj: T, defaults: Partial<T>) {
+    export function defaults<T, K extends Partial<T>>(obj: T, defaults: K): T & K {
         for (let key in defaults) {
-            if (obj[key] === undefined) {
-                obj[key] = defaults[key];
+            if ((obj as any)[key] === undefined) {
+                (obj as any)[key] = defaults[key];
             }
         }
-        return obj;
+        return obj as T & K;
     }
 
     export function getClass(obj: Object) {
@@ -83,7 +83,7 @@ namespace O {
         return true;
     }
 
-    export function isEmpty(obj: any) {
+    export function isEmpty(obj: any): obj is undefined {
         if (obj === null || obj === undefined) return true;
         if (Array.isArray(obj)) return obj.length === 0;
         return Object.keys(obj).length === 0;
@@ -119,6 +119,7 @@ namespace O {
     export function setPath(obj: Object, path: string, value: any) {
         let pathParts = path.split('.');
         let lastPart = pathParts.pop();
+        if (!lastPart) return;
         let current = obj;
         for (let part of pathParts) {
             if (!current || !(part in current)) return;
@@ -127,10 +128,8 @@ namespace O {
         current[lastPart] = value;
     }
 
-    export function withDefaults<T>(obj: T, defaults: any): T {
-        let result = clone(obj);
-        O.defaults(result, defaults);
-        return result;
+    export function withDefaults<T, K extends Partial<T>>(obj: T, defaults: K): T & K {
+        return O.defaults(clone(obj), defaults);
     }
 
     export function withOverrides<T>(obj: T, overrides: Partial<T>): T {

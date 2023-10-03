@@ -93,6 +93,7 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     isGrounded(groundGroups: string[]) {
+        if (!this.world) return false;
         this.bounds.y++;
         let ground = this.world.select.overlap(this.bounds, groundGroups);
         this.bounds.y--;
@@ -100,7 +101,7 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     isImmovable() {
-        return this._immovable || (this.world && this.world.getPhysicsGroupByName(this.physicsGroup).immovable);
+        return this._immovable || (this.world && this.world.getPhysicsGroupByName(this.physicsGroup)?.immovable);
     }
 
     isOverlapping(bounds: Bounds) {
@@ -121,9 +122,9 @@ class PhysicsWorldObject extends WorldObject {
             x = x.x;
         }
         this.x = x;
-        this.y = y;
+        this.y = y ?? x;
         this.physicslastx = x;
-        this.physicslasty = y;
+        this.physicslasty = y ?? x;
     }
 
     private applyGravity() {

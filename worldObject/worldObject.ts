@@ -85,15 +85,15 @@ class WorldObject {
 
     alive: boolean;
 
-    name: string;
+    name?: string;
     tags: string[];
 
     // World data
-    private _world: World;
-    private _layer: string;
-    private _physicsGroup: string;
+    private _world?: World;
+    private _layer?: string;
+    private _physicsGroup?: string;
     private _children: WorldObject[];
-    private _parent: WorldObject;
+    private _parent?: WorldObject;
 
     get world() { return this._world; }
     get layer() {
@@ -107,8 +107,8 @@ class WorldObject {
     get children() { return <ReadonlyArray<WorldObject>>this._children; }
     get parent() { return this._parent; }
 
-    set layer(value: string) { World.Actions.setLayer(this, value); }
-    set physicsGroup(value: string) { World.Actions.setPhysicsGroup(this, value); }
+    set layer(value: string | undefined) { World.Actions.setLayer(this, value); }
+    set physicsGroup(value: string | undefined) { World.Actions.setPhysicsGroup(this, value); }
     //
 
     get delta() { return ((this.useGlobalTime || !this.world) ? global.game.delta : this.world.delta) * this.timeScale;}
@@ -133,11 +133,11 @@ class WorldObject {
     stateMachine: StateMachine;
     get state() { return this.stateMachine.getCurrentStateName(); }
 
-    onAddCallback: WorldObject.OnAddCallback<this>;
-    onRemoveCallback: WorldObject.OnRemoveCallback<this>;
-    updateCallback: WorldObject.UpdateCallback<this>;
-    postUpdateCallback: WorldObject.PostUpdateCallback<this>;
-    renderCallback: WorldObject.RenderCallback<this>;
+    onAddCallback?: WorldObject.OnAddCallback<this>;
+    onRemoveCallback?: WorldObject.OnRemoveCallback<this>;
+    updateCallback?: WorldObject.UpdateCallback<this>;
+    postUpdateCallback?: WorldObject.PostUpdateCallback<this>;
+    renderCallback?: WorldObject.RenderCallback<this>;
 
     debugFollowMouse: boolean;
 
@@ -182,9 +182,9 @@ class WorldObject {
 
         this.uid = WorldObject.UID.generate();
 
-        this._world = null;
+        this._world = undefined;
         this._children = [];
-        this._parent = null;
+        this._parent = undefined;
 
         this.zinternal_setLayerWorldObject(config.layer);
         this.zinternal_setPhysicsGroupWorldObject(config.physicsGroup);
@@ -224,8 +224,10 @@ class WorldObject {
         this.stateMachine.update(this.delta);
 
         if (this.debugFollowMouse) {
-            this.x = this.world.getWorldMouseX();
-            this.y = this.world.getWorldMouseY();
+            if (this.world) {
+                this.x = this.world.getWorldMouseX();
+                this.y = this.world.getWorldMouseY();
+            }
         }
         if (this.updateCallback) this.updateCallback();
 
@@ -275,7 +277,8 @@ class WorldObject {
         if (this.parent) {
             result = this.parent.getRenderScreenX();
         } else {
-            result = this.shouldIgnoreCamera() ? 0 : -Math.round(this.world.camera.worldOffsetX);
+            let worldOffsetX = this.world ? this.world.camera.worldOffsetX : 0;
+            result = this.shouldIgnoreCamera() ? 0 : -Math.round(worldOffsetX);
         }
 
         result += Math.round(this.localx);
@@ -289,7 +292,8 @@ class WorldObject {
         if (this.parent) {
             result = this.parent.getRenderScreenY();
         } else {
-            result = this.shouldIgnoreCamera() ? 0 : -Math.round(this.world.camera.worldOffsetY);
+            let worldOffsetY = this.world ? this.world.camera.worldOffsetY : 0;
+            result = this.shouldIgnoreCamera() ? 0 : -Math.round(worldOffsetY);
         }
 
         result += Math.round(this.localy);
@@ -353,15 +357,11 @@ class WorldObject {
         return this.detachChildren(<ReadonlyArray<T>>this.children);
     }
 
-    detachChild<T extends WorldObject>(child: T | string): T {
-        if (!child) return undefined;
-        if (St.isString(child)) {
-            child = this.getChildByName<T>(child);
-            if (!child) return undefined;
-        }
+    detachChild<T extends WorldObject>(child: T): T {
+        if (!child) return child;
         if (child.parent !== this) {
             console.error(`Cannot detach child ${child.name} from parent ${this.name} because no such relationship exists`);
-            return undefined;
+            return child;
         }
         return World.Actions.detachChildFromParent(child);
     }
@@ -421,7 +421,7 @@ class WorldObject {
         return <T>this.children[index];
     }
 
-    getChildByName<T extends WorldObject>(name: string): T {
+    getChildByName<T extends WorldObject>(name: string): T | undefined {
         for (let child of this.children) {
             if (child.name === name) return <T>child;
         }
@@ -429,7 +429,7 @@ class WorldObject {
         return undefined;
     }
 
-    getModule<T extends Module<WorldObject>>(type: new (...args) => T): T {
+    getModule<T extends Module<WorldObject>>(type: new (...args) => T): T | undefined {
         for (let module of this.modules) {
             if (module instanceof type) return module;
         }
@@ -448,7 +448,7 @@ class WorldObject {
         return A.clone(this.timers);
     }
 
-    getVisibleScreenBounds(): Rect {
+    getVisibleScreenBounds(): Rect | undefined {
         return undefined;
     }
 
@@ -471,6 +471,7 @@ class WorldObject {
     }
 
     isOnScreen(buffer: number = 0) {
+        if (!this.world) return false;
         let bounds = this.getVisibleScreenBounds();
         if (!bounds) return true;
         return bounds.x + bounds.width >= -buffer
@@ -570,7 +571,7 @@ class WorldObject {
         }
     }
 
-    private shouldIgnoreCamera() {
+    private shouldIgnoreCamera(): boolean {
         if (this.ignoreCamera) return true;
         if (this.parent) return this.parent.shouldIgnoreCamera();
         return false;
@@ -589,16 +590,16 @@ class WorldObject {
 
     // For use with World.Actions.removeWorldObjectFromWorld
     zinternal_removeWorldObjectFromWorldWorldObject(world: World) {
-        this._world = null;
+        this._world = undefined;
     }
 
     // For use with World.Actions.setLayer
-    zinternal_setLayerWorldObject(layer: string) {
+    zinternal_setLayerWorldObject(layer: string | undefined) {
         this._layer = layer;
     }
 
     // For use with World.Actions.setPhysicsGroup
-    zinternal_setPhysicsGroupWorldObject(physicsGroup: string) {
+    zinternal_setPhysicsGroupWorldObject(physicsGroup: string | undefined) {
         this._physicsGroup = physicsGroup;
     }
 
@@ -614,7 +615,7 @@ class WorldObject {
 
     // For use with World.Actions.removeChildFromParent
     zinternal_removeChildFromParentWorldObjectChild() {
-        this._parent = null;
+        this._parent = undefined;
     }
 
     // For use with World.Actions.removeChildFromParent

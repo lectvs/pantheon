@@ -41,7 +41,7 @@ namespace World {
     }
 
     export type LayerConfig = {
-        name?: string;
+        name: string;
         sortKey?: (worldObject: WorldObject) => number;
         reverseSort?: boolean;
         effects?: Effects.Config;
@@ -81,7 +81,7 @@ class World {
 
     layers: World.Layer[];
     effects: Effects;
-    mask: TextureFilters.Mask.WorldMaskConfig;
+    mask?: TextureFilters.Mask.WorldMaskConfig;
 
     backgroundColor: number;
     backgroundAlpha: number;
@@ -262,14 +262,15 @@ class World {
         return this.worldObjects.filter(obj => !obj.alive);
     }
 
-    getLayerByName(name: string) {
+    getLayerByName(name: string | undefined) {
         for (let layer of this.layers) {
             if (layer.name === name) return layer;
         }
         return undefined;
     }
 
-    getPhysicsGroupByName(name: string) {
+    getPhysicsGroupByName(name: string | undefined) {
+        if (!name) return undefined;
         return this.physicsGroups[name];
     }
 
@@ -349,7 +350,7 @@ class World {
         return sound;
     }
     
-    removeWorldObject<T extends WorldObject>(obj: T | string): T {
+    removeWorldObject<T extends WorldObject>(obj: T | string | undefined): T | undefined {
         if (!obj) return undefined;
         if (St.isString(obj)) {
             obj = this.select.name<T>(obj);
@@ -365,7 +366,7 @@ class World {
     
     removeWorldObjects<T extends WorldObject>(objs: ReadonlyArray<T | string>): T[] {
         if (A.isEmpty(objs)) return [];
-        return objs.map(obj => this.removeWorldObject(obj)).filter(obj => obj);
+        return objs.map(obj => this.removeWorldObject(obj)).filter(obj => obj) as T[];
     }
 
     runScript(script: Script | Script.Function, name?: string) {
@@ -382,7 +383,7 @@ class World {
         return screen;
     }
 
-    private createLayers(layers: World.LayerConfig[]) {
+    private createLayers(layers: World.LayerConfig[] | undefined) {
         if (A.isEmpty(layers)) layers = [];
 
         layers.push({ name: World.DEFAULT_LAYER });
@@ -398,7 +399,7 @@ class World {
         return result;
     }
 
-    private createPhysicsGroups(physicsGroups: Dict<World.PhysicsGroupConfig>) {
+    private createPhysicsGroups(physicsGroups: Dict<World.PhysicsGroupConfig> | undefined) {
         if (O.isEmpty(physicsGroups)) return {};
 
         let result: Dict<World.PhysicsGroup> = {};
@@ -447,7 +448,7 @@ class World {
     }
 
     // For use with World.Actions.setLayer
-    zinternal_setLayerWorld(obj: WorldObject, layerName: string) {
+    zinternal_setLayerWorld(obj: WorldObject, layerName: string | undefined) {
         this.removeFromAllLayers(obj);
 
         for (let layer of this.layers) {
@@ -459,10 +460,10 @@ class World {
     }
 
     // For use with World.Actions.setPhysicsGroup
-    zinternal_setPhysicsGroupWorld(obj: PhysicsWorldObject, physicsGroupName: string) {
+    zinternal_setPhysicsGroupWorld(obj: PhysicsWorldObject, physicsGroupName: string | undefined) {
         this.removeFromAllPhysicsGroups(obj);
         if (!St.isEmpty(physicsGroupName)) {
-            this.getPhysicsGroupByName(physicsGroupName).worldObjects.push(obj);
+            this.getPhysicsGroupByName(physicsGroupName)?.worldObjects?.push(obj);
         }
     }
 
@@ -485,11 +486,11 @@ namespace World {
     export class Layer {
         name: string;
         worldObjects: WorldObject[];
-        sortKey: (worldObject: WorldObject) => number;
+        sortKey?: (worldObject: WorldObject) => number;
         reverseSort: boolean;
 
         effects: Effects;
-        mask: TextureFilters.Mask.WorldMaskConfig;
+        mask?: TextureFilters.Mask.WorldMaskConfig;
 
         get shouldRenderToOwnLayer() {
             return this.effects.hasEffects() || !!this.mask;
@@ -508,7 +509,7 @@ namespace World {
         sort() {
             if (!this.sortKey) return;
             let r = this.reverseSort ? -1 : 1;
-            this.worldObjects.sort((a, b) => r*(this.sortKey(a) - this.sortKey(b)));
+            this.worldObjects.sort((a, b) => r*(this.sortKey!(a) - this.sortKey!(b)));
         }
     }
 
@@ -526,14 +527,14 @@ namespace World {
 
     export namespace Actions {
         /**
-         * Adds a WorldObject to the world. Returns the object added.
+         * Adds a WorldObject to the world. Returns the object for chaining.
          */
-        export function addWorldObjectToWorld<T extends WorldObject>(obj: T, world: World): T {
+        export function addWorldObjectToWorld<T extends WorldObject | undefined>(obj: T, world: World): T {
             if (!obj || !world) return obj;
 
             if (obj.world) {
                 console.error(`Cannot add object ${obj.name} to world because it aleady exists in another world! You must remove object from previous world first. World:`, world, 'Previous world:', obj.world);
-                return undefined;
+                return obj;
             }
 
             obj.zinternal_addWorldObjectToWorldWorldObject(world);
@@ -554,9 +555,9 @@ namespace World {
         }
 
         /**
-         * Removes a WorldObject from its containing world. Returns the object removed.
+         * Removes a WorldObject from its containing world. Returns the object for chaining.
          */
-        export function removeWorldObjectFromWorld<T extends WorldObject>(obj: T, detachFromParent: boolean = true): T {
+        export function removeWorldObjectFromWorld<T extends WorldObject | undefined>(obj: T, detachFromParent: boolean = true): T {
             if (!obj) return obj;
 
             if (!obj.world) {
@@ -580,9 +581,9 @@ namespace World {
         }
 
         /**
-         * Removes a list of WorldObjects from their containing worlds. Returns as a list the objects successfully removed.
+         * Removes a list of WorldObjects from their containing worlds. Returns a copy of the list of objs.
          */
-        export function removeWorldObjectsFromWorld<T extends WorldObject>(objs: ReadonlyArray<T>, unlinkFromParent: boolean = true): T[] {
+        export function removeWorldObjectsFromWorld<T extends WorldObject | undefined>(objs: ReadonlyArray<T>, unlinkFromParent: boolean = true): T[] {
             if (A.isEmpty(objs)) return [];
             return A.clone(objs).filter(obj => removeWorldObjectFromWorld(obj, unlinkFromParent));
         }
@@ -590,7 +591,7 @@ namespace World {
         /**
          * Sets the layer of a WorldObject. Returns the new layer name of the object.
          */
-        export function setLayer(obj: WorldObject, layerName: string): string {
+        export function setLayer(obj: WorldObject, layerName: string | undefined): string | undefined {
             if (!obj) return undefined;
 
             if (obj.world && !obj.world.getLayerByName(layerName)) {
@@ -611,7 +612,7 @@ namespace World {
         /**
          * Sets the physics group of a WorldObject. Returns the new physics group name of the object.
          */
-        export function setPhysicsGroup(obj: WorldObject, physicsGroupName: string): string {
+        export function setPhysicsGroup(obj: WorldObject, physicsGroupName: string | undefined): string | undefined {
             if (!obj) return undefined;
 
             if (obj.world && !St.isEmpty(physicsGroupName) && !obj.world.getPhysicsGroupByName(physicsGroupName)) {
@@ -634,26 +635,26 @@ namespace World {
         }
 
         /**
-         * Adds a WorldObject as a child to a parent. Returns the child object if successful.
+         * Adds a WorldObject as a child to a parent. Returns the child object for chaining.
          */
         export function addChildToParent<T extends WorldObject>(child: T, obj: WorldObject): T {
             if (!child || !obj) return child;
 
             if (child.parent) {
                 console.error(`Cannot add child ${child.name} to parent ${obj.name} becase the child is already the child of another parent!`, child.parent);
-                return undefined;
+                return child;
             }
 
             if (child.world && child.world !== obj.world) {
                 console.error(`Cannot add child ${child.name} to parent ${obj.name} becase the child exists in a different world!`, child.world);
-                return undefined;
+                return child;
             }
 
             let cyclicCheckParent = obj.parent;
             while (cyclicCheckParent) {
                 if (cyclicCheckParent === child) {
                     console.error(`Cannot add child ${child.name} to parent ${obj.name} because this would result in a cyclic hierarchy`);
-                    return undefined;
+                    return child;
                 }
                 cyclicCheckParent = cyclicCheckParent.parent;
             }
@@ -669,7 +670,7 @@ namespace World {
         }
 
         /**
-         * Adds a list of WorldObjects as children to a parent. Returns as a list the children successfully added.
+         * Adds a list of WorldObjects as children to a parent. Returns a copy of the list of children.
          */
         export function addChildrenToParent<T extends WorldObject>(children: ReadonlyArray<T>, obj: WorldObject): T[] {
             if (A.isEmpty(children)) return [];
@@ -677,7 +678,7 @@ namespace World {
         }
 
         /**
-         * Detaches a child from its parent. Returns the child if successfully removed.
+         * Detaches a child from its parent. Returns the child for chaining.
          */
         export function detachChildFromParent<T extends WorldObject>(child: T): T {
             if (!child) return child;
@@ -698,7 +699,7 @@ namespace World {
         }
 
         /**
-         * Detaches a list of children from their parents. Returns as a list the children successfully removed.
+         * Detaches a list of children from their parents. Returns a copy of the list of children.
          */
         export function detachChildrenFromParent<T extends WorldObject>(children: ReadonlyArray<T>): T[] {
             if (A.isEmpty(children)) return [];
@@ -715,8 +716,10 @@ namespace World {
                 return;
             }
 
-            if (obj.layer === before.layer) {
-                A.moveBefore(obj.world.getLayerByName(obj.layer).worldObjects, obj, before);
+            let layer = obj.world.getLayerByName(obj.layer);
+
+            if (layer && obj.layer === before.layer) {
+                A.moveBefore(layer.worldObjects, obj, before);
             }
         }
 
@@ -730,8 +733,10 @@ namespace World {
                 return;
             }
 
-            if (obj.layer === after.layer) {
-                A.moveAfter(obj.world.getLayerByName(obj.layer).worldObjects, obj, after);
+            let layer = obj.world.getLayerByName(obj.layer);
+
+            if (layer && obj.layer === after.layer) {
+                A.moveAfter(layer.worldObjects, obj, after);
             }
         }
 
@@ -744,7 +749,9 @@ namespace World {
                 console.error('Cannot move object since it is not in a world:', obj);
                 return;
             }
-            let layerObjects = obj.world.getLayerByName(obj.layer).worldObjects;
+            let layer = obj.world.getLayerByName(obj.layer);
+            if (!layer) return;
+            let layerObjects = layer.worldObjects;
             let i = layerObjects.indexOf(obj);
             if (i === layerObjects.length-1) return;
             layerObjects.push(layerObjects.splice(i, 1)[0]);
@@ -759,7 +766,9 @@ namespace World {
                 console.error('Cannot move object since it is not in a world:', obj);
                 return;
             }
-            let layerObjects = obj.world.getLayerByName(obj.layer).worldObjects;
+            let layer = obj.world.getLayerByName(obj.layer);
+            if (!layer) return;
+            let layerObjects = layer.worldObjects;
             let i = layerObjects.indexOf(obj);
             if (i === 0) return;
             layerObjects.unshift(layerObjects.splice(i, 1)[0]);

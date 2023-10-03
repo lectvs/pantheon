@@ -20,7 +20,7 @@ class ScriptManager {
 
     runScript(script: Script | Script.Function, name?: string) {
         if (script instanceof Script) {
-            if (script.done) return undefined;
+            if (script.done) return script;
         } else {
             script = new Script(script, name);
         }

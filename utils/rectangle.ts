@@ -22,11 +22,12 @@ class Rectangle {
         return new Rectangle(this.x, this.y, this.width, this.height);
     }
 
-    contains(x?: Pt | number, y?: number) {
+    contains(x: Pt | number, y?: number) {
         if (typeof(x) !== 'number') {
             y = x.y;
             x = x.x;
         }
+        y = y ?? x;
         return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
     }
 }

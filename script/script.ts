@@ -1,11 +1,11 @@
 namespace Script {
-    export type Function = () => IterableIterator<FunctionInner>;
-    type FunctionInner = Script.Function | (() => IterableIterator<FunctionInner>)[];
+    export type Function = () => IterableIterator<FunctionInner | undefined>;
+    type FunctionInner = Script.Function | (() => IterableIterator<FunctionInner>)[] | undefined;
 }
 
 class Script {
     iterator: IterableIterator<any>;
-    name: string;
+    name?: string;
 
     paused: boolean;
     done: boolean;

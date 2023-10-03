@@ -10,7 +10,7 @@ namespace DialogBox {
         nameFont: string;
         namePosition: Pt;
         nameTextOffset: Pt;
-        defaultDialogStart: string;
+        defaultDialogStart?: string;
         defaultDialogSpeak: string;
     }
 }
@@ -20,9 +20,9 @@ class DialogBox extends Sprite {
     private textAreaPortrait: Rect;
 
     private defaultTextFont: string;
-    private defaultDialogStart: string;
+    private defaultDialogStart: string | undefined;
     private defaultDialogSpeak: string;
-    private dialogStart: string;
+    private dialogStart: string | undefined;
     private dialogSpeak: string;
     
     private get textArea() { return this.portraitObject ? this.textAreaPortrait : this.textAreaFull; }
@@ -35,7 +35,7 @@ class DialogBox extends Sprite {
     private spriteText: SpriteText;
     private spriteTextOffset: number;
     private portrait: WorldObject;
-    private portraitObject: WorldObject;
+    private portraitObject: WorldObject | undefined;
     private nameSprite: Sprite;
     private nameText: SpriteText;
 
@@ -69,7 +69,7 @@ class DialogBox extends Sprite {
         this.speakSoundTimer = new Timer(0.05, () => {
             let p = this.getDialogProgression() < 0.9 ? 0.85 : 1;  // 85% normally, but 100% if dialog is close to ending
             if (this.dialogSpeak && Debug.SKIP_RATE < 2 && !this.isPageComplete() && Random.boolean(p)) {
-                let sound = this.world.playSound(this.dialogSpeak);
+                let sound = this.world!.playSound(this.dialogSpeak);
                 sound.speed = Random.float(0.95, 1.05);
             }
         }, Infinity);
@@ -126,7 +126,7 @@ class DialogBox extends Sprite {
         this.advanceCharacter(); // Advance character once to start the dialog with one displayed character.
 
         if (this.dialogStart) {
-            this.world.playSound(this.dialogStart);
+            this.world?.playSound(this.dialogStart);
         }
     }
 
@@ -143,7 +143,7 @@ class DialogBox extends Sprite {
         this.advanceCharacter(); // Advance character once to start the dialog with one displayed character.
 
         if (this.dialogStart) {
-            this.world.playSound(this.dialogStart);
+            this.world?.playSound(this.dialogStart);
         }
     }
 
@@ -156,7 +156,7 @@ class DialogBox extends Sprite {
         // Portrait
         if (this.portraitObject) {
             this.portraitObject.removeFromWorld();
-            this.portraitObject = null;
+            this.portraitObject = undefined;
         }
         let portrait = profile.getPortrait(entry);
         if (portrait) {

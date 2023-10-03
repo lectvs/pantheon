@@ -1,6 +1,7 @@
 namespace S {
     export function cameraTransition(duration: number, toMode: Camera.Mode, toMovement?: Camera.Movement, easingFunction: Tween.Easing.Function = Tween.Easing.OutExp): Script.Function {
         return function*() {
+            if (!global.world) return;
             let camera = global.world.camera;
 
             if (!toMovement) toMovement = camera.movement;
@@ -151,6 +152,7 @@ namespace S {
 
     export function shake(intensity: number, time: number): Script.Function {
         return function*() {
+            if (!global.world) return;
             global.world.camera.shakeIntensity += intensity;
             let timer = new Timer(time);
             while (!timer.done) {

@@ -1,5 +1,5 @@
 class CircleBounds implements Bounds {
-    parent: Bounds.Parent;
+    parent?: Bounds.Parent;
     private frozen: boolean;
 
     x: number;
@@ -28,7 +28,8 @@ class CircleBounds implements Bounds {
             y = x.y;
             x = x.x;
         }
-
+        
+        y = y ?? x;
         let center = this.getCenter();
         return M.distanceSq(center.x, center.y, x, y) <= this.radius * this.radius;
     }
@@ -58,7 +59,7 @@ class CircleBounds implements Bounds {
         return this.boundingBox;
     }
 
-    getDisplacementCollision(other: Bounds): Bounds.DisplacementCollision {
+    getDisplacementCollision(other: Bounds) {
         if (other instanceof RectBounds) return Bounds.Collision.getDisplacementCollisionCircleRect(this, other);
         if (other instanceof CircleBounds) return Bounds.Collision.getDisplacementCollisionCircleCircle(this, other);
         if (other instanceof SlopeBounds) return Bounds.Collision.getDisplacementCollisionCircleSlope(this, other);
@@ -69,7 +70,7 @@ class CircleBounds implements Bounds {
         return undefined;
     }
 
-    getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision {
+    getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number) {
         if (other instanceof RectBounds) return Bounds.Collision.getRaycastCollisionCircleRect(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof CircleBounds) return Bounds.Collision.getRaycastCollisionCircleCircle(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof SlopeBounds) return Bounds.Collision.getRaycastCollisionCircleSlope(this, dx, dy, other, otherdx, otherdy);
@@ -86,7 +87,7 @@ class CircleBounds implements Bounds {
         if (other instanceof SlopeBounds) return Bounds.Collision.isOverlappingCircleSlope(this, other);
         if (other instanceof InvertedRectBounds) return Bounds.Collision.isOverlappingCircleInvertedRect(this, other);
         if (other instanceof InvertedCircleBounds) return Bounds.Collision.isOverlappingCircleInvertedCircle(this, other);
-        if (other instanceof NullBounds) return undefined;
+        if (other instanceof NullBounds) return false;
         console.error("No overlap supported between these bounds", this, other);
         return false;
     }

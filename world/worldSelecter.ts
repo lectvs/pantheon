@@ -17,12 +17,12 @@ class WorldSelecter {
         return groups.map(group => this.world.physicsGroups[group].worldObjects).flat();
     }
 
-    modules<T extends WorldObject, S extends Module<T>>(moduleType: new (...args) => S): S[] {
+    modules<T extends WorldObject, S extends Module<T>>(moduleType: new (...args: any[]) => S): S[] {
         if (!moduleType) return [];
-        return this.world.worldObjects.map(obj => obj.getModule(moduleType)).filter(m => m);
+        return this.world.worldObjects.map(obj => obj.getModule(moduleType)).filter(m => m) as S[];
     }
 
-    name<T extends WorldObject>(name: string, checked: boolean = true) {
+    name<T extends WorldObject>(name: string, checked: boolean = true): T | undefined {
         let results = this.nameAll<T>(name);
         if (A.isEmpty(results)) {
             if (checked) console.error(`No object with name ${name} exists in world:`, this.world);
@@ -40,7 +40,7 @@ class WorldSelecter {
     }
 
     names<T extends WorldObject, K extends string, O extends {[key in K]: T}>(type: new () => T, ...names: K[]): O {
-        let result: Dict<T> = {};
+        let result: Dict<T | undefined> = {};
 
         for (let name of names) {
             result[name] = this.name(name as string);

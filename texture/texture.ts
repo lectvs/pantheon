@@ -12,7 +12,7 @@ namespace Texture {
         filters?: TextureFilter[];
         blendMode?: BlendMode;
     }
-
+    
     export type MaskProperties = {
         texture: Texture;
         x: number;

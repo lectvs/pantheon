@@ -1,5 +1,5 @@
 class InvertedRectBounds implements Bounds {
-    parent: Bounds.Parent;
+    parent?: Bounds.Parent;
     private frozen: boolean;
 
     x: number;
@@ -56,7 +56,7 @@ class InvertedRectBounds implements Bounds {
         return this.innerBox;
     }
 
-    getDisplacementCollision(other: Bounds): Bounds.DisplacementCollision {
+    getDisplacementCollision(other: Bounds) {
         if (other instanceof RectBounds) return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionRectInvertedRect(other, this));
         if (other instanceof CircleBounds) return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionCircleInvertedRect(other, this));
         if (other instanceof NullBounds) return undefined;
@@ -64,7 +64,7 @@ class InvertedRectBounds implements Bounds {
         return undefined;
     }
 
-    getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision {
+    getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number) {
         if (other instanceof RectBounds) return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionRectInvertedRect(other, otherdx, otherdy, this, dx, dy));
         if (other instanceof CircleBounds) return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionCircleInvertedRect(other, otherdx, otherdy, this, dx, dy));
         if (other instanceof NullBounds) return undefined;
@@ -75,7 +75,7 @@ class InvertedRectBounds implements Bounds {
     isOverlapping(other: Bounds) {
         if (other instanceof RectBounds) return Bounds.Collision.isOverlappingRectInvertedRect(other, this);
         if (other instanceof CircleBounds) return Bounds.Collision.isOverlappingCircleInvertedRect(other, this);
-        if (other instanceof NullBounds) return undefined;
+        if (other instanceof NullBounds) return false;
         console.error("No overlap supported between these bounds", this, other);
         return false;
     }

@@ -11,12 +11,12 @@ namespace M {
         else return  to - from + 360;
     }
 
-    export function argmax<T>(array: T[], key: (x: T) => number): T {
+    export function argmax<T>(array: T[], key: (x: T) => number): T | undefined {
         return argmin(array, x => -key(x));
     }
 
-    export function argmin<T>(array: T[], key: (x: T) => number): T {
-        if (!array || array.length == 0) return null;
+    export function argmin<T>(array: T[], key: (x: T) => number): T | undefined {
+        if (!array || array.length == 0) return undefined;
         let result = array[0];
         let resultValue = key(array[0]);
 

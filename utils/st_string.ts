@@ -1,20 +1,21 @@
 namespace St {
     export function asciiToBinary(ascii: string) {
-        let result = "";
-        for (var i = 0; i < ascii.length; i++) {
-            var bin = ascii[i].charCodeAt(0).toString(2);
-            result += Array(8 - bin.length + 1).join("0") + bin;
+        let result = '';
+        for (let i = 0; i < ascii.length; i++) {
+            let bin = ascii[i].charCodeAt(0).toString(2);
+            result += Array(8 - bin.length + 1).join('0') + bin;
         }
         return result;
     }
 
     export function binaryToAscii(binary: string) {
-        var result = "";
-            var arr = binary.match(/.{1,8}/g);
-            for (var i = 0; i < arr.length; i++) {
-                result += String.fromCharCode(parseInt(arr[i], 2));
-            }
-            return result;
+        let arr = binary.match(/.{1,8}/g);
+        if (!arr) return '';
+        let result = '';
+        for (let i = 0; i < arr.length; i++) {
+            result += String.fromCharCode(parseInt(arr[i], 2));
+        }
+        return result;
     }
 
     export function encodeB64S(text: string) {
@@ -27,11 +28,11 @@ namespace St {
         return St.binaryToAscii(binary.substring(1) + binary[0]);
     }
 
-    export function isBlank(text: string) {
-        return isEmpty(text) || isEmpty(text.trim());
+    export function isBlank(text: string | undefined | null): text is undefined {
+        return isEmpty(text) || isEmpty(text!.trim());
     }
 
-    export function isEmpty(text: string) {
+    export function isEmpty(text: string | undefined | null): text is undefined {
         return !text || text.length === 0;
     }
 
@@ -70,7 +71,7 @@ namespace St {
         return str.split(replace).join(wiith);
     }
 
-    export function splitOnWhitespace(str: string) {
+    export function splitOnWhitespace(str: string): string[] {
         if (isEmpty(str)) return [];
         return str.match(/\S+/g) || [];
     }

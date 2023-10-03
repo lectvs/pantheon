@@ -1,6 +1,6 @@
 class MusicManager {
     private musics: Sound[];
-    private transitionScript: Script;
+    private transitionScript: Script | undefined;
     paused: boolean;
 
     get volume() { return this.baseVolume * this.volumeScale; }
@@ -9,7 +9,6 @@ class MusicManager {
     volumeScale: number;
 
     get currentMusic() { return this.musics.last(); }
-    get currentMusicKey() { return this.currentMusic?.key; }
 
     constructor() {
         this.musics = [];
@@ -22,7 +21,7 @@ class MusicManager {
         if (this.transitionScript) {
             this.transitionScript.update(delta);
             if (this.transitionScript.done) {
-                this.transitionScript = null;
+                this.transitionScript = undefined;
             }
         }
 
@@ -61,7 +60,7 @@ class MusicManager {
         this.paused = false;
 
         // TODO: this really needs to be fixed
-        if (this.currentMusicKey === key && !this.transitionScript) {
+        if (this.currentMusic?.key === key && !this.transitionScript) {
             let music = this.currentMusic;
             let currentVolume = music.volume;
             music.volume = 0;
@@ -78,7 +77,7 @@ class MusicManager {
 
         if (fadeTime <= 0) {
             this.musics = [music];
-            this.transitionScript = null;
+            this.transitionScript = undefined;
         } else {
             this.musics.push(music);
             music.volume = 0;
@@ -102,7 +101,7 @@ class MusicManager {
     stopMusic(fadeTime: number = 0) {
         if (fadeTime <= 0) {
             this.musics = [];
-            this.transitionScript = null;
+            this.transitionScript = undefined;
         } else {
             let startVolumes = this.musics.map(m => m.volume);
             this.transitionScript = new Script(S.chain(

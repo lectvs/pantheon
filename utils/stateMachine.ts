@@ -46,7 +46,7 @@ class StateMachine {
             yield stateScript;
             yield; // Yield one more time so we don't immediately transition to next state.
 
-            let selectedTransition: StateMachine.Transition = undefined;
+            let selectedTransition: StateMachine.Transition | undefined = undefined;
             do {
                 selectedTransition = sm.getValidTransition(sm.currentState);
                 if (!selectedTransition) yield;

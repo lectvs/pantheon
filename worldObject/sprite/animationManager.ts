@@ -3,7 +3,7 @@ class AnimationManager {
     animations: Dict<Animation.Frame[]>;
     speed: number;
 
-    private currentFrame: Animation.Frame;
+    private currentFrame: Animation.Frame | undefined;
     private currentFrameTime: number;
 
     constructor(sprite: Sprite) {
@@ -11,7 +11,7 @@ class AnimationManager {
         this.animations = {};
         this.speed = 1;
 
-        this.currentFrame = null;
+        this.currentFrame = undefined;
         this.currentFrameTime = 0;
     }
 
@@ -19,9 +19,10 @@ class AnimationManager {
         if (this.currentFrame) {
             this.currentFrameTime += delta * this.speed;
 
-            while (this.currentFrame && this.currentFrameTime >= this.currentFrame.duration) {
-                this.currentFrameTime -= this.currentFrame.duration;
-                this.setCurrentFrame(this.currentFrame.nextFrameRef, false, true);
+            let duration = this.currentFrame?.duration ?? Infinity;
+            while (this.currentFrameTime >= duration) {
+                this.currentFrameTime -= duration;
+                this.setCurrentFrame(this.currentFrame?.nextFrameRef, false, true);
             }
         }
     }
@@ -50,7 +51,7 @@ class AnimationManager {
                 return name;
             }
         }
-        return null;
+        return undefined;
     }
     
     getCurrentFrame() {
@@ -93,13 +94,13 @@ class AnimationManager {
             return;
         }
         if (this.hasAnimation(name) && this.isAnimationEmpty(name)) {
-            this.setCurrentFrame(null, true, force);
+            this.setCurrentFrame(undefined, true, force);
             return;
         }
         this.setCurrentFrame(`${name}/0`, true, force);
     }
 
-    setCurrentFrame(frameRef: string, resetFrameTime: boolean = true, force: boolean = false) {
+    setCurrentFrame(frameRef: string | undefined, resetFrameTime: boolean = true, force: boolean = false) {
         if (this.forceRequired && !force) {
             return;
         }
@@ -110,7 +111,7 @@ class AnimationManager {
         }
 
         if (!frameRef) {
-            this.currentFrame = null;
+            this.currentFrame = undefined;
             return;
         }
 
@@ -134,6 +135,6 @@ class AnimationManager {
     }
 
     stop() {
-        this.setCurrentFrame(null, true, true);
+        this.setCurrentFrame(undefined, true, true);
     }
 }

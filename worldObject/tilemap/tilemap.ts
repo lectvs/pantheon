@@ -49,7 +49,7 @@ namespace Tilemap {
 class Tilemap extends WorldObject {
     protected tilemap: Tilemap.Tilemap;
     protected tileset: Tilemap.Tileset;
-    protected animation: Tilemap.Animation;
+    protected animation?: Tilemap.Animation;
     protected collisionOnly: boolean;
 
     collisionBoxes: PhysicsWorldObject[];
@@ -155,7 +155,7 @@ class Tilemap extends WorldObject {
     }
 
     private drawTile(tile: Tilemap.Tile, tileX: number, tileY: number, renderTextures: Texture[]) {
-        if (!tile || tile.index < 0) return;
+        if (tile.index < 0) return;
 
         for (let i = 0; i < renderTextures.length; i++) {
             let textureKeyIndex = this.animation ? i*this.animation.tilesPerFrame + tile.index : tile.index;
@@ -213,13 +213,14 @@ class Tilemap extends WorldObject {
         this.zTextures = [];
     }
 
-    private scrubTilemapEntities(entities: Dict<any>) {
+    private scrubTilemapEntities(entities: Dict<any> | undefined) {
         if (O.isEmpty(entities)) return;
         for (let layer = 0; layer < this.tilemap.layers.length; layer++) {
             for (let y = 0; y < this.tilemap.layers[layer].tiles.length; y++) {
                 for (let x = 0; x < this.tilemap.layers[layer].tiles[y].length; x++) {
-                    if (this.tilemap.layers[layer].tiles[y][x].index in entities) {
-                        this.tilemap.layers[layer].tiles[y][x].index = -1;
+                    let tile = this.tilemap.layers[layer].tiles[y][x];
+                    if (tile && tile.index in entities!) {
+                        tile.index = -1;
                     }
                 }
             }
@@ -247,14 +248,14 @@ namespace Tilemap {
         return zTileIndices;
     }
 
-    export function createEmptyZTextures(zTileIndices: number[][], tileset: Tilemap.Tileset, animation: Tilemap.Animation): Tilemap.ZTextureMap {
+    export function createEmptyZTextures(zTileIndices: number[][], tileset: Tilemap.Tileset, animation: Tilemap.Animation | undefined): Tilemap.ZTextureMap {
         let zTextureSlots: Tilemap.ZTextureMap = {};
         for (let y = 0; y < zTileIndices.length; y++) {
             for (let x = 0; x < zTileIndices[y].length; x++) {
                 if (isFinite(zTileIndices[y][x])) {
                     let zValue = getZValue(zTileIndices, y, x);
                     if (!zTextureSlots[zValue]) zTextureSlots[zValue] = {
-                        frames: null,
+                        frames: [],
                         bounds: { x: 0, y: 0, width: 0, height: 0 },
                         tileBounds: { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity },
                         zHeight: -Infinity,
@@ -286,7 +287,7 @@ namespace Tilemap {
         for (let y = 0; y < tilemapLayer.tiles.length; y++) {
             for (let x = 0; x < tilemapLayer.tiles[y].length; x++) {
                 let tile = tilemapLayer.tiles[y][x];
-                if (tileset.collisionIndices.includes(tile.index)) {
+                if (tileset.collisionIndices!.includes(tile.index)) {
                     let rect = {
                         x: x*tileset.tileWidth,
                         y: y*tileset.tileHeight,
@@ -358,7 +359,7 @@ namespace Tilemap {
     }
 
     function getInitialZTileIndicies(layer: Tilemap.TilemapLayer, zMap: Tilemap.ZMap) {
-        let zTileIndices = A.filledArray2D<number>(layer.tiles.length, layer.tiles[0].length, undefined);
+        let zTileIndices = A.filledArray2D<number>(layer.tiles.length, layer.tiles[0].length, -Infinity);
 
         if (O.isEmpty(zMap)) {
             for (let x = 0; x < layer.tiles[0].length; x++) {

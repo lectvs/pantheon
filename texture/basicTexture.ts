@@ -2,6 +2,16 @@
 /// <reference path="./filter/textureFilter.ts"/>
 /// <reference path="./filter/filters/slice.ts"/>
 
+namespace BasicTexture {
+    export type _RequiredPropertiesForFilter = Texture.Properties & {
+        x: number;
+        y: number;
+        scaleX: number;
+        scaleY: number;
+        filters: TextureFilter[];
+    }
+}
+
 class BasicTexture implements Texture {
     get width() { return this.renderTextureSprite._renderTexture.width; }
     get height() { return this.renderTextureSprite._renderTexture.height; }
@@ -130,14 +140,14 @@ class BasicTexture implements Texture {
         return result;
     }
 
-    renderTo(texture: Texture, properties?: Texture.Properties) {
+    renderTo(texture: Texture, _properties?: Texture.Properties) {
         if (!texture) return;
         if (texture.immutable) {
             console.error('Cannot render to immutable texture!');
             return;
         }
 
-        properties = this.setRenderTextureSpriteProperties(properties);
+        let properties = this.setRenderTextureSpriteProperties(_properties);
         let allFilters = this.setRenderTextureSpriteFilters(texture, properties);
         texture.renderPIXIDisplayObject(this.renderTextureSprite);
         this.returnTextureFilters(allFilters);
@@ -190,8 +200,8 @@ class BasicTexture implements Texture {
     /**
      * Returns a NEW texture which is transformed from the original.
      */
-    transform(properties: Texture.TransformProperties, source: string) {
-        O.defaults(properties, {
+    transform(_properties: Texture.TransformProperties, source: string) {
+        let properties = O.defaults(_properties, {
             scaleX: 1,
             scaleY: 1,
             tint: 0xFFFFFF,
@@ -212,7 +222,7 @@ class BasicTexture implements Texture {
         return result;
     }
 
-    private getAllTextureFilters(properties: Texture.Properties) {
+    private getAllTextureFilters(properties: BasicTexture._RequiredPropertiesForFilter) {
         let allFilters: TextureFilter[] = [];
 
         if (properties.slice) {
@@ -244,10 +254,10 @@ class BasicTexture implements Texture {
         allFilters.forEach(filter => filter.returnPixiFilter());
     }
 
-    private setRenderTextureSpriteProperties(properties: Texture.Properties) {
-        if (!properties) properties = {};
+    private setRenderTextureSpriteProperties(_properties: Texture.Properties | undefined) {
+        if (!_properties) _properties = {};
 
-        O.defaults(properties, {
+        let properties = O.defaults(_properties, {
             x: 0,
             y: 0,
             scaleX: 1,
@@ -277,7 +287,7 @@ class BasicTexture implements Texture {
         return properties;
     }
 
-    private setRenderTextureSpriteFilters(destTexture: Texture, properties: Texture.Properties) {
+    private setRenderTextureSpriteFilters(destTexture: Texture, properties: BasicTexture._RequiredPropertiesForFilter) {
         let allFilters = this.getAllTextureFilters(properties);
         allFilters.forEach(filter => filter.update());
         this.renderTextureSprite.filters = allFilters.map(filter => filter.borrowPixiFilter());

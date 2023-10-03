@@ -57,7 +57,7 @@ class WebAudioSound implements WebAudioSoundI {
         if (this.sourceNode) this.sourceNode.loop = value;
     }
 
-    get duration() { return this.sourceNode ? this.sourceNode.buffer.duration : 0; }
+    get duration() { return this.sourceNode?.buffer ? this.sourceNode.buffer.duration : 0; }
 
     private _done: boolean;
     get done() { return this._done; }
@@ -65,7 +65,7 @@ class WebAudioSound implements WebAudioSoundI {
     onDone: () => void;
 
     private startTime: number;
-    private pausedPosition: number;
+    private pausedPosition: number | undefined;
     get paused() { return this.pausedPosition !== undefined; };
     set paused(value: boolean) { value ? this.pause() : this.unpause(); }
 
@@ -86,7 +86,7 @@ class WebAudioSound implements WebAudioSoundI {
     pause() {
         if (this.paused || this.done) return;
         this.pausedPosition = M.mod(this.context.currentTime - this.startTime, this.duration);
-        this.sourceNode.onended = undefined;
+        this.sourceNode.onended = null;
         this.sourceNode.stop();
     }
 
@@ -104,7 +104,7 @@ class WebAudioSound implements WebAudioSoundI {
         if (this.paused) {
             this.pausedPosition = pos;
         } else {
-            this.sourceNode.onended = undefined;
+            this.sourceNode.onended = null;
             this.sourceNode.stop();
             this.start(pos);
         }

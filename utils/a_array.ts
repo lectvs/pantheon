@@ -32,12 +32,12 @@ namespace A {
         return filledArray<T>(count);
     }
 
-    export function filledArray<T>(count: number, fillWith?: T) {
-        return sequence(count, i => fillWith);
+    export function filledArray<T>(count: number, fillWith?: T): ValueElseUndefined<T>[] {
+        return sequence(count, i => fillWith) as any;
     }
 
-    export function filledArray2D<T>(rows: number, cols: number, fillWith?: T) {
-        return sequence2D(rows, cols, (i, j) => fillWith);
+    export function filledArray2D<T>(rows: number, cols: number, fillWith?: T): ValueElseUndefined<T>[][] {
+        return sequence2D(rows, cols, (i, j) => fillWith) as any;
     }
 
     export function filterInPlace<T>(array: T[], predicate: (value: T, index: number, array: T[]) => any) {
@@ -59,7 +59,7 @@ namespace A {
         return Array.isArray(obj);
     }
 
-    export function isEmpty(array: ReadonlyArray<any>) {
+    export function isEmpty(array: ReadonlyArray<any> | undefined): array is undefined {
         return !array || array.length === 0;
     }
 
@@ -217,7 +217,7 @@ namespace A {
     /**
      * Creates a new array equal to: [f(0), f(1), f(2), ..., f(count-1)]
      */
-    export function sequence<T>(count: number, f: (i: number) => T) {
+    export function sequence<T>(count: number, f: (i: number) => T): T[] {
         let result: T[] = [];
         for (let i = 0; i < count; i++) {
             result.push(f(i));
@@ -225,7 +225,7 @@ namespace A {
         return result;
     }
 
-    export function sequence2D<T>(rows: number, cols: number, f: (i: number, j: number) => T) {
+    export function sequence2D<T>(rows: number, cols: number, f: (i: number, j: number) => T): T[][] {
         return sequence(rows, i => sequence(cols, j => f(i, j)));
     }
 

@@ -4,7 +4,7 @@ class Timer {
     time: number;
     paused: boolean;
 
-    callback: () => any;
+    callback?: () => any;
     currentIter: number;
     count: number;
 

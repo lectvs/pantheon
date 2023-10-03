@@ -41,7 +41,7 @@ namespace SmartTilemap {
         return A.sort(rules, rule => getPatternSpecificity(rule.pattern), 'reverse');
     }
 
-    export function getSmartTilemap(tilemap: string | Tilemap.Tilemap, config: RuleConfig): Tilemap.Tilemap {
+    export function getSmartTilemap(tilemap: string | Tilemap.Tilemap, config: RuleConfig): Tilemap.Tilemap | undefined {
         if (St.isString(tilemap)) {
             tilemap = AssetCache.getTilemap(tilemap);
             if (!tilemap) return undefined;
@@ -90,7 +90,7 @@ namespace SmartTilemap {
             && matchTilePatternTile(pattern.belowRight, getTileIndex(tilemap, x+1, y+1, config));
     }
 
-    function matchTilePatternTile(patternTile: SmartTilemap.Rule.PatternTile, tileIndex: number): boolean {
+    function matchTilePatternTile(patternTile: SmartTilemap.Rule.PatternTile | undefined, tileIndex: number): boolean {
         if (patternTile === undefined) return true;
         if (M.isNumber(patternTile)) return patternTile === tileIndex;
         if (patternTile.type === 'is') return patternTile.index === tileIndex;
@@ -110,7 +110,7 @@ namespace SmartTilemap {
              + getPatternTileSpecificity(pattern.belowRight);
     }
 
-    function getPatternTileSpecificity(patternTile: SmartTilemap.Rule.PatternTile): number {
+    function getPatternTileSpecificity(patternTile: SmartTilemap.Rule.PatternTile | undefined): number {
         if (patternTile === undefined) return 0;
         return 1;
     }

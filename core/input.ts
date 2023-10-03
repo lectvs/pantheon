@@ -25,7 +25,7 @@ namespace Input {
 }
 
 class Input {
-    private static eventKey: string; // Mainly for use in control binding
+    private static eventKey: string | undefined; // Mainly for use in control binding
     private static isDownByKeyCode: Dict<boolean>;
     private static keysByKeycode: Dict<Input.Key>;
     private static keyCodesByName: Input.KeyCodesByName;
@@ -186,9 +186,9 @@ class Input {
     private static updateMousePosition() {
         if (this.isUsingTouch && this.simulateMouseWithTouches) {
             if (TouchManager.isTouching) {
-                this._canvasMouseX = TouchManager.touch.x;
-                this._canvasMouseY = TouchManager.touch.y;
-                this._mouseRadius = TouchManager.touch.radius;
+                this._canvasMouseX = TouchManager.touch!.x;
+                this._canvasMouseY = TouchManager.touch!.y;
+                this._mouseRadius = TouchManager.touch!.radius;
             }
         } else if (IS_MOBILE) {
             if (this.isDownByKeyCode[this.MOUSE_KEYCODES[0]]) {

@@ -1,7 +1,7 @@
 interface LocalStorageBackend {
     delete(key: string): void;
-    getJson<T>(key: string): T;
-    getString(key: string): string;
+    getJson<T>(key: string): T | undefined;
+    getString(key: string): string | undefined;
     setJson(key: string, value: any): void;
     setString(key: string, value: string): void;
 }
@@ -63,7 +63,8 @@ class LocalStorageTrueBackend implements LocalStorageBackend {
 
     getString(key: string) {
         try {
-            return localStorage.getItem(key);
+            let value = localStorage.getItem(key);
+            return value === null ? undefined : value;
         } catch (e) {
             console.error('Unable to get localStorage:', e);
         }

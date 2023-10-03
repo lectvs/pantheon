@@ -60,8 +60,8 @@ class Animations {
         return result;
     }
 
-    static fromTextureList(config: Animation.Configs.FromTextureList): Animation.Config {
-        O.defaults(config, {
+    static fromTextureList(_config: Animation.Configs.FromTextureList): Animation.Config {
+        let config = O.defaults(_config, {
             count: 1,
         });
 

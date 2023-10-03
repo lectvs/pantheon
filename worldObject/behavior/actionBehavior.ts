@@ -42,6 +42,7 @@ class ActionBehavior implements Behavior {
         let b = this;
 
         if (action.wait) {
+            let wait = action.wait;
             let waitActionName = `wait_after_${name}`;
 
             this.addAction(name, {
@@ -52,7 +53,7 @@ class ActionBehavior implements Behavior {
 
             this.addAction(waitActionName, {
                 script: function*() {
-                    yield S.wait(action.wait);
+                    yield S.wait(wait);
                 },
                 nextAction: action.nextAction,
             });
@@ -85,7 +86,7 @@ class ActionBehavior implements Behavior {
         this.stateMachine.setState(name);
     }
 
-    private canInterrupt(interrupt: ActionBehavior.Interrupt): boolean {
+    private canInterrupt(interrupt: ActionBehavior.Interrupt | undefined): boolean {
         return !!interrupt;
     }
 

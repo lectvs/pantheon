@@ -22,7 +22,9 @@ class LciLoader implements Loader {
     }
 
     private onLoadLci(callback?: () => void) {
-        this.lci = Lci.parseDocument(this.pixiLoader.resources[this.key].data);
+        let lci = Lci.parseDocument(this.pixiLoader.resources[this.key].data);
+        if (!lci) return;
+        this.lci = lci;
         AssetCache.lciDocuments[this.key] = this.lci;
         new LoaderSystem(this.lci.layers
             .filter(layer => !layer.isDataLayer)

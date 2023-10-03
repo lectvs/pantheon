@@ -8,10 +8,10 @@ namespace Transition {
 }
 
 abstract class Transition extends WorldObject {
-    protected oldWorld: World;
-    protected newWorld: World;
-    protected oldSnapshot: Texture;
-    protected newSnapshot: Texture;
+    protected oldWorld?: World;
+    protected newWorld?: World;
+    protected oldSnapshot?: Texture;
+    protected newSnapshot?: Texture;
 
     protected preTime: number;
     protected postTime: number;
@@ -27,7 +27,7 @@ abstract class Transition extends WorldObject {
 
     abstract start(): void;
 
-    withData(oldWorld: World, newWorld: World) {
+    setData(oldWorld: World | undefined, newWorld: World | undefined) {
         this.oldWorld = oldWorld;
         this.newWorld = newWorld;
         return this;
@@ -35,7 +35,7 @@ abstract class Transition extends WorldObject {
 
     takeWorldSnapshots() {
         this.oldSnapshot = this.oldWorld ? this.oldWorld.takeSnapshot() : Texture.filledRect(global.gameWidth, global.gameHeight, global.backgroundColor).clone('Transition.takeWorldSnapshots');
-        this.newSnapshot = this.newWorld.takeSnapshot();
+        this.newSnapshot = this.newWorld?.takeSnapshot();
     }
 
     freeWorldSnapshots() {

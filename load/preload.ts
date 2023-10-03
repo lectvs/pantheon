@@ -118,7 +118,7 @@ class Preload {
         this.loaderSystem.load(options.progressCallback, options.onLoad);
     }
 
-    private static isLciImage(url: string) {
+    private static isLciImage(url: string | undefined) {
         if (!url) return false;
         return url.endsWith('.lci') || url.startsWith('data:image/lci;');
     }

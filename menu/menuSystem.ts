@@ -12,13 +12,13 @@ class MenuSystem {
 
     update() {
         if (this.inMenu) {
-            this.currentMenu.update();
+            this.currentMenu!.update();
         }
     }
 
     render(screen: Texture) {
         if (this.inMenu) {
-            this.currentMenu.render(screen, 0, 0);
+            this.currentMenu!.render(screen, 0, 0);
         }
     }
 

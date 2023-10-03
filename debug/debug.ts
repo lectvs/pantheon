@@ -90,9 +90,9 @@ class Debug {
     static get AUTOPLAY() { return this.DEBUG && this._AUTOPLAY; }
     static set AUTOPLAY(value: boolean) { this._AUTOPLAY = value; }
 
-    private static _SKIP_MAIN_MENU_STAGE: () => World;
-    static get SKIP_MAIN_MENU_STAGE() { return this.DEBUG ? this._SKIP_MAIN_MENU_STAGE : undefined; }
-    static set SKIP_MAIN_MENU_STAGE(value: () => World) { this._SKIP_MAIN_MENU_STAGE = value; }
+    private static _SKIP_MAIN_MENU_STAGE: Factory<World> | undefined;
+    static get SKIP_MAIN_MENU_STAGE(): Factory<World> | undefined { return this.DEBUG ? this._SKIP_MAIN_MENU_STAGE : undefined; }
+    static set SKIP_MAIN_MENU_STAGE(value: Factory<World> | undefined) { this._SKIP_MAIN_MENU_STAGE = value; }
 
     private static _FRAME_STEP_ENABLED: boolean;
     static get FRAME_STEP_ENABLED() { return this.DEBUG && this._FRAME_STEP_ENABLED; }
@@ -109,6 +109,7 @@ class Debug {
 }
 
 function get(nameOrType: string | (new (...args) => WorldObject)) {
+    if (!global.world) return undefined;
     let worldObjects = St.isString(nameOrType)
                         ? global.world.select.nameAll(nameOrType)
                         : global.world.select.typeAll(nameOrType);

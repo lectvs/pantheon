@@ -25,7 +25,7 @@ namespace Sprite {
 
 class Sprite extends PhysicsWorldObject {
     private texture: Texture;
-    private textureKey: string;
+    private textureKey: string | undefined;
     protected animationManager: AnimationManager;
 
     flipX: boolean;
@@ -51,8 +51,8 @@ class Sprite extends PhysicsWorldObject {
     alpha: number;
 
     effects: Effects;
-    mask: TextureFilters.Mask.WorldObjectMaskConfig;
-    blendMode: Texture.BlendMode;
+    mask?: TextureFilters.Mask.WorldObjectMaskConfig;
+    blendMode?: Texture.BlendMode;
 
     onScreenPadding: number;
 
@@ -68,7 +68,7 @@ class Sprite extends PhysicsWorldObject {
         if (config.defaultAnimation) {
             this.playAnimation(config.defaultAnimation);
         } else if (!A.isEmpty(config.animations)) {
-            this.playAnimation(config.animations[0].name);
+            this.playAnimation(config.animations![0].name);
         }
 
         this.flipX = config.flipX ?? false;
@@ -161,7 +161,7 @@ class Sprite extends PhysicsWorldObject {
         this.animationManager.playAnimation(name, force);
     }
 
-    setTexture(key: string | Texture) {
+    setTexture(key: string | Texture | undefined) {
         if (!key) {
             this.texture = Texture.NONE;
             this.textureKey = undefined;

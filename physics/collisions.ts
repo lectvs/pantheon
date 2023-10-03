@@ -35,8 +35,8 @@ namespace Bounds.Collision {
         let checkTop = movePos.y <= fromBox.top + fromBox.height/2;
         let checkLeft = movePos.x <= fromBox.left + fromBox.width/2;
 
-        let displacementXs = [];
-        let displacementYs = [];
+        let displacementXs: number[] = [];
+        let displacementYs: number[] = [];
 
         if (checkTop) {
             displacementXs.push(0);
@@ -118,7 +118,7 @@ namespace Bounds.Collision {
 
         if (displacementXs.length === 0) return undefined;
 
-        let i = M.argmin(A.range(displacementXs.length), i => M.magnitude(displacementXs[i], displacementYs[i]));
+        let i = M.argmin(A.range(displacementXs.length), i => M.magnitude(displacementXs[i], displacementYs[i]))!;
 
         return <Bounds.DisplacementCollision>{
             bounds1: move,
@@ -134,8 +134,8 @@ namespace Bounds.Collision {
         let movePos = move.getCenter();
         let fromBox = from.getBoundingBox();
 
-        let newXs = [];
-        let newYs = [];
+        let newXs: number[] = [];
+        let newYs: number[] = [];
 
 
         // Right edge
@@ -241,7 +241,7 @@ namespace Bounds.Collision {
 
         if (newXs.length === 0) return undefined;
 
-        let i = M.argmin(A.range(newXs.length), i => M.distanceSq(movePos.x, movePos.y, newXs[i], newYs[i]));
+        let i = M.argmin(A.range(newXs.length), i => M.distanceSq(movePos.x, movePos.y, newXs[i], newYs[i]))!;
 
         let displacementX = newXs[i] - movePos.x;
         let displacementY = newYs[i] - movePos.y;
@@ -307,8 +307,8 @@ namespace Bounds.Collision {
         let currentBox = move.getBoundingBox();
         let currentOtherBox = from.getBoundingBox();
 
-        let displacementX = M.argmin([currentOtherBox.right - currentBox.left, currentOtherBox.left - currentBox.right], Math.abs);
-        let displacementY = M.argmin([currentOtherBox.bottom - currentBox.top, currentOtherBox.top - currentBox.bottom], Math.abs);
+        let displacementX = M.argmin([currentOtherBox.right - currentBox.left, currentOtherBox.left - currentBox.right], Math.abs)!;
+        let displacementY = M.argmin([currentOtherBox.bottom - currentBox.top, currentOtherBox.top - currentBox.bottom], Math.abs)!;
 
         if (Math.abs(displacementX) < Math.abs(displacementY)) {
             displacementY = 0;
@@ -330,8 +330,8 @@ namespace Bounds.Collision {
         let moveBox = move.getBoundingBox();
         let fromBox = from.getBoundingBox();
 
-        let newXs = [];
-        let newYs = [];
+        let newXs: number[] = [];
+        let newYs: number[] = [];
 
         // Left Edge + vertex
         if (from.direction === 'upright' || from.direction === 'downright'
@@ -403,7 +403,7 @@ namespace Bounds.Collision {
 
         if (newXs.length === 0) return undefined;
 
-        let i = M.argmin(A.range(newXs.length), i => M.distanceSq(moveBox.left, moveBox.top, newXs[i], newYs[i]));
+        let i = M.argmin(A.range(newXs.length), i => M.distanceSq(moveBox.left, moveBox.top, newXs[i], newYs[i]))!;
 
         let displacementX = newXs[i] - moveBox.left;
         let displacementY = newYs[i] - moveBox.top;
@@ -1063,7 +1063,7 @@ namespace Bounds.Collision {
         return false;
     }
 
-    export function invertDisplacementCollision(collision: Bounds.DisplacementCollision) {
+    export function invertDisplacementCollision(collision: Bounds.DisplacementCollision | undefined) {
         if (collision) {
             let temp = collision.bounds1;
             collision.bounds1 = collision.bounds2;
@@ -1075,7 +1075,7 @@ namespace Bounds.Collision {
         return collision;
     }
 
-    export function invertRaycastCollision(collision: Bounds.RaycastCollision) {
+    export function invertRaycastCollision(collision: Bounds.RaycastCollision | undefined) {
         if (collision) {
             let temp = collision.bounds1;
             collision.bounds1 = collision.bounds2;

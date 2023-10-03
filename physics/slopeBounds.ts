@@ -3,7 +3,7 @@ namespace SlopeBounds {
 }
 
 class SlopeBounds implements Bounds {
-    parent: Bounds.Parent;
+    parent?: Bounds.Parent;
     private frozen: boolean;
 
     x: number;
@@ -35,6 +35,8 @@ class SlopeBounds implements Bounds {
             x = x.x;
         }
 
+        y = y ?? x;
+
         let box = this.getBoundingBox();
 
         if (!box.contains(x, y)) return false;
@@ -62,7 +64,7 @@ class SlopeBounds implements Bounds {
         return this.boundingBox;
     }
 
-    getDisplacementCollision(other: Bounds): Bounds.DisplacementCollision {
+    getDisplacementCollision(other: Bounds) {
         if (other instanceof RectBounds) return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionRectSlope(other, this));
         if (other instanceof CircleBounds) return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionCircleSlope(other, this));
         if (other instanceof NullBounds) return undefined;
@@ -70,7 +72,7 @@ class SlopeBounds implements Bounds {
         return undefined;
     }
 
-    getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision {
+    getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number) {
         if (other instanceof RectBounds) return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionRectSlope(other, otherdx, otherdy, this, dx, dy));
         if (other instanceof CircleBounds) return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionCircleSlope(other, otherdx, otherdy, this, dx, dy));
         if (other instanceof NullBounds) return undefined;
@@ -81,7 +83,7 @@ class SlopeBounds implements Bounds {
     isOverlapping(other: Bounds) {
         if (other instanceof RectBounds) return Bounds.Collision.isOverlappingRectSlope(other, this);
         if (other instanceof CircleBounds) return Bounds.Collision.isOverlappingCircleSlope(other, this);
-        if (other instanceof NullBounds) return undefined;
+        if (other instanceof NullBounds) return false;
         console.error("No overlap supported between these bounds", this, other);
         return false;
     }

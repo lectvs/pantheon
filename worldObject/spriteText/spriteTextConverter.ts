@@ -34,7 +34,7 @@ namespace SpriteTextConverter {
                         tagStack.pop();
                     }
                 } else {
-                    let tag = parts.shift();
+                    let tag = parts.shift()!;
                     tagStack.push({ tag, params: parts });
                 }
 
@@ -105,7 +105,7 @@ namespace SpriteTextConverter {
     function pushWord(word: SpriteText.Character[], resultLines: SpriteText.Character[][], position: Vector2, font: SpriteText.Font, maxWidth: number, current: CurrentData) {
         if (A.isEmpty(word)) return;
 
-        let lastChar = word.last();
+        let lastChar = word.last()!;
         if (maxWidth > 0 && lastChar.right > maxWidth) {
             let diffx = -word[0].x;
             let diffy = getNewLineHeightDiff(word[0].y, SpriteText.getHeightOfCharList(resultLines.flat()), font.newlineHeight);
@@ -121,7 +121,7 @@ namespace SpriteTextConverter {
         }
 
         while (word.length > 0) {
-            resultLines.last().push(word.shift());
+            resultLines.last()!.push(word.shift()!);
         }
     }
 
@@ -161,7 +161,7 @@ namespace SpriteTextConverter {
         return textures;
     }
 
-    export function returnStaticTextures(textures: Dict<SpriteText.StaticTextureData>) {
+    export function returnStaticTextures(textures: Dict<SpriteText.StaticTextureData> | undefined) {
         if (!textures) return;
         for (let part in textures) {
             cache_staticTextures.return(textures[part].texture.width, textures[part].texture.height, textures[part].texture);

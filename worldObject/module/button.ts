@@ -133,6 +133,7 @@ class Button extends Module<WorldObject> {
     isHovered() {
         if (!this.enabled) return false;
         if (!this.canHover()) return false;
+        if (!this.worldObject.world) return false;
 
         if (!this.isOverlappingMouse()) return false;
 
@@ -141,6 +142,7 @@ class Button extends Module<WorldObject> {
     }
 
     isOverlappingMouse() {
+        if (!this.worldObject.world) return false;
         let mouseBounds = this.worldObject.world.getWorldMouseBounds();
         return this.worldObject.bounds.isOverlapping(mouseBounds);
     }

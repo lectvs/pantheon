@@ -100,7 +100,7 @@ namespace TextureFilters {
         }
 
         export type WorldMaskConfig = {
-            texture: Texture;
+            texture?: Texture;
             offsetx: number;
             offsety: number;
             invert?: boolean;
@@ -108,7 +108,8 @@ namespace TextureFilters {
 
         export type WorldObjectMaskType = 'local' | 'screen' | 'world';
 
-        export function getTextureMaskForWorldObject(mask: WorldObjectMaskConfig, worldObject: WorldObject, renderX: number, renderY: number): Texture.MaskProperties {
+        export function getTextureMaskForWorldObject(mask: WorldObjectMaskConfig | undefined, worldObject: WorldObject,
+                renderX: number, renderY: number): Texture.MaskProperties | undefined {
             if (!mask || !mask.texture) return undefined;
 
             let x = 0;
@@ -133,7 +134,7 @@ namespace TextureFilters {
             };
         }
 
-        export function getTextureMaskForWorld(mask: WorldMaskConfig): Texture.MaskProperties {
+        export function getTextureMaskForWorld(mask: WorldMaskConfig | undefined): Texture.MaskProperties | undefined {
             if (!mask || !mask.texture) return undefined;
 
             return {

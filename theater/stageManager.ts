@@ -1,17 +1,17 @@
 class StageManager {
-    currentWorld: World;
-    currentWorldAsWorldObject: Theater.WorldAsWorldObject;
+    currentWorld: World | undefined;
+    currentWorldAsWorldObject: Theater.WorldAsWorldObject | undefined;
     currentWorldFactory: () => World;
 
-    private transition: Transition;
+    private transition?: Transition;
     get transitioning() { return !!this.transition; }
 
     private theater: Theater;
 
     constructor(theater: Theater) {
         this.theater = theater;
-        this.currentWorld = null;
-        this.currentWorldAsWorldObject = null;
+        this.currentWorld = undefined;
+        this.currentWorldAsWorldObject = undefined;
     }
 
     /**
@@ -21,9 +21,7 @@ class StageManager {
         let oldWorld = this.currentWorld;
 
         // Remove old stuff
-        if (this.currentWorld) {
-            World.Actions.removeWorldObjectFromWorld(this.currentWorldAsWorldObject);
-        }
+        World.Actions.removeWorldObjectFromWorld(this.currentWorldAsWorldObject);
 
         // Create new stuff
         this.currentWorldFactory = stage;
@@ -42,22 +40,28 @@ class StageManager {
         this.currentWorldAsWorldObject.setVisible(false);
 
         // this is outside the script to avoid 1-frame flicker
-        this.transition = transition.withData(oldWorld, newWorld);
+        this.transition = transition.setData(oldWorld, newWorld);
         this.transition.layer = Theater.LAYER_TRANSITION;
         this.theater.addWorldObject(this.transition);
         this.transition.takeWorldSnapshots();
         this.transition.start();
 
         this.theater.runScript(S.chain(
-            S.waitUntil(() => this.transition.done),
+            S.waitUntil(() => !this.transition || this.transition.done),
             S.call(() => {
-                World.Actions.removeWorldObjectFromWorld(this.transition);
-                this.transition.freeWorldSnapshots();
-                this.transition = null;
-                this.currentWorldAsWorldObject.setActive(true);
-                this.currentWorldAsWorldObject.setVisible(true);
-                this.currentWorld.onTransitioned();
-                onTransitioned(this.currentWorld);
+                if (this.transition) {
+                    World.Actions.removeWorldObjectFromWorld(this.transition);
+                    this.transition.freeWorldSnapshots();
+                    this.transition = undefined;
+                }
+                if (this.currentWorldAsWorldObject) {
+                    this.currentWorldAsWorldObject.setActive(true);
+                    this.currentWorldAsWorldObject.setVisible(true);
+                }
+                if (this.currentWorld) {
+                    this.currentWorld.onTransitioned();
+                    onTransitioned(this.currentWorld);
+                }
             }),
         )).update(this.theater.delta);  // Update once in case the transition is already done (i.e. instant)
     }

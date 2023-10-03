@@ -10,12 +10,12 @@ class SingleKeyPool<K, V> {
         this.pool = {};
     }
 
-    borrow(key: K) {
+    borrow(key: K): V {
         let keyString = this.keyToStringFn(key);
         if (A.isEmpty(this.pool[keyString])) {
             return this.factory(key);
         }
-        return this.pool[keyString].pop();
+        return this.pool[keyString].pop()!;
     }
 
     return(key: K, value: V) {
@@ -39,12 +39,12 @@ class DualKeyPool<K1, K2, V> {
         this.pool = {};
     }
 
-    borrow(key1: K1, key2: K2) {
+    borrow(key1: K1, key2: K2): V {
         let keyString = this.keysToStringFn(key1, key2);
         if (A.isEmpty(this.pool[keyString])) {
             return this.factory(key1, key2);
         }
-        return this.pool[keyString].pop();
+        return this.pool[keyString].pop()!;
     }
 
     return(key1: K1, key2: K2, value: V) {

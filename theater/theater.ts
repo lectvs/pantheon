@@ -18,7 +18,7 @@ class Theater extends World {
     get currentWorld() { return this.stageManager ? this.stageManager.currentWorld : undefined; }
     get isCutscenePlaying() { return this.cutsceneManager ? this.cutsceneManager.isCutscenePlaying : false; }
     get slides() { return this.slideManager ? this.slideManager.slides : []; }
-    get canPause() { return this.allowPause && this.currentWorld?.allowPause; }
+    get canPause() { return this.allowPause && this.currentWorld ? this.currentWorld.allowPause : false; }
 
     endOfFrameQueue: (() => any)[];
 
@@ -56,7 +56,7 @@ class Theater extends World {
 
         super.update();
         while (!A.isEmpty(this.endOfFrameQueue)) {
-            this.endOfFrameQueue.shift()();
+            this.endOfFrameQueue.shift()!();
         }
     }
 
@@ -136,7 +136,7 @@ class Theater extends World {
 namespace Theater {
     export class WorldAsWorldObject extends WorldObject {
         containedWorld: World;
-        mask: TextureFilters.Mask.WorldMaskConfig;
+        mask: TextureFilters.Mask.WorldMaskConfig | undefined;
 
         constructor(containedWorld: World) {
             super();

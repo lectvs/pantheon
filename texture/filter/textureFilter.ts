@@ -40,7 +40,7 @@ class TextureFilter {
     private uniformCode: string;
     private uniforms: Dict<any>;
 
-    private borrowedPixiFilter: PIXI.Filter;
+    private borrowedPixiFilter: PIXI.Filter | undefined;
 
     constructor(config: TextureFilter.Config) {
         this.code = config.code ?? '';
@@ -55,7 +55,7 @@ class TextureFilter {
         this.setUniform('t', 0);
 
         this.enabled = true;
-        this.borrowedPixiFilter = null;
+        this.borrowedPixiFilter = undefined;
     }
 
     borrowPixiFilter() {
@@ -69,7 +69,7 @@ class TextureFilter {
     returnPixiFilter() {
         if (!this.borrowedPixiFilter) return;
         TextureFilter.cache.return(this, this.borrowedPixiFilter);
-        this.borrowedPixiFilter = null;
+        this.borrowedPixiFilter = undefined;
     }
 
     constructPixiFilter(): PIXI.Filter {
@@ -117,7 +117,7 @@ class TextureFilter {
         this.setUniform('t', this.getUniform('t') + delta);
     }
 
-    private constructUniformCode(uniformDeclarations: Dict<any>) {
+    private constructUniformCode(uniformDeclarations: Dict<any> | undefined) {
         if (O.isEmpty(uniformDeclarations)) return '';
         let uniformCode = '';
         for (let decl in uniformDeclarations) {
@@ -126,7 +126,7 @@ class TextureFilter {
         return uniformCode;
     }
 
-    protected constructUniforms(uniformDeclarations: Dict<any>) {
+    protected constructUniforms(uniformDeclarations: Dict<any> | undefined) {
         if (O.isEmpty(uniformDeclarations)) return {};
         let uniformMap = {};
         for (let decl in uniformDeclarations) {

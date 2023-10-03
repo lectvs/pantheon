@@ -6,7 +6,7 @@ type Cutscene = {
 
 class CutsceneManager {
     theater: Theater;
-    current: { node: Cutscene, script: Script };
+    current: { node: Cutscene, script: Script } | undefined;
 
     get isCutscenePlaying() { return !!this.current; }
 
@@ -14,7 +14,7 @@ class CutsceneManager {
 
     constructor(theater: Theater) {
         this.theater = theater;
-        this.current = null;
+        this.current = undefined;
         this.seenCutsceneKeys = new Set();
     }
 
@@ -78,7 +78,7 @@ class CutsceneManager {
         if (this.current) {
             this.current.script.done = true;
         }
-        this.current = null;
+        this.current = undefined;
     }
 
     onStageLoad() {
@@ -88,8 +88,8 @@ class CutsceneManager {
     private finishCurrentCutscene() {
         if (!this.isCutscenePlaying) return;
         
-        this.markCutsceneAsSeen(this.current.node);
-        this.current = null;
+        this.markCutsceneAsSeen(this.current!.node);
+        this.current = undefined;
 
         this.theater.dialogBox.complete();
         this.theater.clearSlides();

@@ -36,7 +36,11 @@ class PyxelTilemapLoader implements Loader {
             layers: [],
         };
         for (let i = 0; i < tilemapJson.layers.length; i++) {
-            let tiles: Tilemap.Tile[][] = A.filledArray2D(tilemapJson.tileshigh, tilemapJson.tileswide);
+            let tiles: Tilemap.Tile[][] = A.sequence2D(tilemapJson.tileshigh, tilemapJson.tileswide, _ => ({
+                index: -1,
+                angle: 0,
+                flipX: false,
+            }));
             for (let tile of tilemapJson.layers[i].tiles) {
                 tiles[tile.y][tile.x] = {
                     index: Math.max(tile.tile, -1),

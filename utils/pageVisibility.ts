@@ -11,7 +11,7 @@ namespace PageVisibility {
             return "webkitHidden";
         }
         console.error("Page Visibility API unsupported!");
-        return undefined;
+        return "hidden";
     }
 
     function visibilityChangeKey(document: Document & { msHidden?: boolean, webkitHidden?: boolean }) {
@@ -22,6 +22,6 @@ namespace PageVisibility {
         } else if (typeof document.webkitHidden !== "undefined") {
             return "webkitvisibilitychange";
         }
-        return undefined;
+        return "visibilitychange";
     }
 }

@@ -1,5 +1,5 @@
 namespace Network {
-    export function httpRequest(url: string, data: string, callback: (responseJson: any, error: string) => any) {
+    export function httpRequest(url: string, data: string, callback: (responseJson: any, error: string | undefined) => any) {
         var xhr = new XMLHttpRequest();
         xhr.open(data ? "POST" : "GET", url, true);
         xhr.onload = function () {

@@ -86,7 +86,7 @@ class Main {
         global.gameHeight = this.config.gameHeight;
         global.backgroundColor = this.config.backgroundColor;
         SpriteText.addTags(this.config.spriteTextTags ?? {});
-        SpriteText.DEFAULT_FONT = this.config.defaultSpriteTextFont;
+        if (this.config.defaultSpriteTextFont) SpriteText.DEFAULT_FONT = this.config.defaultSpriteTextFont;
         DialogProfiles.initProfiles(this.config.dialogProfiles);
 
         Main.renderer = PIXI.autoDetectRenderer({
@@ -107,7 +107,7 @@ class Main {
         // AccessibilityManager causes game to crash when Tab is pressed.
         // Deleting it as per https://github.com/pixijs/pixi.js/issues/5111#issuecomment-420047824
         Main.renderer.plugins.accessibility.destroy();
-        delete Main.renderer.plugins.accessibility;
+        delete (Main.renderer.plugins as any).accessibility;
 
         Main.screen = new BasicTexture(global.gameWidth, global.gameHeight, 'Main.screen');
 

@@ -70,6 +70,7 @@ namespace S {
 
     export function revealText(text: SpriteText, rate: number, sound?: string): Script.Function {
         return function*() {
+            if (!global.world) return;
             text.visibleCharCount = 0;
             yield;
             while (!text.allCharactersVisible()) {
