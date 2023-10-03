@@ -429,7 +429,7 @@ class WorldObject {
         return undefined;
     }
 
-    getModule<T extends Module<WorldObject>>(type: new (...args) => T): T | undefined {
+    getModule<T extends Module<WorldObject>>(type: new (...args: any[]) => T): T | undefined {
         for (let module of this.modules) {
             if (module instanceof type) return module;
         }

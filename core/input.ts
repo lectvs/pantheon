@@ -429,6 +429,7 @@ namespace Input {
 
         constructor() {
             this._isDown = false;
+            this._lastDown = false;
         }
 
         get isDown() { return this._isDown; }
@@ -480,7 +481,7 @@ namespace Input {
         return key;
     }
 
-    const CAPS_TO_KEYS = {
+    const CAPS_TO_KEYS: Dict<string> = {
         '~': '`', '!': '1', '@': '2', '#': '3', '$': '4',  '%': '5', '^': '6',  '&': '7', '*': '8', '(': '9', ')': '0',
         '_': '-', '+': '=', '{': '[', '}': ']', '|': '\\', ':': ';', '"': '\'', '<': ',', '>': '.', '?': '/',
     };

@@ -128,7 +128,7 @@ class TextureFilter {
 
     protected constructUniforms(uniformDeclarations: Dict<any> | undefined) {
         if (O.isEmpty(uniformDeclarations)) return {};
-        let uniformMap = {};
+        let uniformMap: any = {};
         for (let decl in uniformDeclarations) {
             let uniformName = decl.trim().substring(decl.lastIndexOf(' ') + 1);
             uniformMap[uniformName] = uniformDeclarations[decl];

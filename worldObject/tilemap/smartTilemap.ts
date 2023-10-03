@@ -75,7 +75,7 @@ namespace SmartTilemap {
             }
         }
 
-        return tilemap[y][x];
+        return tilemap.tiles[y][x];
     }
 
     function matchTilePattern(tilemap: Tilemap.TilemapLayer, x: number, y: number, config: RuleConfig, pattern: SmartTilemap.Rule.Pattern): boolean {

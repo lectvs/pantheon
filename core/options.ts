@@ -64,7 +64,7 @@ class Options {
 
     private static loadOptions() {
         this.options = O.deepClone(this.defaultOptions);
-        let loadedOptions = LocalStorage.getJson<Options.Options>(this.getOptionsLocalStorageName()) || {};
+        let loadedOptions: Partial<Options.Options> = LocalStorage.getJson<Options.Options>(this.getOptionsLocalStorageName()) || {};
 
         for (let option in loadedOptions) {
             if (option === Options.CONTROLS) {

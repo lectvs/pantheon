@@ -108,7 +108,7 @@ class Debug {
     static EXPERIMENTS: Dict<Experiment>;
 }
 
-function get(nameOrType: string | (new (...args) => WorldObject)) {
+function get(nameOrType: string | (new (...args: any[]) => WorldObject)) {
     if (!global.world) return undefined;
     let worldObjects = St.isString(nameOrType)
                         ? global.world.select.nameAll(nameOrType)

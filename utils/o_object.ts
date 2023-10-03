@@ -30,7 +30,7 @@ namespace O {
             if (isEmpty(obj)) return {} as T;
             let result: any = {};
             for (let key in obj) {
-                result[key] = deepCloneInternal(obj[key]);
+                result[key] = deepCloneInternal((obj as any)[key]);
             }
             return result as T;
         }
@@ -40,12 +40,12 @@ namespace O {
 
     export function deepOverride<T>(obj: T, overrides: any) {
         for (let key in overrides) {
-            if (obj[key] && Array.isArray(overrides[key])) {
-                obj[key] = overrides[key];
-            } else if (obj[key] && isObject(obj[key]) && isObject(overrides[key])) {
-                deepOverride(obj[key], overrides[key]);
+            if ((obj as any)[key] && Array.isArray(overrides[key])) {
+                (obj as any)[key] = overrides[key];
+            } else if ((obj as any)[key] && isObject((obj as any)[key]) && isObject(overrides[key])) {
+                deepOverride((obj as any)[key], overrides[key]);
             } else {
-                obj[key] = overrides[key];
+                (obj as any)[key] = overrides[key];
             }
         }
     }
@@ -68,7 +68,7 @@ namespace O {
         let current = obj;
         for (let part of pathParts) {
             if (!current || !(part in current)) return undefined;
-            current = current[part];
+            current = (current as any)[part];
         }
         return current;
     }
@@ -78,7 +78,7 @@ namespace O {
         let current = obj;
         for (let part of pathParts) {
             if (!(part in current)) return false;
-            current = current[part];
+            current = (current as any)[part];
         }
         return true;
     }
@@ -123,9 +123,9 @@ namespace O {
         let current = obj;
         for (let part of pathParts) {
             if (!current || !(part in current)) return;
-            current = current[part];
+            current = (current as any)[part];
         }
-        current[lastPart] = value;
+        (current as any)[lastPart] = value;
     }
 
     export function withDefaults<T, K extends Partial<T>>(obj: T, defaults: K): T & K {

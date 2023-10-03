@@ -78,7 +78,7 @@ class WorldSelecter {
         return <T[]>this.world.worldObjects.filter(obj => obj.tags.includes(tag));
     }
 
-    type<T extends WorldObject>(type: new (...args) => T, checked: boolean = true) {
+    type<T extends WorldObject>(type: new (...args: any[]) => T, checked: boolean = true) {
         let results = this.typeAll(type);
         if (A.isEmpty(results)) {
             if (checked) console.error(`No object of type ${type.name} exists in world:`, this.world);
@@ -90,7 +90,7 @@ class WorldSelecter {
         return results[0];
     }
 
-    typeAll<T extends WorldObject>(type: new (...args) => T) {
+    typeAll<T extends WorldObject>(type: new (...args: any[]) => T) {
         return <T[]>this.world.worldObjects.filter(obj => obj instanceof type);
     }
 }

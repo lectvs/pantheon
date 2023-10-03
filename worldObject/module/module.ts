@@ -1,10 +1,10 @@
 class Module<T extends WorldObject> {
-    protected type: new (...args) => T;
+    protected type: new (...args: any[]) => T;
     protected _worldObject: T;
 
     get worldObject() { return this._worldObject; }
 
-    constructor(type: new (...args) => T) {
+    constructor(type: new (...args: any[]) => T) {
         this.type = type;
     }
 

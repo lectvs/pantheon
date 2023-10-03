@@ -10,7 +10,7 @@ function lciDocumentToWorldObjects(key: string) {
         let bounds = layer.properties.bounds;
 
         if (!St.isBlank(layer.properties.placeholder)) {
-            let constructor: new (x: number, y: number) => WorldObject = window[layer.properties.placeholder];
+            let constructor: new (x: number, y: number) => WorldObject = (window as any)[layer.properties.placeholder];  // Get the placeholder class from global scope
             if (!constructor || !constructor.prototype || !constructor.prototype.constructor.name) {
                 console.error(`LCI placeholder '${layer.properties.placeholder}' does not exist.`);
                 continue;

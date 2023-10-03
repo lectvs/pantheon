@@ -14,7 +14,7 @@ class Game {
     private overlay: DebugOverlay;
     private isShowingOverlay: boolean;
 
-    get canPause(): boolean { return this.theater?.canPause; }
+    get canPause(): boolean { return this.theater?.canPause ?? false; }
 
     private entryPointMenu: Factory<Menu>;
     private mainMenu: Factory<Menu>;
@@ -38,6 +38,7 @@ class Game {
         this.musicManager = new MusicManager();
 
         this.menuSystem = new MenuSystem(this);
+        this.theater = this.theaterFactory();
 
         this.overlay = new DebugOverlay();
         this.isShowingOverlay = true;
@@ -91,7 +92,6 @@ class Game {
     render(screen: Texture) {
         if (this.menuSystem.inMenu) {
             this.menuSystem.render(screen);
-
         } else {
             this.theater.render(screen, 0, 0);
         }

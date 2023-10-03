@@ -21,7 +21,7 @@ interface WebAudioSoundI {
     seek(pos: number): void;
     stop(): void;
 
-    setFilter(filter: WebAudioFilter);
+    setFilter(filter: WebAudioFilter): void;
 }
 
 class WebAudioSound implements WebAudioSoundI {

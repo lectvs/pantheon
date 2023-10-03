@@ -259,7 +259,7 @@ class Main {
             }
         });
         window.addEventListener(PageVisibility.VISIBILITY_CHANGE, () => {
-            if (document[PageVisibility.HIDDEN]) {
+            if (document[PageVisibility.HIDDEN as 'hidden']) {
                 global.soundManager.pause();
             } else {
                 global.soundManager.unpause();
