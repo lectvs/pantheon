@@ -29,8 +29,8 @@ class DialogBox extends Sprite {
 
     done: boolean;
 
-    private currentProfileKey: string;
-    private currentProfileEntry: string;
+    private currentProfileKey: string | undefined;
+    private currentProfileEntry: string | undefined;
 
     private spriteText: SpriteText;
     private spriteTextOffset: number;

@@ -35,7 +35,7 @@ class PhysicsWorldObject extends WorldObject {
 
     private _immovable: boolean;
 
-    private _bounds: Bounds;
+    private _bounds!: Bounds;
     get bounds() { return this._bounds; }
     set bounds(value: Bounds) {
         this._bounds = value;

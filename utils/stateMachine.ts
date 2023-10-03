@@ -15,9 +15,9 @@ namespace StateMachine {
 
 class StateMachine {
     private states: Dict<StateMachine.State>;
-    private currentState: StateMachine.State;
+    private currentState: StateMachine.State | undefined;
     
-    private script: Script;
+    private script: Script | undefined;
 
     constructor() {
         this.states = {};
@@ -80,8 +80,9 @@ class StateMachine {
         return this.states[name];
     }
 
-    private getValidTransition(state: StateMachine.State) {
-        for (let transition of state.transitions || []) {
+    private getValidTransition(state: StateMachine.State | undefined) {
+        if (!state || !state.transitions) return undefined;
+        for (let transition of state.transitions) {
             if (transition.condition && !transition.condition()) continue;
             return transition;
         }

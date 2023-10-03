@@ -13,11 +13,10 @@ namespace TilemapEntities {
 }
 
 class TilemapEntities {
-
     static getEntities(config: TilemapEntities.GetEntitiesConfig): WorldObject[] {
-        let tilemap = St.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap;
+        let tileset = Tilemap.getTilesetAsset(config.tileset);
+        let tilemap = Tilemap.getTilemapAsset(config.tilemap);
         let tilemapLayer = config.tilemapLayer;
-        let tileset = AssetCache.getTileset(config.tileset);
         let entities = config.entities;
         let offsetX = config.offsetX ?? 0;
         let offsetY = config.offsetY ?? 0;

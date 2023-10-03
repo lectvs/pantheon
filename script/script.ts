@@ -17,6 +17,9 @@ class Script {
     constructor(scriptFunction: Script.Function, name?: string) {
         this.iterator = this.buildIterator(scriptFunction)();
         this.name = name;
+        this.paused = false;
+        this.done = false;
+        this.delta = 0;
         this.data = {};
     }
 

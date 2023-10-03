@@ -82,15 +82,13 @@ namespace SpriteTextConverter {
             charHeight = charTexture.height;
         }
         
-        let character = new SpriteText.Character();
-        character.char = char;
-        character.x = x;
-        character.y = y;
-        character.width = charWidth;
-        character.height = charHeight;
-        character.part = part;
-        character.tagData = A.clone(tagData);
-        return character;
+        return new SpriteText.Character({
+            char, x, y,
+            width: charWidth,
+            height: charHeight,
+            part,
+            tagData: A.clone(tagData),
+        });
     }
 
     function parseTag(tag: string) {

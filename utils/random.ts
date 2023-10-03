@@ -1,5 +1,5 @@
 class RandomNumberGenerator {
-    private generate: () => number;
+    private generate!: () => number;
 
     constructor(seed?: number) {
         this.seed(seed);

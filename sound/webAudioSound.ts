@@ -21,13 +21,13 @@ interface WebAudioSoundI {
     seek(pos: number): void;
     stop(): void;
 
-    setFilter(filter: WebAudioFilter): void;
+    setFilter(filter: WebAudioFilter | undefined): void;
 }
 
 class WebAudioSound implements WebAudioSoundI {
     asset: WebAudioSound.Asset;
-    private sourceNode: AudioBufferSourceNode;
-    private filter: WebAudioFilter;
+    private sourceNode!: AudioBufferSourceNode;
+    private filter: WebAudioFilter | undefined;
 
     private get context() { return WebAudio.context; }
 
@@ -78,7 +78,9 @@ class WebAudioSound implements WebAudioSoundI {
         this._volume = 1;
         this._speed = 1;
         this._loop = false;
+        this._done = false;
         this.onDone = Utils.NOOP;
+        this.startTime = 0;
 
         this.start();
     }
@@ -156,7 +158,7 @@ class WebAudioSoundDummy implements WebAudioSoundI {
     duration: number;
     done: boolean;
     paused: boolean;
-    filter: WebAudioFilter;
+    filter: WebAudioFilter | undefined;
 
     constructor(asset: WebAudioSound.Asset) {
         this.asset = asset;

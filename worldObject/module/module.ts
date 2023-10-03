@@ -1,6 +1,6 @@
 class Module<T extends WorldObject> {
     protected type: new (...args: any[]) => T;
-    protected _worldObject: T;
+    protected _worldObject!: T;
 
     get worldObject() { return this._worldObject; }
 

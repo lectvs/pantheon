@@ -1,24 +1,20 @@
 class LoaderSystem {
     private loaders: Loader[];
-    private progressCallback: (progress: number) => void;
-    private callback: () => void;
 
     constructor(loaders: Loader[]) {
         this.loaders = loaders;
     }
 
     load(progressCallback: (progress: number) => void, callback: () => void) {
-        this.progressCallback = progressCallback;
-        this.callback = callback;
         for (let loader of this.loaders) {
-            loader.load(() => this.onLoaderLoad());
+            loader.load(() => this.onLoaderLoad(progressCallback, callback));
         }
     }
 
-    private onLoaderLoad() {
-        this.progressCallback(this.getLoadProgress());
+    private onLoaderLoad(progressCallback: (progress: number) => void, callback: () => void) {
+        progressCallback(this.getLoadProgress());
         if (this.isLoadComplete()) {
-            this.callback();
+            callback();
         }
     }
 

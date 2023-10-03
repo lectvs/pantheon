@@ -66,11 +66,14 @@ class Tilemap extends WorldObject {
     constructor(config: Tilemap.Config) {
         super(config);
 
-        this.tilemap = Tilemap.cloneTilemap(St.isString(config.tilemap) ? AssetCache.getTilemap(config.tilemap) : config.tilemap);
-        this.scrubTilemapEntities(config.entities);
-        this.setTilemapLayer(config.tilemapLayer ?? 0);
+        this.collisionBoxes = [];
+        this.zTextures = [];
 
-        this.tileset = AssetCache.getTileset(config.tileset);
+        this.tilemap = Tilemap.cloneTilemap(Tilemap.getTilemapAsset(config.tilemap));
+        this.scrubTilemapEntities(config.entities);
+        this.tilemapLayer = this.getTilemapLayer(config.tilemapLayer ?? 0);
+
+        this.tileset = Tilemap.getTilesetAsset(config.tileset);
 
         this.zMap = config.zMap ?? {};
         this.animation = config.animation;
@@ -170,20 +173,18 @@ class Tilemap extends WorldObject {
         }
     }
 
-    private setTilemapLayer(tilemapLayer: number | string) {
+    private getTilemapLayer(tilemapLayer: number | string) {
         if (M.isNumber(tilemapLayer)) {
-            this.tilemapLayer = tilemapLayer;
-            return;
+            return tilemapLayer;
         }
 
         let layerIndex = this.tilemap.layers.findIndex(layer => layer.name === tilemapLayer);
         if (layerIndex >= 0) {
-            this.tilemapLayer = layerIndex;
-            return;
+            return layerIndex;
         }
 
         console.error(`Could not find layer '${tilemapLayer}' in tilemap`, this);
-        this.tilemapLayer = 0;
+        return 0;
     }
 
     private createZTextures(zTileIndices: number[][]) {
@@ -299,6 +300,23 @@ namespace Tilemap {
             }
         }
         return result;
+    }
+
+    export function getTilemapAsset(tilemap: string | Tilemap): Tilemap {
+        if (St.isString(tilemap)) {
+            return AssetCache.getTilemap(tilemap) ?? {
+                layers: [],
+            };
+        }
+        return tilemap;
+    }
+
+    export function getTilesetAsset(tileset: string): Tileset {
+        return AssetCache.getTileset(tileset) ?? {
+            tiles: [],
+            tileWidth: 0,
+            tileHeight: 0,
+        };
     }
 
     export function getZValue(zTileIndices: number[][], y: number, x: number) {

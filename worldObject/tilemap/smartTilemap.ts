@@ -43,8 +43,9 @@ namespace SmartTilemap {
 
     export function getSmartTilemap(tilemap: string | Tilemap.Tilemap, config: RuleConfig): Tilemap.Tilemap | undefined {
         if (St.isString(tilemap)) {
-            tilemap = AssetCache.getTilemap(tilemap);
-            if (!tilemap) return undefined;
+            let tilemapAsset = AssetCache.getTilemap(tilemap);
+            if (!tilemapAsset) return undefined;
+            tilemap = tilemapAsset;
         }
         return {
             layers: tilemap.layers.map(layer => getSmartTilemapLayer(layer, config)),

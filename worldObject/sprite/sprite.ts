@@ -24,7 +24,7 @@ namespace Sprite {
 }
 
 class Sprite extends PhysicsWorldObject {
-    private texture: Texture;
+    private texture!: Texture;
     private textureKey: string | undefined;
     protected animationManager: AnimationManager;
 

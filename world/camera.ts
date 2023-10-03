@@ -52,6 +52,8 @@ class Camera {
     constructor(config: Camera.Config, world: World) {
         this.world = world;
 
+        this.x = 0;
+        this.y = 0;
         this.width = config.width ?? world.width;
         this.height = config.height ?? world.height;
 

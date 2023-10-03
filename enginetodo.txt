@@ -66,7 +66,6 @@ TODO
     - good temporary object system
 - controller revamp
 - fix: Options.updateCallbacks.push(() => Input.init());
-- check for strict assignment in constructor
 - full nodejs setup
 - template for new games
 - documentation and API cleanup

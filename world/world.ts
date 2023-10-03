@@ -108,7 +108,7 @@ class World {
 
     private mouseBounds: CircleBounds;
 
-    updateCallback: (this: World) => any;
+    updateCallback: ((this: World) => any) | undefined;
 
     constructor(config: World.Config = {}) {        
         this.scriptManager = new ScriptManager();

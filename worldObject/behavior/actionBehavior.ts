@@ -16,8 +16,8 @@ class ActionBehavior implements Behavior {
     private stateMachine: StateMachine;
     private actions: Dict<ActionBehavior.Action>;
 
-    private currentActionName: string;
-    private get currentAction() { return this.actions[this.currentActionName]; }
+    private currentActionName: string | undefined;
+    private get currentAction() { return this.currentActionName ? this.actions[this.currentActionName] : undefined; }
 
     constructor(startAction: string, startWait: OrFactory<number>) {
         this.controller = new Controller();

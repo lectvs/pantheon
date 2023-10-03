@@ -8,7 +8,7 @@ class AssetCache {
     static fonts: Dict<SpriteText.Font> = {};
     static lciDocuments: Dict<Lci.Document> = {};
 
-    static getPixiTexture(key: string) {
+    static getPixiTexture(key: string): PIXI.Texture | undefined {
         if (!this.pixiTextures[key]) {
             console.error(`Texture '${key}' does not exist.`);
         }
@@ -34,35 +34,36 @@ class AssetCache {
         return this.sounds[key];
     }
 
-    static getTileset(key: string) {
+    static getTileset(key: string): Tilemap.Tileset | undefined {
         if (!this.tilesets[key]) {
             console.error(`Tileset '${key}' does not exist.`);
         }
         return this.tilesets[key];
     }
 
-    static getTilemap(key: string) {
+    static getTilemap(key: string): Tilemap.Tilemap | undefined {
         if (!this.tilemaps[key]) {
             console.error(`Tilemap '${key}' does not exist.`);
         }
         return this.tilemaps[key];
     }
 
-    static getFont(key: string) {
+    static getFont(key: string): SpriteText.Font | undefined {
         if (!this.fonts[key]) {
             console.error(`Font '${key}' does not exist.`);
+
         }
         return this.fonts[key];
     }
 
-    static getLciDocument(key: string) {
+    static getLciDocument(key: string): Lci.Document | undefined {
         if (!this.lciDocuments[key]) {
             console.error(`LCI document '${key}' does not exist.`);
         }
         return this.lciDocuments[key];
     }
 
-    static isNoneTexture(key: string) {
+    static isNoneTexture(key: string): boolean {
         return !key || key === 'none' || key.startsWith('none/');
     }
 }

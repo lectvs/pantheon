@@ -6,25 +6,24 @@ class LciLoader implements Loader {
     private texture: Preload.Texture;
     private pixiLoader: PIXI.Loader;
 
-    private lci: Lci.Document;
+    private lci: Lci.Document | undefined;
 
     constructor(key: string, texture: Preload.Texture) {
         this.key = key;
         this.texture = texture;
         this._completionPercent = 0;
+        this.pixiLoader = new PIXI.Loader();
     }
 
     load(callback?: () => void) {
         let url = Preload.getAssetUrl(this.key, this.texture.url, 'lci');
-        this.pixiLoader = new PIXI.Loader();
         this.pixiLoader.add(this.key, url);
         this.pixiLoader.load(() => this.onLoadLci(callback));
     }
 
     private onLoadLci(callback?: () => void) {
-        let lci = Lci.parseDocument(this.pixiLoader.resources[this.key].data);
-        if (!lci) return;
-        this.lci = lci;
+        this.lci = Lci.parseDocument(this.pixiLoader.resources[this.key].data);
+        if (!this.lci) return;
         AssetCache.lciDocuments[this.key] = this.lci;
         new LoaderSystem(this.lci.layers
             .filter(layer => !layer.isDataLayer)
@@ -40,6 +39,7 @@ class LciLoader implements Loader {
     }
 
     private onLoadTextures() {
+        if (!this.lci) return;
         let fullTexture = new AnchoredTexture(new BasicTexture(this.lci.width, this.lci.height, 'LciLoader.onLoadTextures'));
         if (this.texture.anchor) {
             fullTexture.anchorX = this.texture.anchor.x;

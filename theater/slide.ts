@@ -8,7 +8,7 @@ namespace Slide {
 }
 
 class Slide extends Sprite {
-    targetAlpha: number;
+    targetAlpha: number | undefined;
 
     private timer: Timer;
     fullyLoaded: boolean;

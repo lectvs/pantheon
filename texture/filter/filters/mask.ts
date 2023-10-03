@@ -34,6 +34,8 @@ namespace TextureFilters {
             this.offsetX = config.offsetX ?? 0;
             this.offsetY = config.offsetY ?? 0;
             this.invert = config.invert ?? false;
+            this.maskOffsetX = 0;
+            this.maskOffsetY = 0;
             this.setMask(config.mask);
         }
 

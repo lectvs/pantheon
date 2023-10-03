@@ -56,7 +56,7 @@ class SpriteText extends WorldObject {
     protected font: SpriteText.Font;
     private _fontKey: string;
     get fontKey() { return this._fontKey; }
-    private chars: SpriteText.Character[][];
+    private chars!: SpriteText.Character[][];
 
     private _style: Required<SpriteText.Style>;
     get style() { return this._style; }
@@ -113,28 +113,14 @@ class SpriteText extends WorldObject {
     mask?: TextureFilters.Mask.WorldObjectMaskConfig;
 
     private staticTextures?: Dict<SpriteText.StaticTextureData>;
-    private currentText: string;
+    private currentText!: string;
     private dirty: boolean;
 
     constructor(config: SpriteText.Config) {
         super(config);
 
-        if (config.font || SpriteText.DEFAULT_FONT) {
-            this._fontKey = config.font ?? SpriteText.DEFAULT_FONT;
-            this.font = AssetCache.getFont(this._fontKey);
-        } else {
-            console.error("SpriteText must have a font provided, or a default font set");
-        }
-
-        if (!this.font) {
-            this.font = {
-                charTextures: {},
-                charWidth: 0,
-                charHeight: 0,
-                spaceWidth: 0,
-                newlineHeight: 0
-            };
-        }
+        this._fontKey = config.font ?? SpriteText.DEFAULT_FONT;
+        this.font = SpriteText.getFontByName(this._fontKey);
 
         this._style = O.defaults(O.deepClone(config.style ?? {}), requireType<Required<SpriteText.Style>>({
             color: 0xFFFFFF,
@@ -144,12 +130,11 @@ class SpriteText extends WorldObject {
             filters: [],
         })) as Required<SpriteText.Style>;
 
-        this.visibleCharCount = Infinity;
-
-        this.maxWidth = config.maxWidth ?? Infinity;
+        this._visibleCharCount = Infinity;
+        this._maxWidth = config.maxWidth ?? Infinity;
+        this._justify = config.justify ?? 'left';
 
         this.anchor = config.anchor ?? Anchor.TOP_LEFT;
-        this.justify = config.justify ?? 'left';
 
         this.alpha = config.alpha ?? 1;
         this.flipX = config.flipX ?? false;
@@ -361,6 +346,16 @@ namespace SpriteText {
         part: number;
         tagData: TagData[];
 
+        constructor(props: { char: string, x: number, y: number, width: number, height: number, part: number, tagData: TagData[] }) {
+            this.char = props.char;
+            this.x = props.x;
+            this.y = props.y;
+            this.width = props.width;
+            this.height = props.height;
+            this.part = props.part;
+            this.tagData = props.tagData;
+        }
+
         get left() {
             return this.x;
         }
@@ -385,6 +380,17 @@ namespace SpriteText {
             }
             SpriteText.TAGS[key] = tags[key];
         }
+    }
+
+    export function getFontByName(fontName: string | undefined) {
+        let font = AssetCache.getFont(fontName ?? SpriteText.DEFAULT_FONT);
+        return font ?? {
+            charTextures: {},
+            charWidth: 0,
+            charHeight: 0,
+            spaceWidth: 0,
+            newlineHeight: 0,
+        };
     }
 
     export function getWidthOfCharList(list: SpriteText.Character[], charCount?: number) {

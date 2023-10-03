@@ -1,7 +1,7 @@
 class StageManager {
     currentWorld: World | undefined;
     currentWorldAsWorldObject: Theater.WorldAsWorldObject | undefined;
-    currentWorldFactory: () => World;
+    currentWorldFactory: (() => World) | undefined;
 
     private transition?: Transition;
     get transitioning() { return !!this.transition; }
@@ -10,8 +10,6 @@ class StageManager {
 
     constructor(theater: Theater) {
         this.theater = theater;
-        this.currentWorld = undefined;
-        this.currentWorldAsWorldObject = undefined;
     }
 
     /**
@@ -70,6 +68,10 @@ class StageManager {
      * Reloads the current stage immediately. If you are calling from inside your game, you probably want to call Theater.reloadCurrentStage
      */
     internalReloadCurrentStage(transition: Transition) {
+        if (!this.currentWorldFactory) {
+            console.error("Tried to reload current stage, but no stage loaded in StageManager");
+            return;
+        }
         this.internalLoadStage(this.currentWorldFactory, transition, Utils.NOOP);
     }
 }

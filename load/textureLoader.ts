@@ -10,11 +10,11 @@ class TextureLoader implements Loader {
         this.key = key;
         this.texture = texture;
         this._completionPercent = 0;
+        this.pixiLoader = new PIXI.Loader();
     }
 
     load(callback?: () => void) {
         let url = Preload.getAssetUrl(this.key, this.texture.url, 'png');
-        this.pixiLoader = new PIXI.Loader();
         this.pixiLoader.add(this.key, url);
         this.pixiLoader.load(() => {
             this.onLoad();

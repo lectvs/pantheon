@@ -20,8 +20,6 @@ class BasicTexture implements Texture {
 
     renderTextureSprite: Texture.PIXIRenderTextureSprite;
 
-    private cachedPixelsARGB: number[][];
-
     constructor(width: number, height: number, source: string, immutable: boolean = false) {
         // TODO: find the true texture bounds across devices
         // if (width > 2048 || height > 2048) {
@@ -115,6 +113,7 @@ class BasicTexture implements Texture {
         return this.getPixelAbsoluteARGB(x, y, extendMode);
     }
 
+    private cachedPixelsARGB: number[][] | undefined;
     getPixelsARGB() {
         if (this.immutable && this.cachedPixelsARGB) return this.cachedPixelsARGB;
 

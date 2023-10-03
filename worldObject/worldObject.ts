@@ -156,8 +156,8 @@ class WorldObject {
         this.useGlobalTime = config.useGlobalTime ?? false;
         this.data = config.data ? O.deepClone(config.data) : {};
 
-        this.setVisible(config.visible ?? true);
-        this.setActive(config.active ?? true);
+        this._visible = config.visible ?? true;
+        this._active = config.active ?? true;
 
         this.ignoreCamera = config.ignoreCamera ?? false;
         this.copyFromParent = config.copyFromParent ? A.clone(config.copyFromParent) : [];

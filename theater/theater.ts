@@ -35,7 +35,7 @@ class Theater extends World {
             ]
         });
 
-        this.loadDialogBox(config.dialogBox);
+        this.dialogBox = this.addDialogBox(config.dialogBox);
 
         this.cutsceneManager = new CutsceneManager(this);
         this.stageManager = new StageManager(this);
@@ -118,10 +118,11 @@ class Theater extends World {
         this.cutsceneManager.onStageLoad();
     }
     
-    private loadDialogBox(factory: Factory<DialogBox>) {
-        this.dialogBox = this.addWorldObject(factory());
-        this.dialogBox.setVisible(false);
-        World.Actions.setLayer(this.dialogBox, Theater.LAYER_DIALOG);
+    private addDialogBox(factory: Factory<DialogBox>) {
+        let dialogBox = this.addWorldObject(factory());
+        dialogBox.setVisible(false);
+        World.Actions.setLayer(dialogBox, Theater.LAYER_DIALOG);
+        return dialogBox;
     }
 
     static readonly LAYER_WORLD = 'world';
