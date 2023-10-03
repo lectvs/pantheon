@@ -1,6 +1,5 @@
 TODO
 - simple mask shapes (like rectangle)
-- move Game.allowPauseWithPauseKey from a global property to an evaluated function (based on world flags?)
 - remove Draw.brush?
     - combined Draw.circleSolid + Draw.circleOutline etc?
 - outline match texture's alpha by default?

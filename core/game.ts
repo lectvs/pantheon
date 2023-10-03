@@ -14,7 +14,7 @@ class Game {
     private overlay: DebugOverlay;
     private isShowingOverlay: boolean;
 
-    allowPauseWithPauseKey: boolean;
+    get canPause(): boolean { return this.theater?.canPause; }
 
     private entryPointMenu: Factory<Menu>;
     private mainMenu: Factory<Menu>;
@@ -24,7 +24,7 @@ class Game {
     soundManager: SoundManager;
     musicManager: MusicManager;
     get volume(): number { return Options.volume * (Debug.SKIP_RATE >= 100 ? 0.2 : 1); };
-    get currentMusicKey() { return this.musicManager ? this.musicManager.currentMusicKey : undefined; }
+    get currentMusicKey(): string { return this.musicManager ? this.musicManager.currentMusicKey : undefined; }
 
     get delta(): number { return Main.delta; }
 
@@ -41,7 +41,6 @@ class Game {
 
         this.overlay = new DebugOverlay();
         this.isShowingOverlay = true;
-        this.allowPauseWithPauseKey = true;
     }
 
     start() {
@@ -72,7 +71,7 @@ class Game {
     }
 
     private updatePause() {
-        if (!this.menuSystem.inMenu && this.allowPauseWithPauseKey && this.theater.canPause && Input.justDown(Input.GAME_PAUSE)) {
+        if (!this.menuSystem.inMenu && this.canPause && Input.justDown(Input.GAME_PAUSE)) {
             Input.consume(Input.GAME_PAUSE);
             this.pauseGame();
         }
