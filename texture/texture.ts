@@ -54,6 +54,7 @@ interface Texture {
 
     clear(): void;
     clone(source: string): Texture;
+    crop(x: number, y: number, width: number, height: number, source: string): Texture;
     free(): void;
 
     getLocalBounds(properties: Texture.Properties): Rect;

@@ -41,6 +41,11 @@ class AnchoredTexture implements Texture {
         return new AnchoredTexture(this.baseTexture.clone(source), this.anchorX, this.anchorY);
     }
 
+    crop(x: number, y: number, width: number, height: number, source: string) {
+        let croppedBaseTexture = this.baseTexture.crop(x, y, width, height, source);
+        return new AnchoredTexture(croppedBaseTexture, this.anchorX, this.anchorY);
+    }
+
     free() {
         this.baseTexture.free();
     }

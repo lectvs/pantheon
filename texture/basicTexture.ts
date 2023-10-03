@@ -36,6 +36,15 @@ class BasicTexture implements Texture {
         return this.transform({}, source);
     }
 
+    crop(x: number, y: number, width: number, height: number, source: string) {
+        let texture = new BasicTexture(width, height, source, false);
+        this.renderTo(texture, {
+            x: -x,
+            y: -y,
+        });
+        return texture;
+    }
+
     free() {
         this.renderTextureSprite.renderTexture.destroy(true);
         TextureCreationData.logFreeTexture(this);
@@ -158,14 +167,9 @@ class BasicTexture implements Texture {
                 let ty = y * frameh;
                 let tw = x === h-1 ? lastframew : framew;
                 let th = y === v-1 ? lastframeh : frameh;
-                let texture = new BasicTexture(tw, th, source, false);
-                this.renderTo(texture, {
-                    x: -tx,
-                    y: -ty,
-                });
                 result.push({
                     x: tx, y: ty,
-                    texture: texture
+                    texture: this.crop(tx, ty, tw, th, source),
                 });
             }
         }

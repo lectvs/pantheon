@@ -5,7 +5,6 @@ TODO
     - combined Draw.circleSolid + Draw.circleOutline etc?
 - outline match texture's alpha by default?
 - lci bounds=allcircle
-- texture crop() method
 - "humanized" option in sound asset definition
 - collision mode that has no separation or momentum transfer (e.g. checking if a bullet hits the player)
 - rewrite musicmanager, handle playing a music track if the track is already playing

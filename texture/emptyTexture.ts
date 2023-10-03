@@ -14,6 +14,10 @@ class EmptyTexture implements Texture {
         return new EmptyTexture();
     }
 
+    crop(x: number, y: number, width: number, height: number, source: string) {
+        return new EmptyTexture();
+    }
+
     free() { }
 
     getLocalBounds(properties: Texture.Properties) {
