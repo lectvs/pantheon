@@ -94,7 +94,7 @@ class Sprite extends PhysicsWorldObject {
         this.onScreenPadding = 1;
     }
 
-    update() {
+    override update() {
         super.update();
         this.animationManager.update(this.delta);
         this.effects.updateEffects(this.delta);
@@ -102,7 +102,7 @@ class Sprite extends PhysicsWorldObject {
         this.angle += this.vangle * this.delta;
     }
 
-    render(texture: Texture, x: number, y: number) {
+    override render(texture: Texture, x: number, y: number) {
         this.texture.renderTo(texture, {
             x: x + this.offsetX,
             y: y + this.offsetY,
@@ -141,7 +141,7 @@ class Sprite extends PhysicsWorldObject {
         return bounds;
     }
 
-    getVisibleScreenBounds() {
+    override getVisibleScreenBounds() {
         if (this.texture === Texture.EFFECT_ONLY) {
             return undefined;
         }

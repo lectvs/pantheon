@@ -61,18 +61,18 @@ class PhysicsWorldObject extends WorldObject {
         this.debugDrawBounds = false;
     }
 
-    preUpdate() {
+    override preUpdate() {
         super.preUpdate();
         this.physicslastx = this.x;
         this.physicslasty = this.y;
     }
 
-    update() {
+    override update() {
         this.applyGravity();
         super.update();
     }
 
-    render(texture: Texture, x: number, y: number) {
+    override render(texture: Texture, x: number, y: number) {
         if (Debug.SHOW_ALL_PHYSICS_BOUNDS || this.debugDrawBounds) {
             let zoffset = 0; // offset to cancel out the z-factor when drawing bounds
             if (this.zBehavior === 'threequarters') {

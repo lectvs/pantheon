@@ -36,7 +36,7 @@ class PuffSystem extends WorldObject {
         super(config);
     }
 
-    update() {
+    override update() {
         super.update();
 
         for (let i = this.puffs.length-1; i >= 0; i--) {
@@ -51,7 +51,7 @@ class PuffSystem extends WorldObject {
         }
     }
 
-    render(texture: Texture, x: number, y: number) {
+    override render(texture: Texture, x: number, y: number) {
         for (let puff of this.puffs) {
             let progress = puff.t / puff.maxLife;
 

@@ -31,7 +31,7 @@ namespace Transitions {
             ));
         }
 
-        render(texture: Texture, x: number, y: number) {
+        override render(texture: Texture, x: number, y: number) {
             super.render(texture, x, y);
             this.oldSnapshot?.renderTo(texture);
             this.newSnapshot?.renderTo(texture, {
@@ -69,7 +69,7 @@ namespace Transitions {
             ));
         }
 
-        render(texture: Texture, x: number, y: number) {
+        override render(texture: Texture, x: number, y: number) {
             super.render(texture, x, y);
 
             Draw.brush.color = 0x000000;

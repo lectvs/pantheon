@@ -51,7 +51,7 @@ class Theater extends World {
         }
     }
 
-    update() {
+    override update() {
         this.cutsceneManager.update();
 
         super.update();
@@ -144,12 +144,12 @@ namespace Theater {
             this.mask = undefined;
         }
 
-        update() {
+        override update() {
             super.update();
             this.containedWorld.update();
         }
 
-        render(texture: Texture, x: number, y: number) {
+        override render(texture: Texture, x: number, y: number) {
             let currentMask = this.containedWorld.mask;
             if (this.mask !== undefined) {
                 this.containedWorld.mask = this.mask;

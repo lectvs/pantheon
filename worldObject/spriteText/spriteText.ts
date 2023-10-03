@@ -168,14 +168,14 @@ class SpriteText extends WorldObject {
         this.dirty = true;
     }
 
-    onRemove(): void {
+    override onRemove(): void {
         super.onRemove();
         SpriteTextConverter.returnStaticTextures(this.staticTextures);
         this.staticTextures = undefined;
         this.dirty = true;
     }
 
-    update() {
+    override update() {
         super.update();
         this.effects.updateEffects(this.delta);
 
@@ -188,7 +188,7 @@ class SpriteText extends WorldObject {
         }
     }
 
-    render(texture: Texture, x: number, y: number) {
+    override render(texture: Texture, x: number, y: number) {
         if (this.dirty) {
             this.renderSpriteText();
             this.dirty = false;
@@ -277,7 +277,7 @@ class SpriteText extends WorldObject {
         };
     }
 
-    getVisibleScreenBounds() {
+    override getVisibleScreenBounds() {
         let bounds = this.getTextWorldBounds();
         bounds.x += this.getRenderScreenX() - this.x;
         bounds.y += this.getRenderScreenY() - this.y;

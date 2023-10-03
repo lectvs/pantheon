@@ -75,7 +75,7 @@ class DialogBox extends Sprite {
         }, Infinity);
     }
 
-    update() {
+    override update() {
         super.update();
 
         this.spriteText.localx = this.textArea.x;

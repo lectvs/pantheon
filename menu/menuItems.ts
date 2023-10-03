@@ -41,7 +41,7 @@ class MenuTextButton extends SpriteText {
         button.baseTint = this.tint;
     }
 
-    update() {
+    override update() {
         super.update();
         this.setBounds();
     }
@@ -110,7 +110,7 @@ class MenuNumericSelector extends SpriteText {
         rightButton.style = this.style;
     }
 
-    update() {
+    override update() {
         super.update();
         
         let fullBars = this.getFullBarsForValue(this.getValue());

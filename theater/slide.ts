@@ -31,7 +31,7 @@ class Slide extends Sprite {
         }
     }
 
-    update() {
+    override update() {
         super.update();
         this.updateLoading();
     }

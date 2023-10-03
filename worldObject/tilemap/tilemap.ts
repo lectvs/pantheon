@@ -82,7 +82,7 @@ class Tilemap extends WorldObject {
         this.debugDrawBounds = false;
     }
 
-    update() {
+    override update() {
         if (this.dirty) {
             this.createTilemap();
             this.dirty = false;

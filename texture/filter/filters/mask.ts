@@ -47,7 +47,7 @@ namespace TextureFilters {
         }
 
         // Used by Texture in render
-        setTexturePosition(posx: number, posy: number) {
+        override setTexturePosition(posx: number, posy: number) {
             super.setTexturePosition(posx, posy);
             this.setMaskPosition(posx, posy);
         }

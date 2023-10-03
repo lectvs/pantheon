@@ -635,7 +635,7 @@ namespace WorldObject {
             this.frames = 0;
         }
 
-        update(delta: number): void {
+        override update(delta: number): void {
             super.update(delta);
             this.frames++;
         }

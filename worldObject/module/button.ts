@@ -50,7 +50,7 @@ class Button extends Module<WorldObject> {
     private lastClickedDown: boolean = false;
     private clickedDown: boolean = false;
 
-    get worldObject() { return <Button.CompatibleWorldObject>this._worldObject; }
+    override get worldObject() { return <Button.CompatibleWorldObject>this._worldObject; }
 
     constructor(config: Button.Config) {
         super(WorldObject);
@@ -70,7 +70,7 @@ class Button extends Module<WorldObject> {
         this.enabled = config.enabled ?? true;
     }
 
-    init(worldObject: WorldObject): void {
+    override init(worldObject: WorldObject): void {
         super.init(worldObject);
 
         if (this.baseTint === undefined) {
@@ -78,7 +78,7 @@ class Button extends Module<WorldObject> {
         }
     }
 
-    update() {
+    override update() {
         super.update();
 
         let hovered = this.isHovered();
