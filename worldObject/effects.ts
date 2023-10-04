@@ -175,26 +175,36 @@ namespace Effects {
             set color(value: number) { this.setUniform('color', Color.colorToVec3(value)); }
             get alpha() { return this.getUniform('alpha'); }
             set alpha(value: number) { this.setUniform('alpha', value); }
+            get matchAlpha() { return this.getUniform('matchAlpha') > 0; }
+            set matchAlpha(value: boolean) { this.setUniform('matchAlpha', value ? 1 : 0); }
 
-            constructor(color: number, alpha: number) {
+            constructor(color: number, alpha: number, matchAlpha: boolean = true) {
                 super({
                     uniforms: {
                         "vec3 color": Color.colorToVec3(0x000000),
-                        "float alpha": 1.0
+                        "float alpha": 1.0,
+                        "int matchAlpha": 1,
                     },
                     code: `
-                        if (inp.a == 0.0 && (getColor(x-1.0, y).a > 0.0 || getColor(x+1.0, y).a > 0.0 || getColor(x, y-1.0).a > 0.0 || getColor(x, y+1.0).a > 0.0)) {
-                            outp = vec4(color, alpha);
+                        float maxAlpha = max(max(getColor(x-1.0, y).a, getColor(x, y-1.0).a), max(getColor(x+1.0, y).a, getColor(x, y+1.0).a));
+                        if (inp.a == 0.0 && maxAlpha > 0.0) {
+                            if (matchAlpha == 0) {
+                                outp = vec4(color, alpha);
+                            } else {
+                                outp = vec4(color, alpha * maxAlpha);
+                            }
                         }
                     `
                 });
                 this.color = color;
                 this.alpha = alpha;
+                this.matchAlpha = matchAlpha;
             }
 
-            enable(color: number, alpha: number) {
+            enable(color: number, alpha: number, matchAlpha: boolean = true) {
                 this.color = color;
                 this.alpha = alpha;
+                this.matchAlpha = matchAlpha;
                 this.enabled = true;
             }
         }
