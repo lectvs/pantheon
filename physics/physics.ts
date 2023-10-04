@@ -6,7 +6,7 @@ namespace Physics {
         other: CollisionObject;
     }
 
-    export type MomentumTransferMode = 'zero_velocity_global' | 'zero_velocity_local' | 'elastic';
+    export type CollisionMode = 'zero_velocity_global' | 'zero_velocity_local' | 'elastic' | 'no_physics';
 
     type CollisionData = {
         move: PhysicsWorldObject;
@@ -16,11 +16,12 @@ namespace Physics {
     type RaycastCollisionData = CollisionData & {
         collision: Bounds.RaycastCollision | undefined;
         callback?: CollisionCallback;
-        momentumTransfer?: MomentumTransferMode;
+        collisionMode?: CollisionMode;
     }
 
     type DisplacementCollisionData = CollisionData & {
         collision: Bounds.DisplacementCollision | undefined;
+        collisionMode?: CollisionMode;
     }
 
     type CollisionObject = {
@@ -136,7 +137,8 @@ namespace Physics {
         let displacementCollision: DisplacementCollisionData = {
             move: raycastCollision.move,
             from: raycastCollision.from,
-            collision: undefined
+            collision: undefined,
+            collisionMode: collision.collisionMode,
         };
 
         // Use raycast collision displacement if applicable.
@@ -153,7 +155,9 @@ namespace Physics {
 
         if (!displacementCollision.collision) return false;
 
-        applyDisplacementForCollision(displacementCollision, forceImmovable);
+        if (displacementCollision.collisionMode !== 'no_physics') {
+            applyDisplacementForCollision(displacementCollision, forceImmovable);
+        }
 
         return true;
     }
@@ -178,7 +182,7 @@ namespace Physics {
                         move, from,
                         collision: raycastCollision,
                         callback: collision.callback,
-                        momentumTransfer: collision.momentumTransfer,
+                        collisionMode: collision.collisionMode,
                     });
                 }
             }
@@ -242,7 +246,7 @@ namespace Physics {
                 move: collisionList[0].move,
                 from: collisionList[0].from,
                 callback: collisionList[0].callback,
-                momentumTransfer: collisionList[0].momentumTransfer,
+                collisionMode: collisionList[0].collisionMode,
                 collision: {
                     bounds1: collisionList[0].move.bounds,
                     bounds2: collisionList[0].from.bounds,
@@ -278,7 +282,7 @@ namespace Physics {
                 other: moveCollisionInfo.self
             };
 
-            applyMomentumTransferForCollision(collision, collision.momentumTransfer, delta);
+            applyMomentumTransferForCollision(collision, collision.collisionMode, delta);
 
             moveCollisionInfo.self.post_vx = collision.move.v.x;
             moveCollisionInfo.self.post_vy = collision.move.v.y;
@@ -291,10 +295,10 @@ namespace Physics {
         }
     }
 
-    function applyMomentumTransferForCollision(collision: DisplacementCollisionData, momentumTransferMode: MomentumTransferMode | undefined, delta: number,) {
+    function applyMomentumTransferForCollision(collision: DisplacementCollisionData, collisionMode: CollisionMode | undefined, delta: number,) {
         if (!collision.collision) return;
         
-        if (momentumTransferMode === 'elastic') {
+        if (collisionMode === 'elastic') {
             if (collision.move.isImmovable() && collision.from.isImmovable()) return;
 
             let d = new Vector2(collision.collision.displacementX, collision.collision.displacementY).normalized();
@@ -323,7 +327,7 @@ namespace Physics {
             collision.from.v.x += dvff_proj * collision.from.bounce * d.x;
             collision.from.v.y += dvff_proj * collision.from.bounce * d.y;
 
-        } else if (momentumTransferMode === 'zero_velocity_local') {
+        } else if (collisionMode === 'zero_velocity_local') {
             if (!collision.move.isImmovable()) {
                 let fromvx = delta === 0 ? 0 : (collision.from.x - collision.from.physicslastx) / delta;
                 let fromvy = delta === 0 ? 0 : (collision.from.y - collision.from.physicslasty) / delta;
@@ -343,6 +347,8 @@ namespace Physics {
                 collision.move.v.x += movevx;
                 collision.move.v.y += movevy;
             }
+        } else if (collisionMode === 'no_physics') {
+            // Pass, no momentum transfer
         } else { // zero_velocity_global
             if (!collision.move.isImmovable()) {
                 zeroVelocityAgainstDisplacement(collision.move, collision.collision.displacementX, collision.collision.displacementY);

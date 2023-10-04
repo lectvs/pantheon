@@ -1,5 +1,4 @@
 TODO
-- collision mode that has no separation or momentum transfer (e.g. checking if a bullet hits the player)
 - rewrite musicmanager, handle playing a music track if the track is already playing
 - animation revamp (animation/script parity?)
     - squash/stretch/transform/etc actions

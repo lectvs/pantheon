@@ -37,7 +37,7 @@ namespace World {
         move: string;
         from: string;
         callback?: Physics.CollisionCallback;
-        momentumTransfer?: Physics.MomentumTransferMode;
+        collisionMode?: Physics.CollisionMode;
     }
 
     export type LayerConfig = {
