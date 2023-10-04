@@ -5,7 +5,7 @@ namespace World {
     export type Config = {
         layers?: World.LayerConfig[];
         effects?: Effects.Config;
-        mask?: TextureFilters.Mask.WorldMaskConfig;
+        mask?: Mask.WorldMaskConfig;
 
         camera?: Camera.Config;
 
@@ -45,7 +45,7 @@ namespace World {
         sortKey?: (worldObject: WorldObject) => number;
         reverseSort?: boolean;
         effects?: Effects.Config;
-        mask?: TextureFilters.Mask.WorldMaskConfig;
+        mask?: Mask.WorldMaskConfig;
     }
 
     export type PhysicsGroupConfig = {
@@ -81,7 +81,7 @@ class World {
 
     layers: World.Layer[];
     effects: Effects;
-    mask?: TextureFilters.Mask.WorldMaskConfig;
+    mask?: Mask.WorldMaskConfig;
 
     backgroundColor: number;
     backgroundAlpha: number;
@@ -223,7 +223,7 @@ class World {
                 this.renderLayerToTexture(layer, this.layerTexture);
                 this.layerTexture.renderTo(this.worldTexture, {
                     filters: layer.effects.getFilterList(),
-                    mask: TextureFilters.Mask.getTextureMaskForWorld(layer.mask),
+                    mask: Mask.getTextureMaskForWorld(layer.mask),
                 });
             } else {
                 this.renderLayerToTexture(layer, this.worldTexture);
@@ -236,7 +236,7 @@ class World {
             scaleX: this.scaleX,
             scaleY: this.scaleY,
             filters: this.effects.getFilterList(),
-            mask: TextureFilters.Mask.getTextureMaskForWorld(this.mask),
+            mask: Mask.getTextureMaskForWorld(this.mask),
         });
     }
 
@@ -343,7 +343,7 @@ class World {
         sound.volume = config?.volume ?? 1;
         sound.speed = config?.speed ?? 1;
 
-        let humanized = config?.humanized ?? (sound.duration < 1);
+        let humanized = (config?.humanized ?? true) && sound.duration < 1;
         if (humanized && this.globalSoundHumanizeFactor > 0) {
             sound.humanize(this.globalSoundHumanizeFactor);
         }
@@ -490,7 +490,7 @@ namespace World {
         reverseSort: boolean;
 
         effects: Effects;
-        mask?: TextureFilters.Mask.WorldMaskConfig;
+        mask?: Mask.WorldMaskConfig;
 
         get shouldRenderToOwnLayer() {
             return this.effects.hasEffects() || !!this.mask;

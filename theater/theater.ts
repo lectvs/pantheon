@@ -137,7 +137,7 @@ class Theater extends World {
 namespace Theater {
     export class WorldAsWorldObject extends WorldObject {
         containedWorld: World;
-        mask: TextureFilters.Mask.WorldMaskConfig | undefined;
+        mask: Mask.WorldMaskConfig | undefined;
 
         constructor(containedWorld: World) {
             super();

@@ -17,7 +17,7 @@ namespace SpriteText {
         maxWidth?: number;
         style?: Style;
         effects?: Effects.Config;
-        mask?: TextureFilters.Mask.WorldObjectMaskConfig;
+        mask?: Mask.WorldObjectMaskConfig;
     }
 
     export type Font = {
@@ -110,7 +110,7 @@ class SpriteText extends WorldObject {
     }
 
     effects: Effects;
-    mask?: TextureFilters.Mask.WorldObjectMaskConfig;
+    mask?: Mask.WorldObjectMaskConfig;
 
     private staticTextures?: Dict<SpriteText.StaticTextureData>;
     private currentText!: string;
@@ -194,7 +194,7 @@ class SpriteText extends WorldObject {
                 scaleY: (this.flipY ? -1 : 1) * this.scaleY,
                 angle: this.angle + this.angleOffset,
                 filters: [...style.filters, ...this.effects.getFilterList()],
-                mask: TextureFilters.Mask.getTextureMaskForWorldObject(this.mask, this, x, y),
+                mask: Mask.getTextureMaskForWorldObject(this.mask, this, x, y),
             });
         }
 

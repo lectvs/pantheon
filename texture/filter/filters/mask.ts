@@ -67,83 +67,83 @@ namespace TextureFilters {
             }
         }
     }
+}
 
-    export namespace Mask {
-        export type Config = {
-            mask: Texture;
-            type: Mask.Type;
-            offsetX?: number;
-            offsetY?: number;
-            invert?: boolean;
+namespace Mask {
+    export type Config = {
+        mask: Texture;
+        type: Mask.Type;
+        offsetX?: number;
+        offsetY?: number;
+        invert?: boolean;
+    }
+
+    export type Type = 'global' | 'local';
+
+    var _maskFilter: TextureFilters.Mask;
+    export function SHARED(mask: Texture, type: Mask.Type = 'global', offsetX: number = 0, offsetY: number = 0, invert: boolean = false) {
+        if (!_maskFilter) {
+            _maskFilter = new TextureFilters.Mask({ mask, type, offsetX, offsetY, invert });
+        } else {
+            _maskFilter.setMask(mask);
+            _maskFilter.type = type;
+            _maskFilter.offsetX = offsetX;
+            _maskFilter.offsetY = offsetY;
+            _maskFilter.invert = invert;
+        }
+        return _maskFilter;
+    }
+
+    export type WorldObjectMaskConfig = {
+        texture: Texture;
+        type: 'local' | 'screen' | 'world';
+        offsetx: number;
+        offsety: number;
+        invert?: boolean;
+    }
+
+    export type WorldMaskConfig = {
+        texture?: Texture;
+        offsetx: number;
+        offsety: number;
+        invert?: boolean;
+    }
+
+    export type WorldObjectMaskType = 'local' | 'screen' | 'world';
+
+    export function getTextureMaskForWorldObject(mask: WorldObjectMaskConfig | undefined, worldObject: WorldObject,
+            renderX: number, renderY: number): Texture.MaskProperties | undefined {
+        if (!mask || !mask.texture) return undefined;
+
+        let x = 0;
+        let y = 0;
+        if (mask.type === 'screen') {
+            x = mask.offsetx;
+            y = mask.offsety;
+        } else if (mask.type === 'local') {
+            x = renderX + mask.offsetx;
+            y = renderY + mask.offsety;
+        } else if (mask.type === 'world') {
+            let worldx = worldObject.world ? -Math.round(worldObject.world.camera.worldOffsetX) : 0;
+            let worldy = worldObject.world ? -Math.round(worldObject.world.camera.worldOffsetY) : 0;
+            x = worldx + mask.offsetx;
+            y = worldy + mask.offsety;
         }
 
-        export type Type = 'global' | 'local';
+        return {
+            texture: mask.texture,
+            x: x, y: y,
+            invert: mask.invert ?? false,
+        };
+    }
 
-        var _maskFilter: Mask;
-        export function SHARED(mask: Texture, type: Mask.Type = 'global', offsetX: number = 0, offsetY: number = 0, invert: boolean = false) {
-            if (!_maskFilter) {
-                _maskFilter = new Mask({ mask, type, offsetX, offsetY, invert });
-            } else {
-                _maskFilter.setMask(mask);
-                _maskFilter.type = type;
-                _maskFilter.offsetX = offsetX;
-                _maskFilter.offsetY = offsetY;
-                _maskFilter.invert = invert;
-            }
-            return _maskFilter;
-        }
+    export function getTextureMaskForWorld(mask: WorldMaskConfig | undefined): Texture.MaskProperties | undefined {
+        if (!mask || !mask.texture) return undefined;
 
-        export type WorldObjectMaskConfig = {
-            texture: Texture;
-            type: 'local' | 'screen' | 'world';
-            offsetx: number;
-            offsety: number;
-            invert?: boolean;
-        }
-
-        export type WorldMaskConfig = {
-            texture?: Texture;
-            offsetx: number;
-            offsety: number;
-            invert?: boolean;
-        }
-
-        export type WorldObjectMaskType = 'local' | 'screen' | 'world';
-
-        export function getTextureMaskForWorldObject(mask: WorldObjectMaskConfig | undefined, worldObject: WorldObject,
-                renderX: number, renderY: number): Texture.MaskProperties | undefined {
-            if (!mask || !mask.texture) return undefined;
-
-            let x = 0;
-            let y = 0;
-            if (mask.type === 'screen') {
-                x = mask.offsetx;
-                y = mask.offsety;
-            } else if (mask.type === 'local') {
-                x = renderX + mask.offsetx;
-                y = renderY + mask.offsety;
-            } else if (mask.type === 'world') {
-                let worldx = worldObject.world ? -Math.round(worldObject.world.camera.worldOffsetX) : 0;
-                let worldy = worldObject.world ? -Math.round(worldObject.world.camera.worldOffsetY) : 0;
-                x = worldx + mask.offsetx;
-                y = worldy + mask.offsety;
-            }
-
-            return {
-                texture: mask.texture,
-                x: x, y: y,
-                invert: mask.invert ?? false,
-            };
-        }
-
-        export function getTextureMaskForWorld(mask: WorldMaskConfig | undefined): Texture.MaskProperties | undefined {
-            if (!mask || !mask.texture) return undefined;
-
-            return {
-                texture: mask.texture,
-                x: mask.offsetx, y: mask.offsety,
-                invert: mask.invert ?? false,
-            };
-        }
+        return {
+            texture: mask.texture,
+            x: mask.offsetx, y: mask.offsety,
+            invert: mask.invert ?? false,
+        };
     }
 }

@@ -233,7 +233,7 @@ class BasicTexture implements Texture {
         }
 
         if (properties.mask && properties.mask.texture) {
-            let maskFilter = TextureFilters.Mask.SHARED(properties.mask.texture, 'global', properties.mask.x, properties.mask.y, properties.mask.invert);
+            let maskFilter = Mask.SHARED(properties.mask.texture, 'global', properties.mask.x, properties.mask.y, properties.mask.invert);
             Texture.setFilterProperties(maskFilter, properties.x, properties.y, this.width, this.height);
             allFilters.push(maskFilter);
         }
