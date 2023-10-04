@@ -152,10 +152,7 @@ class Game {
 
     private renderTouches(screen: Texture) {
         if (IS_MOBILE && Input.isKeyCodeDown(Input.MOUSE_KEYCODES[0])) {
-            Draw.brush.color = 0xFF0000;
-            Draw.brush.alpha = 1;
-            Draw.brush.thickness = 1;
-            Draw.circleOutline(screen, Input.mouseX, Input.mouseY, Input.mouseRadius, Draw.ALIGNMENT_INNER);
+            Draw.circle(screen, Input.mouseX, Input.mouseY, Input.mouseRadius, { outline: { color: 0xFF0000 }});
         }
     }
 }

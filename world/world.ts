@@ -213,9 +213,7 @@ class World {
         this.worldTexture.clear();
 
         // Render background color.
-        Draw.brush.color = this.backgroundColor;
-        Draw.brush.alpha = this.backgroundAlpha;
-        Draw.rectangleSolid(this.worldTexture, 0, 0, this.width, this.height);
+        Draw.rectangle(this.worldTexture, 0, 0, this.width, this.height, { fill: { color: this.backgroundColor, alpha: this.backgroundAlpha }});
 
         for (let layer of this.layers) {
             if (layer.shouldRenderToOwnLayer) {

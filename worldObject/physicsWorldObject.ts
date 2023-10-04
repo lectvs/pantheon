@@ -134,44 +134,33 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     private drawBounds(texture: Texture, x: number, y: number) {
-        Draw.brush.color = 0x00FF00;
-        Draw.brush.alpha = 1;
-
         if (this.bounds instanceof RectBounds) {
             let box = this.bounds.getBoundingBox();
             box.x += x - this.x;
             box.y += y - this.y;
-            Draw.rectangleOutline(texture, box.x, box.y, box.width, box.height);
+            Draw.rectangle(texture, box.x, box.y, box.width, box.height, { outline: { color: 0x00FF00 }});
         } else if (this.bounds instanceof InvertedRectBounds) {
             let box = this.bounds.getInnerBox();
             box.x += x - this.x;
             box.y += y - this.y;
-            Draw.rectangleOutline(texture, box.x, box.y, box.width, box.height);
+            Draw.rectangle(texture, box.x, box.y, box.width, box.height, { outline: { color: 0x00FF00 }});
         } else if (this.bounds instanceof CircleBounds) {
             let center = this.bounds.getCenter();
             center.x += x - this.x;
             center.y += y - this.y;
-            Draw.circleOutline(texture, center.x, center.y, this.bounds.radius);
+            Draw.circle(texture, center.x, center.y, this.bounds.radius, { outline: { color: 0x00FF00 }});
         } else if (this.bounds instanceof SlopeBounds) {
             let box = this.bounds.getBoundingBox();
             box.x += x - this.x;
             box.y += y - this.y;
             if (this.bounds.direction === 'upleft') {
-                Draw.line(texture, box.left, box.bottom, box.right, box.bottom);
-                Draw.line(texture, box.right, box.bottom, box.right, box.top);
-                Draw.line(texture, box.right, box.top, box.left, box.bottom);
+                Draw.polygon(texture, [vec2(box.left, box.bottom), vec2(box.right, box.bottom), vec2(box.right, box.top)], { outline: { color: 0x00FF00 }});
             } else if (this.bounds.direction === 'upright') {
-                Draw.line(texture, box.left, box.bottom, box.right, box.bottom);
-                Draw.line(texture, box.left, box.bottom, box.left, box.top);
-                Draw.line(texture, box.left, box.top, box.right, box.bottom);
+                Draw.polygon(texture, [vec2(box.left, box.bottom), vec2(box.right, box.bottom), vec2(box.left, box.top)], { outline: { color: 0x00FF00 }});
             } else if (this.bounds.direction === 'downright') {
-                Draw.line(texture, box.left, box.bottom, box.left, box.top);
-                Draw.line(texture, box.left, box.top, box.right, box.top);
-                Draw.line(texture, box.right, box.top, box.left, box.bottom);
+                Draw.polygon(texture, [vec2(box.left, box.bottom), vec2(box.left, box.top), vec2(box.right, box.top)], { outline: { color: 0x00FF00 }});
             } else {
-                Draw.line(texture, box.left, box.top, box.right, box.top);
-                Draw.line(texture, box.right, box.top, box.right, box.bottom);
-                Draw.line(texture, box.right, box.bottom, box.left, box.top);
+                Draw.polygon(texture, [vec2(box.left, box.top), vec2(box.right, box.top), vec2(box.right, box.bottom)], { outline: { color: 0x00FF00 }});
             }
         } 
     }

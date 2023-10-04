@@ -80,7 +80,7 @@ namespace Texture {
         let key = `${radius},${fillColor},${fillAlpha}`;
         if (!cache_filledCircle[key]) {
             let result = new AnchoredTexture(new BasicTexture(radius*2, radius*2, 'Texture.filledCircle'), 0.5, 0.5);
-            Draw.circleSolid(result, radius, radius, radius, { color: fillColor, alpha: fillAlpha, thickness: 0 });
+            Draw.circle(result, radius, radius, radius, { fill: { color: fillColor, alpha: fillAlpha }});
             result.immutable = true;
             cache_filledCircle[key] = result;
         }
@@ -93,7 +93,7 @@ namespace Texture {
         let key = `${width},${height},${fillColor},${fillAlpha}`;
         if (!cache_filledRect[key]) {
             let result = new BasicTexture(width, height, 'Texture.filledRect');
-            Draw.fill(result, { color: fillColor, alpha: fillAlpha, thickness: 0 });
+            Draw.fill(result, { color: fillColor, alpha: fillAlpha });
             result.immutable = true;
             cache_filledRect[key] = result;
         }
@@ -169,7 +169,7 @@ namespace Texture {
         let key = `${width},${height},${outlineColor},${outlineAlpha},${outlineThickness}`;
         if (!cache_outlineRect[key]) {
             let result = new BasicTexture(width, height, 'Texture.outlineRect');
-            Draw.rectangleOutline(result, 0, 0, width, height, Draw.ALIGNMENT_INNER, { color: outlineColor, alpha: outlineAlpha, thickness: outlineThickness });
+            Draw.rectangle(result, 0, 0, width, height, { outline: { color: outlineColor, alpha: outlineAlpha, thickness: outlineThickness }});
             result.immutable = true;
             cache_outlineRect[key] = result;
         }
@@ -181,7 +181,7 @@ namespace Texture {
         let key = `${radius},${outlineColor},${outlineAlpha},${outlineThickness}`;
         if (!cache_outlineCircle[key]) {
             let result = new AnchoredTexture(new BasicTexture(radius*2, radius*2, 'Texture.outlineCircle'));
-            Draw.circleOutline(result, radius, radius, radius, Draw.ALIGNMENT_INNER, { color: outlineColor, alpha: outlineAlpha, thickness: outlineThickness });
+            Draw.circle(result, radius, radius, radius, { outline: { color: outlineColor, alpha: outlineAlpha, thickness: outlineThickness }});
             result.immutable = true;
             cache_outlineCircle[key] = result;
         }

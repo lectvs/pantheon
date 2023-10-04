@@ -1,26 +1,29 @@
 /// <reference path="./basicTexture.ts"/>
 
 namespace Draw {
-    export type Brush = {
-        color: number;
-        alpha: number;
-        thickness: number;
+    export type Alignment = 'inner' | 'outer';
+
+    export type FillAndOutlineConfig = {
+        fill?: {
+            color: number;
+            alpha?: number;
+        };
+        outline?: {
+            color: number;
+            alpha?: number;
+            thickness?: number;
+            alignment?: Draw.Alignment;
+        };
     }
 }
 
 class Draw {
-    static brush: Draw.Brush = {
-        color: 0x000000,
-        alpha: 1,
-        thickness: 1
-    };
-
     private static graphics: PIXI.Graphics = new PIXI.Graphics();
 
-    static fill(texture: Texture, brush: Draw.Brush = Draw.brush) {
+    static fill(texture: Texture, config: { color: number, alpha?: number }) {
         this.graphics.lineStyle(0, 0, 0);
         this.graphics.clear();
-        this.graphics.beginFill(brush.color, brush.alpha);
+        this.graphics.beginFill(config.color, config.alpha ?? 1);
         this.graphics.drawRect(0, 0, texture.width, texture.height);
         this.graphics.endFill();
         texture.clear();
@@ -44,14 +47,15 @@ class Draw {
         });
     }
 
-    static annulusSolid(texture: Texture, x: number, y: number, innerRadius: number, outerRadius: number, brush: Draw.Brush = Draw.brush) {
+    static annulus(texture: Texture, x: number, y: number, innerRadius: number, outerRadius: number, config: Draw.FillAndOutlineConfig) {
         if (innerRadius <= 0) {
-            this.circleSolid(texture, x, y, outerRadius, brush);
+            this.circle(texture, x, y, outerRadius, config);
             return;
         }
-        this.graphics.lineStyle(0, 0, 0);
+        let values = Draw.getFillAndOutlineConfigValues(config);
+        this.graphics.lineStyle(values.outlineThickness, values.outlineColor, values.outlineAlpha, Draw.getAlignmentNumber(values.outlineAlignment));
         this.graphics.clear();
-        this.graphics.beginFill(brush.color, brush.alpha);
+        this.graphics.beginFill(values.fillColor, values.fillAlpha);
         this.graphics.drawCircle(x, y, outerRadius);
         this.graphics.endFill();
         this.graphics.beginHole();
@@ -60,97 +64,78 @@ class Draw {
         texture.renderPIXIDisplayObject(this.graphics);
     }
 
-    static circleOutline(texture: Texture, x: number, y: number, radius: number, alignment: number = this.ALIGNMENT_INNER, brush: Draw.Brush = Draw.brush) {
-        this.graphics.lineStyle(brush.thickness, brush.color, brush.alpha, alignment);
+    static circle(texture: Texture, x: number, y: number, radius: number, config: Draw.FillAndOutlineConfig) {
+        let values = Draw.getFillAndOutlineConfigValues(config);
+        this.graphics.lineStyle(values.outlineThickness, values.outlineColor, values.outlineAlpha, Draw.getAlignmentNumber(values.outlineAlignment));
         this.graphics.clear();
-        this.graphics.beginFill(0, 0);
+        this.graphics.beginFill(values.fillColor, values.fillAlpha);
         this.graphics.drawCircle(x, y, radius);
         this.graphics.endFill();
         texture.renderPIXIDisplayObject(this.graphics);
     }
 
-    static circleSolid(texture: Texture, x: number, y: number, radius: number, brush: Draw.Brush = Draw.brush) {
-        this.graphics.lineStyle(0, 0, 0);
+    static ellipse(texture: Texture, x: number, y: number, radiusX: number, radiusY: number, config: Draw.FillAndOutlineConfig) {
+        let values = Draw.getFillAndOutlineConfigValues(config);
+        this.graphics.lineStyle(values.outlineThickness, values.outlineColor, values.outlineAlpha, Draw.getAlignmentNumber(values.outlineAlignment));
         this.graphics.clear();
-        this.graphics.beginFill(brush.color, brush.alpha);
-        this.graphics.drawCircle(x, y, radius);
-        this.graphics.endFill();
-        texture.renderPIXIDisplayObject(this.graphics);
-    }
-
-    static ellipseOutline(texture: Texture, x: number, y: number, radiusX: number, radiusY: number, alignment: number = this.ALIGNMENT_INNER, brush: Draw.Brush = Draw.brush) {
-        this.graphics.lineStyle(brush.thickness, brush.color, brush.alpha, alignment);
-        this.graphics.clear();
-        this.graphics.beginFill(0, 0);
+        this.graphics.beginFill(values.fillColor, values.fillAlpha);
         this.graphics.drawEllipse(x, y, radiusX, radiusY);
         this.graphics.endFill();
         texture.renderPIXIDisplayObject(this.graphics);
     }
 
-    static ellipseSolid(texture: Texture, x: number, y: number, radiusX: number, radiusY: number, brush: Draw.Brush = Draw.brush) {
-        this.graphics.lineStyle(0, 0, 0);
-        this.graphics.clear();
-        this.graphics.beginFill(brush.color, brush.alpha);
-        this.graphics.drawEllipse(x, y, radiusX, radiusY);
-        this.graphics.endFill();
-        texture.renderPIXIDisplayObject(this.graphics);
-    }
-
-    static pixel(texture: Texture, x: number, y: number, brush: Draw.Brush = Draw.brush) {
+    static pixel(texture: Texture, x: number, y: number, config: { color: number, alpha?: number }) {
         Draw.PIXEL_TEXTURE.renderTo(texture, {
             x: x, y: y,
-            tint: brush.color,
-            alpha: brush.alpha,
+            tint: config.color,
+            alpha: config.alpha ?? 1,
         });
     }
 
-    static line(texture: Texture, x1: number, y1: number, x2: number, y2: number, brush: Draw.Brush = Draw.brush) {
-        this.graphics.lineStyle(brush.thickness, brush.color, brush.alpha, this.ALIGNMENT_MIDDLE);
+    static line(texture: Texture, x1: number, y1: number, x2: number, y2: number, config: { color: number, alpha?: number, thickness?: number }) {
+        this.graphics.lineStyle(config.thickness ?? 1, config.color, config.alpha ?? 1, 0.5);
         this.graphics.clear();
         this.graphics.moveTo(x1, y1);
         this.graphics.lineTo(x2, y2);
         texture.renderPIXIDisplayObject(this.graphics);
     }
 
-    static polygonOutline(texture: Texture, points: Pt[], alignment: number = this.ALIGNMENT_INNER, brush: Draw.Brush = Draw.brush) {
-        this.graphics.lineStyle(brush.thickness, brush.color, brush.alpha, alignment);
+    static polygon(texture: Texture, points: Pt[], config: Draw.FillAndOutlineConfig) {
+        let values = Draw.getFillAndOutlineConfigValues(config);
+        this.graphics.lineStyle(values.outlineThickness, values.outlineColor, values.outlineAlpha, Draw.getAlignmentNumber(values.outlineAlignment));
         this.graphics.clear();
-        this.graphics.beginFill(0, 0);
+        this.graphics.beginFill(values.fillColor, values.fillAlpha);
         this.graphics.drawPolygon(points.map(point => new PIXI.Point(point.x, point.y)));
         this.graphics.endFill();
         texture.renderPIXIDisplayObject(this.graphics);
     }
 
-    static polygonSolid(texture: Texture, points: Pt[], brush: Draw.Brush = Draw.brush) {
-        this.graphics.lineStyle(0, 0, 0);
+    static rectangle(texture: Texture, x: number, y: number, width: number, height: number, config: Draw.FillAndOutlineConfig) {
+        let values = Draw.getFillAndOutlineConfigValues(config);
+        this.graphics.lineStyle(values.outlineThickness, values.outlineColor, values.outlineAlpha, Draw.getAlignmentNumber(values.outlineAlignment));
         this.graphics.clear();
-        this.graphics.beginFill(brush.color, brush.alpha);
-        this.graphics.drawPolygon(points.map(point => new PIXI.Point(point.x, point.y)));
-        this.graphics.endFill();
-        texture.renderPIXIDisplayObject(this.graphics);
-    }
-
-    static rectangleOutline(texture: Texture, x: number, y: number, width: number, height: number, alignment: number = this.ALIGNMENT_INNER, brush: Draw.Brush = Draw.brush) {
-        this.graphics.lineStyle(brush.thickness, brush.color, brush.alpha, alignment);
-        this.graphics.clear();
-        this.graphics.beginFill(0, 0);
+        this.graphics.beginFill(values.fillColor, values.fillAlpha);
         this.graphics.drawRect(x, y, width, height);
         this.graphics.endFill();
         texture.renderPIXIDisplayObject(this.graphics);
     }
 
-    static rectangleSolid(texture: Texture, x: number, y: number, width: number, height: number, brush: Draw.Brush = Draw.brush) {
-        this.graphics.lineStyle(0, 0, 0);
-        this.graphics.clear();
-        this.graphics.beginFill(brush.color, brush.alpha);
-        this.graphics.drawRect(x, y, width, height);
-        this.graphics.endFill();
-        texture.renderPIXIDisplayObject(this.graphics);
+    private static getAlignmentNumber(alignment: Draw.Alignment | undefined) {
+        if (alignment === 'inner') return 0;
+        if (alignment === 'outer') return 1;
+        return 0;  // Default to inner
     }
 
-    static ALIGNMENT_INNER: number = 0;
-    static ALIGNMENT_MIDDLE: number = 0.5;
-    static ALIGNMENT_OUTER: number = 1;
+    private static getFillAndOutlineConfigValues(config: Draw.FillAndOutlineConfig) {
+        return {
+            fillColor: config.fill ? config.fill.color : 0,
+            fillAlpha: config.fill ? (config.fill.alpha ?? 1) : 0,
+            outlineColor: config.outline ? config.outline.color : 0,
+            outlineAlpha: config.outline ? (config.outline.alpha ?? 1) : 0,
+            outlineThickness: config.outline ? (config.outline.thickness ?? 1) : 0,
+            outlineAlignment: config.outline ? (config.outline.alignment ?? 'inner') : 'inner',
+        };
+    }
 
     private static _PIXEL_TEXTURE: Texture;
     static get PIXEL_TEXTURE() {

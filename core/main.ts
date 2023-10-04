@@ -196,19 +196,15 @@ class Main {
     private static renderPreloadProgress(progress: number) {
         Main.screen.clear();
 
-        Draw.brush.color = this.config.preloadBackgroundColor;
-        Draw.brush.alpha = 1;
-        Draw.fill(Main.screen);
+        Draw.fill(Main.screen, { color: this.config.preloadBackgroundColor });
 
         let barw = global.gameWidth/2;
         let barh = 16;
         let barx = global.gameWidth/2 - barw/2;
         let bary = global.gameHeight/2 - barh/2;
 
-        Draw.brush.color = this.config.preloadProgressBarColor;
-        Draw.brush.thickness = 1;
-        Draw.rectangleSolid(Main.screen, barx, bary, barw * progress, barh);
-        Draw.rectangleOutline(Main.screen, barx, bary, barw, barh, Draw.ALIGNMENT_INNER);
+        Draw.rectangle(Main.screen, barx, bary, barw * progress, barh, { fill: { color: this.config.preloadProgressBarColor }});
+        Draw.rectangle(Main.screen, barx, bary, barw, barh, { outline: { color: this.config.preloadProgressBarColor }});
 
         Main.renderScreenToCanvas();
     }

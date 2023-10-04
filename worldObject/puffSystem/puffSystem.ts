@@ -59,9 +59,7 @@ class PuffSystem extends WorldObject {
             let color = Color.lerpColorByLch(progress, puff.initialColor, puff.finalColor);
             let alpha = M.lerp(progress, puff.initialAlpha, puff.finalAlpha);
 
-            Draw.brush.color = color;
-            Draw.brush.alpha = alpha;
-            Draw.circleSolid(texture, x - this.x + puff.x, y - this.y + puff.y, radius);
+            Draw.circle(texture, x - this.x + puff.x, y - this.y + puff.y, radius, { fill: { color, alpha }});
         }
 
         super.render(texture, x, y);

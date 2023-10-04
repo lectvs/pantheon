@@ -72,20 +72,17 @@ namespace Transitions {
         override render(texture: Texture, x: number, y: number) {
             super.render(texture, x, y);
 
-            Draw.brush.color = 0x000000;
-            Draw.brush.alpha = 1;
-
             if (this.transitioned) {
                 if (this.newSnapshot) {
                     this.newSnapshot.renderTo(texture);
-                    Draw.rectangleSolid(texture, 0, 0, this.newSnapshot.width, this.newSnapshot.height/2 * this.slide_t);
-                    Draw.rectangleSolid(texture, 0, this.newSnapshot.height* (1 - 0.5*this.slide_t), this.newSnapshot.width, this.newSnapshot.height * 0.5*this.slide_t);
+                    Draw.rectangle(texture, 0, 0, this.newSnapshot.width, this.newSnapshot.height/2 * this.slide_t, { fill: { color: 0x000000 }});
+                    Draw.rectangle(texture, 0, this.newSnapshot.height* (1 - 0.5*this.slide_t), this.newSnapshot.width, this.newSnapshot.height * 0.5*this.slide_t, { fill: { color: 0x000000 }});
                 }
             } else {
                 if (this.oldSnapshot) {
                     this.oldSnapshot.renderTo(texture);
-                    Draw.rectangleSolid(texture, 0, 0, this.oldSnapshot.width, this.oldSnapshot.height/2 * this.slide_t);
-                    Draw.rectangleSolid(texture, 0, this.oldSnapshot.height* (1 - 0.5*this.slide_t), this.oldSnapshot.width, this.oldSnapshot.height * 0.5*this.slide_t);
+                    Draw.rectangle(texture, 0, 0, this.oldSnapshot.width, this.oldSnapshot.height/2 * this.slide_t, { fill: { color: 0x000000 }});
+                    Draw.rectangle(texture, 0, this.oldSnapshot.height* (1 - 0.5*this.slide_t), this.oldSnapshot.width, this.oldSnapshot.height * 0.5*this.slide_t, { fill: { color: 0x000000 }});
                 }
             }
         }
