@@ -1,5 +1,4 @@
 TODO
-- rewrite musicmanager, handle playing a music track if the track is already playing
 - animation revamp (animation/script parity?)
     - squash/stretch/transform/etc actions
 - game/theater revamp

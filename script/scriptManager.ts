@@ -7,10 +7,14 @@ class ScriptManager {
 
     update(delta: number) {
         for (let i = this.activeScripts.length-1; i >= 0; i--) {
-            this.activeScripts[i].update(delta);
-            if (this.activeScripts[i].done) {
-                this.activeScripts.splice(i, 1);
-            }
+            this.updateScript(delta, i);
+        }
+    }
+
+    private updateScript(delta: number, i: number) {
+        this.activeScripts[i].update(delta);
+        if (this.activeScripts[i].done) {
+            this.activeScripts.splice(i, 1);
         }
     }
     
@@ -25,6 +29,7 @@ class ScriptManager {
             script = new Script(script, name);
         }
         this.activeScripts.push(script);
+        this.updateScript(0, this.activeScripts.length-1);
         return script;
     }
 

@@ -24,7 +24,7 @@ class Game {
     soundManager: SoundManager;
     musicManager: MusicManager;
     get volume(): number { return Options.volume * (Debug.SKIP_RATE >= 100 ? 0.2 : 1); };
-    get currentMusicKey(): string | undefined { return this.musicManager?.currentMusic?.key; }
+    get currentMusicKey(): string | undefined { return this.musicManager.getCurrentMusicKey(); }
 
     get delta(): number { return Main.delta; }
 
@@ -67,7 +67,7 @@ class Game {
 
         this.soundManager.volume = this.volume * Options.sfxVolume;
         this.soundManager.update(this.delta);
-        this.musicManager.baseVolume = this.volume * Options.musicVolume;
+        this.musicManager.volume = this.volume * Options.musicVolume;
         this.musicManager.update(this.delta);
     }
 
@@ -146,8 +146,8 @@ class Game {
         this.menuSystem.clear();
     }
 
-    unpauseMusic() {
-        this.musicManager.unpauseMusic();
+    unpauseMusic(fadeTime: number = 0) {
+        this.musicManager.unpauseMusic(fadeTime);
     }
 
     private renderTouches(screen: Texture) {

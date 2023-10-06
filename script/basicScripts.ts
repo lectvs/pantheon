@@ -21,7 +21,12 @@ namespace S {
 
     export function doOverTime(time: OrFactory<number>, func: (t: number) => any): Script.Function {
         return function*() {
-            let t = new Timer(OrFactory.resolve(time));
+            let duration = OrFactory.resolve(time);
+            if (duration < 0) {
+                func(1);
+                return;
+            }
+            let t = new Timer(duration);
             while (!t.done) {
                 func(t.progress);
                 t.update(global.script.delta);
@@ -121,15 +126,9 @@ namespace S {
     }
 
     export function tween<T extends Partial<Record<K, number>>, K extends keyof T>(duration: OrFactory<number>, obj: T, prop: K, start: number, end: number, easingFunction: Tween.Easing.Function = Tween.Easing.Linear): Script.Function {
-        return function*() {
-            let tween = new Tween(start, end, OrFactory.resolve(duration), easingFunction);
-            while (!tween.done) {
-                tween.update(global.script.delta);
-                obj[prop] = <any>tween.value;
-                yield;
-            }
-            obj[prop] = <any>end;
-        }
+        return S.doOverTime(duration, t => {
+            obj[prop] = M.lerp(t, start, end, easingFunction) as any;
+        });
     }
 
     export function tweenPt(duration: OrFactory<number>, pt: Pt, start: Pt, end: Pt, easingFunction: Tween.Easing.Function = Tween.Easing.Linear): Script.Function {

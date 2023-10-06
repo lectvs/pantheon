@@ -1,123 +1,111 @@
+namespace MusicManager {
+    export type State = {
+        state: 'stopped';
+    } | {
+        state: 'playing';
+        currentMusic: Sound;
+        transitionScript: Script;
+    } | {
+        state: 'paused';
+        currentMusic: Sound;
+        transitionScript: Script;
+    };
+}
+
 class MusicManager {
-    private musics: Sound[];
-    private transitionScript: Script | undefined;
     paused: boolean;
+    volume: number;
 
-    get volume() { return this.baseVolume * this.volumeScale; }
+    private soundManager: SoundManager;
+    private scriptManager: ScriptManager;
 
-    baseVolume: number;
-    volumeScale: number;
-
-    get currentMusic() { return this.musics.last(); }
+    private state: MusicManager.State;
 
     constructor() {
-        this.musics = [];
         this.paused = false;
-        this.baseVolume = 1;
-        this.volumeScale = 1;
+        this.volume = 1;
+
+        this.soundManager = new SoundManager();
+        this.scriptManager = new ScriptManager();
+
+        this.state = {
+            state: 'stopped',
+        };
     }
 
     update(delta: number) {
-        if (this.transitionScript) {
-            this.transitionScript.update(delta);
-            if (this.transitionScript.done) {
-                this.transitionScript = undefined;
-            }
+        if (!this.paused) {
+            this.soundManager.update(delta);
+            this.scriptManager.update(delta);
         }
+    }
 
-        for (let i = this.musics.length-1; i >= 0; i--) {
-            if (!this.paused && !this.musics[i].paused) {
-                this.musics[i].update(delta);
-            }
-            if (this.musics[i].done) {
-                this.musics.splice(i, 1);
-            }
-        }
+    getCurrentMusicKey() {
+        if (this.state.state === 'stopped') return undefined;
+        return this.state.currentMusic.key;
     }
 
     pauseMusic(fadeTime: number = 0) {
-        if (fadeTime <= 0) {
-            this.paused = true;
-        } else {
-            let startVolumes = this.musics.map(m => m.volume);
-            this.transitionScript = new Script(S.chain(
-                S.doOverTime(fadeTime, t => {
-                    for (let i = 0; i < this.musics.length; i++) {
-                        this.musics[i].volume = startVolumes[i] * (1-t);
-                    }
-                }),
-                S.call(() => {
-                    for (let i = 0; i < this.musics.length; i++) {
-                        this.musics[i].volume = startVolumes[i];
-                    }
-                    this.paused = true;
-                })
-            ));
-        }
+        if (this.state.state === 'stopped') return;
+        this.state.transitionScript.stop();
+        let music = this.state.currentMusic;
+        let startVolume = music.volume;
+        let pauseScript = this.scriptManager.runScript(S.chain(
+            S.tween(fadeTime, music, 'volume', startVolume, 0),
+            S.call(() => music.paused = true),
+        ));
+        this.state = {
+            state: 'paused',
+            currentMusic: music,
+            transitionScript: pauseScript,
+        };
     }
 
     playMusic(key: string, fadeTime: number = 0) {
-        this.paused = false;
-
-        // TODO: this really needs to be fixed
-        if (this.currentMusic?.key === key && !this.transitionScript) {
-            let music = this.currentMusic;
-            let currentVolume = music.volume;
-            music.volume = 0;
-            this.transitionScript = new Script(S.chain(
-                S.doOverTime(fadeTime, t => {
-                    music.volume = t * currentVolume;
-                }),
-            ));
-            return music;
+        if (this.state.state !== 'stopped' && this.state.currentMusic.key === key) {
+            if (this.state.state === 'playing') return;
+            if (this.state.state === 'paused') {
+                this.unpauseMusic(fadeTime);
+                return;
+            }
         }
 
-        let music = new Sound(key, this);
+        this.stopMusic(fadeTime);
+        let music = this.soundManager.playSound(key);
         music.loop = true;
-
-        if (fadeTime <= 0) {
-            this.musics = [music];
-            this.transitionScript = undefined;
-        } else {
-            this.musics.push(music);
-            music.volume = 0;
-            
-            let startVolumes = this.musics.map(m => m.volume);
-            this.transitionScript = new Script(S.chain(
-                S.doOverTime(fadeTime, t => {
-                    for (let i = 0; i < this.musics.length-1; i++) {
-                        this.musics[i].volume = startVolumes[i] * (1-t);
-                    }
-                    music.volume = t;
-                }),
-                S.call(() => {
-                    this.musics = [music];
-                })
-            ));
-        }
-        return music;
+        let playScript = this.scriptManager.runScript(S.tween(fadeTime, music, 'volume', 0, 1));
+        this.state = {
+            state: 'playing',
+            currentMusic: music,
+            transitionScript: playScript,
+        };
     }
 
     stopMusic(fadeTime: number = 0) {
-        if (fadeTime <= 0) {
-            this.musics = [];
-            this.transitionScript = undefined;
-        } else {
-            let startVolumes = this.musics.map(m => m.volume);
-            this.transitionScript = new Script(S.chain(
-                S.doOverTime(fadeTime, t => {
-                    for (let i = 0; i < this.musics.length; i++) {
-                        this.musics[i].volume = startVolumes[i] * (1-t);
-                    }
-                }),
-                S.call(() => {
-                    this.musics = [];
-                })
-            ));
-        }
+        if (this.state.state === 'stopped') return;
+        this.state.transitionScript.stop();
+        let music = this.state.currentMusic;
+        let startVolume = music.volume;
+        this.scriptManager.runScript(S.chain(
+            S.tween(fadeTime, music, 'volume', startVolume, 0),
+            S.call(() => music.stop()),
+        ));
+        this.state = {
+            state: 'stopped',
+        };
     }
 
-    unpauseMusic() {
-        this.paused = false;
+    unpauseMusic(fadeTime: number = 0) {
+        if (this.state.state === 'stopped') return;
+        this.state.transitionScript.stop();
+        let music = this.state.currentMusic;
+        let startVolume = music.volume;
+        music.paused = false;
+        let unpauseScript = this.scriptManager.runScript(S.tween(fadeTime, music, 'volume', startVolume, 1));
+        this.state = {
+            state: 'playing',
+            currentMusic: music,
+            transitionScript: unpauseScript,
+        };
     }
 }
