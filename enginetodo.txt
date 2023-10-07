@@ -1,9 +1,10 @@
 TODO
-- animation revamp (animation/script parity?)
+- animation revamp
+    - animate generic worldobjects
+    - animation/visual layers
+    - animation/script parity?
     - squash/stretch/transform/etc actions
 - game/theater revamp
-    - theater not a world (for real this time)
-    - better slides (for real this time)
     - figure out what is defined in the world constructor vs what is defined in onTransitioned
     - revamp menu system, transitions from main menu to game
 - world and worldobject hooks/events (onDeath, onLoad, etc.)

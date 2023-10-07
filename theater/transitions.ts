@@ -4,8 +4,8 @@ namespace Transitions {
             super({});
         }
 
-        start() {
-            this.done = true;
+        override render(screen: Texture): void {
+            // Noop
         }
     }
 
@@ -18,23 +18,19 @@ namespace Transitions {
             super(config);
             this.time = config.time;
             this.newAlpha = 0;
-        }
 
-        start() {
-            this.runScript(S.chain(
+            this.script = new Script(S.chain(
                 S.wait(this.preTime),
                 S.doOverTime(this.time, t => {
                     this.newAlpha = t;
                 }),
                 S.wait(this.postTime),
-                S.call(() => this.done = true),
             ));
         }
 
-        override render(texture: Texture, x: number, y: number) {
-            super.render(texture, x, y);
-            this.oldSnapshot?.renderTo(texture);
-            this.newSnapshot?.renderTo(texture, {
+        override render(screen: Texture) {
+            this.oldSnapshot?.renderTo(screen);
+            this.newSnapshot?.renderTo(screen, {
                 alpha: this.newAlpha
             });
         }
@@ -55,34 +51,29 @@ namespace Transitions {
             this.outTime = config.outTime;
             this.slide_t = 0;
             this.transitioned = false;
-        }
 
-        start() {
-            this.runScript(S.chain(
+            this.script = new Script(S.chain(
                 S.wait(this.preTime),
                 S.doOverTime(this.inTime, t => this.slide_t = t),
                 S.wait(this.midTime),
                 S.call(() => this.transitioned = true),
                 S.doOverTime(this.outTime, t => this.slide_t = 1-t),
                 S.wait(this.postTime),
-                S.call(() => this.done = true),
             ));
         }
 
-        override render(texture: Texture, x: number, y: number) {
-            super.render(texture, x, y);
-
+        override render(screen: Texture) {
             if (this.transitioned) {
                 if (this.newSnapshot) {
-                    this.newSnapshot.renderTo(texture);
-                    Draw.rectangle(texture, 0, 0, this.newSnapshot.width, this.newSnapshot.height/2 * this.slide_t, { fill: { color: 0x000000 }});
-                    Draw.rectangle(texture, 0, this.newSnapshot.height* (1 - 0.5*this.slide_t), this.newSnapshot.width, this.newSnapshot.height * 0.5*this.slide_t, { fill: { color: 0x000000 }});
+                    this.newSnapshot.renderTo(screen);
+                    Draw.rectangle(screen, 0, 0, this.newSnapshot.width, this.newSnapshot.height/2 * this.slide_t, { fill: { color: 0x000000 }});
+                    Draw.rectangle(screen, 0, this.newSnapshot.height* (1 - 0.5*this.slide_t), this.newSnapshot.width, this.newSnapshot.height * 0.5*this.slide_t, { fill: { color: 0x000000 }});
                 }
             } else {
                 if (this.oldSnapshot) {
-                    this.oldSnapshot.renderTo(texture);
-                    Draw.rectangle(texture, 0, 0, this.oldSnapshot.width, this.oldSnapshot.height/2 * this.slide_t, { fill: { color: 0x000000 }});
-                    Draw.rectangle(texture, 0, this.oldSnapshot.height* (1 - 0.5*this.slide_t), this.oldSnapshot.width, this.oldSnapshot.height * 0.5*this.slide_t, { fill: { color: 0x000000 }});
+                    this.oldSnapshot.renderTo(screen);
+                    Draw.rectangle(screen, 0, 0, this.oldSnapshot.width, this.oldSnapshot.height/2 * this.slide_t, { fill: { color: 0x000000 }});
+                    Draw.rectangle(screen, 0, this.oldSnapshot.height* (1 - 0.5*this.slide_t), this.oldSnapshot.width, this.oldSnapshot.height * 0.5*this.slide_t, { fill: { color: 0x000000 }});
                 }
             }
         }

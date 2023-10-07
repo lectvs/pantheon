@@ -93,7 +93,7 @@ class Game {
         if (this.menuSystem.inMenu) {
             this.menuSystem.render(screen);
         } else {
-            this.theater.render(screen, 0, 0);
+            this.theater.render(screen);
         }
 
         if (this.isShowingOverlay && Debug.SHOW_OVERLAY) {

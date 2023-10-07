@@ -24,6 +24,11 @@ namespace S {
         }
     }
 
+    export function clearFades(duration: number) {
+        let fadeScript = global.theater.clearFades(duration);
+        return S.waitUntil(() => fadeScript.done);
+    }
+
     export function dialog(profileKey: string, text: string): Script.Function {
         return function*() {
             let [profile, entry] = DialogProfile.splitKey(profileKey);
@@ -46,31 +51,9 @@ namespace S {
         }
     }
 
-    export function fadeSlides(duration: number): Script.Function {
-        return function*() {
-            if (A.isEmpty(global.theater.slides)) return;
-
-            let slideAlphas = global.theater.slides.map(slide => slide.alpha);
-
-            let timer = new Timer(duration);
-            while (!timer.done) {
-                for (let i = 0; i < global.theater.slides.length; i++) {
-                    global.theater.slides[i].alpha = slideAlphas[i] * (1 - timer.progress);
-                }
-                timer.update(global.script.delta);
-                yield;
-            }
-
-            global.theater.clearSlides();
-        }
-    }
-
-    export function fadeOut(duration: number = 0, tint: number = 0x000000): Script.Function {
-        return showSlide(() => {
-            let slide = new Slide({ timeToLoad: duration, fadeIn: true });
-            slide.setTexture(Texture.filledRect(global.gameWidth, global.gameHeight, tint));
-            return slide;
-        });
+    export function fade(duration: number, color: number = 0x000000): Script.Function {
+        let fadeScript = global.theater.fade(duration, color);
+        return S.waitUntil(() => fadeScript.done);
     }
 
     export function jumpZ(duration: number, sprite: Sprite, peakDelta: number, landOnGround: boolean = false): Script.Function {
@@ -160,18 +143,6 @@ namespace S {
                 yield;
             }
             global.world.camera.shakeIntensity -= intensity;
-        }
-    }
-
-    export function showSlide(factory: Factory<Slide>, waitForCompletion: boolean = true): Script.Function {
-        let slide: Slide;
-        return function*() {
-            slide = global.theater.addSlide(factory());
-            if (waitForCompletion) {
-                while (!slide.fullyLoaded) {
-                    yield;
-                }
-            }
         }
     }
 }

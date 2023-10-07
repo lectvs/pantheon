@@ -53,6 +53,7 @@ class Draw {
             return;
         }
         let values = Draw.getFillAndOutlineConfigValues(config);
+        if (values.fillAlpha === 0 && values.outlineAlpha === 0) return;
         this.graphics.lineStyle(values.outlineThickness, values.outlineColor, values.outlineAlpha, Draw.getAlignmentNumber(values.outlineAlignment));
         this.graphics.clear();
         this.graphics.beginFill(values.fillColor, values.fillAlpha);
@@ -66,6 +67,7 @@ class Draw {
 
     static circle(texture: Texture, x: number, y: number, radius: number, config: Draw.FillAndOutlineConfig) {
         let values = Draw.getFillAndOutlineConfigValues(config);
+        if (values.fillAlpha === 0 && values.outlineAlpha === 0) return;
         this.graphics.lineStyle(values.outlineThickness, values.outlineColor, values.outlineAlpha, Draw.getAlignmentNumber(values.outlineAlignment));
         this.graphics.clear();
         this.graphics.beginFill(values.fillColor, values.fillAlpha);
@@ -76,6 +78,7 @@ class Draw {
 
     static ellipse(texture: Texture, x: number, y: number, radiusX: number, radiusY: number, config: Draw.FillAndOutlineConfig) {
         let values = Draw.getFillAndOutlineConfigValues(config);
+        if (values.fillAlpha === 0 && values.outlineAlpha === 0) return;
         this.graphics.lineStyle(values.outlineThickness, values.outlineColor, values.outlineAlpha, Draw.getAlignmentNumber(values.outlineAlignment));
         this.graphics.clear();
         this.graphics.beginFill(values.fillColor, values.fillAlpha);
@@ -85,6 +88,7 @@ class Draw {
     }
 
     static pixel(texture: Texture, x: number, y: number, config: { color: number, alpha?: number }) {
+        if (config.alpha === 0) return;
         Draw.PIXEL_TEXTURE.renderTo(texture, {
             x: x, y: y,
             tint: config.color,
@@ -93,6 +97,7 @@ class Draw {
     }
 
     static line(texture: Texture, x1: number, y1: number, x2: number, y2: number, config: { color: number, alpha?: number, thickness?: number }) {
+        if (config.alpha === 0) return;
         this.graphics.lineStyle(config.thickness ?? 1, config.color, config.alpha ?? 1, 0.5);
         this.graphics.clear();
         this.graphics.moveTo(x1, y1);
@@ -102,6 +107,7 @@ class Draw {
 
     static polygon(texture: Texture, points: Pt[], config: Draw.FillAndOutlineConfig) {
         let values = Draw.getFillAndOutlineConfigValues(config);
+        if (values.fillAlpha === 0 && values.outlineAlpha === 0) return;
         this.graphics.lineStyle(values.outlineThickness, values.outlineColor, values.outlineAlpha, Draw.getAlignmentNumber(values.outlineAlignment));
         this.graphics.clear();
         this.graphics.beginFill(values.fillColor, values.fillAlpha);
@@ -112,6 +118,7 @@ class Draw {
 
     static rectangle(texture: Texture, x: number, y: number, width: number, height: number, config: Draw.FillAndOutlineConfig) {
         let values = Draw.getFillAndOutlineConfigValues(config);
+        if (values.fillAlpha === 0 && values.outlineAlpha === 0) return;
         this.graphics.lineStyle(values.outlineThickness, values.outlineColor, values.outlineAlpha, Draw.getAlignmentNumber(values.outlineAlignment));
         this.graphics.clear();
         this.graphics.beginFill(values.fillColor, values.fillAlpha);

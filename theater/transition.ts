@@ -7,7 +7,7 @@ namespace Transition {
     }
 }
 
-abstract class Transition extends WorldObject {
+abstract class Transition {
     protected oldWorld?: World;
     protected newWorld?: World;
     protected oldSnapshot?: Texture;
@@ -16,29 +16,31 @@ abstract class Transition extends WorldObject {
     protected preTime: number;
     protected postTime: number;
 
-    done: boolean;
+    protected script: Script | undefined;
+
+    get done() { return !this.script || this.script.done; }
 
     constructor(config: Transition.BaseConfig) {
-        super();
         this.preTime = config.preTime ?? 0;
         this.postTime = config.postTime ?? 0;
-        this.done = false;
+        this.script = undefined;
     }
 
-    abstract start(): void;
+    update(delta: number) {
+        this.script?.update(delta);
+    }
+
+    abstract render(screen: Texture): void;
 
     setData(oldWorld: World | undefined, newWorld: World | undefined) {
         this.oldWorld = oldWorld;
         this.newWorld = newWorld;
-        return this;
-    }
 
-    takeWorldSnapshots() {
         this.oldSnapshot = this.oldWorld ? this.oldWorld.takeSnapshot() : Texture.filledRect(global.gameWidth, global.gameHeight, global.backgroundColor).clone('Transition.takeWorldSnapshots');
         this.newSnapshot = this.newWorld?.takeSnapshot();
     }
 
-    freeWorldSnapshots() {
+    free() {
         this.oldSnapshot?.free();
         this.newSnapshot?.free();
     }

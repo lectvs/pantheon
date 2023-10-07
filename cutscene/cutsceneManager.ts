@@ -92,6 +92,5 @@ class CutsceneManager {
         this.current = undefined;
 
         this.theater.dialogBox.complete();
-        this.theater.clearSlides();
     }
 }
