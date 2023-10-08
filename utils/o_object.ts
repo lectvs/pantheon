@@ -128,6 +128,11 @@ namespace O {
         (current as any)[lastPart] = value;
     }
 
+    export function size(obj: Object | undefined) {
+        if (!obj) return 0;
+        return Object.keys(obj).length;
+    }
+
     export function withDefaults<T, K extends Partial<T>>(obj: T, defaults: K): T & K {
         return O.defaults(clone(obj), defaults);
     }

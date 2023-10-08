@@ -22,7 +22,7 @@ class WorldSelecter {
         return this.world.worldObjects.map(obj => obj.getModule(moduleType)).filter(m => m) as S[];
     }
 
-    name<T extends WorldObject>(name: string, checked: boolean = true): T | undefined {
+    name<T extends WorldObject>(name: string, checked: 'checked' | 'unchecked' = 'checked'): T | undefined {
         let results = this.nameAll<T>(name);
         if (A.isEmpty(results)) {
             if (checked) console.error(`No object with name ${name} exists in world:`, this.world);
@@ -78,7 +78,7 @@ class WorldSelecter {
         return <T[]>this.world.worldObjects.filter(obj => obj.tags.includes(tag));
     }
 
-    type<T extends WorldObject>(type: new (...args: any[]) => T, checked: boolean = true) {
+    type<T extends WorldObject>(type: new (...args: any[]) => T, checked: 'checked' | 'unchecked' = 'checked') {
         let results = this.typeAll(type);
         if (A.isEmpty(results)) {
             if (checked) console.error(`No object of type ${type.name} exists in world:`, this.world);

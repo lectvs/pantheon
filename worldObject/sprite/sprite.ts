@@ -3,8 +3,6 @@
 namespace Sprite {
     export type Config = ReplaceConfigCallbacks<PhysicsWorldObject.Config, Sprite> & {
         texture?: string | Texture;
-        animations?: Animation.Config[];
-        defaultAnimation?: string;
         flipX?: boolean;
         flipY?: boolean;
         offsetX?: number;
@@ -26,7 +24,6 @@ namespace Sprite {
 class Sprite extends PhysicsWorldObject {
     private texture!: Texture;
     private textureKey: string | undefined;
-    protected animationManager: AnimationManager;
 
     flipX: boolean;
     flipY: boolean;
@@ -59,17 +56,7 @@ class Sprite extends PhysicsWorldObject {
     constructor(config: Sprite.Config = {}) {
         super(config);
 
-        this.setTexture(config.texture);
-
-        this.animationManager = new AnimationManager(this);
-        for (let animation of config.animations || []) {
-            this.addAnimation(animation);
-        }
-        if (config.defaultAnimation) {
-            this.playAnimation(config.defaultAnimation);
-        } else if (!A.isEmpty(config.animations)) {
-            this.playAnimation(config.animations![0].name);
-        }
+        if (config.texture) this.setTexture(config.texture);
 
         this.flipX = config.flipX ?? false;
         this.flipY = config.flipY ?? false;
@@ -96,7 +83,6 @@ class Sprite extends PhysicsWorldObject {
 
     override update() {
         super.update();
-        this.animationManager.update(this.delta);
         this.effects.updateEffects(this.delta);
 
         this.angle += this.vangle * this.delta;
@@ -116,14 +102,6 @@ class Sprite extends PhysicsWorldObject {
             blendMode: this.blendMode,
         });
         super.render(texture, x, y);
-    }
-
-    addAnimation(animation: Animation.Config) {
-        this.animationManager.addAnimation(animation.name, animation.frames);
-    }
-
-    getCurrentAnimationName() {
-        return this.animationManager.getCurrentAnimationName();
     }
 
     getTexture() {
@@ -151,14 +129,6 @@ class Sprite extends PhysicsWorldObject {
         bounds.width += 2*this.onScreenPadding;
         bounds.height += 2*this.onScreenPadding;
         return bounds;
-    }
-
-    hasAnimation(name: string) {
-        return this.animationManager.hasAnimation(name);
-    }
-
-    playAnimation(name: string, force: boolean = false) {
-        this.animationManager.playAnimation(name, force);
     }
 
     setTexture(key: string | Texture | undefined) {

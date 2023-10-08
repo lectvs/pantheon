@@ -1,9 +1,4 @@
 TODO
-- animation revamp
-    - animate generic worldobjects
-    - animation/visual layers
-    - animation/script parity?
-    - squash/stretch/transform/etc actions
 - game/theater revamp
     - figure out what is defined in the world constructor vs what is defined in onTransitioned
     - revamp menu system, transitions from main menu to game
@@ -32,6 +27,7 @@ TODO
 - redo kill() ... not flag the object as being dead? how to remove object then re-add it later?
 - turn screen shake into a shader (to get edge continuation)
 - fix everyNSeconds and oscillateNSeconds for very low framerates
+- animation/visual layers
 - ui balancer
     - create better worldbounds/localbounds/visiblescreenbounds system
     - well-defined visual boundaries for every object + better World.Actions.balanceWorldObjects

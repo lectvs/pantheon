@@ -199,7 +199,7 @@ class Tilemap extends WorldObject {
             zTexture.offsetY = -zHeight;
             zTexture.setTexture(this.animation ? undefined : texturesByZ[zValue].frames[0]);
             if (this.animation) {
-                zTexture.addAnimation(Animations.fromTextureList({ name: 'play', textures: texturesByZ[zValue].frames, frameRate: this.animation.frameRate, count: -1 }));
+                zTexture.addAnimation('play', Animations.fromTextureList({ textures: texturesByZ[zValue].frames, frameRate: this.animation.frameRate, count: -1 }));
                 zTexture.playAnimation('play');
             }
 

@@ -17,6 +17,8 @@ namespace WorldObject {
         visible?: boolean;
         active?: boolean;
         activeOutsideWorldBoundsBuffer?: number;
+        animations?: Dict<AnimationInstance>;
+        defaultAnimation?: string;
         life?: number;
         timers?: Timer[];
         ignoreCamera?: boolean;
@@ -95,6 +97,8 @@ class WorldObject {
     private _children: WorldObject[];
     private _parent?: WorldObject;
 
+    protected animationManager: AnimationManager;
+
     get world() { return this._world; }
     get layer() {
         this.resolveLayer();
@@ -158,6 +162,21 @@ class WorldObject {
 
         this._visible = config.visible ?? true;
         this._active = config.active ?? true;
+
+        this.animationManager = new AnimationManager(this);
+        if (!O.isEmpty(config.animations)) {
+            for (let animationName in config.animations) {
+                this.addAnimation(animationName, config.animations[animationName]);
+            }
+        }
+        if ('defaultAnimation' in config) {
+            if (config.defaultAnimation) this.playAnimation(config.defaultAnimation);
+        } else if (O.size(config.animations) === 1) {
+            this.playAnimation(Object.keys(config.animations!)[0]);
+        } else if (!O.isEmpty(config.animations)) {
+            if ('default' in config.animations) this.playAnimation('default');
+            else if ('idle' in config.animations) this.playAnimation('idle');
+        }
 
         this.ignoreCamera = config.ignoreCamera ?? false;
         this.copyFromParent = config.copyFromParent ? A.clone(config.copyFromParent) : [];
@@ -240,6 +259,7 @@ class WorldObject {
         }
 
         this.life.update(this.delta);
+        this.animationManager.update(this.delta);
 
         if (this.parent && this.ignoreCamera) {
             debug(`Warning: ignoreCamera is set to true on a child object. This will be ignored!`);
@@ -312,6 +332,10 @@ class WorldObject {
         for (let module of this.modules) {
             module.render(texture, x, y);
         }
+    }
+
+    addAnimation(name: string, animation: AnimationInstance) {
+        this.animationManager.addAnimation(name, animation);
     }
 
     addChild<T extends WorldObject>(child: T): T {
@@ -413,6 +437,10 @@ class WorldObject {
         return Math.floor((this.life.time + this.delta)/n) !== Math.floor(this.life.time/n);
     }
 
+    getCurrentAnimationName() {
+        return this.animationManager.getCurrentAnimationName();
+    }
+
     getChildByIndex<T extends WorldObject>(index: number) {
         if (this.children.length < index) {
             console.error(`Parent has no child at index ${index}:`, this);
@@ -458,6 +486,10 @@ class WorldObject {
         return 'noop';
     }
 
+    hasAnimation(name: string) {
+        return this.animationManager.hasAnimation(name);
+    }
+
     hasTag(tag: string) {
         return this.tags.includes(tag);
     }
@@ -494,6 +526,10 @@ class WorldObject {
 
     oscillateNSeconds(n: number) {
         return Math.floor(this.life.time/n) % 2 === 1;
+    }
+
+    playAnimation(name: string, force: boolean | 'force' = false) {
+        this.animationManager.playAnimation(name, force);
     }
 
     removeFromWorld(): this {

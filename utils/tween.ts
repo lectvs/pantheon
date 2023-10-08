@@ -47,6 +47,6 @@ namespace Tween {
         export const InOutElastic: (elasticity: number) => Function = elasticity => inOutFromIn(InElastic(elasticity));
 
 
-        export const OscillateSine: (cyclesPerSecond: number) => Function = cyclesPerSecond => (t => (1 - M.cos(t * 360 * cyclesPerSecond))/2);
+        export const OscillateSine: (cyclesPerSecond: number, cycleOffsetPercent?: number) => Function = (cyclesPerSecond, cycleOffsetPercent = 0) => (t => (1 - M.cos((t * cyclesPerSecond + cycleOffsetPercent) * 360))/2);
     }
 }

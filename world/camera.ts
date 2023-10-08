@@ -196,7 +196,7 @@ namespace Camera {
                 getTargetPt: (camera: Camera) => {
                     let position: Vector2;
                     if (St.isString(target)) {
-                        let worldObject = camera.world.select.name(target, false);
+                        let worldObject = camera.world.select.name(target, 'unchecked');
                         position = worldObject ? vec2(worldObject.x + offsetX, worldObject.y + offsetY) : vec2(camera.x, camera.y);
                     } else {
                         position = vec2(target.x + offsetX, target.y + offsetY);

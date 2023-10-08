@@ -1,113 +1,76 @@
-/// <reference path="../../utils/a_array.ts" />
-
-namespace Animation {
-    export type Config = {
-        name: string;
-        frames: Animation.Frame[];
-    }
-
-    export type Frame = {
+namespace Animations {
+    export type FromSingleTextureConfig = {
+        texture: string | Texture;
         duration?: number;
-        nextFrameRef?: string;
-        forceRequired?: boolean;
         callback?: () => any;
-    
-        texture?: string | Texture;
+        priority?: number;
+        nextRef?: string;
     }
 
-    export namespace Configs {
-        export type FromSingleTexture = {
-            name: string;
-            texture: string | Texture;
-            duration?: number;
-            oneOff?: boolean;
-            override?: Frame;
-        }
-
-        export type FromTextureList = {
-            name: string;
-            textures: (string | Texture | number)[];
-            textureRoot?: string;
-            frameRate: number;
-            nextFrameRef?: string;
-            count?: number;
-            oneOff?: boolean;
-            overrides?: {[frame: number]: Frame};
-        }
-    }
-}
-
-class Animations {
-    static emptyList(...names: string[]): Animation.Config[] {
-        if (A.isEmpty(names)) return [];
-        return names.map(name => { return { name: name, frames: [] }; })
-    }
-
-    static fromSingleTexture(config: Animation.Configs.FromSingleTexture): Animation.Config {
-        let result: Animation.Config = {
-            name: config.name,
+    export function fromSingleTexture(config: FromSingleTextureConfig): AnimationInstance.TextureAnimation {
+        return new AnimationInstance.TextureAnimation({
             frames: [{
                 duration: config.duration ?? Infinity,
                 texture: config.texture,
-                forceRequired: config.oneOff,
+                callback: config.callback,
             }],
-        };
-
-        if (config.override) {
-            result.frames[0] = this.overrideFrame(result.frames[0], config.override);
-        }
-
-        return result;
+            count: 1,
+            priority: config.priority ?? 0,
+            nextRef: config.nextRef,
+        });
     }
 
-    static fromTextureList(_config: Animation.Configs.FromTextureList): Animation.Config {
-        let config = O.defaults(_config, {
-            count: 1,
-        });
+    export type FromTextureListConfig = {
+        textureRoot?: string;
+        textures: (string | Texture | number)[];
+        frameRate: number;
+        count?: number;
+        overrides?: {[frame: number]: AnimationInstance.TextureAnimationFrame};
+        priority?: number;
+        nextRef?: string;
+    }
 
-        if (config.count < 0 || !isFinite(config.count)) {
-            config.nextFrameRef = `${config.name}/0`;
-            config.count = 1;
-        }
-
-        let frameDuration = 1 / config.frameRate;
-        let textures = A.repeat(config.textures, config.count);
-        
-        let result: Animation.Config = {
-            name: config.name,
-            frames: [],
-        };
-
-        if (A.isEmpty(textures)) {
-            return result;
-        }
-
+    export function fromTextureList(config: FromTextureListConfig): AnimationInstance.TextureAnimation {
         let texturePrefix = !config.textureRoot ? "" : `${config.textureRoot}/`;
+        let duration = 1 / config.frameRate;
 
-        for (let i = 0; i < textures.length; i++) {
-            let animationFrame: Animation.Frame = {
-                duration: frameDuration,
-                texture: (St.isString(textures[i]) || M.isNumber(textures[i])) ? `${texturePrefix}${textures[i]}` : <Texture>textures[i],
-                nextFrameRef: `${config.name}/${i+1}`,
-                forceRequired: config.oneOff,
+        let frames: AnimationInstance.TextureAnimationFrame[] = config.textures.map(texture => {
+            return {
+                texture: (St.isString(texture) || M.isNumber(texture)) ? `${texturePrefix}${texture}` : texture,
+                duration,
             };
-
-            result.frames.push(animationFrame);
-        }
-
-        result.frames[result.frames.length - 1].nextFrameRef = config.nextFrameRef;
+        });
 
         if (config.overrides) {
             for (let key in config.overrides) {
-                let frame = <number><any>key;
-                result.frames[frame] = this.overrideFrame(result.frames[frame], config.overrides[key]);
+                let frame = parseInt(key);
+                O.override(frames[frame], config.overrides[key]);
             }
         }
 
-        return result;
+        return new AnimationInstance.TextureAnimation({
+            frames,
+            count: config.count ?? 1,
+            priority: config.priority ?? 0,
+            nextRef: config.nextRef,
+        });
     }
 
-    private static overrideFrame(frame: Animation.Frame, override: Animation.Frame) {
-        return O.withOverrides(frame, override);
+    export type FromScriptConfig = {
+        script: Script.Function;
+        count?: number;
+        onReset?: () => any;
+        priority?: number;
+        nextRef?: string;
+    }
+
+    export function fromScript(config: FromScriptConfig) {
+        return new AnimationInstance.ScriptAnimation({
+            script: config.script,
+            count: config.count ?? 1,
+            onReset: config.onReset,
+            priority: config.priority ?? 0,
+            nextRef: config.nextRef,
+        });
     }
 }
