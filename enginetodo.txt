@@ -1,7 +1,4 @@
 TODO
-- game/theater revamp
-    - figure out what is defined in the world constructor vs what is defined in onTransitioned
-    - revamp menu system, transitions from main menu to game
 - world and worldobject hooks/events (onDeath, onLoad, etc.)
 - remake build script in node
     - add LICENSE to build, keep it from bloating src/lectvs/assets/etc

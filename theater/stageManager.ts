@@ -3,7 +3,7 @@ class StageManager {
     currentWorldFactory: (() => World) | undefined;
 
     private theater: Theater;
-    private transition?: Transition;
+    private transition: Transition | undefined;
 
     constructor(theater: Theater) {
         this.theater = theater;

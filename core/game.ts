@@ -111,11 +111,6 @@ class Game {
         Persist.persist();
     }
 
-    loadTheater(stageToLoad: () => World) {
-        this.theater = this.theaterFactory();
-        this.theater.loadStageImmediate(stageToLoad);
-    }
-
     pauseGame() {
         this.menuSystem.loadMenu(this.pauseMenu);
     }
@@ -133,8 +128,8 @@ class Game {
         return this.soundManager.playSound(key);
     }
 
-    startGame(stageToLoad: () => World) {
-        this.loadTheater(stageToLoad);
+    startGame(stageToLoad: () => World, transition: Transition = new Transitions.Instant()) {
+        this.loadTheater(stageToLoad, transition);
         this.menuSystem.clear();
     }
 
@@ -148,6 +143,24 @@ class Game {
 
     unpauseMusic(fadeTime: number = 0) {
         this.musicManager.unpauseMusic(fadeTime);
+    }
+
+    private loadTheater(stageToLoad: () => World, transition: Transition) {
+        this.theater = this.theaterFactory();
+        if (!(transition instanceof Transitions.Instant)) {
+            this.theater.loadStageImmediate(() => this.worldForMenuTransition());
+        }
+        this.theater.loadStageImmediate(stageToLoad, transition);
+    }
+
+    private worldForMenuTransition() {
+        let world = new World();
+        let screenshot = new BasicTexture(global.gameWidth, global.gameHeight, 'Game.worldForMenuTransition');
+        this.menuSystem.render(screenshot);
+        world.addWorldObject(new Sprite({
+            texture: screenshot,
+        }));
+        return world;
     }
 
     private renderTouches(screen: Texture) {
