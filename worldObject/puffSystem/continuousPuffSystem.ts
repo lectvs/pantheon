@@ -2,7 +2,7 @@
 
 
 namespace ContinuousPuffSystem {
-    export type Config = ReplaceConfigCallbacks<WorldObject.Config, ContinuousPuffSystem> & {
+    export type Config = ReplaceConfigCallbacks<WorldObject.Config<ContinuousPuffSystem>, ContinuousPuffSystem> & {
         startEnabled?: boolean;
         startDelay?: number;
         puffRate: number;

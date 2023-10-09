@@ -1,7 +1,7 @@
 /// <reference path="../worldObject.ts" />
 
 namespace SpriteText {
-    export type Config = ReplaceConfigCallbacks<WorldObject.Config, SpriteText> & {
+    export type Config = ReplaceConfigCallbacks<WorldObject.Config<SpriteText>, SpriteText> & {
         font?: string;
         text?: string;
         justify?: Justify;

@@ -1,7 +1,7 @@
 /// <reference path="../worldObject/sprite/sprite.ts" />
 
 namespace DialogBox {
-    export type Config = Sprite.Config & {
+    export type Config = Sprite.Config<DialogBox> & {
         defaultTextFont: string;
         textAreaFull: Rect;
         textAreaPortrait: Rect;

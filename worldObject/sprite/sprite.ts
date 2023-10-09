@@ -1,7 +1,7 @@
 /// <reference path="../physicsWorldObject.ts" />
 
 namespace Sprite {
-    export type Config = ReplaceConfigCallbacks<PhysicsWorldObject.Config, Sprite> & {
+    export type Config<WO extends Sprite> = ReplaceConfigCallbacks<PhysicsWorldObject.Config<WO>, Sprite> & {
         texture?: string | Texture;
         flipX?: boolean;
         flipY?: boolean;
@@ -53,10 +53,10 @@ class Sprite extends PhysicsWorldObject {
 
     onScreenPadding: number;
 
-    constructor(config: Sprite.Config = {}) {
+    constructor(config: Sprite.Config<Sprite> = {}) {
         super(config);
 
-        if (config.texture) this.setTexture(config.texture);
+        if (config.texture || !this.texture) this.setTexture(config.texture);
 
         this.flipX = config.flipX ?? false;
         this.flipY = config.flipY ?? false;

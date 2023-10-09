@@ -1,7 +1,7 @@
 /// <reference path="./worldObject.ts" />
 
 namespace PhysicsWorldObject {
-    export type Config = ReplaceConfigCallbacks<WorldObject.Config, PhysicsWorldObject> & {
+    export type Config<WO extends PhysicsWorldObject> = ReplaceConfigCallbacks<WorldObject.Config<WO>, PhysicsWorldObject> & {
         mass?: number;
         gravityx?: number;
         gravityy?: number;
@@ -42,7 +42,7 @@ class PhysicsWorldObject extends WorldObject {
         this._bounds.parent = this;
     }
 
-    constructor(config: PhysicsWorldObject.Config = {}) {
+    constructor(config: PhysicsWorldObject.Config<PhysicsWorldObject> = {}) {
         super(config);
         this.mass = config.mass ?? 1;
         this._gravity = vec2(config.gravityx ?? 0, config.gravityy ?? 0);

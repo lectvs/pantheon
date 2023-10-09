@@ -1,5 +1,15 @@
 TODO
 - world and worldobject hooks/events (onDeath, onLoad, etc.)
+    - world
+        - onTransitioned
+        - onWorldObjectAdded
+        - onWorldObjectRemoved
+    - worldobject
+        - onAdd
+        - onRemove
+        - onDeath
+        - onUpdate
+        - onRender
 - remake build script in node
     - add LICENSE to build, keep it from bloating src/lectvs/assets/etc
 - improve compile time

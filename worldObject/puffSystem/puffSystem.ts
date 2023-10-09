@@ -32,7 +32,7 @@ class PuffSystem extends WorldObject {
 
     protected puffs: PuffSystem.Puff[] = [];
 
-    constructor(config: WorldObject.Config) {
+    constructor(config: WorldObject.Config<PuffSystem>) {
         super(config);
     }
 

@@ -32,7 +32,7 @@ type Boundaries = {
 type Getter<T> = () => T;
 type Setter<T> = (value: T) => void;
 
-type ReplaceConfigCallbacks<SuperType extends WorldObject.Config, NewType extends WorldObject> = Omit<SuperType, WorldObject.CallbackKeys> & WorldObject.Callbacks<NewType>;
+type ReplaceConfigCallbacks<SuperType extends WorldObject.Config<NewType>, NewType extends WorldObject> = Omit<SuperType, WorldObject.CallbackKeys> & WorldObject.Callbacks<NewType>;
 
 type ValueElseUndefined<T> =
   T extends (string | number | boolean | symbol | object) ? T : undefined;

@@ -2,7 +2,7 @@
 /// <reference path="../utils/uid.ts" />
 
 namespace WorldObject {
-    export type Config = {
+    export type Config<WO extends WorldObject> = {
         name?: string;
         layer?: string;
         physicsGroup?: string;
@@ -27,6 +27,7 @@ namespace WorldObject {
         timeScale?: number;
         useGlobalTime?: boolean;
         tags?: string[];
+        hooks?: WorldObject.HooksConfig<WO>;
         data?: any;
     } & Callbacks<WorldObject>;
 
@@ -137,6 +138,8 @@ class WorldObject {
     stateMachine: StateMachine;
     get state() { return this.stateMachine.getCurrentStateName(); }
 
+    protected hookManager: WorldObjectHookManager;
+
     onAddCallback?: WorldObject.OnAddCallback<this>;
     onRemoveCallback?: WorldObject.OnRemoveCallback<this>;
     updateCallback?: WorldObject.UpdateCallback<this>;
@@ -145,7 +148,7 @@ class WorldObject {
 
     debugFollowMouse: boolean;
 
-    constructor(config: WorldObject.Config = {}) {
+    constructor(config: WorldObject.Config<WorldObject> = {}) {
         this.localx = config.x ?? (config.p ? config.p.x : 0);
         this.localy = config.y ?? (config.p ? config.p.y : 0);
         this.localz = config.z ?? 0;
@@ -211,6 +214,21 @@ class WorldObject {
         this.scriptManager = new ScriptManager();
         this.stateMachine = new StateMachine();
 
+        this.hookManager = new WorldObjectHookManager();
+        if (config.hooks) {
+            for (let key in config.hooks) {
+                let hookName = key as WorldObject.HookName;
+                let hooks = config.hooks[hookName];
+                if (A.isArray(hooks)) {
+                    for (let hook of hooks) {
+                        this.addHook(hookName, hook);
+                    }
+                } else {
+                    this.addHook(hookName, hooks as any);
+                }
+            }
+        }
+
         this.onAddCallback = config.onAdd;
         this.onRemoveCallback = config.onRemove;
         this.updateCallback = config.update;
@@ -222,10 +240,12 @@ class WorldObject {
 
     onAdd() {
         if (this.onAddCallback) this.onAddCallback();
+        this.hookManager.executeHooks('onAdd');
     }
 
     onRemove() {
         if (this.onRemoveCallback) this.onRemoveCallback();
+        this.hookManager.executeHooks('onRemove');
     }
 
     preUpdate() {
@@ -234,6 +254,7 @@ class WorldObject {
         this.lastz = this.z;
         this.behavior.update(this.delta);
         this.updateController();
+        this.hookManager.executeHooks('onPreUpdate');
     }
 
     update() {
@@ -249,6 +270,7 @@ class WorldObject {
             }
         }
         if (this.updateCallback) this.updateCallback();
+        this.hookManager.executeHooks('onUpdate');
 
         for (let module of this.modules) {
             module.update();
@@ -267,13 +289,14 @@ class WorldObject {
     }
 
     visualUpdate() {
-
+        this.hookManager.executeHooks('onVisualUpdate');
     }
 
     postUpdate() {
         this.controller.reset();
 
         if (this.postUpdateCallback) this.postUpdateCallback();
+        this.hookManager.executeHooks('onPostUpdate');
 
         this.resolveCopyFromParent();
 
@@ -328,6 +351,7 @@ class WorldObject {
 
     render(texture: Texture, x: number, y: number) {
         if (this.renderCallback) this.renderCallback(texture, x, y);
+        this.hookManager.executeHooks('onRender', texture, x, y);
 
         for (let module of this.modules) {
             module.render(texture, x, y);
@@ -355,6 +379,11 @@ class WorldObject {
 
     addChildren<T extends WorldObject>(children: T[]): T[] {
         return World.Actions.addChildrenToParent(children, this);
+    }
+
+    addHook<T extends WorldObject.HookName>(name: T, fn: WorldObject.Hooks<WorldObject>[T]['params']) {
+        let hookFn = fn.bind(this);
+        this.hookManager.addHook(name, hookFn);
     }
 
     addModule<T extends Module<WorldObject>>(module: T): T {
@@ -535,6 +564,10 @@ class WorldObject {
     removeFromWorld(): this {
         if (!this.world) return this;
         return World.Actions.removeWorldObjectFromWorld(this);
+    }
+
+    removeHook(hook: WorldObject.Hook) {
+        this.hookManager.removeHook(hook);
     }
 
     removeTag(tag: string) {
