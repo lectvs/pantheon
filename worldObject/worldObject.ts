@@ -498,6 +498,7 @@ class WorldObject {
 
     kill() {
         this.alive = false;
+        this.hookManager.executeHooks('onKill');
     }
 
     oscillateNFrames(n: number) {
