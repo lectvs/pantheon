@@ -1,11 +1,6 @@
 TODO
-- remake build script in node
-    - add LICENSE to build, keep it from bloating src/lectvs/assets/etc
 - improve compile time
 - integrate debug textures/sfx into the engine?
-- preload/load overhaul + get off of pixi's preload system
-    - load from zip file?
-    - asset dependencies?
 - improve spritetext
     - better performance on large spritetexts
     - spritetext tags are technically not assets
@@ -17,6 +12,10 @@ TODO
     - support rainbow text
 - script revamp
     - yield multiple comma-separated values, yield number to wait
+- carry data on statemachine
+- preload/load overhaul + get off of pixi's preload system
+    - load from zip file?
+    - asset dependencies?
 - why does physicslastx/y exist? can we make a reliable lastx/y or dx/y that works regardless of update order?
 - "Failed to detect time of collision between circle and inverted rect", maybe with changing bounds?
 - better resolution of copyFromParent and render ordering (polarity inverter bug)
