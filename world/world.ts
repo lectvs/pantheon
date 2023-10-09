@@ -30,6 +30,7 @@ namespace World {
 
         timescale?: number;
         allowPause?: boolean;
+        hooks?: HooksConfig<Hooks>;
         data?: any;
     }
 
@@ -57,6 +58,14 @@ namespace World {
         speed?: number;
         humanized?: boolean;
         limit?: number;
+    }
+
+    // To add a new hook, simply add an entry here and call World.hookManager.executeHooks() at the appropriate location(s).
+    export type Hooks = {
+        onTransitioned: { params: (this: World) => void };
+        onUpdate: { params: (this: World) => void };
+        onWorldObjectAdded: { params: (this: World, worldObject: WorldObject) => void };
+        onWorldObjectRemoved: { params: (this: World, worldObject: WorldObject) => void };
     }
 }
 
@@ -106,6 +115,8 @@ class World {
 
     allowPause: boolean;
 
+    protected hookManager: HookManager<World.Hooks>;
+
     private mouseBounds: CircleBounds;
 
     updateCallback: ((this: World) => any) | undefined;
@@ -152,10 +163,15 @@ class World {
         this.camera = new Camera(config.camera ?? {}, this);
 
         this.mouseBounds = new CircleBounds(0, 0, 0);
+
+        this.hookManager = new HookManager({
+            binder: fn => fn.bind(this),
+            hooks: config.hooks,
+        });
     }
 
     onTransitioned() {
-        
+        this.hookManager.executeHooks('onTransitioned');
     }
 
     update() {
@@ -191,6 +207,7 @@ class World {
         this.removeDeadWorldObjects();
 
         if (this.updateCallback) this.updateCallback();
+        this.hookManager.executeHooks('onUpdate');
 
         this.camera.update();
 
@@ -246,6 +263,10 @@ class World {
                 worldObject.render(texture, worldObject.getRenderScreenX(), worldObject.getRenderScreenY());
             }
         }
+    }
+
+    addHook<T extends keyof World.Hooks>(name: T, fn: World.Hooks[T]['params']) {
+        this.hookManager.addHook(name, fn);
     }
 
     addWorldObject<T extends WorldObject>(obj: T): T {
@@ -347,6 +368,10 @@ class World {
         }
         return sound;
     }
+
+    removeHook(hook: Hook) {
+        this.hookManager.removeHook(hook);
+    }
     
     removeWorldObject<T extends WorldObject>(obj: T | string | undefined): T | undefined {
         if (!obj) return undefined;
@@ -436,10 +461,14 @@ class World {
         if (obj instanceof PhysicsWorldObject && obj.physicsGroup) {
             World.Actions.setPhysicsGroup(obj, obj.physicsGroup);
         }
+
+        this.hookManager.executeHooks('onWorldObjectAdded', obj);
     }
 
     // For use with World.Actions.removeWorldObjectFromWorld
     zinternal_removeWorldObjectFromWorldWorld(obj: WorldObject) {
+        this.hookManager.executeHooks('onWorldObjectRemoved', obj);
+
         this.removeFromAllLayers(obj);
         this.removeFromAllPhysicsGroups(obj);
         A.removeAll(this.worldObjects, obj);

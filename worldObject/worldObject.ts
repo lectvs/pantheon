@@ -27,11 +27,23 @@ namespace WorldObject {
         timeScale?: number;
         useGlobalTime?: boolean;
         tags?: string[];
-        hooks?: WorldObject.HooksConfig<WO>;
+        hooks?: HooksConfig<Hooks<WO>>;
         data?: any;
     };
 
     export type ZBehavior = 'noop' | 'threequarters';
+
+    // To add a new hook, simply add an entry here and call WorldObject.hookManager.executeHooks() at the appropriate location(s).
+    export type Hooks<WO extends WorldObject> = {
+        onAdd: { params: (this: WO) => void };
+        onRemove: { params: (this: WO) => void };
+        onPreUpdate: { params: (this: WO) => void };
+        onUpdate: { params: (this: WO) => void };
+        onVisualUpdate: { params: (this: WO) => void };
+        onPostUpdate: { params: (this: WO) => void };
+        onRender: { params: (this: WO, texture: Texture, x: number, y: number) => void };
+        onKill: { params: (this: WO) => void };
+    }
 }
 
 class WorldObject {
@@ -118,7 +130,7 @@ class WorldObject {
     stateMachine: StateMachine;
     get state() { return this.stateMachine.getCurrentStateName(); }
 
-    protected hookManager: WorldObjectHookManager;
+    protected hookManager: HookManager<WorldObject.Hooks<this>>;
 
     debugFollowMouse: boolean;
 
@@ -188,20 +200,10 @@ class WorldObject {
         this.scriptManager = new ScriptManager();
         this.stateMachine = new StateMachine();
 
-        this.hookManager = new WorldObjectHookManager();
-        if (config.hooks) {
-            for (let key in config.hooks) {
-                let hookName = key as WorldObject.HookName;
-                let hooks = config.hooks[hookName];
-                if (A.isArray(hooks)) {
-                    for (let hook of hooks) {
-                        this.addHook(hookName, hook);
-                    }
-                } else {
-                    this.addHook(hookName, hooks as any);
-                }
-            }
-        }
+        this.hookManager = new HookManager({
+            binder: fn => fn.bind(this),
+            hooks: config.hooks,
+        });
 
         this.debugFollowMouse = false;
     }
@@ -344,9 +346,8 @@ class WorldObject {
         return World.Actions.addChildrenToParent(children, this);
     }
 
-    addHook<T extends WorldObject.HookName>(name: T, fn: WorldObject.Hooks<WorldObject>[T]['params']) {
-        let hookFn = fn.bind(this);
-        this.hookManager.addHook(name, hookFn);
+    addHook<T extends keyof WorldObject.Hooks<this>>(name: T, fn: WorldObject.Hooks<WorldObject>[T]['params']) {
+        this.hookManager.addHook(name, fn);
     }
 
     addModule<T extends Module<WorldObject>>(module: T): T {
@@ -529,7 +530,7 @@ class WorldObject {
         return World.Actions.removeWorldObjectFromWorld(this);
     }
 
-    removeHook(hook: WorldObject.Hook) {
+    removeHook(hook: Hook) {
         this.hookManager.removeHook(hook);
     }
 
