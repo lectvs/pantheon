@@ -1,7 +1,7 @@
 /// <reference path="./worldObject.ts" />
 
 namespace PhysicsWorldObject {
-    export type Config<WO extends PhysicsWorldObject> = ReplaceConfigCallbacks<WorldObject.Config<WO>, PhysicsWorldObject> & {
+    export type Config<WO extends PhysicsWorldObject> = WorldObject.Config<WO> & {
         mass?: number;
         gravityx?: number;
         gravityy?: number;

@@ -1,7 +1,7 @@
 /// <reference path="./puffSystem.ts" />
 
 namespace BurstPuffSystem {
-    export type Config = ReplaceConfigCallbacks<WorldObject.Config<BurstPuffSystem>, BurstPuffSystem> & {
+    export type Config = WorldObject.Config<BurstPuffSystem> & {
         deleteOnComplete?: boolean;
         puffCount: number;
         puffConfigFactory: Factory<PuffSystem.PuffConfig>;

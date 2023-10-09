@@ -1,7 +1,7 @@
 /// <reference path="../physicsWorldObject.ts" />
 
 namespace Sprite {
-    export type Config<WO extends Sprite> = ReplaceConfigCallbacks<PhysicsWorldObject.Config<WO>, Sprite> & {
+    export type Config<WO extends Sprite> = PhysicsWorldObject.Config<WO> & {
         texture?: string | Texture;
         flipX?: boolean;
         flipY?: boolean;

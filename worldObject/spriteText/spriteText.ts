@@ -1,7 +1,7 @@
 /// <reference path="../worldObject.ts" />
 
 namespace SpriteText {
-    export type Config = ReplaceConfigCallbacks<WorldObject.Config<SpriteText>, SpriteText> & {
+    export type Config<WO extends SpriteText> = WorldObject.Config<WO> & {
         font?: string;
         text?: string;
         justify?: Justify;
@@ -116,7 +116,7 @@ class SpriteText extends WorldObject {
     private currentText!: string;
     private dirty: boolean;
 
-    constructor(config: SpriteText.Config) {
+    constructor(config: SpriteText.Config<SpriteText>) {
         super(config);
 
         this._fontKey = config.font ?? SpriteText.DEFAULT_FONT;

@@ -1,7 +1,7 @@
 /// <reference path="../worldObject/spriteText/spriteText.ts" />
 
 namespace MenuTextButton {
-    export type Config = SpriteText.Config & {
+    export type Config = SpriteText.Config<MenuTextButton> & {
         onClick?: (this: MenuTextButton) => void;
         onHover?: (this: MenuTextButton) => void;
         onJustHovered?: (this: MenuTextButton) => void;
@@ -56,7 +56,7 @@ class MenuTextButton extends SpriteText {
 }
 
 namespace MenuNumericSelector {
-    export type Config = SpriteText.Config & {
+    export type Config = SpriteText.Config<MenuNumericSelector> & {
         barLength: number;
         minValue: number;
         maxValue: number;

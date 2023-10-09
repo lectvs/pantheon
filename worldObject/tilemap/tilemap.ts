@@ -1,5 +1,5 @@
 namespace Tilemap {
-    export type Config = ReplaceConfigCallbacks<WorldObject.Config<TilemapClass>, TilemapClass> & {
+    export type Config = WorldObject.Config<TilemapClass> & {
         tilemap: string | Tilemap.Tilemap;
         tileset: string;
         tilemapLayer?: number | string;

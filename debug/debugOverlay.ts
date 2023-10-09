@@ -16,9 +16,11 @@ class DebugOverlay extends World {
             font: Debug.FONT,
             style: Debug.FONT_STYLE,
             effects: { outline: { color: 0x000000 } },
-            update: function() {
-                this.setText(debugOverlay.getDebugInfo());
-            }
+            hooks: {
+                onUpdate: function() {
+                    this.setText(debugOverlay.getDebugInfo());
+                },
+            },
         }));
     }
 

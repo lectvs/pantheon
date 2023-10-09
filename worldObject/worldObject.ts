@@ -29,29 +29,9 @@ namespace WorldObject {
         tags?: string[];
         hooks?: WorldObject.HooksConfig<WO>;
         data?: any;
-    } & Callbacks<WorldObject>;
-
-    export type CallbackKeys =
-        'onAdd'
-      | 'onRemove'
-      | 'update'
-      | 'postUpdate'
-      | 'render';
-    export type Callbacks<T> = {
-        onAdd?: OnAddCallback<T>;
-        onRemove?: OnRemoveCallback<T>;
-        update?: UpdateCallback<T>;
-        postUpdate?: PostUpdateCallback<T>;
-        render?: RenderCallback<T>;
-    }
+    };
 
     export type ZBehavior = 'noop' | 'threequarters';
-
-    export type OnAddCallback<T> = (this: T) => any;
-    export type OnRemoveCallback<T> = (this: T) => any;
-    export type UpdateCallback<T> = (this: T) => any;
-    export type PostUpdateCallback<T> = (this: T) => any;
-    export type RenderCallback<T> = (this: T, screen: Texture, x: number, y: number) => any;
 }
 
 class WorldObject {
@@ -140,12 +120,6 @@ class WorldObject {
 
     protected hookManager: WorldObjectHookManager;
 
-    onAddCallback?: WorldObject.OnAddCallback<this>;
-    onRemoveCallback?: WorldObject.OnRemoveCallback<this>;
-    updateCallback?: WorldObject.UpdateCallback<this>;
-    postUpdateCallback?: WorldObject.PostUpdateCallback<this>;
-    renderCallback?: WorldObject.RenderCallback<this>;
-
     debugFollowMouse: boolean;
 
     constructor(config: WorldObject.Config<WorldObject> = {}) {
@@ -229,22 +203,14 @@ class WorldObject {
             }
         }
 
-        this.onAddCallback = config.onAdd;
-        this.onRemoveCallback = config.onRemove;
-        this.updateCallback = config.update;
-        this.postUpdateCallback = config.postUpdate;
-        this.renderCallback = config.render;
-
         this.debugFollowMouse = false;
     }
 
     onAdd() {
-        if (this.onAddCallback) this.onAddCallback();
         this.hookManager.executeHooks('onAdd');
     }
 
     onRemove() {
-        if (this.onRemoveCallback) this.onRemoveCallback();
         this.hookManager.executeHooks('onRemove');
     }
 
@@ -269,7 +235,6 @@ class WorldObject {
                 this.y = this.world.getWorldMouseY();
             }
         }
-        if (this.updateCallback) this.updateCallback();
         this.hookManager.executeHooks('onUpdate');
 
         for (let module of this.modules) {
@@ -295,7 +260,6 @@ class WorldObject {
     postUpdate() {
         this.controller.reset();
 
-        if (this.postUpdateCallback) this.postUpdateCallback();
         this.hookManager.executeHooks('onPostUpdate');
 
         this.resolveCopyFromParent();
@@ -350,7 +314,6 @@ class WorldObject {
     }
 
     render(texture: Texture, x: number, y: number) {
-        if (this.renderCallback) this.renderCallback(texture, x, y);
         this.hookManager.executeHooks('onRender', texture, x, y);
 
         for (let module of this.modules) {
