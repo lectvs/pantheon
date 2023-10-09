@@ -152,20 +152,7 @@ class WorldObject {
         this._visible = config.visible ?? true;
         this._active = config.active ?? true;
 
-        this.animationManager = new AnimationManager(this);
-        if (!O.isEmpty(config.animations)) {
-            for (let animationName in config.animations) {
-                this.addAnimation(animationName, config.animations[animationName]);
-            }
-        }
-        if ('defaultAnimation' in config) {
-            if (config.defaultAnimation) this.playAnimation(config.defaultAnimation);
-        } else if (O.size(config.animations) === 1) {
-            this.playAnimation(Object.keys(config.animations!)[0]);
-        } else if (!O.isEmpty(config.animations)) {
-            if ('default' in config.animations) this.playAnimation('default');
-            else if ('idle' in config.animations) this.playAnimation('idle');
-        }
+        this.animationManager = new AnimationManager(this, config.animations, config.defaultAnimation);
 
         this.ignoreCamera = config.ignoreCamera ?? false;
         this.copyFromParent = config.copyFromParent ? A.clone(config.copyFromParent) : [];
