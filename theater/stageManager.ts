@@ -13,12 +13,7 @@ class StageManager {
         if (this.transition) {
             this.transition.update(this.theater.delta);
             if (this.transition.done) {
-                this.transition.free();
-                this.transition = undefined;
-
-                if (this.currentWorld) {
-                    this.currentWorld.onTransitioned();
-                }
+                this.finishTransition();
             }
         } else {
             this.currentWorld?.update();
@@ -45,9 +40,10 @@ class StageManager {
         this.theater.onStageLoad();
         this.currentWorld.update();
         
-        if (!transition.done) {
-            this.transition = transition;
-            this.transition.setData(oldWorld, this.currentWorld);
+        this.transition = transition;
+        this.transition.setData(oldWorld, this.currentWorld);
+        if (this.transition.done) {
+            this.finishTransition();
         }
     }
 
@@ -60,5 +56,16 @@ class StageManager {
             return;
         }
         this.internalLoadStage(this.currentWorldFactory, transition);
+    }
+
+    private finishTransition() {
+        if (this.transition) {
+            this.transition.free();
+            this.transition = undefined;
+        }
+
+        if (this.currentWorld) {
+            this.currentWorld.onTransitioned();
+        }
     }
 }

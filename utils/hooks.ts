@@ -34,7 +34,6 @@ class HookManager<Hooks extends HookSet> {
     }
 
     addHook<T extends string & keyof Hooks>(name: T, fn: Hooks[T]['params']): Hook {
-        console.log('adding hook', name, fn);
         if (!(name in this.hooks)) {
             this.hooks[name] = [];
         }

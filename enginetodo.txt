@@ -1,8 +1,4 @@
 TODO
-- world hooks/events
-    - onTransitioned
-    - onWorldObjectAdded
-    - onWorldObjectRemoved
 - remake build script in node
     - add LICENSE to build, keep it from bloating src/lectvs/assets/etc
 - improve compile time

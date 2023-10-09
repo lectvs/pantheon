@@ -119,8 +119,6 @@ class World {
 
     private mouseBounds: CircleBounds;
 
-    updateCallback: ((this: World) => any) | undefined;
-
     constructor(config: World.Config = {}) {        
         this.scriptManager = new ScriptManager();
         this.soundManager = new SoundManager();
@@ -206,7 +204,6 @@ class World {
 
         this.removeDeadWorldObjects();
 
-        if (this.updateCallback) this.updateCallback();
         this.hookManager.executeHooks('onUpdate');
 
         this.camera.update();
