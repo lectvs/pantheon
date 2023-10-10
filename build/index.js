@@ -6,7 +6,7 @@ const JSZip = require('./jszip');
 exports.buildGame = function(directory, gameName) {
     let files = [
         { directory: 'assets', exclude: ['.pyxel', '.flp', '.xrns', 'LICENSE*'] },
-        { directory: 'js', exclude: ['pixiEdits.txt'] },
+        { directory: 'js', exclude: ['pixiEdits.txt', 'lectvs.d.ts'] },
         { file: 'index.html' },
     ];
 
@@ -18,7 +18,6 @@ exports.buildSrc = function(directory, gameName) {
     let files = [
         { directory: '.vscode' },
         { directory: 'bin', exclude: ['pixiEdits.txt'] },
-        { directory: 'def' },
         { directory: 'drafts' },
         { directory: 'lectvs', exclude: ['build*', '.git', 'enginetodo.txt', 'LICENSE'] },
         { directory: 'src' },

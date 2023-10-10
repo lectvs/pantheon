@@ -1,4 +1,4 @@
-/// <reference path="./basicTexture.ts"/>
+/// <reference path="../texture/basicTexture.ts"/>
 
 namespace Draw {
     export type Alignment = 'inner' | 'outer';

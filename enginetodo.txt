@@ -1,5 +1,4 @@
 TODO
-- improve compile time
 - integrate debug textures/sfx into the engine?
 - improve spritetext
     - better performance on large spritetexts

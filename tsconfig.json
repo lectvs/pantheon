@@ -1,0 +1,26 @@
+{
+    "include": ["./engine/**/*", "./def/**/*"],
+    "exclude": ["./build/**/*"],
+    "compilerOptions": {
+        "target": "es5",
+        "lib": [
+            "dom",
+            "es2022"
+        ],
+        "module": "amd",
+        "sourceMap": false,
+        "strict": false,
+        "allowUnreachableCode": false,
+        "allowUnusedLabels": false,
+        "noImplicitAny": true,
+        "noImplicitOverride": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "strictNullChecks": true,
+        "strictPropertyInitialization": true,
+        "types": [],
+        "outFile": "../bin/js/lectvs.js",
+        "declaration": true,
+        "downlevelIteration": true
+    }
+}
