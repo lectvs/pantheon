@@ -1,5 +1,4 @@
 TODO
-- integrate debug textures/sfx into the engine?
 - improve spritetext
     - better performance on large spritetexts
     - spritetext tags are technically not assets
