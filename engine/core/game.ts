@@ -3,7 +3,7 @@ namespace Game {
         entryPointMenu: Factory<Menu>;
         mainMenu: Factory<Menu>;
         pauseMenu: Factory<Menu>;
-        theaterFactory: Factory<Theater>;
+        theaterFactory?: Factory<Theater>;
     }
 }
 
@@ -32,7 +32,7 @@ class Game {
         this.entryPointMenu = config.entryPointMenu;
         this.mainMenu = config.mainMenu;
         this.pauseMenu = config.pauseMenu;
-        this.theaterFactory = config.theaterFactory;
+        this.theaterFactory = config.theaterFactory || (() => new Theater());
 
         this.soundManager = new SoundManager();
         this.musicManager = new MusicManager();

@@ -91,6 +91,6 @@ class CutsceneManager {
         this.markCutsceneAsSeen(this.current!.node);
         this.current = undefined;
 
-        this.theater.dialogBox.complete();
+        this.theater.dialogBox?.complete();
     }
 }

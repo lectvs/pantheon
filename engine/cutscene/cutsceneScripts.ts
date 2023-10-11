@@ -31,6 +31,7 @@ namespace S {
 
     export function dialog(profileKey: string, text: string): Script.Function {
         return function*() {
+            if (!global.theater.dialogBox) return;
             let [profile, entry] = DialogProfile.splitKey(profileKey);
             global.theater.dialogBox.setProfile(profile, entry);
             global.theater.dialogBox.showDialog(text);
@@ -42,6 +43,7 @@ namespace S {
 
     export function dialogAdd(profileKey: string, text: string): Script.Function {
         return function*() {
+            if (!global.theater.dialogBox) return;
             let [profile, entry] = DialogProfile.splitKey(profileKey);
             global.theater.dialogBox.setProfile(profile, entry);
             global.theater.dialogBox.addToDialog(text);

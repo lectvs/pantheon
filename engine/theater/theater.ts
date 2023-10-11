@@ -3,7 +3,7 @@
 
 namespace Theater {
     export type Config = {
-        dialogBox: Factory<DialogBox>;
+        dialogBox?: Factory<DialogBox>;
         autoPlayScript?: () => IterableIterator<any>;
     }
 
@@ -19,7 +19,7 @@ class Theater {
     stageManager: StageManager;
 
     private dialogBoxWorld: World;
-    dialogBox: DialogBox;
+    dialogBox: DialogBox | undefined;
 
     endOfFrameQueue: (() => any)[];
 
@@ -32,7 +32,7 @@ class Theater {
     get canPause() { return this.currentWorld ? this.currentWorld.allowPause : false; }
     get delta() { return global.game.delta; }
     
-    constructor(config: Theater.Config) {
+    constructor(config: Theater.Config = {}) {
         this.scriptManager = new ScriptManager();
         this.cutsceneManager = new CutsceneManager(this);
         this.stageManager = new StageManager(this);
@@ -40,7 +40,9 @@ class Theater {
         this.dialogBoxWorld = new World({
             backgroundAlpha: 0,
         });
-        this.dialogBox = this.addDialogBox(config.dialogBox);
+        if (config.dialogBox) {
+            this.dialogBox = this.addDialogBox(config.dialogBox);
+        }
 
         this.endOfFrameQueue = [];
 
