@@ -20,21 +20,22 @@ namespace Main {
         pyxelTilemaps: Dict<Preload.PyxelTilemap>;
         fonts: Dict<Preload.Font>;
         customResources: Dict<Preload.CustomResource>;
-        spriteTextTags: Dict<SpriteText.TagFunction>;
-        dialogProfiles: Dict<DialogProfile.Config>;
 
         simulateMouseWithTouches: boolean;
         defaultOptions: Options.Options;
 
         game: Game.Config;
 
-        persistIntervalSeconds: number;
-        persist: () => void;
+        debug: Debug.Config;
+
+        persistIntervalSeconds?: number;
+        persist?: () => void;
 
         beforePreload?: () => void;
         beforeStart?: () => void;
 
-        debug: Debug.Config;
+        dialogProfiles?: Dict<DialogProfile.Config>;
+        spriteTextTags?: Dict<SpriteText.TagFunction>;
     }
 }
 
@@ -85,9 +86,9 @@ class Main {
         global.gameWidth = this.config.gameWidth;
         global.gameHeight = this.config.gameHeight;
         global.backgroundColor = this.config.backgroundColor;
-        SpriteText.addTags(this.config.spriteTextTags ?? {});
+        if (!O.isEmpty(this.config.spriteTextTags)) SpriteText.addTags(this.config.spriteTextTags);
         if (this.config.defaultSpriteTextFont) SpriteText.DEFAULT_FONT = this.config.defaultSpriteTextFont;
-        DialogProfiles.initProfiles(this.config.dialogProfiles);
+        if (!O.isEmpty(this.config.dialogProfiles)) DialogProfiles.initProfiles(this.config.dialogProfiles);
 
         Main.renderer = PIXI.autoDetectRenderer({
             width: global.gameWidth,
@@ -138,7 +139,7 @@ class Main {
         Input.init(); // TODO: remove this when fixed above
         Input.simulateMouseWithTouches = this.config.simulateMouseWithTouches;
 
-        Persist.init(this.config.persistIntervalSeconds, () => this.config.persist());
+        Persist.init(this.config.persistIntervalSeconds ?? 30, () => this.config.persist?.());
 
         this.initEvents();
 

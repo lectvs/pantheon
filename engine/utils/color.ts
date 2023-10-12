@@ -58,6 +58,16 @@ namespace Color {
         return vec3ToColor([rgbf[0] / 255, rgbf[1] / 255, rgbf[2] / 255]);
     }
 
+    export function tint(color: number, tint: number) {
+        let colorR = (color >> 16) & 255;
+        let colorG = (color >> 8) & 255;
+        let colorB = color & 255;
+        let tintR = (tint >> 16) & 255;
+        let tintG = (tint >> 8) & 255;
+        let tintB = tint & 255;
+        return (Math.round(colorR * tintR / 255) << 16) + (Math.round(colorG * tintG / 255) << 8) + Math.round(colorB * tintB / 255);
+    }
+
     export function vec3ToColor(vec3: [number, number, number]) {
         return (Math.round(vec3[0] * 255) << 16) + (Math.round(vec3[1] * 255) << 8) + Math.round(vec3[2] * 255);
     }

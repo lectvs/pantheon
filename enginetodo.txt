@@ -1,8 +1,6 @@
 TODO
 - improve spritetext
     - better performance on large spritetexts
-    - spritetext tags are technically not assets
-    - remove spritetext "style" field for constructor - input individual color/alpha/etc. fields instead
     - specify spritetext typing speed as a tag?
     - custom font characters -> general textures instead?
     - calculate text width/height while not all chars visible

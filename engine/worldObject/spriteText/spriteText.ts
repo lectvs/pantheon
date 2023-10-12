@@ -6,7 +6,6 @@ namespace SpriteText {
         text?: string;
         justify?: Justify;
         anchor?: Vector2;
-        alpha?: number;
         flipX?: boolean;
         flipY?: boolean;
         scale?: number;
@@ -16,6 +15,8 @@ namespace SpriteText {
         angleOffset?: number;
         maxWidth?: number;
         style?: Style;
+        tint?: number;
+        alpha?: number;
         effects?: Effects.Config;
         mask?: Mask.WorldObjectMaskConfig;
     }
@@ -92,6 +93,7 @@ class SpriteText extends WorldObject {
 
     anchor: Vector2;
 
+    tint: number;
     alpha: number;
     flipX: boolean;
     flipY: boolean;
@@ -136,6 +138,7 @@ class SpriteText extends WorldObject {
 
         this.anchor = config.anchor ?? Anchor.TOP_LEFT;
 
+        this.tint = config.tint ?? 0xFFFFFF;
         this.alpha = config.alpha ?? 1;
         this.flipX = config.flipX ?? false;
         this.flipY = config.flipY ?? false;
@@ -188,8 +191,8 @@ class SpriteText extends WorldObject {
             data.texture.renderTo(texture, {
                 x: x + anchorOffsetX + (data.x + style.offsetX) * (this.flipX ? -1 : 1) * this.scaleX,
                 y: y + anchorOffsetY + (data.y + style.offsetY) * (this.flipY ? -1 : 1) * this.scaleY,
-                tint: style.color,
-                alpha: this.alpha * style.alpha,
+                tint: Color.tint(style.color, this.tint),
+                alpha: style.alpha * this.alpha,
                 scaleX: (this.flipX ? -1 : 1) * this.scaleX,
                 scaleY: (this.flipY ? -1 : 1) * this.scaleY,
                 angle: this.angle + this.angleOffset,

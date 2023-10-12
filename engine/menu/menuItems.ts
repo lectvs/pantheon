@@ -12,9 +12,6 @@ namespace MenuTextButton {
 class MenuTextButton extends SpriteText {
     private bounds: RectBounds;
 
-    get tint() { return this.style.color; }
-    set tint(value: number) { this.style.color = value; }
-
     get enabled() { return this.getModule(Button)?.enabled ?? false; }
     set enabled(value: boolean) {
         let button = this.getModule(Button);
