@@ -3,6 +3,8 @@
 class DebugOverlay extends World {
     private currentWorldToDebug: World | undefined;
 
+    debugInfo: SpriteText;
+
     constructor() {
         super();
 
@@ -10,7 +12,7 @@ class DebugOverlay extends World {
 
         let debugOverlay = this;
 
-        this.addWorldObject(new SpriteText({
+        this.debugInfo = this.addWorldObject(new SpriteText({
             name: 'debuginfo',
             x: 0, y: 0,
             font: Debug.FONT,

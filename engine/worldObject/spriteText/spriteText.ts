@@ -360,19 +360,19 @@ namespace SpriteText {
         }
 
         get left() {
-            return this.x;
+            return Math.floor(this.x - this.width/2);
         }
 
         get right() {
-            return this.x + this.width;
+            return Math.floor(this.x + this.width/2);
         }
 
         get top() {
-            return this.y;
+            return Math.floor(this.y - this.height/2);
         }
 
         get bottom() {
-            return this.y + this.height;
+            return Math.floor(this.y + this.height/2);
         }
     }
 
@@ -423,9 +423,9 @@ namespace SpriteText {
         for (let line of lines) {
             if (line.length === 0) continue;
             let lineWidth = SpriteText.getWidthOfCharList(line);
-            let lineX = (maxWidth - lineWidth) * justifyToX(justify);
-            let minX = M.min(line, char => char.x);
-            let dx = lineX - minX;
+            let lineLeft = (maxWidth - lineWidth) * justifyToX(justify);
+            let minLeft = M.min(line, char => char.left);
+            let dx = lineLeft - minLeft;
             for (let char of line) {
                 char.x += dx;
             }

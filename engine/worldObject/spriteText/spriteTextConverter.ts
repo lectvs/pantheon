@@ -6,9 +6,12 @@ namespace SpriteTextConverter {
     export function textToCharListWithWordWrap(text: string, font: SpriteText.Font, maxWidth: number) {
         if (!text) return [];
 
+        let startX = Math.floor(font.charWidth/2);
+        let startY = Math.floor(font.charHeight/2);
+
         let result: SpriteText.Character[][] = [[]];
         let word: SpriteText.Character[] = [];
-        let nextCharPosition: Vector2 = new Vector2(0, 0);
+        let nextCharPosition: Vector2 = new Vector2(startX, startY);
         let tagStack: SpriteText.TagData[] = [];
         let current: CurrentData =  { part: 0 };
 
@@ -18,7 +21,7 @@ namespace SpriteTextConverter {
                 nextCharPosition.x += font.spaceWidth;
             } else if (text[i] === '\n') {
                 pushWord(word, result, nextCharPosition, font, maxWidth, current);
-                nextCharPosition.x = 0;
+                nextCharPosition.x = startX;
                 nextCharPosition.y += getNewLineHeightDiff(nextCharPosition.y, SpriteText.getHeightOfCharList(result.flat()), font.newlineHeight);
                 result.push([]);
             } else if (text[i] === '[') {

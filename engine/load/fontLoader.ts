@@ -14,7 +14,7 @@ class FontLoader implements Loader {
     load(callback?: () => void) {
         new TextureLoader(this.key, {
             url: this.getUrl(),
-            anchor: Anchor.TOP_LEFT,
+            anchor: Anchor.CENTER,
             spritesheet: { frameWidth: this.font.charWidth, frameHeight: this.font.charHeight },
         }).load(() => {
             this.onLoad();
