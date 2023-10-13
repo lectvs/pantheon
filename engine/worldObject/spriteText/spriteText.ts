@@ -245,11 +245,11 @@ class SpriteText extends WorldObject {
     }
 
     getTextWidth() {
-        return SpriteText.getBoundsOfCharList(this.getCharList(), this.visibleCharCount).width * this.scaleX;
+        return SpriteText.getBoundsOfCharList(this.getCharList()).width * this.scaleX;
     }
 
     getTextHeight() {
-        return SpriteText.getBoundsOfCharList(this.getCharList(), this.visibleCharCount).height * this.scaleY;
+        return SpriteText.getBoundsOfCharList(this.getCharList()).height * this.scaleY;
     }
 
     getTextWorldBounds() {
@@ -397,14 +397,18 @@ namespace SpriteText {
         };
     }
 
-    export function getBoundsOfCharList(list: SpriteText.Character[], charCount?: number) {
+    export function getBoundsOfCharList(list: SpriteText.Character[]) {
+        return getVisibleBoundsOfCharList(list, Infinity);
+    }
+
+    export function getVisibleBoundsOfCharList(list: SpriteText.Character[], charsVisible: number) {
         if (A.isEmpty(list)) return new Rectangle(0, 0, 0, 0);
-        charCount = Math.min(charCount ?? list.length, list.length);
+        charsVisible = Math.min(charsVisible, list.length);
 
         let left = M.min(list, char => char.left);
         let right = M.max(list, char => char.right);
         let top = M.min(list, char => char.top);
-        let bottom = M.min(list, char => char.bottom);
+        let bottom = M.max(list, char => char.bottom);
 
         return new Rectangle(left, top, right-left, bottom-top);
     }

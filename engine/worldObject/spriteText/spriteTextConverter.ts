@@ -6,12 +6,9 @@ namespace SpriteTextConverter {
     export function textToCharListWithWordWrap(text: string, font: SpriteText.Font, maxWidth: number) {
         if (!text) return [];
 
-        let startX = font.charWidth/2;
-        let startY = font.charHeight/2;
-
         let result: SpriteText.Character[][] = [[]];
         let word: SpriteText.Character[] = [];
-        let nextCharPosition: Vector2 = new Vector2(startX, startY);
+        let nextCharPosition: Vector2 = new Vector2(0, 0);
         let tagStack: SpriteText.TagData[] = [];
         let current: CurrentData =  { part: 0 };
 
@@ -21,11 +18,11 @@ namespace SpriteTextConverter {
                 nextCharPosition.x += font.spaceWidth;
             } else if (text[i] === '\n') {
                 pushWord(word, result, nextCharPosition, font, maxWidth, current);
-                nextCharPosition.x = startX;
+                nextCharPosition.x = 0;
                 nextCharPosition.y += getNewLineHeightDiff(nextCharPosition.y, SpriteText.getBoundsOfCharList(result.flat()), font.newlineHeight);
                 result.push([]);
             } else if (text[i] === '[') {
-                let closingBracketIndex = text.indexOf(']', i); 
+                let closingBracketIndex = text.indexOf(']', i);
                 if (closingBracketIndex < i+1) {
                     console.error(`Text '${text}' has an unclosed tag bracket.`);
                     continue;

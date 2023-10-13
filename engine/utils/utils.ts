@@ -10,6 +10,10 @@ function requireType<T>(param: T) {
     return param;
 }
 
+function assertUnreachable(c: never) {
+    console.error("Unreachable code reached!");
+}
+
 function async(fn: Function) {
     setTimeout(fn, 1);
 }
