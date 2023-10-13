@@ -22,7 +22,7 @@ type Rect = {
     height: number;
 }
 
-type Boundaries = {
+type Bndries = {
     top: number;
     bottom: number;
     left: number;

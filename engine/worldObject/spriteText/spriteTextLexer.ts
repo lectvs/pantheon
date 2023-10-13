@@ -14,6 +14,7 @@ namespace SpriteTextLexer {
         name: string;
         isCustom: boolean;
         tagData: SpriteText.TagData[];
+        part: number;
     }
 
     export function lex(tokens: SpriteTextTokenizer.Token[], wordWrap: boolean) {
@@ -70,10 +71,12 @@ namespace SpriteTextLexer {
     function hydrateTagData(tokens: SpriteTextTokenizer.Token[]) {
         let lexemes: Lexeme[] = [];
         let tagData: SpriteText.TagData[] = [];
+        let currentPart = 0;
 
         for (let token of tokens) {
             if (token.type === 'starttag') {
                 tagData.push({ tag: token.tag, params: token.params });
+                currentPart++;
                 continue;
             }
 
@@ -83,6 +86,7 @@ namespace SpriteTextLexer {
                     continue;
                 }
                 tagData.pop();
+                currentPart++;
                 continue;
             }
 
@@ -93,6 +97,7 @@ namespace SpriteTextLexer {
 
             if (token.type === 'newline') {
                 lexemes.push({ type: 'newline', count: 1 });
+                currentPart++;
                 continue;
             }
 
@@ -101,6 +106,7 @@ namespace SpriteTextLexer {
                     name: token.name,
                     isCustom: token.type === 'customchar',
                     tagData: A.clone(tagData),
+                    part: currentPart,
                 }]});
                 continue;
             }

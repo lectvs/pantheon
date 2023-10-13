@@ -71,6 +71,19 @@ namespace G {
         return A.range(n).map(i => vec2(cx + r*M.cos(angle + 360/n*(i+0.5)), cy + r*M.sin(angle + 360/n*(i+0.5))));
     }
 
+    export function getEncompassingBoundaries(boundaries: Bndries[]): Boundaries {
+        let left = M.min(boundaries, char => char.left);
+        let right = M.max(boundaries, char => char.right);
+        let top = M.min(boundaries, char => char.top);
+        let bottom = M.max(boundaries, char => char.bottom);
+        return new Boundaries(
+            isFinite(left) ? left : -Infinity,
+            isFinite(right) ? right : Infinity,
+            isFinite(top) ? top : -Infinity,
+            isFinite(bottom) ? bottom : Infinity,
+        );
+    }
+
     export function getRectangleOverlap(rect1: Rect, rect2: Rect) {
         let x = Math.max(rect1.x, rect2.x);
         let w = Math.min(rect1.x + rect1.width, rect2.x + rect2.width) - x;

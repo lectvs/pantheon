@@ -805,12 +805,7 @@ namespace World {
         export function balanceWorldObjects(objs: ReadonlyArray<WorldObject>, aroundX: number, aroundY: number, anchor: Vector2 = Anchor.CENTER, deep: boolean = false) {
             if (A.isEmpty(objs)) return undefined;
 
-            let bounds: Boundaries = {
-                left: objs[0].x,
-                right: objs[0].x,
-                top: objs[0].y,
-                bottom: objs[0].y,
-            };
+            let bounds = new Boundaries(objs[0].x, objs[0].x, objs[0].y, objs[0].y);
 
             for (let obj of objs) {
                 expandWorldObjectBounds(bounds, obj, deep);

@@ -2,7 +2,6 @@ TODO
 - improve spritetext
     - better performance on large spritetexts
     - specify spritetext typing speed as a tag?
-    - fix initial spaces not counting toward alignment?
     - support rainbow text
 - script revamp
     - yield multiple comma-separated values, yield number to wait
@@ -47,6 +46,7 @@ TODO
 - full nodejs setup
 - template for new games
 - documentation and API cleanup
+- rename repo
 - games do not work on Opera mobile browser (AAC audio encoding?)
 - camera zoom/rotate?
 - vs code tasks?

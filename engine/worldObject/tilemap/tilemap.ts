@@ -258,7 +258,7 @@ namespace Tilemap {
                     if (!zTextureSlots[zValue]) zTextureSlots[zValue] = {
                         frames: [],
                         bounds: { x: 0, y: 0, width: 0, height: 0 },
-                        tileBounds: { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity },
+                        tileBounds: new Boundaries(Infinity, -Infinity, Infinity, -Infinity),
                         zHeight: -Infinity,
                     };
                     if (x < zTextureSlots[zValue].tileBounds.left) zTextureSlots[zValue].tileBounds.left = x;

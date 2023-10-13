@@ -2,7 +2,7 @@ namespace SpriteTextParser {
     export function parse(props: { lexemes: SpriteTextLexer.Lexeme[], font: SpriteText.Font, maxWidth: number, fixedCharSize: boolean }) {
         let { lexemes, font, maxWidth, fixedCharSize } = props;
 
-        let result: Character[] = [];
+        let result: Character[][] = [];
         let currentLine: Character[] = [];
         let currentExtraNewlineCount = 0;
         let currentRight = () => A.isEmpty(currentLine) ? 0 : M.max(currentLine, char => char.right);
@@ -10,8 +10,8 @@ namespace SpriteTextParser {
         for (let lexeme of lexemes) {
             if (lexeme.type === 'space') {
                 let space = Character.SPACE(font.spaceWidth * lexeme.count, font.charHeight);
-                space.x = currentRight();
-                result.push(space);
+                space.x = currentRight() - space.left;
+                currentLine.push(space);
                 continue;
             }
 
@@ -24,7 +24,7 @@ namespace SpriteTextParser {
 
             if (lexeme.type === 'word') {
                 let word = createWord(lexeme.chars, font, fixedCharSize);
-                if (currentRight() + (word.right - word.left) >= maxWidth) {
+                if (currentRight() + (word.right - word.left) > maxWidth) {
                     pushLine(result, currentLine);
                     currentLine = []
                     currentExtraNewlineCount = 0;
@@ -44,12 +44,14 @@ namespace SpriteTextParser {
             assertUnreachable(lexeme);
         }
 
+        pushLine(result, currentLine);
+
         return result;
     }
 
-    function pushLine(result: Character[], line: Character[]) {
+    function pushLine(result: Character[][], line: Character[]) {
         if (A.isEmpty(line)) return;
-        let resultBottom = A.isEmpty(result) ? 0 : M.max(result, char => char.bottom);
+        let resultBottom = A.isEmpty(result) ? 0 : M.max(result.last()!, char => char.bottom);
         let lineTop = M.min(line, char => char.top);
 
         let dy = resultBottom - lineTop;
@@ -57,7 +59,7 @@ namespace SpriteTextParser {
             char.y += dy;
         }
 
-        result.push(...line);
+        result.push(line);
     }
 
     function createWord(chars: SpriteTextLexer.Char[], font: SpriteText.Font, fixedCharSize: boolean) {
@@ -83,7 +85,7 @@ namespace SpriteTextParser {
         }
 
         let localBounds = fixedCharSize
-            ? new Rectangle(-font.charWidth/2, -font.charHeight/2, font.charWidth, font.charHeight)
+            ? new Rectangle(0, 0, font.charWidth, font.charHeight)
             : texture.getLocalBounds({});
 
         return new Character({
@@ -91,6 +93,7 @@ namespace SpriteTextParser {
             texture: texture,
             localBounds: localBounds,
             tagData: A.clone(char.tagData),
+            part: char.part,
         });
     }
 
@@ -99,16 +102,18 @@ namespace SpriteTextParser {
         y: number;
         name: string;
         texture: Texture | undefined;
-        tagData: SpriteText.TagData[];
         localBounds: Rectangle;
+        tagData: SpriteText.TagData[];
+        part: number;
 
-        constructor(props: { name: string, texture: Texture | undefined, localBounds: Rectangle, tagData: SpriteText.TagData[] }) {
+        constructor(props: { name: string, texture: Texture | undefined, localBounds: Rectangle, tagData: SpriteText.TagData[], part: number }) {
             this.x = 0;
             this.y = 0;
             this.name = props.name;
             this.texture = props.texture;
             this.localBounds = props.localBounds;
             this.tagData = props.tagData;
+            this.part = props.part;
         }
 
         get left() {
@@ -131,8 +136,9 @@ namespace SpriteTextParser {
             return new Character({
                 name: ' ',
                 texture: undefined,
-                localBounds: new Rectangle(-width/2, -height/2, width, height),
+                localBounds: new Rectangle(0, 0, width, height),
                 tagData: [],
+                part: -1,
             });
         }
     }

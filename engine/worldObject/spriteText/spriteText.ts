@@ -14,6 +14,8 @@ namespace SpriteText {
         angle?: number;
         angleOffset?: number;
         maxWidth?: number;
+        wordWrap?: boolean;
+        fixedCharSize?: boolean;
         style?: Style;
         tint?: number;
         alpha?: number;
@@ -57,7 +59,7 @@ class SpriteText extends WorldObject {
     protected font: SpriteText.Font;
     private _fontKey: string;
     get fontKey() { return this._fontKey; }
-    private chars!: SpriteText.Character[][];
+    private chars!: SpriteTextParser.Character[][];
 
     private _style: Required<SpriteText.Style>;
     get style() { return this._style; }
@@ -74,6 +76,22 @@ class SpriteText extends WorldObject {
     set maxWidth(value: number) {
         if (this._maxWidth === value) return;
         this._maxWidth = value;
+        this.dirty = true;
+    }
+
+    private _wordWrap: boolean;
+    get wordWrap() { return this._wordWrap; }
+    set wordWrap(value: boolean) {
+        if (this._wordWrap === value) return;
+        this._wordWrap = value;
+        this.dirty = true;
+    }
+
+    private _fixedCharSize: boolean;
+    get fixedCharSize() { return this._fixedCharSize; }
+    set fixedCharSize(value: boolean) {
+        if (this._fixedCharSize === value) return;
+        this._fixedCharSize = value;
         this.dirty = true;
     }
 
@@ -134,6 +152,8 @@ class SpriteText extends WorldObject {
 
         this._visibleCharCount = Infinity;
         this._maxWidth = config.maxWidth ?? Infinity;
+        this._wordWrap = config.wordWrap ?? true;
+        this._fixedCharSize = config.fixedCharSize ?? false;
         this._justify = config.justify ?? 'left';
 
         this.anchor = config.anchor ?? Anchor.TOP_LEFT;
@@ -158,7 +178,7 @@ class SpriteText extends WorldObject {
 
     override onRemove(): void {
         super.onRemove();
-        SpriteTextConverter.returnStaticTextures(this.staticTextures);
+        SpriteTextRenderer.returnStaticTextures(this.staticTextures);
         this.staticTextures = undefined;
         this.dirty = true;
     }
@@ -207,21 +227,10 @@ class SpriteText extends WorldObject {
     renderSpriteText() {
         SpriteText.justify(this.chars, this.justify);
 
-        let chars = this.chars.flat();
-        let charCount = Math.min(this.visibleCharCount, chars.length);
+        let charCount = Math.min(this.visibleCharCount, A.sum(this.chars, line => line.length));
 
-        SpriteTextConverter.returnStaticTextures(this.staticTextures);
-        this.staticTextures = SpriteTextConverter.getStaticTexturesForCharList(chars, charCount);
-
-        for (let i = 0; i < charCount; i++) {
-            let char = chars[i];
-            let staticTextureData = this.staticTextures[char.part];
-
-            char.texture.renderTo(staticTextureData.texture, {
-                x: Math.floor(char.x - staticTextureData.x),
-                y: Math.floor(char.y - staticTextureData.y),
-            });
-        }
+        SpriteTextRenderer.returnStaticTextures(this.staticTextures);
+        this.staticTextures = SpriteTextRenderer.getRenderedStaticTextures(this.chars, charCount);
     }
 
     addText(text: string) {
@@ -284,7 +293,13 @@ class SpriteText extends WorldObject {
 
     setText(text: string) {
         if (text === this.currentText) return;
-        this.chars = SpriteTextConverter.textToCharListWithWordWrap(text, this.font, this.maxWidth);
+        this.chars = SpriteText.textToCharList({
+            text: text,
+            font: this.font,
+            maxWidth: this.maxWidth,
+            wordWrap: this.wordWrap,
+            fixedCharSize: this.fixedCharSize,
+        });
         this.currentText = text;
         this.dirty = true;
     }
@@ -338,45 +353,6 @@ class SpriteText extends WorldObject {
 }
 
 namespace SpriteText {
-    export class Character {
-        char: string;
-        x: number;
-        y: number;
-        texture: Texture;
-        part: number;
-        tagData: TagData[];
-
-        private textureLocalBounds: Rectangle;
-
-        constructor(props: { char: string, x: number, y: number, texture: Texture, part: number, tagData: TagData[] }) {
-            this.char = props.char;
-            this.x = props.x;
-            this.y = props.y;
-            
-            this.texture = props.texture;
-            this.part = props.part;
-            this.tagData = props.tagData;
-            
-            this.textureLocalBounds = this.texture.getLocalBounds({});
-        }
-
-        get left() {
-            return this.x + this.textureLocalBounds.left;
-        }
-
-        get right() {
-            return this.x + this.textureLocalBounds.right;
-        }
-
-        get top() {
-            return this.y + this.textureLocalBounds.top;
-        }
-
-        get bottom() {
-            return this.y + this.textureLocalBounds.bottom;
-        }
-    }
-
     export function addTags(tags: Dict<TagFunction>) {
         for (let key in tags) {
             if (key in SpriteText.TAGS) {
@@ -397,11 +373,11 @@ namespace SpriteText {
         };
     }
 
-    export function getBoundsOfCharList(list: SpriteText.Character[]) {
+    export function getBoundsOfCharList(list: SpriteTextParser.Character[]) {
         return getVisibleBoundsOfCharList(list, Infinity);
     }
 
-    export function getVisibleBoundsOfCharList(list: SpriteText.Character[], charsVisible: number) {
+    export function getVisibleBoundsOfCharList(list: SpriteTextParser.Character[], charsVisible: number) {
         if (A.isEmpty(list)) return new Rectangle(0, 0, 0, 0);
         charsVisible = Math.min(charsVisible, list.length);
 
@@ -413,7 +389,7 @@ namespace SpriteText {
         return new Rectangle(left, top, right-left, bottom-top);
     }
 
-    export function justify(lines: SpriteText.Character[][], justify: SpriteText.Justify) {
+    export function justify(lines: SpriteTextParser.Character[][], justify: SpriteText.Justify) {
         let maxWidth = SpriteText.getBoundsOfCharList(lines.flat()).width;
         for (let line of lines) {
             if (line.length === 0) continue;
@@ -431,6 +407,17 @@ namespace SpriteText {
         if (justify === 'left') return 0;
         if (justify === 'center') return 0.5;
         return 1;
+    }
+
+    export function textToCharList(props: { text: string, font: SpriteText.Font, maxWidth: number, wordWrap: boolean, fixedCharSize: boolean }) {
+        let { text, font, maxWidth, wordWrap, fixedCharSize } = props;
+        if (!text) return [];
+
+        let tokens = SpriteTextTokenizer.tokenize(text);
+        let lexemes = SpriteTextLexer.lex(tokens, wordWrap);
+        let result = SpriteTextParser.parse({ lexemes, font, maxWidth, fixedCharSize });
+
+        return result;
     }
 
     export const NOOP_TAG = 'noop';
