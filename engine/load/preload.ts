@@ -68,9 +68,8 @@ namespace Preload {
         url?: string;
         charWidth: number;
         charHeight: number;
-        spaceWidth: number;
-        newlineHeight: number;
-        customCharacters?: Dict<string>;
+        spaceWidth?: number;
+        newlineHeight?: number;
     }
 
     export type CustomResource = {

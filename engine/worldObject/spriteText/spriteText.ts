@@ -215,13 +215,11 @@ class SpriteText extends WorldObject {
 
         for (let i = 0; i < charCount; i++) {
             let char = chars[i];
-            let charTexture = AssetCache.getTexture(this.font.charTextures[char.char]);
-
             let staticTextureData = this.staticTextures[char.part];
 
-            charTexture.renderTo(staticTextureData.texture, {
-                x: char.x - staticTextureData.x,
-                y: char.y - staticTextureData.y,
+            char.texture.renderTo(staticTextureData.texture, {
+                x: Math.floor(char.x - staticTextureData.x),
+                y: Math.floor(char.y - staticTextureData.y),
             });
         }
     }
@@ -247,11 +245,11 @@ class SpriteText extends WorldObject {
     }
 
     getTextWidth() {
-        return SpriteText.getWidthOfCharList(this.getCharList(), this.visibleCharCount) * this.scaleX;
+        return SpriteText.getBoundsOfCharList(this.getCharList(), this.visibleCharCount).width * this.scaleX;
     }
 
     getTextHeight() {
-        return SpriteText.getHeightOfCharList(this.getCharList(), this.visibleCharCount) * this.scaleY;
+        return SpriteText.getBoundsOfCharList(this.getCharList(), this.visibleCharCount).height * this.scaleY;
     }
 
     getTextWorldBounds() {
@@ -344,35 +342,38 @@ namespace SpriteText {
         char: string;
         x: number;
         y: number;
-        width: number;
-        height: number;
+        texture: Texture;
         part: number;
         tagData: TagData[];
 
-        constructor(props: { char: string, x: number, y: number, width: number, height: number, part: number, tagData: TagData[] }) {
+        private textureLocalBounds: Rectangle;
+
+        constructor(props: { char: string, x: number, y: number, texture: Texture, part: number, tagData: TagData[] }) {
             this.char = props.char;
             this.x = props.x;
             this.y = props.y;
-            this.width = props.width;
-            this.height = props.height;
+            
+            this.texture = props.texture;
             this.part = props.part;
             this.tagData = props.tagData;
+            
+            this.textureLocalBounds = this.texture.getLocalBounds({});
         }
 
         get left() {
-            return Math.floor(this.x - this.width/2);
+            return this.x + this.textureLocalBounds.left;
         }
 
         get right() {
-            return Math.floor(this.x + this.width/2);
+            return this.x + this.textureLocalBounds.right;
         }
 
         get top() {
-            return Math.floor(this.y - this.height/2);
+            return this.y + this.textureLocalBounds.top;
         }
 
         get bottom() {
-            return Math.floor(this.y + this.height/2);
+            return this.y + this.textureLocalBounds.bottom;
         }
     }
 
@@ -396,33 +397,23 @@ namespace SpriteText {
         };
     }
 
-    export function getWidthOfCharList(list: SpriteText.Character[], charCount?: number) {
-        if (A.isEmpty(list)) return 0;
+    export function getBoundsOfCharList(list: SpriteText.Character[], charCount?: number) {
+        if (A.isEmpty(list)) return new Rectangle(0, 0, 0, 0);
         charCount = Math.min(charCount ?? list.length, list.length);
 
-        let min = M.min(list, char => char.left);
-        let max = M.max(list, char => char.right);
+        let left = M.min(list, char => char.left);
+        let right = M.max(list, char => char.right);
+        let top = M.min(list, char => char.top);
+        let bottom = M.min(list, char => char.bottom);
 
-        return max - min;
-    }
-
-    export function getHeightOfCharList(list: SpriteText.Character[], charCount?: number) {
-        if (A.isEmpty(list)) return 0;
-        charCount = Math.min(charCount ?? list.length, list.length);
-
-        let result = 0;
-        for (let i = 0; i < charCount; i++) {
-            if (list[i].bottom > result) result = list[i].bottom;
-        }
-
-        return result;
+        return new Rectangle(left, top, right-left, bottom-top);
     }
 
     export function justify(lines: SpriteText.Character[][], justify: SpriteText.Justify) {
-        let maxWidth = SpriteText.getWidthOfCharList(lines.flat());
+        let maxWidth = SpriteText.getBoundsOfCharList(lines.flat()).width;
         for (let line of lines) {
             if (line.length === 0) continue;
-            let lineWidth = SpriteText.getWidthOfCharList(line);
+            let lineWidth = SpriteText.getBoundsOfCharList(line).width;
             let lineLeft = (maxWidth - lineWidth) * justifyToX(justify);
             let minLeft = M.min(line, char => char.left);
             let dx = lineLeft - minLeft;

@@ -21,7 +21,7 @@ class EmptyTexture implements Texture {
     free() { }
 
     getLocalBounds(properties: Texture.Properties) {
-        return rect(0, 0, 0, 0);
+        return new Rectangle(0, 0, 0, 0);
     }
 
     getPixelAbsoluteARGB(x: number, y: number, extendMode: Texture.ExtendMode = 'transparent') {

@@ -66,7 +66,7 @@ class BasicTexture implements Texture {
         let height = this.height * scaleY;
 
         if (angle === 0) {
-            return rect(0, 0, width, height);
+            return new Rectangle(0, 0, width, height);
         }
 
         let v1x = 0;
@@ -83,12 +83,7 @@ class BasicTexture implements Texture {
         let miny = Math.min(v1y, v2y, v3y, v4y);
         let maxy = Math.max(v1y, v2y, v3y, v4y);
 
-        return <Rect>{
-            x: minx,
-            y: miny,
-            width: maxx - minx,
-            height: maxy - miny,
-        };
+        return new Rectangle(minx, miny, maxx - minx, maxy - miny);
     }
 
     getPixelAbsoluteARGB(x: number, y: number, extendMode: Texture.ExtendMode = 'transparent') {

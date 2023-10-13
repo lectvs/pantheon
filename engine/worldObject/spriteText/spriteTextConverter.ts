@@ -6,8 +6,8 @@ namespace SpriteTextConverter {
     export function textToCharListWithWordWrap(text: string, font: SpriteText.Font, maxWidth: number) {
         if (!text) return [];
 
-        let startX = Math.floor(font.charWidth/2);
-        let startY = Math.floor(font.charHeight/2);
+        let startX = font.charWidth/2;
+        let startY = font.charHeight/2;
 
         let result: SpriteText.Character[][] = [[]];
         let word: SpriteText.Character[] = [];
@@ -22,7 +22,7 @@ namespace SpriteTextConverter {
             } else if (text[i] === '\n') {
                 pushWord(word, result, nextCharPosition, font, maxWidth, current);
                 nextCharPosition.x = startX;
-                nextCharPosition.y += getNewLineHeightDiff(nextCharPosition.y, SpriteText.getHeightOfCharList(result.flat()), font.newlineHeight);
+                nextCharPosition.y += getNewLineHeightDiff(nextCharPosition.y, SpriteText.getBoundsOfCharList(result.flat()), font.newlineHeight);
                 result.push([]);
             } else if (text[i] === '[') {
                 let closingBracketIndex = text.indexOf(']', i); 
@@ -52,13 +52,13 @@ namespace SpriteTextConverter {
 
                 let char = createCharacter(font, text.substring(i+1, closingBracketIndex), nextCharPosition.x, nextCharPosition.y, current.part, tagStack);
                 word.push(char);
-                nextCharPosition.x += char.width;
+                nextCharPosition.x += font.charWidth;
                 i = closingBracketIndex;
             } else {
                 if (text[i] === '\\' && i < text.length-1) i++;
                 let char = createCharacter(font, text[i], nextCharPosition.x, nextCharPosition.y, current.part, tagStack);
                 word.push(char);
-                nextCharPosition.x += char.width;
+                nextCharPosition.x += font.charWidth;
             }
         }
 
@@ -68,27 +68,27 @@ namespace SpriteTextConverter {
     }
 
     function createCharacter(font: SpriteText.Font, char: string, x: number, y: number, part: number, tagData: SpriteText.TagData[]) {
-        let charWidth: number;
-        let charHeight: number;
-
         if (char === ' ') {
-            charWidth = font.spaceWidth;
-            charHeight = font.charHeight;
-        } else {
-            let charTexture = AssetCache.getTexture(font.charTextures[char]);
-            if (!font.charTextures[char] || !charTexture) {
-                console.error(`Font does not have character '${char}':`, font);
-                char = 'missing';
-                charTexture = AssetCache.getTexture(font.charTextures[char]);
-            }
-            charWidth = charTexture.width;
-            charHeight = charTexture.height;
+            return new SpriteText.Character({
+                char, x, y,
+                texture: Texture.filledRect(font.spaceWidth, font.charHeight, 0xFFFFFF, 0),
+                part,
+                tagData: A.clone(tagData),
+            });
         }
+
+        let charTextureKey = char.length === 1 ? font.charTextures[char] : char;
         
+        let charTexture = AssetCache.getTexture(charTextureKey);
+        if (!charTexture) {
+            console.error('No texture found for character:', charTextureKey);
+            char = 'missing';
+            charTexture = AssetCache.getTexture(font.charTextures['missing']);
+        }
+
         return new SpriteText.Character({
             char, x, y,
-            width: charWidth,
-            height: charHeight,
+            texture: charTexture,
             part,
             tagData: A.clone(tagData),
         });
@@ -109,7 +109,7 @@ namespace SpriteTextConverter {
         let lastChar = word.last()!;
         if (maxWidth > 0 && lastChar.right > maxWidth) {
             let diffx = -word[0].x;
-            let diffy = getNewLineHeightDiff(word[0].y, SpriteText.getHeightOfCharList(resultLines.flat()), font.newlineHeight);
+            let diffy = getNewLineHeightDiff(word[0].y, SpriteText.getBoundsOfCharList(resultLines.flat()), font.newlineHeight);
             for (let char of word) {
                 char.x += diffx;
                 char.y += diffy;
@@ -126,8 +126,8 @@ namespace SpriteTextConverter {
         }
     }
 
-    function getNewLineHeightDiff(lastLineY: number, heightOfCharList: number, fontNewLineHeight: number) {
-        return Math.max(heightOfCharList - lastLineY, fontNewLineHeight);
+    function getNewLineHeightDiff(lastLineY: number, boundsOfCharList: Rectangle, fontNewLineHeight: number) {
+        return Math.max(boundsOfCharList.bottom - lastLineY, fontNewLineHeight);
     }
 
     export function getStaticTexturesForCharList(chars: SpriteText.Character[], visibleChars: number) {
@@ -149,11 +149,11 @@ namespace SpriteTextConverter {
         let textures: Dict<SpriteText.StaticTextureData> = {};
 
         for (let part in bounds) {
-            let texture = cache_staticTextures.borrow(bounds[part].right - bounds[part].left, bounds[part].bottom - bounds[part].top);
+            let texture = cache_staticTextures.borrow(Math.ceil(bounds[part].right - bounds[part].left), Math.ceil(bounds[part].bottom - bounds[part].top));
             texture.clear();
             textures[part] = {
-                x: bounds[part].left,
-                y: bounds[part].top,
+                x: Math.floor(bounds[part].left),
+                y: Math.floor(bounds[part].top),
                 texture: texture,
                 tagData: partToTagData[part],
             };

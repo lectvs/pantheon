@@ -2,7 +2,6 @@ TODO
 - improve spritetext
     - better performance on large spritetexts
     - specify spritetext typing speed as a tag?
-    - custom font characters -> general textures instead?
     - calculate text width/height while not all chars visible
     - fix initial spaces not counting toward alignment?
     - support rainbow text

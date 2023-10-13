@@ -54,18 +54,12 @@ class FontLoader implements Loader {
             }
         }
 
-        if (this.font.customCharacters) {
-            for (let char in this.font.customCharacters) {
-                charTextures[char] = this.font.customCharacters[char];
-            }
-        }
-
         AssetCache.fonts[this.key] = {
             charTextures: charTextures,
             charWidth: this.font.charWidth,
             charHeight: this.font.charHeight,
-            spaceWidth: this.font.spaceWidth,
-            newlineHeight: this.font.newlineHeight
+            spaceWidth: this.font.spaceWidth ?? this.font.charWidth,
+            newlineHeight: this.font.newlineHeight ?? this.font.charHeight,
         };
     }
 
