@@ -1,6 +1,6 @@
 namespace Script {
-    export type Function = () => IterableIterator<FunctionInner | undefined>;
-    type FunctionInner = Script.Function | (() => IterableIterator<FunctionInner>)[] | undefined;
+    export type Function = () => IterableIterator<FunctionInner | number | undefined>;
+    type FunctionInner = Script.Function | Script.Function[] | undefined;
 }
 
 class Script {
@@ -64,8 +64,10 @@ class Script {
             while (true) {
                 let result = iterator.next();
                 if (result.value) {
-                    if (Array.isArray(result.value)) {
-                        result.value = S.simul(...result.value.map(scr => s.buildIterator(scr)));
+                    if (M.isNumber(result.value)) {
+                        result.value = S.wait(result.value);
+                    } else if (Array.isArray(result.value)) {
+                        result.value = S.simul(...result.value.map(scr => M.isNumber(scr) ? S.wait(scr) : s.buildIterator(scr)));
                     }
                     let script = new Script(result.value);
                     while (!script.done) {
