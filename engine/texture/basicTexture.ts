@@ -59,6 +59,8 @@ class BasicTexture implements Texture {
     }
 
     getLocalBounds(properties: Texture.Properties) {
+        let x = properties.x ?? 0;
+        let y = properties.y ?? 0;
         let scaleX = properties.scaleX ?? 1;
         let scaleY = properties.scaleY ?? 1;
         let angle = properties.angle ?? 0;
@@ -66,7 +68,7 @@ class BasicTexture implements Texture {
         let height = this.height * scaleY;
 
         if (angle === 0) {
-            return new Rectangle(0, 0, width, height);
+            return new Rectangle(x, y, width, height);
         }
 
         let v1x = 0;
@@ -83,7 +85,7 @@ class BasicTexture implements Texture {
         let miny = Math.min(v1y, v2y, v3y, v4y);
         let maxy = Math.max(v1y, v2y, v3y, v4y);
 
-        return new Rectangle(minx, miny, maxx - minx, maxy - miny);
+        return new Rectangle(x + minx, y + miny, maxx - minx, maxy - miny);
     }
 
     getPixelAbsoluteARGB(x: number, y: number, extendMode: Texture.ExtendMode = 'transparent') {

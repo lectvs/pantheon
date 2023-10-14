@@ -11,8 +11,6 @@ namespace SpriteText {
         scale?: number;
         scaleX?: number;
         scaleY?: number;
-        angle?: number;
-        angleOffset?: number;
         maxWidth?: number;
         wordWrap?: boolean;
         fixedCharSize?: boolean;
@@ -76,7 +74,7 @@ class SpriteText extends WorldObject {
     set maxWidth(value: number) {
         if (this._maxWidth === value) return;
         this._maxWidth = value;
-        this.dirty = true;
+        this.markDirty();
     }
 
     private _wordWrap: boolean;
@@ -84,7 +82,7 @@ class SpriteText extends WorldObject {
     set wordWrap(value: boolean) {
         if (this._wordWrap === value) return;
         this._wordWrap = value;
-        this.dirty = true;
+        this.markDirty();
     }
 
     private _fixedCharSize: boolean;
@@ -92,21 +90,21 @@ class SpriteText extends WorldObject {
     set fixedCharSize(value: boolean) {
         if (this._fixedCharSize === value) return;
         this._fixedCharSize = value;
-        this.dirty = true;
+        this.markDirty();
     }
 
     private _visibleCharCount: number;
     get visibleCharCount() { return this._visibleCharCount; }
     set visibleCharCount(value: number) {
         this._visibleCharCount = value;
-        this.dirty = true;
+        this.markDirty();
     }
 
     private _justify: SpriteText.Justify;
     get justify() { return this._justify; }
     set justify(value: SpriteText.Justify) {
         this._justify = value;
-        this.dirty = true;
+        this.markDirty();
     }
 
     anchor: Vector2;
@@ -115,8 +113,6 @@ class SpriteText extends WorldObject {
     alpha: number;
     flipX: boolean;
     flipY: boolean;
-    angle: number;
-    angleOffset: number;
 
     scaleX: number;
     scaleY: number;
@@ -132,9 +128,8 @@ class SpriteText extends WorldObject {
     effects: Effects;
     mask?: Mask.WorldObjectMaskConfig;
 
-    private staticTextures?: Dict<SpriteText.StaticTextureData>;
+    private renderSystem?: SpriteTextRenderSystem;
     private currentText!: string;
-    private dirty: boolean;
 
     constructor(config: SpriteText.Config<SpriteText>) {
         super(config);
@@ -164,8 +159,6 @@ class SpriteText extends WorldObject {
         this.flipY = config.flipY ?? false;
         this.scaleX = config.scaleX ?? (config.scale ?? 1);
         this.scaleY = config.scaleY ?? (config.scale ?? 1);
-        this.angle = config.angle ?? 0;
-        this.angleOffset = config.angleOffset ?? 0;
 
         this.effects = new Effects();
         this.effects.updateFromConfig(config.effects);
@@ -173,14 +166,12 @@ class SpriteText extends WorldObject {
         this.mask = config.mask;
 
         this.setText(config.text ?? "");
-        this.dirty = true;
+        this.markDirty();
     }
 
     override onRemove(): void {
         super.onRemove();
-        SpriteTextRenderer.returnStaticTextures(this.staticTextures);
-        this.staticTextures = undefined;
-        this.dirty = true;
+        this.markDirty();
     }
 
     override update() {
@@ -197,40 +188,19 @@ class SpriteText extends WorldObject {
     }
 
     override render(texture: Texture, x: number, y: number) {
-        if (this.dirty) {
+        if (!this.renderSystem) {
             this.renderSpriteText();
-            this.dirty = false;
         }
 
-        let anchorOffsetX = Math.round(-this.anchor.x * this.getTextWidth());
-        let anchorOffsetY = Math.round(-this.anchor.y * this.getTextHeight());
-
-        for (let key in this.staticTextures) {
-            let data = this.staticTextures[key];
-            let style = this.getStyleFromTags(data.tagData, this.style);
-            data.texture.renderTo(texture, {
-                x: x + anchorOffsetX + (data.x + style.offsetX) * (this.flipX ? -1 : 1) * this.scaleX,
-                y: y + anchorOffsetY + (data.y + style.offsetY) * (this.flipY ? -1 : 1) * this.scaleY,
-                tint: Color.tint(style.color, this.tint),
-                alpha: style.alpha * this.alpha,
-                scaleX: (this.flipX ? -1 : 1) * this.scaleX,
-                scaleY: (this.flipY ? -1 : 1) * this.scaleY,
-                angle: this.angle + this.angleOffset,
-                filters: [...style.filters, ...this.effects.getFilterList()],
-                mask: Mask.getTextureMaskForWorldObject(this.mask, this, x, y),
-            });
-        }
+        this.renderSystem!.render(texture, x, y, this);
 
         super.render(texture, x, y);
     }
 
-    renderSpriteText() {
+    private renderSpriteText() {
         SpriteText.justify(this.chars, this.justify);
-
-        let charCount = Math.min(this.visibleCharCount, A.sum(this.chars, line => line.length));
-
-        SpriteTextRenderer.returnStaticTextures(this.staticTextures);
-        this.staticTextures = SpriteTextRenderer.getRenderedStaticTextures(this.chars, charCount);
+        this.renderSystem?.free();
+        this.renderSystem = SpriteTextRenderer.getRenderSystem(this.getVisibleCharList());
     }
 
     addText(text: string) {
@@ -247,6 +217,11 @@ class SpriteText extends WorldObject {
 
     getCharList() {
         return this.chars.flat();
+    }
+
+    getVisibleCharList(visibleCharCount: number = this.visibleCharCount) {
+        let chars = this.chars.flat();
+        return chars.slice(0, Math.min(visibleCharCount, chars.length));
     }
 
     getCurrentText() {
@@ -279,6 +254,11 @@ class SpriteText extends WorldObject {
         return bounds;
     }
 
+    markDirty() {
+        this.renderSystem?.free();
+        this.renderSystem = undefined;
+    }
+
     setFont(fontKey: string) {
         if (fontKey === this.fontKey) return;
         let font = AssetCache.getFont(fontKey);
@@ -288,7 +268,7 @@ class SpriteText extends WorldObject {
         }
         this.font = font;
         this._fontKey = fontKey;
-        this.dirty = true;
+        this.markDirty();
     }
 
     setText(text: string) {
@@ -301,7 +281,7 @@ class SpriteText extends WorldObject {
             fixedCharSize: this.fixedCharSize,
         });
         this.currentText = text;
-        this.dirty = true;
+        this.markDirty();
     }
 
     // May still need work
@@ -374,12 +354,7 @@ namespace SpriteText {
     }
 
     export function getBoundsOfCharList(list: SpriteTextParser.Character[]) {
-        return getVisibleBoundsOfCharList(list, Infinity);
-    }
-
-    export function getVisibleBoundsOfCharList(list: SpriteTextParser.Character[], charsVisible: number) {
         if (A.isEmpty(list)) return new Rectangle(0, 0, 0, 0);
-        charsVisible = Math.min(charsVisible, list.length);
 
         let left = M.min(list, char => char.left);
         let right = M.max(list, char => char.right);

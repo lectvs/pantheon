@@ -228,7 +228,7 @@ class DialogBox extends Sprite {
 
     private isPageComplete() {
         if (this.isDialogComplete()) return true;
-        let nextHeight = SpriteText.getVisibleBoundsOfCharList(this.spriteText.getCharList(), this.spriteText.visibleCharCount + 1).height;
+        let nextHeight = SpriteText.getBoundsOfCharList(this.spriteText.getVisibleCharList(this.spriteText.visibleCharCount+1)).height;
         return nextHeight > this.textArea.height + this.spriteTextOffset;
     }
 

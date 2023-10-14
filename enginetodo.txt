@@ -1,8 +1,6 @@
 TODO
 - improve spritetext
-    - better performance on large spritetexts
-    - specify spritetext typing speed as a tag?
-    - support rainbow text
+    - proper spritetext rotation
 - script revamp
     - yield multiple comma-separated values, yield number to wait
 - carry data on statemachine
