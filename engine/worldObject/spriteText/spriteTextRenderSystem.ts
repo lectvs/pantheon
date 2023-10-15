@@ -4,7 +4,7 @@ namespace SpriteTextRenderSystem {
         y: number;
         characters: SpriteTextParser.Character[];
         tagData: SpriteText.TagData[];
-        texture: Texture;
+        texture: AnchoredTexture;
         rendered: boolean;
     }
 }
@@ -17,23 +17,25 @@ class SpriteTextRenderSystem {
     }
 
     render(screen: Texture, x: number, y: number, spriteText: SpriteText) {
-        let anchorOffsetX = Math.round(-spriteText.anchor.x * spriteText.getTextWidth());
-        let anchorOffsetY = Math.round(-spriteText.anchor.y * spriteText.getTextHeight());
+        let textBounds = SpriteText.getBoundsOfCharList(spriteText.getCharList());
 
         for (let part in this.parts) {
             let data = this.parts[part];
-            let style = SpriteTextRenderSystem.getStyleFromTags(data.tagData, spriteText.style);
+            let style = spriteText.getStyleFromTags(data.tagData, spriteText.style);
 
-            let renderX = x + anchorOffsetX + (data.x + style.offsetX) * (spriteText.flipX ? -1 : 1) * spriteText.scaleX;
-            let renderY = y + anchorOffsetY + (data.y + style.offsetY) * (spriteText.flipY ? -1 : 1) * spriteText.scaleY;
+            data.texture.anchorX = -(data.x + style.offsetX - spriteText.anchor.x * textBounds.width) / data.texture.width;
+            data.texture.anchorY = -(data.y + style.offsetY - spriteText.anchor.y * textBounds.height) / data.texture.height;
+
             let scaleX = (spriteText.flipX ? -1 : 1) * spriteText.scaleX;
             let scaleY = (spriteText.flipY ? -1 : 1) * spriteText.scaleY;
+            let angle = spriteText.angle;
 
             let textureLocalBounds = data.texture.getLocalBounds({
-                x: renderX,
-                y: renderY,
+                x: x,
+                y: y,
                 scaleX: scaleX,
                 scaleY: scaleY,
+                angle: angle,
             });
 
             let screenBounds = new Rectangle(0, 0, screen.width, screen.height);
@@ -45,12 +47,13 @@ class SpriteTextRenderSystem {
             }
 
             data.texture.renderTo(screen, {
-                x: renderX,
-                y: renderY,
+                x: x,
+                y: y,
                 tint: Color.tint(style.color, spriteText.tint),
                 alpha: style.alpha * spriteText.alpha,
                 scaleX: scaleX,
                 scaleY: scaleY,
+                angle: angle,
                 filters: [...style.filters, ...spriteText.effects.getFilterList()],
                 mask: Mask.getTextureMaskForWorldObject(spriteText.mask, spriteText, x, y),
             });
@@ -61,6 +64,28 @@ class SpriteTextRenderSystem {
         for (let part in this.parts) {
             SpriteTextRenderSystem.freePart(this.parts[part]);
         }
+    }
+
+    getSpriteTextLocalBounds(spriteText: SpriteText) {
+        let textBounds = SpriteText.getBoundsOfCharList(spriteText.getCharList());
+
+        return G.getEncompassingBoundaries(Object.keys(this.parts).map(part => {
+            let data = this.parts[part];
+            let style = spriteText.getStyleFromTags(data.tagData, spriteText.style);
+
+            data.texture.anchorX = -(data.x + style.offsetX - spriteText.anchor.x * textBounds.width) / data.texture.width;
+            data.texture.anchorY = -(data.y + style.offsetY - spriteText.anchor.y * textBounds.height) / data.texture.height;
+
+            let scaleX = (spriteText.flipX ? -1 : 1) * spriteText.scaleX;
+            let scaleY = (spriteText.flipY ? -1 : 1) * spriteText.scaleY;
+            let angle = spriteText.angle;
+
+            return data.texture.getLocalBounds({
+                scaleX: scaleX,
+                scaleY: scaleY,
+                angle: angle,
+            });
+        }));
     }
 }
 
@@ -106,39 +131,7 @@ namespace SpriteTextRenderSystem {
         cache_staticTextures.return(part.texture.width, part.texture.height, part.texture);
     }
 
-    const cache_staticTextures = new DualKeyPool<number, number, Texture>((w, h) => {
-        return new BasicTexture(w, h, 'SpriteText.getStaticTexturesForCharList', false)
+    const cache_staticTextures = new DualKeyPool<number, number, AnchoredTexture>((w, h) => {
+        return new AnchoredTexture(new BasicTexture(w, h, 'SpriteText.getStaticTexturesForCharList', false), 0, 0)
     }, (w, h) => `${w},${h}`);
-
-    export function getStyleFromTags(tagData: SpriteText.TagData[], defaults: Required<SpriteText.Style>) {
-        let result: SpriteText.Style = { filters: [] };
-        for (let data of tagData) {
-            let style = getTagStyle(data.tag, data.params);
-            if (style.color !== undefined) result.color = style.color;
-            if (style.alpha !== undefined) result.alpha = style.alpha;
-            if (style.offsetX !== undefined) result.offsetX = style.offsetX;
-            if (style.offsetY !== undefined) result.offsetY = style.offsetY;
-            if (!A.isEmpty(style.filters)) result.filters!.push(...style.filters);
-        }
-
-        return O.defaults(result, defaults);
-    }
-
-    function getTagStyle(name: string, params: string[]) {
-        let cacheKey = [name, ...params].join(' ');
-        if (cacheKey in tagCache) {
-            return tagCache[cacheKey];
-        }
-        let tag = SpriteText.TAGS[name];
-        if (!tag) {
-            console.error(`Tag not found: ${name}`);
-            tag = SpriteText.TAGS[SpriteText.NOOP_TAG];
-        }
-
-        let style = tag(params);
-        tagCache[cacheKey] = style;
-        return style;
-    }
-
-    const tagCache: Dict<SpriteText.Style> = {};
 }

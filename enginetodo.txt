@@ -1,6 +1,4 @@
 TODO
-- improve spritetext
-    - proper spritetext rotation
 - carry data on statemachine
 - preload/load overhaul + get off of pixi's preload system
     - load from zip file?
