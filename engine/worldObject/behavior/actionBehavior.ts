@@ -13,7 +13,7 @@ namespace ActionBehavior {
 class ActionBehavior implements Behavior {
     controller: Controller;
 
-    private stateMachine: StateMachine;
+    private stateMachine: SimpleStateMachine;
     private actions: Dict<ActionBehavior.Action>;
 
     private currentActionName: string | undefined;
@@ -21,7 +21,7 @@ class ActionBehavior implements Behavior {
 
     constructor(startAction: string, startWait: OrFactory<number>) {
         this.controller = new Controller();
-        this.stateMachine = new StateMachine();
+        this.stateMachine = new SimpleStateMachine();
         this.actions = {};
 
         this.addAction(ActionBehavior.START_ACTION, {

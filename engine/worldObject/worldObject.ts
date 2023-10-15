@@ -136,7 +136,7 @@ class WorldObject {
     readonly uid: string;
 
     protected scriptManager: ScriptManager;
-    stateMachine: StateMachine;
+    stateMachine: SimpleStateMachine;
     get state() { return this.stateMachine.getCurrentStateName(); }
 
     protected hookManager: HookManager<WorldObject.Hooks<this>>;
@@ -197,7 +197,7 @@ class WorldObject {
         this.zinternal_setPhysicsGroupWorldObject(config.physicsGroup);
 
         this.scriptManager = new ScriptManager();
-        this.stateMachine = new StateMachine();
+        this.stateMachine = new SimpleStateMachine();
 
         this.hookManager = new HookManager({
             binder: fn => fn.bind(this),
