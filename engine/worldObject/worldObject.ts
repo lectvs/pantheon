@@ -110,9 +110,18 @@ class WorldObject {
 
     get delta() { return ((this.useGlobalTime || !this.world) ? global.game.delta : this.world.delta) * this.timeScale;}
 
-    lastx: number;
-    lasty: number;
-    lastz: number;
+    startOfThisFrameX: number;
+    startOfThisFrameY: number;
+    startOfThisFrameZ: number;
+    startOfLastFrameX: number;
+    startOfLastFrameY: number;
+    startOfLastFrameZ: number;
+    get movedThisFrameX() { return this.x - this.startOfThisFrameX; }
+    get movedThisFrameY() { return this.y - this.startOfThisFrameY; }
+    get movedThisFrameZ() { return this.z - this.startOfThisFrameZ; }
+    get movedLastFrameX() { return this.startOfThisFrameX - this.startOfLastFrameX; }
+    get movedLastFrameY() { return this.startOfThisFrameY - this.startOfLastFrameY; }
+    get movedLastFrameZ() { return this.startOfThisFrameZ - this.startOfLastFrameZ; }
 
     _isInsideWorldBoundsBufferThisFrame: boolean;
 
@@ -162,9 +171,12 @@ class WorldObject {
         this.name = config.name;
         this.tags = config.tags ? A.clone(config.tags) : [];
 
-        this.lastx = this.x;
-        this.lasty = this.y;
-        this.lastz = this.z;
+        this.startOfThisFrameX = this.x;
+        this.startOfThisFrameY = this.y;
+        this.startOfThisFrameZ = this.z;
+        this.startOfLastFrameX = this.x;
+        this.startOfLastFrameY = this.y;
+        this.startOfLastFrameZ = this.z;
 
         this._isInsideWorldBoundsBufferThisFrame = false;
 
@@ -204,9 +216,12 @@ class WorldObject {
     }
 
     preUpdate() {
-        this.lastx = this.x;
-        this.lasty = this.y;
-        this.lastz = this.z;
+        this.startOfLastFrameX = this.startOfThisFrameX;
+        this.startOfLastFrameY = this.startOfThisFrameY;
+        this.startOfLastFrameZ = this.startOfThisFrameZ;
+        this.startOfThisFrameX = this.x;
+        this.startOfThisFrameY = this.y;
+        this.startOfThisFrameZ = this.z;
         this.behavior.update(this.delta);
         this.updateController();
         this.hookManager.executeHooks('onPreUpdate');

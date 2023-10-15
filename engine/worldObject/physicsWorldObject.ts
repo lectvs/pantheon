@@ -28,8 +28,8 @@ class PhysicsWorldObject extends WorldObject {
     bounce: number;
     colliding: boolean;
 
-    physicslastx: number;
-    physicslasty: number;
+    // physicslastx: number;
+    // physicslasty: number;
 
     debugDrawBounds: boolean;
 
@@ -55,16 +55,7 @@ class PhysicsWorldObject extends WorldObject {
         this._immovable = config.immovable ?? false;
         this.colliding = config.colliding ?? true;
 
-        this.physicslastx = this.x;
-        this.physicslasty = this.y;
-
         this.debugDrawBounds = false;
-    }
-
-    override preUpdate() {
-        super.preUpdate();
-        this.physicslastx = this.x;
-        this.physicslasty = this.y;
     }
 
     override update() {
@@ -123,8 +114,8 @@ class PhysicsWorldObject extends WorldObject {
         }
         this.x = x;
         this.y = y ?? x;
-        this.physicslastx = x;
-        this.physicslasty = y ?? x;
+        this.startOfThisFrameX = x;
+        this.startOfThisFrameY = y ?? x;
     }
 
     private applyGravity() {

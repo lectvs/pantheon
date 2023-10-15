@@ -5,7 +5,6 @@ TODO
 - preload/load overhaul + get off of pixi's preload system
     - load from zip file?
     - asset dependencies?
-- why does physicslastx/y exist? can we make a reliable lastx/y or dx/y that works regardless of update order?
 - "Failed to detect time of collision between circle and inverted rect", maybe with changing bounds?
 - better resolution of copyFromParent and render ordering (polarity inverter bug)
 - redo kill() ... not flag the object as being dead? how to remove object then re-add it later?

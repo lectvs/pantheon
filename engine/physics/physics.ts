@@ -129,7 +129,7 @@ namespace Physics {
         let raycastCollision: RaycastCollisionData = {
             move: collision.move,
             from: collision.from,
-            collision: collision.move.bounds.getRaycastCollision(collision.move.x-collision.move.physicslastx, collision.move.y-collision.move.physicslasty, collision.from.bounds, collision.from.x-collision.from.physicslastx, collision.from.y-collision.from.physicslasty),
+            collision: collision.move.bounds.getRaycastCollision(collision.move.movedThisFrameX, collision.move.movedThisFrameY, collision.from.bounds, collision.from.movedThisFrameX, collision.from.movedThisFrameY),
         };
         
         if (!raycastCollision.collision) return false;
@@ -176,7 +176,7 @@ namespace Physics {
                     if (!G.areRectanglesOverlapping(move.bounds.getBoundingBox(), from.bounds.getBoundingBox())) continue;
                     if (!move.colliding || !from.colliding) continue;
                     if (!move.isCollidingWith(from) || !from.isCollidingWith(move)) continue;
-                    let raycastCollision = move.bounds.getRaycastCollision(move.x-move.physicslastx, move.y-move.physicslasty, from.bounds, from.x-from.physicslastx, from.y-from.physicslasty);
+                    let raycastCollision = move.bounds.getRaycastCollision(move.movedThisFrameX, move.movedThisFrameY, from.bounds, from.movedThisFrameX, from.movedThisFrameY);
                     if (!raycastCollision) continue;
                     raycastCollisions.push({
                         move, from,
@@ -329,8 +329,8 @@ namespace Physics {
 
         } else if (collisionMode === 'zero_velocity_local') {
             if (!collision.move.isImmovable()) {
-                let fromvx = delta === 0 ? 0 : (collision.from.x - collision.from.physicslastx) / delta;
-                let fromvy = delta === 0 ? 0 : (collision.from.y - collision.from.physicslasty) / delta;
+                let fromvx = delta === 0 ? 0 : (collision.from.movedThisFrameX) / delta;
+                let fromvy = delta === 0 ? 0 : (collision.from.movedThisFrameY) / delta;
                 collision.move.v.x -= fromvx;
                 collision.move.v.y -= fromvy;
                 zeroVelocityAgainstDisplacement(collision.move, collision.collision.displacementX, collision.collision.displacementY);
@@ -339,8 +339,8 @@ namespace Physics {
             }
     
             if (!collision.from.isImmovable()) {
-                let movevx = delta === 0 ? 0 : (collision.move.x - collision.move.physicslastx) / delta;
-                let movevy = delta === 0 ? 0 : (collision.move.y - collision.move.physicslasty) / delta;
+                let movevx = delta === 0 ? 0 : (collision.move.movedThisFrameX) / delta;
+                let movevy = delta === 0 ? 0 : (collision.move.movedThisFrameY) / delta;
                 collision.move.v.x -= movevx;
                 collision.move.v.y -= movevy;
                 zeroVelocityAgainstDisplacement(collision.from, -collision.collision.displacementX, -collision.collision.displacementY);
@@ -382,7 +382,7 @@ namespace Physics {
         let dpos: Dict<Vector2> = {};
 
         for (let worldObject of physicsWorldObjects) {
-            dpos[worldObject.uid] = vec2(worldObject.x - worldObject.physicslastx, worldObject.y - worldObject.physicslasty);
+            dpos[worldObject.uid] = vec2(worldObject.movedThisFrameX, worldObject.movedThisFrameY);
         }
 
         return { dpos };
