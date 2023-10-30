@@ -1,6 +1,5 @@
 TODO
 - better resolution of copyFromParent and render ordering (polarity inverter bug)
-- redo kill() ... not flag the object as being dead? how to remove object then re-add it later?
 - turn screen shake into a shader (to get edge continuation)
 - fix everyNSeconds and oscillateNSeconds for very low framerates
 - animation/visual layers

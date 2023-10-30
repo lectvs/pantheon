@@ -116,6 +116,7 @@ class World {
     allowPause: boolean;
 
     protected hookManager: HookManager<World.Hooks>;
+    protected endOfFrameQueue: (() => any)[];
 
     private mouseBounds: CircleBounds;
 
@@ -166,6 +167,8 @@ class World {
             binder: fn => fn.bind(this),
             hooks: config.hooks,
         });
+
+        this.endOfFrameQueue = [];
     }
 
     onTransitioned() {
@@ -202,8 +205,6 @@ class World {
             }
         }
 
-        this.removeDeadWorldObjects();
-
         this.hookManager.executeHooks('onUpdate');
 
         this.camera.update();
@@ -217,6 +218,10 @@ class World {
         this.soundManager.update(this.delta);
 
         this.time += this.delta;
+
+        while (!A.isEmpty(this.endOfFrameQueue)) {
+            this.endOfFrameQueue.shift()!();
+        }
     }
 
     protected updateScriptManager() {
@@ -272,10 +277,6 @@ class World {
     
     addWorldObjects<T extends WorldObject>(objs: T[]): T[] {
         return World.Actions.addWorldObjectsToWorld(objs, this);
-    }
-
-    getDeadWorldObjects() {
-        return this.worldObjects.filter(obj => !obj.alive);
     }
 
     getLayerByName(name: string | undefined) {
@@ -389,6 +390,10 @@ class World {
         return objs.map(obj => this.removeWorldObject(obj)).filter(obj => obj) as T[];
     }
 
+    runAtEndOfFrame(fn: () => any) {
+        this.endOfFrameQueue.push(fn);
+    }
+
     runScript(script: Script | Script.Function, name?: string) {
         return this.scriptManager.runScript(script, name);
     }
@@ -427,10 +432,6 @@ class World {
             result[name] = new World.PhysicsGroup(name, physicsGroups[name]);
         }
         return result;
-    }
-
-    private removeDeadWorldObjects() {
-        this.removeWorldObjects(this.getDeadWorldObjects());
     }
 
     private removeFromAllLayers(obj: WorldObject) {

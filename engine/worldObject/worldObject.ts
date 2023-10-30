@@ -78,8 +78,6 @@ class WorldObject {
     private _visible: boolean;
     private _active: boolean;
 
-    alive: boolean;
-
     name?: string;
     tags: string[];
 
@@ -166,8 +164,6 @@ class WorldObject {
         this.ignoreCamera = config.ignoreCamera ?? false;
         this.copyFromParent = config.copyFromParent ? A.clone(config.copyFromParent) : [];
 
-        this.alive = true;
-        
         this.name = config.name;
         this.tags = config.tags ? A.clone(config.tags) : [];
 
@@ -512,7 +508,7 @@ class WorldObject {
     }
 
     kill() {
-        this.alive = false;
+        this.world?.runAtEndOfFrame(() => this.removeFromWorld());
         this.hookManager.executeHooks('onKill');
     }
 
