@@ -78,8 +78,12 @@ class Effects {
         this.updateFromConfig(config);
     }
 
-    getFilterList() {
-        return this.pre.concat(this.effects.filter(e => e) as TextureFilter[]).concat(this.post);
+    getFilterList(): TextureFilter[] {
+        return [
+            ...this.pre,
+            ...this.effects.filter(e => e) as TextureFilter[],
+            ...this.post,
+        ];
     }
 
     hasEffects() {

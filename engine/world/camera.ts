@@ -7,6 +7,7 @@ namespace Camera {
         bounds?: Bndries;
         mode?: Mode;
         movement?: Movement;
+        screenShakePhysicallyMovesCamera?: boolean;
     }
 
     export type Mode = {
@@ -32,9 +33,12 @@ class Camera {
     mode: Camera.Mode;
     movement: Camera.Movement;
 
+    screenShakePhysicallyMovesCamera: boolean;
     shakeIntensity: number;
     private _shakeX: number;
+    get shakeX() { return this._shakeX; }
     private _shakeY: number;
+    get shakeY() { return this._shakeY; }
 
     waverIntensityX: number;
     waverIntensityY: number;
@@ -46,8 +50,8 @@ class Camera {
     private debugOffsetX: number;
     private debugOffsetY: number;
 
-    get worldOffsetX() { return this.x - this.width/2 + this._shakeX + this._waverX + this.debugOffsetX; }
-    get worldOffsetY() { return this.y - this.height/2 + this._shakeY + this._waverY + this.debugOffsetY; }
+    get worldOffsetX() { return this.x - this.width/2 + this._waverX + this.debugOffsetX + (this.screenShakePhysicallyMovesCamera ? this.shakeX : 0); }
+    get worldOffsetY() { return this.y - this.height/2 + this._waverY + this.debugOffsetY + (this.screenShakePhysicallyMovesCamera ? this.shakeY : 0); }
 
     constructor(config: Camera.Config, world: World) {
         this.world = world;
@@ -66,6 +70,7 @@ class Camera {
         this.mode = config.mode ? O.clone(config.mode) : Camera.Mode.FOCUS(this.width/2, this.height/2);
         this.movement = config.movement ? O.clone(config.movement) : Camera.Movement.SNAP();
 
+        this.screenShakePhysicallyMovesCamera = config.screenShakePhysicallyMovesCamera ?? false;
         this.shakeIntensity = 0;
         this._shakeX = 0;
         this._shakeY = 0;
@@ -157,7 +162,7 @@ class Camera {
             }
         }
     }
-    
+
     snapPosition() {
         let target = this.mode.getTargetPt(this);
         this.x = target.x;

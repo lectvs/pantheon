@@ -1,6 +1,5 @@
 TODO
 - better resolution of copyFromParent and render ordering (polarity inverter bug)
-- turn screen shake into a shader (to get edge continuation)
 - fix everyNSeconds and oscillateNSeconds for very low framerates
 - animation/visual layers
 - ui balancer

@@ -1,5 +1,6 @@
 /// <reference path="../worldObject/sprite/sprite.ts" />
 /// <reference path="../worldObject/worldObject.ts" />
+/// <reference path="../texture/filter/textureFilter.ts" />
 
 namespace World {
     export type Config = {
@@ -96,6 +97,8 @@ class World {
     backgroundAlpha: number;
 
     camera: Camera;
+    private screenShakeFilter: World.ScreenShakeFilter;
+
     private worldTexture: Texture;
     private layerTexture: Texture;
 
@@ -160,6 +163,7 @@ class World {
         this.layerTexture = new BasicTexture(this.width, this.height, 'World.layerTexture');
 
         this.camera = new Camera(config.camera ?? {}, this);
+        this.screenShakeFilter = new World.ScreenShakeFilter();
 
         this.mouseBounds = new CircleBounds(0, 0, 0);
 
@@ -214,6 +218,8 @@ class World {
         }
         this.effects.updateEffects(this.delta);
 
+        this.screenShakeFilter.setShake(this.camera.shakeX, this.camera.shakeY);
+
         this.soundManager.volume = this.volume * global.game.volume * Options.sfxVolume;
         this.soundManager.update(this.delta);
 
@@ -247,12 +253,17 @@ class World {
             }
         }
 
+        let filters = this.effects.getFilterList();
+        if (!this.camera.screenShakePhysicallyMovesCamera) {
+            filters.unshift(this.screenShakeFilter);
+        }
+
         // Apply world effects.
         this.worldTexture.renderTo(screen, {
             x: x, y: y,
             scaleX: this.scaleX,
             scaleY: this.scaleY,
-            filters: this.effects.getFilterList(),
+            filters: filters,
             mask: Mask.getTextureMaskForWorld(this.mask),
         });
     }
@@ -842,6 +853,24 @@ namespace World {
                     expandWorldObjectBounds(bounds, child, deep);
                 }
             }
+        }
+    }
+
+    export class ScreenShakeFilter extends TextureFilter {
+        constructor() {
+            super({
+                uniforms: { 'float shakeX': 0, 'float shakeY': 0 },
+                code: `
+                    float newX = clamp(x + shakeX, 0.0, width-1.0);
+                    float newY = clamp(y + shakeY, 0.0, height-1.0);
+                    outp = getColor(newX, newY);
+                `
+            });
+        }
+
+        setShake(shakeX: number, shakeY: number) {
+            this.setUniform('shakeX', shakeX);
+            this.setUniform('shakeY', shakeY);
         }
     }
 }
