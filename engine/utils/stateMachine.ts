@@ -75,12 +75,7 @@ class StateMachine<StateData extends StateMachine.StateData> {
     }
 
     getCurrentStateName() {
-        for (let name in this.states) {
-            if (this.states[name] === this.currentStateData) {
-                return name;
-            }
-        }
-        return undefined;
+        return this.currentStateData?.state;
     }
 
     private getState(name: string) {
