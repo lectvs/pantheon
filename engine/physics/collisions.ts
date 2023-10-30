@@ -595,10 +595,10 @@ namespace Bounds.Collision {
         fromBox.x -= fromdx;
         fromBox.y -= fromdy;
 
-        let left_t = movePos.x - move.radius + movedx < fromBox.left ? (movePos.x - move.radius - fromBox.left) / (fromdx - movedx) : Infinity;
-        let right_t = movePos.x + move.radius + movedx > fromBox.right ? (movePos.x + move.radius - fromBox.right) / (fromdx - movedx) : Infinity;
-        let top_t = movePos.y - move.radius + movedy < fromBox.top ? (movePos.y - move.radius - fromBox.top) / (fromdy - movedy) : Infinity;
-        let bottom_t = movePos.y + move.radius + movedy > fromBox.bottom ? (movePos.y + move.radius - fromBox.bottom) / (fromdy - movedy) : Infinity;
+        let left_t = movePos.x - move.radius + movedx >= fromBox.left + fromdx + 0.0001 ? Infinity : fromdx === movedx ? 0 : (movePos.x - move.radius - fromBox.left) / (fromdx - movedx);
+        let right_t = movePos.x + move.radius + movedx <= fromBox.right + fromdx - 0.0001 ? Infinity : fromdx === movedx ? 0 : (movePos.x + move.radius - fromBox.right) / (fromdx - movedx);
+        let top_t = movePos.y - move.radius + movedy >= fromBox.top + fromdy + 0.0001 ? Infinity : fromdy === movedy ? 0 : (movePos.y - move.radius - fromBox.top) / (fromdy - movedy);
+        let bottom_t = movePos.y + move.radius + movedy <= fromBox.bottom + fromdy - 0.0001 ? Infinity : fromdy === movedy ? 0 : (movePos.y + move.radius - fromBox.bottom) / (fromdy - movedy);
 
         let t = Math.min(left_t, right_t, top_t, bottom_t);
 
@@ -606,10 +606,6 @@ namespace Bounds.Collision {
         movePos.y += movedy;
         fromBox.x += fromdx;
         fromBox.y += fromdy;
-
-        if (!isFinite(t) && fromdx === movedx && fromdy === movedy) {
-            t = 0;
-        }
 
         if (!isFinite(t)) {
             console.error(`Failed to detect time of collision between circle and inverted rect:`, move.parent, { x: movePos.x, y: movePos.y, radius: move.radius }, movedx, movedy, from.parent, fromBox, fromdx, fromdy);

@@ -134,12 +134,17 @@ class PhysicsWorldObject extends WorldObject {
             let box = this.bounds.getInnerBox();
             box.x += x - this.x;
             box.y += y - this.y;
-            Draw.rectangle(texture, box.x, box.y, box.width, box.height, { outline: { color: 0x00FF00 }});
+            Draw.rectangle(texture, box.x, box.y, box.width, box.height, { outline: { color: 0x00FF00, alignment: 'outer' }});
         } else if (this.bounds instanceof CircleBounds) {
             let center = this.bounds.getCenter();
             center.x += x - this.x;
             center.y += y - this.y;
             Draw.circle(texture, center.x, center.y, this.bounds.radius, { outline: { color: 0x00FF00 }});
+        } else if (this.bounds instanceof InvertedCircleBounds) {
+            let center = this.bounds.getCenter();
+            center.x += x - this.x;
+            center.y += y - this.y;
+            Draw.circle(texture, center.x, center.y, this.bounds.radius, { outline: { color: 0x00FF00, alignment: 'outer' }});
         } else if (this.bounds instanceof SlopeBounds) {
             let box = this.bounds.getBoundingBox();
             box.x += x - this.x;
@@ -153,6 +158,10 @@ class PhysicsWorldObject extends WorldObject {
             } else {
                 Draw.polygon(texture, [vec2(box.left, box.top), vec2(box.right, box.top), vec2(box.right, box.bottom)], { outline: { color: 0x00FF00 }});
             }
-        } 
+        } else if (this.bounds instanceof NullBounds) {
+            // Pass
+        } else {
+            debug('Unrecognized bounds for drawing:', this.bounds);
+        }
     }
 }

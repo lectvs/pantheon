@@ -1,8 +1,4 @@
 TODO
-- preload/load overhaul + get off of pixi's preload system
-    - load from zip file?
-    - asset dependencies?
-- "Failed to detect time of collision between circle and inverted rect", maybe with changing bounds?
 - better resolution of copyFromParent and render ordering (polarity inverter bug)
 - redo kill() ... not flag the object as being dead? how to remove object then re-add it later?
 - turn screen shake into a shader (to get edge continuation)
@@ -19,16 +15,18 @@ TODO
 - module system revamp
     - revamp module system to work with compound types
     - attach arbitrary "update"/"render" objects to worldobjects (e.g. timers, new module system?)
-- performance
-    - look into more performant graphics libraries
-    - look into pixi gpu usage: https://www.google.com/search?q=pixijs+uses+gpu
-    - use shaders for puff system
 - debug show overlay with O key doesn't always work. sometimes i need to call Debug.SHOW_OVERLAY=true
 - better ways to move the camera (without needing to call setModeFocus)
 - supertextures ("detective+hat")
 - better WorldAsWorldObject (containers?)
 - methods to take a screenshot of the canvas (full-size and 1:1 scale? copy to clipboard?)
-- figure out why we lose auto-complete for class methods sometimes
+- preload/load overhaul + get off of pixi's preload system
+    - asset "repositories" (local, remote?, zip)
+    - asset dependencies?
+- performance
+    - look into more performant graphics libraries
+    - look into pixi gpu usage: https://www.google.com/search?q=pixijs+uses+gpu
+    - use shaders for puff system
 - easier window event integration (onbeforeunload, etc.)
 - Network.httpRequest should return some kind of error if the user is not connected to the internet
 - better world and object management (freeing)
