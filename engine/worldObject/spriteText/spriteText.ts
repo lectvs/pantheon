@@ -236,21 +236,14 @@ class SpriteText extends WorldObject {
         return SpriteText.getBoundsOfCharList(this.getCharList()).height * this.scaleY;
     }
 
-    getTextWorldBounds(): Rect {
+    override getVisibleLocalBounds(): Rect | undefined {
         let bounds = this.getRenderSystem().getSpriteTextLocalBounds(this);
         return {
-            x: this.x + bounds.left,
-            y: this.y + bounds.top,
+            x: bounds.left,
+            y: bounds.top,
             width: bounds.width,
             height: bounds.height,
         };
-    }
-
-    override getVisibleScreenBounds() {
-        let bounds = this.getTextWorldBounds();
-        bounds.x += this.getRenderScreenX() - this.x;
-        bounds.y += this.getRenderScreenY() - this.y;
-        return bounds;
     }
 
     markDirty() {

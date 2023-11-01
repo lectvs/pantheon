@@ -1,9 +1,5 @@
 TODO
-- better resolution of copyFromParent and render ordering (polarity inverter bug)
-- fix everyNSeconds and oscillateNSeconds for very low framerates
-- animation/visual layers
 - ui balancer
-    - create better worldbounds/localbounds/visiblescreenbounds system
     - well-defined visual boundaries for every object + better World.Actions.balanceWorldObjects
     - worldobject that centers/anchors its children (useful for UI)
 - allow S scripts to be run in non-global worlds (global.script.world? how do we handle cutscenes?)
@@ -18,6 +14,7 @@ TODO
 - supertextures ("detective+hat")
 - better WorldAsWorldObject (containers?)
 - methods to take a screenshot of the canvas (full-size and 1:1 scale? copy to clipboard?)
+- animation/visual layers
 - preload/load overhaul + get off of pixi's preload system
     - asset "repositories" (local, remote?, zip)
     - asset dependencies?

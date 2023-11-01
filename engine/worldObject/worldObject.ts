@@ -421,11 +421,11 @@ class WorldObject {
     }
 
     everyNFrames(n: number) {
-        return Math.floor((this.life.frames + 1)/n) !== Math.floor(this.life.frames/n);
+        return this.life.everyNFrames(n);
     }
 
     everyNSeconds(n: number) {
-        return Math.floor((this.life.time + this.delta)/n) !== Math.floor(this.life.time/n);
+        return this.life.everyNSeconds(n);
     }
 
     getCurrentAnimationName() {
@@ -467,8 +467,36 @@ class WorldObject {
         return A.clone(this.timers);
     }
 
-    getVisibleScreenBounds(): Rect | undefined {
+    /**
+     * Gets the visible bounds in local space.
+     * @returns A bounding Rect or undefined if the bounds are infinite or have not been defined.
+     */
+    getVisibleLocalBounds(): Rect | undefined {
         return undefined;
+    }
+
+    /**
+     * Gets the visible bounds in screen space.
+     * @returns A bounding Rect or undefined if the bounds are infinite or have not been defined.
+     */
+    getVisibleScreenBounds(): Rect | undefined {
+        let localBounds = this.getVisibleLocalBounds();
+        if (!localBounds) return undefined;
+        localBounds.x += this.getRenderScreenX();
+        localBounds.y += this.getRenderScreenY();
+        return localBounds;
+    }
+
+    /**
+     * Gets the visible bounds in world space.
+     * @returns A bounding Rect or undefined if the bounds are infinite or have not been defined.
+     */
+    getVisibleWorldBounds(): Rect | undefined {
+        let localBounds = this.getVisibleLocalBounds();
+        if (!localBounds) return undefined;
+        localBounds.x += this.x;
+        localBounds.y += this.y;
+        return localBounds;
     }
 
     getZBehavior(): WorldObject.ZBehavior {
@@ -513,11 +541,11 @@ class WorldObject {
     }
 
     oscillateNFrames(n: number) {
-        return Math.floor(this.life.frames/n) % 2 === 1;
+        return this.life.oscillateNFrames(n);
     }
 
     oscillateNSeconds(n: number) {
-        return Math.floor(this.life.time/n) % 2 === 1;
+        return this.life.oscillateNSeconds(n);
     }
 
     playAnimation(name: string, force: boolean | 'force' = false) {
@@ -661,15 +689,51 @@ namespace WorldObject {
 
     export class LifeTimer extends Timer {
         frames: number;
+        history: number[];
 
         constructor(life: number, onFinish: () => void) {
             super(life, onFinish);
             this.frames = 0;
+            this.history = [];
         }
 
         override update(delta: number): void {
             super.update(delta);
             this.frames++;
+            this.history.push(this.time);
+            if (this.history.length > 100) {
+                this.history.splice(0, this.history.length-100);
+            }
+        }
+        
+        override reset(): void {
+            super.reset();
+            this.frames = 0;
+            this.history = [];
+        }
+
+        everyNFrames(n: number) {
+            return Math.floor((this.frames + 1)/n) !== Math.floor(this.frames/n);
+        }
+    
+        everyNSeconds(n: number) {
+            let lastTime = this.getLastTime();
+            return Math.floor((this.time)/n) !== Math.floor(lastTime/n) || this.time >= lastTime + n;
+        }
+
+        oscillateNFrames(n: number) {
+            return Math.floor(this.frames/n) % 2 === 1;
+        }
+    
+        oscillateNSeconds(n: number) {
+            return Math.floor(this.time/n) % 2 === 1;
+        }
+
+        private getLastTime() {
+            if (A.isEmpty(this.history)) return this.time;
+            if (this.history.length === 1) return this.history[0];
+            if (this.history.last() !== this.time) return this.history.last()!;
+            return this.history[this.history.length-2];
         }
     }
 }

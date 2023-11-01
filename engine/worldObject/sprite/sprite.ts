@@ -51,8 +51,6 @@ class Sprite extends PhysicsWorldObject {
     mask?: Mask.WorldObjectMaskConfig;
     blendMode?: Texture.BlendMode;
 
-    onScreenPadding: number;
-
     constructor(config: Sprite.Config<Sprite> = {}) {
         super(config);
 
@@ -77,8 +75,6 @@ class Sprite extends PhysicsWorldObject {
 
         this.mask = config.mask;
         this.blendMode = config.blendMode;
-
-        this.onScreenPadding = 1;
     }
 
     override update() {
@@ -112,23 +108,18 @@ class Sprite extends PhysicsWorldObject {
         return this.textureKey;
     }
 
-    getTextureWorldBounds() {
-        let bounds = this.getTextureLocalBounds();
-        bounds.x += this.x + this.offsetX;
-        bounds.y += this.y + this.offsetY;
-        return bounds;
-    }
-
-    override getVisibleScreenBounds() {
+    override getVisibleLocalBounds(): Rect | undefined {
+        if (!this.texture) return rect(0, 0, 0, 0);
         if (this.texture === Texture.EFFECT_ONLY) {
             return undefined;
         }
-        let bounds = this.getTextureLocalBounds();
-        bounds.x += this.getRenderScreenX() + this.offsetX - this.onScreenPadding;
-        bounds.y += this.getRenderScreenY() + this.offsetY - this.onScreenPadding;
-        bounds.width += 2*this.onScreenPadding;
-        bounds.height += 2*this.onScreenPadding;
-        return bounds;
+        return this.texture.getLocalBounds({
+            x: this.offsetX,
+            y: this.offsetY,
+            angle: this.angle + this.angleOffset,
+            scaleX: this.scaleX,
+            scaleY: this.scaleY,
+        });
     }
 
     setTexture(key: string | Texture | undefined) {
@@ -140,14 +131,5 @@ class Sprite extends PhysicsWorldObject {
 
         this.textureKey = St.isString(key) ? key : undefined;
         this.texture = St.isString(key) ? AssetCache.getTexture(key) : key;
-    }
-
-    private getTextureLocalBounds() {
-        if (!this.texture) return rect(0, 0, 0, 0);
-        return this.texture.getLocalBounds({
-            angle: this.angle + this.angleOffset,
-            scaleX: this.scaleX,
-            scaleY: this.scaleY,
-        });
     }
 }
