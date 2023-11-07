@@ -116,9 +116,9 @@ class Sprite extends PhysicsWorldObject {
         return this.texture.getLocalBounds({
             x: this.offsetX,
             y: this.offsetY,
-            angle: this.angle + this.angleOffset,
             scaleX: this.scaleX,
             scaleY: this.scaleY,
+            angle: this.angle + this.angleOffset,
         });
     }
 

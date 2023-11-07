@@ -12,6 +12,7 @@ namespace TextureFilters {
                     'float x4': 1,
                     'float y4': 1,
                 },
+                visualPadding: Infinity,
                 code: `
                     float a1 = width * (x1);
                     float b1 = width * (x2 - x1);

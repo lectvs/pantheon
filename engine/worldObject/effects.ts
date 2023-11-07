@@ -189,6 +189,7 @@ namespace Effects {
                         "float alpha": 1.0,
                         "int matchAlpha": 1,
                     },
+                    visualPadding: 1,
                     code: `
                         float maxAlpha = max(max(getColor(x-1.0, y).a, getColor(x, y-1.0).a), max(getColor(x+1.0, y).a, getColor(x, y+1.0).a));
                         if (inp.a == 0.0 && maxAlpha > 0.0) {
@@ -277,6 +278,10 @@ namespace Effects {
                 this.speed = speed;
                 this.spread = spread;
                 this.enabled = true;
+            }
+
+            override getVisualPadding(): number {
+                return this._strength;
             }
         }
     }

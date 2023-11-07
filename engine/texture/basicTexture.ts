@@ -287,7 +287,33 @@ class BasicTexture implements Texture {
         let allFilters = this.getAllTextureFilters(properties);
         allFilters.forEach(filter => filter.update());
         this.renderTextureSprite.filters = allFilters.map(filter => filter.borrowPixiFilter());
-        this.renderTextureSprite.filterArea = new PIXI.Rectangle(0, 0, destTexture.width, destTexture.height);
+        this.renderTextureSprite.filterArea = this.getFilterArea(destTexture, properties);
         return allFilters;
+    }
+
+    private getFilterArea(destTexture: Texture, properties: BasicTexture._RequiredPropertiesForFilter) {
+        let localBounds = this.getLocalBounds(properties);
+        let boundaries = Boundaries.fromRect(localBounds);
+
+        if (!A.isEmpty(properties.filters)) {
+            for (let filter of properties.filters) {
+                let visualPadding = filter.getVisualPadding();
+                boundaries.left -= visualPadding;
+                boundaries.right += visualPadding;
+                boundaries.top -= visualPadding;
+                boundaries.bottom += visualPadding;
+            }
+        }
+
+        if (!boundaries.isFinite()) {
+            return new PIXI.Rectangle(0, 0, destTexture.width, destTexture.height);
+        }
+
+        return new PIXI.Rectangle(
+            M.clamp(boundaries.left, 0, destTexture.width),
+            M.clamp(boundaries.top, 0, destTexture.height),
+            boundaries.left < 0 ? boundaries.right : M.clamp(boundaries.width, 0, destTexture.width - boundaries.left),
+            boundaries.top < 0 ? boundaries.bottom : M.clamp(boundaries.height, 0, destTexture.height - boundaries.top),
+        );
     }
 }

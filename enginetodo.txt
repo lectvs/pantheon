@@ -1,6 +1,6 @@
 TODO
 - ui balancer
-    - well-defined visual boundaries for every object + better World.Actions.balanceWorldObjects
+    - better World.Actions.balanceWorldObjects
     - worldobject that centers/anchors its children (useful for UI)
 - allow S scripts to be run in non-global worlds (global.script.world? how do we handle cutscenes?)
 - general solution to prevent sprites from jittering relative to camera movement

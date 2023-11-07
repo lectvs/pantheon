@@ -28,6 +28,7 @@ namespace TextureFilter {
     export type Config = {
         uniforms?: Dict<any>;
         helperMethods?: string;
+        visualPadding?: number;
         code?: string;
     }
 }
@@ -37,6 +38,7 @@ class TextureFilter {
     
     private code: string;
     private helperMethods: string;
+    private visualPadding: number;
     private uniformCode: string;
     private uniforms: Dict<any>;
 
@@ -45,6 +47,7 @@ class TextureFilter {
     constructor(config: TextureFilter.Config) {
         this.code = config.code ?? '';
         this.helperMethods = config.helperMethods ?? '';
+        this.visualPadding = config.visualPadding ?? 0;
         this.uniformCode = this.constructUniformCode(config.uniforms);
         this.uniforms = this.constructUniforms(config.uniforms);
 
@@ -86,6 +89,10 @@ class TextureFilter {
 
     getUniformCode() {
         return this.uniformCode;
+    }
+
+    getVisualPadding() {
+        return this.visualPadding;
     }
 
     setTextureDimensions(dimx: number, dimy: number) {

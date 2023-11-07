@@ -32,4 +32,8 @@ class Boundaries {
     isFinite() {
         return isFinite(this.left) && isFinite(this.right) && isFinite(this.top) && isFinite(this.bottom);
     }
+
+    static fromRect(rect: Rect) {
+        return new Boundaries(rect.x, rect.x + rect.width, rect.y, rect.y + rect.height);
+    }
 }
