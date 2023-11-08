@@ -30,4 +30,22 @@ class Rectangle {
         y = y ?? x;
         return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
     }
+
+    isFinite() {
+        return isFinite(this.x) && isFinite(this.y) && isFinite(this.width) && isFinite(this.height);
+    }
+
+    set(x: number, y: number, width: number, height: number) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        return this;
+    }
+
+    static fromBoundaries(bndries: Bndries) {
+        let width = isFinite(bndries.left) && isFinite(bndries.right) ? bndries.right - bndries.left : Infinity;
+        let height = isFinite(bndries.top) && isFinite(bndries.bottom) ? bndries.bottom - bndries.top : Infinity;
+        return new Rectangle(bndries.left, bndries.right, width, height);
+    }
 }

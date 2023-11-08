@@ -30,7 +30,7 @@ class SpriteTextRenderSystem {
             let scaleY = (spriteText.flipY ? -1 : 1) * spriteText.scaleY;
             let angle = spriteText.angle;
 
-            let textureLocalBounds = data.texture.getLocalBounds({
+            let textureLocalBounds = data.texture.getLocalBounds$({
                 x: x,
                 y: y,
                 scaleX: scaleX,
@@ -80,11 +80,11 @@ class SpriteTextRenderSystem {
             let scaleY = (spriteText.flipY ? -1 : 1) * spriteText.scaleY;
             let angle = spriteText.angle;
 
-            return data.texture.getLocalBounds({
+            return data.texture.getLocalBounds$({
                 scaleX: scaleX,
                 scaleY: scaleY,
                 angle: angle,
-            });
+            }).clone();
         }));
     }
 }

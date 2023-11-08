@@ -57,7 +57,7 @@ interface Texture {
     crop(x: number, y: number, width: number, height: number, source: string): Texture;
     free(): void;
 
-    getLocalBounds(properties: Texture.Properties): Rectangle;
+    getLocalBounds$(properties: Texture.Properties): Rectangle;
 
     getPixelAbsoluteARGB(x: number, y: number, extendMode?: Texture.ExtendMode): number;
     getPixelRelativeARGB(x: number, y: number, extendMode?: Texture.ExtendMode): number;

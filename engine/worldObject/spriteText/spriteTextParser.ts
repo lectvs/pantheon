@@ -86,7 +86,7 @@ namespace SpriteTextParser {
 
         let localBounds = fixedCharSize
             ? new Rectangle(0, 0, font.charWidth, font.charHeight)
-            : texture.getLocalBounds({});
+            : texture.getLocalBounds$({}).clone();
 
         return new Character({
             name: char.name,

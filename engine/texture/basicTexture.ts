@@ -29,6 +29,7 @@ class BasicTexture implements Texture {
         // }
         this.renderTextureSprite = new Texture.PIXIRenderTextureSprite(width, height);
         this.immutable = immutable;
+        this._localBoundsResult = new Rectangle(0, 0, 0, 0);
         TextureCreationData.logCreateTexture(this, source);
     }
 
@@ -58,7 +59,8 @@ class BasicTexture implements Texture {
         TextureCreationData.logFreeTexture(this);
     }
 
-    getLocalBounds(properties: Texture.Properties) {
+    private _localBoundsResult: Rectangle;
+    getLocalBounds$(properties: Texture.Properties) {
         let x = properties.x ?? 0;
         let y = properties.y ?? 0;
         let scaleX = properties.scaleX ?? 1;
@@ -68,7 +70,7 @@ class BasicTexture implements Texture {
         let height = this.height * scaleY;
 
         if (angle === 0) {
-            return new Rectangle(x, y, width, height);
+            return this._localBoundsResult.set(x, y, width, height);
         }
 
         let v1x = 0;
@@ -85,7 +87,7 @@ class BasicTexture implements Texture {
         let miny = Math.min(v1y, v2y, v3y, v4y);
         let maxy = Math.max(v1y, v2y, v3y, v4y);
 
-        return new Rectangle(x + minx, y + miny, maxx - minx, maxy - miny);
+        return this._localBoundsResult.set(x + minx, y + miny, maxx - minx, maxy - miny);
     }
 
     getPixelAbsoluteARGB(x: number, y: number, extendMode: Texture.ExtendMode = 'transparent') {
@@ -292,8 +294,7 @@ class BasicTexture implements Texture {
     }
 
     private getFilterArea(destTexture: Texture, properties: BasicTexture._RequiredPropertiesForFilter) {
-        let localBounds = this.getLocalBounds(properties);
-        let boundaries = Boundaries.fromRect(localBounds);
+        let boundaries = Boundaries.fromRect(this.getLocalBounds$(properties));
 
         if (!A.isEmpty(properties.filters)) {
             for (let filter of properties.filters) {

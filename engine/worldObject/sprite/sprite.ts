@@ -108,12 +108,12 @@ class Sprite extends PhysicsWorldObject {
         return this.textureKey;
     }
 
-    override getVisibleLocalBounds(): Rect | undefined {
-        if (!this.texture) return rect(0, 0, 0, 0);
+    override getVisibleLocalBounds$(): Rectangle | undefined {
+        if (!this.texture) return new Rectangle(0, 0, 0, 0);
         if (this.texture === Texture.EFFECT_ONLY) {
             return undefined;
         }
-        return this.texture.getLocalBounds({
+        return this.texture.getLocalBounds$({
             x: this.offsetX,
             y: this.offsetY,
             scaleX: this.scaleX,

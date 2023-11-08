@@ -469,18 +469,18 @@ class WorldObject {
 
     /**
      * Gets the visible bounds in local space.
-     * @returns A bounding Rect or undefined if the bounds are infinite or have not been defined.
+     * @returns A bounding Rectangle or undefined if the bounds are infinite or have not been defined.
      */
-    getVisibleLocalBounds(): Rect | undefined {
+    getVisibleLocalBounds$(): Rectangle | undefined {
         return undefined;
     }
 
     /**
      * Gets the visible bounds in screen space.
-     * @returns A bounding Rect or undefined if the bounds are infinite or have not been defined.
+     * @returns A bounding Rectangle or undefined if the bounds are infinite or have not been defined.
      */
-    getVisibleScreenBounds(): Rect | undefined {
-        let localBounds = this.getVisibleLocalBounds();
+    getVisibleScreenBounds$(): Rectangle | undefined {
+        let localBounds = this.getVisibleLocalBounds$();
         if (!localBounds) return undefined;
         localBounds.x += this.getRenderScreenX();
         localBounds.y += this.getRenderScreenY();
@@ -489,10 +489,10 @@ class WorldObject {
 
     /**
      * Gets the visible bounds in world space.
-     * @returns A bounding Rect or undefined if the bounds are infinite or have not been defined.
+     * @returns A bounding Rectangle or undefined if the bounds are infinite or have not been defined.
      */
-    getVisibleWorldBounds(): Rect | undefined {
-        let localBounds = this.getVisibleLocalBounds();
+    getVisibleWorldBounds$(): Rectangle | undefined {
+        let localBounds = this.getVisibleLocalBounds$();
         if (!localBounds) return undefined;
         localBounds.x += this.x;
         localBounds.y += this.y;
@@ -523,7 +523,7 @@ class WorldObject {
 
     isOnScreen(buffer: number = 0) {
         if (!this.world) return false;
-        let bounds = this.getVisibleScreenBounds();
+        let bounds = this.getVisibleScreenBounds$();
         if (!bounds) return true;
         return bounds.x + bounds.width >= -buffer
             && bounds.x <= this.world.width + buffer

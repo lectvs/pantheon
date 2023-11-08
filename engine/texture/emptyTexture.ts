@@ -1,3 +1,5 @@
+/// <reference path="../utils/rectangle.ts" />
+
 class EmptyTexture implements Texture {
     get width() { return 0; }
     get height() { return 0; }
@@ -5,7 +7,7 @@ class EmptyTexture implements Texture {
     get immutable() { return true; }
 
     constructor() {
-
+        this._localBoundsResult = new Rectangle(0, 0, 0, 0);
     }
 
     clear() { }
@@ -20,8 +22,9 @@ class EmptyTexture implements Texture {
 
     free() { }
 
-    getLocalBounds(properties: Texture.Properties) {
-        return new Rectangle(0, 0, 0, 0);
+    private _localBoundsResult: Rectangle;
+    getLocalBounds$(properties: Texture.Properties) {
+        return this._localBoundsResult;
     }
 
     getPixelAbsoluteARGB(x: number, y: number, extendMode: Texture.ExtendMode = 'transparent') {
