@@ -12,7 +12,6 @@ class Game {
     theater: Theater;
 
     private overlay: DebugOverlay;
-    private isShowingOverlay: boolean;
 
     get canPause(): boolean { return this.theater?.canPause ?? false; }
 
@@ -41,7 +40,6 @@ class Game {
         this.theater = this.theaterFactory();
 
         this.overlay = new DebugOverlay();
-        this.isShowingOverlay = true;
     }
 
     start() {
@@ -79,11 +77,7 @@ class Game {
     }
 
     private updateOverlay() {
-        if (Input.justDown(Input.DEBUG_TOGGLE_OVERLAY)) {
-            this.isShowingOverlay = !this.isShowingOverlay;
-        }
-
-        if (this.isShowingOverlay && Debug.SHOW_OVERLAY) {
+        if (Debug.SHOW_OVERLAY) {
             this.overlay.setCurrentWorldToDebug(this.menuSystem.inMenu ? this.menuSystem.currentMenu : this.theater?.currentWorld);
             this.overlay.update();
         }
@@ -96,7 +90,7 @@ class Game {
             this.theater.render(screen);
         }
 
-        if (this.isShowingOverlay && Debug.SHOW_OVERLAY) {
+        if (Debug.SHOW_OVERLAY) {
             this.overlay.render(screen, 0, 0);
         }
 

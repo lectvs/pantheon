@@ -1,14 +1,11 @@
 TODO
 - general solution to prevent sprites from jittering relative to camera movement
-- find true texture limit and re-enable in BasicTexture
-- debug show overlay with O key doesn't always work. sometimes i need to call Debug.SHOW_OVERLAY=true
 - methods to take a screenshot of the canvas (full-size and 1:1 scale? copy to clipboard?) + debug screenshot key
 - preload/load overhaul + get off of pixi's preload system
     - asset "repositories" (local, remote?, zip)
     - asset dependencies?
 - performance
     - look into more performant graphics libraries
-    - look into pixi gpu usage: https://www.google.com/search?q=pixijs+uses+gpu
     - use shaders for puff system
 - easier window event integration (onbeforeunload, etc.)
 - Network.httpRequest should return some kind of error if the user is not connected to the internet
@@ -21,6 +18,7 @@ TODO
 
 
 backlog
+- allow BasicTexture to be broken into smaller textures if the size limit is surpassed
 - apply filter before texture transformation during render? (rotate, scale, etc.)
 - module system revamp
     - revamp module system to work with compound types
