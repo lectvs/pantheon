@@ -293,4 +293,39 @@ class Main {
     static getScaledHeight() {
         return global.gameHeight * Main.config.canvasScale;
     }
+
+    static takeScreenshot(scale: number, output: 'clipboard' | 'newtab') {
+        Main.forceRender();
+
+        let hcanvas = document.createElement('canvas');
+        hcanvas.width = global.gameWidth*scale;
+        hcanvas.height = global.gameHeight*scale;
+    
+        let hctx = hcanvas.getContext('2d');
+        hctx!.drawImage(
+            Main.renderer.view,
+            0, 0, Main.getScaledWidth(), Main.getScaledHeight(),
+            0, 0, global.gameWidth*scale, global.gameHeight*scale,
+        );
+
+        hcanvas.toBlob(blob => {
+            if (!blob) {
+                console.error('Blank blob');
+                return;
+            }
+
+            if (output === 'clipboard') {
+                navigator.clipboard.write([
+                    new ClipboardItem({
+                        [blob.type]: blob
+                    })
+                ]).then(() => {
+                    console.log('Took screenshot');
+                });
+            } else if (output === 'newtab') {
+                window.open(URL.createObjectURL(blob), '_blank');
+                console.log('Took screenshot');
+            }
+        });
+    }
 }

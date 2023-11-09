@@ -1,6 +1,5 @@
 TODO
 - general solution to prevent sprites from jittering relative to camera movement
-- methods to take a screenshot of the canvas (full-size and 1:1 scale? copy to clipboard?) + debug screenshot key
 - preload/load overhaul + get off of pixi's preload system
     - asset "repositories" (local, remote?, zip)
     - asset dependencies?

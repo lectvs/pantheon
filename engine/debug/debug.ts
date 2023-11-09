@@ -55,6 +55,10 @@ class Debug {
             Debug.FRAME_STEP_ENABLED = false;
         }
 
+        if (Input.justDown(Input.DEBUG_SCREENSHOT)) {
+            Main.takeScreenshot(1, 'clipboard');
+        }
+
         Debug._SKIP_RATE_KEY_MODIFIER = Input.isDown(Input.DEBUG_SKIP_RATE) ? 10 : 1;
     }
 
