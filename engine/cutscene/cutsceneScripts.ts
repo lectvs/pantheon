@@ -1,8 +1,7 @@
 namespace S {
-    export function cameraTransition(duration: number, toMode: Camera.Mode, toMovement?: Camera.Movement, easingFunction: Tween.Easing.Function = Tween.Easing.OutExp): Script.Function {
+    export function cameraTransition(world: World, duration: number, toMode: Camera.Mode, toMovement?: Camera.Movement, easingFunction: Tween.Easing.Function = Tween.Easing.OutExp): Script.Function {
         return function*() {
-            if (!global.world) return;
-            let camera = global.world.camera;
+            let camera = world.camera;
 
             if (!toMovement) toMovement = camera.movement;
 
@@ -135,16 +134,17 @@ namespace S {
         }
     }
 
-    export function shake(intensity: number, time: number): Script.Function {
+    export function shake(world: World | undefined, intensity: number, time: number): Script.Function {
         return function*() {
-            if (!global.world) return;
-            global.world.camera.shakeIntensity += intensity;
+            if (!world) return;
+            if (world.camera.shakeIntensity >= intensity) return;
+            world.camera.shakeIntensity += intensity;
             let timer = new Timer(time);
             while (!timer.done) {
                 timer.update(global.script.delta);
                 yield;
             }
-            global.world.camera.shakeIntensity -= intensity;
+            world.camera.shakeIntensity -= intensity;
         }
     }
 }

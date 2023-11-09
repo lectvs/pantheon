@@ -1,17 +1,8 @@
 TODO
-- allow S scripts to be run in non-global worlds (global.script.world? how do we handle cutscenes?)
 - general solution to prevent sprites from jittering relative to camera movement
 - find true texture limit and re-enable in BasicTexture
-- apply filter before texture transformation during render? (rotate, scale, etc.)
-- module system revamp
-    - revamp module system to work with compound types
-    - attach arbitrary "update"/"render" objects to worldobjects (e.g. timers, new module system?)
 - debug show overlay with O key doesn't always work. sometimes i need to call Debug.SHOW_OVERLAY=true
-- better ways to move the camera (without needing to call setModeFocus)
-- supertextures ("detective+hat")
-- better WorldAsWorldObject (containers?)
-- methods to take a screenshot of the canvas (full-size and 1:1 scale? copy to clipboard?)
-- animation/visual layers
+- methods to take a screenshot of the canvas (full-size and 1:1 scale? copy to clipboard?) + debug screenshot key
 - preload/load overhaul + get off of pixi's preload system
     - asset "repositories" (local, remote?, zip)
     - asset dependencies?
@@ -21,23 +12,29 @@ TODO
     - use shaders for puff system
 - easier window event integration (onbeforeunload, etc.)
 - Network.httpRequest should return some kind of error if the user is not connected to the internet
-- better world and object management (freeing)
-    - good temporary object system
-- controller revamp
 - fix: Options.updateCallbacks.push(() => Input.init());
-- full nodejs setup
 - template for new games
 - documentation and API cleanup
 - rename repo
 - games do not work on Opera mobile browser (AAC audio encoding?)
+
+
+
+backlog
+- apply filter before texture transformation during render? (rotate, scale, etc.)
+- module system revamp
+    - revamp module system to work with compound types
+    - attach arbitrary "update"/"render" objects to worldobjects (e.g. timers, new module system?)
+- better ways to move the camera (without needing to call setModeFocus)
+- supertextures ("detective+hat")
+- animation/visual layers
+- better WorldAsWorldObject (containers?)
+- better world and object management (freeing)
+    - good temporary object system
+- controller revamp
+- full nodejs setup
 - camera zoom/rotate?
 - vs code tasks?
-
-
-
-
-
-stretch
 - look into moving from localstorage to indexeddb: https://web.dev/indexeddb/
 - new paint.net 5.x plugin capabilities: https://boltbait.com/pdn/CodeLab/help/tutorial.php
 - normal-map/lighting
