@@ -7,7 +7,6 @@ TODO
     - look into more performant graphics libraries
     - use shaders for puff system
 - games do not work on Opera mobile browser (AAC audio encoding?) (can we load audio browser-agnostic?)
-- Network.httpRequest should return some kind of error if the user is not connected to the internet
 - template for new games
 - documentation and API cleanup
 - rename repo
