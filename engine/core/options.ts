@@ -3,7 +3,6 @@ namespace Options {
         [Options.VOLUME]: number;
         [Options.SFX_VOLUME]: number;
         [Options.MUSIC_VOLUME]: number;
-        [Options.CONTROLS]: Input.KeyCodesByName;
     } & Dict<any>;
 }
 
@@ -11,13 +10,10 @@ class Options {
     static readonly VOLUME = 'volume';
     static readonly SFX_VOLUME = 'sfx_volume';
     static readonly MUSIC_VOLUME = 'music_volume';
-    static readonly CONTROLS = 'controls';
 
     static optionsName: string;
     private static options: Options.Options;
     private static defaultOptions: Options.Options;
-
-    static updateCallbacks: (() => any)[] = [];
 
     static get volume() { return this.getOption(Options.VOLUME); }
     static set volume(value: number) { this.updateOption(Options.VOLUME, value); }
@@ -59,7 +55,6 @@ class Options {
 
     static saveOptions() {
         LocalStorage.setJson(this.getOptionsLocalStorageName(), this.options);
-        this.onUpdate();
     }
 
     private static loadOptions() {
@@ -67,28 +62,7 @@ class Options {
         let loadedOptions: Partial<Options.Options> = LocalStorage.getJson<Options.Options>(this.getOptionsLocalStorageName()) || {};
 
         for (let option in loadedOptions) {
-            if (option === Options.CONTROLS) {
-                /* NOOP FOR NOW, DEAL WITH CONTROLS OVERRIDING LATER */
-                // let controls = this.options[Options.CONTROLS];
-                // let loadedControls = loadedOptions[Options.CONTROLS]
-                // for (let control in controls) {
-                //     if (control in loadedControls) {
-                //         controls[control] = loadedControls[controls];
-                //     }
-                // }
-            } else {
-                this.options[option] = loadedOptions[option];
-            }
-        }
-        
-        if (O.isEmpty(loadedOptions)) {
-            this.onUpdate();
-        }
-    }
-
-    private static onUpdate() {
-        for (let callback of this.updateCallbacks) {
-            callback();
+            this.options[option] = loadedOptions[option];
         }
     }
 

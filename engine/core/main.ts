@@ -21,6 +21,8 @@ namespace Main {
         fonts: Dict<Preload.Font>;
         customResources: Dict<Preload.CustomResource>;
 
+        controls: Input.KeyCodesByName;
+
         simulateMouseWithTouches: boolean;
         defaultOptions: Options.Options;
 
@@ -134,9 +136,8 @@ class Main {
     }
 
     private static load() {
-        //Options.updateCallbacks.push(() => Input.init()); // TODO: fix this for continuous volume slider
         Options.init(global.gameCodeName, this.config.defaultOptions);
-        Input.init(); // TODO: remove this when fixed above
+        Input.init(this.config.controls);
         Input.simulateMouseWithTouches = this.config.simulateMouseWithTouches;
 
         Persist.init(this.config.persistIntervalSeconds ?? 30, () => this.config.persist?.());

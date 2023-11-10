@@ -2,17 +2,15 @@ TODO
 - general solution to prevent sprites from jittering relative to camera movement
 - preload/load overhaul + get off of pixi's preload system
     - asset "repositories" (local, remote?, zip)
-    - asset dependencies?
+    - asset dependencies? (maybe just that custom assets load after regular assets?)
 - performance
     - look into more performant graphics libraries
     - use shaders for puff system
-- easier window event integration (onbeforeunload, etc.)
+- games do not work on Opera mobile browser (AAC audio encoding?) (can we load audio browser-agnostic?)
 - Network.httpRequest should return some kind of error if the user is not connected to the internet
-- fix: Options.updateCallbacks.push(() => Input.init());
 - template for new games
 - documentation and API cleanup
 - rename repo
-- games do not work on Opera mobile browser (AAC audio encoding?)
 
 
 
@@ -25,6 +23,7 @@ backlog
 - better ways to move the camera (without needing to call setModeFocus)
 - supertextures ("detective+hat")
 - animation/visual layers
+- easier window event integration (onbeforeunload, etc.)
 - better WorldAsWorldObject (containers?)
 - better world and object management (freeing)
     - good temporary object system

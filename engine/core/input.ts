@@ -47,8 +47,8 @@ class Input {
     static simulateMouseWithTouches: boolean = false;
     static preventRegularKeyboardInput: boolean = false;
 
-    static init() {
-        this.keyCodesByName = O.deepClone(Options.getOption(Options.CONTROLS));
+    static init(keyCodesByName: Input.KeyCodesByName) {
+        this.keyCodesByName = O.deepClone(keyCodesByName);
         this.isDownByKeyCode = {};
         this.keysByKeycode = {};
 
@@ -112,56 +112,6 @@ class Input {
     static debugKeyJustUp(name: string) {
         if (!Debug.PROGRAMMATIC_INPUT) return;
         this.keysByKeycode[this.debugKeyCode(name)].setJustUp();
-    }
-
-    static addControlBinding(controlName: string, keyCode: string) {
-        let controls: Dict<string[]> = Options.getOption(Options.CONTROLS);
-        let controlBindings = controls[controlName];
-        if (!controlBindings) {
-            console.error(`Cannot add control binding for '${controlName}' since the control does not exist`);
-            return;
-        }
-        if (!controlBindings.includes(keyCode)) {
-            controlBindings.push(keyCode);
-        }
-        Options.saveOptions();
-        this.init();
-    }
-
-    static removeControlBinding(controlName: string, keyCode: string) {
-        let controls: Dict<string[]> = Options.getOption(Options.CONTROLS);
-        let controlBindings = controls[controlName];
-        if (!controlBindings) {
-            console.error(`Cannot remove control binding for '${controlName}' since the control does not exist`);
-            return;
-        }
-        A.removeAll(controlBindings, keyCode);
-        Options.saveOptions();
-        this.init();
-    }
-
-    static updateControlBinding(controlName: string, oldKeyCode: string, newKeyCode: string) {
-        let controls: Dict<string[]> = Options.getOption(Options.CONTROLS);
-        let controlBindings = controls[controlName];
-        if (!controlBindings) {
-            console.error(`Cannot update control binding for '${controlName}' since the control does not exist`);
-            return;
-        }
-
-        if (!controlBindings.includes(oldKeyCode)) {
-            console.error(`Cannot update control binding '${oldKeyCode}' for '${controlName}' since that key is not bound to that control`);
-            return;
-        }
-
-        for (let i = 0; i < controlBindings.length; i++) {
-            if (controlBindings[i] === oldKeyCode) {
-                controlBindings[i] = newKeyCode;
-                break;
-            }
-        }
-        
-        Options.saveOptions();
-        this.init();
     }
 
     private static debugKeyCode(name: string) {
