@@ -1,8 +1,5 @@
 TODO
 - general solution to prevent sprites from jittering relative to camera movement
-- preload/load overhaul + get off of pixi's preload system
-    - asset "repositories" (local, remote?, zip)
-    - asset dependencies? (maybe just that custom assets load after regular assets?)
 - performance
     - look into more performant graphics libraries
     - use shaders for puff system
@@ -14,6 +11,7 @@ TODO
 
 
 backlog
+- asset "repositories" (local, remote?, zip)
 - allow BasicTexture to be broken into smaller textures if the size limit is surpassed
 - apply filter before texture transformation during render? (rotate, scale, etc.)
 - module system revamp
