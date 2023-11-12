@@ -12,10 +12,7 @@ class SoundLoader implements Loader {
     }
 
     load(callback?: () => void) {
-        let url = Preload.getAssetUrl(this.key, this.sound.url, 'aac');
-        if (url.endsWith('.ogg')) {
-            console.error("Do not use .ogg!", url);
-        }
+        let url = Preload.getAssetUrl(this.key, this.sound.url, 'ogg');
         WebAudio.preloadSound(this.key, url, () => {
             this.onLoad();
             this._completionPercent = 1;

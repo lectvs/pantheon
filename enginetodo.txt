@@ -3,7 +3,6 @@ TODO
 - performance
     - look into more performant graphics libraries
     - use shaders for puff system
-- games do not work on Opera mobile browser (AAC audio encoding?) (can we load audio browser-agnostic?)
 - template for new games
 - documentation and API cleanup
 - rename repo
