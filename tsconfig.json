@@ -19,7 +19,7 @@
         "strictNullChecks": true,
         "strictPropertyInitialization": true,
         "types": [],
-        "outFile": "../bin/js/lectvs.js",
+        "outFile": "../bin/js/pantheon.js",
         "declaration": true,
         "downlevelIteration": true
     }
