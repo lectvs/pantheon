@@ -1,7 +1,5 @@
 TODO
-- template for new games
 - documentation and API cleanup
-- rename repo
 
 
 
