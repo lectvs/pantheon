@@ -1,8 +1,4 @@
 TODO
-- general solution to prevent sprites from jittering relative to camera movement
-- performance
-    - look into more performant graphics libraries
-    - use shaders for puff system
 - template for new games
 - documentation and API cleanup
 - rename repo
@@ -10,6 +6,13 @@ TODO
 
 
 backlog
+- nodify repo
+    - can we make our own language using babel?
+    - hot reload?
+- performance
+    - look into more performant graphics libraries
+    - use shaders for puff system
+- general solution to prevent sprites from jittering relative to camera movement
 - asset "repositories" (local, remote?, zip)
 - allow BasicTexture to be broken into smaller textures if the size limit is surpassed
 - apply filter before texture transformation during render? (rotate, scale, etc.)
