@@ -8,6 +8,7 @@ backlog
     - hot reload?
 - performance
     - look into more performant graphics libraries
+        - https://github.com/melonjs/melonJS
     - use shaders for puff system
 - general solution to prevent sprites from jittering relative to camera movement
 - asset "repositories" (local, remote?, zip)
