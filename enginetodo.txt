@@ -3,7 +3,8 @@ TODO
 
 
 backlog
-- nodify repo
+- repo improvements
+    - custom file watcher
     - can we make our own language using babel?
     - hot reload?
 - performance
