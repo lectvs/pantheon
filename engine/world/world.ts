@@ -44,6 +44,9 @@ namespace World {
 
     export type LayerConfig = {
         name: string;
+        /**
+         * Sorts each object in the layer by a key. Objects are ordered from lowest key to highest key.
+         */
         sortKey?: (worldObject: WorldObject) => number;
         reverseSort?: boolean;
         effects?: Effects.Config;

@@ -60,7 +60,9 @@ class Theater {
         this.cutsceneManager.update();
         this.stageManager.update();
 
-        this.dialogBoxWorld.update();
+        if (this.dialogBox) {
+            this.dialogBoxWorld.update();
+        }
 
         while (!A.isEmpty(this.endOfFrameQueue)) {
             this.endOfFrameQueue.shift()!();
@@ -69,7 +71,9 @@ class Theater {
 
     render(screen: Texture) {
         this.stageManager.render(screen);
-        this.dialogBoxWorld.render(screen, 0, 0);
+        if (this.dialogBox) {
+            this.dialogBoxWorld.render(screen, 0, 0);
+        }
 
         for (let fade of this.fades) {
             Draw.rectangle(screen, 0, 0, screen.width, screen.height, { fill: { color: fade.color, alpha: M.clamp(fade.alpha, 0, 1) } });

@@ -33,6 +33,10 @@ class BasicTexture implements Texture {
         TextureCreationData.logCreateTexture(this, source);
     }
 
+    anchored(ax: number, ay: number) {
+        return new AnchoredTexture(this, ax, ay);
+    }
+
     clear() {
         if (this.immutable) {
             console.error('Cannot clear immutable texture!');
@@ -68,10 +72,6 @@ class BasicTexture implements Texture {
         let angle = properties.angle ?? 0;
         let width = this.width * scaleX;
         let height = this.height * scaleY;
-
-        if (angle === 0) {
-            return this._localBoundsResult.set(x, y, width, height);
-        }
 
         let v1x = 0;
         let v1y = 0;
