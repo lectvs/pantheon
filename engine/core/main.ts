@@ -235,16 +235,16 @@ class Main {
             Input.handleMouseScrollEvent(event, this.config.preventScrollOnCanvas);
         }, { passive: false });
         window.addEventListener("touchstart", event => {
-            TouchManager.handleTouchStartEvent(event);
+            Input.handleTouchStartEvent(event);
         });
         window.addEventListener("touchmove", event => {
-            TouchManager.handleTouchMoveEvent(event);
+            Input.handleTouchMoveEvent(event);
         });
         window.addEventListener("touchend", event => {
-            TouchManager.handleTouchEndEvent(event);
+            Input.handleTouchEndEvent(event);
         });
         window.addEventListener("touchcancel", event => {
-            TouchManager.handleTouchCancelEvent(event);
+            Input.handleTouchCancelEvent(event);
         });
         window.addEventListener("contextmenu", event => {
             WebAudio.start();

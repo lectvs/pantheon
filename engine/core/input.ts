@@ -23,6 +23,13 @@ namespace Input {
         [Input.DEBUG_SKIP_RATE]: string[],
         [Input.DEBUG_SCREENSHOT]: string[],
     } & Dict<string[]>;
+
+    export type TouchData = {
+        id: number;
+        x: number;
+        y: number;
+        radius: number;
+    }
 }
 
 class Input {
@@ -40,12 +47,15 @@ class Input {
     private static _lastMouseX: number;
     private static _lastMouseY: number;
 
-    private static isUsingTouch: boolean = false;
+    private static usingTouch: boolean = false;
     private static touchWentDown: boolean = false; // Did a touch event happen this frame that caused touch to start?
     private static touchWentUp: boolean = false; // Did a touch event happen this frame that caused touch to stop?
+    private static touches: Input.TouchData[] = [];
 
     static simulateMouseWithTouches: boolean = false;
     static preventRegularKeyboardInput: boolean = false;
+
+    static gestures: Input.Gestures;
 
     static init(keyCodesByName: Input.KeyCodesByName) {
         this.keyCodesByName = O.deepClone(keyCodesByName);
@@ -59,8 +69,7 @@ class Input {
             }
         }
 
-        TouchManager.onTouchDown = () => this.handleTouchDown();
-        TouchManager.onTouchUp = () => this.handleTouchUp();
+        this.gestures = new Input.Gestures();
     }
 
     static update() {
@@ -69,6 +78,7 @@ class Input {
         }
         this.updateKeys();
         this.updateMousePosition();
+        this.gestures.update();
     }
 
     static postUpdate() {
@@ -136,10 +146,10 @@ class Input {
 
     private static updateMousePosition() {
         if (this.isUsingTouch && this.simulateMouseWithTouches) {
-            if (TouchManager.isTouching) {
-                this._canvasMouseX = TouchManager.touch!.x;
-                this._canvasMouseY = TouchManager.touch!.y;
-                this._mouseRadius = TouchManager.touch!.radius;
+            if (this.isTouching) {
+                this._canvasMouseX = this.touch!.x;
+                this._canvasMouseY = this.touch!.y;
+                this._mouseRadius = this.touch!.radius;
             }
         } else if (IS_MOBILE) {
             if (this.isDownByKeyCode[this.MOUSE_KEYCODES[0]]) {
@@ -276,6 +286,18 @@ class Input {
         return M.distance(this.mouseX, this.mouseY, this.lastMouseX, this.lastMouseY) / Main.delta;
     }
 
+    static get isUsingTouch() {
+        return this.usingTouch;
+    }
+
+    static get isTouching() {
+        return this.touches.length > 0;
+    }
+
+    static get touch() {
+        return this.isTouching ? this.touches[0] : undefined;
+    }
+
     static handleKeyDownEvent(event: KeyboardEvent) {
         let keyCode = Input.getKeyFromEventKey(event.key);
         this.eventKey = keyCode;
@@ -334,19 +356,80 @@ class Input {
         }
     }
 
-    static handleTouchDown() {
+    static handleTouchStartEvent(event: TouchEvent) {
+        // TODO: handle multiple touches at some point
+        if (this.isTouching) return;
+
+        for (let i = 0; i < event.changedTouches.length; i++) {
+            let touch = event.changedTouches[i];
+            let touchData = this.getTouchData(touch);
+            this.touches.push(touchData);
+        }
+
+        if (this.isTouching) {
+            this.onTouchDown();
+        }
+    }
+
+    static handleTouchMoveEvent(event: TouchEvent) {
+        for (let i = 0; i < event.changedTouches.length; i++) {
+            let touch = event.changedTouches[i];
+            let index = this.touches.findIndex(td => td.id === touch.identifier);
+            if (index >= 0) {
+                this.touches[index] = this.getTouchData(touch);
+            }
+        }
+    }
+
+    static handleTouchEndEvent(event: TouchEvent) {
+        for (let i = 0; i < event.changedTouches.length; i++) {
+            let touch = event.changedTouches[i];
+            let index = this.touches.findIndex(td => td.id === touch.identifier);
+            if (index >= 0) {
+                this.touches.splice(index, 1);
+            }
+        }
+        if (!this.isTouching && this.onTouchUp) {
+            this.onTouchUp();
+        }
+    }
+
+    static handleTouchCancelEvent(event: TouchEvent) {
+        for (let i = 0; i < event.changedTouches.length; i++) {
+            let touch = event.changedTouches[i];
+            let index = this.touches.findIndex(td => td.id === touch.identifier);
+            if (index >= 0) {
+                this.touches.splice(index, 1);
+            }
+        }
+        if (!this.isTouching) {
+            this.onTouchUp();
+        }
+    }
+
+    private static onTouchDown() {
         if (this.simulateMouseWithTouches) {
             this.isDownByKeyCode[this.MOUSE_KEYCODES[0]] = true;
-            this.isUsingTouch = true;
+            this.usingTouch = true;
             this.touchWentDown = true;
         }
     }
 
-    static handleTouchUp() {
+    private static onTouchUp() {
         if (this.simulateMouseWithTouches) {
             this.isDownByKeyCode[this.MOUSE_KEYCODES[0]] = false;
             this.touchWentUp = true;
         }
+    }
+
+    private static getTouchData(touch: Touch): Input.TouchData {
+        let bounds = Main.renderer.view.getBoundingClientRect();
+        return {
+            id: touch.identifier,
+            x: M.map(touch.pageX, bounds.left, bounds.right, 0, global.gameWidth),
+            y: M.map(touch.pageY, bounds.top, bounds.bottom, 0, global.gameHeight),
+            radius: 10, // TODO: touch radius issues on Android?
+        };
     }
 
     static MOUSE_KEYCODES: string[] = ["MouseLeft", "MouseMiddle", "MouseRight", "MouseBack", "MouseForward"];
@@ -420,6 +503,45 @@ namespace Input {
         setJustUp() {
             this._isDown = false;
             this._lastDown = true;
+        }
+    }
+
+    export namespace Gestures {
+        export type Drag = {
+            start: Vector2;
+            end: Vector2;
+            d: Vector2;
+        }
+    }
+
+    export class Gestures {
+        drag: Gestures.Drag | undefined;
+
+        private lastTouch: Pt | undefined;
+
+        update() {
+            let touch = Input.isUsingTouch
+                ? Input.touch
+                : Input.isKeyCodeDown(Input.MOUSE_KEYCODES[0]) ? Input.mousePosition : undefined;
+            
+            if (touch) {
+                if (!this.lastTouch) {
+                    this.drag = {
+                        start: vec2(touch),
+                        end: vec2(touch),
+                        d: Vector2.ZERO,
+                    };
+                }
+
+                if (this.drag) {
+                    this.drag.end.set(touch);
+                    this.drag.d.set(this.drag.end).subtract(this.drag.start);
+                }
+            } else {
+                this.drag = undefined;
+            }
+
+            this.lastTouch = touch;
         }
     }
 
