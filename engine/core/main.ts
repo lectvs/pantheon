@@ -23,6 +23,7 @@ namespace Main {
 
         controls: Input.KeyCodesByName;
 
+        mobileScalePrimaryDirection?: MobileScaleManager.PrimaryDirection;
         simulateMouseWithTouches: boolean;
         defaultOptions: Options.Options;
 
@@ -65,6 +66,8 @@ class Main {
     }
 
     private static preload() {
+        Debug.init(this.config.debug);
+
         if (MobileUtils.isMobileBrowser()) {
             IS_MOBILE = true;
         }
@@ -82,7 +85,6 @@ class Main {
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
         LocalStorage.init();
-        Debug.init(this.config.debug);
 
         global.gameCodeName = this.config.gameCodeName;
         global.gameWidth = this.config.gameWidth;
@@ -104,7 +106,7 @@ class Main {
 
         if (MobileUtils.isMobileBrowser()) {
             document.body.style.backgroundColor = "black";
-            MobileScaleManager.init();
+            MobileScaleManager.init(this.config.mobileScalePrimaryDirection ?? 'none');
         }
 
         // AccessibilityManager causes game to crash when Tab is pressed.
@@ -192,6 +194,15 @@ class Main {
         Main.screen.clear();
         Main.game.render(Main.screen);
         Main.renderScreenToCanvas();
+    }
+
+    static forceResize(width: number, height: number) {
+        if (!Main.screen) return;
+        global.gameWidth = width;
+        global.gameHeight = height;
+        Main.renderer.resize(width, height);
+        Main.screen.free();
+        Main.screen = new BasicTexture(global.gameWidth, global.gameHeight, 'Main.screen');
     }
 
     // For use in preload.

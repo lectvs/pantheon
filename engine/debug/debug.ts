@@ -14,6 +14,7 @@ namespace Debug {
         skipMainMenuStage: () => World;
         frameStepEnabled: boolean;
         resetOptionsAtStart: boolean;
+        forceMobile: boolean;
         experiments: Dict<Experiment>;
     }
 }
@@ -35,6 +36,7 @@ class Debug {
         Debug.SKIP_MAIN_MENU_STAGE = config.skipMainMenuStage;
         Debug.FRAME_STEP_ENABLED = config.frameStepEnabled;
         Debug.RESET_OPTIONS_AT_START = config.resetOptionsAtStart;
+        Debug.FORCE_MOBILE = config.forceMobile;
         Debug.EXPERIMENTS = config.experiments;
     }
 
@@ -112,6 +114,10 @@ class Debug {
     private static _RESET_OPTIONS_AT_START: boolean;
     static get RESET_OPTIONS_AT_START() { return this.DEBUG && this._RESET_OPTIONS_AT_START; }
     static set RESET_OPTIONS_AT_START(value: boolean) { this._RESET_OPTIONS_AT_START = value; }
+
+    private static _FORCE_MOBILE: boolean;
+    static get FORCE_MOBILE() { return this.DEBUG && this._FORCE_MOBILE; }
+    static set FORCE_MOBILE(value: boolean) { this._FORCE_MOBILE = value; }
 
     static EXPERIMENTS: Dict<Experiment>;
 }

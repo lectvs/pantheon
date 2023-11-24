@@ -526,9 +526,9 @@ class WorldObject {
         let bounds = this.getVisibleScreenBounds$();
         if (!bounds) return true;
         return bounds.x + bounds.width >= -buffer
-            && bounds.x <= this.world.width + buffer
+            && bounds.x <= this.world.getScreenWidth() + buffer
             && bounds.y + bounds.height >= -buffer
-            && bounds.y <= this.world.height + buffer;
+            && bounds.y <= this.world.getScreenHeight() + buffer;
     }
 
     isVisible(): boolean {

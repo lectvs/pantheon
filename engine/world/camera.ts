@@ -26,8 +26,6 @@ class Camera {
 
     x: number;
     y: number;
-    width: number;
-    height: number;
 
     bounds: Bndries;
     mode: Camera.Mode;
@@ -50,6 +48,8 @@ class Camera {
     private debugOffsetX: number;
     private debugOffsetY: number;
 
+    get width() { return this.world.getScreenWidth(); }
+    get height() { return this.world.getScreenHeight(); }
     get worldOffsetX() { return this.x - this.width/2 + this._waverX + this.debugOffsetX + (this.screenShakePhysicallyMovesCamera ? this.shakeX : 0); }
     get worldOffsetY() { return this.y - this.height/2 + this._waverY + this.debugOffsetY + (this.screenShakePhysicallyMovesCamera ? this.shakeY : 0); }
 
@@ -58,8 +58,6 @@ class Camera {
 
         this.x = 0;
         this.y = 0;
-        this.width = config.width ?? world.width;
-        this.height = config.height ?? world.height;
 
         this.bounds = O.withDefaults(config.bounds ?? {}, {
             top: -Infinity,

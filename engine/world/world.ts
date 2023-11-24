@@ -13,8 +13,8 @@ namespace World {
         backgroundColor?: number;
         backgroundAlpha?: number;
 
-        width?: number;
-        height?: number;
+        forcedWidth?: number;
+        forcedHeight?: number;
         scaleX?: number;
         scaleY?: number;
 
@@ -74,8 +74,9 @@ namespace World {
 }
 
 class World {
-    width: number;
-    height: number;
+    forcedWidth: number | undefined;
+    forcedHeight: number | undefined;
+
     worldObjects: WorldObject[];
     time: number;
     timeScale: number;
@@ -136,8 +137,8 @@ class World {
         this.allowSounds = true;
         this.globalSoundHumanizeFactor = config.globalSoundHumanizeFactor ?? 0;
 
-        this.width = config.width ?? global.gameWidth;
-        this.height = config.height ?? global.gameHeight;
+        this.forcedWidth = config.forcedWidth;
+        this.forcedHeight = config.forcedHeight;
         this.time = 0;
         this.timeScale = config.timescale ?? 1;
         this.allowPause = config.allowPause ?? true;
@@ -162,8 +163,8 @@ class World {
         this.backgroundColor = config.backgroundColor ?? global.backgroundColor;
         this.backgroundAlpha = config.backgroundAlpha ?? 1;
 
-        this.worldTexture = new BasicTexture(this.width, this.height, 'World.worldTexture');
-        this.layerTexture = new BasicTexture(this.width, this.height, 'World.layerTexture');
+        this.worldTexture = new BasicTexture(global.gameWidth, global.gameHeight, 'World.worldTexture');
+        this.layerTexture = new BasicTexture(global.gameWidth, global.gameHeight, 'World.layerTexture');
 
         this.camera = new Camera(config.camera ?? {}, this);
         this.screenShakeFilter = new World.ScreenShakeFilter();
@@ -238,10 +239,19 @@ class World {
     }
 
     render(screen: Texture, x: number, y: number) {
+        let targetWidth = this.forcedWidth ?? screen.width;
+        let targetHeight = this.forcedHeight ?? screen.height;
+        if (this.worldTexture.width !== targetWidth || this.worldTexture.height !== targetHeight) {
+            this.worldTexture.free();
+            this.worldTexture = new BasicTexture(targetWidth, targetHeight, 'World.worldTexture/resized');
+            this.layerTexture.free();
+            this.layerTexture = new BasicTexture(targetWidth, targetHeight, 'World.layerTexture/resized');
+        }
+
         this.worldTexture.clear();
 
         // Render background color.
-        Draw.rectangle(this.worldTexture, 0, 0, this.width, this.height, { fill: { color: this.backgroundColor, alpha: this.backgroundAlpha }});
+        Draw.rectangle(this.worldTexture, 0, 0, this.worldTexture.width, this.worldTexture.height, { fill: { color: this.backgroundColor, alpha: this.backgroundAlpha }});
 
         for (let layer of this.layers) {
             if (layer.shouldRenderToOwnLayer) {
@@ -315,6 +325,14 @@ class World {
             }
         }
         return A.removeDuplicates(result);
+    }
+
+    getScreenWidth() {
+        return this.worldTexture.width;
+    }
+
+    getScreenHeight() {
+        return this.worldTexture.height;
     }
 
     getWorldMouseX() {
@@ -417,7 +435,7 @@ class World {
     }
 
     takeSnapshot() {
-        let screen = new BasicTexture(this.width * this.scaleX, this.height * this.scaleY, 'World.takeSnapshot', false);
+        let screen = new BasicTexture(this.worldTexture.width * this.scaleX, this.worldTexture.height * this.scaleY, 'World.takeSnapshot', false);
         this.render(screen, 0, 0);
         return screen;
     }

@@ -1,25 +1,59 @@
-class MobileScaleManager {
-    private static currentScale: number;
+namespace MobileScaleManager {
+    export type PrimaryDirection = 'horizontal' | 'vertical' | 'none';
+}
 
-    static init() {
-        this.scale(this.getScale());
+class MobileScaleManager {
+    private static primaryDirection: MobileScaleManager.PrimaryDirection;
+    private static currentWindowInnerWidth: number;
+    private static currentWindowInnerHeight: number;
+
+    static init(primaryDirection: MobileScaleManager.PrimaryDirection) {
+        this.primaryDirection = primaryDirection;
+        this.scale();
     }
 
     static update() {
-        let newScale = this.getScale();
-        if (newScale !== this.currentScale) {
-            this.scale(newScale);
+        if (window.innerWidth !== this.currentWindowInnerWidth || window.innerHeight !== this.currentWindowInnerHeight) {
+            this.scale();
         }
     }
 
-    private static scale(s: number) {
-        Main.renderer.view.style.transform = `scale(${s})`;
-        this.currentScale = s;
+    private static scale() {
+        let newScale = this.getScale();
+        Main.renderer.view.style.transform = `scale(${newScale})`;
+
+        if (this.primaryDirection !== 'none') {
+            this.resize();
+        }
+    }
+
+    private static resize() {
+        let ratio = window.innerWidth / window.innerHeight;
+
+        let width: number, height: number;
+        if (this.primaryDirection === 'horizontal') {
+            height = Main.config.gameHeight;
+            width = Math.ceil(height * ratio);
+        } else {
+            width = Main.config.gameWidth;
+            height = Math.ceil(width / ratio);
+        }
+
+        Main.forceResize(width, height);
     }
 
     private static getScale() {
-        return Math.min(
-            window.innerWidth/Main.getScaledWidth(),
-            window.innerHeight/Main.getScaledHeight());
+        let hscale = window.innerWidth/Main.getScaledWidth();
+        let vscale = window.innerHeight/Main.getScaledHeight();
+
+        if (this.primaryDirection === 'horizontal') {
+            return vscale;
+        }
+
+        if (this.primaryDirection === 'vertical') {
+            return hscale;
+        }
+
+        return Math.min(hscale, vscale);
     }
 }

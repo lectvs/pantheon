@@ -6,7 +6,7 @@ const JSZip = require('./jszip');
 exports.buildGame = function(directory, gameName) {
     let files = [
         { directory: 'assets', exclude: ['.pyxel', '.flp', '.xrns', 'LICENSE*'] },
-        { directory: 'js', exclude: ['pixiEdits.txt', 'lectvs.d.ts'] },
+        { directory: 'js', exclude: ['pixiEdits.txt', 'pantheon.d.ts'] },
         { file: 'index.html' },
     ];
 
@@ -19,14 +19,14 @@ exports.buildSrc = function(directory, gameName) {
         { directory: '.vscode' },
         { directory: 'bin', exclude: ['pixiEdits.txt'] },
         { directory: 'drafts' },
-        { directory: 'lectvs', exclude: ['build*', '.git', 'enginetodo.txt', 'LICENSE'] },
+        { directory: 'pantheon', exclude: ['build*', '.git', 'enginetodo.txt', 'LICENSE'] },
         { directory: 'src' },
         { file: 'favicon.ico' },
         { file: 'README.md' },
         { file: 'tsconfig.json' },
         { file: 'tscw.bat' },
         { inline: getLicense('LICENSE_ART'), path: 'bin/assets/LICENSE-FOR-ART-ASSETS' },
-        { inline: getLicense('LICENSE_SRC'), path: 'lectvs/LICENSE' },
+        { inline: getLicense('LICENSE_SRC'), path: 'pantheon/LICENSE' },
         { inline: getLicense('LICENSE_SRC'), path: 'src/LICENSE' },
     ];
 
