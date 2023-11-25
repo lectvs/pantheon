@@ -7,9 +7,7 @@
 - `git submodule update`
 
 # New Game Checklist
-- Change game name in `build.bat`
-- Change game name in `src/main.ts`
-- Change window title in `bin/index.html`
+- Change game name and window title in `bin/index.html`
 
 # Pre-Publish Checklist
 - Sound does not restart on death

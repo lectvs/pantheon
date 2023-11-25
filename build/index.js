@@ -2,6 +2,20 @@ const fs = require('fs');
 const path = require('path');
 const JSZip = require('./jszip');
 
+/* EXPORTS */
+
+exports.cleanBuildDir = function(directory) {
+    fs.rmSync(path.join(directory, 'build'), { recursive: true, force: true });
+}
+
+exports.getGameName = function(directory) {
+    let indexFile = fs.readFileSync(path.join(directory, 'bin/index.html')).toString('utf-8');
+    let match = indexFile.match(/var\s+GAME_NAME\s*=\s*"([^\"]+)"\s*;/);
+    if (!match) {
+        throw new Error('Could not find a game name in index.html');
+    }
+    return match[1];
+}
 
 exports.buildGame = function(directory, gameName) {
     let files = [
@@ -11,7 +25,6 @@ exports.buildGame = function(directory, gameName) {
     ];
 
     createAdvancedZip(path.join(directory, 'bin'), files, path.join(directory, `build/${gameName}.zip`));
-
 }
 
 exports.buildSrc = function(directory, gameName) {
@@ -34,6 +47,7 @@ exports.buildSrc = function(directory, gameName) {
 }
 
 
+/* HELPERS */
 
 function addFileToZip(zip, pathOnDisk, pathInZip) {
     let file = fs.readFileSync(pathOnDisk);
@@ -63,7 +77,7 @@ function createAdvancedZip(rootDirectory, files, outPath) {
             let exclusions = file.exclude || [];
             let innerFiles = exclude(getFileListRecursive(path.join(rootDirectory, file.directory)), exclusions);
             for (let innerFile of innerFiles) {
-                addFileToZip(zip, innerFile, path.relative(rootDirectory, innerFile));
+                addFileToZip(zip, innerFile, path.relative(rootDirectory, innerFile).replace(/\\/g, '/'));
             }
         } else {
             console.error("Unknown file:", file);
@@ -99,9 +113,13 @@ function getFileListRecursive(directory) {
 }
 
 function saveZip(zip, filePath) {
-    zip.generateAsync({ type: "nodebuffer" }).then(function (buffer) {
-        let directory = path.dirname(filePath);
-        fs.mkdirSync(directory, { recursive: true });
-        fs.writeFileSync(filePath, buffer);
-    });
+    let directory = path.dirname(filePath);
+    fs.mkdirSync(directory, { recursive: true });
+
+    zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE", compressionOptions: { level: 9 } })
+        .then(function (buffer) {
+            let directory = path.dirname(filePath);
+            fs.mkdirSync(directory, { recursive: true });
+            fs.writeFileSync(filePath, buffer);
+        });
 }

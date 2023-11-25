@@ -2,7 +2,6 @@
 
 namespace Main {
     export type Config = {
-        gameCodeName: string;
         gameWidth: number;
         gameHeight: number;
         canvasScale: number;
@@ -86,7 +85,6 @@ class Main {
 
         LocalStorage.init();
 
-        global.gameCodeName = this.config.gameCodeName;
         global.gameWidth = this.config.gameWidth;
         global.gameHeight = this.config.gameHeight;
         global.backgroundColor = this.config.backgroundColor;
@@ -138,7 +136,7 @@ class Main {
     }
 
     private static load() {
-        Options.init(global.gameCodeName, this.config.defaultOptions);
+        Options.init(GAME_NAME, this.config.defaultOptions);
         Input.init(this.config.controls);
         Input.simulateMouseWithTouches = this.config.simulateMouseWithTouches;
 

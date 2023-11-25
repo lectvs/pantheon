@@ -22,7 +22,6 @@ class global {
     static get soundManager() { return Main.soundManager; }
     static fpsCalculator: FPSCalculator = new FPSCalculator(1);
 
-    static gameCodeName: string;
     static gameWidth: number;
     static gameHeight: number;
     static backgroundColor: number;

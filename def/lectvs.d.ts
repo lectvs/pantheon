@@ -1,4 +1,9 @@
 /**
+ * The game's code name, defined in index.html.
+ */
+declare var GAME_NAME: string;
+
+/**
  * true iff we are on a mobile browser, or explicitly set.
  */
 declare var IS_MOBILE: boolean;
