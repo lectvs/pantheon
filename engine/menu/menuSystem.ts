@@ -33,5 +33,6 @@ class MenuSystem {
     loadMenu(menuFactory: Factory<Menu>) {
         let instance = menuFactory();
         this.menuStack.push(instance);
+        instance.onTransitioned();
     }
 }
