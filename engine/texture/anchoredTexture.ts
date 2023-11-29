@@ -69,6 +69,18 @@ class AnchoredTexture implements Texture {
         return this.baseTexture.getPixelsARGB();
     }
 
+    getPixiTexture(): PIXI.Texture {
+        return this.baseTexture.getPixiTexture();
+    }
+
+    getPixiTextureAnchorX(): number {
+        return this.anchorX;
+    }
+
+    getPixiTextureAnchorY(): number {
+        return this.anchorY;
+    }
+
     renderTo(texture: Texture, properties: Texture.Properties = {}) {
         properties.x = properties.x ?? 0;
         properties.y = properties.y ?? 0;

@@ -138,6 +138,18 @@ class BasicTexture implements Texture {
         return result;
     }
 
+    getPixiTexture(): PIXI.Texture {
+        return this.renderTextureSprite.renderTexture;
+    }
+
+    getPixiTextureAnchorX(): number {
+        return 0;
+    }
+
+    getPixiTextureAnchorY(): number {
+        return 0;
+    }
+
     renderTo(texture: Texture, _properties?: Texture.Properties) {
         if (!texture) return;
         if (texture.immutable) {
@@ -151,9 +163,12 @@ class BasicTexture implements Texture {
         this.returnTextureFilters(allFilters);
     }
 
-    renderPIXIDisplayObject(displayObject: PIXI.DisplayObject) {
+    renderPIXIDisplayObject(displayObject: PIXI.DisplayObject | undefined) {
         if (this.immutable) {
             console.error('Cannot render to immutable texture!');
+            return;
+        }
+        if (!displayObject) {
             return;
         }
         global.renderer.render(displayObject, this.renderTextureSprite.renderTexture, false);

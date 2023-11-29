@@ -39,6 +39,18 @@ class EmptyTexture implements Texture {
         return [];
     }
 
+    getPixiTexture(): PIXI.Texture {
+        return Utils.NOOP_RENDERTEXTURE;
+    }
+
+    getPixiTextureAnchorX(): number {
+        return 0;
+    }
+
+    getPixiTextureAnchorY(): number {
+        return 0;
+    }
+
     renderTo(texture: Texture, properties: Texture.Properties = {}) { }
 
     renderPIXIDisplayObject(displayObject: PIXI.DisplayObject) { }

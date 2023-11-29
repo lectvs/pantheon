@@ -51,6 +51,8 @@ class Sprite extends PhysicsWorldObject {
     mask?: Mask.WorldObjectMaskConfig;
     blendMode?: Texture.BlendMode;
 
+    private renderObject: PIXI.Sprite;
+
     constructor(config: Sprite.Config<Sprite> = {}) {
         super(config);
 
@@ -75,6 +77,8 @@ class Sprite extends PhysicsWorldObject {
 
         this.mask = config.mask;
         this.blendMode = config.blendMode;
+
+        this.renderObject = new PIXI.Sprite();
     }
 
     override update() {
@@ -82,6 +86,29 @@ class Sprite extends PhysicsWorldObject {
         this.effects.updateEffects(this.delta);
 
         this.angle += this.vangle * this.delta;
+    }
+
+    override compile(x: number, y: number): CompileResult {
+        if (this.textureKey) {
+            let texture = AssetCache.getTexture(this.textureKey);
+            if (texture) {
+                this.renderObject.texture = texture.getPixiTexture();
+                this.renderObject.anchor.x = texture.getPixiTextureAnchorX();
+                this.renderObject.anchor.y = texture.getPixiTextureAnchorY();
+            }
+        }
+        this.renderObject.x = x + this.offsetX;
+        this.renderObject.y = y + this.offsetY;
+        this.renderObject.scale.x = (this.flipX ? -1 : 1) * this.scaleX;
+        this.renderObject.scale.y = (this.flipY ? -1 : 1) * this.scaleY;
+        this.renderObject.angle = this.angle + this.angleOffset;
+        this.renderObject.tint = this.tint;
+        this.renderObject.alpha = this.alpha;
+        // TODO PIXI this.renderObject.filters
+        // TODO PIXI mask
+        this.renderObject.blendMode = this.blendMode ?? PIXI.BLEND_MODES.NORMAL;
+        // TODO PIXI do not ignore the results of super.compile()
+        return this.renderObject;
     }
 
     override render(texture: Texture, x: number, y: number) {

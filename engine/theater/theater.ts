@@ -6,11 +6,6 @@ namespace Theater {
         dialogBox?: Factory<DialogBox>;
         autoPlayScript?: () => IterableIterator<any>;
     }
-
-    export type Fade = {
-        color: number;
-        alpha: number;
-    }
 }
 
 class Theater {
@@ -31,6 +26,8 @@ class Theater {
     get isCutscenePlaying() { return this.cutsceneManager ? this.cutsceneManager.isCutscenePlaying : false; }
     get canPause() { return this.currentWorld ? this.currentWorld.allowPause : false; }
     get delta() { return global.game.delta; }
+
+    private container: PIXI.Container;
     
     constructor(config: Theater.Config = {}) {
         this.scriptManager = new ScriptManager();
@@ -53,6 +50,8 @@ class Theater {
         if (Debug.AUTOPLAY && config.autoPlayScript) {
             this.runScript(config.autoPlayScript);
         }
+
+        this.container = new PIXI.Container();
     }
 
     update() {
@@ -69,15 +68,22 @@ class Theater {
         }
     }
 
-    render(screen: Texture) {
-        this.stageManager.render(screen);
+    compile(): CompileResult {
+        let result = [
+            this.stageManager.compile(),
+        ];
+
         if (this.dialogBox) {
-            this.dialogBoxWorld.render(screen, 0, 0);
+            result.push(this.dialogBoxWorld.compile());
         }
 
         for (let fade of this.fades) {
-            Draw.rectangle(screen, 0, 0, screen.width, screen.height, { fill: { color: fade.color, alpha: M.clamp(fade.alpha, 0, 1) } });
+            result.push(fade.compile());
         }
+
+        diffCompile(this.container, result);
+
+        return this.container;
     }
 
     clearFades(duration: number) {
@@ -90,7 +96,7 @@ class Theater {
     }
 
     fade(duration: number, color: number) {
-        let fade = { color, alpha: 0 };
+        let fade = new Theater.Fade(color, 0);
         this.fades.push(fade);
         return this.runScript(S.tween(duration, fade, 'alpha', 0, 1));
     }
@@ -160,6 +166,21 @@ class Theater {
 }
 
 namespace Theater {
+    export class Fade {
+        private graphics: PIXI.Graphics;
+
+        get alpha() { return this.graphics.alpha; }
+        set alpha(value) { this.graphics.alpha = value; }
+
+        constructor(color: number, alpha: number) {
+            this.graphics = Graphics.rectangle(0, 0, W, H, { fill: { color }});
+            this.alpha = alpha;
+        }
+
+        compile() {
+            return this.graphics;
+        }
+    }
     export class WorldAsWorldObject extends WorldObject {
         containedWorld: World;
         mask: Mask.WorldMaskConfig | undefined;
@@ -175,16 +196,17 @@ namespace Theater {
             this.containedWorld.update();
         }
 
-        override render(texture: Texture, x: number, y: number) {
+        override compile(x: number, y: number): CompileResult {
             let currentMask = this.containedWorld.mask;
             if (this.mask !== undefined) {
                 this.containedWorld.mask = this.mask;
             }
 
-            this.containedWorld.render(texture, x, y);
-            super.render(texture, x, y);
+            let result = this.containedWorld.compile();
 
             this.containedWorld.mask = currentMask;
+
+            return result;
         }
     }
 }

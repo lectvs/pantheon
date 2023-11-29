@@ -127,6 +127,9 @@ class World {
 
     private mouseBounds: CircleBounds;
 
+    private container: PIXI.Container;
+    private bgFill: PIXI.Graphics;
+
     constructor(config: World.Config = {}) {        
         this.scriptManager = new ScriptManager();
         this.soundManager = new SoundManager();
@@ -177,6 +180,9 @@ class World {
         });
 
         this.endOfFrameQueue = [];
+
+        this.container = new PIXI.Container();
+        this.bgFill = Graphics.rectangle(0, 0, 1, 1, { fill: { color: 0xFFFFFF }});
     }
 
     onTransitioned() {
@@ -238,57 +244,60 @@ class World {
         this.scriptManager.update(this.delta);
     }
 
-    render(screen: Texture, x: number, y: number) {
-        let targetWidth = this.forcedWidth ?? screen.width;
-        let targetHeight = this.forcedHeight ?? screen.height;
-        if (this.worldTexture.width !== targetWidth || this.worldTexture.height !== targetHeight) {
-            this.worldTexture.free();
-            this.worldTexture = new BasicTexture(targetWidth, targetHeight, 'World.worldTexture/resized');
-            this.layerTexture.free();
-            this.layerTexture = new BasicTexture(targetWidth, targetHeight, 'World.layerTexture/resized');
-        }
+    compile(): CompileResult {
+        this.bgFill.scale.x = this.getScreenWidth();
+        this.bgFill.scale.y = this.getScreenHeight();
+        this.bgFill.tint = this.backgroundColor;
+        this.bgFill.alpha = this.backgroundAlpha;
 
-        this.worldTexture.clear();
+        let result: CompileResult[] = [
+            this.bgFill,
+        ];
 
-        // Render background color.
-        Draw.rectangle(this.worldTexture, 0, 0, this.worldTexture.width, this.worldTexture.height, { fill: { color: this.backgroundColor, alpha: this.backgroundAlpha }});
+        // TODO PIXI
+        // for (let layer of this.layers) {
+        //     if (layer.shouldRenderToOwnLayer) {
+        //         this.layerTexture.clear();
+        //         this.renderLayerToTexture(layer, this.layerTexture);
+        //         this.layerTexture.renderTo(this.worldTexture, {
+        //             filters: layer.effects.getFilterList(),
+        //             mask: Mask.getTextureMaskForWorld(layer.mask),
+        //         });
+        //     } else {
+        //         this.renderLayerToTexture(layer, this.worldTexture);
+        //     }
+        // }
+
+        // let filters = this.effects.getFilterList();
+        // if (!this.camera.screenShakePhysicallyMovesCamera) {
+        //     filters.unshift(this.screenShakeFilter);
+        // }
+
+        // // Apply world effects.
+        // this.worldTexture.renderTo(screen, {
+        //     x: x, y: y,
+        //     scaleX: this.scaleX,
+        //     scaleY: this.scaleY,
+        //     filters: filters,
+        //     mask: Mask.getTextureMaskForWorld(this.mask),
+        // });
 
         for (let layer of this.layers) {
-            if (layer.shouldRenderToOwnLayer) {
-                this.layerTexture.clear();
-                this.renderLayerToTexture(layer, this.layerTexture);
-                this.layerTexture.renderTo(this.worldTexture, {
-                    filters: layer.effects.getFilterList(),
-                    mask: Mask.getTextureMaskForWorld(layer.mask),
-                });
-            } else {
-                this.renderLayerToTexture(layer, this.worldTexture);
-            }
+            result.push(...this.compileLayer(layer));
         }
 
-        let filters = this.effects.getFilterList();
-        if (!this.camera.screenShakePhysicallyMovesCamera) {
-            filters.unshift(this.screenShakeFilter);
-        }
+        diffCompile(this.container, result);
 
-        // Apply world effects.
-        this.worldTexture.renderTo(screen, {
-            x: x, y: y,
-            scaleX: this.scaleX,
-            scaleY: this.scaleY,
-            filters: filters,
-            mask: Mask.getTextureMaskForWorld(this.mask),
-        });
+        return this.container;
     }
 
-    renderLayerToTexture(layer: World.Layer, texture: Texture) {
+    compileLayer(layer: World.Layer) {
+        // TODO PIXI: assign zIndex to layer objects
         layer.sort();
 
-        for (let worldObject of layer.worldObjects) {
-            if (worldObject.isVisible() && worldObject.isOnScreen()) {
-                worldObject.render(texture, worldObject.getRenderScreenX(), worldObject.getRenderScreenY());
-            }
-        }
+        return layer.worldObjects
+            .filter(worldObject => worldObject.isVisible() && worldObject.isOnScreen())
+            .map(worldObject => worldObject.compile(worldObject.getRenderScreenX(), worldObject.getRenderScreenY()));
     }
 
     addHook<T extends keyof World.Hooks>(name: T, fn: World.Hooks[T]['params']) {
@@ -436,7 +445,7 @@ class World {
 
     takeSnapshot() {
         let screen = new BasicTexture(this.worldTexture.width * this.scaleX, this.worldTexture.height * this.scaleY, 'World.takeSnapshot', false);
-        this.render(screen, 0, 0);
+        screen.renderPIXIDisplayObject(this.compile());
         return screen;
     }
 

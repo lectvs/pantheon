@@ -30,6 +30,7 @@ abstract class Transition {
         this.script?.update(delta);
     }
 
+    abstract compile(): CompileResult;
     abstract render(screen: Texture): void;
 
     setData(oldWorld: World | undefined, newWorld: World | undefined) {

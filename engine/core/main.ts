@@ -10,9 +10,6 @@ namespace Main {
         preventScrollOnCanvas: boolean;
         defaultSpriteTextFont?: string;
 
-        preloadBackgroundColor: number;
-        preloadProgressBarColor: number;
-
         textures: Dict<Preload.Texture>;
         sounds: Dict<Preload.Sound>;
         tilesets: Dict<Preload.Tileset>;
@@ -48,7 +45,7 @@ class Main {
     static game: Game;
     static soundManager: GlobalSoundManager;
     static renderer: PIXI.Renderer;
-    static screen: BasicTexture;
+    static stage: PIXI.Container;
     static delta: number;
 
     static loadConfig(configFactory: () => Main.Config) {
@@ -112,7 +109,7 @@ class Main {
         Main.renderer.plugins.accessibility.destroy();
         delete (Main.renderer.plugins as any).accessibility;
 
-        Main.screen = new BasicTexture(global.gameWidth, global.gameHeight, 'Main.screen');
+        Main.stage = new PIXI.Container();
 
         this.soundManager = new GlobalSoundManager();
         
@@ -175,9 +172,7 @@ class Main {
                 MobileScaleManager.update();
             }
 
-            Main.screen.clear();
-
-            Main.game.render(Main.screen);
+            diffCompile(Main.stage, [Main.game.compile()]);
 
             Main.renderScreenToCanvas();
         });
@@ -185,37 +180,34 @@ class Main {
 
     private static renderScreenToCanvas() {
         Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
-        Main.renderer.render(Main.screen.renderTextureSprite);
+        Main.renderer.render(Main.stage);
     }
 
     static forceRender() {
-        Main.screen.clear();
-        Main.game.render(Main.screen);
+        diffCompile(Main.stage, [Main.game.compile()]);
         Main.renderScreenToCanvas();
     }
 
+    // TODO PIXI this didn't work when i tried it earlier
     static forceResize(width: number, height: number) {
-        if (!Main.screen) return;
         global.gameWidth = width;
         global.gameHeight = height;
         Main.renderer.resize(width, height);
-        Main.screen.free();
-        Main.screen = new BasicTexture(global.gameWidth, global.gameHeight, 'Main.screen');
     }
 
-    // For use in preload.
     private static renderPreloadProgress(progress: number) {
-        Main.screen.clear();
-
-        Draw.fill(Main.screen, { color: this.config.preloadBackgroundColor });
-
         let barw = global.gameWidth/2;
         let barh = 16;
         let barx = global.gameWidth/2 - barw/2;
         let bary = global.gameHeight/2 - barh/2;
 
-        Draw.rectangle(Main.screen, barx, bary, barw * progress, barh, { fill: { color: this.config.preloadProgressBarColor }});
-        Draw.rectangle(Main.screen, barx, bary, barw, barh, { outline: { color: this.config.preloadProgressBarColor }});
+        let bg = lazy('Main.renderPreloadProgress.bg', () => Graphics.rectangle(0, 0, W, H, { fill: { color: 0x000000 }}));
+        let barFill = lazy('Main.renderPreloadProgress.barFill', () => Graphics.rectangle(barx, bary, 1, barh, { fill: { color: 0xFFFFFF }}));
+        let barOutline = lazy('Main.renderPreloadProgress.barOutline', () => Graphics.rectangle(barx, bary, barw, barh, { outline: { color: 0xFFFFFF }}));
+
+        barFill.scale.x = barw * progress;
+
+        diffCompile(Main.stage, [ bg, barFill, barOutline ]);
 
         Main.renderScreenToCanvas();
     }

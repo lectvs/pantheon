@@ -4,6 +4,10 @@ namespace Transitions {
             super({});
         }
 
+        override compile(): CompileResult {
+            return undefined;
+        }
+
         override render(screen: Texture): void {
             // Noop
         }
@@ -26,6 +30,11 @@ namespace Transitions {
                 }),
                 S.wait(this.postTime),
             ));
+        }
+
+        override compile(): CompileResult {
+            // TODO PIXI
+            return undefined;
         }
 
         override render(screen: Texture) {
@@ -60,6 +69,11 @@ namespace Transitions {
                 S.doOverTime(this.outTime, t => this.slide_t = 1-t),
                 S.wait(this.postTime),
             ));
+        }
+
+        override compile(): CompileResult {
+            // TODO PIXI
+            return undefined;
         }
 
         override render(screen: Texture) {

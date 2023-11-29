@@ -12,6 +12,7 @@ class Game {
     theater: Theater;
 
     private overlay: DebugOverlay;
+    private debugTouchGraphics: PIXI.Graphics;
 
     get canPause(): boolean { return this.theater?.canPause ?? false; }
 
@@ -27,6 +28,8 @@ class Game {
 
     get delta(): number { return Main.delta; }
 
+    private container: PIXI.Container;
+
     constructor(config: Game.Config) {
         this.entryPointMenu = config.entryPointMenu;
         this.mainMenu = config.mainMenu;
@@ -40,6 +43,9 @@ class Game {
         this.theater = this.theaterFactory();
 
         this.overlay = new DebugOverlay();
+        this.debugTouchGraphics = Graphics.circle(0, 0, 10, { outline: { color: 0xFF0000 }});
+
+        this.container = new PIXI.Container;
     }
 
     start() {
@@ -83,20 +89,24 @@ class Game {
         }
     }
 
-    render(screen: Texture) {
-        if (this.menuSystem.inMenu) {
-            this.menuSystem.render(screen);
-        } else {
-            this.theater.render(screen);
-        }
+    compile(): CompileResult {
+        let result = [
+            this.menuSystem.inMenu
+                ? this.menuSystem.compile()
+                : this.theater.compile()
+        ];
 
         if (Debug.SHOW_OVERLAY) {
-            this.overlay.render(screen, 0, 0);
+            result.push(this.overlay.compile());
         }
 
         if (Debug.SHOW_TOUCHES) {
-            this.renderTouches(screen);
+            result.push(this.compileTouches());
         }
+
+        diffCompile(this.container, result);
+
+        return this.container;
     }
 
     loadMainMenu() {
@@ -150,16 +160,19 @@ class Game {
     private worldForMenuTransition() {
         let world = new World();
         let screenshot = new BasicTexture(global.gameWidth, global.gameHeight, 'Game.worldForMenuTransition');
-        this.menuSystem.render(screenshot);
+        screenshot.renderPIXIDisplayObject(this.menuSystem.compile());
         world.addWorldObject(new Sprite({
             texture: screenshot,
         }));
         return world;
     }
 
-    private renderTouches(screen: Texture) {
-        if (IS_MOBILE && Input.isKeyCodeDown(Input.MOUSE_KEYCODES[0])) {
-            Draw.circle(screen, Input.mouseX, Input.mouseY, Input.mouseRadius, { outline: { color: 0xFF0000 }});
+    private compileTouches() {
+        if (!IS_MOBILE || !Input.isKeyCodeDown(Input.MOUSE_KEYCODES[0])) {
+            return undefined;
         }
+        this.debugTouchGraphics.x = Input.mouseX;
+        this.debugTouchGraphics.y = Input.mouseY;
+        return this.debugTouchGraphics;
     }
 }

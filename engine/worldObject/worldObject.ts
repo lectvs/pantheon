@@ -313,6 +313,10 @@ class WorldObject {
         return result;
     }
 
+    compile(x: number, y: number): CompileResult {
+        return undefined;
+    }
+
     render(texture: Texture, x: number, y: number) {
         this.hookManager.executeHooks('onRender', texture, x, y);
 

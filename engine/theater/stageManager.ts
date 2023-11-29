@@ -20,12 +20,11 @@ class StageManager {
         }
     }
 
-    render(screen: Texture) {
+    compile(): CompileResult {
         if (this.transition) {
-            this.transition.render(screen);
-        } else {
-            this.currentWorld?.render(screen, 0, 0);
+            return this.transition.compile();
         }
+        return this.currentWorld?.compile();
     }
 
     /**

@@ -63,6 +63,11 @@ interface Texture {
     getPixelRelativeARGB(x: number, y: number, extendMode?: Texture.ExtendMode): number;
     getPixelsARGB(): number[][];
 
+    // TODO PIXI
+    getPixiTexture(): PIXI.Texture;
+    getPixiTextureAnchorX(): number;
+    getPixiTextureAnchorY(): number;
+
     renderTo(texture: Texture, properties?: Texture.Properties): void;
     renderPIXIDisplayObject(displayObject: PIXI.DisplayObject): void;
 

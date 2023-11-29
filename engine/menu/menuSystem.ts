@@ -16,10 +16,11 @@ class MenuSystem {
         }
     }
 
-    render(screen: Texture) {
+    compile(): CompileResult {
         if (this.inMenu) {
-            this.currentMenu!.render(screen, 0, 0);
+            return this.currentMenu!.compile();
         }
+        return undefined;
     }
 
     back() {
