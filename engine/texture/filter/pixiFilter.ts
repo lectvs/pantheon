@@ -1,7 +1,7 @@
 ///<reference path="../../utils/pool.ts"/>
 ///<reference path="../../utils/perlin.ts"/>
 
-namespace TextureFilter {
+namespace PixiFilter {
     /**
      * Texture fragment filter config.
      * 
@@ -33,87 +33,44 @@ namespace TextureFilter {
     }
 }
 
-class TextureFilter {
-    enabled: boolean;
-    
-    private code: string;
-    private helperMethods: string;
+class PixiFilter extends PIXI.Filter {
     private visualPadding: number;
-    private uniformCode: string;
-    private uniforms: Dict<any>;
+    private uniformCache: Dict<any>;
 
-    private borrowedPixiFilter: PIXI.Filter | undefined;
-
-    constructor(config: TextureFilter.Config) {
-        this.code = config.code ?? '';
-        this.helperMethods = config.helperMethods ?? '';
+    constructor(config: PixiFilter.Config) {
+        super(
+            PIXI.Filter.defaultVertexSrc,
+            PixiFilter.constructFragCode(PixiFilter.constructUniformCode(config.uniforms), config.helperMethods ?? '', config.code ?? ''),
+            PixiFilter.constructUniformsMap(config.uniforms),
+        );
+        this.uniformCache = PixiFilter.constructUniformsMap(config.uniforms);  // Purposefully duplicated
         this.visualPadding = config.visualPadding ?? 0;
-        this.uniformCode = this.constructUniformCode(config.uniforms);
-        this.uniforms = this.constructUniforms(config.uniforms);
-
-        this.setUniform('posx', 0);
-        this.setUniform('posy', 0);
-        this.setUniform('dimx', 0);
-        this.setUniform('dimy', 0);
-        this.setUniform('t', 0);
-
-        this.enabled = true;
-        this.borrowedPixiFilter = undefined;
     }
 
-    borrowPixiFilter() {
-        this.borrowedPixiFilter = TextureFilter.cache.borrow(this);
-        for (let uniform in this.uniforms) {
-            this.borrowedPixiFilter.uniforms[uniform] = this.uniforms[uniform];
-        }
-        return this.borrowedPixiFilter;
-    }
-
-    returnPixiFilter() {
-        if (!this.borrowedPixiFilter) return;
-        TextureFilter.cache.return(this, this.borrowedPixiFilter);
-        this.borrowedPixiFilter = undefined;
-    }
-
-    constructPixiFilter(): PIXI.Filter {
-        return new PIXI.Filter(PIXI.Filter.defaultVertexSrc, TextureFilter.constructFragCode(this.uniformCode, this.helperMethods, this.code), {});
-    }
-
-    getCacheCode() {
-        return `TextureFilter:${this.uniformCode}${this.helperMethods}${this.code}`;
-    }
-
-    getUniform(uniform: string) {
-        return this.uniforms[uniform];
-    }
-
-    getUniformCode() {
-        return this.uniformCode;
+    getUniform(name: string) {
+        return this.uniformCache[name];
     }
 
     getVisualPadding() {
         return this.visualPadding;
     }
 
+    // TODO PIXI how can we call these?
     setTextureDimensions(dimx: number, dimy: number) {
-        this.uniforms['dimx'] = dimx;
-        this.uniforms['dimy'] = dimy;
+        this.setUniform('dimx', dimx);
+        this.setUniform('dimy', dimy);
     }
 
+    // TODO PIXI how can we call these?
     setTexturePosition(posx: number, posy: number) {
-        this.uniforms['posx'] = posx;
-        this.uniforms['posy'] = posy;
+        this.setUniform('posx', posx);
+        this.setUniform('posy', posy);
     }
 
-    setUniform(uniform: string, value: any) {
-        this.uniforms[uniform] = value;
-    }
-
-    setUniforms(uniforms: Dict<any>) {
-        if (!uniforms) return;
-        for (let key in uniforms) {
-            this.uniforms[key] = uniforms[key];
-        }
+    setUniform(name: string, value: any) {
+        if (this.uniformCache[name] === value) return;
+        this.uniforms[name] = value;
+        this.uniformCache[name] = value;
     }
 
     update() {
@@ -123,33 +80,9 @@ class TextureFilter {
     updateTime(delta: number) {
         this.setUniform('t', this.getUniform('t') + delta);
     }
-
-    private constructUniformCode(uniformDeclarations: Dict<any> | undefined) {
-        if (O.isEmpty(uniformDeclarations)) return '';
-        let uniformCode = '';
-        for (let decl in uniformDeclarations) {
-            uniformCode += `uniform ${decl};`;
-        }
-        return uniformCode;
-    }
-
-    protected constructUniforms(uniformDeclarations: Dict<any> | undefined) {
-        if (O.isEmpty(uniformDeclarations)) return {};
-        let uniformMap: any = {};
-        for (let decl in uniformDeclarations) {
-            let uniformName = decl.trim().substring(decl.lastIndexOf(' ') + 1);
-            uniformMap[uniformName] = uniformDeclarations[decl];
-        }
-        return uniformMap;
-    }
 }
 
-namespace TextureFilter {
-    export const cache = new SingleKeyPool(
-        (filter: TextureFilter) => filter.constructPixiFilter(),
-        (filter: TextureFilter) => filter.getCacheCode(),
-    );
-
+namespace PixiFilter {
     export function constructFragCode(uniformCode: string, helperMethods: string, code: string) {
         return fragPrecision
             + fragCoreUniforms
@@ -302,13 +235,29 @@ namespace TextureFilter {
         }
     `;
 
-    var _sliceFilter: TextureFilters.Slice;
-    export function SLICE_FILTER(rect: Rect) {
-        if (!_sliceFilter) {
-            _sliceFilter = new TextureFilters.Slice(rect);
-        } else {
-            _sliceFilter.setSlice(rect);
+    export function constructUniformCode(uniformDeclarations: Dict<any> | undefined) {
+        if (O.isEmpty(uniformDeclarations)) return '';
+        let uniformCode = '';
+        for (let decl in uniformDeclarations) {
+            uniformCode += `uniform ${decl};`;
         }
-        return _sliceFilter;
+        return uniformCode;
+    }
+
+    export function constructUniformsMap(uniformDeclarations: Dict<any> | undefined) {
+        if (O.isEmpty(uniformDeclarations)) return {};
+        let uniforms: Dict<any> = {};
+        for (let decl in uniformDeclarations) {
+            let uniformName = decl.trim().substring(decl.lastIndexOf(' ') + 1);
+            uniforms[uniformName] = uniformDeclarations[decl];
+        }
+
+        uniforms['posx'] = 0;
+        uniforms['posy'] = 0;
+        uniforms['dimx'] = 0;
+        uniforms['dimy'] = 0;
+        uniforms['t'] = 0;
+
+        return uniforms;
     }
 }

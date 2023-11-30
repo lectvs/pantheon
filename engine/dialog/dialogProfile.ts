@@ -1,4 +1,4 @@
-/// <reference path="../texture/filter/textureFilter.ts" />
+/// <reference path="../texture/filter/pixiFilter.ts" />
 
 namespace DialogProfile {
     export type Config = {
@@ -104,7 +104,7 @@ namespace DialogProfiles {
         return () => new Sprite({ texture: key, effects: { pre: [new DialogOutlineFilter()] }});
     }
 
-    class DialogOutlineFilter extends TextureFilter {
+    class DialogOutlineFilter extends PixiFilter {
         constructor() {
             super({
                 visualPadding: 1,

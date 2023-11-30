@@ -1,6 +1,6 @@
 /// <reference path="../worldObject/sprite/sprite.ts" />
 /// <reference path="../worldObject/worldObject.ts" />
-/// <reference path="../texture/filter/textureFilter.ts" />
+/// <reference path="../texture/filter/pixiFilter.ts" />
 
 namespace World {
     export type Config = {
@@ -915,7 +915,7 @@ namespace World {
         }
     }
 
-    export class ScreenShakeFilter extends TextureFilter {
+    export class ScreenShakeFilter extends PixiFilter {
         constructor() {
             super({
                 uniforms: { 'float shakeX': 0, 'float shakeY': 0 },
