@@ -46,13 +46,6 @@ namespace SpriteText {
         params: string[];
     }
     export type TagFunction = (params: string[]) => SpriteText.Style;
-
-    export type StaticTextureData = {
-        x: number;
-        y: number;
-        texture: Texture;
-        tagData: TagData[];
-    }
 }
 
 class SpriteText extends WorldObject {
@@ -185,12 +178,8 @@ class SpriteText extends WorldObject {
     }
 
     override compile(x: number, y: number): CompileResult {
+        // TODO PIXI do not ignore the result of super.compile()
         return this.getRenderSystem().compile(x, y, this);
-    }
-
-    override render(texture: Texture, x: number, y: number) {
-        this.getRenderSystem().render(texture, x, y, this);
-        super.render(texture, x, y);
     }
 
     addText(text: string) {

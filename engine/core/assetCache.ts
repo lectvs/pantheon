@@ -9,11 +9,11 @@ class AssetCache {
 
     static getPixiTexture(key: string): PIXI.Texture {
         if (this.isNoneTexture(key)) {
-            return Utils.NOOP_RENDERTEXTURE;
+            return Textures.NONE;
         }
         if (!this.pixiTextures[key]) {
             console.error(`Texture '${key}' does not exist.`);
-            return Utils.NOOP_RENDERTEXTURE;
+            return Textures.NONE;
         }
         return this.pixiTextures[key];
     }

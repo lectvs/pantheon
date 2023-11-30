@@ -15,9 +15,9 @@ function diffCompile(stage: PIXI.Container, match: CompileResult[]) {
 
     // Ensure order of passed DisplayObjects.
     for (let i = 0; i < match.length; i++) {
-        if (match[i]) {
-            match[i]!.zIndex = i;
-        }
+        let m = match[i];
+        if (!m) continue;
+        m.zIndex = i;
     }
 
     stage.sortChildren();

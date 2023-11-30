@@ -109,6 +109,7 @@ class Sprite extends PhysicsWorldObject {
         // mask: Mask.getTextureMaskForWorldObject(this.mask, this, x, y),
         this.renderObject.blendMode = this.blendMode ?? PIXI.BLEND_MODES.NORMAL;
         // TODO PIXI do not ignore the results of super.compile()
+        diffCompile(this.renderObject, [super.compile(0, 0)]);
         return this.renderObject;
     }
 
@@ -122,7 +123,7 @@ class Sprite extends PhysicsWorldObject {
 
     override getVisibleLocalBounds$(): Rectangle | undefined {
         if (!this.texture) return new Rectangle(0, 0, 0, 0);
-        if (this.texture === Utils.EFFECTONLY_RENDERTEXTURE) {
+        if (this.texture === Textures.EFFECT_ONLY) {
             return undefined;
         }
         // TODO PIXI optimize
@@ -131,7 +132,7 @@ class Sprite extends PhysicsWorldObject {
 
     setTexture(key: string | PIXI.Texture | undefined) {
         if (!key) {
-            this.texture = Utils.NOOP_RENDERTEXTURE;
+            this.texture = Textures.NONE;
             this.textureKey = undefined;
             return;
         }

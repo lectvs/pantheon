@@ -2,11 +2,11 @@ namespace TextureCreationData {
     export const TEXTURES_CREATED: Dict<number> = {};
     export var TEXTURES_FREED: number = 0;
 
-    export function logCreateTexture(texture: Texture | PIXI.RenderTexture, source: string) {
+    export function logCreateTexture(texture: PIXI.RenderTexture, source: string) {
         TEXTURES_CREATED[source] = (TEXTURES_CREATED[source] || 0) + 1;
     }
 
-    export function logFreeTexture(texture: Texture | PIXI.RenderTexture) {
+    export function logFreeTexture(texture: PIXI.RenderTexture) {
         TEXTURES_FREED++;
     }
 

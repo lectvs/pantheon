@@ -1,5 +1,3 @@
-/// <reference path="../texture/basicTexture.ts"/>
-
 namespace Draw {
     export type Alignment = 'inner' | 'outer';
 
@@ -20,34 +18,16 @@ namespace Draw {
 class Draw {
     private static graphics: PIXI.Graphics = new PIXI.Graphics();
 
-    static fill(texture: Texture, config: { color: number, alpha?: number }) {
+    static fill(texture: PIXI.RenderTexture, config: { color: number, alpha?: number }) {
         this.graphics.lineStyle(0, 0, 0);
         this.graphics.clear();
         this.graphics.beginFill(config.color, config.alpha ?? 1);
         this.graphics.drawRect(0, 0, texture.width, texture.height);
         this.graphics.endFill();
-        texture.clear();
-        texture.renderPIXIDisplayObject(this.graphics);
+        Main.renderer.render(this.graphics, texture, true);
     }
 
-    static eraseRect(texture: Texture, x: number, y: number, width: number, height: number) {
-        let newTexture = texture.clone('Draw.eraseRect');
-
-        let mask = new TextureFilters.Mask({
-            type: 'local',
-            mask: Texture.filledRect(width, height, 0xFFFFFF),
-            offsetX: x, offsetY: y,
-            invert: true,
-        });
-
-        texture.clear();
-        newTexture.renderTo(texture, {
-            x: 0, y: 0,
-            filters: [mask],
-        });
-    }
-
-    static annulus(texture: Texture, x: number, y: number, innerRadius: number, outerRadius: number, config: Draw.FillAndOutlineConfig) {
+    static annulus(texture: PIXI.RenderTexture, x: number, y: number, innerRadius: number, outerRadius: number, config: Draw.FillAndOutlineConfig) {
         if (innerRadius <= 0) {
             this.circle(texture, x, y, outerRadius, config);
             return;
@@ -62,10 +42,10 @@ class Draw {
         this.graphics.beginHole();
         this.graphics.drawCircle(x, y, innerRadius);
         this.graphics.endHole();
-        texture.renderPIXIDisplayObject(this.graphics);
+        Main.renderer.render(this.graphics, texture, false);
     }
 
-    static circle(texture: Texture, x: number, y: number, radius: number, config: Draw.FillAndOutlineConfig) {
+    static circle(texture: PIXI.RenderTexture, x: number, y: number, radius: number, config: Draw.FillAndOutlineConfig) {
         let values = Draw.getFillAndOutlineConfigValues(config);
         if (values.fillAlpha === 0 && values.outlineAlpha === 0) return;
         this.graphics.lineStyle(values.outlineThickness, values.outlineColor, values.outlineAlpha, Draw.getAlignmentNumber(values.outlineAlignment));
@@ -73,10 +53,10 @@ class Draw {
         this.graphics.beginFill(values.fillColor, values.fillAlpha);
         this.graphics.drawCircle(x, y, radius);
         this.graphics.endFill();
-        texture.renderPIXIDisplayObject(this.graphics);
+        Main.renderer.render(this.graphics, texture, false);
     }
 
-    static ellipse(texture: Texture, x: number, y: number, radiusX: number, radiusY: number, config: Draw.FillAndOutlineConfig) {
+    static ellipse(texture: PIXI.RenderTexture, x: number, y: number, radiusX: number, radiusY: number, config: Draw.FillAndOutlineConfig) {
         let values = Draw.getFillAndOutlineConfigValues(config);
         if (values.fillAlpha === 0 && values.outlineAlpha === 0) return;
         this.graphics.lineStyle(values.outlineThickness, values.outlineColor, values.outlineAlpha, Draw.getAlignmentNumber(values.outlineAlignment));
@@ -84,28 +64,28 @@ class Draw {
         this.graphics.beginFill(values.fillColor, values.fillAlpha);
         this.graphics.drawEllipse(x, y, radiusX, radiusY);
         this.graphics.endFill();
-        texture.renderPIXIDisplayObject(this.graphics);
+        Main.renderer.render(this.graphics, texture, false);
     }
 
-    static pixel(texture: Texture, x: number, y: number, config: { color: number, alpha?: number }) {
+    static pixel(texture: PIXI.RenderTexture, x: number, y: number, config: { color: number, alpha?: number }) {
         if (config.alpha === 0) return;
-        Draw.PIXEL_TEXTURE.renderTo(texture, {
-            x: x, y: y,
-            tint: config.color,
-            alpha: config.alpha ?? 1,
-        });
+        Draw.PIXEL_SPRITE.x = x;
+        Draw.PIXEL_SPRITE.y = y;
+        Draw.PIXEL_SPRITE.tint = config.color;
+        Draw.PIXEL_SPRITE.alpha = config.alpha ?? 1;
+        Main.renderer.render(Draw.PIXEL_SPRITE, texture, false);
     }
 
-    static line(texture: Texture, x1: number, y1: number, x2: number, y2: number, config: { color: number, alpha?: number, thickness?: number }) {
+    static line(texture: PIXI.RenderTexture, x1: number, y1: number, x2: number, y2: number, config: { color: number, alpha?: number, thickness?: number }) {
         if (config.alpha === 0) return;
         this.graphics.lineStyle(config.thickness ?? 1, config.color, config.alpha ?? 1, 0.5);
         this.graphics.clear();
         this.graphics.moveTo(x1, y1);
         this.graphics.lineTo(x2, y2);
-        texture.renderPIXIDisplayObject(this.graphics);
+        Main.renderer.render(this.graphics, texture, false);
     }
 
-    static polygon(texture: Texture, points: Pt[], config: Draw.FillAndOutlineConfig) {
+    static polygon(texture: PIXI.RenderTexture, points: Pt[], config: Draw.FillAndOutlineConfig) {
         let values = Draw.getFillAndOutlineConfigValues(config);
         if (values.fillAlpha === 0 && values.outlineAlpha === 0) return;
         this.graphics.lineStyle(values.outlineThickness, values.outlineColor, values.outlineAlpha, Draw.getAlignmentNumber(values.outlineAlignment));
@@ -113,10 +93,10 @@ class Draw {
         this.graphics.beginFill(values.fillColor, values.fillAlpha);
         this.graphics.drawPolygon(points.map(point => new PIXI.Point(point.x, point.y)));
         this.graphics.endFill();
-        texture.renderPIXIDisplayObject(this.graphics);
+        Main.renderer.render(this.graphics, texture, false);
     }
 
-    static rectangle(texture: Texture, x: number, y: number, width: number, height: number, config: Draw.FillAndOutlineConfig) {
+    static rectangle(texture: PIXI.RenderTexture, x: number, y: number, width: number, height: number, config: Draw.FillAndOutlineConfig) {
         let values = Draw.getFillAndOutlineConfigValues(config);
         if (values.fillAlpha === 0 && values.outlineAlpha === 0) return;
         this.graphics.lineStyle(values.outlineThickness, values.outlineColor, values.outlineAlpha, Draw.getAlignmentNumber(values.outlineAlignment));
@@ -124,7 +104,7 @@ class Draw {
         this.graphics.beginFill(values.fillColor, values.fillAlpha);
         this.graphics.drawRect(x, y, width, height);
         this.graphics.endFill();
-        texture.renderPIXIDisplayObject(this.graphics);
+        Main.renderer.render(this.graphics, texture, false);
     }
 
     private static getAlignmentNumber(alignment: Draw.Alignment | undefined) {
@@ -144,9 +124,13 @@ class Draw {
         };
     }
 
-    private static _PIXEL_TEXTURE: Texture;
-    static get PIXEL_TEXTURE() {
-        if (!this._PIXEL_TEXTURE) this._PIXEL_TEXTURE = Texture.filledRect(1, 1, 0xFFFFFF);
-        return this._PIXEL_TEXTURE;
+    private static _PIXEL_SPRITE: PIXI.Sprite;
+    static get PIXEL_SPRITE() {
+        if (!this._PIXEL_SPRITE) {
+            let texture = newPixiRenderTexture(1, 1, 'Draw.PIXEL_TEXTURE');
+            Draw.fill(texture, { color: 0xFFFFFF });
+            this._PIXEL_SPRITE = new PIXI.Sprite(texture);
+        }
+        return this._PIXEL_SPRITE;
     }
 }

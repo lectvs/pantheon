@@ -14,6 +14,8 @@ class SlopeBounds implements Bounds {
 
     private boundingBox: Rectangle;
 
+    private debugSprite: PIXI.Sprite;
+
     constructor(x: number, y: number, width: number, height: number, direction: SlopeBounds.Direction, parent?: Bounds.Parent) {
         this.parent = parent;
         this.x = x;
@@ -23,6 +25,7 @@ class SlopeBounds implements Bounds {
         this.direction = direction;
         this.boundingBox = new Rectangle(0, 0, 0, 0);
         this.frozen = false;
+        this.debugSprite = new PIXI.Sprite();
     }
 
     clone(): SlopeBounds {
@@ -46,6 +49,24 @@ class SlopeBounds implements Bounds {
         if (this.direction === 'downleft' && y - box.top > (x - box.left) * (box.height / box.width)) return false;
 
         return true;
+    }
+
+    // TODO PIXI
+    // if (this.bounds.direction === 'upleft') {
+    //     Draw.polygon(texture.renderTextureSprite.renderTexture, [vec2(box.left, box.bottom), vec2(box.right, box.bottom), vec2(box.right, box.top)], { outline: { color: 0x00FF00 }});
+    // } else if (this.bounds.direction === 'upright') {
+    //     Draw.polygon(texture.renderTextureSprite.renderTexture, [vec2(box.left, box.bottom), vec2(box.right, box.bottom), vec2(box.left, box.top)], { outline: { color: 0x00FF00 }});
+    // } else if (this.bounds.direction === 'downright') {
+    //     Draw.polygon(texture.renderTextureSprite.renderTexture, [vec2(box.left, box.bottom), vec2(box.left, box.top), vec2(box.right, box.top)], { outline: { color: 0x00FF00 }});
+    // } else {
+    //     Draw.polygon(texture.renderTextureSprite.renderTexture, [vec2(box.left, box.top), vec2(box.right, box.top), vec2(box.right, box.bottom)], { outline: { color: 0x00FF00 }});
+    // }
+    debugCompile(): CompileResult {
+        let boundingBox = this.getBoundingBox();
+        this.debugSprite.x = boundingBox.x;
+        this.debugSprite.y = boundingBox.y;
+        this.debugSprite.texture = Textures.outlineRect(boundingBox.width, boundingBox.height, 0x00FF00);
+        return this.debugSprite;
     }
 
     freeze() {

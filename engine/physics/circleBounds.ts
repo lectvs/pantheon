@@ -9,6 +9,8 @@ class CircleBounds implements Bounds {
     private center: Vector2;
     private boundingBox: Rectangle;
 
+    private debugSprite: PIXI.Sprite;
+
     constructor(x: number, y: number, radius: number, parent?: Bounds.Parent) {
         this.parent = parent;
         this.x = x;
@@ -17,6 +19,7 @@ class CircleBounds implements Bounds {
         this.center = new Vector2(x, y);
         this.boundingBox = new Rectangle(0, 0, 0, 0);
         this.frozen = false;
+        this.debugSprite = new PIXI.Sprite();
     }
 
     clone(): CircleBounds {
@@ -32,6 +35,14 @@ class CircleBounds implements Bounds {
         y = y ?? x;
         let center = this.getCenter();
         return M.distanceSq(center.x, center.y, x, y) <= this.radius * this.radius;
+    }
+
+    debugCompile(): CompileResult {
+        let center = this.getCenter();
+        this.debugSprite.x = center.x;
+        this.debugSprite.y = center.y;
+        this.debugSprite.texture = Textures.outlineCircle(this.radius, 0x00FF00);
+        return this.debugSprite;
     }
 
     freeze() {

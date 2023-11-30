@@ -41,7 +41,6 @@ namespace WorldObject {
         onUpdate: { params: (this: WO) => void };
         onVisualUpdate: { params: (this: WO) => void };
         onPostUpdate: { params: (this: WO) => void };
-        onRender: { params: (this: WO, texture: Texture, x: number, y: number) => void };
         onKill: { params: (this: WO) => void };
     }
 }
@@ -314,15 +313,11 @@ class WorldObject {
     }
 
     compile(x: number, y: number): CompileResult {
+        // TODO PIXI
+        // for (let module of this.modules) {
+        //     module.render(texture, x, y);
+        // }
         return undefined;
-    }
-
-    render(texture: Texture, x: number, y: number) {
-        this.hookManager.executeHooks('onRender', texture, x, y);
-
-        for (let module of this.modules) {
-            module.render(texture, x, y);
-        }
     }
 
     addAnimation(name: string, animation: AnimationInstance) {

@@ -39,8 +39,13 @@ namespace TextureFilters {
             this.setMask(config.mask);
         }
 
-        setMask(texture: Texture) {
-            let mask = texture.toMask();
+        setMask(texture: PIXI.Texture) {
+            let mask: Texture.TextureToMask = {
+                renderTexture: texture,
+                // TODO PIXI are these offsets needed?
+                offsetx: -Math.floor(texture.defaultAnchor.x * texture.width),
+                offsety: -Math.floor(texture.defaultAnchor.y * texture.height),
+            };
             this.setUniform('mask', mask.renderTexture);
             this.setUniform('maskWidth', mask.renderTexture.width);
             this.setUniform('maskHeight', mask.renderTexture.height);
@@ -71,7 +76,7 @@ namespace TextureFilters {
 
 namespace Mask {
     export type Config = {
-        mask: Texture;
+        mask: PIXI.Texture;
         type: Mask.Type;
         offsetX?: number;
         offsetY?: number;
@@ -81,7 +86,7 @@ namespace Mask {
     export type Type = 'global' | 'local';
 
     var _maskFilter: TextureFilters.Mask;
-    export function SHARED(mask: Texture, type: Mask.Type = 'global', offsetX: number = 0, offsetY: number = 0, invert: boolean = false) {
+    export function SHARED(mask: PIXI.Texture, type: Mask.Type = 'global', offsetX: number = 0, offsetY: number = 0, invert: boolean = false) {
         if (!_maskFilter) {
             _maskFilter = new TextureFilters.Mask({ mask, type, offsetX, offsetY, invert });
         } else {
@@ -95,7 +100,7 @@ namespace Mask {
     }
 
     export type WorldObjectMaskConfig = {
-        texture: Texture;
+        texture: PIXI.Texture;
         type: 'local' | 'screen' | 'world';
         offsetx: number;
         offsety: number;
@@ -103,7 +108,7 @@ namespace Mask {
     }
 
     export type WorldMaskConfig = {
-        texture?: Texture;
+        texture?: PIXI.Texture;
         offsetx: number;
         offsety: number;
         invert?: boolean;

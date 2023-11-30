@@ -27,10 +27,9 @@ class BasicTexture implements Texture {
         //     width = Math.min(width, 2048);
         //     height = Math.min(height, 2048);
         // }
-        this.renderTextureSprite = new Texture.PIXIRenderTextureSprite(width, height);
+        this.renderTextureSprite = new Texture.PIXIRenderTextureSprite(width, height, source);
         this.immutable = immutable;
         this._localBoundsResult = new Rectangle(0, 0, 0, 0);
-        TextureCreationData.logCreateTexture(this, source);
     }
 
     anchored(ax: number, ay: number) {
@@ -59,8 +58,7 @@ class BasicTexture implements Texture {
     }
 
     free() {
-        this.renderTextureSprite.renderTexture.destroy(true);
-        TextureCreationData.logFreeTexture(this);
+        this.renderTextureSprite.free();
     }
 
     private _localBoundsResult: Rectangle;

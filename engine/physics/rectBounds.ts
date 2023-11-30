@@ -9,6 +9,8 @@ class RectBounds implements Bounds {
 
     private boundingBox: Rectangle;
 
+    private debugSprite: PIXI.Sprite;
+
     constructor(x: number, y: number, width: number, height: number, parent?: Bounds.Parent) {
         this.parent = parent;
         this.x = x;
@@ -17,6 +19,7 @@ class RectBounds implements Bounds {
         this.height = height;
         this.boundingBox = new Rectangle(0, 0, 0, 0);
         this.frozen = false;
+        this.debugSprite = new PIXI.Sprite();
     }
 
     clone(): RectBounds {
@@ -30,6 +33,14 @@ class RectBounds implements Bounds {
         }
 
         return this.getBoundingBox().contains(x, y);
+    }
+
+    debugCompile(): CompileResult {
+        let boundingBox = this.getBoundingBox();
+        this.debugSprite.x = boundingBox.x;
+        this.debugSprite.y = boundingBox.y;
+        this.debugSprite.texture = Textures.outlineRect(boundingBox.width, boundingBox.height, 0x00FF00);
+        return this.debugSprite;
     }
 
     freeze() {

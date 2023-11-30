@@ -42,6 +42,8 @@ class PhysicsWorldObject extends WorldObject {
         this._bounds.parent = this;
     }
 
+    private container: PIXI.Container;
+
     constructor(config: PhysicsWorldObject.Config<PhysicsWorldObject> = {}) {
         super(config);
         this.mass = config.mass ?? 1;
@@ -56,6 +58,7 @@ class PhysicsWorldObject extends WorldObject {
         this.colliding = config.colliding ?? true;
 
         this.debugDrawBounds = false;
+        this.container = new PIXI.Container();
     }
 
     override update() {
@@ -63,16 +66,19 @@ class PhysicsWorldObject extends WorldObject {
         super.update();
     }
 
-    override render(texture: Texture, x: number, y: number) {
+    override compile(x: number, y: number): CompileResult {
+        let result: CompileResult[] = [];
         if (Debug.SHOW_ALL_PHYSICS_BOUNDS || this.debugDrawBounds) {
             let zoffset = 0; // offset to cancel out the z-factor when drawing bounds
             if (this.zBehavior === 'threequarters') {
                 let parentz = this.parent ? this.parent.z : 0;
                 zoffset = parentz - this.z;
             }
-            this.drawBounds(texture, x, y - zoffset);
+            result.push(this.compileBounds(x, y - zoffset));
         }
-        super.render(texture, x, y);
+        result.push(super.compile(x, y));
+        diffCompile(this.container, result);
+        return this.container;
     }
 
     getWorldBounds() {
@@ -124,44 +130,13 @@ class PhysicsWorldObject extends WorldObject {
         this.vz += this.gravityz * this.delta;
     }
 
-    private drawBounds(texture: Texture, x: number, y: number) {
-        if (this.bounds instanceof RectBounds) {
-            let box = this.bounds.getBoundingBox();
-            box.x += x - this.x;
-            box.y += y - this.y;
-            Draw.rectangle(texture, box.x, box.y, box.width, box.height, { outline: { color: 0x00FF00 }});
-        } else if (this.bounds instanceof InvertedRectBounds) {
-            let box = this.bounds.getInnerBox();
-            box.x += x - this.x;
-            box.y += y - this.y;
-            Draw.rectangle(texture, box.x, box.y, box.width, box.height, { outline: { color: 0x00FF00, alignment: 'outer' }});
-        } else if (this.bounds instanceof CircleBounds) {
-            let center = this.bounds.getCenter();
-            center.x += x - this.x;
-            center.y += y - this.y;
-            Draw.circle(texture, center.x, center.y, this.bounds.radius, { outline: { color: 0x00FF00 }});
-        } else if (this.bounds instanceof InvertedCircleBounds) {
-            let center = this.bounds.getCenter();
-            center.x += x - this.x;
-            center.y += y - this.y;
-            Draw.circle(texture, center.x, center.y, this.bounds.radius, { outline: { color: 0x00FF00, alignment: 'outer' }});
-        } else if (this.bounds instanceof SlopeBounds) {
-            let box = this.bounds.getBoundingBox();
-            box.x += x - this.x;
-            box.y += y - this.y;
-            if (this.bounds.direction === 'upleft') {
-                Draw.polygon(texture, [vec2(box.left, box.bottom), vec2(box.right, box.bottom), vec2(box.right, box.top)], { outline: { color: 0x00FF00 }});
-            } else if (this.bounds.direction === 'upright') {
-                Draw.polygon(texture, [vec2(box.left, box.bottom), vec2(box.right, box.bottom), vec2(box.left, box.top)], { outline: { color: 0x00FF00 }});
-            } else if (this.bounds.direction === 'downright') {
-                Draw.polygon(texture, [vec2(box.left, box.bottom), vec2(box.left, box.top), vec2(box.right, box.top)], { outline: { color: 0x00FF00 }});
-            } else {
-                Draw.polygon(texture, [vec2(box.left, box.top), vec2(box.right, box.top), vec2(box.right, box.bottom)], { outline: { color: 0x00FF00 }});
-            }
-        } else if (this.bounds instanceof NullBounds) {
-            // Pass
-        } else {
-            debug('Unrecognized bounds for drawing:', this.bounds);
-        }
+    private compileBounds(x: number, y: number) {
+        let compileResult = this.bounds.debugCompile();
+        if (!compileResult) return undefined;
+
+        compileResult.x += x - this.x;
+        compileResult.y += y - this.y;
+
+        return compileResult;
     }
 }

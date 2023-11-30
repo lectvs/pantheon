@@ -84,15 +84,13 @@ namespace SpriteTextParser {
             texture = AssetCache.getPixiTexture(textureKey);
         }
 
-        let lectvsTexture = Texture.fromPixiTexture(texture);
-
         let localBounds = fixedCharSize
             ? new Rectangle(0, 0, font.charWidth, font.charHeight)
-            : lectvsTexture.getLocalBounds$({}).clone();
+            : TextureUtils.getTextureLocalBounds(texture, {});
 
         return new Character({
             name: char.name,
-            texture: lectvsTexture,
+            texture: texture,
             localBounds: localBounds,
             tagData: A.clone(char.tagData),
             part: char.part,
@@ -103,12 +101,12 @@ namespace SpriteTextParser {
         x: number;
         y: number;
         name: string;
-        texture: Texture | undefined;
+        texture: PIXI.Texture | undefined;
         localBounds: Rectangle;
         tagData: SpriteText.TagData[];
         part: number;
 
-        constructor(props: { name: string, texture: Texture | undefined, localBounds: Rectangle, tagData: SpriteText.TagData[], part: number }) {
+        constructor(props: { name: string, texture: PIXI.Texture | undefined, localBounds: Rectangle, tagData: SpriteText.TagData[], part: number }) {
             this.x = 0;
             this.y = 0;
             this.name = props.name;

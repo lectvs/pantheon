@@ -10,6 +10,8 @@ class InvertedRectBounds implements Bounds {
     private boundingBox: Rectangle;
     private innerBox: Rectangle;
 
+    private debugSprite: PIXI.Sprite;
+
     constructor(x: number, y: number, width: number, height: number, parent?: Bounds.Parent) {
         this.parent = parent;
         this.x = x;
@@ -20,6 +22,7 @@ class InvertedRectBounds implements Bounds {
         this.boundingBox = new Rectangle(-1_000_000, -1_000_000, 2_000_000, 2_000_000);
         this.innerBox = new Rectangle(0, 0, 0, 0);
         this.frozen = false;
+        this.debugSprite = new PIXI.Sprite();
     }
 
     clone(): InvertedRectBounds {
@@ -33,6 +36,15 @@ class InvertedRectBounds implements Bounds {
         }
 
         return !this.getInnerBox().contains(x, y);
+    }
+
+    debugCompile(): CompileResult {
+        let innerBox = this.getInnerBox();
+        // -1 for outer alignment
+        this.debugSprite.x = innerBox.x-1;
+        this.debugSprite.y = innerBox.y-1;
+        this.debugSprite.texture = Textures.outlineRect(innerBox.width+2, innerBox.height+2, 0x00FF00);
+        return this.debugSprite;
     }
 
     freeze() {

@@ -59,40 +59,6 @@ class SpriteTextRenderSystem {
         return this.container;
     }
 
-    render(screen: Texture, x: number, y: number, spriteText: SpriteText) {
-        let textBounds = SpriteText.getBoundsOfCharList(spriteText.getCharList());
-
-        for (let part in this.parts) {
-            let data = this.parts[part];
-            let style = spriteText.getStyleFromTags(data.tagData, spriteText.style);
-
-            data.sprite.anchor.x = -(data.x + style.offsetX - spriteText.anchor.x * textBounds.width) / data.sprite.width;
-            data.sprite.anchor.y = -(data.y + style.offsetY - spriteText.anchor.y * textBounds.height) / data.sprite.height;
-            data.sprite.x = x;
-            data.sprite.y = y;
-            data.sprite.scale.x = (spriteText.flipX ? -1 : 1) * spriteText.scaleX;
-            data.sprite.scale.y = (spriteText.flipY ? -1 : 1) * spriteText.scaleY;
-            data.sprite.angle = spriteText.angle;
-            data.sprite.tint = Color.tint(style.color, spriteText.tint);
-            data.sprite.alpha = style.alpha * spriteText.alpha;
-            // TODO PIXI
-            // filters: [...style.filters, ...spriteText.effects.getFilterList()],
-            // mask: Mask.getTextureMaskForWorldObject(spriteText.mask, spriteText, x, y),
-
-            let textureLocalBounds = data.sprite.getLocalBounds();
-
-            let screenBounds = new Rectangle(0, 0, screen.width, screen.height);
-
-            if (!G.areRectanglesOverlapping(textureLocalBounds, screenBounds)) continue;
-
-            if (!data.rendered) {
-                SpriteTextRenderSystem.renderPart(data);
-            }
-
-            screen.renderPIXIDisplayObject(data.sprite);
-        }
-    }
-
     free() {
         for (let part in this.parts) {
             SpriteTextRenderSystem.freePart(this.parts[part]);
@@ -151,7 +117,7 @@ namespace SpriteTextRenderSystem {
 
         for (let character of part.characters) {
             if (!character.texture) continue;
-            sprite.texture = character.texture.getPixiTexture();
+            sprite.texture = character.texture;
             sprite.anchor = sprite.texture.defaultAnchor;
             sprite.x = Math.floor(character.x - part.x);
             sprite.y = Math.floor(character.y - part.y);

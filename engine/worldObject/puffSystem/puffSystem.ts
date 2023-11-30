@@ -29,11 +29,13 @@ namespace PuffSystem {
 }
 
 class PuffSystem extends WorldObject {
-
     protected puffs: PuffSystem.Puff[] = [];
+    private sprites: PIXI.Sprite[] = [];
+    private container: PIXI.Container;
 
     constructor(config: WorldObject.Config<PuffSystem>) {
         super(config);
+        this.container = new PIXI.Container();
     }
 
     override update() {
@@ -51,18 +53,27 @@ class PuffSystem extends WorldObject {
         }
     }
 
-    override render(texture: Texture, x: number, y: number) {
-        for (let puff of this.puffs) {
+    override compile(x: number, y: number): CompileResult {
+        let result = this.puffs.map((puff, i) => {
             let progress = puff.t / puff.maxLife;
 
             let radius = M.lerp(progress, puff.initialRadius, puff.finalRadius);
             let color = Color.lerpColorByLch(progress, puff.initialColor, puff.finalColor);
             let alpha = M.lerp(progress, puff.initialAlpha, puff.finalAlpha);
 
-            Draw.circle(texture, x - this.x + puff.x, y - this.y + puff.y, radius, { fill: { color, alpha }});
-        }
+            this.sprites[i].x = x - this.x + puff.x;
+            this.sprites[i].y = y - this.y + puff.y;
+            this.sprites[i].scale.set(radius/16);
+            this.sprites[i].tint = color;
+            this.sprites[i].alpha = alpha;
 
-        super.render(texture, x, y);
+            return this.sprites[i];
+        });
+
+        diffCompile(this.container, result);
+
+        // TODO PIXI do not ignore the result of super.compile()
+        return this.container;
     }
 
     protected addPuff(config: PuffSystem.PuffConfig) {
@@ -80,5 +91,17 @@ class PuffSystem extends WorldObject {
             initialAlpha: config.alpha ?? 1,
             finalAlpha: config.finalAlpha ?? config.alpha ?? 1,
         });
+
+        if (this.sprites.length < this.puffs.length) {
+            this.sprites.push(new PIXI.Sprite(PuffSystem.PUFF_TEXTURE.get()));
+        }
     }
+
+    private static PUFF_TEXTURE = new LazyValue(() => {
+        let texture = newPixiRenderTexture(32, 32, 'PuffSystem.PUFF_TEXTURE');
+        let graphics = Graphics.circle(8, 8, 16, { fill: { color: 0xFFFFFF }});
+        Main.renderer.render(graphics, texture);
+        graphics.destroy();
+        return texture;
+    });
 }

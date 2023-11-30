@@ -40,7 +40,7 @@ class EmptyTexture implements Texture {
     }
 
     getPixiTexture(): PIXI.Texture {
-        return Utils.NOOP_RENDERTEXTURE;
+        return Textures.NOOP;
     }
 
     getPixiTextureAnchorX(): number {
@@ -72,7 +72,7 @@ class EmptyTexture implements Texture {
 
     toMask() {
         return {
-            renderTexture: Utils.NOOP_RENDERTEXTURE,
+            renderTexture: Textures.NOOP,
             offsetx: 0, offsety: 0,
         };
     }

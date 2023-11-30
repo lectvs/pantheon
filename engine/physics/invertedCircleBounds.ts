@@ -9,6 +9,8 @@ class InvertedCircleBounds implements Bounds {
     private center: Vector2;
     private boundingBox: Rectangle;
 
+    private debugSprite: PIXI.Sprite;
+
     constructor(x: number, y: number, radius: number, parent?: Bounds.Parent) {
         this.parent = parent;
         this.x = x;
@@ -18,6 +20,7 @@ class InvertedCircleBounds implements Bounds {
         // Big numbers because I don't trust Infinity :)
         this.boundingBox = new Rectangle(-1_000_000, -1_000_000, 2_000_000, 2_000_000);
         this.frozen = false;
+        this.debugSprite = new PIXI.Sprite();
     }
 
     clone(): InvertedCircleBounds {
@@ -33,6 +36,15 @@ class InvertedCircleBounds implements Bounds {
         y = y ?? x;
         let center = this.getCenter();
         return M.distanceSq(center.x, center.y, x, y) > this.radius * this.radius;
+    }
+
+    debugCompile(): CompileResult {
+        let center = this.getCenter();
+        this.debugSprite.x = center.x;
+        this.debugSprite.y = center.y;
+        // +2 for outer alignment
+        this.debugSprite.texture = Textures.outlineCircle(this.radius+2, 0x00FF00);
+        return this.debugSprite;
     }
 
     freeze() {

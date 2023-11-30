@@ -20,6 +20,10 @@ class NullBounds implements Bounds {
         return false;
     }
 
+    debugCompile(): CompileResult {
+        return undefined;
+    }
+
     freeze() {
         // Noop
     }
