@@ -12,4 +12,13 @@ function diffCompile(stage: PIXI.Container, match: CompileResult[]) {
             stage.addChild(obj);
         }
     }
+
+    // Ensure order of passed DisplayObjects.
+    for (let i = 0; i < match.length; i++) {
+        if (match[i]) {
+            match[i]!.zIndex = i;
+        }
+    }
+
+    stage.sortChildren();
 }

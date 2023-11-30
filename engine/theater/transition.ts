@@ -5,13 +5,18 @@ namespace Transition {
         preTime?: number;
         postTime?: number;
     }
+
+    export type Snapshot = {
+        texture: PIXI.RenderTexture;
+        sprite: PIXI.Sprite;
+    }
 }
 
 abstract class Transition {
     protected oldWorld?: World;
     protected newWorld?: World;
-    protected oldSnapshot?: Texture;
-    protected newSnapshot?: Texture;
+    protected oldSnapshot?: Transition.Snapshot;
+    protected newSnapshot?: Transition.Snapshot;
 
     protected preTime: number;
     protected postTime: number;
@@ -31,18 +36,29 @@ abstract class Transition {
     }
 
     abstract compile(): CompileResult;
-    abstract render(screen: Texture): void;
 
     setData(oldWorld: World | undefined, newWorld: World | undefined) {
         this.oldWorld = oldWorld;
         this.newWorld = newWorld;
 
-        this.oldSnapshot = this.oldWorld ? this.oldWorld.takeSnapshot() : Texture.filledRect(global.gameWidth, global.gameHeight, global.backgroundColor).clone('Transition.takeWorldSnapshots');
-        this.newSnapshot = this.newWorld?.takeSnapshot();
+        if (this.oldWorld) {
+            let oldWorldTexture = this.oldWorld.takeSnapshot();
+            this.oldSnapshot = {
+                texture: oldWorldTexture,
+                sprite: new PIXI.Sprite(oldWorldTexture),
+            };
+        }
+        if (this.newWorld) {
+            let newWorldTexture = this.newWorld.takeSnapshot();
+            this.newSnapshot = {
+                texture: newWorldTexture,
+                sprite: new PIXI.Sprite(newWorldTexture),
+            };
+        }
     }
 
     free() {
-        this.oldSnapshot?.free();
-        this.newSnapshot?.free();
+        if (this.oldSnapshot) freePixiRenderTexture(this.oldSnapshot.texture);
+        if (this.newSnapshot) freePixiRenderTexture(this.newSnapshot.texture);
     }
 }

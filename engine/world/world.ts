@@ -103,8 +103,8 @@ class World {
     camera: Camera;
     private screenShakeFilter: World.ScreenShakeFilter;
 
-    private worldTexture: Texture;
-    private layerTexture: Texture;
+    private worldTexture: PIXI.RenderTexture;
+    private layerTexture: PIXI.RenderTexture;
 
     protected scriptManager: ScriptManager;
     soundManager: SoundManager;
@@ -166,8 +166,8 @@ class World {
         this.backgroundColor = config.backgroundColor ?? global.backgroundColor;
         this.backgroundAlpha = config.backgroundAlpha ?? 1;
 
-        this.worldTexture = new BasicTexture(global.gameWidth, global.gameHeight, 'World.worldTexture');
-        this.layerTexture = new BasicTexture(global.gameWidth, global.gameHeight, 'World.layerTexture');
+        this.worldTexture = newPixiRenderTexture(global.gameWidth, global.gameHeight, 'World.worldTexture');
+        this.layerTexture = newPixiRenderTexture(global.gameWidth, global.gameHeight, 'World.layerTexture');
 
         this.camera = new Camera(config.camera ?? {}, this);
         this.screenShakeFilter = new World.ScreenShakeFilter();
@@ -444,8 +444,11 @@ class World {
     }
 
     takeSnapshot() {
-        let screen = new BasicTexture(this.worldTexture.width * this.scaleX, this.worldTexture.height * this.scaleY, 'World.takeSnapshot', false);
-        screen.renderPIXIDisplayObject(this.compile());
+        let screen = newPixiRenderTexture(this.worldTexture.width * this.scaleX, this.worldTexture.height * this.scaleY, 'World.takeSnapshot');
+        let compileResult = this.compile();
+        if (compileResult) {
+            Main.renderer.render(compileResult, screen);
+        }
         return screen;
     }
 

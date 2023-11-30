@@ -32,7 +32,7 @@ namespace Tilemap {
     }
     export type ZMap = {[key: number]: number};
     export type ZTexture = {
-        frames: Texture[];
+        frames: PIXI.RenderTexture[];
         bounds: Rect;
         tileBounds: Boundaries;
         zHeight: number;
@@ -157,7 +157,7 @@ class Tilemap extends WorldObject {
         }
     }
 
-    private drawTile(tile: Tilemap.Tile, tileX: number, tileY: number, renderTextures: Texture[]) {
+    private drawTile(tile: Tilemap.Tile, tileX: number, tileY: number, renderTextures: PIXI.RenderTexture[]) {
         if (tile.index < 0) return;
 
         let sprite = new PIXI.Sprite();
@@ -171,7 +171,7 @@ class Tilemap extends WorldObject {
             sprite.y = (tileY + 0.5) * this.tileset.tileHeight;
             sprite.angle = tile.angle;
             sprite.scale.x = tile.flipX ? -1 : 1;
-            renderTextures[i].renderPIXIDisplayObject(sprite);
+            Main.renderer.render(sprite, renderTextures[i], false);
         }
     }
 
@@ -199,9 +199,9 @@ class Tilemap extends WorldObject {
             zTexture.y = this.y + texturesByZ[zValue].bounds.y + zHeight;
             zTexture.copyFromParent.push('layer');
             zTexture.offsetY = -zHeight;
-            zTexture.setTexture(this.animation ? undefined : texturesByZ[zValue].frames[0].getPixiTexture());
+            zTexture.setTexture(this.animation ? undefined : texturesByZ[zValue].frames[0]);
             if (this.animation) {
-                zTexture.addAnimation('play', Animations.fromTextureList({ textures: texturesByZ[zValue].frames.map(t => t.getPixiTexture()), frameRate: this.animation.frameRate, count: -1 }));
+                zTexture.addAnimation('play', Animations.fromTextureList({ textures: texturesByZ[zValue].frames, frameRate: this.animation.frameRate, count: -1 }));
                 zTexture.playAnimation('play');
             }
 
@@ -278,7 +278,7 @@ namespace Tilemap {
             zTextureSlots[zValue].bounds.width = (zTextureSlots[zValue].tileBounds.right - zTextureSlots[zValue].tileBounds.left + 1) * tileset.tileWidth;
             zTextureSlots[zValue].bounds.height = (zTextureSlots[zValue].tileBounds.bottom - zTextureSlots[zValue].tileBounds.top + 1) * tileset.tileHeight;
             let numFrames = animation ? animation.frames : 1;
-            zTextureSlots[zValue].frames = A.range(numFrames).map(i => new BasicTexture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height, 'Tilemap.createEmptyZTextures'));
+            zTextureSlots[zValue].frames = A.range(numFrames).map(i => newPixiRenderTexture(zTextureSlots[zValue].bounds.width, zTextureSlots[zValue].bounds.height, 'Tilemap.createEmptyZTextures'));
         }
 
         return zTextureSlots;

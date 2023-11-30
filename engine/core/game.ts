@@ -159,11 +159,14 @@ class Game {
 
     private worldForMenuTransition() {
         let world = new World();
-        let screenshot = new BasicTexture(global.gameWidth, global.gameHeight, 'Game.worldForMenuTransition');
-        screenshot.renderPIXIDisplayObject(this.menuSystem.compile());
-        world.addWorldObject(new Sprite({
-            texture: screenshot.getPixiTexture(),
-        }));
+        let compileResult = this.menuSystem.compile();
+        if (compileResult) {
+            let screenshot = newPixiRenderTexture(global.gameWidth, global.gameHeight, 'Game.worldForMenuTransition');
+            Main.renderer.render(compileResult, screenshot);
+            world.addWorldObject(new Sprite({
+                texture: screenshot,
+            }));
+        }
         return world;
     }
 
