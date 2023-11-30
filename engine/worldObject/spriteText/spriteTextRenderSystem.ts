@@ -4,7 +4,8 @@ namespace SpriteTextRenderSystem {
         y: number;
         characters: SpriteTextParser.Character[];
         tagData: SpriteText.TagData[];
-        texture: AnchoredTexture;
+        texture: PIXI.RenderTexture;
+        sprite: PIXI.Sprite;
         rendered: boolean;
     }
 }
@@ -12,31 +13,35 @@ namespace SpriteTextRenderSystem {
 class SpriteTextRenderSystem {
     parts: Dict<SpriteTextRenderSystem.Part>;
 
+    private container: PIXI.Container;
+
     constructor(partToCharacters: Dict<SpriteTextParser.Character[]>) {
         this.parts = SpriteTextRenderSystem.buildParts(partToCharacters);
+        this.container = new PIXI.Container();
     }
 
-    render(screen: Texture, x: number, y: number, spriteText: SpriteText) {
+    compile(x: number, y: number, spriteText: SpriteText) {
         let textBounds = SpriteText.getBoundsOfCharList(spriteText.getCharList());
+        let result: CompileResult[] = [];
 
         for (let part in this.parts) {
             let data = this.parts[part];
             let style = spriteText.getStyleFromTags(data.tagData, spriteText.style);
 
-            data.texture.anchorX = -(data.x + style.offsetX - spriteText.anchor.x * textBounds.width) / data.texture.width;
-            data.texture.anchorY = -(data.y + style.offsetY - spriteText.anchor.y * textBounds.height) / data.texture.height;
+            data.sprite.anchor.x = -(data.x + style.offsetX - spriteText.anchor.x * textBounds.width) / data.sprite.width;
+            data.sprite.anchor.y = -(data.y + style.offsetY - spriteText.anchor.y * textBounds.height) / data.sprite.height;
+            data.sprite.x = x;
+            data.sprite.y = y;
+            data.sprite.scale.x = (spriteText.flipX ? -1 : 1) * spriteText.scaleX;
+            data.sprite.scale.y = (spriteText.flipY ? -1 : 1) * spriteText.scaleY;
+            data.sprite.angle = spriteText.angle;
+            data.sprite.tint = Color.tint(style.color, spriteText.tint);
+            data.sprite.alpha = style.alpha * spriteText.alpha;
+            // TODO PIXI
+            // filters: [...style.filters, ...spriteText.effects.getFilterList()],
+            // mask: Mask.getTextureMaskForWorldObject(spriteText.mask, spriteText, x, y),
 
-            let scaleX = (spriteText.flipX ? -1 : 1) * spriteText.scaleX;
-            let scaleY = (spriteText.flipY ? -1 : 1) * spriteText.scaleY;
-            let angle = spriteText.angle;
-
-            let textureLocalBounds = data.texture.getLocalBounds$({
-                x: x,
-                y: y,
-                scaleX: scaleX,
-                scaleY: scaleY,
-                angle: angle,
-            });
+            let textureLocalBounds = data.sprite.getLocalBounds();
 
             let screenBounds = new Rectangle(0, 0, screen.width, screen.height);
 
@@ -46,17 +51,45 @@ class SpriteTextRenderSystem {
                 SpriteTextRenderSystem.renderPart(data);
             }
 
-            data.texture.renderTo(screen, {
-                x: x,
-                y: y,
-                tint: Color.tint(style.color, spriteText.tint),
-                alpha: style.alpha * spriteText.alpha,
-                scaleX: scaleX,
-                scaleY: scaleY,
-                angle: angle,
-                filters: [...style.filters, ...spriteText.effects.getFilterList()],
-                mask: Mask.getTextureMaskForWorldObject(spriteText.mask, spriteText, x, y),
-            });
+            result.push(data.sprite);
+        }
+
+        diffCompile(this.container, result);
+
+        return this.container;
+    }
+
+    render(screen: Texture, x: number, y: number, spriteText: SpriteText) {
+        let textBounds = SpriteText.getBoundsOfCharList(spriteText.getCharList());
+
+        for (let part in this.parts) {
+            let data = this.parts[part];
+            let style = spriteText.getStyleFromTags(data.tagData, spriteText.style);
+
+            data.sprite.anchor.x = -(data.x + style.offsetX - spriteText.anchor.x * textBounds.width) / data.sprite.width;
+            data.sprite.anchor.y = -(data.y + style.offsetY - spriteText.anchor.y * textBounds.height) / data.sprite.height;
+            data.sprite.x = x;
+            data.sprite.y = y;
+            data.sprite.scale.x = (spriteText.flipX ? -1 : 1) * spriteText.scaleX;
+            data.sprite.scale.y = (spriteText.flipY ? -1 : 1) * spriteText.scaleY;
+            data.sprite.angle = spriteText.angle;
+            data.sprite.tint = Color.tint(style.color, spriteText.tint);
+            data.sprite.alpha = style.alpha * spriteText.alpha;
+            // TODO PIXI
+            // filters: [...style.filters, ...spriteText.effects.getFilterList()],
+            // mask: Mask.getTextureMaskForWorldObject(spriteText.mask, spriteText, x, y),
+
+            let textureLocalBounds = data.sprite.getLocalBounds();
+
+            let screenBounds = new Rectangle(0, 0, screen.width, screen.height);
+
+            if (!G.areRectanglesOverlapping(textureLocalBounds, screenBounds)) continue;
+
+            if (!data.rendered) {
+                SpriteTextRenderSystem.renderPart(data);
+            }
+
+            screen.renderPIXIDisplayObject(data.sprite);
         }
     }
 
@@ -73,18 +106,13 @@ class SpriteTextRenderSystem {
             let data = this.parts[part];
             let style = spriteText.getStyleFromTags(data.tagData, spriteText.style);
 
-            data.texture.anchorX = -(data.x + style.offsetX - spriteText.anchor.x * textBounds.width) / data.texture.width;
-            data.texture.anchorY = -(data.y + style.offsetY - spriteText.anchor.y * textBounds.height) / data.texture.height;
+            data.sprite.anchor.x = -(data.x + style.offsetX - spriteText.anchor.x * textBounds.width) / data.sprite.width;
+            data.sprite.anchor.y = -(data.y + style.offsetY - spriteText.anchor.y * textBounds.height) / data.sprite.height;
+            data.sprite.scale.x = (spriteText.flipX ? -1 : 1) * spriteText.scaleX;
+            data.sprite.scale.y = (spriteText.flipY ? -1 : 1) * spriteText.scaleY;
+            data.sprite.angle = spriteText.angle;
 
-            let scaleX = (spriteText.flipX ? -1 : 1) * spriteText.scaleX;
-            let scaleY = (spriteText.flipY ? -1 : 1) * spriteText.scaleY;
-            let angle = spriteText.angle;
-
-            return data.texture.getLocalBounds$({
-                scaleX: scaleX,
-                scaleY: scaleY,
-                angle: angle,
-            }).clone();
+            return data.sprite.getLocalBounds().clone();
         }));
     }
 }
@@ -100,12 +128,15 @@ namespace SpriteTextRenderSystem {
                 boundary = new Boundaries(partToCharacters[part][0].x, partToCharacters[part][0].x, partToCharacters[part][0].y, partToCharacters[part][0].y);
             }
 
+            let texture = cache_staticTextures.borrow(Math.ceil(boundary.width), Math.ceil(boundary.height));
+
             result[part] = {
                 x: Math.floor(boundary.left),
                 y: Math.floor(boundary.top),
                 characters: partToCharacters[part],
                 tagData: A.clone(partToCharacters[part][0].tagData),
-                texture: cache_staticTextures.borrow(Math.ceil(boundary.width), Math.ceil(boundary.height)),
+                texture: texture,
+                sprite: new PIXI.Sprite(texture),
                 rendered: false,
             };
         }
@@ -114,24 +145,28 @@ namespace SpriteTextRenderSystem {
     }
 
     export function renderPart(part: Part) {
-        part.texture.clear();
+        Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, part.texture, true);  // Clear the texture
+
+        let sprite = new PIXI.Sprite();
 
         for (let character of part.characters) {
-            character.texture?.renderTo(part.texture, {
-                x: Math.floor(character.x - part.x),
-                y: Math.floor(character.y - part.y),
-            });
+            if (!character.texture) continue;
+            sprite.texture = character.texture.getPixiTexture();
+            sprite.anchor = sprite.texture.defaultAnchor;
+            sprite.x = Math.floor(character.x - part.x);
+            sprite.y = Math.floor(character.y - part.y);
+            Main.renderer.render(sprite, part.texture, false);
         }
 
         part.rendered = true;
     }
 
     export function freePart(part: Part) {
-        if (!part.texture) return;
-        cache_staticTextures.return(part.texture.width, part.texture.height, part.texture);
+        if (!part.sprite) return;
+        cache_staticTextures.return(part.sprite.width, part.sprite.height, part.texture);
     }
 
-    const cache_staticTextures = new DualKeyPool<number, number, AnchoredTexture>((w, h) => {
-        return new AnchoredTexture(new BasicTexture(w, h, 'SpriteText.getStaticTexturesForCharList', false), 0, 0)
+    const cache_staticTextures = new DualKeyPool<number, number, PIXI.RenderTexture>((w, h) => {
+        return PIXI.RenderTexture.create({ width: w, height: h });
     }, (w, h) => `${w},${h}`);
 }

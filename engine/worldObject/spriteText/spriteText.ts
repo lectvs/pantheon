@@ -184,6 +184,10 @@ class SpriteText extends WorldObject {
         }
     }
 
+    override compile(x: number, y: number): CompileResult {
+        return this.getRenderSystem().compile(x, y, this);
+    }
+
     override render(texture: Texture, x: number, y: number) {
         this.getRenderSystem().render(texture, x, y, this);
         super.render(texture, x, y);
@@ -275,13 +279,17 @@ class SpriteText extends WorldObject {
     toTexture() {
         let width = this.getTextWidth();
         let height = this.getTextHeight();
-        let texture = new BasicTexture(width, height, 'SpriteText.toTexture', false);
+        let texture = PIXI.RenderTexture.create({ width, height });
 
         let anchorOffsetX = Math.round(this.anchor.x * width);
         let anchorOffsetY = Math.round(this.anchor.y * height);
-        this.render(texture, anchorOffsetX, anchorOffsetY);
 
-        return new AnchoredTexture(texture, this.anchor.x, this.anchor.y);
+        let compileResult = this.compile(anchorOffsetX, anchorOffsetY);
+        if (compileResult) Main.renderer.render(compileResult, texture, false);
+
+        texture.defaultAnchor.set(this.anchor.x, this.anchor.y);
+
+        return texture;
     }
 
     private getRenderSystem() {

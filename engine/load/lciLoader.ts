@@ -41,10 +41,9 @@ class LciLoader implements Loader {
 
     private onLoadTextures() {
         if (!this.lci) return;
-        let fullTexture = new AnchoredTexture(new BasicTexture(this.lci.width, this.lci.height, 'LciLoader.onLoadTextures'));
+        let fullTexture = PIXI.RenderTexture.create({ width: this.lci.width, height: this.lci.height });
         if (this.texture.anchor) {
-            fullTexture.anchorX = this.texture.anchor.x;
-            fullTexture.anchorY = this.texture.anchor.y;
+            fullTexture.defaultAnchor.set(this.texture.anchor.x, this.texture.anchor.y);
         }
 
         let sprite = new PIXI.Sprite();
@@ -64,9 +63,8 @@ class LciLoader implements Loader {
             sprite.y = layer.position.y + (layer.properties.offset?.y ?? 0);
             sprite.alpha = layer.opacity / 255;
             sprite.blendMode = layer.blendMode ?? 0;
-            fullTexture.renderPIXIDisplayObject(sprite);
+            Main.renderer.render(sprite, fullTexture, false);
         }
-        AssetCache.pixiTextures[this.key] = fullTexture.getPixiTexture();
-        AssetCache.pixiTextures[this.key].defaultAnchor.set(fullTexture.getPixiTextureAnchorX(), fullTexture.getPixiTextureAnchorY());
+        AssetCache.pixiTextures[this.key] = fullTexture;
     }
 }
