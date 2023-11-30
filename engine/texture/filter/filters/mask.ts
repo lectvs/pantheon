@@ -40,7 +40,7 @@ namespace TextureFilters {
         }
 
         setMask(texture: PIXI.Texture) {
-            let mask: Texture.TextureToMask = {
+            let mask: Mask.TextureToMask = {
                 renderTexture: texture,
                 // TODO PIXI are these offsets needed?
                 offsetx: -Math.floor(texture.defaultAnchor.x * texture.width),
@@ -83,6 +83,19 @@ namespace Mask {
         invert?: boolean;
     }
 
+    export type MaskProperties = {
+        texture: PIXI.Texture;
+        x: number;
+        y: number;
+        invert: boolean;
+    }
+
+    export type TextureToMask = {
+        renderTexture: PIXI.Texture;
+        offsetx: number;
+        offsety: number;
+    }
+
     export type Type = 'global' | 'local';
 
     var _maskFilter: TextureFilters.Mask;
@@ -117,7 +130,7 @@ namespace Mask {
     export type WorldObjectMaskType = 'local' | 'screen' | 'world';
 
     export function getTextureMaskForWorldObject(mask: WorldObjectMaskConfig | undefined, worldObject: WorldObject,
-            renderX: number, renderY: number): Texture.MaskProperties | undefined {
+            renderX: number, renderY: number): MaskProperties | undefined {
         if (!mask || !mask.texture) return undefined;
 
         let x = 0;
@@ -142,7 +155,7 @@ namespace Mask {
         };
     }
 
-    export function getTextureMaskForWorld(mask: WorldMaskConfig | undefined): Texture.MaskProperties | undefined {
+    export function getTextureMaskForWorld(mask: WorldMaskConfig | undefined): MaskProperties | undefined {
         if (!mask || !mask.texture) return undefined;
 
         return {

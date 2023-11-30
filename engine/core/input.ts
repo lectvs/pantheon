@@ -153,17 +153,17 @@ class Input {
             }
         } else if (IS_MOBILE) {
             if (this.isDownByKeyCode[this.MOUSE_KEYCODES[0]]) {
-                this._canvasMouseX = global.renderer.plugins.interaction.mouse.global.x;
-                this._canvasMouseY = global.renderer.plugins.interaction.mouse.global.y;
+                this._canvasMouseX = Main.renderer.plugins.interaction.mouse.global.x;
+                this._canvasMouseY = Main.renderer.plugins.interaction.mouse.global.y;
                 this._mouseRadius = IS_MOBILE ? 10 : 0;
             }
         } else {
-            this._canvasMouseX = global.renderer.plugins.interaction.mouse.global.x;
-            this._canvasMouseY = global.renderer.plugins.interaction.mouse.global.y;
+            this._canvasMouseX = Main.renderer.plugins.interaction.mouse.global.x;
+            this._canvasMouseY = Main.renderer.plugins.interaction.mouse.global.y;
         }
         if (Fullscreen.enabled) {
-            let cw = global.renderer.width / global.renderer.resolution;
-            let ch = global.renderer.height / global.renderer.resolution;
+            let cw = Main.renderer.width / Main.renderer.resolution;
+            let ch = Main.renderer.height / Main.renderer.resolution;
             let iw = window.innerWidth;
             let ih = window.innerHeight;
             let ratioW = iw/cw;

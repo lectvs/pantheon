@@ -18,7 +18,6 @@ class global {
 
     static get skippingCutscene() { return this.theater?.isSkippingCutscene; }
 
-    static get renderer() { return Main.renderer; }
     static get soundManager() { return Main.soundManager; }
     static fpsCalculator: FPSCalculator = new FPSCalculator(1);
 

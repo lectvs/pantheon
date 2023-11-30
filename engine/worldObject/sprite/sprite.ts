@@ -17,7 +17,7 @@ namespace Sprite {
         alpha?: number;
         effects?: Effects.Config;
         mask?: Mask.WorldObjectMaskConfig;
-        blendMode?: Texture.BlendMode;
+        blendMode?: PIXI.BLEND_MODES;
     }
 }
 
@@ -49,7 +49,7 @@ class Sprite extends PhysicsWorldObject {
 
     effects: Effects;
     mask?: Mask.WorldObjectMaskConfig;
-    blendMode?: Texture.BlendMode;
+    blendMode?: PIXI.BLEND_MODES;
 
     private renderObject: PIXI.Sprite;
 
