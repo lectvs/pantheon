@@ -38,7 +38,7 @@ namespace SpriteText {
         alpha?: number;
         offsetX?: number;
         offsetY?: number;
-        filters?: PixiFilter[];
+        filters?: TextureFilter[];
     }
 
     export type TagData = {

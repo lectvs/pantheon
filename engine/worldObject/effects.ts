@@ -1,13 +1,13 @@
-/// <reference path="../texture/filter/pixiFilter.ts" />
+/// <reference path="../texture/filter/textureFilter.ts" />
 
 namespace Effects {
     export type Config = {
-        pre?: PixiFilter[];
+        pre?: TextureFilter[];
         silhouette?: SilhouetteConfig;
         outline?: OutlineConfig;
         invertColors?: InvertColorsConfig;
         glitch?: GlitchConfig;
-        post?: PixiFilter[];
+        post?: TextureFilter[];
     }
 
     export type SilhouetteConfig = { color?: number, alpha?: number, amount?: number,  enabled?: boolean };
@@ -29,8 +29,8 @@ class Effects {
     private static INVERT_COLORS_I: number = 2;
     private static GLITCH_I: number = 3;
 
-    pre: PixiFilter[];
-    post: PixiFilter[];
+    pre: TextureFilter[];
+    post: TextureFilter[];
 
     get silhouette(): Effects.Filters.Silhouette {
         if (!this.effects[Effects.SILHOUETTE_I]) {
@@ -78,10 +78,10 @@ class Effects {
         this.updateFromConfig(config);
     }
 
-    getFilterList(): PixiFilter[] {
+    getFilterList(): TextureFilter[] {
         return [
             ...this.pre,
-            ...this.effects.filter(e => e) as PixiFilter[],
+            ...this.effects.filter(e => e) as TextureFilter[],
             ...this.post,
         ];
     }
@@ -141,7 +141,7 @@ class Effects {
 
 namespace Effects {
     export namespace Filters {
-        export class Silhouette extends PixiFilter {
+        export class Silhouette extends TextureFilter {
             get color() { return Color.vec3ToColor(this.getUniform('color')); }
             set color(value: number) { this.setUniform('color', Color.colorToVec3(value)); }
             get alpha() { return this.getUniform('alpha'); }
@@ -174,7 +174,7 @@ namespace Effects {
             }
         }
 
-        export class Outline extends PixiFilter {
+        export class Outline extends TextureFilter {
             get color() { return Color.vec3ToColor(this.getUniform('color')); }
             set color(value: number) { this.setUniform('color', Color.colorToVec3(value)); }
             get alpha() { return this.getUniform('alpha'); }
@@ -214,7 +214,7 @@ namespace Effects {
             }
         }
 
-        export class InvertColors extends PixiFilter {
+        export class InvertColors extends TextureFilter {
             constructor() {
                 super({
                     code: `
@@ -230,7 +230,7 @@ namespace Effects {
             }
         }
 
-        export class Glitch extends PixiFilter {
+        export class Glitch extends TextureFilter {
             private _strength: number;
             get strength() { return this._strength; }
             set strength(value: number) {

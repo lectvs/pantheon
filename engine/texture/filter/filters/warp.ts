@@ -1,5 +1,5 @@
 namespace TextureFilters {
-    export class Warp extends PixiFilter {
+    export class Warp extends TextureFilter {
         constructor() {
             super({
                 uniforms: {

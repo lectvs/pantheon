@@ -1,5 +1,5 @@
 namespace TextureFilters {
-    export class Mask extends PixiFilter {
+    export class Mask extends TextureFilter {
         type: Mask.Type;
         offsetX: number;
         offsetY: number;

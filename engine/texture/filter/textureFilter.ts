@@ -1,7 +1,7 @@
 ///<reference path="../../utils/pool.ts"/>
 ///<reference path="../../utils/perlin.ts"/>
 
-namespace PixiFilter {
+namespace TextureFilter {
     /**
      * Texture fragment filter config.
      * 
@@ -33,17 +33,17 @@ namespace PixiFilter {
     }
 }
 
-class PixiFilter extends PIXI.Filter {
+class TextureFilter extends PIXI.Filter {
     private visualPadding: number;
     private uniformCache: Dict<any>;
 
-    constructor(config: PixiFilter.Config) {
+    constructor(config: TextureFilter.Config) {
         super(
             PIXI.Filter.defaultVertexSrc,
-            PixiFilter.constructFragCode(PixiFilter.constructUniformCode(config.uniforms), config.helperMethods ?? '', config.code ?? ''),
-            PixiFilter.constructUniformsMap(config.uniforms),
+            TextureFilter.constructFragCode(TextureFilter.constructUniformCode(config.uniforms), config.helperMethods ?? '', config.code ?? ''),
+            TextureFilter.constructUniformsMap(config.uniforms),
         );
-        this.uniformCache = PixiFilter.constructUniformsMap(config.uniforms);  // Purposefully duplicated
+        this.uniformCache = TextureFilter.constructUniformsMap(config.uniforms);  // Purposefully duplicated
         this.visualPadding = config.visualPadding ?? 0;
     }
 
@@ -82,7 +82,7 @@ class PixiFilter extends PIXI.Filter {
     }
 }
 
-namespace PixiFilter {
+namespace TextureFilter {
     export function constructFragCode(uniformCode: string, helperMethods: string, code: string) {
         return fragPrecision
             + fragCoreUniforms

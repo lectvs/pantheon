@@ -1,5 +1,5 @@
 namespace TextureFilters {
-    export class Tint extends PixiFilter {
+    export class Tint extends TextureFilter {
         private _tint: number;
         get tint() { return this._tint; }
         set tint(v) {
