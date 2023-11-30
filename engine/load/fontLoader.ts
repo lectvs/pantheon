@@ -28,7 +28,7 @@ class FontLoader implements Loader {
     }
 
     private onLoad() {
-        let mainTexture = AssetCache.textures[this.key];
+        let mainTexture = AssetCache.pixiTextures[this.key];
         if (!mainTexture) {
             console.error(`Failed to load tileset texture ${this.key}`);
             return;
@@ -48,8 +48,8 @@ class FontLoader implements Loader {
             for (let x = 0; x < FontLoader.FONT_CHARACTERS[y].length; x++) {
                 let i = x + y*numCharsX;
                 let char = FontLoader.FONT_CHARACTERS[y][x];
-                AssetCache.textures[`${this.key}/chars/${char}`] = AssetCache.textures[`${this.key}/${i}`];
-                delete AssetCache.textures[`${this.key}/${i}`];
+                AssetCache.pixiTextures[`${this.key}/chars/${char}`] = AssetCache.pixiTextures[`${this.key}/${i}`];
+                delete AssetCache.pixiTextures[`${this.key}/${i}`];
                 charTextures[char] = `${this.key}/chars/${char}`;
             }
         }

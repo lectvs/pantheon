@@ -1,29 +1,21 @@
 // Only meant to be populated by Preload
 class AssetCache {
     static pixiTextures: Dict<PIXI.Texture> = {};
-    static textures: Dict<Texture> = {};
     static sounds: Dict<WebAudioSound.Asset> = {};
     static tilesets: Dict<Tilemap.Tileset> = {};
     static tilemaps: Dict<Tilemap.Tilemap> = {};
     static fonts: Dict<SpriteText.Font> = {};
     static lciDocuments: Dict<Lci.Document> = {};
 
-    static getPixiTexture(key: string): PIXI.Texture | undefined {
+    static getPixiTexture(key: string): PIXI.Texture {
+        if (this.isNoneTexture(key)) {
+            return Utils.NOOP_RENDERTEXTURE;
+        }
         if (!this.pixiTextures[key]) {
             console.error(`Texture '${key}' does not exist.`);
+            return Utils.NOOP_RENDERTEXTURE;
         }
         return this.pixiTextures[key];
-    }
-
-    static getTexture(key: string): Texture {
-        if (this.isNoneTexture(key)) {
-            return Texture.NONE;
-        }
-        if (!this.textures[key]) {
-            console.error(`Texture '${key}' does not exist.`);
-            return Texture.NONE;
-        }
-        return this.textures[key];
     }
 
     static getSoundAsset(key: string): WebAudioSound.Asset {

@@ -35,7 +35,7 @@ namespace AnimationInstance {
     }
 
     export type TextureAnimationFrame = {
-        texture?: string | Texture;
+        texture?: string | PIXI.Texture;
         duration?: number;
         callback?: () => any;
     }

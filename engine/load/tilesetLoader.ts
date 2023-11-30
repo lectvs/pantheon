@@ -28,7 +28,7 @@ class TilesetLoader implements Loader {
     }
 
     private onLoad() {
-        let mainTexture = AssetCache.textures[this.key];
+        let mainTexture = AssetCache.pixiTextures[this.key];
         if (!mainTexture) {
             console.error(`Failed to load tileset texture ${this.key}`);
             return;

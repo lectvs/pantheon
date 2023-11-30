@@ -1,6 +1,6 @@
 namespace Animations {
     export type FromSingleTextureConfig = {
-        texture: string | Texture;
+        texture: string | PIXI.Texture;
         duration?: number;
         callback?: () => any;
         priority?: number;
@@ -22,7 +22,7 @@ namespace Animations {
 
     export type FromTextureListConfig = {
         textureRoot?: string;
-        textures: (string | Texture | number)[];
+        textures: (string | PIXI.Texture | number)[];
         frameRate: number;
         count?: number;
         overrides?: {[frame: number]: AnimationInstance.TextureAnimationFrame};

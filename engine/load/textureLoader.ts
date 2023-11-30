@@ -38,7 +38,6 @@ class TextureLoader implements Loader {
         }
         mainTexture.defaultAnchor = new Point(anchor.x, anchor.y);
         AssetCache.pixiTextures[this.key] = mainTexture;
-        AssetCache.textures[this.key] = Texture.fromPixiTexture(mainTexture);
 
         let frames = TextureLoader.getAllFrames(this.key, this.texture);
 
@@ -51,11 +50,12 @@ class TextureLoader implements Loader {
             }
             frameTexture.defaultAnchor = new Point(anchor.x, anchor.y);
             AssetCache.pixiTextures[frame] = frameTexture;
-            AssetCache.textures[frame] = Texture.fromPixiTexture(frameTexture);
         }
     }
 
-    static getAllFrames(key: string, texture: Preload.Texture, width: number = AssetCache.textures[key].width, height: number = AssetCache.textures[key].height) {
+    static getAllFrames(key: string, texture: Preload.Texture) {
+        let width = AssetCache.getPixiTexture(key).width;
+        let height = AssetCache.getPixiTexture(key).height;
         let frames: Dict<Preload.TextureFrame> = {};
 
         if (texture.spritesheet) {

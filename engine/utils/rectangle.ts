@@ -48,4 +48,8 @@ class Rectangle {
         let height = isFinite(bndries.top) && isFinite(bndries.bottom) ? bndries.bottom - bndries.top : Infinity;
         return new Rectangle(bndries.left, bndries.right, width, height);
     }
+
+    static fromPixiRectangle(pixiRectangle: PIXI.Rectangle) {
+        return new Rectangle(pixiRectangle.x, pixiRectangle.y, pixiRectangle.width, pixiRectangle.height);
+    }
 }

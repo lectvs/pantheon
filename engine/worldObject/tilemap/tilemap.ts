@@ -160,16 +160,18 @@ class Tilemap extends WorldObject {
     private drawTile(tile: Tilemap.Tile, tileX: number, tileY: number, renderTextures: Texture[]) {
         if (tile.index < 0) return;
 
+        let sprite = new PIXI.Sprite();
+
         for (let i = 0; i < renderTextures.length; i++) {
             let textureKeyIndex = this.animation ? i*this.animation.tilesPerFrame + tile.index : tile.index;
             let textureKey = this.tileset.tiles[textureKeyIndex];
-            let texture = AssetCache.getTexture(textureKey);
-            texture.renderTo(renderTextures[i], {
-                x: (tileX + 0.5) * this.tileset.tileWidth,
-                y: (tileY + 0.5) * this.tileset.tileHeight,
-                angle: tile.angle,
-                scaleX: tile.flipX ? -1 : 1,
-            });
+            sprite.texture = AssetCache.getPixiTexture(textureKey);
+            sprite.anchor = sprite.texture.defaultAnchor;
+            sprite.x = (tileX + 0.5) * this.tileset.tileWidth;
+            sprite.y = (tileY + 0.5) * this.tileset.tileHeight;
+            sprite.angle = tile.angle;
+            sprite.scale.x = tile.flipX ? -1 : 1;
+            renderTextures[i].renderPIXIDisplayObject(sprite);
         }
     }
 
@@ -197,9 +199,9 @@ class Tilemap extends WorldObject {
             zTexture.y = this.y + texturesByZ[zValue].bounds.y + zHeight;
             zTexture.copyFromParent.push('layer');
             zTexture.offsetY = -zHeight;
-            zTexture.setTexture(this.animation ? undefined : texturesByZ[zValue].frames[0]);
+            zTexture.setTexture(this.animation ? undefined : texturesByZ[zValue].frames[0].getPixiTexture());
             if (this.animation) {
-                zTexture.addAnimation('play', Animations.fromTextureList({ textures: texturesByZ[zValue].frames, frameRate: this.animation.frameRate, count: -1 }));
+                zTexture.addAnimation('play', Animations.fromTextureList({ textures: texturesByZ[zValue].frames.map(t => t.getPixiTexture()), frameRate: this.animation.frameRate, count: -1 }));
                 zTexture.playAnimation('play');
             }
 

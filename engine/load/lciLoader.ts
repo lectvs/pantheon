@@ -47,22 +47,26 @@ class LciLoader implements Loader {
             fullTexture.anchorY = this.texture.anchor.y;
         }
 
+        let sprite = new PIXI.Sprite();
+
         for (let layer of this.lci.layers) {
             if (layer.isDataLayer) continue;
             if (!layer.visible) continue;
 
-            let layerTexture = AssetCache.textures[Lci.getLayerTextureKey(this.key, layer.name)];
+            let layerTexture = AssetCache.pixiTextures[Lci.getLayerTextureKey(this.key, layer.name)];
             if (!layerTexture) {
                 console.error(`Failed to load LCI layer texture: ${Lci.getLayerTextureKey(this.key, layer.name)}`);
                 continue;
             }
-            layerTexture.renderTo(fullTexture, {
-                x: layer.position.x + (layer.properties.offset?.x ?? 0),
-                y: layer.position.y + (layer.properties.offset?.y ?? 0),
-                alpha: layer.opacity/255,
-                blendMode: <Texture.BlendMode><any>(layer.blendMode ?? 0),
-            });
+            sprite.texture = layerTexture;
+            sprite.anchor = layerTexture.defaultAnchor;
+            sprite.x = layer.position.x + (layer.properties.offset?.x ?? 0);
+            sprite.y = layer.position.y + (layer.properties.offset?.y ?? 0);
+            sprite.alpha = layer.opacity / 255;
+            sprite.blendMode = layer.blendMode ?? 0;
+            fullTexture.renderPIXIDisplayObject(sprite);
         }
-        AssetCache.textures[this.key] = fullTexture;
+        AssetCache.pixiTextures[this.key] = fullTexture.getPixiTexture();
+        AssetCache.pixiTextures[this.key].defaultAnchor.set(fullTexture.getPixiTextureAnchorX(), fullTexture.getPixiTextureAnchorY());
     }
 }

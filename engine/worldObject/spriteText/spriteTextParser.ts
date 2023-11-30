@@ -78,19 +78,21 @@ namespace SpriteTextParser {
 
     function createCharacter(char: SpriteTextLexer.Char, font: SpriteText.Font, fixedCharSize: boolean) {
         let textureKey = char.isCustom ? char.name : font.charTextures[char.name];
-        let texture = AssetCache.getTexture(textureKey);
+        let texture = AssetCache.getPixiTexture(textureKey);
         if (!texture) {
             textureKey = font.charTextures['missing'];
-            texture = AssetCache.getTexture(textureKey);
+            texture = AssetCache.getPixiTexture(textureKey);
         }
+
+        let lectvsTexture = Texture.fromPixiTexture(texture);
 
         let localBounds = fixedCharSize
             ? new Rectangle(0, 0, font.charWidth, font.charHeight)
-            : texture.getLocalBounds$({}).clone();
+            : lectvsTexture.getLocalBounds$({}).clone();
 
         return new Character({
             name: char.name,
-            texture: texture,
+            texture: lectvsTexture,
             localBounds: localBounds,
             tagData: A.clone(char.tagData),
             part: char.part,

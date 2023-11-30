@@ -2,7 +2,7 @@
 
 namespace Sprite {
     export type Config<WO extends Sprite> = PhysicsWorldObject.Config<WO> & {
-        texture?: string | Texture;
+        texture?: string | PIXI.Texture;
         flipX?: boolean;
         flipY?: boolean;
         offsetX?: number;
@@ -22,7 +22,7 @@ namespace Sprite {
 }
 
 class Sprite extends PhysicsWorldObject {
-    private texture!: Texture;
+    private texture!: PIXI.Texture;
     private textureKey: string | undefined;
 
     flipX: boolean;
@@ -90,11 +90,11 @@ class Sprite extends PhysicsWorldObject {
 
     override compile(x: number, y: number): CompileResult {
         if (this.textureKey) {
-            let texture = AssetCache.getTexture(this.textureKey);
+            let texture = AssetCache.getPixiTexture(this.textureKey);
             if (texture) {
-                this.renderObject.texture = texture.getPixiTexture();
-                this.renderObject.anchor.x = texture.getPixiTextureAnchorX();
-                this.renderObject.anchor.y = texture.getPixiTextureAnchorY();
+                this.renderObject.texture = texture;
+                this.renderObject.anchor.x = texture.defaultAnchor.x;
+                this.renderObject.anchor.y = texture.defaultAnchor.y;
             }
         }
         this.renderObject.x = x + this.offsetX;
@@ -104,27 +104,12 @@ class Sprite extends PhysicsWorldObject {
         this.renderObject.angle = this.angle + this.angleOffset;
         this.renderObject.tint = this.tint;
         this.renderObject.alpha = this.alpha;
-        // TODO PIXI this.renderObject.filters
-        // TODO PIXI mask
+        // TODO PIXI
+        // filters: this.effects.getFilterList(),
+        // mask: Mask.getTextureMaskForWorldObject(this.mask, this, x, y),
         this.renderObject.blendMode = this.blendMode ?? PIXI.BLEND_MODES.NORMAL;
         // TODO PIXI do not ignore the results of super.compile()
         return this.renderObject;
-    }
-
-    override render(texture: Texture, x: number, y: number) {
-        this.texture.renderTo(texture, {
-            x: x + this.offsetX,
-            y: y + this.offsetY,
-            scaleX: (this.flipX ? -1 : 1) * this.scaleX,
-            scaleY: (this.flipY ? -1 : 1) * this.scaleY,
-            angle: this.angle + this.angleOffset,
-            tint: this.tint,
-            alpha: this.alpha,
-            filters: this.effects.getFilterList(),
-            mask: Mask.getTextureMaskForWorldObject(this.mask, this, x, y),
-            blendMode: this.blendMode,
-        });
-        super.render(texture, x, y);
     }
 
     getTexture() {
@@ -137,26 +122,21 @@ class Sprite extends PhysicsWorldObject {
 
     override getVisibleLocalBounds$(): Rectangle | undefined {
         if (!this.texture) return new Rectangle(0, 0, 0, 0);
-        if (this.texture === Texture.EFFECT_ONLY) {
+        if (this.texture === Utils.EFFECTONLY_RENDERTEXTURE) {
             return undefined;
         }
-        return this.texture.getLocalBounds$({
-            x: this.offsetX,
-            y: this.offsetY,
-            scaleX: this.scaleX,
-            scaleY: this.scaleY,
-            angle: this.angle + this.angleOffset,
-        });
+        // TODO PIXI optimize
+        return Rectangle.fromPixiRectangle(this.compile(this.offsetX, this.offsetY)!.getLocalBounds());
     }
 
-    setTexture(key: string | Texture | undefined) {
+    setTexture(key: string | PIXI.Texture | undefined) {
         if (!key) {
-            this.texture = Texture.NONE;
+            this.texture = Utils.NOOP_RENDERTEXTURE;
             this.textureKey = undefined;
             return;
         }
 
         this.textureKey = St.isString(key) ? key : undefined;
-        this.texture = St.isString(key) ? AssetCache.getTexture(key) : key;
+        this.texture = St.isString(key) ? AssetCache.getPixiTexture(key) : key;
     }
 }
