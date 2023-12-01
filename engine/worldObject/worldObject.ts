@@ -312,7 +312,7 @@ class WorldObject {
         return result;
     }
 
-    render(x: number, y: number): RenderResult[] {
+    render(x: number, y: number): RenderResult {
         return this.modules.map(module => module.render(x, y)).flat();
     }
 

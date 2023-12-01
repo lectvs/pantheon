@@ -68,7 +68,7 @@ class Theater {
         }
     }
 
-    render(): RenderResult[] {
+    render(): RenderResult {
         let result = [
             ...this.stageManager.render(),
         ];
@@ -173,7 +173,7 @@ namespace Theater {
             this.sprite = new PIXI.Sprite(Textures.filledRect(W, H, 0xFFFFFF));
         }
 
-        render(): RenderResult[] {
+        render(): RenderResult {
             this.sprite.tint = this.color;
             this.sprite.alpha = this.alpha;
             return [this.sprite];
@@ -192,7 +192,7 @@ namespace Theater {
             this.containedWorld.update();
         }
 
-        override render(x: number, y: number): RenderResult[] {
+        override render(x: number, y: number): RenderResult {
             return this.containedWorld.render();
         }
     }

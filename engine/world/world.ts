@@ -246,7 +246,7 @@ class World {
         this.bgFill.tint = this.backgroundColor;
         this.bgFill.alpha = this.backgroundAlpha;
 
-        let result: RenderResult[] = [
+        let result: RenderResult = [
             this.bgFill,
         ];
 

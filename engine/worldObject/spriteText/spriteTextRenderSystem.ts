@@ -19,7 +19,7 @@ class SpriteTextRenderSystem {
 
     render(x: number, y: number, spriteText: SpriteText) {
         let textBounds = SpriteText.getBoundsOfCharList(spriteText.getCharList());
-        let result: RenderResult[] = [];
+        let result: RenderResult = [];
 
         for (let part in this.parts) {
             let data = this.parts[part];

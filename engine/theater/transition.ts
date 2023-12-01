@@ -35,7 +35,7 @@ abstract class Transition {
         this.script?.update(delta);
     }
 
-    abstract render(): RenderResult[];
+    abstract render(): RenderResult;
 
     setData(oldWorld: World | undefined, newWorld: World | undefined) {
         this.oldWorld = oldWorld;

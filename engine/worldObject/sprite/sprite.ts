@@ -85,7 +85,7 @@ class Sprite extends PhysicsWorldObject {
         this.angle += this.vangle * this.delta;
     }
 
-    override render(x: number, y: number): RenderResult[] {
+    override render(x: number, y: number): RenderResult {
         if (this.textureKey) {
             let texture = AssetCache.getPixiTexture(this.textureKey);
             if (texture) {

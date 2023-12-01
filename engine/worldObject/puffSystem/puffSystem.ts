@@ -52,7 +52,7 @@ class PuffSystem extends WorldObject {
     }
 
     override render(x: number, y: number) {
-        let result: RenderResult[] = this.puffs.map((puff, i) => {
+        let result: RenderResult = this.puffs.map((puff, i) => {
             let progress = puff.t / puff.maxLife;
 
             let radius = M.lerp(progress, puff.initialRadius, puff.finalRadius);
