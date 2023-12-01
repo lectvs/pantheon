@@ -35,7 +35,7 @@ class RectBounds implements Bounds {
         return this.getBoundingBox().contains(x, y);
     }
 
-    debugCompile(): CompileResult {
+    debugRender() {
         let boundingBox = this.getBoundingBox();
         this.debugSprite.x = boundingBox.x;
         this.debugSprite.y = boundingBox.y;

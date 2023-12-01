@@ -53,8 +53,8 @@ class PuffSystem extends WorldObject {
         }
     }
 
-    override compile(x: number, y: number): CompileResult {
-        let result: CompileResult[] = this.puffs.map((puff, i) => {
+    override render(x: number, y: number): RenderResult {
+        let result: RenderResult[] = this.puffs.map((puff, i) => {
             let progress = puff.t / puff.maxLife;
 
             let radius = M.lerp(progress, puff.initialRadius, puff.finalRadius);
@@ -70,12 +70,12 @@ class PuffSystem extends WorldObject {
             return this.sprites[i];
         });
 
-        let superCompile = super.compile(x, y);
-        if (superCompile) {
-            result.push(superCompile);
+        let superRender = super.render(x, y);
+        if (superRender) {
+            result.push(superRender);
         }
 
-        diffCompile(this.container, result);
+        diffRender(this.container, result);
 
         return this.container;
     }

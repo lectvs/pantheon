@@ -240,13 +240,13 @@ class World {
         this.scriptManager.update(this.delta);
     }
 
-    compile(): CompileResult {
+    render() {
         this.bgFill.scale.x = this.getScreenWidth();
         this.bgFill.scale.y = this.getScreenHeight();
         this.bgFill.tint = this.backgroundColor;
         this.bgFill.alpha = this.backgroundAlpha;
 
-        let result: CompileResult[] = [
+        let result: RenderResult[] = [
             this.bgFill,
         ];
 
@@ -279,21 +279,21 @@ class World {
         // });
 
         for (let layer of this.layers) {
-            result.push(...this.compileLayer(layer));
+            result.push(...this.renderLayer(layer));
         }
 
-        diffCompile(this.container, result);
+        diffRender(this.container, result);
 
         return this.container;
     }
 
-    compileLayer(layer: World.Layer) {
+    renderLayer(layer: World.Layer) {
         // TODO PIXI: assign zIndex to layer objects
         layer.sort();
 
         return layer.worldObjects
             .filter(worldObject => worldObject.isVisible() && worldObject.isOnScreen())
-            .map(worldObject => worldObject.compile(worldObject.getRenderScreenX(), worldObject.getRenderScreenY()));
+            .map(worldObject => worldObject.render(worldObject.getRenderScreenX(), worldObject.getRenderScreenY()));
     }
 
     addHook<T extends keyof World.Hooks>(name: T, fn: World.Hooks[T]['params']) {
@@ -441,9 +441,9 @@ class World {
 
     takeSnapshot() {
         let screen = newPixiRenderTexture(this.worldTexture.width * this.scaleX, this.worldTexture.height * this.scaleY, 'World.takeSnapshot');
-        let compileResult = this.compile();
-        if (compileResult) {
-            renderToRenderTexture(compileResult, screen);
+        let renderResult = this.render();
+        if (renderResult) {
+            renderToRenderTexture(renderResult, screen);
         }
         return screen;
     }

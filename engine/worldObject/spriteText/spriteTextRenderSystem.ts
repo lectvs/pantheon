@@ -20,9 +20,9 @@ class SpriteTextRenderSystem {
         this.container = new PIXI.Container();
     }
 
-    compile(x: number, y: number, spriteText: SpriteText) {
+    render(x: number, y: number, spriteText: SpriteText) {
         let textBounds = SpriteText.getBoundsOfCharList(spriteText.getCharList());
-        let result: CompileResult[] = [];
+        let result: RenderResult[] = [];
 
         for (let part in this.parts) {
             let data = this.parts[part];
@@ -52,7 +52,7 @@ class SpriteTextRenderSystem {
             result.push(data.sprite);
         }
 
-        diffCompile(this.container, result);
+        diffRender(this.container, result);
 
         return this.container;
     }

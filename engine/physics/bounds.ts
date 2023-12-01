@@ -29,7 +29,7 @@ interface Bounds {
     y: number;
     clone(): Bounds;
     containsPoint(x: number | Pt, y?: number): boolean;
-    debugCompile(): CompileResult;
+    debugRender(): RenderResult;
     /** FOR USE WITH PHYSICS RESOLVECOLLISIONS ONLY. */
     freeze(): void;
     getBoundingBox(): Rectangle;

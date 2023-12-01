@@ -316,9 +316,9 @@ class WorldObject {
         return result;
     }
 
-    compile(x: number, y: number): CompileResult {
-        let result = this.modules.map(module => module.compile(x, y));
-        diffCompile(this.modulesContainer, result);
+    render(x: number, y: number): RenderResult {
+        let result = this.modules.map(module => module.render(x, y));
+        diffRender(this.modulesContainer, result);
         return this.modulesContainer;
     }
 

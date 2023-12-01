@@ -38,7 +38,7 @@ class InvertedRectBounds implements Bounds {
         return !this.getInnerBox().contains(x, y);
     }
 
-    debugCompile(): CompileResult {
+    debugRender() {
         let innerBox = this.getInnerBox();
         // -1 for outer alignment
         this.debugSprite.x = innerBox.x-1;

@@ -4,7 +4,7 @@ namespace Transitions {
             super({});
         }
 
-        override compile(): CompileResult {
+        override render(): RenderResult {
             return undefined;
         }
     }
@@ -29,8 +29,8 @@ namespace Transitions {
             ));
         }
 
-        override compile(): CompileResult {
-            let result: CompileResult[] = [];
+        override render(): RenderResult {
+            let result: RenderResult[] = [];
             if (this.oldSnapshot) {
                 result.push(this.oldSnapshot.sprite);
             }
@@ -38,7 +38,7 @@ namespace Transitions {
                 this.newSnapshot.sprite.alpha = this.newAlpha;
                 result.push(this.newSnapshot.sprite);
             }
-            diffCompile(this.container, result);
+            diffRender(this.container, result);
             return this.container;
         }
     }
@@ -77,8 +77,8 @@ namespace Transitions {
             ));
         }
 
-        override compile(): CompileResult {
-            let result: CompileResult[] = [];
+        override render(): RenderResult {
+            let result: RenderResult[] = [];
 
             if (this.transitioned) {
                 if (this.newSnapshot) {
@@ -96,7 +96,7 @@ namespace Transitions {
             this.bottomCurtain.y = H/2 * (2 - this.slide_t);
             result.push(this.bottomCurtain);
 
-            diffCompile(this.container, result);
+            diffRender(this.container, result);
             return this.container;
         }
     }

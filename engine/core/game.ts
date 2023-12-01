@@ -89,22 +89,22 @@ class Game {
         }
     }
 
-    compile(): CompileResult {
+    render() {
         let result = [
             this.menuSystem.inMenu
-                ? this.menuSystem.compile()
-                : this.theater.compile()
+                ? this.menuSystem.render()
+                : this.theater.render()
         ];
 
         if (Debug.SHOW_OVERLAY) {
-            result.push(this.overlay.compile());
+            result.push(this.overlay.render());
         }
 
         if (Debug.SHOW_TOUCHES) {
-            result.push(this.compileTouches());
+            result.push(this.renderTouches());
         }
 
-        diffCompile(this.container, result);
+        diffRender(this.container, result);
 
         return this.container;
     }
@@ -159,10 +159,10 @@ class Game {
 
     private worldForMenuTransition() {
         let world = new World();
-        let compileResult = this.menuSystem.compile();
-        if (compileResult) {
+        let renderResult = this.menuSystem.render();
+        if (renderResult) {
             let screenshot = newPixiRenderTexture(global.gameWidth, global.gameHeight, 'Game.worldForMenuTransition');
-            renderToRenderTexture(compileResult, screenshot);
+            renderToRenderTexture(renderResult, screenshot);
             world.addWorldObject(new Sprite({
                 texture: screenshot,
             }));
@@ -170,7 +170,7 @@ class Game {
         return world;
     }
 
-    private compileTouches() {
+    private renderTouches() {
         if (!IS_MOBILE || !Input.isKeyCodeDown(Input.MOUSE_KEYCODES[0])) {
             return undefined;
         }

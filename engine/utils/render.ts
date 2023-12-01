@@ -1,6 +1,6 @@
-type CompileResult = PIXI.DisplayObject | undefined;
+type RenderResult = PIXI.DisplayObject | undefined;
 
-function diffCompile(stage: PIXI.Container, match: CompileResult[]) {
+function diffRender(stage: PIXI.Container, match: RenderResult[]) {
     for (let i = stage.children.length-1; i >= 0; i--) {
         if (!match.includes(stage.getChildAt(i))) {
             stage.removeChildAt(i);

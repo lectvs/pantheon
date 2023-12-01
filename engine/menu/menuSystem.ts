@@ -16,9 +16,9 @@ class MenuSystem {
         }
     }
 
-    compile(): CompileResult {
+    render() {
         if (this.inMenu) {
-            return this.currentMenu!.compile();
+            return this.currentMenu!.render();
         }
         return undefined;
     }

@@ -68,20 +68,20 @@ class Theater {
         }
     }
 
-    compile(): CompileResult {
+    render() {
         let result = [
-            this.stageManager.compile(),
+            this.stageManager.render(),
         ];
 
         if (this.dialogBox) {
-            result.push(this.dialogBoxWorld.compile());
+            result.push(this.dialogBoxWorld.render());
         }
 
         for (let fade of this.fades) {
-            result.push(fade.compile());
+            result.push(fade.render());
         }
 
-        diffCompile(this.container, result);
+        diffRender(this.container, result);
 
         return this.container;
     }
@@ -177,7 +177,7 @@ namespace Theater {
             this.alpha = alpha;
         }
 
-        compile() {
+        render() {
             return this.graphics;
         }
     }
@@ -194,8 +194,8 @@ namespace Theater {
             this.containedWorld.update();
         }
 
-        override compile(x: number, y: number): CompileResult {
-            return this.containedWorld.compile();
+        override render(x: number, y: number): RenderResult {
+            return this.containedWorld.render();
         }
     }
 }

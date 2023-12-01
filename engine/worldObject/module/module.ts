@@ -17,7 +17,7 @@ class Module<T extends WorldObject> {
     }
 
     update(): void {}
-    compile(x: number, y: number): CompileResult {
+    render(x: number, y: number): RenderResult {
         return undefined;
     }
 

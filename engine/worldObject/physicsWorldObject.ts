@@ -66,18 +66,18 @@ class PhysicsWorldObject extends WorldObject {
         super.update();
     }
 
-    override compile(x: number, y: number): CompileResult {
-        let result: CompileResult[] = [];
+    override render(x: number, y: number): RenderResult {
+        let result: RenderResult[] = [];
         if (Debug.SHOW_ALL_PHYSICS_BOUNDS || this.debugDrawBounds) {
             let zoffset = 0; // offset to cancel out the z-factor when drawing bounds
             if (this.zBehavior === 'threequarters') {
                 let parentz = this.parent ? this.parent.z : 0;
                 zoffset = parentz - this.z;
             }
-            result.push(this.compileBounds(x, y - zoffset));
+            result.push(this.renderBounds(x, y - zoffset));
         }
-        result.push(super.compile(x, y));
-        diffCompile(this.container, result);
+        result.push(super.render(x, y));
+        diffRender(this.container, result);
         return this.container;
     }
 
@@ -130,13 +130,13 @@ class PhysicsWorldObject extends WorldObject {
         this.vz += this.gravityz * this.delta;
     }
 
-    private compileBounds(x: number, y: number) {
-        let compileResult = this.bounds.debugCompile();
-        if (!compileResult) return undefined;
+    private renderBounds(x: number, y: number) {
+        let renderResult = this.bounds.debugRender();
+        if (!renderResult) return undefined;
 
-        compileResult.x += x - this.x;
-        compileResult.y += y - this.y;
+        renderResult.x += x - this.x;
+        renderResult.y += y - this.y;
 
-        return compileResult;
+        return renderResult;
     }
 }

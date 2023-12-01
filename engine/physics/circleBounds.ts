@@ -37,7 +37,7 @@ class CircleBounds implements Bounds {
         return M.distanceSq(center.x, center.y, x, y) <= this.radius * this.radius;
     }
 
-    debugCompile(): CompileResult {
+    debugRender() {
         let center = this.getCenter();
         this.debugSprite.x = center.x;
         this.debugSprite.y = center.y;

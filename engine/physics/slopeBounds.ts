@@ -61,7 +61,7 @@ class SlopeBounds implements Bounds {
     // } else {
     //     Draw.polygon(texture.renderTextureSprite.renderTexture, [vec2(box.left, box.top), vec2(box.right, box.top), vec2(box.right, box.bottom)], { outline: { color: 0x00FF00 }});
     // }
-    debugCompile(): CompileResult {
+    debugRender() {
         let boundingBox = this.getBoundingBox();
         this.debugSprite.x = boundingBox.x;
         this.debugSprite.y = boundingBox.y;

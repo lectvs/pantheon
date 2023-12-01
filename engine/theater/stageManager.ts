@@ -20,11 +20,11 @@ class StageManager {
         }
     }
 
-    compile(): CompileResult {
+    render() {
         if (this.transition) {
-            return this.transition.compile();
+            return this.transition.render();
         }
-        return this.currentWorld?.compile();
+        return this.currentWorld?.render();
     }
 
     /**

@@ -20,7 +20,7 @@ class NullBounds implements Bounds {
         return false;
     }
 
-    debugCompile(): CompileResult {
+    debugRender() {
         return undefined;
     }
 

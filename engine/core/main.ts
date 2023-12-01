@@ -177,7 +177,7 @@ class Main {
                 MobileScaleManager.update();
             }
 
-            diffCompile(Main.stage, [Main.game.compile()]);
+            diffRender(Main.stage, [Main.game.render()]);
 
             Main.renderScreenToCanvas();
         });
@@ -189,7 +189,7 @@ class Main {
     }
 
     static forceRender() {
-        diffCompile(Main.stage, [Main.game.compile()]);
+        diffRender(Main.stage, [Main.game.render()]);
         Main.renderScreenToCanvas();
     }
 
@@ -220,7 +220,7 @@ class Main {
 
         barFill.scale.x = barw * progress;
 
-        diffCompile(Main.stage, [ bg, barFill, barOutline ]);
+        diffRender(Main.stage, [ bg, barFill, barOutline ]);
 
         Main.renderScreenToCanvas();
     }
