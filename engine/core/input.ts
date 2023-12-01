@@ -153,29 +153,27 @@ class Input {
             }
         } else if (IS_MOBILE) {
             if (this.isDownByKeyCode[this.MOUSE_KEYCODES[0]]) {
-                this._canvasMouseX = Main.renderer.plugins.interaction.mouse.global.x;
-                this._canvasMouseY = Main.renderer.plugins.interaction.mouse.global.y;
+                this._canvasMouseX = Main.rendererPlugins.interaction.mouse.global.x;
+                this._canvasMouseY = Main.rendererPlugins.interaction.mouse.global.y;
                 this._mouseRadius = IS_MOBILE ? 10 : 0;
             }
         } else {
-            this._canvasMouseX = Main.renderer.plugins.interaction.mouse.global.x;
-            this._canvasMouseY = Main.renderer.plugins.interaction.mouse.global.y;
+            this._canvasMouseX = Main.rendererPlugins.interaction.mouse.global.x;
+            this._canvasMouseY = Main.rendererPlugins.interaction.mouse.global.y;
         }
         if (Fullscreen.enabled) {
-            let cw = Main.renderer.width / Main.renderer.resolution;
-            let ch = Main.renderer.height / Main.renderer.resolution;
             let iw = window.innerWidth;
             let ih = window.innerHeight;
-            let ratioW = iw/cw;
-            let ratioH = ih/ch;
+            let ratioW = iw/W;
+            let ratioH = ih/H;
             if (ratioW < ratioH) {
-                let h = ch*ch*ratioW/ih;
-                let y1 = (ch - h) / 2;
-                this._canvasMouseY = ch * (this._canvasMouseY - y1) / h;
+                let h = H*H*ratioW/ih;
+                let y1 = (H - h) / 2;
+                this._canvasMouseY = H * (this._canvasMouseY - y1) / h;
             } else if (ratioW > ratioH) {
-                let w = cw*cw*ratioH/iw;
-                let x1 = (cw - w) / 2;
-                this._canvasMouseX = cw * (this._canvasMouseX - x1) / w;
+                let w = W*W*ratioH/iw;
+                let x1 = (W - w) / 2;
+                this._canvasMouseX = W * (this._canvasMouseX - x1) / w;
             }
         }
 
@@ -423,7 +421,7 @@ class Input {
     }
 
     private static getTouchData(touch: Touch): Input.TouchData {
-        let bounds = Main.renderer.view.getBoundingClientRect();
+        let bounds = Main.rendererView.getBoundingClientRect();
         return {
             id: touch.identifier,
             x: M.map(touch.pageX, bounds.left, bounds.right, 0, global.gameWidth),

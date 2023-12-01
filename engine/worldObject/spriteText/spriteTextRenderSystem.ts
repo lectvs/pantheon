@@ -37,9 +37,7 @@ class SpriteTextRenderSystem {
             data.sprite.angle = spriteText.angle;
             data.sprite.tint = Color.tint(style.color, spriteText.tint);
             data.sprite.alpha = style.alpha * spriteText.alpha;
-            // TODO PIXI
-            // filters: [...style.filters, ...spriteText.effects.getFilterList()],
-            // mask: Mask.getTextureMaskForWorldObject(spriteText.mask, spriteText, x, y),
+            data.sprite.filters = [...style.filters, ...spriteText.effects.getFilterList()];
 
             let textureLocalBounds = data.sprite.getLocalBounds();
 
@@ -111,7 +109,7 @@ namespace SpriteTextRenderSystem {
     }
 
     export function renderPart(part: Part) {
-        Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, part.texture, true);  // Clear the texture
+        clearRenderTexture(part.texture);
 
         let sprite = new PIXI.Sprite();
 
@@ -121,7 +119,7 @@ namespace SpriteTextRenderSystem {
             sprite.anchor = sprite.texture.defaultAnchor;
             sprite.x = Math.floor(character.x - part.x);
             sprite.y = Math.floor(character.y - part.y);
-            Main.renderer.render(sprite, part.texture, false);
+            renderToRenderTexture(sprite, part.texture);
         }
 
         part.rendered = true;
@@ -133,6 +131,6 @@ namespace SpriteTextRenderSystem {
     }
 
     const cache_staticTextures = new DualKeyPool<number, number, PIXI.RenderTexture>((w, h) => {
-        return PIXI.RenderTexture.create({ width: w, height: h });
+        return newPixiRenderTexture(w, h, 'SpriteTextRenderSystem.cache_staticTextures');
     }, (w, h) => `${w},${h}`);
 }

@@ -44,9 +44,12 @@ class Main {
 
     static game: Game;
     static soundManager: GlobalSoundManager;
-    static renderer: PIXI.Renderer;
+    private static renderer: PIXI.Renderer;
     static stage: PIXI.Container;
     static delta: number;
+
+    static get rendererPlugins() { return Main.renderer.plugins; }
+    static get rendererView() { return Main.renderer.view; }
 
     static loadConfig(configFactory: () => Main.Config) {
         this.configFactory = configFactory;
@@ -154,6 +157,8 @@ class Main {
         PIXI.Ticker.shared.add(frameDelta => {
             Main.delta = M.clamp(frameDelta/60, 0, 1/this.config.fpsLimit);
 
+            PerformanceTracking.logBeginFrame();
+
             global.fpsCalculator.update();
 
             global.clearStacks();
@@ -193,6 +198,14 @@ class Main {
         global.gameWidth = width;
         global.gameHeight = height;
         Main.renderer.resize(width, height);
+    }
+
+    static _internalRenderToRenderTexture(object: PIXI.DisplayObject, renderTexture: PIXI.RenderTexture, clearTextureFirst: boolean) {
+        Main.renderer.render(object, renderTexture, clearTextureFirst);
+    }
+
+    static _internalClearRenderTexture(renderTexture: PIXI.RenderTexture) {
+        Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, renderTexture, true);
     }
 
     private static renderPreloadProgress(progress: number) {

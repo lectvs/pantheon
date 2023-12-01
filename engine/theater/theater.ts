@@ -183,12 +183,10 @@ namespace Theater {
     }
     export class WorldAsWorldObject extends WorldObject {
         containedWorld: World;
-        mask: Mask.WorldMaskConfig | undefined;
 
         constructor(containedWorld: World) {
             super();
             this.containedWorld = containedWorld;
-            this.mask = undefined;
         }
 
         override update() {
@@ -197,16 +195,7 @@ namespace Theater {
         }
 
         override compile(x: number, y: number): CompileResult {
-            let currentMask = this.containedWorld.mask;
-            if (this.mask !== undefined) {
-                this.containedWorld.mask = this.mask;
-            }
-
-            let result = this.containedWorld.compile();
-
-            this.containedWorld.mask = currentMask;
-
-            return result;
+            return this.containedWorld.compile();
         }
     }
 }

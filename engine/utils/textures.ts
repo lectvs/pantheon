@@ -51,7 +51,7 @@ namespace Textures {
                     sprite.y = innerRect.y + j*innerRect.height*pieceScaleY;
                     sprite.scale.set(pieceScaleX, pieceScaleY);
                     sprite.texture.frame = new PIXI.Rectangle(innerRect.x, innerRect.y, innerRect.width, innerRect.height);
-                    Main.renderer.render(sprite, result, false);
+                    renderToRenderTexture(sprite, result);
                 }
             }
 
@@ -61,26 +61,26 @@ namespace Textures {
                 sprite.y = 0;
                 sprite.scale.set(pieceScaleX, 1);
                 sprite.texture.frame = new PIXI.Rectangle(innerRect.x, 0, innerRect.width, innerRect.y);
-                Main.renderer.render(sprite, result, false);
+                renderToRenderTexture(sprite, result);
 
                 sprite.x = innerRect.x + i*innerRect.width*pieceScaleX;
                 sprite.y = targetHeight - remheight;
                 sprite.scale.set(pieceScaleX, 1);
                 sprite.texture.frame = new PIXI.Rectangle(innerRect.x, innerRect.y + innerRect.width, innerRect.width, remheight);
-                Main.renderer.render(sprite, result, false);
+                renderToRenderTexture(sprite, result);
             }
             for (let j = 0; j < countY; j++) {
                 sprite.x = 0;
                 sprite.y = innerRect.y + j*innerRect.height*pieceScaleY;
                 sprite.scale.set(1, pieceScaleY);
                 sprite.texture.frame = new PIXI.Rectangle(0, innerRect.y, innerRect.x, innerRect.height);
-                Main.renderer.render(sprite, result, false);
+                renderToRenderTexture(sprite, result);
 
                 sprite.x = targetWidth - remwidth;
                 sprite.y = innerRect.y + j*innerRect.height*pieceScaleY;
                 sprite.scale.set(1, pieceScaleY);
                 sprite.texture.frame = new PIXI.Rectangle(innerRect.x + innerRect.width, innerRect.y, remwidth, innerRect.height);
-                Main.renderer.render(sprite, result, false);
+                renderToRenderTexture(sprite, result);
             }
 
         } else {
@@ -89,32 +89,32 @@ namespace Textures {
             sprite.y = innerRect.y;
             sprite.scale.set(innerScaleX, innerScaleY);
             sprite.texture.frame = new PIXI.Rectangle(innerRect.x, innerRect.y, innerRect.width, innerRect.height);
-            Main.renderer.render(sprite, result, false);
+            renderToRenderTexture(sprite, result);
 
             // Edges
             sprite.x = innerRect.x;
             sprite.y = 0;
             sprite.scale.set(innerScaleX, 1);
             sprite.texture.frame = new PIXI.Rectangle(innerRect.x, 0, innerRect.width, innerRect.y);
-            Main.renderer.render(sprite, result, false);
+            renderToRenderTexture(sprite, result);
 
             sprite.x = innerRect.x;
             sprite.y = targetHeight - remheight;
             sprite.scale.set(innerScaleX, 1);
             sprite.texture.frame = new PIXI.Rectangle(innerRect.x, innerRect.y + innerRect.height, innerRect.width, remheight);
-            Main.renderer.render(sprite, result, false);
+            renderToRenderTexture(sprite, result);
 
             sprite.x = 0;
             sprite.y = innerRect.y;
             sprite.scale.set(1, innerScaleY);
             sprite.texture.frame = new PIXI.Rectangle(0, innerRect.y, innerRect.x, innerRect.height);
-            Main.renderer.render(sprite, result, false);
+            renderToRenderTexture(sprite, result);
 
             sprite.x = targetWidth - remwidth;
             sprite.y = innerRect.y;
             sprite.scale.set(1, innerScaleY);
             sprite.texture.frame = new PIXI.Rectangle(innerRect.x + innerRect.width, innerRect.y, remwidth, innerRect.height);
-            Main.renderer.render(sprite, result, false);
+            renderToRenderTexture(sprite, result);
         }
 
         // Corners
@@ -122,25 +122,25 @@ namespace Textures {
         sprite.y = 0;
         sprite.scale.set(1, 1);
         sprite.texture.frame = new PIXI.Rectangle(0, 0, innerRect.x, innerRect.y);
-        Main.renderer.render(sprite, result, false);
+        renderToRenderTexture(sprite, result);
 
         sprite.x = targetWidth - remwidth;
         sprite.y = 0;
         sprite.scale.set(1, 1);
         sprite.texture.frame = new PIXI.Rectangle(innerRect.x + innerRect.width, 0, remwidth, innerRect.y);
-        Main.renderer.render(sprite, result, false);
+        renderToRenderTexture(sprite, result);
 
         sprite.x = 0;
         sprite.y = targetHeight - remheight;
         sprite.scale.set(1, 1);
         sprite.texture.frame = new PIXI.Rectangle(0, innerRect.y + innerRect.height, innerRect.x, remheight);
-        Main.renderer.render(sprite, result, false);
+        renderToRenderTexture(sprite, result);
 
         sprite.x = targetWidth - remwidth;
         sprite.y = targetHeight - remheight;
         sprite.scale.set(1, 1);
         sprite.texture.frame = new PIXI.Rectangle(innerRect.x + innerRect.width, innerRect.y + innerRect.height, remwidth, remheight);
-        Main.renderer.render(sprite, result, false);
+        renderToRenderTexture(sprite, result);
 
         sprite.texture.destroy();
 
@@ -172,6 +172,6 @@ namespace Textures {
     }
 
     export const NONE = PIXI.Texture.EMPTY;
-    export const NOOP = PIXI.RenderTexture.create({ width: 0, height: 0 });
-    export const EFFECT_ONLY = PIXI.RenderTexture.create({ width: 0, height: 0 });
+    export const NOOP = newPixiRenderTexture(0, 0, 'Textures.NOOP');
+    export const EFFECT_ONLY = newPixiRenderTexture(0, 0, 'Textures.EFFECT_ONLY');
 }

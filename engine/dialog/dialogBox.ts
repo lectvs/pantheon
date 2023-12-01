@@ -81,12 +81,6 @@ class DialogBox extends Sprite {
         this.spriteText.localx = this.textArea.x;
         this.spriteText.localy = this.textArea.y - this.spriteTextOffset;
         this.spriteText.maxWidth = this.textArea.width;
-        this.spriteText.mask = {
-            type: 'world',
-            texture: this.spriteText.mask ? this.spriteText.mask.texture : Textures.filledRect(this.textArea.width, this.textArea.height, 0xFFFFFF),
-            offsetx: this.x + this.textArea.x,
-            offsety: this.y + this.textArea.y,
-        };
 
         // Visibility must be set before dialog progression to avoid a 1-frame flicker.
         this.setVisible(!this.done);

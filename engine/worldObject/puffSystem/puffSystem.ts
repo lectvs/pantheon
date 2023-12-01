@@ -54,7 +54,7 @@ class PuffSystem extends WorldObject {
     }
 
     override compile(x: number, y: number): CompileResult {
-        let result = this.puffs.map((puff, i) => {
+        let result: CompileResult[] = this.puffs.map((puff, i) => {
             let progress = puff.t / puff.maxLife;
 
             let radius = M.lerp(progress, puff.initialRadius, puff.finalRadius);
@@ -70,9 +70,13 @@ class PuffSystem extends WorldObject {
             return this.sprites[i];
         });
 
+        let superCompile = super.compile(x, y);
+        if (superCompile) {
+            result.push(superCompile);
+        }
+
         diffCompile(this.container, result);
 
-        // TODO PIXI do not ignore the result of super.compile()
         return this.container;
     }
 
@@ -100,7 +104,7 @@ class PuffSystem extends WorldObject {
     private static PUFF_TEXTURE = new LazyValue(() => {
         let texture = newPixiRenderTexture(32, 32, 'PuffSystem.PUFF_TEXTURE');
         let graphics = Graphics.circle(8, 8, 16, { fill: { color: 0xFFFFFF }});
-        Main.renderer.render(graphics, texture);
+        renderToRenderTexture(graphics, texture);
         graphics.destroy();
         return texture;
     });

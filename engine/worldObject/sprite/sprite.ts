@@ -16,7 +16,6 @@ namespace Sprite {
         tint?: number;
         alpha?: number;
         effects?: Effects.Config;
-        mask?: Mask.WorldObjectMaskConfig;
         blendMode?: PIXI.BLEND_MODES;
     }
 }
@@ -48,7 +47,6 @@ class Sprite extends PhysicsWorldObject {
     alpha: number;
 
     effects: Effects;
-    mask?: Mask.WorldObjectMaskConfig;
     blendMode?: PIXI.BLEND_MODES;
 
     private renderObject: PIXI.Sprite;
@@ -75,7 +73,6 @@ class Sprite extends PhysicsWorldObject {
         this.effects = new Effects();
         this.effects.updateFromConfig(config.effects);
 
-        this.mask = config.mask;
         this.blendMode = config.blendMode;
 
         this.renderObject = new PIXI.Sprite();
@@ -104,12 +101,11 @@ class Sprite extends PhysicsWorldObject {
         this.renderObject.angle = this.angle + this.angleOffset;
         this.renderObject.tint = this.tint;
         this.renderObject.alpha = this.alpha;
-        // TODO PIXI
-        // filters: this.effects.getFilterList(),
-        // mask: Mask.getTextureMaskForWorldObject(this.mask, this, x, y),
+        this.renderObject.filters = this.effects.getFilterList();
         this.renderObject.blendMode = this.blendMode ?? PIXI.BLEND_MODES.NORMAL;
-        // TODO PIXI do not ignore the results of super.compile()
+
         diffCompile(this.renderObject, [super.compile(0, 0)]);
+        
         return this.renderObject;
     }
 

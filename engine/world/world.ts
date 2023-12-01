@@ -6,7 +6,6 @@ namespace World {
     export type Config = {
         layers?: World.LayerConfig[];
         effects?: Effects.Config;
-        mask?: Mask.WorldMaskConfig;
 
         camera?: Camera.Config;
 
@@ -50,7 +49,6 @@ namespace World {
         sortKey?: (worldObject: WorldObject) => number;
         reverseSort?: boolean;
         effects?: Effects.Config;
-        mask?: Mask.WorldMaskConfig;
     }
 
     export type PhysicsGroupConfig = {
@@ -95,7 +93,6 @@ class World {
 
     layers: World.Layer[];
     effects: Effects;
-    mask?: Mask.WorldMaskConfig;
 
     backgroundColor: number;
     backgroundAlpha: number;
@@ -161,7 +158,6 @@ class World {
         this.worldObjects = [];
         this.layers = this.createLayers(config.layers);
         this.effects = new Effects(config.effects);
-        this.mask = config.mask;
 
         this.backgroundColor = config.backgroundColor ?? global.backgroundColor;
         this.backgroundAlpha = config.backgroundAlpha ?? 1;
@@ -447,7 +443,7 @@ class World {
         let screen = newPixiRenderTexture(this.worldTexture.width * this.scaleX, this.worldTexture.height * this.scaleY, 'World.takeSnapshot');
         let compileResult = this.compile();
         if (compileResult) {
-            Main.renderer.render(compileResult, screen);
+            renderToRenderTexture(compileResult, screen);
         }
         return screen;
     }
@@ -559,10 +555,9 @@ namespace World {
         reverseSort: boolean;
 
         effects: Effects;
-        mask?: Mask.WorldMaskConfig;
 
         get shouldRenderToOwnLayer() {
-            return this.effects.hasEffects() || !!this.mask;
+            return this.effects.hasEffects();
         }
         
         constructor(name: string, config: World.LayerConfig) {
@@ -572,7 +567,6 @@ namespace World {
             this.reverseSort = config.reverseSort ?? false;
 
             this.effects = new Effects(config.effects);
-            this.mask = config.mask;
         }
 
         sort() {

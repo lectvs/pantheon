@@ -162,7 +162,7 @@ class Game {
         let compileResult = this.menuSystem.compile();
         if (compileResult) {
             let screenshot = newPixiRenderTexture(global.gameWidth, global.gameHeight, 'Game.worldForMenuTransition');
-            Main.renderer.render(compileResult, screenshot);
+            renderToRenderTexture(compileResult, screenshot);
             world.addWorldObject(new Sprite({
                 texture: screenshot,
             }));

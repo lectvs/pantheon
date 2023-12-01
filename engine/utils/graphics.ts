@@ -1,3 +1,4 @@
+// TODO PIXI can we get rid of this?
 namespace Graphics {
     export type Alignment = 'inner' | 'outer';
 
@@ -13,35 +14,6 @@ namespace Graphics {
             alignment?: Draw.Alignment;
         };
     }
-
-    // TODO PIXI
-    // export function fill(texture: Texture, config: { color: number, alpha?: number }) {
-    //     this.graphics.lineStyle(0, 0, 0);
-    //     this.graphics.clear();
-    //     this.graphics.beginFill(config.color, config.alpha ?? 1);
-    //     this.graphics.drawRect(0, 0, texture.width, texture.height);
-    //     this.graphics.endFill();
-    //     texture.clear();
-    //     texture.renderPIXIDisplayObject(this.graphics);
-    // }
-
-    // TODO PIXI
-    // export function eraseRect(texture: Texture, x: number, y: number, width: number, height: number) {
-    //     let newTexture = texture.clone('Draw.eraseRect');
-
-    //     let mask = new TextureFilters.Mask({
-    //         type: 'local',
-    //         mask: Texture.filledRect(width, height, 0xFFFFFF),
-    //         offsetX: x, offsetY: y,
-    //         invert: true,
-    //     });
-
-    //     texture.clear();
-    //     newTexture.renderTo(texture, {
-    //         x: 0, y: 0,
-    //         filters: [mask],
-    //     });
-    // }
 
     export function annulus(x: number, y: number, innerRadius: number, outerRadius: number, config: Draw.FillAndOutlineConfig) {
         if (innerRadius <= 0) {
@@ -90,16 +62,6 @@ namespace Graphics {
         graphics.endFill();
         return graphics;
     }
-
-    // TODO PIXI
-    // export function pixel(x: number, y: number, config: { color: number, alpha?: number }) {
-    //     if (config.alpha === 0) return;
-    //     Draw.PIXEL_TEXTURE.renderTo(texture, {
-    //         x: x, y: y,
-    //         tint: config.color,
-    //         alpha: config.alpha ?? 1,
-    //     });
-    // }
 
     export function line(x1: number, y1: number, x2: number, y2: number, config: { color: number, alpha?: number, thickness?: number }) {
         let graphics = new PIXI.Graphics();

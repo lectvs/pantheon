@@ -171,7 +171,7 @@ class Tilemap extends WorldObject {
             sprite.y = (tileY + 0.5) * this.tileset.tileHeight;
             sprite.angle = tile.angle;
             sprite.scale.x = tile.flipX ? -1 : 1;
-            Main.renderer.render(sprite, renderTextures[i], false);
+            renderToRenderTexture(sprite, renderTextures[i]);
         }
     }
 

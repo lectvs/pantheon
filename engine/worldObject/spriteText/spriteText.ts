@@ -20,7 +20,6 @@ namespace SpriteText {
         tint?: number;
         alpha?: number;
         effects?: Effects.Config;
-        mask?: Mask.WorldObjectMaskConfig;
     }
 
     export type Font = {
@@ -115,7 +114,6 @@ class SpriteText extends WorldObject {
     }
 
     effects: Effects;
-    mask?: Mask.WorldObjectMaskConfig;
 
     private renderSystem?: SpriteTextRenderSystem;
     private currentText!: string;
@@ -152,8 +150,6 @@ class SpriteText extends WorldObject {
 
         this.effects = new Effects();
         this.effects.updateFromConfig(config.effects);
-
-        this.mask = config.mask;
 
         this.setText(config.text ?? "");
         this.markDirty();
@@ -268,13 +264,13 @@ class SpriteText extends WorldObject {
     toTexture() {
         let width = this.getTextWidth();
         let height = this.getTextHeight();
-        let texture = PIXI.RenderTexture.create({ width, height });
+        let texture = newPixiRenderTexture(width, height, 'SpriteText.toTexture');
 
         let anchorOffsetX = Math.round(this.anchor.x * width);
         let anchorOffsetY = Math.round(this.anchor.y * height);
 
         let compileResult = this.compile(anchorOffsetX, anchorOffsetY);
-        if (compileResult) Main.renderer.render(compileResult, texture, false);
+        if (compileResult) renderToRenderTexture(compileResult, texture);
 
         texture.defaultAnchor.set(this.anchor.x, this.anchor.y);
 

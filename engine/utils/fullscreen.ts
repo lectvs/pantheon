@@ -14,7 +14,7 @@ class Fullscreen {
 
     private static startFullscreen() {
         if (!this.supported || this.enabled) return;
-        Main.renderer.view.requestFullscreen();
+        Main.rendererView.requestFullscreen();
     }
 
     private static stopFullscreen() {

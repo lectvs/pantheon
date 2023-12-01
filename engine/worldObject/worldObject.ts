@@ -140,6 +140,8 @@ class WorldObject {
 
     debugFollowMouse: boolean;
 
+    protected modulesContainer: PIXI.Container;
+
     constructor(config: WorldObject.Config<WorldObject> = {}) {
         this.localx = config.x ?? (config.p ? config.p.x : 0);
         this.localy = config.y ?? (config.p ? config.p.y : 0);
@@ -200,6 +202,8 @@ class WorldObject {
         });
 
         this.debugFollowMouse = false;
+
+        this.modulesContainer = new PIXI.Container();
     }
 
     onAdd() {
@@ -313,11 +317,9 @@ class WorldObject {
     }
 
     compile(x: number, y: number): CompileResult {
-        // TODO PIXI
-        // for (let module of this.modules) {
-        //     module.render(texture, x, y);
-        // }
-        return undefined;
+        let result = this.modules.map(module => module.compile(x, y));
+        diffCompile(this.modulesContainer, result);
+        return this.modulesContainer;
     }
 
     addAnimation(name: string, animation: AnimationInstance) {

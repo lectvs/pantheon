@@ -1,10 +1,5 @@
 // TODO PIXI texture leftovers
 
-//     export function setFilterProperties(filter: TextureFilter, posx: number, posy: number, dimx: number, dimy: number) {
-//         filter.setTexturePosition(posx, posy);
-//         filter.setTextureDimensions(dimx, dimy);
-//     }
-
 // TODO: find the true texture bounds across devices
 // if (width > 2048 || height > 2048) {
 //     console.error(`Texture dimensions exceed bounds: (${width}, ${height}), limiting to bounds`);

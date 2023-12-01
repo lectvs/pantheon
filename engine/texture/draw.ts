@@ -24,7 +24,7 @@ class Draw {
         this.graphics.beginFill(config.color, config.alpha ?? 1);
         this.graphics.drawRect(0, 0, texture.width, texture.height);
         this.graphics.endFill();
-        Main.renderer.render(this.graphics, texture, true);
+        renderToRenderTexture(this.graphics, texture, 'clearTextureFirst');
     }
 
     static annulus(texture: PIXI.RenderTexture, x: number, y: number, innerRadius: number, outerRadius: number, config: Draw.FillAndOutlineConfig) {
@@ -42,7 +42,7 @@ class Draw {
         this.graphics.beginHole();
         this.graphics.drawCircle(x, y, innerRadius);
         this.graphics.endHole();
-        Main.renderer.render(this.graphics, texture, false);
+        renderToRenderTexture(this.graphics, texture);
     }
 
     static circle(texture: PIXI.RenderTexture, x: number, y: number, radius: number, config: Draw.FillAndOutlineConfig) {
@@ -53,7 +53,7 @@ class Draw {
         this.graphics.beginFill(values.fillColor, values.fillAlpha);
         this.graphics.drawCircle(x, y, radius);
         this.graphics.endFill();
-        Main.renderer.render(this.graphics, texture, false);
+        renderToRenderTexture(this.graphics, texture);
     }
 
     static ellipse(texture: PIXI.RenderTexture, x: number, y: number, radiusX: number, radiusY: number, config: Draw.FillAndOutlineConfig) {
@@ -64,7 +64,7 @@ class Draw {
         this.graphics.beginFill(values.fillColor, values.fillAlpha);
         this.graphics.drawEllipse(x, y, radiusX, radiusY);
         this.graphics.endFill();
-        Main.renderer.render(this.graphics, texture, false);
+        renderToRenderTexture(this.graphics, texture);
     }
 
     static pixel(texture: PIXI.RenderTexture, x: number, y: number, config: { color: number, alpha?: number }) {
@@ -73,7 +73,7 @@ class Draw {
         Draw.PIXEL_SPRITE.y = y;
         Draw.PIXEL_SPRITE.tint = config.color;
         Draw.PIXEL_SPRITE.alpha = config.alpha ?? 1;
-        Main.renderer.render(Draw.PIXEL_SPRITE, texture, false);
+        renderToRenderTexture(Draw.PIXEL_SPRITE, texture);
     }
 
     static line(texture: PIXI.RenderTexture, x1: number, y1: number, x2: number, y2: number, config: { color: number, alpha?: number, thickness?: number }) {
@@ -82,7 +82,7 @@ class Draw {
         this.graphics.clear();
         this.graphics.moveTo(x1, y1);
         this.graphics.lineTo(x2, y2);
-        Main.renderer.render(this.graphics, texture, false);
+        renderToRenderTexture(this.graphics, texture);
     }
 
     static polygon(texture: PIXI.RenderTexture, points: Pt[], config: Draw.FillAndOutlineConfig) {
@@ -93,7 +93,7 @@ class Draw {
         this.graphics.beginFill(values.fillColor, values.fillAlpha);
         this.graphics.drawPolygon(points.map(point => new PIXI.Point(point.x, point.y)));
         this.graphics.endFill();
-        Main.renderer.render(this.graphics, texture, false);
+        renderToRenderTexture(this.graphics, texture);
     }
 
     static rectangle(texture: PIXI.RenderTexture, x: number, y: number, width: number, height: number, config: Draw.FillAndOutlineConfig) {
@@ -104,7 +104,7 @@ class Draw {
         this.graphics.beginFill(values.fillColor, values.fillAlpha);
         this.graphics.drawRect(x, y, width, height);
         this.graphics.endFill();
-        Main.renderer.render(this.graphics, texture, false);
+        renderToRenderTexture(this.graphics, texture);
     }
 
     private static getAlignmentNumber(alignment: Draw.Alignment | undefined) {
