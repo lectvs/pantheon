@@ -24,7 +24,10 @@ class StageManager {
         if (this.transition) {
             return this.transition.render();
         }
-        return this.currentWorld?.render();
+        if (this.currentWorld) {
+            return this.currentWorld.render();
+        }
+        return [];
     }
 
     /**

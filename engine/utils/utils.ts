@@ -31,7 +31,14 @@ function freePixiRenderTexture(texture: PIXI.RenderTexture) {
     texture.destroy();
 }
 
-function renderToRenderTexture(object: PIXI.DisplayObject, renderTexture: PIXI.RenderTexture, clearTextureFirst?: 'clearTextureFirst') {
+function renderToRenderTexture(object: PIXI.DisplayObject | PIXI.DisplayObject[], renderTexture: PIXI.RenderTexture, clearTextureFirst?: 'clearTextureFirst') {
+    if (A.isArray(object)) {
+        for (let o of object) {
+            renderToRenderTexture(o, renderTexture, clearTextureFirst);
+        }
+        return;
+    }
+    
     Main._internalRenderToRenderTexture(object, renderTexture, clearTextureFirst === 'clearTextureFirst');
     PerformanceTracking.logManualRender();
 }

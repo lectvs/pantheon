@@ -13,11 +13,8 @@ namespace SpriteTextRenderSystem {
 class SpriteTextRenderSystem {
     parts: Dict<SpriteTextRenderSystem.Part>;
 
-    private container: PIXI.Container;
-
     constructor(partToCharacters: Dict<SpriteTextParser.Character[]>) {
         this.parts = SpriteTextRenderSystem.buildParts(partToCharacters);
-        this.container = new PIXI.Container();
     }
 
     render(x: number, y: number, spriteText: SpriteText) {
@@ -52,9 +49,7 @@ class SpriteTextRenderSystem {
             result.push(data.sprite);
         }
 
-        diffRender(this.container, result);
-
-        return this.container;
+        return result;
     }
 
     free() {

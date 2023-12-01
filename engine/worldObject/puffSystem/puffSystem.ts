@@ -31,11 +31,9 @@ namespace PuffSystem {
 class PuffSystem extends WorldObject {
     protected puffs: PuffSystem.Puff[] = [];
     private sprites: PIXI.Sprite[] = [];
-    private container: PIXI.Container;
 
     constructor(config: WorldObject.Config<PuffSystem>) {
         super(config);
-        this.container = new PIXI.Container();
     }
 
     override update() {
@@ -53,7 +51,7 @@ class PuffSystem extends WorldObject {
         }
     }
 
-    override render(x: number, y: number): RenderResult {
+    override render(x: number, y: number) {
         let result: RenderResult[] = this.puffs.map((puff, i) => {
             let progress = puff.t / puff.maxLife;
 
@@ -70,14 +68,9 @@ class PuffSystem extends WorldObject {
             return this.sprites[i];
         });
 
-        let superRender = super.render(x, y);
-        if (superRender) {
-            result.push(superRender);
-        }
+        result.push(...super.render(x, y));
 
-        diffRender(this.container, result);
-
-        return this.container;
+        return result;
     }
 
     protected addPuff(config: PuffSystem.PuffConfig) {

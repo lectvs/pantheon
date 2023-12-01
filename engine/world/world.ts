@@ -279,12 +279,12 @@ class World {
         // });
 
         for (let layer of this.layers) {
-            result.push(...this.renderLayer(layer));
+            result.push(...this.renderLayer(layer).flat());
         }
 
         diffRender(this.container, result);
 
-        return this.container;
+        return [this.container];
     }
 
     renderLayer(layer: World.Layer) {

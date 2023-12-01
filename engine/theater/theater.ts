@@ -68,22 +68,22 @@ class Theater {
         }
     }
 
-    render() {
+    render(): RenderResult[] {
         let result = [
-            this.stageManager.render(),
+            ...this.stageManager.render(),
         ];
 
         if (this.dialogBox) {
-            result.push(this.dialogBoxWorld.render());
+            result.push(...this.dialogBoxWorld.render());
         }
 
         for (let fade of this.fades) {
-            result.push(fade.render());
+            result.push(...fade.render());
         }
 
         diffRender(this.container, result);
 
-        return this.container;
+        return [this.container];
     }
 
     clearFades(duration: number) {
@@ -173,10 +173,10 @@ namespace Theater {
             this.sprite = new PIXI.Sprite(Textures.filledRect(W, H, 0xFFFFFF));
         }
 
-        render() {
+        render(): RenderResult[] {
             this.sprite.tint = this.color;
             this.sprite.alpha = this.alpha;
-            return this.sprite;
+            return [this.sprite];
         }
     }
     export class WorldAsWorldObject extends WorldObject {
@@ -192,7 +192,7 @@ namespace Theater {
             this.containedWorld.update();
         }
 
-        override render(x: number, y: number): RenderResult {
+        override render(x: number, y: number): RenderResult[] {
             return this.containedWorld.render();
         }
     }

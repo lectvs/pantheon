@@ -1,4 +1,4 @@
-type RenderResult = PIXI.DisplayObject | undefined;
+type RenderResult = PIXI.DisplayObject;
 
 function diffRender(stage: PIXI.Container, match: RenderResult[]) {
     for (let i = stage.children.length-1; i >= 0; i--) {

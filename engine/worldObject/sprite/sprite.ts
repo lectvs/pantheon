@@ -85,7 +85,7 @@ class Sprite extends PhysicsWorldObject {
         this.angle += this.vangle * this.delta;
     }
 
-    override render(x: number, y: number): RenderResult {
+    override render(x: number, y: number): RenderResult[] {
         if (this.textureKey) {
             let texture = AssetCache.getPixiTexture(this.textureKey);
             if (texture) {
@@ -104,9 +104,10 @@ class Sprite extends PhysicsWorldObject {
         this.renderObject.filters = this.effects.getFilterList();
         this.renderObject.blendMode = this.blendMode ?? PIXI.BLEND_MODES.NORMAL;
 
-        diffRender(this.renderObject, [super.render(0, 0)]);
-        
-        return this.renderObject;
+        return [
+            this.renderObject,
+            ...super.render(x, y),
+        ];
     }
 
     getTexture() {
@@ -123,7 +124,8 @@ class Sprite extends PhysicsWorldObject {
             return undefined;
         }
         // TODO PIXI optimize
-        return Rectangle.fromPixiRectangle(this.render(this.offsetX, this.offsetY)!.getLocalBounds());
+        this.render(this.offsetX, this.offsetY);
+        return Rectangle.fromPixiRectangle(this.renderObject.getLocalBounds());
     }
 
     setTexture(key: string | PIXI.Texture | undefined) {

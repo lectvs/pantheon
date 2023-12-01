@@ -40,7 +40,7 @@ class RectBounds implements Bounds {
         this.debugSprite.x = boundingBox.x;
         this.debugSprite.y = boundingBox.y;
         this.debugSprite.texture = Textures.outlineRect(boundingBox.width, boundingBox.height, 0x00FF00);
-        return this.debugSprite;
+        return [this.debugSprite];
     }
 
     freeze() {

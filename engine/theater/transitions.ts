@@ -4,21 +4,19 @@ namespace Transitions {
             super({});
         }
 
-        override render(): RenderResult {
-            return undefined;
+        override render() {
+            return [];
         }
     }
 
     export class Fade extends Transition {
         private time: number;
         private newAlpha: number;
-        private container: PIXI.Container;
 
         constructor(config: Transition.BaseConfig & { time: number }) {
             super(config);
             this.time = config.time;
             this.newAlpha = 0;
-            this.container = new PIXI.Container();
 
             this.script = new Script(S.chain(
                 S.wait(this.preTime),
@@ -29,7 +27,7 @@ namespace Transitions {
             ));
         }
 
-        override render(): RenderResult {
+        override render() {
             let result: RenderResult[] = [];
             if (this.oldSnapshot) {
                 result.push(this.oldSnapshot.sprite);
@@ -38,8 +36,7 @@ namespace Transitions {
                 this.newSnapshot.sprite.alpha = this.newAlpha;
                 result.push(this.newSnapshot.sprite);
             }
-            diffRender(this.container, result);
-            return this.container;
+            return result;
         }
     }
 
@@ -51,7 +48,6 @@ namespace Transitions {
         private slide_t: number;
         private transitioned: boolean;
 
-        private container: PIXI.Container;
         private topCurtain: PIXI.Sprite;
         private bottomCurtain: PIXI.Sprite;
 
@@ -62,8 +58,6 @@ namespace Transitions {
             this.outTime = config.outTime;
             this.slide_t = 0;
             this.transitioned = false;
-
-            this.container = new PIXI.Container();
 
             this.topCurtain = new PIXI.Sprite(Textures.filledRect(W, H/2, 0x000000));
             this.bottomCurtain = new PIXI.Sprite(Textures.filledRect(W, H/2, 0x000000));
@@ -78,7 +72,7 @@ namespace Transitions {
             ));
         }
 
-        override render(): RenderResult {
+        override render() {
             let result: RenderResult[] = [];
 
             if (this.transitioned) {
@@ -97,8 +91,7 @@ namespace Transitions {
             this.bottomCurtain.y = H/2 * (2 - this.slide_t);
             result.push(this.bottomCurtain);
 
-            diffRender(this.container, result);
-            return this.container;
+            return result;
         }
     }
 }

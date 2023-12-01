@@ -90,18 +90,16 @@ class Game {
     }
 
     render() {
-        let result = [
-            this.menuSystem.inMenu
-                ? this.menuSystem.render()
-                : this.theater.render()
-        ];
+        let result = this.menuSystem.inMenu
+            ? this.menuSystem.render()
+            : this.theater.render()
 
         if (Debug.SHOW_OVERLAY) {
-            result.push(this.overlay.render());
+            result.push(...this.overlay.render());
         }
 
         if (Debug.SHOW_TOUCHES) {
-            result.push(this.renderTouches());
+            result.push(...this.renderTouches());
         }
 
         diffRender(this.container, result);
@@ -172,10 +170,10 @@ class Game {
 
     private renderTouches() {
         if (!IS_MOBILE || !Input.isKeyCodeDown(Input.MOUSE_KEYCODES[0])) {
-            return undefined;
+            return [];
         }
         this.debugTouchSprite.x = Input.mouseX;
         this.debugTouchSprite.y = Input.mouseY;
-        return this.debugTouchSprite;
+        return [this.debugTouchSprite];
     }
 }

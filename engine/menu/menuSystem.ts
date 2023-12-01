@@ -20,7 +20,7 @@ class MenuSystem {
         if (this.inMenu) {
             return this.currentMenu!.render();
         }
-        return undefined;
+        return [];
     }
 
     back() {

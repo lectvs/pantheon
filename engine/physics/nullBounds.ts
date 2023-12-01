@@ -21,7 +21,7 @@ class NullBounds implements Bounds {
     }
 
     debugRender() {
-        return undefined;
+        return [];
     }
 
     freeze() {

@@ -42,8 +42,6 @@ class PhysicsWorldObject extends WorldObject {
         this._bounds.parent = this;
     }
 
-    private container: PIXI.Container;
-
     constructor(config: PhysicsWorldObject.Config<PhysicsWorldObject> = {}) {
         super(config);
         this.mass = config.mass ?? 1;
@@ -58,7 +56,6 @@ class PhysicsWorldObject extends WorldObject {
         this.colliding = config.colliding ?? true;
 
         this.debugDrawBounds = false;
-        this.container = new PIXI.Container();
     }
 
     override update() {
@@ -66,7 +63,7 @@ class PhysicsWorldObject extends WorldObject {
         super.update();
     }
 
-    override render(x: number, y: number): RenderResult {
+    override render(x: number, y: number): RenderResult[] {
         let result: RenderResult[] = [];
         if (Debug.SHOW_ALL_PHYSICS_BOUNDS || this.debugDrawBounds) {
             let zoffset = 0; // offset to cancel out the z-factor when drawing bounds
@@ -74,11 +71,10 @@ class PhysicsWorldObject extends WorldObject {
                 let parentz = this.parent ? this.parent.z : 0;
                 zoffset = parentz - this.z;
             }
-            result.push(this.renderBounds(x, y - zoffset));
+            result.push(...this.renderBounds(x, y - zoffset));
         }
-        result.push(super.render(x, y));
-        diffRender(this.container, result);
-        return this.container;
+        result.push(...super.render(x, y));
+        return result;
     }
 
     getWorldBounds() {
@@ -132,10 +128,11 @@ class PhysicsWorldObject extends WorldObject {
 
     private renderBounds(x: number, y: number) {
         let renderResult = this.bounds.debugRender();
-        if (!renderResult) return undefined;
 
-        renderResult.x += x - this.x;
-        renderResult.y += y - this.y;
+        for (let r of renderResult) {
+            r.x += x - this.x;
+            r.y += y - this.y;
+        }
 
         return renderResult;
     }
