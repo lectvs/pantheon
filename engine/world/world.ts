@@ -125,7 +125,7 @@ class World {
     private mouseBounds: CircleBounds;
 
     private container: PIXI.Container;
-    private bgFill: PIXI.Graphics;
+    private bgFill: PIXI.Sprite;
 
     constructor(config: World.Config = {}) {        
         this.scriptManager = new ScriptManager();
@@ -178,7 +178,7 @@ class World {
         this.endOfFrameQueue = [];
 
         this.container = new PIXI.Container();
-        this.bgFill = Graphics.rectangle(0, 0, 1, 1, { fill: { color: 0xFFFFFF }});
+        this.bgFill = new PIXI.Sprite(Textures.filledRect(1, 1, 0xFFFFFF));
     }
 
     onTransitioned() {

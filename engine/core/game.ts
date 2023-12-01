@@ -12,7 +12,7 @@ class Game {
     theater: Theater;
 
     private overlay: DebugOverlay;
-    private debugTouchGraphics: PIXI.Graphics;
+    private debugTouchSprite: PIXI.Sprite;
 
     get canPause(): boolean { return this.theater?.canPause ?? false; }
 
@@ -43,7 +43,7 @@ class Game {
         this.theater = this.theaterFactory();
 
         this.overlay = new DebugOverlay();
-        this.debugTouchGraphics = Graphics.circle(0, 0, 10, { outline: { color: 0xFF0000 }});
+        this.debugTouchSprite = new PIXI.Sprite(Textures.outlineCircle(10, 0xFF0000));
 
         this.container = new PIXI.Container;
     }
@@ -174,8 +174,8 @@ class Game {
         if (!IS_MOBILE || !Input.isKeyCodeDown(Input.MOUSE_KEYCODES[0])) {
             return undefined;
         }
-        this.debugTouchGraphics.x = Input.mouseX;
-        this.debugTouchGraphics.y = Input.mouseY;
-        return this.debugTouchGraphics;
+        this.debugTouchSprite.x = Input.mouseX;
+        this.debugTouchSprite.y = Input.mouseY;
+        return this.debugTouchSprite;
     }
 }

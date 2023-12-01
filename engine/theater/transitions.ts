@@ -52,8 +52,8 @@ namespace Transitions {
         private transitioned: boolean;
 
         private container: PIXI.Container;
-        private topCurtain: PIXI.Graphics;
-        private bottomCurtain: PIXI.Graphics;
+        private topCurtain: PIXI.Sprite;
+        private bottomCurtain: PIXI.Sprite;
 
         constructor(config: Transition.BaseConfig & { inTime: number, midTime: number, outTime: number }) {
             super(config);
@@ -64,8 +64,9 @@ namespace Transitions {
             this.transitioned = false;
 
             this.container = new PIXI.Container();
-            this.topCurtain = Graphics.rectangle(0, 0, W, H/2, { fill: { color: 0x000000 }});
-            this.bottomCurtain = Graphics.rectangle(0, 0, W, H/2, { fill: { color: 0x000000 }});
+
+            this.topCurtain = new PIXI.Sprite(Textures.filledRect(W, H/2, 0x000000));
+            this.bottomCurtain = new PIXI.Sprite(Textures.filledRect(W, H/2, 0x000000));
 
             this.script = new Script(S.chain(
                 S.wait(this.preTime),

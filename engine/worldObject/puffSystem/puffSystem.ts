@@ -97,15 +97,7 @@ class PuffSystem extends WorldObject {
         });
 
         if (this.sprites.length < this.puffs.length) {
-            this.sprites.push(new PIXI.Sprite(PuffSystem.PUFF_TEXTURE.get()));
+            this.sprites.push(new PIXI.Sprite(Textures.filledCircle(16, 0xFFFFFF)));
         }
     }
-
-    private static PUFF_TEXTURE = new LazyValue(() => {
-        let texture = newPixiRenderTexture(32, 32, 'PuffSystem.PUFF_TEXTURE');
-        let graphics = Graphics.circle(8, 8, 16, { fill: { color: 0xFFFFFF }});
-        renderToRenderTexture(graphics, texture);
-        graphics.destroy();
-        return texture;
-    });
 }

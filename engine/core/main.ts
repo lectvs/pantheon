@@ -214,11 +214,13 @@ class Main {
         let barx = global.gameWidth/2 - barw/2;
         let bary = global.gameHeight/2 - barh/2;
 
-        let bg = lazy('Main.renderPreloadProgress.bg', () => Graphics.rectangle(0, 0, W, H, { fill: { color: 0x000000 }}));
-        let barFill = lazy('Main.renderPreloadProgress.barFill', () => Graphics.rectangle(barx, bary, 1, barh, { fill: { color: 0xFFFFFF }}));
-        let barOutline = lazy('Main.renderPreloadProgress.barOutline', () => Graphics.rectangle(barx, bary, barw, barh, { outline: { color: 0xFFFFFF }}));
+        let bg = lazy('Main.renderPreloadProgress.bg', () => new PIXI.Sprite(Textures.filledRect(W, H, 0x000000)));
+        let barFill = lazy('Main.renderPreloadProgress.barFill', () => new PIXI.Sprite(Textures.filledRect(1, barh, 0xFFFFFF)));
+        let barOutline = lazy('Main.renderPreloadProgress.barOutline', () => new PIXI.Sprite(Textures.outlineRect(barw, barh, 0xFFFFFF)));
 
+        barFill.position.set(barx, bary);
         barFill.scale.x = barw * progress;
+        barOutline.position.set(barx, bary);
 
         diffRender(Main.stage, [ bg, barFill, barOutline ]);
 

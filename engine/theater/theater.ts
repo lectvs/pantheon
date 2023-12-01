@@ -167,18 +167,16 @@ class Theater {
 
 namespace Theater {
     export class Fade {
-        private graphics: PIXI.Graphics;
+        private sprite: PIXI.Sprite;
 
-        get alpha() { return this.graphics.alpha; }
-        set alpha(value) { this.graphics.alpha = value; }
-
-        constructor(color: number, alpha: number) {
-            this.graphics = Graphics.rectangle(0, 0, W, H, { fill: { color }});
-            this.alpha = alpha;
+        constructor(private color: number, public alpha: number) {
+            this.sprite = new PIXI.Sprite(Textures.filledRect(W, H, 0xFFFFFF));
         }
 
         render() {
-            return this.graphics;
+            this.sprite.tint = this.color;
+            this.sprite.alpha = this.alpha;
+            return this.sprite;
         }
     }
     export class WorldAsWorldObject extends WorldObject {
