@@ -12,8 +12,6 @@ namespace World {
         backgroundColor?: number;
         backgroundAlpha?: number;
 
-        forcedWidth?: number;
-        forcedHeight?: number;
         scaleX?: number;
         scaleY?: number;
 
@@ -103,6 +101,9 @@ class World {
     private worldTexture: PIXI.RenderTexture;
     private layerTexture: PIXI.RenderTexture;
 
+    private container: PIXI.Container;
+    private bgFill: PIXI.Sprite;
+
     protected scriptManager: ScriptManager;
     soundManager: SoundManager;
 
@@ -124,9 +125,6 @@ class World {
 
     private mouseBounds: CircleBounds;
 
-    private container: PIXI.Container;
-    private bgFill: PIXI.Sprite;
-
     constructor(config: World.Config = {}) {        
         this.scriptManager = new ScriptManager();
         this.soundManager = new SoundManager();
@@ -137,8 +135,6 @@ class World {
         this.allowSounds = true;
         this.globalSoundHumanizeFactor = config.globalSoundHumanizeFactor ?? 0;
 
-        this.forcedWidth = config.forcedWidth;
-        this.forcedHeight = config.forcedHeight;
         this.time = 0;
         this.timeScale = config.timescale ?? 1;
         this.allowPause = config.allowPause ?? true;
@@ -165,6 +161,10 @@ class World {
         this.worldTexture = newPixiRenderTexture(global.gameWidth, global.gameHeight, 'World.worldTexture');
         this.layerTexture = newPixiRenderTexture(global.gameWidth, global.gameHeight, 'World.layerTexture');
 
+        this.container = new PIXI.Container();
+        this.bgFill = new PIXI.Sprite(Textures.filledRect(1, 1, 0xFFFFFF));
+        this.bgFill.scale.set(global.gameWidth, global.gameHeight);
+
         this.camera = new Camera(config.camera ?? {}, this);
         this.screenShakeFilter = new World.ScreenShakeFilter();
 
@@ -176,9 +176,6 @@ class World {
         });
 
         this.endOfFrameQueue = [];
-
-        this.container = new PIXI.Container();
-        this.bgFill = new PIXI.Sprite(Textures.filledRect(1, 1, 0xFFFFFF));
     }
 
     onTransitioned() {
@@ -241,8 +238,8 @@ class World {
     }
 
     render() {
-        this.bgFill.scale.x = this.getScreenWidth();
-        this.bgFill.scale.y = this.getScreenHeight();
+        this.bgFill.scale.x = global.gameWidth;
+        this.bgFill.scale.y = global.gameHeight;
         this.bgFill.tint = this.backgroundColor;
         this.bgFill.alpha = this.backgroundAlpha;
 
@@ -333,11 +330,11 @@ class World {
     }
 
     getScreenWidth() {
-        return this.worldTexture.width;
+        return this.bgFill.width;
     }
 
     getScreenHeight() {
-        return this.worldTexture.height;
+        return this.bgFill.height;
     }
 
     getWorldMouseX() {

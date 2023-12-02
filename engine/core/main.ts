@@ -193,7 +193,6 @@ class Main {
         Main.renderScreenToCanvas();
     }
 
-    // TODO PIXI this didn't work when i tried it earlier
     static forceResize(width: number, height: number) {
         global.gameWidth = width;
         global.gameHeight = height;

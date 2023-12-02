@@ -15,6 +15,7 @@ class DebugOverlay extends World {
         this.debugInfo = this.addWorldObject(new SpriteText({
             name: 'debuginfo',
             x: 0, y: 0,
+            ignoreCamera: true,
             font: Debug.FONT,
             style: Debug.FONT_STYLE,
             effects: { outline: { color: 0x000000 } },

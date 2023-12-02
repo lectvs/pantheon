@@ -55,13 +55,11 @@ class TextureFilter extends PIXI.Filter {
         return this.visualPadding;
     }
 
-    // TODO PIXI how can we call these?
     setTextureDimensions(dimx: number, dimy: number) {
         this.setUniform('dimx', dimx);
         this.setUniform('dimy', dimy);
     }
 
-    // TODO PIXI how can we call these?
     setTexturePosition(posx: number, posy: number) {
         this.setUniform('posx', posx);
         this.setUniform('posy', posy);
