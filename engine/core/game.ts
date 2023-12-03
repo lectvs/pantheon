@@ -52,7 +52,9 @@ class Game {
         this.menuSystem.clear();
         this.menuSystem.loadMenu(this.entryPointMenu);
         if (Debug.SKIP_MAIN_MENU_STAGE) {
-            this.loadMainMenu();
+            if (this.entryPointMenu.toString() !== this.mainMenu.toString()) {
+                this.loadMainMenu();
+            }
             this.startGame(Debug.SKIP_MAIN_MENU_STAGE);
         }
     }

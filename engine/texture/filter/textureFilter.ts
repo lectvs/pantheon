@@ -10,12 +10,9 @@ namespace TextureFilter {
      *           Available for use are the following variables and methods:
      *               vec4 inp - the input color
      *               float width/height - the width and height of the source texture
-     *               float destWidth/destHeight - the width and height of the dest texture (filter, technically)
-     *               float x/y - the local x/y coordinates in pixels
-     *               float destx/y - the x/y coordinates in dest space
+     *               float x/y - the x/y coordinates in pixels
      *               float t - time in seconds
-     *               vec4 getColor(float x, float y) - get the color at local x/y
-     *               vec4 getDestColor(float destx, float desty) - get the color at x/y in dest space
+     *               vec4 getColor(float x, float y) - get the color at x/y
      *               float pnoise(vec3 p) - perlin noise at a point, normalized to [-1, 1]
      *               float pnoise(float x, float y, float z) - perlin noise at a point, normalized to [-1, 1]
      *               float pnoisePos(vec3 p) - perlin noise at a point, normalized to [0, 1]
@@ -55,19 +52,13 @@ class TextureFilter extends PIXI.Filter {
         return this.visualPadding;
     }
 
-    setTextureValues(x: number, y: number, width: number, height: number) {
-        this.setUniform('dimx', width);
-        this.setUniform('dimy', height);
-        this.setUniform('posx', x);
-        this.setUniform('posy', y);
+    setTextureValues(width: number, height: number) {
+        this.setUniform('width', width);
+        this.setUniform('height', height);
     }
 
     setTextureValuesFromSprite(sprite: PIXI.Sprite) {
-        this.setTextureValues(
-            sprite.x - sprite.anchor.x * sprite.width,
-            sprite.y - sprite.anchor.y * sprite.height,
-            sprite.width,
-            sprite.height);
+        this.setTextureValues(sprite.width, sprite.height);
     }
 
     setUniform(name: string, value: any) {
@@ -106,33 +97,15 @@ namespace TextureFilter {
         uniform vec4 inputSize;
         uniform sampler2D uSampler;
 
-        uniform float posx;
-        uniform float posy;
-        uniform float dimx;
-        uniform float dimy;
+        uniform float width;
+        uniform float height;
         uniform float t;
-
-        float width;
-        float height;
-        float destWidth;
-        float destHeight;
     `;
 
     const fragCoreHelperMethods = `
         vec4 getColor(float localx, float localy) {
-            float tx = (localx + posx) / destWidth;
-            float ty = (localy + posy) / destHeight;
-            vec4 color = texture2D(uSampler, vec2(tx, ty));
-            if (color.a > 0.0) {
-                // Un-premultiply alpha, like inp.
-                color.rgb /= color.a;
-            }
-            return color;
-        }
-
-        vec4 getDestColor(float destx, float desty) {
-            float tx = destx / destWidth;
-            float ty = desty / destHeight;
+            float tx = localx / inputSize.x;
+            float ty = localy / inputSize.y;
             vec4 color = texture2D(uSampler, vec2(tx, ty));
             if (color.a > 0.0) {
                 // Un-premultiply alpha, like inp.
@@ -213,14 +186,8 @@ namespace TextureFilter {
             #define PI 3.14159265358979
             #define TWOPI 6.28318530717958
 
-            width = dimx;
-            height = dimy;
-            destWidth = inputSize.x;
-            destHeight = inputSize.y;
-            float destx = vTextureCoord.x * destWidth;
-            float desty = vTextureCoord.y * destHeight;
-            float x = destx - posx;
-            float y = desty - posy;
+            float x = vTextureCoord.x * inputSize.x;
+            float y = vTextureCoord.y * inputSize.y;
             vec4 inp = texture2D(uSampler, vTextureCoord);
             // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.
             if (inp.a > 0.0) {
@@ -255,10 +222,8 @@ namespace TextureFilter {
             uniforms[uniformName] = uniformDeclarations[decl];
         }
 
-        uniforms['posx'] = 0;
-        uniforms['posy'] = 0;
-        uniforms['dimx'] = 0;
-        uniforms['dimy'] = 0;
+        uniforms['width'] = 0;
+        uniforms['height'] = 0;
         uniforms['t'] = 0;
 
         return uniforms;
