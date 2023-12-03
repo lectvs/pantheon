@@ -29,6 +29,8 @@ namespace WorldObject {
         tags?: string[];
         hooks?: HooksConfig<Hooks<WO>>;
         data?: any;
+
+        debugFollowMouse?: boolean;
     };
 
     export type ZBehavior = 'noop' | 'threequarters';
@@ -41,6 +43,7 @@ namespace WorldObject {
         onUpdate: { params: (this: WO) => void };
         onVisualUpdate: { params: (this: WO) => void };
         onPostUpdate: { params: (this: WO) => void };
+        onRender: { params: (this: WO, x: number, y: number) => RenderResult };
         onKill: { params: (this: WO) => void };
     }
 }
@@ -199,7 +202,7 @@ class WorldObject {
             hooks: config.hooks,
         });
 
-        this.debugFollowMouse = false;
+        this.debugFollowMouse = config.debugFollowMouse ?? false;
     }
 
     onAdd() {
@@ -313,7 +316,10 @@ class WorldObject {
     }
 
     render(x: number, y: number): RenderResult {
-        return this.modules.map(module => module.render(x, y)).flat();
+        return [
+            ...this.modules.map(module => module.render(x, y)).flat(),
+            ...this.hookManager.executeHooks('onRender', x, y).flat(),
+        ];
     }
 
     addAnimation(name: string, animation: AnimationInstance) {

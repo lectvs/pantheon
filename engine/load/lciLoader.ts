@@ -65,6 +65,8 @@ class LciLoader implements Loader {
             sprite.blendMode = layer.blendMode ?? 0;
             renderToRenderTexture(sprite, fullTexture);
         }
+
+        TextureUtils.setImmutable(fullTexture);
         AssetCache.pixiTextures[this.key] = fullTexture;
     }
 }

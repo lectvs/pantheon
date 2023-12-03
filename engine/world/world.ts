@@ -92,14 +92,21 @@ class World {
     layers: World.Layer[];
     effects: Effects;
 
+    get shouldRenderToTexture() {
+        return A.size(this.effects.getFilterList()) > 0
+            || !this.camera.screenShakePhysicallyMovesCamera
+            || this.scaleX !== 1
+            || this.scaleY !== 1;
+    }
+
     backgroundColor: number;
     backgroundAlpha: number;
 
     camera: Camera;
     private screenShakeFilter: World.ScreenShakeFilter;
 
-    private worldTexture: PIXI.RenderTexture;
-    private layerTexture: PIXI.RenderTexture;
+    private worldSprite: PIXI.Sprite;
+    private layerSprite: PIXI.Sprite;
 
     private container: PIXI.Container;
     private bgFill: PIXI.Sprite;
@@ -158,12 +165,12 @@ class World {
         this.backgroundColor = config.backgroundColor ?? global.backgroundColor;
         this.backgroundAlpha = config.backgroundAlpha ?? 1;
 
-        this.worldTexture = newPixiRenderTexture(global.gameWidth, global.gameHeight, 'World.worldTexture');
-        this.layerTexture = newPixiRenderTexture(global.gameWidth, global.gameHeight, 'World.layerTexture');
+        this.worldSprite = new PIXI.Sprite(newPixiRenderTexture(this.getTargetScreenWidth(), this.getTargetScreenHeight(), 'World.worldTexture'));
+        this.layerSprite = new PIXI.Sprite(newPixiRenderTexture(this.getTargetScreenWidth(), this.getTargetScreenHeight(), 'World.layerSprite'));
 
         this.container = new PIXI.Container();
         this.bgFill = new PIXI.Sprite(Textures.filledRect(1, 1, 0xFFFFFF));
-        this.bgFill.scale.set(global.gameWidth, global.gameHeight);
+        this.bgFill.scale.set(this.getTargetScreenWidth(), this.getTargetScreenHeight());
 
         this.camera = new Camera(config.camera ?? {}, this);
         this.screenShakeFilter = new World.ScreenShakeFilter();
@@ -238,8 +245,8 @@ class World {
     }
 
     render() {
-        this.bgFill.scale.x = global.gameWidth;
-        this.bgFill.scale.y = global.gameHeight;
+        this.handleResize();
+
         this.bgFill.tint = this.backgroundColor;
         this.bgFill.alpha = this.backgroundAlpha;
 
@@ -247,50 +254,49 @@ class World {
             this.bgFill,
         ];
 
-        // TODO PIXI
-        // for (let layer of this.layers) {
-        //     if (layer.shouldRenderToOwnLayer) {
-        //         this.layerTexture.clear();
-        //         this.renderLayerToTexture(layer, this.layerTexture);
-        //         this.layerTexture.renderTo(this.worldTexture, {
-        //             filters: layer.effects.getFilterList(),
-        //             mask: Mask.getTextureMaskForWorld(layer.mask),
-        //         });
-        //     } else {
-        //         this.renderLayerToTexture(layer, this.worldTexture);
-        //     }
-        // }
-
-        // let filters = this.effects.getFilterList();
-        // if (!this.camera.screenShakePhysicallyMovesCamera) {
-        //     filters.unshift(this.screenShakeFilter);
-        // }
-
-        // // Apply world effects.
-        // this.worldTexture.renderTo(screen, {
-        //     x: x, y: y,
-        //     scaleX: this.scaleX,
-        //     scaleY: this.scaleY,
-        //     filters: filters,
-        //     mask: Mask.getTextureMaskForWorld(this.mask),
-        // });
-
         for (let layer of this.layers) {
-            result.push(...this.renderLayer(layer).flat());
+            if (layer.shouldRenderToOwnLayer) {
+                let layerTexture = this.layerSprite.texture as PIXI.RenderTexture;
+                renderToRenderTexture(this.renderLayer(layer), layerTexture, 'clearTextureFirst');
+                let layerFilters = layer.effects.getFilterList();
+                for (let filter of layerFilters) {
+                    filter.setTextureValuesFromSprite(this.layerSprite);
+                }
+                this.layerSprite.filters = layerFilters;
+                result.push(this.layerSprite);
+            } else {
+                result.push(...this.renderLayer(layer));
+            }
         }
 
         diffRender(this.container, result);
 
-        return [this.container];
+        let worldFilters = this.effects.getFilterList();
+        if (!this.camera.screenShakePhysicallyMovesCamera) {
+            worldFilters.unshift(this.screenShakeFilter);
+        }
+
+        if (this.shouldRenderToTexture) {
+            let worldTexture = this.worldSprite.texture as PIXI.RenderTexture;
+            renderToRenderTexture(this.container, worldTexture, 'clearTextureFirst');
+            this.worldSprite.scale.set(this.scaleX, this.scaleY);
+            for (let filter of worldFilters) {
+                filter.setTextureValuesFromSprite(this.worldSprite);
+            }
+            this.worldSprite.filters = worldFilters;
+            return [this.worldSprite];
+        } else {
+            return [this.container];
+        }
     }
 
     renderLayer(layer: World.Layer) {
-        // TODO PIXI: assign zIndex to layer objects
         layer.sort();
 
         return layer.worldObjects
             .filter(worldObject => worldObject.isVisible() && worldObject.isOnScreen())
-            .map(worldObject => worldObject.render(worldObject.getRenderScreenX(), worldObject.getRenderScreenY()));
+            .map(worldObject => worldObject.render(worldObject.getRenderScreenX(), worldObject.getRenderScreenY()))
+            .flat();
     }
 
     addHook<T extends keyof World.Hooks>(name: T, fn: World.Hooks[T]['params']) {
@@ -335,6 +341,14 @@ class World {
 
     getScreenHeight() {
         return this.bgFill.height;
+    }
+
+    getTargetScreenWidth() {
+        return global.gameWidth / this.scaleX;
+    }
+
+    getTargetScreenHeight() {
+        return global.gameHeight / this.scaleY;
     }
 
     getWorldMouseX() {
@@ -432,12 +446,16 @@ class World {
         return this.scriptManager.runScript(script, name);
     }
 
+    shake(intensity: number, time: number) {
+        this.runScript(S.shake(this, intensity, time));
+    }
+
     stopScriptByName(name: string) {
         this.scriptManager.stopScriptByName(name);
     }
 
     takeSnapshot() {
-        let screen = newPixiRenderTexture(this.worldTexture.width * this.scaleX, this.worldTexture.height * this.scaleY, 'World.takeSnapshot');
+        let screen = newPixiRenderTexture(this.getScreenWidth() * this.scaleX, this.getScreenHeight() * this.scaleY, 'World.takeSnapshot');
         let renderResult = this.render();
         if (renderResult) {
             renderToRenderTexture(renderResult, screen);
@@ -455,7 +473,7 @@ class World {
             O.defaults(layer, {
                 reverseSort: false,
             });
-            result.push(new World.Layer(layer.name, layer));
+            result.push(new World.Layer(this, layer.name, layer));
         }
 
         return result;
@@ -469,6 +487,25 @@ class World {
             result[name] = new World.PhysicsGroup(name, physicsGroups[name]);
         }
         return result;
+    }
+
+    private handleResize() {
+        this.bgFill.scale.set(this.getTargetScreenWidth(), this.getTargetScreenHeight());
+
+        if (this.shouldRenderToTexture) {
+            this.resizeTexture(this.worldSprite.texture, this.getTargetScreenWidth(), this.getTargetScreenHeight());
+        }
+
+        for (let layer of this.layers) {
+            if (layer.shouldRenderToOwnLayer) {
+                this.resizeTexture(layer.sprite.texture, this.getTargetScreenWidth(), this.getTargetScreenHeight());
+            }
+        }
+    }
+
+    private resizeTexture(texture: PIXI.Texture, width: number, height: number) {
+        if (texture.width === width && texture.height === height) return;
+        (texture as PIXI.RenderTexture).resize(width, height);
     }
 
     private removeFromAllLayers(obj: WorldObject) {
@@ -552,18 +589,20 @@ namespace World {
         reverseSort: boolean;
 
         effects: Effects;
+        sprite: PIXI.Sprite;
 
         get shouldRenderToOwnLayer() {
             return this.effects.hasEffects();
         }
         
-        constructor(name: string, config: World.LayerConfig) {
+        constructor(world: World, name: string, config: World.LayerConfig) {
             this.name = name;
             this.worldObjects = [];
             this.sortKey = config.sortKey;
             this.reverseSort = config.reverseSort ?? false;
 
             this.effects = new Effects(config.effects);
+            this.sprite = new PIXI.Sprite(newPixiRenderTexture(world.getTargetScreenWidth(), world.getTargetScreenHeight(), 'World.Layer.sprite'));
         }
 
         sort() {

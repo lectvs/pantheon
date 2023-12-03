@@ -1,4 +1,6 @@
 namespace O {
+    const METADATA_KEY = '___metadata___';
+
     export function clone<T>(obj: T): T {
         if (!obj || !isObject(obj)) return obj;
         if (Array.isArray(obj)) return <T>A.clone(obj);
@@ -63,6 +65,14 @@ namespace O {
         return obj.constructor;
     }
 
+    export function getMetadata<T>(obj: Object, key: string): T | undefined {
+        if (!(METADATA_KEY in obj)) {
+            return undefined;
+        }
+        // @ts-ignore
+        return obj[METADATA_KEY][key] as T | undefined;
+    }
+
     export function getPath(obj: Object, path: string) {
         let pathParts = path.split('.');
         let current = obj;
@@ -114,6 +124,15 @@ namespace O {
         for (let key in overrides) {
             (obj as any)[key] = overrides[key];
         }
+    }
+
+    export function putMetadata(obj: Object, key: string, value: any) {
+        if (!(METADATA_KEY in obj)) {
+            // @ts-ignore
+            obj[METADATA_KEY] = {};
+        }
+        // @ts-ignore
+        obj[METADATA_KEY][key] = value;
     }
 
     export function setPath(obj: Object, path: string, value: any) {

@@ -55,14 +55,19 @@ class TextureFilter extends PIXI.Filter {
         return this.visualPadding;
     }
 
-    setTextureDimensions(dimx: number, dimy: number) {
-        this.setUniform('dimx', dimx);
-        this.setUniform('dimy', dimy);
+    setTextureValues(x: number, y: number, width: number, height: number) {
+        this.setUniform('dimx', width);
+        this.setUniform('dimy', height);
+        this.setUniform('posx', x);
+        this.setUniform('posy', y);
     }
 
-    setTexturePosition(posx: number, posy: number) {
-        this.setUniform('posx', posx);
-        this.setUniform('posy', posy);
+    setTextureValuesFromSprite(sprite: PIXI.Sprite) {
+        this.setTextureValues(
+            sprite.x - sprite.anchor.x * sprite.width,
+            sprite.y - sprite.anchor.y * sprite.height,
+            sprite.width,
+            sprite.height);
     }
 
     setUniform(name: string, value: any) {

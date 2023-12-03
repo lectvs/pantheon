@@ -1,3 +1,5 @@
+/// <reference path="../utils/lazy.ts" />
+
 namespace Draw {
     export type Alignment = 'inner' | 'outer';
 
@@ -69,11 +71,12 @@ class Draw {
 
     static pixel(texture: PIXI.RenderTexture, x: number, y: number, config: { color: number, alpha?: number }) {
         if (config.alpha === 0) return;
-        Draw.PIXEL_SPRITE.x = x;
-        Draw.PIXEL_SPRITE.y = y;
-        Draw.PIXEL_SPRITE.tint = config.color;
-        Draw.PIXEL_SPRITE.alpha = config.alpha ?? 1;
-        renderToRenderTexture(Draw.PIXEL_SPRITE, texture);
+        let pixelSprite = Draw.PIXEL_SPRITE.get();
+        pixelSprite.x = x;
+        pixelSprite.y = y;
+        pixelSprite.tint = config.color;
+        pixelSprite.alpha = config.alpha ?? 1;
+        renderToRenderTexture(pixelSprite, texture);
     }
 
     static line(texture: PIXI.RenderTexture, x1: number, y1: number, x2: number, y2: number, config: { color: number, alpha?: number, thickness?: number }) {
@@ -124,13 +127,9 @@ class Draw {
         };
     }
 
-    private static _PIXEL_SPRITE: PIXI.Sprite;
-    static get PIXEL_SPRITE() {
-        if (!this._PIXEL_SPRITE) {
-            let texture = newPixiRenderTexture(1, 1, 'Draw.PIXEL_TEXTURE');
-            Draw.fill(texture, { color: 0xFFFFFF });
-            this._PIXEL_SPRITE = new PIXI.Sprite(texture);
-        }
-        return this._PIXEL_SPRITE;
-    }
+    private static PIXEL_SPRITE = new LazyValue(() => {
+        let texture = newPixiRenderTexture(1, 1, 'Draw.PIXEL_TEXTURE');
+        Draw.fill(texture, { color: 0xFFFFFF });
+        return new PIXI.Sprite(texture);
+    });
 }

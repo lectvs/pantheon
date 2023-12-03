@@ -200,10 +200,18 @@ class Main {
     }
 
     static _internalRenderToRenderTexture(object: PIXI.DisplayObject, renderTexture: PIXI.RenderTexture, clearTextureFirst: boolean) {
+        if (TextureUtils.isImmutable(renderTexture)) {
+            console.error("Cannot render to immutable render texture:", renderTexture);
+            return;
+        }
         Main.renderer.render(object, renderTexture, clearTextureFirst);
     }
 
     static _internalClearRenderTexture(renderTexture: PIXI.RenderTexture) {
+        if (TextureUtils.isImmutable(renderTexture)) {
+            console.error("Cannot clear immutable render texture:", renderTexture);
+            return;
+        }
         Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, renderTexture, true);
     }
 

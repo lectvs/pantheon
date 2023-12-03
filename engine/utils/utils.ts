@@ -21,6 +21,11 @@ function clearRenderTexture(renderTexture: PIXI.RenderTexture) {
 }
 
 function newPixiRenderTexture(width: number, height: number, source: string) {
+    // if (width > 2048 || height > 2048) {
+    //     console.error(`Texture dimensions exceed bounds: (${width}, ${height}), limiting to bounds`);
+    //     width = Math.min(width, 2048);
+    //     height = Math.min(height, 2048);
+    // }
     let texture = PIXI.RenderTexture.create({ width, height });
     PerformanceTracking.logCreateTexture(texture, source);
     return texture;
@@ -33,8 +38,8 @@ function freePixiRenderTexture(texture: PIXI.RenderTexture) {
 
 function renderToRenderTexture(object: PIXI.DisplayObject | PIXI.DisplayObject[], renderTexture: PIXI.RenderTexture, clearTextureFirst?: 'clearTextureFirst') {
     if (A.isArray(object)) {
-        for (let o of object) {
-            renderToRenderTexture(o, renderTexture, clearTextureFirst);
+        for (let i = 0; i < object.length; i++) {
+            renderToRenderTexture(object[i], renderTexture, i === 0 ? 'clearTextureFirst' : undefined);
         }
         return;
     }

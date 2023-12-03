@@ -31,10 +31,6 @@ namespace M {
         return result;
     }
 
-    export function axis(neg: boolean, pos: boolean) {
-        return (neg ? -1 : 0) + (pos ? 1 : 0);
-    }
-
     export function batch(count: number, maxCount: number) {
         if (count <= maxCount) {
             return A.create(count, i => 1);

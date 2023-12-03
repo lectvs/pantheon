@@ -51,21 +51,22 @@ class SlopeBounds implements Bounds {
         return true;
     }
 
-    // TODO PIXI
-    // if (this.bounds.direction === 'upleft') {
-    //     Draw.polygon(texture.renderTextureSprite.renderTexture, [vec2(box.left, box.bottom), vec2(box.right, box.bottom), vec2(box.right, box.top)], { outline: { color: 0x00FF00 }});
-    // } else if (this.bounds.direction === 'upright') {
-    //     Draw.polygon(texture.renderTextureSprite.renderTexture, [vec2(box.left, box.bottom), vec2(box.right, box.bottom), vec2(box.left, box.top)], { outline: { color: 0x00FF00 }});
-    // } else if (this.bounds.direction === 'downright') {
-    //     Draw.polygon(texture.renderTextureSprite.renderTexture, [vec2(box.left, box.bottom), vec2(box.left, box.top), vec2(box.right, box.top)], { outline: { color: 0x00FF00 }});
-    // } else {
-    //     Draw.polygon(texture.renderTextureSprite.renderTexture, [vec2(box.left, box.top), vec2(box.right, box.top), vec2(box.right, box.bottom)], { outline: { color: 0x00FF00 }});
-    // }
     debugRender() {
-        let boundingBox = this.getBoundingBox();
-        this.debugSprite.x = boundingBox.x;
-        this.debugSprite.y = boundingBox.y;
-        this.debugSprite.texture = Textures.outlineRect(boundingBox.width, boundingBox.height, 0x00FF00);
+        let box = this.getBoundingBox();
+
+        this.debugSprite.x = box.x;
+        this.debugSprite.y = box.y;
+
+        if (this.direction === 'upleft') {
+            this.debugSprite.texture = Textures.outlinePolygon([vec2(box.right, box.bottom), vec2(box.left, box.bottom), vec2(box.right, box.top)], 0x00FF00);
+        } else if (this.direction === 'upright') {
+            this.debugSprite.texture = Textures.outlinePolygon([vec2(box.right, box.bottom), vec2(box.left, box.bottom), vec2(box.left, box.top)], 0x00FF00);
+        } else if (this.direction === 'downright') {
+            this.debugSprite.texture = Textures.outlinePolygon([vec2(box.left, box.bottom), vec2(box.left, box.top), vec2(box.right, box.top)], 0x00FF00);
+        } else {
+            this.debugSprite.texture = Textures.outlinePolygon([vec2(box.left, box.top), vec2(box.right, box.top), vec2(box.right, box.bottom)], 0x00FF00);
+        }
+
         return [this.debugSprite];
     }
 

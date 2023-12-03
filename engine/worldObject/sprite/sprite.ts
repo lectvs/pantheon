@@ -85,15 +85,10 @@ class Sprite extends PhysicsWorldObject {
         this.angle += this.vangle * this.delta;
     }
 
-    override render(x: number, y: number): RenderResult {
-        if (this.textureKey) {
-            let texture = AssetCache.getPixiTexture(this.textureKey);
-            if (texture) {
-                this.renderObject.texture = texture;
-                this.renderObject.anchor.x = texture.defaultAnchor.x;
-                this.renderObject.anchor.y = texture.defaultAnchor.y;
-            }
-        }
+    override render(x: number, y: number): [PIXI.Sprite, ...RenderResult] {
+        this.renderObject.texture = this.texture;
+        this.renderObject.anchor.x = this.texture.defaultAnchor.x;
+        this.renderObject.anchor.y = this.texture.defaultAnchor.y;
         this.renderObject.x = x + this.offsetX;
         this.renderObject.y = y + this.offsetY;
         this.renderObject.scale.x = (this.flipX ? -1 : 1) * this.scaleX;
@@ -101,8 +96,28 @@ class Sprite extends PhysicsWorldObject {
         this.renderObject.angle = this.angle + this.angleOffset;
         this.renderObject.tint = this.tint;
         this.renderObject.alpha = this.alpha;
-        this.renderObject.filters = this.effects.getFilterList();
         this.renderObject.blendMode = this.blendMode ?? PIXI.BLEND_MODES.NORMAL;
+
+        let filters = this.effects.getFilterList();
+        for (let filter of filters) {
+            filter.setTextureValuesFromSprite(this.renderObject);
+        }
+        this.renderObject.filters = filters;
+
+        let filterArea = TextureUtils.getFilterArea(this.renderObject.texture, filters, {
+            x: this.renderObject.x,
+            y: this.renderObject.y,
+            scaleX: this.renderObject.scale.x,
+            scaleY: this.renderObject.scale.y,
+            angle: this.renderObject.angle,
+        });
+
+        if (filterArea) {
+            this.renderObject.filterArea = filterArea;
+        } else {
+            // @ts-expect-error
+            this.renderObject.filterArea = null;
+        }
 
         return [
             this.renderObject,
@@ -119,13 +134,16 @@ class Sprite extends PhysicsWorldObject {
     }
 
     override getVisibleLocalBounds$(): Rectangle | undefined {
-        if (!this.texture) return new Rectangle(0, 0, 0, 0);
         if (this.texture === Textures.EFFECT_ONLY) {
             return undefined;
         }
-        // TODO PIXI optimize
-        this.render(this.offsetX, this.offsetY);
-        return Rectangle.fromPixiRectangle(this.renderObject.getLocalBounds());
+        return TextureUtils.getTextureLocalBounds$(this.texture, {
+            x: this.offsetX,
+            y: this.offsetY,
+            scaleX: this.scaleX,
+            scaleY: this.scaleY,
+            angle: this.angle,
+        });
     }
 
     setTexture(key: string | PIXI.Texture | undefined) {

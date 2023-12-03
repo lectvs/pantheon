@@ -24,6 +24,18 @@ namespace G {
         return sum;
     }
 
+    export function chirality(points: Pt[]): -1 | 0 | 1 {
+        if (A.size(points) <= 2) return 0;
+
+        let averageX = A.average(points, p => p.x);
+        let averageY = A.average(points, p => p.y);
+
+        let d0 = vec2(points[0]).subtract(averageX, averageY);
+        let d1 = vec2(points[1]).subtract(averageX, averageY);
+
+        return M.angleDiff(d1.angle, d0.angle) > 0 ? -1 : 1;
+    }
+
     export function circleIntersectsSegment(cx: number, cy: number, r: number, lx1: number, ly1: number, lx2: number, ly2: number) {
         let dx = cx - lx1;
         let dy = cy - ly1;
@@ -71,11 +83,11 @@ namespace G {
         return A.range(n).map(i => vec2(cx + r*M.cos(angle + 360/n*(i+0.5)), cy + r*M.sin(angle + 360/n*(i+0.5))));
     }
 
-    export function getEncompassingBoundaries(boundaries: Bndries[]): Boundaries {
-        let left = M.min(boundaries, char => char.left);
-        let right = M.max(boundaries, char => char.right);
-        let top = M.min(boundaries, char => char.top);
-        let bottom = M.max(boundaries, char => char.bottom);
+    export function getEncompassingBoundaries(boundaries: (Pt | Bndries)[]): Boundaries {
+        let left = M.min(boundaries, char => 'left' in char ? char.left : char.x);
+        let right = M.max(boundaries, char => 'right' in char ? char.right : char.x);
+        let top = M.min(boundaries, char => 'top' in char ? char.top : char.y);
+        let bottom = M.max(boundaries, char => 'bottom' in char ? char.bottom : char.y);
         return new Boundaries(
             isFinite(left) ? left : -Infinity,
             isFinite(right) ? right : Infinity,

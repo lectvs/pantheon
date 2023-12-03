@@ -2,6 +2,11 @@ namespace A {
     export const ALPHABET_LOWERCASE = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
     export const ALPHABET_UPPERCASE = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
 
+    export function average<T>(array: T[], key: (e: T) => number = (e => <any>e)) {
+        if (isEmpty(array)) return NaN;
+        return sum(array, key) / array.length;
+    }
+
     export function batch<T>(array: ReadonlyArray<T>, batchSize: number) {
         let result: T[][] = A.range(Math.ceil(array.length / batchSize)).map(i => []);
         for (let i = 0; i < array.length; i++) {

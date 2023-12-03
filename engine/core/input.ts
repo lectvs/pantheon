@@ -231,6 +231,10 @@ class Input {
         return this.isDownByKeyCode[keyCode];
     }
 
+    static axis(negKey: string, posKey: string) {
+        return (this.isDown(negKey) ? -1 : 0) + (this.isDown(posKey) ? 1 : 0);
+    }
+
     static get mouseX() {
         return this._mouseX;
     }
@@ -355,7 +359,6 @@ class Input {
     }
 
     static handleTouchStartEvent(event: TouchEvent) {
-        // TODO: handle multiple touches at some point
         if (this.isTouching) return;
 
         for (let i = 0; i < event.changedTouches.length; i++) {
@@ -426,7 +429,7 @@ class Input {
             id: touch.identifier,
             x: M.map(touch.pageX, bounds.left, bounds.right, 0, global.gameWidth),
             y: M.map(touch.pageY, bounds.top, bounds.bottom, 0, global.gameHeight),
-            radius: 10, // TODO: touch radius issues on Android?
+            radius: 10,
         };
     }
 

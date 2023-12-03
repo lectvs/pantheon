@@ -44,10 +44,12 @@ class HookManager<Hooks extends HookSet> {
 
     executeHooks<T extends string & keyof Hooks>(name: T, ...params: Parameters<Hooks[T]['params']>) {
         let hooks = this.hooks[name];
-        if (A.isEmpty(hooks)) return;
+        if (A.isEmpty(hooks)) return [];
+        let result: ReturnType<Hooks[T]['params']>[] = [];
         for (let hook of hooks) {
-            hook(...params);
+            result.push(hook(...params));
         }
+        return result;
     }
 
     removeHook(hook: Hook) {

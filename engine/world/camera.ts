@@ -68,7 +68,7 @@ class Camera {
         this.mode = config.mode ? O.clone(config.mode) : Camera.Mode.FOCUS(this.width/2, this.height/2);
         this.movement = config.movement ? O.clone(config.movement) : Camera.Movement.SNAP();
 
-        this.screenShakePhysicallyMovesCamera = config.screenShakePhysicallyMovesCamera ?? false;
+        this.screenShakePhysicallyMovesCamera = config.screenShakePhysicallyMovesCamera ?? true;
         this.shakeIntensity = 0;
         this._shakeX = 0;
         this._shakeY = 0;
