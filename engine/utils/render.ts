@@ -7,18 +7,19 @@ function diffRender(stage: PIXI.Container, match: RenderResult) {
         }
     }
 
-    for (let obj of match) {
-        if (obj && !stage.children.includes(obj)) {
+    let sortNeeded = false;
+    for (let i = 0; i < match.length; i++) {
+        let obj = match[i];
+        if (!stage.children.includes(obj)) {
             stage.addChild(obj);
+        }
+        match[i].zIndex = i;
+        if (stage.children[i] !== match[i]) {
+            sortNeeded = true;
         }
     }
 
-    // Ensure order of passed DisplayObjects.
-    for (let i = 0; i < match.length; i++) {
-        let m = match[i];
-        if (!m) continue;
-        m.zIndex = i;
+    if (sortNeeded) {
+        stage.sortChildren();
     }
-
-    stage.sortChildren();
 }
