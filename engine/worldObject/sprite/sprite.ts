@@ -97,34 +97,12 @@ class Sprite extends PhysicsWorldObject {
         this.renderObject.tint = this.tint;
         this.renderObject.alpha = this.alpha;
         this.renderObject.blendMode = this.blendMode ?? PIXI.BLEND_MODES.NORMAL;
+        this.renderObject.updateAndSetEffects(this.effects);
 
-        let filters = this.effects.getFilterList();
-        if (!A.equals(this.renderObject.filters, filters)) {
-            for (let filter of filters) {
-                filter.setTextureValuesFromSprite(this.renderObject);
-            }
-            this.renderObject.filters = filters;
-        }
+        let result: [PIXI.Sprite, ...RenderResult] = FrameCache.array(this.renderObject);
+        result.pushAll(super.render(x, y));
 
-        let filterArea = TextureUtils.getFilterArea(this.renderObject.texture, filters, {
-            x: this.renderObject.x,
-            y: this.renderObject.y,
-            scaleX: this.renderObject.scale.x,
-            scaleY: this.renderObject.scale.y,
-            angle: this.renderObject.angle,
-        });
-
-        if (filterArea) {
-            this.renderObject.filterArea = filterArea;
-        } else {
-            // @ts-expect-error
-            this.renderObject.filterArea = null;
-        }
-
-        return [
-            this.renderObject,
-            ...super.render(x, y),
-        ];
+        return result;
     }
 
     getTexture() {

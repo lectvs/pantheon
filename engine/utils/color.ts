@@ -12,13 +12,11 @@ namespace Color {
         let fgColorArray = colorToVec3(fgColor);
 
         let a = M.clamp(alpha, 0, 1);
-        let blendedColorArray: [number, number, number] = [
-            M.lerp(a, bgColorArray[0], fgColorArray[0]),
-            M.lerp(a, bgColorArray[1], fgColorArray[1]),
-            M.lerp(a, bgColorArray[2], fgColorArray[2]),
-        ];
+        let r = M.lerp(a, bgColorArray[0], fgColorArray[0]);
+        let g = M.lerp(a, bgColorArray[1], fgColorArray[1]);
+        let b = M.lerp(a, bgColorArray[2], fgColorArray[2]);
 
-        return vec3ToColor(blendedColorArray);
+        return xyzToColor(r, g, b);
     }
 
     export function colorToVec3(color: number): [number, number, number] {
@@ -40,7 +38,7 @@ namespace Color {
         let chromaf = chroma.interpolate(chroma1, chroma2, t, 'lch');
         let rgbf = chromaf.rgb();
 
-        return vec3ToColor([rgbf[0] / 255, rgbf[1] / 255, rgbf[2] / 255]);
+        return xyzToColor(rgbf[0] / 255, rgbf[1] / 255, rgbf[2] / 255);
     }
 
     export function lerpColorByRgb(t: number, color1: number, color2: number): number {
@@ -55,7 +53,7 @@ namespace Color {
         let chromaf = chroma.interpolate(chroma1, chroma2, t, 'rgb');
         let rgbf = chromaf.rgb();
 
-        return vec3ToColor([rgbf[0] / 255, rgbf[1] / 255, rgbf[2] / 255]);
+        return xyzToColor(rgbf[0] / 255, rgbf[1] / 255, rgbf[2] / 255);
     }
 
     export function tint(color: number, tint: number) {
@@ -69,10 +67,18 @@ namespace Color {
     }
 
     export function vec3ToColor(vec3: [number, number, number]) {
-        return (Math.round(vec3[0] * 255) << 16) + (Math.round(vec3[1] * 255) << 8) + Math.round(vec3[2] * 255);
+        return xyzToColor(vec3[0], vec3[1], vec3[2]);
     }
 
-    export function vec4ToArgb(vec3: [number, number, number, number]) {
-        return (Math.round(vec3[0] * 255) << 24) + (Math.round(vec3[1] * 255) << 16) + (Math.round(vec3[2] * 255) << 8) + Math.round(vec3[3] * 255);
+    export function vec4ToArgb(vec4: [number, number, number, number]) {
+        return xyzwToArgb(vec4[0], vec4[1], vec4[2], vec4[3]);
+    }
+
+    export function xyzToColor(x: number, y: number, z: number) {
+        return (Math.round(x * 255) << 16) + (Math.round(y * 255) << 8) + Math.round(z * 255);
+    }
+
+    export function xyzwToArgb(x: number, y: number, z: number, w: number) {
+        return (Math.round(x * 255) << 24) + (Math.round(y * 255) << 16) + (Math.round(z * 255) << 8) + Math.round(w * 255);
     }
 }

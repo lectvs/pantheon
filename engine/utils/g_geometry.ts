@@ -83,16 +83,46 @@ namespace G {
         return A.range(n).map(i => vec2(cx + r*M.cos(angle + 360/n*(i+0.5)), cy + r*M.sin(angle + 360/n*(i+0.5))));
     }
 
-    export function getEncompassingBoundaries(boundaries: (Pt | Bndries)[]): Boundaries {
-        let left = M.min(boundaries, char => 'left' in char ? char.left : char.x);
-        let right = M.max(boundaries, char => 'right' in char ? char.right : char.x);
-        let top = M.min(boundaries, char => 'top' in char ? char.top : char.y);
-        let bottom = M.max(boundaries, char => 'bottom' in char ? char.bottom : char.y);
+    export function getEncompassingBoundaries(objs: (Pt | Rect | Bndries)[]): Boundaries {
+        let minLeft: number | undefined;
+        let maxRight: number | undefined;
+        let minTop: number | undefined;
+        let maxBottom: number | undefined;
+
+        for (let obj of objs) {
+            let left: number;
+            let right: number;
+            let top: number;
+            let bottom: number;
+
+            if ('left' in obj) {
+                left = obj.left;
+                right = obj.right;
+                top = obj.top;
+                bottom = obj.bottom;
+            } else if ('width' in obj) {
+                left = obj.x;
+                right = obj.x + obj.width;
+                top = obj.y;
+                bottom = obj.y + obj.height;
+            } else {
+                left = obj.x;
+                right = obj.x;
+                top = obj.y;
+                bottom = obj.y;
+            }
+
+            if (minLeft === undefined || left < minLeft) minLeft = left;
+            if (maxRight === undefined || right > maxRight) maxRight = right;
+            if (minTop === undefined || top < minTop) minTop = top;
+            if (maxBottom === undefined || bottom > maxBottom) maxBottom = bottom;
+        }
+
         return new Boundaries(
-            isFinite(left) ? left : -Infinity,
-            isFinite(right) ? right : Infinity,
-            isFinite(top) ? top : -Infinity,
-            isFinite(bottom) ? bottom : Infinity,
+            minLeft && isFinite(minLeft) ? minLeft : -Infinity,
+            maxRight && isFinite(maxRight) ? maxRight : Infinity,
+            minTop && isFinite(minTop) ? minTop : -Infinity,
+            maxBottom && isFinite(maxBottom) ? maxBottom : Infinity,
         );
     }
 

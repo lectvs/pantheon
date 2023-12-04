@@ -52,7 +52,10 @@ class PuffSystem extends WorldObject {
     }
 
     override render(x: number, y: number) {
-        let result: RenderResult = this.puffs.map((puff, i) => {
+        let result: RenderResult = FrameCache.array();
+        
+        for (let i = 0; i < this.puffs.length; i++) {
+            let puff = this.puffs[i];
             let progress = puff.t / puff.maxLife;
 
             let radius = M.lerp(progress, puff.initialRadius, puff.finalRadius);
@@ -65,10 +68,10 @@ class PuffSystem extends WorldObject {
             this.sprites[i].tint = color;
             this.sprites[i].alpha = alpha;
 
-            return this.sprites[i];
-        });
+            result.push(this.sprites[i]);
+        }
 
-        result.push(...super.render(x, y));
+        result.pushAll(super.render(x, y));
 
         return result;
     }

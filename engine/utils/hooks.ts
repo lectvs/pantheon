@@ -44,8 +44,16 @@ class HookManager<Hooks extends HookSet> {
 
     executeHooks<T extends string & keyof Hooks>(name: T, ...params: Parameters<Hooks[T]['params']>) {
         let hooks = this.hooks[name];
-        if (A.isEmpty(hooks)) return [];
-        let result: ReturnType<Hooks[T]['params']>[] = [];
+        if (A.isEmpty(hooks)) return;
+        for (let hook of hooks) {
+            hook(...params);
+        }
+    }
+
+    executeHooksWithReturnValue$<T extends string & keyof Hooks>(name: T, ...params: Parameters<Hooks[T]['params']>) {
+        let hooks = this.hooks[name];
+        if (A.isEmpty(hooks)) return FrameCache.array();
+        let result: ReturnType<Hooks[T]['params']>[] = FrameCache.array();
         for (let hook of hooks) {
             result.push(hook(...params));
         }

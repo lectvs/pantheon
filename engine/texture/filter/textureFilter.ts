@@ -5,7 +5,7 @@ namespace TextureFilter {
     /**
      * Texture fragment filter config.
      * 
-     * @property uniforms Map of uniform name => value to initialize the filter. Of the form {"rx": 5, "position": [1,4]}
+     * @property uniforms Map of uniform type+name => value to initialize the filter. Of the form {"float rx": 5, "vec2 position": [1,4]}
      * @property code The fragment shader code. Set the color in `outp`.
      *           Available for use are the following variables and methods:
      *               vec4 inp - the input color

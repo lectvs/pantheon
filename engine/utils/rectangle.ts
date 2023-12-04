@@ -31,6 +31,22 @@ class Rectangle {
         return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
     }
 
+    copyBoundaries(bndries: Bndries) {
+        this.x = bndries.left;
+        this.y = bndries.top;
+        this.width = isFinite(bndries.left) && isFinite(bndries.right) ? bndries.right - bndries.left : Infinity;
+        this.height = isFinite(bndries.top) && isFinite(bndries.bottom) ? bndries.bottom - bndries.top : Infinity;
+        return this;
+    }
+
+    copyPixiRectangle(pixiRectangle: PIXI.Rectangle) {
+        this.x = pixiRectangle.x;
+        this.y = pixiRectangle.y;
+        this.width = pixiRectangle.width;
+        this.height = pixiRectangle.height;
+        return this;
+    }
+
     isFinite() {
         return isFinite(this.x) && isFinite(this.y) && isFinite(this.width) && isFinite(this.height);
     }
@@ -44,12 +60,10 @@ class Rectangle {
     }
 
     static fromBoundaries(bndries: Bndries) {
-        let width = isFinite(bndries.left) && isFinite(bndries.right) ? bndries.right - bndries.left : Infinity;
-        let height = isFinite(bndries.top) && isFinite(bndries.bottom) ? bndries.bottom - bndries.top : Infinity;
-        return new Rectangle(bndries.left, bndries.right, width, height);
+        return new Rectangle(0, 0, 0, 0).copyBoundaries(bndries);
     }
 
     static fromPixiRectangle(pixiRectangle: PIXI.Rectangle) {
-        return new Rectangle(pixiRectangle.x, pixiRectangle.y, pixiRectangle.width, pixiRectangle.height);
+        return new Rectangle(0, 0, 0, 0).copyPixiRectangle(pixiRectangle)
     }
 }

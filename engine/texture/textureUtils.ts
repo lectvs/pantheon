@@ -105,7 +105,6 @@ namespace TextureUtils {
         return result;
     }
 
-    const _visibleLocalBoundsResult = new Rectangle(0, 0, 0, 0);
     export function getTextureLocalBounds$(texture: PIXI.Texture, properties: { x?: number, y?: number, scaleX?: number, scaleY?: number, angle?: number }) {
         let x = properties.x ?? 0;
         let y = properties.y ?? 0;
@@ -135,7 +134,7 @@ namespace TextureUtils {
         let rotatedAndScaled_ax = (-ax) * M.cos(angle) - (-ay) * M.sin(angle);
         let rotatedAndScaled_ay = (-ax) * M.sin(angle) + (-ay) * M.cos(angle);
 
-        return _visibleLocalBoundsResult.set(x + rotatedAndScaled_ax + minx, y + rotatedAndScaled_ay + miny, maxx - minx, maxy - miny);
+        return FrameCache.rectangle(x + rotatedAndScaled_ax + minx, y + rotatedAndScaled_ay + miny, maxx - minx, maxy - miny);
     }
 
     export function isImmutable(renderTexture: PIXI.RenderTexture) {

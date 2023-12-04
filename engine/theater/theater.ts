@@ -69,21 +69,21 @@ class Theater {
     }
 
     render(): RenderResult {
-        let result = [
-            ...this.stageManager.render(),
-        ];
+        let result: RenderResult = FrameCache.array();
+
+        result.pushAll(this.stageManager.render());
 
         if (this.dialogBox) {
-            result.push(...this.dialogBoxWorld.render());
+            result.pushAll(this.dialogBoxWorld.render());
         }
 
         for (let fade of this.fades) {
-            result.push(...fade.render());
+            result.pushAll(fade.render());
         }
 
         diffRender(this.container, result);
 
-        return [this.container];
+        return FrameCache.array(this.container);
     }
 
     clearFades(duration: number) {
@@ -176,7 +176,7 @@ namespace Theater {
         render(): RenderResult {
             this.sprite.tint = this.color;
             this.sprite.alpha = this.alpha;
-            return [this.sprite];
+            return FrameCache.array(this.sprite);
         }
     }
     export class WorldAsWorldObject extends WorldObject {

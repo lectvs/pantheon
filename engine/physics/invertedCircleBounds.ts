@@ -44,7 +44,7 @@ class InvertedCircleBounds implements Bounds {
         this.debugSprite.y = center.y;
         // +2 for outer alignment
         this.debugSprite.texture = Textures.outlineCircle(this.radius+2, 0x00FF00);
-        return [this.debugSprite];
+        return FrameCache.array(this.debugSprite);
     }
 
     freeze() {

@@ -42,7 +42,7 @@ class CircleBounds implements Bounds {
         this.debugSprite.x = center.x;
         this.debugSprite.y = center.y;
         this.debugSprite.texture = Textures.outlineCircle(this.radius, 0x00FF00);
-        return [this.debugSprite];
+        return FrameCache.array(this.debugSprite);
     }
 
     freeze() {

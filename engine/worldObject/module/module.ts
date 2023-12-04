@@ -18,7 +18,7 @@ class Module<T extends WorldObject> {
 
     update(): void {}
     render(x: number, y: number): RenderResult {
-        return [];
+        return FrameCache.array();
     }
 
     remove(): void {

@@ -1,3 +1,5 @@
+/// <reference path="./extensions.ts" />
+
 namespace A {
     export const ALPHABET_LOWERCASE = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
     export const ALPHABET_UPPERCASE = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
@@ -57,16 +59,6 @@ namespace A {
 
     export function filledArray2D<T>(rows: number, cols: number, fillWith?: T): ValueElseUndefined<T>[][] {
         return sequence2D(rows, cols, (i, j) => fillWith) as any;
-    }
-
-    export function filterInPlace<T>(array: T[], predicate: (value: T, index: number, array: T[]) => any) {
-        if (isEmpty(array)) return array;
-        for (let i = array.length-1; i >= 0; i--) {
-            if (!predicate(array[i], i, array)) {
-                array.splice(i, 1);
-            }
-        }
-        return array;
     }
 
     export function get2DArrayDimensions(array: any[][]): Dimens {
@@ -228,7 +220,7 @@ namespace A {
     export function repeat<T>(array: T[], count: number) {
         let result: T[] = [];
         for (let i = 0; i < count; i++) {
-            result.push(...array);
+            result.pushAll(array);
         }
         return result;
     }

@@ -174,10 +174,10 @@ class SpriteText extends WorldObject {
     }
 
     override render(x: number, y: number) {
-        return [
-            ...this.getRenderSystem().render(x, y, this),
-            ...super.render(x, y),
-        ];
+        let result: RenderResult = FrameCache.array();
+        result.pushAll(this.getRenderSystem().render(x, y, this));
+        result.pushAll(super.render(x, y));
+        return result;
     }
 
     addText(text: string) {
@@ -205,15 +205,15 @@ class SpriteText extends WorldObject {
         return this.currentText;
     }
 
-    getStyleFromTags(tagData: SpriteText.TagData[], defaults: Required<SpriteText.Style>) {
-        let result: SpriteText.Style = { filters: [] };
+    getStyleFromTags$(tagData: SpriteText.TagData[], defaults: Required<SpriteText.Style>) {
+        let result: SpriteText.Style = { filters: FrameCache.array() };
         for (let data of tagData) {
             let style = this.getTagStyle(data.tag, data.params);
             if (style.color !== undefined) result.color = style.color;
             if (style.alpha !== undefined) result.alpha = style.alpha;
             if (style.offsetX !== undefined) result.offsetX = style.offsetX;
             if (style.offsetY !== undefined) result.offsetY = style.offsetY;
-            if (!A.isEmpty(style.filters)) result.filters!.push(...style.filters);
+            if (!A.isEmpty(style.filters)) result.filters!.pushAll(style.filters);
         }
 
         return O.defaults(result, defaults);
@@ -228,8 +228,8 @@ class SpriteText extends WorldObject {
     }
 
     override getVisibleLocalBounds$(): Rectangle | undefined {
-        let bounds = this.getRenderSystem().getSpriteTextLocalBounds(this);
-        return Rectangle.fromBoundaries(bounds);
+        let bounds = this.getRenderSystem().getSpriteTextLocalBounds$(this);
+        return FrameCache.rectangle(0, 0, 0, 0).copyBoundaries(bounds);
     }
 
     markDirty() {
@@ -287,7 +287,7 @@ class SpriteText extends WorldObject {
     }
 
     private getTagStyle(name: string, params: string[]) {
-        let cacheKey = [name, ...params].join(' ');
+        let cacheKey = `${name} ${params.join(' ')}`;
         if (cacheKey in this.tagCache) {
             return this.tagCache[cacheKey];
         }

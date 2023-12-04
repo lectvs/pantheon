@@ -93,7 +93,7 @@ class World {
     effects: Effects;
 
     get shouldRenderToTexture() {
-        return A.size(this.effects.getFilterList()) > 0
+        return this.effects.hasEffects()
             || !this.camera.screenShakePhysicallyMovesCamera
             || this.scaleX !== 1
             || this.scaleY !== 1;
@@ -174,6 +174,9 @@ class World {
 
         this.camera = new Camera(config.camera ?? {}, this);
         this.screenShakeFilter = new World.ScreenShakeFilter();
+        if (!this.camera.screenShakePhysicallyMovesCamera) {
+            this.effects.pre.push(this.screenShakeFilter);
+        }
 
         this.mouseBounds = new CircleBounds(0, 0, 0);
 
@@ -250,53 +253,41 @@ class World {
         this.bgFill.tint = this.backgroundColor;
         this.bgFill.alpha = this.backgroundAlpha;
 
-        let result: RenderResult = [
-            this.bgFill,
-        ];
-
+        let result: RenderResult = FrameCache.array(this.bgFill);
+        
         for (let layer of this.layers) {
             if (layer.shouldRenderToOwnLayer) {
                 let layerTexture = this.layerSprite.texture as PIXI.RenderTexture;
                 renderToRenderTexture(this.renderLayer(layer), layerTexture, 'clearTextureFirst');
-                let layerFilters = layer.effects.getFilterList();
-                for (let filter of layerFilters) {
-                    filter.setTextureValuesFromSprite(this.layerSprite);
-                }
-                this.layerSprite.filters = layerFilters;
+                this.layerSprite.updateAndSetEffects(layer.effects);
                 result.push(this.layerSprite);
             } else {
-                result.push(...this.renderLayer(layer));
+                result.pushAll(this.renderLayer(layer));
             }
         }
 
         diffRender(this.container, result);
 
-        let worldFilters = this.effects.getFilterList();
-        if (!this.camera.screenShakePhysicallyMovesCamera) {
-            worldFilters.unshift(this.screenShakeFilter);
-        }
-
         if (this.shouldRenderToTexture) {
             let worldTexture = this.worldSprite.texture as PIXI.RenderTexture;
             renderToRenderTexture(this.container, worldTexture, 'clearTextureFirst');
             this.worldSprite.scale.set(this.scaleX, this.scaleY);
-            for (let filter of worldFilters) {
-                filter.setTextureValuesFromSprite(this.worldSprite);
-            }
-            this.worldSprite.filters = worldFilters;
-            return [this.worldSprite];
+            this.worldSprite.updateAndSetEffects(this.effects);
+            return FrameCache.array(this.worldSprite);
         } else {
-            return [this.container];
+            return FrameCache.array(this.container);
         }
     }
 
     renderLayer(layer: World.Layer) {
         layer.sort();
 
-        return layer.worldObjects
-            .filter(worldObject => worldObject.isVisible() && worldObject.isOnScreen())
-            .map(worldObject => worldObject.render(worldObject.getRenderScreenX(), worldObject.getRenderScreenY()))
-            .flat();
+        let result: RenderResult = [];
+        for (let worldObject of layer.worldObjects) {
+            if (!worldObject.isVisible() || !worldObject.isOnScreen()) continue;
+            result.pushAll(worldObject.render(worldObject.getRenderScreenX(), worldObject.getRenderScreenY()));
+        }
+        return result;
     }
 
     addHook<T extends keyof World.Hooks>(name: T, fn: World.Hooks[T]['params']) {
@@ -323,8 +314,8 @@ class World {
         return this.physicsGroups[name];
     }
 
-    getPhysicsGroupsThatCollideWith(physicsGroup: string) {
-        let result: string[] = [];
+    getPhysicsGroupsThatCollideWith$(physicsGroup: string) {
+        let result: string[] = FrameCache.array();
         for (let collision of this.collisions) {
             if (collision.move === physicsGroup) {
                 result.push(collision.from);

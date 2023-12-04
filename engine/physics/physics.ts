@@ -53,7 +53,7 @@ namespace Physics {
             worldObject.bounds.freeze();
         }
 
-        let resultCollisions: RaycastCollisionData[] = [];
+        let resultCollisions: RaycastCollisionData[] = FrameCache.array();
 
         for (let iter = 0; iter < iters; iter++) {
             for (let worldObject of collidingPhysicsWorldObjects) {
@@ -163,7 +163,7 @@ namespace Physics {
     }
 
     function getRaycastCollisions(world: World): RaycastCollisionData[] {
-        let raycastCollisions: RaycastCollisionData[] = [];
+        let raycastCollisions: RaycastCollisionData[] = FrameCache.array();
 
         for (let collision of world.collisions) {
             for (let imove = 0; imove < world.physicsGroups[collision.move].worldObjects.length; imove++) {
@@ -225,7 +225,7 @@ namespace Physics {
     }
 
     function collectCollisions(collisions: RaycastCollisionData[]) {
-        let collisionGroups: RaycastCollisionData[][] = [];
+        let collisionGroups: RaycastCollisionData[][] = FrameCache.array();
 
         for (let collision of collisions) {
             let collisionFoundInList = false;
@@ -237,12 +237,12 @@ namespace Physics {
                 }
             }
             if (!collisionFoundInList) {
-                collisionGroups.push([collision]);
+                collisionGroups.push(FrameCache.array(collision));
             }
         }
 
-        return collisionGroups.map(collisionList => {
-            return <RaycastCollisionData>{
+        return collisionGroups.mapInPlace(collisionList => {
+            return {
                 move: collisionList[0].move,
                 from: collisionList[0].from,
                 callback: collisionList[0].callback,
@@ -254,7 +254,7 @@ namespace Physics {
                     displacementY: A.sum(collisionList, collision => collision.collision?.displacementY ?? 0),
                     t: M.min(collisionList, collision => collision.collision?.t ?? -Infinity),
                 }
-            };
+            } satisfies RaycastCollisionData;
         });
     }
 
@@ -369,13 +369,17 @@ namespace Physics {
     }
 
     function getCollidingPhysicsObjects(world: World): PhysicsWorldObject[] {
-        return <PhysicsWorldObject[]>world.worldObjects.filter(worldObject => {
-            if (!(worldObject instanceof PhysicsWorldObject)) return false;
-            if (!worldObject.physicsGroup) return false;
-            if (!worldObject.isActive()) return false;
-            if (!worldObject.colliding) return false;
-            return true;
-        });
+        let result: PhysicsWorldObject[] = FrameCache.array();
+
+        for (let worldObject of world.worldObjects) {
+            if (!(worldObject instanceof PhysicsWorldObject)) continue;
+            if (!worldObject.physicsGroup) continue;
+            if (!worldObject.isActive()) continue;
+            if (!worldObject.colliding) continue;
+            result.push(worldObject);
+        }
+
+        return result;
     }
 
     function cachePhysicsObjectData(physicsWorldObjects: PhysicsWorldObject[]): PhysicsObjectDataCache {

@@ -44,7 +44,7 @@ class InvertedRectBounds implements Bounds {
         this.debugSprite.x = innerBox.x-1;
         this.debugSprite.y = innerBox.y-1;
         this.debugSprite.texture = Textures.outlineRect(innerBox.width+2, innerBox.height+2, 0x00FF00);
-        return [this.debugSprite];
+        return FrameCache.array(this.debugSprite);
     }
 
     freeze() {

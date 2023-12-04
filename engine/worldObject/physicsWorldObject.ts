@@ -64,16 +64,16 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     override render(x: number, y: number): RenderResult {
-        let result: RenderResult = [];
+        let result: RenderResult = FrameCache.array();
         if (Debug.SHOW_ALL_PHYSICS_BOUNDS || this.debugDrawBounds) {
             let zoffset = 0; // offset to cancel out the z-factor when drawing bounds
             if (this.zBehavior === 'threequarters') {
                 let parentz = this.parent ? this.parent.z : 0;
                 zoffset = parentz - this.z;
             }
-            result.push(...this.renderBounds(x, y - zoffset));
+            result.pushAll(this.renderBounds(x, y - zoffset));
         }
-        result.push(...super.render(x, y));
+        result.pushAll(super.render(x, y));
         return result;
     }
 

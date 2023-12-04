@@ -159,8 +159,8 @@ class Main {
 
             PerformanceTracking.logBeginFrame();
 
+            FrameCache.reset();
             global.fpsCalculator.update();
-
             global.clearStacks();
 
             for (let i = 0; i < Debug.SKIP_RATE; i++) {
@@ -177,7 +177,7 @@ class Main {
                 MobileScaleManager.update();
             }
 
-            diffRender(Main.stage, [Main.game.render()]);
+            diffRender(Main.stage, FrameCache.array(Main.game.render()));
 
             Main.renderScreenToCanvas();
         });
@@ -228,7 +228,7 @@ class Main {
         barFill.scale.x = barw * progress;
         barOutline.position.set(barx, bary);
 
-        diffRender(Main.stage, [ bg, barFill, barOutline ]);
+        diffRender(Main.stage, FrameCache.array(bg, barFill, barOutline));
 
         Main.renderScreenToCanvas();
     }

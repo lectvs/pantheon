@@ -13,13 +13,24 @@ class WorldSelecter {
     }
 
     collidesWith(physicsGroup: string) {
-        let groups = this.world.getPhysicsGroupsThatCollideWith(physicsGroup);
-        return groups.map(group => this.world.physicsGroups[group].worldObjects).flat();
+        let groups = this.world.getPhysicsGroupsThatCollideWith$(physicsGroup);
+        let result: PhysicsWorldObject[] = [];
+        for (let group of groups) {
+            result.pushAll(this.world.physicsGroups[group].worldObjects);
+        }
+        return result;
     }
 
     modules<T extends WorldObject, S extends Module<T>>(moduleType: new (...args: any[]) => S): S[] {
         if (!moduleType) return [];
-        return this.world.worldObjects.map(obj => obj.getModule(moduleType)).filter(m => m) as S[];
+        let result: S[] = [];
+        for (let worldObject of this.world.worldObjects) {
+            let module = worldObject.getModule(moduleType);
+            if (module) {
+                result.push(module);
+            }
+        }
+        return result;
     }
 
     name<T extends WorldObject>(name: string, checked: 'checked' | 'unchecked' = 'checked'): T | undefined {
@@ -50,15 +61,20 @@ class WorldSelecter {
     }
 
     overlap(bounds: Bounds, physicsGroups?: string[]): PhysicsWorldObject[] {
-        let objs = physicsGroups
-                    ? Object.keys(this.world.physicsGroups)
-                        .filter(pg => physicsGroups.includes(pg))
-                        .map(pg => this.world.physicsGroups[pg].worldObjects)
-                        .flat()
-                    : this.world.select.typeAll(PhysicsWorldObject);
+        let objs: PhysicsWorldObject[];
+
+        if (physicsGroups) {
+            objs = [];
+            for (let pg in this.world.physicsGroups) {
+                if (!physicsGroups.includes(pg)) continue;
+                objs.pushAll(this.world.physicsGroups[pg].worldObjects);
+            }
+        } else {
+            objs = this.world.select.typeAll(PhysicsWorldObject);
+        }
 
         if (A.isEmpty(objs)) return [];
-        return objs.filter(obj => obj.isOverlapping(bounds));
+        return objs.filterInPlace(obj => obj.isOverlapping(bounds));
     }
 
     raycast(x: number, y: number, dx: number, dy: number, physicsGroups: string[]): WorldSelecter.RaycastResult[] {

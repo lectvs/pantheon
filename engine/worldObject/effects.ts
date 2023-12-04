@@ -28,23 +28,6 @@ class Effects {
     get invertColors() { return this._invertColorsLazy.get(); }
     get glitch() { return this._glitchLazy.get(); }
 
-    get allEffects() {
-        const mainEffects = [
-            this._silhouetteLazy,
-            this._outlineLazy,
-            this._invertColorsLazy,
-            this._glitchLazy,
-        ]
-        .filter(effectLazy => effectLazy.has())
-        .map(effectLazy => effectLazy.get());
-
-        return [
-            ...this.pre,
-            ...mainEffects,
-            ...this.post,
-        ];
-    }
-
     pre: TextureFilter[];
     post: TextureFilter[];
 
@@ -54,16 +37,16 @@ class Effects {
         this.updateFromConfig(config);
     }
 
-    getFilterList(): TextureFilter[] {
-        return this.allEffects.filter(e => e.enabled);
+    getFilterList$(): TextureFilter[] {
+        return this.getAllEffects$().filterInPlace(e => e.enabled);
     }
 
     hasEffects() {
-        return this.allEffects.some(e => e.enabled);
+        return this.getAllEffects$().some(e => e.enabled);
     }
 
     updateEffects(delta: number) {
-        let allEffects = this.allEffects;
+        let allEffects = this.getAllEffects$();
         for (let effect of allEffects) {
             effect.updateTime(delta);
         }
@@ -103,6 +86,21 @@ class Effects {
         if (config.post) {
             this.post = config.post;
         }
+    }
+
+    private getAllEffects$() {
+        let result: TextureFilter[] = FrameCache.array();
+
+        result.pushAll(this.pre);
+
+        if (this._silhouetteLazy.has()) result.push(this._silhouetteLazy.get());
+        if (this._outlineLazy.has()) result.push(this._outlineLazy.get());
+        if (this._invertColorsLazy.has()) result.push(this._invertColorsLazy.get());
+        if (this._glitchLazy.has()) result.push(this._glitchLazy.get());
+
+        result.pushAll(this.post);
+
+        return result;
     }
 }
 

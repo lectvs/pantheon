@@ -27,7 +27,7 @@ class StageManager {
         if (this.currentWorld) {
             return this.currentWorld.render();
         }
-        return [];
+        return FrameCache.array();
     }
 
     /**

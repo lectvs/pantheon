@@ -31,7 +31,8 @@ class Camera {
     mode: Camera.Mode;
     movement: Camera.Movement;
 
-    screenShakePhysicallyMovesCamera: boolean;
+    // Readonly because world only sets the screen shake filter once.
+    readonly screenShakePhysicallyMovesCamera: boolean;
     shakeIntensity: number;
     private _shakeX: number;
     get shakeX() { return this._shakeX; }

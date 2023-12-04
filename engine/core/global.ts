@@ -2,7 +2,7 @@
 
 class global {
     static clearStacks() {
-        this.scriptStack = [];
+        this.scriptStack.clear();
     }
 
     // Update options

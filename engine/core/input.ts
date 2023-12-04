@@ -93,7 +93,8 @@ class Input {
     }
 
     static consume(key: string) {
-        for (let keyCode of this.keyCodesByName[key] || []) {
+        if (!this.keyCodesByName[key]) return;
+        for (let keyCode of this.keyCodesByName[key]) {
             this.keysByKeycode[keyCode].consume();
         }
     }

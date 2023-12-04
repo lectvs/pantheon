@@ -35,8 +35,8 @@ namespace Bounds.Collision {
         let checkTop = movePos.y <= fromBox.top + fromBox.height/2;
         let checkLeft = movePos.x <= fromBox.left + fromBox.width/2;
 
-        let displacementXs: number[] = [];
-        let displacementYs: number[] = [];
+        let displacementXs: number[] = FrameCache.array();
+        let displacementYs: number[] = FrameCache.array();
 
         if (checkTop) {
             displacementXs.push(0);
@@ -134,8 +134,8 @@ namespace Bounds.Collision {
         let movePos = move.getCenter();
         let fromBox = from.getBoundingBox();
 
-        let newXs: number[] = [];
-        let newYs: number[] = [];
+        let newXs: number[] = FrameCache.array();
+        let newYs: number[] = FrameCache.array();
 
 
         // Right edge
@@ -307,8 +307,8 @@ namespace Bounds.Collision {
         let currentBox = move.getBoundingBox();
         let currentOtherBox = from.getBoundingBox();
 
-        let displacementX = M.argmin([currentOtherBox.right - currentBox.left, currentOtherBox.left - currentBox.right], Math.abs)!;
-        let displacementY = M.argmin([currentOtherBox.bottom - currentBox.top, currentOtherBox.top - currentBox.bottom], Math.abs)!;
+        let displacementX = M.argmin(FrameCache.array(currentOtherBox.right - currentBox.left, currentOtherBox.left - currentBox.right), Math.abs)!;
+        let displacementY = M.argmin(FrameCache.array(currentOtherBox.bottom - currentBox.top, currentOtherBox.top - currentBox.bottom), Math.abs)!;
 
         if (Math.abs(displacementX) < Math.abs(displacementY)) {
             displacementY = 0;
@@ -330,8 +330,8 @@ namespace Bounds.Collision {
         let moveBox = move.getBoundingBox();
         let fromBox = from.getBoundingBox();
 
-        let newXs: number[] = [];
-        let newYs: number[] = [];
+        let newXs: number[] = FrameCache.array();
+        let newYs: number[] = FrameCache.array();
 
         // Left Edge + vertex
         if (from.direction === 'upright' || from.direction === 'downright'

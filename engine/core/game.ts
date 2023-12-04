@@ -97,11 +97,11 @@ class Game {
             : this.theater.render()
 
         if (Debug.SHOW_OVERLAY) {
-            result.push(...this.overlay.render());
+            result.pushAll(this.overlay.render());
         }
 
         if (Debug.SHOW_TOUCHES) {
-            result.push(...this.renderTouches());
+            result.pushAll(this.renderTouches());
         }
 
         diffRender(this.container, result);
@@ -172,10 +172,10 @@ class Game {
 
     private renderTouches() {
         if (!IS_MOBILE || !Input.isKeyCodeDown(Input.MOUSE_KEYCODES[0])) {
-            return [];
+            return FrameCache.array();
         }
         this.debugTouchSprite.x = Input.mouseX;
         this.debugTouchSprite.y = Input.mouseY;
-        return [this.debugTouchSprite];
+        return FrameCache.array(this.debugTouchSprite);
     }
 }

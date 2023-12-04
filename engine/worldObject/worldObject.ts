@@ -316,10 +316,18 @@ class WorldObject {
     }
 
     render(x: number, y: number): RenderResult {
-        return [
-            ...this.modules.map(module => module.render(x, y)).flat(),
-            ...this.hookManager.executeHooks('onRender', x, y).flat(),
-        ];
+        let result: RenderResult = FrameCache.array();
+
+        for (let module of this.modules) {
+            result.pushAll(module.render(x, y));
+        }
+
+        let renderedHooks = this.hookManager.executeHooksWithReturnValue$('onRender', x, y);
+        for (let renderedHook of renderedHooks) {
+            result.pushAll(renderedHook);
+        }
+
+        return result;
     }
 
     addAnimation(name: string, animation: AnimationInstance) {
