@@ -125,9 +125,9 @@ class Debug {
 function get(nameOrType: string | (new (...args: any[]) => WorldObject)) {
     if (!global.world) return undefined;
     let worldObjects = St.isString(nameOrType)
-                        ? global.world.select.nameAll(nameOrType)
-                        : global.world.select.typeAll(nameOrType);
+                        ? global.world.select.nameAll$(nameOrType)
+                        : global.world.select.typeAll$(nameOrType);
     if (A.isEmpty(worldObjects)) return undefined;
     if (worldObjects.length === 1) return worldObjects[0];
-    return worldObjects;
+    return A.clone(worldObjects);
 }

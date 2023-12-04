@@ -88,7 +88,7 @@ class PhysicsWorldObject extends WorldObject {
     isGrounded(groundGroups: string[]) {
         if (!this.world) return false;
         this.bounds.y++;
-        let ground = this.world.select.overlap(this.bounds, groundGroups);
+        let ground = this.world.select.overlap$(this.bounds, groundGroups);
         this.bounds.y--;
         return !A.isEmpty(ground);
     }
