@@ -37,6 +37,20 @@ namespace A {
         return filledArray<T>(count);
     }
 
+    /**
+     * Returns true iff the arrays contain the same elements.
+     */
+    export function equals(array1: any[] | undefined, array2: any[] | undefined) {
+        let size1 = A.size(array1);
+        let size2 = A.size(array2);
+        if (size1 === 0 && size2 === 0) return true;
+        if (size1 !== size2) return false;
+        for (let i = 0; i < size1; i++) {
+            if (array1![i] !== array2![i]) return false;
+        }
+        return true;
+    }
+
     export function filledArray<T>(count: number, fillWith?: T): ValueElseUndefined<T>[] {
         return sequence(count, i => fillWith) as any;
     }
@@ -234,7 +248,7 @@ namespace A {
         return sequence(rows, i => sequence(cols, j => f(i, j)));
     }
 
-    export function size(array: any[]) {
+    export function size(array: any[] | undefined) {
         if (isEmpty(array)) return 0;
         return array.length;
     }

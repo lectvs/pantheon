@@ -133,7 +133,7 @@ namespace Effects {
                 this.alpha = alpha;
             }
 
-            enable(color: number, alpha: number, amount: number) {
+            enable(color: number = this.color, alpha: number = this.alpha, amount: number = this.amount) {
                 this.color = color;
                 this.alpha = alpha;
                 this.amount = amount;
@@ -174,7 +174,7 @@ namespace Effects {
                 this.matchAlpha = matchAlpha;
             }
 
-            enable(color: number, alpha: number, matchAlpha: boolean = true) {
+            enable(color: number = this.color, alpha: number = this.alpha, matchAlpha: boolean = this.matchAlpha) {
                 this.color = color;
                 this.alpha = alpha;
                 this.matchAlpha = matchAlpha;
@@ -243,7 +243,7 @@ namespace Effects {
                 this._spread = spread;
             }
 
-            enable(strength: number, speed: number, spread: number) {
+            enable(strength: number = this.strength, speed: number = this.speed, spread: number = this.spread) {
                 this.strength = strength;
                 this.speed = speed;
                 this.spread = spread;

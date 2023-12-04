@@ -99,8 +99,7 @@ class Sprite extends PhysicsWorldObject {
         this.renderObject.blendMode = this.blendMode ?? PIXI.BLEND_MODES.NORMAL;
 
         let filters = this.effects.getFilterList();
-        if (A.isEmpty(this.renderObject.filters) && !A.isEmpty(filters)) {
-            console.log('setting filters sprite:', filters)
+        if (!A.equals(this.renderObject.filters, filters)) {
             for (let filter of filters) {
                 filter.setTextureValuesFromSprite(this.renderObject);
             }

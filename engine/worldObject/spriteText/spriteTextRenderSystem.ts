@@ -36,7 +36,7 @@ class SpriteTextRenderSystem {
             data.sprite.alpha = style.alpha * spriteText.alpha;
 
             let filters = [...style.filters, ...spriteText.effects.getFilterList()];
-            if (A.isEmpty(data.sprite.filters) && !A.isEmpty(filters)) {
+            if (!A.equals(data.sprite.filters, filters)) {
                 console.log('setting filters spritetext:', filters)
                 for (let filter of filters) {
                     filter.setTextureValuesFromSprite(data.sprite);
