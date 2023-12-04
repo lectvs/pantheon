@@ -350,14 +350,7 @@ class World {
         return Math.floor(Input.mouseY / this.scaleY + this.camera.worldOffsetY);
     }
 
-    /**
-     * @deprecated Use getWorldMouseBounds instead
-     */
-    getWorldMousePosition() {
-        return new Vector2(this.getWorldMouseX(), this.getWorldMouseY());
-    }
-
-    getWorldMouseBounds() {
+    getWorldMouseBounds$() {
         this.mouseBounds.x = this.getWorldMouseX();
         this.mouseBounds.y = this.getWorldMouseY();
 
@@ -890,10 +883,10 @@ namespace World {
                 expandWorldObjectBounds(bounds, obj, deep, getLocalBounds$);
             }
 
-            let anchorPoint = vec2(M.lerp(anchor.x, bounds.left, bounds.right), M.lerp(anchor.y, bounds.top, bounds.bottom));
+            let anchorPoint = tmp.vec2(M.lerp(anchor.x, bounds.left, bounds.right), M.lerp(anchor.y, bounds.top, bounds.bottom));
 
             if (!isFinite(anchorPoint.x) || !isFinite(anchorPoint.y)) {
-                console.error('Non-finite anchorPoint for balancing:', objs, anchorPoint);
+                console.error('Non-finite anchorPoint for balancing:', objs, `(${anchorPoint.x}, ${anchorPoint.y})`);
             }
 
             for (let obj of objs) {

@@ -244,8 +244,8 @@ class Input {
         return this._mouseY;
     }
 
-    static get mousePosition() {
-        return new Vector2(this.mouseX, this.mouseY);
+    static get mousePosition$() {
+        return FrameCache.vec2(this.mouseX, this.mouseY);
     }
 
     static get lastMouseX() {
@@ -256,8 +256,8 @@ class Input {
         return this._lastMouseY;
     }
 
-    static get lastMousePosition() {
-        return new Vector2(this.lastMouseX, this.lastMouseY);
+    static get lastMousePosition$() {
+        return FrameCache.vec2(this.lastMouseX, this.lastMouseY);
     }
 
     static get canvasMouseX() {
@@ -268,8 +268,8 @@ class Input {
         return this._canvasMouseY;
     }
 
-    static get canvasMousePosition() {
-        return new Vector2(this.canvasMouseX, this.canvasMouseY);
+    static get canvasMousePosition$() {
+        return FrameCache.vec2(this.canvasMouseX, this.canvasMouseY);
     }
 
     static get isMouseOnCanvas() {
@@ -524,7 +524,7 @@ namespace Input {
         update() {
             let touch = Input.isUsingTouch
                 ? Input.touch
-                : Input.isKeyCodeDown(Input.MOUSE_KEYCODES[0]) ? Input.mousePosition : undefined;
+                : Input.isKeyCodeDown(Input.MOUSE_KEYCODES[0]) ? Input.mousePosition$.clone() : undefined;
             
             if (touch) {
                 if (!this.lastTouch) {

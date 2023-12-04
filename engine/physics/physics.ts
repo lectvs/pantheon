@@ -301,7 +301,7 @@ namespace Physics {
         if (collisionMode === 'elastic') {
             if (collision.move.isImmovable() && collision.from.isImmovable()) return;
 
-            let d = new Vector2(collision.collision.displacementX, collision.collision.displacementY).normalized();
+            let d = tmp.vec2(collision.collision.displacementX, collision.collision.displacementY).normalized();
 
             let mm = collision.move.mass;
             let mf = collision.from.mass;
@@ -386,7 +386,7 @@ namespace Physics {
         let dpos: Dict<Vector2> = {};
 
         for (let worldObject of physicsWorldObjects) {
-            dpos[worldObject.uid] = vec2(worldObject.movedThisFrameX, worldObject.movedThisFrameY);
+            dpos[worldObject.uid] = FrameCache.vec2(worldObject.movedThisFrameX, worldObject.movedThisFrameY);
         }
 
         return { dpos };

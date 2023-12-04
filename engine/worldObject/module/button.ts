@@ -137,13 +137,13 @@ class Button extends Module<WorldObject> {
 
         if (!this.isOverlappingMouse()) return false;
 
-        let mouseBounds = this.worldObject.world.getWorldMouseBounds();
+        let mouseBounds = this.worldObject.world.getWorldMouseBounds$();
         return Button.getClosestButton(mouseBounds, this.worldObject.world) === this;
     }
 
     isOverlappingMouse() {
         if (!this.worldObject.world) return false;
-        let mouseBounds = this.worldObject.world.getWorldMouseBounds();
+        let mouseBounds = this.worldObject.world.getWorldMouseBounds$();
         return this.worldObject.bounds.isOverlapping(mouseBounds);
     }
 }
@@ -165,7 +165,7 @@ namespace Button {
     }
 
     function distanceTo(x: number, y: number, rect: Rect) {
-        if (G.rectContainsPt(rect, vec2(x, y))) return 0;
+        if (G.rectContainsPt(rect, tmp.vec2(x, y))) return 0;
 
         if (rect.x <= x && x <= rect.x + rect.width) {
             return Math.min(Math.abs(rect.y - y), Math.abs(rect.y + rect.height - y));

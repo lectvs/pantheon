@@ -58,13 +58,13 @@ class SlopeBounds implements Bounds {
         this.debugSprite.y = box.y;
 
         if (this.direction === 'upleft') {
-            this.debugSprite.texture = Textures.outlinePolygon(FrameCache.array(vec2(box.right, box.bottom), vec2(box.left, box.bottom), vec2(box.right, box.top)), 0x00FF00);
+            this.debugSprite.texture = Textures.outlinePolygon(FrameCache.array(FrameCache.vec2(box.right, box.bottom), FrameCache.vec2(box.left, box.bottom), FrameCache.vec2(box.right, box.top)), 0x00FF00);
         } else if (this.direction === 'upright') {
-            this.debugSprite.texture = Textures.outlinePolygon(FrameCache.array(vec2(box.right, box.bottom), vec2(box.left, box.bottom), vec2(box.left, box.top)), 0x00FF00);
+            this.debugSprite.texture = Textures.outlinePolygon(FrameCache.array(FrameCache.vec2(box.right, box.bottom), FrameCache.vec2(box.left, box.bottom), FrameCache.vec2(box.left, box.top)), 0x00FF00);
         } else if (this.direction === 'downright') {
-            this.debugSprite.texture = Textures.outlinePolygon(FrameCache.array(vec2(box.left, box.bottom), vec2(box.left, box.top), vec2(box.right, box.top)), 0x00FF00);
+            this.debugSprite.texture = Textures.outlinePolygon(FrameCache.array(FrameCache.vec2(box.left, box.bottom), FrameCache.vec2(box.left, box.top), FrameCache.vec2(box.right, box.top)), 0x00FF00);
         } else {
-            this.debugSprite.texture = Textures.outlinePolygon(FrameCache.array(vec2(box.left, box.top), vec2(box.right, box.top), vec2(box.right, box.bottom)), 0x00FF00);
+            this.debugSprite.texture = Textures.outlinePolygon(FrameCache.array(FrameCache.vec2(box.left, box.top), FrameCache.vec2(box.right, box.top), FrameCache.vec2(box.right, box.bottom)), 0x00FF00);
         }
 
         return FrameCache.array(this.debugSprite);

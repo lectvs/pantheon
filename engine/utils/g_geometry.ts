@@ -30,8 +30,8 @@ namespace G {
         let averageX = A.average(points, p => p.x);
         let averageY = A.average(points, p => p.y);
 
-        let d0 = vec2(points[0]).subtract(averageX, averageY);
-        let d1 = vec2(points[1]).subtract(averageX, averageY);
+        let d0 = tmp.vec2_1(points[0]).subtract(averageX, averageY);
+        let d1 = tmp.vec2_2(points[1]).subtract(averageX, averageY);
 
         return M.angleDiff(d1.angle, d0.angle) > 0 ? -1 : 1;
     }
@@ -141,7 +141,7 @@ namespace G {
 
     export function moveToClamp(current: Vector2, to: Vector2, speed: number, delta: number) {
         if (G.distance(current, to) <= speed * delta) current.set(to);
-        current.add(vec2(to.x - current.x, to.y - current.y).withMagnitude(speed * delta));
+        current.add(tmp.vec2(to.x - current.x, to.y - current.y).setMagnitude(speed * delta));
         return current;
     }
 

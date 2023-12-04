@@ -35,6 +35,8 @@ type Setter<T> = (value: T) => void;
 type ValueElseUndefined<T> =
   T extends (string | number | boolean | symbol | object) ? T : undefined;
 
+function vec2(pt: Pt): Vector2;
+function vec2(x: number, y: number): Vector2;
 function vec2(x: number | Pt, y?: number): Vector2 {
     if (typeof(x) === 'number') {
         return new Vector2(x, y ?? x);

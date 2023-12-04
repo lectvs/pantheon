@@ -464,8 +464,8 @@ class WorldObject {
         return undefined;
     }
 
-    getPosition() {
-        return vec2(this.x, this.y);
+    getPosition$() {
+        return FrameCache.vec2(this.x, this.y);
     }
 
     getSpeed() {
