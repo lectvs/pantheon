@@ -19,8 +19,8 @@ class Balancer extends WorldObject {
         super.postUpdate();
 
         let balance = this.balanceBy === 'balance_by_position'
-            ? World.Actions.balanceWorldObjectsByPosition
-            : World.Actions.balanceWorldObjectsByVisualBounds;
+            ? World.Actions.balanceWorldObjectsByPosition$
+            : World.Actions.balanceWorldObjectsByVisualBounds$;
 
         balance(this.children, this.x, this.y, this.anchor, this.deep);
     }

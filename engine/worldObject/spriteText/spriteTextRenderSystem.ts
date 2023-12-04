@@ -88,7 +88,7 @@ class SpriteTextRenderSystem {
             bounds.push(localBounds);
         }
 
-        return G.getEncompassingBoundaries(bounds);
+        return G.getEncompassingBoundaries$(bounds);
     }
 }
 
@@ -97,10 +97,10 @@ namespace SpriteTextRenderSystem {
         let result: Dict<SpriteTextRenderSystem.Part> = {};
 
         for (let part in partToCharacters) {
-            let boundary = G.getEncompassingBoundaries(partToCharacters[part]);
+            let boundary = G.getEncompassingBoundaries$(partToCharacters[part]);
             if (!boundary.isFinite()) {
                 console.error('SpriteText character boundaries is not finite:', partToCharacters[part]);
-                boundary = new Boundaries(partToCharacters[part][0].x, partToCharacters[part][0].x, partToCharacters[part][0].y, partToCharacters[part][0].y);
+                boundary = FrameCache.boundaries(partToCharacters[part][0].x, partToCharacters[part][0].x, partToCharacters[part][0].y, partToCharacters[part][0].y);
             }
 
             let texture = cache_staticTextures.borrow(Math.ceil(boundary.width), Math.ceil(boundary.height));

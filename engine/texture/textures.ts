@@ -32,7 +32,7 @@ namespace Textures {
     export function filledPolygon(points: Pt[], fillColor: number, fillAlpha: number = 1) {
         let key = `[${points.map(p => `${p.x},${p.y}`).join(',')}].${fillColor},${fillAlpha}`;
         if (!cache_filledPolygon[key]) {
-            let boundaries = G.getEncompassingBoundaries(points);
+            let boundaries = G.getEncompassingBoundaries$(points);
             let result = newPixiRenderTexture(Math.floor(boundaries.width)+1, Math.floor(boundaries.height)+1, 'Textures.filledPolygon');
             Draw.polygon(result, points.map(p => vec2(p.x - boundaries.left, p.y - boundaries.top)), { fill: { color: fillColor, alpha: fillAlpha }});
             TextureUtils.setImmutable(result);
@@ -71,7 +71,7 @@ namespace Textures {
     export function outlinePolygon(points: Pt[], outlineColor: number, outlineAlpha: number = 1, outlineThickness: number = 1) {
         let key = `[${points.map(p => `${p.x},${p.y}`).join(',')}].${outlineColor},${outlineAlpha},${outlineThickness}`;
         if (!cache_outlinePolygon[key]) {
-            let boundaries = G.getEncompassingBoundaries(points);
+            let boundaries = G.getEncompassingBoundaries$(points);
             let alignment: 'inner' | 'outer' = G.chirality(points) >= 0 ? 'inner' : 'outer';
             let result = newPixiRenderTexture(Math.floor(boundaries.width)+1, Math.floor(boundaries.height)+1, 'Textures.outlinePolygon');
             Draw.polygon(result, points.map(p => vec2(p.x - boundaries.left, p.y - boundaries.top)), { outline: { color: outlineColor, alpha: outlineAlpha, thickness: outlineThickness, alignment }});

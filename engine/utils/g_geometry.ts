@@ -83,7 +83,7 @@ namespace G {
         return A.range(n).map(i => vec2(cx + r*M.cos(angle + 360/n*(i+0.5)), cy + r*M.sin(angle + 360/n*(i+0.5))));
     }
 
-    export function getEncompassingBoundaries(objs: (Pt | Rect | Bndries)[]): Boundaries {
+    export function getEncompassingBoundaries$(objs: (Pt | Rect | Bndries)[]): Boundaries {
         let minLeft: number | undefined;
         let maxRight: number | undefined;
         let minTop: number | undefined;
@@ -118,7 +118,7 @@ namespace G {
             if (maxBottom === undefined || bottom > maxBottom) maxBottom = bottom;
         }
 
-        return new Boundaries(
+        return FrameCache.boundaries(
             minLeft !== undefined && isFinite(minLeft) ? minLeft : -Infinity,
             maxRight !== undefined && isFinite(maxRight) ? maxRight : Infinity,
             minTop !== undefined && isFinite(minTop) ? minTop : -Infinity,

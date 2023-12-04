@@ -861,29 +861,29 @@ namespace World {
          * Shifts provided WorldObjects equally to balance them around a point. Uses objects' position.
          * @return the new bounds containing all of the objects
          */
-        export function balanceWorldObjectsByPosition(objs: ReadonlyArray<WorldObject>, aroundX: number, aroundY: number, anchor: Vector2 = Anchor.CENTER, deep: boolean = false) {
+        export function balanceWorldObjectsByPosition$(objs: ReadonlyArray<WorldObject>, aroundX: number, aroundY: number, anchor: Vector2 = Anchor.CENTER, deep: boolean = false) {
             let localBounds = FrameCache.rectangle(0, 0, 0, 0);
-            return balanceWorldObjects(objs, aroundX, aroundY, anchor, deep, _ => localBounds);
+            return balanceWorldObjects$(objs, aroundX, aroundY, anchor, deep, _ => localBounds);
         }
 
         /**
          * Shifts provided WorldObjects equally to balance them around a point. Uses objects' getVisibleLocalBounds() method.
          * @return the new bounds containing all of the objects
          */
-        export function balanceWorldObjectsByVisualBounds(objs: ReadonlyArray<WorldObject>, aroundX: number, aroundY: number, anchor: Vector2 = Anchor.CENTER, deep: boolean = false) {
-            return balanceWorldObjects(objs, aroundX, aroundY, anchor, deep, worldObject => worldObject.getVisibleLocalBounds$());
+        export function balanceWorldObjectsByVisualBounds$(objs: ReadonlyArray<WorldObject>, aroundX: number, aroundY: number, anchor: Vector2 = Anchor.CENTER, deep: boolean = false) {
+            return balanceWorldObjects$(objs, aroundX, aroundY, anchor, deep, worldObject => worldObject.getVisibleLocalBounds$());
         }
 
-        function balanceWorldObjects(objs: ReadonlyArray<WorldObject>, aroundX: number, aroundY: number, anchor: Vector2, deep: boolean, getLocalBounds$: (worldObject: WorldObject) => Rectangle | undefined) {
+        function balanceWorldObjects$(objs: ReadonlyArray<WorldObject>, aroundX: number, aroundY: number, anchor: Vector2, deep: boolean, getLocalBounds$: (worldObject: WorldObject) => Rectangle | undefined) {
             if (A.isEmpty(objs)) return undefined;
 
-            let bounds = new Boundaries(objs[0].x, objs[0].x, objs[0].y, objs[0].y);
+            let bounds$ = FrameCache.boundaries(objs[0].x, objs[0].x, objs[0].y, objs[0].y);
 
             for (let obj of objs) {
-                expandWorldObjectBounds(bounds, obj, deep, getLocalBounds$);
+                expandWorldObjectBounds(bounds$, obj, deep, getLocalBounds$);
             }
 
-            let anchorPoint = tmp.vec2(M.lerp(anchor.x, bounds.left, bounds.right), M.lerp(anchor.y, bounds.top, bounds.bottom));
+            let anchorPoint = tmp.vec2(M.lerp(anchor.x, bounds$.left, bounds$.right), M.lerp(anchor.y, bounds$.top, bounds$.bottom));
 
             if (!isFinite(anchorPoint.x) || !isFinite(anchorPoint.y)) {
                 console.error('Non-finite anchorPoint for balancing:', objs, `(${anchorPoint.x}, ${anchorPoint.y})`);
@@ -894,15 +894,15 @@ namespace World {
                 obj.y += aroundY - anchorPoint.y;
             }
 
-            bounds.left += aroundX - anchorPoint.x;
-            bounds.right += aroundX - anchorPoint.x;
-            bounds.top += aroundY - anchorPoint.y;
-            bounds.bottom += aroundY - anchorPoint.y;
+            bounds$.left += aroundX - anchorPoint.x;
+            bounds$.right += aroundX - anchorPoint.x;
+            bounds$.top += aroundY - anchorPoint.y;
+            bounds$.bottom += aroundY - anchorPoint.y;
 
-            return bounds;
+            return bounds$;
         }
 
-        function expandWorldObjectBounds(bounds: Boundaries, obj: WorldObject, deep: boolean, getLocalBounds$: (worldObject: WorldObject) => Rectangle | undefined) {
+        function expandWorldObjectBounds(bounds$: Boundaries, obj: WorldObject, deep: boolean, getLocalBounds$: (worldObject: WorldObject) => Rectangle | undefined) {
             let objBounds = getLocalBounds$(obj);
 
             if (!objBounds || !objBounds.isFinite()) {
@@ -913,17 +913,17 @@ namespace World {
             objBounds.x += obj.x;
             objBounds.y += obj.y;
             
-            bounds.left = Math.min(bounds.left, objBounds.left);
-            bounds.right = Math.max(bounds.right, objBounds.right);
-            bounds.top = Math.min(bounds.top, objBounds.top);
-            bounds.bottom = Math.max(bounds.bottom, objBounds.bottom);
+            bounds$.left = Math.min(bounds$.left, objBounds.left);
+            bounds$.right = Math.max(bounds$.right, objBounds.right);
+            bounds$.top = Math.min(bounds$.top, objBounds.top);
+            bounds$.bottom = Math.max(bounds$.bottom, objBounds.bottom);
 
             objBounds.x -= obj.x;
             objBounds.y -= obj.y;
 
             if (deep) {
                 for (let child of obj.children) {
-                    expandWorldObjectBounds(bounds, child, deep, getLocalBounds$);
+                    expandWorldObjectBounds(bounds$, child, deep, getLocalBounds$);
                 }
             }
         }

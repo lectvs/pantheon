@@ -14,8 +14,8 @@ class VisualizeBounds extends Sprite {
     override postUpdate(): void {
         super.postUpdate();
 
-        let bnds = this.getBounds();
-        let rectangle = 'x' in bnds ? bnds : Rectangle.fromBoundaries(bnds);
+        let bounds = this.getBounds();
+        let rectangle = 'x' in bounds ? bounds : Rectangle.fromBoundaries(bounds);
 
         this.x = rectangle.x;
         this.y = rectangle.y;
