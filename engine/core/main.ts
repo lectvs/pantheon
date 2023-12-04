@@ -184,7 +184,6 @@ class Main {
     }
 
     private static renderScreenToCanvas() {
-        Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, undefined, true);  // Clear the renderer
         Main.renderer.render(Main.stage);
     }
 

@@ -44,6 +44,11 @@ class TextureFilter extends PIXI.Filter {
         this.visualPadding = config.visualPadding ?? 0;
     }
 
+    disable() {
+        this.enabled = false;
+        return this;
+    }
+
     getUniform(name: string) {
         return this.uniformCache[name];
     }

@@ -18,88 +18,55 @@ namespace Effects {
 
 
 class Effects {
-    private effects: [
-        Effects.Filters.Silhouette | undefined,
-        Effects.Filters.Outline | undefined,
-        Effects.Filters.InvertColors | undefined,
-        Effects.Filters.Glitch | undefined,
-    ];
-    private static SILHOUETTE_I: number = 0;
-    private static OUTLINE_I: number = 1;
-    private static INVERT_COLORS_I: number = 2;
-    private static GLITCH_I: number = 3;
+    private _silhouetteLazy = new LazyValue(() => new Effects.Filters.Silhouette(0x000000, 1).disable());
+    private _outlineLazy = new LazyValue(() => new Effects.Filters.Outline(0x000000, 1).disable());
+    private _invertColorsLazy = new LazyValue(() => new Effects.Filters.InvertColors().disable());
+    private _glitchLazy = new LazyValue(() => new Effects.Filters.Glitch(2, 1, 2).disable());
+
+    get silhouette() { return this._silhouetteLazy.get(); }
+    get outline() { return this._outlineLazy.get(); }
+    get invertColors() { return this._invertColorsLazy.get(); }
+    get glitch() { return this._glitchLazy.get(); }
+
+    get allEffects() {
+        const mainEffects = [
+            this._silhouetteLazy,
+            this._outlineLazy,
+            this._invertColorsLazy,
+            this._glitchLazy,
+        ]
+        .filter(effectLazy => effectLazy.has())
+        .map(effectLazy => effectLazy.get());
+
+        return [
+            ...this.pre,
+            ...mainEffects,
+            ...this.post,
+        ];
+    }
 
     pre: TextureFilter[];
     post: TextureFilter[];
 
-    get silhouette(): Effects.Filters.Silhouette {
-        if (!this.effects[Effects.SILHOUETTE_I]) {
-            this.effects[Effects.SILHOUETTE_I] = new Effects.Filters.Silhouette(0x000000, 1);
-            this.effects[Effects.SILHOUETTE_I]!.enabled = false;
-        }
-        return <Effects.Filters.Silhouette>this.effects[Effects.SILHOUETTE_I];
-    }
-    get outline(): Effects.Filters.Outline {
-        if (!this.effects[Effects.OUTLINE_I]) {
-            this.effects[Effects.OUTLINE_I] = new Effects.Filters.Outline(0x000000, 1);
-            this.effects[Effects.OUTLINE_I]!.enabled = false;
-        }
-        return <Effects.Filters.Outline>this.effects[Effects.OUTLINE_I];
-    }
-    get invertColors(): Effects.Filters.InvertColors {
-        if (!this.effects[Effects.INVERT_COLORS_I]) {
-            this.effects[Effects.INVERT_COLORS_I] = new Effects.Filters.InvertColors();
-            this.effects[Effects.INVERT_COLORS_I]!.enabled = false;
-        }
-        return <Effects.Filters.InvertColors>this.effects[Effects.INVERT_COLORS_I];
-    }
-    get glitch(): Effects.Filters.Glitch {
-        if (!this.effects[Effects.GLITCH_I]) {
-            this.effects[Effects.GLITCH_I] = new Effects.Filters.Glitch(2, 1, 2);
-            this.effects[Effects.GLITCH_I]!.enabled = false;
-        }
-        return <Effects.Filters.Glitch>this.effects[Effects.GLITCH_I];
-    }
-
-    get addSilhouette(): Effects.Filters.Silhouette {
-        this.silhouette.enabled = true;
-        return this.silhouette;
-    }
-
-    get addOutline(): Effects.Filters.Outline {
-        this.outline.enabled = true;
-        return this.outline;
-    }
-
     constructor(config: Effects.Config = {}) {
-        this.effects = [undefined, undefined, undefined, undefined];
         this.pre = [];
         this.post = [];
         this.updateFromConfig(config);
     }
 
     getFilterList(): TextureFilter[] {
-        return [
-            ...this.pre,
-            ...this.effects.filter(e => e) as TextureFilter[],
-            ...this.post,
-        ];
+        return this.allEffects.filter(e => e.enabled);
     }
 
     hasEffects() {
-        if (this.effects.some(effect => effect && effect.enabled)) return true;
-        if (this.pre.some(filter => filter && filter.enabled)) return true;
-        if (this.post.some(filter => filter && filter.enabled)) return true;
-        return false;
+        return this.allEffects.some(e => e.enabled);
     }
 
     updateEffects(delta: number) {
-        this.effects[Effects.SILHOUETTE_I]?.updateTime(delta);
-        this.effects[Effects.OUTLINE_I]?.updateTime(delta);
-        this.effects[Effects.INVERT_COLORS_I]?.updateTime(delta);
-        this.effects[Effects.GLITCH_I]?.updateTime(delta);
-        for (let filter of this.pre) filter.updateTime(delta);
-        for (let filter of this.post) filter.updateTime(delta);
+        let allEffects = this.allEffects;
+        for (let effect of allEffects) {
+            effect.updateTime(delta);
+        }
     }
 
     updateFromConfig(config: Effects.Config | undefined) {
@@ -171,6 +138,7 @@ namespace Effects {
                 this.alpha = alpha;
                 this.amount = amount;
                 this.enabled = true;
+                return this;
             }
         }
 
@@ -211,6 +179,7 @@ namespace Effects {
                 this.alpha = alpha;
                 this.matchAlpha = matchAlpha;
                 this.enabled = true;
+                return this;
             }
         }
 
@@ -227,6 +196,7 @@ namespace Effects {
 
             enable() {
                 this.enabled = true;
+                return this;
             }
         }
 
@@ -278,6 +248,7 @@ namespace Effects {
                 this.speed = speed;
                 this.spread = spread;
                 this.enabled = true;
+                return this;
             }
 
             override getVisualPadding(): number {

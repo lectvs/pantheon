@@ -34,7 +34,30 @@ class SpriteTextRenderSystem {
             data.sprite.angle = spriteText.angle;
             data.sprite.tint = Color.tint(style.color, spriteText.tint);
             data.sprite.alpha = style.alpha * spriteText.alpha;
-            data.sprite.filters = [...style.filters, ...spriteText.effects.getFilterList()];
+
+            let filters = [...style.filters, ...spriteText.effects.getFilterList()];
+            if (A.isEmpty(data.sprite.filters) && !A.isEmpty(filters)) {
+                console.log('setting filters spritetext:', filters)
+                for (let filter of filters) {
+                    filter.setTextureValuesFromSprite(data.sprite);
+                }
+                data.sprite.filters = filters;
+            }
+
+            let filterArea = TextureUtils.getFilterArea(data.sprite.texture, filters, {
+                x: data.sprite.x,
+                y: data.sprite.y,
+                scaleX: data.sprite.scale.x,
+                scaleY: data.sprite.scale.y,
+                angle: data.sprite.angle,
+            });
+    
+            if (filterArea) {
+                data.sprite.filterArea = filterArea;
+            } else {
+                // @ts-expect-error
+                data.sprite.filterArea = null;
+            }
 
             let textureLocalBounds = data.sprite.getLocalBounds();
 
