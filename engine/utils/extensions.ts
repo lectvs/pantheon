@@ -68,13 +68,13 @@ PIXI.Sprite.prototype.updateAndSetEffects = function(effects: Effects) {
         this.filters = filters.slice();
     }
 
-    let filterArea = TextureUtils.getFilterArea$(this.texture, filters, {
-        x: this.x,
-        y: this.y,
-        scaleX: this.scale.x,
-        scaleY: this.scale.y,
-        angle: this.angle,
-    });
+    let filterArea = TextureUtils.getFilterArea$(this.texture, filters,
+        this.x,
+        this.y,
+        this.scale.x,
+        this.scale.y,
+        this.angle,
+    );
 
     if (filterArea) {
         if (this.filterArea) {

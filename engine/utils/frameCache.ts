@@ -53,6 +53,19 @@ namespace FrameCache {
         return result;
     }
 
+    export const _setCache = new Cache<Set<any>>(() => new Set());
+    export function set(): Set<any>;
+    export function set<T>(e1?: T, e2?: T, e3?: T, e4?: T): Set<T>;
+    export function set<T>(e1?: T, e2?: T, e3?: T, e4?: T) {
+        let result = _setCache.get();
+        result.clear();
+        if (e1 !== undefined) result.add(e1);
+        if (e2 !== undefined) result.add(e2);
+        if (e3 !== undefined) result.add(e3);
+        if (e4 !== undefined) result.add(e4);
+        return result;
+    }
+
     export const _vec2Cache = new Cache(() => new Vector2(0, 0));
     export function vec2(x: number, y: number): Vector2 {
         let result = _vec2Cache.get();
@@ -105,6 +118,7 @@ namespace FrameCache {
     export function reset() {
         _arrayCache.reset();
         _objectCache.reset();
+        _setCache.reset();
         _vec2Cache.reset();
         _rectangleCache.reset();
         _boundariesCache.reset();

@@ -96,7 +96,10 @@ namespace O {
     export function isEmpty(obj: any): obj is undefined {
         if (obj === null || obj === undefined) return true;
         if (Array.isArray(obj)) return obj.length === 0;
-        return Object.keys(obj).length === 0;
+        for (let _ in obj) {
+            return false;
+        }
+        return true;
     }
 
     export function isFunction(obj: any): obj is Function {
@@ -149,7 +152,11 @@ namespace O {
 
     export function size(obj: Object | undefined) {
         if (!obj) return 0;
-        return Object.keys(obj).length;
+        let count = 0;
+        for (let _ in obj) {
+            count++;
+        }
+        return count;
     }
 
     export function withDefaults<T, K extends Partial<T>>(obj: T, defaults: K): T & K {

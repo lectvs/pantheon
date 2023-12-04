@@ -117,13 +117,13 @@ class Sprite extends PhysicsWorldObject {
         if (this.texture === Textures.EFFECT_ONLY) {
             return undefined;
         }
-        return TextureUtils.getTextureLocalBounds$(this.texture, {
-            x: this.offsetX,
-            y: this.offsetY,
-            scaleX: this.scaleX,
-            scaleY: this.scaleY,
-            angle: this.angle,
-        });
+        return TextureUtils.getTextureLocalBounds$(this.texture,
+            this.offsetX,
+            this.offsetY,
+            this.scaleX,
+            this.scaleY,
+            this.angle,
+        );
     }
 
     setTexture(key: string | PIXI.Texture | undefined) {

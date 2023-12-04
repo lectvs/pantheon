@@ -37,11 +37,13 @@ class SpriteTextRenderSystem {
             data.sprite.updateAndSetEffects(spriteText.effects);
             spriteText.effects.pre.length -= style.filters.length;  // Remove the style filters
 
-            let textureLocalBounds = TextureUtils.getTextureLocalBounds$(data.texture, {
-                scaleX: data.sprite.scale.x,
-                scaleY: data.sprite.scale.y,
-                angle: data.sprite.angle,
-            });
+            let textureLocalBounds = TextureUtils.getTextureLocalBounds$(data.texture,
+                0,
+                0,
+                data.sprite.scale.x,
+                data.sprite.scale.y,
+                data.sprite.angle,
+            );
 
             let screenBounds = tmp.rectangle(0, 0, screen.width, screen.height);
             if (!G.areRectanglesOverlapping(textureLocalBounds, screenBounds)) continue;
@@ -77,11 +79,13 @@ class SpriteTextRenderSystem {
             data.sprite.texture.defaultAnchor.x = -(data.x + style.offsetX - spriteText.anchor.x * textBounds.width) / data.sprite.width;
             data.sprite.texture.defaultAnchor.y = -(data.y + style.offsetY - spriteText.anchor.y * textBounds.height) / data.sprite.height;
 
-            let localBounds = TextureUtils.getTextureLocalBounds$(data.sprite.texture, {
-                scaleX: (spriteText.flipX ? -1 : 1) * spriteText.scaleX,
-                scaleY: (spriteText.flipY ? -1 : 1) * spriteText.scaleY,
-                angle: spriteText.angle,
-            });
+            let localBounds = TextureUtils.getTextureLocalBounds$(data.sprite.texture,
+                0,
+                0,
+                (spriteText.flipX ? -1 : 1) * spriteText.scaleX,
+                (spriteText.flipY ? -1 : 1) * spriteText.scaleY,
+                spriteText.angle,
+            );
 
             data.sprite.texture.defaultAnchor.set(origAnchorX, origAnchorY);
 

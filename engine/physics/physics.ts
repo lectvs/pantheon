@@ -94,7 +94,7 @@ namespace Physics {
     function performFinalIteration(world: World, resultCollisions: RaycastCollisionData[]) {
         let collisions = getRaycastCollisions(world);
 
-        let currentSet = new Set<PhysicsWorldObject>();
+        let currentSet: Set<PhysicsWorldObject> = FrameCache.set();
         for (let collision of collisions) {
             if (collision.move.isImmovable()) currentSet.add(collision.move);
             if (collision.from.isImmovable()) currentSet.add(collision.from);

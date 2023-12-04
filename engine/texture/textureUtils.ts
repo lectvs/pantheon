@@ -34,8 +34,8 @@ namespace TextureUtils {
         return result;
     }
 
-    export function getFilterArea$(texture: PIXI.Texture, filters: TextureFilter[], properties: { x?: number, y?: number, scaleX?: number, scaleY?: number, angle?: number }) {
-        let localBounds = TextureUtils.getTextureLocalBounds$(texture, properties);
+    export function getFilterArea$(texture: PIXI.Texture, filters: TextureFilter[], x: number, y: number, scaleX: number, scaleY: number, angle: number) {
+        let localBounds = TextureUtils.getTextureLocalBounds$(texture, x, y, scaleX, scaleY, angle);
 
         if (!localBounds.isFinite()) {
             return undefined;
@@ -106,12 +106,7 @@ namespace TextureUtils {
         return result;
     }
 
-    export function getTextureLocalBounds$(texture: PIXI.Texture, properties: { x?: number, y?: number, scaleX?: number, scaleY?: number, angle?: number }) {
-        let x = properties.x ?? 0;
-        let y = properties.y ?? 0;
-        let scaleX = properties.scaleX ?? 1;
-        let scaleY = properties.scaleY ?? 1;
-        let angle = properties.angle ?? 0;
+    export function getTextureLocalBounds$(texture: PIXI.Texture, x: number, y: number, scaleX: number, scaleY: number, angle: number) {
         let width = texture.width * scaleX;
         let height = texture.height * scaleY;
 

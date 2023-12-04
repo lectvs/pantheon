@@ -55,8 +55,8 @@ class WorldSelecter {
         return result;
     }
 
-    names<T extends WorldObject, K extends string, O extends {[key in K]: T}>(type: new () => T, ...names: K[]): O {
-        let result: Dict<T | undefined> = {};
+    names$<T extends WorldObject, K extends string, O extends {[key in K]: T}>(type: new () => T, ...names: K[]): O {
+        let result: Dict<T | undefined> = FrameCache.object();
 
         for (let name of names) {
             result[name] = this.name(name as string);
