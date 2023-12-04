@@ -44,6 +44,15 @@ namespace FrameCache {
         return result;
     }
 
+    export const _objectCache = new Cache<any>(() => ({}));
+    export function object() {
+        let result = _objectCache.get();
+        for (let key in result) {
+            delete result[key];
+        }
+        return result;
+    }
+
     export const _vec2Cache = new Cache(() => new Vector2(0, 0));
     export function vec2(x: number, y: number): Vector2 {
         let result = _vec2Cache.get();
@@ -72,10 +81,34 @@ namespace FrameCache {
         return result;
     }
 
+    export const _displacementCollisionCache = new Cache<Bounds.DisplacementCollision>(() => ({} as Bounds.DisplacementCollision));
+    export function displacementCollision(bounds1: Bounds, bounds2: Bounds, displacementX: number, displacementY: number): Bounds.DisplacementCollision {
+        let result = _displacementCollisionCache.get();
+        result.bounds1 = bounds1;
+        result.bounds2 = bounds2;
+        result.displacementX = displacementX;
+        result.displacementY = displacementY;
+        return result;
+    }
+
+    export const _raycastCollisionCache = new Cache<Bounds.RaycastCollision>(() => ({} as Bounds.RaycastCollision));
+    export function raycastCollision(bounds1: Bounds, bounds2: Bounds, displacementX: number, displacementY: number, t: number): Bounds.RaycastCollision {
+        let result = _raycastCollisionCache.get();
+        result.bounds1 = bounds1;
+        result.bounds2 = bounds2;
+        result.displacementX = displacementX;
+        result.displacementY = displacementY;
+        result.t = t;
+        return result;
+    }
+
     export function reset() {
         _arrayCache.reset();
+        _objectCache.reset();
         _vec2Cache.reset();
         _rectangleCache.reset();
         _boundariesCache.reset();
+        _displacementCollisionCache.reset();
+        _raycastCollisionCache.reset();
     }
 }

@@ -33,8 +33,8 @@ interface Bounds {
     /** FOR USE WITH PHYSICS RESOLVECOLLISIONS ONLY. */
     freeze(): void;
     getBoundingBox(): Rectangle;
-    getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision | undefined;
-    getDisplacementCollision(other: Bounds): Bounds.DisplacementCollision | undefined;
+    getRaycastCollision$(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision | undefined;
+    getDisplacementCollision$(other: Bounds): Bounds.DisplacementCollision | undefined;
     isOverlapping(other: Bounds): boolean;
     /** FOR USE WITH PHYSICS RESOLVECOLLISIONS ONLY. REQUIRES BOUNDS TO BE FROZEN TO BE USEFUL. */
     move(dx: number, dy: number): void;

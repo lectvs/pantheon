@@ -126,44 +126,48 @@ namespace Physics {
 
     // Return true iff the collision actually happened.
     function resolveCollision(world: World, collision: RaycastCollisionData, forceImmovable?: PhysicsWorldObject) {
-        let raycastCollision: RaycastCollisionData = {
-            move: collision.move,
-            from: collision.from,
-            collision: collision.move.bounds.getRaycastCollision(collision.move.movedThisFrameX, collision.move.movedThisFrameY, collision.from.bounds, collision.from.movedThisFrameX, collision.from.movedThisFrameY),
-        };
-        
-        if (!raycastCollision.collision) return false;
+        let raycastCollision = collision.move.bounds.getRaycastCollision$(
+            collision.move.movedThisFrameX,
+            collision.move.movedThisFrameY,
+            collision.from.bounds,
+            collision.from.movedThisFrameX,
+            collision.from.movedThisFrameY);
 
-        let displacementCollision: DisplacementCollisionData = {
-            move: raycastCollision.move,
-            from: raycastCollision.from,
-            collision: undefined,
-            collisionMode: collision.collisionMode,
-        };
+        if (!raycastCollision) return false;
+        
+        let raycastCollisionData: RaycastCollisionData = FrameCache.object();
+        raycastCollisionData.move = collision.move;
+        raycastCollisionData.from = collision.from;
+        raycastCollisionData.collision = raycastCollision;
+        
+        let displacementCollisionData: DisplacementCollisionData = FrameCache.object();
+        displacementCollisionData.move = raycastCollisionData.move;
+        displacementCollisionData.from = raycastCollisionData.from;
+        displacementCollisionData.collisionMode = collision.collisionMode;
 
         // Use raycast collision displacement if applicable.
-        if (M.magnitude(raycastCollision.collision.displacementX, raycastCollision.collision.displacementY) <= world.useRaycastDisplacementThreshold) {
-            displacementCollision.collision = {
-                bounds1: raycastCollision.move.bounds,
-                bounds2: raycastCollision.from.bounds,
-                displacementX: raycastCollision.collision.displacementX,
-                displacementY: raycastCollision.collision.displacementY,
-            };
+        if (M.magnitude(raycastCollisionData.collision.displacementX, raycastCollisionData.collision.displacementY) <= world.useRaycastDisplacementThreshold) {
+            displacementCollisionData.collision = FrameCache.displacementCollision(
+                raycastCollisionData.move.bounds,
+                raycastCollisionData.from.bounds,
+                raycastCollisionData.collision.displacementX,
+                raycastCollisionData.collision.displacementY,
+            );
         } else {
-            displacementCollision.collision = raycastCollision.move.bounds.getDisplacementCollision(raycastCollision.from.bounds);
+            displacementCollisionData.collision = raycastCollisionData.move.bounds.getDisplacementCollision$(raycastCollisionData.from.bounds);
         }
 
-        if (!displacementCollision.collision) return false;
+        if (!displacementCollisionData.collision) return false;
 
-        if (displacementCollision.collisionMode !== 'no_physics') {
-            applyDisplacementForCollision(displacementCollision, forceImmovable);
+        if (displacementCollisionData.collisionMode !== 'no_physics') {
+            applyDisplacementForCollision(displacementCollisionData, forceImmovable);
         }
 
         return true;
     }
 
     function getRaycastCollisions(world: World): RaycastCollisionData[] {
-        let raycastCollisions: RaycastCollisionData[] = FrameCache.array();
+        let raycastCollisionDatas: RaycastCollisionData[] = FrameCache.array();
 
         for (let collision of world.collisions) {
             for (let imove = 0; imove < world.physicsGroups[collision.move].worldObjects.length; imove++) {
@@ -176,19 +180,20 @@ namespace Physics {
                     if (!G.areRectanglesOverlapping(move.bounds.getBoundingBox(), from.bounds.getBoundingBox())) continue;
                     if (!move.colliding || !from.colliding) continue;
                     if (!move.isCollidingWith(from) || !from.isCollidingWith(move)) continue;
-                    let raycastCollision = move.bounds.getRaycastCollision(move.movedThisFrameX, move.movedThisFrameY, from.bounds, from.movedThisFrameX, from.movedThisFrameY);
+                    let raycastCollision = move.bounds.getRaycastCollision$(move.movedThisFrameX, move.movedThisFrameY, from.bounds, from.movedThisFrameX, from.movedThisFrameY);
                     if (!raycastCollision) continue;
-                    raycastCollisions.push({
-                        move, from,
-                        collision: raycastCollision,
-                        callback: collision.callback,
-                        collisionMode: collision.collisionMode,
-                    });
+                    let raycastCollisionData: RaycastCollisionData = FrameCache.object();
+                    raycastCollisionData.move = move;
+                    raycastCollisionData.from = from;
+                    raycastCollisionData.collision = raycastCollision;
+                    raycastCollisionData.callback = collision.callback;
+                    raycastCollisionData.collisionMode = collision.collisionMode;
+                    raycastCollisionDatas.push(raycastCollisionData);
                 }
             }
         }
 
-        return raycastCollisions;
+        return raycastCollisionDatas;
     }
 
     function applyDisplacementForCollision(collision: DisplacementCollisionData, forceImmovable?: PhysicsWorldObject) {
@@ -242,46 +247,46 @@ namespace Physics {
         }
 
         return collisionGroups.mapInPlace(collisionList => {
-            return {
-                move: collisionList[0].move,
-                from: collisionList[0].from,
-                callback: collisionList[0].callback,
-                collisionMode: collisionList[0].collisionMode,
-                collision: {
-                    bounds1: collisionList[0].move.bounds,
-                    bounds2: collisionList[0].from.bounds,
-                    displacementX: A.sum(collisionList, collision => collision.collision?.displacementX ?? 0),
-                    displacementY: A.sum(collisionList, collision => collision.collision?.displacementY ?? 0),
-                    t: M.min(collisionList, collision => collision.collision?.t ?? -Infinity),
-                }
-            } satisfies RaycastCollisionData;
+            let raycastCollisionData: RaycastCollisionData = FrameCache.object();
+            raycastCollisionData.move = collisionList[0].move;
+            raycastCollisionData.from = collisionList[0].from;
+            raycastCollisionData.callback = collisionList[0].callback;
+            raycastCollisionData.collisionMode = collisionList[0].collisionMode;
+            raycastCollisionData.collision = FrameCache.raycastCollision(
+                collisionList[0].move.bounds,
+                collisionList[0].from.bounds,
+                A.sum(collisionList, collision => collision.collision?.displacementX ?? 0),
+                A.sum(collisionList, collision => collision.collision?.displacementY ?? 0),
+                M.min(collisionList, collision => collision.collision?.t ?? -Infinity),
+            );
+            return raycastCollisionData;
         });
     }
 
     function applyCollisionEffects(collisions: RaycastCollisionData[], delta: number) {
         for (let collision of collisions) {
-            let moveCollisionInfo: Physics.Collision = {
-                self: {
-                    obj: collision.move,
-                    pre_vx: collision.move.v.x,
-                    pre_vy: collision.move.v.y,
-                    post_vx: collision.move.v.x,  // Will be modified after momentum transfer
-                    post_vy: collision.move.v.y,  // Will be modified after momentum transfer
-                },
-                other: {
-                    obj: collision.from,
-                    pre_vx: collision.from.v.x,
-                    pre_vy: collision.from.v.y,
-                    post_vx: collision.from.v.x,  // Will be modified after momentum transfer
-                    post_vy: collision.from.v.y,  // Will be modified after momentum transfer
-                }
-            };
+            let self: CollisionObject = FrameCache.object();
+            self.obj = collision.move;
+            self.pre_vx = collision.move.v.x;
+            self.pre_vy = collision.move.v.y;
+            self.post_vx = collision.move.v.x;  // Will be modified after momentum transfer
+            self.post_vy = collision.move.v.y;  // Will be modified after momentum transfer
 
-            let fromCollisionInfo: Physics.Collision = {
-                self: moveCollisionInfo.other,
-                other: moveCollisionInfo.self
-            };
+            let other: CollisionObject = FrameCache.object();
+            other.obj = collision.from;
+            other.pre_vx = collision.from.v.x;
+            other.pre_vy = collision.from.v.y;
+            other.post_vx = collision.from.v.x;  // Will be modified after momentum transfer
+            other.post_vy = collision.from.v.y;  // Will be modified after momentum transfer
 
+            let moveCollisionInfo: Physics.Collision = FrameCache.object();
+            moveCollisionInfo.self = self;
+            moveCollisionInfo.other = other;
+
+            let fromCollisionInfo: Physics.Collision = FrameCache.object();
+            fromCollisionInfo.self = moveCollisionInfo.other;
+            fromCollisionInfo.other = moveCollisionInfo.self;
+            
             applyMomentumTransferForCollision(collision, collision.collisionMode, delta);
 
             moveCollisionInfo.self.post_vx = collision.move.v.x;
@@ -295,13 +300,13 @@ namespace Physics {
         }
     }
 
-    function applyMomentumTransferForCollision(collision: DisplacementCollisionData, collisionMode: CollisionMode | undefined, delta: number,) {
+    function applyMomentumTransferForCollision(collision: DisplacementCollisionData, collisionMode: CollisionMode | undefined, delta: number) {
         if (!collision.collision) return;
         
         if (collisionMode === 'elastic') {
             if (collision.move.isImmovable() && collision.from.isImmovable()) return;
 
-            let d = tmp.vec2(collision.collision.displacementX, collision.collision.displacementY).normalized();
+            let d = tmp.vec2(collision.collision.displacementX, collision.collision.displacementY).normalize();
 
             let mm = collision.move.mass;
             let mf = collision.from.mass;

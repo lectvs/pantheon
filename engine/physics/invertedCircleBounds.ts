@@ -66,17 +66,17 @@ class InvertedCircleBounds implements Bounds {
         return this.boundingBox;
     }
 
-    getDisplacementCollision(other: Bounds) {
-        if (other instanceof RectBounds) return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionRectInvertedCircle(other, this));
-        if (other instanceof CircleBounds) return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionCircleInvertedCircle(other, this));
+    getDisplacementCollision$(other: Bounds) {
+        if (other instanceof RectBounds) return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionRectInvertedCircle$(other, this));
+        if (other instanceof CircleBounds) return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionCircleInvertedCircle$(other, this));
         if (other instanceof NullBounds) return undefined;
         console.error("No collision supported between these bounds", this, other);
         return undefined;
     }
 
-    getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number) {
-        if (other instanceof RectBounds) return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionRectInvertedCircle(other, otherdx, otherdy, this, dx, dy));
-        if (other instanceof CircleBounds) return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionCircleInvertedCircle(other, otherdx, otherdy, this, dx, dy));
+    getRaycastCollision$(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number) {
+        if (other instanceof RectBounds) return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionRectInvertedCircle$(other, otherdx, otherdy, this, dx, dy));
+        if (other instanceof CircleBounds) return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionCircleInvertedCircle$(other, otherdx, otherdy, this, dx, dy));
         if (other instanceof NullBounds) return undefined;
         console.error("No collision supported between these bounds", this, other);
         return undefined;

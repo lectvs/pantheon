@@ -70,23 +70,23 @@ class CircleBounds implements Bounds {
         return this.boundingBox;
     }
 
-    getDisplacementCollision(other: Bounds) {
-        if (other instanceof RectBounds) return Bounds.Collision.getDisplacementCollisionCircleRect(this, other);
-        if (other instanceof CircleBounds) return Bounds.Collision.getDisplacementCollisionCircleCircle(this, other);
-        if (other instanceof SlopeBounds) return Bounds.Collision.getDisplacementCollisionCircleSlope(this, other);
-        if (other instanceof InvertedRectBounds) return Bounds.Collision.getDisplacementCollisionCircleInvertedRect(this, other);
-        if (other instanceof InvertedCircleBounds) return Bounds.Collision.getDisplacementCollisionCircleInvertedCircle(this, other);
+    getDisplacementCollision$(other: Bounds) {
+        if (other instanceof RectBounds) return Bounds.Collision.getDisplacementCollisionCircleRect$(this, other);
+        if (other instanceof CircleBounds) return Bounds.Collision.getDisplacementCollisionCircleCircle$(this, other);
+        if (other instanceof SlopeBounds) return Bounds.Collision.getDisplacementCollisionCircleSlope$(this, other);
+        if (other instanceof InvertedRectBounds) return Bounds.Collision.getDisplacementCollisionCircleInvertedRect$(this, other);
+        if (other instanceof InvertedCircleBounds) return Bounds.Collision.getDisplacementCollisionCircleInvertedCircle$(this, other);
         if (other instanceof NullBounds) return undefined;
         console.error("No collision supported between these bounds", this, other);
         return undefined;
     }
 
-    getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number) {
-        if (other instanceof RectBounds) return Bounds.Collision.getRaycastCollisionCircleRect(this, dx, dy, other, otherdx, otherdy);
-        if (other instanceof CircleBounds) return Bounds.Collision.getRaycastCollisionCircleCircle(this, dx, dy, other, otherdx, otherdy);
-        if (other instanceof SlopeBounds) return Bounds.Collision.getRaycastCollisionCircleSlope(this, dx, dy, other, otherdx, otherdy);
-        if (other instanceof InvertedRectBounds) return Bounds.Collision.getRaycastCollisionCircleInvertedRect(this, dx, dy, other, otherdx, otherdy);
-        if (other instanceof InvertedCircleBounds) return Bounds.Collision.getRaycastCollisionCircleInvertedCircle(this, dx, dy, other, otherdx, otherdy);
+    getRaycastCollision$(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number) {
+        if (other instanceof RectBounds) return Bounds.Collision.getRaycastCollisionCircleRect$(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof CircleBounds) return Bounds.Collision.getRaycastCollisionCircleCircle$(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof SlopeBounds) return Bounds.Collision.getRaycastCollisionCircleSlope$(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof InvertedRectBounds) return Bounds.Collision.getRaycastCollisionCircleInvertedRect$(this, dx, dy, other, otherdx, otherdy);
+        if (other instanceof InvertedCircleBounds) return Bounds.Collision.getRaycastCollisionCircleInvertedCircle$(this, dx, dy, other, otherdx, otherdy);
         if (other instanceof NullBounds) return undefined;
         console.error("No collision supported between these bounds", this, other);
         return undefined;

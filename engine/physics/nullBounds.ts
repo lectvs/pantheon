@@ -32,11 +32,11 @@ class NullBounds implements Bounds {
         return this.boundingBox;
     }
 
-    getDisplacementCollision(other: Bounds) {
+    getDisplacementCollision$(other: Bounds) {
         return undefined;
     }
 
-    getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number) {
+    getRaycastCollision$(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number) {
         return undefined;
     }
 

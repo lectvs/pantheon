@@ -68,17 +68,17 @@ class InvertedRectBounds implements Bounds {
         return this.innerBox;
     }
 
-    getDisplacementCollision(other: Bounds) {
-        if (other instanceof RectBounds) return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionRectInvertedRect(other, this));
-        if (other instanceof CircleBounds) return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionCircleInvertedRect(other, this));
+    getDisplacementCollision$(other: Bounds) {
+        if (other instanceof RectBounds) return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionRectInvertedRect$(other, this));
+        if (other instanceof CircleBounds) return Bounds.Collision.invertDisplacementCollision(Bounds.Collision.getDisplacementCollisionCircleInvertedRect$(other, this));
         if (other instanceof NullBounds) return undefined;
         console.error("No collision supported between these bounds", this, other);
         return undefined;
     }
 
-    getRaycastCollision(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number) {
-        if (other instanceof RectBounds) return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionRectInvertedRect(other, otherdx, otherdy, this, dx, dy));
-        if (other instanceof CircleBounds) return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionCircleInvertedRect(other, otherdx, otherdy, this, dx, dy));
+    getRaycastCollision$(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number) {
+        if (other instanceof RectBounds) return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionRectInvertedRect$(other, otherdx, otherdy, this, dx, dy));
+        if (other instanceof CircleBounds) return Bounds.Collision.invertRaycastCollision(Bounds.Collision.getRaycastCollisionCircleInvertedRect$(other, otherdx, otherdy, this, dx, dy));
         if (other instanceof NullBounds) return undefined;
         console.error("No collision supported between these bounds", this, other);
         return undefined;
