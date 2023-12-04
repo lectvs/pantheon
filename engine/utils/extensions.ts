@@ -68,7 +68,7 @@ PIXI.Sprite.prototype.updateAndSetEffects = function(effects: Effects) {
         this.filters = filters.slice();
     }
 
-    let filterArea = TextureUtils.getFilterArea(this.texture, filters, {
+    let filterArea = TextureUtils.getFilterArea$(this.texture, filters, {
         x: this.x,
         y: this.y,
         scaleX: this.scale.x,
@@ -77,7 +77,11 @@ PIXI.Sprite.prototype.updateAndSetEffects = function(effects: Effects) {
     });
 
     if (filterArea) {
-        this.filterArea = filterArea;
+        if (this.filterArea) {
+            this.filterArea.copyFrom(filterArea);
+        } else {
+            this.filterArea = new PIXI.Rectangle().copyFrom(filterArea);
+        }
     } else {
         // @ts-expect-error
         this.filterArea = null;

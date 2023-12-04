@@ -70,6 +70,11 @@ interface Array<T> {
 }
 
 declare namespace PIXI {
+    export interface Rectangle {
+        // Override for generic rects.
+        copyFrom(rect: Rect): this;
+    }
+
     export interface Sprite {
         /**
          * Updates and sets Effects on a sprite. Should be called after setting the sprite's transforms.

@@ -220,11 +220,11 @@ class SpriteText extends WorldObject {
     }
 
     getTextWidth() {
-        return SpriteText.getBoundsOfCharList(this.getCharList()).width * this.scaleX;
+        return SpriteText.getBoundsOfCharList$(this.getCharList()).width * this.scaleX;
     }
 
     getTextHeight() {
-        return SpriteText.getBoundsOfCharList(this.getCharList()).height * this.scaleY;
+        return SpriteText.getBoundsOfCharList$(this.getCharList()).height * this.scaleY;
     }
 
     override getVisibleLocalBounds$(): Rectangle | undefined {
@@ -328,22 +328,22 @@ namespace SpriteText {
         };
     }
 
-    export function getBoundsOfCharList(list: SpriteTextParser.Character[]) {
-        if (A.isEmpty(list)) return new Rectangle(0, 0, 0, 0);
+    export function getBoundsOfCharList$(list: SpriteTextParser.Character[]) {
+        if (A.isEmpty(list)) return FrameCache.rectangle(0, 0, 0, 0);
 
         let left = M.min(list, char => char.left);
         let right = M.max(list, char => char.right);
         let top = M.min(list, char => char.top);
         let bottom = M.max(list, char => char.bottom);
 
-        return new Rectangle(left, top, right-left, bottom-top);
+        return FrameCache.rectangle(left, top, right-left, bottom-top);
     }
 
     export function justify(lines: SpriteTextParser.Character[][], justify: SpriteText.Justify) {
-        let maxWidth = SpriteText.getBoundsOfCharList(lines.flat()).width;
+        let maxWidth = SpriteText.getBoundsOfCharList$(lines.flat()).width;
         for (let line of lines) {
             if (line.length === 0) continue;
-            let lineWidth = SpriteText.getBoundsOfCharList(line).width;
+            let lineWidth = SpriteText.getBoundsOfCharList$(line).width;
             let lineLeft = (maxWidth - lineWidth) * justifyToX(justify);
             let minLeft = M.min(line, char => char.left);
             let dx = lineLeft - minLeft;

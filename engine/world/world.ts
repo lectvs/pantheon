@@ -862,7 +862,7 @@ namespace World {
          * @return the new bounds containing all of the objects
          */
         export function balanceWorldObjectsByPosition(objs: ReadonlyArray<WorldObject>, aroundX: number, aroundY: number, anchor: Vector2 = Anchor.CENTER, deep: boolean = false) {
-            let localBounds = new Rectangle(0, 0, 0, 0);
+            let localBounds = FrameCache.rectangle(0, 0, 0, 0);
             return balanceWorldObjects(objs, aroundX, aroundY, anchor, deep, _ => localBounds);
         }
 
@@ -906,8 +906,8 @@ namespace World {
             let objBounds = getLocalBounds$(obj);
 
             if (!objBounds || !objBounds.isFinite()) {
-                console.error("Failed to get finite object bounds for balancing:", obj, objBounds);
-                objBounds = new Rectangle(0, 0, 0, 0);
+                console.error("Failed to get finite object bounds for balancing:", obj, JSON.stringify(objBounds));
+                objBounds = FrameCache.rectangle(0, 0, 0, 0);
             }
 
             objBounds.x += obj.x;

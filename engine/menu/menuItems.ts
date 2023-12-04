@@ -44,11 +44,18 @@ class MenuTextButton extends SpriteText {
     }
 
     private setBounds() {
-        let textBounds = this.getVisibleWorldBounds$() ?? rect(this.x, this.y, 0, 0);
-        this.bounds.x = textBounds.x - this.x;
-        this.bounds.y = textBounds.y - this.y;
-        this.bounds.width = textBounds.width;
-        this.bounds.height = textBounds.height;
+        let textBounds = this.getVisibleWorldBounds$();
+        if (textBounds) {
+            this.bounds.x = textBounds.x - this.x;
+            this.bounds.y = textBounds.y - this.y;
+            this.bounds.width = textBounds.width;
+            this.bounds.height = textBounds.height;
+        } else {
+            this.bounds.x = this.x;
+            this.bounds.y = this.y;
+            this.bounds.width = 0;
+            this.bounds.height = 0;
+        }
     }
 }
 

@@ -37,4 +37,13 @@ namespace tmp {
         _vec2_2.y = y ?? x;
         return _vec2_2;
     }
+
+    const _rectangle = new Rectangle(0, 0, 0, 0);
+    export function rectangle(x: number, y: number, width: number, height: number) {
+        _rectangle.x = x;
+        _rectangle.y = y;
+        _rectangle.width = width;
+        _rectangle.height = height;
+        return _rectangle;
+    }
 }

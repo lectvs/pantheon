@@ -119,20 +119,20 @@ namespace G {
         }
 
         return new Boundaries(
-            minLeft && isFinite(minLeft) ? minLeft : -Infinity,
-            maxRight && isFinite(maxRight) ? maxRight : Infinity,
-            minTop && isFinite(minTop) ? minTop : -Infinity,
-            maxBottom && isFinite(maxBottom) ? maxBottom : Infinity,
+            minLeft !== undefined && isFinite(minLeft) ? minLeft : -Infinity,
+            maxRight !== undefined && isFinite(maxRight) ? maxRight : Infinity,
+            minTop !== undefined && isFinite(minTop) ? minTop : -Infinity,
+            maxBottom !== undefined && isFinite(maxBottom) ? maxBottom : Infinity,
         );
     }
 
-    export function getRectangleOverlap(rect1: Rect, rect2: Rect) {
+    export function getRectangleOverlap$(rect1: Rect, rect2: Rect) {
         let x = Math.max(rect1.x, rect2.x);
         let w = Math.min(rect1.x + rect1.width, rect2.x + rect2.width) - x;
         let y = Math.max(rect1.y, rect2.y);
         let h = Math.min(rect1.y + rect1.height, rect2.y + rect2.height) - y;
         if (w < 0 || h < 0) return undefined;
-        return rect(x, y, w, h);
+        return FrameCache.rectangle(x, y, w, h);
     }
 
     export function lerpPt(pt1: Pt, pt2: Pt, t: number) {

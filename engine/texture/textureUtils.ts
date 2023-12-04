@@ -34,24 +34,25 @@ namespace TextureUtils {
         return result;
     }
 
-    export function getFilterArea(texture: PIXI.Texture, filters: TextureFilter[], properties: { x?: number, y?: number, scaleX?: number, scaleY?: number, angle?: number }) {
-        let boundaries = Boundaries.fromRect(TextureUtils.getTextureLocalBounds$(texture, properties));
+    export function getFilterArea$(texture: PIXI.Texture, filters: TextureFilter[], properties: { x?: number, y?: number, scaleX?: number, scaleY?: number, angle?: number }) {
+        let localBounds = TextureUtils.getTextureLocalBounds$(texture, properties);
+
+        if (!localBounds.isFinite()) {
+            return undefined;
+        }
 
         if (!A.isEmpty(filters)) {
             for (let filter of filters) {
                 let visualPadding = filter.getVisualPadding();
-                boundaries.left -= visualPadding;
-                boundaries.right += visualPadding;
-                boundaries.top -= visualPadding;
-                boundaries.bottom += visualPadding;
+                if (!isFinite(visualPadding)) return undefined;
+                localBounds.x -= visualPadding;
+                localBounds.y -= visualPadding;
+                localBounds.width += 2*visualPadding;
+                localBounds.height += 2*visualPadding;
             }
         }
 
-        if (!boundaries.isFinite()) {
-            return undefined;
-        }
-
-        return new PIXI.Rectangle(boundaries.left, boundaries.top, boundaries.width, boundaries.height);
+        return localBounds;
     }
 
     export function getPixelARGBRawPos(texture: PIXI.Texture, x: number, y: number, extendMode: ExtendMode = 'transparent') {

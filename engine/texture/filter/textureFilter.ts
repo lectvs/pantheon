@@ -63,7 +63,7 @@ class TextureFilter extends PIXI.Filter {
     }
 
     setTextureValuesFromSprite(sprite: PIXI.Sprite) {
-        this.setTextureValues(sprite.width, sprite.height);
+        this.setTextureValues(sprite.width*10, sprite.height*10);
     }
 
     setUniform(name: string, value: any) {

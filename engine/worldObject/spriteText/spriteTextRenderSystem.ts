@@ -18,32 +18,32 @@ class SpriteTextRenderSystem {
     }
 
     render(x: number, y: number, spriteText: SpriteText) {
-        let textBounds = SpriteText.getBoundsOfCharList(spriteText.getCharList());
+        let textBounds = SpriteText.getBoundsOfCharList$(spriteText.getCharList());
         let result: RenderResult = FrameCache.array();
 
         for (let part in this.parts) {
             let data = this.parts[part];
             let style = spriteText.getStyleFromTags$(data.tagData, spriteText.style);
 
-            data.sprite.anchor.x = -(data.x + style.offsetX - spriteText.anchor.x * textBounds.width) / data.sprite.width;
-            data.sprite.anchor.y = -(data.y + style.offsetY - spriteText.anchor.y * textBounds.height) / data.sprite.height;
-            data.sprite.x = x;
-            data.sprite.y = y;
+            data.sprite.x = x + (data.x + style.offsetX - spriteText.anchor.x * textBounds.width);
+            data.sprite.y = y + (data.y + style.offsetY - spriteText.anchor.y * textBounds.height);
             data.sprite.scale.x = (spriteText.flipX ? -1 : 1) * spriteText.scaleX;
             data.sprite.scale.y = (spriteText.flipY ? -1 : 1) * spriteText.scaleY;
             data.sprite.angle = spriteText.angle;
             data.sprite.tint = Color.tint(style.color, spriteText.tint);
             data.sprite.alpha = style.alpha * spriteText.alpha;
 
-
-            spriteText.effects.pre.push(...style.filters);
+            spriteText.effects.pre.pushAll(style.filters);
             data.sprite.updateAndSetEffects(spriteText.effects);
             spriteText.effects.pre.length -= style.filters.length;  // Remove the style filters
 
-            let textureLocalBounds = data.sprite.getLocalBounds();
+            let textureLocalBounds = TextureUtils.getTextureLocalBounds$(data.texture, {
+                scaleX: data.sprite.scale.x,
+                scaleY: data.sprite.scale.y,
+                angle: data.sprite.angle,
+            });
 
-            let screenBounds = new Rectangle(0, 0, screen.width, screen.height);
-
+            let screenBounds = tmp.rectangle(0, 0, screen.width, screen.height);
             if (!G.areRectanglesOverlapping(textureLocalBounds, screenBounds)) continue;
 
             if (!data.rendered) {
@@ -63,7 +63,7 @@ class SpriteTextRenderSystem {
     }
 
     getSpriteTextLocalBounds$(spriteText: SpriteText) {
-        let textBounds = SpriteText.getBoundsOfCharList(spriteText.getCharList());
+        let textBounds = SpriteText.getBoundsOfCharList$(spriteText.getCharList());
 
         let bounds: Rectangle[] = FrameCache.array();
 
