@@ -17,7 +17,7 @@ class Module<T extends WorldObject> {
     }
 
     update(): void {}
-    render(x: number, y: number): RenderResult {
+    render(): Render.Result {
         return FrameCache.array();
     }
 

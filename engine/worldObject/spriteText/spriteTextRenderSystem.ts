@@ -17,16 +17,16 @@ class SpriteTextRenderSystem {
         this.parts = SpriteTextRenderSystem.buildParts(partToCharacters);
     }
 
-    render(x: number, y: number, spriteText: SpriteText) {
+    render(spriteText: SpriteText) {
         let textBounds = SpriteText.getBoundsOfCharList$(spriteText.getCharList());
-        let result: RenderResult = FrameCache.array();
+        let result: Render.Result = FrameCache.array();
 
         for (let part in this.parts) {
             let data = this.parts[part];
             let style = spriteText.getStyleFromTags$(data.tagData, spriteText.style);
 
-            data.sprite.x = x + (data.x + style.offsetX - spriteText.anchor.x * textBounds.width);
-            data.sprite.y = y + (data.y + style.offsetY - spriteText.anchor.y * textBounds.height);
+            data.sprite.x = data.x + style.offsetX - spriteText.anchor.x * textBounds.width;
+            data.sprite.y = data.y + style.offsetY - spriteText.anchor.y * textBounds.height;
             data.sprite.scale.x = (spriteText.flipX ? -1 : 1) * spriteText.scaleX;
             data.sprite.scale.y = (spriteText.flipY ? -1 : 1) * spriteText.scaleY;
             data.sprite.angle = spriteText.angle;

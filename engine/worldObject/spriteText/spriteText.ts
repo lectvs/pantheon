@@ -173,10 +173,10 @@ class SpriteText extends WorldObject {
         }
     }
 
-    override render(x: number, y: number) {
-        let result: RenderResult = FrameCache.array();
-        result.pushAll(this.getRenderSystem().render(x, y, this));
-        result.pushAll(super.render(x, y));
+    override render() {
+        let result: Render.Result = FrameCache.array();
+        result.pushAll(this.getRenderSystem().render(this));
+        result.pushAll(super.render());
         return result;
     }
 
@@ -271,7 +271,7 @@ class SpriteText extends WorldObject {
         let anchorOffsetX = Math.round(this.anchor.x * width);
         let anchorOffsetY = Math.round(this.anchor.y * height);
 
-        renderToRenderTexture(this.render(anchorOffsetX, anchorOffsetY), texture);
+        renderToRenderTexture(Render.shift(this.render(), anchorOffsetX, anchorOffsetY), texture);
 
         texture.defaultAnchor.set(this.anchor.x, this.anchor.y);
 

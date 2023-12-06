@@ -85,12 +85,12 @@ class Sprite extends PhysicsWorldObject {
         this.angle += this.vangle * this.delta;
     }
 
-    override render(x: number, y: number): [PIXI.Sprite, ...RenderResult] {
+    override render(): [PIXI.Sprite, ...Render.Result] {
         this.renderObject.texture = this.texture;
         this.renderObject.anchor.x = this.texture.defaultAnchor.x;
         this.renderObject.anchor.y = this.texture.defaultAnchor.y;
-        this.renderObject.x = x + this.offsetX;
-        this.renderObject.y = y + this.offsetY;
+        this.renderObject.x = this.offsetX;
+        this.renderObject.y = this.offsetY;
         this.renderObject.scale.x = (this.flipX ? -1 : 1) * this.scaleX;
         this.renderObject.scale.y = (this.flipY ? -1 : 1) * this.scaleY;
         this.renderObject.angle = this.angle + this.angleOffset;
@@ -99,8 +99,8 @@ class Sprite extends PhysicsWorldObject {
         this.renderObject.blendMode = this.blendMode ?? PIXI.BLEND_MODES.NORMAL;
         this.renderObject.updateAndSetEffects(this.effects);
 
-        let result: [PIXI.Sprite, ...RenderResult] = FrameCache.array(this.renderObject);
-        result.pushAll(super.render(x, y));
+        let result: [PIXI.Sprite, ...Render.Result] = FrameCache.array(this.renderObject);
+        result.pushAll(super.render());
 
         return result;
     }

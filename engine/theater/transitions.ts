@@ -28,7 +28,7 @@ namespace Transitions {
         }
 
         override render() {
-            let result: RenderResult = FrameCache.array();
+            let result: Render.Result = FrameCache.array();
             if (this.oldSnapshot) {
                 result.push(this.oldSnapshot.sprite);
             }
@@ -73,7 +73,7 @@ namespace Transitions {
         }
 
         override render() {
-            let result: RenderResult = [];
+            let result: Render.Result = FrameCache.array();
 
             if (this.transitioned) {
                 if (this.newSnapshot) {

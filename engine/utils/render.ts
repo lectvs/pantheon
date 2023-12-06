@@ -1,25 +1,40 @@
-type RenderResult = PIXI.DisplayObject[];
+namespace Render {
+    export type Result = PIXI.DisplayObject[];
 
-function diffRender(stage: PIXI.Container, match: RenderResult) {
-    for (let i = stage.children.length-1; i >= 0; i--) {
-        if (!match.includes(stage.getChildAt(i))) {
-            stage.removeChildAt(i);
+    export function diff(container: PIXI.Container, match: Render.Result) {
+        for (let i = container.children.length-1; i >= 0; i--) {
+            if (!match.includes(container.getChildAt(i))) {
+                container.removeChildAt(i);
+            }
+        }
+    
+        let sortNeeded = false;
+        for (let i = 0; i < match.length; i++) {
+            let obj = match[i];
+            if (!container.children.includes(obj)) {
+                container.addChild(obj);
+            }
+            match[i].zIndex = i;
+            if (container.children[i] !== match[i]) {
+                sortNeeded = true;
+            }
+        }
+    
+        if (sortNeeded) {
+            container.sortChildren();
         }
     }
 
-    let sortNeeded = false;
-    for (let i = 0; i < match.length; i++) {
-        let obj = match[i];
-        if (!stage.children.includes(obj)) {
-            stage.addChild(obj);
-        }
-        match[i].zIndex = i;
-        if (stage.children[i] !== match[i]) {
-            sortNeeded = true;
-        }
-    }
+    export function shift(result: Render.Result, dx: number, dy: number) {
+        for (let r of result) {
+            r.x += dx;
+            r.y += dy;
 
-    if (sortNeeded) {
-        stage.sortChildren();
+            if (r instanceof PIXI.Sprite && r.filterArea) {
+                r.filterArea.x += dx;
+                r.filterArea.y += dy;
+            }
+        }
+        return result;
     }
 }

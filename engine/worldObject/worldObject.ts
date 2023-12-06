@@ -43,7 +43,7 @@ namespace WorldObject {
         onUpdate: { params: (this: WO) => void };
         onVisualUpdate: { params: (this: WO) => void };
         onPostUpdate: { params: (this: WO) => void };
-        onRender: { params: (this: WO, x: number, y: number) => RenderResult };
+        onRender: { params: (this: WO) => Render.Result };
         onKill: { params: (this: WO) => void };
     }
 }
@@ -315,14 +315,14 @@ class WorldObject {
         return result;
     }
 
-    render(x: number, y: number): RenderResult {
-        let result: RenderResult = FrameCache.array();
+    render(): Render.Result {
+        let result: Render.Result = FrameCache.array();
 
         for (let module of this.modules) {
-            result.pushAll(module.render(x, y));
+            result.pushAll(module.render());
         }
 
-        let renderedHooks = this.hookManager.executeHooksWithReturnValue$('onRender', x, y);
+        let renderedHooks = this.hookManager.executeHooksWithReturnValue$('onRender');
         for (let renderedHook of renderedHooks) {
             result.pushAll(renderedHook);
         }

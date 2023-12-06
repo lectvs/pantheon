@@ -253,7 +253,7 @@ class World {
         this.bgFill.tint = this.backgroundColor;
         this.bgFill.alpha = this.backgroundAlpha;
 
-        let result: RenderResult = FrameCache.array(this.bgFill);
+        let result: Render.Result = FrameCache.array(this.bgFill);
         
         for (let layer of this.layers) {
             if (layer.shouldRenderToOwnLayer) {
@@ -266,7 +266,7 @@ class World {
             }
         }
 
-        diffRender(this.container, result);
+        Render.diff(this.container, result);
 
         if (this.shouldRenderToTexture) {
             let worldTexture = this.worldSprite.texture as PIXI.RenderTexture;
@@ -282,10 +282,10 @@ class World {
     renderLayer(layer: World.Layer) {
         layer.sort();
 
-        let result: RenderResult = [];
+        let result: Render.Result = FrameCache.array();
         for (let worldObject of layer.worldObjects) {
             if (!worldObject.isVisible() || !worldObject.isOnScreen()) continue;
-            result.pushAll(worldObject.render(worldObject.getRenderScreenX(), worldObject.getRenderScreenY()));
+            result.pushAll(Render.shift(worldObject.render(), worldObject.getRenderScreenX(), worldObject.getRenderScreenY()));
         }
         return result;
     }

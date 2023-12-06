@@ -177,7 +177,7 @@ class Main {
                 MobileScaleManager.update();
             }
 
-            diffRender(Main.stage, FrameCache.array(Main.game.render()));
+            Render.diff(Main.stage, FrameCache.array(Main.game.render()));
 
             Main.renderScreenToCanvas();
         });
@@ -188,7 +188,7 @@ class Main {
     }
 
     static forceRender() {
-        diffRender(Main.stage, [Main.game.render()]);
+        Render.diff(Main.stage, [Main.game.render()]);
         Main.renderScreenToCanvas();
     }
 
@@ -228,7 +228,7 @@ class Main {
         barFill.scale.x = barw * progress;
         barOutline.position.set(barx, bary);
 
-        diffRender(Main.stage, FrameCache.array(bg, barFill, barOutline));
+        Render.diff(Main.stage, FrameCache.array(bg, barFill, barOutline));
 
         Main.renderScreenToCanvas();
     }

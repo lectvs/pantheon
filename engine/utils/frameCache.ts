@@ -28,7 +28,7 @@ namespace FrameCache {
      * To add a new cache, add the function below and add the cache to the reset() function below.
      */
 
-    export const _arrayCache = new Cache<any[]>(() => []);
+    const _arrayCache = new Cache<any[]>(() => []);
     export function array(): [];
     export function array<T>(e1: T): [T];
     export function array<T>(e1: T, e2: T): [T, T];
@@ -44,7 +44,7 @@ namespace FrameCache {
         return result;
     }
 
-    export const _objectCache = new Cache<any>(() => ({}));
+    const _objectCache = new Cache<any>(() => ({}));
     export function object() {
         let result = _objectCache.get();
         for (let key in result) {
@@ -53,7 +53,7 @@ namespace FrameCache {
         return result;
     }
 
-    export const _setCache = new Cache<Set<any>>(() => new Set());
+    const _setCache = new Cache<Set<any>>(() => new Set());
     export function set(): Set<any>;
     export function set<T>(e1?: T, e2?: T, e3?: T, e4?: T): Set<T>;
     export function set<T>(e1?: T, e2?: T, e3?: T, e4?: T) {
@@ -66,7 +66,7 @@ namespace FrameCache {
         return result;
     }
 
-    export const _vec2Cache = new Cache(() => new Vector2(0, 0));
+    const _vec2Cache = new Cache(() => new Vector2(0, 0));
     export function vec2(x: number, y: number): Vector2 {
         let result = _vec2Cache.get();
         result.x = x;
@@ -74,7 +74,7 @@ namespace FrameCache {
         return result;
     }
 
-    export const _rectangleCache = new Cache(() => new Rectangle(0, 0, 0, 0));
+    const _rectangleCache = new Cache(() => new Rectangle(0, 0, 0, 0));
     export function rectangle(x: number, y: number, width: number, height: number): Rectangle {
         let result = _rectangleCache.get();
         result.x = x;
@@ -84,7 +84,7 @@ namespace FrameCache {
         return result;
     }
 
-    export const _boundariesCache = new Cache(() => new Boundaries(0, 0, 0, 0));
+    const _boundariesCache = new Cache(() => new Boundaries(0, 0, 0, 0));
     export function boundaries(left: number, right: number, top: number, bottom: number): Boundaries {
         let result = _boundariesCache.get();
         result.left = left;
@@ -94,7 +94,7 @@ namespace FrameCache {
         return result;
     }
 
-    export const _displacementCollisionCache = new Cache<Bounds.DisplacementCollision>(() => ({} as Bounds.DisplacementCollision));
+    const _displacementCollisionCache = new Cache<Bounds.DisplacementCollision>(() => ({} as Bounds.DisplacementCollision));
     export function displacementCollision(bounds1: Bounds, bounds2: Bounds, displacementX: number, displacementY: number): Bounds.DisplacementCollision {
         let result = _displacementCollisionCache.get();
         result.bounds1 = bounds1;
@@ -104,7 +104,7 @@ namespace FrameCache {
         return result;
     }
 
-    export const _raycastCollisionCache = new Cache<Bounds.RaycastCollision>(() => ({} as Bounds.RaycastCollision));
+    const _raycastCollisionCache = new Cache<Bounds.RaycastCollision>(() => ({} as Bounds.RaycastCollision));
     export function raycastCollision(bounds1: Bounds, bounds2: Bounds, displacementX: number, displacementY: number, t: number): Bounds.RaycastCollision {
         let result = _raycastCollisionCache.get();
         result.bounds1 = bounds1;

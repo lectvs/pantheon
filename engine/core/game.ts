@@ -104,7 +104,7 @@ class Game {
             result.pushAll(this.renderTouches());
         }
 
-        diffRender(this.container, result);
+        Render.diff(this.container, result);
 
         return this.container;
     }

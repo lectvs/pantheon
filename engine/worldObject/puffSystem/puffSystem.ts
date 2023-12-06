@@ -51,8 +51,8 @@ class PuffSystem extends WorldObject {
         }
     }
 
-    override render(x: number, y: number) {
-        let result: RenderResult = FrameCache.array();
+    override render() {
+        let result: Render.Result = FrameCache.array();
         
         for (let i = 0; i < this.puffs.length; i++) {
             let puff = this.puffs[i];
@@ -62,8 +62,8 @@ class PuffSystem extends WorldObject {
             let color = Color.lerpColorByLch(progress, puff.initialColor, puff.finalColor);
             let alpha = M.lerp(progress, puff.initialAlpha, puff.finalAlpha);
 
-            this.sprites[i].x = x - this.x + puff.x;
-            this.sprites[i].y = y - this.y + puff.y;
+            this.sprites[i].x = puff.x - this.x;
+            this.sprites[i].y = puff.y - this.y;
             this.sprites[i].scale.set(radius/16);
             this.sprites[i].tint = color;
             this.sprites[i].alpha = alpha;
@@ -71,7 +71,7 @@ class PuffSystem extends WorldObject {
             result.push(this.sprites[i]);
         }
 
-        result.pushAll(super.render(x, y));
+        result.pushAll(super.render());
 
         return result;
     }

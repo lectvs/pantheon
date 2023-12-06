@@ -68,8 +68,8 @@ class Theater {
         }
     }
 
-    render(): RenderResult {
-        let result: RenderResult = FrameCache.array();
+    render(): Render.Result {
+        let result: Render.Result = FrameCache.array();
 
         result.pushAll(this.stageManager.render());
 
@@ -81,7 +81,7 @@ class Theater {
             result.pushAll(fade.render());
         }
 
-        diffRender(this.container, result);
+        Render.diff(this.container, result);
 
         return FrameCache.array(this.container);
     }
@@ -173,7 +173,7 @@ namespace Theater {
             this.sprite = new PIXI.Sprite(Textures.filledRect(W, H, 0xFFFFFF));
         }
 
-        render(): RenderResult {
+        render(): Render.Result {
             this.sprite.tint = this.color;
             this.sprite.alpha = this.alpha;
             return FrameCache.array(this.sprite);
@@ -192,7 +192,7 @@ namespace Theater {
             this.containedWorld.update();
         }
 
-        override render(x: number, y: number): RenderResult {
+        override render(): Render.Result {
             return this.containedWorld.render();
         }
     }
