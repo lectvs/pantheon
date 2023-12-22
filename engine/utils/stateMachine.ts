@@ -71,10 +71,14 @@ class StateMachine<StateData extends StateMachine.StateData> {
 
     update(delta: number) {
         if (this.script) this.script.update(delta);
-        if (this.currentStateData?.update) this.currentStateData.update();
+
+        let updateCallback = !this.currentStateData || !this.currentStateData.state || !this.states[this.currentStateData.state]
+            ? undefined
+            : this.states[this.currentStateData.state].update;
+        if (updateCallback) updateCallback();
     }
 
-    getCurrentStateName() {
+    getCurrentStateName(): StateData['state'] | undefined {
         return this.currentStateData?.state;
     }
 

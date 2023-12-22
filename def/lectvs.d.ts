@@ -30,6 +30,17 @@ declare const HH: number;
 
 interface Array<T> {
     /**
+     * Returns the maximum element according to the key.
+     * Returns undefined if the array is empty.
+     */
+    argmax(key: (value: T, index: number, obj: T[]) => number): T | undefined;
+    /**
+     * Returns the minimum element according to the key.
+     * Returns undefined if the array is empty.
+     */
+    argmin(key: (value: T, index: number, obj: T[]) => number): T | undefined;
+
+    /**
      * Clears the array by setting its length to zero.
      */
     clear(): void;
@@ -57,6 +68,19 @@ interface Array<T> {
     last(): T | undefined;
 
     mapInPlace<S>(callbackFn: (value: T, index: number, obj: T[]) => S): S[];
+
+    /**
+     * Returns the maximum value of the key applied to each element.
+     * If key is not specified, it is the identity function.
+     * Returns NaN if the array is empty.
+     */
+    max(key?: (value: T, index: number, obj: T[]) => number): number;
+    /**
+     * Returns the minimum value of the key applied to each element.
+     * If key is not specified, it is the identity function.
+     * Returns NaN if the array is empty.
+     */
+    min(key?: (value: T, index: number, obj: T[]) => number): number;
 
     /**
      * Appends elements from another array to the end of this array, and returns the new length of the array.

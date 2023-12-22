@@ -1,5 +1,6 @@
 namespace Utils {
     export const NOOP = () => null;
+    export const IDENTITY = (e: any) => e;
     export const NOOP_DISPLAYOBJECT: PIXI.DisplayObject = new PIXI.DisplayObject();
 
     export const UID = new UIDGenerator();

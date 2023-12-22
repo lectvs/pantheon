@@ -1,4 +1,13 @@
 namespace Animations {
+    export type EmptyConfig = {
+        priority?: number;
+        nextRef?: string;
+    }
+
+    export function empty(config: EmptyConfig = {}) {
+        return new AnimationInstance.EmptyAnimation(config.priority ?? 0, config.nextRef);
+    }
+
     export type FromSingleTextureConfig = {
         texture: string | PIXI.Texture;
         duration?: number;

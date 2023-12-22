@@ -1,5 +1,25 @@
 // Source: https://stackoverflow.com/questions/13897659/extending-functionality-in-typescript
 
+Array.prototype.argmax = function(key: (value: any, index: number, obj: any[]) => number) {
+    return this.argmin((value, index, obj) => -key(value, index, obj));
+}
+
+Array.prototype.argmin = function(key: (value: any, index: number, obj: any[]) => number) {
+    if (this.length == 0) return undefined;
+    let result = this[0];
+    let resultValue = key(this[0], 0, this);
+
+    for (let i = 1; i < this.length; i++) {
+        let value = key(this[i], i, this);
+        if (value < resultValue)  {
+            result = this[i];
+            resultValue = value;
+        }
+    }
+
+    return result;
+}
+
 Array.prototype.clear = function() {
     this.length = 0;
 }
@@ -42,6 +62,24 @@ Array.prototype.mapInPlace = function(fn: (value: any, index: number, obj: any[]
         this[i] = fn(this[i], i, this);
     }
     return this;
+}
+
+Array.prototype.max = function(key: (value: any, index: number, obj: any[]) => number = Utils.IDENTITY) {
+    return -this.min((value, index, obj) => -key(value, index, obj));
+}
+
+Array.prototype.min = function(key: (value: any, index: number, obj: any[]) => number = Utils.IDENTITY) {
+    if (this.length == 0) return NaN;
+    let resultValue = key(this[0], 0, this);
+
+    for (let i = 1; i < this.length; i++) {
+        let value = key(this[i], i, this);
+        if (value < resultValue)  {
+            resultValue = value;
+        }
+    }
+
+    return resultValue;
 }
 
 Array.prototype.pushAll = function(other: any[]) {

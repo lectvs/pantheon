@@ -1,4 +1,4 @@
-function lciDocumentToWorldObjects(key: string) {
+function lciDocumentToWorldObjects(key: string, originX: number = 0, originY: number = 0) {
     let lciDocument = AssetCache.getLciDocument(key);
     if (!lciDocument) return [];
 
@@ -59,5 +59,5 @@ function lciDocumentToWorldObjects(key: string) {
         worldObjects.push(sprite);
     }
 
-    return worldObjects;
+    return G.shiftPts(worldObjects, -originX, -originY);
 }

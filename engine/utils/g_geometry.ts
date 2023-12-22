@@ -83,6 +83,15 @@ namespace G {
         return A.range(n).map(i => vec2(cx + r*M.cos(angle + 360/n*(i+0.5)), cy + r*M.sin(angle + 360/n*(i+0.5))));
     }
 
+    export function getClosestCardinalDirection$(vector: Vector2) {
+        let angle = vector.angle;
+        if (vector.isZero()) return FrameCache.vec2(0, 0);
+        if (angle > 45 && angle < 135) return FrameCache.vec2(0, 1);
+        if (angle >= 135 && angle <= 225) return FrameCache.vec2(-1, 0);
+        if (angle > 225 && angle < 315) return FrameCache.vec2(0, -1);
+        return FrameCache.vec2(1, 0);
+    }
+
     export function getEncompassingBoundaries$(objs: (Pt | Rect | Bndries)[]): Boundaries {
         let minLeft: number | undefined;
         let maxRight: number | undefined;
@@ -139,9 +148,15 @@ namespace G {
         return vec2(M.lerp(t, pt1.x, pt2.x), M.lerp(t, pt1.y, pt2.y));
     }
 
-    export function moveToClamp(current: Vector2, to: Vector2, speed: number, delta: number) {
-        if (G.distance(current, to) <= speed * delta) current.set(to);
-        current.add(tmp.vec2(to.x - current.x, to.y - current.y).setMagnitude(speed * delta));
+    export function moveToClamp(current: Pt, to: Pt, speed: number, delta: number) {
+        if (G.distance(current, to) <= speed * delta) {
+            current.x = to.x;
+            current.y = to.y;
+            return current;
+        }
+        let d = tmp.vec2(to.x - current.x, to.y - current.y).setMagnitude(speed * delta);
+        current.x += d.x;
+        current.y += d.y;
         return current;
     }
 
@@ -152,5 +167,13 @@ namespace G {
     export function rectContainsRect(rect: Rect, contains: Rect) {
         return rect.x <= contains.x && rect.x + rect.width  >= contains.x + contains.width
             && rect.y <= contains.y && rect.y + rect.height >= contains.y + contains.height;
+    }
+
+    export function shiftPts<T extends Pt>(pts: T[], dx: number, dy: number): T[] {
+        for (let pt of pts) {
+            pt.x += dx;
+            pt.y += dy;
+        }
+        return pts;
     }
 }

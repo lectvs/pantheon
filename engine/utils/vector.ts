@@ -38,12 +38,21 @@ class Vector2 {
         return this.setMagnitude(this.magnitude + amount);
     }
 
-    clampMagnitude(maxMagnitude: number) {
-        if (maxMagnitude < 0) {
-            console.error('Tried to clamp vector magnitude with negative maxMagnitude');
+    clampMagnitude(maxMagnitude: number): this;
+    clampMagnitude(minMagnitude: number, maxMagnitude: number): this;
+    clampMagnitude(minMagnitude: number, maxMagnitude?: number) {
+        if (maxMagnitude === undefined) {
+            maxMagnitude = minMagnitude;
+            minMagnitude = 0;
+        }
+
+        if (maxMagnitude < minMagnitude) {
+            console.error('Tried to clamp vector magnitude with maxMagnitude < minMagnitude');
             return this;
         }
-        if (this.magnitude > maxMagnitude) {
+        if (this.magnitude < minMagnitude) {
+            this.setMagnitude(minMagnitude);
+        } else if (this.magnitude > maxMagnitude) {
             this.setMagnitude(maxMagnitude);
         } 
         return this;

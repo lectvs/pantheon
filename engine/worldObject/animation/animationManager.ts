@@ -22,8 +22,6 @@ class AnimationManager {
             // Noop
         } else if (defaultAnimation) {
             this.playAnimation(defaultAnimation);
-        } else if (O.size(animations) === 1) {
-            this.playAnimation(Object.keys(animations!)[0]);
         } else if (!O.isEmpty(animations)) {
             if ('default' in animations) this.playAnimation('default');
             else if ('idle' in animations) this.playAnimation('idle');
