@@ -38,11 +38,11 @@ class Effects {
     }
 
     getFilterList$(): TextureFilter[] {
-        return this.getAllEffects$().filterInPlace(e => e.enabled);
+        return this.getAllEffects$().filterInPlace(e => e.doesAffectRender());
     }
 
     hasEffects() {
-        return this.getAllEffects$().some(e => e.enabled);
+        return this.getAllEffects$().some(e => e.doesAffectRender());
     }
 
     updateEffects(delta: number) {
@@ -107,18 +107,35 @@ class Effects {
 namespace Effects {
     export namespace Filters {
         export class Silhouette extends TextureFilter {
-            get color() { return Color.vec3ToColor(this.getUniform('color')); }
-            set color(value: number) { this.setUniform('color', Color.colorToVec3(value)); }
-            get alpha() { return this.getUniform('alpha'); }
-            set alpha(value: number) { this.setUniform('alpha', value); }
-            get amount() { return this.getUniform('amount'); }
-            set amount(value: number) { this.setUniform('amount', value); }
+            private _color: number;
+            get color() { return this._color; }
+            set color(value: number) {
+                if (value === this._color) return;
+                this.setUniform('color', Color.colorToVec3(value));
+                this._color = value;
+            }
+
+            private _alpha: number;
+            get alpha() { return this._alpha; }
+            set alpha(value: number) {
+                if (value === this._alpha) return;
+                this.setUniform('alpha', value);
+                this._alpha = value;
+            }
+
+            private _amount: number = 1;
+            get amount() { return this._amount; }
+            set amount(value: number) {
+                if (value === this._amount) return;
+                this.setUniform('amount', value);
+                this._amount = value;
+            }
 
             constructor(color: number, alpha: number) {
                 super({
                     uniforms: {
-                        "vec3 color": Color.colorToVec3(0x000000),
-                        "float alpha": 1.0,
+                        "vec3 color": Color.colorToVec3(color),
+                        "float alpha": alpha,
                         "float amount": 1.0
                     },
                     code: `
@@ -127,8 +144,13 @@ namespace Effects {
                         }
                     `
                 });
-                this.color = color;
-                this.alpha = alpha;
+                this._color = color;
+                this._alpha = alpha;
+            }
+
+            override doesAffectRender(): boolean {
+                if (this.amount === 0) return false;
+                return super.doesAffectRender();
             }
 
             enable(color: number = this.color, alpha: number = this.alpha, amount: number = this.amount) {
@@ -141,19 +163,36 @@ namespace Effects {
         }
 
         export class Outline extends TextureFilter {
-            get color() { return Color.vec3ToColor(this.getUniform('color')); }
-            set color(value: number) { this.setUniform('color', Color.colorToVec3(value)); }
-            get alpha() { return this.getUniform('alpha'); }
-            set alpha(value: number) { this.setUniform('alpha', value); }
-            get matchAlpha() { return this.getUniform('matchAlpha') > 0; }
-            set matchAlpha(value: boolean) { this.setUniform('matchAlpha', value ? 1 : 0); }
+            private _color: number;
+            get color() { return this._color; }
+            set color(value: number) {
+                if (value === this._color) return;
+                this.setUniform('color', Color.colorToVec3(value));
+                this._color = value;
+            }
+
+            private _alpha: number;
+            get alpha() { return this._alpha; }
+            set alpha(value: number) {
+                if (value === this._alpha) return;
+                this.setUniform('alpha', value);
+                this._alpha = value;
+            }
+
+            private _matchAlpha: boolean;
+            get matchAlpha() { return this._matchAlpha; }
+            set matchAlpha(value: boolean) {
+                if (value === this._matchAlpha) return;
+                this.setUniform('matchAlpha', value ? 1 : 0);
+                this._matchAlpha = value;
+            }
 
             constructor(color: number, alpha: number, matchAlpha: boolean = true) {
                 super({
                     uniforms: {
-                        "vec3 color": Color.colorToVec3(0x000000),
-                        "float alpha": 1.0,
-                        "int matchAlpha": 1,
+                        "vec3 color": Color.colorToVec3(color),
+                        "float alpha": alpha,
+                        "int matchAlpha": matchAlpha ? 1 : 0,
                     },
                     visualPadding: 1,
                     code: `
@@ -167,9 +206,14 @@ namespace Effects {
                         }
                     `
                 });
-                this.color = color;
-                this.alpha = alpha;
-                this.matchAlpha = matchAlpha;
+                this._color = color;
+                this._alpha = alpha;
+                this._matchAlpha = matchAlpha;
+            }
+
+            override doesAffectRender(): boolean {
+                if (this.alpha <= 0) return false;
+                return super.doesAffectRender();
             }
 
             enable(color: number = this.color, alpha: number = this.alpha, matchAlpha: boolean = this.matchAlpha) {

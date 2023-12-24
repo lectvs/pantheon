@@ -65,7 +65,8 @@ class TextureLoader implements Loader {
             for (let y = 0; y < numFramesY; y++) {
                 for (let x = 0; x < numFramesX; x++) {
                     let frameKeyPrefix = texture.spritesheet.prefix ?? `${key}/`;
-                    let frameKey = `${frameKeyPrefix}${x + y*numFramesX}`;
+                    let frameKeyIndex = this.getFrameKeyIndex(texture, x, y, numFramesX);
+                    let frameKey = `${frameKeyPrefix}${frameKeyIndex}`;
                     frames[frameKey] = {
                         rect: {
                             x: x*texture.spritesheet.frameWidth,
@@ -86,5 +87,11 @@ class TextureLoader implements Loader {
         }
 
         return frames;
+    }
+
+    private static getFrameKeyIndex(texture: Preload.Texture, x: number, y: number, numFramesX: number) {
+        if (texture.spritesheet?.naming === 'x/y') return `${x}/${y}`;
+        if (texture.spritesheet?.naming === 'y/x') return `${y}/${x}`;
+        return `${x + y*numFramesX}`;
     }
 }

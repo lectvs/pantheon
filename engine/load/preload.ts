@@ -21,17 +21,18 @@ namespace Preload {
         anchor?: Vector2;
     }
 
-    export type Sound = {
-        url?: string;
-        volume?: number;
-        speed?: number;
-    }
-
     export type TextureSpritesheet = {
         frameWidth: number;
         frameHeight: number;
         prefix?: string;
         anchor?: Vector2;
+        naming?: 'index' | 'x/y' | 'y/x';
+    }
+
+    export type Sound = {
+        url?: string;
+        volume?: number;
+        speed?: number;
     }
 
     export type Tileset = {
