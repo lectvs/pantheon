@@ -101,7 +101,7 @@ namespace SpriteTextRenderSystem {
         let result: Dict<SpriteTextRenderSystem.Part> = {};
 
         for (let part in partToCharacters) {
-            let boundary = G.getEncompassingBoundaries$(partToCharacters[part]);
+            let boundary = G.getEncompassingBoundaries$(partToCharacters[part].map(character => character.getTextureBoundaries$()));
             if (!boundary.isFinite()) {
                 console.error('SpriteText character boundaries is not finite:', partToCharacters[part]);
                 boundary = FrameCache.boundaries(partToCharacters[part][0].x, partToCharacters[part][0].x, partToCharacters[part][0].y, partToCharacters[part][0].y);

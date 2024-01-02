@@ -28,6 +28,19 @@ namespace Textures {
         return cache_filledRect[key];
     }
 
+    const cache_filledRoundedRect: Dict<PIXI.RenderTexture> = {};
+    export function filledRoundedRect(width: number, height: number, radius: number, fillColor: number, fillAlpha: number = 1) {
+        let key = `${width},${height},${radius},${fillColor},${fillAlpha}`;
+        if (!cache_filledRoundedRect[key]) {
+            let result = newPixiRenderTexture(width, height, 'Textures.filledRoundedRect');
+            Draw.roundedRectangle(result, 0, 0, width, height, radius, { fill: { color: fillColor, alpha: fillAlpha }});
+            TextureUtils.setImmutable(result);
+            cache_filledRoundedRect[key] = result;
+        }
+
+        return cache_filledRoundedRect[key];
+    }
+
     const cache_filledPolygon: Dict<PIXI.RenderTexture> = {};
     export function filledPolygon(points: Pt[], fillColor: number, fillAlpha: number = 1) {
         let key = `[${points.map(p => `${p.x},${p.y}`).join(',')}].${fillColor},${fillAlpha}`;
@@ -52,6 +65,19 @@ namespace Textures {
             cache_outlineRect[key] = result;
         }
         return cache_outlineRect[key];
+    }
+
+    const cache_outlineRoundedRect: Dict<PIXI.RenderTexture> = {};
+    export function outlineRoundedRect(width: number, height: number, radius: number, outlineColor: number, outlineAlpha: number = 1, outlineThickness: number = 1) {
+        let key = `${width},${height},${radius},${outlineColor},${outlineAlpha},${outlineThickness}`;
+        if (!cache_outlineRoundedRect[key]) {
+            let result = newPixiRenderTexture(width, height, 'Textures.outlineRoundedRect');
+            Draw.roundedRectangle(result, 0, 0, width, height, radius, { outline: { color: outlineColor, alpha: outlineAlpha, thickness: outlineThickness }});
+            TextureUtils.setImmutable(result);
+            cache_outlineRoundedRect[key] = result;
+        }
+
+        return cache_outlineRoundedRect[key];
     }
 
     const cache_outlineCircle: Dict<PIXI.RenderTexture> = {};

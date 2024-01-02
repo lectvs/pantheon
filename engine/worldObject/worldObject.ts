@@ -101,7 +101,7 @@ class WorldObject {
         this.resolvePhysicsGroup();
         return this._physicsGroup;
     }
-    get children() { return <ReadonlyArray<WorldObject>>this._children; }
+    get children() { return this._children; }
     get parent() { return this._parent; }
 
     set layer(value: string | undefined) { World.Actions.setLayer(this, value); }
@@ -377,8 +377,8 @@ class WorldObject {
         return durationOrTimer;
     }
 
-    detachAllChildren<T extends WorldObject>(): T[] {
-        return this.detachChildren(<ReadonlyArray<T>>this.children);
+    detachAllChildren(): WorldObject[] {
+        return this.detachChildren(this.children);
     }
 
     detachChild<T extends WorldObject>(child: T): T {

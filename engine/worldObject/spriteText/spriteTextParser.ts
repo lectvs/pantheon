@@ -132,6 +132,13 @@ namespace SpriteTextParser {
             return this.y + this.localBounds.bottom;
         }
 
+        getTextureBoundaries$() {
+            if (!this.texture) {
+                return FrameCache.rectangle(this.x, this.y, 0, 0);
+            }
+            return TextureUtils.getTextureLocalBounds$(this.texture, this.x, this.y, 1, 1, 0);
+        }
+
         static SPACE(width: number, height: number) {
             return new Character({
                 name: ' ',

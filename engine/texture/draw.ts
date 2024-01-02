@@ -110,6 +110,17 @@ class Draw {
         renderToRenderTexture(this.graphics, texture);
     }
 
+    static roundedRectangle(texture: PIXI.RenderTexture, x: number, y: number, width: number, height: number, radius: number, config: Draw.FillAndOutlineConfig) {
+        let values = Draw.getFillAndOutlineConfigValues(config);
+        if (values.fillAlpha === 0 && values.outlineAlpha === 0) return;
+        this.graphics.lineStyle(values.outlineThickness, values.outlineColor, values.outlineAlpha, Draw.getAlignmentNumber(values.outlineAlignment));
+        this.graphics.clear();
+        this.graphics.beginFill(values.fillColor, values.fillAlpha);
+        this.graphics.drawRoundedRect(x, y, width, height, radius + 2);  // +2 to align 1px radius corner
+        this.graphics.endFill();
+        renderToRenderTexture(this.graphics, texture);
+    }
+
     private static getAlignmentNumber(alignment: Draw.Alignment | undefined) {
         if (alignment === 'inner') return 0;
         if (alignment === 'outer') return 1;
