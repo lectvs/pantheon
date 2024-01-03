@@ -78,6 +78,10 @@ class StateMachine<StateData extends StateMachine.StateData> {
         if (updateCallback) updateCallback();
     }
 
+    getCurrentStateData(): StateData | undefined {
+        return this.currentStateData;
+    }
+
     getCurrentStateName(): StateData['state'] | undefined {
         return this.currentStateData?.state;
     }
