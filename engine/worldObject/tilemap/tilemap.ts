@@ -13,6 +13,7 @@ namespace Tilemap {
         index: number;
         angle: number;
         flipX: boolean;
+        flipY: boolean;
     }
 
     export type Tilemap = {
@@ -171,6 +172,7 @@ class Tilemap extends WorldObject {
             sprite.y = (tileY + 0.5) * this.tileset.tileHeight;
             sprite.angle = tile.angle;
             sprite.scale.x = tile.flipX ? -1 : 1;
+            sprite.scale.y = tile.flipY ? -1 : 1;
             renderToRenderTexture(sprite, renderTextures[i]);
         }
     }
@@ -400,7 +402,7 @@ namespace Tilemap {
     function fillZTileIndicies(zTileIndices: number[][]) {
         for (let y = 1; y < zTileIndices.length; y++) {
             for (let x = 0; x < zTileIndices[y].length; x++) {
-                if (zTileIndices[y][x] === undefined && isFinite(zTileIndices[y-1][x])) {
+                if (zTileIndices[y][x] === -Infinity && isFinite(zTileIndices[y-1][x])) {
                     zTileIndices[y][x] = zTileIndices[y-1][x] - 1;
                 }
             }
@@ -408,7 +410,7 @@ namespace Tilemap {
 
         for (let y = zTileIndices.length-2; y >= 0; y--) {
             for (let x = 0; x < zTileIndices[y].length; x++) {
-                if (zTileIndices[y][x] === undefined && isFinite(zTileIndices[y+1][x])) {
+                if (zTileIndices[y][x] === -Infinity && isFinite(zTileIndices[y+1][x])) {
                     zTileIndices[y][x] = zTileIndices[y+1][x] + 1;
                 }
             }
@@ -416,7 +418,7 @@ namespace Tilemap {
 
         for (let y = 0; y < zTileIndices.length; y++) {
             for (let x = 0; x < zTileIndices[y].length; x++) {
-                if (zTileIndices[y][x] === undefined) {
+                if (zTileIndices[y][x] === -Infinity) {
                     zTileIndices[y][x] = 0;
                 }
             }

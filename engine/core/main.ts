@@ -14,6 +14,7 @@ namespace Main {
         sounds: Dict<Preload.Sound>;
         tilesets: Dict<Preload.Tileset>;
         pyxelTilemaps: Dict<Preload.PyxelTilemap>;
+        ldtkTilemaps: Dict<Preload.LdtkWorld>;
         fonts: Dict<Preload.Font>;
         customResources: Dict<Preload.CustomResource>;
 
@@ -125,6 +126,7 @@ class Main {
             sounds: this.config.sounds,
             tilesets: this.config.tilesets,
             pyxelTilemaps: this.config.pyxelTilemaps,
+            ldtkWorlds: this.config.ldtkTilemaps,
             fonts: this.config.fonts,
             custom: this.config.customResources,
             progressCallback: (progress) => this.renderPreloadProgress(progress),

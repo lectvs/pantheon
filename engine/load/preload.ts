@@ -4,6 +4,7 @@ namespace Preload {
         sounds: Dict<Preload.Sound>;
         tilesets: Dict<Preload.Tileset>;
         pyxelTilemaps: Dict<Preload.PyxelTilemap>;
+        ldtkWorlds: Dict<Preload.LdtkWorld>;
         fonts: Dict<Preload.Font>;
         custom: Dict<Preload.CustomResource>;
         progressCallback: (progress: number) => any;
@@ -46,23 +47,9 @@ namespace Preload {
         url?: string;
     }
 
-    export type PyxelTilemapJson = {
-        tilewidth: number;
-        tileheight: number;
-        tileswide: number;
-        tileshigh: number;
-        layers: {
-            number: number;
-            name: string;
-            tiles: {
-                x: number;
-                y: number;
-                index: number;
-                tile: number;
-                flipX: boolean;
-                rot: number;
-            }[];
-        }[];
+    export type LdtkWorld = {
+        url?: string;
+        solidEnumName: string;
     }
 
     export type Font = {
@@ -104,6 +91,10 @@ class Preload {
 
         for (let key in options.pyxelTilemaps) {
             loaders.push(new PyxelTilemapLoader(key, options.pyxelTilemaps[key]));
+        }
+
+        for (let key in options.ldtkWorlds) {
+            loaders.push(new LdtkWorldLoader(key, options.ldtkWorlds[key]));
         }
 
         for (let key in options.fonts) {

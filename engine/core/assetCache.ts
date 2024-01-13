@@ -4,6 +4,7 @@ class AssetCache {
     static sounds: Dict<WebAudioSound.Asset> = {};
     static tilesets: Dict<Tilemap.Tileset> = {};
     static tilemaps: Dict<Tilemap.Tilemap> = {};
+    static ldtkWorlds: Dict<LdtkWorld.LdtkWorld> = {};
     static fonts: Dict<SpriteText.Font> = {};
     static lciDocuments: Dict<Lci.Document> = {};
 
@@ -40,6 +41,13 @@ class AssetCache {
         return this.tilemaps[key];
     }
 
+    static getLdtkWorld(key: string): LdtkWorld.LdtkWorld | undefined {
+        if (!this.ldtkWorlds[key]) {
+            console.error(`Ldtk world '${key}' does not exist.`);
+        }
+        return this.ldtkWorlds[key];
+    }
+
     static getFont(key: string): SpriteText.Font | undefined {
         if (!this.fonts[key]) {
             console.error(`Font '${key}' does not exist.`);
@@ -54,6 +62,8 @@ class AssetCache {
         }
         return this.lciDocuments[key];
     }
+
+    /* HELPERS */
 
     static isNoneTexture(key: string): boolean {
         return !key || key === 'none' || key.startsWith('none/');

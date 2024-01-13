@@ -72,7 +72,15 @@ namespace SmartTilemap {
     function getSmartTile(tilemap: Tilemap.TilemapLayer, x: number, y: number, config: RuleConfig): Tilemap.Tile {
         for (let rule of config.rules) {
             if (matchTilePattern(tilemap, x, y, config, rule.pattern)) {
-                return M.isNumber(rule.tile) ? { index: rule.tile, angle: 0, flipX: false } : rule.tile;
+                if (M.isNumber(rule.tile)) {
+                    return {
+                        index: rule.tile,
+                        angle: 0,
+                        flipX: false,
+                        flipY: false,
+                    };
+                }
+                return rule.tile;
             }
         }
 

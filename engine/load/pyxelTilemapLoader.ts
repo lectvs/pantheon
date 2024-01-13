@@ -1,3 +1,25 @@
+namespace PyxelTilemapLoader {
+    export type PyxelJsonSchema = {
+        tilewidth: number;
+        tileheight: number;
+        tileswide: number;
+        tileshigh: number;
+        layers: {
+            number: number;
+            name: string;
+            tiles: {
+                x: number;
+                y: number;
+                index: number;
+                tile: number;
+                flipX: boolean;
+                flipY: boolean;
+                rot: number;
+            }[];
+        }[];
+    }
+}
+
 class PyxelTilemapLoader implements Loader {
     private _completionPercent: number;
     get completionPercent() { return this._completionPercent; }
@@ -30,7 +52,7 @@ class PyxelTilemapLoader implements Loader {
             return;
         }
 
-        let tilemapJson: Preload.PyxelTilemapJson = tilemapResource.data;
+        let tilemapJson: PyxelTilemapLoader.PyxelJsonSchema = tilemapResource.data;
 
         let tilemapForCache: Tilemap.Tilemap = {
             layers: [],
@@ -40,12 +62,14 @@ class PyxelTilemapLoader implements Loader {
                 index: -1,
                 angle: 0,
                 flipX: false,
+                flipY: false,
             }));
             for (let tile of tilemapJson.layers[i].tiles) {
                 tiles[tile.y][tile.x] = {
                     index: Math.max(tile.tile, -1),
                     angle: tile.rot * 90,
                     flipX: tile.flipX,
+                    flipY: tile.flipY,
                 };
             }
             tilemapForCache.layers.unshift({

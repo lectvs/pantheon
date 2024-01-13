@@ -70,11 +70,11 @@ class LazyDictNumber<T> {
     }
 }
 
-const LAZY_CACHE: Dict<LazyValue<any>> = {};
+const _LAZY_CACHE: Dict<LazyValue<any>> = {};
 function lazy<T>(key: string, factory: Factory<T>): T {
-    if (!(key in LAZY_CACHE)) {
-        LAZY_CACHE[key] = new LazyValue(factory);
+    if (!(key in _LAZY_CACHE)) {
+        _LAZY_CACHE[key] = new LazyValue(factory);
     }
 
-    return (<LazyValue<T>>LAZY_CACHE[key]).get();
+    return (<LazyValue<T>>_LAZY_CACHE[key]).get();
 }
