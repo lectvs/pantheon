@@ -55,7 +55,7 @@ class LciLoader implements Loader {
             if (layer.isDataLayer) continue;
             if (!layer.visible) continue;
 
-            let layerTexture = AssetCache.pixiTextures[Lci.getLayerTextureKey(this.key, layer.name)];
+            let layerTexture = AssetCache.textures[Lci.getLayerTextureKey(this.key, layer.name)];
             if (!layerTexture) {
                 console.error(`Failed to load LCI layer texture: ${Lci.getLayerTextureKey(this.key, layer.name)}`);
                 continue;
@@ -70,6 +70,6 @@ class LciLoader implements Loader {
         }
 
         TextureUtils.setImmutable(fullTexture);
-        AssetCache.pixiTextures[this.key] = fullTexture;
+        AssetCache.textures[this.key] = fullTexture;
     }
 }

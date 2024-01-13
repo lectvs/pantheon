@@ -78,10 +78,10 @@ namespace SpriteTextParser {
 
     function createCharacter(char: SpriteTextLexer.Char, font: SpriteText.Font, fixedCharSize: boolean) {
         let textureKey = char.isCustom ? char.name : font.charTextures[char.name];
-        let texture = AssetCache.getPixiTexture(textureKey);
+        let texture = AssetCache.getTexture(textureKey);
         if (!texture) {
             textureKey = font.charTextures['missing'];
-            texture = AssetCache.getPixiTexture(textureKey);
+            texture = AssetCache.getTexture(textureKey);
         }
 
         let localBounds = fixedCharSize

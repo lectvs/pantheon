@@ -1,6 +1,6 @@
 // Only meant to be populated by Preload
 class AssetCache {
-    static pixiTextures: Dict<PIXI.Texture> = {};
+    static textures: Dict<PIXI.Texture> = {};
     static sounds: Dict<WebAudioSound.Asset> = {};
     static tilesets: Dict<Tilemap.Tileset> = {};
     static tilemaps: Dict<Tilemap.Tilemap> = {};
@@ -8,15 +8,15 @@ class AssetCache {
     static fonts: Dict<SpriteText.Font> = {};
     static lciDocuments: Dict<Lci.Document> = {};
 
-    static getPixiTexture(key: string): PIXI.Texture {
+    static getTexture(key: string): PIXI.Texture {
         if (this.isNoneTexture(key)) {
             return Textures.NONE;
         }
-        if (!this.pixiTextures[key]) {
+        if (!this.textures[key]) {
             console.error(`Texture '${key}' does not exist.`);
             return Textures.NONE;
         }
-        return this.pixiTextures[key];
+        return this.textures[key];
     }
 
     static getSoundAsset(key: string): WebAudioSound.Asset {

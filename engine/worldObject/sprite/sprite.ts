@@ -134,6 +134,6 @@ class Sprite extends PhysicsWorldObject {
         }
 
         this.textureKey = St.isString(key) ? key : undefined;
-        this.texture = St.isString(key) ? AssetCache.getPixiTexture(key) : key;
+        this.texture = St.isString(key) ? AssetCache.getTexture(key) : key;
     }
 }

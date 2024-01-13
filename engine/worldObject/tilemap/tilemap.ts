@@ -166,7 +166,7 @@ class Tilemap extends WorldObject {
         for (let i = 0; i < renderTextures.length; i++) {
             let textureKeyIndex = this.animation ? i*this.animation.tilesPerFrame + tile.index : tile.index;
             let textureKey = this.tileset.tiles[textureKeyIndex];
-            sprite.texture = AssetCache.getPixiTexture(textureKey);
+            sprite.texture = AssetCache.getTexture(textureKey);
             sprite.anchor = sprite.texture.defaultAnchor;
             sprite.x = (tileX + 0.5) * this.tileset.tileWidth;
             sprite.y = (tileY + 0.5) * this.tileset.tileHeight;

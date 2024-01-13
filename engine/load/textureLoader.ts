@@ -37,7 +37,7 @@ class TextureLoader implements Loader {
             mainTexture.frame = new PIXI.Rectangle(rect.x, rect.y, rect.width, rect.height);
         }
         mainTexture.defaultAnchor = new Point(anchor.x, anchor.y);
-        AssetCache.pixiTextures[this.key] = mainTexture;
+        AssetCache.textures[this.key] = mainTexture;
 
         let frames = TextureLoader.getAllFrames(this.key, this.texture);
 
@@ -49,13 +49,13 @@ class TextureLoader implements Loader {
                 frameTexture.frame = new PIXI.Rectangle(rect.x, rect.y, rect.width, rect.height);
             }
             frameTexture.defaultAnchor = new Point(anchor.x, anchor.y);
-            AssetCache.pixiTextures[frame] = frameTexture;
+            AssetCache.textures[frame] = frameTexture;
         }
     }
 
     static getAllFrames(key: string, texture: Preload.Texture) {
-        let width = AssetCache.getPixiTexture(key).width;
-        let height = AssetCache.getPixiTexture(key).height;
+        let width = AssetCache.getTexture(key).width;
+        let height = AssetCache.getTexture(key).height;
         let frames: Dict<Preload.TextureFrame> = {};
 
         if (texture.spritesheet) {
