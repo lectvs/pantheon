@@ -410,6 +410,9 @@ namespace SpriteText {
         'r': (params) => {
             return { color: 0xFF0000 };
         },
+        'gold': (params) => {
+            return { color: 0xFFD800 };
+        },
         'color': (params) => {
             return { color: getInt(params[0], undefined) };
         },
@@ -422,15 +425,18 @@ namespace SpriteText {
         'offsety': (params) => {
             return { offsetY: getFloat(params[0], undefined) };
         },
+        'outline': (params) => {
+            return { filters: [new Effects.Filters.Outline(getInt(params[0], 0x000000), getFloat(params[1], 1))] };
+        },
     }
 
-    function getInt(text: string, def: number | undefined) {
+    function getInt<D extends number | undefined>(text: string, def: D): number | D {
         let result = parseInt(text);
         if (!isFinite(result)) return def;
         return result;
     }
 
-    function getFloat(text: string, def: number | undefined) {
+    function getFloat<D extends number | undefined>(text: string, def: D): number | D {
         let result = parseFloat(text);
         if (!isFinite(result)) return def;
         return result;

@@ -25,10 +25,10 @@ class SpriteTextRenderSystem {
             let data = this.parts[part];
             let style = spriteText.getStyleFromTags$(data.tagData, spriteText.style);
 
-            data.sprite.x = data.x + style.offsetX - spriteText.anchor.x * textBounds.width;
-            data.sprite.y = data.y + style.offsetY - spriteText.anchor.y * textBounds.height;
             data.sprite.scale.x = (spriteText.flipX ? -1 : 1) * spriteText.scaleX;
             data.sprite.scale.y = (spriteText.flipY ? -1 : 1) * spriteText.scaleY;
+            data.sprite.x = (data.x + style.offsetX - spriteText.anchor.x * textBounds.width) * data.sprite.scale.x;
+            data.sprite.y = (data.y + style.offsetY - spriteText.anchor.y * textBounds.height) * data.sprite.scale.y;
             data.sprite.angle = spriteText.angle;
             data.sprite.tint = Color.tint(style.color, spriteText.tint);
             data.sprite.alpha = style.alpha * spriteText.alpha;
@@ -38,8 +38,8 @@ class SpriteTextRenderSystem {
             spriteText.effects.pre.length -= style.filters.length;  // Remove the style filters
 
             let textureLocalBounds = TextureUtils.getTextureLocalBounds$(data.texture,
-                0,
-                0,
+                spriteText.getRenderScreenX() + data.sprite.x,
+                spriteText.getRenderScreenY() + data.sprite.y,
                 data.sprite.scale.x,
                 data.sprite.scale.y,
                 data.sprite.angle,

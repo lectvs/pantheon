@@ -69,6 +69,8 @@ interface Array<T> {
 
     mapInPlace<S>(callbackFn: (value: T, index: number, obj: T[]) => S): S[];
 
+    mapToObject<K extends string | number, V>(keyFn: (value: T, index: number, obj: T[]) => K, valueFn: (value: T, index: number, obj: T[]) => V, resolveConflicts?: 'earliest' | 'latest'): Record<K, V>;
+
     /**
      * Returns the maximum value of the key applied to each element.
      * If key is not specified, it is the identity function.

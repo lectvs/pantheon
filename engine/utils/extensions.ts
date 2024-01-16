@@ -64,6 +64,19 @@ Array.prototype.mapInPlace = function(fn: (value: any, index: number, obj: any[]
     return this;
 }
 
+Array.prototype.mapToObject = function(keyFn: (value: any, index: number, obj: any[]) => any, valueFn: (value: any, index: number, obj: any[]) => any, resolveConflicts: 'earliest' | 'latest' = 'latest') {
+    let result: any = {};
+    for (let i = 0; i < this.length; i++) {
+        let key = keyFn(this[i], i, this);
+        let value = valueFn(this[i], i, this);
+        if (key in result && resolveConflicts === 'earliest') {
+            continue;
+        }
+        result[key] = value;
+    }
+    return result;
+}
+
 Array.prototype.max = function(key: (value: any, index: number, obj: any[]) => number = Utils.IDENTITY) {
     return -this.min((value, index, obj) => -key(value, index, obj));
 }
