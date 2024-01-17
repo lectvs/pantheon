@@ -68,6 +68,14 @@ namespace M {
         return middle - d*(n-1)/2 + d*i;
     }
 
+    export function everyNFloat(n: number, t: number, delta: number) {
+        return Math.floor(t/n) !== Math.floor((t - delta)/n) || delta >= n;
+    }
+
+    export function everyNInt(n: number, t: number) {
+        return Math.floor((t + 1)/n) !== Math.floor(t/n);
+    }
+
     export function floorRelative(n: number, relativeTo: number) {
         return Math.floor(n - relativeTo) + relativeTo;
     }
@@ -161,6 +169,10 @@ namespace M {
         if (to > current) return Math.min(current + speed * delta, to);
         if (to < current) return Math.max(current - speed * delta, to);
         return current;
+    }
+
+    export function oscillateN(n: number, t: number) {
+        return Math.floor(t/n) % 2 === 1;
     }
 
     export function periodic(fn: (x: number) => number, period: number) {

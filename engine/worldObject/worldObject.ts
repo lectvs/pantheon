@@ -722,20 +722,20 @@ namespace WorldObject {
         }
 
         everyNFrames(n: number) {
-            return Math.floor((this.frames + 1)/n) !== Math.floor(this.frames/n);
+            return M.everyNInt(n, this.frames);
         }
     
         everyNSeconds(n: number) {
             let lastTime = this.getLastTime();
-            return Math.floor((this.time)/n) !== Math.floor(lastTime/n) || this.time >= lastTime + n;
+            return M.everyNFloat(n, this.time, this.time - lastTime);
         }
 
         oscillateNFrames(n: number) {
-            return Math.floor(this.frames/n) % 2 === 1;
+            return M.oscillateN(n, this.frames);
         }
     
         oscillateNSeconds(n: number) {
-            return Math.floor(this.time/n) % 2 === 1;
+            return M.oscillateN(n, this.time);
         }
 
         private getLastTime() {
