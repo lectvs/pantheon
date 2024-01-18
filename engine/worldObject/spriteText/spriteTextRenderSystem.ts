@@ -25,11 +25,11 @@ class SpriteTextRenderSystem {
             let data = this.parts[part];
             let style = spriteText.getStyleFromTags$(data.tagData, spriteText.style);
 
-            data.sprite.scale.x = (spriteText.flipX ? -1 : 1) * spriteText.scaleX;
-            data.sprite.scale.y = (spriteText.flipY ? -1 : 1) * spriteText.scaleY;
-            data.sprite.x = (data.x + style.offsetX - spriteText.anchor.x * textBounds.width) * data.sprite.scale.x;
-            data.sprite.y = (data.y + style.offsetY - spriteText.anchor.y * textBounds.height) * data.sprite.scale.y;
-            data.sprite.angle = spriteText.angle;
+            data.sprite.x = this.getX(spriteText, data, style, textBounds);
+            data.sprite.y = this.getY(spriteText, data, style, textBounds);
+            data.sprite.scale.x = this.getScaleX(spriteText);
+            data.sprite.scale.y = this.getScaleY(spriteText);
+            data.sprite.angle = this.getAngle(spriteText);
             data.sprite.tint = Color.tint(style.color, spriteText.tint);
             data.sprite.alpha = style.alpha * spriteText.alpha;
 
@@ -73,26 +73,38 @@ class SpriteTextRenderSystem {
             let data = this.parts[part];
             let style = spriteText.getStyleFromTags$(data.tagData, spriteText.style);
 
-            let origAnchorX = data.sprite.texture.defaultAnchor.x;
-            let origAnchorY = data.sprite.texture.defaultAnchor.y;
-
-            data.sprite.texture.defaultAnchor.x = -(data.x + style.offsetX - spriteText.anchor.x * textBounds.width) / data.sprite.width;
-            data.sprite.texture.defaultAnchor.y = -(data.y + style.offsetY - spriteText.anchor.y * textBounds.height) / data.sprite.height;
-
             let localBounds = TextureUtils.getTextureLocalBounds$(data.sprite.texture,
-                0,
-                0,
-                (spriteText.flipX ? -1 : 1) * spriteText.scaleX,
-                (spriteText.flipY ? -1 : 1) * spriteText.scaleY,
-                spriteText.angle,
+                this.getX(spriteText, data, style, textBounds),
+                this.getY(spriteText, data, style, textBounds),
+                this.getScaleX(spriteText),
+                this.getScaleY(spriteText),
+                this.getAngle(spriteText),
             );
-
-            data.sprite.texture.defaultAnchor.set(origAnchorX, origAnchorY);
 
             bounds.push(localBounds);
         }
 
         return G.getEncompassingBoundaries$(bounds);
+    }
+
+    private getX(spriteText: SpriteText, data: SpriteTextRenderSystem.Part, style: Required<SpriteText.Style>, textBounds: Rectangle) {
+        return (data.x + style.offsetX - spriteText.anchor.x * textBounds.width) * this.getScaleX(spriteText);
+    }
+
+    private getY(spriteText: SpriteText, data: SpriteTextRenderSystem.Part, style: Required<SpriteText.Style>, textBounds: Rectangle) {
+        return (data.y + style.offsetY - spriteText.anchor.y * textBounds.height) * this.getScaleY(spriteText);
+    }
+
+    private getScaleX(spriteText: SpriteText) {
+        return (spriteText.flipX ? -1 : 1) * spriteText.scaleX;
+    }
+
+    private getScaleY(spriteText: SpriteText) {
+        return (spriteText.flipY ? -1 : 1) * spriteText.scaleY;
+    }
+
+    private getAngle(spriteText: SpriteText) {
+        return spriteText.angle;
     }
 }
 

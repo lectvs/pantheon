@@ -20,7 +20,7 @@ namespace TextureUtils {
     /**
      * Returns a NEW texture which is a cropped version of the original.
      */
-    export function crop(texture: PIXI.Texture, rect: Rect, source: string) {
+    export function crop(texture: PIXI.Texture, rect: Rect, source: string, anchor?: Vector2) {
         let sprite = new PIXI.Sprite(texture);
         sprite.anchor.set(0, 0);
         sprite.x = -rect.x;
@@ -29,7 +29,8 @@ namespace TextureUtils {
         let result = newPixiRenderTexture(Math.floor(rect.width), Math.floor(rect.height), source);
         renderToRenderTexture(sprite, result);
 
-        result.defaultAnchor.set(texture.defaultAnchor.x, texture.defaultAnchor.y);
+        let resultAnchor = anchor ?? texture.defaultAnchor;
+        result.defaultAnchor.set(resultAnchor.x, resultAnchor.y);
 
         return result;
     }
@@ -144,7 +145,7 @@ namespace TextureUtils {
     /**
      * Returns an array of NEW textures which are a subdivision of the original texture into h x v parts, along with their coordinates.
      */
-    export function subdivide(texture: PIXI.Texture, h: number, v: number, source: string): Subdivision[] {
+    export function subdivide(texture: PIXI.Texture, h: number, v: number, anchor: Vector2, source: string): Subdivision[] {
         if (h <= 0 || v <= 0) return [];
 
         let result: Subdivision[] = [];
@@ -161,8 +162,9 @@ namespace TextureUtils {
                 let tw = x === h-1 ? lastframew : framew;
                 let th = y === v-1 ? lastframeh : frameh;
                 result.push({
-                    x: tx, y: ty,
-                    texture: TextureUtils.crop(texture, rect(tx, ty, tw, th), source),
+                    x: tx + anchor.x * tw,
+                    y: ty + anchor.y * th,
+                    texture: TextureUtils.crop(texture, rect(tx, ty, tw, th), source, anchor),
                 });
             }
         }

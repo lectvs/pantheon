@@ -178,7 +178,7 @@ namespace Physics {
 
                     if (move === from) continue;
                     if (!G.areRectanglesOverlapping(move.bounds.getBoundingBox(), from.bounds.getBoundingBox())) continue;
-                    if (!move.colliding || !from.colliding) continue;
+                    if (!move.collisionEnabled || !from.collisionEnabled) continue;
                     if (!move.isCollidingWith(from) || !from.isCollidingWith(move)) continue;
                     let raycastCollision = move.bounds.getRaycastCollision$(move.movedThisFrameX, move.movedThisFrameY, from.bounds, from.movedThisFrameX, from.movedThisFrameY);
                     if (!raycastCollision) continue;
@@ -380,7 +380,7 @@ namespace Physics {
             if (!(worldObject instanceof PhysicsWorldObject)) continue;
             if (!worldObject.physicsGroup) continue;
             if (!worldObject.isActive()) continue;
-            if (!worldObject.colliding) continue;
+            if (!worldObject.collisionEnabled) continue;
             result.push(worldObject);
         }
 

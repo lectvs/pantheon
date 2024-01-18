@@ -26,10 +26,7 @@ class PhysicsWorldObject extends WorldObject {
 
     mass: number;
     bounce: number;
-    colliding: boolean;
-
-    // physicslastx: number;
-    // physicslasty: number;
+    collisionEnabled: boolean;
 
     debugDrawBounds: boolean;
 
@@ -53,7 +50,7 @@ class PhysicsWorldObject extends WorldObject {
         this.bounds = config.bounds ?? new NullBounds();
 
         this._immovable = config.immovable ?? false;
-        this.colliding = config.colliding ?? true;
+        this.collisionEnabled = config.colliding ?? true;
 
         this.debugDrawBounds = false;
     }

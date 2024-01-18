@@ -104,7 +104,6 @@ namespace AnimationInstance {
             this.currentFrameIndex = 0;
             this.currentFrameTime = 0;
             this.currentIteration = 0;
-            this.applyCurrentFrame();
         }
     
         private applyCurrentFrame() {

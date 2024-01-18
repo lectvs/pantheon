@@ -61,6 +61,18 @@ namespace S {
         }
     }
 
+    export function loopForAtLeastTime(time: number, scriptFunctionIter: (t: number) => Script.Function): Script.Function {
+        return function*() {
+            let timer = new Timer(time);
+            while (!timer.done) {
+                yield S.either(
+                    scriptFunctionIter(timer.progress),
+                    S.doOverTime(Infinity, _ => timer.update(global.script.delta)),
+                );
+            }
+        }
+    }
+
     export function loopUntil(condition: () => any, scriptFunction: Script.Function): Script.Function {
         return function*() {
             while (!condition()) {
