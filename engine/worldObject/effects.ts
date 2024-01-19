@@ -196,7 +196,7 @@ namespace Effects {
                     },
                     visualPadding: 1,
                     code: `
-                        float maxAlpha = max(max(getColor(x-1.0, y).a, getColor(x, y-1.0).a), max(getColor(x+1.0, y).a, getColor(x, y+1.0).a));
+                        float maxAlpha = max(max(getColor(x-upscale, y).a, getColor(x, y-upscale).a), max(getColor(x+upscale, y).a, getColor(x, y+upscale).a));
                         if (inp.a == 0.0 && maxAlpha > 0.0) {
                             if (matchAlpha == 0) {
                                 outp = vec4(color, alpha);
@@ -274,8 +274,8 @@ namespace Effects {
                     uniforms: { 'float strength': strength, 'float speed': speed, 'float spread': spread },
                     code: `
                         float tt = floor(5.4 + t * speed);
-                        float yy = floor(y / spread) * spread;
-                        float offset = pnoise(0.0, yy*1.1, tt*5.1) * strength;
+                        float yy = floor(y / spread / upscale) * spread * upscale;
+                        float offset = pnoise(0.0, yy*1.1, tt*5.1) * strength * upscale;
                         outp = getColor(x + offset, y);
                     `
                 });

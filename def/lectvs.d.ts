@@ -107,4 +107,11 @@ declare namespace PIXI {
          */
         updateAndSetEffects(effects: Effects): void;
     }
+
+    export interface Filter {
+        /**
+         * Sets a value for upscale.
+         */
+        setUpscale(scale: number): void;
+    }
 }

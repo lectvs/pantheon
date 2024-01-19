@@ -61,6 +61,11 @@ class TextureFilter extends PIXI.Filter {
         return this.visualPadding;
     }
 
+    override setUpscale(scale: number): void {
+        super.setUpscale(scale);
+        this.setUniform('upscale', scale);
+    }
+
     setTextureValues(width: number, height: number) {
         this.setUniform('width', width);
         this.setUniform('height', height);
@@ -109,6 +114,7 @@ namespace TextureFilter {
         uniform float width;
         uniform float height;
         uniform float t;
+        uniform float upscale;
     `;
 
     const fragCoreHelperMethods = `
@@ -234,6 +240,7 @@ namespace TextureFilter {
         uniforms['width'] = 0;
         uniforms['height'] = 0;
         uniforms['t'] = 0;
+        uniforms['upscale'] = 1;
 
         return uniforms;
     }

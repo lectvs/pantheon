@@ -154,13 +154,13 @@ class Input {
             }
         } else if (IS_MOBILE) {
             if (this.isDownByKeyCode[this.MOUSE_KEYCODES[0]]) {
-                this._canvasMouseX = Main.rendererPlugins.interaction.mouse.global.x;
-                this._canvasMouseY = Main.rendererPlugins.interaction.mouse.global.y;
+                this._canvasMouseX = Main.rendererPlugins.interaction.mouse.global.x / Main.config.upscale;
+                this._canvasMouseY = Main.rendererPlugins.interaction.mouse.global.y / Main.config.upscale;
                 this._mouseRadius = IS_MOBILE ? 10 : 0;
             }
         } else {
-            this._canvasMouseX = Main.rendererPlugins.interaction.mouse.global.x;
-            this._canvasMouseY = Main.rendererPlugins.interaction.mouse.global.y;
+            this._canvasMouseX = Main.rendererPlugins.interaction.mouse.global.x / Main.config.upscale;
+            this._canvasMouseY = Main.rendererPlugins.interaction.mouse.global.y / Main.config.upscale;
         }
         if (Fullscreen.enabled) {
             let iw = window.innerWidth;

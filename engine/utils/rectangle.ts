@@ -51,6 +51,16 @@ class Rectangle {
         return isFinite(this.x) && isFinite(this.y) && isFinite(this.width) && isFinite(this.height);
     }
 
+    scale(scale: number, dimensionsOnly?: 'dimensionsOnly') {
+        if (!dimensionsOnly) {
+            this.x *= scale;
+            this.y *= scale;
+        }
+        this.width *= scale;
+        this.height *= scale;
+        return this;
+    }
+
     set(x: number, y: number, width: number, height: number) {
         this.x = x;
         this.y = y;

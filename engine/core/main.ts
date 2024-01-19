@@ -5,6 +5,7 @@ namespace Main {
         gameWidth: number;
         gameHeight: number;
         canvasScale: number;
+        upscale: number;
         backgroundColor: number;
         fpsLimit: number;
         preventScrollOnCanvas: boolean;
@@ -94,8 +95,8 @@ class Main {
         if (!O.isEmpty(this.config.dialogProfiles)) DialogProfiles.initProfiles(this.config.dialogProfiles);
 
         Main.renderer = PIXI.autoDetectRenderer({
-            width: global.gameWidth,
-            height: global.gameHeight,
+            width: global.gameWidth * this.config.upscale,
+            height: global.gameHeight * this.config.upscale,
             resolution: this.config.canvasScale,
             backgroundColor: global.backgroundColor,
         });
@@ -114,6 +115,7 @@ class Main {
         delete (Main.renderer.plugins as any).accessibility;
 
         Main.stage = new PIXI.Container();
+        Main.stage.scale.set(this.config.upscale);
 
         this.soundManager = new GlobalSoundManager();
         
@@ -186,7 +188,9 @@ class Main {
     }
 
     private static renderScreenToCanvas() {
+        Main.upscalePixiObjectProperties(Main.stage, 'upscale');
         Main.renderer.render(Main.stage);
+        Main.upscalePixiObjectProperties(Main.stage, 'downscale');
     }
 
     static forceRender() {
@@ -197,7 +201,23 @@ class Main {
     static forceResize(width: number, height: number) {
         global.gameWidth = width;
         global.gameHeight = height;
-        Main.renderer.resize(width, height);
+        Main.renderer.resize(width * this.config.upscale, height * this.config.upscale);
+    }
+
+    private static upscalePixiObjectProperties(object: PIXI.DisplayObject, scale: 'upscale' | 'downscale') {
+        let scaleMult = scale === 'upscale' ? Main.config.upscale : 1 / Main.config.upscale;
+        object.filters?.forEach(filter => filter.setUpscale(scale === 'upscale' ? Main.config.upscale : 1));
+        if (object.filterArea) {
+            object.filterArea.x *= scaleMult;
+            object.filterArea.y *= scaleMult;
+            object.filterArea.width *= scaleMult;
+            object.filterArea.height *= scaleMult;
+        }
+        if (object instanceof PIXI.Container) {
+            for (let child of object.children) {
+                Main.upscalePixiObjectProperties(child, scale);
+            }
+        }
     }
 
     static _internalRenderToRenderTexture(object: PIXI.DisplayObject, renderTexture: PIXI.RenderTexture, clearTextureFirst: boolean) {

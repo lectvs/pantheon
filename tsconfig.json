@@ -21,6 +21,7 @@
         "types": [],
         "outFile": "../bin/js/pantheon.js",
         "declaration": true,
+        "declarationMap": true,
         "downlevelIteration": true
     }
 }

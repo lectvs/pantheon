@@ -20,7 +20,7 @@ class MobileScaleManager {
 
     private static scale() {
         let newScale = this.getScale();
-        Main.rendererView.style.transform = `scale(${newScale})`;
+        Main.rendererView.style.transform = `scale(${newScale / Main.config.upscale})`;
 
         if (this.primaryDirection !== 'none') {
             this.resize();

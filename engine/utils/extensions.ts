@@ -138,3 +138,7 @@ PIXI.Sprite.prototype.updateAndSetEffects = function(effects: Effects) {
         this.filterArea = null;
     }
 }
+
+PIXI.Filter.prototype.setUpscale = function(scale: number) {
+    // Pass, implement per-filter
+}
