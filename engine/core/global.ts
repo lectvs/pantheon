@@ -24,6 +24,7 @@ class global {
     static gameWidth: number;
     static gameHeight: number;
     static backgroundColor: number;
+    static upscale: number;
 }
 
 Object.defineProperty(window, 'W', {

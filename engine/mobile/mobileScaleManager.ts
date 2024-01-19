@@ -1,14 +1,18 @@
 namespace MobileScaleManager {
     export type PrimaryDirection = 'horizontal' | 'vertical' | 'none';
+    export type ScaleMode = 'canvas' | 'upscale';
 }
 
 class MobileScaleManager {
     private static primaryDirection: MobileScaleManager.PrimaryDirection;
+    private static scaleMode: MobileScaleManager.ScaleMode;
+
     private static currentWindowInnerWidth: number;
     private static currentWindowInnerHeight: number;
 
-    static init(primaryDirection: MobileScaleManager.PrimaryDirection) {
+    static init(primaryDirection: MobileScaleManager.PrimaryDirection, scaleMode: MobileScaleManager.ScaleMode) {
         this.primaryDirection = primaryDirection;
+        this.scaleMode = scaleMode;
         this.scale();
     }
 
@@ -20,26 +24,35 @@ class MobileScaleManager {
 
     private static scale() {
         let newScale = this.getScale();
-        Main.rendererView.style.transform = `scale(${newScale / Main.config.upscale})`;
+        let upscale: number;
 
-        if (this.primaryDirection !== 'none') {
-            this.resize();
+        if (this.scaleMode === 'upscale') {
+            Main.rendererView.style.transform = '';
+            upscale = newScale;
+        } else {
+            Main.rendererView.style.transform = `scale(${newScale / Main.config.upscale})`;
+            upscale = Main.config.upscale;
         }
+
+        this.resize(upscale);
     }
 
-    private static resize() {
+    private static resize(upscale: number) {
         let ratio = window.innerWidth / window.innerHeight;
 
         let width: number, height: number;
         if (this.primaryDirection === 'horizontal') {
             height = Main.config.gameHeight;
             width = Math.ceil(height * ratio);
-        } else {
+        } else if (this.primaryDirection === 'vertical') {
             width = Main.config.gameWidth;
             height = Math.ceil(width / ratio);
+        } else {
+            width = Main.config.gameWidth;
+            height = Main.config.gameHeight;
         }
 
-        Main.forceResize(width, height);
+        Main.forceResize(width, height, upscale);
     }
 
     private static getScale() {

@@ -22,6 +22,7 @@ namespace Main {
         controls: Input.KeyCodesByName;
 
         mobileScalePrimaryDirection?: MobileScaleManager.PrimaryDirection;
+        mobileScaleMode?: MobileScaleManager.ScaleMode;
         simulateMouseWithTouches: boolean;
         defaultOptions: Options.Options;
 
@@ -90,13 +91,14 @@ class Main {
         global.gameWidth = this.config.gameWidth;
         global.gameHeight = this.config.gameHeight;
         global.backgroundColor = this.config.backgroundColor;
+        global.upscale = this.config.upscale;
         if (!O.isEmpty(this.config.spriteTextTags)) SpriteText.addTags(this.config.spriteTextTags);
         if (this.config.defaultSpriteTextFont) SpriteText.DEFAULT_FONT = this.config.defaultSpriteTextFont;
         if (!O.isEmpty(this.config.dialogProfiles)) DialogProfiles.initProfiles(this.config.dialogProfiles);
 
         Main.renderer = PIXI.autoDetectRenderer({
-            width: global.gameWidth * this.config.upscale,
-            height: global.gameHeight * this.config.upscale,
+            width: global.gameWidth * global.upscale,
+            height: global.gameHeight * global.upscale,
             resolution: this.config.canvasScale,
             backgroundColor: global.backgroundColor,
         });
@@ -106,7 +108,7 @@ class Main {
 
         if (MobileUtils.isMobileBrowser()) {
             document.body.style.backgroundColor = "black";
-            MobileScaleManager.init(this.config.mobileScalePrimaryDirection ?? 'none');
+            MobileScaleManager.init(this.config.mobileScalePrimaryDirection ?? 'none', this.config.mobileScaleMode ?? 'canvas');
         }
 
         // AccessibilityManager causes game to crash when Tab is pressed.
@@ -115,7 +117,7 @@ class Main {
         delete (Main.renderer.plugins as any).accessibility;
 
         Main.stage = new PIXI.Container();
-        Main.stage.scale.set(this.config.upscale);
+        Main.stage.scale.set(global.upscale);
 
         this.soundManager = new GlobalSoundManager();
         
@@ -198,15 +200,17 @@ class Main {
         Main.renderScreenToCanvas();
     }
 
-    static forceResize(width: number, height: number) {
+    static forceResize(width: number, height: number, upscale: number) {
         global.gameWidth = width;
         global.gameHeight = height;
-        Main.renderer.resize(width * this.config.upscale, height * this.config.upscale);
+        global.upscale = upscale;
+        Main.renderer.resize(width * upscale, height * upscale);
+        Main.stage?.scale.set(upscale);
     }
 
     private static upscalePixiObjectProperties(object: PIXI.DisplayObject, scale: 'upscale' | 'downscale') {
-        let scaleMult = scale === 'upscale' ? Main.config.upscale : 1 / Main.config.upscale;
-        object.filters?.forEach(filter => filter.setUpscale(scale === 'upscale' ? Main.config.upscale : 1));
+        let scaleMult = scale === 'upscale' ? global.upscale : 1 / global.upscale;
+        object.filters?.forEach(filter => filter.setUpscale(scale === 'upscale' ? global.upscale : 1));
         if (object.filterArea) {
             object.filterArea.x *= scaleMult;
             object.filterArea.y *= scaleMult;

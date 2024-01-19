@@ -287,10 +287,10 @@ class WorldObject {
             result = this.parent.getRenderScreenX();
         } else {
             let worldOffsetX = this.world ? this.world.camera.worldOffsetX : 0;
-            result = this.shouldIgnoreCamera() ? 0 : -M.roundToNearest(worldOffsetX, 1 / Main.config.upscale);
+            result = this.shouldIgnoreCamera() ? 0 : -M.roundToNearest(worldOffsetX, 1 / global.upscale);
         }
 
-        result += M.roundToNearest(this.localx, 1 / Main.config.upscale);
+        result += M.roundToNearest(this.localx, 1 / global.upscale);
 
         return result;
     }
@@ -302,10 +302,10 @@ class WorldObject {
             result = this.parent.getRenderScreenY();
         } else {
             let worldOffsetY = this.world ? this.world.camera.worldOffsetY : 0;
-            result = this.shouldIgnoreCamera() ? 0 : -M.roundToNearest(worldOffsetY, 1 / Main.config.upscale);
+            result = this.shouldIgnoreCamera() ? 0 : -M.roundToNearest(worldOffsetY, 1 / global.upscale);
         }
 
-        result += M.roundToNearest(this.localy, 1 / Main.config.upscale);
+        result += M.roundToNearest(this.localy, 1 / global.upscale);
 
         if (this.getZBehavior() === 'threequarters') {
             let parentz = this.parent ? this.parent.z : 0;
