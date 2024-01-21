@@ -8,6 +8,20 @@ namespace Animations {
         return new AnimationInstance.EmptyAnimation(config.priority ?? 0, config.nextRef);
     }
 
+    export type CompositeConfig = {
+        animations: AnimationInstance[];
+        priority?: number;
+        nextRef?: string;
+    }
+
+    export function composite(config: CompositeConfig) {
+        return new AnimationInstance.CompositeAnimation({
+            animations: config.animations,
+            priority: config.priority ?? 0,
+            nextRef: config.nextRef,
+        });
+    }
+
     export type FromSingleTextureConfig = {
         texture: string | PIXI.Texture;
         duration?: number;
@@ -66,7 +80,7 @@ namespace Animations {
     }
 
     export type FromScriptConfig = {
-        script: Script.Function;
+        script: () => Script.Function;
         count?: number;
         onReset?: () => any;
         priority?: number;

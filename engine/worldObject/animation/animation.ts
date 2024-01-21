@@ -26,7 +26,56 @@ namespace AnimationInstance {
         override skipToRefPoint(refPoint: number): void {}
         override reset(): void {}
     }
+
+    export type CompositeAnimationConfig = {
+        animations: AnimationInstance[];
+        priority: number;
+        nextRef?: string;
+    }
+
+    export class CompositeAnimation extends AnimationInstance {
+        private animations: AnimationInstance[];
+
+        constructor(config: CompositeAnimationConfig) {
+            super(config.priority, config.nextRef);
+            this.animations = config.animations;
+        }
+
+        override onAdd(worldObject: WorldObject): void {
+            for (let animation of this.animations) {
+                animation.onAdd(worldObject);
+            }
+        }
+
+        override onStart(): void {
+            for (let animation of this.animations) {
+                animation.onStart();
+            }
+        }
     
+        override update(delta: number): void {
+            for (let animation of this.animations) {
+                animation.update(delta);
+            }
+        }
+
+        override isDone(): boolean {
+            return this.animations.every(animation => animation.isDone());
+        }
+
+        override skipToRefPoint(refPoint: number): void {
+            for (let animation of this.animations) {
+                animation.skipToRefPoint(refPoint);
+            }
+        }
+
+        override reset(): void {
+            for (let animation of this.animations) {
+                animation.reset();
+            }
+        }
+    }
+
     export type TextureAnimationConfig = {
         frames: TextureAnimationFrame[];
         count: number;
@@ -123,7 +172,7 @@ namespace AnimationInstance {
     }
 
     export type ScriptAnimationConfig = {
-        script: Script.Function;
+        script: () => Script.Function;
         count: number;
         onReset?: () => any;
         priority: number;
@@ -131,7 +180,7 @@ namespace AnimationInstance {
     }
 
     export class ScriptAnimation extends AnimationInstance {
-        private scriptFuncion: Script.Function;
+        private scriptFactory: () => Script.Function;
         private count: number;
         private onReset: (() => any) | undefined;
 
@@ -140,16 +189,17 @@ namespace AnimationInstance {
     
         constructor(config: ScriptAnimationConfig) {
             super(config.priority, config.nextRef);
-            this.scriptFuncion = config.script;
+            this.scriptFactory = config.script;
             this.count = config.count;
             this.onReset = config.onReset;
 
-            this.script = new Script(this.scriptFuncion);
             this.currentIteration = 0;
         }
 
         override onAdd(worldObject: WorldObject): void {}
-        override onStart(): void {}
+        override onStart(): void {
+            this.script = new Script(this.scriptFactory());
+        }
     
         override update(delta: number): void {
             if (this.script) {
@@ -157,7 +207,7 @@ namespace AnimationInstance {
                 if (this.script.done) {
                     this.currentIteration++;
                     if (this.currentIteration < this.count) {
-                        this.script = new Script(this.scriptFuncion);
+                        this.script = new Script(this.scriptFactory());
                     } else {
                         this.script = undefined;
                     }
@@ -172,7 +222,7 @@ namespace AnimationInstance {
         override skipToRefPoint(refPoint: number): void {}
 
         override reset(): void {
-            this.script = new Script(this.scriptFuncion);
+            this.script = undefined;
             this.currentIteration = 0;
             this.onReset?.();
         }

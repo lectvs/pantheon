@@ -10,7 +10,7 @@ namespace PhysicsWorldObject {
         bounce?: number;
         bounds?: Bounds;
         immovable?: boolean;
-        colliding?: boolean;
+        collisionEnabled?: boolean;
     }
 }
 
@@ -50,7 +50,7 @@ class PhysicsWorldObject extends WorldObject {
         this.bounds = config.bounds ?? new NullBounds();
 
         this._immovable = config.immovable ?? false;
-        this.collisionEnabled = config.colliding ?? true;
+        this.collisionEnabled = config.collisionEnabled ?? true;
 
         this.debugDrawBounds = false;
     }
