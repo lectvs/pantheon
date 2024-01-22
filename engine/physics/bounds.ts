@@ -42,3 +42,42 @@ interface Bounds {
     /** FOR USE WITH PHYSICS RESOLVECOLLISIONS ONLY. */
     unfreeze(): void;
 }
+
+namespace Bounds {
+    export function fromString(str: string): Bounds {
+        let match = St.removeWhitespace(str).match(/^([a-z]+)\(([-a-z0-9,\.]+)\)$/);
+        if (!match) {
+            console.error('Could not parse Bounds:', str);
+            return new NullBounds();
+        }
+        let name = match[1];
+        let params = match[2].split(',');
+
+        if (name === 'rect') {
+            return new RectBounds(parseFloat(params[0]), parseFloat(params[1]), parseFloat(params[2]), parseFloat(params[3]));
+        }
+
+        if (name === 'circle') {
+            return new CircleBounds(parseFloat(params[0]), parseFloat(params[1]), parseFloat(params[2]));
+        }
+
+        if (name === 'slope') {
+            if (!SlopeBounds.ALL_DIRECTIONS.includes(params[4])) {
+                console.error('Invalid slope direction from parsed bounds:', str);
+                return new NullBounds();
+            }
+            return new SlopeBounds(parseFloat(params[0]), parseFloat(params[1]), parseFloat(params[2]), parseFloat(params[3]), params[4] as SlopeBounds.Direction);
+        }
+
+        if (name === 'invertedrect') {
+            return new InvertedRectBounds(parseFloat(params[0]), parseFloat(params[1]), parseFloat(params[2]), parseFloat(params[3]));
+        }
+
+        if (name === 'invertedcircle') {
+            return new InvertedCircleBounds(parseFloat(params[0]), parseFloat(params[1]), parseFloat(params[2]));
+        }
+
+        console.log('Invalid bounds type:', str);
+        return new NullBounds();
+    }
+}

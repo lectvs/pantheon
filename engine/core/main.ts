@@ -108,6 +108,11 @@ class Main {
 
         if (MobileUtils.isMobileBrowser()) {
             document.body.style.backgroundColor = "black";
+            if (this.config.mobileScaleMode === 'upscale' && (window.innerWidth < 540 || window.innerHeight < 540)) {
+                console.log('Overriding mobileScaleMode due to low-res screen');
+                this.config.upscale = 5;
+                this.config.mobileScaleMode = 'canvas';
+            }
             MobileScaleManager.init(this.config.mobileScalePrimaryDirection ?? 'none', this.config.mobileScaleMode ?? 'canvas');
         }
 

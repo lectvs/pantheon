@@ -31,11 +31,17 @@ namespace LdtkWorldLoader {
                     f: number;
                     t: number;
                 }[];
-                entityInstances: {
-                    __identifier: string;
-                    px: [number, number];
-                }[];
+                entityInstances: LdtkEntityInstanceSchema[];
             }[];
+        }[];
+    }
+
+    export type LdtkEntityInstanceSchema = {
+        __identifier: string;
+        px: [number, number];
+        fieldInstances: {
+            __identifier: string;
+            __value: string;
         }[];
     }
 }
@@ -131,6 +137,11 @@ class LdtkWorldLoader implements Loader {
                             x: entity.px[0],
                             y: entity.px[1],
                             name: entity.__identifier,
+                            placeholder: this.getEntityPlaceholder(entity),
+                            texture: this.getEntityField(entity, 'texture'),
+                            bounds: this.getEntityField(entity, 'bounds'),
+                            layer: this.getEntityField(entity, 'layer'),
+                            physicsGroup: this.getEntityField(entity, 'physicsGroup'),
                         });
                     }
                 }
@@ -172,6 +183,22 @@ class LdtkWorldLoader implements Loader {
 
     private getTilemapLevelKey(identifier: string) {
         return `${this.key}/${identifier}`;
+    }
+
+    private getEntityPlaceholder(entity: LdtkWorldLoader.LdtkEntityInstanceSchema) {
+        let placeholder = entity.fieldInstances.find(fi => fi.__identifier === 'placeholder');
+        if (placeholder) {
+            return placeholder.__value;
+        }
+        return entity.__identifier;
+    }
+
+    private getEntityField(entity: LdtkWorldLoader.LdtkEntityInstanceSchema, field: string) {
+        let fieldInstance = entity.fieldInstances.find(fi => fi.__identifier === field);
+        if (!fieldInstance) {
+            return undefined;
+        }
+        return fieldInstance.__value;
     }
 
     static TAG_EMPTY_SOLID = "empty_solid";

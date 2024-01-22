@@ -66,6 +66,10 @@ namespace St {
         return text;
     }
 
+    export function removeWhitespace(str: string) {
+        return str.replace(/\s/g, '');
+    }
+
     export function replaceAll(str: string, replace: string, wiith: string) {
         if (!str) return "";
         return str.split(replace).join(wiith);

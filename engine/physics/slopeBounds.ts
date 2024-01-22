@@ -186,4 +186,6 @@ class SlopeBounds implements Bounds {
     unfreeze() {
         this.frozen = false;
     }
+
+    static ALL_DIRECTIONS = ['upleft', 'upright', 'downleft', 'downright'];
 }

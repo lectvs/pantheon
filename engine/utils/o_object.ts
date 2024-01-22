@@ -73,8 +73,8 @@ namespace O {
         return obj[METADATA_KEY][key] as T | undefined;
     }
 
-    export function getPath(obj: Object, path: string) {
-        let pathParts = path.split('.');
+    export function getPath(obj: Object, path: string, delimiter: string = '.') {
+        let pathParts = path.split(delimiter);
         let current = obj;
         for (let part of pathParts) {
             if (!current || !(part in current)) return undefined;
@@ -83,8 +83,8 @@ namespace O {
         return current;
     }
 
-    export function hasPath(obj: Object, path: string) {
-        let pathParts = path.split('.');
+    export function hasPath(obj: Object, path: string, delimiter: string = '.') {
+        let pathParts = path.split(delimiter);
         let current = obj;
         for (let part of pathParts) {
             if (!(part in current)) return false;

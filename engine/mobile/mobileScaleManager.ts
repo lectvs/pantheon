@@ -35,6 +35,9 @@ class MobileScaleManager {
         }
 
         this.resize(upscale);
+
+        this.currentWindowInnerWidth = window.innerWidth;
+        this.currentWindowInnerHeight = window.innerHeight;
     }
 
     private static resize(upscale: number) {

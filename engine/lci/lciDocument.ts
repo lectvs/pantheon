@@ -1,3 +1,48 @@
+namespace Lci {
+    export type Document = {
+        width: number;
+        height: number;
+        layers: Layer[];
+    }
+
+    export type Layer = {
+        name: string;
+        image: string;
+        opacity: number;
+        visible: boolean;
+        blendMode: number;
+        position: Pt;
+        isDataLayer: boolean;
+        properties: LayerProperties;
+    }
+
+    export type LayerProperties = {
+        layer: string;
+        anchor: Pt;
+        offset: Pt;
+        physicsGroup: string;
+        bounds: Rect;
+        placeholder: string;
+        multiBounds: Rect[];
+        data: Dict<string>;
+    }
+
+    const HEADER = '.LCI';
+
+    export function parseDocument(lciString: string): Document | undefined {
+        if (!lciString.startsWith(HEADER)) {
+            console.error('Error loading LCI: bad header', lciString);
+            return undefined;
+        }
+        let lciJson = lciString.substr(HEADER.length);
+        return JSON.parse(lciJson);
+    }
+
+    export function getLayerTextureKey(documentKey: string, layerName: string) {
+        return `${documentKey}/${layerName}`;
+    }
+}
+
 function lciDocumentToWorldObjects(key: string, originX: number = 0, originY: number = 0) {
     let lciDocument = AssetCache.getLciDocument(key);
     if (!lciDocument) return [];
@@ -10,7 +55,7 @@ function lciDocumentToWorldObjects(key: string, originX: number = 0, originY: nu
         let bounds = layer.properties.bounds;
 
         if (!St.isBlank(layer.properties.placeholder)) {
-            let constructor: new (x: number, y: number) => WorldObject = (window as any)[layer.properties.placeholder];  // Get the placeholder class from global scope
+            let constructor = O.getPath(window, layer.properties.placeholder) as new (x: number, y: number) => WorldObject;  // Get the placeholder class from global scope
             if (!constructor || !constructor.prototype || !constructor.prototype.constructor.name) {
                 console.error(`LCI placeholder '${layer.properties.placeholder}' does not exist.`);
                 continue;
