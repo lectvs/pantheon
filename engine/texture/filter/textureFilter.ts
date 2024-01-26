@@ -8,19 +8,21 @@ namespace TextureFilter {
      * @property uniforms Map of uniform type+name => value to initialize the filter. Of the form {"float rx": 5, "vec2 position": [1,4]}
      * @property code The fragment shader code. Set the color in `outp`.
      *           Available for use are the following variables and methods:
-     *               vec4 inp - the input color
-     *               float width/height - the width and height of the source texture
-     *               float x/y - the x/y coordinates in pixels
-     *               float t - time in seconds
-     *               vec4 getColor(float x, float y) - get the color at x/y
-     *               float pnoise(vec3 p) - perlin noise at a point, normalized to [-1, 1]
-     *               float pnoise(float x, float y, float z) - perlin noise at a point, normalized to [-1, 1]
-     *               float pnoisePos(vec3 p) - perlin noise at a point, normalized to [0, 1]
-     *               float pnoisePos(float x, float y, float z) - perlin noise at a point, normalized to [0, 1]
-     *               vec3 rgb2hsv(vec3 rgb) - converts RGB to HSV. all values are in the range [0, 1]
-     *               vec3 hsv2rgb(vec3 hsv) - converts HSV to RGB. all values are in the range [0, 1]
-     *               float map(float value, float min1, float max1, float min2, float max2) - linearly map a value between ranges
-     *               float mapClamp(float value, float min1, float max1, float min2, float max2) - map and clamp a value between ranges
+     *              vec4 inp - the input color
+     *              float width/height - the width and height of the source texture
+     *              float x/y - the x/y coordinates in pixels
+     *              float t - time in seconds
+     *              vec4 getColor(float x, float y) - get the color at x/y
+     *              float pnoise(vec3 p) - perlin noise at a point, normalized to [-1, 1]
+     *              float pnoise(float x, float y, float z) - perlin noise at a point, normalized to [-1, 1]
+     *              float pnoisePos(vec3 p) - perlin noise at a point, normalized to [0, 1]
+     *              float pnoisePos(float x, float y, float z) - perlin noise at a point, normalized to [0, 1]
+     *              vec3 rgb2hsv(vec3 rgb) - converts RGB to HSV. all values are in the range [0, 1]
+     *              vec3 hsv2rgb(vec3 hsv) - converts HSV to RGB. all values are in the range [0, 1]
+     *              float map(float value, float min1, float max1, float min2, float max2) - linearly map a value between ranges
+     *              float mapClamp(float value, float min1, float max1, float min2, float max2) - map and clamp a value between ranges
+     *              float distance(vecN A, vecN B) - distance between two vectors
+     *              float length(vecN A) - magnitude of a vector
      */
     export type Config = {
         uniforms?: Dict<any>;
