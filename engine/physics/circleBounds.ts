@@ -92,7 +92,7 @@ class CircleBounds implements Bounds {
         return undefined;
     }
 
-    isOverlapping(other: Bounds) {
+    overlaps(other: Bounds) {
         if (other instanceof RectBounds) return Bounds.Collision.isOverlappingCircleRect(this, other);
         if (other instanceof CircleBounds) return Bounds.Collision.isOverlappingCircleCircle(this, other);
         if (other instanceof SlopeBounds) return Bounds.Collision.isOverlappingCircleSlope(this, other);

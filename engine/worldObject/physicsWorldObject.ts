@@ -95,7 +95,7 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     isOverlapping(bounds: Bounds) {
-        return this.bounds.isOverlapping(bounds);
+        return this.bounds.overlaps(bounds);
     }
     
     onCollide(collision: Physics.Collision) {

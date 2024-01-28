@@ -144,13 +144,13 @@ class Button extends Module<WorldObject> {
     isOverlappingMouse() {
         if (!this.worldObject.world) return false;
         let mouseBounds = this.worldObject.world.getWorldMouseBounds$();
-        return this.worldObject.bounds.isOverlapping(mouseBounds);
+        return this.worldObject.bounds.overlaps(mouseBounds);
     }
 }
 
 namespace Button {
     export function getClosestButton(targetBounds: CircleBounds, world: World) {
-        let buttons = world.select.modules$(Button).filterInPlace(button => button.worldObject.isActive() && button.enabled && button.worldObject.bounds.isOverlapping(targetBounds) && button.canHover());
+        let buttons = world.select.modules$(Button).filterInPlace(button => button.worldObject.isActive() && button.enabled && button.worldObject.bounds.overlaps(targetBounds) && button.canHover());
         if (A.isEmpty(buttons)) {
             return undefined;
         }

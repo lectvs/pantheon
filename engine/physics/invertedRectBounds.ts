@@ -84,7 +84,7 @@ class InvertedRectBounds implements Bounds {
         return undefined;
     }
 
-    isOverlapping(other: Bounds) {
+    overlaps(other: Bounds) {
         if (other instanceof RectBounds) return Bounds.Collision.isOverlappingRectInvertedRect(other, this);
         if (other instanceof CircleBounds) return Bounds.Collision.isOverlappingCircleInvertedRect(other, this);
         if (other instanceof NullBounds) return false;
