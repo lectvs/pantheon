@@ -23,8 +23,11 @@ namespace World {
         minDistanceIgnoreCollisionStepCalculation?: number;
         defaultZBehavior?: WorldObject.ZBehavior;
 
-        volume?: number;
-        globalSoundHumanizeFactor?: number;
+        sound?: {
+            volume?: number;
+            humanizeByDefault?: boolean;
+            humanizeFactor?: number;
+        };
 
         timescale?: number;
         allowPause?: boolean;
@@ -56,6 +59,7 @@ namespace World {
     export type PlaySoundConfig = {
         volume?: number;
         speed?: number;
+        loop?: boolean;
         humanized?: boolean;
         limit?: number;
     }
@@ -123,7 +127,8 @@ class World {
 
     volume: number;
     allowSounds: boolean;
-    globalSoundHumanizeFactor: number;
+    soundHumanizeByDefault: boolean;
+    soundHumanizeFactor: number;
 
     allowPause: boolean;
 
@@ -138,9 +143,10 @@ class World {
 
         this.select = new WorldSelecter(this);
 
-        this.volume = config.volume ?? 1;
+        this.volume = config.sound?.volume ?? 1;
         this.allowSounds = true;
-        this.globalSoundHumanizeFactor = config.globalSoundHumanizeFactor ?? 0;
+        this.soundHumanizeByDefault = config.sound?.humanizeByDefault ?? false;
+        this.soundHumanizeFactor = config.sound?.humanizeFactor ?? 0.1;
 
         this.time = 0;
         this.timeScale = config.timescale ?? 1;
@@ -391,10 +397,11 @@ class World {
 
         sound.volume = config?.volume ?? 1;
         sound.speed = config?.speed ?? 1;
+        sound.loop = config?.loop ?? false;
 
-        let humanized = (config?.humanized ?? true) && sound.duration < 1;
-        if (humanized && this.globalSoundHumanizeFactor > 0) {
-            sound.humanize(this.globalSoundHumanizeFactor);
+        let humanized = (config?.humanized ?? this.soundHumanizeByDefault) && sound.duration < 1;
+        if (humanized && this.soundHumanizeFactor > 0) {
+            sound.humanize(this.soundHumanizeFactor);
         }
         return sound;
     }
