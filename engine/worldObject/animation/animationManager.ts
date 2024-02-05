@@ -53,6 +53,18 @@ class AnimationManager {
         this.animations[name] = animation;
         animation.onAdd(this.worldObject);
     }
+    
+    addAlias(aliasName: string, animationName: string) {
+        if (aliasName in this.animations) {
+            console.error(`Cannot add alias '${aliasName}' because it already exists`, this);
+            return;
+        }
+        if (!(animationName in this.animations)) {
+            console.error(`Cannot add alias '${aliasName}' because its mapped animation '${animationName}' does not exist`, this);
+            return;
+        }
+        this.animations[aliasName] = this.animations[animationName];
+    }
 
     getCurrentAnimationName() {
         return this.currentAnimationName;

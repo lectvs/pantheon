@@ -1,5 +1,5 @@
 namespace Sound {
-    export type Controller = SoundManager | MusicManager;
+    export type Controller = SoundManager | MusicManager | World | WorldObject;
 }
 
 class Sound {
@@ -71,7 +71,7 @@ class Sound {
         this.volume = M.clamp(this.volume, 0, Sound.MAX_VOLUME);
         this.speed = M.clamp(this.speed, 0, Sound.MAX_SPEED);
 
-        let volume = this.volume * (this.controller ? this.controller.volume : 1);
+        let volume = this.volume * this.getControllerVolume();
         if (this.webAudioSound.volume !== volume) this.webAudioSound.volume = volume;
 
         if (this.webAudioSound.speed !== this.speed) this.webAudioSound.speed = this.speed;
@@ -117,6 +117,14 @@ class Sound {
 
     setFilter(filter: WebAudioFilter) {
         this.webAudioSound.setFilter(filter);
+    }
+
+    private getControllerVolume() {
+        if (this.controller instanceof SoundManager) return this.controller.volume;
+        if (this.controller instanceof MusicManager) return this.controller.volume;
+        if (this.controller instanceof World) return this.controller.soundManager.volume;
+        if (this.controller instanceof WorldObject && this.controller.world) return this.controller.world.soundManager.volume;
+        return 1;
     }
 }
 
