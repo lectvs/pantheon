@@ -3,6 +3,11 @@ namespace Hooks {
         return function(this: WorldObject) {
             (this as any)[key] = M.lerp(this.life.time, low, high, Tween.Easing.OscillateSine(cyclesPerSecond)) as any;
         }
-        
+    }
+
+    export function tweenOverLifetime(key: string, start: number, end: number, tweenFn?: Tween.Easing.Function) {
+        return function(this: WorldObject) {
+            (this as any)[key] = M.lerp(this.life.progress, start, end, tweenFn) as any;
+        }
     }
 }
