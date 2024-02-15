@@ -70,11 +70,6 @@ namespace St {
         return str.replace(/\s/g, '');
     }
 
-    export function replaceAll(str: string, replace: string, wiith: string) {
-        if (!str) return "";
-        return str.split(replace).join(wiith);
-    }
-
     export function splitOnWhitespace(str: string): string[] {
         if (isEmpty(str)) return [];
         return str.match(/\S+/g) || [];

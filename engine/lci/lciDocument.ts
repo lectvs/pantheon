@@ -54,25 +54,22 @@ function lciDocumentToWorldObjects(key: string, originX: number = 0, originY: nu
         let physicsGroup = St.isBlank(layer.properties.physicsGroup) ? undefined : layer.properties.physicsGroup;
         let bounds = layer.properties.bounds;
 
+        let worldObjectsToAdd: WorldObject[] = [];
         if (!St.isBlank(layer.properties.placeholder)) {
             let constructor = O.getPath(window, layer.properties.placeholder) as new (x: number, y: number) => WorldObject;  // Get the placeholder class from global scope
             if (!constructor || !constructor.prototype || !constructor.prototype.constructor.name) {
                 console.error(`LCI placeholder '${layer.properties.placeholder}' does not exist.`);
                 continue;
             }
-            let worldObject: WorldObject;
             try {
-                worldObject = new constructor(layer.position.x, layer.position.y);
+                let worldObject = new constructor(layer.position.x, layer.position.y);
                 worldObject.name = layer.name;
+                worldObjectsToAdd.push(worldObject);
             } catch (err) {
                 console.error(`Cannot instantiate LCI placeholder '${layer.properties.placeholder}':`, err);
                 continue;
             }
-            worldObjects.push(worldObject);
-            continue;
-        }
-
-        if (!A.isEmpty(layer.properties.multiBounds)) {
+        } else if (!A.isEmpty(layer.properties.multiBounds)) {
             for (let rect of layer.properties.multiBounds) {
                 let bounds = new PhysicsWorldObject({
                     x: rect.x, y: rect.y,
@@ -80,28 +77,35 @@ function lciDocumentToWorldObjects(key: string, originX: number = 0, originY: nu
                     bounds: new RectBounds(0, 0, rect.width, rect.height),
                     immovable: true,
                 });
-                worldObjects.push(bounds);
+                worldObjectsToAdd.push(bounds);
+            }
+        } else if (layer.isDataLayer) {
+            // Data layers include placeholder and multiBounds
+            continue;
+        } else {
+            worldObjectsToAdd.push(new Sprite({
+                name: layer.name,
+                x: layer.position.x,
+                y: layer.position.y,
+                texture: Lci.getLayerTextureKey(key, layer.name),
+                offsetX: layer.properties.offset?.x ?? 0,
+                offsetY: layer.properties.offset?.y ?? 0,
+                blendMode: layer.blendMode ?? 0,
+                alpha: layer.opacity/255,
+                layer: worldLayer,
+                physicsGroup: physicsGroup,
+                bounds: bounds ? new RectBounds(bounds.x, bounds.y, bounds.width, bounds.height) : undefined,
+                immovable: true,
+            }));
+        }
+
+        for (let worldObject of worldObjectsToAdd) {
+            for (let d in layer.properties.data) {
+                worldObject.data[d] = layer.properties.data[d];
             }
         }
 
-        if (layer.isDataLayer) continue;
-        
-        let sprite = new Sprite({
-            name: layer.name,
-            x: layer.position.x,
-            y: layer.position.y,
-            texture: Lci.getLayerTextureKey(key, layer.name),
-            offsetX: layer.properties.offset?.x ?? 0,
-            offsetY: layer.properties.offset?.y ?? 0,
-            blendMode: layer.blendMode ?? 0,
-            alpha: layer.opacity/255,
-            layer: worldLayer,
-            physicsGroup: physicsGroup,
-            bounds: bounds ? new RectBounds(bounds.x, bounds.y, bounds.width, bounds.height) : undefined,
-            immovable: true,
-        });
-
-        worldObjects.push(sprite);
+        worldObjects.pushAll(worldObjectsToAdd);
     }
 
     return G.shiftPts(worldObjects, -originX, -originY);

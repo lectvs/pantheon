@@ -574,8 +574,8 @@ class WorldObject {
         A.removeAll(this.tags, tag);
     }
 
-    runScript(script: Script | Script.Function) {
-        return this.scriptManager.runScript(script);
+    runScript(script: Script | Script.Function, name?: string, stopPrevious?: 'stopPrevious') {
+        return this.scriptManager.runScript(script, name, stopPrevious);
     }
 
     setActive(active: boolean) {
@@ -598,6 +598,10 @@ class WorldObject {
 
     setVisible(visible: boolean) {
         this._visible = visible;
+    }
+
+    stopScriptByName(name: string) {
+        this.scriptManager.stopScriptByName(name);
     }
 
     private applyVelocity() {

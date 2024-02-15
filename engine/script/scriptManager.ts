@@ -22,12 +22,17 @@ class ScriptManager {
         this.activeScripts = [];
     }
 
-    runScript(script: Script | Script.Function, name?: string) {
+    runScript(script: Script | Script.Function, name?: string, stopPrevious?: 'stopPrevious') {
         if (script instanceof Script) {
             if (script.done) return script;
         } else {
             script = new Script(script, name);
         }
+
+        if (stopPrevious && name) {
+            this.stopScriptByName(name);
+        }
+
         this.activeScripts.push(script);
         this.updateScript(0, this.activeScripts.length-1);
         return script;

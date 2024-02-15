@@ -433,8 +433,8 @@ class World {
         this.endOfFrameQueue.push(fn);
     }
 
-    runScript(script: Script | Script.Function, name?: string) {
-        return this.scriptManager.runScript(script, name);
+    runScript(script: Script | Script.Function, name?: string, stopPrevious?: 'stopPrevious') {
+        return this.scriptManager.runScript(script, name, stopPrevious);
     }
 
     shake(intensity: number, time: number) {
