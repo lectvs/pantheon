@@ -1,6 +1,6 @@
 namespace StateMachine {
     export type State<SD extends StateData, S extends StateData['state']> = {
-        callback?: (currentStateData?: SD & { state: S }) => any;
+        callback?: (previousState?: StateData['state'], currentStateData?: SD & { state: S }) => any;
         script?: (currentStateData?: SD & { state: S }) => Script.Function;
         update?: (currentStateData?: SD & { state: S }) => any;
         transitions?: Transition<SD, S>[];
@@ -27,7 +27,7 @@ class StateMachine<StateData extends StateMachine.StateData> {
         this.states = {};
     }
 
-    addState<S extends StateData['state']>(name: S, state: StateMachine.State<StateData, S>) {
+    addState<S extends StateData['state']>(name: S, state: StateMachine.State<StateData, S> = {}) {
         if (name in this.states) {
             console.error(`State ${name} already exists on state machine`, this);
             return;
@@ -39,10 +39,11 @@ class StateMachine<StateData extends StateMachine.StateData> {
         if (this.script) this.script.done = true;
         let state = this.getState(stateData.state);
         if (!state) return;
+        let previousState = this.currentStateData?.state;
         let currentStateData = O.clone(stateData);
         this.currentStateData = currentStateData;
 
-        if (state.callback) state.callback(currentStateData);
+        if (state.callback) state.callback(previousState, currentStateData);
 
         let stateScript = state.script ? state.script(currentStateData) : S.noop();
 

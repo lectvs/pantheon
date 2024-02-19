@@ -20,7 +20,7 @@ class SimpleStateMachine {
         this.stateMachine = new StateMachine();
     }
 
-    addState(name: string, state: SimpleStateMachine.State) {
+    addState(name: string, state: SimpleStateMachine.State = {}) {
         let stateScript = state.script;
 
         this.stateMachine.addState(name, {

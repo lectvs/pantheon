@@ -142,3 +142,24 @@ PIXI.Sprite.prototype.updateAndSetEffects = function(effects: Effects) {
 PIXI.Filter.prototype.setUpscale = function(scale: number) {
     // Pass, implement per-filter
 }
+
+Object.defineProperty(PIXI.Texture.prototype, 'left', {
+    get: function(this: PIXI.Texture) {
+        return this.width * (-this.defaultAnchor.x);
+    },
+});
+Object.defineProperty(PIXI.Texture.prototype, 'right', {
+    get: function(this: PIXI.Texture) {
+        return this.width * (1-this.defaultAnchor.x);
+    },
+});
+Object.defineProperty(PIXI.Texture.prototype, 'top', {
+    get: function(this: PIXI.Texture) {
+        return this.height * (-this.defaultAnchor.y);
+    },
+});
+Object.defineProperty(PIXI.Texture.prototype, 'bottom', {
+    get: function(this: PIXI.Texture) {
+        return this.height * (1-this.defaultAnchor.y);
+    },
+});

@@ -34,11 +34,3 @@ Object.defineProperty(window, 'W', {
 Object.defineProperty(window, 'H', {
     get: () => global.gameHeight,
 });
-
-Object.defineProperty(window, 'HW', {
-    get: () => global.gameWidth/2,
-});
-
-Object.defineProperty(window, 'HH', {
-    get: () => global.gameHeight/2,
-});

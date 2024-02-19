@@ -142,14 +142,14 @@ namespace S {
         });
     }
 
-    export function tweenPt(duration: OrFactory<number>, pt: Pt, start: Pt, end: Pt, easingFunction: Tween.Easing.Function = Tween.Easing.Linear): Script.Function {
+    export function tweenPt(duration: OrFactory<number>, pt: Pt, start: Pt, end: Pt, easingFunctionX: Tween.Easing.Function = Tween.Easing.Linear, easingFunctionY: Tween.Easing.Function = easingFunctionX): Script.Function {
         let startx = start.x;
         let starty = start.y;
         let endx = end.x;
         let endy = end.y;
         return S.simul(
-            S.tween(duration, pt, 'x', startx, endx, easingFunction),
-            S.tween(duration, pt, 'y', starty, endy, easingFunction),
+            S.tween(duration, pt, 'x', startx, endx, easingFunctionX),
+            S.tween(duration, pt, 'y', starty, endy, easingFunctionY),
         );
     }
 

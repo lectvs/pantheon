@@ -353,8 +353,8 @@ class WorldObject {
         return World.Actions.addChildrenToParent(children, this);
     }
 
-    addHook<T extends keyof WorldObject.Hooks<this>>(name: T, fn: WorldObject.Hooks<WorldObject>[T]['params']) {
-        this.hookManager.addHook(name, fn);
+    addHook<T extends keyof WorldObject.Hooks<this>>(name: T, fn: WorldObject.Hooks<this>[T]['params']) {
+        return this.hookManager.addHook(name, fn);
     }
 
     addModule<T extends Module<WorldObject>>(module: T): T {
@@ -427,6 +427,10 @@ class WorldObject {
             yield S.wait(time);
             callback();
         });
+    }
+
+    emitEvent(event: string, data: any = {}) {
+        this.world?.emitEventWorldObject(this, event, data);
     }
 
     everyNFrames(n: number) {
@@ -547,6 +551,26 @@ class WorldObject {
     kill() {
         this.world?.runAtEndOfFrame(() => this.removeFromWorld());
         this.hookManager.executeHooks('onKill');
+    }
+
+    listenForEventWorld(event: string | string[], onEvent: (event: WorldEvent.WorldEvent) => void) {
+        return this.world?.registerListener({
+            fromSources: [{ type: 'world' }],
+            events: A.isArray(event) ? event : [event],
+            onEvent,
+            shouldPrune: () => !this.world,
+        });
+    }
+
+    listenForEventWorldObject(worldObject: WorldEvent.ListenerWorldObjectSource | (WorldEvent.ListenerWorldObjectSource)[], event: string | string[], onEvent: (event: WorldEvent.WorldObjectEvent) => void) {
+        return this.world?.registerListener({
+            fromSources: A.isArray(worldObject)
+                ? worldObject.map(obj => ({ type: 'worldobject', worldObject: obj }))
+                : [{ type: 'worldobject', worldObject }],
+            events: A.isArray(event) ? event : [event],
+            onEvent,
+            shouldPrune: () => !this.world,
+        });
     }
 
     oscillateNFrames(n: number) {

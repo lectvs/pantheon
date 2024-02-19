@@ -133,6 +133,7 @@ class World {
     allowPause: boolean;
 
     protected hookManager: HookManager<World.Hooks>;
+    protected eventManager: WorldEventManager;
     protected endOfFrameQueue: (() => any)[];
 
     private mouseBounds: CircleBounds;
@@ -190,6 +191,7 @@ class World {
             binder: fn => fn.bind(this),
             hooks: config.hooks,
         });
+        this.eventManager = new WorldEventManager();
 
         this.endOfFrameQueue = [];
     }
@@ -308,6 +310,27 @@ class World {
         return World.Actions.addWorldObjectsToWorld(objs, this);
     }
 
+    emitEventWorld(event: string, data: any = {}) {
+        this.eventManager.emitEvent({
+            source: {
+                type: 'world',
+            },
+            event,
+            data,
+        });
+    }
+
+    emitEventWorldObject(worldObject: WorldObject, event: string, data: any = {}) {
+        this.eventManager.emitEvent({
+            source: {
+                type: 'worldobject',
+                worldObject,
+            },
+            event,
+            data,
+        });
+    }
+
     getLayerByName(name: string | undefined) {
         for (let layer of this.layers) {
             if (layer.name === name) return layer;
@@ -404,6 +427,10 @@ class World {
             sound.humanize(this.soundHumanizeFactor);
         }
         return sound;
+    }
+
+    registerListener(listener: WorldEvent.Listener) {
+        return this.eventManager.registerListener(listener);
     }
 
     removeHook(hook: Hook) {

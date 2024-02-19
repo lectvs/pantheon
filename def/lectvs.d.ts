@@ -18,15 +18,6 @@ declare const W: number;
  */
 declare const H: number;
 
-/**
- * global.gameWidth/2
- */
-declare const HW: number;
-
-/**
- * global.gameHeight/2
- */
-declare const HH: number;
 
 interface Array<T> {
     /**
@@ -45,6 +36,9 @@ interface Array<T> {
      */
     clear(): void;
 
+    /**
+     * Iterates in forward order.
+     */
     filterInPlace(predicate: (value: T, index: number, obj: T[]) => boolean): this;
 
     /**
@@ -113,5 +107,24 @@ declare namespace PIXI {
          * Sets a value for upscale.
          */
         setUpscale(scale: number): void;
+    }
+
+    export interface Texture {
+        /**
+         * The texture's left side relative to the anchor.
+         */
+        readonly left: number;
+        /**
+         * The texture's right side relative to the anchor.
+         */
+        readonly right: number;
+        /**
+         * The texture's top side relative to the anchor.
+         */
+        readonly top: number;
+        /**
+         * The texture's bottom side relative to the anchor.
+         */
+        readonly bottom: number;
     }
 }

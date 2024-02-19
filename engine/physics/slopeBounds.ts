@@ -66,6 +66,7 @@ class SlopeBounds implements Bounds {
         } else {
             this.debugSprite.texture = Textures.outlinePolygon(FrameCache.array(FrameCache.vec2(box.left, box.top), FrameCache.vec2(box.right, box.top), FrameCache.vec2(box.right, box.bottom)), 0x00FF00);
         }
+        this.debugSprite.anchor.set(0.5, 0.5);
 
         return FrameCache.array(this.debugSprite);
     }

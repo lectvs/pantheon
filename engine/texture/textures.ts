@@ -47,6 +47,7 @@ namespace Textures {
         if (!cache_filledPolygon[key]) {
             let boundaries = G.getEncompassingBoundaries$(points);
             let result = newPixiRenderTexture(Math.floor(boundaries.width)+1, Math.floor(boundaries.height)+1, 'Textures.filledPolygon');
+            result.defaultAnchor.set(0.5, 0.5);
             Draw.polygon(result, points.map(p => vec2(p.x - boundaries.left, p.y - boundaries.top)), { fill: { color: fillColor, alpha: fillAlpha }});
             TextureUtils.setImmutable(result);
             cache_filledPolygon[key] = result;
@@ -100,6 +101,7 @@ namespace Textures {
             let boundaries = G.getEncompassingBoundaries$(points);
             let alignment: 'inner' | 'outer' = G.chirality(points) >= 0 ? 'inner' : 'outer';
             let result = newPixiRenderTexture(Math.floor(boundaries.width)+1, Math.floor(boundaries.height)+1, 'Textures.outlinePolygon');
+            result.defaultAnchor.set(0.5, 0.5);
             Draw.polygon(result, points.map(p => vec2(p.x - boundaries.left, p.y - boundaries.top)), { outline: { color: outlineColor, alpha: outlineAlpha, thickness: outlineThickness, alignment }});
             TextureUtils.setImmutable(result);
             cache_outlinePolygon[key] = result;

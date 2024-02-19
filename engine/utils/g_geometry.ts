@@ -83,6 +83,12 @@ namespace G {
         return A.range(n).map(i => vec2(cx + r*M.cos(angle + 360/n*(i+0.5)), cy + r*M.sin(angle + 360/n*(i+0.5))));
     }
 
+    export function generateStarVertices(cx: number, cy: number, rmin: number, rmax: number, n: number, angle: number = 0) {
+        return A.range(n*2).map(i => i % 2
+            ? vec2(cx + rmax*M.cos(angle + 180/n*(i+0.5)), cy + rmax*M.sin(angle + 180/n*(i+0.5)))
+            : vec2(cx + rmin*M.cos(angle + 180/n*(i+0.5)), cy + rmin*M.sin(angle + 180/n*(i+0.5))));
+    }
+
     export function getClosestCardinalDirection$(vector: Vector2) {
         let angle = vector.angle;
         if (vector.isZero()) return FrameCache.vec2(0, 0);
@@ -167,6 +173,14 @@ namespace G {
     export function rectContainsRect(rect: Rect, contains: Rect) {
         return rect.x <= contains.x && rect.x + rect.width  >= contains.x + contains.width
             && rect.y <= contains.y && rect.y + rect.height >= contains.y + contains.height;
+    }
+
+    export function rotateAround(pt: Pt, around: Pt, angle: number) {
+        let currentAngle = M.atan2(pt.y - around.y, pt.x - around.x);
+        let newAngle = currentAngle + angle;
+        let dist = distance(pt, around);
+        pt.x = around.x + M.cos(newAngle) * dist;
+        pt.y = around.y + M.sin(newAngle) * dist;
     }
 
     export function shiftPts<T extends Pt>(pts: T[], dx: number, dy: number): T[] {
