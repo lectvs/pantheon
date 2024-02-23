@@ -123,11 +123,16 @@ namespace S {
         }
     }
 
-    export function playAnimation(sprite: Sprite, animationName: string, force: boolean = true, waitForCompletion: boolean = true): Script.Function {
+    /**
+     * Play an animation on a WorldObject
+     * @param force default true
+     * @param waitForCompletion default true
+     */
+    export function playAnimation(worldObject: WorldObject, animationName: string, force: boolean | 'force' = true, waitForCompletion: boolean = true): Script.Function {
         return function*() {
-            sprite.playAnimation(animationName, force);
+            worldObject.playAnimation(animationName, force);
             if (waitForCompletion) {
-                while (sprite.getCurrentAnimationName() === animationName) {
+                while (worldObject.getCurrentAnimationName() === animationName) {
                     yield;
                 }
             }
