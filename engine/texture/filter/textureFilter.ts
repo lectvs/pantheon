@@ -12,11 +12,12 @@ namespace TextureFilter {
      *              float width/height - the width and height of the source texture
      *              float x/y - the x/y coordinates in pixels
      *              float t - time in seconds
+     *              float upscale - upscale ratio
      *              vec4 getColor(float x, float y) - get the color at x/y
      *              float pnoise(vec3 p) - perlin noise at a point, normalized to [-1, 1]
      *              float pnoise(float x, float y, float z) - perlin noise at a point, normalized to [-1, 1]
-     *              float pnoisePos(vec3 p) - perlin noise at a point, normalized to [0, 1]
-     *              float pnoisePos(float x, float y, float z) - perlin noise at a point, normalized to [0, 1]
+     *              float pnoise01(vec3 p) - perlin noise at a point, normalized to [0, 1]
+     *              float pnoise01(float x, float y, float z) - perlin noise at a point, normalized to [0, 1]
      *              vec3 rgb2hsv(vec3 rgb) - converts RGB to HSV. all values are in the range [0, 1]
      *              vec3 hsv2rgb(vec3 hsv) - converts HSV to RGB. all values are in the range [0, 1]
      *              float map(float value, float min1, float max1, float min2, float max2) - linearly map a value between ranges
@@ -63,6 +64,11 @@ class TextureFilter extends PIXI.Filter {
         return this.visualPadding;
     }
 
+    setOffset(offsetx: number, offsety: number) {
+        this.setUniform('offsetx', offsetx);
+        this.setUniform('offsety', offsety);
+    }
+
     override setUpscale(scale: number): void {
         super.setUpscale(scale);
         this.setUniform('upscale', scale);
@@ -81,10 +87,6 @@ class TextureFilter extends PIXI.Filter {
         if (this.uniformCache[name] === value) return;
         this.uniforms[name] = value;
         this.uniformCache[name] = value;
-    }
-
-    update() {
-        
     }
 
     updateTime(delta: number) {
@@ -117,6 +119,8 @@ namespace TextureFilter {
         uniform float height;
         uniform float t;
         uniform float upscale;
+        uniform float offsetx;
+        uniform float offsety;
     `;
 
     const fragCoreHelperMethods = `
@@ -203,8 +207,8 @@ namespace TextureFilter {
             #define PI 3.14159265358979
             #define TWOPI 6.28318530717958
 
-            float x = vTextureCoord.x * inputSize.x;
-            float y = vTextureCoord.y * inputSize.y;
+            float x = vTextureCoord.x * inputSize.x + offsetx * upscale;
+            float y = vTextureCoord.y * inputSize.y + offsety * upscale;
             vec4 inp = texture2D(uSampler, vTextureCoord);
             // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.
             if (inp.a > 0.0) {

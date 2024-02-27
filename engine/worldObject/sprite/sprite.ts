@@ -114,7 +114,7 @@ class Sprite extends PhysicsWorldObject {
     }
 
     override getVisibleLocalBounds$(): Rectangle | undefined {
-        if (this.texture === Textures.EFFECT_ONLY) {
+        if (this.texture === Textures.NOOP) {
             return undefined;
         }
         return TextureUtils.getTextureLocalBounds$(this.texture,

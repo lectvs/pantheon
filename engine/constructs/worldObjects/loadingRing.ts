@@ -34,7 +34,7 @@ class LoadingRing extends Sprite {
         let roundedRadius = Math.ceil(outerRadius);
         return lazy(`LoadingRing(${outerRadius}, ${thickness},${roundedProgress})`, () => {
             let texture = newPixiRenderTexture(roundedRadius*2, roundedRadius*2, 'LoadingRing');
-            let sprite = new PIXI.Sprite(Textures.EFFECT_ONLY);
+            let sprite = new PIXI.Sprite(Textures.NOOP);
             sprite.x = outerRadius;
             sprite.y = outerRadius;
             sprite.filters = [new LoadingRing.Filter(outerRadius, thickness, roundedProgress)];

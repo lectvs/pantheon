@@ -112,5 +112,4 @@ namespace Textures {
 
     export const NONE = PIXI.Texture.EMPTY;
     export const NOOP = newPixiRenderTexture(0, 0, 'Textures.NOOP');
-    export const EFFECT_ONLY = newPixiRenderTexture(0, 0, 'Textures.EFFECT_ONLY');
 }
