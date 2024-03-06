@@ -171,6 +171,28 @@ namespace TextureUtils {
         return result;
     }
 
+    const superTextureCache: Dict<PIXI.Texture> = {};
+    export function superTexture(...textureKeys: string[]) {
+        let cacheKey = textureKeys.join(':+:');
+        if (!(cacheKey in superTextureCache)) {
+            let textures = textureKeys.map(key => AssetCache.getTexture(key));
+            let width = M.max(textures, t => t.width);
+            let height = M.max(textures, t => t.height);
+            let finalTexture = newPixiRenderTexture(width, height, 'TextureUtils.superTexture');
+            let sprite = new PIXI.Sprite();
+            for (let t of textures) {
+                sprite.texture = t;
+                sprite.anchor.set(0, 0);
+                renderToRenderTexture(sprite, finalTexture);
+            }
+            finalTexture.defaultAnchor.x = textures[0].defaultAnchor.x;
+            finalTexture.defaultAnchor.y = textures[0].defaultAnchor.y;
+            setImmutable(finalTexture);
+            superTextureCache[cacheKey] = finalTexture;
+        }
+        return superTextureCache[cacheKey];
+    }
+
     export function toCanvas(renderTexture: PIXI.RenderTexture) {
         return Main.rendererPlugins.extract.canvas(renderTexture);
     }

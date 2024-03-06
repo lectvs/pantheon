@@ -41,6 +41,15 @@ https://twitter.com/maddythorson/status/1238338574220546049
 - Dash just under semi-solid -> pop up onto it
 - Riding fast-moving platform -> added jump momentum is stored for a few frames
 - Can wall-jump 2 pixels from the wall
+https://www.youtube.com/watch?v=u2fwxuHZXIA
+- Player jumps higher when moving faster
+- Holding the jump button change player's gravity
+- Acceleration is higher when changing direction
+- Slopes change player max speed and acceleration
+- Player has less friction while sliding, even on flat ground
+- "P-speed" increases player's max speed
+- Player doesn't slow down while in the air and not holding direction
+- Mario actually "decelerates toward" his max speed if over it instead of clamping, resulting in his speed oscillating over time
 
 # Art Tips
 - Create independent "scenes" centered at the player even in a large world

@@ -44,10 +44,17 @@ namespace World {
 
     export type LayerConfig = {
         name: string;
-        /**
-         * Sorts each object in the layer by a key. Objects are ordered from lowest key to highest key.
-         */
-        sortKey?: (worldObject: WorldObject) => number;
+        sort?: {
+            /**
+             * Sorts each object in the layer by a key. Objects are ordered from lowest key to highest key.
+             */
+            key: (worldObject: WorldObject) => number;
+        } | {
+            /**
+             * Sorts each object in the layer by a comparator. If worldObject1 is before worldObject2, the comparator should return a negative number.
+             */
+            comparator: (worldObject1: WorldObject, worldObject2: WorldObject) => number;
+        };
         reverseSort?: boolean;
         effects?: Effects.Config;
     }
@@ -603,7 +610,7 @@ namespace World {
     export class Layer {
         name: string;
         worldObjects: WorldObject[];
-        sortKey?: (worldObject: WorldObject) => number;
+        sortComparator?: (worldObject1: WorldObject, worldObject2: WorldObject) => number;
         reverseSort: boolean;
 
         effects: Effects;
@@ -616,7 +623,7 @@ namespace World {
         constructor(world: World, name: string, config: World.LayerConfig) {
             this.name = name;
             this.worldObjects = [];
-            this.sortKey = config.sortKey;
+            this.sortComparator = this.getSortComparator(config.sort);
             this.reverseSort = config.reverseSort ?? false;
 
             this.effects = new Effects(config.effects);
@@ -624,9 +631,15 @@ namespace World {
         }
 
         sort() {
-            if (!this.sortKey) return;
+            if (!this.sortComparator) return;
             let r = this.reverseSort ? -1 : 1;
-            this.worldObjects.sort((a, b) => r*(this.sortKey!(a) - this.sortKey!(b)));
+            this.worldObjects.sort((a, b) => r*this.sortComparator!(a, b));
+        }
+
+        private getSortComparator(sort: World.LayerConfig['sort']) {
+            if (!sort) return undefined;
+            if ('comparator' in sort) return sort.comparator;
+            return (worldObject1: WorldObject, worldObject2: WorldObject) => sort.key(worldObject1) - sort.key(worldObject2);
         }
     }
 

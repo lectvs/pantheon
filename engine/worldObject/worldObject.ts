@@ -249,10 +249,6 @@ class WorldObject {
 
         this.life.update(this.delta);
         this.animationManager.update(this.delta);
-
-        if (this.parent && this.ignoreCamera) {
-            debug(`Warning: ignoreCamera is set to true on a child object. This will be ignored!`);
-        }
     }
 
     visualUpdate() {

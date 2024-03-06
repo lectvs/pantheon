@@ -9,6 +9,8 @@ namespace SpriteText {
         anchor?: Vector2;
         flipX?: boolean;
         flipY?: boolean;
+        offsetX?: number;
+        offsetY?: number;
         angle?: number;
         scale?: number;
         scaleX?: number;
@@ -100,6 +102,8 @@ class SpriteText extends WorldObject {
     alpha: number;
     flipX: boolean;
     flipY: boolean;
+    offsetX: number;
+    offsetY: number;
     angle: number;
 
     scaleX: number;
@@ -144,6 +148,8 @@ class SpriteText extends WorldObject {
         this.alpha = config.alpha ?? 1;
         this.flipX = config.flipX ?? false;
         this.flipY = config.flipY ?? false;
+        this.offsetX = config.offsetX ?? 0;
+        this.offsetY = config.offsetY ?? 0;
         this.angle = config.angle ?? 0;
         this.scaleX = config.scaleX ?? (config.scale ?? 1);
         this.scaleY = config.scaleY ?? (config.scale ?? 1);

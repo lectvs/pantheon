@@ -72,6 +72,13 @@ namespace G {
         return v1.x*v2.x + v1.y*v2.y;
     }
 
+    export function expandBounds(bounds: Bndries, amount: number) {
+        bounds.left -= amount;
+        bounds.top -= amount;
+        bounds.right += amount;
+        bounds.bottom += amount;
+    }
+
     export function expandRectangle(rect: Rect, amount: number) {
         rect.x -= amount;
         rect.y -= amount;

@@ -88,11 +88,11 @@ class SpriteTextRenderSystem {
     }
 
     private getX(spriteText: SpriteText, data: SpriteTextRenderSystem.Part, style: Required<SpriteText.Style>, textBounds: Rectangle) {
-        return (data.x + style.offsetX - spriteText.anchor.x * textBounds.width) * this.getScaleX(spriteText);
+        return (data.x + style.offsetX - spriteText.anchor.x * textBounds.width) * this.getScaleX(spriteText) + spriteText.offsetX;
     }
 
     private getY(spriteText: SpriteText, data: SpriteTextRenderSystem.Part, style: Required<SpriteText.Style>, textBounds: Rectangle) {
-        return (data.y + style.offsetY - spriteText.anchor.y * textBounds.height) * this.getScaleY(spriteText);
+        return (data.y + style.offsetY - spriteText.anchor.y * textBounds.height) * this.getScaleY(spriteText) + spriteText.offsetY;
     }
 
     private getScaleX(spriteText: SpriteText) {
