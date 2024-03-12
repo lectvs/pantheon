@@ -85,13 +85,13 @@ namespace S {
         return function*() {}
     }
 
-    export function revealText(world: World, text: SpriteText, rate: number, sound?: string): Script.Function {
+    export function revealText(world: World | undefined, text: SpriteText, rate: number, sound?: string): Script.Function {
         return function*() {
             text.visibleCharCount = 0;
             yield;
             while (!text.allCharactersVisible()) {
                 text.visibleCharCount++;
-                if (sound) world.playSound(sound);
+                if (sound && world) world.playSound(sound);
                 yield S.wait(1/rate);
             }
         }

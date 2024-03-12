@@ -51,8 +51,13 @@ class Camera {
 
     get width() { return this.world.getScreenWidth(); }
     get height() { return this.world.getScreenHeight(); }
-    get worldOffsetX() { return this.x - this.width/2 + this._waverX + this.debugOffsetX + (this.screenShakePhysicallyMovesCamera ? this.shakeX : 0); }
-    get worldOffsetY() { return this.y - this.height/2 + this._waverY + this.debugOffsetY + (this.screenShakePhysicallyMovesCamera ? this.shakeY : 0); }
+    get worldOffsetX() { return this.left + this._waverX + this.debugOffsetX + (this.screenShakePhysicallyMovesCamera ? this.shakeX : 0); }
+    get worldOffsetY() { return this.top + this._waverY + this.debugOffsetY + (this.screenShakePhysicallyMovesCamera ? this.shakeY : 0); }
+
+    get left() { return this.x - this.width/2; }
+    get right() { return this.x + this.width/2; }
+    get top() { return this.y - this.height/2; }
+    get bottom() { return this.y + this.height/2; }
 
     constructor(config: Camera.Config, world: World) {
         this.world = world;
@@ -121,17 +126,17 @@ class Camera {
     }
 
     private clampToBounds() {
-        if (this.bounds.left > -Infinity && this.x - this.width/2 < this.bounds.left) {
-            this.x = this.bounds.left + this.width/2;
+        if (this.bounds.left > -Infinity && this.left < this.bounds.left) {
+            this.x += this.bounds.left - this.left;
         }
-        if (this.bounds.right < Infinity && this.x + this.width/2 > this.bounds.right) {
-            this.x = this.bounds.right - this.width/2;
+        if (this.bounds.right < Infinity && this.right > this.bounds.right) {
+            this.x += this.bounds.right - this.right;
         }
-        if (this.bounds.top > -Infinity && this.y - this.height/2 < this.bounds.top) {
-            this.y = this.bounds.top + this.height/2;
+        if (this.bounds.top > -Infinity && this.top < this.bounds.top) {
+            this.y += this.bounds.top - this.top;
         }
-        if (this.bounds.bottom < Infinity && this.y + this.height/2 > this.bounds.bottom) {
-            this.y = this.bounds.bottom - this.height/2;
+        if (this.bounds.bottom < Infinity && this.bottom > this.bounds.bottom) {
+            this.y += this.bounds.bottom - this.bottom;
         }
     }
 

@@ -505,6 +505,9 @@ class WorldObject {
         if (!localBounds) return undefined;
         localBounds.x += this.x;
         localBounds.y += this.y;
+        if (this.getZBehavior() === 'threequarters') {
+            localBounds.y -= this.z;
+        }
         return localBounds;
     }
 

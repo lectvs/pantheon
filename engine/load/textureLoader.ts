@@ -48,8 +48,13 @@ class TextureLoader implements Loader {
             if (rect) {
                 frameTexture.frame = new PIXI.Rectangle(rect.x, rect.y, rect.width, rect.height);
             }
-            frameTexture.defaultAnchor = new Point(anchor.x, anchor.y);
-            AssetCache.textures[frame] = frameTexture;
+            frameTexture.defaultAnchor.set(0, 0);
+            let renderTexture = newPixiRenderTexture(frameTexture.width, frameTexture.height, 'TextureLoader');
+            TextureUtils.render(frameTexture, renderTexture, {});
+            renderTexture.defaultAnchor.set(anchor.x, anchor.y);
+            TextureUtils.setImmutable(renderTexture);
+            AssetCache.textures[frame] = renderTexture;
+            frameTexture.destroy();
         }
     }
 
@@ -80,6 +85,15 @@ class TextureLoader implements Loader {
             }
         }
 
+        if (texture.ninepatch) {
+            for (let subrect of ['topleft', 'top', 'topright', 'left', 'center', 'right', 'bottomleft', 'bottom', 'bottomright']) {
+                frames[`${key}/ninepatch/${subrect}`] = {
+                    rect: this.getNinepatchSubRect(width, height, texture.ninepatch.innerRect, subrect),
+                    anchor: Anchor.TOP_LEFT,
+                };
+            }
+        }
+
         if (texture.frames) {
             for (let frame in texture.frames) {
                 frames[frame] = texture.frames[frame];
@@ -90,8 +104,19 @@ class TextureLoader implements Loader {
     }
 
     private static getFrameKeyIndex(texture: Preload.Texture, x: number, y: number, numFramesX: number) {
-        if (texture.spritesheet?.naming === 'x/y') return `${x}/${y}`;
-        if (texture.spritesheet?.naming === 'y/x') return `${y}/${x}`;
-        return `${x + y*numFramesX}`;
+        let index = x + y*numFramesX;
+        if (!texture.spritesheet) return index;
+        if (texture.spritesheet.naming === 'x/y') return `${x}/${y}`;
+        if (texture.spritesheet.naming === 'y/x') return `${y}/${x}`;
+        if (A.isArray(texture.spritesheet.naming) && index < texture.spritesheet.naming.length) return texture.spritesheet.naming[index];
+        return index;
+    }
+
+    private static getNinepatchSubRect(textureWidth: number, textureHeight: number, innerRect: Rect, name: string) {
+        let x = name.includes('left') ? 0 : (name.includes('right') ? innerRect.x + innerRect.width : innerRect.x);
+        let y = name.includes('top') ? 0 : (name.includes('bottom') ? innerRect.y + innerRect.height : innerRect.y);
+        let width = name.includes('left') ? innerRect.x : (name.includes('right') ? textureWidth - (innerRect.x + innerRect.width) : innerRect.width);
+        let height = name.includes('top') ? innerRect.y : (name.includes('bottom') ? textureHeight - (innerRect.y + innerRect.height) : innerRect.height);
+        return rect(x, y, width, height);
     }
 }

@@ -9,6 +9,16 @@ namespace TextureUtils {
         texture: PIXI.RenderTexture;
     }
 
+    export type RenderProperties = {
+        x?: number;
+        y?: number;
+        scaleX?: number;
+        scaleY?: number;
+        tint?: number;
+        alpha?: number;
+        filters?: TextureFilter[];
+    }
+
     export type TransformProperties = {
         scaleX?: number;
         scaleY?: number;
@@ -137,6 +147,27 @@ namespace TextureUtils {
     export function isImmutable(renderTexture: PIXI.RenderTexture) {
         return O.getMetadata<boolean>(renderTexture, 'immutable') ?? false;
     }
+
+    /**
+     * Renders a texture to another texture.
+     */
+    export function render(texture: PIXI.Texture, toTexture: PIXI.RenderTexture, properties: RenderProperties) {
+        if (isImmutable(toTexture)) {
+            console.error('Cannot render to immutable texture:', toTexture);
+            return;
+        }
+        renderSprite.texture = texture;
+        renderSprite.anchor.set(texture.defaultAnchor.x, texture.defaultAnchor.y);
+        renderSprite.x = properties.x ?? 0;
+        renderSprite.y = properties.y ?? 0;
+        renderSprite.scale.x = properties.scaleX ?? 1;
+        renderSprite.scale.y = properties.scaleY ?? 1;
+        renderSprite.tint = properties.tint ?? 0xFFFFFF;
+        renderSprite.alpha = properties.alpha ?? 1;
+        renderSprite.filters = properties.filters || null!;
+        renderToRenderTexture(renderSprite, toTexture);
+    }
+    const renderSprite = new PIXI.Sprite();
 
     export function setImmutable(renderTexture: PIXI.RenderTexture) {
         O.putMetadata(renderTexture, 'immutable', true);

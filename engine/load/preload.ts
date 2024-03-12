@@ -14,6 +14,7 @@ namespace Preload {
     export type Texture = {
         url?: string;
         spritesheet?: TextureSpritesheet;
+        ninepatch?: TextureNinepatch;
         frames?: Dict<TextureFrame>;
     } & TextureFrame;
 
@@ -27,7 +28,11 @@ namespace Preload {
         frameHeight: number;
         prefix?: string;
         anchor?: Vector2;
-        naming?: 'index' | 'x/y' | 'y/x';
+        naming?: 'index' | 'x/y' | 'y/x' | string[];
+    }
+
+    export type TextureNinepatch = {
+        innerRect: Rect;
     }
 
     export type Sound = {

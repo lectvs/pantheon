@@ -335,14 +335,26 @@ namespace SpriteText {
     }
 
     export function getBoundsOfCharList$(list: SpriteTextParser.Character[]) {
-        if (A.isEmpty(list)) return FrameCache.rectangle(0, 0, 0, 0);
+        let left = Infinity;
+        let right = -Infinity;
+        let top = Infinity;
+        let bottom = -Infinity;
 
-        let left = M.min(list, char => char.left);
-        let right = M.max(list, char => char.right);
-        let top = M.min(list, char => char.top);
-        let bottom = M.max(list, char => char.bottom);
+        for (let char of list) {
+            if (St.isBlank(char.name)) continue;
+            left = Math.min(left, char.left);
+            right = Math.max(right, char.right);
+            top = Math.min(top, char.top);
+            bottom = Math.max(bottom, char.bottom);
+        }
 
-        return FrameCache.rectangle(left, top, right-left, bottom-top);
+        let result = FrameCache.rectangle(left, top, right-left, bottom-top);
+
+        if (!result.isFinite()) {
+            result.set(0, 0, 0, 0);
+        }
+
+        return result;
     }
 
     export function justify(lines: SpriteTextParser.Character[][], justify: SpriteText.Justify) {

@@ -1,6 +1,9 @@
 /// <reference path="../utils/performanceTracking.ts" />
 
 namespace Textures {
+    export const NONE = PIXI.Texture.EMPTY;
+    export const NOOP = newPixiRenderTexture(0, 0, 'Textures.NOOP');
+    
     const cache_filledCircle: Dict<PIXI.RenderTexture> = {};
     export function filledCircle(radius: number, fillColor: number, fillAlpha: number = 1) {
         let key = `${radius},${fillColor},${fillAlpha}`;
@@ -110,6 +113,46 @@ namespace Textures {
         return cache_outlinePolygon[key];
     }
 
-    export const NONE = PIXI.Texture.EMPTY;
-    export const NOOP = newPixiRenderTexture(0, 0, 'Textures.NOOP');
+    const cache_ninepatchScaled: Dict<PIXI.RenderTexture> = {};
+    export function ninepatchScaled(baseTexture: string, width: number, height: number) {
+        let key = `${baseTexture},${width},${height}`;
+        if (!cache_ninepatchScaled[key]) {
+            let result = newPixiRenderTexture(width, height, 'Textures.ninepatchScaled');
+            result.defaultAnchor.copyFrom(AssetCache.getTexture(baseTexture).defaultAnchor);
+
+            let topleft = AssetCache.getTexture(`${baseTexture}/ninepatch/topleft`);
+            let top = AssetCache.getTexture(`${baseTexture}/ninepatch/top`);
+            let topright = AssetCache.getTexture(`${baseTexture}/ninepatch/topright`);
+            let left = AssetCache.getTexture(`${baseTexture}/ninepatch/left`);
+            let center = AssetCache.getTexture(`${baseTexture}/ninepatch/center`);
+            let right = AssetCache.getTexture(`${baseTexture}/ninepatch/right`);
+            let bottomleft = AssetCache.getTexture(`${baseTexture}/ninepatch/bottomleft`);
+            let bottom = AssetCache.getTexture(`${baseTexture}/ninepatch/bottom`);
+            let bottomright = AssetCache.getTexture(`${baseTexture}/ninepatch/bottomright`);
+
+            // Corners
+            TextureUtils.render(topleft, result, { x: 0, y: 0 });
+            TextureUtils.render(topright, result, { x: width - topright.width, y: 0 });
+            TextureUtils.render(bottomleft, result, { x: 0, y: height - bottomleft.height });
+            TextureUtils.render(bottomright, result, { x: width - bottomright.width, y: height - bottomright.height });
+
+            // Edges
+            TextureUtils.render(top, result, { x: topleft.width, y: 0, scaleX: (width - topleft.width - topright.width) / top.width });
+            TextureUtils.render(bottom, result, { x: bottomleft.width, y: height - bottom.height, scaleX: (width - bottomleft.width - bottomright.width) / bottom.width });
+            TextureUtils.render(left, result, { x: 0, y: topleft.height, scaleY: (height - topleft.height - bottomleft.height) / left.height });
+            TextureUtils.render(right, result, { x: width - right.width, y: topright.height, scaleY: (height - topright.height - bottomright.height) / right.height });
+
+            // Center
+            TextureUtils.render(center, result, {
+                x: topleft.width,
+                y: topleft.height,
+                scaleX: (width - topleft.width - topright.width) / top.width,
+                scaleY: (height - topleft.height - bottomleft.height) / left.height,
+            });
+
+            TextureUtils.setImmutable(result);
+            cache_ninepatchScaled[key] = result;
+        }
+        return cache_ninepatchScaled[key];
+    }
 }

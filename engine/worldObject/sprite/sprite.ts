@@ -3,6 +3,7 @@
 namespace Sprite {
     export type Config<WO extends Sprite> = PhysicsWorldObject.Config<WO> & {
         texture?: string | PIXI.Texture;
+        textureAnchor?: Pt;
         flipX?: boolean;
         flipY?: boolean;
         offsetX?: number;
@@ -24,6 +25,7 @@ class Sprite extends PhysicsWorldObject {
     private texture!: PIXI.Texture;
     private textureKey: string | undefined;
 
+    textureAnchor?: Vector2;
     flipX: boolean;
     flipY: boolean;
     offsetX: number;
@@ -56,6 +58,7 @@ class Sprite extends PhysicsWorldObject {
 
         if (config.texture || !this.texture) this.setTexture(config.texture);
 
+        if (config.textureAnchor) this.textureAnchor = vec2(config.textureAnchor);
         this.flipX = config.flipX ?? false;
         this.flipY = config.flipY ?? false;
 
@@ -87,8 +90,8 @@ class Sprite extends PhysicsWorldObject {
 
     override render(): [PIXI.Sprite, ...Render.Result] {
         this.renderObject.texture = this.texture;
-        this.renderObject.anchor.x = this.texture.defaultAnchor.x;
-        this.renderObject.anchor.y = this.texture.defaultAnchor.y;
+        this.renderObject.anchor.x = this.textureAnchor ? this.textureAnchor.x : this.texture.defaultAnchor.x;
+        this.renderObject.anchor.y = this.textureAnchor ? this.textureAnchor.y : this.texture.defaultAnchor.y;
         this.renderObject.x = this.offsetX;
         this.renderObject.y = this.offsetY;
         this.renderObject.scale.x = (this.flipX ? -1 : 1) * this.scaleX;
