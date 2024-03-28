@@ -106,17 +106,6 @@ class PhysicsWorldObject extends WorldObject {
         this._immovable = immovable;
     }
 
-    teleport(x: Pt | number, y?: number) {
-        if (!M.isNumber(x)) {
-            y = x.y;
-            x = x.x;
-        }
-        this.x = x;
-        this.y = y ?? x;
-        this.startOfThisFrameX = x;
-        this.startOfThisFrameY = y ?? x;
-    }
-
     private applyGravity() {
         this.v.x += this.gravity.x * this.delta;
         this.v.y += this.gravity.y * this.delta;

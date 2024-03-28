@@ -84,12 +84,14 @@ namespace S {
             if (dx > 0) {
                 while (worldObject.x < x && !timer.done) {
                     worldObject.controller.right = true;
+                    worldObject.controller.moveDirection.set(1, 0);
                     timer.update(global.script.delta);
                     yield;
                 }
             } else {
                 while (worldObject.x > x && !timer.done) {
                     worldObject.controller.left = true;
+                    worldObject.controller.moveDirection.set(-1, 0);
                     timer.update(global.script.delta);
                     yield;
                 }
@@ -108,12 +110,14 @@ namespace S {
             if (dy > 0) {
                 while (worldObject.y < y && !timer.done) {
                     worldObject.controller.down = true;
+                    worldObject.controller.moveDirection.set(0, 1);
                     timer.update(global.script.delta);
                     yield;
                 }
             } else {
                 while (worldObject.y > y && !timer.done) {
                     worldObject.controller.up = true;
+                    worldObject.controller.moveDirection.set(0, -1);
                     timer.update(global.script.delta);
                     yield;
                 }

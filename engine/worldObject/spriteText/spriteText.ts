@@ -428,6 +428,9 @@ namespace SpriteText {
         'r': (params) => {
             return { color: 0xFF0000 };
         },
+        'pu': (params) => {
+            return { color: 0x9900FF };
+        },
         'gold': (params) => {
             return { color: 0xFFD800 };
         },

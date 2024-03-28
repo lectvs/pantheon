@@ -224,6 +224,20 @@ class Anchor {
     static get BOTTOM() { return new Vector2(0.5, 1); }
     static get LEFT() { return new Vector2(0, 0.5); }
     static get RIGHT() { return new Vector2(1, 0.5); }
+
+    static fromName(anchorName: string) {
+        anchorName = anchorName.toLowerCase();
+
+        let result = vec2(0.5, 0.5);
+
+        if (anchorName.includes('left')) result.x = 0;
+        else if (anchorName.includes('right')) result.x = 1;
+
+        if (anchorName.includes('top')) result.y = 0;
+        else if (anchorName.includes('bottom')) result.y = 1;
+
+        return result;
+    }
 }
 
 class Direction {
@@ -236,4 +250,18 @@ class Direction {
     static get DOWN_LEFT() { return new Vector2(-1, 1); }
     static get DOWN() { return new Vector2(0, 1); }
     static get DOWN_RIGHT() { return new Vector2(1, 1); }
+
+    static fromName(directionName: string) {
+        directionName = directionName.toLowerCase();
+
+        let result = vec2(0, 0);
+
+        if (directionName.includes('left')) result.x = -1;
+        else if (directionName.includes('right')) result.x = 1;
+
+        if (directionName.includes('up')) result.y = -1;
+        else if (directionName.includes('down')) result.y = 1;
+
+        return result;
+    }
 }

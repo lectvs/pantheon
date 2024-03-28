@@ -358,7 +358,7 @@ class Main {
         let hctx = hcanvas.getContext('2d');
         hctx!.drawImage(
             Main.renderer.view,
-            0, 0, Main.getScaledWidth(), Main.getScaledHeight(),
+            0, 0, Main.getScaledWidth() * global.upscale, Main.getScaledHeight() * global.upscale,
             0, 0, global.gameWidth*scale, global.gameHeight*scale,
         );
 

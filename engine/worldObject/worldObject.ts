@@ -627,6 +627,17 @@ class WorldObject {
         this.scriptManager.stopScriptByName(name);
     }
 
+    teleport(x: Pt | number, y?: number) {
+        if (!M.isNumber(x)) {
+            y = x.y;
+            x = x.x;
+        }
+        this.x = x;
+        this.y = y ?? x;
+        this.startOfThisFrameX = x;
+        this.startOfThisFrameY = y ?? x;
+    }
+
     private applyVelocity() {
         this.localx += this.v.x * this.delta;
         this.localy += this.v.y * this.delta;

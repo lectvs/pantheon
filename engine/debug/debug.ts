@@ -89,7 +89,7 @@ class Debug {
 
     private static _SKIP_RATE: number;
     private static _SKIP_RATE_KEY_MODIFIER: number = 1;
-    static get SKIP_RATE() { return this.DEBUG ? this._SKIP_RATE * this._SKIP_RATE_KEY_MODIFIER : 1; }
+    static get SKIP_RATE() { return this.DEBUG ? M.clamp(this._SKIP_RATE * this._SKIP_RATE_KEY_MODIFIER, 1, Infinity) : 1; }
     static set SKIP_RATE(value: number) { this._SKIP_RATE = value; }
 
     private static _PROGRAMMATIC_INPUT: boolean;
