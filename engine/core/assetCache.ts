@@ -7,6 +7,7 @@ class AssetCache {
     static ldtkWorlds: Dict<LdtkWorld.LdtkWorld> = {};
     static fonts: Dict<SpriteText.Font> = {};
     static lciDocuments: Dict<Lci.Document> = {};
+    static textFiles: Dict<string> = {};
 
     static getTexture(key: string): PIXI.Texture {
         if (this.isNoneTexture(key)) {
@@ -46,6 +47,13 @@ class AssetCache {
             console.error(`Ldtk world '${key}' does not exist.`);
         }
         return this.ldtkWorlds[key];
+    }
+
+    static getTextFile(key: string): string | undefined {
+        if (!this.textFiles[key]) {
+            console.error(`Text file '${key}' does not exist.`);
+        }
+        return this.textFiles[key];
     }
 
     static getFont(key: string): SpriteText.Font | undefined {

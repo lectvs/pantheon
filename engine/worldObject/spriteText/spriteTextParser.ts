@@ -86,7 +86,7 @@ namespace SpriteTextParser {
 
         let localBounds = fixedCharSize
             ? new Rectangle(0, 0, font.charWidth, font.charHeight)
-            : TextureUtils.getTextureLocalBounds$(texture, 0, 0, 1, 1, 0).clone();
+            : TextureUtils.getTextureLocalBounds$(texture, 0, 0, 1, 1, 0, undefined).clone();
 
         return new Character({
             name: char.name,
@@ -136,7 +136,7 @@ namespace SpriteTextParser {
             if (!this.texture) {
                 return FrameCache.rectangle(this.x, this.y, 0, 0);
             }
-            return TextureUtils.getTextureLocalBounds$(this.texture, this.x, this.y, 1, 1, 0);
+            return TextureUtils.getTextureLocalBounds$(this.texture, this.x, this.y, 1, 1, 0, undefined);
         }
 
         static SPACE(width: number, height: number) {

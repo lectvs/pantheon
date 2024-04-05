@@ -5,6 +5,7 @@ namespace Preload {
         tilesets: Dict<Preload.Tileset>;
         pyxelTilemaps: Dict<Preload.PyxelTilemap>;
         ldtkWorlds: Dict<Preload.LdtkWorld>;
+        textFiles: Dict<Preload.TextFile>;
         fonts: Dict<Preload.Font>;
         custom: Dict<Preload.CustomResource>;
         progressCallback: (progress: number) => any;
@@ -57,6 +58,10 @@ namespace Preload {
         solidEnumName: string;
     }
 
+    export type TextFile = {
+        url?: string;
+    }
+
     export type Font = {
         url?: string;
         charWidth: number;
@@ -100,6 +105,10 @@ class Preload {
 
         for (let key in options.ldtkWorlds) {
             loaders.push(new LdtkWorldLoader(key, options.ldtkWorlds[key]));
+        }
+
+        for (let key in options.textFiles) {
+            loaders.push(new TextFileLoader(key, options.textFiles[key]));
         }
 
         for (let key in options.fonts) {

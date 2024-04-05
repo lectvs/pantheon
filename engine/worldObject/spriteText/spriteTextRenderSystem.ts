@@ -43,6 +43,7 @@ class SpriteTextRenderSystem {
                 data.sprite.scale.x,
                 data.sprite.scale.y,
                 data.sprite.angle,
+                undefined,
             );
 
             let screenBounds = tmp.rectangle(0, 0, screen.width, screen.height);
@@ -79,6 +80,7 @@ class SpriteTextRenderSystem {
                 this.getScaleX(spriteText),
                 this.getScaleY(spriteText),
                 this.getAngle(spriteText),
+                data.sprite.anchor,
             );
 
             bounds.push(localBounds);

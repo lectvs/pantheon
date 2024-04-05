@@ -11,13 +11,14 @@ namespace Main {
         preventScrollOnCanvas: boolean;
         defaultSpriteTextFont?: string;
 
-        textures: Dict<Preload.Texture>;
-        sounds: Dict<Preload.Sound>;
-        tilesets: Dict<Preload.Tileset>;
-        pyxelTilemaps: Dict<Preload.PyxelTilemap>;
-        ldtkTilemaps: Dict<Preload.LdtkWorld>;
-        fonts: Dict<Preload.Font>;
-        customResources: Dict<Preload.CustomResource>;
+        textures?: Dict<Preload.Texture>;
+        sounds?: Dict<Preload.Sound>;
+        tilesets?: Dict<Preload.Tileset>;
+        pyxelTilemaps?: Dict<Preload.PyxelTilemap>;
+        ldtkTilemaps?: Dict<Preload.LdtkWorld>;
+        textFiles?: Dict<Preload.TextFile>;
+        fonts?: Dict<Preload.Font>;
+        customResources?: Dict<Preload.CustomResource>;
 
         controls: Input.KeyCodesByName;
 
@@ -131,13 +132,14 @@ class Main {
         if (this.config.beforePreload) this.config.beforePreload();
 
         Preload.preload({
-            textures: this.config.textures,
-            sounds: this.config.sounds,
-            tilesets: this.config.tilesets,
-            pyxelTilemaps: this.config.pyxelTilemaps,
-            ldtkWorlds: this.config.ldtkTilemaps,
-            fonts: this.config.fonts,
-            custom: this.config.customResources,
+            textures: this.config.textures ?? {},
+            sounds: this.config.sounds ?? {},
+            tilesets: this.config.tilesets ?? {},
+            pyxelTilemaps: this.config.pyxelTilemaps ?? {},
+            ldtkWorlds: this.config.ldtkTilemaps ?? {},
+            textFiles: this.config.textFiles ?? {},
+            fonts: this.config.fonts ?? {},
+            custom: this.config.customResources ?? {},
             progressCallback: (progress) => this.renderPreloadProgress(progress),
             onLoad: () => {
                 Main.load();

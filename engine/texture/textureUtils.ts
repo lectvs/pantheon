@@ -45,8 +45,8 @@ namespace TextureUtils {
         return result;
     }
 
-    export function getFilterArea$(texture: PIXI.Texture, filters: TextureFilter[], x: number, y: number, scaleX: number, scaleY: number, angle: number) {
-        let localBounds = TextureUtils.getTextureLocalBounds$(texture, x, y, scaleX, scaleY, angle);
+    export function getFilterArea$(texture: PIXI.Texture, filters: TextureFilter[], x: number, y: number, scaleX: number, scaleY: number, angle: number, overrideAnchor: Pt | undefined) {
+        let localBounds = TextureUtils.getTextureLocalBounds$(texture, x, y, scaleX, scaleY, angle, overrideAnchor);
 
         if (!localBounds.isFinite()) {
             return undefined;
@@ -117,7 +117,7 @@ namespace TextureUtils {
         return result;
     }
 
-    export function getTextureLocalBounds$(texture: PIXI.Texture, x: number, y: number, scaleX: number, scaleY: number, angle: number) {
+    export function getTextureLocalBounds$(texture: PIXI.Texture, x: number, y: number, scaleX: number, scaleY: number, angle: number, overrideAnchor: Pt | undefined) {
         let width = texture.width * scaleX;
         let height = texture.height * scaleY;
 
@@ -136,8 +136,10 @@ namespace TextureUtils {
         let maxy = Math.max(v1y, v2y, v3y, v4y);
 
         // Anchor adjustment
-        let ax = Math.floor(texture.defaultAnchor.x * texture.width) * scaleX;
-        let ay = Math.floor(texture.defaultAnchor.y * texture.height) * scaleY;
+        let anchorX = overrideAnchor ? overrideAnchor.x : texture.defaultAnchor.x;
+        let anchorY = overrideAnchor ? overrideAnchor.y : texture.defaultAnchor.y;
+        let ax = Math.floor(anchorX * texture.width) * scaleX;
+        let ay = Math.floor(anchorY * texture.height) * scaleY;
         let rotatedAndScaled_ax = (-ax) * M.cos(angle) - (-ay) * M.sin(angle);
         let rotatedAndScaled_ay = (-ax) * M.sin(angle) + (-ay) * M.cos(angle);
 

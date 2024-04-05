@@ -126,6 +126,7 @@ class Sprite extends PhysicsWorldObject {
             this.scaleX,
             this.scaleY,
             this.angle,
+            this.textureAnchor,
         );
     }
 

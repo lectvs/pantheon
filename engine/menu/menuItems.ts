@@ -11,16 +11,12 @@ namespace MenuTextButton {
 
 class MenuTextButton extends SpriteText {
     private bounds: RectBounds;
-
-    get enabled() { return this.getModule(Button)?.enabled ?? false; }
-    set enabled(value: boolean) {
-        let button = this.getModule(Button);
-        if (button) button.enabled = value;
-    }
+    enabled: boolean;
 
     constructor(config: MenuTextButton.Config) {
         super(config);
         this.bounds = new RectBounds(0, 0, 0, 0, this);
+        this.enabled = true;
 
         let button = this.addModule(new Button({
             hoverTint: config.hoverColor ?? 0x808080,
@@ -41,6 +37,11 @@ class MenuTextButton extends SpriteText {
     override update() {
         super.update();
         this.setBounds();
+
+        let button = this.getModule(Button);
+        if (button) {
+            button.enabled = this.enabled && this.isHighestPriority();
+        }
     }
 
     private setBounds() {
@@ -56,6 +57,10 @@ class MenuTextButton extends SpriteText {
             this.bounds.width = 0;
             this.bounds.height = 0;
         }
+    }
+
+    isHighestPriority() {
+        return true;
     }
 }
 

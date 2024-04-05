@@ -450,11 +450,19 @@ class WorldObject {
         return <T>this.children[index];
     }
 
-    getChildByName<T extends WorldObject>(name: string): T | undefined {
+    getChildByName<T extends WorldObject>(name: string, unchecked?: 'unchecked'): T | undefined {
         for (let child of this.children) {
             if (child.name === name) return <T>child;
         }
-        console.error(`Cannot find child named ${name} on parent:`, this);
+        if (!unchecked) console.error(`Cannot find child named ${name} on parent:`, this);
+        return undefined;
+    }
+
+    getChildByType<T extends WorldObject>(type: new (...args: any[]) => T, unchecked?: 'unchecked'): T | undefined {
+        for (let child of this.children) {
+            if (child instanceof type) return <T>child;
+        }
+        if (!unchecked) console.error(`Cannot find child with type ${type.name} on parent:`, this);
         return undefined;
     }
 
