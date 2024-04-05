@@ -5,27 +5,37 @@ class AnimationManager {
     private animations: Dict<AnimationInstance>;
     private currentAnimationName: string | undefined;
     private get currentAnimation(): AnimationInstance | undefined { return this.animations[this.currentAnimationName!]; }
+    private defaultAnimation: string | undefined;
+    private started: boolean;
 
     constructor(worldObject: WorldObject, animations: Dict<AnimationInstance> | undefined, defaultAnimation: string | undefined) {
         this.speed = 1;
         this.worldObject = worldObject;
         this.animations = {};
         this.currentAnimationName = undefined;
+        this.defaultAnimation = defaultAnimation;
+        this.started = false;
 
         if (!O.isEmpty(animations)) {
             for (let animationName in animations) {
                 this.addAnimation(animationName, animations[animationName]);
             }
         }
+    }
 
-        if (defaultAnimation === 'none') {
+    start() {
+        if (this.started) return;
+
+        if (this.defaultAnimation === 'none') {
             // Noop
-        } else if (defaultAnimation) {
-            this.playAnimation(defaultAnimation);
-        } else if (!O.isEmpty(animations)) {
-            if ('default' in animations) this.playAnimation('default');
-            else if ('idle' in animations) this.playAnimation('idle');
+        } else if (this.defaultAnimation) {
+            this.playAnimation(this.defaultAnimation);
+        } else if (!O.isEmpty(this.animations)) {
+            if ('default' in this.animations) this.playAnimation('default');
+            else if ('idle' in this.animations) this.playAnimation('idle');
         }
+
+        this.started = true;
     }
 
     update(delta: number) {

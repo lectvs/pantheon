@@ -125,6 +125,10 @@ class Camera {
         }
     }
 
+    getWorldRect$() {
+        return FrameCache.rectangle(this.left, this.top, this.width, this.height);
+    }
+
     private clampToBounds() {
         if (this.bounds.left > -Infinity && this.left < this.bounds.left) {
             this.x += this.bounds.left - this.left;

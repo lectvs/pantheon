@@ -58,7 +58,7 @@ class ActionBehavior implements Behavior {
                 nextAction: action.nextAction,
             });
 
-            return;
+            return this;
         }
 
         this.stateMachine.addState(name, {
@@ -70,6 +70,8 @@ class ActionBehavior implements Behavior {
         });
 
         this.actions[name] = action;
+
+        return this;
     }
 
     interrupt(action?: string) {

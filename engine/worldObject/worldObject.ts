@@ -206,6 +206,7 @@ class WorldObject {
     }
 
     onAdd() {
+        this.animationManager.start();
         this.hookManager.executeHooks('onAdd');
     }
 

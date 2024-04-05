@@ -119,6 +119,11 @@ PIXI.Sprite.prototype.updateAndSetEffects = function(effects: Effects) {
         this.filters = filters.slice();
     }
 
+    let oldAnchorX = this.texture.defaultAnchor.x;
+    let oldAnchorY = this.texture.defaultAnchor.y;
+
+    this.texture.defaultAnchor.set(this.anchor.x, this.anchor.y);
+
     let filterArea = TextureUtils.getFilterArea$(this.texture, filters,
         this.x,
         this.y,
@@ -126,6 +131,8 @@ PIXI.Sprite.prototype.updateAndSetEffects = function(effects: Effects) {
         this.scale.y,
         this.angle,
     );
+
+    this.texture.defaultAnchor.set(oldAnchorX, oldAnchorY);
 
     if (filterArea) {
         if (this.filterArea) {

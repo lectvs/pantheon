@@ -76,4 +76,18 @@ namespace Actions {
             delete worldObject.data.exiting;
         });
     }
+
+    export function flash(worldObject: WorldObject & { effects: Effects }, duration: number, color: number = 0xFFFFFF) {
+        let previousColor = worldObject.effects.silhouette.color;
+        let previousAlpha = worldObject.effects.silhouette.alpha;
+        let previousAmount = worldObject.effects.silhouette.amount;
+        let previousEnabled = worldObject.effects.silhouette.enabled;
+        worldObject.runScript(function*() {
+            worldObject.effects.silhouette.enable(color, 1, 0);
+            yield S.tween(duration/2, worldObject.effects.silhouette, 'amount', 0, 1);
+            yield S.tween(duration/2, worldObject.effects.silhouette, 'amount', 1, 0);
+            worldObject.effects.silhouette.enable(previousColor, previousAlpha, previousAmount);
+            if (!previousEnabled) worldObject.effects.silhouette.disable();
+        });
+    }
 }

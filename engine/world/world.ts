@@ -409,6 +409,18 @@ class World {
         Physics.resolveCollisions(this);
     }
 
+    isPtOnScreen(pt: Pt, buffer: number = 0) {
+        let screenRect = this.camera.getWorldRect$();
+        G.expandRectangle(screenRect, buffer);
+        return screenRect.contains(pt);
+    }
+
+    isRectOnScreen(rect: Rect, buffer: number = 0) {
+        let screenRect = this.camera.getWorldRect$();
+        G.expandRectangle(screenRect, buffer);
+        return G.areRectanglesOverlapping(rect, screenRect);
+    }
+
     /**
      * By default, sounds are:
      *   - Humanized (if set globally and sound duration less than 1 second)

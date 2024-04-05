@@ -1,7 +1,7 @@
 namespace PuffSystem {
     export type PuffConfig = {
-        p?: Vector2;
-        v: Vector2;
+        p?: Pt;
+        v: Pt;
         maxLife: number;
         radius: number;
         color: number;

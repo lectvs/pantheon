@@ -11,6 +11,22 @@ namespace Hooks {
         }
     }
 
+    export function killIfOffScreenBounds(padding: number) {
+        return function(this: WorldObject & { bounds: Bounds }) {
+            if (this.world && !this.world.isRectOnScreen(this.bounds.getBoundingBox())) {
+                this.kill();
+            }
+        }
+    }
+
+    export function killIfOffScreenCoords(padding: number) {
+        return function(this: WorldObject) {
+            if (this.world && !this.world.isPtOnScreen(this)) {
+                this.kill();
+            }
+        }
+    }
+
     export function oscillate(key: string, low: number, high: number, cyclesPerSecond: number) {
         return function(this: WorldObject) {
             (this as any)[key] = M.lerp(this.life.time, low, high, Tween.Easing.OscillateSine(cyclesPerSecond)) as any;
