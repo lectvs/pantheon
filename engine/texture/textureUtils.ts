@@ -164,7 +164,13 @@ namespace TextureUtils {
         renderSprite.scale.y = properties.scaleY ?? 1;
         renderSprite.tint = properties.tint ?? 0xFFFFFF;
         renderSprite.alpha = properties.alpha ?? 1;
-        renderSprite.filters = properties.filters || null!;
+
+        let effects = new Effects();
+        if (properties.filters) {
+            effects.post = properties.filters;
+        }
+        renderSprite.updateAndSetEffects(effects);
+
         renderToRenderTexture(renderSprite, toTexture);
     }
     const renderSprite = new PIXI.Sprite();

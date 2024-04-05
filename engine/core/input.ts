@@ -35,6 +35,7 @@ namespace Input {
 class Input {
     private static eventKey: string | undefined; // Mainly for use in control binding
     private static isDownByKeyCode: Dict<boolean>;
+    private static lastIsDownByKeyCode: Dict<boolean>;
     private static keysByKeycode: Dict<Input.Key>;
     private static keyCodesByName: Input.KeyCodesByName;
     private static _mouseX: number = 0;
@@ -60,6 +61,7 @@ class Input {
     static init(keyCodesByName: Input.KeyCodesByName) {
         this.keyCodesByName = O.deepClone(keyCodesByName);
         this.isDownByKeyCode = {};
+        this.lastIsDownByKeyCode = {};
         this.keysByKeycode = {};
 
         for (let name in this.keyCodesByName) {
@@ -82,6 +84,10 @@ class Input {
     }
 
     static postUpdate() {
+        for (let key in this.isDownByKeyCode) {
+            this.lastIsDownByKeyCode[key] = this.isDownByKeyCode[key];
+        }
+
         this._mouseScrollDelta = 0;
 
         if (this.touchWentUp) {
@@ -230,6 +236,10 @@ class Input {
 
     static isKeyCodeDown(keyCode: string) {
         return this.isDownByKeyCode[keyCode];
+    }
+
+    static isKeyCodeJustDown(keyCode: string) {
+        return this.isDownByKeyCode[keyCode] && !this.lastIsDownByKeyCode[keyCode];
     }
 
     static axis(negKey: string, posKey: string) {
@@ -434,9 +444,31 @@ class Input {
         };
     }
 
+    static KEYCODES = {
+        Space: ' ',
+        Alt: 'Alt',
+        ArrowDown: 'ArrowDown',
+        ArrowLeft: 'ArrowLeft',
+        ArrowRight: 'ArrowRight',
+        ArrowUp: 'ArrowUp',
+        Backspace: 'Backspace',
+        CapsLock: 'CapsLock',
+        Ctrl: 'Control',
+        Del: 'Delete',
+        End: 'End',
+        Enter: 'Enter',
+        Esc: 'Escape',
+        Home: 'Home',
+        Ins: 'Insert',
+        Win: 'Meta',
+        PgDn: 'PageDown',
+        PgUp: 'PageUp',
+        Shift: 'Shift',
+        Tab: 'Tab',
+    } as const;
+
     static MOUSE_KEYCODES: string[] = ["MouseLeft", "MouseMiddle", "MouseRight", "MouseBack", "MouseForward"];
     static DEBUG_PREFIX: string = "debug::";
-
 }
 
 namespace Input {
