@@ -17,6 +17,10 @@ class ScriptManager {
             this.activeScripts.splice(i, 1);
         }
     }
+
+    hasScriptRunning(name: string) {
+        return this.activeScripts.some(script => script.name === name);
+    }
     
     reset() {
         this.activeScripts = [];

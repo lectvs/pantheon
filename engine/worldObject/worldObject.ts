@@ -522,6 +522,10 @@ class WorldObject {
         return this.animationManager.hasAnimation(name);
     }
 
+    hasScriptRunning(name: string) {
+        return this.scriptManager.hasScriptRunning(name);
+    }
+
     hasTag(tag: string) {
         return this.tags.includes(tag);
     }

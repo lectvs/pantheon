@@ -1,7 +1,7 @@
 namespace Network {
     export const NAME_NOT_RESOLVED = "Name not resolved";
 
-    export function httpRequest(url: string, data: string, callback: (responseJson: any, error: string | undefined) => any) {
+    export function httpRequest(url: string, data: string | null, callback: (responseJson: any, error: string | undefined) => any) {
         var xhr = new XMLHttpRequest();
         xhr.open(data ? "POST" : "GET", url, true);
         xhr.onload = function () {

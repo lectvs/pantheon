@@ -11,7 +11,7 @@ namespace Debug {
         skipRate: number;
         programmaticInput: boolean;
         autoplay: boolean;
-        skipMainMenuStage: () => World;
+        skipMainMenuStage: (() => World) | undefined;
         frameStepEnabled: boolean;
         resetOptionsAtStart: boolean;
         forceMobile: boolean;

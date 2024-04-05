@@ -66,6 +66,10 @@ namespace A {
         return { width: M.max(array, line => isEmpty(line) ? 0 : line.length), height: array.length };
     }
 
+    export function indices(array: ReadonlyArray<any>) {
+        return range(array.length);
+    }
+
     export function isArray(obj: any): obj is any[] {
         return Array.isArray(obj);
     }
