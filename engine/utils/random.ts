@@ -1,7 +1,7 @@
 class RandomNumberGenerator {
     private generate!: () => number;
 
-    constructor(seed?: number) {
+    constructor(seed?: number | string) {
         this.seed(seed);
     }
 
@@ -129,6 +129,30 @@ class RandomNumberGenerator {
         for (let i = 0; i < count; i++) {
             let j = this.int(0, copiedArray.length-1);
             result.push(copiedArray.splice(j, 1)[0]);
+        }
+
+        return result;
+    }
+
+    /**
+     * Random sample of {count} elements from an array.
+     */
+    sampleWeighted<T>(array: T[], weights: number[], count: number) {
+        if (count > A.size(array)) {
+            console.error('Trying to sample an array for more elements than it contains', array, count);
+            count = A.size(array);
+        }
+        if (A.isEmpty(array)) return [];
+
+        let copiedWeights = A.clone(weights);
+        let indices = A.indices(array);
+        let result: T[] = [];
+        for (let i = 0; i < count; i++) {
+            let index = this.elementWeighted(indices, copiedWeights);
+            let indexI = indices.indexOf(index);
+            indices.splice(indexI, 1);
+            copiedWeights.splice(indexI, 1);
+            result.push(array[index!]);
         }
 
         return result;
