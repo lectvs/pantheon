@@ -92,7 +92,7 @@ class AnimationManager {
         }
 
         let priorityForceRequired = this.currentAnimation && this.currentAnimation.getPriority() > this.animations[name].getPriority();
-        let sameAnimationForceRequired = this.currentAnimationName?.startsWith(name);
+        let sameAnimationForceRequired = this.isAnimationOrVariantPlaying(name);
 
         let forceRequired = priorityForceRequired || sameAnimationForceRequired;
 
@@ -103,6 +103,14 @@ class AnimationManager {
         this.currentAnimation?.reset();
         this.currentAnimationName = name;
         this.currentAnimation?.onStart();
+    }
+
+    private isAnimationOrVariantPlaying(name: string) {
+        if (!this.currentAnimationName) return false;
+        if (this.currentAnimationName === name) return true;
+        if (this.animations[this.currentAnimationName].getVariantOf().includes(name)) return true;
+        if (this.animations[name].getVariantOf().includes(this.currentAnimationName)) return true;
+        return false;
     }
 
     private skipToRefPoint(refPoint: number) {

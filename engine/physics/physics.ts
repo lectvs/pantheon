@@ -169,7 +169,19 @@ namespace Physics {
     function getRaycastCollisions(world: World): RaycastCollisionData[] {
         let raycastCollisionDatas: RaycastCollisionData[] = FrameCache.array();
 
-        for (let collision of world.collisions) {
+        let collisions = world.collisions.filter(collision => {
+            if (!(collision.move in world.physicsGroups)) {
+                console.error(`PhysicsGroup '${collision.move}' does not exist on world`);
+                return false;
+            }
+            if (!(collision.from in world.physicsGroups)) {
+                console.error(`PhysicsGroup '${collision.from}' does not exist on world`);
+                return false;
+            }
+            return true;
+        })
+
+        for (let collision of collisions) {
             for (let imove = 0; imove < world.physicsGroups[collision.move].worldObjects.length; imove++) {
                 let fromStart = collision.move === collision.from ? imove + 1 : 0;  // Don't double-count collisions between members of the same physics group.
                 for (let ifrom = fromStart; ifrom < world.physicsGroups[collision.from].worldObjects.length; ifrom++) {

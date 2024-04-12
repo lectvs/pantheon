@@ -1,5 +1,13 @@
 abstract class AnimationInstance {
-    constructor(private priority: number, private nextRef?: string) {}
+    private priority: number;
+    private nextRef: string | undefined;
+    private variantOf: string[];
+
+    constructor(config: AnimationInstance.Config) {
+        this.priority = config.priority ?? 0;
+        this.nextRef = config.nextRef;
+        this.variantOf = config.variantOf ?? [];
+    }
 
     abstract onAdd(worldObject: WorldObject): void;
     abstract onStart(): void;
@@ -15,9 +23,19 @@ abstract class AnimationInstance {
     getNextRef(): string | undefined {
         return this.nextRef;
     }
+
+    getVariantOf() {
+        return this.variantOf;
+    }
 }
 
 namespace AnimationInstance {
+    export type Config = {
+        priority?: number;
+        nextRef?: string;
+        variantOf?: string[]
+    }
+
     export class EmptyAnimation extends AnimationInstance {
         override onAdd(worldObject: WorldObject): void {}
         override onStart(): void {}
@@ -27,17 +45,15 @@ namespace AnimationInstance {
         override reset(): void {}
     }
 
-    export type CompositeAnimationConfig = {
+    export type CompositeAnimationConfig = Config & {
         animations: AnimationInstance[];
-        priority: number;
-        nextRef?: string;
     }
 
     export class CompositeAnimation extends AnimationInstance {
         private animations: AnimationInstance[];
 
         constructor(config: CompositeAnimationConfig) {
-            super(config.priority, config.nextRef);
+            super(config);
             this.animations = config.animations;
         }
 
@@ -76,11 +92,9 @@ namespace AnimationInstance {
         }
     }
 
-    export type TextureAnimationConfig = {
+    export type TextureAnimationConfig = Config & {
         frames: TextureAnimationFrame[];
         count: number;
-        priority: number;
-        nextRef?: string;
     }
 
     export type TextureAnimationFrame = {
@@ -100,7 +114,7 @@ namespace AnimationInstance {
         private currentIteration: number;
     
         constructor(config: TextureAnimationConfig) {
-            super(config.priority, config.nextRef);
+            super(config);
             this.frames = config.frames;
             this.count = config.count;
     
@@ -171,12 +185,10 @@ namespace AnimationInstance {
         }
     }
 
-    export type ScriptAnimationConfig = {
+    export type ScriptAnimationConfig = Config & {
         script: () => Script.Function;
         count: number;
         onReset?: () => any;
-        priority: number;
-        nextRef?: string;
     }
 
     export class ScriptAnimation extends AnimationInstance {
@@ -188,7 +200,7 @@ namespace AnimationInstance {
         private currentIteration: number;
     
         constructor(config: ScriptAnimationConfig) {
-            super(config.priority, config.nextRef);
+            super(config);
             this.scriptFactory = config.script;
             this.count = config.count;
             this.onReset = config.onReset;

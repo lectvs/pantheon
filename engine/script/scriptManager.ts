@@ -1,3 +1,7 @@
+namespace ScriptManager {
+    export type SpecialMode = 'stopPrevious' | 'dontRunTwice';
+}
+
 class ScriptManager {
     activeScripts: Script[];
 
@@ -26,15 +30,19 @@ class ScriptManager {
         this.activeScripts = [];
     }
 
-    runScript(script: Script | Script.Function, name?: string, stopPrevious?: 'stopPrevious') {
+    runScript(script: Script | Script.Function, name?: string, specialMode?: ScriptManager.SpecialMode) {
         if (script instanceof Script) {
             if (script.done) return script;
         } else {
             script = new Script(script, name);
         }
 
-        if (stopPrevious && name) {
+        if (specialMode === 'stopPrevious' && name) {
             this.stopScriptByName(name);
+        }
+
+        if (specialMode === 'dontRunTwice' && name && this.hasScriptRunning(name)) {
+            return script;
         }
 
         this.activeScripts.push(script);

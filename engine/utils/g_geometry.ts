@@ -96,6 +96,19 @@ namespace G {
             : vec2(cx + rmin*M.cos(angle + 180/n*(i+0.5)), cy + rmin*M.sin(angle + 180/n*(i+0.5))));
     }
 
+    export function getClosest45DegreeDirection$(vector: Vector2) {
+        let angle = vector.angle;
+        if (vector.isZero()) return FrameCache.vec2(0, 0);
+        if (angle >= 22.5 && angle < 67.5) return FrameCache.vec2(Math.SQRT2, Math.SQRT2);
+        if (angle >= 67.5 && angle < 112.5) return FrameCache.vec2(0, 1);
+        if (angle >= 112.5 && angle < 157.5) return FrameCache.vec2(-Math.SQRT2, Math.SQRT2);
+        if (angle >= 157.5 && angle < 202.5) return FrameCache.vec2(-1, 0);
+        if (angle >= 202.5 && angle < 247.5) return FrameCache.vec2(-Math.SQRT2, -Math.SQRT2);
+        if (angle >= 247.5 && angle < 292.5) return FrameCache.vec2(0, -1);
+        if (angle >= 292.5 && angle < 337.5) return FrameCache.vec2(Math.SQRT2, -Math.SQRT2);
+        return FrameCache.vec2(1, 0);
+    }
+
     export function getClosestCardinalDirection$(vector: Vector2) {
         let angle = vector.angle;
         if (vector.isZero()) return FrameCache.vec2(0, 0);

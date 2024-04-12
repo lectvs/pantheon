@@ -610,8 +610,8 @@ class WorldObject {
         A.removeAll(this.tags, tag);
     }
 
-    runScript(script: Script | Script.Function, name?: string, stopPrevious?: 'stopPrevious') {
-        return this.scriptManager.runScript(script, name, stopPrevious);
+    runScript(script: Script | Script.Function, name?: string, specialMode?: ScriptManager.SpecialMode) {
+        return this.scriptManager.runScript(script, name, specialMode);
     }
 
     setActive(active: boolean) {
