@@ -339,6 +339,7 @@ class World {
     }
 
     getLayerByName(name: string | undefined) {
+        if (!name) name = World.DEFAULT_LAYER;
         for (let layer of this.layers) {
             if (layer.name === name) return layer;
         }
@@ -931,6 +932,25 @@ namespace World {
          */
         export function balanceWorldObjectsByVisualBounds$(objs: ReadonlyArray<WorldObject>, aroundX: number, aroundY: number, anchor: Vector2 = Anchor.CENTER, deep: boolean = false) {
             return balanceWorldObjects$(objs, aroundX, aroundY, anchor, deep, worldObject => worldObject.getVisibleLocalBounds$());
+        }
+
+        /**
+         * Returns -1 if obj1 renders before obj2, +1 if vice versa, or 0 if no order could be determined.
+         */
+        export function getRenderOrder(obj1: WorldObject, obj2: WorldObject) {
+            if (!obj1.world || !obj2.world || obj1.world !== obj2.world) return 0;
+
+            let world = obj1.world;
+            let layer1 = world.getLayerByName(obj1.layer);
+            let layer2 = world.getLayerByName(obj2.layer);
+
+            if (!layer1 || !layer2) return 0;
+
+            if (layer1 === layer2) {
+                return Math.sign(layer1.worldObjects.indexOf(obj1) - layer1.worldObjects.indexOf(obj2));
+            }
+
+            return Math.sign(world.layers.indexOf(layer1) - world.layers.indexOf(layer2));
         }
 
         function balanceWorldObjects$(objs: ReadonlyArray<WorldObject>, aroundX: number, aroundY: number, anchor: Vector2, deep: boolean, getLocalBounds$: (worldObject: WorldObject) => Rectangle | undefined) {
