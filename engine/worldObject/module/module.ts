@@ -3,6 +3,7 @@ class Module<T extends WorldObject> {
     protected _worldObject!: T;
 
     get worldObject() { return this._worldObject; }
+    get delta() { return this._worldObject.delta; }
 
     constructor(type: new (...args: any[]) => T) {
         this.type = type;
@@ -14,14 +15,22 @@ class Module<T extends WorldObject> {
             return;
         }
         this._worldObject = worldObject;
+        this.onAdd();
     }
 
+    onAdd(): void {}
+    onRemove(): void {}
+
+    preUpdate(): void {}
     update(): void {}
+    postUpdate(): void {}
+
     render(): Render.Result {
         return FrameCache.array();
     }
 
     remove(): void {
+        this.onRemove();
         A.removeAll(this.worldObject.modules, this);
     }
 }

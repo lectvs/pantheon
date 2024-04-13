@@ -5,7 +5,7 @@ namespace ActionBehavior {
     export type Action = {
         script?: Script.Function;
         interrupt?: Interrupt;
-        wait?: OrFactory<number>;
+        waitAfter?: OrFactory<number>;
         nextAction: NextAction;
     }
 }
@@ -25,7 +25,7 @@ class ActionBehavior implements Behavior {
         this.actions = {};
 
         this.addAction(ActionBehavior.START_ACTION, {
-            wait: startWait,
+            waitAfter: startWait,
             nextAction: startAction,
         });
     }
@@ -41,8 +41,8 @@ class ActionBehavior implements Behavior {
     addAction(name: string, action: ActionBehavior.Action) {
         let b = this;
 
-        if (action.wait) {
-            let wait = action.wait;
+        if (action.waitAfter) {
+            let wait = action.waitAfter;
             let waitActionName = `wait_after_${name}`;
 
             this.addAction(name, {

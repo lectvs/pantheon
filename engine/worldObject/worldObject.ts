@@ -224,6 +224,10 @@ class WorldObject {
         this.behavior.update(this.delta);
         this.updateController();
         this.hookManager.executeHooks('onPreUpdate');
+
+        for (let module of this.modules) {
+            module.preUpdate();
+        }
     }
 
     update() {
@@ -260,6 +264,10 @@ class WorldObject {
         this.controller.reset();
 
         this.hookManager.executeHooks('onPostUpdate');
+
+        for (let module of this.modules) {
+            module.postUpdate();
+        }
 
         this.resolveCopyFromParent();
 

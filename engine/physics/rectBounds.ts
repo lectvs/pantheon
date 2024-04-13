@@ -140,3 +140,14 @@ class RectBounds implements Bounds {
         this.frozen = false;
     }
 }
+
+namespace RectBounds {
+    export function fromVisibleLocalBounds(worldObject: WorldObject) {
+        let bounds = worldObject.getVisibleLocalBounds$();
+        if (!bounds) {
+            console.error('WorldObject does not have visibleLocalBounds:', worldObject);
+            return new RectBounds(0, 0, 0, 0);
+        }
+        return new RectBounds(bounds.x, bounds.y, bounds.width, bounds.height);
+    }
+}

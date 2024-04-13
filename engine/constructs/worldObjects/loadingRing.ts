@@ -26,7 +26,8 @@ class LoadingRing extends Sprite {
     }
 
     protected updateTexture() {
-        this.setTexture(LoadingRing.getTexture(this.outerRadius, this.thickness, this.progress));
+        let progress = M.clamp(this.progress, 0, 1);
+        this.setTexture(LoadingRing.getTexture(this.outerRadius, this.thickness, progress));
     }
 
     static getTexture(outerRadius: number, thickness: number, progress: number) {

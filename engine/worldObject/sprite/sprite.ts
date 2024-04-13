@@ -101,6 +101,7 @@ class Sprite extends PhysicsWorldObject {
         this.renderObject.alpha = this.alpha;
         this.renderObject.blendMode = this.blendMode ?? PIXI.BLEND_MODES.NORMAL;
         this.renderObject.updateAndSetEffects(this.effects);
+        O.putMetadata(this.renderObject, 'renderedFrom', this);
 
         let result: [PIXI.Sprite, ...Render.Result] = FrameCache.array(this.renderObject);
         result.pushAll(super.render());

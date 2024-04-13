@@ -122,3 +122,14 @@ class InvertedRectBounds implements Bounds {
         this.frozen = false;
     }
 }
+
+namespace InvertedRectBounds {
+    export function fromVisibleLocalBounds(worldObject: WorldObject) {
+        let bounds = worldObject.getVisibleLocalBounds$();
+        if (!bounds) {
+            console.error('WorldObject does not have visibleLocalBounds:', worldObject);
+            return new InvertedRectBounds(0, 0, 0, 0);
+        }
+        return new InvertedRectBounds(bounds.x, bounds.y, bounds.width, bounds.height);
+    }
+}

@@ -72,6 +72,13 @@ namespace G {
         return v1.x*v2.x + v1.y*v2.y;
     }
 
+    export function dotNormalized(v1: Pt, v2: Pt) {
+        let mag1 = magnitude(v1);
+        let mag2 = magnitude(v2);
+        if (mag1 === 0 || mag2 === 0) return 0;
+        return (v1.x*v2.x + v1.y*v2.y) / mag1 / mag2;
+    }
+
     export function expandBounds(bounds: Bndries, amount: number) {
         bounds.left -= amount;
         bounds.top -= amount;
@@ -172,6 +179,14 @@ namespace G {
 
     export function lerpPt(pt1: Pt, pt2: Pt, t: number) {
         return vec2(M.lerp(t, pt1.x, pt2.x), M.lerp(t, pt1.y, pt2.y));
+    }
+
+    export function magnitude(pt: Pt) {
+        return Math.sqrt(magnitudeSq(pt));
+    }
+
+    export function magnitudeSq(pt: Pt) {
+        return pt.x*pt.x + pt.y*pt.y;
     }
 
     export function moveToClamp(current: Pt, to: Pt, speed: number, delta: number) {
