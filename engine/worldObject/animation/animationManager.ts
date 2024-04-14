@@ -84,6 +84,14 @@ class AnimationManager {
         return name in this.animations;
     }
 
+    isAnimationOrVariantPlaying(name: string) {
+        if (!this.currentAnimationName) return false;
+        if (this.currentAnimationName === name) return true;
+        if (this.animations[this.currentAnimationName].getVariantOf().includes(name)) return true;
+        if (this.animations[name].getVariantOf().includes(this.currentAnimationName)) return true;
+        return false;
+    }
+
     playAnimation(name: string, force: boolean | 'force' = false, checked: 'checked' | 'unchecked' = 'checked') {
         if (!this.hasAnimation(name)) {
             if (checked) console.error(`Cannot play animation '${name}' because it does not exist`, this);
@@ -103,14 +111,6 @@ class AnimationManager {
         this.currentAnimation?.reset();
         this.currentAnimationName = name;
         this.currentAnimation?.onStart();
-    }
-
-    private isAnimationOrVariantPlaying(name: string) {
-        if (!this.currentAnimationName) return false;
-        if (this.currentAnimationName === name) return true;
-        if (this.animations[this.currentAnimationName].getVariantOf().includes(name)) return true;
-        if (this.animations[name].getVariantOf().includes(this.currentAnimationName)) return true;
-        return false;
     }
 
     private skipToRefPoint(refPoint: number) {

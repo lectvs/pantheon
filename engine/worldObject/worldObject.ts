@@ -550,6 +550,10 @@ class WorldObject {
         return this._active && (!this.parent || this.parent.isActive());
     }
 
+    isAnimationOrVariantPlaying(name: string) {
+        return this.animationManager.isAnimationOrVariantPlaying(name);
+    }
+
     isControlRevoked() {
         return global.theater?.isCutscenePlaying;
     }
