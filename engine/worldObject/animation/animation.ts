@@ -161,6 +161,7 @@ namespace AnimationInstance {
             this.currentFrameIndex = frame;
             this.currentFrameTime = 0;
             this.currentIteration = iteration;
+            this.applyCurrentFrame();
         }
 
         override reset(): void {

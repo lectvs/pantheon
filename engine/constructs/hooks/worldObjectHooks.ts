@@ -13,7 +13,7 @@ namespace Hooks {
 
     export function killIfOffScreenBounds(padding: number) {
         return function(this: WorldObject & { bounds: Bounds }) {
-            if (this.world && !this.world.isRectOnScreen(this.bounds.getBoundingBox())) {
+            if (this.world && !this.world.isRectOnScreen(this.bounds.getBoundingBox(), padding)) {
                 this.kill();
             }
         }
@@ -21,15 +21,15 @@ namespace Hooks {
 
     export function killIfOffScreenCoords(padding: number) {
         return function(this: WorldObject) {
-            if (this.world && !this.world.isPtOnScreen(this)) {
+            if (this.world && !this.world.isPtOnScreen(this, padding)) {
                 this.kill();
             }
         }
     }
 
-    export function oscillate(key: string, low: number, high: number, cyclesPerSecond: number) {
+    export function oscillate(key: string, low: number, high: number, cyclesPerSecond: number, offset: number = 0) {
         return function(this: WorldObject) {
-            (this as any)[key] = M.lerp(this.life.time, low, high, Tween.Easing.OscillateSine(cyclesPerSecond)) as any;
+            (this as any)[key] = M.lerp(this.life.time + offset, low, high, Tween.Easing.OscillateSine(cyclesPerSecond)) as any;
         }
     }
 

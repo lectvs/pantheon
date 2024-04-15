@@ -39,7 +39,7 @@ interface Array<T> {
     /**
      * Iterates in forward order.
      */
-    filterInPlace(predicate: (value: T, index: number, obj: T[]) => boolean): this;
+    filterInPlace(predicate: (value: T, index: number, obj: T[]) => boolean | undefined): this;
 
     /**
      * Version of findIndex that returns the last element matching the predicate.

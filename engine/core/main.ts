@@ -269,6 +269,7 @@ class Main {
     private static initEvents() {
         window.addEventListener("keypress", event => {
             WebAudio.start();
+            event.preventDefault();
         });
         window.addEventListener("keydown", event => {
             WebAudio.start();

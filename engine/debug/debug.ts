@@ -46,7 +46,7 @@ class Debug {
         }
 
         if (Input.justDown(Input.DEBUG_TOGGLE_OVERLAY)) {
-            Debug.SHOW_OVERLAY = !Debug.SHOW_OVERLAY;
+            Debug.SHOW_OVERLAY = Debug.DEBUG && !Debug.SHOW_OVERLAY;
         }
 
         if (Input.justDown(Input.DEBUG_FRAME_SKIP_STEP) || Input.justDown(Input.DEBUG_FRAME_SKIP_RUN)) {

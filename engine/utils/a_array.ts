@@ -18,6 +18,10 @@ namespace A {
         return result;
     }
 
+    export function chars(str: string) {
+        return Array.from(str);
+    }
+
     export function clone<T>(array: ReadonlyArray<T>) {
         if (isEmpty(array)) return [];
         return Array.from(array);

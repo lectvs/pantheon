@@ -77,7 +77,7 @@ namespace Actions {
         });
     }
 
-    export function flash(worldObject: WorldObject & { effects: Effects }, duration: number, color: number = 0xFFFFFF) {
+    export function flash(worldObject: WorldObject & { effects: Effects }, duration: number, disableAfter?: 'disableAfter', color: number = 0xFFFFFF) {
         let previousColor = worldObject.effects.silhouette.color;
         let previousAlpha = worldObject.effects.silhouette.alpha;
         let previousAmount = worldObject.effects.silhouette.amount;
@@ -87,7 +87,7 @@ namespace Actions {
             yield S.tween(duration/2, worldObject.effects.silhouette, 'amount', 0, 1);
             yield S.tween(duration/2, worldObject.effects.silhouette, 'amount', 1, 0);
             worldObject.effects.silhouette.enable(previousColor, previousAlpha, previousAmount);
-            if (!previousEnabled) worldObject.effects.silhouette.disable();
+            if (!previousEnabled || disableAfter) worldObject.effects.silhouette.disable();
         });
     }
 }

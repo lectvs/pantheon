@@ -8,11 +8,10 @@ backlog
     - can we make our own language using babel?
     - hot reload?
 - performance
-    - look into more performant graphics libraries
-        - https://github.com/melonjs/melonJS
     - use shaders for puff system
 - general solution to prevent sprites from jittering relative to camera movement
 - asset "repositories" (local, remote?, zip)
+    - make game files group-downloadable with https://stuk.github.io/jszip/
 - allow BasicTexture to be broken into smaller textures if the size limit is surpassed
 - apply filter before texture transformation during render? (rotate, scale, etc.)
 - module system revamp
@@ -24,7 +23,6 @@ backlog
 - easier window event integration (onbeforeunload, etc.)
 - better WorldAsWorldObject (containers?)
 - better world and object management (freeing)
-    - good temporary object system
 - controller revamp
 - full nodejs setup
 - camera zoom/rotate?
@@ -35,8 +33,5 @@ backlog
 - "window" filters
 - boundless textures
     - optimize tilemap editing with boundless textures
-- better keyboard text input
 - print errors on screen?
-- report game errors through lambda API?
 - loading messages
-- make game files group-downloadable with https://stuk.github.io/jszip/

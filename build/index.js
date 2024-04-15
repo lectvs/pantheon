@@ -50,6 +50,7 @@ exports.buildSrc = function(directory, gameName) {
 /* HELPERS */
 
 function addFileToZip(zip, pathOnDisk, pathInZip) {
+    if (!fs.existsSync(pathOnDisk)) return;
     let file = fs.readFileSync(pathOnDisk);
     zip.file(pathInZip, file);
 }
