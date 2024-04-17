@@ -7,7 +7,7 @@ namespace Debug {
         showTouches: boolean;
         moveCameraWithArrows: boolean; 
         showOverlay: boolean;
-        overlayFeeds: ((world: World) => string)[];
+        overlayFeeds: ((world: World) => string | number)[];
         skipRate: number;
         programmaticInput: boolean;
         autoplay: boolean;
@@ -85,7 +85,7 @@ class Debug {
     static set MOVE_CAMERA_WITH_ARROWS(value: boolean) { this._MOVE_CAMERA_WITH_ARROWS = value; }
 
     static SHOW_OVERLAY: boolean;
-    static OVERLAY_FEEDS: ((world: World) => string)[];
+    static OVERLAY_FEEDS: ((world: World) => string | number)[];
 
     private static _SKIP_RATE: number;
     private static _SKIP_RATE_KEY_MODIFIER: number = 1;

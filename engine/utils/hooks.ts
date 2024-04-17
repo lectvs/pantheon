@@ -60,6 +60,10 @@ class HookManager<Hooks extends HookSet> {
         return result;
     }
 
+    hasHooks(name: string & keyof Hooks) {
+        return !A.isEmpty(this.hooks[name]);
+    }
+
     removeHook(hook: Hook) {
         if (!(hook.name in this.hooks)) {
             console.error("Cannot remove hook because it does not exist", hook, this);

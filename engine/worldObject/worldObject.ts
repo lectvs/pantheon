@@ -44,6 +44,7 @@ namespace WorldObject {
         onVisualUpdate: { params: (this: WO) => void };
         onPostUpdate: { params: (this: WO) => void };
         onRender: { params: (this: WO) => Render.Result };
+        onLifeExpire: { params: (this: WO) => void };
         onKill: { params: (this: WO) => void };
     }
 }
@@ -152,7 +153,7 @@ class WorldObject {
         this.vz = config.vz ?? 0;
 
         this.activeOutsideWorldBoundsBuffer = config.activeOutsideWorldBoundsBuffer ?? Infinity;
-        this.life = new WorldObject.LifeTimer(config.life ?? Infinity, () => this.kill());
+        this.life = new WorldObject.LifeTimer(config.life ?? Infinity, () => this.lifeExpired());
         this.zBehavior = config.zBehavior;
         this.timeScale = config.timeScale ?? 1;
         this.useGlobalTime = config.useGlobalTime ?? false;
@@ -636,6 +637,11 @@ class WorldObject {
                     : true;
     }
 
+    setLife(life: number) {
+        this.life.duration = life;
+        this.life.reset();
+    }
+
     setSpeed(speed: number) {
         this.v.setMagnitude(speed);
     }
@@ -667,6 +673,14 @@ class WorldObject {
         this.localx += this.v.x * this.delta;
         this.localy += this.v.y * this.delta;
         this.localz += this.vz * this.delta;
+    }
+
+    private lifeExpired() {
+        if (this.hookManager.hasHooks('onLifeExpire')) {
+            this.hookManager.executeHooks('onLifeExpire');
+        } else {
+            this.kill();
+        }
     }
 
     private resolveLayer() {
