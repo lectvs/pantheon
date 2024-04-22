@@ -3,7 +3,7 @@
 /// <reference path="../texture/filter/textureFilter.ts" />
 
 namespace World {
-    export type Config = {
+    export type Config<W extends World> = {
         layers?: World.LayerConfig[];
         effects?: Effects.Config;
 
@@ -31,7 +31,7 @@ namespace World {
 
         timescale?: number;
         allowPause?: boolean;
-        hooks?: HooksConfig<Hooks>;
+        hooks?: HooksConfig<Hooks<W>>;
         data?: any;
     }
 
@@ -72,11 +72,11 @@ namespace World {
     }
 
     // To add a new hook, simply add an entry here and call World.hookManager.executeHooks() at the appropriate location(s).
-    export type Hooks = {
-        onTransitioned: { params: (this: World) => void };
-        onUpdate: { params: (this: World) => void };
-        onWorldObjectAdded: { params: (this: World, worldObject: WorldObject) => void };
-        onWorldObjectRemoved: { params: (this: World, worldObject: WorldObject) => void };
+    export type Hooks<W extends World> = {
+        onTransitioned: { params: (this: W) => void };
+        onUpdate: { params: (this: W) => void };
+        onWorldObjectAdded: { params: (this: W, worldObject: WorldObject) => void };
+        onWorldObjectRemoved: { params: (this: W, worldObject: WorldObject) => void };
     }
 }
 
@@ -112,6 +112,8 @@ class World {
 
     backgroundColor: number;
     backgroundAlpha: number;
+    fadeColor: number;
+    fadeAmount: number;
 
     camera: Camera;
     private screenShakeFilter: World.ScreenShakeFilter;
@@ -121,6 +123,7 @@ class World {
 
     private container: PIXI.Container;
     private bgFill: PIXI.Sprite;
+    private fadeFill: PIXI.Sprite;
 
     protected scriptManager: ScriptManager;
     soundManager: SoundManager;
@@ -139,13 +142,13 @@ class World {
 
     allowPause: boolean;
 
-    protected hookManager: HookManager<World.Hooks>;
+    protected hookManager: HookManager<World.Hooks<this>>;
     protected eventManager: WorldEventManager;
     protected endOfFrameQueue: (() => any)[];
 
     private mouseBounds: CircleBounds;
 
-    constructor(config: World.Config = {}) {        
+    constructor(config: World.Config<World> = {}) {        
         this.scriptManager = new ScriptManager();
         this.soundManager = new SoundManager();
 
@@ -178,6 +181,8 @@ class World {
 
         this.backgroundColor = config.backgroundColor ?? global.backgroundColor;
         this.backgroundAlpha = config.backgroundAlpha ?? 1;
+        this.fadeColor = 0x000000;
+        this.fadeAmount = 0;
 
         this.worldSprite = new PIXI.Sprite(newPixiRenderTexture(this.getTargetScreenWidth(), this.getTargetScreenHeight(), 'World.worldTexture'));
         this.layerSprite = new PIXI.Sprite(newPixiRenderTexture(this.getTargetScreenWidth(), this.getTargetScreenHeight(), 'World.layerSprite'));
@@ -185,6 +190,8 @@ class World {
         this.container = new PIXI.Container();
         this.bgFill = new PIXI.Sprite(Textures.filledRect(1, 1, 0xFFFFFF));
         this.bgFill.scale.set(this.getTargetScreenWidth(), this.getTargetScreenHeight());
+        this.fadeFill = new PIXI.Sprite(Textures.filledRect(1, 1, 0xFFFFFF));
+        this.fadeFill.scale.set(this.getTargetScreenWidth(), this.getTargetScreenHeight());
 
         this.camera = new Camera(config.camera ?? {}, this);
         this.screenShakeFilter = new World.ScreenShakeFilter();
@@ -281,6 +288,12 @@ class World {
             }
         }
 
+        this.fadeFill.tint = this.fadeColor;
+        this.fadeFill.alpha = this.fadeAmount;
+        if (this.fadeAmount > 0) {
+            result.push(this.fadeFill);
+        }
+
         Render.diff(this.container, result);
 
         if (this.shouldRenderToTexture) {
@@ -305,7 +318,7 @@ class World {
         return result;
     }
 
-    addHook<T extends keyof World.Hooks>(name: T, fn: World.Hooks[T]['params']) {
+    addHook<T extends keyof World.Hooks<this>>(name: T, fn: World.Hooks<this>[T]['params']) {
         this.hookManager.addHook(name, fn);
     }
 
@@ -336,6 +349,19 @@ class World {
             event,
             data,
         });
+    }
+
+    fadeIn(duration: number, color: number = 0x000000) {
+        this.fadeColor = color;
+        this.fadeAmount = 1;
+        let script = this.runScript(S.tween(duration, this, 'fadeAmount', 1, 0), 'World.fade', 'stopPrevious');
+        return S.waitUntil(() => script.done);
+    }
+
+    fadeOut(duration: number, color: number = 0x000000) {
+        this.fadeColor = color;
+        let script = this.runScript(S.tween(duration, this, 'fadeAmount', 0, 1), 'World.fade', 'stopPrevious');
+        return S.waitUntil(() => script.done);
     }
 
     getLayerByName(name: string | undefined) {
@@ -529,6 +555,7 @@ class World {
 
     private handleResize() {
         this.bgFill.scale.set(this.getTargetScreenWidth(), this.getTargetScreenHeight());
+        this.fadeFill.scale.set(this.getTargetScreenWidth(), this.getTargetScreenHeight());
 
         if (this.shouldRenderToTexture) {
             this.resizeTexture(this.worldSprite.texture, this.getTargetScreenWidth(), this.getTargetScreenHeight());

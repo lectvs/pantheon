@@ -23,8 +23,6 @@ class Theater {
     private fades: Theater.Fade[];
 
     get currentWorld() { return this.stageManager ? this.stageManager.currentWorld : undefined; }
-    get isCutscenePlaying() { return this.cutsceneManager ? this.cutsceneManager.isCutscenePlaying : false; }
-    get canPause() { return this.currentWorld ? this.currentWorld.allowPause : false; }
     get delta() { return global.game.delta; }
 
     private container: PIXI.Container;
@@ -86,6 +84,11 @@ class Theater {
         return FrameCache.array(this.container);
     }
 
+    canPause() {
+        if (!this.currentWorld) return false;
+        return this.currentWorld.allowPause;
+    }
+
     clearFades(duration: number) {
         let lastOpaque = this.fades.findIndexLast(fade => fade.alpha >= 1);
         this.fades.splice(0, lastOpaque);
@@ -99,6 +102,11 @@ class Theater {
         let fade = new Theater.Fade(color, 0);
         this.fades.push(fade);
         return this.runScript(S.tween(duration, fade, 'alpha', 0, 1));
+    }
+
+    isCutscenePlaying() {
+        if (!this.cutsceneManager) return false;
+        return this.cutsceneManager.isCutscenePlaying;
     }
 
     loadStage(stage: () => World, transition: Transition = new Transitions.Instant()) {

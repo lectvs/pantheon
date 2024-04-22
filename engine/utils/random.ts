@@ -1,8 +1,12 @@
+/// <reference path="./perlin.ts" />
+
 class RandomNumberGenerator {
     private generate!: () => number;
+    private perlinRng: Perlin;
 
     constructor(seed?: number | string) {
         this.seed(seed);
+        this.perlinRng = new Perlin();
     }
 
     /**
@@ -112,6 +116,10 @@ class RandomNumberGenerator {
     onCircle(radius: number = 1) {
         let angle = this.float(0, 360);
         return new Vector2(radius*M.cos(angle), radius*M.sin(angle));
+    }
+
+    perlin(x: number, y?: number, z?: number) {
+        return this.perlinRng.get(x, y, z);
     }
 
     /**

@@ -598,6 +598,22 @@ class WorldObject {
         });
     }
 
+    moveToBack() {
+        World.Actions.moveWorldObjectToBack(this);
+    }
+
+    moveToFront() {
+        World.Actions.moveWorldObjectToFront(this);
+    }
+
+    orderAfter(other: WorldObject) {
+        World.Actions.orderWorldObjectAfter(this, other);
+    }
+
+    orderBefore(other: WorldObject) {
+        World.Actions.orderWorldObjectBefore(this, other);
+    }
+
     oscillateNFrames(n: number) {
         return this.life.oscillateNFrames(n);
     }
@@ -606,8 +622,8 @@ class WorldObject {
         return this.life.oscillateNSeconds(n);
     }
 
-    playAnimation(name: string, force: boolean | 'force' = false) {
-        this.animationManager.playAnimation(name, force);
+    playAnimation(nameOrRef: string, force: boolean | 'force' = false) {
+        this.animationManager.playAnimation(nameOrRef, force);
     }
 
     removeFromWorld(): this {

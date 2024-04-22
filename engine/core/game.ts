@@ -14,8 +14,6 @@ class Game {
     private overlay: DebugOverlay;
     private debugTouchSprite: PIXI.Sprite;
 
-    get canPause(): boolean { return this.theater?.canPause ?? false; }
-
     private entryPointMenu: Factory<Menu>;
     private mainMenu: Factory<Menu>;
     private pauseMenu: Factory<Menu>;
@@ -78,7 +76,7 @@ class Game {
     }
 
     private updatePause() {
-        if (!this.menuSystem.inMenu && this.canPause && Input.justDown(Input.GAME_PAUSE)) {
+        if (!this.menuSystem.inMenu && this.canPause() && Input.justDown(Input.GAME_PAUSE)) {
             Input.consume(Input.GAME_PAUSE);
             this.pauseGame();
         }
@@ -108,6 +106,12 @@ class Game {
 
         return this.container;
     }
+
+    canPause(): boolean {
+        if (!this.theater) return false;
+        return this.theater.canPause();
+    }
+
 
     loadMainMenu() {
         this.menuSystem.clear();

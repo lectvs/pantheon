@@ -1,43 +1,42 @@
 namespace Debug {
     export type Config = {
-        debug: boolean;
-        font: string;
-        fontStyle: SpriteText.Style;
-        showAllPhysicsBounds: boolean;
-        showTouches: boolean;
-        moveCameraWithArrows: boolean; 
-        showOverlay: boolean;
-        overlayFeeds: ((world: World) => string | number)[];
-        skipRate: number;
-        programmaticInput: boolean;
-        autoplay: boolean;
-        skipMainMenuStage: (() => World) | undefined;
-        frameStepEnabled: boolean;
-        resetOptionsAtStart: boolean;
-        forceMobile: boolean;
-        experiments: Dict<Experiment>;
+        debug?: boolean;
+        font?: string;
+        fontStyle?: SpriteText.Style;
+        showAllPhysicsBounds?: boolean;
+        showTouches?: boolean;
+        moveCameraWithArrows?: boolean; 
+        showOverlay?: boolean;
+        overlayFeeds?: ((world: World) => string | number)[];
+        skipRate?: number;
+        programmaticInput?: boolean;
+        autoplay?: boolean;
+        skipMainMenuStage?: () => World;
+        frameStepEnabled?: boolean;
+        resetOptionsAtStart?: boolean;
+        forceMobile?: boolean;
+        experiments?: Dict<Experiment>;
     }
 }
 
 class Debug {
     static init(config: Debug.Config) {
-        Debug.DEBUG = config.debug;
-        Debug.DEBUG_TOGGLE_ENABLED = Debug.DEBUG;
-        Debug.FONT = config.font;
-        Debug.FONT_STYLE = config.fontStyle;
-        Debug.SHOW_ALL_PHYSICS_BOUNDS = config.showAllPhysicsBounds;
-        Debug.SHOW_TOUCHES = config.showTouches;
-        Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows;
-        Debug.SHOW_OVERLAY = Debug.DEBUG && config.showOverlay;
-        Debug.OVERLAY_FEEDS = config.overlayFeeds;
-        Debug.SKIP_RATE = config.skipRate;
-        Debug.PROGRAMMATIC_INPUT = config.programmaticInput;
-        Debug.AUTOPLAY = config.autoplay;
+        Debug.DEBUG = config.debug ?? false;
+        Debug.FONT = config.font ?? SpriteText.DEFAULT_FONT;
+        Debug.FONT_STYLE = config.fontStyle ?? { color: 0xFFFFFF };
+        Debug.SHOW_ALL_PHYSICS_BOUNDS = config.showAllPhysicsBounds ?? false;
+        Debug.SHOW_TOUCHES = config.showTouches ?? true;
+        Debug.MOVE_CAMERA_WITH_ARROWS = config.moveCameraWithArrows ?? true;
+        Debug.SHOW_OVERLAY = Debug.DEBUG && (config.showOverlay ?? false);
+        Debug.OVERLAY_FEEDS = config.overlayFeeds ?? [];
+        Debug.SKIP_RATE = config.skipRate ?? 1;
+        Debug.PROGRAMMATIC_INPUT = config.programmaticInput ?? false;
+        Debug.AUTOPLAY = config.autoplay ?? false;
         Debug.SKIP_MAIN_MENU_STAGE = config.skipMainMenuStage;
-        Debug.FRAME_STEP_ENABLED = config.frameStepEnabled;
-        Debug.RESET_OPTIONS_AT_START = config.resetOptionsAtStart;
-        Debug.FORCE_MOBILE = config.forceMobile;
-        Debug.EXPERIMENTS = config.experiments;
+        Debug.FRAME_STEP_ENABLED = config.frameStepEnabled ?? false;
+        Debug.RESET_OPTIONS_AT_START = config.resetOptionsAtStart ?? false;
+        Debug.FORCE_MOBILE = config.forceMobile ?? false;
+        Debug.EXPERIMENTS = config.experiments ?? {};
     }
 
     static update() {
@@ -67,7 +66,6 @@ class Debug {
     private static _DEBUG: boolean;
     static get DEBUG() { return this._DEBUG; }
     static set DEBUG(value: boolean) { this._DEBUG = value; }
-    static DEBUG_TOGGLE_ENABLED: boolean;
     
     static FONT: string;
     static FONT_STYLE: SpriteText.Style;

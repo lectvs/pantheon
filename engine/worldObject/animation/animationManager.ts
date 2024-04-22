@@ -92,7 +92,8 @@ class AnimationManager {
         return false;
     }
 
-    playAnimation(name: string, force: boolean | 'force' = false, checked: 'checked' | 'unchecked' = 'checked') {
+    playAnimation(nameOrRef: string, force: boolean | 'force' = false, checked: 'checked' | 'unchecked' = 'checked') {
+        let [name, refPoint] = this.splitRef(nameOrRef);
         if (!this.hasAnimation(name)) {
             if (checked) console.error(`Cannot play animation '${name}' because it does not exist`, this);
             this.currentAnimationName = undefined;
@@ -111,6 +112,9 @@ class AnimationManager {
         this.currentAnimation?.reset();
         this.currentAnimationName = name;
         this.currentAnimation?.onStart();
+        if (refPoint > 0) {
+            this.skipToRefPoint(refPoint);
+        }
     }
 
     private skipToRefPoint(refPoint: number) {
@@ -120,9 +124,12 @@ class AnimationManager {
 
     private splitRef(ref: string): [string, number] {
         let parts = ref.split('/');
-        if (parts.length !== 2) {
+        if (parts.length === 0 || parts.length > 3) {
             console.error("Ref is malformed:", ref);
             return [ref, 0];
+        }
+        if (parts.length === 1) {
+            return [parts[0], 0];
         }
         return [parts[0], parseInt(parts[1])];
     }

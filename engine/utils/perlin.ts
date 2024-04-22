@@ -1,12 +1,6 @@
 /// <reference path="./a_array.ts" />
 
 class Perlin {
-    private random: RandomNumberGenerator;
-
-    constructor(seed?: number) {
-        this.random = new RandomNumberGenerator(seed);
-    }
-
     // Normalized to [-1, 1].
     // Algorithm taken from https://adrianb.io/2014/08/09/perlinnoise.html
     get(x: number, y: number = 0, z: number = 0) {
@@ -37,10 +31,6 @@ class Perlin {
         let y2 = M.lerp(v, x21, x22);
 
         return M.lerp(w, y1, y2);
-    }
-
-    seed(seed: any) {
-        this.random.seed(seed);
     }
 
     private fade(t: number) {

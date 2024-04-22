@@ -19,20 +19,20 @@ namespace S {
         }
     }
 
-    export function doOverTime(time: OrFactory<number>, func: (t: number) => any): Script.Function {
+    export function doOverTime(time: OrFactory<number>, func: (t: number, time: number) => any): Script.Function {
         return function*() {
             let duration = OrFactory.resolve(time);
             if (duration < 0) {
-                func(1);
+                func(1, 0);
                 return;
             }
             let t = new Timer(duration);
             while (!t.done) {
-                func(t.progress);
+                func(t.progress, t.time);
                 t.update(global.script.delta);
                 yield;
             }
-            func(1);
+            func(1, duration);
         }
     }
 
