@@ -8,8 +8,6 @@ class CutsceneManager {
     theater: Theater;
     current: { node: Cutscene, script: Script } | undefined;
 
-    get isCutscenePlaying() { return !!this.current; }
-
     private seenCutsceneKeys: Set<string>;
 
     constructor(theater: Theater) {
@@ -50,6 +48,10 @@ class CutsceneManager {
         return this.seenCutsceneKeys.has(cutscene.seenKey);
     }
 
+    isCutscenePlaying() {
+        return !!this.current;
+    }
+
     markCutsceneAsSeen(cutscene: Cutscene) {
         if (!cutscene.seenKey) return;
         this.seenCutsceneKeys.add(cutscene.seenKey);
@@ -86,7 +88,7 @@ class CutsceneManager {
     }
 
     private finishCurrentCutscene() {
-        if (!this.isCutscenePlaying) return;
+        if (!this.isCutscenePlaying()) return;
         
         this.markCutsceneAsSeen(this.current!.node);
         this.current = undefined;

@@ -14,6 +14,10 @@ class Timer {
         if (this.duration === 0) return 1;
         return Math.min(this.time / this.duration, 1);
     }
+    get timeLeft() {
+        if (this.duration === 0) return 0;
+        return this.duration - this.time;
+    }
 
     constructor(duration: number, callback?: () => any, count: number = 1) {
         this.duration = duration;

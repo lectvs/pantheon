@@ -106,7 +106,7 @@ class Theater {
 
     isCutscenePlaying() {
         if (!this.cutsceneManager) return false;
-        return this.cutsceneManager.isCutscenePlaying;
+        return this.cutsceneManager.isCutscenePlaying();
     }
 
     loadStage(stage: () => World, transition: Transition = new Transitions.Instant()) {

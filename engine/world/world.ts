@@ -131,7 +131,7 @@ class World {
     select: WorldSelecter;
     
     get delta() {
-        if (global.skippingCutscene) return Theater.SKIP_CUTSCENE_DELTA;
+        if (global.isSkippingCutscene) return Theater.SKIP_CUTSCENE_DELTA;
         return global.game.delta * this.timeScale;
     }
 

@@ -556,7 +556,7 @@ class WorldObject {
     }
 
     isControlRevoked() {
-        return global.theater?.isCutscenePlaying;
+        return global.theater.isCutscenePlaying();
     }
 
     isOnScreen(buffer: number = 0) {
