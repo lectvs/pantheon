@@ -142,9 +142,9 @@ namespace S {
         });
     }
 
-    export function tweenColor<T extends Partial<Record<K, number>>, K extends keyof T>(duration: OrFactory<number>, obj: T, colorProp: K, start: number, end: number, easingFunction: Tween.Easing.Function = Tween.Easing.Linear): Script.Function {
+    export function tweenColorLch<T extends Partial<Record<K, number>>, K extends keyof T>(duration: OrFactory<number>, obj: T, colorProp: K, start: number, end: number, easingFunction: Tween.Easing.Function = Tween.Easing.Linear): Script.Function {
         return S.doOverTime(duration, t => {
-            obj[colorProp] = Color.lerpColorByLch(easingFunction(t), start, end, ) as any;
+            obj[colorProp] = Color.lerpColorByLch(easingFunction(t), start, end) as any;
         });
     }
 

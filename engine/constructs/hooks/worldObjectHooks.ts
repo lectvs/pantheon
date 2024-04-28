@@ -27,15 +27,15 @@ namespace Hooks {
         }
     }
 
-    export function oscillate(key: string, low: number, high: number, cyclesPerSecond: number, offset: number = 0) {
+    export function oscillate(path: string, low: number, high: number, cyclesPerSecond: number, offset: number = 0) {
         return function(this: WorldObject) {
-            (this as any)[key] = M.lerp(this.life.time + offset, low, high, Tween.Easing.OscillateSine(cyclesPerSecond)) as any;
+            O.setPath(this, path, M.lerp(this.life.time + offset, low, high, Tween.Easing.OscillateSine(cyclesPerSecond)));
         }
     }
 
-    export function shake(key: string, low: number, high: number, cyclesPerSecond: number) {
+    export function shake(path: string, low: number, high: number, cyclesPerSecond: number) {
         return function(this: WorldObject) {
-            (this as any)[key] = this.oscillateNSeconds(1/cyclesPerSecond) ? low : high;
+            O.setPath(this, path, this.oscillateNSeconds(1/cyclesPerSecond) ? low : high);
         }
     }
 

@@ -40,17 +40,19 @@ namespace Animations {
 
     export type FromTextureListConfig = AnimationInstance.Config & {
         textureRoot?: string;
-        textures: (string | PIXI.Texture | number)[];
-        frameRate: number;
+        textures?: (string | PIXI.Texture | number)[];
+        frameRate?: number;
         count?: number;
         overrides?: {[frame: number]: AnimationInstance.TextureAnimationFrame};
     }
 
     export function fromTextureList(config: FromTextureListConfig): AnimationInstance.TextureAnimation {
         let texturePrefix = !config.textureRoot ? "" : `${config.textureRoot}/`;
-        let duration = 1 / config.frameRate;
+        let frameRate = config.frameRate ?? 1;
+        let duration = 1 / frameRate;
+        let textures = config.textures ?? [];
 
-        let frames: AnimationInstance.TextureAnimationFrame[] = config.textures.map(texture => ({
+        let frames: AnimationInstance.TextureAnimationFrame[] = textures.map(texture => ({
             texture: (St.isString(texture) || M.isNumber(texture)) ? `${texturePrefix}${texture}` : texture,
             duration,
         }));
@@ -65,6 +67,33 @@ namespace Animations {
         return new AnimationInstance.TextureAnimation({
             frames,
             count: config.count ?? 1,
+            priority: config.priority ?? 0,
+            nextRef: config.nextRef,
+            variantOf: config.variantOf,
+        });
+    }
+
+    export type FromTextureListDirectionalConfig = AnimationInstance.Config & {
+        getDirection: () => Vector2;
+        directions: PartialRecord<AnimationInstance.TextureAnimationDirection, FromTextureListConfig>;
+        textureRoot?: string;
+        textures?: (string | PIXI.Texture | number)[];
+        frameRate?: number;
+        count?: number;
+        overrides?: {[frame: number]: AnimationInstance.TextureAnimationFrame};
+    }
+
+    export function fromTextureListDirectional(config: FromTextureListDirectionalConfig): AnimationInstance.TextureAnimationDirectional {
+        let directions: PartialRecord<AnimationInstance.TextureAnimationDirection, AnimationInstance.TextureAnimation> = {};
+
+        for (let key in config.directions) {
+            let direction = key as AnimationInstance.TextureAnimationDirection;
+            directions[direction] = fromTextureList(O.withDefaults(config.directions[direction], config));
+        }
+
+        return new AnimationInstance.TextureAnimationDirectional({
+            getDirection: config.getDirection,
+            directions: directions,
             priority: config.priority ?? 0,
             nextRef: config.nextRef,
             variantOf: config.variantOf,

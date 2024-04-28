@@ -15,6 +15,12 @@ type Pt = {
     y: number;
 }
 
+type Pt3 = {
+    x: number;
+    y: number;
+    z: number;
+}
+
 type Rect = {
     x: number;
     y: number;
@@ -32,6 +38,10 @@ type Bndries = {
 type Getter<T> = () => T;
 type Setter<T> = (value: T) => void;
 
+type PartialRecord<K extends keyof any, T> = {
+    [P in K]?: T;
+};
+
 type ValueElseUndefined<T> =
   T extends (string | number | boolean | symbol | object) ? T : undefined;
 
@@ -42,6 +52,10 @@ function vec2(x: number | Pt, y?: number): Vector2 {
         return new Vector2(x, y ?? x);
     }
     return new Vector2(x.x, x.y);
+}
+
+function pt3(x: number, y: number, z: number): Pt3 {
+    return { x, y, z };
 }
 
 function rect(x: number, y: number, width: number, height: number): Rect {

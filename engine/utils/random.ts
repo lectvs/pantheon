@@ -118,6 +118,9 @@ class RandomNumberGenerator {
         return new Vector2(radius*M.cos(angle), radius*M.sin(angle));
     }
 
+    /**
+     * Perlin value, normalized to [-1, 1].
+     */
     perlin(x: number, y?: number, z?: number) {
         return this.perlinRng.get(x, y, z);
     }

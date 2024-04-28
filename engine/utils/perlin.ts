@@ -1,8 +1,10 @@
 /// <reference path="./a_array.ts" />
 
 class Perlin {
-    // Normalized to [-1, 1].
-    // Algorithm taken from https://adrianb.io/2014/08/09/perlinnoise.html
+    /**
+     * Normalized to [-1, 1].
+     * Algorithm taken from https://adrianb.io/2014/08/09/perlinnoise.html
+     */
     get(x: number, y: number = 0, z: number = 0) {
         let xi = Math.floor(x) & 255;
         let yi = Math.floor(y) & 255;

@@ -133,7 +133,9 @@ class Vector2 {
         return copy;
     }
 
-    set(x: number | Pt, y?: number) {
+    set(pt: Pt): this;
+    set(x: number, y: number): this;
+    set(x: number | Pt, y?: number): this {
         if (!M.isNumber(x)) {
             y = x.y;
             x = x.x;
@@ -214,6 +216,25 @@ class Vector2Polar {
 
     toCartesian() {
         return Vector2.fromPolar(this.radius, this.angle);
+    }
+}
+
+class CalculatedVector2 extends Vector2 {
+    private getX: () => number;
+    private getY: () => number;
+
+    constructor(getX: () => number, getY: () => number) {
+        super(getX(), getY());
+
+        this.getX = getX;
+        this.getY = getY;
+
+        Object.defineProperty(this, 'x', {
+            get: () => this.getX(),
+        });
+        Object.defineProperty(this, 'y', {
+            get: () => this.getY(),
+        });
     }
 }
 
