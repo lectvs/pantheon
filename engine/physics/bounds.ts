@@ -32,7 +32,7 @@ interface Bounds {
     debugRender(): Render.Result;
     /** FOR USE WITH PHYSICS RESOLVECOLLISIONS ONLY. */
     freeze(): void;
-    getBoundingBox(): Rectangle;
+    getBoundingBox$(): Rectangle;
     getRaycastCollision$(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision | undefined;
     getDisplacementCollision$(other: Bounds): Bounds.DisplacementCollision | undefined;
     overlaps(other: Bounds): boolean;

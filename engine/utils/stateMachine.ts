@@ -36,7 +36,7 @@ class StateMachine<StateData extends StateMachine.StateData> {
     }
 
     setState<SD extends StateData>(stateData: SD) {
-        if (this.script) this.script.done = true;
+        if (this.script) this.script.isDone = true;
         let state = this.getState(stateData.state);
         if (!state) return;
         let previousState = this.currentStateData?.state;

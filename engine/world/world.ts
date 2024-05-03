@@ -319,7 +319,7 @@ class World {
     }
 
     addHook<T extends keyof World.Hooks<this>>(name: T, fn: World.Hooks<this>[T]['params']) {
-        this.hookManager.addHook(name, fn);
+        return this.hookManager.addHook(name, fn);
     }
 
     addWorldObject<T extends WorldObject>(obj: T): T {
@@ -355,13 +355,13 @@ class World {
         this.fadeColor = color;
         this.fadeAmount = 1;
         let script = this.runScript(S.tween(duration, this, 'fadeAmount', 1, 0), 'World.fade', 'stopPrevious');
-        return S.waitUntil(() => script.done);
+        return S.waitUntil(() => script.isDone);
     }
 
     fadeOut(duration: number, color: number = 0x000000) {
         this.fadeColor = color;
         let script = this.runScript(S.tween(duration, this, 'fadeAmount', 0, 1), 'World.fade', 'stopPrevious');
-        return S.waitUntil(() => script.done);
+        return S.waitUntil(() => script.isDone);
     }
 
     getLayerByName(name: string | undefined) {
@@ -434,6 +434,12 @@ class World {
         if (A.isEmpty(this.collisions)) return;
 
         Physics.resolveCollisions(this);
+    }
+
+    isBoundsOnScreen(bounds: Bounds, buffer: number = 0) {
+        let screenRect = this.camera.getWorldRect$();
+        G.expandRectangle(screenRect, buffer);
+        return G.areRectanglesOverlapping(bounds.getBoundingBox$(), screenRect);
     }
 
     isPtOnScreen(pt: Pt, buffer: number = 0) {
@@ -510,6 +516,11 @@ class World {
         return this.scriptManager.runScript(script, name, specialMode);
     }
 
+    setFade(color: number, amount: number) {
+        this.fadeColor = color;
+        this.fadeAmount = amount;
+    }
+
     shake(intensity: number, time: number) {
         this.runScript(S.shake(this, intensity, time));
     }
@@ -518,7 +529,7 @@ class World {
         this.scriptManager.stopScriptByName(name);
     }
 
-    takeSnapshot() {
+    takeScreenshot() {
         let screen = newPixiRenderTexture(this.getScreenWidth() * this.scaleX, this.getScreenHeight() * this.scaleY, 'World.takeSnapshot');
         let renderResult = this.render();
         if (renderResult) {
@@ -756,6 +767,22 @@ namespace World {
         export function removeWorldObjectsFromWorld<T extends WorldObject | undefined>(objs: ReadonlyArray<T>, unlinkFromParent: boolean = true): T[] {
             if (A.isEmpty(objs)) return [];
             return A.clone(objs).filter(obj => removeWorldObjectFromWorld(obj, unlinkFromParent));
+        }
+
+        /**
+         * Scales world objects and their positions around a given anchor.
+         */
+        export function scaleWorldObjectsByAnchor(worldObjects: (WorldObject & { scaleX: number, scaleY: number })[], anchor: Pt, currentScaleX: number, currentScaleY: number, newScaleX: number, newScaleY: number) {
+            let scaleRatioX = newScaleX / currentScaleX;
+            let scaleRatioY = newScaleY / currentScaleY;
+    
+            for (let obj of worldObjects) {
+                obj.scaleX *= scaleRatioX;
+                obj.scaleY *= scaleRatioY;
+    
+                obj.x = anchor.x + (obj.x - anchor.x) * scaleRatioX;
+                obj.y = anchor.y + (obj.y - anchor.y) * scaleRatioY;
+            }
         }
 
         /**

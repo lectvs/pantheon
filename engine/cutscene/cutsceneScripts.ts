@@ -25,7 +25,7 @@ namespace S {
 
     export function clearFades(duration: number) {
         let fadeScript = global.theater.clearFades(duration);
-        return S.waitUntil(() => fadeScript.done);
+        return S.waitUntil(() => fadeScript.isDone);
     }
 
     export function dialog(profileKey: string, text: string): Script.Function {
@@ -54,7 +54,7 @@ namespace S {
 
     export function fade(duration: number, color: number = 0x000000): Script.Function {
         let fadeScript = global.theater.fade(duration, color);
-        return S.waitUntil(() => fadeScript.done);
+        return S.waitUntil(() => fadeScript.isDone);
     }
 
     export function jumpZ(duration: number, sprite: Sprite, peakDelta: number, landOnGround: boolean = false): Script.Function {
@@ -82,16 +82,16 @@ namespace S {
 
             let timer = new Timer(maxTime);
             if (dx > 0) {
-                while (worldObject.x < x && !timer.done) {
+                while (worldObject.x < x && !timer.isDone) {
                     worldObject.controller.right = true;
-                    worldObject.controller.moveDirection.set(1, 0);
+                    worldObject.controller.setMoveDirectionByLRUD();
                     timer.update(global.script.delta);
                     yield;
                 }
             } else {
-                while (worldObject.x > x && !timer.done) {
+                while (worldObject.x > x && !timer.isDone) {
                     worldObject.controller.left = true;
-                    worldObject.controller.moveDirection.set(-1, 0);
+                    worldObject.controller.setMoveDirectionByLRUD();
                     timer.update(global.script.delta);
                     yield;
                 }
@@ -108,16 +108,16 @@ namespace S {
 
             let timer = new Timer(maxTime);
             if (dy > 0) {
-                while (worldObject.y < y && !timer.done) {
+                while (worldObject.y < y && !timer.isDone) {
                     worldObject.controller.down = true;
-                    worldObject.controller.moveDirection.set(0, 1);
+                    worldObject.controller.setMoveDirectionByLRUD();
                     timer.update(global.script.delta);
                     yield;
                 }
             } else {
-                while (worldObject.y > y && !timer.done) {
+                while (worldObject.y > y && !timer.isDone) {
                     worldObject.controller.up = true;
-                    worldObject.controller.moveDirection.set(0, -1);
+                    worldObject.controller.setMoveDirectionByLRUD();
                     timer.update(global.script.delta);
                     yield;
                 }
@@ -149,7 +149,7 @@ namespace S {
             if (world.camera.shakeIntensity >= intensity) return;
             world.camera.shakeIntensity += intensity;
             let timer = new Timer(time);
-            while (!timer.done) {
+            while (!timer.isDone) {
                 timer.update(global.script.delta);
                 yield;
             }

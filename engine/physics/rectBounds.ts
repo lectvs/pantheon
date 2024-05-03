@@ -32,11 +32,11 @@ class RectBounds implements Bounds {
             x = x.x;
         }
 
-        return this.getBoundingBox().contains(x, y);
+        return this.getBoundingBox$().contains(x, y);
     }
 
     debugRender() {
-        let boundingBox = this.getBoundingBox();
+        let boundingBox = this.getBoundingBox$();
         this.debugSprite.x = boundingBox.x;
         this.debugSprite.y = boundingBox.y;
         this.debugSprite.texture = Textures.outlineRect(boundingBox.width, boundingBox.height, 0x00FF00);
@@ -45,11 +45,11 @@ class RectBounds implements Bounds {
 
     freeze() {
         this.frozen = false;
-        this.getBoundingBox();
+        this.getBoundingBox$();
         this.frozen = true;
     }
 
-    getBoundingBox() {
+    getBoundingBox$() {
         if (!this.frozen) {
             this.boundingBox.x = (this.parent ? this.parent.x : 0) + this.x;
             this.boundingBox.y = (this.parent ? this.parent.y : 0) + this.y;
@@ -93,13 +93,13 @@ class RectBounds implements Bounds {
     }
 
     move(dx: number, dy: number) {
-        let box = this.getBoundingBox();
+        let box = this.getBoundingBox$();
         box.x += dx;
         box.y += dy;
     }
 
     raycast(x: number, y: number, dx: number, dy: number) {
-        let box = this.getBoundingBox();
+        let box = this.getBoundingBox$();
 
         let top_t = Infinity;
         let bottom_t = Infinity;

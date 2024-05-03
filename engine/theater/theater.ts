@@ -3,7 +3,7 @@
 
 namespace Theater {
     export type Config = {
-        dialogBox?: Factory<DialogBox>;
+        dialogBoxFactory?: Factory<DialogBox>;
         autoPlayScript?: () => IterableIterator<any>;
     }
 }
@@ -35,8 +35,8 @@ class Theater {
         this.dialogBoxWorld = new World({
             backgroundAlpha: 0,
         });
-        if (config.dialogBox) {
-            this.dialogBox = this.addDialogBox(config.dialogBox);
+        if (config.dialogBoxFactory) {
+            this.dialogBox = this.addDialogBox(config.dialogBoxFactory);
         }
 
         this.endOfFrameQueue = [];

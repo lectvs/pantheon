@@ -40,7 +40,7 @@ class SlopeBounds implements Bounds {
 
         y = y ?? x;
 
-        let box = this.getBoundingBox();
+        let box = this.getBoundingBox$();
 
         if (!box.contains(x, y)) return false;
         if (this.direction === 'upleft' && y - box.bottom < (x - box.left) * (-box.height / box.width)) return false;
@@ -52,7 +52,7 @@ class SlopeBounds implements Bounds {
     }
 
     debugRender() {
-        let box = this.getBoundingBox();
+        let box = this.getBoundingBox$();
 
         this.debugSprite.x = box.x;
         this.debugSprite.y = box.y;
@@ -73,11 +73,11 @@ class SlopeBounds implements Bounds {
 
     freeze() {
         this.frozen = false;
-        this.getBoundingBox();
+        this.getBoundingBox$();
         this.frozen = true;
     }
 
-    getBoundingBox() {
+    getBoundingBox$() {
         if (!this.frozen) {
             this.boundingBox.x = (this.parent ? this.parent.x : 0) + this.x;
             this.boundingBox.y = (this.parent ? this.parent.y : 0) + this.y;
@@ -112,13 +112,13 @@ class SlopeBounds implements Bounds {
     }
 
     move(dx: number, dy: number) {
-        let box = this.getBoundingBox();
+        let box = this.getBoundingBox$();
         box.x += dx;
         box.y += dy;
     }
 
     raycast(x: number, y: number, dx: number, dy: number) {
-        let box = this.getBoundingBox();
+        let box = this.getBoundingBox$();
 
         let top_t = Infinity;
         let bottom_t = Infinity;

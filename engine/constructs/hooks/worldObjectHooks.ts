@@ -1,4 +1,16 @@
 namespace Hooks {
+    export function enter(duration: number, initialValues: Actions.EnterInitialValues, easingFn?: Tween.Easing.Function, delay?: number) {
+        return function(this: WorldObject) {
+            Actions.enter(this, duration, initialValues, easingFn, delay);
+        }
+    }
+
+    export function exit(duration: number, finalValues: Actions.ExitFinalValues, easingFn?: Tween.Easing.Function, delay?: number) {
+        return function(this: WorldObject) {
+            Actions.exit(this, duration, finalValues, easingFn, delay);
+        }
+    }
+
     export function keepBehind(obj: WorldObject) {
         return function(this: WorldObject) {
             World.Actions.orderWorldObjectBefore(this, obj);
@@ -13,7 +25,7 @@ namespace Hooks {
 
     export function killIfOffScreenBounds(padding: number) {
         return function(this: WorldObject & { bounds: Bounds }) {
-            if (this.world && !this.world.isRectOnScreen(this.bounds.getBoundingBox(), padding)) {
+            if (this.world && !this.world.isBoundsOnScreen(this.bounds, padding)) {
                 this.kill();
             }
         }

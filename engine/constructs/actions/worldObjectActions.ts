@@ -1,12 +1,12 @@
 namespace Actions {
-    type EnterInitialValues = {
+    export type EnterInitialValues = {
         dx?: number;
         dy?: number;
         dz?: number;
         alpha?: number;
     }
 
-    export function enter(worldObject: WorldObject | undefined, duration: number, initialValues: EnterInitialValues, easingFn?: Tween.Easing.Function, delay?: number, ): Script.Function {
+    export function enter(worldObject: WorldObject | undefined, duration: number, initialValues: EnterInitialValues, easingFn?: Tween.Easing.Function, delay?: number): Script.Function {
         if (!worldObject || worldObject.data.entering) return S.noop();
 
         worldObject.setVisible(true);
@@ -50,7 +50,7 @@ namespace Actions {
         return S.waitUntil(() => !worldObject.data.entering);
     }
 
-    type ExitFinalValues = {
+    export type ExitFinalValues = {
         dx?: number;
         dy?: number;
         dz?: number;

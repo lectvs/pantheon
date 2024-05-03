@@ -23,7 +23,7 @@ abstract class Transition {
 
     protected script: Script | undefined;
 
-    get done() { return !this.script || this.script.done; }
+    get done() { return !this.script || this.script.isDone; }
 
     constructor(config: Transition.BaseConfig) {
         this.preTime = config.preTime ?? 0;
@@ -42,14 +42,14 @@ abstract class Transition {
         this.newWorld = newWorld;
 
         if (this.oldWorld) {
-            let oldWorldTexture = this.oldWorld.takeSnapshot();
+            let oldWorldTexture = this.oldWorld.takeScreenshot();
             this.oldSnapshot = {
                 texture: oldWorldTexture,
                 sprite: new PIXI.Sprite(oldWorldTexture),
             };
         }
         if (this.newWorld) {
-            let newWorldTexture = this.newWorld.takeSnapshot();
+            let newWorldTexture = this.newWorld.takeScreenshot();
             this.newSnapshot = {
                 texture: newWorldTexture,
                 sprite: new PIXI.Sprite(newWorldTexture),

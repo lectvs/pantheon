@@ -8,7 +8,7 @@ class Script {
     name?: string;
 
     paused: boolean;
-    done: boolean;
+    isDone: boolean;
 
     // Global data for use in scripts
     delta: number;
@@ -18,13 +18,13 @@ class Script {
         this.iterator = this.buildIterator(scriptFunction)();
         this.name = name;
         this.paused = false;
-        this.done = false;
+        this.isDone = false;
         this.delta = 0;
         this.data = {};
     }
 
     get running() {
-        return !this.paused && !this.done;
+        return !this.paused && !this.isDone;
     }
 
     update(delta: number) {
@@ -35,25 +35,25 @@ class Script {
 
         let result = this.iterator.next();
         if (result.done) {
-            this.done = true;
+            this.isDone = true;
         }
 
         global.popScript();
     }
 
     finishImmediately(maxIters: number = Script.FINISH_IMMEDIATELY_MAX_ITERS) {
-        for (let i = 0; i < maxIters && !this.done; i++) {
+        for (let i = 0; i < maxIters && !this.isDone; i++) {
             this.update(0.1);
         }
         
-        if (!this.done) {
+        if (!this.isDone) {
             console.error('Warning: script finishImmediately exceeded max iters!', this);
-            this.done = true;
+            this.isDone = true;
         }
     }
 
     stop() {
-        this.done = true;
+        this.isDone = true;
     }
 
     private buildIterator(scriptFunction: Script.Function) {
@@ -70,9 +70,9 @@ class Script {
                         result.value = S.simul(...result.value.map(scr => M.isNumber(scr) ? S.wait(scr) : s.buildIterator(scr)));
                     }
                     let script = new Script(result.value);
-                    while (!script.done) {
+                    while (!script.isDone) {
                         script.update(global.script.delta);
-                        if (script.done) break;
+                        if (script.isDone) break;
                         yield;
                     }
                 } else if (!result.done) {  // Normal yield statement.

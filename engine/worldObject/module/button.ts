@@ -50,6 +50,8 @@ class Button extends Module<WorldObject> {
     private lastClickedDown: boolean = false;
     private clickedDown: boolean = false;
 
+    private bounds: RectBounds;
+
     override get worldObject() { return <Button.CompatibleWorldObject>this._worldObject; }
 
     constructor(config: Button.Config) {
@@ -68,6 +70,7 @@ class Button extends Module<WorldObject> {
         this.baseTint = config.baseTint;
         this.priority = config.priority ?? 0;
         this.enabled = config.enabled ?? true;
+        this.bounds = new RectBounds(0, 0, 0, 0);
     }
 
     override init(worldObject: WorldObject): void {
@@ -76,6 +79,8 @@ class Button extends Module<WorldObject> {
         if (this.baseTint === undefined) {
             this.baseTint = this.worldObject.tint;
         }
+
+        this.bounds.parent = worldObject;
     }
 
     override update() {
@@ -130,6 +135,18 @@ class Button extends Module<WorldObject> {
         this.onClick();
     }
 
+    getBounds$() {
+        let localBounds = this.worldObject.getVisibleLocalBounds$();
+        if (this.worldObject.bounds instanceof NullBounds && localBounds) {
+            this.bounds.x = localBounds.x;
+            this.bounds.y = localBounds.y;
+            this.bounds.width = localBounds.width;
+            this.bounds.height = localBounds.height;
+            return this.bounds;
+        }
+        return this.worldObject.bounds;
+    }
+
     isHovered() {
         if (!this.enabled) return false;
         if (!this.canHover()) return false;
@@ -144,21 +161,21 @@ class Button extends Module<WorldObject> {
     isOverlappingMouse() {
         if (!this.worldObject.world) return false;
         let mouseBounds = this.worldObject.world.getWorldMouseBounds$();
-        return this.worldObject.bounds.overlaps(mouseBounds);
+        return this.getBounds$().overlaps(mouseBounds);
     }
 }
 
 namespace Button {
     export function getClosestButton(targetBounds: CircleBounds, world: World) {
-        let buttons = world.select.modules$(Button).filterInPlace(button => button.worldObject.isActive() && button.enabled && button.worldObject.bounds.overlaps(targetBounds) && button.canHover());
+        let buttons = world.select.modules$(Button).filterInPlace(button => button.worldObject.isActive() && button.enabled && button.getBounds$().overlaps(targetBounds) && button.canHover());
         if (A.isEmpty(buttons)) {
             return undefined;
         }
 
         buttons.sort((b1, b2) => {
             if (b1.priority !== b2.priority) return b2.priority - b1.priority;
-            let b1dist = distanceTo(targetBounds.x, targetBounds.y, b1.worldObject.bounds.getBoundingBox());
-            let b2dist = distanceTo(targetBounds.x, targetBounds.y, b2.worldObject.bounds.getBoundingBox());
+            let b1dist = distanceTo(targetBounds.x, targetBounds.y, b1.getBounds$().getBoundingBox$());
+            let b2dist = distanceTo(targetBounds.x, targetBounds.y, b2.getBounds$().getBoundingBox$());
             return b1dist - b2dist;
         });
         return buttons[0];

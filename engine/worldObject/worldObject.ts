@@ -475,15 +475,15 @@ class WorldObject {
         return undefined;
     }
 
+    getLocalPosition$() {
+        return FrameCache.vec2(this.localx, this.localy);
+    }
+
     getModule<T extends Module<WorldObject>>(type: new (...args: any[]) => T): T | undefined {
         for (let module of this.modules) {
             if (module instanceof type) return module;
         }
         return undefined;
-    }
-
-    getPosition$() {
-        return FrameCache.vec2(this.x, this.y);
     }
 
     getSpeed() {
@@ -527,6 +527,10 @@ class WorldObject {
             localBounds.y -= this.z;
         }
         return localBounds;
+    }
+
+    getWorldPosition$() {
+        return FrameCache.vec2(this.x, this.y);
     }
 
     getZBehavior(): WorldObject.ZBehavior {
@@ -808,10 +812,10 @@ namespace WorldObject {
             }
         }
         
-        override reset(): void {
-            super.reset();
+        override reset() {
             this.frames = 0;
             this.history = [];
+            return super.reset();
         }
 
         everyNFrames(n: number) {

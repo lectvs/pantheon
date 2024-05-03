@@ -49,7 +49,7 @@ class CircleBounds implements Bounds {
     freeze() {
         this.frozen = false;
         this.getCenter();
-        this.getBoundingBox();
+        this.getBoundingBox$();
         this.frozen = true;
     }
 
@@ -61,7 +61,7 @@ class CircleBounds implements Bounds {
         return this.center;
     }
 
-    getBoundingBox() {
+    getBoundingBox$() {
         if (!this.frozen) {
             this.boundingBox.x = (this.parent ? this.parent.x : 0) + this.x - this.radius;
             this.boundingBox.y = (this.parent ? this.parent.y : 0) + this.y - this.radius;
@@ -105,7 +105,7 @@ class CircleBounds implements Bounds {
     }
 
     move(dx: number, dy: number) {
-        let box = this.getBoundingBox();
+        let box = this.getBoundingBox$();
         box.x += dx;
         box.y += dy;
         let center = this.getCenter();

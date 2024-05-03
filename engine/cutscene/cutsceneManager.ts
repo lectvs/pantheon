@@ -23,7 +23,7 @@ class CutsceneManager {
     private updateCurrentCutscene() {
         if (this.current) {
             this.current.script.update(this.theater.delta);
-            if (this.current.script.done) {
+            if (this.current.script.isDone) {
                 this.finishCurrentCutscene();
             }
         }
@@ -78,7 +78,7 @@ class CutsceneManager {
 
     reset() {
         if (this.current) {
-            this.current.script.done = true;
+            this.current.script.isDone = true;
         }
         this.current = undefined;
     }

@@ -12,6 +12,12 @@ namespace DialogBox {
         nameTextOffset: Pt;
         defaultDialogStart?: string;
         defaultDialogSpeak: string;
+        advanceIndicator?: {
+            texture: string | PIXI.Texture;
+            position: Pt;
+            movementLength: number;
+            movementSpeed: number;
+        };
     }
 }
 
@@ -24,6 +30,7 @@ class DialogBox extends Sprite {
     private defaultDialogSpeak: string;
     private dialogStart: string | undefined;
     private dialogSpeak: string;
+    private isAdvanceIndicatorEnabled: boolean;
     
     private get textArea() { return this.portraitObject ? this.textAreaPortrait : this.textAreaFull; }
 
@@ -38,6 +45,7 @@ class DialogBox extends Sprite {
     private portraitObject: WorldObject | undefined;
     private nameSprite: Sprite;
     private nameText: SpriteText;
+    private advanceIndicator: Sprite;
 
     private characterTimer: Timer;
     private speakSoundTimer: Timer;
@@ -53,21 +61,31 @@ class DialogBox extends Sprite {
         this.defaultDialogSpeak = config.defaultDialogSpeak;
         this.dialogStart = config.defaultDialogStart;
         this.dialogSpeak = config.defaultDialogSpeak;
+        this.isAdvanceIndicatorEnabled = !!config.advanceIndicator;
 
         this.done = true;
 
         this.spriteText = this.addChild(new SpriteText({ font: this.defaultTextFont }));
         this.spriteTextOffset = 0;
 
-        this.portrait = this.addChild(new WorldObject({ x: config.portraitPosition.x, y: config.portraitPosition.y }));
+        this.portrait = this.addChild(new WorldObject({ p: config.portraitPosition }));
 
-        this.nameSprite = this.addChild(new Sprite({ x: config.namePosition.x, y: config.namePosition.y, texture: config.nameTexture }));
-        this.nameText = this.nameSprite.addChild(new SpriteText({ x: config.nameTextOffset.x, y: config.nameTextOffset.y, font: config.nameFont, anchor: Anchor.CENTER }));
+        this.nameSprite = this.addChild(new Sprite({ p: config.namePosition, texture: config.nameTexture }));
+        this.nameText = this.nameSprite.addChild(new SpriteText({ p: config.nameTextOffset, font: config.nameFont, anchor: Anchor.CENTER }));
 
-        this.characterTimer = new Timer(0.05, () => this.advanceCharacter(), Infinity);
+        this.advanceIndicator = this.addChild(new Sprite({
+            p: config.advanceIndicator?.position,
+            texture: config.advanceIndicator?.texture,
+            visible: false,
+            hooks: {
+                onUpdate: Hooks.oscillate('offsetX', -(config.advanceIndicator?.movementLength ?? 0), 0, config.advanceIndicator?.movementSpeed ?? 1),
+            },
+        }));
 
-        this.speakSoundTimer = new Timer(0.05, () => {
-            let p = this.getDialogProgression() < 0.9 ? 0.85 : 1;  // 85% normally, but 100% if dialog is close to ending
+        this.characterTimer = new Timer(0.02, () => this.advanceCharacter(), Infinity);
+
+        this.speakSoundTimer = new Timer(0.08, () => {
+            let p = this.getDialogProgression() < 0.8 ? 0.95 : 1;  // 95% normally, but 100% if dialog is close to ending
             if (this.dialogSpeak && Debug.SKIP_RATE < 2 && !this.isPageComplete() && Random.boolean(p)) {
                 let sound = this.world!.playSound(this.dialogSpeak);
                 sound.speed = Random.float(0.95, 1.05);
@@ -89,6 +107,8 @@ class DialogBox extends Sprite {
             this.updateDialogProgression();
             this.speakSoundTimer.update(this.delta);
         }
+
+        this.advanceIndicator.setVisible(this.isPageComplete() && this.isAdvanceIndicatorEnabled);
     }
 
     private updateDialogProgression() {

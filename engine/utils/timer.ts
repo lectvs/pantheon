@@ -8,8 +8,8 @@ class Timer {
     currentIter: number;
     count: number;
 
-    get running() { return !this.done && !this.paused; }
-    get done() { return this.currentIter >= this.count; }
+    get running() { return !this.isDone && !this.paused; }
+    get isDone() { return this.currentIter >= this.count; }
     get progress() {
         if (this.duration === 0) return 1;
         return Math.min(this.time / this.duration, 1);
@@ -53,10 +53,12 @@ class Timer {
 
     finish() {
         this.time = this.duration;
+        return this;
     }
 
     reset() {
         this.time = 0;
         this.currentIter = 0;
+        return this;
     }
 }

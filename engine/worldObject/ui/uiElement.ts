@@ -149,8 +149,8 @@ namespace UIElement {
         uiElements.sort((e1, e2) => {
             let cmpLayer = -World.Actions.getRenderOrder(e1.worldObject, e2.worldObject);
             if (cmpLayer !== 0) return cmpLayer;
-            let e1dist = distanceTo(targetBounds.x, targetBounds.y, e1.getInteractBounds().getBoundingBox());
-            let e2dist = distanceTo(targetBounds.x, targetBounds.y, e2.getInteractBounds().getBoundingBox());
+            let e1dist = distanceTo(targetBounds.x, targetBounds.y, e1.getInteractBounds().getBoundingBox$());
+            let e2dist = distanceTo(targetBounds.x, targetBounds.y, e2.getInteractBounds().getBoundingBox$());
             return e1dist - e2dist;
         });
 

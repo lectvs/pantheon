@@ -28,7 +28,7 @@ class NullBounds implements Bounds {
         // Noop
     }
 
-    getBoundingBox() {
+    getBoundingBox$() {
         return this.boundingBox;
     }
 

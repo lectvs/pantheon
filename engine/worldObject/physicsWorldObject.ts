@@ -75,7 +75,7 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     getWorldBounds() {
-        return this.bounds.getBoundingBox();
+        return this.bounds.getBoundingBox$();
     }
 
     isCollidingWith(other: PhysicsWorldObject) {

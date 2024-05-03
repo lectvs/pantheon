@@ -1,6 +1,6 @@
 namespace SimpleStateMachine {
     export type State = {
-        callback?: () => any;
+        callback?: (previousState?: string) => any;
         script?: Script.Function;
         update?: () => any;
         transitions?: Transition[];

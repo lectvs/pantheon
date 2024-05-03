@@ -17,7 +17,7 @@ class ScriptManager {
 
     private updateScript(delta: number, i: number) {
         this.activeScripts[i].update(delta);
-        if (this.activeScripts[i].done) {
+        if (this.activeScripts[i].isDone) {
             this.activeScripts.splice(i, 1);
         }
     }
@@ -32,7 +32,7 @@ class ScriptManager {
 
     runScript(script: Script | Script.Function, name?: string, specialMode?: ScriptManager.SpecialMode) {
         if (script instanceof Script) {
-            if (script.done) return script;
+            if (script.isDone) return script;
         } else {
             script = new Script(script, name);
         }

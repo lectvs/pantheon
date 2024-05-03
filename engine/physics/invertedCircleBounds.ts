@@ -50,7 +50,7 @@ class InvertedCircleBounds implements Bounds {
     freeze() {
         this.frozen = false;
         this.getCenter();
-        this.getBoundingBox();
+        this.getBoundingBox$();
         this.frozen = true;
     }
 
@@ -62,7 +62,7 @@ class InvertedCircleBounds implements Bounds {
         return this.center;
     }
 
-    getBoundingBox() {
+    getBoundingBox$() {
         return this.boundingBox;
     }
 
@@ -91,7 +91,7 @@ class InvertedCircleBounds implements Bounds {
     }
 
     move(dx: number, dy: number) {
-        let box = this.getBoundingBox();
+        let box = this.getBoundingBox$();
         box.x += dx;
         box.y += dy;
         let center = this.getCenter();

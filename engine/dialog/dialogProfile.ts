@@ -107,9 +107,8 @@ namespace DialogProfiles {
     class DialogOutlineFilter extends TextureFilter {
         constructor() {
             super({
-                visualPadding: 1,
                 code: `
-                    if (x >= 0.0 && x < width && y >= 0.0 && y < height && inp.a == 0.0 && (getColor(x-1.0, y).a > 0.0 || getColor(x+1.0, y).a > 0.0 || getColor(x, y-1.0).a > 0.0 || getColor(x, y+1.0).a > 0.0)) {
+                    if (x >= 0.0 && x < width && y >= 0.0 && y < height && inp.a == 0.0 && (getColor(x-upscale, y).a > 0.0 || getColor(x+upscale, y).a > 0.0 || getColor(x, y-upscale).a > 0.0 || getColor(x, y+upscale).a > 0.0)) {
                         outp = vec4(1.0, 1.0, 1.0, 1.0);
                     }
                 `

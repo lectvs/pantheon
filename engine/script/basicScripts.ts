@@ -27,7 +27,7 @@ namespace S {
                 return;
             }
             let t = new Timer(duration);
-            while (!t.done) {
+            while (!t.isDone) {
                 func(t.progress, t.time);
                 t.update(global.script.delta);
                 yield;
@@ -43,11 +43,11 @@ namespace S {
         return function*() {
             let scripts: Script[] = scriptFunctions.map(sfn => new Script(sfn));
             if (A.isEmpty(scripts)) return;
-            while (!scripts.some(s => s.done)) {
+            while (!scripts.some(s => s.isDone)) {
                 for (let script of scripts) {
                     script.update(global.script.delta);
                 }
-                if (!scripts.some(s => s.done)) yield;
+                if (!scripts.some(s => s.isDone)) yield;
             }
         }
     }
@@ -64,7 +64,7 @@ namespace S {
     export function loopForAtLeastTime(time: number, scriptFunctionIter: (t: number) => Script.Function): Script.Function {
         return function*() {
             let timer = new Timer(time);
-            while (!timer.done) {
+            while (!timer.isDone) {
                 yield S.either(
                     scriptFunctionIter(timer.progress),
                     S.doOverTime(Infinity, _ => timer.update(global.script.delta)),
@@ -129,7 +129,7 @@ namespace S {
             while (!A.isEmpty(scripts)) {
                 scripts = scripts.filter(script => {
                     script.update(global.script.delta);
-                    return !script.done;
+                    return !script.isDone;
                 });
                 if (!A.isEmpty(scripts)) yield;
             }
@@ -146,6 +146,17 @@ namespace S {
         return S.doOverTime(duration, t => {
             obj[colorProp] = Color.lerpColorByLch(easingFunction(t), start, end) as any;
         });
+    }
+
+    export function tweenLocalPos(duration: OrFactory<number>, obj: WorldObject, start: Pt, end: Pt, easingFunctionX: Tween.Easing.Function = Tween.Easing.Linear, easingFunctionY: Tween.Easing.Function = easingFunctionX): Script.Function {
+        let startx = start.x;
+        let starty = start.y;
+        let endx = end.x;
+        let endy = end.y;
+        return S.simul(
+            S.tween(duration, obj, 'localx', startx, endx, easingFunctionX),
+            S.tween(duration, obj, 'localy', starty, endy, easingFunctionY),
+        );
     }
 
     export function tweenPt(duration: OrFactory<number>, pt: Pt, start: Pt, end: Pt, easingFunctionX: Tween.Easing.Function = Tween.Easing.Linear, easingFunctionY: Tween.Easing.Function = easingFunctionX): Script.Function {

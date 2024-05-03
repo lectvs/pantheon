@@ -339,7 +339,7 @@ namespace AnimationInstance {
         override update(delta: number): void {
             if (this.script) {
                 this.script.update(delta);
-                if (this.script.done) {
+                if (this.script.isDone) {
                     this.currentIteration++;
                     if (this.currentIteration < this.count) {
                         this.script = new Script(this.scriptFactory());

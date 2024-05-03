@@ -243,7 +243,7 @@ class Input {
     }
 
     static axis(negKey: string, posKey: string) {
-        return (this.isDown(negKey) ? -1 : 0) + (this.isDown(posKey) ? 1 : 0);
+        return M.axis(this.isDown(negKey), this.isDown(posKey));
     }
 
     static get mouseX() {

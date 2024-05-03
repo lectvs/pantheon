@@ -46,4 +46,11 @@ class Controller {
             this.keys[key] = false;
         }
     }
+
+    setMoveDirectionByLRUD() {
+        this.moveDirection.set(
+              M.axis(this.left, this.right),
+              M.axis(this.up, this.down),
+        );
+    }
 }

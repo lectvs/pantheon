@@ -50,11 +50,11 @@ class InvertedRectBounds implements Bounds {
     freeze() {
         this.frozen = false;
         this.getInnerBox();
-        this.getBoundingBox();
+        this.getBoundingBox$();
         this.frozen = true;
     }
 
-    getBoundingBox() {
+    getBoundingBox$() {
         return this.boundingBox;
     }
 
@@ -93,7 +93,7 @@ class InvertedRectBounds implements Bounds {
     }
 
     move(dx: number, dy: number) {
-        let box = this.getBoundingBox();
+        let box = this.getBoundingBox$();
         box.x += dx;
         box.y += dy;
         let ibox = this.getInnerBox();
