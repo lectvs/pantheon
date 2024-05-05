@@ -50,6 +50,10 @@ namespace M {
         return Math.ceil(n - relativeTo) + relativeTo;
     }
 
+    export function ceilToNearest(n: number, unit: number) {
+        return Math.ceil(n / unit) * unit;
+    }
+
     export function clamp(val: number, min: number, max: number) {
         return val < min ? min : (val > max ? max : val);
     }
@@ -82,6 +86,10 @@ namespace M {
 
     export function floorRelative(n: number, relativeTo: number) {
         return Math.floor(n - relativeTo) + relativeTo;
+    }
+
+    export function floorToNearest(n: number, unit: number) {
+        return Math.floor(n / unit) * unit;
     }
 
     export function isInt(n: string) {

@@ -45,6 +45,24 @@ class Effects {
         return this.getAllEffects$().some(e => e.doesAffectRender());
     }
 
+    removeFromPost(filter: TextureFilter) {
+        A.removeAll(this.post, filter);
+    }
+
+    removeFromPre(filter: TextureFilter) {
+        A.removeAll(this.pre, filter);
+    }
+
+    setOnPost(filter: TextureFilter) {
+        if (this.post.includes(filter)) return;
+        this.post.push(filter);
+    }
+
+    setOnPre(filter: TextureFilter) {
+        if (this.pre.includes(filter)) return;
+        this.pre.push(filter);
+    }
+
     updateEffects(delta: number) {
         let allEffects = this.getAllEffects$();
         for (let effect of allEffects) {

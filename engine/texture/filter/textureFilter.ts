@@ -22,6 +22,7 @@ namespace TextureFilter {
      *              vec3 hsv2rgb(vec3 hsv) - converts HSV to RGB. all values are in the range [0, 1]
      *              float map(float value, float min1, float max1, float min2, float max2) - linearly map a value between ranges
      *              float mapClamp(float value, float min1, float max1, float min2, float max2) - map and clamp a value between ranges
+     *              float mod(float n, float mod) - float-wise modulo
      *              float distance(vecN A, vecN B) - distance between two vectors
      *              float length(vecN A) - magnitude of a vector
      */

@@ -11,6 +11,18 @@ namespace Hooks {
         }
     }
 
+    export function keepAtBack() {
+        return function(this: WorldObject) {
+            World.Actions.moveWorldObjectToBack(this);
+        }
+    }
+
+    export function keepAtFront() {
+        return function(this: WorldObject) {
+            World.Actions.moveWorldObjectToFront(this);
+        }
+    }
+
     export function keepBehind(obj: WorldObject) {
         return function(this: WorldObject) {
             World.Actions.orderWorldObjectBefore(this, obj);

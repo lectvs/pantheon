@@ -29,7 +29,7 @@ class Module<T extends WorldObject> {
         return FrameCache.array();
     }
 
-    remove(): void {
+    removeFromWorldObject(): void {
         this.onRemove();
         A.removeAll(this.worldObject.modules, this);
     }
