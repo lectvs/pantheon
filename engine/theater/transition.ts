@@ -15,8 +15,8 @@ namespace Transition {
 abstract class Transition {
     protected oldWorld?: World;
     protected newWorld?: World;
-    protected oldSnapshot?: Transition.Snapshot;
-    protected newSnapshot?: Transition.Snapshot;
+    protected oldScreenshot?: Transition.Snapshot;
+    protected newScreenshot?: Transition.Snapshot;
 
     protected preTime: number;
     protected postTime: number;
@@ -42,23 +42,27 @@ abstract class Transition {
         this.newWorld = newWorld;
 
         if (this.oldWorld) {
-            let oldWorldTexture = this.oldWorld.takeScreenshot();
-            this.oldSnapshot = {
-                texture: oldWorldTexture,
-                sprite: new PIXI.Sprite(oldWorldTexture),
+            let oldWorldScreenshot = this.oldWorld.takeScreenshot();
+            let oldWorldSprite = new PIXI.Sprite(oldWorldScreenshot.texture);
+            oldWorldSprite.scale.set(1 / oldWorldScreenshot.upscale);
+            this.oldScreenshot = {
+                texture: oldWorldScreenshot.texture,
+                sprite: oldWorldSprite,
             };
         }
         if (this.newWorld) {
-            let newWorldTexture = this.newWorld.takeScreenshot();
-            this.newSnapshot = {
-                texture: newWorldTexture,
-                sprite: new PIXI.Sprite(newWorldTexture),
+            let newWorldScreenshot = this.newWorld.takeScreenshot();
+            let newWorldSprite = new PIXI.Sprite(newWorldScreenshot.texture);
+            newWorldSprite.scale.set(1 / newWorldScreenshot.upscale);
+            this.newScreenshot = {
+                texture: newWorldScreenshot.texture,
+                sprite: newWorldSprite,
             };
         }
     }
 
     free() {
-        if (this.oldSnapshot) freePixiRenderTexture(this.oldSnapshot.texture);
-        if (this.newSnapshot) freePixiRenderTexture(this.newSnapshot.texture);
+        if (this.oldScreenshot) freePixiRenderTexture(this.oldScreenshot.texture);
+        if (this.newScreenshot) freePixiRenderTexture(this.newScreenshot.texture);
     }
 }

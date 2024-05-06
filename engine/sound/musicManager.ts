@@ -72,7 +72,7 @@ class MusicManager {
 
         this.stopMusic(fadeTime);
         let music = this.soundManager.playSound(key);
-        music.loop = true;
+        music.loopsLeft = Infinity;
         let playScript = this.scriptManager.runScript(S.tween(fadeTime, music, 'volume', 0, 1));
         this.state = {
             state: 'playing',

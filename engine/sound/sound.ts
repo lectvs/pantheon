@@ -16,7 +16,7 @@ class Sound {
     volume: number;
     /** Must be between 0 and Sound.MAX_SPEED */
     speed: number;
-    loop: boolean;
+    loopsLeft: number;
 
     get done() { return this.webAudioSound.done; }
     
@@ -45,7 +45,7 @@ class Sound {
 
         this.volume = 1;
         this.speed = 1;
-        this.loop = false;
+        this.loopsLeft = 0;
         this.hanging = false;
 
         this.controller = controller;
@@ -55,17 +55,21 @@ class Sound {
         this.soundManager.ensureSoundEnabled(this);
         this.pos += delta;
 
+        if (this.pos > this.duration) {
+            this.pos = M.mod(this.pos, this.duration);
+            if (this.loopsLeft > 0) this.loopsLeft--;
+        }
+
         if (this.hanging) {
-            this.pos -= delta;
-            this.webAudioSound.seek(this.loop ? M.mod(this.pos, this.duration) : this.pos);
+            this.seek(this.pos - delta);
         }
         
         if (WebAudio.started && this.webAudioSound instanceof WebAudioSoundDummy) {
-            if (this.pos < this.duration || this.loop) {
+            if (this.pos < this.duration || this.loopsLeft > 0) {
                 // Generate WebAudioSound from dummy
                 this.webAudioSound = this.webAudioSound.toWebAudioSound();
             }
-            this.webAudioSound.seek(this.loop ? M.mod(this.pos, this.duration) : this.pos);
+            this.seek(this.pos);
         }
 
         this.volume = M.clamp(this.volume, 0, Sound.MAX_VOLUME);
@@ -75,7 +79,9 @@ class Sound {
         if (this.webAudioSound.volume !== volume) this.webAudioSound.volume = volume;
 
         if (this.webAudioSound.speed !== this.speed) this.webAudioSound.speed = this.speed;
-        if (this.webAudioSound.loop !== this.loop) this.webAudioSound.loop = this.loop;
+
+        let loop = this.loopsLeft > 0;
+        if (this.webAudioSound.loop !== loop) this.webAudioSound.loop = loop;
     }
 
     markForDisable() {
@@ -100,7 +106,7 @@ class Sound {
 
     seek(position: number) {
         this.pos = position;
-        if (this.loop) {
+        if (this.loopsLeft > 0) {
             this.pos = M.mod(this.pos, this.duration);
         }
         this.webAudioSound.seek(this.pos);

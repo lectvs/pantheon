@@ -7,6 +7,7 @@ namespace Effects {
         outline?: OutlineConfig;
         invertColors?: InvertColorsConfig;
         glitch?: GlitchConfig;
+        dropShadow?: DropShadowConfig;
         post?: TextureFilter[];
     }
 
@@ -14,6 +15,7 @@ namespace Effects {
     export type OutlineConfig = { color?: number, alpha?: number, enabled?: boolean };
     export type InvertColorsConfig = { enabled?: boolean };
     export type GlitchConfig = { strength?: number, speed?: number, spread?: number, enabled?: boolean };
+    export type DropShadowConfig = { distance?: number, color?: number, alpha?: number, enabled?: boolean };
 }
 
 
@@ -22,11 +24,13 @@ class Effects {
     private _outlineLazy = new LazyValue(() => new Effects.Filters.Outline(0x000000, 1).disable());
     private _invertColorsLazy = new LazyValue(() => new Effects.Filters.InvertColors().disable());
     private _glitchLazy = new LazyValue(() => new Effects.Filters.Glitch(2, 1, 2).disable());
+    private _dropShadowLazy = new LazyValue(() => new Effects.Filters.DropShadow(1, 0x000000, 0.5).disable());
 
     get silhouette() { return this._silhouetteLazy.get(); }
     get outline() { return this._outlineLazy.get(); }
     get invertColors() { return this._invertColorsLazy.get(); }
     get glitch() { return this._glitchLazy.get(); }
+    get dropShadow() { return this._dropShadowLazy.get(); }
 
     pre: TextureFilter[];
     post: TextureFilter[];
@@ -101,6 +105,13 @@ class Effects {
             this.glitch.enabled = config.glitch.enabled ?? true;
         }
 
+        if (config.dropShadow) {
+            this.dropShadow.distance = config.dropShadow.distance ?? 1;
+            this.dropShadow.color = config.dropShadow.color ?? 0x000000;
+            this.dropShadow.alpha = config.dropShadow.alpha ?? 0.5;
+            this.dropShadow.enabled = config.dropShadow.enabled ?? true;
+        }
+
         if (config.post) {
             this.post = config.post;
         }
@@ -115,6 +126,7 @@ class Effects {
         if (this._outlineLazy.has()) result.push(this._outlineLazy.get());
         if (this._invertColorsLazy.has()) result.push(this._invertColorsLazy.get());
         if (this._glitchLazy.has()) result.push(this._glitchLazy.get());
+        if (this._dropShadowLazy.has()) result.push(this._dropShadowLazy.get());
 
         result.pushAll(this.post);
 
@@ -152,9 +164,9 @@ namespace Effects {
             constructor(color: number, alpha: number) {
                 super({
                     uniforms: {
-                        "vec3 color": Color.colorToVec3(color),
-                        "float alpha": alpha,
-                        "float amount": 1.0
+                        'vec3 color': Color.colorToVec3(color),
+                        'float alpha': alpha,
+                        'float amount': 1.0
                     },
                     code: `
                         if (inp.a > 0.0) {
@@ -162,6 +174,7 @@ namespace Effects {
                         }
                     `
                 });
+
                 this._color = color;
                 this._alpha = alpha;
             }
@@ -208,9 +221,9 @@ namespace Effects {
             constructor(color: number, alpha: number, matchAlpha: boolean = true) {
                 super({
                     uniforms: {
-                        "vec3 color": Color.colorToVec3(color),
-                        "float alpha": alpha,
-                        "int matchAlpha": matchAlpha ? 1 : 0,
+                        'vec3 color': Color.colorToVec3(color),
+                        'float alpha': alpha,
+                        'int matchAlpha': matchAlpha ? 1 : 0,
                     },
                     visualPadding: 1,
                     code: `
@@ -224,6 +237,7 @@ namespace Effects {
                         }
                     `
                 });
+
                 this._color = color;
                 this._alpha = alpha;
                 this._matchAlpha = matchAlpha;
@@ -289,7 +303,11 @@ namespace Effects {
              */
             constructor(strength: number, speed: number, spread: number) {
                 super({
-                    uniforms: { 'float strength': strength, 'float speed': speed, 'float spread': spread },
+                    uniforms: {
+                        'float strength': strength,
+                        'float speed': speed,
+                        'float spread': spread,
+                    },
                     code: `
                         float tt = floor(5.4 + t * speed);
                         float yy = floor(y / spread / upscale) * spread * upscale;
@@ -313,6 +331,54 @@ namespace Effects {
 
             override getVisualPadding(): number {
                 return this._strength;
+            }
+        }
+
+        export class DropShadow extends TextureFilter {
+            private _distance: number;
+            get distance() { return this._distance; }
+            set distance(value: number) {
+                this._distance = value;
+                this.setUniform('distance', value);
+            }
+
+            private _color: number;
+            get color() { return this._color; }
+            set color(value: number) {
+                if (value === this._color) return;
+                this.setUniform('color', Color.colorToVec3(value));
+                this._color = value;
+            }
+
+            private _alpha: number;
+            get alpha() { return this._alpha; }
+            set alpha(value: number) {
+                this._alpha = value;
+                this.setUniform('alpha', value);
+            }
+
+            constructor(distance: number, color: number, alpha: number = 1) {
+                super({
+                    uniforms: {
+                        'float distance': distance,
+                        'vec3 color': Color.colorToVec3(color),
+                        'float alpha': alpha,
+                    },
+                    code: `
+                        float maxAlpha = getColor(x - distance*upscale, y - distance*upscale).a;
+                        if (x/upscale >= distance && y/upscale >= distance && inp.a == 0.0 && maxAlpha > 0.0) {
+                            outp = vec4(color, alpha * maxAlpha);
+                        }
+                    `
+                });
+
+                this._distance = distance;
+                this._color = color;
+                this._alpha = alpha;
+            }
+
+            override getVisualPadding(): number {
+                return this._distance;
             }
         }
     }

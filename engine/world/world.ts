@@ -66,9 +66,14 @@ namespace World {
     export type PlaySoundConfig = {
         volume?: number;
         speed?: number;
-        loop?: boolean;
+        loop?: boolean | number;
         humanized?: boolean;
         limit?: number;
+    }
+
+    export type Screenshot = {
+        texture: PIXI.RenderTexture;
+        upscale: number;
     }
 
     // To add a new hook, simply add an entry here and call World.hookManager.executeHooks() at the appropriate location(s).
@@ -472,7 +477,9 @@ class World {
 
         sound.volume = config?.volume ?? 1;
         sound.speed = config?.speed ?? 1;
-        sound.loop = config?.loop ?? false;
+
+        let loop = config?.loop ?? false;
+        sound.loopsLeft = M.isNumber(loop) ? loop : (loop ? Infinity : 0);
 
         let humanized = (config?.humanized ?? this.soundHumanizeByDefault) && sound.duration < 1;
         if (humanized && this.soundHumanizeFactor > 0) {
@@ -529,13 +536,21 @@ class World {
         this.scriptManager.stopScriptByName(name);
     }
 
-    takeScreenshot() {
-        let screen = newPixiRenderTexture(this.getScreenWidth() * this.scaleX, this.getScreenHeight() * this.scaleY, 'World.takeSnapshot');
-        let renderResult = this.render();
-        if (renderResult) {
-            renderToRenderTexture(renderResult, screen);
-        }
-        return screen;
+    takeScreenshot(): World.Screenshot {
+        let screen = newPixiRenderTexture(
+            this.getScreenWidth() * this.scaleX * global.upscale,
+            this.getScreenHeight() * this.scaleY * global.upscale,
+            'World.takeSnapshot');
+        let container = new PIXI.Container();
+        container.scale.set(global.upscale);
+        Render.diff(container, this.render());
+        Render.upscalePixiObjectProperties(container, 'upscale');
+        renderToRenderTexture(container, screen);
+        Render.upscalePixiObjectProperties(container, 'downscale');
+        return {
+            texture: screen,
+            upscale: global.upscale,
+        };
     }
 
     private createLayers(layers: World.LayerConfig[] | undefined) {

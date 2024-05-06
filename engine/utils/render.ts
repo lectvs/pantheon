@@ -37,4 +37,20 @@ namespace Render {
         }
         return result;
     }
+
+    export function upscalePixiObjectProperties(object: PIXI.DisplayObject, scale: 'upscale' | 'downscale') {
+        let scaleMult = scale === 'upscale' ? global.upscale : 1 / global.upscale;
+        object.filters?.forEach(filter => filter.setUpscale(scale === 'upscale' ? global.upscale : 1));
+        if (object.filterArea) {
+            object.filterArea.x *= scaleMult;
+            object.filterArea.y *= scaleMult;
+            object.filterArea.width *= scaleMult;
+            object.filterArea.height *= scaleMult;
+        }
+        if (object instanceof PIXI.Container) {
+            for (let child of object.children) {
+                upscalePixiObjectProperties(child, scale);
+            }
+        }
+    }
 }

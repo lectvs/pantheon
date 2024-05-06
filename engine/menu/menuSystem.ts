@@ -23,6 +23,17 @@ class MenuSystem {
         return FrameCache.array();
     }
 
+    takeScreenshot(): World.Screenshot {
+        if (!this.inMenu) {
+            console.error('Not in menu');
+            return {
+                texture: Textures.NOOP,
+                upscale: 1,
+            };
+        }
+        return this.currentMenu!.takeScreenshot();
+    }
+
     back() {
         if (this.inMenu) this.menuStack.pop();
     }

@@ -190,20 +190,20 @@ class Main {
                 MobileScaleManager.update();
             }
 
-            Render.diff(Main.stage, FrameCache.array(Main.game.render()));
+            Render.diff(Main.stage, Main.game.render());
 
             Main.renderScreenToCanvas();
         });
     }
 
     private static renderScreenToCanvas() {
-        Main.upscalePixiObjectProperties(Main.stage, 'upscale');
+        Render.upscalePixiObjectProperties(Main.stage, 'upscale');
         Main.renderer.render(Main.stage);
-        Main.upscalePixiObjectProperties(Main.stage, 'downscale');
+        Render.upscalePixiObjectProperties(Main.stage, 'downscale');
     }
 
     static forceRender() {
-        Render.diff(Main.stage, [Main.game.render()]);
+        Render.diff(Main.stage, Main.game.render());
         Main.renderScreenToCanvas();
     }
 
@@ -213,22 +213,6 @@ class Main {
         global.upscale = upscale;
         Main.renderer.resize(width * upscale, height * upscale);
         Main.stage?.scale.set(upscale);
-    }
-
-    private static upscalePixiObjectProperties(object: PIXI.DisplayObject, scale: 'upscale' | 'downscale') {
-        let scaleMult = scale === 'upscale' ? global.upscale : 1 / global.upscale;
-        object.filters?.forEach(filter => filter.setUpscale(scale === 'upscale' ? global.upscale : 1));
-        if (object.filterArea) {
-            object.filterArea.x *= scaleMult;
-            object.filterArea.y *= scaleMult;
-            object.filterArea.width *= scaleMult;
-            object.filterArea.height *= scaleMult;
-        }
-        if (object instanceof PIXI.Container) {
-            for (let child of object.children) {
-                Main.upscalePixiObjectProperties(child, scale);
-            }
-        }
     }
 
     static _internalRenderToRenderTexture(object: PIXI.DisplayObject, renderTexture: PIXI.RenderTexture, clearTextureFirst: boolean) {

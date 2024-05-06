@@ -43,7 +43,7 @@ class Game {
         this.overlay = new DebugOverlay();
         this.debugTouchSprite = new PIXI.Sprite(Textures.outlineCircle(10, 0xFF0000));
 
-        this.container = new PIXI.Container;
+        this.container = new PIXI.Container();
     }
 
     start() {
@@ -104,7 +104,7 @@ class Game {
 
         Render.diff(this.container, result);
 
-        return this.container;
+        return FrameCache.array(this.container);
     }
 
     canPause(): boolean {
@@ -163,14 +163,11 @@ class Game {
 
     private worldForMenuTransition() {
         let world = new World();
-        let renderResult = this.menuSystem.render();
-        if (renderResult) {
-            let screenshot = newPixiRenderTexture(global.gameWidth, global.gameHeight, 'Game.worldForMenuTransition');
-            renderToRenderTexture(renderResult, screenshot);
-            world.addWorldObject(new Sprite({
-                texture: screenshot,
-            }));
-        }
+        let screenshot = this.menuSystem.takeScreenshot();
+        world.addWorldObject(new Sprite({
+            texture: screenshot.texture,
+            scale: 1 / screenshot.upscale,
+        }));
         return world;
     }
 

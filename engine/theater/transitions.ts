@@ -29,12 +29,12 @@ namespace Transitions {
 
         override render() {
             let result: Render.Result = FrameCache.array();
-            if (this.oldSnapshot) {
-                result.push(this.oldSnapshot.sprite);
+            if (this.oldScreenshot) {
+                result.push(this.oldScreenshot.sprite);
             }
-            if (this.newSnapshot) {
-                this.newSnapshot.sprite.alpha = this.newAlpha;
-                result.push(this.newSnapshot.sprite);
+            if (this.newScreenshot) {
+                this.newScreenshot.sprite.alpha = this.newAlpha;
+                result.push(this.newScreenshot.sprite);
             }
             return result;
         }
@@ -76,12 +76,12 @@ namespace Transitions {
             let result: Render.Result = FrameCache.array();
 
             if (this.transitioned) {
-                if (this.newSnapshot) {
-                    result.push(this.newSnapshot.sprite);
+                if (this.newScreenshot) {
+                    result.push(this.newScreenshot.sprite);
                 }
             } else {
-                if (this.oldSnapshot) {
-                    result.push(this.oldSnapshot.sprite);
+                if (this.oldScreenshot) {
+                    result.push(this.oldScreenshot.sprite);
                 }
             }
 
