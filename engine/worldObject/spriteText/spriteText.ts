@@ -82,10 +82,17 @@ class SpriteText extends WorldObject {
         this.markDirty();
     }
 
-    private _visibleCharCount: number;
-    get visibleCharCount() { return this._visibleCharCount; }
-    set visibleCharCount(value: number) {
-        this._visibleCharCount = value;
+    private _visibleCharStart: number;
+    get visibleCharStart() { return this._visibleCharStart; }
+    set visibleCharStart(value: number) {
+        this._visibleCharStart = value;
+        this.markDirty();
+    }
+
+    private _visibleCharEnd: number;
+    get visibleCharEnd() { return this._visibleCharEnd; }
+    set visibleCharEnd(value: number) {
+        this._visibleCharEnd = value;
         this.markDirty();
     }
 
@@ -136,7 +143,8 @@ class SpriteText extends WorldObject {
             filters: [],
         });
 
-        this._visibleCharCount = Infinity;
+        this._visibleCharStart = 0;
+        this._visibleCharEnd = Infinity;
         this._maxWidth = config.maxWidth ?? Infinity;
         this._wordWrap = config.wordWrap ?? true;
         this._fixedCharSize = config.fixedCharSize ?? false;
@@ -191,20 +199,20 @@ class SpriteText extends WorldObject {
     }
 
     allCharactersVisible() {
-        return this.visibleCharCount >= this.getCharList().length;
+        return this.visibleCharStart <= 0 && this.visibleCharEnd >= this.getCharList().length;
     }
 
     clear() {
-        this.setText("");
+        this.setText('');
     }
 
     getCharList() {
         return this.chars.flat();
     }
 
-    getVisibleCharList(visibleCharCount: number = this.visibleCharCount) {
+    getVisibleCharList(visibleCharStart: number = this.visibleCharStart, visibleCharEnd: number = this.visibleCharEnd) {
         let chars = this.chars.flat();
-        return chars.slice(0, Math.min(visibleCharCount, chars.length));
+        return chars.slice(visibleCharStart, Math.min(visibleCharEnd, chars.length));
     }
 
     getCurrentText() {
@@ -231,6 +239,14 @@ class SpriteText extends WorldObject {
 
     getTextHeight() {
         return SpriteText.getBoundsOfCharList$(this.getCharList()).height * this.scaleY;
+    }
+
+    getVisibleTextWidth(visibleCharStart: number = this.visibleCharStart, visibleCharEnd: number = this.visibleCharEnd) {
+        return SpriteText.getBoundsOfCharList$(this.getVisibleCharList(visibleCharStart, visibleCharEnd)).width * this.scaleX;
+    }
+
+    getVisibleTextHeight(visibleCharStart: number = this.visibleCharStart, visibleCharEnd: number = this.visibleCharEnd) {
+        return SpriteText.getBoundsOfCharList$(this.getVisibleCharList(visibleCharStart, visibleCharEnd)).height * this.scaleY;
     }
 
     override getVisibleLocalBounds$(): Rectangle | undefined {

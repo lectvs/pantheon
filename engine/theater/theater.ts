@@ -133,7 +133,7 @@ class Theater {
         this.endOfFrameQueue.push(fn);
     }
 
-    runScript(script: Script | Script.Function, name?: string) {
+    runScript(script: Script.FunctionLike, name?: string) {
         return this.scriptManager.runScript(script, name);
     }
 

@@ -359,14 +359,12 @@ class World {
     fadeIn(duration: number, color: number = 0x000000) {
         this.fadeColor = color;
         this.fadeAmount = 1;
-        let script = this.runScript(S.tween(duration, this, 'fadeAmount', 1, 0), 'World.fade', 'stopPrevious');
-        return S.waitUntil(() => script.isDone);
+        return this.runScript(S.tween(duration, this, 'fadeAmount', 1, 0), 'World.fade', 'stopPrevious');
     }
 
     fadeOut(duration: number, color: number = 0x000000) {
         this.fadeColor = color;
-        let script = this.runScript(S.tween(duration, this, 'fadeAmount', 0, 1), 'World.fade', 'stopPrevious');
-        return S.waitUntil(() => script.isDone);
+        return this.runScript(S.tween(duration, this, 'fadeAmount', 0, 1), 'World.fade', 'stopPrevious');
     }
 
     getLayerByName(name: string | undefined) {
@@ -519,7 +517,7 @@ class World {
         this.endOfFrameQueue.push(fn);
     }
 
-    runScript(script: Script | Script.Function, name?: string, specialMode?: ScriptManager.SpecialMode) {
+    runScript(script: Script.FunctionLike, name?: string, specialMode?: ScriptManager.SpecialMode) {
         return this.scriptManager.runScript(script, name, specialMode);
     }
 

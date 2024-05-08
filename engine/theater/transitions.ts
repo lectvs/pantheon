@@ -10,6 +10,57 @@ namespace Transitions {
     }
 
     export class Fade extends Transition {
+        private inTime: number;
+        private midTime: number;
+        private outTime: number;
+
+        private fade_t: number;
+        private transitioned: boolean;
+
+        private fadeSprite: PIXI.Sprite;
+
+        constructor(config: Transition.BaseConfig & { inTime: number, midTime: number, outTime: number }) {
+            super(config);
+            this.inTime = config.inTime;
+            this.midTime = config.midTime;
+            this.outTime = config.outTime;
+
+            this.fade_t = 0;
+            this.transitioned = false;
+
+            this.fadeSprite = new PIXI.Sprite(Textures.filledRect(W, H, 0x000000));
+
+            this.script = new Script(S.chain(
+                S.wait(this.preTime),
+                S.doOverTime(this.inTime, t => this.fade_t = t),
+                S.wait(this.midTime),
+                S.call(() => this.transitioned = true),
+                S.doOverTime(this.outTime, t => this.fade_t = 1-t),
+                S.wait(this.postTime),
+            ));
+        }
+
+        override render() {
+            let result: Render.Result = FrameCache.array();
+
+            if (this.transitioned) {
+                if (this.newScreenshot) {
+                    result.push(this.newScreenshot.sprite);
+                }
+            } else {
+                if (this.oldScreenshot) {
+                    result.push(this.oldScreenshot.sprite);
+                }
+            }
+
+            this.fadeSprite.alpha = this.fade_t;
+            result.push(this.fadeSprite);
+
+            return result;
+        }
+    }
+
+    export class CrossFade extends Transition {
         private time: number;
         private newAlpha: number;
 

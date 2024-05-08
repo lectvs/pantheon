@@ -30,12 +30,8 @@ class ScriptManager {
         this.activeScripts = [];
     }
 
-    runScript(script: Script | Script.Function, name?: string, specialMode?: ScriptManager.SpecialMode) {
-        if (script instanceof Script) {
-            if (script.isDone) return script;
-        } else {
-            script = new Script(script, name);
-        }
+    runScript(functionLike: Script.FunctionLike, name?: string, specialMode?: ScriptManager.SpecialMode) {
+        let script = new Script(functionLike, name);
 
         if (specialMode === 'stopPrevious' && name) {
             this.stopScriptByName(name);

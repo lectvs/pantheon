@@ -15,7 +15,7 @@ class FontLoader implements Loader {
         new TextureLoader(this.key, {
             url: this.getUrl(),
             anchor: Anchor.TOP_LEFT,
-            spritesheet: { frameWidth: this.font.charWidth, frameHeight: this.font.charHeight },
+            spritesheet: { width: this.font.charWidth, height: this.font.charHeight },
         }).load(() => {
             this.onLoad();
             this._completionPercent = 1;

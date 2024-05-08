@@ -1,5 +1,5 @@
 namespace Sound {
-    export type Controller = SoundManager | MusicManager | World | WorldObject;
+    export type Controller = SoundManager | MusicManager | World | WorldObject | Module<WorldObject>;
 }
 
 class Sound {
@@ -130,6 +130,7 @@ class Sound {
         if (this.controller instanceof MusicManager) return this.controller.volume;
         if (this.controller instanceof World) return this.controller.soundManager.volume;
         if (this.controller instanceof WorldObject && this.controller.world) return this.controller.world.soundManager.volume;
+        if (this.controller instanceof Module && this.controller.worldObject && this.controller.worldObject.world) return this.controller.worldObject.world.soundManager.volume;
         return 1;
     }
 }

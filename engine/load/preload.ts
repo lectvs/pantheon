@@ -25,8 +25,8 @@ namespace Preload {
     }
 
     export type TextureSpritesheet = {
-        frameWidth: number;
-        frameHeight: number;
+        width: number;
+        height: number;
         prefix?: string;
         anchor?: Vector2;
         naming?: 'index' | 'x/y' | 'y/x' | string[];

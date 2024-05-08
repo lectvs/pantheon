@@ -14,6 +14,8 @@ namespace Sprite {
         scale?: number;
         scaleX?: number;
         scaleY?: number;
+        skewX?: number;
+        skewY?: number;
         tint?: number;
         alpha?: number;
         effects?: Effects.Config;
@@ -45,6 +47,9 @@ class Sprite extends PhysicsWorldObject {
         this.scaleY = value;
     }
 
+    skewX: number;
+    skewY: number;
+
     tint: number;
     alpha: number;
 
@@ -69,6 +74,8 @@ class Sprite extends PhysicsWorldObject {
         this.vangle = config.vangle ?? 0;
         this.scaleX = config.scaleX ?? (config.scale ?? 1);
         this.scaleY = config.scaleY ?? (config.scale ?? 1);
+        this.skewX = config.skewX ?? 0;
+        this.skewY = config.skewY ?? 0;
 
         this.tint = config.tint ?? 0xFFFFFF;
         this.alpha = config.alpha ?? 1;
@@ -96,6 +103,8 @@ class Sprite extends PhysicsWorldObject {
         this.renderObject.y = this.offsetY;
         this.renderObject.scale.x = (this.flipX ? -1 : 1) * this.scaleX;
         this.renderObject.scale.y = (this.flipY ? -1 : 1) * this.scaleY;
+        this.renderObject.skew.x = this.skewX;
+        this.renderObject.skew.y = this.skewY;
         this.renderObject.angle = this.angle + this.angleOffset;
         this.renderObject.tint = this.tint;
         this.renderObject.alpha = this.alpha;

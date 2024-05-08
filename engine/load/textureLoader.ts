@@ -64,8 +64,8 @@ class TextureLoader implements Loader {
         let frames: Dict<Preload.TextureFrame> = {};
 
         if (texture.spritesheet) {
-            let numFramesX = Math.floor(width / texture.spritesheet.frameWidth);
-            let numFramesY = Math.floor(height / texture.spritesheet.frameHeight);
+            let numFramesX = Math.floor(width / texture.spritesheet.width);
+            let numFramesY = Math.floor(height / texture.spritesheet.height);
 
             for (let y = 0; y < numFramesY; y++) {
                 for (let x = 0; x < numFramesX; x++) {
@@ -74,10 +74,10 @@ class TextureLoader implements Loader {
                     let frameKey = `${frameKeyPrefix}${frameKeyIndex}`;
                     frames[frameKey] = {
                         rect: {
-                            x: x*texture.spritesheet.frameWidth,
-                            y: y*texture.spritesheet.frameHeight,
-                            width: texture.spritesheet.frameWidth,
-                            height: texture.spritesheet.frameHeight
+                            x: x*texture.spritesheet.width,
+                            y: y*texture.spritesheet.height,
+                            width: texture.spritesheet.width,
+                            height: texture.spritesheet.height
                         },
                         anchor: texture.spritesheet.anchor,
                     };

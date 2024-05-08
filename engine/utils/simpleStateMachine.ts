@@ -7,9 +7,10 @@ namespace SimpleStateMachine {
     }
 
     export type Transition = {
-        toState: string;
-        condition?: () => any;
+        toState: string | ((currentState?: string) => string);
+        condition?: (currentState?: string) => any;
         afterConditionDelay?: number;
+        onTransition?: (currentState?: string) => any;
     }
 }
 
@@ -28,9 +29,10 @@ class SimpleStateMachine {
             script: stateScript ? (() => stateScript!) : undefined,
             update: state.update,
             transitions: state.transitions?.map(transition => ({
-                toState: { state: transition.toState },
-                condition: transition.condition,
+                toState: O.isFunction(transition.toState) ? (currentStateData => (transition.toState as Function)(currentStateData.state)) : { state: transition.toState },
+                condition: transition.condition ? (currentStateData => transition.condition!(currentStateData?.state)) : undefined,
                 afterConditionDelay: transition.afterConditionDelay,
+                onTransition: transition.onTransition ? (currentStateData => transition.onTransition!(currentStateData?.state)) : undefined,
             })),
         });
     }

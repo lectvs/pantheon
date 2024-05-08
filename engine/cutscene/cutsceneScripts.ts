@@ -34,7 +34,7 @@ namespace S {
             let [profile, entry] = DialogProfile.splitKey(profileKey);
             global.theater.dialogBox.setProfile(profile, entry);
             global.theater.dialogBox.showDialog(text);
-            while (!global.theater.dialogBox.done) {
+            while (!global.theater.dialogBox.isDone) {
                 yield;
             }
         }
@@ -46,7 +46,7 @@ namespace S {
             let [profile, entry] = DialogProfile.splitKey(profileKey);
             global.theater.dialogBox.setProfile(profile, entry);
             global.theater.dialogBox.addToDialog(text);
-            while (!global.theater.dialogBox.done) {
+            while (!global.theater.dialogBox.isDone) {
                 yield;
             }
         }

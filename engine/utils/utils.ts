@@ -9,7 +9,7 @@ namespace Utils {
 type KeyOfType<T, U> = {[P in keyof T]: T[P] extends U ? P: never}[keyof T]
 
 function assertUnreachable(c: never) {
-    console.error("Unreachable code reached!");
+    console.error('Unreachable code reached for value:', c);
 }
 
 function async(fn: Function) {

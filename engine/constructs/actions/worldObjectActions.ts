@@ -6,8 +6,8 @@ namespace Actions {
         alpha?: number;
     }
 
-    export function enter(worldObject: WorldObject | undefined, duration: number, initialValues: EnterInitialValues, easingFn?: Tween.Easing.Function, delay?: number): Script.Function {
-        if (!worldObject || worldObject.data.entering) return S.noop();
+    export function enter(worldObject: WorldObject | undefined, duration: number, initialValues: EnterInitialValues, easingFn?: Tween.Easing.Function, delay?: number): Script {
+        if (!worldObject || worldObject.data.entering) return new Script(S.noop());
 
         worldObject.setVisible(true);
         worldObject.data.entering = true;
@@ -41,13 +41,11 @@ namespace Actions {
             scripts.push(S.wait(duration));
         }
 
-        worldObject.runScript(function*() {
+        return worldObject.runScript(function*() {
             yield S.wait(delay ?? 0);
             yield scripts;
             delete worldObject.data.entering;
         });
-
-        return S.waitUntil(() => !worldObject.data.entering);
     }
 
     export type ExitFinalValues = {
@@ -57,8 +55,8 @@ namespace Actions {
         alpha?: number;
     }
 
-    export function exit(worldObject: WorldObject | undefined, duration: number, finalValues: ExitFinalValues, easingFn?: Tween.Easing.Function, delay?: number): Script.Function {
-        if (!worldObject || worldObject.data.exiting) return S.noop();
+    export function exit(worldObject: WorldObject | undefined, duration: number, finalValues: ExitFinalValues, easingFn?: Tween.Easing.Function, delay?: number): Script {
+        if (!worldObject || worldObject.data.exiting) return new Script(S.noop());
 
         worldObject.data.exiting = true;
 
@@ -86,14 +84,12 @@ namespace Actions {
             scripts.push(S.wait(duration));
         }
 
-        worldObject.runScript(function*() {
+        return worldObject.runScript(function*() {
             yield S.wait(delay ?? 0);
             yield scripts;
             worldObject.kill();
             delete worldObject.data.exiting;
         });
-
-        return S.waitUntil(() => !worldObject.data.exiting);
     }
 
     export function flash(worldObject: WorldObject & { effects: Effects }, duration: number, keepPreviousEnabled?: 'keepPreviousEnabled', color: number = 0xFFFFFF) {

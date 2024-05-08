@@ -2,16 +2,18 @@
 
 namespace DialogBox {
     export type Config = Sprite.Config<DialogBox> & {
-        defaultTextFont: string;
-        textAreaFull: Rect;
-        textAreaPortrait: Rect;
-        portraitPosition: Pt;
-        nameTexture: string;
-        nameFont: string;
-        namePosition: Pt;
-        nameTextOffset: Pt;
+        font?: string;
+        textAreaFull?: Rect;
+        textAreaPortrait?: Rect;
+        portraitPosition?: Pt;
+        namePlate?: {
+            texture: string;
+            position: Pt;
+            textOffset: Pt;
+            font?: string;
+        };
         defaultDialogStart?: string;
-        defaultDialogSpeak: string;
+        defaultDialogSpeak?: string;
         advanceIndicator?: {
             texture: string | PIXI.Texture;
             position: Pt;
@@ -27,14 +29,14 @@ class DialogBox extends Sprite {
 
     private defaultTextFont: string;
     private defaultDialogStart: string | undefined;
-    private defaultDialogSpeak: string;
+    private defaultDialogSpeak: string | undefined
     private dialogStart: string | undefined;
-    private dialogSpeak: string;
+    private dialogSpeak: string | undefined;
     private isAdvanceIndicatorEnabled: boolean;
     
     private get textArea() { return this.portraitObject ? this.textAreaPortrait : this.textAreaFull; }
 
-    done: boolean;
+    isDone: boolean;
 
     private currentProfileKey: string | undefined;
     private currentProfileEntry: string | undefined;
@@ -53,25 +55,36 @@ class DialogBox extends Sprite {
     constructor(config: DialogBox.Config) {
         super(config);
 
-        this.textAreaFull = config.textAreaFull;
-        this.textAreaPortrait = config.textAreaPortrait;
+        this.textAreaFull = config.textAreaFull ?? this.getVisibleLocalBounds$()?.clone() ?? rect(0, 0, 0, 0);
+        this.textAreaPortrait = config.textAreaPortrait ?? this.getVisibleLocalBounds$()?.clone() ?? rect(0, 0, 0, 0);
 
-        this.defaultTextFont = config.defaultTextFont;
+        this.defaultTextFont = config.font ?? SpriteText.DEFAULT_FONT;
         this.defaultDialogStart = config.defaultDialogStart;
         this.defaultDialogSpeak = config.defaultDialogSpeak;
         this.dialogStart = config.defaultDialogStart;
         this.dialogSpeak = config.defaultDialogSpeak;
         this.isAdvanceIndicatorEnabled = !!config.advanceIndicator;
 
-        this.done = true;
+        this.isDone = true;
 
-        this.spriteText = this.addChild(new SpriteText({ font: this.defaultTextFont }));
+        this.spriteText = this.addChild(new SpriteText({
+            font: this.defaultTextFont,
+        }));
         this.spriteTextOffset = 0;
 
-        this.portrait = this.addChild(new WorldObject({ p: config.portraitPosition }));
+        this.portrait = this.addChild(new WorldObject({
+            p: config.portraitPosition,
+        }));
 
-        this.nameSprite = this.addChild(new Sprite({ p: config.namePosition, texture: config.nameTexture }));
-        this.nameText = this.nameSprite.addChild(new SpriteText({ p: config.nameTextOffset, font: config.nameFont, anchor: Anchor.CENTER }));
+        this.nameSprite = this.addChild(new Sprite({
+            p: config.namePlate?.position,
+            texture: config.namePlate?.texture,
+        }));
+        this.nameText = this.nameSprite.addChild(new SpriteText({
+            p: config.namePlate?.textOffset,
+            font: config.namePlate?.font ?? this.defaultTextFont,
+            anchor: Anchor.CENTER,
+        }));
 
         this.advanceIndicator = this.addChild(new Sprite({
             p: config.advanceIndicator?.position,
@@ -101,9 +114,9 @@ class DialogBox extends Sprite {
         this.spriteText.maxWidth = this.textArea.width;
 
         // Visibility must be set before dialog progression to avoid a 1-frame flicker.
-        this.setVisible(!this.done);
+        this.setVisible(!this.isDone);
 
-        if (!this.done) {
+        if (!this.isDone) {
             this.updateDialogProgression();
             this.speakSoundTimer.update(this.delta);
         }
@@ -130,10 +143,11 @@ class DialogBox extends Sprite {
     showDialog(dialogText: string) {
         this.spriteText.clear();
         this.spriteTextOffset = 0;
-        this.done = false;
+        this.isDone = false;
 
         this.spriteText.setText(dialogText);
-        this.spriteText.visibleCharCount = 0;
+        this.spriteText.visibleCharStart = 0;
+        this.spriteText.visibleCharEnd = 0;
         this.spriteTextOffset = 0;
         this.characterTimer.reset();
 
@@ -145,13 +159,13 @@ class DialogBox extends Sprite {
     }
 
     addToDialog(additionalText: string) {
-        this.done = false;
+        this.isDone = false;
 
         let newCurrentText = this.spriteText.getCurrentText() + additionalText;
-        let newVisibleCharCount = this.spriteText.visibleCharCount;
+        let newVisibleCharEnd = this.spriteText.visibleCharEnd;
 
         this.spriteText.setText(newCurrentText);
-        this.spriteText.visibleCharCount = newVisibleCharCount;
+        this.spriteText.visibleCharEnd = newVisibleCharEnd;
         this.characterTimer.reset();
 
         this.advanceCharacter(); // Advance character once to start the dialog with one displayed character.
@@ -200,7 +214,7 @@ class DialogBox extends Sprite {
     }
 
     complete() {
-        while (!this.done) {
+        while (!this.isDone) {
             this.completePage();
             this.advancePage();
         }
@@ -208,15 +222,16 @@ class DialogBox extends Sprite {
 
     private advanceCharacter() {
         if (!this.isPageComplete()) {
-            this.spriteText.visibleCharCount++;
+            this.spriteText.visibleCharEnd++;
         }
     }
 
     private advancePage() {
         if (this.isDialogComplete()) {
-            this.done = true;
+            this.isDone = true;
         } else {
-            this.spriteTextOffset = this.spriteText.getTextHeight();
+            this.spriteTextOffset = this.spriteText.getVisibleTextHeight(0, this.spriteText.visibleCharEnd);
+            this.spriteText.visibleCharStart = this.spriteText.visibleCharEnd;
         }
     }
 
@@ -237,12 +252,12 @@ class DialogBox extends Sprite {
     }
 
     private getDialogProgression() {
-        return this.spriteText.visibleCharCount / this.spriteText.getCharList().length;
+        return this.spriteText.visibleCharEnd / this.spriteText.getCharList().length;
     }
 
     private isPageComplete() {
         if (this.isDialogComplete()) return true;
-        let nextHeight = SpriteText.getBoundsOfCharList$(this.spriteText.getVisibleCharList(this.spriteText.visibleCharCount+1)).height;
+        let nextHeight = this.spriteText.getVisibleTextHeight(0, this.spriteText.visibleCharEnd+1);
         return nextHeight > this.textArea.height + this.spriteTextOffset;
     }
 

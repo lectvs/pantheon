@@ -643,7 +643,7 @@ class WorldObject {
         A.removeAll(this.tags, tag);
     }
 
-    runScript(script: Script | Script.Function, name?: string, specialMode?: ScriptManager.SpecialMode) {
+    runScript(script: Script.FunctionLike, name?: string, specialMode?: ScriptManager.SpecialMode) {
         return this.scriptManager.runScript(script, name, specialMode);
     }
 

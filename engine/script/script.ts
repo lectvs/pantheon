@@ -1,6 +1,6 @@
 namespace Script {
-    export type Function = () => IterableIterator<FunctionInner | number | undefined>;
-    type FunctionInner = Script.Function | Script.Function[] | undefined;
+    export type Function = () => IterableIterator<FunctionLike>;
+    export type FunctionLike = Script.Function | Script | number | undefined | FunctionLike[];
 }
 
 class Script {
@@ -14,8 +14,8 @@ class Script {
     delta: number;
     data: any;
 
-    constructor(scriptFunction: Script.Function, name?: string) {
-        this.iterator = this.buildIterator(scriptFunction)();
+    constructor(scriptFunctionLike: Script.FunctionLike, name?: string) {
+        this.iterator = Script.toScriptFunction(scriptFunctionLike)();
         this.name = name;
         this.paused = false;
         this.isDone = false;
@@ -56,19 +56,44 @@ class Script {
         this.isDone = true;
     }
 
-    private buildIterator(scriptFunction: Script.Function) {
-        let s = this;
+    static FINISH_IMMEDIATELY_MAX_ITERS = 1000000;
+}
+
+namespace Script {
+    export function instant(scriptFunction: Script.Function, maxIters?: number) {
+        new Script(scriptFunction).finishImmediately(maxIters);
+    }
+
+    export function toScriptFunction(functionLike: FunctionLike): Script.Function {
+        if (!functionLike) {
+            return S.noop();
+        }
+
+        if (M.isNumber(functionLike)) {
+            return S.wait(functionLike);
+        }
+        
+        if (functionLike instanceof Script) {
+            let waitForScript = functionLike;
+            return S.waitUntil(() => waitForScript.isDone);
+        }
+        
+        if (Array.isArray(functionLike)) {
+            return S.simul(...functionLike.map(scr => toScriptFunction(scr)));
+        }
+
+        return buildIterator(functionLike);
+    }
+
+    function buildIterator(scriptFunction: Script.Function) {
         return function*() {
             let iterator = scriptFunction();
 
             while (true) {
                 let result = iterator.next();
                 if (result.value) {
-                    if (M.isNumber(result.value)) {
-                        result.value = S.wait(result.value);
-                    } else if (Array.isArray(result.value)) {
-                        result.value = S.simul(...result.value.map(scr => M.isNumber(scr) ? S.wait(scr) : s.buildIterator(scr)));
-                    }
+                    result.value = toScriptFunction(result.value);
+
                     let script = new Script(result.value);
                     while (!script.isDone) {
                         script.update(global.script.delta);
@@ -81,13 +106,5 @@ class Script {
                 if (result.done) break;
             }
         };
-    }
-
-    static FINISH_IMMEDIATELY_MAX_ITERS = 1000000;
-}
-
-namespace Script {
-    export function instant(scriptFunction: Script.Function, maxIters?: number) {
-        new Script(scriptFunction).finishImmediately(maxIters);
     }
 }

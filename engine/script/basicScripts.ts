@@ -11,7 +11,7 @@ namespace S {
         return S.chain(S.wait(time), S.call(func));
     }
 
-    export function chain(...scriptFunctions: Script.Function[]): Script.Function {
+    export function chain(...scriptFunctions: Script.FunctionLike[]): Script.Function {
         return function*() {
             for (let scriptFunction of scriptFunctions) {
                 yield scriptFunction;
@@ -87,18 +87,19 @@ namespace S {
 
     export function revealText(world: World | undefined, text: SpriteText, rate: number, sound?: string): Script.Function {
         return function*() {
-            text.visibleCharCount = 0;
+            text.visibleCharStart = 0;
+            text.visibleCharEnd = 0;
             yield;
             while (!text.allCharactersVisible()) {
-                text.visibleCharCount++;
+                text.visibleCharEnd++;
                 if (sound && world) world.playSound(sound);
                 yield S.wait(1/rate);
             }
         }
     }
 
-    export function schedule(...schedule: [number, Script.Function, ...Array<number | Script.Function>]): Script.Function {
-        let fns: { t: number, s: Script.Function }[] = [];
+    export function schedule(...schedule: [number, Script.FunctionLike, ...Array<number | Script.FunctionLike>]): Script.Function {
+        let fns: { t: number, s: Script.FunctionLike }[] = [];
         for (let i = 0; i < schedule.length; /* no incr */) {
             let t = schedule[i];
             let s = i+1 < schedule.length ? schedule[i+1] : S.noop();

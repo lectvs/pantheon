@@ -10,6 +10,7 @@ namespace StateMachine {
         toState: SD | ((currentStateData: SD & { state: S }) => SD);
         condition?: (currentStateData?: SD & { state: S }) => any;
         afterConditionDelay?: number;
+        onTransition?: (previousStateData?: SD & { state: S }) => any;
     }
 
     export type StateData = {
@@ -61,6 +62,9 @@ class StateMachine<StateData extends StateMachine.StateData> {
             } while (!selectedTransition);
 
             yield S.wait(selectedTransition.afterConditionDelay ?? 0);
+
+            if (selectedTransition.onTransition) selectedTransition.onTransition(currentStateData);
+
             let toState = O.isFunction(selectedTransition.toState)
                 ? selectedTransition.toState(currentStateData)
                 : selectedTransition.toState;
