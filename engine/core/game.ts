@@ -22,7 +22,6 @@ class Game {
     soundManager: SoundManager;
     musicManager: MusicManager;
     get volume(): number { return Options.volume * (Debug.SKIP_RATE >= 100 ? 0.2 : 1); };
-    get currentMusicKey(): string | undefined { return this.musicManager.getCurrentMusicKey(); }
 
     get delta(): number { return Main.delta; }
 

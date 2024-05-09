@@ -51,7 +51,7 @@ class Input {
     private static usingTouch: boolean = false;
     private static touchWentDown: boolean = false; // Did a touch event happen this frame that caused touch to start?
     private static touchWentUp: boolean = false; // Did a touch event happen this frame that caused touch to stop?
-    private static touches: Input.TouchData[] = [];
+    static touches: Input.Touch[] = [];
 
     static simulateMouseWithTouches: boolean = false;
     static preventRegularKeyboardInput: boolean = false;
@@ -80,7 +80,6 @@ class Input {
         }
         this.updateKeys();
         this.updateMousePosition();
-        this.gestures.update();
     }
 
     static postUpdate() {
@@ -89,6 +88,8 @@ class Input {
         }
 
         this._mouseScrollDelta = 0;
+
+        this.touches.filterInPlace(touch => touch.isDown);
 
         if (this.touchWentUp) {
             this._canvasMouseX = 0;
@@ -164,9 +165,11 @@ class Input {
                 this._canvasMouseY = Main.rendererPlugins.interaction.mouse.global.y / global.upscale;
                 this._mouseRadius = IS_MOBILE ? 10 : 0;
             }
+            this.updateMouseTouch();
         } else {
             this._canvasMouseX = Main.rendererPlugins.interaction.mouse.global.x / global.upscale;
             this._canvasMouseY = Main.rendererPlugins.interaction.mouse.global.y / global.upscale;
+            this.updateMouseTouch();
         }
         if (Fullscreen.enabled) {
             let iw = window.innerWidth;
@@ -196,6 +199,31 @@ class Input {
             this._lastMouseX = this._mouseX;
             this._lastMouseY = this._mouseY;
             this.touchWentDown = false;
+        }
+    }
+
+    private static updateMouseTouch() {
+        let currentMouseTouch = this.touches.find(touch => touch.id === Input.MOUSE_TOUCH_ID);
+
+        let touchData: Input.TouchData = {
+            id: Input.MOUSE_TOUCH_ID,
+            x: this._canvasMouseX,
+            y: this._canvasMouseY,
+            radius: this._mouseRadius,
+        };
+
+        if (this.isDownByKeyCode[this.MOUSE_KEYCODES[0]]) {
+            if (currentMouseTouch) {
+                currentMouseTouch.updateDown(touchData);
+            } else {
+                this.touches.push(new Input.Touch(touchData));
+            }
+        } else {
+            if (currentMouseTouch) {
+                currentMouseTouch.updateUp(touchData);
+            } else {
+                // Pass, mouse already up.
+            }
         }
     }
 
@@ -304,7 +332,7 @@ class Input {
     }
 
     static get isTouching() {
-        return this.touches.length > 0;
+        return this.touches.some(touch => touch.isDown);
     }
 
     static get touch() {
@@ -370,12 +398,10 @@ class Input {
     }
 
     static handleTouchStartEvent(event: TouchEvent) {
-        if (this.isTouching) return;
-
         for (let i = 0; i < event.changedTouches.length; i++) {
             let touch = event.changedTouches[i];
             let touchData = this.getTouchData(touch);
-            this.touches.push(touchData);
+            this.touches.push(new Input.Touch(touchData));
         }
 
         if (this.isTouching) {
@@ -388,7 +414,8 @@ class Input {
             let touch = event.changedTouches[i];
             let index = this.touches.findIndex(td => td.id === touch.identifier);
             if (index >= 0) {
-                this.touches[index] = this.getTouchData(touch);
+                let touchData = this.getTouchData(touch);
+                this.touches[index].updateDown(touchData);
             }
         }
     }
@@ -398,7 +425,8 @@ class Input {
             let touch = event.changedTouches[i];
             let index = this.touches.findIndex(td => td.id === touch.identifier);
             if (index >= 0) {
-                this.touches.splice(index, 1);
+                let touchData = this.getTouchData(touch);
+                this.touches[index].updateUp(touchData);
             }
         }
         if (!this.isTouching && this.onTouchUp) {
@@ -468,6 +496,7 @@ class Input {
     } as const;
 
     static MOUSE_KEYCODES: string[] = ["MouseLeft", "MouseMiddle", "MouseRight", "MouseBack", "MouseForward"];
+    static MOUSE_TOUCH_ID: number = Infinity;
     static DEBUG_PREFIX: string = "debug::";
 }
 
@@ -540,42 +569,157 @@ namespace Input {
         }
     }
 
+    export class Touch {
+        id: number;
+        x: number;
+        y: number;
+        radius: number;
+        isDown: boolean;
+
+        startX: number;
+        startY: number;
+        downTime: number;
+        maxDragDistance: number;
+
+        constructor(touchData: TouchData) {
+            this.id = touchData.id;
+            this.x = touchData.x;
+            this.y = touchData.y;
+            this.radius = touchData.radius;
+            this.isDown = true;
+
+            this.startX = this.x;
+            this.startY = this.y;
+            this.downTime = 0;
+            this.maxDragDistance = 0;
+        }
+
+        updateDown(touchData: TouchData) {
+            this.id = touchData.id;
+            this.x = touchData.x;
+            this.y = touchData.y;
+            this.radius = touchData.radius;
+            this.isDown = true;
+            this.downTime += Main.delta;
+            this.maxDragDistance = Math.max(this.maxDragDistance, M.distance(this.x, this.y, this.startX, this.startY));
+        }
+
+        updateUp(touchData: TouchData) {
+            this.id = touchData.id;
+            this.x = touchData.x;
+            this.y = touchData.y;
+            this.radius = touchData.radius;
+            this.isDown = false;
+        }
+    }
+
     export namespace Gestures {
         export type Drag = {
             start: Vector2;
             end: Vector2;
             d: Vector2;
         }
+
+        export type Hold = {
+            x: number;
+            y: number;
+            time: number;
+        }
+
+        export type Tap = {
+            x: number;
+            y: number;
+            time: number;
+        }
     }
 
     export class Gestures {
-        drag: Gestures.Drag | undefined;
+        private _drags: Gestures.Drag[] = [];
+        getDrags$(minDistance: number = 0) {
+            let resultLength = 0;
+            for (let touch of Input.touches) {
+                if (!touch.isDown) continue;
+                if (touch.maxDragDistance < minDistance) continue;
 
-        private lastTouch: Pt | undefined;
-
-        update() {
-            let touch = Input.isUsingTouch
-                ? Input.touch
-                : Input.isKeyCodeDown(Input.MOUSE_KEYCODES[0]) ? Input.mousePosition$.clone() : undefined;
-            
-            if (touch) {
-                if (!this.lastTouch) {
-                    this.drag = {
-                        start: vec2(touch),
-                        end: vec2(touch),
-                        d: Vector2.ZERO,
-                    };
+                resultLength++;
+                if (this._drags.length < resultLength) {
+                    this._drags.push({
+                        start: vec2(touch.startX, touch.startY),
+                        end: vec2(touch.x, touch.y),
+                        d: vec2(touch.x - touch.startX, touch.y - touch.startY),
+                    });
+                } else {
+                    this._drags[resultLength-1].start.set(touch.startX, touch.startY);
+                    this._drags[resultLength-1].end.set(touch.x, touch.y);
+                    this._drags[resultLength-1].d.set(touch.x - touch.startX, touch.y - touch.startY);
                 }
-
-                if (this.drag) {
-                    this.drag.end.set(touch);
-                    this.drag.d.set(this.drag.end).subtract(this.drag.start);
-                }
-            } else {
-                this.drag = undefined;
             }
 
-            this.lastTouch = touch;
+            this._drags.length = resultLength;
+            return this._drags;
+        }
+
+        getDrag$(minDistance: number = 0): Gestures.Drag | undefined {
+            return this.getDrags$(minDistance)[0];
+        }
+
+        private _holds: Gestures.Hold[] = [];
+        getHolds$(maxDistance: number = 0, minTime: number = 0) {
+            let resultLength = 0;
+            for (let touch of Input.touches) {
+                if (!touch.isDown) continue;
+                if (touch.maxDragDistance > maxDistance) continue;
+                if (touch.downTime < minTime) continue;
+
+                resultLength++;
+                if (this._holds.length < resultLength) {
+                    this._holds.push({
+                        x: touch.x,
+                        y: touch.y,
+                        time: touch.downTime,
+                    });
+                } else {
+                    this._holds[resultLength-1].x = touch.x;
+                    this._holds[resultLength-1].y = touch.y;
+                    this._holds[resultLength-1].time = touch.downTime;
+                }
+            }
+
+            this._holds.length = resultLength;
+            return this._holds;
+        }
+
+        getHold$(maxDistance: number = 0, minTime: number = 0): Gestures.Hold | undefined {
+            return this.getHolds$(maxDistance, minTime)[0];
+        }
+
+        private _taps: Gestures.Tap[] = [];
+        getTaps$(maxTime: number = Infinity) {
+            let resultLength = 0;
+            for (let touch of Input.touches) {
+                if (touch.isDown) continue;
+                if (touch.downTime > maxTime) continue;
+
+                resultLength++;
+                if (this._taps.length < resultLength) {
+                    this._taps.push({
+                        x: touch.x,
+                        y: touch.y,
+                        time: touch.downTime,
+                    });
+                } else {
+                    this._taps[resultLength-1].x = touch.x;
+                    this._taps[resultLength-1].y = touch.y;
+                    this._taps[resultLength-1].time = touch.downTime;
+                }
+            }
+
+            this._taps.length = resultLength;
+            return this._taps;
+        }
+
+        getTap$(maxTime: number = Infinity): Gestures.Tap | undefined {
+            return this.getTaps$(maxTime)[0];
         }
     }
 

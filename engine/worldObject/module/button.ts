@@ -21,7 +21,6 @@ namespace Button {
     }
 
     export type CompatibleWorldObject = WorldObject & {
-        bounds: Bounds;
         tint: number;
     }
 
@@ -137,14 +136,19 @@ class Button extends Module<WorldObject> {
 
     getBounds$() {
         let localBounds = this.worldObject.getVisibleLocalBounds$();
-        if (this.worldObject.bounds instanceof NullBounds && localBounds) {
+        let worldObjectBounds = (this.worldObject as any).bounds as Bounds | undefined;
+        if ((!worldObjectBounds || worldObjectBounds instanceof NullBounds) && localBounds) {
             this.bounds.x = localBounds.x;
             this.bounds.y = localBounds.y;
             this.bounds.width = localBounds.width;
             this.bounds.height = localBounds.height;
             return this.bounds;
         }
-        return this.worldObject.bounds;
+        if (worldObjectBounds) {
+            return worldObjectBounds;
+        }
+        console.error('Object not compatible with Button:', this.worldObject);
+        return this.bounds;
     }
 
     isHovered() {

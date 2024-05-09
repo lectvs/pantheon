@@ -1,17 +1,34 @@
+namespace Module {
+    // To add a new hook, simply add an entry here and call Module.hookManager.executeHooks() at the appropriate location(s).
+    export type Hooks<M extends Module<WorldObject>> = {
+        onUpdate: { params: (this: M) => void };
+    }
+}
+
 class Module<T extends WorldObject> {
-    protected type: new (...args: any[]) => T;
+    protected worldObjectType: new (...args: any[]) => T;
     protected _worldObject!: T;
+
+    protected hookManager: HookManager<Module.Hooks<this>>;
 
     get worldObject() { return this._worldObject; }
     get delta() { return this._worldObject.delta; }
 
-    constructor(type: new (...args: any[]) => T) {
-        this.type = type;
+    constructor(worldObjectType: new (...args: any[]) => T) {
+        this.worldObjectType = worldObjectType;
+        this.hookManager = new HookManager({
+            binder: fn => fn.bind(this),
+            hooks: {},
+        });
+    }
+
+    addHook<T extends keyof Module.Hooks<this>>(name: T, fn: Module.Hooks<this>[T]['params']) {
+        return this.hookManager.addHook(name, fn);
     }
 
     init(worldObject: WorldObject): void {
-        if (!(worldObject instanceof this.type)) {
-            console.error(`Tried to add Module<${this.type.name}> to a world object of incompatible type:`, worldObject);
+        if (!(worldObject instanceof this.worldObjectType)) {
+            console.error(`Tried to add Module<${this.worldObjectType.name}> to a world object of incompatible type:`, worldObject);
             return;
         }
         this._worldObject = worldObject;
@@ -22,7 +39,9 @@ class Module<T extends WorldObject> {
     onRemove(): void {}
 
     preUpdate(): void {}
-    update(): void {}
+    update(): void {
+        this.hookManager.executeHooks('onUpdate');
+    }
     postUpdate(): void {}
 
     render(): Render.Result {
@@ -32,5 +51,9 @@ class Module<T extends WorldObject> {
     removeFromWorldObject(): void {
         this.onRemove();
         A.removeAll(this.worldObject.modules, this);
+    }
+
+    removeHook(hook: Hook) {
+        this.hookManager.removeHook(hook);
     }
 }

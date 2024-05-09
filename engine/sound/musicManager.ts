@@ -4,11 +4,11 @@ namespace MusicManager {
     } | {
         state: 'playing';
         currentMusic: Sound;
-        transitionScript: Script;
+        fadeVolume: number;
     } | {
         state: 'paused';
         currentMusic: Sound;
-        transitionScript: Script;
+        fadeVolume: number;
     };
 }
 
@@ -40,6 +40,15 @@ class MusicManager {
         }
     }
 
+    fadeMusic(fadeVolume: number, fadeTime: number = 0) {
+        if (this.state.state === 'stopped') return;
+        let music = this.state.currentMusic;
+        let startVolume = music.volume;
+        this.scriptManager.runScript(S.tween(fadeTime, music, 'volume', startVolume, fadeVolume),
+            MusicManager.TRANSITION_SCRIPT, 'stopPrevious');
+        this.state.fadeVolume = fadeVolume;
+    }
+
     getCurrentMusicKey() {
         if (this.state.state === 'stopped') return undefined;
         return this.state.currentMusic.key;
@@ -47,23 +56,27 @@ class MusicManager {
 
     pauseMusic(fadeTime: number = 0) {
         if (this.state.state === 'stopped') return;
-        this.state.transitionScript.stop();
         let music = this.state.currentMusic;
         let startVolume = music.volume;
-        let pauseScript = this.scriptManager.runScript(S.chain(
+        this.scriptManager.runScript(S.chain(
             S.tween(fadeTime, music, 'volume', startVolume, 0),
             S.call(() => music.paused = true),
-        ));
+        ), MusicManager.TRANSITION_SCRIPT, 'stopPrevious');
         this.state = {
             state: 'paused',
             currentMusic: music,
-            transitionScript: pauseScript,
+            fadeVolume: this.state.fadeVolume,
         };
     }
 
     playMusic(key: string, fadeTime: number = 0) {
         if (this.state.state !== 'stopped' && this.state.currentMusic.key === key) {
-            if (this.state.state === 'playing') return;
+            if (this.state.state === 'playing') {
+                if (this.state.fadeVolume < 1) {
+                    this.unfadeMusic(fadeTime);
+                }
+                return;
+            }
             if (this.state.state === 'paused') {
                 this.unpauseMusic(fadeTime);
                 return;
@@ -73,17 +86,17 @@ class MusicManager {
         this.stopMusic(fadeTime);
         let music = this.soundManager.playSound(key);
         music.loopsLeft = Infinity;
-        let playScript = this.scriptManager.runScript(S.tween(fadeTime, music, 'volume', 0, 1));
+        this.scriptManager.runScript(S.tween(fadeTime, music, 'volume', 0, 1),
+            MusicManager.TRANSITION_SCRIPT, 'stopPrevious');
         this.state = {
             state: 'playing',
             currentMusic: music,
-            transitionScript: playScript,
+            fadeVolume: 1,
         };
     }
 
     stopMusic(fadeTime: number = 0) {
         if (this.state.state === 'stopped') return;
-        this.state.transitionScript.stop();
         let music = this.state.currentMusic;
         let startVolume = music.volume;
         this.scriptManager.runScript(S.chain(
@@ -95,17 +108,23 @@ class MusicManager {
         };
     }
 
+    unfadeMusic(fadeTime: number = 0) {
+        this.fadeMusic(1, fadeTime);
+    }
+
     unpauseMusic(fadeTime: number = 0) {
         if (this.state.state === 'stopped') return;
-        this.state.transitionScript.stop();
         let music = this.state.currentMusic;
         let startVolume = music.volume;
         music.paused = false;
-        let unpauseScript = this.scriptManager.runScript(S.tween(fadeTime, music, 'volume', startVolume, 1));
+        this.scriptManager.runScript(S.tween(fadeTime, music, 'volume', startVolume, 1),
+            MusicManager.TRANSITION_SCRIPT, 'stopPrevious');
         this.state = {
             state: 'playing',
             currentMusic: music,
-            transitionScript: unpauseScript,
+            fadeVolume: this.state.fadeVolume,
         };
     }
+
+    static TRANSITION_SCRIPT = 'transition';
 }
