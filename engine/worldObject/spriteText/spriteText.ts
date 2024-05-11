@@ -303,7 +303,17 @@ class SpriteText extends WorldObject {
     private getRenderSystem() {
         if (!this.renderSystem) {
             SpriteText.justify(this.chars, this.justify);
-            this.renderSystem = SpriteTextRenderer.getRenderSystem(this.getVisibleCharList());
+            let characters = this.getVisibleCharList();
+            let partToCharacters: DictNumber<SpriteTextParser.Character[]> = {};
+            for (let character of characters) {
+                if (!character.texture) continue;
+                if (!(character.part in partToCharacters)) {
+                    partToCharacters[character.part] = [];
+                }
+                partToCharacters[character.part].push(character);
+            }
+    
+            this.renderSystem = new SpriteTextRenderSystem(partToCharacters);
         }
         return this.renderSystem;
     }

@@ -1,15 +1,20 @@
 /// <reference path="../../worldObject/worldObject.ts"/>
 
 namespace SpriteTextDisplay {
-    export type Config = WorldObject.Config<SpriteTextDisplay2> & {
+    export type Config = WorldObject.Config<SpriteTextDisplay> & {
         text?: string;
         spacingDx?: number;
         spacingDy?: number;
         spriteTextConfig?: SpriteText.Config<SpriteText>;
+        startEntered?: boolean;
+        wavy?: {
+            amplitude: number;
+            cyclesPerSecond: number;
+        };
     }
 }
 
-class SpriteTextDisplay2 extends WorldObject {
+class SpriteTextDisplay extends WorldObject {
     private spriteTexts: SpriteText[];
 
     constructor(config: SpriteTextDisplay.Config) {
@@ -23,6 +28,8 @@ class SpriteTextDisplay2 extends WorldObject {
         let spacingDx = config.spacingDx ?? (spriteTextFont?.charWidth ?? 8);
         let spacingDy = config.spacingDy ?? (spriteTextFont?.charHeight ?? 15);
 
+        let startEntered = config.startEntered ?? false;
+
         let styledChars = SpriteTextUtils.splitIntoStyledChars(config.text ?? '');
 
         this.spriteTexts = this.addChildren(styledChars.map((line, j) => line.map((styledChar, i) => new SpriteText({
@@ -32,8 +39,20 @@ class SpriteTextDisplay2 extends WorldObject {
             x: M.equidistantLine(0, spacingDx * scaleX, line.length, i),
             y: M.equidistantLine(0, spacingDy * scaleY, styledChars.length, j),
             text: styledChar,
-            visible: false,
+            visible: startEntered,
         }))).flat());
+
+        if (config.wavy) {
+            this.makeWavy(config.wavy.amplitude, config.wavy.cyclesPerSecond);
+        }
+    }
+
+    enterInstant() {
+        this.spriteTexts.forEach(st => st.setVisible(true));
+    }
+
+    exitInstant() {
+        this.kill();
     }
 
     enterFade(duration: number) {
@@ -93,108 +112,13 @@ class SpriteTextDisplay2 extends WorldObject {
     forEach(callback: (spriteText: SpriteText, i: number, spriteTexts: SpriteText[]) => void) {
         this.spriteTexts.forEach((s, i, ss) => callback(s, i, ss));
     }
-}
 
-abstract class SpriteTextDisplay extends WorldObject {
-    abstract enter(duration: number): Script;
-    abstract exit(duration: number): Script;
-    abstract forEach(callback: (spriteText: SpriteText) => void): void;
-}
-
-namespace SpriteTextDisplay {
-    export class Alpha extends SpriteTextDisplay {
-        private spriteText: SpriteText;
-        displayedAlpha: number;
-
-        constructor(config: SpriteTextDisplay.Config) {
-            super(config);
-
-            let spriteTextConfig = config.spriteTextConfig ?? {};
-
-            this.displayedAlpha = spriteTextConfig.alpha ?? 1;
-
-            this.spriteText = this.addChild(new SpriteText({
-                justify: 'center',
-                anchor: Anchor.CENTER,
-                ...spriteTextConfig,
-                text: config.text,
-                alpha: 0,
-            }));
-        }
-
-        override enter(duration: number) {
-            let std = this;
-            return this.runScript(function*() {
-                yield S.tween(duration, std.spriteText, 'alpha', 0, std.displayedAlpha);
+    makeWavy(amplitude: number, cyclesPerSecond: number) {
+        this.spriteTexts.forEach((s, i) => {
+            s.addHook('onUpdate', function() {
+                this.offsetY = M.lerp(Tween.Easing.OscillateSine(cyclesPerSecond)(this.life.time + i/10), -amplitude, amplitude);
             });
-        }
-
-        override exit(duration: number) {
-            let std = this;
-            return this.runScript(function*() {
-                yield S.tween(duration, std.spriteText, 'alpha', std.spriteText.alpha, 0);
-                std.kill();
-            });
-        }
-
-        override forEach(callback: (spriteText: SpriteText) => void): void {
-            callback(this.spriteText);
-        }
-    }
-
-    export class Scatter extends SpriteTextDisplay {
-        private spriteTexts: SpriteText[];
-        displayedAlpha: number;
-        scatterDistance: number;
-
-        constructor(config: SpriteTextDisplay.Config & { scatterDistance?: number }) {
-            super(config);
-
-
-            let spriteTextConfig = config.spriteTextConfig ?? {};
-
-            this.displayedAlpha = spriteTextConfig.alpha ?? 1;
-            this.scatterDistance = config.scatterDistance ?? 0;
-
-            let text = config.text ?? '';
-            let lines = text.split('\n');
-            this.spriteTexts = this.addChildren(lines.map((line, j) => A.chars(line).map((char, i) => new SpriteText({
-                justify: 'center',
-                anchor: Anchor.CENTER,
-                ...spriteTextConfig,
-                x: M.equidistantLine(0, 10, line.length, i),
-                y: M.equidistantLine(0, 16, lines.length, j),
-                text: char,
-                alpha: 0,
-            }))).flat());
-        }
-
-        override enter(duration: number): Script {
-            let std = this;
-            return this.runScript(function*() {
-                let d = Random.inCircle(std.scatterDistance);
-                yield std.spriteTexts.map(char => S.simul(
-                    S.tween(duration, char, 'x', char.x + d.x, char.x),
-                    S.tween(duration, char, 'y', char.y + d.y, char.y),
-                    S.tween(duration, char, 'alpha', 0, std.displayedAlpha),
-                ));
-            });
-        }
-
-        override exit(duration: number): Script {
-            let std = this;
-            return this.runScript(function*() {
-                let d = Random.inCircle(std.scatterDistance);
-                yield std.spriteTexts.map(char => S.simul(
-                    S.tween(duration, char, 'x', char.x, char.x + d.x),
-                    S.tween(duration, char, 'y', char.y, char.y + d.y),
-                    S.tween(duration, char, 'alpha', char.alpha, 0),
-                ));
-            });
-        }
-
-        override forEach(callback: (spriteText: SpriteText) => void): void {
-            this.spriteTexts.forEach(t => callback(t));
-        }
+        });
+        return this;
     }
 }

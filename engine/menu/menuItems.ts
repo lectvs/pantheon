@@ -24,7 +24,7 @@ class MenuTextButton extends SpriteText {
             onHover: () => {
                 if (config.onHover) config.onHover.apply(this);
             },
-            onJustHovered: () => {
+            onJustHover: () => {
                 if (config.onJustHovered) config.onJustHovered.apply(this);
             },
             onClick: () => {

@@ -20,9 +20,9 @@ class LoadingRing extends Sprite {
         this.updateTexture();
     }
 
-    override update(): void {
-        super.update();
+    override render(): [PIXI.Sprite, ...PIXI.DisplayObject[]] {
         this.updateTexture();
+        return super.render();
     }
 
     protected updateTexture() {

@@ -81,7 +81,7 @@ interface Array<T> {
     /**
      * Appends elements from another array to the end of this array, and returns the new length of the array.
      */
-    pushAll(other: T[]): number;
+    pushAll(other: T[] | undefined): number;
 
     /**
      * Removes the element at the specified index, like splice but does not create a new array.

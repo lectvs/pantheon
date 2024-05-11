@@ -96,6 +96,7 @@ Array.prototype.min = function(key: (value: any, index: number, obj: any[]) => n
 }
 
 Array.prototype.pushAll = function(other: any[]) {
+    if (!other) return this.length;
     for (let i = 0; i < other.length; i++) {
         this.push(other[i]);
     }

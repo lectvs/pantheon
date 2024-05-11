@@ -4,14 +4,17 @@ namespace Button {
     export type Config = {
         onClick?: Callback;
         onHover?: Callback;
-        onJustHovered?: Callback;
-        onUnhover?: Callback;
-        onJustUnhovered?: Callback;
+        onJustHover?: Callback;
+        onUnHover?: Callback;
+        onJustUnHover?: Callback;
         onClickedDown?: Callback;
         onJustClickedDown?: Callback;
+        onUnClickedDown?: Callback;
+        onJustUnClickedDown?: Callback;
 
         canHover?: () => boolean;
 
+        enableTinting?: boolean;
         hoverTint?: number;
         clickTint?: number;
         baseTint?: number;
@@ -30,14 +33,17 @@ namespace Button {
 class Button extends Module<WorldObject> {
     onClick: Button.Callback;
     onHover: Button.Callback;
-    onJustHovered: Button.Callback;
-    onUnhover: Button.Callback;
-    onJustUnhovered: Button.Callback;
+    onJustHover: Button.Callback;
+    onUnHover: Button.Callback;
+    onJustUnHover: Button.Callback;
     onClickedDown: Button.Callback;
     onJustClickedDown: Button.Callback;
+    onUnClickedDown: Button.Callback;
+    onJustUnClickedDown: Button.Callback;
 
     canHover: () => boolean;
 
+    enableTinting: boolean;
     hoverTint?: number;
     clickTint?: number;
     baseTint?: number;
@@ -58,12 +64,15 @@ class Button extends Module<WorldObject> {
 
         this.onClick = config.onClick ?? Utils.NOOP;
         this.onHover = config.onHover ?? Utils.NOOP;
-        this.onJustHovered = config.onJustHovered ?? Utils.NOOP;
-        this.onUnhover = config.onUnhover ?? Utils.NOOP;
-        this.onJustUnhovered = config.onJustUnhovered ?? Utils.NOOP;
+        this.onJustHover = config.onJustHover ?? Utils.NOOP;
+        this.onUnHover = config.onUnHover ?? Utils.NOOP;
+        this.onJustUnHover = config.onJustUnHover ?? Utils.NOOP;
         this.onClickedDown = config.onClickedDown ?? Utils.NOOP;
         this.onJustClickedDown = config.onJustClickedDown ?? Utils.NOOP;
+        this.onUnClickedDown = config.onUnClickedDown ?? Utils.NOOP;
+        this.onJustUnClickedDown = config.onJustUnClickedDown ?? Utils.NOOP;
         this.canHover = config.canHover ?? (() => true);
+        this.enableTinting = config.enableTinting ?? true;
         this.hoverTint = config.hoverTint;
         this.clickTint = config.clickTint;
         this.baseTint = config.baseTint;
@@ -98,20 +107,22 @@ class Button extends Module<WorldObject> {
             this.clickedDown = false;
         }
         
-        if (hovered) {
-            if (this.clickedDown) {
-                if (this.clickTint !== undefined) this.worldObject.tint = this.clickTint;
+        if (this.enableTinting) {
+            if (hovered) {
+                if (this.clickedDown) {
+                    if (this.clickTint !== undefined) this.worldObject.tint = this.clickTint;
+                } else {
+                    if (this.hoverTint !== undefined) this.worldObject.tint = this.hoverTint;
+                }
             } else {
-                if (this.hoverTint !== undefined) this.worldObject.tint = this.hoverTint;
+                if (this.baseTint !== undefined) this.worldObject.tint = this.baseTint;
             }
-        } else {
-            if (this.baseTint !== undefined) this.worldObject.tint = this.baseTint;
         }
 
         if (hovered) {
             this.onHover();
             if (!this.lastHovered) {
-                this.onJustHovered();
+                this.onJustHover();
             }
             if (this.clickedDown) {
                 this.onClickedDown();
@@ -120,10 +131,20 @@ class Button extends Module<WorldObject> {
                 }
             }
         } else {
-            this.onUnhover();
+            this.onUnHover();
             if (this.lastHovered) {
-                this.onJustUnhovered();
+                this.onJustUnHover();
             }
+        }
+
+        if (hovered) {
+            this.onHover();
+        } else {
+            this.onUnHover();
+        }
+
+        if (hovered && !this.lastHovered) {
+            this.onJustHover();
         }
 
         this.lastHovered = hovered;
@@ -160,6 +181,10 @@ class Button extends Module<WorldObject> {
 
         let mouseBounds = this.worldObject.world.getWorldMouseBounds$();
         return Button.getClosestButton(mouseBounds, this.worldObject.world) === this;
+    }
+
+    isClickedDown() {
+        return this.clickedDown;
     }
 
     isOverlappingMouse() {
