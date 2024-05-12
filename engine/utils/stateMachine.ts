@@ -7,7 +7,7 @@ namespace StateMachine {
     }
 
     export type Transition<SD extends StateData, S extends StateData['state']> = {
-        toState: SD | ((currentStateData: SD & { state: S }) => SD);
+        toState: SD | ((currentStateData?: SD & { state: S }) => SD);
         condition?: (currentStateData?: SD & { state: S }) => any;
         afterConditionDelay?: number;
         onTransition?: (previousStateData?: SD & { state: S }) => any;
@@ -63,11 +63,12 @@ class StateMachine<StateData extends StateMachine.StateData> {
 
             yield S.wait(selectedTransition.afterConditionDelay ?? 0);
 
-            if (selectedTransition.onTransition) selectedTransition.onTransition(currentStateData);
-
             let toState = O.isFunction(selectedTransition.toState)
                 ? selectedTransition.toState(currentStateData)
                 : selectedTransition.toState;
+
+            if (selectedTransition.onTransition) selectedTransition.onTransition(currentStateData);
+
             sm.setState(toState);
         });
 

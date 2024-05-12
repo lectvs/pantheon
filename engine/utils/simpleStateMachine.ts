@@ -29,7 +29,7 @@ class SimpleStateMachine {
             script: stateScript ? (() => stateScript!) : undefined,
             update: state.update,
             transitions: state.transitions?.map(transition => ({
-                toState: O.isFunction(transition.toState) ? (currentStateData => (transition.toState as Function)(currentStateData.state)) : { state: transition.toState },
+                toState: O.isFunction(transition.toState) ? (currentStateData => (transition.toState as Function)(currentStateData?.state)) : { state: transition.toState },
                 condition: transition.condition ? (currentStateData => transition.condition!(currentStateData?.state)) : undefined,
                 afterConditionDelay: transition.afterConditionDelay,
                 onTransition: transition.onTransition ? (currentStateData => transition.onTransition!(currentStateData?.state)) : undefined,

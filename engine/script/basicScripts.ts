@@ -22,7 +22,7 @@ namespace S {
     export function doOverTime(time: OrFactory<number>, func: (t: number, time: number) => any): Script.Function {
         return function*() {
             let duration = OrFactory.resolve(time);
-            if (duration < 0) {
+            if (duration <= 0) {
                 func(1, 0);
                 return;
             }
