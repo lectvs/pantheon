@@ -1,34 +1,44 @@
 namespace UIElement {
     export type Config = {
         onClick?: Callback;
-        onHover?: Callback;
+        onUpdate?: UpdateCallback;
         onJustHovered?: Callback;
-        onUnhover?: Callback;
         onJustUnhovered?: Callback;
-        onClickedDown?: Callback;
         onJustClickedDown?: Callback;
+        onJustUnClickedDown?: Callback;
 
         canInteract?: () => boolean;
         enabled?: boolean;
 
         blockLevel?: number;
+
+        tinting?: {
+            base?: number;
+            hover?: number;
+            clicked?: number;
+        };
     }
 
     export type Callback = (this: UIElement) => void;
+    export type UpdateCallback = (this: UIElement, hovered: boolean, clickedDown: boolean) => void;
 }
 
 class UIElement extends Module<WorldObject> {
     onClick: UIElement.Callback;
-    onHover: UIElement.Callback;
+    onUpdate: UIElement.UpdateCallback;
     onJustHovered: UIElement.Callback;
-    onUnhover: UIElement.Callback;
     onJustUnhovered: UIElement.Callback;
-    onClickedDown: UIElement.Callback;
     onJustClickedDown: UIElement.Callback;
+    onJustUnClickedDown: UIElement.Callback;
 
     canInteract: () => boolean;
     enabled: boolean;
     blockLevel: number;
+
+    tintingEnabled: boolean;
+    baseTint?: number;
+    hoverTint?: number;
+    clickTint?: number;
 
     private lastHovered: boolean = false;
     private lastClickedDown: boolean = false;
@@ -38,16 +48,30 @@ class UIElement extends Module<WorldObject> {
         super(WorldObject);
 
         this.onClick = config.onClick ?? Utils.NOOP;
-        this.onHover = config.onHover ?? Utils.NOOP;
+        this.onUpdate = config.onUpdate ?? Utils.NOOP;
         this.onJustHovered = config.onJustHovered ?? Utils.NOOP;
-        this.onUnhover = config.onUnhover ?? Utils.NOOP;
         this.onJustUnhovered = config.onJustUnhovered ?? Utils.NOOP;
-        this.onClickedDown = config.onClickedDown ?? Utils.NOOP;
         this.onJustClickedDown = config.onJustClickedDown ?? Utils.NOOP;
+        this.onJustUnClickedDown = config.onJustUnClickedDown ?? Utils.NOOP;
 
         this.canInteract = config.canInteract ?? (() => true);
         this.enabled = config.enabled ?? true;
         this.blockLevel = config.blockLevel ?? 0;
+
+        this.tintingEnabled = !!config.tinting;
+        if (config.tinting) {
+            this.baseTint = config.tinting.base;
+            this.hoverTint = config.tinting.hover;
+            this.clickTint = config.tinting.clicked;
+        }
+    }
+
+    override init(worldObject: WorldObject): void {
+        super.init(worldObject);
+
+        if (this.baseTint === undefined && 'tint' in this.worldObject && M.isNumber(this.worldObject.tint)) {
+            this.baseTint = this.worldObject.tint;
+        }
     }
 
     override update(): void {
@@ -65,24 +89,40 @@ class UIElement extends Module<WorldObject> {
             }
             this.clickedDown = false;
         }
+
+        if (this.tintingEnabled && 'tint' in this.worldObject) {
+            if (hovered) {
+                if (this.clickedDown) {
+                    if (this.clickTint !== undefined) this.worldObject.tint = this.clickTint;
+                } else {
+                    if (this.hoverTint !== undefined) this.worldObject.tint = this.hoverTint;
+                }
+            } else {
+                if (this.baseTint !== undefined) this.worldObject.tint = this.baseTint;
+            }
+        }
         
         if (hovered) {
-            this.onHover();
             if (!this.lastHovered) {
                 this.onJustHovered();
             }
-            if (this.clickedDown) {
-                this.onClickedDown();
-                if (!this.lastClickedDown) {
-                    this.onJustClickedDown();
-                }
-            }
         } else {
-            this.onUnhover();
             if (this.lastHovered) {
-                this.onJustUnhovered();
+                this.onJustHovered();
             }
         }
+
+        if (hovered && this.clickedDown) {
+            if (!this.lastClickedDown) {
+                this.onJustClickedDown();
+            }
+        } else {
+            if (this.lastClickedDown) {
+                this.onJustUnClickedDown();
+            }
+        }
+
+        this.onUpdate(hovered, this.clickedDown);
 
         this.lastHovered = hovered;
         this.lastClickedDown = this.clickedDown;
@@ -106,12 +146,12 @@ class UIElement extends Module<WorldObject> {
     isOverlappingMouse() {
         if (!this.worldObject.world) return false;
         let mouseBounds = this.worldObject.world.getWorldMouseBounds$();
-        return this.getInteractBounds().overlaps(mouseBounds);
+        return this.getInteractBounds$().overlaps(mouseBounds);
     }
 
     private localBounds = new RectBounds(0, 0, 0, 0);
-    getInteractBounds() {
-        if ('bounds' in this.worldObject && (this.worldObject.bounds as Bounds).overlaps) {
+    getInteractBounds$() {
+        if ('bounds' in this.worldObject && (this.worldObject.bounds as Bounds).overlaps && !(this.worldObject.bounds instanceof NullBounds)) {
             return this.worldObject.bounds as Bounds;
         }
         let objLocalBounds = this.worldObject.getVisibleLocalBounds$();
@@ -140,7 +180,7 @@ namespace UIElement {
                                         && uiElement.blockLevel >= maxBlockLevel
                                         && uiElement.worldObject.isActive()
                                         && uiElement.canInteract()
-                                        && uiElement.getInteractBounds().overlaps(targetBounds));
+                                        && uiElement.getInteractBounds$().overlaps(targetBounds));
         
         if (A.isEmpty(uiElements)) {
             return undefined;
@@ -149,8 +189,8 @@ namespace UIElement {
         uiElements.sort((e1, e2) => {
             let cmpLayer = -World.Actions.getRenderOrder(e1.worldObject, e2.worldObject);
             if (cmpLayer !== 0) return cmpLayer;
-            let e1dist = distanceTo(targetBounds.x, targetBounds.y, e1.getInteractBounds().getBoundingBox$());
-            let e2dist = distanceTo(targetBounds.x, targetBounds.y, e2.getInteractBounds().getBoundingBox$());
+            let e1dist = distanceTo(targetBounds.x, targetBounds.y, e1.getInteractBounds$().getBoundingBox$());
+            let e2dist = distanceTo(targetBounds.x, targetBounds.y, e2.getInteractBounds$().getBoundingBox$());
             return e1dist - e2dist;
         });
 

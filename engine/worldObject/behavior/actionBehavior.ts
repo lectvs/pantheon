@@ -3,7 +3,7 @@ namespace ActionBehavior {
     export type NextAction = string | ((this: ActionBehavior) => string);
 
     export type Action = {
-        script?: Script.Function;
+        script?: (controller: Controller) => Script.Function;
         interrupt?: Interrupt;
         waitAfter?: OrFactory<number>;
         nextAction: NextAction;
@@ -52,7 +52,7 @@ class ActionBehavior implements Behavior {
             });
 
             this.addAction(waitActionName, {
-                script: function*() {
+                script: controller => function*() {
                     yield S.wait(wait);
                 },
                 nextAction: action.nextAction,
@@ -63,7 +63,7 @@ class ActionBehavior implements Behavior {
 
         this.stateMachine.addState(name, {
             script: function*() {
-                if (action.script) yield action.script;
+                if (action.script) yield action.script(b.controller);
                 yield;  // Yield once before doing the next action to let final controller inputs go through.
                 b.doAction(b.getNextAction(action.nextAction));
             }

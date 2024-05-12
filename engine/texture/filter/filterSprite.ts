@@ -11,8 +11,6 @@ class FilterSprite extends Sprite {
     override update(): void {
         super.update();
 
-        if (!this.world) return;
-
         this.effects.post.forEach(filter => filter.setOffset(this.world!.camera.worldOffsetX, this.world!.camera.worldOffsetY));
     }
 }

@@ -18,13 +18,15 @@ class MenuTextButton extends SpriteText {
         this.bounds = new RectBounds(0, 0, 0, 0, this);
         this.enabled = true;
 
-        let button = this.addModule(new Button({
-            hoverTint: config.hoverColor ?? 0x808080,
-            clickTint: config.hoverColor ?? 0x808080,
-            onHover: () => {
-                if (config.onHover) config.onHover.apply(this);
+        let button = this.addModule(new UIElement({
+            tinting: {
+                hover: config.hoverColor ?? 0x808080,
+                clicked: config.hoverColor ?? 0x808080,
             },
-            onJustHover: () => {
+            onUpdate: (hovered) => {
+                if (hovered && config.onHover) config.onHover.apply(this);
+            },
+            onJustHovered: () => {
                 if (config.onJustHovered) config.onJustHovered.apply(this);
             },
             onClick: () => {
@@ -38,7 +40,7 @@ class MenuTextButton extends SpriteText {
         super.update();
         this.setBounds();
 
-        let button = this.getModule(Button);
+        let button = this.getModule(UIElement);
         if (button) {
             button.enabled = this.enabled && this.isHighestPriority();
         }
