@@ -2,6 +2,12 @@ type Hook = { name: string, fn: Function };
 type HookSet = Dict<{ params: (...params: any[]) => void }>;
 type HooksConfig<Hooks extends HookSet> = { [T in keyof Hooks]?: Hooks[T]['params'] | Hooks[T]['params'][] };
 
+namespace Hook {
+    export type Config = {
+        runOnce?: boolean;
+    }
+}
+
 namespace HookManager {
     export type Config<Hooks extends HookSet> = {
         binder?: (fn: Function) => Function;
@@ -11,7 +17,10 @@ namespace HookManager {
 
 class HookManager<Hooks extends HookSet> {
     private binder: (fn: Function) => Function;
-    private hooks: Dict<Function[]>;
+    private hooks: Dict<{
+        hookFn: Function;
+        runOnce: boolean;
+    }[]>;
 
     constructor(config: HookManager.Config<Hooks>) {
         this.hooks = {};
@@ -33,12 +42,15 @@ class HookManager<Hooks extends HookSet> {
         }
     }
 
-    addHook<T extends string & keyof Hooks>(name: T, fn: Hooks[T]['params']): Hook {
+    addHook<T extends string & keyof Hooks>(name: T, fn: Hooks[T]['params'], config: Hook.Config = {}): Hook {
         if (!(name in this.hooks)) {
             this.hooks[name] = [];
         }
         let boundFn = this.binder(fn);
-        this.hooks[name].push(boundFn);
+        this.hooks[name].push({
+            hookFn: boundFn,
+            runOnce: config.runOnce ?? false,
+        });
         return { name, fn: boundFn };
     }
 
@@ -46,8 +58,9 @@ class HookManager<Hooks extends HookSet> {
         let hooks = this.hooks[name];
         if (A.isEmpty(hooks)) return;
         for (let hook of hooks) {
-            hook(...params);
+            hook.hookFn(...params);
         }
+        hooks.filterInPlace(hook => !hook.runOnce);
     }
 
     executeHooksWithReturnValue$<T extends string & keyof Hooks>(name: T, ...params: Parameters<Hooks[T]['params']>) {
@@ -55,8 +68,9 @@ class HookManager<Hooks extends HookSet> {
         if (A.isEmpty(hooks)) return FrameCache.array();
         let result: ReturnType<Hooks[T]['params']>[] = FrameCache.array();
         for (let hook of hooks) {
-            result.push(hook(...params));
+            result.push(hook.hookFn(...params));
         }
+        hooks.filterInPlace(hook => !hook.runOnce);
         return result;
     }
 
@@ -69,6 +83,6 @@ class HookManager<Hooks extends HookSet> {
             console.error("Cannot remove hook because it does not exist", hook, this);
             return;
         }
-        A.removeAll(this.hooks[hook.name], hook.fn);
+        this.hooks[hook.name].filterInPlace(h => h.hookFn !== hook.fn)
     }
 }

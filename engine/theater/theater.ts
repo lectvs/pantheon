@@ -11,18 +11,14 @@ namespace Theater {
 class Theater {
     scriptManager: ScriptManager;
     cutsceneManager: CutsceneManager;
-    stageManager: StageManager;
 
     private dialogBoxWorld: World;
     dialogBox: DialogBox | undefined;
-
-    endOfFrameQueue: (() => any)[];
 
     isSkippingCutscene: boolean;
     shouldStopSkippingCutscene: boolean;
     private fades: Theater.Fade[];
 
-    get currentWorld() { return this.stageManager ? this.stageManager.currentWorld : undefined; }
     get delta() { return global.game.delta; }
 
     private container: PIXI.Container;
@@ -30,7 +26,6 @@ class Theater {
     constructor(config: Theater.Config = {}) {
         this.scriptManager = new ScriptManager();
         this.cutsceneManager = new CutsceneManager(this);
-        this.stageManager = new StageManager(this);
 
         this.dialogBoxWorld = new World({
             backgroundAlpha: 0,
@@ -38,8 +33,6 @@ class Theater {
         if (config.dialogBoxFactory) {
             this.dialogBox = this.addDialogBox(config.dialogBoxFactory);
         }
-
-        this.endOfFrameQueue = [];
 
         this.isSkippingCutscene = false;
         this.shouldStopSkippingCutscene = false;
@@ -55,21 +48,14 @@ class Theater {
     update() {
         this.scriptManager.update(this.delta);
         this.cutsceneManager.update();
-        this.stageManager.update();
 
         if (this.dialogBox) {
             this.dialogBoxWorld.update();
-        }
-
-        while (!A.isEmpty(this.endOfFrameQueue)) {
-            this.endOfFrameQueue.shift()!();
         }
     }
 
     render(): Render.Result {
         let result: Render.Result = FrameCache.array();
-
-        result.pushAll(this.stageManager.render());
 
         if (this.dialogBox) {
             result.pushAll(this.dialogBoxWorld.render());
@@ -82,11 +68,6 @@ class Theater {
         Render.diff(this.container, result);
 
         return FrameCache.array(this.container);
-    }
-
-    canPause() {
-        if (!this.currentWorld) return false;
-        return this.currentWorld.allowPause;
     }
 
     clearFades(duration: number) {
@@ -109,28 +90,12 @@ class Theater {
         return this.cutsceneManager.isCutscenePlaying();
     }
 
-    loadStage(stage: () => World, transition: Transition = new Transitions.Instant()) {
-        this.runAtEndOfFrame(() => this.loadStageImmediate(stage, transition));
-    }
-
-    loadStageImmediate(stage: () => World, transition: Transition = new Transitions.Instant()) {
-        this.stageManager.internalLoadStage(stage, transition)
-    }
-
     playCutscene(cutscene: Cutscene) {
         this.cutsceneManager.playCutscene(cutscene);
     }
 
     playCutsceneIfNotSeen(cutscene: Cutscene) {
         this.cutsceneManager.playCutsceneIfNotSeen(cutscene);
-    }
-
-    reloadCurrentStage(transition: Transition = new Transitions.Instant()) {
-        this.runAtEndOfFrame(() => this.stageManager.internalReloadCurrentStage(transition));
-    }
-
-    runAtEndOfFrame(fn: () => any) {
-        this.endOfFrameQueue.push(fn);
     }
 
     runScript(script: Script.FunctionLike, name?: string) {
@@ -159,10 +124,6 @@ class Theater {
         }
     }
 
-    onStageLoad() {
-        this.cutsceneManager.onStageLoad();
-    }
-    
     private addDialogBox(factory: Factory<DialogBox>) {
         let dialogBox = this.dialogBoxWorld.addWorldObject(factory());
         dialogBox.setVisible(false);

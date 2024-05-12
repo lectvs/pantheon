@@ -323,8 +323,12 @@ class World {
         return result;
     }
 
-    addHook<T extends keyof World.Hooks<this>>(name: T, fn: World.Hooks<this>[T]['params']) {
-        return this.hookManager.addHook(name, fn);
+    addHook<T extends keyof World.Hooks<this>>(name: T, fn: World.Hooks<this>[T]['params'], config: Hook.Config = {}) {
+        // Almost all onTransitioned hooks are intended to be run only once.
+        if (name === 'onTransitioned' && config.runOnce === undefined) {
+            config.runOnce = true;
+        }
+        return this.hookManager.addHook(name, fn, config);
     }
 
     addWorldObject<T extends WorldObject>(obj: T): T {

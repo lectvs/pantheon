@@ -22,8 +22,8 @@ class Module<T extends WorldObject> {
         });
     }
 
-    addHook<T extends keyof Module.Hooks<this>>(name: T, fn: Module.Hooks<this>[T]['params']) {
-        return this.hookManager.addHook(name, fn);
+    addHook<T extends keyof Module.Hooks<this>>(name: T, fn: Module.Hooks<this>[T]['params'], config: Hook.Config = {}) {
+        return this.hookManager.addHook(name, fn, config);
     }
 
     init(worldObject: WorldObject): void {

@@ -359,8 +359,8 @@ class WorldObject {
         return World.Actions.addChildrenToParent(children, this);
     }
 
-    addHook<T extends keyof WorldObject.Hooks<this>>(name: T, fn: WorldObject.Hooks<this>[T]['params']) {
-        return this.hookManager.addHook(name, fn);
+    addHook<T extends keyof WorldObject.Hooks<this>>(name: T, fn: WorldObject.Hooks<this>[T]['params'], config: Hook.Config = {}) {
+        return this.hookManager.addHook(name, fn, config);
     }
 
     addModule<T extends Module<WorldObject>>(module: T): T {

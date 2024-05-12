@@ -38,6 +38,6 @@ class SimpleWarp extends WorldObject {
         let isInBounds = this.bounds.containsPoint(target) || (target instanceof PhysicsWorldObject && target.isOverlapping(this.bounds));
         if (!isInBounds) return;
         
-        global.theater.loadStage(this.toStage, OrFactory.resolve(this.transition));
+        global.game.loadStage(this.toStage, OrFactory.resolve(this.transition));
     }
 }

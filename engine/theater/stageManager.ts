@@ -1,22 +1,24 @@
 class StageManager {
-    currentWorld: World | undefined;
-    currentWorldFactory: (() => World) | undefined;
-
-    private theater: Theater;
+    private stageStack: {
+        world: World;
+        worldFactory: () => World;
+    }[];
     private transition: Transition | undefined;
 
-    constructor(theater: Theater) {
-        this.theater = theater;
+    get delta() { return global.game.delta; }
+
+    constructor() {
+        this.stageStack = [];
     }
 
     update() {
         if (this.transition) {
-            this.transition.update(this.theater.delta);
+            this.transition.update(this.delta);
             if (this.transition.done) {
                 this.finishTransition();
             }
         } else {
-            this.currentWorld?.update();
+            this.getCurrentWorld()?.update();
         }
     }
 
@@ -24,40 +26,70 @@ class StageManager {
         if (this.transition) {
             return this.transition.render();
         }
-        if (this.currentWorld) {
-            return this.currentWorld.render();
+        let currentWorld = this.getCurrentWorld();
+        if (currentWorld) {
+            return currentWorld.render();
         }
         return FrameCache.array();
     }
+    
+    back(transition: Transition) {
+        if (this.stageStack.length === 0) return;
 
-    /**
-     * Loads a stage immediately. If you are calling from inside your game, you probably want to call Theater.loadStage
-     */
-    internalLoadStage(stage: () => World, transition: Transition) {
-        let oldWorld = this.currentWorld;
+        let oldWorld = this.getCurrentWorld();
+        this.stageStack.pop();
+        let newWorld = this.getCurrentWorld();
+        this.transitionTo(oldWorld, newWorld, transition);
+    }
 
-        this.currentWorldFactory = stage;
-        this.currentWorld = stage();
+    clearMenus(transition: Transition) {
+        let oldWorld = this.getCurrentWorld();
+        this.stageStack.filterInPlace(stage => !(stage.world instanceof Menu));
+        let newWorld = this.getCurrentWorld();
 
-        this.theater.onStageLoad();
-        this.currentWorld.update();
-        
-        this.transition = transition;
-        this.transition.setData(oldWorld, this.currentWorld);
-        if (this.transition.done) {
-            this.finishTransition();
+        if (oldWorld !== newWorld) {
+            this.transitionTo(oldWorld, newWorld, transition);
         }
     }
 
-    /**
-     * Reloads the current stage immediately. If you are calling from inside your game, you probably want to call Theater.reloadCurrentStage
-     */
+    getCurrentWorld() {
+        return this.stageStack.last()?.world;
+    }
+
+    isInMenu() {
+        return this.getCurrentWorld() instanceof Menu;
+    }
+
+    internalLoadStage(stage: () => World, transition: Transition) {
+        let oldWorld = this.getCurrentWorld();
+        let newWorld = stage();
+        this.stageStack.push({
+            world: newWorld,
+            worldFactory: stage,
+        });
+        newWorld.update();
+        this.transitionTo(oldWorld, newWorld, transition);
+    }
+
     internalReloadCurrentStage(transition: Transition) {
-        if (!this.currentWorldFactory) {
-            console.error("Tried to reload current stage, but no stage loaded in StageManager");
+        if (this.stageStack.length === 0) {
+            console.error('Cannot reload current stage because there are no stages loaded');
             return;
         }
-        this.internalLoadStage(this.currentWorldFactory, transition);
+        this.internalLoadStage(this.stageStack.last()!.worldFactory, transition);
+    }
+
+    reset() {
+        this.stageStack.clear();
+        this.transition = undefined;
+    }
+
+    transitionTo(oldWorld: World | undefined, newWorld: World | undefined, transition: Transition) {
+        this.transition = transition;
+        this.transition.setData(oldWorld, newWorld);
+        if (this.transition.done) {
+            this.finishTransition();
+        }
     }
 
     private finishTransition() {
@@ -66,8 +98,6 @@ class StageManager {
             this.transition = undefined;
         }
 
-        if (this.currentWorld) {
-            this.currentWorld.onTransitioned();
-        }
+        this.getCurrentWorld()?.onTransitioned();
     }
 }

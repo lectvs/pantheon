@@ -3,13 +3,13 @@ namespace Game {
         entryPointMenu: Factory<World>;
         mainMenu: Factory<World>;
         pauseMenu: Factory<World>;
-        menuTheaterFactory?: Factory<MenuTheater>;
+        menuTheaterFactory?: Factory<Theater>;
         gameTheaterFactory?: Factory<Theater>;
     }
 }
 
 class Game {
-    menuTheater: MenuTheater;
+    menuTheater: Theater;
     gameTheater: Theater;
 
     private overlay: DebugOverlay;
@@ -18,14 +18,17 @@ class Game {
     private entryPointMenu: Factory<World>;
     private mainMenu: Factory<World>;
     private pauseMenu: Factory<World>;
-    private menuTheaterFactory: Factory<MenuTheater>;
+    private menuTheaterFactory: Factory<Theater>;
     private gameTheaterFactory: Factory<Theater>;
 
+    stageManager: StageManager;
     soundManager: SoundManager;
     musicManager: MusicManager;
     get volume(): number { return Options.volume * (Debug.SKIP_RATE >= 100 ? 0.2 : 1); };
 
     get delta(): number { return Main.delta; }
+
+    endOfFrameQueue: (() => any)[];
 
     private container: PIXI.Container;
 
@@ -33,9 +36,10 @@ class Game {
         this.entryPointMenu = config.entryPointMenu;
         this.mainMenu = config.mainMenu;
         this.pauseMenu = config.pauseMenu;
-        this.menuTheaterFactory = config.menuTheaterFactory || (() => new MenuTheater());
+        this.menuTheaterFactory = config.menuTheaterFactory || (() => new Theater());
         this.gameTheaterFactory = config.gameTheaterFactory || (() => new Theater());
 
+        this.stageManager = new StageManager();
         this.soundManager = new SoundManager();
         this.musicManager = new MusicManager();
 
@@ -45,12 +49,14 @@ class Game {
         this.overlay = new DebugOverlay();
         this.debugTouchSprite = new PIXI.Sprite(Textures.outlineCircle(10, 0xFF0000));
 
+        this.endOfFrameQueue = [];
+
         this.container = new PIXI.Container();
     }
 
     start() {
-        this.menuTheater.clearMenus();
-        this.menuTheater.loadMenu(this.entryPointMenu);
+        this.stageManager.reset();
+        this.stageManager.internalLoadStage(this.entryPointMenu, new Transitions.Instant());
         if (Debug.SKIP_MAIN_MENU_STAGE) {
             if (this.entryPointMenu.toString() !== this.mainMenu.toString()) {
                 this.loadMainMenu();
@@ -62,7 +68,9 @@ class Game {
     update() {
         this.updatePause();
 
-        if (this.menuTheater.getCurrentMenu()) {
+        this.stageManager.update();
+
+        if (this.stageManager.isInMenu()) {
             this.menuTheater.isSkippingCutscene = false;  // Safeguard
             this.menuTheater.update();
         } else {
@@ -76,10 +84,14 @@ class Game {
         this.soundManager.update(this.delta);
         this.musicManager.volume = this.volume * Options.musicVolume;
         this.musicManager.update(this.delta);
+
+        while (!A.isEmpty(this.endOfFrameQueue)) {
+            this.endOfFrameQueue.shift()!();
+        }
     }
 
     private updatePause() {
-        if (!this.menuTheater.getCurrentMenu() && this.canPause() && Input.justDown(Input.GAME_PAUSE)) {
+        if (!this.stageManager.isInMenu() && this.canPause() && Input.justDown(Input.GAME_PAUSE)) {
             Input.consume(Input.GAME_PAUSE);
             this.pauseGame();
         }
@@ -87,15 +99,20 @@ class Game {
 
     private updateOverlay() {
         if (Debug.SHOW_OVERLAY) {
-            this.overlay.setCurrentWorldToDebug(this.menuTheater.getCurrentMenu() ?? this.gameTheater?.currentWorld);
+            this.overlay.setCurrentWorldToDebug(this.stageManager.getCurrentWorld());
             this.overlay.update();
         }
     }
 
     render() {
-        let result = this.menuTheater.getCurrentMenu()
-            ? this.menuTheater.render()
-            : this.gameTheater.render()
+        let result: Render.Result = FrameCache.array();
+        result.pushAll(this.stageManager.render());
+
+        if (this.stageManager.isInMenu()) {
+            result.pushAll(this.menuTheater.render());
+        } else {
+            result.pushAll(this.gameTheater.render());
+        }
 
         if (Debug.SHOW_OVERLAY) {
             result.pushAll(this.overlay.render());
@@ -111,19 +128,27 @@ class Game {
     }
 
     canPause(): boolean {
-        if (!this.gameTheater) return false;
-        return this.gameTheater.canPause();
+        let currentWorld = this.stageManager.getCurrentWorld();
+        if (!currentWorld) return false;
+        return currentWorld.allowPause;
     }
 
-
     loadMainMenu() {
-        this.menuTheater.clearMenus();
-        this.menuTheater.loadMenu(this.mainMenu);
+        this.stageManager.reset();
+        this.stageManager.internalLoadStage(this.mainMenu, new Transitions.Instant());
         Persist.persist();
     }
 
-    pauseGame() {
-        this.menuTheater.loadMenu(this.pauseMenu);
+    loadStage(stage: () => World, transition: Transition = new Transitions.Instant()) {
+        this.runAtEndOfFrame(() => global.stageManager.internalLoadStage(stage, transition));
+    }
+
+    loadStageImmediate(stage: () => World, transition: Transition = new Transitions.Instant()) {
+        global.stageManager.internalLoadStage(stage, transition)
+    }
+
+    pauseGame(transition: Transition = new Transitions.Instant()) {
+        this.stageManager.internalLoadStage(this.pauseMenu, transition);
     }
 
     pauseMusic(fadeTime: number = 0) {
@@ -139,42 +164,46 @@ class Game {
         return this.soundManager.playSound(key);
     }
 
+    reloadCurrentStage(transition: Transition = new Transitions.Instant()) {
+        this.runAtEndOfFrame(() => this.reloadCurrentStage(transition));
+    }
+
+    runAtEndOfFrame(fn: () => any) {
+        this.endOfFrameQueue.push(fn);
+    }
+
     startGame(stageToLoad: () => World, transition: Transition = new Transitions.Instant()) {
-        this.loadTheater(stageToLoad, transition);
-        this.menuTheater.clearMenus();
+        this.gameTheater = this.gameTheaterFactory();
+        this.stageManager.internalLoadStage(stageToLoad, transition);
     }
 
     stopMusic(fadeTime: number = 0) {
         this.musicManager.stopMusic(fadeTime);
     }
 
-    unpauseGame() {
-        this.menuTheater.clearMenus();
+    takeScreenshot(): World.Screenshot {
+        let screen = newPixiRenderTexture(
+            W * global.upscale,
+            H * global.upscale,
+            'Game.takeSnapshot');
+        let container = new PIXI.Container();
+        container.scale.set(global.upscale);
+        Render.diff(container, this.render());
+        Render.upscalePixiObjectProperties(container, 'upscale');
+        renderToRenderTexture(container, screen);
+        Render.upscalePixiObjectProperties(container, 'downscale');
+        return {
+            texture: screen,
+            upscale: global.upscale,
+        };
+    }
+
+    unpauseGame(transition: Transition = new Transitions.Instant()) {
+        this.stageManager.clearMenus(transition);
     }
 
     unpauseMusic(fadeTime: number = 0) {
         this.musicManager.unpauseMusic(fadeTime);
-    }
-
-    private loadTheater(stageToLoad: () => World, transition: Transition) {
-        this.gameTheater = this.gameTheaterFactory();
-        if (!(transition instanceof Transitions.Instant)) {
-            this.gameTheater.loadStageImmediate(() => this.worldForMenuTransition());
-        }
-        this.gameTheater.loadStageImmediate(stageToLoad, transition);
-    }
-
-    private worldForMenuTransition() {
-        let world = new World();
-        let currentMenu = this.menuTheater.getCurrentMenu();
-        if (currentMenu) {
-            let screenshot = currentMenu.takeScreenshot();
-            world.addWorldObject(new Sprite({
-                texture: screenshot.texture,
-                scale: 1 / screenshot.upscale,
-            }));
-        }
-        return world;
     }
 
     private renderTouches() {

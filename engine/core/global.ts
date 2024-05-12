@@ -13,8 +13,9 @@ class global {
     static popScript() { return this.scriptStack.pop(); }
 
     static get game() { return Main.game; }
+    static get stageManager() { return this.game.stageManager; }
     static get theater() { return this.game.gameTheater; }
-    static get world() { return this.theater.currentWorld; }
+    static get world() { return this.stageManager.getCurrentWorld(); }
 
     static get isSkippingCutscene() { return this.theater.isSkippingCutscene; }
 

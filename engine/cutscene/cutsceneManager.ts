@@ -83,10 +83,6 @@ class CutsceneManager {
         this.current = undefined;
     }
 
-    onStageLoad() {
-        
-    }
-
     private finishCurrentCutscene() {
         if (!this.isCutscenePlaying()) return;
         
