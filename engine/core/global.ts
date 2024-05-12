@@ -13,7 +13,7 @@ class global {
     static popScript() { return this.scriptStack.pop(); }
 
     static get game() { return Main.game; }
-    static get theater() { return this.game.theater; }
+    static get theater() { return this.game.gameTheater; }
     static get world() { return this.theater.currentWorld; }
 
     static get isSkippingCutscene() { return this.theater.isSkippingCutscene; }

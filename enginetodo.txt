@@ -35,3 +35,4 @@ backlog
     - optimize tilemap editing with boundless textures
 - print errors on screen?
 - loading messages
+- direct aseprite loading (https://github.com/kennedy0/aseprite-reader/blob/main/src/aseprite_reader/aseprite_file.py)
