@@ -423,27 +423,32 @@ class Input {
     static handleTouchEndEvent(event: TouchEvent) {
         for (let i = 0; i < event.changedTouches.length; i++) {
             let touch = event.changedTouches[i];
-            let index = this.touches.findIndex(td => td.id === touch.identifier);
-            if (index >= 0) {
-                let touchData = this.getTouchData(touch);
-                this.touches[index].updateUp(touchData);
+            let touchData = this.getTouchData(touch);
+            for (let t of this.touches) {
+                if (t.id === touch.identifier) {
+                    console.log('set up', t);
+                    t.updateUp(touchData);
+                }
             }
         }
-        if (!this.isTouching && this.onTouchUp) {
-            this.onTouchUp();
+        if (!this.isTouching) {
+            this.onTouchUp?.();
         }
     }
 
     static handleTouchCancelEvent(event: TouchEvent) {
         for (let i = 0; i < event.changedTouches.length; i++) {
             let touch = event.changedTouches[i];
-            let index = this.touches.findIndex(td => td.id === touch.identifier);
-            if (index >= 0) {
-                this.touches.splice(index, 1);
+            let touchData = this.getTouchData(touch);
+            for (let t of this.touches) {
+                if (t.id === touch.identifier) {
+                    console.log('set up', t);
+                    t.updateUp(touchData);
+                }
             }
         }
         if (!this.isTouching) {
-            this.onTouchUp();
+            this.onTouchUp?.();
         }
     }
 
