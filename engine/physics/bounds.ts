@@ -45,6 +45,14 @@ interface Bounds {
 
 namespace Bounds {
     export function fromString(str: string): Bounds {
+        // Parse bounds in the form "x,y,w,h"
+        let rectBoundsMatch = St.removeWhitespace(str).match(/^([-a-z0-9,\.]+)$/);
+        if (rectBoundsMatch) {
+            let params = rectBoundsMatch[1].split(',');
+            return new RectBounds(parseFloat(params[0]), parseFloat(params[1]), parseFloat(params[2]), parseFloat(params[3]));
+        }
+
+        // Parse bounds in the form "type(x,y,...)"
         let match = St.removeWhitespace(str).match(/^([a-z]+)\(([-a-z0-9,\.]+)\)$/);
         if (!match) {
             console.error('Could not parse Bounds:', str);

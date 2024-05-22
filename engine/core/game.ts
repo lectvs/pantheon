@@ -70,13 +70,9 @@ class Game {
 
         this.stageManager.update();
 
-        if (this.stageManager.isInMenu()) {
-            this.menuTheater.isSkippingCutscene = false;  // Safeguard
-            this.menuTheater.update();
-        } else {
-            this.gameTheater.isSkippingCutscene = false;  // Safeguard
-            this.gameTheater.update();
-        }
+        let currentTheater = this.getCurrentTheater();
+        currentTheater.isSkippingCutscene = false;  // Safeguard
+        currentTheater.update();
 
         this.updateOverlay();
 
@@ -108,11 +104,7 @@ class Game {
         let result: Render.Result = FrameCache.array();
         result.pushAll(this.stageManager.render());
 
-        if (this.stageManager.isInMenu()) {
-            result.pushAll(this.menuTheater.render());
-        } else {
-            result.pushAll(this.gameTheater.render());
-        }
+        result.pushAll(this.getCurrentTheater().render());
 
         if (Debug.SHOW_OVERLAY) {
             result.pushAll(this.overlay.render());
@@ -133,6 +125,11 @@ class Game {
         return currentWorld.allowPause;
     }
 
+    getCurrentTheater() {
+        if (this.stageManager.isInMenu()) return this.menuTheater;
+        return this.gameTheater;
+    }
+
     loadMainMenu() {
         this.stageManager.reset();
         this.stageManager.internalLoadStage(this.mainMenu, new Transitions.Instant());
@@ -144,7 +141,7 @@ class Game {
     }
 
     loadStageImmediate(stage: () => World, transition: Transition = new Transitions.Instant()) {
-        global.stageManager.internalLoadStage(stage, transition)
+        return global.stageManager.internalLoadStage(stage, transition)
     }
 
     pauseGame(transition: Transition = new Transitions.Instant()) {

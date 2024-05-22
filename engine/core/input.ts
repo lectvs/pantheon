@@ -244,7 +244,7 @@ class Input {
     }
 
     static isDown(key: string) {
-        if (key === Input.GAME_ADVANCE_CUTSCENE && global.isSkippingCutscene) return true;
+        if (key === Input.GAME_ADVANCE_CUTSCENE && global.currentTheater.isSkippingCutscene) return true;
         return this.keyCodesByName[key] && this.keyCodesByName[key].some(keyCode => this.keysByKeycode[keyCode].isDown);
     }
 
@@ -253,7 +253,7 @@ class Input {
     }
 
     static justDown(key: string) {
-        if (key === Input.GAME_ADVANCE_CUTSCENE && global.isSkippingCutscene) return true;
+        if (key === Input.GAME_ADVANCE_CUTSCENE && global.currentTheater.isSkippingCutscene) return true;
         return this.keyCodesByName[key] && this.keyCodesByName[key].some(keyCode => this.keysByKeycode[keyCode].justDown);
     }
 

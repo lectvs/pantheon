@@ -21,7 +21,7 @@ namespace Lci {
         anchor: Pt;
         offset: Pt;
         physicsGroup: string;
-        bounds: Rect;
+        bounds: Rect | string;
         placeholder: string;
         multiBounds: Rect[];
         data: Dict<string>;
@@ -94,7 +94,10 @@ function lciDocumentToWorldObjects(key: string, originX: number = 0, originY: nu
                 alpha: layer.opacity/255,
                 layer: worldLayer,
                 physicsGroup: physicsGroup,
-                bounds: bounds ? new RectBounds(bounds.x, bounds.y, bounds.width, bounds.height) : undefined,
+                bounds: St.isString(bounds)
+                    ? Bounds.fromString(bounds)
+                    // Legacy LCI stored bounds in Rect format
+                    : bounds ? new RectBounds(bounds.x, bounds.y, bounds.width, bounds.height) : undefined,
                 immovable: true,
             }));
         }

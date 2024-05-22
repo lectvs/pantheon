@@ -178,7 +178,7 @@ class Camera {
     }
 
     setMode(mode: Camera.Mode) {
-        this.mode = mode;
+        this.mode = O.clone(mode);
     }
 
     setModeFocus(x: number, y: number) {
@@ -187,6 +187,10 @@ class Camera {
 
     setModeFollow(target: string | Pt, offsetX: number = 0, offsetY: number = 0, snapToScreenBounds: boolean = false) {
         this.setMode(Camera.Mode.FOLLOW(target, offsetX, offsetY, snapToScreenBounds));
+    }
+
+    setModeFree() {
+        this.setMode(Camera.Mode.FREE());
     }
 
     setMovement(movement: Camera.Movement) {
@@ -204,6 +208,12 @@ class Camera {
 
 namespace Camera {
     export namespace Mode {
+        export function FOCUS(x: number, y: number): Mode {
+            let focusPt = vec2(x, y);
+            return {
+                getTargetPt: (camera: Camera) => focusPt,
+            };
+        }
         export function FOLLOW(target: string | Pt, offsetX: number = 0, offsetY: number = 0, snapToScreenBounds: boolean = false): Mode {
             return {
                 getTargetPt: (camera: Camera) => {
@@ -224,10 +234,9 @@ namespace Camera {
                 },
             };
         }
-        export function FOCUS(x: number, y: number): Mode {
-            let focusPt = vec2(x, y);
+        export function FREE(): Mode {
             return {
-                getTargetPt: (camera: Camera) => focusPt,
+                getTargetPt: (camera: Camera) => camera,
             };
         }
     }

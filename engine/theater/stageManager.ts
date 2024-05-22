@@ -69,6 +69,7 @@ class StageManager {
         });
         newWorld.update();
         this.transitionTo(oldWorld, newWorld, transition);
+        return newWorld;
     }
 
     internalReloadCurrentStage(transition: Transition) {

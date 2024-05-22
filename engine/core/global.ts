@@ -14,10 +14,9 @@ class global {
 
     static get game() { return Main.game; }
     static get stageManager() { return this.game.stageManager; }
+    static get currentTheater() { return this.game.getCurrentTheater(); }
     static get theater() { return this.game.gameTheater; }
     static get world() { return this.stageManager.getCurrentWorld(); }
-
-    static get isSkippingCutscene() { return this.theater.isSkippingCutscene; }
 
     static get soundManager() { return Main.soundManager; }
     static fpsCalculator: FPSCalculator = new FPSCalculator(1);

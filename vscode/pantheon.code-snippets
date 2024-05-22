@@ -1,0 +1,30 @@
+{
+	// See https://code.visualstudio.com/docs/editor/userdefinedsnippets for user guide.
+
+	"Sprite": {
+		"scope": "typescript",
+		"prefix": ["spri"],
+		"body": [
+			"class ${1:${TM_FILENAME_BASE/(.)(.*)/${1:/upcase}$2/}} extends Sprite {",
+				"\tconstructor(x: number, y: number) {",
+					"\t\tsuper({",
+						"\t\t\tx, y,",
+						"\t\t\ttexture: '${2:$TM_FILENAME_BASE}',",
+						"\t\t\tlayer: Layers.main,",
+					"\t\t});",
+				"\t}",
+			"}"],
+		"description": "A class which extends Sprite with standard properties."
+	},
+	"WorldObjectConfig": {
+		"scope": "typescript",
+		"prefix": ["spri"],
+		"body": [
+			"namespace ${1:${TM_FILENAME_BASE/(.)(.*)/${1:/upcase}$2/}} {",
+				"\texport type Config = WorldObject.Config<${1:${TM_FILENAME_BASE/(.)(.*)/${1:/upcase}$2/}}> & {",
+					"\t\t",
+				"\t}",
+			"}"],
+		"description": "A type for a WorldObject Config."
+	}
+}

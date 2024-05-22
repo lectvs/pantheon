@@ -445,6 +445,9 @@ namespace SpriteText {
         [NOOP_TAG]: (params) => {
             return {};
         },
+        'white': (params) => {
+            return { color: 0xFFFFFF };
+        },
         'y': (params) => {
             return { color: 0xFFFF00 };
         },

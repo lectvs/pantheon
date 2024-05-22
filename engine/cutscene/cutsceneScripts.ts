@@ -5,16 +5,15 @@ namespace S {
 
             if (!toMovement) toMovement = camera.movement;
 
-            let cameraPoint = vec2(camera.x, camera.y);
-            camera.setModeFollow(cameraPoint);
+            camera.setModeFree();
             camera.setMovementSnap();
 
-            let startPoint = vec2(cameraPoint.x, cameraPoint.y);
+            let startPoint = vec2(camera);
 
             yield S.doOverTime(duration, t => {
                 let toPoint = toMode.getTargetPt(camera);
-                cameraPoint.x = M.lerp(t, startPoint.x, toPoint.x, easingFunction);
-                cameraPoint.y = M.lerp(t, startPoint.y, toPoint.y, easingFunction);
+                camera.x = M.lerp(t, startPoint.x, toPoint.x, easingFunction);
+                camera.y = M.lerp(t, startPoint.y, toPoint.y, easingFunction);
                 camera.snapPosition();
             });
 

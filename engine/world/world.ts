@@ -136,7 +136,7 @@ class World {
     select: WorldSelecter;
     
     get delta() {
-        if (global.isSkippingCutscene) return Theater.SKIP_CUTSCENE_DELTA;
+        if (global.currentTheater.isSkippingCutscene) return Theater.SKIP_CUTSCENE_DELTA;
         return global.game.delta * this.timeScale;
     }
 
@@ -283,6 +283,15 @@ class World {
         let result: Render.Result = FrameCache.array(this.bgFill);
         
         for (let layer of this.layers) {
+            // Push fade right before afterfade layer.
+            if (layer.name === World.AFTER_FADE_LAYER) {
+                this.fadeFill.tint = this.fadeColor;
+                this.fadeFill.alpha = this.fadeAmount;
+                if (this.fadeAmount > 0) {
+                    result.push(this.fadeFill);
+                }
+            }
+
             if (layer.shouldRenderToOwnLayer) {
                 let layerTexture = this.layerSprite.texture as PIXI.RenderTexture;
                 renderToRenderTexture(this.renderLayer(layer), layerTexture, 'clearTextureFirst');
@@ -291,12 +300,6 @@ class World {
             } else {
                 result.pushAll(this.renderLayer(layer));
             }
-        }
-
-        this.fadeFill.tint = this.fadeColor;
-        this.fadeFill.alpha = this.fadeAmount;
-        if (this.fadeAmount > 0) {
-            result.push(this.fadeFill);
         }
 
         Render.diff(this.container, result);
@@ -558,7 +561,8 @@ class World {
     private createLayers(layers: World.LayerConfig[] | undefined) {
         if (A.isEmpty(layers)) layers = [];
 
-        layers.push({ name: World.DEFAULT_LAYER });
+        if (!layers.find(layer => layer.name === World.DEFAULT_LAYER)) layers.push({ name: World.DEFAULT_LAYER });
+        if (!layers.find(layer => layer.name === World.AFTER_FADE_LAYER)) layers.push({ name: World.AFTER_FADE_LAYER });
 
         let result: World.Layer[] = [];
         for (let layer of layers) {
@@ -672,6 +676,7 @@ class World {
     }
 
     static DEFAULT_LAYER: string = 'default';
+    static AFTER_FADE_LAYER: string = 'afterfade';
 }
 
 namespace World {

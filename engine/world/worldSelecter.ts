@@ -33,10 +33,11 @@ class WorldSelecter {
         return result;
     }
 
-    name<T extends WorldObject>(name: string, checked: 'checked' | 'unchecked' = 'checked'): T | undefined {
+    name<T extends WorldObject>(name: string, checked: 'checked' | 'unchecked' | boolean = true): T | undefined {
         let results = this.nameAll$<T>(name);
+        let isUnchecked = !checked || checked === 'unchecked';
         if (A.isEmpty(results)) {
-            if (checked === 'checked') console.error(`No object with name ${name} exists in world:`, this.world);
+            if (!isUnchecked) console.error(`No object with name ${name} exists in world:`, this.world);
             return undefined;
         }
         if (results.length > 1) {
@@ -105,10 +106,11 @@ class WorldSelecter {
         return result;
     }
 
-    type<T extends WorldObject>(type: new (...args: any[]) => T, checked: 'checked' | 'unchecked' = 'checked') {
+    type<T extends WorldObject>(type: new (...args: any[]) => T, checked: 'checked' | 'unchecked' | boolean = true) {
         let results = this.typeAll$(type);
+        let isUnchecked = !checked || checked === 'unchecked';
         if (A.isEmpty(results)) {
-            if (checked === 'checked') console.error(`No object of type ${type.name} exists in world:`, this.world);
+            if (!isUnchecked) console.error(`No object of type ${type.name} exists in world:`, this.world);
             return undefined;
         }
         if (results.length > 1) {
