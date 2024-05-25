@@ -1,5 +1,7 @@
 TODO
-
+- text centered by default
+- look into babel transformations
+- hot reloading again (reload just assets?)
 
 
 backlog
@@ -17,7 +19,6 @@ backlog
 - module system revamp
     - revamp module system to work with compound types
     - attach arbitrary "update"/"render" objects to worldobjects (e.g. timers, new module system?)
-- better ways to move the camera (without needing to call setModeFocus)
 - supertextures ("detective+hat")
 - animation/visual layers
 - easier window event integration (onbeforeunload, etc.)

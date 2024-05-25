@@ -26,7 +26,7 @@ namespace Color {
         return [r/255, g/255, b/255];
     }
 
-    export function lerpColorByLch(t: number, color1: number, color2: number): number {
+    export function lerpColorByLch(t: number, color1: number, color2: number, easingFn: Tween.Easing.Function = Tween.Easing.Linear): number {
         if (color1 === color2) return color1;
 
         let vec3color1 = colorToVec3(color1);
@@ -35,13 +35,13 @@ namespace Color {
         let chroma1 = chroma.rgb(vec3color1[0] * 255, vec3color1[1] * 255, vec3color1[2] * 255);
         let chroma2 = chroma.rgb(vec3color2[0] * 255, vec3color2[1] * 255, vec3color2[2] * 255);
 
-        let chromaf = chroma.interpolate(chroma1, chroma2, t, 'lch');
+        let chromaf = chroma.interpolate(chroma1, chroma2, easingFn(t), 'lch');
         let rgbf = chromaf.rgb();
 
         return xyzToColor(rgbf[0] / 255, rgbf[1] / 255, rgbf[2] / 255);
     }
 
-    export function lerpColorByRgb(t: number, color1: number, color2: number): number {
+    export function lerpColorByRgb(t: number, color1: number, color2: number, easingFn: Tween.Easing.Function = Tween.Easing.Linear): number {
         if (color1 === color2) return color1;
 
         let vec3color1 = colorToVec3(color1);
@@ -50,7 +50,7 @@ namespace Color {
         let chroma1 = chroma.rgb(vec3color1[0] * 255, vec3color1[1] * 255, vec3color1[2] * 255);
         let chroma2 = chroma.rgb(vec3color2[0] * 255, vec3color2[1] * 255, vec3color2[2] * 255);
 
-        let chromaf = chroma.interpolate(chroma1, chroma2, t, 'rgb');
+        let chromaf = chroma.interpolate(chroma1, chroma2, easingFn(t), 'rgb');
         let rgbf = chromaf.rgb();
 
         return xyzToColor(rgbf[0] / 255, rgbf[1] / 255, rgbf[2] / 255);

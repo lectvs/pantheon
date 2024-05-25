@@ -558,6 +558,28 @@ class World {
         };
     }
 
+    transitionCamera(duration: number, toMode: Camera.Mode, toMovement?: Camera.Movement, easingFunction: Tween.Easing.Function = Tween.Easing.OutExp) {
+        let camera = this.camera;
+        return this.runScript(function*() {
+            if (!toMovement) toMovement = camera.movement;
+
+            camera.setModeFree();
+            camera.setMovementSnap();
+
+            let startPoint = vec2(camera);
+
+            yield S.doOverTime(duration, t => {
+                let toPoint = toMode.getTargetPt(camera);
+                camera.x = M.lerp(t, startPoint.x, toPoint.x, easingFunction);
+                camera.y = M.lerp(t, startPoint.y, toPoint.y, easingFunction);
+                camera.snapPosition();
+            });
+
+            camera.setMode(toMode);
+            camera.setMovement(toMovement);
+        });
+    }
+
     private createLayers(layers: World.LayerConfig[] | undefined) {
         if (A.isEmpty(layers)) layers = [];
 

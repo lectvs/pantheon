@@ -1,27 +1,4 @@
 namespace S {
-    export function cameraTransition(world: World, duration: number, toMode: Camera.Mode, toMovement?: Camera.Movement, easingFunction: Tween.Easing.Function = Tween.Easing.OutExp): Script.Function {
-        return function*() {
-            let camera = world.camera;
-
-            if (!toMovement) toMovement = camera.movement;
-
-            camera.setModeFree();
-            camera.setMovementSnap();
-
-            let startPoint = vec2(camera);
-
-            yield S.doOverTime(duration, t => {
-                let toPoint = toMode.getTargetPt(camera);
-                camera.x = M.lerp(t, startPoint.x, toPoint.x, easingFunction);
-                camera.y = M.lerp(t, startPoint.y, toPoint.y, easingFunction);
-                camera.snapPosition();
-            });
-
-            camera.setMode(toMode);
-            camera.setMovement(toMovement);
-        }
-    }
-
     export function clearFades(duration: number) {
         let fadeScript = global.theater.clearFades(duration);
         return S.waitUntil(() => fadeScript.isDone);

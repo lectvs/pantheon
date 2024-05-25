@@ -10,6 +10,8 @@ namespace PuffSystem {
         finalRadius?: number;
         finalColor?: number;
         finalAlpha?: number;
+
+        easingFn?: Tween.Easing.Function;
     }
 
     export type Puff = {
@@ -25,6 +27,7 @@ namespace PuffSystem {
         finalColor: number;
         initialAlpha: number;
         finalAlpha: number;
+        easingFn: Tween.Easing.Function;
     }
 }
 
@@ -58,9 +61,9 @@ class PuffSystem extends WorldObject {
             let puff = this.puffs[i];
             let progress = puff.t / puff.maxLife;
 
-            let radius = M.lerp(progress, puff.initialRadius, puff.finalRadius);
-            let color = Color.lerpColorByLch(progress, puff.initialColor, puff.finalColor);
-            let alpha = M.lerp(progress, puff.initialAlpha, puff.finalAlpha);
+            let radius = M.lerp(progress, puff.initialRadius, puff.finalRadius, puff.easingFn);
+            let color = Color.lerpColorByLch(progress, puff.initialColor, puff.finalColor, puff.easingFn);
+            let alpha = M.lerp(progress, puff.initialAlpha, puff.finalAlpha, puff.easingFn);
 
             this.sprites[i].x = puff.x - this.x;
             this.sprites[i].y = puff.y - this.y;
@@ -90,6 +93,7 @@ class PuffSystem extends WorldObject {
             finalColor: config.finalColor ?? config.color,
             initialAlpha: config.alpha ?? 1,
             finalAlpha: config.finalAlpha ?? config.alpha ?? 1,
+            easingFn: config.easingFn ?? Tween.Easing.Linear,
         });
 
         if (this.sprites.length < this.puffs.length) {
