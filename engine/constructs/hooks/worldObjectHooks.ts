@@ -35,6 +35,14 @@ namespace Hooks {
         }
     }
 
+    export function killIf(condition: () => any) {
+        return function(this: WorldObject) {
+            if (condition()) {
+                this.kill();
+            }
+        }
+    }
+
     export function killIfOffScreenBounds(padding: number) {
         return function(this: WorldObject & { bounds: Bounds }) {
             if (this.world && !this.world.isBoundsOnScreen(this.bounds, padding)) {
