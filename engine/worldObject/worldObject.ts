@@ -449,6 +449,17 @@ class WorldObject {
         return this.life.everyNSeconds(n);
     }
 
+    findAncestor(predicate: (obj: WorldObject) => any) {
+        let ancestor = this.parent;
+        while (ancestor) {
+            if (predicate(ancestor)) {
+                return ancestor;
+            }
+            ancestor = ancestor.parent;
+        }
+        return undefined;
+    }
+
     getCurrentAnimationName() {
         return this.animationManager.getCurrentAnimationName();
     }

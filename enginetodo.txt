@@ -1,5 +1,6 @@
 TODO
 - text centered by default
+- animation on every spritetext called "type"
 - look into babel transformations
 - hot reloading again (reload just assets?)
 
