@@ -6,6 +6,9 @@ namespace SpriteTextDisplay {
         spacingDx?: number;
         spacingDy?: number;
         spriteTextConfig?: SpriteText.Config<SpriteText>;
+        /**
+         * @default false
+         */
         startEntered?: boolean;
         wavy?: {
             amplitude: number;
@@ -39,6 +42,7 @@ class SpriteTextDisplay extends WorldObject {
             x: M.equidistantLine(0, spacingDx * scaleX, line.length, i),
             y: M.equidistantLine(0, spacingDy * scaleY, styledChars.length, j),
             text: styledChar,
+            copyFromParent: ['layer'],
             visible: startEntered,
         }))).flat());
 

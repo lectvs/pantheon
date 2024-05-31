@@ -25,7 +25,7 @@ namespace SpriteTextUtils {
             }
 
             if (token.type === 'char') {
-                line.push(`${tagsStart}${token.name}${tagsEnd}`);
+                line.push(`${tagsStart}\\${token.name}${tagsEnd}`);
                 continue;
             }
 

@@ -363,15 +363,15 @@ class World {
         });
     }
 
-    fadeIn(duration: number, color: number = 0x000000) {
+    fadeIn(duration: number, color: number = 0x000000, fromAmount: number = this.fadeAmount) {
         this.fadeColor = color;
-        this.fadeAmount = 1;
-        return this.runScript(S.tween(duration, this, 'fadeAmount', 1, 0), 'World.fade', 'stopPrevious');
+        this.fadeAmount = fromAmount;
+        return this.runScript(S.tween(duration, this, 'fadeAmount', fromAmount, 0), 'World.fade', 'stopPrevious');
     }
 
-    fadeOut(duration: number, color: number = 0x000000) {
+    fadeOut(duration: number, color: number = 0x000000, amount: number = 1) {
         this.fadeColor = color;
-        return this.runScript(S.tween(duration, this, 'fadeAmount', 0, 1), 'World.fade', 'stopPrevious');
+        return this.runScript(S.tween(duration, this, 'fadeAmount', 0, amount), 'World.fade', 'stopPrevious');
     }
 
     getLayerByName(name: string | undefined) {

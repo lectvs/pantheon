@@ -254,6 +254,13 @@ class Anchor {
     static get LEFT() { return new Vector2(0, 0.5); }
     static get RIGHT() { return new Vector2(1, 0.5); }
 
+    static fromLike(anchorLike: AnchorLike) {
+        if (St.isString(anchorLike)) {
+            return Anchor.fromName(anchorLike);
+        }
+        return vec2(anchorLike);
+    }
+
     static fromName(anchorName: string) {
         anchorName = anchorName.toLowerCase();
 
@@ -269,6 +276,13 @@ class Anchor {
     }
 }
 
+type AnchorLike = Vector2 | Pt |
+    'top_left' | 'top_center' | 'top_right' |
+    'center_left' | 'center_center' | 'center_right' |
+    'bottom_left' | 'bottom_center' | 'bottom_right' |
+    'top' | 'center' | 'bottom' | 'left' | 'right';
+
+
 class Direction {
     static get UP_LEFT() { return new Vector2(-1, -1); }
     static get UP() { return new Vector2(0, -1); }
@@ -279,6 +293,13 @@ class Direction {
     static get DOWN_LEFT() { return new Vector2(-1, 1); }
     static get DOWN() { return new Vector2(0, 1); }
     static get DOWN_RIGHT() { return new Vector2(1, 1); }
+
+    static fromLike(directionLike: DirectionLike) {
+        if (St.isString(directionLike)) {
+            return Direction.fromName(directionLike);
+        }
+        return vec2(directionLike);
+    }
 
     static fromName(directionName: string) {
         directionName = directionName.toLowerCase();
@@ -294,3 +315,8 @@ class Direction {
         return result;
     }
 }
+
+type DirectionLike = Vector2 | Pt |
+    'up_left' | 'up' | 'up_right' |
+    'left' | 'none' | 'right' |
+    'down_left' | 'down' | 'down_right';
