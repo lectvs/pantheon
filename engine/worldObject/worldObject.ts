@@ -139,6 +139,7 @@ class WorldObject {
     readonly uid: string;
 
     protected scriptManager: ScriptManager;
+    protected preScriptManager: ScriptManager;
     stateMachine: SimpleStateMachine;
     get state() { return this.stateMachine.getCurrentStateName(); }
 
@@ -198,6 +199,7 @@ class WorldObject {
         this.zinternal_setPhysicsGroupWorldObject(config.physicsGroup);
 
         this.scriptManager = new ScriptManager();
+        this.preScriptManager = new ScriptManager();
         this.stateMachine = new SimpleStateMachine();
 
         this.hookManager = new HookManager({
@@ -227,6 +229,8 @@ class WorldObject {
         this.behavior.update(this.delta);
         this.updateController();
         this.hookManager.executeHooks('onPreUpdate');
+
+        this.preScriptManager.update(this.delta);
 
         for (let module of this.modules) {
             module.preUpdate();
@@ -441,12 +445,20 @@ class WorldObject {
         this.world?.emitEventWorldObject(this, event, data);
     }
 
+    enter(duration: number, initialValues: Actions.EnterInitialValues, easingFn?: Tween.Easing.Function, delay?: number) {
+        return Actions.enter(this, duration, initialValues, easingFn, delay);
+    }
+
     everyNFrames(n: number) {
         return this.life.everyNFrames(n);
     }
 
     everyNSeconds(n: number) {
         return this.life.everyNSeconds(n);
+    }
+
+    exit(duration: number, finalValues: Actions.ExitFinalValues, easingFn?: Tween.Easing.Function, delay?: number) {
+        return Actions.exit(this, duration, finalValues, easingFn, delay);
     }
 
     findAncestor(predicate: (obj: WorldObject) => any) {
@@ -615,6 +627,79 @@ class WorldObject {
         });
     }
 
+    moveTo(x: number, y: number, maxTime: number = 10) {
+        return this.runPreScript(S.simul(
+            this.moveToX(x, maxTime),
+            this.moveToY(y, maxTime),
+        ));
+    }
+
+    moveToX(x: number, maxTime: number = 10) {
+        let worldObject = this;
+        return this.runPreScript(function*() {
+            let dx = x - worldObject.x;
+            if (dx === 0) return;
+
+            let timer = new Timer(maxTime);
+            if (dx > 0) {
+                while (worldObject.x < x && !timer.isDone) {
+                    worldObject.controller.right = true;
+                    worldObject.controller.setMoveDirectionByLRUD();
+                    timer.update(global.script.delta);
+                    yield;
+                }
+            } else {
+                while (worldObject.x > x && !timer.isDone) {
+                    worldObject.controller.left = true;
+                    worldObject.controller.setMoveDirectionByLRUD();
+                    timer.update(global.script.delta);
+                    yield;
+                }
+            }
+
+            worldObject.x = x;
+        });
+    }
+
+    moveToY(y: number, maxTime: number = 10) {
+        let worldObject = this;
+        return this.runPreScript(function*() {
+            let dy = y - worldObject.y;
+            if (dy === 0) return;
+
+            let timer = new Timer(maxTime);
+            if (dy > 0) {
+                while (worldObject.y < y && !timer.isDone) {
+                    worldObject.controller.down = true;
+                    worldObject.controller.setMoveDirectionByLRUD();
+                    timer.update(global.script.delta);
+                    yield;
+                }
+            } else {
+                while (worldObject.y > y && !timer.isDone) {
+                    worldObject.controller.up = true;
+                    worldObject.controller.setMoveDirectionByLRUD();
+                    timer.update(global.script.delta);
+                    yield;
+                }
+            }
+
+            worldObject.y = y;
+        });
+    }
+
+    moveToD(dx: number, dy: number, maxTime: number = 10) {
+        return this.moveTo(this.x + dx, this.y + dy, maxTime);
+    }
+
+    moveToDX(dx: number, maxTime: number = 10) {
+        return this.moveToX(this.x + dx, maxTime);
+    }
+
+    moveToDY(dy: number, maxTime: number = 10) {
+        return this.moveToY(this.y + dy, maxTime);
+    }
+
     moveToBack() {
         World.Actions.moveWorldObjectToBack(this);
     }
@@ -654,6 +739,10 @@ class WorldObject {
 
     removeTag(tag: string) {
         A.removeAll(this.tags, tag);
+    }
+
+    runPreScript(script: Script.FunctionLike, name?: string, specialMode?: ScriptManager.SpecialMode) {
+        return this.preScriptManager.runScript(script, name, specialMode);
     }
 
     runScript(script: Script.FunctionLike, name?: string, specialMode?: ScriptManager.SpecialMode) {

@@ -44,63 +44,26 @@ namespace S {
         }
     }
 
-    export function moveTo(worldObject: WorldObject, x: number, y: number, maxTime: number = 10): Script.Function {
-        return simul(
-            moveToX(worldObject, x, maxTime),
-            moveToY(worldObject, y, maxTime),
-        );
+    /**
+     * @deprecated Use WorldObject.moveTo instead.
+     */
+    export function moveTo(worldObject: WorldObject, x: number, y: number, maxTime: number = 10): Script.FunctionLike {
+        return worldObject.moveTo(x, y, maxTime);
     }
 
-    export function moveToX(worldObject: WorldObject, x: number, maxTime: number = 10): Script.Function {
-        return function*() {
-            let dx = x - worldObject.x;
-            if (dx === 0) return;
+    /**
+     * @deprecated Use WorldObject.moveToX instead.
+     */
+    export function moveToX(worldObject: WorldObject, x: number, maxTime: number = 10): Script.FunctionLike {
+        return worldObject.moveToX(x, maxTime);
 
-            let timer = new Timer(maxTime);
-            if (dx > 0) {
-                while (worldObject.x < x && !timer.isDone) {
-                    worldObject.controller.right = true;
-                    worldObject.controller.setMoveDirectionByLRUD();
-                    timer.update(global.script.delta);
-                    yield;
-                }
-            } else {
-                while (worldObject.x > x && !timer.isDone) {
-                    worldObject.controller.left = true;
-                    worldObject.controller.setMoveDirectionByLRUD();
-                    timer.update(global.script.delta);
-                    yield;
-                }
-            }
-
-            worldObject.x = x;
-        }
     }
 
-    export function moveToY(worldObject: WorldObject, y: number, maxTime: number = 10): Script.Function {
-        return function*() {
-            let dy = y - worldObject.y;
-            if (dy === 0) return;
-
-            let timer = new Timer(maxTime);
-            if (dy > 0) {
-                while (worldObject.y < y && !timer.isDone) {
-                    worldObject.controller.down = true;
-                    worldObject.controller.setMoveDirectionByLRUD();
-                    timer.update(global.script.delta);
-                    yield;
-                }
-            } else {
-                while (worldObject.y > y && !timer.isDone) {
-                    worldObject.controller.up = true;
-                    worldObject.controller.setMoveDirectionByLRUD();
-                    timer.update(global.script.delta);
-                    yield;
-                }
-            }
-
-            worldObject.y = y;
-        }
+    /**
+     * @deprecated Use WorldObject.moveToY instead.
+     */
+    export function moveToY(worldObject: WorldObject, y: number, maxTime: number = 10): Script.FunctionLike {
+        return worldObject.moveToY(y, maxTime);
     }
 
     /**

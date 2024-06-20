@@ -7,10 +7,9 @@ namespace Actions {
     }
 
     export function enter(worldObject: WorldObject | undefined, duration: number, initialValues: EnterInitialValues, easingFn?: Tween.Easing.Function, delay?: number): Script {
-        if (!worldObject || worldObject.data.entering) return new Script(S.noop());
+        if (!worldObject) return new Script(S.noop());
 
         worldObject.setVisible(true);
-        worldObject.data.entering = true;
 
         let scripts: Script.Function[] = [];
 
@@ -44,7 +43,6 @@ namespace Actions {
         return worldObject.runScript(function*() {
             yield S.wait(delay ?? 0);
             yield scripts;
-            delete worldObject.data.entering;
         });
     }
 

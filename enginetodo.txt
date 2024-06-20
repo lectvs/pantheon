@@ -1,6 +1,9 @@
 TODO
 - text centered by default
+- change "camera bounds" -> "camera limit", change "camera world rect" -> "camera world bounds"
 - animation on every spritetext called "type"
+- load directly from pyxel file (it's just a zip??)
+- load directly from ase (https://github.com/kennedy0/aseprite-reader/blob/main/src/aseprite_reader/aseprite_file.py)
 - look into babel transformations
 - hot reloading again (reload just assets?)
 
@@ -37,4 +40,3 @@ backlog
     - optimize tilemap editing with boundless textures
 - print errors on screen?
 - loading messages
-- direct aseprite loading (https://github.com/kennedy0/aseprite-reader/blob/main/src/aseprite_reader/aseprite_file.py)

@@ -23,7 +23,8 @@ class CutsceneManager {
     private updateCurrentCutscene() {
         if (this.current) {
             this.current.script.update(this.theater.delta);
-            if (this.current.script.isDone) {
+            // Cutscene could be cancelled during the update
+            if (this.current?.script.isDone) {
                 this.finishCurrentCutscene();
             }
         }

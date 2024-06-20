@@ -124,7 +124,7 @@ namespace S {
         }
     }
 
-    export function simul(...scriptFunctions: Script.Function[]): Script.Function {
+    export function simul(...scriptFunctions: Script.FunctionLike[]): Script.Function {
         return function*() {
             let scripts: Script[] = scriptFunctions.map(sfn => new Script(sfn));
             while (!A.isEmpty(scripts)) {
