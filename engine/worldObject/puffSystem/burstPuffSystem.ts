@@ -10,14 +10,22 @@ namespace BurstPuffSystem {
 
 class BurstPuffSystem extends PuffSystem {
     private deleteOnComplete: boolean;
+    private puffCount: number;
+    private puffConfigFactory: Factory<PuffSystem.PuffConfig>;
 
     constructor(config: BurstPuffSystem.Config) {
         super(config);
 
         this.deleteOnComplete = config.deleteOnComplete ?? true;
+        this.puffCount = config.puffCount;
+        this.puffConfigFactory = config.puffConfigFactory;
+    }
 
-        for (let i = 0; i < config.puffCount; i++) {
-            this.addPuff(config.puffConfigFactory());
+    override onAdd(): void {
+        super.onAdd();
+
+        for (let i = 0; i < this.puffCount; i++) {
+            this.addPuff(this.puffConfigFactory());
         }
     }
 

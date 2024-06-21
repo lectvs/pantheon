@@ -65,6 +65,7 @@ class PuffSystem extends WorldObject {
             let color = Color.lerpColorByLch(progress, puff.initialColor, puff.finalColor, puff.easingFn);
             let alpha = M.lerp(progress, puff.initialAlpha, puff.finalAlpha, puff.easingFn);
 
+            // Puff position includes this.x/y so the system can move around without affecting existing puffs.
             this.sprites[i].x = puff.x - this.x;
             this.sprites[i].y = puff.y - this.y;
             this.sprites[i].scale.set(radius/16);
@@ -81,6 +82,7 @@ class PuffSystem extends WorldObject {
 
     protected addPuff(config: PuffSystem.PuffConfig) {
         this.puffs.push({
+            // Puff position includes this.x/y so the system can move around without affecting existing puffs.
             x: this.x + (config.p?.x ?? 0),
             y: this.y + (config.p?.y ?? 0),
             vx: config.v.x,
