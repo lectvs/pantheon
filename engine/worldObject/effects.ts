@@ -12,7 +12,7 @@ namespace Effects {
     }
 
     export type SilhouetteConfig = { color?: number, alpha?: number, amount?: number,  enabled?: boolean };
-    export type OutlineConfig = { color?: number, alpha?: number, enabled?: boolean };
+    export type OutlineConfig = { color?: number, alpha?: number, matchAlpha?: boolean, fillCorners?: boolean, enabled?: boolean };
     export type InvertColorsConfig = { enabled?: boolean };
     export type GlitchConfig = { strength?: number, speed?: number, spread?: number, enabled?: boolean };
     export type DropShadowConfig = { distance?: number, color?: number, alpha?: number, enabled?: boolean };
@@ -91,6 +91,8 @@ class Effects {
         if (config.outline) {
             this.outline.color = config.outline.color ?? 0x000000;
             this.outline.alpha = config.outline.alpha ?? 1;
+            this.outline.matchAlpha = config.outline.matchAlpha ?? true;
+            this.outline.fillCorners = config.outline.fillCorners ?? false;
             this.outline.enabled = config.outline.enabled ?? true;
         }
 
@@ -218,16 +220,29 @@ namespace Effects {
                 this._matchAlpha = value;
             }
 
-            constructor(color: number, alpha: number, matchAlpha: boolean = true) {
+            private _fillCorners: boolean;
+            get fillCorners() { return this._fillCorners; }
+            set fillCorners(value: boolean) {
+                if (value === this._fillCorners) return;
+                this.setUniform('fillCorners', value ? 1 : 0);
+                this._fillCorners = value;
+            }
+
+            constructor(color: number, alpha: number, matchAlpha: boolean = true, fillCorners: boolean = false) {
                 super({
                     uniforms: {
                         'vec3 color': Color.colorToVec3(color),
                         'float alpha': alpha,
                         'int matchAlpha': matchAlpha ? 1 : 0,
+                        'int fillCorners': fillCorners ? 1 : 0,
                     },
                     visualPadding: 1,
                     code: `
                         float maxAlpha = max(max(getColor(x-upscale, y).a, getColor(x, y-upscale).a), max(getColor(x+upscale, y).a, getColor(x, y+upscale).a));
+                        if (fillCorners == 1) {
+                            float maxAlphaCorners = max(max(getColor(x-upscale, y-upscale).a, getColor(x+upscale, y-upscale).a), max(getColor(x-upscale, y+upscale).a, getColor(x+upscale, y+upscale).a));
+                            maxAlpha = max(maxAlpha, maxAlphaCorners);
+                        }
                         if (inp.a == 0.0 && maxAlpha > 0.0) {
                             if (matchAlpha == 0) {
                                 outp = vec4(color, alpha);
@@ -241,6 +256,7 @@ namespace Effects {
                 this._color = color;
                 this._alpha = alpha;
                 this._matchAlpha = matchAlpha;
+                this._fillCorners = fillCorners;
             }
 
             override doesAffectRender(): boolean {

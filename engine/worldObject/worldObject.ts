@@ -393,6 +393,10 @@ class WorldObject {
         return this.detachChildren(this.children);
     }
 
+    detachAllChildrenKeepWorldPosition(): WorldObject[] {
+        return this.detachChildrenKeepWorldPosition(this.children);
+    }
+
     detachChild<T extends WorldObject>(child: T): T {
         if (!child) return child;
         if (child.parent !== this) {
@@ -416,6 +420,11 @@ class WorldObject {
     detachChildren<T extends WorldObject>(children: ReadonlyArray<T>): T[] {
         if (A.isEmpty(children)) return [];
         return children.map(child => this.detachChild(child)).filter(child => child);
+    }
+
+    detachChildrenKeepWorldPosition<T extends WorldObject>(children: ReadonlyArray<T>): T[] {
+        if (A.isEmpty(children)) return [];
+        return children.map(child => this.detachChildKeepWorldPosition(child)).filter(child => child);
     }
 
     detachFromParent(): this {
@@ -492,12 +501,28 @@ class WorldObject {
         return undefined;
     }
 
+    getChildrenByName$<T extends WorldObject>(name: string): T[] {
+        let result: T[] = FrameCache.array();
+        for (let child of this.children) {
+            if (child.name === name) result.push(<T>child);
+        }
+        return result;
+    }
+
     getChildByType<T extends WorldObject>(type: new (...args: any[]) => T, unchecked?: 'unchecked'): T | undefined {
         for (let child of this.children) {
             if (child instanceof type) return <T>child;
         }
         if (!unchecked) console.error(`Cannot find child with type ${type.name} on parent:`, this);
         return undefined;
+    }
+
+    getChildrenByType$<T extends WorldObject>(type: new (...args: any[]) => T): T[] {
+        let result: T[] = FrameCache.array();
+        for (let child of this.children) {
+            if (child instanceof type) result.push(<T>child);
+        }
+        return result;
     }
 
     getLocalPosition$() {

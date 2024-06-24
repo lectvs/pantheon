@@ -4,6 +4,8 @@ namespace Actions {
         dy?: number;
         dz?: number;
         alpha?: number;
+        scaleX?: number;
+        scaleY?: number;
     }
 
     export function enter(worldObject: WorldObject | undefined, duration: number, initialValues: EnterInitialValues, easingFn?: Tween.Easing.Function, delay?: number): Script {
@@ -36,6 +38,18 @@ namespace Actions {
             scripts.push(S.tween(duration, wo, 'alpha', wo.alpha, currentAlpha, easingFn));
         }
 
+        if (initialValues.scaleX !== undefined && typeof(wo.scaleX) === 'number') {
+            let currentScaleX = wo.scaleX;
+            wo.scaleX = initialValues.scaleX;
+            scripts.push(S.tween(duration, wo, 'scaleX', wo.scaleX, currentScaleX, easingFn));
+        }
+
+        if (initialValues.scaleY !== undefined && typeof(wo.scaleY) === 'number') {
+            let currentScaleY = wo.scaleY;
+            wo.scaleY = initialValues.scaleY;
+            scripts.push(S.tween(duration, wo, 'scaleY', wo.scaleY, currentScaleY, easingFn));
+        }
+
         if (scripts.length === 0) {
             scripts.push(S.wait(duration));
         }
@@ -51,6 +65,8 @@ namespace Actions {
         dy?: number;
         dz?: number;
         alpha?: number;
+        scaleX?: number;
+        scaleY?: number;
     }
 
     export function exit(worldObject: WorldObject | undefined, duration: number, finalValues: ExitFinalValues, easingFn?: Tween.Easing.Function, delay?: number): Script {
@@ -76,6 +92,14 @@ namespace Actions {
 
         if (finalValues.alpha !== undefined && typeof(wo.alpha) === 'number') {
             scripts.push(S.tween(duration, wo, 'alpha', wo.alpha, finalValues.alpha, easingFn));
+        }
+
+        if (finalValues.scaleX !== undefined && typeof(wo.scaleX) === 'number') {
+            scripts.push(S.tween(duration, wo, 'scaleX', wo.scaleX, finalValues.scaleX, easingFn));
+        }
+
+        if (finalValues.scaleY !== undefined && typeof(wo.scaleY) === 'number') {
+            scripts.push(S.tween(duration, wo, 'scaleY', wo.scaleY, finalValues.scaleY, easingFn));
         }
 
         if (scripts.length === 0) {
