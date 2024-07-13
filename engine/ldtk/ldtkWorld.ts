@@ -11,12 +11,14 @@ namespace LdtkWorld {
     export type Entity = {
         x: number;
         y: number;
-        name: string;
+        identifier: string;
         placeholder: string;
+        name?: string;
         texture?: string;
         bounds?: string;
         layer?: string;
         physicsGroup?: string;
+        data: any;
     }
 
     export function getEntities(ldtkWorld: string | LdtkWorld, level: string) {
@@ -37,10 +39,15 @@ namespace LdtkWorld {
             let worldObject = getInstantiatedWorldObject(entity);
             if (!worldObject) continue;
 
+            if (entity.name) worldObject.name = entity.name;
             if (entity.layer) worldObject.layer = entity.layer;
             if (entity.physicsGroup) worldObject.physicsGroup = entity.physicsGroup;
             if (entity.bounds && worldObject instanceof PhysicsWorldObject) {
                 worldObject.bounds = Bounds.fromString(entity.bounds);
+            }
+
+            for (let field in entity.data) {
+                worldObject.data[field] = entity.data[field];
             }
 
             worldObjects.push(worldObject);
@@ -68,7 +75,6 @@ namespace LdtkWorld {
         } catch (err) {
             console.error(`Cannot instantiate Ldtk entity '${entity.name}':`, err);
             return undefined;
-
         }
     }
 }

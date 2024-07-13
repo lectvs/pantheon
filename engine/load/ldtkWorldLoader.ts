@@ -136,12 +136,14 @@ class LdtkWorldLoader implements Loader {
                         ldtkLevel.entities.push({
                             x: entity.px[0],
                             y: entity.px[1],
-                            name: entity.__identifier,
+                            identifier: entity.__identifier,
+                            name: this.getEntityName(entity),
                             placeholder: this.getEntityPlaceholder(entity),
                             texture: this.getEntityField(entity, 'texture'),
                             bounds: this.getEntityField(entity, 'bounds'),
                             layer: this.getEntityField(entity, 'layer'),
                             physicsGroup: this.getEntityField(entity, 'physicsGroup'),
+                            data: this.getEntityData(entity),
                         });
                     }
                 }
@@ -185,12 +187,30 @@ class LdtkWorldLoader implements Loader {
         return `${this.key}/${identifier}`;
     }
 
+    private getEntityName(entity: LdtkWorldLoader.LdtkEntityInstanceSchema) {
+        let name = entity.fieldInstances.find(fi => fi.__identifier === 'name');
+        if (name) {
+            return name.__value;
+        }
+        return undefined;
+    }
+
     private getEntityPlaceholder(entity: LdtkWorldLoader.LdtkEntityInstanceSchema) {
         let placeholder = entity.fieldInstances.find(fi => fi.__identifier === 'placeholder');
         if (placeholder) {
             return placeholder.__value;
         }
         return entity.__identifier;
+    }
+
+    private getEntityData(entity: LdtkWorldLoader.LdtkEntityInstanceSchema) {
+        let data: any = {};
+        for (let field of entity.fieldInstances) {
+            if (!LdtkWorldLoader.ENTITY_NON_DATA_FIELDS.includes(field.__identifier)) {
+                data[field.__identifier] = field.__value;
+            }
+        }
+        return data;
     }
 
     private getEntityField(entity: LdtkWorldLoader.LdtkEntityInstanceSchema, field: string) {
@@ -202,4 +222,6 @@ class LdtkWorldLoader implements Loader {
     }
 
     static TAG_EMPTY_SOLID = "empty_solid";
+    static ENTITY_NON_DATA_FIELDS = ['name', 'placeholder', 'texture', 'bounds', 'layer', 'physicsGroup'];
+
 }

@@ -237,11 +237,13 @@ namespace TextureFilter {
     }
 
     export function constructUniformsMap(uniformDeclarations: Dict<any> | undefined) {
-        if (O.isEmpty(uniformDeclarations)) return {};
         let uniforms: Dict<any> = {};
-        for (let decl in uniformDeclarations) {
-            let uniformName = decl.trim().substring(decl.lastIndexOf(' ') + 1);
-            uniforms[uniformName] = uniformDeclarations[decl];
+
+        if (!O.isEmpty(uniformDeclarations)) {
+            for (let decl in uniformDeclarations) {
+                let uniformName = decl.trim().substring(decl.lastIndexOf(' ') + 1);
+                uniforms[uniformName] = uniformDeclarations[decl];
+            }
         }
 
         uniforms['width'] = 0;

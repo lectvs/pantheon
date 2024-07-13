@@ -7,6 +7,7 @@ namespace Tilemap {
         zMap?: Tilemap.ZMap;
         animation?: Tilemap.Animation;
         collisionOnly?: boolean;
+        emptyTiles?: 'solid' | 'non_solid' | 'use_tileset';
     }
 
     export type Tile = {
@@ -52,6 +53,7 @@ class Tilemap extends WorldObject {
     protected tileset: Tilemap.Tileset;
     protected animation?: Tilemap.Animation;
     protected collisionOnly: boolean;
+    protected emptyTiles?: 'solid' | 'non_solid' | 'use_tileset';
 
     collisionBoxes: PhysicsWorldObject[];
     
@@ -79,6 +81,7 @@ class Tilemap extends WorldObject {
         this.zMap = config.zMap ?? {};
         this.animation = config.animation;
         this.collisionOnly = config.collisionOnly ?? false;
+        this.emptyTiles = config.emptyTiles ?? 'use_tileset';
 
         this.createTilemap();
         this.dirty = false;
@@ -121,7 +124,7 @@ class Tilemap extends WorldObject {
     private createCollisionBoxes() {
         World.Actions.removeWorldObjectsFromWorld(this.collisionBoxes);
         this.collisionBoxes = [];
-        let collisionRects = Tilemap.getCollisionRects(this.currentTilemapLayer, this.tileset);
+        let collisionRects = this.getCollisionRects(this.currentTilemapLayer);
         Tilemap.optimizeCollisionRects(collisionRects);  // Not optimizing entire array first to save some cycles.
         Tilemap.optimizeCollisionRects(collisionRects, Tilemap.OPTIMIZE_ALL);
         for (let rect of collisionRects) {
@@ -189,6 +192,35 @@ class Tilemap extends WorldObject {
 
         console.error(`Could not find layer '${tilemapLayer}' in tilemap`, this);
         return 0;
+    }
+
+    private getCollisionRects(tilemapLayer: Tilemap.TilemapLayer) {
+        let collisionIndices = A.clone(this.tileset.collisionIndices ?? []);
+        if (this.emptyTiles === 'solid' && !collisionIndices.includes(-1)) {
+            collisionIndices.push(-1);
+        }
+        if (this.emptyTiles === 'non_solid') {
+            A.removeAll(collisionIndices, -1);
+        }
+
+        if (A.isEmpty(collisionIndices)) return [];
+
+        let result: Rect[] = [];
+        for (let y = 0; y < tilemapLayer.tiles.length; y++) {
+            for (let x = 0; x < tilemapLayer.tiles[y].length; x++) {
+                let tile = tilemapLayer.tiles[y][x];
+                if (collisionIndices.includes(tile.index)) {
+                    let rect = {
+                        x: x*this.tileset.tileWidth,
+                        y: y*this.tileset.tileHeight,
+                        width: this.tileset.tileWidth,
+                        height: this.tileset.tileHeight
+                    };
+                    result.push(rect);
+                }
+            }
+        }
+        return result;
     }
 
     private createZTextures(zTileIndices: number[][]) {
@@ -284,26 +316,6 @@ namespace Tilemap {
         }
 
         return zTextureSlots;
-    }
-
-    export function getCollisionRects(tilemapLayer: Tilemap.TilemapLayer, tileset: Tileset) {
-        if (A.isEmpty(tileset.collisionIndices)) return [];
-        let result: Rect[] = [];
-        for (let y = 0; y < tilemapLayer.tiles.length; y++) {
-            for (let x = 0; x < tilemapLayer.tiles[y].length; x++) {
-                let tile = tilemapLayer.tiles[y][x];
-                if (tileset.collisionIndices!.includes(tile.index)) {
-                    let rect = {
-                        x: x*tileset.tileWidth,
-                        y: y*tileset.tileHeight,
-                        width: tileset.tileWidth,
-                        height: tileset.tileHeight
-                    };
-                    result.push(rect);
-                }
-            }
-        }
-        return result;
     }
 
     export function getTilemapAsset(tilemap: string | Tilemap): Tilemap {
