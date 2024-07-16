@@ -416,11 +416,11 @@ class World {
     }
 
     getWorldMouseX() {
-        return Math.floor(Input.mouseX / this.scaleX + this.camera.worldOffsetX);
+        return Math.floor(this.screenXToWorldX(Input.mouseX));
     }
 
     getWorldMouseY() {
-        return Math.floor(Input.mouseY / this.scaleY + this.camera.worldOffsetY);
+        return Math.floor(this.screenYToWorldY(Input.mouseY));
     }
 
     getWorldMouseBounds$() {
@@ -526,6 +526,18 @@ class World {
 
     runScript(script: Script.FunctionLike, name?: string, specialMode?: ScriptManager.SpecialMode) {
         return this.scriptManager.runScript(script, name, specialMode);
+    }
+    
+    screenXToWorldX(screenX: number) {
+        return screenX / this.scaleX + this.camera.worldOffsetX;
+    }
+
+    screenYToWorldY(screenY: number) {
+        return screenY / this.scaleY + this.camera.worldOffsetY;
+    }
+
+    screenPosToWorldPos$(screenPos: Pt) {
+        return FrameCache.vec2(this.screenXToWorldX(screenPos.x), this.screenYToWorldY(screenPos.y));
     }
 
     setFade(color: number, amount: number) {

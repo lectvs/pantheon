@@ -1,4 +1,7 @@
 namespace G {
+    /**
+     * Returns the angle of the vector from p1 to p2.
+     */
     export function angle(p1: Pt, p2: Pt) {
         let angle = M.atan2(p2.y - p1.y, p2.x - p1.x);
         if (angle < 0) {
