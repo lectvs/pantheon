@@ -2,6 +2,8 @@ namespace Module {
     // To add a new hook, simply add an entry here and call Module.hookManager.executeHooks() at the appropriate location(s).
     export type Hooks<M extends Module<WorldObject>> = {
         onUpdate: { params: (this: M) => void };
+        onWorldObjectAdd: { params: (this: M) => void };
+        onWorldObjectRemove: { params: (this: M) => void };
     }
 }
 
@@ -37,6 +39,13 @@ class Module<T extends WorldObject> {
 
     onAdd(): void {}
     onRemove(): void {}
+    
+    onWorldObjectAdd() : void {
+        this.hookManager.executeHooks('onWorldObjectAdd');
+    }
+    onWorldObjectRemove() : void {
+        this.hookManager.executeHooks('onWorldObjectRemove');
+    }
 
     preUpdate(): void {}
     update(): void {

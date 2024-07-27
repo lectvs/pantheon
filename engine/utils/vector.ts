@@ -192,6 +192,10 @@ class Vector2 {
         return vec2(v1.x + v2.x, v1.y + v2.y);
     }
 
+    static dot(v1: Vector2, v2: Vector2) {
+        return G.dot(v1, v2);
+    }
+
     static subtract(v1: Pt, v2: Pt) {
         return vec2(v1.x - v2.x, v1.y - v2.y);
     }

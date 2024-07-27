@@ -32,6 +32,16 @@ namespace A {
         return array.map(line => clone(line));
     }
 
+    export function countElements<T extends string | number>(array: T[]): PartialRecord<T, number> {
+        let result: PartialRecord<T, number> = {};
+
+        for (let e of array) {
+            result[e] = (result[e] ?? 0) + 1;
+        }
+
+        return result;
+    }
+
     export function create<T>(count: number, fillFn: (i: number) => T): T[] {
         let result: T[] = [];
         for (let i = 0; i < count; i++) {

@@ -213,10 +213,16 @@ class WorldObject {
     onAdd() {
         this.animationManager.start();
         this.hookManager.executeHooks('onAdd');
+        for (let module of this.modules) {
+            module.onWorldObjectAdd();
+        }
     }
 
     onRemove() {
         this.hookManager.executeHooks('onRemove');
+        for (let module of this.modules) {
+            module.onWorldObjectRemove();
+        }
     }
 
     preUpdate() {
@@ -573,6 +579,7 @@ class WorldObject {
         if (!localBounds) return undefined;
         localBounds.x += this.x;
         localBounds.y += this.y;
+
         if (this.getZBehavior() === 'threequarters') {
             localBounds.y -= this.z;
         }
@@ -633,7 +640,14 @@ class WorldObject {
     }
 
     listenForEventWorld(event: string | string[], onEvent: (event: WorldEvent.WorldEvent) => void) {
-        return this.world?.registerListener({
+        if (!this.world) {
+            console.error('Tried to listen to worldObject event but world is undefined');
+            return {
+                onEvent: () => null,
+                shouldPrune: () => true,
+            };
+        }
+        return this.world.registerListener({
             fromSources: [{ type: 'world' }],
             events: A.isArray(event) ? event : [event],
             onEvent,
@@ -641,8 +655,15 @@ class WorldObject {
         });
     }
 
-    listenForEventWorldObject(worldObject: WorldEvent.ListenerWorldObjectSource | (WorldEvent.ListenerWorldObjectSource)[], event: string | string[], onEvent: (event: WorldEvent.WorldObjectEvent) => void) {
-        return this.world?.registerListener({
+    listenForEventWorldObject(worldObject: WorldEvent.ListenerWorldObjectSource | (WorldEvent.ListenerWorldObjectSource)[], event: string | string[], onEvent: (event: WorldEvent.WorldObjectEvent) => void): WorldEvent.Listener {
+        if (!this.world) {
+            console.error('Tried to listen to worldObject event but world is undefined');
+            return {
+                onEvent: () => null,
+                shouldPrune: () => true,
+            };
+        }
+        return this.world.registerListener({
             fromSources: A.isArray(worldObject)
                 ? worldObject.map(obj => ({ type: 'worldobject', worldObject: obj }))
                 : [{ type: 'worldobject', worldObject }],
@@ -801,6 +822,12 @@ class WorldObject {
         this._visible = visible;
     }
 
+    shouldIgnoreCamera(): boolean {
+        if (this.ignoreCamera) return true;
+        if (this.parent) return this.parent.shouldIgnoreCamera();
+        return false;
+    }
+
     stopScriptByName(name: string) {
         this.scriptManager.stopScriptByName(name);
     }
@@ -862,12 +889,6 @@ class WorldObject {
             if (thisValue === parentValue) continue;
             O.setPath(this, path, parentValue);
         }
-    }
-
-    private shouldIgnoreCamera(): boolean {
-        if (this.ignoreCamera) return true;
-        if (this.parent) return this.parent.shouldIgnoreCamera();
-        return false;
     }
 
     private updateController() {

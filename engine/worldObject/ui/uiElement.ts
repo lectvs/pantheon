@@ -108,7 +108,7 @@ class UIElement extends Module<WorldObject> {
             }
         } else {
             if (this.lastHovered) {
-                this.onJustHovered();
+                this.onJustUnhovered();
             }
         }
 
@@ -137,16 +137,45 @@ class UIElement extends Module<WorldObject> {
         if (!this.canInteract()) return false;
         if (!this.worldObject.world) return false;
 
-        if (!this.isOverlappingMouse()) return false;
-
         let mouseBounds = this.worldObject.world.getWorldMouseBounds$();
+
+        if (!this.isOverlapping(mouseBounds)) return false;
+
         return UIElement.getClosestUIElement(mouseBounds, this.worldObject.world) === this;
     }
 
-    isOverlappingMouse() {
-        if (!this.worldObject.world) return false;
-        let mouseBounds = this.worldObject.world.getWorldMouseBounds$();
-        return this.getInteractBounds$().overlaps(mouseBounds);
+    isOverlapping(bounds: Bounds) {
+        let boundsX = bounds.x;
+        let boundsY = bounds.y;
+
+        if (this.worldObject.shouldIgnoreCamera() && this.worldObject.world) {
+            bounds.x -= this.worldObject.world.camera.worldOffsetX;
+            bounds.y -= this.worldObject.world.camera.worldOffsetY;
+        }
+
+        let result = this.getInteractBounds$().overlaps(bounds);
+
+        bounds.x = boundsX;
+        bounds.y = boundsY;
+
+        return result;
+    }
+
+    distanceTo(bounds: Bounds) {
+        let boundsX = bounds.x;
+        let boundsY = bounds.y;
+
+        if (this.worldObject.shouldIgnoreCamera() && this.worldObject.world) {
+            bounds.x -= this.worldObject.world.camera.worldOffsetX;
+            bounds.y -= this.worldObject.world.camera.worldOffsetY;
+        }
+
+        let result = UIElement.distanceTo(bounds.x, bounds.y, this.getInteractBounds$().getBoundingBox$());
+
+        bounds.x = boundsX;
+        bounds.y = boundsY;
+
+        return result;
     }
 
     private localBounds = new RectBounds(0, 0, 0, 0);
@@ -180,7 +209,7 @@ namespace UIElement {
                                         && uiElement.blockLevel >= maxBlockLevel
                                         && uiElement.worldObject.isActive()
                                         && uiElement.canInteract()
-                                        && uiElement.getInteractBounds$().overlaps(targetBounds));
+                                        && uiElement.isOverlapping(targetBounds));
         
         if (A.isEmpty(uiElements)) {
             return undefined;
@@ -189,15 +218,15 @@ namespace UIElement {
         uiElements.sort((e1, e2) => {
             let cmpLayer = -World.Actions.getRenderOrder(e1.worldObject, e2.worldObject);
             if (cmpLayer !== 0) return cmpLayer;
-            let e1dist = distanceTo(targetBounds.x, targetBounds.y, e1.getInteractBounds$().getBoundingBox$());
-            let e2dist = distanceTo(targetBounds.x, targetBounds.y, e2.getInteractBounds$().getBoundingBox$());
+            let e1dist = e1.distanceTo(targetBounds);
+            let e2dist = e2.distanceTo(targetBounds);
             return e1dist - e2dist;
         });
 
         return uiElements[0];
     }
 
-    function distanceTo(x: number, y: number, rect: Rect) {
+    export function distanceTo(x: number, y: number, rect: Rect) {
         if (G.rectContainsPt(rect, tmp.vec2(x, y))) return 0;
 
         if (rect.x <= x && x <= rect.x + rect.width) {
