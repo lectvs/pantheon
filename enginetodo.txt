@@ -6,6 +6,7 @@ TODO
 - load directly from ase (https://github.com/kennedy0/aseprite-reader/blob/main/src/aseprite_reader/aseprite_file.py)
 - look into babel transformations
 - hot reloading again (reload just assets?)
+- world.unload function to free spritetext textures
 
 
 backlog
@@ -33,10 +34,12 @@ backlog
 - camera zoom/rotate?
 - vs code tasks?
 - look into moving from localstorage to indexeddb: https://web.dev/indexeddb/
-- new paint.net 5.x plugin capabilities: https://boltbait.com/pdn/CodeLab/help/tutorial.php
 - normal-map/lighting
 - "window" filters
 - boundless textures
     - optimize tilemap editing with boundless textures
 - print errors on screen?
 - loading messages
+
+bugs
+- xephia zoom bug on app (pinch and zoom on black area outside canvas)

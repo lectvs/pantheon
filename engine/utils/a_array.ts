@@ -244,6 +244,14 @@ namespace A {
         return result;
     }
 
+    export function reversed<T>(array: T[]) {
+        let result: T[] = [];
+        for (let i = array.length-1; i >= 0; i--) {
+            result.push(array[i]);
+        }
+        return result;
+    }
+
     /**
      * Creates a new array equal to: [f(0), f(1), f(2), ..., f(count-1)]
      */
