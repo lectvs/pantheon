@@ -126,6 +126,13 @@ class RandomNumberGenerator {
     }
 
     /**
+     * Same as perlin(), with a pre-defined offset.
+     */
+    perlin2(x: number, y?: number, z?: number) {
+        return this.perlinRng.get(x + 11037.11037, y, z);
+    }
+
+    /**
      * Random sample of {count} elements from an array.
      */
     sample<T>(array: T[], count: number) {
