@@ -109,7 +109,7 @@ class WorldObject {
     set physicsGroup(value: string | undefined) { World.Actions.setPhysicsGroup(this, value); }
     //
 
-    get worldn() { return this._world ?? new World() };
+    get worldd() { return this._world ?? new World() };
 
     get delta() { return ((this.useGlobalTime || !this.world) ? global.game.delta : this.world.delta) * this.timeScale;}
 
