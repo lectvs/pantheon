@@ -3,8 +3,7 @@
 
 # Cloning With lectvs Submodule
 - After cloning this repo with `git clone git@github.com:lectvs/REPO.git`...
-- `git submodule init`
-- `git submodule update`
+- `git submodule update --init --recursive`
 
 # New Game Checklist
 - Change game name and window title in `bin/index.html`

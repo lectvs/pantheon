@@ -145,4 +145,46 @@ namespace Transitions {
             return result;
         }
     }
+
+    export class Dissolve extends Transition {
+        private time: number;
+        private dissolveFilter: DissolveFilter;
+
+        constructor(config: Transition.BaseConfig & { time: number, scaleX: number, scaleY: number, timeTransform?: (t: number) => number }) {
+            super(config);
+            this.time = config.time;
+
+            this.dissolveFilter = new DissolveFilter(config.scaleX, config.scaleY);
+            this.dissolveFilter.amount = 1;
+
+            let timeTransform = config.timeTransform ?? Utils.IDENTITY;
+
+            this.script = new Script(S.chain(
+                S.wait(this.preTime),
+                S.doOverTime(this.time, t => {
+                    this.dissolveFilter.amount = M.lerp(timeTransform(t), 1, 0);
+                }),
+                S.wait(this.postTime),
+            ));
+        }
+
+        override setData(oldWorld: World | undefined, newWorld: World | undefined): void {
+            super.setData(oldWorld, newWorld);
+
+            if (this.newScreenshot) {
+                this.newScreenshot.sprite.filters = [this.dissolveFilter];
+            }
+        }
+
+        override render() {
+            let result: Render.Result = FrameCache.array();
+            if (this.oldScreenshot) {
+                result.push(this.oldScreenshot.sprite);
+            }
+            if (this.newScreenshot) {
+                result.push(this.newScreenshot.sprite);
+            }
+            return result;
+        }
+    }
 }

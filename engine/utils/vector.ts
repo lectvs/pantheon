@@ -134,7 +134,7 @@ class Vector2 {
     }
 
     set(pt: Pt): this;
-    set(x: number, y: number): this;
+    set(x: number, y?: number): this;
     set(x: number | Pt, y?: number): this {
         if (!M.isNumber(x)) {
             y = x.y;

@@ -9,6 +9,7 @@ namespace Debug {
         showOverlay?: boolean;
         overlayFeeds?: ((world: World) => string | number)[];
         skipRate?: number;
+        skipRateKeyModifier?: number;
         programmaticInput?: boolean;
         autoplay?: boolean;
         skipMainMenuStage?: () => World;
@@ -30,6 +31,7 @@ class Debug {
         Debug.SHOW_OVERLAY = Debug.DEBUG && (config.showOverlay ?? false);
         Debug.OVERLAY_FEEDS = config.overlayFeeds ?? [];
         Debug.SKIP_RATE = config.skipRate ?? 1;
+        Debug.SKIP_RATE_KEY_MODIFIER_MAX = config.skipRateKeyModifier ?? 10;
         Debug.PROGRAMMATIC_INPUT = config.programmaticInput ?? false;
         Debug.AUTOPLAY = config.autoplay ?? false;
         Debug.SKIP_MAIN_MENU_STAGE = config.skipMainMenuStage;
@@ -60,7 +62,7 @@ class Debug {
             Main.takeScreenshot(1, 'clipboard');
         }
 
-        Debug._SKIP_RATE_KEY_MODIFIER = Input.isDown(Input.DEBUG_SKIP_RATE) ? 10 : 1;
+        Debug._SKIP_RATE_KEY_MODIFIER = Input.isDown(Input.DEBUG_SKIP_RATE) ? Debug.SKIP_RATE_KEY_MODIFIER_MAX : 1;
     }
 
     private static _DEBUG: boolean;
@@ -87,6 +89,7 @@ class Debug {
 
     private static _SKIP_RATE: number;
     private static _SKIP_RATE_KEY_MODIFIER: number = 1;
+    static SKIP_RATE_KEY_MODIFIER_MAX: number;
     static get SKIP_RATE() { return this.DEBUG ? M.clamp(this._SKIP_RATE * this._SKIP_RATE_KEY_MODIFIER, 1, Infinity) : 1; }
     static set SKIP_RATE(value: number) { this._SKIP_RATE = value; }
 

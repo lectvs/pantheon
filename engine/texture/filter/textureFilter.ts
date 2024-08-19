@@ -26,6 +26,7 @@ namespace TextureFilter {
      *              float mod(float n, float mod) - float-wise modulo
      *              float distance(vecN A, vecN B) - distance between two vectors
      *              float length(vecN A) - magnitude of a vector
+     *              float step(float threshold, float value) - returns 0 if value < threshold, 1 otherwise
      */
     export type Config = {
         uniforms?: Dict<any>;

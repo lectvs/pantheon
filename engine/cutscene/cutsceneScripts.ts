@@ -44,26 +44,22 @@ namespace S {
         }
     }
 
-    /**
-     * @deprecated Use WorldObject.moveTo instead.
-     */
     export function moveTo(worldObject: WorldObject, x: number, y: number, maxTime: number = 10): Script.FunctionLike {
-        return worldObject.moveTo(x, y, maxTime);
+        return function*() {
+            yield worldObject.moveTo(x, y, maxTime);
+        }
     }
 
-    /**
-     * @deprecated Use WorldObject.moveToX instead.
-     */
     export function moveToX(worldObject: WorldObject, x: number, maxTime: number = 10): Script.FunctionLike {
-        return worldObject.moveToX(x, maxTime);
-
+        return function*() {
+            yield worldObject.moveToX(x, maxTime);
+        }
     }
 
-    /**
-     * @deprecated Use WorldObject.moveToY instead.
-     */
     export function moveToY(worldObject: WorldObject, y: number, maxTime: number = 10): Script.FunctionLike {
-        return worldObject.moveToY(y, maxTime);
+        return function*() {
+            yield worldObject.moveToY(y, maxTime);
+        }
     }
 
     /**

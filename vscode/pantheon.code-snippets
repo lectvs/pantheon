@@ -18,13 +18,26 @@
 	},
 	"WorldObjectConfig": {
 		"scope": "typescript",
-		"prefix": ["spri"],
+		"prefix": ["confi"],
 		"body": [
 			"namespace ${1:${TM_FILENAME_BASE/(.)(.*)/${1:/upcase}$2/}} {",
-				"\texport type Config = WorldObject.Config<${1:${TM_FILENAME_BASE/(.)(.*)/${1:/upcase}$2/}}> & {",
+				"\texport type Config = WorldObject.Config<${1}> & {",
 					"\t\t",
 				"\t}",
 			"}"],
 		"description": "A type for a WorldObject Config."
+	},
+	"Uniform": {
+		"scope": "typescript",
+		"prefix": ["unif"],
+		"body": [
+			"private _${1:name}: number;",
+			"get ${1}() { return this._${1}; }",
+			"set ${1}(v) {",
+				"\tif (v === this._${1}) return;",
+				"\tthis._${1} = v;",
+				"\tthis.setUniform('${1}', v);",
+			"}"],
+		"description": "Uniform definition for a TextureFilter."
 	}
 }
