@@ -29,6 +29,8 @@ namespace World {
             humanizeFactor?: number;
         };
 
+        music?: MusicConfig;
+
         timescale?: number;
         allowPause?: boolean;
         hooks?: HooksConfig<Hooks<W>>;
@@ -74,6 +76,13 @@ namespace World {
     export type Screenshot = {
         texture: PIXI.RenderTexture;
         upscale: number;
+    }
+
+    export type MusicConfig = {
+        action: 'block';
+    } | {
+        action: 'volumescale';
+        volumeScale: number;
     }
 
     // To add a new hook, simply add an entry here and call World.hookManager.executeHooks() at the appropriate location(s).
@@ -145,6 +154,8 @@ class World {
     soundHumanizeByDefault: boolean;
     soundHumanizeFactor: number;
 
+    music: World.MusicConfig;
+
     allowPause: boolean;
 
     protected hookManager: HookManager<World.Hooks<this>>;
@@ -163,6 +174,8 @@ class World {
         this.allowSounds = true;
         this.soundHumanizeByDefault = config.sound?.humanizeByDefault ?? false;
         this.soundHumanizeFactor = config.sound?.humanizeFactor ?? 0.1;
+
+        this.music = config.music ? O.clone(config.music) : { action: 'volumescale', volumeScale: 1 };
 
         this.time = 0;
         this.timeScale = config.timescale ?? 1;

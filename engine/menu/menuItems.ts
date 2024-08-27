@@ -6,6 +6,7 @@ namespace MenuTextButton {
         onHover?: (this: MenuTextButton) => void;
         onJustHovered?: (this: MenuTextButton) => void;
         hoverColor?: number;
+        clickedColor?: number;
     }
 }
 
@@ -21,7 +22,7 @@ class MenuTextButton extends SpriteText {
         let button = this.addModule(new UIElement({
             tinting: {
                 hover: config.hoverColor ?? 0x808080,
-                clicked: config.hoverColor ?? 0x808080,
+                clicked: config.clickedColor ?? (config.hoverColor ?? 0x808080),
             },
             onUpdate: (hovered) => {
                 if (hovered && config.onHover) config.onHover.apply(this);

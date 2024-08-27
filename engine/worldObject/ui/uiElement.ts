@@ -12,12 +12,14 @@ namespace UIElement {
 
         blockLevel?: number;
 
-        tinting?: {
-            base?: number;
-            hover?: number;
-            clicked?: number;
-        };
+        tinting?: Tinting;
     }
+
+    export type Tinting = {
+        base?: number;
+        hover?: number;
+        clicked?: number;
+    };
 
     export type Callback = (this: UIElement) => void;
     export type UpdateCallback = (this: UIElement, hovered: boolean, clickedDown: boolean) => void;

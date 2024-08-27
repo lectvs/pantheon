@@ -14,16 +14,17 @@ namespace MusicManager {
 
 class MusicManager {
     paused: boolean;
-    volume: number;
 
     private soundManager: SoundManager;
     private scriptManager: ScriptManager;
 
     private state: MusicManager.State;
 
+    get volume() { return this.soundManager.volume; }
+    set volume(v) { this.soundManager.volume = v }
+
     constructor() {
         this.paused = false;
-        this.volume = 1;
 
         this.soundManager = new SoundManager();
         this.scriptManager = new ScriptManager();

@@ -52,6 +52,14 @@ class StageManager {
         }
     }
 
+    getCurrentGameWorld() {
+        return this.stageStack.findLast(world => !(world.world instanceof Menu))?.world;
+    }
+
+    getCurrentMenuWorld() {
+        return this.stageStack.findLast(world => world.world instanceof Menu)?.world;
+    }
+
     getCurrentWorld() {
         return this.stageStack.last()?.world;
     }

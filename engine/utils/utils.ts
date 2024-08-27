@@ -2,8 +2,15 @@ namespace Utils {
     export const NOOP = () => null;
     export const IDENTITY = (e: any) => e;
     export const NOOP_DISPLAYOBJECT: PIXI.DisplayObject = new PIXI.DisplayObject();
-
     export const UID = new UIDGenerator();
+
+    export function openTwitter() {
+        window.open('https://twitter.com/lectvs', '_blank');
+    }
+
+    export function openDiscord() {
+        window.open('https://discord.gg/qyG4xx45JD', '_blank');
+    }
 }
 
 type KeyOfType<T, U> = {[P in keyof T]: T[P] extends U ? P: never}[keyof T]

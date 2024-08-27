@@ -74,12 +74,21 @@ class Game {
         currentTheater.isSkippingCutscene = false;  // Safeguard
         currentTheater.update();
 
+        let currentWorld = this.stageManager.getCurrentWorld();
+
         this.updateOverlay();
 
         this.soundManager.volume = this.volume * Options.sfxVolume;
         this.soundManager.update(this.delta);
+
         this.musicManager.volume = this.volume * Options.musicVolume;
-        this.musicManager.update(this.delta);
+
+        if (!currentWorld) {
+            this.musicManager.update(this.delta);
+        } else if (currentWorld.music.action !== 'block') {
+            this.musicManager.volume *= currentWorld.music.volumeScale;
+            this.musicManager.update(this.delta);
+        }
 
         while (!A.isEmpty(this.endOfFrameQueue)) {
             this.endOfFrameQueue.shift()!();
@@ -117,6 +126,10 @@ class Game {
         Render.diff(this.container, result);
 
         return FrameCache.array(this.container);
+    }
+
+    back(transition: Transition = new Transitions.Instant()) {
+        this.stageManager.back(transition);
     }
 
     canPause(): boolean {
