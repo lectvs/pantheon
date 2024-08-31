@@ -114,6 +114,21 @@ namespace Actions {
         });
     }
 
+    export function enterFlicker(worldObject: WorldObject, duration: number) {
+        return worldObject.runScript(function*() {
+            yield S.either(
+                S.wait(duration),
+                S.loopFor(Infinity, _ => S.chain(
+                    S.wait(0.05),
+                    S.call(() => worldObject.setVisible(false)),
+                    S.wait(0.05),
+                    S.call(() => worldObject.setVisible(true)),
+                ))
+            );
+            worldObject.setVisible(true);
+        });
+    }
+
     export function flash(worldObject: WorldObject & { effects: Effects }, duration: number, keepPreviousEnabled?: 'keepPreviousEnabled', color: number = 0xFFFFFF) {
         let previousColor = worldObject.effects.silhouette.color;
         let previousAlpha = worldObject.effects.silhouette.alpha;

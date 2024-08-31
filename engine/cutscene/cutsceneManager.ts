@@ -39,9 +39,13 @@ class CutsceneManager {
         return this.current && !this.current.node.unskippable;
     }
 
-    fastForwardCutscene(cutscene: Cutscene) {
-        this.playCutscene(cutscene);
-        this.finishCurrentCutscene();
+    finishCurrentCutscene() {
+        if (!this.isCutscenePlaying()) return;
+        
+        this.markCutsceneAsSeen(this.current!.node);
+        this.current = undefined;
+
+        this.theater.dialogBox?.complete();
     }
 
     hasSeenCutscene(cutscene: Cutscene) {
@@ -77,19 +81,15 @@ class CutsceneManager {
         this.playCutscene(cutscene);
     }
 
+    playCutsceneAndImmediatelyFinish(cutscene: Cutscene) {
+        this.playCutscene(cutscene);
+        this.finishCurrentCutscene();
+    }
+    
     reset() {
         if (this.current) {
             this.current.script.isDone = true;
         }
         this.current = undefined;
-    }
-
-    private finishCurrentCutscene() {
-        if (!this.isCutscenePlaying()) return;
-        
-        this.markCutsceneAsSeen(this.current!.node);
-        this.current = undefined;
-
-        this.theater.dialogBox?.complete();
     }
 }
