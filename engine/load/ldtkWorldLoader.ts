@@ -38,6 +38,7 @@ namespace LdtkWorldLoader {
 
     export type LdtkEntityInstanceSchema = {
         __identifier: string;
+        iid: string;
         px: [number, number];
         fieldInstances: {
             __identifier: string;
@@ -137,6 +138,7 @@ class LdtkWorldLoader implements Loader {
                             x: entity.px[0],
                             y: entity.px[1],
                             identifier: entity.__identifier,
+                            iid: entity.iid,
                             name: this.getEntityName(entity),
                             placeholder: this.getEntityPlaceholder(entity),
                             texture: this.getEntityField(entity, 'texture'),

@@ -12,6 +12,7 @@ namespace LdtkWorld {
         x: number;
         y: number;
         identifier: string;
+        iid: string;
         placeholder: string;
         name?: string;
         texture?: string;
@@ -38,6 +39,9 @@ namespace LdtkWorld {
         for (let entity of ldtkWorld.levels[level].entities) {
             let worldObject = getInstantiatedWorldObject(entity);
             if (!worldObject) continue;
+
+            // Default name to iid if not present.
+            if (entity.iid && !worldObject.name) worldObject.name = entity.iid;
 
             if (entity.name) worldObject.name = entity.name;
             if (entity.layer) worldObject.layer = entity.layer;

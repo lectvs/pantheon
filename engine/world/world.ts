@@ -4,6 +4,7 @@
 
 namespace World {
     export type Config<W extends World> = {
+        name?: string;
         layers?: World.LayerConfig[];
         effects?: Effects.Config;
 
@@ -95,6 +96,8 @@ namespace World {
 }
 
 class World {
+    name: string | undefined;
+
     forcedWidth: number | undefined;
     forcedHeight: number | undefined;
 
@@ -164,7 +167,9 @@ class World {
 
     private mouseBounds: CircleBounds;
 
-    constructor(config: World.Config<World> = {}) {        
+    constructor(config: World.Config<World> = {}) {      
+        this.name = config.name;
+          
         this.scriptManager = new ScriptManager();
         this.soundManager = new SoundManager();
 

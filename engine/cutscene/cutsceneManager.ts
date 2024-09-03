@@ -4,16 +4,25 @@ type Cutscene = {
     seenKey?: string;
 }
 
+namespace CutsceneManager {
+    export type Config = {
+        getSeenCutscenes?: () => string[];
+        onSeenCutscene?: (seenKey: string) => void;
+    }
+}
+
 class CutsceneManager {
     theater: Theater;
     current: { node: Cutscene, script: Script } | undefined;
 
     private seenCutsceneKeys: Set<string>;
+    private onSeenCutscene: (seenKey: string) => void;
 
-    constructor(theater: Theater) {
+    constructor(theater: Theater, config: CutsceneManager.Config) {
         this.theater = theater;
         this.current = undefined;
-        this.seenCutsceneKeys = new Set();
+        this.seenCutsceneKeys = new Set(config.getSeenCutscenes ? config.getSeenCutscenes() : []);
+        this.onSeenCutscene = config.onSeenCutscene ?? Utils.NOOP;
     }
 
     update() {
@@ -60,6 +69,7 @@ class CutsceneManager {
     markCutsceneAsSeen(cutscene: Cutscene) {
         if (!cutscene.seenKey) return;
         this.seenCutsceneKeys.add(cutscene.seenKey);
+        this.onSeenCutscene(cutscene.seenKey);
     }
 
     playCutscene(cutscene: Cutscene) {

@@ -4,6 +4,7 @@
 namespace Theater {
     export type Config = {
         dialogBoxFactory?: Factory<DialogBox>;
+        cutsceneManager?: CutsceneManager.Config;
         autoPlayScript?: () => IterableIterator<any>;
     }
 }
@@ -25,7 +26,7 @@ class Theater {
     
     constructor(config: Theater.Config = {}) {
         this.scriptManager = new ScriptManager();
-        this.cutsceneManager = new CutsceneManager(this);
+        this.cutsceneManager = new CutsceneManager(this, config.cutsceneManager ?? {});
 
         this.dialogBoxWorld = new World({
             backgroundAlpha: 0,
