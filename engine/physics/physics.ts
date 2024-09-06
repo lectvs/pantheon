@@ -40,6 +40,8 @@ namespace Physics {
         let collidingPhysicsWorldObjects = getCollidingPhysicsObjects(world);
         let physicsObjectDataCache = cachePhysicsObjectData(collidingPhysicsWorldObjects);
 
+        let physicsGroupsToObjs = getPhysicsGroupToCollidingPhysicsObjects(world, collidingPhysicsWorldObjects);
+
         let iters = 1;
         for (let worldObject of collidingPhysicsWorldObjects) {
             let d = physicsObjectDataCache.dpos[worldObject.uid];
@@ -62,13 +64,13 @@ namespace Physics {
                 worldObject.y += d.y / iters;
                 worldObject.bounds.move(d.x / iters, d.y / iters);
             }
-            performNormalIteration(world, resultCollisions);
+            performNormalIteration(world, physicsGroupsToObjs, resultCollisions);
         }
 
         for (let iter = 0; iter < world.collisionIterations - iters; iter++) {
-            performNormalIteration(world, resultCollisions);
+            performNormalIteration(world, physicsGroupsToObjs, resultCollisions);
         }
-        performFinalIteration(world, resultCollisions);
+        performFinalIteration(world, physicsGroupsToObjs, resultCollisions);
 
         // Collect any duplicate collisions for the same entities.
         let collectedCollisions = collectCollisions(resultCollisions);
@@ -81,8 +83,8 @@ namespace Physics {
         }
     }
 
-    function performNormalIteration(world: World, resultCollisions: RaycastCollisionData[]) {
-        let collisions = getRaycastCollisions(world)
+    function performNormalIteration(world: World, physicsGroupsToObjs: Dict<PhysicsWorldObject[]>, resultCollisions: RaycastCollisionData[]) {
+        let collisions = getRaycastCollisions(world, physicsGroupsToObjs)
                 .sort((a,b) => (a.collision?.t ?? -Infinity) - (b.collision?.t ?? -Infinity));
 
         for (let collision of collisions) {
@@ -91,8 +93,8 @@ namespace Physics {
         }
     }
 
-    function performFinalIteration(world: World, resultCollisions: RaycastCollisionData[]) {
-        let collisions = getRaycastCollisions(world);
+    function performFinalIteration(world: World, physicsGroupsToObjs: Dict<PhysicsWorldObject[]>, resultCollisions: RaycastCollisionData[]) {
+        let collisions = getRaycastCollisions(world, physicsGroupsToObjs);
 
         let currentSet: Set<PhysicsWorldObject> = FrameCache.set();
         for (let collision of collisions) {
@@ -166,7 +168,7 @@ namespace Physics {
         return true;
     }
 
-    function getRaycastCollisions(world: World): RaycastCollisionData[] {
+    function getRaycastCollisions(world: World, physicsGroupsToObjs: Dict<PhysicsWorldObject[]>): RaycastCollisionData[] {
         let raycastCollisionDatas: RaycastCollisionData[] = FrameCache.array();
 
         let collisions = world.collisions.filter(collision => {
@@ -179,18 +181,19 @@ namespace Physics {
                 return false;
             }
             return true;
-        })
+        });
+
 
         for (let collision of collisions) {
-            for (let imove = 0; imove < world.physicsGroups[collision.move].worldObjects.length; imove++) {
+            for (let imove = 0; imove < physicsGroupsToObjs[collision.move].length; imove++) {
                 let fromStart = collision.move === collision.from ? imove + 1 : 0;  // Don't double-count collisions between members of the same physics group.
-                for (let ifrom = fromStart; ifrom < world.physicsGroups[collision.from].worldObjects.length; ifrom++) {
-                    let move = world.physicsGroups[collision.move].worldObjects[imove];
-                    let from = world.physicsGroups[collision.from].worldObjects[ifrom];
+                for (let ifrom = fromStart; ifrom < physicsGroupsToObjs[collision.from].length; ifrom++) {
+                    let move = physicsGroupsToObjs[collision.move][imove];
+                    let from = physicsGroupsToObjs[collision.from][ifrom];
 
                     if (move === from) continue;
-                    if (!G.areRectanglesOverlapping(move.bounds.getBoundingBox$(), from.bounds.getBoundingBox$())) continue;
                     if (!move.collisionEnabled || !from.collisionEnabled) continue;
+                    if (!G.areRectanglesOverlapping(move.bounds.getBoundingBox$(), from.bounds.getBoundingBox$())) continue;
                     if (!move.isCollidingWith(from) || !from.isCollidingWith(move)) continue;
                     let raycastCollision = move.bounds.getRaycastCollision$(move.movedThisFrameX, move.movedThisFrameY, from.bounds, from.movedThisFrameX, from.movedThisFrameY);
                     if (!raycastCollision) continue;
@@ -394,6 +397,20 @@ namespace Physics {
             if (!worldObject.isActive()) continue;
             if (!worldObject.collisionEnabled) continue;
             result.push(worldObject);
+        }
+
+        return result;
+    }
+
+    function getPhysicsGroupToCollidingPhysicsObjects(world: World, collidingPhysicsWorldObjects: PhysicsWorldObject[]) {
+        let result: Dict<PhysicsWorldObject[]> = FrameCache.object();
+
+        for (let physicsGroup in world.physicsGroups) {
+            result[physicsGroup] = FrameCache.array();
+        }
+
+        for (let obj of collidingPhysicsWorldObjects) {
+            result[obj.physicsGroup!].push(obj);
         }
 
         return result;
