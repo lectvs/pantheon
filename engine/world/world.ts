@@ -837,6 +837,7 @@ namespace World {
 
         /**
          * Removes a list of WorldObjects from their containing worlds. Returns a copy of the list of objs.
+         * @param unlinkFromParent default: true
          */
         export function removeWorldObjectsFromWorld<T extends WorldObject | undefined>(objs: ReadonlyArray<T>, unlinkFromParent: boolean = true): T[] {
             if (A.isEmpty(objs)) return [];
