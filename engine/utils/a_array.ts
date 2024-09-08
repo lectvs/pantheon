@@ -81,7 +81,27 @@ namespace A {
         return { width: M.max(array, line => isEmpty(line) ? 0 : line.length), height: array.length };
     }
 
-    export function indices(array: ReadonlyArray<any>) {
+    export function indexOfMax<T>(array: T[], fn: (a: T) => number = Utils.IDENTITY) {
+        if (isEmpty(array)) return -1;
+        let max = fn(array[0]);
+        let maxI = 0;
+
+        for (let i = 1; i < array.length; i++) {
+            let v = fn(array[i]);
+            if (v > max) {
+                max = v;
+                maxI = i;
+            }
+        }
+        
+        return maxI;
+    }
+
+    export function indexOfMin<T>(array: T[], fn: (a: T) => number = Utils.IDENTITY) {
+        return indexOfMax(array, e => -fn(e));
+    }
+
+    export function indices(array: any[]) {
         return range(array.length);
     }
 
