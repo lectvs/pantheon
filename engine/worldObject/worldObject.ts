@@ -112,6 +112,7 @@ class WorldObject {
     get worldd() { return this._world ?? new World() };
 
     get delta() { return ((this.useGlobalTime || !this.world) ? global.game.delta : this.world.delta) * this.timeScale;}
+    private lastFrameDelta: number;
 
     startOfThisFrameX: number;
     startOfThisFrameY: number;
@@ -122,9 +123,15 @@ class WorldObject {
     get movedThisFrameX() { return this.x - this.startOfThisFrameX; }
     get movedThisFrameY() { return this.y - this.startOfThisFrameY; }
     get movedThisFrameZ() { return this.z - this.startOfThisFrameZ; }
+    get movedThisFrameAngle() { return M.angle(this.movedThisFrameX, this.movedThisFrameY); }
+    get movedThisFrameDistance() { return M.magnitude(this.movedThisFrameX, this.movedThisFrameY); }
+    get movedThisFrameSpeed() { return this.delta === 0 ? 0 : this.movedThisFrameDistance / this.delta; }
     get movedLastFrameX() { return this.startOfThisFrameX - this.startOfLastFrameX; }
     get movedLastFrameY() { return this.startOfThisFrameY - this.startOfLastFrameY; }
     get movedLastFrameZ() { return this.startOfThisFrameZ - this.startOfLastFrameZ; }
+    get movedLastFrameAngle() { return M.angle(this.movedLastFrameX, this.movedLastFrameY); }
+    get movedLastFrameDistance() { return M.magnitude(this.movedLastFrameX, this.movedLastFrameY); }
+    get movedLastFrameSpeed() { return this.lastFrameDelta === 0 ? 0 : this.movedLastFrameDistance / this.lastFrameDelta; }
 
     _isInsideWorldBoundsBufferThisFrame: boolean;
 
@@ -161,6 +168,7 @@ class WorldObject {
         this.timeScale = config.timeScale ?? 1;
         this.useGlobalTime = config.useGlobalTime ?? false;
         this.data = config.data ? O.deepClone(config.data) : {};
+        this.lastFrameDelta = 0.01;
 
         this._visible = config.visible ?? true;
         this._active = config.active ?? true;
@@ -289,6 +297,8 @@ class WorldObject {
             if (!isFinite(this.v.x)) this.v.x = 0;
             if (!isFinite(this.v.y)) this.v.y = 0;
         }
+
+        this.lastFrameDelta = this.delta;
     }
 
     fullUpdate() {

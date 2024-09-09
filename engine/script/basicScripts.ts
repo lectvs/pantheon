@@ -160,6 +160,8 @@ namespace S {
         );
     }
 
+    export function tweenPt(duration: OrFactory<number>, pt: Pt, start: Pt, end: Pt, easingFunction?: Tween.Easing.Function): Script.Function;
+    export function tweenPt(duration: OrFactory<number>, pt: Pt, start: Pt, end: Pt, easingFunctionX: Tween.Easing.Function, easingFunctionY: Tween.Easing.Function): Script.Function;
     export function tweenPt(duration: OrFactory<number>, pt: Pt, start: Pt, end: Pt, easingFunctionX: Tween.Easing.Function = Tween.Easing.Linear, easingFunctionY: Tween.Easing.Function = easingFunctionX): Script.Function {
         let startx = start.x;
         let starty = start.y;

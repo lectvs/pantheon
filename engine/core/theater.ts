@@ -91,12 +91,8 @@ class Theater {
         return this.cutsceneManager.isCutscenePlaying();
     }
 
-    playCutscene(cutscene: Cutscene) {
-        this.cutsceneManager.playCutscene(cutscene);
-    }
-
-    playCutsceneIfNotSeen(cutscene: Cutscene) {
-        this.cutsceneManager.playCutsceneIfNotSeen(cutscene);
+    playCutscene(cutscene: Cutscene, options: CutsceneManager.PlayOptions = {}) {
+        this.cutsceneManager.playCutscene(cutscene, options);
     }
 
     runScript(script: Script.FunctionLike, name?: string) {

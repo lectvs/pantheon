@@ -9,11 +9,19 @@ namespace CutsceneManager {
         getSeenCutscenes?: () => string[];
         onSeenCutscene?: (seenKey: string) => void;
     }
+
+    export type PlayOptions = {
+        playIfSeen?: boolean;
+        queueIfCutscenePlaying?: boolean;
+        immediatelyFinish?: boolean;
+    }
 }
 
 class CutsceneManager {
     theater: Theater;
     current: { node: Cutscene, script: Script } | undefined;
+
+    private queue: { node: Cutscene, options: CutsceneManager.PlayOptions }[];
 
     private seenCutsceneKeys: Set<string>;
     private onSeenCutscene: (seenKey: string) => void;
@@ -21,12 +29,18 @@ class CutsceneManager {
     constructor(theater: Theater, config: CutsceneManager.Config) {
         this.theater = theater;
         this.current = undefined;
+        this.queue = [];
         this.seenCutsceneKeys = new Set(config.getSeenCutscenes ? config.getSeenCutscenes() : []);
         this.onSeenCutscene = config.onSeenCutscene ?? Utils.NOOP;
     }
 
     update() {
         this.updateCurrentCutscene();
+
+        if (!this.current && this.queue.length > 0) {
+            let next = this.queue.shift()!;
+            this.playCutscene(next.node, next.options);
+        }
     }
 
     private updateCurrentCutscene() {
@@ -72,9 +86,23 @@ class CutsceneManager {
         this.onSeenCutscene(cutscene.seenKey);
     }
 
-    playCutscene(cutscene: Cutscene) {
+    playCutscene(cutscene: Cutscene, optionsParams: CutsceneManager.PlayOptions = {}) {
+        let options = O.defaults(optionsParams, {
+            playIfSeen: true,
+            queueIfCutscenePlaying: false,
+            immediatelyFinish: false,
+        });
+
+        if (!options.playIfSeen && this.hasSeenCutscene(cutscene)) return;
+
         if (this.current) {
-            console.error('Cannot play cutscene:', cutscene, 'because a cutscene is already playing:', this.current);
+            if (options.queueIfCutscenePlaying) {
+                let queuedOptions = O.deepClone(options);
+                queuedOptions.queueIfCutscenePlaying = false;
+                this.queue.push({ node: cutscene, options: queuedOptions });
+            } else {
+                console.error('Cannot play cutscene:', cutscene, 'because a cutscene is already playing:', this.current);
+            }
             return;
         }
 
@@ -84,18 +112,12 @@ class CutsceneManager {
         };
 
         this.updateCurrentCutscene();
+
+        if (options.immediatelyFinish) {
+            this.finishCurrentCutscene();
+        }
     }
 
-    playCutsceneIfNotSeen(cutscene: Cutscene) {
-        if (this.hasSeenCutscene(cutscene)) return;
-        this.playCutscene(cutscene);
-    }
-
-    playCutsceneAndImmediatelyFinish(cutscene: Cutscene) {
-        this.playCutscene(cutscene);
-        this.finishCurrentCutscene();
-    }
-    
     reset() {
         if (this.current) {
             this.current.script.isDone = true;

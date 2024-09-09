@@ -1,5 +1,16 @@
 namespace M {
     /**
+     * Returns the angle of the vector <dx, dy> from the origin.
+     */
+    export function angle(dx: number, dy: number) {
+        let angle = M.atan2(dy, dx);
+        if (angle < 0) {
+            angle += 360;
+        }
+        return angle;
+    }
+
+    /**
      * Computes the difference between angles, such that [from] + [diff] is
      * an equivalent angle to [to]
      */
