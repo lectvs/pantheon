@@ -40,6 +40,8 @@ class TextureFilter extends PIXI.Filter {
     private visualPadding: number;
     private uniformCache: Dict<any>;
 
+    timeScale: number;
+
     constructor(config: TextureFilter.Config) {
         super(
             PIXI.Filter.defaultVertexSrc,
@@ -48,6 +50,7 @@ class TextureFilter extends PIXI.Filter {
         );
         this.uniformCache = TextureFilter.constructUniformsMap(config.uniforms);  // Purposefully duplicated
         this.visualPadding = config.visualPadding ?? 0;
+        this.timeScale = 1;
     }
 
     disable() {
@@ -86,6 +89,10 @@ class TextureFilter extends PIXI.Filter {
         this.setTextureValues(sprite.width, sprite.height);
     }
 
+    setTime(t: number) {
+        this.setUniform('t', t);
+    }
+
     setUniform(name: string, value: any) {
         if (this.uniformCache[name] === value) return;
         this.uniforms[name] = value;
@@ -93,7 +100,7 @@ class TextureFilter extends PIXI.Filter {
     }
 
     updateTime(delta: number) {
-        this.setUniform('t', this.getUniform('t') + delta);
+        this.setUniform('t', this.getUniform('t') + delta * this.timeScale);
     }
 }
 
