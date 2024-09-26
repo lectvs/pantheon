@@ -56,6 +56,10 @@ namespace Color {
         return xyzToColor(rgbf[0] / 255, rgbf[1] / 255, rgbf[2] / 255);
     }
 
+    export function rgbaToVec4(rgba: number): [number, number, number, number] {
+        return argbToVec4(rgba);
+    }
+
     export function tint(color: number, tint: number) {
         let colorR = (color >> 16) & 255;
         let colorG = (color >> 8) & 255;
