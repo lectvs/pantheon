@@ -7,6 +7,7 @@ namespace PuffSystem {
         color: number;
         alpha?: number;
 
+        finalV?: Pt;
         finalRadius?: number;
         finalColor?: number;
         finalAlpha?: number;
@@ -21,6 +22,8 @@ namespace PuffSystem {
         vy: number;
         t: number;
         maxLife: number;
+        finalVx: number;
+        finalVy: number;
         initialRadius: number;
         finalRadius: number;
         initialColor: number;
@@ -42,16 +45,22 @@ class PuffSystem extends WorldObject {
     override update() {
         super.update();
 
-        for (let i = this.puffs.length-1; i >= 0; i--) {
-            let puff = this.puffs[i];
-            puff.x += puff.vx * this.delta;
-            puff.y += puff.vy * this.delta;
+        this.updateParticles(this.delta);
+    }
+
+    protected updateParticles(delta: number) {
+        this.puffs.filterInPlace(puff => {
+            let progress = puff.t / puff.maxLife;
+
+            let vx = M.lerp(progress, puff.vx, puff.finalVx, puff.easingFn);
+            let vy = M.lerp(progress, puff.vy, puff.finalVy, puff.easingFn);
+
+            puff.x += vx * delta;
+            puff.y += vy * delta;
             
-            puff.t += this.delta;
-            if (this.puffs[i].t > this.puffs[i].maxLife) {
-                this.puffs.splice(i, 1);
-            }
-        }
+            puff.t += delta;
+            return puff.t < puff.maxLife;
+        });
     }
 
     override render() {
@@ -89,6 +98,8 @@ class PuffSystem extends WorldObject {
             vy: config.v.y,
             t: 0,
             maxLife: config.maxLife,
+            finalVx: config.finalV?.x ?? config.v.x,
+            finalVy: config.finalV?.y ?? config.v.y,
             initialRadius: config.radius,
             finalRadius: config.finalRadius ?? config.radius,
             initialColor: config.color,

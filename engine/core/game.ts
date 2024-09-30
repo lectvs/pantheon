@@ -175,7 +175,7 @@ class Game {
     }
 
     reloadCurrentStage(transition: Transition = new Transitions.Instant()) {
-        this.runAtEndOfFrame(() => this.reloadCurrentStage(transition));
+        this.runAtEndOfFrame(() => this.stageManager.internalReloadCurrentStage(transition));
     }
 
     runAtEndOfFrame(fn: () => any) {
