@@ -164,6 +164,7 @@ class World {
     protected hookManager: HookManager<World.Hooks<this>>;
     protected eventManager: WorldEventManager;
     protected endOfFrameQueue: (() => any)[];
+    protected maxInputLevelThisFrame: number;
 
     private mouseBounds: CircleBounds;
 
@@ -229,6 +230,7 @@ class World {
             hooks: config.hooks,
         });
         this.eventManager = new WorldEventManager();
+        this.maxInputLevelThisFrame = 0;
 
         this.endOfFrameQueue = [];
     }
@@ -238,6 +240,7 @@ class World {
     }
 
     update() {
+        this.updateMaxInputLevelThisFrame();
         this.updateScriptManager();
 
         for (let worldObject of this.worldObjects) {
@@ -286,6 +289,14 @@ class World {
         while (!A.isEmpty(this.endOfFrameQueue)) {
             this.endOfFrameQueue.shift()!();
         }
+    }
+
+    protected updateMaxInputLevelThisFrame() {
+        if (this.worldObjects.length === 0) {
+            this.maxInputLevelThisFrame = 0;
+            return;
+        }
+        this.maxInputLevelThisFrame = M.max(this.worldObjects, obj => obj.inputLevel);
     }
 
     protected updateScriptManager() {
@@ -398,6 +409,11 @@ class World {
             if (layer.name === name) return layer;
         }
         return undefined;
+    }
+
+    getMaxInputLevel(): number {
+        if (global.theater.isCutscenePlaying()) return Infinity;
+        return this.maxInputLevelThisFrame;
     }
 
     getPhysicsGroupByName(name: string | undefined) {

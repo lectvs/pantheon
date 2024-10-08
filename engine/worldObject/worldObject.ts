@@ -26,6 +26,7 @@ namespace WorldObject {
         zBehavior?: ZBehavior;
         timeScale?: number;
         useGlobalTime?: boolean;
+        inputLevel?: number;
         tags?: string[];
         hooks?: HooksConfig<Hooks<WO>>;
         data?: any;
@@ -136,8 +137,8 @@ class WorldObject {
     _isInsideWorldBoundsBufferThisFrame: boolean;
 
     controller: Controller;
-
     behavior: Behavior;
+    inputLevel: number;
 
     modules: Module<WorldObject>[];
 
@@ -192,6 +193,7 @@ class WorldObject {
 
         this.controller = new Controller();
         this.behavior = new NullBehavior();
+        this.inputLevel = config.inputLevel ?? 0;
 
         this.modules = [];
 
@@ -627,7 +629,7 @@ class WorldObject {
     }
 
     isControlRevoked() {
-        return global.theater.isCutscenePlaying();
+        return !this.world || this.inputLevel < this.world.getMaxInputLevel();
     }
 
     isOnScreen(buffer: number = 0) {

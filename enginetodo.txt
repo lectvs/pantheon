@@ -10,6 +10,34 @@ TODO
 - worldobject-specific soundmanagers?
 - default/template menus for pause, options, debug, intro, main
 - better particle system (e.g. start at 0 alpha, then go to 1, then back to 0)
+- alpha/tint on every world object
+- box model
+    - create a box
+    - subdivide box
+        - vertically with custom width (fixed + percent)
+        - horizontally with custom width (fixed + percent)
+        - verticaly into N equal size
+        - horizontally into N equal size
+        - vertically and horizontally into NxM equal size
+    - add inner padding
+        - left
+        - right
+        - top
+        - bottom
+        - left and right equal
+        - top and bottom equal
+        - left, right, top, and bottom equal
+        - left, right, top, and bottom collective custom (convenience method)
+    - add world objects to box
+        - anchor position
+        - position offset from anchor
+        - mask world object within bounds of its box or some ancestor box
+        - maxwidth on spritetext
+    - create inner boxes with greater dimensions than outer box and add scroll functionality
+    - manipulate properties of the box and propagate to contained worldobjects
+    - name a box and get box by name
+    - box can have a background texture (scaled or ninepatch)
+    - box can be easily inherited for custom objects (e.g. dialog boxes, etc.)
 
 
 backlog
