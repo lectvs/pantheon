@@ -15,7 +15,7 @@ class BoxWorldObject extends WorldObject {
 
     constructor(config: BoxWorldObject.Config) {
         super(config);
-        this.box = config.box;
+        this.box = config.box.build();
         this.addChildren(this.box.getAllWorldObjects$());
 
         this.debugDrawBox = false;

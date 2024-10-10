@@ -6,7 +6,7 @@ namespace Box {
         offsetY: number;
     }
 
-    export type BackgroundSpriteParams = {
+    export type BackgroundParams = {
         type: 'texture';
         texture: string | PIXI.Texture;
     } | {
@@ -15,6 +15,13 @@ namespace Box {
     }
 
     export type Margins = {
+        left: ValueUnit;
+        right: ValueUnit;
+        top: ValueUnit;
+        bottom: ValueUnit;
+    }
+
+    export type Padding = {
         left: ValueUnit;
         right: ValueUnit;
         top: ValueUnit;
@@ -42,7 +49,6 @@ namespace Box {
  * - fit box size to content
  * - mask world object within bounds of its box or some ancestor box 
  * - create inner boxes with greater dimensions than outer box and add scroll functionality
- * - maxwidth on spritetext
  */
 class Box {
     parent: Box | undefined;
@@ -53,21 +59,30 @@ class Box {
     outerWidth: number;
     outerHeight: number;
 
+    private _contentX: number;
+    private _contentY: number;
+    private _contentWidth: number;
+    private _contentHeight: number;
+    get contentX() { return this._contentX; }
+    get contentY() { return this._contentY; }
+    get contentWidth() { return this._contentWidth; }
+    get contentHeight() { return this._contentHeight; }
+
     private _innerX: number;
     private _innerY: number;
     private _innerWidth: number;
     private _innerHeight: number;
-
     get innerX() { return this._innerX; }
     get innerY() { return this._innerY; }
     get innerWidth() { return this._innerWidth; }
     get innerHeight() { return this._innerHeight; }
 
     margins: Box.Margins;
+    padding: Box.Padding;
     subdivision: Box.Subdivision | undefined;
 
     worldObjects: Box.WorldObjectData[];
-    backgroundSprite: Box.BackgroundSprite | undefined;
+    background: Box.Background | undefined;
 
     private debugSprite: PIXI.Sprite;
 
@@ -80,12 +95,24 @@ class Box {
         this.outerWidth = width;
         this.outerHeight = height;
 
+        this._contentX = x;
+        this._contentY = y;
+        this._contentWidth = width;
+        this._contentHeight = height;
+
         this._innerX = x;
         this._innerY = y;
         this._innerWidth = width;
         this._innerHeight = height;
         
         this.margins = {
+            left: { value: 0, unit: 'pixels' },
+            right: { value: 0, unit: 'pixels' },
+            top: { value: 0, unit: 'pixels' },
+            bottom: { value: 0, unit: 'pixels' },
+        };
+
+        this.padding = {
             left: { value: 0, unit: 'pixels' },
             right: { value: 0, unit: 'pixels' },
             top: { value: 0, unit: 'pixels' },
@@ -101,24 +128,33 @@ class Box {
         return this;
     }
 
-    addBackgroundSprite(params: Box.BackgroundSpriteParams) {
-        if (this.backgroundSprite) {
-            console.error('Box already has a backgroundSprite', this);
+    addBackground(params: Box.BackgroundParams) {
+        if (this.background) {
+            console.error('Box already has a background', this);
             return this;
         }
-        this.backgroundSprite = new Box.BackgroundSprite(this, params);
-        return this.addWorldObject(this.backgroundSprite);
+        this.background = new Box.Background(this, params);
+        return this.addWorldObject(this.background);
     }
 
     build() {
-        this._innerX = this.outerX + Box.valueUnitToPixels(this.margins.left, this.outerWidth);
-        this._innerY = this.outerY + Box.valueUnitToPixels(this.margins.top, this.outerHeight);
-        this._innerWidth = this.outerWidth - Box.valueUnitToPixels(this.margins.left, this.outerWidth) - Box.valueUnitToPixels(this.margins.right, this.outerWidth);
-        this._innerHeight = this.outerHeight - Box.valueUnitToPixels(this.margins.top, this.outerHeight) - Box.valueUnitToPixels(this.margins.bottom, this.outerHeight);
+        this._contentX = this.outerX + Box.valueUnitToPixels(this.margins.left, this.outerWidth);
+        this._contentY = this.outerY + Box.valueUnitToPixels(this.margins.top, this.outerHeight);
+        this._contentWidth = this.outerWidth - Box.valueUnitToPixels(this.margins.left, this.outerWidth) - Box.valueUnitToPixels(this.margins.right, this.outerWidth);
+        this._contentHeight = this.outerHeight - Box.valueUnitToPixels(this.margins.top, this.outerHeight) - Box.valueUnitToPixels(this.margins.bottom, this.outerHeight);
         
+        this._innerX = this._contentX + Box.valueUnitToPixels(this.padding.left, this._contentWidth);
+        this._innerY = this._contentY + Box.valueUnitToPixels(this.padding.top, this._contentHeight);
+        this._innerWidth = this._contentWidth - Box.valueUnitToPixels(this.padding.left, this._contentWidth) - Box.valueUnitToPixels(this.padding.right, this._contentWidth);
+        this._innerHeight = this._contentHeight - Box.valueUnitToPixels(this.padding.top, this._contentHeight) - Box.valueUnitToPixels(this.padding.bottom, this._contentHeight);
+
         for (let data of this.worldObjects) {
-            data.worldObject.localx = data.offsetX + this._innerX + this._innerWidth * data.anchor.x;
-            data.worldObject.localy = data.offsetY + this._innerY + this._innerHeight * data.anchor.y;
+            data.worldObject.localx = this._contentX + this._contentWidth * data.anchor.x + data.offsetX;
+            data.worldObject.localy = this._contentY + this._contentHeight * data.anchor.y + data.offsetY;
+
+            if (data.worldObject instanceof SpriteText) {
+                data.worldObject.maxWidth = this._contentWidth;
+            }
         }
         
         if (this.subdivision) this.subdivision.build();
@@ -166,13 +202,6 @@ class Box {
         if (this.subdivision) return this.subdivision._getSubBoxByName(name);
         console.error(`Cannot find sub-box with name '${name}'`, this);
         return undefined;
-    }
-
-    innerBox(fn: (box: Box) => void) {
-        let subdivision = new Box.Subdivision.Inner(this);
-        this.subdivision = subdivision;
-        subdivision.box(fn);
-        return this;
     }
 
     named(name: string) {
@@ -230,6 +259,65 @@ class Box {
         this.marginTop(top, unit);
         this.marginBottom(bottom, unit);
 
+        return this;
+    }
+
+    padLeft(value: number, unit: Box.Unit = 'pixels') {
+        this.padding.left = { value, unit };
+        return this;
+    }
+
+    padRight(value: number, unit: Box.Unit = 'pixels') {
+        this.padding.right = { value, unit };
+        return this;
+    }
+
+    padTop(value: number, unit: Box.Unit = 'pixels') {
+        this.padding.top = { value, unit };
+        return this;
+    }
+
+    padBottom(value: number, unit: Box.Unit = 'pixels') {
+        this.padding.bottom = { value, unit };
+        return this;
+    }
+
+    padLeftRight(value: number, unit: Box.Unit = 'pixels') {
+        this.padLeft(value, unit)
+        this.padRight(value, unit);
+        return this;
+    }
+
+    padTopBottom(value: number, unit: Box.Unit = 'pixels') {
+        this.padTop(value, unit)
+        this.padBottom(value, unit);
+        return this;
+    }
+
+    pad(value: number, unit?: Box.Unit): Box;
+    pad(left: number, right: number, top: number, bottom: number, unit?: Box.Unit): Box;
+    pad(leftOrValue: number, rightOrUnit?: Box.Unit | number, top?: number, bottom?: number, unit?: Box.Unit) {
+        if (rightOrUnit === undefined) {
+            rightOrUnit = 'pixels';
+        }
+
+        let left = leftOrValue;
+        let right = typeof rightOrUnit === 'string' ? leftOrValue : rightOrUnit;
+        top = top ?? leftOrValue;
+        bottom = bottom ?? leftOrValue;
+        unit = typeof rightOrUnit === 'string' ? rightOrUnit : (unit ?? 'pixels');
+
+        this.padLeft(left, unit);
+        this.padRight(right, unit);
+        this.padTop(top, unit);
+        this.padBottom(bottom, unit);
+
+        return this;
+    }
+
+    subdivideInner() {
+        let subdivision = new Box.Subdivision.Inner(this);
+        this.subdivision = subdivision;
         return this;
     }
 
@@ -537,14 +625,14 @@ namespace Box {
         }
     }
 
-    export class BackgroundSprite extends Sprite {
+    export class Background extends Sprite {
 
-        params: BackgroundSpriteParams;
+        params: BackgroundParams;
 
         private currentWidth: number;
         private currentHeight: number;
 
-        constructor(private box: Box, params: BackgroundSpriteParams) {
+        constructor(private box: Box, params: BackgroundParams) {
             super({
                 textureAnchor: Anchor.CENTER,
             });
@@ -557,9 +645,9 @@ namespace Box {
         override postUpdate(): void {
             super.postUpdate();
 
-            if (this.currentWidth !== this.box.innerWidth || this.currentHeight !== this.box.innerHeight) {
-                this.currentWidth = this.box.innerWidth;
-                this.currentHeight = this.box.innerHeight;
+            if (this.currentWidth !== this.box.contentWidth || this.currentHeight !== this.box.contentHeight) {
+                this.currentWidth = this.box.contentWidth;
+                this.currentHeight = this.box.contentHeight;
                 this.updateTexture();
             }
         }
@@ -570,7 +658,7 @@ namespace Box {
                 this.scaleX = this.currentWidth / this.getTexture().width;
                 this.scaleY = this.currentHeight / this.getTexture().height;
             } else if (this.params.type === 'ninepatchScaled') {
-                this.setTexture(Textures.ninepatchScaled(this.params.baseTexture, this.box.innerWidth, this.box.innerHeight));
+                this.setTexture(Textures.ninepatchScaled(this.params.baseTexture, this.box.contentWidth, this.box.contentHeight));
             } else {
                 assertUnreachable(this.params);
             }

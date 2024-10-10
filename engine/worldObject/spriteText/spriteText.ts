@@ -267,14 +267,8 @@ class SpriteText extends WorldObject {
 
     setText(text: string) {
         if (text === this.currentText) return;
-        this.chars = SpriteText.textToCharList({
-            text: text,
-            font: this.font,
-            maxWidth: this.maxWidth,
-            wordWrap: this.wordWrap,
-            fixedCharSize: this.fixedCharSize,
-        });
         this.currentText = text;
+        this.setCharsFromCurrentText();
         this.markDirty();
     }
 
@@ -296,6 +290,7 @@ class SpriteText extends WorldObject {
 
     private getRenderSystem() {
         if (!this.renderSystem) {
+            this.setCharsFromCurrentText();
             SpriteText.justify(this.chars, this.justify);
             let characters = this.getVisibleCharList();
             let partToCharacters: DictNumber<SpriteTextParser.Character[]> = {};
@@ -326,6 +321,16 @@ class SpriteText extends WorldObject {
         let style = tag(params);
         this.tagCache[cacheKey] = style;
         return style;
+    }
+
+    private setCharsFromCurrentText() {
+        this.chars = SpriteText.textToCharList({
+            text: this.currentText,
+            font: this.font,
+            maxWidth: this.maxWidth,
+            wordWrap: this.wordWrap,
+            fixedCharSize: this.fixedCharSize,
+        });
     }
 
     private readonly tagCache: Dict<SpriteText.Style> = {};

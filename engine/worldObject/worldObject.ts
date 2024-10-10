@@ -886,13 +886,15 @@ class WorldObject {
     }
 
     private resolveLayer() {
-        if (this.copyFromParent.includes('layer') && this.parent && this._layer !== this.parent.layer) {
+        let shouldCopyLayerFromParent = this.copyFromParent.includes('layer') || !this._layer;
+        if (shouldCopyLayerFromParent && this.parent && this._layer !== this.parent.layer) {
             this.layer = this.parent.layer;
         }
     }
 
     private resolvePhysicsGroup() {
-        if (this.copyFromParent.includes('physicsGroup') && this.parent && this._physicsGroup !== this.parent.physicsGroup) {
+        let shouldCopyPhysicsGroupFromParent = this.copyFromParent.includes('physicsGroup');
+        if (shouldCopyPhysicsGroupFromParent && this.parent && this._physicsGroup !== this.parent.physicsGroup) {
             this.physicsGroup = this.parent.physicsGroup;
         }
     }
