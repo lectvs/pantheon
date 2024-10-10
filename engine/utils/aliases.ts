@@ -1,3 +1,4 @@
+/// <reference path="../utils/m_math.ts"/>
 /// <reference path="../utils/vector.ts"/>
 
 type Dict<T> = {[name: string]: T};
@@ -43,7 +44,15 @@ type PartialRecord<K extends keyof any, T> = {
 };
 
 type ValueElseUndefined<T> =
-  T extends (string | number | boolean | symbol | object) ? T : undefined;
+    T extends (string | number | boolean | symbol | object) ? T : undefined;
+
+type Without<T, U> = { [P in Exclude<keyof T, keyof U>]?: never };
+type XOR<T, U> = (T | U) extends object ? (Without<T, U> & U) | (Without<U, T> & T) : T | U;
+
+const clamp = M.clamp;
+const lerp = M.lerp;
+const map = M.map;
+const mapClamp = M.mapClamp;
 
 function vec2(pt: Pt): Vector2;
 function vec2(x: number, y: number): Vector2;

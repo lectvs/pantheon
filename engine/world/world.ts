@@ -626,6 +626,18 @@ class World {
         });
     }
 
+    worldXToScreenX(worldX: number) {
+        return (worldX - this.camera.worldOffsetX) * this.scaleX;
+    }
+
+    worldYToScreenY(worldY: number) {
+        return (worldY - this.camera.worldOffsetY) * this.scaleY;
+    }
+
+    worldPosToScreenPos$(worldPos: Pt) {
+        return FrameCache.vec2(this.worldXToScreenX(worldPos.x), this.worldYToScreenY(worldPos.y));
+    }
+
     private createLayers(layers: World.LayerConfig[] | undefined) {
         if (A.isEmpty(layers)) layers = [];
 

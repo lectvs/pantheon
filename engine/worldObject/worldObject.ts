@@ -19,6 +19,8 @@ namespace WorldObject {
         activeOutsideWorldBoundsBuffer?: number;
         animations?: Dict<AnimationInstance>;
         defaultAnimation?: string;
+        tint?: number;
+        alpha?: number;
         life?: number;
         timers?: Timer[];
         ignoreCamera?: boolean;
@@ -84,6 +86,8 @@ class WorldObject {
 
     name?: string;
     tags: string[];
+    tint: number;
+    alpha: number;
 
     // World data
     private _world?: World;
@@ -181,6 +185,8 @@ class WorldObject {
 
         this.name = config.name;
         this.tags = config.tags ? A.clone(config.tags) : [];
+        this.tint = config.tint ?? 0xFFFFFF;
+        this.alpha = config.alpha ?? 1;
 
         this.startOfThisFrameX = this.x;
         this.startOfThisFrameY = this.y;
@@ -560,6 +566,16 @@ class WorldObject {
 
     getTimers() {
         return A.clone(this.timers);
+    }
+
+    getTotalTint(): number {
+        if (!this.parent) return this.tint;
+        return Color.combineTints(this.tint, this.parent.getTotalTint());
+    }
+
+    getTotalAlpha(): number {
+        if (!this.parent) return this.alpha;
+        return this.alpha * this.parent.getTotalAlpha();
     }
 
     /**

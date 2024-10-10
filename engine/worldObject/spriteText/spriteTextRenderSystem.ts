@@ -30,8 +30,8 @@ class SpriteTextRenderSystem {
             data.sprite.scale.x = this.getScaleX(spriteText);
             data.sprite.scale.y = this.getScaleY(spriteText);
             data.sprite.angle = this.getAngle(spriteText);
-            data.sprite.tint = Color.tint(style.color, spriteText.tint);
-            data.sprite.alpha = style.alpha * spriteText.alpha;
+            data.sprite.tint = Color.combineTints(style.color, spriteText.getTotalTint());
+            data.sprite.alpha = style.alpha * spriteText.getTotalAlpha();
 
             spriteText.effects.pre.pushAll(style.filters);
             data.sprite.updateAndSetEffects(spriteText.effects);

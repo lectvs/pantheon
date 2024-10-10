@@ -113,13 +113,6 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     private renderBounds() {
-        let renderResult = this.bounds.debugRender();
-
-        for (let r of renderResult) {
-            r.x -= this.x;
-            r.y -= this.y;
-        }
-
-        return renderResult;
+        return Render.shift(this.bounds.debugRender(), -this.x, -this.y);
     }
 }

@@ -19,8 +19,6 @@ namespace SpriteText {
         wordWrap?: boolean;
         fixedCharSize?: boolean;
         style?: Style;
-        tint?: number;
-        alpha?: number;
         effects?: Effects.Config;
     }
 
@@ -105,8 +103,6 @@ class SpriteText extends WorldObject {
 
     readonly anchor: SpriteText.DirtyAnchor;
 
-    tint: number;
-    alpha: number;
     flipX: boolean;
     flipY: boolean;
     offsetX: number;
@@ -152,8 +148,6 @@ class SpriteText extends WorldObject {
 
         this.anchor = new SpriteText.DirtyAnchor(config.anchor ?? Anchor.TOP_LEFT, () => this.markDirty());
 
-        this.tint = config.tint ?? 0xFFFFFF;
-        this.alpha = config.alpha ?? 1;
         this.flipX = config.flipX ?? false;
         this.flipY = config.flipY ?? false;
         this.offsetX = config.offsetX ?? 0;

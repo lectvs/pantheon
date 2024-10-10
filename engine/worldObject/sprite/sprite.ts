@@ -4,6 +4,8 @@ namespace Sprite {
     export type Config<WO extends Sprite> = PhysicsWorldObject.Config<WO> & {
         texture?: string | PIXI.Texture;
         textureAnchor?: Pt;
+        textureTint?: number;
+        textureAlpha?: number;
         flipX?: boolean;
         flipY?: boolean;
         offsetX?: number;
@@ -16,8 +18,6 @@ namespace Sprite {
         scaleY?: number;
         skewX?: number;
         skewY?: number;
-        tint?: number;
-        alpha?: number;
         effects?: Effects.Config;
         blendMode?: PIXI.BLEND_MODES;
     }
@@ -28,6 +28,8 @@ class Sprite extends PhysicsWorldObject {
     private textureKey: string | undefined;
 
     textureAnchor?: Vector2;
+    textureTint: number;
+    textureAlpha: number;
     flipX: boolean;
     flipY: boolean;
     offsetX: number;
@@ -50,9 +52,6 @@ class Sprite extends PhysicsWorldObject {
     skewX: number;
     skewY: number;
 
-    tint: number;
-    alpha: number;
-
     effects: Effects;
     blendMode?: PIXI.BLEND_MODES;
 
@@ -64,6 +63,8 @@ class Sprite extends PhysicsWorldObject {
         if (config.texture || !this.texture) this.setTexture(config.texture);
 
         if (config.textureAnchor) this.textureAnchor = vec2(config.textureAnchor);
+        this.textureTint = config.textureTint ?? 0xFFFFFF;
+        this.textureAlpha = config.textureAlpha ?? 1;
         this.flipX = config.flipX ?? false;
         this.flipY = config.flipY ?? false;
 
@@ -76,9 +77,6 @@ class Sprite extends PhysicsWorldObject {
         this.scaleY = config.scaleY ?? (config.scale ?? 1);
         this.skewX = config.skewX ?? 0;
         this.skewY = config.skewY ?? 0;
-
-        this.tint = config.tint ?? 0xFFFFFF;
-        this.alpha = config.alpha ?? 1;
 
         this.effects = new Effects();
         this.effects.updateFromConfig(config.effects);
@@ -106,8 +104,8 @@ class Sprite extends PhysicsWorldObject {
         this.renderObject.skew.x = this.skewX;
         this.renderObject.skew.y = this.skewY;
         this.renderObject.angle = this.angle + this.angleOffset;
-        this.renderObject.tint = this.tint;
-        this.renderObject.alpha = this.alpha;
+        this.renderObject.tint = Color.combineTints(this.getTotalTint(), this.textureTint);
+        this.renderObject.alpha = this.getTotalAlpha() * this.textureAlpha;
         this.renderObject.blendMode = this.blendMode ?? PIXI.BLEND_MODES.NORMAL;
         this.renderObject.updateAndSetEffects(this.effects);
         O.putMetadata(this.renderObject, 'renderedFrom', this);

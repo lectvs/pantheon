@@ -4,7 +4,6 @@ namespace ParticleFocus {
         effectRate?: number;
         particleRadius: number;
         particleSpeed?: number;
-        particleColor?: number;
     }
 }
 
@@ -13,7 +12,6 @@ class ParticleFocus extends WorldObject {
     effectRate: number;
     particleSpeed: number;
     particleRadius: number;
-    particleColor: number;
 
     private timer: Timer;
 
@@ -26,7 +24,6 @@ class ParticleFocus extends WorldObject {
         this.effectRate = config.effectRate ?? 1;
         this.particleSpeed = config.particleSpeed ?? 1;
         this.particleRadius = config.particleRadius;
-        this.particleColor = config.particleColor ?? 0xFFFFFF;
 
         this.timer = this.addTimer(0.05, () => {
             this.createParticle();
@@ -44,7 +41,7 @@ class ParticleFocus extends WorldObject {
         let particle = this.worldd.addWorldObject(new Sprite({
             p: Random.onCircle(this.effectRadius).scale(Random.float(0.6, 1)).add(this),
             texture: Textures.filledCircle(32, 0xFFFFFF),
-            tint: this.particleColor,
+            tint: this.getTotalTint(),
             alpha: 0,
             scale: this.particleRadius / 32,
             layer: this.layer,

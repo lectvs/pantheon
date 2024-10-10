@@ -71,15 +71,15 @@ class PuffSystem extends WorldObject {
             let progress = puff.t / puff.maxLife;
 
             let radius = M.lerp(progress, puff.initialRadius, puff.finalRadius, puff.easingFn);
-            let color = Color.lerpColorByLch(progress, puff.initialColor, puff.finalColor, puff.easingFn);
+            let particleColor = Color.lerpColorByLch(progress, puff.initialColor, puff.finalColor, puff.easingFn);
             let alpha = M.lerp(progress, puff.initialAlpha, puff.finalAlpha, puff.easingFn);
 
             // Puff position includes this.x/y so the system can move around without affecting existing puffs.
             this.sprites[i].x = puff.x - this.x;
             this.sprites[i].y = puff.y - this.y;
             this.sprites[i].scale.set(radius/16);
-            this.sprites[i].tint = color;
-            this.sprites[i].alpha = alpha;
+            this.sprites[i].tint = Color.combineTints(particleColor, this.getTotalTint());
+            this.sprites[i].alpha = alpha * this.getTotalAlpha();
 
             result.push(this.sprites[i]);
         }

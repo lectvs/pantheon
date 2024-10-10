@@ -60,14 +60,16 @@ namespace Color {
         return argbToVec4(rgba);
     }
 
-    export function tint(color: number, tint: number) {
-        let colorR = (color >> 16) & 255;
-        let colorG = (color >> 8) & 255;
-        let colorB = color & 255;
-        let tintR = (tint >> 16) & 255;
-        let tintG = (tint >> 8) & 255;
-        let tintB = tint & 255;
-        return (Math.round(colorR * tintR / 255) << 16) + (Math.round(colorG * tintG / 255) << 8) + Math.round(colorB * tintB / 255);
+    export function combineTints(tint1: number, tint2: number) {
+        if (tint1 === 0xFFFFFF) return tint2;
+        if (tint2 === 0xFFFFFF) return tint1;
+        let tint1R = (tint1 >> 16) & 255;
+        let tint1G = (tint1 >> 8) & 255;
+        let tint1B = tint1 & 255;
+        let tint2R = (tint2 >> 16) & 255;
+        let tint2G = (tint2 >> 8) & 255;
+        let tint2B = tint2 & 255;
+        return (Math.round(tint1R * tint2R / 255) << 16) + (Math.round(tint1G * tint2G / 255) << 8) + Math.round(tint1B * tint2B / 255);
     }
 
     export function vec3ToColor(vec3: [number, number, number]) {
