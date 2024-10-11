@@ -76,6 +76,10 @@ namespace World {
 
     export type Screenshot = {
         texture: PIXI.RenderTexture;
+        /**
+         * Defines how much bigger this screenshot is from the world dimensions.
+         * When adding a screenshot sprite to the world, you should set the scale to `1 / upscale`
+         */
         upscale: number;
     }
 

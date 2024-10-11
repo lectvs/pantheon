@@ -1,6 +1,23 @@
 namespace SpriteTextParser {
-    export function parse(props: { lexemes: SpriteTextLexer.Lexeme[], font: SpriteText.Font, maxWidth: number, fixedCharSize: boolean }) {
-        let { lexemes, font, maxWidth, fixedCharSize } = props;
+    export function parse(props: {
+        lexemes: SpriteTextLexer.Lexeme[],
+        font: SpriteText.Font,
+        maxWidth: number,
+        spaceBetweenLines: number | undefined,
+        blankLineHeight: number | undefined,
+        fixedCharSize: boolean,
+    }) {
+        let {
+            lexemes,
+            font,
+            maxWidth,
+            spaceBetweenLines,
+            blankLineHeight,
+            fixedCharSize,
+        } = props;
+
+        spaceBetweenLines = spaceBetweenLines ?? font.spaceBetweenLines;
+        blankLineHeight = blankLineHeight ?? font.blankLineHeight;
 
         let result: Character[][] = [];
         let currentLine: Character[] = [];
@@ -16,7 +33,7 @@ namespace SpriteTextParser {
             }
 
             if (lexeme.type === 'newline') {
-                pushLine(result, currentLine);
+                pushLine(result, currentLine, spaceBetweenLines);
                 currentLine = [];
                 currentExtraNewlineCount = lexeme.count-1;
                 continue;
@@ -25,12 +42,12 @@ namespace SpriteTextParser {
             if (lexeme.type === 'word') {
                 let word = createWord(lexeme.chars, font, fixedCharSize);
                 if (currentRight() + (word.right - word.left) > maxWidth) {
-                    pushLine(result, currentLine);
+                    pushLine(result, currentLine, spaceBetweenLines);
                     currentLine = []
                     currentExtraNewlineCount = 0;
                 }
                 word.x = currentRight() - word.left;
-                word.y = currentExtraNewlineCount * font.newlineHeight;
+                word.y = currentExtraNewlineCount * blankLineHeight;
 
                 for (let character of word.characters) {
                     character.x += word.x;
@@ -44,17 +61,17 @@ namespace SpriteTextParser {
             assertUnreachable(lexeme);
         }
 
-        pushLine(result, currentLine);
+        pushLine(result, currentLine, spaceBetweenLines);
 
         return result;
     }
 
-    function pushLine(result: Character[][], line: Character[]) {
+    function pushLine(result: Character[][], line: Character[], spaceBetweenLines: number) {
         if (A.isEmpty(line)) return;
         let resultBottom = A.isEmpty(result) ? 0 : M.max(result.last()!, char => char.bottom);
         let lineTop = M.min(line, char => char.top);
 
-        let dy = resultBottom - lineTop;
+        let dy = resultBottom + spaceBetweenLines - lineTop;
         for (let char of line) {
             char.y += dy;
         }

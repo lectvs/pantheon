@@ -236,6 +236,10 @@ class Input {
         this.eventKey = undefined;
     }
 
+    static consumeTouches() {
+        this.touches.clear();
+    }
+
     /**
      * Used to detect keypress when updating key binds.
      */

@@ -59,7 +59,8 @@ class FontLoader implements Loader {
             charWidth: this.font.charWidth,
             charHeight: this.font.charHeight,
             spaceWidth: this.font.spaceWidth ?? this.font.charWidth,
-            newlineHeight: this.font.newlineHeight ?? this.font.charHeight,
+            spaceBetweenLines: this.font.spaceBetweenLines ?? 0,
+            blankLineHeight: this.font.blankLineHeight ?? this.font.charHeight,
         };
     }
 

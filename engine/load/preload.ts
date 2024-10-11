@@ -67,7 +67,8 @@ namespace Preload {
         charWidth: number;
         charHeight: number;
         spaceWidth?: number;
-        newlineHeight?: number;
+        spaceBetweenLines?: number;
+        blankLineHeight?: number;
     }
 
     export type CustomResource = {

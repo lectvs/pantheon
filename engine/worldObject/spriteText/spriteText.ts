@@ -16,6 +16,8 @@ namespace SpriteText {
         scaleX?: number;
         scaleY?: number;
         maxWidth?: number;
+        spaceBetweenLines?: number;
+        blankLineHeight?: number;
         wordWrap?: boolean;
         fixedCharSize?: boolean;
         style?: Style;
@@ -27,7 +29,8 @@ namespace SpriteText {
         charWidth: number;
         charHeight: number;
         spaceWidth: number;
-        newlineHeight: number;
+        spaceBetweenLines: number;
+        blankLineHeight: number;
     }
 
     export type Justify = 'left' | 'center' | 'right';
@@ -61,6 +64,22 @@ class SpriteText extends WorldObject {
     set maxWidth(value: number) {
         if (this._maxWidth === value) return;
         this._maxWidth = value;
+        this.markDirty();
+    }
+
+    private _spaceBetweenLines: number | undefined;
+    get spaceBetweenLines() { return this._spaceBetweenLines; }
+    set spaceBetweenLines(value: number | undefined) {
+        if (this._spaceBetweenLines === value) return;
+        this._spaceBetweenLines = value;
+        this.markDirty();
+    }
+
+    private _blankLineHeight: number | undefined;
+    get blankLineHeight() { return this._blankLineHeight; }
+    set blankLineHeight(value: number | undefined) {
+        if (this._blankLineHeight === value) return;
+        this._blankLineHeight = value;
         this.markDirty();
     }
 
@@ -142,6 +161,8 @@ class SpriteText extends WorldObject {
         this._visibleCharStart = 0;
         this._visibleCharEnd = Infinity;
         this._maxWidth = config.maxWidth ?? Infinity;
+        this._spaceBetweenLines = config.spaceBetweenLines;
+        this._blankLineHeight = config.blankLineHeight;
         this._wordWrap = config.wordWrap ?? true;
         this._fixedCharSize = config.fixedCharSize ?? false;
         this._justify = config.justify ?? 'left';
@@ -328,6 +349,8 @@ class SpriteText extends WorldObject {
             text: this.currentText,
             font: this.font,
             maxWidth: this.maxWidth,
+            spaceBetweenLines: this.spaceBetweenLines,
+            blankLineHeight: this.blankLineHeight,
             wordWrap: this.wordWrap,
             fixedCharSize: this.fixedCharSize,
         });
@@ -348,14 +371,15 @@ namespace SpriteText {
         }
     }
 
-    export function getFontByName(fontName: string | undefined) {
+    export function getFontByName(fontName: string | undefined): SpriteText.Font {
         let font = AssetCache.getFont(fontName ?? SpriteText.DEFAULT_FONT);
         return font ?? {
             charTextures: {},
             charWidth: 0,
             charHeight: 0,
             spaceWidth: 0,
-            newlineHeight: 0,
+            spaceBetweenLines: 0,
+            blankLineHeight: 0,
         };
     }
 
@@ -402,13 +426,37 @@ namespace SpriteText {
         return 1;
     }
 
-    export function textToCharList(props: { text: string, font: SpriteText.Font, maxWidth: number, wordWrap: boolean, fixedCharSize: boolean }) {
-        let { text, font, maxWidth, wordWrap, fixedCharSize } = props;
+    export function textToCharList(props: {
+        text: string,
+        font: SpriteText.Font,
+        maxWidth: number,
+        spaceBetweenLines: number | undefined,
+        blankLineHeight: number | undefined,
+        wordWrap: boolean,
+        fixedCharSize: boolean,
+    }) {
+        let {
+            text,
+            font,
+            maxWidth,
+            spaceBetweenLines,
+            blankLineHeight,
+            wordWrap,
+            fixedCharSize
+        } = props;
+
         if (!text) return [];
 
         let tokens = SpriteTextTokenizer.tokenize(text);
         let lexemes = SpriteTextLexer.lex(tokens, wordWrap);
-        let result = SpriteTextParser.parse({ lexemes, font, maxWidth, fixedCharSize });
+        let result = SpriteTextParser.parse({
+            lexemes,
+            font,
+            maxWidth,
+            spaceBetweenLines,
+            blankLineHeight,
+            fixedCharSize,
+        });
 
         return result;
     }
