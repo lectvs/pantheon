@@ -300,7 +300,7 @@ class World {
             this.maxInputLevelThisFrame = 0;
             return;
         }
-        this.maxInputLevelThisFrame = M.max(this.worldObjects, obj => obj.inputLevel);
+        this.maxInputLevelThisFrame = M.max(this.worldObjects, obj => obj.getInputLevel());
     }
 
     protected updateScriptManager() {

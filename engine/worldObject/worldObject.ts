@@ -144,13 +144,6 @@ class WorldObject {
     behavior: Behavior;
 
     private _inputLevel: number;
-    get inputLevel() {
-        if (this.parent) {
-            return Math.max(this.parent.inputLevel, this._inputLevel);
-        }
-        return this._inputLevel;
-    }
-    set inputLevel(value: number) { this._inputLevel = value; }
 
     modules: Module<WorldObject>[];
 
@@ -557,6 +550,13 @@ class WorldObject {
         return result;
     }
 
+    getInputLevel(): number {
+        if (this.parent) {
+            return Math.max(this.parent.getInputLevel(), this._inputLevel);
+        }
+        return this._inputLevel;
+    }
+
     getLocalPosition$() {
         return FrameCache.vec2(this.localx, this.localy);
     }
@@ -653,7 +653,7 @@ class WorldObject {
     }
 
     isControlRevoked() {
-        return !this.world || this.inputLevel < this.world.getMaxInputLevel();
+        return !this.world || this.getInputLevel() < this.world.getMaxInputLevel();
     }
 
     isOnScreen(buffer: number = 0) {
@@ -833,6 +833,10 @@ class WorldObject {
 
     setActive(active: boolean) {
         this._active = active;
+    }
+    
+    setInputLevel(inputLevel: number) {
+        this._inputLevel = inputLevel;
     }
 
     setIsInsideWorldBoundsBufferThisFrame() {
