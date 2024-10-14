@@ -315,10 +315,9 @@ class Box {
         return this;
     }
 
-    subdivideInner() {
-        let subdivision = new Box.Subdivision.Inner(this);
-        this.subdivision = subdivision;
-        return this;
+    root(): Box {
+        if (!this.parent) return this;
+        return this.parent.root();
     }
 
     subdivideLeftRight(params: Box.SubdivideLeftRightParams) {
@@ -364,13 +363,105 @@ namespace Box {
         return 0;
     }
 
+    export class LeftRightBox extends Box {
+        constructor(parent: Box, private leftRight: Subdivision.LeftRight) {
+            super(0, 0, 0, 0, parent);
+        }
+
+        left() {
+            return this.leftRight.left();
+        }
+
+        right() {
+            return this.leftRight.right();
+        }
+    }
+
+    export class TopBottomBox extends Box {
+        constructor(parent: Box, private topBottom: Subdivision.TopBottom) {
+            super(0, 0, 0, 0, parent);
+        }
+
+        top() {
+            return this.topBottom.top();
+        }
+
+        bottom() {
+            return this.topBottom.bottom();
+        }
+    }
+
+    export class XBox extends Box {
+        constructor(parent: Box, private x: Subdivision.X, private i: number) {
+            super(0, 0, 0, 0, parent);
+        }
+
+        index(i: number) {
+            return this.x._getSubBox(i, 0) as XBox;
+        }
+
+        next() {
+            return this.index(this.i + 1);
+        }
+    }
+
+    export class YBox extends Box {
+        constructor(parent: Box, private y: Subdivision.Y, private i: number) {
+            super(0, 0, 0, 0, parent);
+        }
+
+        index(i: number) {
+            return this.y._getSubBox(0, i) as YBox;
+        }
+
+        next() {
+            return this.index(this.i + 1);
+        }
+    }
+
+    export class XYBox extends Box {
+        constructor(parent: Box, private xy: Subdivision.XY, private xi: number, private yi: number) {
+            super(0, 0, 0, 0, parent);
+        }
+
+        index(xi: number, yi: number) {
+            return this.xy._getSubBox(xi, yi) as XYBox;
+        }
+
+        nextX() {
+            if (this.xi >= this.xy.xn - 1) {
+                return this.nextRow();
+            }
+            return this.index(this.xi + 1, this.yi);
+        }
+
+        nextY() {
+            if (this.yi >= this.xy.yn - 1) {
+                return this.nextColumn();
+            }
+            return this.index(this.xi, this.yi + 1);
+        }
+
+        nextRow() {
+            return this.index(0, this.yi + 1);
+        }
+
+        nextColumn() {
+            return this.index(this.xi + 1, 0);
+        }
+    }
+
     export class Subdivision {
         parent: Box;
+        xn: number;
+        yn: number;
         private subBoxes: Box[][];
 
-        constructor(parent: Box, subBoxes: Box[][]) {
+        constructor(parent: Box) {
             this.parent = parent;
-            this.subBoxes = subBoxes;
+            this.subBoxes = [];
+            this.xn = 0;
+            this.yn = 0;
         }
 
         _getAllSubBoxes$() {
@@ -402,6 +493,13 @@ namespace Box {
             return this.subBoxes[yi][xi];
         }
 
+        _setSubBoxes(subBoxes: Box[][]) {
+            this.subBoxes = subBoxes;
+            this.yn = subBoxes.length;
+            this.xn = this.yn > 0 ? subBoxes[0].length : 0;
+            return this;
+        }
+
         build() {
             let currentY = this.parent.innerY;
             for (let subBoxList of this.subBoxes) {
@@ -418,56 +516,39 @@ namespace Box {
             }
             return this.parent;
         }
+
+        forEach(fn: (box: Box, xi: number, yi: number) => void) {
+            for (let yi = 0; yi < this.subBoxes.length; yi++) {
+                for (let xi = 0; xi < this.subBoxes[yi].length; xi++) {
+                    fn(this.subBoxes[yi][xi], xi, yi);
+                }
+            }
+            return this.build();
+        }
+
+        root(): Box {
+            return this.parent.root();
+        }
     }
 
     export namespace Subdivision {
-        export class Inner extends Subdivision {
-            private _box: Box;
-
-            constructor(parent: Box) {
-                let box = new Box(0, 0, 0, 0, parent);
-                super(parent, [[box]]);
-                this._box = box;
-            }
-    
-            box(fn: (box: Box) => void) {
-                fn(this._box);
-                return this.build();
-            }
-
-            override build(): Box {
-                this._box.outerWidth = this.parent.innerWidth;
-                this._box.outerHeight = this.parent.innerHeight;
-                return super.build();
-            }
-        }
-
         export class LeftRight extends Subdivision {
-            private _left: Box;
-            private _right: Box;
+            private _left: LeftRightBox;
+            private _right: LeftRightBox;
 
             constructor(parent: Box, private width: XOR<{ left: ValueUnit }, { right: ValueUnit }>) {
-                let left = new Box(0, 0, 0, 0, parent);
-                let right = new Box(0, 0, 0, 0, parent);
-                super(parent, [[left, right]]);
-                this._left = left;
-                this._right = right;
+                super(parent);
+                this._left = new LeftRightBox(parent, this);
+                this._right = new LeftRightBox(parent, this);
+                this._setSubBoxes([[this._left, this._right]])
             }
     
-            left(fn: (box: Box) => void) {
-                fn(this._left);
-                return this;
+            left() {
+                return this._left;
             }
     
-            right(fn: (box: Box) => void) {
-                fn(this._right);
-                return this;
-            }
-
-            leftRight(left: (left: Box) => void, right: (right: Box) => void) {
-                left(this._left);
-                right(this._right);
-                return this.build();
+            right() {
+                return this._right;
             }
 
             override build(): Box {
@@ -487,31 +568,22 @@ namespace Box {
         }
 
         export class TopBottom extends Subdivision {
-            private _top: Box;
-            private _bottom: Box;
+            private _top: TopBottomBox;
+            private _bottom: TopBottomBox;
 
             constructor(parent: Box, private height: XOR<{ top: ValueUnit }, { bottom: ValueUnit }>) {
-                let top = new Box(0, 0, 0, 0, parent);
-                let bottom = new Box(0, 0, 0, 0, parent);
-                super(parent, [[top], [bottom]]);
-                this._top = top;
-                this._bottom = bottom;
+                super(parent);
+                this._top = new TopBottomBox(parent, this);
+                this._bottom = new TopBottomBox(parent, this);
+                this._setSubBoxes([[this._top], [this._bottom]])
             }
     
-            top(fn: (box: Box) => void) {
-                fn(this._top);
-                return this;
+            top() {
+                return this._top;
             }
     
-            bottom(fn: (box: Box) => void) {
-                fn(this._bottom);
-                return this;
-            }
-
-            topBottom(top: (top: Box) => void, bottom: (bottom: Box) => void) {
-                top(this._top);
-                bottom(this._bottom);
-                return this.build();
+            bottom() {
+                return this._bottom;
             }
 
             override build(): Box {
@@ -531,29 +603,29 @@ namespace Box {
         }
 
         export class X extends Subdivision {
-            private _boxes: Box[];
+            private _boxes: XBox[];
 
             constructor(parent: Box, n: number) {
-                let boxes = A.sequence(n, _ => new Box(0, 0, 0, 0, parent));
-                super(parent, [[...boxes]]);
-                this._boxes = boxes;
+                super(parent);
+                this._boxes = A.sequence(n, i => new XBox(parent, this, i));
+                this._setSubBoxes([[...this._boxes]]);
             }
 
-            box(i: number, fn: (box: Box) => void) {
-                fn(this._boxes[i]);
-                return this;
+            index(i: number) {
+                return this._getSubBox(i, 0) as XBox;
             }
 
-            boxes(fn: (box: Box, i: number) => void) {
-                for (let i = 0; i < this._boxes.length; i++) {
-                    fn(this._boxes[i], i);
-                }
-                return this.build();
+            left() {
+                return this.index(0);
+            }
+
+            start() {
+                return this.index(0);
             }
 
             override build(): Box {
                 for (let box of this._boxes) {
-                    box.outerWidth = this.parent.innerWidth / this.boxes.length;
+                    box.outerWidth = this.parent.innerWidth / this.forEach.length;
                     box.outerHeight = this.parent.innerHeight;
                 }
                 return super.build();
@@ -561,24 +633,24 @@ namespace Box {
         }
 
         export class Y extends Subdivision {
-            private _boxes: Box[];
+            private _boxes: YBox[];
 
             constructor(parent: Box, n: number) {
-                let boxes = A.sequence(n, _ => new Box(0, 0, 0, 0, parent));
-                super(parent, [...boxes.map(box => [box])]);
-                this._boxes = boxes;
+                super(parent);
+                this._boxes = A.sequence(n, i => new YBox(parent, this, i));
+                this._setSubBoxes([...this._boxes.map(box => [box])])
             }
 
-            box(i: number, fn: (box: Box) => void) {
-                fn(this._boxes[i]);
-                return this;
+            index(i: number) {
+                return this._getSubBox(0, i) as YBox;
             }
 
-            boxes(fn: (box: Box, i: number) => void) {
-                for (let i = 0; i < this._boxes.length; i++) {
-                    fn(this._boxes[i], i);
-                }
-                return this.build();
+            top() {
+                return this.index(0);
+            }
+
+            start() {
+                return this.index(0);
             }
 
             override build(): Box {
@@ -591,26 +663,24 @@ namespace Box {
         }
 
         export class XY extends Subdivision {
-            private _boxes: Box[][];
+            private _boxes: XYBox[][];
 
             constructor(parent: Box, xn: number, yn: number) {
-                let boxes = A.sequence(yn, _ => A.sequence(xn, _ => new Box(0, 0, 0, 0, parent)));
-                super(parent, [...boxes.map(b => [...b])]);
-                this._boxes = boxes;
+                super(parent);
+                this._boxes = A.sequence(yn, yi => A.sequence(xn, xi => new XYBox(parent, this, xi, yi)));
+                this._setSubBoxes([...this._boxes.map(b => [...b])]);
             }
 
-            box(xi: number, yi: number, fn: (box: Box) => void) {
-                fn(this._boxes[yi][xi]);
-                return this;
+            index(xi: number, yi: number) {
+                return this._getSubBox(xi, yi) as XYBox;
             }
 
-            boxes(fn: (box: Box, xi: number, yi: number) => void) {
-                for (let yi = 0; yi < this._boxes.length; yi++) {
-                    for (let xi = 0; xi < this._boxes[yi].length; xi++) {
-                        fn(this._boxes[yi][xi], xi, yi);
-                    }
-                }
-                return this.build();
+            topLeft() {
+                return this.index(0, 0);
+            }
+
+            start() {
+                return this.index(0, 0);
             }
 
             override build(): Box {

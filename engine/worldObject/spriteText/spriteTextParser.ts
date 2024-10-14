@@ -71,7 +71,8 @@ namespace SpriteTextParser {
         let resultBottom = A.isEmpty(result) ? 0 : M.max(result.last()!, char => char.bottom);
         let lineTop = M.min(line, char => char.top);
 
-        let dy = resultBottom + spaceBetweenLines - lineTop;
+        let dy = resultBottom - lineTop;
+        if (!A.isEmpty(result)) dy += spaceBetweenLines;
         for (let char of line) {
             char.y += dy;
         }

@@ -10,8 +10,6 @@ namespace UIElement {
         canInteract?: () => boolean;
         enabled?: boolean;
 
-        blockLevel?: number;
-
         tinting?: Tinting;
     }
 
@@ -35,7 +33,6 @@ class UIElement extends Module<WorldObject> {
 
     canInteract: () => boolean;
     enabled: boolean;
-    blockLevel: number;
 
     tintingEnabled: boolean;
     baseTint?: number;
@@ -58,7 +55,6 @@ class UIElement extends Module<WorldObject> {
 
         this.canInteract = config.canInteract ?? (() => true);
         this.enabled = config.enabled ?? true;
-        this.blockLevel = config.blockLevel ?? 0;
 
         this.tintingEnabled = !!config.tinting;
         if (config.tinting) {
@@ -205,11 +201,9 @@ class UIElement extends Module<WorldObject> {
 namespace UIElement {
     export function getClosestUIElement(targetBounds: CircleBounds, world: World) {
         let uiElements = world.select.modules$(UIElement);
-        let maxBlockLevel = M.max(uiElements, uiElement => uiElement.blockLevel);
-
         uiElements.filterInPlace(uiElement => uiElement.enabled
-                                        && uiElement.blockLevel >= maxBlockLevel
                                         && uiElement.worldObject.isActive()
+                                        && !uiElement.worldObject.isControlRevoked()
                                         && uiElement.canInteract()
                                         && uiElement.isOverlapping(targetBounds));
         

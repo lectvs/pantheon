@@ -354,7 +354,7 @@ class World {
         let result: Render.Result = FrameCache.array();
         for (let worldObject of layer.worldObjects) {
             if (!worldObject.isVisible() || !worldObject.isOnScreen()) continue;
-            result.pushAll(Render.shift(worldObject.render(), worldObject.getRenderScreenX(), worldObject.getRenderScreenY()));
+            result.pushAll(Render.snapToUpscale(Render.shift(worldObject.render(), worldObject.getRenderScreenX(), worldObject.getRenderScreenY())));
         }
         return result;
     }

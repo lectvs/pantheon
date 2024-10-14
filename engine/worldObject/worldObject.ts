@@ -142,7 +142,15 @@ class WorldObject {
 
     controller: Controller;
     behavior: Behavior;
-    inputLevel: number;
+
+    private _inputLevel: number;
+    get inputLevel() {
+        if (this.parent) {
+            return Math.max(this.parent.inputLevel, this._inputLevel);
+        }
+        return this._inputLevel;
+    }
+    set inputLevel(value: number) { this._inputLevel = value; }
 
     modules: Module<WorldObject>[];
 
@@ -199,7 +207,7 @@ class WorldObject {
 
         this.controller = new Controller();
         this.behavior = new NullBehavior();
-        this.inputLevel = config.inputLevel ?? 0;
+        this._inputLevel = config.inputLevel ?? 0;
 
         this.modules = [];
 
@@ -323,10 +331,10 @@ class WorldObject {
             result = this.parent.getRenderScreenX();
         } else {
             let worldOffsetX = this.world ? this.world.camera.worldOffsetX : 0;
-            result = this.shouldIgnoreCamera() ? 0 : -M.roundToNearest(worldOffsetX, 1 / global.upscale);
+            result = this.shouldIgnoreCamera() ? 0 : -worldOffsetX;
         }
 
-        result += M.roundToNearest(this.localx, 1 / global.upscale);
+        result += this.localx;
 
         return result;
     }
@@ -338,10 +346,10 @@ class WorldObject {
             result = this.parent.getRenderScreenY();
         } else {
             let worldOffsetY = this.world ? this.world.camera.worldOffsetY : 0;
-            result = this.shouldIgnoreCamera() ? 0 : -M.roundToNearest(worldOffsetY, 1 / global.upscale);
+            result = this.shouldIgnoreCamera() ? 0 : -worldOffsetY;
         }
 
-        result += M.roundToNearest(this.localy, 1 / global.upscale);
+        result += this.localy;
 
         if (this.getZBehavior() === 'threequarters') {
             let parentz = this.parent ? this.parent.z : 0;
@@ -929,6 +937,7 @@ class WorldObject {
     // For use with World.Actions.addWorldObjectToWorld
     zinternal_addWorldObjectToWorldWorldObject(world: World) {
         this._world = world;
+        this.resolveLayer();
         if (!this._layer) this._layer = World.DEFAULT_LAYER;
     }
 
