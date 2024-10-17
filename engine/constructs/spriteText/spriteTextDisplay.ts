@@ -25,11 +25,14 @@ class SpriteTextDisplay extends WorldObject {
 
         let spriteTextConfig = config.spriteTextConfig ?? {};
         let spriteTextFont = AssetCache.getFont(spriteTextConfig.font ?? SpriteText.DEFAULT_FONT);
+        let charWidth = spriteTextFont?.charWidth ?? 8;
+        let charHeight = spriteTextFont?.charHeight ?? 15;
+        let spaceBetweenLines = spriteTextConfig.spaceBetweenLines ?? spriteTextFont?.spaceBetweenLines ?? 0;
 
         let scaleX = spriteTextConfig.scaleX ?? (spriteTextConfig.scale ?? 1);
         let scaleY = spriteTextConfig.scaleY ?? (spriteTextConfig.scale ?? 1);
-        let spacingDx = config.spacingDx ?? (spriteTextFont?.charWidth ?? 8);
-        let spacingDy = config.spacingDy ?? (spriteTextFont?.charHeight ?? 15);
+        let spacingDx = config.spacingDx ?? charWidth;
+        let spacingDy = config.spacingDy ?? (charHeight + spaceBetweenLines);
 
         let startEntered = config.startEntered ?? false;
 
