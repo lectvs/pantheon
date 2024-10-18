@@ -10,14 +10,31 @@ namespace Camera {
         screenShakePhysicallyMovesCamera?: boolean;
     }
 
-    export type Mode = {
-        getTargetPt: (camera: Camera) => Pt;
-    }
+    export type Mode = Mode.Free | Mode.Focus | Mode.Follow;
 
     export type Movement = {
         speed: number;
         deadZoneWidth: number;
         deadZoneHeight: number;
+    }
+
+    export namespace Mode {
+        export type Free = {
+            type: 'free';
+        }
+
+        export type Focus = {
+            type: 'focus';
+            pt: Pt;
+        }
+
+        export type Follow = {
+            type: 'follow';
+            target: string | Pt;
+            offsetX: number;
+            offsetY: number;
+            snapToScreenBounds: boolean;
+        }
     }
 }
 
@@ -93,7 +110,7 @@ class Camera {
     }
 
     update() {
-        let target = this.mode.getTargetPt(this);
+        let target = this.getTargetPt$();
         this.moveTowardsPoint(target.x, target.y);
 
         if (this.shakeIntensity > 0) {
@@ -123,6 +140,47 @@ class Camera {
             if (Input.isDown(Input.DEBUG_MOVE_CAMERA_UP))    this.debugOffsetY -= 1;
             if (Input.isDown(Input.DEBUG_MOVE_CAMERA_DOWN))  this.debugOffsetY += 1;
         }
+    }
+
+    private _targetPt: Vector2 = vec2(0, 0);
+    getTargetPt$(assumedMode: Camera.Mode = this.mode) {
+        if (assumedMode.type === 'free') {
+            this._targetPt.x = this.x;
+            this._targetPt.y = this.y;
+            return this._targetPt;
+        }
+        
+        if (assumedMode.type === 'focus') {
+            this._targetPt.x = assumedMode.pt.x;
+            this._targetPt.y = assumedMode.pt.y;
+            return this._targetPt;
+        }
+        
+        if (assumedMode.type === 'follow') {
+            if (St.isString(assumedMode.target)) {
+                let worldObject = this.world.select.name(assumedMode.target, 'unchecked');
+                if (worldObject) {
+                    this._targetPt.x = worldObject.x + assumedMode.offsetX;
+                    this._targetPt.y = worldObject.y + assumedMode.offsetY;
+                } else {
+                    this._targetPt.x = this.x;
+                    this._targetPt.y = this.y;
+                }
+            } else {
+                this._targetPt.x = assumedMode.target.x + assumedMode.offsetX;
+                this._targetPt.y = assumedMode.target.y + assumedMode.offsetY;
+            }
+
+            if (assumedMode.snapToScreenBounds) {
+                this._targetPt.x = Math.floor(this._targetPt.x / this.width) * this.width + this.width/2;
+                this._targetPt.y = Math.floor(this._targetPt.y / this.height) * this.height + this.height/2;
+            }
+
+            return this._targetPt;
+        }
+
+        assertUnreachable(assumedMode);
+        return FrameCache.vec2(0, 0);
     }
 
     getWorldRect$() {
@@ -172,7 +230,7 @@ class Camera {
     }
 
     snapPosition() {
-        let target = this.mode.getTargetPt(this);
+        let target = this.getTargetPt$();
         this.x = target.x;
         this.y = target.y;
     }
@@ -208,35 +266,24 @@ class Camera {
 
 namespace Camera {
     export namespace Mode {
-        export function FOCUS(x: number, y: number): Mode {
-            let focusPt = vec2(x, y);
-            return {
-                getTargetPt: (camera: Camera) => focusPt,
-            };
-        }
-        export function FOLLOW(target: string | Pt, offsetX: number = 0, offsetY: number = 0, snapToScreenBounds: boolean = false): Mode {
-            return {
-                getTargetPt: (camera: Camera) => {
-                    let position: Vector2;
-                    if (St.isString(target)) {
-                        let worldObject = camera.world.select.name(target, 'unchecked');
-                        position = worldObject ? vec2(worldObject.x + offsetX, worldObject.y + offsetY) : vec2(camera.x, camera.y);
-                    } else {
-                        position = vec2(target.x + offsetX, target.y + offsetY);
-                    }
-
-                    if (snapToScreenBounds) {
-                        position.x = Math.floor(position.x / camera.width) * camera.width + camera.width/2;
-                        position.y = Math.floor(position.y / camera.height) * camera.height + camera.height/2;
-                    }
-
-                    return position;
-                },
-            };
-        }
         export function FREE(): Mode {
             return {
-                getTargetPt: (camera: Camera) => camera,
+                type: 'free',
+            };
+        }
+        export function FOCUS(x: number, y: number): Mode.Focus {
+            return {
+                type: 'focus',
+                pt: vec2(x, y),
+            };
+        }
+        export function FOLLOW(target: string | Pt, offsetX: number = 0, offsetY: number = 0, snapToScreenBounds: boolean = false): Mode.Follow {
+            return {
+                type: 'follow',
+                target: target,
+                offsetX: offsetX,
+                offsetY: offsetY,
+                snapToScreenBounds: snapToScreenBounds,
             };
         }
     }

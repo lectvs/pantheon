@@ -161,6 +161,16 @@ class Box {
         return this;
     }
 
+    center() {
+        if (this.parent) {
+            console.error('Cannot center a non-root box', this);
+            return this;
+        }
+        this.outerX -= this.outerWidth / 2;
+        this.outerY -= this.outerHeight / 2;
+        return this;
+    }
+
     debugRender() {
         let boxes = this.getSelfAndSubBoxes$();
 
@@ -201,12 +211,60 @@ class Box {
         if (this.name === name) return this;
         if (this.subdivision) return this.subdivision._getSubBoxByName(name);
         console.error(`Cannot find sub-box with name '${name}'`, this);
+
         return undefined;
     }
 
-    named(name: string) {
-        this.name = name;
-        return this;
+    getSubBoxByPath(path: '.' | ''): this;
+    getSubBoxByPath(path: 'left' | 'right' | `${string}/left` | `${string}/right`): Box.LeftRightBox;
+    getSubBoxByPath(path: 'top' | 'bottom' | `${string}/top` | `${string}/bottom`): Box.TopBottomBox;
+    getSubBoxByPath(path: `${number}` | `${string}/${number}`): Box.XBox | Box.YBox;
+    getSubBoxByPath(path: `${number},${number}` | `${string}/${number},${number}`): Box.XYBox;
+    getSubBoxByPath(path: string): Box;
+    getSubBoxByPath(path: string): Box {
+        if (St.isBlank(path) || path === '.') return this;
+        if (path.startsWith('./')) {
+            path = path.substring(2);
+        }
+
+        let firstPart = path.split('/')[0].trim();
+        let remainingPath = path.split('/').slice(1).join('/');
+        if (St.isBlank(firstPart)) {
+            console.error('Invalid subBox path: start of path is blank', path, this);
+            return new Box(0, 0, 0, 0);
+        }
+
+        if (!this.subdivision) {
+            console.error(`Invalid subBox path: subBox '${firstPart}' does not exist`, path, this);
+            return new Box(0, 0, 0, 0);
+        }
+
+        if (this.subdivision instanceof Box.Subdivision.LeftRight) {
+            if (firstPart === 'left') return this.subdivision.left().getSubBoxByPath(remainingPath);
+            if (firstPart === 'right') return this.subdivision.right().getSubBoxByPath(remainingPath);
+        }
+
+        if (this.subdivision instanceof Box.Subdivision.TopBottom) {
+            if (firstPart === 'top') return this.subdivision.top().getSubBoxByPath(remainingPath);
+            if (firstPart === 'bottom') return this.subdivision.bottom().getSubBoxByPath(remainingPath);
+        }
+
+        if (this.subdivision instanceof Box.Subdivision.X || this.subdivision instanceof Box.Subdivision.Y) {
+            if (M.isInt(firstPart)) {
+                return this.subdivision.index(parseInt(firstPart));
+            }
+        }
+
+        if (this.subdivision instanceof Box.Subdivision.XY) {
+            if (firstPart.match(/^\s*[0-9]+\s*,\s*[0-9]+\s*$/)) {
+                let xi = firstPart.split(',')[0];
+                let yi = firstPart.split(',')[1];
+                return this.subdivision.index(parseInt(xi), parseInt(yi));
+            }
+        }
+
+        console.error(`Invalid subBox path: '${firstPart}'`, path, this);
+        return new Box(0, 0, 0, 0);
     }
 
     marginLeft(value: number, unit: Box.Unit = 'pixels') {
@@ -259,6 +317,21 @@ class Box {
         this.marginTop(top, unit);
         this.marginBottom(bottom, unit);
 
+        return this;
+    }
+
+    named(name: string) {
+        this.name = name;
+        return this;
+    }
+
+    offset(offsetX: number, offsetY: number) {
+        if (this.parent) {
+            console.error('Cannot offset a non-root box', this);
+            return this;
+        }
+        this.outerX += offsetX;
+        this.outerY += offsetY;
         return this;
     }
 
@@ -401,6 +474,7 @@ namespace Box {
         }
 
         next() {
+            if (this.i >= this.x.xn - 1) return this.index(0);
             return this.index(this.i + 1);
         }
     }
@@ -415,6 +489,7 @@ namespace Box {
         }
 
         next() {
+            if (this.i >= this.y.yn - 1) return this.index(0);
             return this.index(this.i + 1);
         }
     }
@@ -443,10 +518,12 @@ namespace Box {
         }
 
         nextRow() {
+            if (this.yi >= this.xy.yn - 1) return this.index(0, 0);
             return this.index(0, this.yi + 1);
         }
 
         nextColumn() {
+            if (this.xi >= this.xy.xn - 1) return this.index(0, 0);
             return this.index(this.xi + 1, 0);
         }
     }

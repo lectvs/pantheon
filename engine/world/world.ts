@@ -416,7 +416,7 @@ class World {
     }
 
     getMaxInputLevel(): number {
-        if (global.theater.isCutscenePlaying()) return Infinity;
+        if (global.currentTheater.isCutscenePlaying()) return Infinity;
         return this.maxInputLevelThisFrame;
     }
 
@@ -619,7 +619,7 @@ class World {
             let startPoint = vec2(camera);
 
             yield S.doOverTime(duration, t => {
-                let toPoint = toMode.getTargetPt(camera);
+                let toPoint = camera.getTargetPt$(toMode);
                 camera.x = M.lerp(t, startPoint.x, toPoint.x, easingFunction);
                 camera.y = M.lerp(t, startPoint.y, toPoint.y, easingFunction);
                 camera.snapPosition();
@@ -627,7 +627,8 @@ class World {
 
             camera.setMode(toMode);
             camera.setMovement(toMovement);
-        });
+        },
+        'transitionCamera', 'stopPrevious');
     }
 
     worldXToScreenX(worldX: number) {
