@@ -1,4 +1,8 @@
 namespace MobileUtils {
+    /**
+     * Returns true iff this game is running in a mobile browser.
+     * If you want to check if the game is in mobile mode, you should use `IS_MOBILE`.
+     */
     export function isMobileBrowser() {
         if (Debug.FORCE_MOBILE) {
             return true;

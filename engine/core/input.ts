@@ -287,7 +287,7 @@ class Input {
     }
 
     static get mousePosition$() {
-        return FrameCache.vec2(this.mouseX, this.mouseY);
+        return FrameCache.vec2(this._mouseX, this._mouseY);
     }
 
     static get lastMouseX() {
@@ -299,7 +299,19 @@ class Input {
     }
 
     static get lastMousePosition$() {
-        return FrameCache.vec2(this.lastMouseX, this.lastMouseY);
+        return FrameCache.vec2(this._lastMouseX, this._lastMouseY);
+    }
+
+    static get mouseDX() {
+        return this._mouseX - this._lastMouseX;
+    }
+
+    static get mouseDY() {
+        return this._mouseY - this._lastMouseY;
+    }
+
+    static get mouseD$() {
+        return FrameCache.vec2(this.mouseDX, this.mouseDY);
     }
 
     static get canvasMouseX() {

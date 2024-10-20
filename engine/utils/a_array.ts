@@ -321,4 +321,27 @@ namespace A {
         array[i] = array[j];
         array[j] = temp;
     }
+
+    export function transpose2D<T>(array: T[][]) {
+        let result: T[][] = [];
+
+        if (isEmpty(array)) return result;
+
+        for (let e of array[0]) {
+            result.push([e]);
+        }
+
+        for (let i = 1; i < array.length; i++) {
+            let jn = array[i].length;
+            if (jn > result.length) {
+                console.error('Transposing an array with irregular structure', array);
+                jn = result.length;
+            }
+            for (let j = 0; j < jn; j++) {
+                result[j].push(array[i][j]);
+            }
+        }
+
+        return result;
+    }
 }

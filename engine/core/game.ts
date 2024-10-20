@@ -66,9 +66,9 @@ class Game {
     }
 
     update() {
-        this.updatePause();
-
         this.stageManager.update();
+
+        this.updatePause();
 
         let currentTheater = this.getCurrentTheater();
         currentTheater.isSkippingCutscene = false;  // Safeguard

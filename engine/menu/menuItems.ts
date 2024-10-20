@@ -4,9 +4,10 @@ namespace MenuTextButton {
     export type Config = SpriteText.Config<MenuTextButton> & {
         onClick?: (this: MenuTextButton) => void;
         onHover?: (this: MenuTextButton) => void;
+        onUnhover?: (this: MenuTextButton) => void;
         onJustHovered?: (this: MenuTextButton) => void;
-        hoverColor?: number;
-        clickedColor?: number;
+        onJustUnhovered?: (this: MenuTextButton) => void;
+        tinting?: UIElement.Tinting;
     }
 }
 
@@ -19,16 +20,23 @@ class MenuTextButton extends SpriteText {
         this.bounds = new RectBounds(0, 0, 0, 0, this);
         this.enabled = true;
 
+        let tinting = config.tinting ? O.withDefaults(config.tinting, {
+            hover: 0x808080,
+            clicked: config.tinting?.hover ?? 0x808080,
+        })
+        : undefined;
+
         let button = this.addModule(new UIElement({
-            tinting: {
-                hover: config.hoverColor ?? 0x808080,
-                clicked: config.clickedColor ?? (config.hoverColor ?? 0x808080),
-            },
+            tinting: tinting,
             onUpdate: (hovered) => {
                 if (hovered && config.onHover) config.onHover.apply(this);
+                if (!hovered && config.onUnhover) config.onUnhover.apply(this);
             },
             onJustHovered: () => {
                 if (config.onJustHovered) config.onJustHovered.apply(this);
+            },
+            onJustUnhovered: () => {
+                if (config.onJustUnhovered) config.onJustUnhovered.apply(this);
             },
             onClick: () => {
                 if (config.onClick) config.onClick.apply(this);

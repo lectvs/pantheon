@@ -19,6 +19,8 @@ namespace UIElement {
         clicked?: number;
     };
 
+    export type SelectionMode = 'mouse' | 'manual';
+
     export type Callback = (this: UIElement) => void;
     export type UpdateCallback = (this: UIElement, hovered: boolean, clickedDown: boolean) => void;
 }
@@ -39,9 +41,10 @@ class UIElement extends Module<WorldObject> {
     hoverTint?: number;
     clickTint?: number;
 
-    private lastHovered: boolean = false;
-    private lastClickedDown: boolean = false;
-    private clickedDown: boolean = false;
+    selectionMode: UIElement.SelectionMode;
+
+    hovered: boolean = false;
+    clickedDown: boolean = false;
 
     constructor(config: UIElement.Config) {
         super(WorldObject);
@@ -62,6 +65,8 @@ class UIElement extends Module<WorldObject> {
             this.hoverTint = config.tinting.hover;
             this.clickTint = config.tinting.clicked;
         }
+
+        this.selectionMode = 'mouse';
     }
 
     override init(worldObject: WorldObject): void {
@@ -75,21 +80,18 @@ class UIElement extends Module<WorldObject> {
     override update(): void {
         super.update();
 
-        let hovered = this.isHovered();
+        let mouseOverlapping = this.isMouseOverlapping();
 
-        if (hovered && Input.justDown(Input.GAME_SELECT)) {
-            this.clickedDown = true;
+        if (mouseOverlapping && !Input.mouseD$.isZero()) {
+            this.selectionMode = 'mouse';
         }
 
-        if (Input.justUp(Input.GAME_SELECT)) {
-            if (hovered && this.clickedDown) {
-                this.click();
-            }
-            this.clickedDown = false;
+        if (this.selectionMode === 'mouse') {
+            this.updateModeMouse(mouseOverlapping);
         }
 
         if (this.tintingEnabled && 'tint' in this.worldObject) {
-            if (hovered) {
+            if (this.hovered) {
                 if (this.clickedDown) {
                     if (this.clickTint !== undefined) this.worldObject.tint = this.clickTint;
                 } else {
@@ -99,39 +101,65 @@ class UIElement extends Module<WorldObject> {
                 if (this.baseTint !== undefined) this.worldObject.tint = this.baseTint;
             }
         }
+    }
+
+    private updateModeMouse(mouseOverlapping: boolean) {
+        if (Input.justUp(Input.GAME_SELECT)) {
+            if (mouseOverlapping && this.clickedDown) {
+                this.click();
+            }
+        }
         
-        if (hovered) {
-            if (!this.lastHovered) {
-                this.onJustHovered();
-            }
+        if (mouseOverlapping) {
+            this.hover();
         } else {
-            if (this.lastHovered) {
-                this.onJustUnhovered();
-            }
+            this.unhover();
         }
 
-        if (hovered && this.clickedDown) {
-            if (!this.lastClickedDown) {
-                this.onJustClickedDown();
-            }
+        if (mouseOverlapping && Input.isDown(Input.GAME_SELECT)) {
+            this.clickDown();
         } else {
-            if (this.lastClickedDown) {
-                this.onJustUnClickedDown();
-            }
+            this.unclickDown();
         }
 
-        this.onUpdate(hovered, this.clickedDown);
-
-        this.lastHovered = hovered;
-        this.lastClickedDown = this.clickedDown;
+        this.onUpdate(mouseOverlapping, this.clickedDown);
     }
 
     click() {
         this.onClick();
     }
 
-    isHovered() {
+    clickDown() {
+        if (!this.clickedDown) {
+            this.onJustClickedDown();
+            this.clickedDown = true;
+        }
+    }
+
+    unclickDown() {
+        if (this.clickedDown) {
+            this.onJustUnClickedDown();
+            this.clickedDown = false;
+        }
+    }
+
+    hover() {
+        if (!this.hovered) {
+            this.onJustHovered();
+            this.hovered = true;
+        }
+    }
+
+    unhover() {
+        if (this.hovered) {
+            this.onJustUnhovered();
+            this.hovered = false;
+        }
+    }
+
+    isMouseOverlapping() {
         if (!this.enabled) return false;
+        if (this.worldObject.isControlRevoked()) return false;
         if (!this.canInteract()) return false;
         if (!this.worldObject.world) return false;
 

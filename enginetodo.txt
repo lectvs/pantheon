@@ -12,6 +12,7 @@ TODO
 - better particle system (e.g. start at 0 alpha, then go to 1, then back to 0)
 - box model P1s
 - worldobject._layer = undefined -> should mean inherit from parent (currently is set on add)
+- add format functionality to spritetext
 
 
 

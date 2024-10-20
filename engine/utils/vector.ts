@@ -184,16 +184,20 @@ class Vector2 {
         return copy;
     }
 
-    static fromPolar(radius: number, angle: number) {
-        return new Vector2(radius * M.cos(angle), radius * M.sin(angle));
-    }
-
     static add(v1: Pt, v2: Pt) {
         return vec2(v1.x + v2.x, v1.y + v2.y);
     }
 
+    static angleBetween(v1: Vector2, v2: Vector2) {
+        return Math.abs(M.angleDiff(v1.angle, v2.angle));
+    }
+
     static dot(v1: Vector2, v2: Vector2) {
         return G.dot(v1, v2);
+    }
+
+    static fromPolar(radius: number, angle: number) {
+        return new Vector2(radius * M.cos(angle), radius * M.sin(angle));
     }
 
     static subtract(v1: Pt, v2: Pt) {
