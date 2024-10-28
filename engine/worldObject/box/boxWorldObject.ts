@@ -7,6 +7,15 @@ namespace BoxWorldObject {
          */
         box: Box | Box.Subdivision;
     }
+
+    export type ListConfig = Omit<BoxWorldObject.Config, 'box'> & {
+        itemCount: number;
+        itemWidth: number;
+        itemHeight: number;
+        itemBox: (box: Box, i: number) => void;
+        alignment: 'horizontal' | 'vertical';
+        anchor?: Vector2;
+    }
 }
 
 class BoxWorldObject extends WorldObject {
@@ -41,5 +50,26 @@ class BoxWorldObject extends WorldObject {
 
     private renderBox() {
         return this.box.debugRender()
+    }
+}
+
+namespace BoxWorldObject {
+    export class List extends BoxWorldObject {
+        constructor(config: BoxWorldObject.ListConfig) {
+            let boxWidth = config.alignment === 'vertical' ? config.itemWidth : config.itemWidth * config.itemCount;
+            let boxHeight = config.alignment === 'horizontal' ? config.itemHeight : config.itemHeight * config.itemCount;
+            let box = new Box(0, 0, boxWidth, boxHeight).anchor(config.anchor ?? Anchor.TOP_LEFT);
+            let subdivision = config.alignment === 'horizontal'
+                ? box.subdivideX(config.itemCount)
+                : box.subdivideY(config.itemCount);
+            for (let i = 0; i < config.itemCount; i++) {
+                config.itemBox(subdivision.index(i), i);
+            }
+
+            super({
+                ...config,
+                box,
+            });
+        }
     }
 }

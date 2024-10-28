@@ -13,6 +13,8 @@ TODO
 - box model P1s
 - worldobject._layer = undefined -> should mean inherit from parent (currently is set on add)
 - add format functionality to spritetext
+- world/global "effects" e.g. timescale, camera position, music volume, etc. that only happen while a worldobject is in the world
+- modify individual characters on a spritetext
 
 
 

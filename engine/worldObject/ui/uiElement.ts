@@ -1,40 +1,47 @@
 namespace UIElement {
     export type Config = {
         onClick?: Callback;
-        onUpdate?: UpdateCallback;
-        onJustHovered?: Callback;
-        onJustUnhovered?: Callback;
-        onJustClickedDown?: Callback;
-        onJustUnClickedDown?: Callback;
+        onUpdate?: Callback;
+        onStateChange?: OnStateChangeCallback;
 
         canInteract?: () => boolean;
-        enabled?: boolean;
 
         tinting?: Tinting;
+
+        disabled?: boolean;
+    }
+
+    export type State = {
+        /**
+         * Hovered, in mouse mode.
+         */
+        hovered: boolean;
+        /**
+         * Selected, in manual mode.
+         */
+        selected: boolean;
+        clickedDown: boolean;
+        disabled: boolean;
     }
 
     export type Tinting = {
         base?: number;
         hover?: number;
         clicked?: number;
-    };
+    }
 
     export type SelectionMode = 'mouse' | 'manual';
 
-    export type Callback = (this: UIElement) => void;
-    export type UpdateCallback = (this: UIElement, hovered: boolean, clickedDown: boolean) => void;
+    export type Callback = (this: UIElement, state: State) => void;
+    export type OnStateChangeCallback = (this: UIElement, state: State, lastState: State) => void;
 }
 
 class UIElement extends Module<WorldObject> {
     onClick: UIElement.Callback;
-    onUpdate: UIElement.UpdateCallback;
-    onJustHovered: UIElement.Callback;
-    onJustUnhovered: UIElement.Callback;
-    onJustClickedDown: UIElement.Callback;
-    onJustUnClickedDown: UIElement.Callback;
+    onUpdate: UIElement.Callback;
+    onStateChange: UIElement.OnStateChangeCallback;
 
     canInteract: () => boolean;
-    enabled: boolean;
 
     tintingEnabled: boolean;
     baseTint?: number;
@@ -43,21 +50,17 @@ class UIElement extends Module<WorldObject> {
 
     selectionMode: UIElement.SelectionMode;
 
-    hovered: boolean = false;
-    clickedDown: boolean = false;
+    state: UIElement.State;
+    private lastState: UIElement.State;
 
     constructor(config: UIElement.Config) {
         super(WorldObject);
 
         this.onClick = config.onClick ?? Utils.NOOP;
         this.onUpdate = config.onUpdate ?? Utils.NOOP;
-        this.onJustHovered = config.onJustHovered ?? Utils.NOOP;
-        this.onJustUnhovered = config.onJustUnhovered ?? Utils.NOOP;
-        this.onJustClickedDown = config.onJustClickedDown ?? Utils.NOOP;
-        this.onJustUnClickedDown = config.onJustUnClickedDown ?? Utils.NOOP;
+        this.onStateChange = config.onStateChange ?? Utils.NOOP;
 
         this.canInteract = config.canInteract ?? (() => true);
-        this.enabled = config.enabled ?? true;
 
         this.tintingEnabled = !!config.tinting;
         if (config.tinting) {
@@ -67,6 +70,15 @@ class UIElement extends Module<WorldObject> {
         }
 
         this.selectionMode = 'mouse';
+
+        this.state = {
+            hovered: false,
+            selected: false,
+            clickedDown: false,
+            disabled: config.disabled ?? false,
+        };
+        this.lastState = O.clone(this.state);
+        this.onStateChange(this.state, this.lastState);
     }
 
     override init(worldObject: WorldObject): void {
@@ -90,9 +102,9 @@ class UIElement extends Module<WorldObject> {
             this.updateModeMouse(mouseOverlapping);
         }
 
-        if (this.tintingEnabled && 'tint' in this.worldObject) {
-            if (this.hovered) {
-                if (this.clickedDown) {
+        if (this.tintingEnabled) {
+            if (this.state.hovered || this.state.selected) {
+                if (this.state.clickedDown) {
                     if (this.clickTint !== undefined) this.worldObject.tint = this.clickTint;
                 } else {
                     if (this.hoverTint !== undefined) this.worldObject.tint = this.hoverTint;
@@ -101,64 +113,51 @@ class UIElement extends Module<WorldObject> {
                 if (this.baseTint !== undefined) this.worldObject.tint = this.baseTint;
             }
         }
+
+        this.handleStateChange();
+        this.onUpdate(this.state);
+    }
+
+    private handleStateChange() {
+        if (this.state.hovered !== this.lastState.hovered ||
+            this.state.selected !== this.lastState.selected ||
+            this.state.clickedDown !== this.lastState.clickedDown ||
+            this.state.disabled !== this.lastState.disabled
+        ) {
+            this.onStateChange(this.state, this.lastState);
+            this.lastState.hovered = this.state.hovered;
+            this.lastState.selected = this.state.selected;
+            this.lastState.clickedDown = this.state.clickedDown;
+            this.lastState.disabled = this.state.disabled;
+        }
     }
 
     private updateModeMouse(mouseOverlapping: boolean) {
         if (Input.justUp(Input.GAME_SELECT)) {
-            if (mouseOverlapping && this.clickedDown) {
+            if (mouseOverlapping && this.state.clickedDown) {
                 this.click();
             }
         }
         
         if (mouseOverlapping) {
-            this.hover();
+            this.setHovered(true);
         } else {
-            this.unhover();
+            this.setHovered(false);
         }
 
         if (mouseOverlapping && Input.isDown(Input.GAME_SELECT)) {
-            this.clickDown();
+            this.setClickedDown(true);
         } else {
-            this.unclickDown();
+            this.setClickedDown(false);
         }
-
-        this.onUpdate(mouseOverlapping, this.clickedDown);
     }
 
     click() {
-        this.onClick();
-    }
-
-    clickDown() {
-        if (!this.clickedDown) {
-            this.onJustClickedDown();
-            this.clickedDown = true;
-        }
-    }
-
-    unclickDown() {
-        if (this.clickedDown) {
-            this.onJustUnClickedDown();
-            this.clickedDown = false;
-        }
-    }
-
-    hover() {
-        if (!this.hovered) {
-            this.onJustHovered();
-            this.hovered = true;
-        }
-    }
-
-    unhover() {
-        if (this.hovered) {
-            this.onJustUnhovered();
-            this.hovered = false;
-        }
+        this.onClick(this.state);
     }
 
     isMouseOverlapping() {
-        if (!this.enabled) return false;
+        if (this.state.disabled) return false;
         if (this.worldObject.isControlRevoked()) return false;
         if (!this.canInteract()) return false;
         if (!this.worldObject.world) return false;
@@ -224,12 +223,36 @@ class UIElement extends Module<WorldObject> {
         }
         return this.localBounds;
     }
+
+    setHovered(hovered: boolean) {
+        if (this.state.hovered === hovered) return;
+        this.state.hovered = hovered;
+        this.handleStateChange();
+    }
+
+    setClickedDown(clickedDown: boolean) {
+        if (this.state.clickedDown === clickedDown) return;
+        this.state.clickedDown = clickedDown;
+        this.handleStateChange();
+    }
+
+    setSelected(selected: boolean) {
+        if (this.state.selected === selected) return;
+        this.state.selected = selected;
+        this.handleStateChange();
+    }
+
+    setDisabled(disabled: boolean) {
+        if (this.state.disabled === disabled) return;
+        this.state.disabled = disabled;
+        this.handleStateChange();
+    }
 }
 
 namespace UIElement {
     export function getClosestUIElement(targetBounds: CircleBounds, world: World) {
         let uiElements = world.select.modules$(UIElement);
-        uiElements.filterInPlace(uiElement => uiElement.enabled
+        uiElements.filterInPlace(uiElement => !uiElement.state.disabled
                                         && uiElement.worldObject.isActive()
                                         && !uiElement.worldObject.isControlRevoked()
                                         && uiElement.canInteract()

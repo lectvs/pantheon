@@ -3,10 +3,7 @@
 namespace MenuTextButton {
     export type Config = SpriteText.Config<MenuTextButton> & {
         onClick?: (this: MenuTextButton) => void;
-        onHover?: (this: MenuTextButton) => void;
-        onUnhover?: (this: MenuTextButton) => void;
-        onJustHovered?: (this: MenuTextButton) => void;
-        onJustUnhovered?: (this: MenuTextButton) => void;
+        onStateChange?: (this: MenuTextButton, state: UIElement.State) => void;
         tinting?: UIElement.Tinting;
     }
 }
@@ -28,15 +25,8 @@ class MenuTextButton extends SpriteText {
 
         let button = this.addModule(new UIElement({
             tinting: tinting,
-            onUpdate: (hovered) => {
-                if (hovered && config.onHover) config.onHover.apply(this);
-                if (!hovered && config.onUnhover) config.onUnhover.apply(this);
-            },
-            onJustHovered: () => {
-                if (config.onJustHovered) config.onJustHovered.apply(this);
-            },
-            onJustUnhovered: () => {
-                if (config.onJustUnhovered) config.onJustUnhovered.apply(this);
+            onStateChange: (state) => {
+                if (config.onStateChange) config.onStateChange.apply(this, state);
             },
             onClick: () => {
                 if (config.onClick) config.onClick.apply(this);
@@ -51,7 +41,7 @@ class MenuTextButton extends SpriteText {
 
         let button = this.getModule(UIElement);
         if (button) {
-            button.enabled = this.enabled && this.isHighestPriority();
+            button.setDisabled(!this.enabled);
         }
     }
 
@@ -68,10 +58,6 @@ class MenuTextButton extends SpriteText {
             this.bounds.width = 0;
             this.bounds.height = 0;
         }
-    }
-
-    isHighestPriority() {
-        return true;
     }
 }
 

@@ -21,6 +21,7 @@ class UIKeyboardSystem extends WorldObject {
     private minMajorAxisDistance: number;
 
     private selectedIndex: number;
+    private clickedDown: boolean;
 
     constructor(config: UIKeyboardSystem.Config) {
         super(config);
@@ -33,7 +34,8 @@ class UIKeyboardSystem extends WorldObject {
         });
         this.precisionAngle = config.precisionAngle ?? 10;
         this.minMajorAxisDistance = config.minMajorAxisDistance ?? 2;
-        this.selectedIndex = config.startSelectedIndex ?? 0;
+        this.selectedIndex = config.startSelectedIndex ?? this.elements.findIndex(e => !e.state.disabled);
+        this.clickedDown = false;
 
         let upKey = config.keys?.up ?? 'up';
         let downKey = config.keys?.down ?? 'down';
@@ -47,6 +49,7 @@ class UIKeyboardSystem extends WorldObject {
             this.controller.left = Input.justDown(leftKey);
             this.controller.right = Input.justDown(rightKey);
             this.controller.interact = Input.justUp(interactKey);
+            this.controller.keys.justInteract = Input.justDown(interactKey);
             this.controller.keys.holdInteract = Input.isDown(interactKey);
         });
 
@@ -58,51 +61,65 @@ class UIKeyboardSystem extends WorldObject {
     override update(): void {
         super.update();
 
+        if (this.elements.every(e => e.state.disabled)) {
+            return;
+        }
+
+        if (this.selectedIndex < 0) {
+            this.elements.findIndex(e => !e.state.disabled);
+        }
+
         if (this.elements.some(e => e.selectionMode === 'mouse') && this.elements.some(e => e.selectionMode === 'manual')) {
             this.setSelectionMode('mouse');
         }
 
         if (this.controller.up || this.controller.down || this.controller.left || this.controller.right) {
             this.setSelectionMode('manual');
+            this.clickedDown = false;
         }
 
         let currentMode = this.elements.some(e => e.selectionMode === 'mouse') ? 'mouse' : 'manual';
 
-        if (currentMode === 'mouse' && !this.elements[this.selectedIndex].hovered) {
-            let hoveredIndex = this.elements.findIndex(e => e.hovered);
+        if (currentMode === 'mouse' && !this.elements[this.selectedIndex].state.hovered) {
+            let hoveredIndex = this.elements.findIndex(e => e.state.hovered);
             this.selectedIndex = hoveredIndex >= 0 ? hoveredIndex : this.selectedIndex;
         }
 
         if (this.controller.left) {
-            this.elements[this.selectedIndex].unhover();
+            this.elements[this.selectedIndex].setSelected(false);
             this.selectToDirection('left');
-            this.elements[this.selectedIndex].hover();
+            this.elements[this.selectedIndex].setSelected(true);
         }
         if (this.controller.right) {
-            this.elements[this.selectedIndex].unhover();
+            this.elements[this.selectedIndex].setSelected(false);
             this.selectToDirection('right');
-            this.elements[this.selectedIndex].hover();
+            this.elements[this.selectedIndex].setSelected(true);
         }
         if (this.controller.up) {
-            this.elements[this.selectedIndex].unhover();
+            this.elements[this.selectedIndex].setSelected(false);
             this.selectToDirection('up');
-            this.elements[this.selectedIndex].hover();
+            this.elements[this.selectedIndex].setSelected(true);
         }
         if (this.controller.down) {
-            this.elements[this.selectedIndex].unhover();
+            this.elements[this.selectedIndex].setSelected(false);
             this.selectToDirection('down');
-            this.elements[this.selectedIndex].hover();
+            this.elements[this.selectedIndex].setSelected(true);
         }
 
         if (currentMode === 'manual') {
             if (this.controller.keys.holdInteract) {
-                this.elements[this.selectedIndex].clickDown();
+                this.elements[this.selectedIndex].setClickedDown(true);
             } else {
-                this.elements[this.selectedIndex].unclickDown();
+                this.elements[this.selectedIndex].setClickedDown(false);
             }
         }
 
-        if (this.controller.interact) {
+        if (this.controller.keys.justInteract) {
+            this.clickedDown = true;
+        }
+
+        if (this.controller.interact && this.clickedDown) {
+            this.clickedDown = false;
             this.elements[this.selectedIndex].click();
         }
     }
@@ -141,6 +158,8 @@ class UIKeyboardSystem extends WorldObject {
         for (let i = 0; i < this.elements.length; i++) {
             if (i === this.selectedIndex) continue;
             let element = this.elements[i];
+
+            if (element.state.disabled) continue;
 
             let dx = element.worldObject.x - currentElement.worldObject.x;
             let dy = element.worldObject.y - currentElement.worldObject.y;
@@ -192,11 +211,14 @@ class UIKeyboardSystem extends WorldObject {
             let element = this.elements[i];
             element.selectionMode = selectionMode;
             if (selectionMode === 'manual') {
+                element.setHovered(false);
                 if (i === this.selectedIndex) {
-                    element.hover();
+                    element.setSelected(true);
                 } else {
-                    element.unhover();
+                    element.setSelected(false);
                 }
+            } else {
+                element.setSelected(false);
             }
         }
     }

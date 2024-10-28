@@ -38,22 +38,6 @@ namespace Render {
         return result;
     }
 
-    export function snapToUpscale(result: Render.Result) {
-        for (let r of result) {
-            let dx = M.roundToNearest(r.x, 1 / global.upscale) - r.x;
-            let dy = M.roundToNearest(r.y, 1 / global.upscale) - r.y;
-
-            r.x += dx;
-            r.y += dy;
-
-            if (r instanceof PIXI.Sprite && r.filterArea) {
-                r.filterArea.x += dx;
-                r.filterArea.y += dy;
-            }
-        }
-        return result;
-    }
-
     export function upscalePixiObjectProperties(object: PIXI.DisplayObject, scale: 'upscale' | 'downscale') {
         let scaleMult = scale === 'upscale' ? global.upscale : 1 / global.upscale;
         object.filters?.forEach(filter => filter.setUpscale(scale === 'upscale' ? global.upscale : 1));

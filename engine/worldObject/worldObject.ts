@@ -317,36 +317,42 @@ class WorldObject {
         this.postUpdate();
     }
 
+    /**
+     * Gets the screen-space X of the WorldObject in the world, snapped to the closest 1/upscale.
+     * Change with care, this seems to work with all edge cases currently.
+     */
     getRenderScreenX() {
-        let result: number;
-
+        let base: number;
         if (this.parent) {
-            result = this.parent.getRenderScreenX();
+            base = this.parent.getRenderScreenX();
         } else {
             let worldOffsetX = this.world ? this.world.camera.worldOffsetX : 0;
-            result = this.shouldIgnoreCamera() ? 0 : -worldOffsetX;
+            base = this.shouldIgnoreCamera() ? 0 : M.roundToNearest(-worldOffsetX, 1/global.upscale);
         }
 
-        result += this.localx;
+        let result = M.roundToNearest(base, 1/global.upscale) + M.roundToNearest(this.localx, 1/global.upscale);
 
         return result;
     }
 
+    /**
+     * Gets the screen-space Y of the WorldObject in the world, snapped to the closest 1/upscale.
+     * Change with care, this seems to work with all edge cases currently.
+     */
     getRenderScreenY() {
-        let result: number;
-
+        let base: number;
         if (this.parent) {
-            result = this.parent.getRenderScreenY();
+            base = this.parent.getRenderScreenY();
         } else {
             let worldOffsetY = this.world ? this.world.camera.worldOffsetY : 0;
-            result = this.shouldIgnoreCamera() ? 0 : -worldOffsetY;
+            base = this.shouldIgnoreCamera() ? 0 : M.roundToNearest(-worldOffsetY, 1/global.upscale);
         }
 
-        result += this.localy;
+        let result = base + M.roundToNearest(this.localy, 1/global.upscale);
 
         if (this.getZBehavior() === 'threequarters') {
             let parentz = this.parent ? this.parent.z : 0;
-            result += parentz - this.z;
+            result += M.roundToNearest(parentz, 1/global.upscale) - M.roundToNearest(this.z, 1/global.upscale);
         }
 
         return result;

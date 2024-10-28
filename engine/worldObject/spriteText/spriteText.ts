@@ -329,6 +329,7 @@ class SpriteText extends WorldObject {
     }
 
     private getTagStyle(name: string, params: string[]) {
+        name = name.toLowerCase();
         let cacheKey = `${name} ${params.join(' ')}`;
         if (cacheKey in this.tagCache) {
             return this.tagCache[cacheKey];
@@ -364,6 +365,7 @@ class SpriteText extends WorldObject {
 namespace SpriteText {
     export function addTags(tags: Dict<TagFunction>) {
         for (let key in tags) {
+            key = key.toLowerCase();
             if (key in SpriteText.TAGS) {
                 debug(`A SpriteText tag already exists with name ${key}:`, SpriteText.TAGS[key]);
             }

@@ -137,6 +137,16 @@ class Box {
         return this.addWorldObject(this.background);
     }
 
+    anchor(anchor: Vector2) {
+        if (this.parent) {
+            console.error('Cannot anchor a non-root box', this);
+            return this;
+        }
+        this.outerX -= this.outerWidth * anchor.x;
+        this.outerY -= this.outerHeight * anchor.y;
+        return this;
+    }
+
     build() {
         this._contentX = this.outerX + Box.valueUnitToPixels(this.margins.left, this.outerWidth);
         this._contentY = this.outerY + Box.valueUnitToPixels(this.margins.top, this.outerHeight);
@@ -162,13 +172,7 @@ class Box {
     }
 
     center() {
-        if (this.parent) {
-            console.error('Cannot center a non-root box', this);
-            return this;
-        }
-        this.outerX -= this.outerWidth / 2;
-        this.outerY -= this.outerHeight / 2;
-        return this;
+        return this.anchor(tmp.vec2(0.5, 0.5));
     }
 
     debugRender() {
@@ -325,16 +329,6 @@ class Box {
         return this;
     }
 
-    offset(offsetX: number, offsetY: number) {
-        if (this.parent) {
-            console.error('Cannot offset a non-root box', this);
-            return this;
-        }
-        this.outerX += offsetX;
-        this.outerY += offsetY;
-        return this;
-    }
-
     padLeft(value: number, unit: Box.Unit = 'pixels') {
         this.padding.left = { value, unit };
         return this;
@@ -425,6 +419,16 @@ class Box {
         let subdivision = new Box.Subdivision.XY(this, xn, yn);
         this.subdivision = subdivision;
         return subdivision;
+    }
+
+    translate(dx: number, dy: number) {
+        if (this.parent) {
+            console.error('Cannot translate a non-root box', this);
+            return this;
+        }
+        this.outerX += dx;
+        this.outerY += dy;
+        return this;
     }
 }
 
