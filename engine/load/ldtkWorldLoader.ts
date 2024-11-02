@@ -148,6 +148,12 @@ class LdtkWorldLoader implements Loader {
                             data: this.getEntityData(entity),
                         });
                     }
+
+                    for (let entity of ldtkLevel.entities) {
+                        if (!entity.placeholder) {
+                            console.error(`No placeholder found for Ldtk entity '${entity.identifier}', level: '${level.identifier}'`);
+                        }
+                    }
                 }
             }
 

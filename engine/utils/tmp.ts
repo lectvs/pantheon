@@ -46,4 +46,12 @@ namespace tmp {
         _rectangle.height = height;
         return _rectangle;
     }
+
+    // For use with `Function.apply()`
+    const _argArray: any[] = [];
+    export function argArray<T>(e1: T): [T] {
+        _argArray.length = 0;
+        _argArray.push(e1);
+        return _argArray as [T];
+    }
 }

@@ -46,6 +46,8 @@ type PartialRecord<K extends keyof any, T> = {
 type ValueElseUndefined<T> =
     T extends (string | number | boolean | symbol | object) ? T : undefined;
 
+type KeysOfWithValueType<T, V> = {[K in keyof T]-?: T[K] extends V ? K : never}[keyof T];
+
 type Without<T, U> = { [P in Exclude<keyof T, keyof U>]?: never };
 type XOR<T, U> = (T | U) extends object ? (Without<T, U> & U) | (Without<U, T> & T) : T | U;
 

@@ -26,7 +26,7 @@ class MenuTextButton extends SpriteText {
         let button = this.addModule(new UIElement({
             tinting: tinting,
             onStateChange: (state) => {
-                if (config.onStateChange) config.onStateChange.apply(this, state);
+                if (config.onStateChange) config.onStateChange.apply(this, tmp.argArray(state));
             },
             onClick: () => {
                 if (config.onClick) config.onClick.apply(this);

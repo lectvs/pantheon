@@ -15,6 +15,10 @@ TODO
 - add format functionality to spritetext
 - world/global "effects" e.g. timescale, camera position, music volume, etc. that only happen while a worldobject is in the world
 - modify individual characters on a spritetext
+- make sure non-menu stages are not stacked by default
+- option to keep children ordered relative to their parent
+- generic worldobject scale inherited by children
+- ability to play the intro/splash screen while loading assets
 
 
 
