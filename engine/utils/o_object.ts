@@ -52,7 +52,7 @@ namespace O {
         }
     }
 
-    export function defaults<T, K extends Partial<T>>(obj: T, defaults: K): T & K {
+    export function defaults<T, K>(obj: T, defaults: K): T & K {
         for (let key in defaults) {
             if ((obj as any)[key] === undefined) {
                 (obj as any)[key] = defaults[key];
@@ -159,7 +159,7 @@ namespace O {
         return count;
     }
 
-    export function withDefaults<T, K extends Partial<T>>(obj: T, defaults: K): T & K {
+    export function withDefaults<T, K>(obj: T, defaults: K): T & K {
         return O.defaults(clone(obj), defaults);
     }
 

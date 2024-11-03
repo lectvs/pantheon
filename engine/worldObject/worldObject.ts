@@ -711,6 +711,7 @@ class WorldObject {
                 : [{ type: 'worldobject', worldObject }],
             events: A.isArray(event) ? event : [event],
             onEvent,
+            isActive: () => this.isActive(),
             shouldPrune: () => !this.world,
         });
     }

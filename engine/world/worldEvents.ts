@@ -27,6 +27,7 @@ namespace WorldEvent {
         fromSources?: ListenerSource[];
         events?: string[];
         onEvent: (event: WorldEvent.Event) => void;
+        isActive?: () => boolean;
         shouldPrune: () => boolean;
         enabled?: boolean;
     }
@@ -79,8 +80,9 @@ class WorldEventManager {
             if (listener.shouldPrune()) {
                 return false;
             }
+            let listenerActive = !listener.isActive || listener.isActive();
             let listenerEnabled = listener.enabled ?? true;
-            if (listenerEnabled && WorldEvent.matches(event, listener)) {
+            if (listenerActive && listenerEnabled && WorldEvent.matches(event, listener)) {
                 listener.onEvent(event);
             }
             return true;
