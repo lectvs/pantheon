@@ -25,6 +25,10 @@ class SoundManager {
         return sound;
     }
 
+    getSoundCountByKey(key: string) {
+        return A.count(this.sounds, sound => sound.key === key);
+    }
+
     getSoundsByKey(key: string) {
         return this.sounds.filter(sound => sound.key === key);
     }

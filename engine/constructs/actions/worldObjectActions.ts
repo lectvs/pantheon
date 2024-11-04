@@ -30,13 +30,13 @@ namespace Actions {
             scripts.push(S.tween(duration, worldObject, 'z', worldObject.z, worldObject.z - initialValues.dz, easingFn));
         }
 
-        let wo = worldObject as any;
-
-        if (initialValues.alpha !== undefined && typeof(wo.alpha) === 'number') {
-            let currentAlpha = wo.alpha;
-            wo.alpha = initialValues.alpha;
-            scripts.push(S.tween(duration, wo, 'alpha', wo.alpha, currentAlpha, easingFn));
+        if (initialValues.alpha !== undefined) {
+            let currentAlpha = worldObject.alpha;
+            worldObject.alpha = initialValues.alpha;
+            scripts.push(S.tween(duration, worldObject, 'alpha', worldObject.alpha, currentAlpha, easingFn));
         }
+
+        let wo = worldObject as any;
 
         if (initialValues.scaleX !== undefined && typeof(wo.scaleX) === 'number') {
             let currentScaleX = wo.scaleX;

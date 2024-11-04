@@ -32,6 +32,19 @@ namespace A {
         return array.map(line => clone(line));
     }
 
+    /**
+     * Counts the number of elements in an array that meet the given predicate.
+     */
+    export function count<T>(array: T[], predicate: (t: T) => boolean) {
+        let result = 0;
+
+        for (let e of array) {
+            if (predicate(e)) result++;
+        }
+
+        return result;
+    }
+
     export function countElements<T extends string | number>(array: T[]): PartialRecord<T, number> {
         let result: PartialRecord<T, number> = {};
 

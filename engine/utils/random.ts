@@ -58,13 +58,18 @@ class RandomNumberGenerator {
     /**
      * Random element from array, weighted by a given weights array.
      */
-    elementWeighted<T>(array: T[], weights: number[]) {
+    elementWeighted<T>(array: T[], weights: number[]): T;
+    elementWeighted<T>(array: T[], weights: (e: T) => number): T;
+    elementWeighted<T>(array: T[], weights: number[] | ((e: T) => number)) {
         if (A.isEmpty(array)) return undefined;
-        if (A.isEmpty(weights)) {
-            console.error(`Weights are empty, using uniform weighting:`, array, weights);
-            return this.element(array);
+        if (!A.isArray(weights)) {
+            let calculatedWeights: number[] = FrameCache.array();
+            for (let e of array) {
+                calculatedWeights.push(weights(e));
+            }
+            weights = calculatedWeights;
         }
-        if (weights.length !== array.length) {
+        if (A.size(weights) !== array.length) {
             console.error(`Weights length does not match array length:`, array, weights);
         }
         let weightSum = A.sum(weights);

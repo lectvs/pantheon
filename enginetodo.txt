@@ -19,6 +19,7 @@ TODO
 - option to keep children ordered relative to their parent
 - generic worldobject scale inherited by children
 - ability to play the intro/splash screen while loading assets
+- bring in constructs from nano
 
 
 
