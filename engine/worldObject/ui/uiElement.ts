@@ -195,7 +195,9 @@ class UIElement extends Module<WorldObject> {
             bounds.y -= this.worldObject.world.camera.worldOffsetY;
         }
 
-        let result = UIElement.distanceTo(bounds.x, bounds.y, this.getInteractBounds$().getBoundingBox$());
+        let boundsBox = bounds.getBoundingBox$();
+
+        let result = UIElement.distanceTo(boundsBox.centerX, boundsBox.centerY, this.getInteractBounds$().getBoundingBox$());
 
         bounds.x = boundsX;
         bounds.y = boundsY;
@@ -263,11 +265,11 @@ namespace UIElement {
         }
 
         uiElements.sort((e1, e2) => {
-            let cmpLayer = -World.Actions.getRenderOrder(e1.worldObject, e2.worldObject);
-            if (cmpLayer !== 0) return cmpLayer;
             let e1dist = e1.distanceTo(targetBounds);
             let e2dist = e2.distanceTo(targetBounds);
-            return e1dist - e2dist;
+            if (e1dist - e2dist !== 0) return e1dist - e2dist;
+            let cmpLayer = -World.Actions.getRenderOrder(e1.worldObject, e2.worldObject);
+            return cmpLayer;
         });
 
         return uiElements[0];

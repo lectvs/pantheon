@@ -348,13 +348,14 @@ class World {
         }
     }
 
-    renderLayer(layer: World.Layer) {
+    protected renderLayer(layer: World.Layer) {
         layer.sort();
 
         let result: Render.Result = FrameCache.array();
         for (let worldObject of layer.worldObjects) {
             if (!worldObject.isVisible() || !worldObject.isOnScreen()) continue;
-            result.pushAll(Render.shift(worldObject.render(), worldObject.getRenderScreenX(), worldObject.getRenderScreenY()));
+            let rendered = Render.roundToNearestUpscale(worldObject.render());
+            result.pushAll(Render.shift(rendered, worldObject.getRenderScreenX(), worldObject.getRenderScreenY()));
         }
         return result;
     }

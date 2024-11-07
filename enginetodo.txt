@@ -20,6 +20,7 @@ TODO
 - generic worldobject scale inherited by children
 - ability to play the intro/splash screen while loading assets
 - bring in constructs from nano
+- optimize World.selector.typeAll (quadratic runtime-ish)
 
 
 

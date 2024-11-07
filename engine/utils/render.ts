@@ -25,6 +25,21 @@ namespace Render {
         }
     }
 
+    export function roundToNearestUpscale(result: Render.Result) {
+        for (let r of result) {
+            let dx = M.roundToNearest(r.x, 1/global.upscale) - r.x;
+            let dy = M.roundToNearest(r.y, 1/global.upscale) - r.y;
+            r.x += dx;
+            r.y += dy;
+
+            if (r instanceof PIXI.Sprite && r.filterArea) {
+                r.filterArea.x += dx;
+                r.filterArea.y += dy;
+            }
+        }
+        return result;
+    }
+
     export function shift(result: Render.Result, dx: number, dy: number) {
         for (let r of result) {
             r.x += dx;

@@ -201,7 +201,7 @@ namespace G {
     }
 
     export function rectContainsPt(rect: Rect, pt: Pt) {
-        return pt.x >= rect.x && pt.y >= rect.y && pt.x < rect.x + rect.width && pt.y < rect.y + rect.height;
+        return pt.x >= rect.x && pt.y >= rect.y && pt.x <= rect.x + rect.width && pt.y <= rect.y + rect.height;
     }
 
     export function rectContainsRect(rect: Rect, contains: Rect) {
