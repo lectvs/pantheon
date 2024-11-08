@@ -31,6 +31,6 @@ In order to run the game in browser, you will need to start up a web server. Thi
 2. Visit `http://localhost:[PORT]/bin/` in your web browser, where PORT is the port you started your web server with.
 
 ## Can I use your code/assets in my game?
-Sure! You can use any of my code from the `pantheon` or `src` folders, and any **ART** assets. Unfortunately, as I don't own all of the sound assets used in this game, I don't have the authority to let you use them in your own game. If you make a game using my stuff, do let me know on Twitter (@lectvs), as I would love to play it! :)
+Sure! You can use any of my code from the `pantheon` or `src` folders, and any **ART** assets. Unfortunately, as I don't own all of the sound assets used in this game, I don't have the authority to let you use them in your own game. If you make a game using my stuff, do let me know on Twitter/Bsky (@lectvs), as I would love to play it! :)
 
 Source code is provided under the MIT License, while **ART** assets are provided under CC0-1.0. For more information, see LICENSE files in each of `pantheon`, `src`, and `bin/assets` folders.

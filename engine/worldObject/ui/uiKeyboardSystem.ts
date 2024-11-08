@@ -5,6 +5,7 @@ namespace UIKeyboardSystem {
         startSelectedIndex?: number;
         precisionAngle?: number;
         minMajorAxisDistance?: number;
+        autoRepeatEnabled?: boolean;
         keys?: {
             up?: string;
             down?: string;
@@ -19,6 +20,7 @@ class UIKeyboardSystem extends WorldObject {
     private elements: UIElement[];
     private precisionAngle: number;
     private minMajorAxisDistance: number;
+    private autoRepeatEnabled: boolean;
 
     private selectedIndex: number;
     private clickedDown: boolean;
@@ -34,6 +36,7 @@ class UIKeyboardSystem extends WorldObject {
         });
         this.precisionAngle = config.precisionAngle ?? 10;
         this.minMajorAxisDistance = config.minMajorAxisDistance ?? 2;
+        this.autoRepeatEnabled = config.autoRepeatEnabled ?? true;
         this.selectedIndex = config.startSelectedIndex ?? this.elements.findIndex(e => !e.state.disabled);
         this.clickedDown = false;
 
@@ -43,11 +46,24 @@ class UIKeyboardSystem extends WorldObject {
         let rightKey = config.keys?.right ?? 'right';
         let interactKey = config.keys?.interact ?? 'game_select';
 
-        this.behavior = new ControllerBehavior(function() {
-            this.controller.up = Input.justDown(upKey);
-            this.controller.down = Input.justDown(downKey);
-            this.controller.left = Input.justDown(leftKey);
-            this.controller.right = Input.justDown(rightKey);
+        let uiKeyboardSystem = this;
+        this.behavior = new ControllerBehavior(function(delta) {
+            if (uiKeyboardSystem.autoRepeatEnabled) {
+                let isDirectionKeyPressed = Input.isDown(upKey) || Input.isDown(downKey) || Input.isDown(leftKey) || Input.isDown(rightKey);
+                let autoRepeat = lazy('UIKeyboardSystem/autoRepeat', () => new AutoRepeat(0.5, 0.08));
+                autoRepeat.update(isDirectionKeyPressed, delta);
+    
+                this.controller.up = Input.isDown(upKey) && autoRepeat.get();
+                this.controller.down = Input.isDown(downKey) && autoRepeat.get();
+                this.controller.left = Input.isDown(leftKey) && autoRepeat.get();
+                this.controller.right = Input.isDown(rightKey) && autoRepeat.get();
+            } else {
+                this.controller.up = Input.justDown(upKey);
+                this.controller.down = Input.justDown(downKey);
+                this.controller.left = Input.justDown(leftKey);
+                this.controller.right = Input.justDown(rightKey);
+            }
+
             this.controller.interact = Input.justUp(interactKey);
             this.controller.keys.justInteract = Input.justDown(interactKey);
             this.controller.keys.holdInteract = Input.isDown(interactKey);

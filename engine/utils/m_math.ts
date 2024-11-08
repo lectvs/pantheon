@@ -87,10 +87,16 @@ namespace M {
         return middle - d*(n-1)/2 + d*i;
     }
 
+    /**
+     * Returns true iff the time t just passed a multiple of n, according to given delta.
+     */
     export function everyNFloat(n: number, t: number, delta: number) {
         return Math.floor(t/n) !== Math.floor((t - delta)/n) || delta >= n;
     }
 
+    /**
+     * Returns true iff the value t is just passing a multiple of n.
+     */
     export function everyNInt(n: number, t: number) {
         return Math.floor((t + 1)/n) !== Math.floor(t/n);
     }

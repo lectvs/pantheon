@@ -68,9 +68,18 @@ class StageManager {
         return this.getCurrentWorld() instanceof Menu;
     }
 
-    internalLoadStage(stage: () => World, transition: Transition) {
+    /**
+     * If stackPrevious is undefined, will be true iff either old or new stage is a Menu.
+     */
+    internalLoadStage(stage: () => World, transition: Transition, stackPrevious: boolean | undefined) {
         let oldWorld = this.getCurrentWorld();
         let newWorld = stage();
+        if (stackPrevious === undefined) {
+            stackPrevious = oldWorld instanceof Menu || newWorld instanceof Menu;
+        }
+        if (!stackPrevious) {
+            this.stageStack.pop();
+        }
         this.stageStack.push({
             world: newWorld,
             worldFactory: stage,
@@ -85,7 +94,7 @@ class StageManager {
             console.error('Cannot reload current stage because there are no stages loaded');
             return;
         }
-        this.internalLoadStage(this.stageStack.last()!.worldFactory, transition);
+        this.internalLoadStage(this.stageStack.last()!.worldFactory, transition, false);
     }
 
     reset() {

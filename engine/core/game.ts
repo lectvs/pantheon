@@ -56,7 +56,7 @@ class Game {
 
     start() {
         this.stageManager.reset();
-        this.stageManager.internalLoadStage(this.entryPointMenu, new Transitions.Instant());
+        this.stageManager.internalLoadStage(this.entryPointMenu, new Transitions.Instant(), false);
         if (Debug.SKIP_MAIN_MENU_STAGE) {
             if (this.entryPointMenu.toString() !== this.mainMenu.toString()) {
                 this.loadMainMenu();
@@ -145,20 +145,20 @@ class Game {
 
     loadMainMenu() {
         this.stageManager.reset();
-        this.stageManager.internalLoadStage(this.mainMenu, new Transitions.Instant());
+        this.stageManager.internalLoadStage(this.mainMenu, new Transitions.Instant(), false);
         Persist.persist();
     }
 
-    loadStage(stage: () => World, transition: Transition = new Transitions.Instant()) {
-        this.runAtEndOfFrame(() => global.stageManager.internalLoadStage(stage, transition));
+    loadStage(stage: () => World, transition: Transition = new Transitions.Instant(), stackPrevious?: boolean) {
+        this.runAtEndOfFrame(() => global.stageManager.internalLoadStage(stage, transition, stackPrevious));
     }
 
-    loadStageImmediate(stage: () => World, transition: Transition = new Transitions.Instant()) {
-        return global.stageManager.internalLoadStage(stage, transition)
+    loadStageImmediate(stage: () => World, transition: Transition = new Transitions.Instant(), stackPrevious?: boolean) {
+        return global.stageManager.internalLoadStage(stage, transition, stackPrevious);
     }
 
     pauseGame(transition: Transition = new Transitions.Instant()) {
-        this.stageManager.internalLoadStage(this.pauseMenu, transition);
+        this.stageManager.internalLoadStage(this.pauseMenu, transition, true);
     }
 
     pauseMusic(fadeTime: number = 0) {
@@ -184,7 +184,7 @@ class Game {
 
     startGame(stageToLoad: () => World, transition: Transition = new Transitions.Instant()) {
         this.gameTheater = this.gameTheaterFactory();
-        this.stageManager.internalLoadStage(stageToLoad, transition);
+        this.stageManager.internalLoadStage(stageToLoad, transition, false);
     }
 
     stopMusic(fadeTime: number = 0) {

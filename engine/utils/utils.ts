@@ -8,6 +8,10 @@ namespace Utils {
         window.open('https://twitter.com/lectvs', '_blank');
     }
 
+    export function openBsky() {
+        window.open('https://bsky.app/profile/lectvs.bsky.social', '_blank');
+    }
+
     export function openDiscord() {
         window.open('https://discord.gg/qyG4xx45JD', '_blank');
     }

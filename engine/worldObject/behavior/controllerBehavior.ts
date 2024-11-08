@@ -1,9 +1,9 @@
 class ControllerBehavior implements Behavior {
     controller: Controller;
 
-    private updateCallback: (this: ControllerBehavior) => any;
+    private updateCallback: (this: ControllerBehavior, delta: number) => any;
 
-    constructor(update: (this: ControllerBehavior) => any) {
+    constructor(update: (this: ControllerBehavior, delta: number) => any) {
         this.controller = new Controller();
 
         this.updateCallback = update;
@@ -11,7 +11,7 @@ class ControllerBehavior implements Behavior {
 
     update(delta: number) {
         this.controller.reset();
-        this.updateCallback();
+        this.updateCallback(delta);
     }
 
     interrupt() {}
