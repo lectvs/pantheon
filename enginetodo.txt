@@ -21,6 +21,7 @@ TODO
 - bring in constructs from nano
 - optimize World.selector.typeAll (quadratic runtime-ish)
 - make uislider (engine construct) a UIElement and make it compatible with UIKeyboardSystem
+- builder-type methods for worldobject (withLayer, etc.)
 
 
 
