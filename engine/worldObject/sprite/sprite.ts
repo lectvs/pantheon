@@ -145,7 +145,15 @@ class Sprite extends PhysicsWorldObject {
             return;
         }
 
-        this.textureKey = St.isString(key) ? key : undefined;
-        this.texture = St.isString(key) ? AssetCache.getTexture(key) : key;
+        let textureKey = St.isString(key) ? key : undefined;
+        let texture = St.isString(key) ? AssetCache.getTexture(key) : key;
+
+        if (!texture) {
+            console.error('Tried to set undefined texture!', this);
+            return;
+        }
+
+        this.textureKey = textureKey;
+        this.texture = texture;
     }
 }

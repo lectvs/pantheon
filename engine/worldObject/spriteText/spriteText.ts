@@ -64,7 +64,7 @@ class SpriteText extends WorldObject {
     set maxWidth(value: number) {
         if (this._maxWidth === value) return;
         this._maxWidth = value;
-        this.markDirty();
+        this.freeRenderSystem();
     }
 
     private _spaceBetweenLines: number | undefined;
@@ -72,7 +72,7 @@ class SpriteText extends WorldObject {
     set spaceBetweenLines(value: number | undefined) {
         if (this._spaceBetweenLines === value) return;
         this._spaceBetweenLines = value;
-        this.markDirty();
+        this.freeRenderSystem();
     }
 
     private _blankLineHeight: number | undefined;
@@ -80,7 +80,7 @@ class SpriteText extends WorldObject {
     set blankLineHeight(value: number | undefined) {
         if (this._blankLineHeight === value) return;
         this._blankLineHeight = value;
-        this.markDirty();
+        this.freeRenderSystem();
     }
 
     private _wordWrap: boolean;
@@ -88,7 +88,7 @@ class SpriteText extends WorldObject {
     set wordWrap(value: boolean) {
         if (this._wordWrap === value) return;
         this._wordWrap = value;
-        this.markDirty();
+        this.freeRenderSystem();
     }
 
     private _fixedCharSize: boolean;
@@ -96,28 +96,28 @@ class SpriteText extends WorldObject {
     set fixedCharSize(value: boolean) {
         if (this._fixedCharSize === value) return;
         this._fixedCharSize = value;
-        this.markDirty();
+        this.freeRenderSystem();
     }
 
     private _visibleCharStart: number;
     get visibleCharStart() { return this._visibleCharStart; }
     set visibleCharStart(value: number) {
         this._visibleCharStart = value;
-        this.markDirty();
+        this.freeRenderSystem();
     }
 
     private _visibleCharEnd: number;
     get visibleCharEnd() { return this._visibleCharEnd; }
     set visibleCharEnd(value: number) {
         this._visibleCharEnd = value;
-        this.markDirty();
+        this.freeRenderSystem();
     }
 
     private _justify: SpriteText.Justify;
     get justify() { return this._justify; }
     set justify(value: SpriteText.Justify) {
         this._justify = value;
-        this.markDirty();
+        this.freeRenderSystem();
     }
 
     readonly anchor: SpriteText.DirtyAnchor;
@@ -167,7 +167,7 @@ class SpriteText extends WorldObject {
         this._fixedCharSize = config.fixedCharSize ?? false;
         this._justify = config.justify ?? 'left';
 
-        this.anchor = new SpriteText.DirtyAnchor(config.anchor ?? Anchor.TOP_LEFT, () => this.markDirty());
+        this.anchor = new SpriteText.DirtyAnchor(config.anchor ?? Anchor.TOP_LEFT, () => this.freeRenderSystem());
 
         this.flipX = config.flipX ?? false;
         this.flipY = config.flipY ?? false;
@@ -181,12 +181,11 @@ class SpriteText extends WorldObject {
         this.effects.updateFromConfig(config.effects);
 
         this.setText(config.text ?? "");
-        this.markDirty();
     }
 
     override onRemove(): void {
         super.onRemove();
-        this.markDirty();
+        this.freeRenderSystem();
     }
 
     override update() {
@@ -219,6 +218,11 @@ class SpriteText extends WorldObject {
 
     clear() {
         this.setText('');
+    }
+
+    freeRenderSystem() {
+        this.renderSystem?.free();
+        this.renderSystem = undefined;
     }
 
     getCharList() {
@@ -269,11 +273,6 @@ class SpriteText extends WorldObject {
         return FrameCache.rectangle(0, 0, 0, 0).copyBoundaries(bounds);
     }
 
-    markDirty() {
-        this.renderSystem?.free();
-        this.renderSystem = undefined;
-    }
-
     setFont(fontKey: string) {
         if (fontKey === this.fontKey) return;
         let font = AssetCache.getFont(fontKey);
@@ -283,14 +282,14 @@ class SpriteText extends WorldObject {
         }
         this.font = font;
         this._fontKey = fontKey;
-        this.markDirty();
+        this.freeRenderSystem();
     }
 
     setText(text: string) {
         if (text === this.currentText) return;
         this.currentText = text;
         this.setCharsFromCurrentText();
-        this.markDirty();
+        this.freeRenderSystem();
     }
 
     // May still need work
@@ -309,6 +308,11 @@ class SpriteText extends WorldObject {
         return texture;
     }
 
+    override unload(): void {
+        super.unload();
+        this.freeRenderSystem();
+    }
+
     private getRenderSystem() {
         if (!this.renderSystem) {
             this.setCharsFromCurrentText();
@@ -323,7 +327,8 @@ class SpriteText extends WorldObject {
                 partToCharacters[character.part].push(character);
             }
     
-            this.renderSystem = new SpriteTextRenderSystem(partToCharacters);
+            let textureCreationSource = this.getCurrentText();
+            this.renderSystem = new SpriteTextRenderSystem(partToCharacters, textureCreationSource);
         }
         return this.renderSystem;
     }

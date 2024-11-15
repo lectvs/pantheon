@@ -141,6 +141,7 @@ class World {
 
     private worldSprite: PIXI.Sprite;
     private layerSprite: PIXI.Sprite;
+    private isWorldSpritesDestroyed: boolean;
 
     private container: PIXI.Container;
     private bgFill: PIXI.Sprite;
@@ -212,8 +213,9 @@ class World {
         this.fadeColor = 0x000000;
         this.fadeAmount = 0;
 
-        this.worldSprite = new PIXI.Sprite(newPixiRenderTexture(this.getTargetScreenWidth(), this.getTargetScreenHeight(), 'World.worldTexture'));
-        this.layerSprite = new PIXI.Sprite(newPixiRenderTexture(this.getTargetScreenWidth(), this.getTargetScreenHeight(), 'World.layerSprite'));
+        this.worldSprite = new PIXI.Sprite();
+        this.layerSprite = new PIXI.Sprite();
+        this.isWorldSpritesDestroyed = true;
 
         this.container = new PIXI.Container();
         this.bgFill = new PIXI.Sprite(Textures.filledRect(1, 1, 0xFFFFFF));
@@ -308,6 +310,12 @@ class World {
     }
 
     render() {
+        if (this.isWorldSpritesDestroyed) {
+            this.layerSprite.texture = newPixiRenderTexture(this.getTargetScreenWidth(), this.getTargetScreenHeight(), 'World.layerSprite.texture');
+            this.worldSprite.texture = newPixiRenderTexture(this.getTargetScreenWidth(), this.getTargetScreenHeight(), 'World.worldSprite.texture');
+            this.isWorldSpritesDestroyed = false;
+        }
+        
         this.handleResize();
 
         this.bgFill.tint = this.backgroundColor;
@@ -630,6 +638,18 @@ class World {
             camera.setMovement(toMovement);
         },
         'transitionCamera', 'stopPrevious');
+    }
+
+    /**
+     * Runs whenever the containing world is unloaded.
+     */
+    unload() {
+        for (let obj of this.worldObjects) {
+            obj.unload();
+        }
+        this.layerSprite.texture.destroy();
+        this.worldSprite.texture.destroy();
+        this.isWorldSpritesDestroyed = true;
     }
 
     worldXToScreenX(worldX: number) {

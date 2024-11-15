@@ -20,7 +20,6 @@ namespace Network {
             }
         };
         xhr.onerror = function () {
-            console.log(xhr);
             if (St.isEmpty(xhr.response) || xhr.status === 0) {
                 callback(undefined, NAME_NOT_RESOLVED);
                 return;

@@ -44,7 +44,15 @@ class StageManager {
 
     clearMenus(transition: Transition) {
         let oldWorld = this.getCurrentWorld();
-        this.stageStack.filterInPlace(stage => !(stage.world instanceof Menu));
+        this.stageStack.filterInPlace(stage => {
+            if (stage.world instanceof Menu) {
+                if (stage.world !== oldWorld) {
+                    stage.world.unload();
+                }
+                return false;
+            }
+            return true;
+        });
         let newWorld = this.getCurrentWorld();
 
         if (oldWorld !== newWorld) {
@@ -98,6 +106,7 @@ class StageManager {
     }
 
     reset() {
+        this.stageStack.forEach(stage => stage.world.unload());
         this.stageStack.clear();
         this.transition = undefined;
     }
@@ -108,6 +117,7 @@ class StageManager {
         if (this.transition.done) {
             this.finishTransition();
         }
+        oldWorld?.unload();
     }
 
     private finishTransition() {

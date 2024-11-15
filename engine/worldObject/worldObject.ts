@@ -114,7 +114,13 @@ class WorldObject {
     set physicsGroup(value: string | undefined) { World.Actions.setPhysicsGroup(this, value); }
     //
 
-    get worldd() { return this._world ?? new World() };
+    get worldd() {
+        if (!this._world) {
+            console.error('Access to WorldObject worldd with no world:', this);
+            return new World();
+        }
+        return this._world;
+    };
 
     get delta() { return ((this.useGlobalTime || !this.world) ? global.game.delta : this.world.delta) * this.timeScale;}
     private lastFrameDelta: number;
@@ -830,6 +836,9 @@ class WorldObject {
         A.removeAll(this.tags, tag);
     }
 
+    /**
+     * Runs a script that runs during preUpdate.
+     */
     runPreScript(script: Script.FunctionLike, name?: string, specialMode?: ScriptManager.SpecialMode) {
         return this.preScriptManager.runScript(script, name, specialMode);
     }
@@ -888,6 +897,14 @@ class WorldObject {
         this.y = y ?? x;
         this.startOfThisFrameX = x;
         this.startOfThisFrameY = y ?? x;
+    }
+
+    /**
+     * Runs whenever the containing world is unloaded.
+     * Note: it IS possible for the world to be re-loaded, so don't do anything permanent.
+     */
+    unload() {
+        // Overridable by children.
     }
 
     private applyVelocity() {

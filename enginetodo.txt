@@ -22,6 +22,9 @@ TODO
 - optimize World.selector.typeAll (quadratic runtime-ish)
 - make uislider (engine construct) a UIElement and make it compatible with UIKeyboardSystem
 - builder-type methods for worldobject (withLayer, etc.)
+- common gamedata system
+- GMS's keyboard_string for my engine (keyboard_string stores the last 1024 chars typed)
+- change state by returning string in statemachine's update method
 
 
 

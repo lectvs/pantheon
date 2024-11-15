@@ -442,7 +442,6 @@ class Input {
             let touchData = this.getTouchData(touch);
             for (let t of this.touches) {
                 if (t.id === touch.identifier) {
-                    console.log('set up', t);
                     t.updateUp(touchData);
                 }
             }
@@ -458,7 +457,6 @@ class Input {
             let touchData = this.getTouchData(touch);
             for (let t of this.touches) {
                 if (t.id === touch.identifier) {
-                    console.log('set up', t);
                     t.updateUp(touchData);
                 }
             }

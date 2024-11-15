@@ -45,14 +45,14 @@ class MobileScaleManager {
 
         let width: number, height: number;
         if (this.primaryDirection === 'horizontal') {
-            height = Main.config.gameHeight;
+            height = OrFactory.resolve(Main.config.gameHeight);
             width = Math.ceil(height * ratio);
         } else if (this.primaryDirection === 'vertical') {
-            width = Main.config.gameWidth;
+            width = OrFactory.resolve(Main.config.gameWidth);
             height = Math.ceil(width / ratio);
         } else {
-            width = Main.config.gameWidth;
-            height = Main.config.gameHeight;
+            width = OrFactory.resolve(Main.config.gameWidth);
+            height = OrFactory.resolve(Main.config.gameHeight);
         }
 
         Main.forceResize(width, height, upscale);

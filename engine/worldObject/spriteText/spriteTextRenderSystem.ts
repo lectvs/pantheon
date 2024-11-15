@@ -7,14 +7,17 @@ namespace SpriteTextRenderSystem {
         texture: PIXI.RenderTexture;
         sprite: PIXI.Sprite;
         rendered: boolean;
+        staticTextureCacheKeyWidth: number;
+        staticTextureCacheKeyHeight: number;
+        textureCreationSource: string;
     }
 }
 
 class SpriteTextRenderSystem {
     parts: Dict<SpriteTextRenderSystem.Part>;
 
-    constructor(partToCharacters: Dict<SpriteTextParser.Character[]>) {
-        this.parts = SpriteTextRenderSystem.buildParts(partToCharacters);
+    constructor(partToCharacters: Dict<SpriteTextParser.Character[]>, textureCreationSource: string) {
+        this.parts = SpriteTextRenderSystem.buildParts(partToCharacters, textureCreationSource);
     }
 
     render(spriteText: SpriteText) {
@@ -111,7 +114,7 @@ class SpriteTextRenderSystem {
 }
 
 namespace SpriteTextRenderSystem {
-    export function buildParts(partToCharacters: Dict<SpriteTextParser.Character[]>) {
+    export function buildParts(partToCharacters: Dict<SpriteTextParser.Character[]>, textureCreationSource: string) {
         let result: Dict<SpriteTextRenderSystem.Part> = {};
 
         for (let part in partToCharacters) {
@@ -121,7 +124,10 @@ namespace SpriteTextRenderSystem {
                 boundary = FrameCache.boundaries(partToCharacters[part][0].x, partToCharacters[part][0].x, partToCharacters[part][0].y, partToCharacters[part][0].y);
             }
 
-            let texture = cache_staticTextures.borrow(Math.ceil(boundary.width), Math.ceil(boundary.height));
+            let staticTextureCacheKeyWidth = Math.ceil(boundary.width);
+            let staticTextureCacheKeyHeight = Math.ceil(boundary.height);
+            let texture = cache_staticTextures.borrow(staticTextureCacheKeyWidth, staticTextureCacheKeyHeight);
+            PerformanceTracking.logBorrowSpriteTextStaticTexture(texture, textureCreationSource);
 
             result[part] = {
                 x: Math.floor(boundary.left),
@@ -131,6 +137,9 @@ namespace SpriteTextRenderSystem {
                 texture: texture,
                 sprite: new PIXI.Sprite(texture),
                 rendered: false,
+                staticTextureCacheKeyWidth,
+                staticTextureCacheKeyHeight,
+                textureCreationSource,
             };
         }
 
@@ -156,10 +165,11 @@ namespace SpriteTextRenderSystem {
 
     export function freePart(part: Part) {
         if (!part.sprite) return;
-        cache_staticTextures.return(part.sprite.width, part.sprite.height, part.texture);
+        cache_staticTextures.return(part.staticTextureCacheKeyWidth, part.staticTextureCacheKeyHeight, part.texture);
+        PerformanceTracking.logReturnSpriteTextStaticTexture(part.texture, part.textureCreationSource);
     }
 
-    const cache_staticTextures = new DualKeyPool<number, number, PIXI.RenderTexture>((w, h) => {
+    export const cache_staticTextures = new DualKeyPool<number, number, PIXI.RenderTexture>((w, h) => {
         return newPixiRenderTexture(w, h, 'SpriteTextRenderSystem.cache_staticTextures');
     }, (w, h) => `${w},${h}`);
 }

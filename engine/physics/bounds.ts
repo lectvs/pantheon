@@ -85,7 +85,7 @@ namespace Bounds {
             return new InvertedCircleBounds(parseFloat(params[0]), parseFloat(params[1]), parseFloat(params[2]));
         }
 
-        console.log('Invalid bounds type:', str);
+        console.error('Invalid bounds type:', str);
         return new NullBounds();
     }
 }

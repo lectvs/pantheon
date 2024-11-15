@@ -2,8 +2,8 @@
 
 namespace Main {
     export type Config = {
-        gameWidth: number;
-        gameHeight: number;
+        gameWidth: OrFactory<number>;
+        gameHeight: OrFactory<number>;
         canvasScale: number;
         upscale: number;
         backgroundColor: number;
@@ -36,6 +36,7 @@ namespace Main {
 
         beforePreload?: () => void;
         beforeStart?: () => void;
+        beforeFrame?: () => void;
 
         dialogProfiles?: Dict<DialogProfile.Config>;
         spriteTextTags?: Dict<SpriteText.TagFunction>;
@@ -89,8 +90,8 @@ class Main {
 
         LocalStorage.init();
 
-        global.gameWidth = this.config.gameWidth;
-        global.gameHeight = this.config.gameHeight;
+        global.gameWidth = OrFactory.resolve(this.config.gameWidth);
+        global.gameHeight = OrFactory.resolve(this.config.gameHeight);
         global.backgroundColor = this.config.backgroundColor;
         global.upscale = this.config.upscale;
         if (!O.isEmpty(this.config.spriteTextTags)) SpriteText.addTags(this.config.spriteTextTags);
@@ -175,6 +176,8 @@ class Main {
             FrameCache.reset();
             global.fpsCalculator.update();
             global.clearStacks();
+
+            if (this.config.beforeFrame) this.config.beforeFrame();
 
             for (let i = 0; i < Debug.SKIP_RATE; i++) {
                 Input.update();
