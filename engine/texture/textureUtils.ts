@@ -1,3 +1,4 @@
+/// <reference path="../utils/o_object.ts" />
 /// <reference path="../utils/rectangle.ts" />
 
 namespace TextureUtils {
@@ -117,6 +118,10 @@ namespace TextureUtils {
         return result;
     }
 
+    export function getTextureCreationSource(renderTexture: PIXI.RenderTexture) {
+        return O.getMetadata<string>(renderTexture, 'textureCreationSource') ?? undefined;
+    }
+
     export function getTextureLocalBounds$(texture: PIXI.Texture, x: number, y: number, scaleX: number, scaleY: number, angle: number, overrideAnchor: Pt | undefined) {
         let width = texture.width * scaleX;
         let height = texture.height * scaleY;
@@ -179,6 +184,10 @@ namespace TextureUtils {
 
     export function setImmutable(renderTexture: PIXI.RenderTexture) {
         O.putMetadata(renderTexture, 'immutable', true);
+    }
+
+    export function setTextureCreationSource(texture: PIXI.RenderTexture, source: string) {
+        O.putMetadata(texture, 'textureCreationSource', source);
     }
 
     /**

@@ -1,7 +1,5 @@
 namespace PerformanceTracking {
-    export const TEXTURES_CREATED: Dict<number> = {};
-    export var TEXTURES_FREED: number = 0;
-
+    export const TEXTURES_CREATED_AND_NOT_FREED: Dict<number> = {};
     export const SPRITE_TEXT_STATIC_TEXTURES_BORROWED_AND_NOT_RETURNED: Dict<number> = {};
 
     export var MANUAL_RENDERS: number[] = [];
@@ -14,11 +12,18 @@ namespace PerformanceTracking {
     }
 
     export function logCreateTexture(texture: PIXI.RenderTexture, source: string) {
-        TEXTURES_CREATED[source] = (TEXTURES_CREATED[source] || 0) + 1;
+        TEXTURES_CREATED_AND_NOT_FREED[source] = (TEXTURES_CREATED_AND_NOT_FREED[source] || 0) + 1;
     }
 
-    export function logFreeTexture(texture: PIXI.RenderTexture) {
-        TEXTURES_FREED++;
+    export function logFreeTexture(texture: PIXI.RenderTexture, source: string | undefined) {
+        if (!source || !(source in TEXTURES_CREATED_AND_NOT_FREED)) {
+            console.error('Freed a texture which was not allocated in PerformanceTracking', source, texture);
+            return;
+        }
+        TEXTURES_CREATED_AND_NOT_FREED[source]--;
+        if (TEXTURES_CREATED_AND_NOT_FREED[source] === 0) {
+            delete TEXTURES_CREATED_AND_NOT_FREED[source];
+        }
     }
 
     export function logBorrowSpriteTextStaticTexture(texture: PIXI.RenderTexture, source: string) {
@@ -40,16 +45,12 @@ namespace PerformanceTracking {
         MANUAL_RENDERS[0]++;
     }
 
-    export function getTotalTexturesCreated() {
+    export function getTotalTexturesCreatedAndNotFreed() {
         let total = 0;
-        for (let key in TEXTURES_CREATED) {
-            total += TEXTURES_CREATED[key];
+        for (let key in TEXTURES_CREATED_AND_NOT_FREED) {
+            total += TEXTURES_CREATED_AND_NOT_FREED[key];
         }
         return total;
-    }
-
-    export function getTotalTexturesCreatedAndNotFreed() {
-        return getTotalTexturesCreated() - TEXTURES_FREED;
     }
 
     export function getTotalSpriteTextStaticTexturesBorrowedAndNotReturned() {

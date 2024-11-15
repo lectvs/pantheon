@@ -140,8 +140,7 @@ class World {
     private screenShakeFilter: World.ScreenShakeFilter;
 
     private worldSprite: PIXI.Sprite;
-    private layerSprite: PIXI.Sprite;
-    private isWorldSpritesDestroyed: boolean;
+    private isWorldSpriteDestroyed: boolean;
 
     private container: PIXI.Container;
     private bgFill: PIXI.Sprite;
@@ -214,8 +213,7 @@ class World {
         this.fadeAmount = 0;
 
         this.worldSprite = new PIXI.Sprite();
-        this.layerSprite = new PIXI.Sprite();
-        this.isWorldSpritesDestroyed = true;
+        this.isWorldSpriteDestroyed = true;
 
         this.container = new PIXI.Container();
         this.bgFill = new PIXI.Sprite(Textures.filledRect(1, 1, 0xFFFFFF));
@@ -310,10 +308,9 @@ class World {
     }
 
     render() {
-        if (this.isWorldSpritesDestroyed) {
-            this.layerSprite.texture = newPixiRenderTexture(this.getTargetScreenWidth(), this.getTargetScreenHeight(), 'World.layerSprite.texture');
+        if (this.isWorldSpriteDestroyed) {
             this.worldSprite.texture = newPixiRenderTexture(this.getTargetScreenWidth(), this.getTargetScreenHeight(), 'World.worldSprite.texture');
-            this.isWorldSpritesDestroyed = false;
+            this.isWorldSpriteDestroyed = false;
         }
         
         this.handleResize();
@@ -334,10 +331,11 @@ class World {
             }
 
             if (layer.shouldRenderToOwnLayer) {
-                let layerTexture = this.layerSprite.texture as PIXI.RenderTexture;
+                let layerSprite = layer.getSprite();
+                let layerTexture = layerSprite.texture as PIXI.RenderTexture;
                 renderToRenderTexture(this.renderLayer(layer), layerTexture, 'clearTextureFirst');
-                this.layerSprite.updateAndSetEffects(layer.effects);
-                result.push(this.layerSprite);
+                layerSprite.updateAndSetEffects(layer.effects);
+                result.push(layerSprite);
             } else {
                 result.pushAll(this.renderLayer(layer));
             }
@@ -647,9 +645,13 @@ class World {
         for (let obj of this.worldObjects) {
             obj.unload();
         }
-        this.layerSprite.texture.destroy();
-        this.worldSprite.texture.destroy();
-        this.isWorldSpritesDestroyed = true;
+        for (let layer of this.layers) {
+            layer.unload();
+        }
+        if (!this.isWorldSpriteDestroyed) {
+            freePixiRenderTexture(this.worldSprite.texture as PIXI.RenderTexture);
+            this.isWorldSpriteDestroyed = true;
+        }
     }
 
     worldXToScreenX(worldX: number) {
@@ -701,7 +703,7 @@ class World {
 
         for (let layer of this.layers) {
             if (layer.shouldRenderToOwnLayer) {
-                this.resizeTexture(layer.sprite.texture, this.getTargetScreenWidth(), this.getTargetScreenHeight());
+                this.resizeTexture(layer.getSprite().texture, this.getTargetScreenWidth(), this.getTargetScreenHeight());
             }
         }
     }
@@ -788,12 +790,14 @@ class World {
 namespace World {
     export class Layer {
         name: string;
+        world: World;
         worldObjects: WorldObject[];
         sortComparator?: (worldObject1: WorldObject, worldObject2: WorldObject) => number;
         reverseSort: boolean;
 
         effects: Effects;
-        sprite: PIXI.Sprite;
+        private sprite: PIXI.Sprite;
+        private isSpriteDestroyed: boolean;
 
         get shouldRenderToOwnLayer() {
             return this.effects.hasEffects();
@@ -801,18 +805,35 @@ namespace World {
         
         constructor(world: World, name: string, config: World.LayerConfig) {
             this.name = name;
+            this.world = world;
             this.worldObjects = [];
             this.sortComparator = this.getSortComparator(config.sort);
             this.reverseSort = config.reverseSort ?? false;
 
             this.effects = new Effects(config.effects);
-            this.sprite = new PIXI.Sprite(newPixiRenderTexture(world.getTargetScreenWidth(), world.getTargetScreenHeight(), 'World.Layer.sprite'));
+            this.sprite = new PIXI.Sprite();
+            this.isSpriteDestroyed = true;
+        }
+
+        getSprite() {
+            if (this.isSpriteDestroyed) {
+                this.sprite.texture = newPixiRenderTexture(this.world.getTargetScreenWidth(), this.world.getTargetScreenHeight(), 'World.Layer.sprite');
+                this.isSpriteDestroyed = false;
+            }
+            return this.sprite;
         }
 
         sort() {
             if (!this.sortComparator) return;
             let r = this.reverseSort ? -1 : 1;
             this.worldObjects.sort((a, b) => r*this.sortComparator!(a, b));
+        }
+
+        unload() {
+            if (!this.isSpriteDestroyed) {
+                freePixiRenderTexture(this.sprite.texture as PIXI.RenderTexture);
+                this.isSpriteDestroyed = true;
+            }
         }
 
         private getSortComparator(sort: World.LayerConfig['sort']) {

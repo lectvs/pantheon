@@ -33,7 +33,8 @@ function clearRenderTexture(renderTexture: PIXI.RenderTexture) {
 }
 
 function freePixiRenderTexture(texture: PIXI.RenderTexture) {
-    PerformanceTracking.logFreeTexture(texture);
+    let textureCreationSource = TextureUtils.getTextureCreationSource(texture);
+    PerformanceTracking.logFreeTexture(texture, textureCreationSource);
     texture.destroy();
 }
 
@@ -44,6 +45,7 @@ function newPixiRenderTexture(width: number, height: number, source: string) {
     //     height = Math.min(height, 2048);
     // }
     let texture = PIXI.RenderTexture.create({ width, height });
+    TextureUtils.setTextureCreationSource(texture, source);
     PerformanceTracking.logCreateTexture(texture, source);
     return texture;
 }
