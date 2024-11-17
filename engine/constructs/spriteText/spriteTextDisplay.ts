@@ -18,7 +18,7 @@ namespace SpriteTextDisplay {
 }
 
 class SpriteTextDisplay extends WorldObject {
-    private spriteTexts: SpriteText[];
+    spriteTexts: SpriteText[];
 
     constructor(config: SpriteTextDisplay.Config) {
         super(config);
@@ -112,6 +112,29 @@ class SpriteTextDisplay extends WorldObject {
                     S.tween(duration, st, 'alpha', st.alpha, 0),
                 );
             });
+            std.kill();
+        });
+    }
+
+    enterType(duration: number) {
+        let std = this;
+        return this.runScript(function*() {
+            let timePerChar = duration / std.spriteTexts.length;
+            for (let st of std.spriteTexts) {
+                st.setVisible(true);
+                yield timePerChar;
+            }
+        });
+    }
+
+    exitType(duration: number) {
+        let std = this;
+        return this.runScript(function*() {
+            let timePerChar = duration / std.spriteTexts.length;
+            for (let i = std.spriteTexts.length-1; i >= 0; i--) {
+                std.spriteTexts[i].setVisible(false);
+                yield timePerChar;
+            }
             std.kill();
         });
     }
