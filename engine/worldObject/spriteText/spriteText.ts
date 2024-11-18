@@ -22,6 +22,8 @@ namespace SpriteText {
         fixedCharSize?: boolean;
         style?: Style;
         effects?: Effects.Config;
+        typeAnimationRate?: number;
+        typeAnimationSound?: string;
     }
 
     export type Font = {
@@ -141,6 +143,9 @@ class SpriteText extends WorldObject {
 
     effects: Effects;
 
+    typeAnimationRate: number;
+    typeAnimationSound: string | undefined;
+
     private renderSystem?: SpriteTextRenderSystem;
     private currentText!: string;
 
@@ -179,6 +184,10 @@ class SpriteText extends WorldObject {
 
         this.effects = new Effects();
         this.effects.updateFromConfig(config.effects);
+
+        this.typeAnimationRate = config.typeAnimationRate ?? 10;
+        this.typeAnimationSound = config.typeAnimationSound;
+        this.addTypeAnimations();
 
         this.setText(config.text ?? "");
     }
@@ -311,6 +320,23 @@ class SpriteText extends WorldObject {
     override unload(): void {
         super.unload();
         this.freeRenderSystem();
+    }
+
+    private addTypeAnimations() {
+        let spriteText = this;
+        if (!this.hasAnimation('type')) {
+            this.addAnimation('type', Animations.fromScript({
+                script: () => function*() {
+                    spriteText.visibleCharEnd = 0;
+                    let chars = spriteText.getCharList();
+                    for (let i = 0; i < chars.length; i++) {
+                        yield 1/spriteText.typeAnimationRate;
+                        spriteText.visibleCharEnd++;
+                        if (spriteText.typeAnimationSound) spriteText.world?.playSound(spriteText.typeAnimationSound);
+                    }
+                },
+            }));
+        }
     }
 
     private getRenderSystem() {

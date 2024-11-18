@@ -39,7 +39,7 @@ namespace S {
     /**
      * Runs a list of script functions and stops when one of them ends.
      */
-    export function either(...scriptFunctions: Script.Function[]): Script.Function {
+    export function either(...scriptFunctions: Script.FunctionLike[]): Script.Function {
         return function*() {
             let scripts: Script[] = scriptFunctions.map(sfn => new Script(sfn));
             if (A.isEmpty(scripts)) return;

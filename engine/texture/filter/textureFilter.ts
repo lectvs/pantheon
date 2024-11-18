@@ -62,6 +62,10 @@ class TextureFilter extends PIXI.Filter {
         return this.enabled;
     }
 
+    getTime() {
+        return this.getUniform('t');
+    }
+
     getUniform(name: string) {
         return this.uniformCache[name];
     }

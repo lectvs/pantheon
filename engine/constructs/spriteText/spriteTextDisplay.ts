@@ -5,6 +5,7 @@ namespace SpriteTextDisplay {
         text?: string;
         spacingDx?: number;
         spacingDy?: number;
+        anchor?: Vector2;
         spriteTextConfig?: SpriteText.Config<SpriteText>;
         /**
          * @default false
@@ -33,6 +34,7 @@ class SpriteTextDisplay extends WorldObject {
         let scaleY = spriteTextConfig.scaleY ?? (spriteTextConfig.scale ?? 1);
         let spacingDx = config.spacingDx ?? charWidth;
         let spacingDy = config.spacingDy ?? (charHeight + spaceBetweenLines);
+        let anchor = config.anchor ?? Anchor.CENTER;
 
         let startEntered = config.startEntered ?? false;
 
@@ -42,8 +44,8 @@ class SpriteTextDisplay extends WorldObject {
             justify: 'center',
             anchor: Anchor.CENTER,
             ...spriteTextConfig,
-            x: M.equidistantLine(0, spacingDx * scaleX, line.length, i),
-            y: M.equidistantLine(0, spacingDy * scaleY, styledChars.length, j),
+            x: M.equidistantLine(0, spacingDx * scaleX, line.length, i) - anchor.x * spacingDx * scaleX,
+            y: M.equidistantLine(0, spacingDy * scaleY, styledChars.length, j) - anchor.y * spacingDy * scaleY,
             text: styledChar,
             copyFromParent: ['layer'],
             visible: startEntered,

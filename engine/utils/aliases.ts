@@ -69,6 +69,6 @@ function pt3(x: number, y: number, z: number): Pt3 {
     return { x, y, z };
 }
 
-function rect(x: number, y: number, width: number, height: number): Rect {
-    return { x, y, width, height };
+function rect(x: number, y: number, width: number, height: number): Rectangle {
+    return new Rectangle(x, y, width, height);
 }

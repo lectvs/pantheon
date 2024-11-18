@@ -27,6 +27,9 @@ namespace World {
         sound?: {
             volume?: number;
             humanizeByDefault?: boolean;
+            /**
+             * Default: 0.1
+             */
             humanizeFactor?: number;
         };
 
