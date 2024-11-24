@@ -138,4 +138,20 @@ class Sound {
 namespace Sound {
     export const MAX_VOLUME: number = 2;
     export const MAX_SPEED: number = 100;
+
+    /**
+     * Each note increment by 1 represents one semitone.
+     * @returns 2^(note/12).
+     */
+    export function pitchUpBySemitone(note: number) {
+        return 2**(note/12);
+    }
+
+    /**
+     * Each note increment by 1 represents one semitone.
+     * @returns 2^(-note/12).
+     */
+    export function pitchDownBySemitone(note: number) {
+        return 2**(-note/12);
+    }
 }

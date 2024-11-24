@@ -75,6 +75,7 @@ namespace World {
         loop?: boolean | number;
         humanized?: boolean;
         limit?: number;
+        fadeIn?: number;
     }
 
     export type Screenshot = {
@@ -538,6 +539,12 @@ class World {
         if (humanized && this.soundHumanizeFactor > 0) {
             sound.humanize(this.soundHumanizeFactor);
         }
+
+        if (config?.fadeIn) {
+            let soundVolume = sound.volume;
+            this.runScript(S.tween(config.fadeIn, sound, 'volume', 0, sound.volume));
+        }
+
         return sound;
     }
 
@@ -599,6 +606,25 @@ class World {
 
     stopScriptByName(name: string) {
         this.scriptManager.stopScriptByName(name);
+    }
+
+    stopSound(sound: string | Sound, fadeOut: number = 0) {
+        let sounds: Sound[];
+        if (St.isString(sound)) {
+            sounds = this.soundManager.getSoundsByKey(sound);
+        } else {
+            sounds = [sound];
+        }
+
+        if (fadeOut <= 0) {
+            sounds.forEach(s => s.stop());
+            return S.noop();
+        }
+
+        return this.runScript(function*() {
+            yield sounds.map(s => S.tween(fadeOut, s, 'volume', s.volume, 0));
+            sounds.forEach(s => s.stop());
+        });
     }
 
     takeScreenshot(): World.Screenshot {

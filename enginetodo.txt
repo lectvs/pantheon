@@ -24,6 +24,7 @@ TODO
 - GMS's keyboard_string for my engine (keyboard_string stores the last 1024 chars typed)
 - change state by returning string in statemachine's update method
 - fix worldSprite and layer.sprite (currently does not factor in upscale)
+- sfx randomizer + test on nano (load random sfx, lock in good sfx, reshuffle rest, repeat)
 
 
 
