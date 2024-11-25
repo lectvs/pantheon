@@ -55,6 +55,8 @@ const clamp = M.clamp;
 const lerp = M.lerp;
 const map = M.map;
 const mapClamp = M.mapClamp;
+const max = Math.max;
+const min = Math.min;
 
 function vec2(pt: Pt): Vector2;
 function vec2(x: number, y: number): Vector2;
