@@ -14,7 +14,8 @@ TODO
 - world/global "effects" e.g. timescale, camera position, music volume, etc. that only happen while a worldobject is in the world
 - modify individual characters on a spritetext
 - option to keep children ordered relative to their parent
-- generic worldobject scale inherited by children
+- generic worldobject scale inherited by children + other inherited traits?
+- consistent keep children/parent close in render order
 - ability to play the intro/splash screen while loading assets
 - bring in constructs from nano
 - optimize World.selector.typeAll (quadratic runtime-ish)

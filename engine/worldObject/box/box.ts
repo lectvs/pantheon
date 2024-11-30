@@ -46,6 +46,7 @@ namespace Box {
 
 /**
  * TODO:
+ * - add new (sub)boxes on outside of current box (e.g. headers, footers)
  * - fit box size to content
  * - mask world object within bounds of its box or some ancestor box 
  * - create inner boxes with greater dimensions than outer box and add scroll functionality
@@ -219,6 +220,9 @@ class Box {
         return undefined;
     }
 
+    /**
+     * Available paths: '.', left, right, top, bottom, [x], [y], `[x],[y]`, [name], `[path]/[to]/[etc]`
+     */
     getSubBoxByPath(path: '.' | ''): this;
     getSubBoxByPath(path: 'left' | 'right' | `${string}/left` | `${string}/right`): Box.LeftRightBox;
     getSubBoxByPath(path: 'top' | 'bottom' | `${string}/top` | `${string}/bottom`): Box.TopBottomBox;
