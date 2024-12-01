@@ -541,7 +541,6 @@ class World {
         }
 
         if (config?.fadeIn) {
-            let soundVolume = sound.volume;
             this.runScript(S.tween(config.fadeIn, sound, 'volume', 0, sound.volume));
         }
 
