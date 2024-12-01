@@ -6,7 +6,7 @@ namespace SpriteTextDisplay {
         spacingDx?: number;
         spacingDy?: number;
         anchor?: Vector2;
-        spriteTextConfig?: SpriteText.Config<SpriteText>;
+        spriteTextConfig?: OrFactory<SpriteText.Config<SpriteText>>;
         /**
          * @default false
          */
@@ -24,32 +24,34 @@ class SpriteTextDisplay extends WorldObject {
     constructor(config: SpriteTextDisplay.Config) {
         super(config);
 
-        let spriteTextConfig = config.spriteTextConfig ?? {};
-        let spriteTextFont = AssetCache.getFont(spriteTextConfig.font ?? SpriteText.DEFAULT_FONT);
-        let charWidth = spriteTextFont?.charWidth ?? 8;
-        let charHeight = spriteTextFont?.charHeight ?? 15;
-        let spaceBetweenLines = spriteTextConfig.spaceBetweenLines ?? spriteTextFont?.spaceBetweenLines ?? 0;
-
-        let scaleX = spriteTextConfig.scaleX ?? (spriteTextConfig.scale ?? 1);
-        let scaleY = spriteTextConfig.scaleY ?? (spriteTextConfig.scale ?? 1);
-        let spacingDx = config.spacingDx ?? charWidth;
-        let spacingDy = config.spacingDy ?? (charHeight + spaceBetweenLines);
-        let anchor = config.anchor ?? Anchor.CENTER;
-
-        let startEntered = config.startEntered ?? false;
-
         let styledChars = SpriteTextUtils.splitIntoStyledChars(config.text ?? '');
 
-        this.spriteTexts = this.addChildren(styledChars.map((line, j) => line.map((styledChar, i) => new SpriteText({
-            justify: 'center',
-            anchor: Anchor.CENTER,
-            ...spriteTextConfig,
-            x: M.equidistantLine(0, spacingDx * scaleX, line.length, i) - (anchor.x - 0.5) * spacingDx * scaleX,
-            y: M.equidistantLine(0, spacingDy * scaleY, styledChars.length, j) - (anchor.y - 0.5) * spacingDy * scaleY,
-            text: styledChar,
-            copyFromParent: ['layer'],
-            visible: startEntered,
-        }))).flat());
+        this.spriteTexts = this.addChildren(styledChars.map((line, j) => line.map((styledChar, i) => {
+            let spriteTextConfig = config.spriteTextConfig ? OrFactory.resolve(config.spriteTextConfig) : {};
+            let spriteTextFont = AssetCache.getFont(spriteTextConfig.font ?? SpriteText.DEFAULT_FONT);
+            let charWidth = spriteTextFont?.charWidth ?? 8;
+            let charHeight = spriteTextFont?.charHeight ?? 15;
+            let spaceBetweenLines = spriteTextConfig.spaceBetweenLines ?? spriteTextFont?.spaceBetweenLines ?? 0;
+    
+            let scaleX = spriteTextConfig.scaleX ?? (spriteTextConfig.scale ?? 1);
+            let scaleY = spriteTextConfig.scaleY ?? (spriteTextConfig.scale ?? 1);
+            let spacingDx = config.spacingDx ?? charWidth;
+            let spacingDy = config.spacingDy ?? (charHeight + spaceBetweenLines);
+            let anchor = config.anchor ?? Anchor.CENTER;
+    
+            let startEntered = config.startEntered ?? false;
+
+            return new SpriteText({
+                justify: 'center',
+                anchor: Anchor.CENTER,
+                ...spriteTextConfig,
+                x: M.equidistantLine(0, spacingDx * scaleX, line.length, i) - (anchor.x - 0.5) * spacingDx * scaleX,
+                y: M.equidistantLine(0, spacingDy * scaleY, styledChars.length, j) - (anchor.y - 0.5) * spacingDy * scaleY,
+                text: styledChar,
+                copyFromParent: ['layer'],
+                visible: startEntered,
+            })
+        })).flat());
 
         if (config.wavy) {
             this.makeWavy(config.wavy.amplitude, config.wavy.cyclesPerSecond);

@@ -28,6 +28,7 @@ TODO
 - sfx randomizer + test on nano (load random sfx, lock in good sfx, reshuffle rest, repeat)
 - experiment with humanize off by default?
 - global variables for specific classes for easy access (e.g. GAME, MUSIC, STAGE, etc.)
+- world-specific music and music priority?
 
 
 
