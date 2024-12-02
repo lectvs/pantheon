@@ -78,18 +78,20 @@ namespace G {
         return (v1.x*v2.x + v1.y*v2.y) / mag1 / mag2;
     }
 
-    export function expandBounds(bounds: Bndries, amount: number) {
-        bounds.left -= amount;
-        bounds.top -= amount;
-        bounds.right += amount;
-        bounds.bottom += amount;
+    export function expandBoundaries<T extends Bndries>(bndries: T, amount: number): T {
+        bndries.left -= amount;
+        bndries.top -= amount;
+        bndries.right += amount;
+        bndries.bottom += amount;
+        return bndries;
     }
 
-    export function expandRectangle(rect: Rect, amount: number) {
+    export function expandRectangle<T extends Rect>(rect: T, amount: number): T {
         rect.x -= amount;
         rect.y -= amount;
         rect.width += 2*amount;
         rect.height += 2*amount;
+        return rect;
     }
 
     export function generatePolygonVertices(cx: number, cy: number, r: number, n: number, angle: number = 0) {

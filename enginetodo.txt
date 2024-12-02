@@ -29,6 +29,8 @@ TODO
 - experiment with humanize off by default?
 - global variables for specific classes for easy access (e.g. GAME, MUSIC, STAGE, etc.)
 - world-specific music and music priority?
+- perf improvement opportunity from eliminating getters for delta, physicsGroup, etc.
+- custom images in text should not affect line height (option?)
 
 
 
