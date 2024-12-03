@@ -178,6 +178,18 @@ class Vector2 {
         return new Vector2Polar(this.angle, this.magnitude);
     }
 
+    withClampedMagnitude(maxMagnitude: number): Vector2;
+    withClampedMagnitude(minMagnitude: number, maxMagnitude: number): Vector2;
+    withClampedMagnitude(minMagnitude: number, maxMagnitude?: number) {
+        let copy = this.clone();
+        if (maxMagnitude === undefined) {
+            copy.clampMagnitude(minMagnitude);
+        } else {
+            copy.clampMagnitude(minMagnitude, maxMagnitude);
+        }
+        return copy;
+    }
+
     withMagnitude(magnitude: number) {
         let copy = this.clone();
         copy.setMagnitude(magnitude);

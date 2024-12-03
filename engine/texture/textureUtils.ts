@@ -151,6 +151,10 @@ namespace TextureUtils {
         return FrameCache.rectangle(x + rotatedAndScaled_ax + minx, y + rotatedAndScaled_ay + miny, maxx - minx, maxy - miny);
     }
 
+    export function isDestroyed(texture: PIXI.Texture) {
+        return !!texture.orig;
+    }
+
     export function isImmutable(renderTexture: PIXI.RenderTexture) {
         return O.getMetadata<boolean>(renderTexture, 'immutable') ?? false;
     }

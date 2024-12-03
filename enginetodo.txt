@@ -31,6 +31,8 @@ TODO
 - world-specific music and music priority?
 - perf improvement opportunity from eliminating getters for delta, physicsGroup, etc.
 - custom images in text should not affect line height (option?)
+- humanize animation speeds?
+- xstart/ystart on worldobjects containing its initial position
 
 
 
