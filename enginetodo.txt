@@ -33,6 +33,7 @@ TODO
 - custom images in text should not affect line height (option?)
 - humanize animation speeds?
 - xstart/ystart on worldobjects containing its initial position
+- allow escaping spriteText special characters like >> or [[ or ]] etc.
 
 
 

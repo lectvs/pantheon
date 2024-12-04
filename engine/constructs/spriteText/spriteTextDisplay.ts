@@ -72,6 +72,7 @@ class SpriteTextDisplay extends WorldObject {
             yield std.spriteTexts.map(st => {
                 let finalAlpha = st.alpha;
                 st.alpha = 0;
+                std.setVisible(true);
                 st.setVisible(true);
                 return S.tween(duration, st, 'alpha', 0, finalAlpha);
             });
@@ -95,6 +96,7 @@ class SpriteTextDisplay extends WorldObject {
                 let finalAlpha = st.alpha;
                 st.alpha = 0;
                 let d = Random.inCircle(scatterDistance);
+                std.setVisible(true);
                 st.setVisible(true);
                 return S.simul(
                     S.tween(duration, st, 'x', st.x + d.x, st.x),
@@ -124,6 +126,7 @@ class SpriteTextDisplay extends WorldObject {
         let std = this;
         return this.runScript(function*() {
             let timePerChar = duration / std.spriteTexts.length;
+            std.setVisible(true);
             for (let st of std.spriteTexts) {
                 st.setVisible(true);
                 yield timePerChar;
