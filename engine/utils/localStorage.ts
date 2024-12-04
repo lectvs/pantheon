@@ -8,13 +8,16 @@ interface LocalStorageBackend {
 
 class LocalStorage {
     private static backend: LocalStorageBackend;
+    static isSupported: boolean;
 
     static init() {
         if (this.doesLocalStorageWork()) {
             this.backend = new LocalStorageTrueBackend();
+            this.isSupported = true;
         } else {
             console.error('LocalStorage does not work! Using temporary in-memory storage.');
             this.backend = new LocalStorageFacadeBackend();
+            this.isSupported = false;
         }
     }
 

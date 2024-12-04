@@ -10,6 +10,7 @@ namespace Main {
         fpsLimit: number;
         preventScrollOnCanvas: boolean;
         defaultSpriteTextFont?: string;
+        requireLocalStorageSupport?: boolean;
 
         textures?: Dict<Preload.Texture>;
         sounds?: Dict<Preload.Sound>;
@@ -77,11 +78,7 @@ class Main {
         }
 
         if (!PIXI.utils.isWebGLSupported()) {
-            let errorText = document.createElement('p');
-            errorText.innerHTML = "Error: WebGL is not supported in your browser.<br/><br/>The most common fix for this is to enable \"Use hardware acceleration\" in your browser's settings.";
-            errorText.style.fontSize = "24px";
-            errorText.style.color = "#FFFFFF";
-            document.body.appendChild(errorText);
+            Main.breakGameWithMessage("Error: WebGL is not supported in your browser.<br/><br/>The most common fix for this is to enable \"Use hardware acceleration\" in your browser's settings.");
             return;
         }
 
@@ -89,6 +86,10 @@ class Main {
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
         LocalStorage.init();
+        if (!LocalStorage.isSupported && (this.config.requireLocalStorageSupport ?? true)) {
+            Main.breakGameWithMessage("Error: Your browser or the page you're visiting does not support localStorage.<br/><br/>Please try a different browser.");
+            return;
+        }
 
         global.gameWidth = OrFactory.resolve(this.config.gameWidth);
         global.gameHeight = OrFactory.resolve(this.config.gameHeight);
@@ -371,5 +372,16 @@ class Main {
                 console.log('Took screenshot');
             }
         });
+    }
+
+    static breakGameWithMessage(messageHtml: string) {
+        Main.renderer?.view.parentNode?.removeChild(Main.renderer.view);
+        Main.soundManager?.ensureAllSoundsDisabled();
+        PIXI.Ticker.shared.stop();
+        let errorText = document.createElement('p');
+        errorText.innerHTML = messageHtml;
+        errorText.style.fontSize = "24px";
+        errorText.style.color = "#FFFFFF";
+        document.body.appendChild(errorText);
     }
 }

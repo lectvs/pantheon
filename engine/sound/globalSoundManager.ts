@@ -35,6 +35,13 @@ class GlobalSoundManager {
         }
     }
 
+    ensureAllSoundsDisabled() {
+        let sounds = A.clone(this.activeSounds);
+        for (let sound of sounds) {
+            this.ensureSoundDisabled(sound);
+        }
+    }
+
     ensureSoundDisabled(sound: Sound) {
         sound.ensureDisabled();
         return A.removeAll(this.activeSounds, sound);
