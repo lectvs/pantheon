@@ -34,6 +34,7 @@ TODO
 - humanize animation speeds?
 - xstart/ystart on worldobjects containing its initial position
 - allow escaping spriteText special characters like >> or [[ or ]] etc.
+- enhanced glitch effect
 
 
 
