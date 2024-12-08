@@ -20,8 +20,6 @@ class Theater {
     shouldStopSkippingCutscene: boolean;
     private fades: Theater.Fade[];
 
-    get delta() { return global.game.delta; }
-
     private container: PIXI.Container;
     
     constructor(config: Theater.Config = {}) {
@@ -47,7 +45,7 @@ class Theater {
     }
 
     update() {
-        this.scriptManager.update(this.delta);
+        this.scriptManager.update(Main.delta);
         this.cutsceneManager.update();
 
         if (this.dialogBox) {

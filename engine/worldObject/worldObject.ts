@@ -94,7 +94,7 @@ class WorldObject {
     private _layer?: string;
     private _physicsGroup?: string;
     private _children: WorldObject[];
-    private _parent?: WorldObject;
+    readonly parent?: WorldObject;
 
     protected animationManager: AnimationManager;
 
@@ -108,7 +108,6 @@ class WorldObject {
         return this._physicsGroup;
     }
     get children() { return this._children; }
-    get parent() { return this._parent; }
 
     set layer(value: string | undefined) { World.Actions.setLayer(this, value); }
     set physicsGroup(value: string | undefined) { World.Actions.setPhysicsGroup(this, value); }
@@ -122,7 +121,7 @@ class WorldObject {
         return this._world;
     };
 
-    get delta() { return ((this.useGlobalTime || !this.world) ? global.game.delta : this.world.delta) * this.timeScale;}
+    delta: number;
     private lastFrameDelta: number;
 
     startOfThisFrameX: number;
@@ -180,6 +179,7 @@ class WorldObject {
         this.timeScale = config.timeScale ?? 1;
         this.useGlobalTime = config.useGlobalTime ?? false;
         this.data = config.data ? O.deepClone(config.data) : {};
+        this.delta = 0.01;
         this.lastFrameDelta = 0.01;
 
         this._visible = config.visible ?? true;
@@ -216,7 +216,6 @@ class WorldObject {
 
         this._world = undefined;
         this._children = [];
-        this._parent = undefined;
 
         this.zinternal_setLayerWorldObject(config.layer);
         this.zinternal_setPhysicsGroupWorldObject(config.physicsGroup);
@@ -249,6 +248,7 @@ class WorldObject {
     }
 
     preUpdate() {
+        this.delta = ((this.useGlobalTime || !this.world) ? Main.delta : this.world.delta) * this.timeScale;
         this.startOfLastFrameX = this.startOfThisFrameX;
         this.startOfLastFrameY = this.startOfThisFrameY;
         this.startOfLastFrameZ = this.startOfThisFrameZ;
@@ -986,7 +986,8 @@ class WorldObject {
 
     // For use with World.Actions.addChildToParent
     zinternal_addChildToParentWorldObjectChild(parent: WorldObject) {
-        this._parent = parent;
+        // @ts-expect-error
+        this.parent = parent;
     }
 
     // For use with World.Actions.addChildToParent
@@ -996,7 +997,8 @@ class WorldObject {
 
     // For use with World.Actions.removeChildFromParent
     zinternal_removeChildFromParentWorldObjectChild() {
-        this._parent = undefined;
+        // @ts-expect-error
+        this.parent = undefined;
     }
 
     // For use with World.Actions.removeChildFromParent

@@ -157,7 +157,7 @@ class World {
     
     get delta() {
         if (global.currentTheater.isSkippingCutscene) return Theater.SKIP_CUTSCENE_DELTA;
-        return global.game.delta * this.timeScale;
+        return Main.delta * this.timeScale;
     }
 
     volume: number;

@@ -5,15 +5,13 @@ class StageManager {
     }[];
     private transition: Transition | undefined;
 
-    get delta() { return global.game.delta; }
-
     constructor() {
         this.stageStack = [];
     }
 
     update() {
         if (this.transition) {
-            this.transition.update(this.delta);
+            this.transition.update(Main.delta);
             if (this.transition.done) {
                 this.finishTransition();
             }

@@ -26,8 +26,6 @@ class Game {
     musicManager: MusicManager;
     get volume(): number { return Options.volume * (Debug.SKIP_RATE >= 100 ? 0.2 : 1); };
 
-    get delta(): number { return Main.delta; }
-
     endOfFrameQueue: (() => any)[];
 
     private container: PIXI.Container;
@@ -79,15 +77,15 @@ class Game {
         this.updateOverlay();
 
         this.soundManager.volume = this.volume * Options.sfxVolume;
-        this.soundManager.update(this.delta);
+        this.soundManager.update(Main.delta);
 
         this.musicManager.volume = this.volume * Options.musicVolume;
 
         if (!currentWorld) {
-            this.musicManager.update(this.delta);
+            this.musicManager.update(Main.delta);
         } else if (currentWorld.music.action !== 'block') {
             this.musicManager.volume *= currentWorld.music.volumeScale;
-            this.musicManager.update(this.delta);
+            this.musicManager.update(Main.delta);
         }
 
         while (!A.isEmpty(this.endOfFrameQueue)) {
