@@ -58,7 +58,7 @@ class Debug {
             Debug.FRAME_STEP_ENABLED = false;
         }
 
-        if (Input.justDown(Input.DEBUG_SCREENSHOT)) {
+        if (Debug.DEBUG && Input.justDown(Input.DEBUG_SCREENSHOT)) {
             Main.takeScreenshot(1, 'clipboard');
         }
 
