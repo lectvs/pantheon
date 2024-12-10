@@ -96,6 +96,7 @@ namespace World {
 
     // To add a new hook, simply add an entry here and call World.hookManager.executeHooks() at the appropriate location(s).
     export type Hooks<W extends World> = {
+        onBeginTransition: { params: (this: W) => void };
         onTransitioned: { params: (this: W) => void };
         onUpdate: { params: (this: W) => void };
         onWorldObjectAdded: { params: (this: W, worldObject: WorldObject) => void };
@@ -241,6 +242,10 @@ class World {
         this.maxInputLevelThisFrame = 0;
 
         this.endOfFrameQueue = [];
+    }
+
+    onBeginTransition() {
+        this.hookManager.executeHooks('onBeginTransition');
     }
 
     onTransitioned() {
@@ -518,13 +523,13 @@ class World {
      *   - Humanized (if set globally and sound duration less than 1 second)
      */
     playSound(key: string, config?: World.PlaySoundConfig) {
-        if (global.theater?.isSkippingCutscene || !this.allowSounds) return new Sound(key);
+        if (global.theater?.isSkippingCutscene || !this.allowSounds) return new BasicSound(key);
         
         let limit = config?.limit ?? Infinity;
 
         // Check limit
         if (this.soundManager.getSoundsByKey(key).length >= limit) {
-            return new Sound(key);
+            return new BasicSound(key);
         }
 
         let sound = this.soundManager.playSound(key);

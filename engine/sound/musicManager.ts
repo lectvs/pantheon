@@ -70,8 +70,10 @@ class MusicManager {
         };
     }
 
-    playMusic(key: string, fadeTime: number = 0) {
-        if (this.state.state !== 'stopped' && this.state.currentMusic.key === key) {
+    playMusic(music: string | Sound, fadeTime: number = 0) {
+        let musicAlreadyPlaying =  (St.isString(music) && this.state.state !== 'stopped' && this.state.currentMusic.key === music)
+                                || (!St.isString(music) && this.state.state !== 'stopped' && this.state.currentMusic === music);
+        if (musicAlreadyPlaying) {
             if (this.state.state === 'playing') {
                 if (this.state.fadeVolume < 1) {
                     this.unfadeMusic(fadeTime);
@@ -85,7 +87,7 @@ class MusicManager {
         }
 
         this.stopMusic(fadeTime);
-        let music = this.soundManager.playSound(key);
+        music = this.soundManager.playSound(music);
         music.loopsLeft = Infinity;
         this.scriptManager.runScript(S.tween(fadeTime, music, 'volume', 0, 1),
             MusicManager.TRANSITION_SCRIPT, 'stopPrevious');
@@ -102,7 +104,7 @@ class MusicManager {
         let startVolume = music.volume;
         this.scriptManager.runScript(S.chain(
             S.tween(fadeTime, music, 'volume', startVolume, 0),
-            S.call(() => music.stop()),
+            S.call(() => this.soundManager.stopSound(music)),
         ));
         this.state = {
             state: 'stopped',

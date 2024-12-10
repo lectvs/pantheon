@@ -55,6 +55,7 @@ const clamp = M.clamp;
 const lerp = M.lerp;
 const map = M.map;
 const mapClamp = M.mapClamp;
+const mod = M.mod;
 const max = Math.max;
 const min = Math.min;
 

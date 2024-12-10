@@ -163,12 +163,12 @@ class Game {
         this.musicManager.pauseMusic(fadeTime);
     }
 
-    playMusic(key: string, fadeTime: number = 0) {
-        this.musicManager.playMusic(key, fadeTime);
+    playMusic(music: string | Sound, fadeTime: number = 0) {
+        this.musicManager.playMusic(music, fadeTime);
     }
 
     playSound(key: string) {
-        if (global.theater?.isSkippingCutscene) return new Sound(key);
+        if (global.theater?.isSkippingCutscene) return new BasicSound(key);
         return this.soundManager.playSound(key);
     }
 

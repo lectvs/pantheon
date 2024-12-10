@@ -112,6 +112,7 @@ class StageManager {
     transitionTo(oldWorld: World | undefined, newWorld: World | undefined, transition: Transition) {
         this.transition = transition;
         this.transition.setData(oldWorld, newWorld);
+        newWorld?.onBeginTransition();
         if (this.transition.done) {
             this.finishTransition();
         }
