@@ -88,6 +88,7 @@ class AnimationManager {
         if (!this.currentAnimationName) return false;
         if (this.currentAnimationName === name) return true;
         if (this.animations[this.currentAnimationName].getVariantOf().includes(name)) return true;
+        if (!this.animations[name]) return false;
         if (this.animations[name].getVariantOf().includes(this.currentAnimationName)) return true;
         return false;
     }
