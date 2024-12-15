@@ -683,7 +683,7 @@ namespace Input {
         }
 
         private _holds: Gestures.Hold[] = [];
-        getHolds$(maxDistance: number = 0, minTime: number = 0) {
+        getHolds$(maxDistance: number = Infinity, minTime: number = 0) {
             let resultLength = 0;
             for (let touch of Input.touches) {
                 if (!touch.isDown) continue;
@@ -708,7 +708,7 @@ namespace Input {
             return this._holds;
         }
 
-        getHold$(maxDistance: number = 0, minTime: number = 0): Gestures.Hold | undefined {
+        getHold$(maxDistance: number = Infinity, minTime: number = 0): Gestures.Hold | undefined {
             return this.getHolds$(maxDistance, minTime)[0];
         }
 
