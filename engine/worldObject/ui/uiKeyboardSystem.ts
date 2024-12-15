@@ -175,7 +175,7 @@ class UIKeyboardSystem extends WorldObject {
             if (i === this.selectedIndex) continue;
             let element = this.elements[i];
 
-            if (element.state.disabled) continue;
+            if (!element.worldObject.isActive() || element.state.disabled) continue;
 
             let dx = element.worldObject.x - currentElement.worldObject.x;
             let dy = element.worldObject.y - currentElement.worldObject.y;

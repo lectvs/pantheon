@@ -55,3 +55,6 @@ https://www.youtube.com/watch?v=u2fwxuHZXIA
 - Block basic shapes/colors first
 - Use a 50% grey canvas instead of white for better judgement of brightness
 - Make better palettes by choosing a "base" color => put other color swatches on top => reduce opacity slightly to blend in some of the base color
+
+# Random Tech
+- Instead of hover tint dark -> highlight, add a two-part hover tint dark -> intermediary -> highlight (citizen sleeper scroll bar)

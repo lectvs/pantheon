@@ -37,6 +37,7 @@ namespace World {
 
         timescale?: number;
         allowPause?: boolean;
+        allowDebugInput?: boolean;
         hooks?: HooksConfig<Hooks<W>>;
         data?: any;
     }
@@ -169,6 +170,7 @@ class World {
     music: World.MusicConfig;
 
     allowPause: boolean;
+    allowDebugInput: boolean;
 
     protected hookManager: HookManager<World.Hooks<this>>;
     protected eventManager: WorldEventManager;
@@ -195,6 +197,7 @@ class World {
         this.time = 0;
         this.timeScale = config.timescale ?? 1;
         this.allowPause = config.allowPause ?? true;
+        this.allowDebugInput = config.allowDebugInput ?? true;
         this.data = config.data ? O.deepClone(config.data) : {};
 
         this.scaleX = config.scaleX ?? 1;

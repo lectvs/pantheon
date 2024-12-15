@@ -46,23 +46,32 @@ class Debug {
             Debug.EXPERIMENTS[experiment].update(experiment);
         }
 
-        if (Input.justDown(Input.DEBUG_TOGGLE_OVERLAY)) {
-            Debug.SHOW_OVERLAY = Debug.DEBUG && !Debug.SHOW_OVERLAY;
-        }
+        if (Debug.isDebugInputAllowed()) {
+            if (Input.justDown(Input.DEBUG_TOGGLE_OVERLAY)) {
+                Debug.SHOW_OVERLAY = Debug.DEBUG && !Debug.SHOW_OVERLAY;
+            }
 
-        if (Input.justDown(Input.DEBUG_FRAME_SKIP_STEP) || Input.justDown(Input.DEBUG_FRAME_SKIP_RUN)) {
-            Debug.FRAME_STEP_ENABLED = true;
-        }
+            if (Input.justDown(Input.DEBUG_FRAME_SKIP_STEP) || Input.justDown(Input.DEBUG_FRAME_SKIP_RUN)) {
+                Debug.FRAME_STEP_ENABLED = true;
+            }
 
-        if (Input.justDown(Input.DEBUG_FRAME_SKIP_DISABLE)) {
-            Debug.FRAME_STEP_ENABLED = false;
-        }
+            if (Input.justDown(Input.DEBUG_FRAME_SKIP_DISABLE)) {
+                Debug.FRAME_STEP_ENABLED = false;
+            }
 
-        if (Debug.DEBUG && Input.justDown(Input.DEBUG_SCREENSHOT)) {
-            Main.takeScreenshot(1, 'clipboard');
-        }
+            if (Debug.DEBUG && Input.justDown(Input.DEBUG_SCREENSHOT)) {
+                Main.takeScreenshot(1, 'clipboard');
+            }
 
-        Debug._SKIP_RATE_KEY_MODIFIER = Input.isDown(Input.DEBUG_SKIP_RATE) ? Debug.SKIP_RATE_KEY_MODIFIER_MAX : 1;
+            Debug._SKIP_RATE_KEY_MODIFIER = Input.isDown(Input.DEBUG_SKIP_RATE) ? Debug.SKIP_RATE_KEY_MODIFIER_MAX : 1;
+        }
+    }
+
+    static isDebugInputAllowed() {
+        if (global.world) {
+            return global.world.allowDebugInput;
+        }
+        return true;
     }
 
     private static _DEBUG: boolean;

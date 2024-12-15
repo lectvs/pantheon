@@ -134,7 +134,7 @@ class Camera {
 
         this.clampToBounds();
 
-        if (Debug.MOVE_CAMERA_WITH_ARROWS && this.world === global.world) {
+        if (Debug.MOVE_CAMERA_WITH_ARROWS && this.world === global.world && Debug.isDebugInputAllowed()) {
             if (Input.isDown(Input.DEBUG_MOVE_CAMERA_LEFT))  this.debugOffsetX -= 1;
             if (Input.isDown(Input.DEBUG_MOVE_CAMERA_RIGHT)) this.debugOffsetX += 1;
             if (Input.isDown(Input.DEBUG_MOVE_CAMERA_UP))    this.debugOffsetY -= 1;
