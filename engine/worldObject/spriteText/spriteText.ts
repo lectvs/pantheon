@@ -282,6 +282,10 @@ class SpriteText extends WorldObject {
         return FrameCache.rectangle(0, 0, 0, 0).copyBoundaries(bounds);
     }
 
+    isRenderSystemFreed() {
+        return !this.renderSystem;
+    }
+
     setFont(fontKey: string) {
         if (fontKey === this.fontKey) return;
         let font = AssetCache.getFont(fontKey);

@@ -37,7 +37,9 @@ class MenuTextButton extends SpriteText {
 
     override update() {
         super.update();
-        this.setBounds();
+        if (!this.isRenderSystemFreed()) {
+            this.setBounds();
+        }
 
         let button = this.getModule(UIElement);
         if (button) {

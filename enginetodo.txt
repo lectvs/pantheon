@@ -36,6 +36,8 @@ TODO
 - allow escaping spriteText special characters like >> or [[ or ]] etc.
 - enhanced glitch effect
 - per world/worldobject lazies
+- garbage collector type thing for worlds? (to fix problem of entities updating/rendering after world has been unloaded)
+- get spriteText bounds without re-rendering it?
 
 
 
