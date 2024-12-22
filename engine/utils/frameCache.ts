@@ -125,4 +125,17 @@ namespace FrameCache {
         _displacementCollisionCache.reset();
         _raycastCollisionCache.reset();
     }
+
+    export function _getAllCaches() {
+        return [
+            _arrayCache,
+            _objectCache,
+            _setCache,
+            _vec2Cache,
+            _rectangleCache,
+            _boundariesCache,
+            _displacementCollisionCache,
+            _raycastCollisionCache,
+        ];
+    }
 }

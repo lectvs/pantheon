@@ -37,7 +37,8 @@ TODO
 - enhanced glitch effect
 - per world/worldobject lazies
 - garbage collector type thing for worlds? (to fix problem of entities updating/rendering after world has been unloaded)
-- get spriteText bounds without re-rendering it?
+- get spriteText bounds without re-rendering it? (see spritetext TODO)
+- investigate webgl context lost when rapidly pausing and unpausing
 
 
 
