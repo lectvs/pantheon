@@ -23,6 +23,7 @@ TODO
 - builder-type methods for worldobject (withLayer, etc.)
 - common gamedata system
 - GMS's keyboard_string for my engine (keyboard_string stores the last 1024 chars typed)
+- Input.anyKeyDown, Input.anyKeyJustDown, etc.
 - change state by returning string in statemachine's update method
 - fix worldSprite and layer.sprite (currently does not factor in upscale)
 - sfx randomizer + test on nano (load random sfx, lock in good sfx, reshuffle rest, repeat)
@@ -39,6 +40,7 @@ TODO
 - garbage collector type thing for worlds? (to fix problem of entities updating/rendering after world has been unloaded)
 - get spriteText bounds without re-rendering it? (see spritetext TODO)
 - investigate webgl context lost when rapidly pausing and unpausing
+- GCCTextures - garbage-collected, cached - be able to create custom textures without worrying about cleanup
 
 
 
