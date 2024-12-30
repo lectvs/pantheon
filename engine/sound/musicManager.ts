@@ -26,7 +26,10 @@ class MusicManager {
     constructor() {
         this.paused = false;
 
-        this.soundManager = new SoundManager();
+        this.soundManager = new SoundManager({
+            volume: 1,
+            humanizeByDefault: false,
+        });
         this.scriptManager = new ScriptManager();
 
         this.state = {

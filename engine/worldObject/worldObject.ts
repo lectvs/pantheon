@@ -26,6 +26,7 @@ namespace WorldObject {
         ignoreCamera?: boolean;
         copyFromParent?: string[];
         zBehavior?: ZBehavior;
+        sound?: SoundManager.Config;
         timeScale?: number;
         useGlobalTime?: boolean;
         inputLevel?: number;
@@ -72,6 +73,10 @@ class WorldObject {
     set x(value: number) { this.localx = value - (this.parent ? this.parent.x : 0); }
     set y(value: number) { this.localy = value - (this.parent ? this.parent.y : 0); }
     set z(value: number) { this.localz = value - (this.parent ? this.parent.z : 0); }
+
+    startX: number;
+    startY: number;
+    startZ: number;
 
     private _v: Vector2;
     get v() { return this._v; }
@@ -161,6 +166,7 @@ class WorldObject {
     stateMachine: SimpleStateMachine;
     get state() { return this.stateMachine.getCurrentStateName(); }
 
+    protected soundManager: SoundManager;
     protected hookManager: HookManager<WorldObject.Hooks<this>>;
 
     debugFollowMouse: boolean;
@@ -169,6 +175,10 @@ class WorldObject {
         this.localx = config.x ?? (config.p ? config.p.x : 0);
         this.localy = config.y ?? (config.p ? config.p.y : 0);
         this.localz = config.z ?? 0;
+
+        this.startX = this.localx;
+        this.startY = this.localy;
+        this.startZ = this.localz;
 
         this._v = config.v ? vec2(config.v.x, config.v.y) : vec2(config.vx ?? 0, config.vy ?? 0);
         this.vz = config.vz ?? 0;
@@ -224,6 +234,7 @@ class WorldObject {
         this.preScriptManager = new ScriptManager();
         this.stateMachine = new SimpleStateMachine();
 
+        this.soundManager = new SoundManager(config.sound ?? {});
         this.hookManager = new HookManager({
             binder: fn => fn.bind(this),
             hooks: config.hooks,
@@ -238,6 +249,9 @@ class WorldObject {
         for (let module of this.modules) {
             module.onWorldObjectAdd();
         }
+        this.startX = this.x;
+        this.startY = this.y;
+        this.startZ = this.z;
     }
 
     onRemove() {
@@ -290,6 +304,9 @@ class WorldObject {
 
         this.life.update(this.delta);
         this.animationManager.update(this.delta);
+
+        this.soundManager.volume = (this.world?.volume ?? 1) * global.game.volume * Options.sfxVolume;
+        this.soundManager.update(this.delta);
     }
 
     visualUpdate() {
@@ -823,6 +840,10 @@ class WorldObject {
         this.animationManager.playAnimation(nameOrRef, force);
     }
 
+    playSound(key: string, config?: SoundUtils.PlaySoundConfig) {
+        return SoundUtils.playSound(this.soundManager, this.scriptManager, this.worldd.allowSounds, key, config);
+    }
+
     removeFromWorld(): this {
         if (!this.world) return this;
         return World.Actions.removeWorldObjectFromWorld(this);
@@ -888,6 +909,10 @@ class WorldObject {
         this.scriptManager.stopScriptByName(name);
     }
 
+    stopSound(sound: string | Sound, fadeOut: number = 0) {
+        return SoundUtils.stopSound(this.soundManager, this.scriptManager, sound, fadeOut)
+    }
+
     teleport(x: Pt | number, y?: number) {
         if (!M.isNumber(x)) {
             y = x.y;
@@ -905,6 +930,102 @@ class WorldObject {
      */
     unload() {
         // Overridable by children.
+    }
+
+    withName(name: string | undefined) {
+        this.name = name;
+        return this;
+    }
+
+    withLayer(layer: string | undefined) {
+        this.layer = layer;
+        return this;
+    }
+
+    withPhysicsGroup(physicsGroup: string | undefined) {
+        this.physicsGroup = physicsGroup;
+        return this;
+    }
+
+    withX(x: number) {
+        this.x = x;
+        return this;
+    }
+
+    withY(y: number) {
+        this.y = y;
+        return this;
+    }
+
+    withZ(z: number) {
+        this.z = z;
+        return this;
+    }
+
+    withPosition(x: number, y: number, z?: number): this;
+    withPosition(p: Pt, z?: number): this;
+    withPosition(x: number | Pt, y?: number, z?: number) {
+        if (typeof x !== 'number') {
+            y = x.y;
+            x = x.x;
+        }
+        this.x = x;
+        if (y !== undefined) this.y = y;
+        if (z !== undefined) this.z = z;
+        return this;
+    }
+
+    withVx(vx: number) {
+        this.v.x = vx;
+        return this;
+    }
+
+    withVy(vy: number) {
+        this.v.y = vy;
+        return this;
+    }
+
+    withVz(vz: number) {
+        this.vz = vz;
+        return this;
+    }
+
+    withVelocity(vx: number, vy: number, vz?: number): this;
+    withVelocity(v: Pt, vz?: number): this;
+    withVelocity(vx: number | Pt, vy?: number, vz?: number) {
+        if (typeof vx !== 'number') {
+            vy = vx.y;
+            vx = vx.x;
+        }
+        this.v.x = vx;
+        if (vy !== undefined) this.v.y = vy;
+        if (vz !== undefined) this.vz = vz;
+        return this;
+    }
+
+    withVisible(visible: boolean) {
+        this.setVisible(visible);
+        return this;
+    }
+
+    withActive(active: boolean) {
+        this.setActive(active);
+        return this;
+    }
+
+    withTint(tint: number) {
+        this.tint = tint;
+        return this;
+    }
+
+    withAlpha(alpha: number) {
+        this.alpha = alpha;
+        return this;
+    }
+
+    withLife(life: number) {
+        this.setLife(life);
+        return this;
     }
 
     private applyVelocity() {

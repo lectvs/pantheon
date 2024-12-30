@@ -38,7 +38,10 @@ class Game {
         this.gameTheaterFactory = config.gameTheaterFactory || (() => new Theater());
 
         this.stageManager = new StageManager();
-        this.soundManager = new SoundManager();
+        this.soundManager = new SoundManager({
+            volume: 1,
+            humanizeByDefault: false,
+        });
         this.musicManager = new MusicManager();
 
         this.menuTheater = this.menuTheaterFactory();

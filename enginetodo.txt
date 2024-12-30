@@ -2,12 +2,8 @@ TODO NOW
 - change "camera bounds" -> "camera limit", change "camera world rect" -> "camera world bounds"
 - load directly from pyxel file (it's just a zip??)
 - load directly from aseprite (https://github.com/kennedy0/aseprite-reader/blob/main/src/aseprite_reader/aseprite_file.py)
-- worldobject-specific soundmanagers?
-- default/template menus for pause, options, debug, intro, main
 - bring in constructs from nano
-- builder-type methods for worldobject (withLayer, etc.)
 - global variables for specific classes for easy access (e.g. GAME, MUSIC, STAGE, etc.)
-- xstart/ystart on worldobjects containing its initial position
 - sort through nano milestones and create a general game todo list
 
 TODO IN SEPARATE BRANCH
@@ -34,7 +30,8 @@ TODO IN SEPARATE BRANCH
 - get spriteText bounds without re-rendering it? (see spritetext TODO)
 - investigate webgl context lost when rapidly pausing and unpausing
 - update pantheon template
-
+    - update with new engine version
+    - default/template menus for pause, options, debug, intro, main
 
 
 backlog

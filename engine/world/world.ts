@@ -24,15 +24,7 @@ namespace World {
         minDistanceIgnoreCollisionStepCalculation?: number;
         defaultZBehavior?: WorldObject.ZBehavior;
 
-        sound?: {
-            volume?: number;
-            humanizeByDefault?: boolean;
-            /**
-             * Default: 0.1
-             */
-            humanizeFactor?: number;
-        };
-
+        sound?: SoundManager.Config;
         music?: MusicConfig;
 
         timescale?: number;
@@ -68,15 +60,6 @@ namespace World {
 
     export type PhysicsGroupConfig = {
         immovable?: boolean;
-    }
-
-    export type PlaySoundConfig = {
-        volume?: number;
-        speed?: number;
-        loop?: boolean | number;
-        humanized?: boolean;
-        limit?: number;
-        fadeIn?: number;
     }
 
     export type Screenshot = {
@@ -164,8 +147,6 @@ class World {
 
     volume: number;
     allowSounds: boolean;
-    soundHumanizeByDefault: boolean;
-    soundHumanizeFactor: number;
 
     music: World.MusicConfig;
 
@@ -183,14 +164,12 @@ class World {
         this.name = config.name;
           
         this.scriptManager = new ScriptManager();
-        this.soundManager = new SoundManager();
+        this.soundManager = new SoundManager(config.sound ?? {});
 
         this.select = new WorldSelecter(this);
 
         this.volume = config.sound?.volume ?? 1;
         this.allowSounds = true;
-        this.soundHumanizeByDefault = config.sound?.humanizeByDefault ?? false;
-        this.soundHumanizeFactor = config.sound?.humanizeFactor ?? 0.1;
 
         this.music = config.music ? O.clone(config.music) : { action: 'volumescale', volumeScale: 1 };
 
@@ -521,38 +500,8 @@ class World {
         return G.areRectanglesOverlapping(rect, screenRect);
     }
 
-    /**
-     * By default, sounds are:
-     *   - Humanized (if set globally and sound duration less than 1 second)
-     */
-    playSound(key: string, config?: World.PlaySoundConfig) {
-        if (global.theater?.isSkippingCutscene || !this.allowSounds) return new BasicSound(key);
-        
-        let limit = config?.limit ?? Infinity;
-
-        // Check limit
-        if (this.soundManager.getSoundsByKey(key).length >= limit) {
-            return new BasicSound(key);
-        }
-
-        let sound = this.soundManager.playSound(key);
-
-        sound.volume = config?.volume ?? 1;
-        sound.speed = config?.speed ?? 1;
-
-        let loop = config?.loop ?? false;
-        sound.loopsLeft = M.isNumber(loop) ? loop : (loop ? Infinity : 0);
-
-        let humanized = (config?.humanized ?? this.soundHumanizeByDefault) && sound.duration < 1;
-        if (humanized && this.soundHumanizeFactor > 0) {
-            sound.humanize(this.soundHumanizeFactor);
-        }
-
-        if (config?.fadeIn) {
-            this.runScript(S.tween(config.fadeIn, sound, 'volume', 0, sound.volume));
-        }
-
-        return sound;
+    playSound(key: string, config?: SoundUtils.PlaySoundConfig) {
+        return SoundUtils.playSound(this.soundManager, this.scriptManager, this.allowSounds, key, config);
     }
 
     registerListener(listener: WorldEvent.Listener) {
@@ -616,22 +565,7 @@ class World {
     }
 
     stopSound(sound: string | Sound, fadeOut: number = 0) {
-        let sounds: Sound[];
-        if (St.isString(sound)) {
-            sounds = this.soundManager.getSoundsByKey(sound);
-        } else {
-            sounds = [sound];
-        }
-
-        if (fadeOut <= 0) {
-            sounds.forEach(s => s.stop());
-            return S.noop();
-        }
-
-        return this.runScript(function*() {
-            yield sounds.map(s => S.tween(fadeOut, s, 'volume', s.volume, 0));
-            sounds.forEach(s => s.stop());
-        });
+        return SoundUtils.stopSound(this.soundManager, this.scriptManager, sound, fadeOut);
     }
 
     takeScreenshot(): World.Screenshot {

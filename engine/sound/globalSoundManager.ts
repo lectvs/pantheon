@@ -7,6 +7,10 @@ class GlobalSoundManager {
         this.paused = false;
     }
 
+    getSoundCount(sound: string | Sound) {
+        return A.count(this.activeSounds, s => s === sound || s.key === sound);
+    }
+
     pause() {
         for (let i = this.activeSounds.length-1; i >= 0; i--) {
             let r = this.ensureSoundDisabled(this.activeSounds[i]);
