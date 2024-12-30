@@ -22,7 +22,6 @@ TODO
 - make uislider (engine construct) a UIElement and make it compatible with UIKeyboardSystem
 - builder-type methods for worldobject (withLayer, etc.)
 - common gamedata system
-- Input.anyKeyDown, Input.anyKeyJustDown, etc.
 - change state by returning string in statemachine's update method
 - fix worldSprite and layer.sprite (currently does not factor in upscale)
 - sfx randomizer + test on nano (load random sfx, lock in good sfx, reshuffle rest, repeat)

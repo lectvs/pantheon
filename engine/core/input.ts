@@ -294,6 +294,20 @@ class Input {
         return this.isDownByKeyCode[keyCode] && !this.lastIsDownByKeyCode[keyCode];
     }
 
+    static isAnyKeyDown() {
+        for (let keyCode in this.isDownByKeyCode) {
+            if (this.isDownByKeyCode[keyCode]) return true;
+        }
+        return false;
+    }
+
+    static isAnyKeyJustDown() {
+        for (let keyCode in this.isDownByKeyCode) {
+            if (this.isDownByKeyCode[keyCode] && !this.lastIsDownByKeyCode[keyCode]) return true;
+        }
+        return false;
+    }
+
     static axis(negKey: string, posKey: string) {
         return M.axis(this.isDown(negKey), this.isDown(posKey));
     }
