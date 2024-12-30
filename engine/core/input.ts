@@ -57,6 +57,7 @@ class Input {
     static preventRegularKeyboardInput: boolean = false;
 
     static gestures: Input.Gestures;
+    static keyboardString: string;
 
     static init(keyCodesByName: Input.KeyCodesByName) {
         this.keyCodesByName = O.deepClone(keyCodesByName);
@@ -72,6 +73,7 @@ class Input {
         }
 
         this.gestures = new Input.Gestures();
+        this.keyboardString = '';
     }
 
     static update() {
@@ -240,6 +242,24 @@ class Input {
         this.touches.clear();
     }
 
+    private static updateKeyboardStringWithEvent(event: KeyboardEvent) {
+        if (event.key === 'Backspace' && this.keyboardString.length >= 1) {
+            this.keyboardString = this.keyboardString.slice(0, -1);
+        }
+
+        if (event.key.length > 1) return;
+
+        this.keyboardString += event.key;
+
+        if (this.keyboardString.length > 1024) {
+            this.keyboardString = this.keyboardString.slice(-1024);
+        }
+    }
+
+    static resetKeyboardString() {
+        this.keyboardString = '';
+    }
+
     /**
      * Used to detect keypress when updating key binds.
      */
@@ -356,12 +376,15 @@ class Input {
     }
 
     static handleKeyDownEvent(event: KeyboardEvent) {
+        // Event fires repeatedly if key is held down.
+        if (event.repeat) return;
         let keyCode = Input.getKeyFromEventKey(event.key);
         this.eventKey = keyCode;
         if (this.isDownByKeyCode[keyCode] !== undefined && event.key === 'Tab') {
             event.preventDefault();
         }
         this.isDownByKeyCode[keyCode] = true;
+        this.updateKeyboardStringWithEvent(event);
 
         // Handle fullscreen toggle
         if (!this.preventRegularKeyboardInput && this.keyCodesByName[Input.FULLSCREEN].includes(keyCode)) {
