@@ -483,21 +483,21 @@ class World {
     }
 
     isBoundsOnScreen(bounds: Bounds, buffer: number = 0) {
-        let screenRect = this.camera.getWorldRect$();
-        G.expandRectangle(screenRect, buffer);
-        return G.areRectanglesOverlapping(bounds.getBoundingBox$(), screenRect);
+        let screenBounds = this.camera.getWorldBounds$();
+        G.expandRectangle(screenBounds, buffer);
+        return G.areRectanglesOverlapping(bounds.getBoundingBox$(), screenBounds);
     }
 
     isPtOnScreen(pt: Pt, buffer: number = 0) {
-        let screenRect = this.camera.getWorldRect$();
-        G.expandRectangle(screenRect, buffer);
-        return screenRect.contains(pt);
+        let screenBounds = this.camera.getWorldBounds$();
+        G.expandRectangle(screenBounds, buffer);
+        return screenBounds.contains(pt);
     }
 
     isRectOnScreen(rect: Rect, buffer: number = 0) {
-        let screenRect = this.camera.getWorldRect$();
-        G.expandRectangle(screenRect, buffer);
-        return G.areRectanglesOverlapping(rect, screenRect);
+        let screenBounds = this.camera.getWorldBounds$();
+        G.expandRectangle(screenBounds, buffer);
+        return G.areRectanglesOverlapping(rect, screenBounds);
     }
 
     playSound(key: string, config?: SoundUtils.PlaySoundConfig) {

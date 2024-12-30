@@ -4,7 +4,7 @@ namespace Camera {
     export type Config = {
         width?: number;
         height?: number;
-        bounds?: Bndries;
+        limits?: Bndries;
         mode?: Mode;
         movement?: Movement;
         screenShakePhysicallyMovesCamera?: boolean;
@@ -44,7 +44,7 @@ class Camera {
     x: number;
     y: number;
 
-    bounds: Bndries;
+    limits: Bndries;
     mode: Camera.Mode;
     movement: Camera.Movement;
 
@@ -82,7 +82,7 @@ class Camera {
         this.x = 0;
         this.y = 0;
 
-        this.bounds = O.withDefaults(config.bounds ?? {}, {
+        this.limits = O.withDefaults(config.limits ?? {}, {
             top: -Infinity,
             bottom: Infinity,
             left: -Infinity,
@@ -132,7 +132,7 @@ class Camera {
             this._waverY = 0;
         }
 
-        this.clampToBounds();
+        this.clampToLimits();
 
         if (Debug.MOVE_CAMERA_WITH_ARROWS && this.world === global.world && Debug.isDebugInputAllowed()) {
             if (Input.isDown(Input.DEBUG_MOVE_CAMERA_LEFT))  this.debugOffsetX -= 1;
@@ -183,22 +183,22 @@ class Camera {
         return FrameCache.vec2(0, 0);
     }
 
-    getWorldRect$() {
+    getWorldBounds$() {
         return FrameCache.rectangle(this.left, this.top, this.width, this.height);
     }
 
-    private clampToBounds() {
-        if (this.bounds.left > -Infinity && this.left < this.bounds.left) {
-            this.x += this.bounds.left - this.left;
+    private clampToLimits() {
+        if (this.limits.left > -Infinity && this.left < this.limits.left) {
+            this.x += this.limits.left - this.left;
         }
-        if (this.bounds.right < Infinity && this.right > this.bounds.right) {
-            this.x += this.bounds.right - this.right;
+        if (this.limits.right < Infinity && this.right > this.limits.right) {
+            this.x += this.limits.right - this.right;
         }
-        if (this.bounds.top > -Infinity && this.top < this.bounds.top) {
-            this.y += this.bounds.top - this.top;
+        if (this.limits.top > -Infinity && this.top < this.limits.top) {
+            this.y += this.limits.top - this.top;
         }
-        if (this.bounds.bottom < Infinity && this.bottom > this.bounds.bottom) {
-            this.y += this.bounds.bottom - this.bottom;
+        if (this.limits.bottom < Infinity && this.bottom > this.limits.bottom) {
+            this.y += this.limits.bottom - this.bottom;
         }
     }
 
