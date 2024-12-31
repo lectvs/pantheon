@@ -5,8 +5,11 @@ class StageManager {
     }[];
     private transition: Transition | undefined;
 
+    private endOfFrameQueue: (() => any)[];
+
     constructor() {
         this.stageStack = [];
+        this.endOfFrameQueue = [];
     }
 
     update() {
@@ -17,6 +20,10 @@ class StageManager {
             }
         } else {
             this.getCurrentWorld()?.update();
+        }
+
+        while (!A.isEmpty(this.endOfFrameQueue)) {
+            this.endOfFrameQueue.shift()!();
         }
     }
 
@@ -77,7 +84,14 @@ class StageManager {
     /**
      * If stackPrevious is undefined, will be true iff either old or new stage is a Menu.
      */
-    internalLoadStage(stage: () => World, transition: Transition, stackPrevious: boolean | undefined) {
+    load(stage: () => World, transition: Transition = new Transitions.Instant(), stackPrevious?: boolean) {
+        this.endOfFrameQueue.push(() => this.loadImmediate(stage, transition, stackPrevious));
+    }
+
+    /**
+     * If stackPrevious is undefined, will be true iff either old or new stage is a Menu.
+     */
+    loadImmediate(stage: () => World, transition: Transition = new Transitions.Instant(), stackPrevious?: boolean) {
         let oldWorld = this.getCurrentWorld();
         let newWorld = stage();
         if (stackPrevious === undefined) {
@@ -95,12 +109,16 @@ class StageManager {
         return newWorld;
     }
 
-    internalReloadCurrentStage(transition: Transition) {
+    reload(transition: Transition = new Transitions.Instant()) {
+        this.endOfFrameQueue.push(() => this.reloadImmediate(transition));
+    }
+
+    reloadImmediate(transition: Transition = new Transitions.Instant()) {
         if (this.stageStack.length === 0) {
             console.error('Cannot reload current stage because there are no stages loaded');
             return;
         }
-        this.internalLoadStage(this.stageStack.last()!.worldFactory, transition, false);
+        this.loadImmediate(this.stageStack.last()!.worldFactory, transition, false);
     }
 
     reset() {

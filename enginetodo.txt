@@ -2,7 +2,6 @@ TODO NOW
 - load directly from pyxel file (it's just a zip??)
 - load directly from aseprite (https://github.com/kennedy0/aseprite-reader/blob/main/src/aseprite_reader/aseprite_file.py)
 - bring in constructs from nano
-- global variables for specific classes for easy access (e.g. GAME, MUSIC, STAGE, etc.)
 - sort through nano milestones and create a general game todo list
 
 TODO IN SEPARATE BRANCH

@@ -18,6 +18,26 @@ declare const W: number;
  */
 declare const H: number;
 
+/**
+ * global.game
+ */
+declare const GAME: Game;
+
+/**
+ * global.world
+ */
+declare const WORLD: World;
+
+/**
+ * global.game.musicManager
+ */
+declare const MUSIC: MusicManager;
+
+/**
+ * global.game.stageManager
+ */
+declare const STAGE: StageManager;
+
 
 interface Array<T> {
     /**

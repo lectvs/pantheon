@@ -44,7 +44,7 @@ class MusicManager {
         }
     }
 
-    fadeMusic(fadeVolume: number, fadeTime: number = 0) {
+    fade(fadeVolume: number, fadeTime: number = 0) {
         if (this.state.state === 'stopped') return;
         let music = this.state.currentMusic;
         let startVolume = music.volume;
@@ -58,7 +58,7 @@ class MusicManager {
         return this.state.currentMusic.key;
     }
 
-    pauseMusic(fadeTime: number = 0) {
+    pause(fadeTime: number = 0) {
         if (this.state.state === 'stopped') return;
         let music = this.state.currentMusic;
         let startVolume = music.volume;
@@ -73,23 +73,23 @@ class MusicManager {
         };
     }
 
-    playMusic(music: string | Sound, fadeTime: number = 0) {
+    play(music: string | Sound, fadeTime: number = 0) {
         let musicAlreadyPlaying =  (St.isString(music) && this.state.state !== 'stopped' && this.state.currentMusic.key === music)
                                 || (!St.isString(music) && this.state.state !== 'stopped' && this.state.currentMusic === music);
         if (musicAlreadyPlaying) {
             if (this.state.state === 'playing') {
                 if (this.state.fadeVolume < 1) {
-                    this.unfadeMusic(fadeTime);
+                    this.unfade(fadeTime);
                 }
                 return;
             }
             if (this.state.state === 'paused') {
-                this.unpauseMusic(fadeTime);
+                this.unpause(fadeTime);
                 return;
             }
         }
 
-        this.stopMusic(fadeTime);
+        this.stop(fadeTime);
         music = this.soundManager.playSound(music);
         music.loopsLeft = Infinity;
         this.scriptManager.runScript(S.tween(fadeTime, music, 'volume', 0, 1),
@@ -101,7 +101,7 @@ class MusicManager {
         };
     }
 
-    stopMusic(fadeTime: number = 0) {
+    stop(fadeTime: number = 0) {
         if (this.state.state === 'stopped') return;
         let music = this.state.currentMusic;
         let startVolume = music.volume;
@@ -114,11 +114,11 @@ class MusicManager {
         };
     }
 
-    unfadeMusic(fadeTime: number = 0) {
-        this.fadeMusic(1, fadeTime);
+    unfade(fadeTime: number = 0) {
+        this.fade(1, fadeTime);
     }
 
-    unpauseMusic(fadeTime: number = 0) {
+    unpause(fadeTime: number = 0) {
         if (this.state.state === 'stopped') return;
         let music = this.state.currentMusic;
         let startVolume = music.volume;

@@ -57,7 +57,7 @@ class Game {
 
     start() {
         this.stageManager.reset();
-        this.stageManager.internalLoadStage(this.entryPointMenu, new Transitions.Instant(), false);
+        this.stageManager.loadImmediate(this.entryPointMenu, new Transitions.Instant(), false);
         if (Debug.SKIP_MAIN_MENU_STAGE) {
             if (this.entryPointMenu.toString() !== this.mainMenu.toString()) {
                 this.loadMainMenu();
@@ -146,37 +146,17 @@ class Game {
 
     loadMainMenu() {
         this.stageManager.reset();
-        this.stageManager.internalLoadStage(this.mainMenu, new Transitions.Instant(), false);
+        this.stageManager.loadImmediate(this.mainMenu, new Transitions.Instant(), false);
         Persist.persist();
     }
 
-    loadStage(stage: () => World, transition: Transition = new Transitions.Instant(), stackPrevious?: boolean) {
-        this.runAtEndOfFrame(() => global.stageManager.internalLoadStage(stage, transition, stackPrevious));
-    }
-
-    loadStageImmediate(stage: () => World, transition: Transition = new Transitions.Instant(), stackPrevious?: boolean) {
-        return global.stageManager.internalLoadStage(stage, transition, stackPrevious);
-    }
-
     pauseGame(transition: Transition = new Transitions.Instant()) {
-        this.stageManager.internalLoadStage(this.pauseMenu, transition, true);
-    }
-
-    pauseMusic(fadeTime: number = 0) {
-        this.musicManager.pauseMusic(fadeTime);
-    }
-
-    playMusic(music: string | Sound, fadeTime: number = 0) {
-        this.musicManager.playMusic(music, fadeTime);
+        this.stageManager.loadImmediate(this.pauseMenu, transition, true);
     }
 
     playSound(key: string) {
         if (global.theater?.isSkippingCutscene) return new BasicSound(key);
         return this.soundManager.playSound(key);
-    }
-
-    reloadCurrentStage(transition: Transition = new Transitions.Instant()) {
-        this.runAtEndOfFrame(() => this.stageManager.internalReloadCurrentStage(transition));
     }
 
     runAtEndOfFrame(fn: () => any) {
@@ -185,11 +165,7 @@ class Game {
 
     startGame(stageToLoad: () => World, transition: Transition = new Transitions.Instant()) {
         this.gameTheater = this.gameTheaterFactory();
-        this.stageManager.internalLoadStage(stageToLoad, transition, false);
-    }
-
-    stopMusic(fadeTime: number = 0) {
-        this.musicManager.stopMusic(fadeTime);
+        this.stageManager.loadImmediate(stageToLoad, transition, false);
     }
 
     takeScreenshot(): World.Screenshot {
@@ -211,10 +187,6 @@ class Game {
 
     unpauseGame(transition: Transition = new Transitions.Instant()) {
         this.stageManager.clearMenus(transition);
-    }
-
-    unpauseMusic(fadeTime: number = 0) {
-        this.musicManager.unpauseMusic(fadeTime);
     }
 
     private renderTouches() {

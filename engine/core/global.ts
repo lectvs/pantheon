@@ -36,3 +36,19 @@ Object.defineProperty(window, 'W', {
 Object.defineProperty(window, 'H', {
     get: () => global.gameHeight,
 });
+
+Object.defineProperty(window, 'GAME', {
+    get: () => global.game,
+});
+
+Object.defineProperty(window, 'WORLD', {
+    get: () => global.world,
+});
+
+Object.defineProperty(window, 'MUSIC', {
+    get: () => global.game.musicManager,
+});
+
+Object.defineProperty(window, 'STAGE', {
+    get: () => global.game.stageManager,
+});
