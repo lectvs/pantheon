@@ -11,7 +11,7 @@ namespace Main {
         fpsLimit: number;
         preventScrollOnCanvas: boolean;
         defaultSpriteTextFont?: string;
-        requireLocalStorageSupport?: boolean;
+        allowUnsupportedLocalStorage?: boolean;
 
         textures?: Dict<Preload.Texture>;
         sounds?: Dict<Preload.Sound>;
@@ -90,7 +90,7 @@ class Main {
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
         LocalStorage.init();
-        if (!LocalStorage.isSupported && (this.config.requireLocalStorageSupport ?? true)) {
+        if (!LocalStorage.isSupported && !this.config.allowUnsupportedLocalStorage) {
             Main.breakGameWithMessage("Error: Your browser or the page you're visiting does not support localStorage.<br/><br/>Please try a different browser.");
             return;
         }

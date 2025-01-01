@@ -9,20 +9,10 @@
 - Change game name and window title in `bin/index.html`
 
 # Pre-Publish Checklist
-- Sound does not restart on death
-- Music volume not too loud
-- Check for remaining TODOs
-- Test with throttling (chrome dev console > performance > [gear])
-- Test for memory leaks
-- Test game in Incognito mode (only with save data)
+- See GAME_TODO.md
 
 # Publish Notes
-- None
-
-# How To Build Electron App
-- `cd bin/`
-- `npm install`
-- `npx electron-packager . [name]`
+- See GAME_TODO.md
 
 # Game Design Tips
 - Stop + Shake + Slow Motion
