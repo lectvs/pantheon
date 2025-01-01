@@ -15,10 +15,14 @@ class Fullscreen {
     private static startFullscreen() {
         if (!this.supported || this.enabled) return;
         Main.rendererView.requestFullscreen();
+        if (Main.config.fullscreenPageBackgroundColor !== undefined) {
+            document.body.style.backgroundColor = Main.config.fullscreenPageBackgroundColor;
+        }
     }
 
     private static stopFullscreen() {
         if (!this.supported || !this.enabled) return;
         document.exitFullscreen();
+        document.body.style.backgroundColor = Main.nonFullscreenPageBackgroundColor;
     }
 }

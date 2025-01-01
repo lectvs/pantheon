@@ -7,6 +7,7 @@ namespace Main {
         canvasScale: number;
         upscale: number;
         backgroundColor: number;
+        fullscreenPageBackgroundColor?: string;
         fpsLimit: number;
         preventScrollOnCanvas: boolean;
         defaultSpriteTextFont?: string;
@@ -48,6 +49,8 @@ class Main {
     private static configFactory: () => Main.Config;
     static config: Main.Config;
 
+    static nonFullscreenPageBackgroundColor: string;
+
     static game: Game;
     static soundManager: GlobalSoundManager;
     private static renderer: PIXI.Renderer;
@@ -71,6 +74,7 @@ class Main {
     }
 
     private static preload() {
+        this.nonFullscreenPageBackgroundColor = document.body.style.backgroundColor;
         Debug.init(this.config.debug);
 
         if (MobileUtils.isMobileBrowser()) {

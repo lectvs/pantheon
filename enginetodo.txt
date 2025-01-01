@@ -2,7 +2,6 @@ TODO NOW
 - load directly from pyxel file (it's just a zip??)
 - load directly from aseprite (https://github.com/kennedy0/aseprite-reader/blob/main/src/aseprite_reader/aseprite_file.py)
 - sort through nano milestones and create a general game todo list
-- change webpage background color for debug vs release, or fullscreen vs non-fullscreen
 
 TODO IN SEPARATE BRANCH
 - text centered by default
