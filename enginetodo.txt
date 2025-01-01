@@ -2,6 +2,7 @@ TODO NOW
 - load directly from pyxel file (it's just a zip??)
 - load directly from aseprite (https://github.com/kennedy0/aseprite-reader/blob/main/src/aseprite_reader/aseprite_file.py)
 - sort through nano milestones and create a general game todo list
+- change webpage background color for debug vs release, or fullscreen vs non-fullscreen
 
 TODO IN SEPARATE BRANCH
 - text centered by default
@@ -26,6 +27,7 @@ TODO IN SEPARATE BRANCH
 - GCCTextures - garbage-collected, cached - be able to create custom textures without worrying about cleanup
 - get spriteText bounds without re-rendering it? (see spritetext TODO)
 - investigate webgl context lost when rapidly pausing and unpausing
+- refactor upscaling/mobile scaling modes (+ new mode for true 1:1 when fullscreened)
 - update pantheon template
     - update with new engine version
     - default/template menus for pause, options, debug, intro, main

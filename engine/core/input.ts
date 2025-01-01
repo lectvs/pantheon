@@ -390,13 +390,11 @@ class Input {
     }
 
     static handleKeyDownEvent(event: KeyboardEvent) {
+        event.preventDefault();
         // Event fires repeatedly if key is held down.
         if (event.repeat) return;
         let keyCode = Input.getKeyFromEventKey(event.key);
         this.eventKey = keyCode;
-        if (this.isDownByKeyCode[keyCode] !== undefined && event.key === 'Tab') {
-            event.preventDefault();
-        }
         this.isDownByKeyCode[keyCode] = true;
         this.updateKeyboardStringWithEvent(event);
 
