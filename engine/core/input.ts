@@ -390,11 +390,15 @@ class Input {
     }
 
     static handleKeyDownEvent(event: KeyboardEvent) {
-        // Prevent default for all keys except F12 (debug console).
-        if (event.key !== 'F12') event.preventDefault();
+        let keyCode = Input.getKeyFromEventKey(event.key);
+
+        if (this.isDownByKeyCode[keyCode] !== undefined && this.PREVENT_DEFAULT_KEYS.includes(event.key)) {
+            event.preventDefault();
+        }
+
         // Event fires repeatedly if key is held down.
         if (event.repeat) return;
-        let keyCode = Input.getKeyFromEventKey(event.key);
+
         this.eventKey = keyCode;
         this.isDownByKeyCode[keyCode] = true;
         this.updateKeyboardStringWithEvent(event);
@@ -553,6 +557,7 @@ class Input {
     static MOUSE_KEYCODES: string[] = ["MouseLeft", "MouseMiddle", "MouseRight", "MouseBack", "MouseForward"];
     static MOUSE_TOUCH_ID: number = Infinity;
     static DEBUG_PREFIX: string = "debug::";
+    static PREVENT_DEFAULT_KEYS: string[] = ['Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
 }
 
 namespace Input {
