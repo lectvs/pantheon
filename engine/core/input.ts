@@ -390,7 +390,8 @@ class Input {
     }
 
     static handleKeyDownEvent(event: KeyboardEvent) {
-        event.preventDefault();
+        // Prevent default for all keys except F12 (debug console).
+        if (event.key !== 'F12') event.preventDefault();
         // Event fires repeatedly if key is held down.
         if (event.repeat) return;
         let keyCode = Input.getKeyFromEventKey(event.key);
