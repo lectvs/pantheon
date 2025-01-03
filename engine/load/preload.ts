@@ -87,6 +87,8 @@ class Preload {
         for (let key in options.textures) {
             if (this.isLciImage(options.textures[key].url)) {
                 loaders.push(new LciLoader(key, options.textures[key]));
+            } else if (this.isAsepriteImage(options.textures[key].url)) {
+                loaders.push(new AsepriteLoader(key, options.textures[key]));
             } else {
                 loaders.push(new TextureLoader(key, options.textures[key]));
             }
@@ -112,6 +114,10 @@ class Preload {
             loaders.push(new TextFileLoader(key, options.textFiles[key]));
         }
 
+        for (let key in options.textFiles) {
+            loaders.push(new TextFileLoader(key, options.textFiles[key]));
+        }
+
         for (let key in options.fonts) {
             loaders.push(new FontLoader(key, options.fonts[key]));
         }
@@ -127,6 +133,11 @@ class Preload {
     private static isLciImage(url: string | undefined) {
         if (!url) return false;
         return url.endsWith('.lci') || url.startsWith('data:image/lci;');
+    }
+
+    private static isAsepriteImage(url: string | undefined) {
+        if (!url) return false;
+        return url.endsWith('.aseprite') || url.endsWith('.ase');
     }
 
     static getAssetUrl(key: string, url: string | undefined, defaultExtension: string) {
