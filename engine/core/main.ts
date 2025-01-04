@@ -18,6 +18,8 @@ namespace Main {
         tilesets?: Dict<Preload.Tileset>;
         pyxelTilemaps?: Dict<Preload.PyxelTilemap>;
         ldtkTilemaps?: Dict<Preload.LdtkWorld>;
+        lciFiles?: Dict<Preload.LciFile>;
+        asepriteFiles?: Dict<Preload.AsepriteFile>;
         textFiles?: Dict<Preload.TextFile>;
         fonts?: Dict<Preload.Font>;
         customResources?: Dict<Preload.CustomResource>;
@@ -89,6 +91,8 @@ class Main {
         PIXI.utils.sayHello(PIXI.utils.isWebGLSupported() ? 'WebGL' : 'Canvas');
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
+        this.checkForWebGlAcceleration();
+
         LocalStorage.init();
         if (!LocalStorage.isSupported && !this.config.allowUnsupportedLocalStorage) {
             Main.breakGameWithMessage("Error: Your browser or the page you're visiting does not support localStorage.<br/><br/>Please try a different browser.");
@@ -143,6 +147,8 @@ class Main {
             tilesets: this.config.tilesets ?? {},
             pyxelTilemaps: this.config.pyxelTilemaps ?? {},
             ldtkWorlds: this.config.ldtkTilemaps ?? {},
+            lciFiles: this.config.lciFiles ?? {},
+            asepriteFiles: this.config.asepriteFiles ?? {},
             textFiles: this.config.textFiles ?? {},
             fonts: this.config.fonts ?? {},
             custom: this.config.customResources ?? {},
@@ -314,6 +320,22 @@ class Main {
         window.addEventListener("beforeunload", event => {
             Persist.persist();
         }, false);
+    }
+
+    private static checkForWebGlAcceleration() {
+        const contextOptions = {
+            stencil: true,
+            failIfMajorPerformanceCaveat: true,
+        };
+        const canvas = document.createElement('canvas');
+        let gl = (
+            canvas.getContext('webgl', contextOptions)
+            || canvas.getContext('experimental-webgl', contextOptions)
+        ) as WebGLRenderingContext;
+
+        if (!gl) {
+            console.warn('Warning: Hardware acceleration does not appear enabled! Performance may be degraded.');
+        }
     }
 
     private static getRemotePath() {

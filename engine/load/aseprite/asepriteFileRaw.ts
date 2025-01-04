@@ -1,3 +1,8 @@
+/**
+ * File spec: https://github.com/aseprite/aseprite/blob/main/docs/ase-file-specs.md
+ * Example: https://github.com/kennedy0/aseprite-reader/blob/main/src/aseprite_reader/aseprite_file.py
+ */
+
 type AsepriteFileRaw = {
     header: AsepriteFileRaw.Header;
     frames: AsepriteFileRaw.Frame[];

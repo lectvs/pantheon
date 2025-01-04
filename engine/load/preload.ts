@@ -5,6 +5,8 @@ namespace Preload {
         tilesets: Dict<Preload.Tileset>;
         pyxelTilemaps: Dict<Preload.PyxelTilemap>;
         ldtkWorlds: Dict<Preload.LdtkWorld>;
+        lciFiles: Dict<Preload.LciFile>;
+        asepriteFiles: Dict<Preload.AsepriteFile>;
         textFiles: Dict<Preload.TextFile>;
         fonts: Dict<Preload.Font>;
         custom: Dict<Preload.CustomResource>;
@@ -34,6 +36,18 @@ namespace Preload {
 
     export type TextureNinepatch = {
         innerRect: Rect;
+    }
+
+    export type LciFile = {
+        url?: string;
+        spritesheet?: TextureSpritesheet;
+        ninepatch?: TextureNinepatch;
+        frames?: Dict<TextureFrame>;
+    } & TextureFrame;
+
+    export type AsepriteFile = {
+        url?: string;
+        anchor?: Vector2;
     }
 
     export type Sound = {
@@ -85,13 +99,7 @@ class Preload {
         let loaders: Loader[] = [];
 
         for (let key in options.textures) {
-            if (this.isLciImage(options.textures[key].url)) {
-                loaders.push(new LciLoader(key, options.textures[key]));
-            } else if (this.isAsepriteImage(options.textures[key].url)) {
-                loaders.push(new AsepriteLoader(key, options.textures[key]));
-            } else {
-                loaders.push(new TextureLoader(key, options.textures[key]));
-            }
+            loaders.push(new TextureLoader(key, options.textures[key]));
         }
 
         for (let key in options.sounds) {
@@ -108,6 +116,14 @@ class Preload {
 
         for (let key in options.ldtkWorlds) {
             loaders.push(new LdtkWorldLoader(key, options.ldtkWorlds[key]));
+        }
+
+        for (let key in options.lciFiles) {
+            loaders.push(new LciLoader(key, options.lciFiles[key]));
+        }
+
+        for (let key in options.asepriteFiles) {
+            loaders.push(new AsepriteLoader(key, options.asepriteFiles[key]));
         }
 
         for (let key in options.textFiles) {
@@ -128,16 +144,6 @@ class Preload {
 
         this.loaderSystem = new LoaderSystem(loaders);
         this.loaderSystem.load(options.progressCallback, options.onLoad);
-    }
-
-    private static isLciImage(url: string | undefined) {
-        if (!url) return false;
-        return url.endsWith('.lci') || url.startsWith('data:image/lci;');
-    }
-
-    private static isAsepriteImage(url: string | undefined) {
-        if (!url) return false;
-        return url.endsWith('.aseprite') || url.endsWith('.ase');
     }
 
     static getAssetUrl(key: string, url: string | undefined, defaultExtension: string) {

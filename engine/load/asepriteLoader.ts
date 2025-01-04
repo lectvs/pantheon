@@ -1,20 +1,26 @@
+/**
+ * File spec: https://github.com/aseprite/aseprite/blob/main/docs/ase-file-specs.md
+ * Example: https://github.com/kennedy0/aseprite-reader/blob/main/src/aseprite_reader/aseprite_file.py
+ */
 class AsepriteLoader implements Loader {
     private _completionPercent: number;
     get completionPercent() { return this._completionPercent; }
 
     private key: string;
-    private texture: Preload.Texture;
+    private asepriteFile: Preload.AsepriteFile;
     private pixiLoader: PIXI.Loader;
 
-    constructor(key: string, textFile: Preload.Texture) {
+    private asepriteDocument: AsepriteFile | undefined;
+
+    constructor(key: string, asepriteFile: Preload.AsepriteFile) {
         this.key = key;
-        this.texture = textFile;
+        this.asepriteFile = asepriteFile;
         this._completionPercent = 0;
         this.pixiLoader = new PIXI.Loader();
     }
 
     load(callback?: () => void) {
-        let url = Preload.getAssetUrl(this.key, this.texture.url, 'aseprite');
+        let url = Preload.getAssetUrl(this.key, this.asepriteFile.url, 'aseprite');
         this.pixiLoader.add(this.key, url, { xhrType: PIXI.LoaderResource.XHR_RESPONSE_TYPE.BUFFER });
         this.pixiLoader.load(() => {
             this.onLoadAsepriteFile(callback);
@@ -32,29 +38,21 @@ class AsepriteLoader implements Loader {
         }
 
         let bytesReader = new BytesReader(dataBuffer);
-
-        console.log('bytesReader:', bytesReader);
-
         let rawFile = AsepriteFileRaw.readAsepriteFileRaw(bytesReader);
-
-        console.log('raw file:', rawFile);
-
-        let parsedFile = AsepriteFile.fromRaw(rawFile);
-
-        console.log('parsed file:', parsedFile);
+        this.asepriteDocument = AsepriteFile.fromRaw(rawFile);
 
         let loaders: Loader[] = [];
 
         // Load each frame with all layers as a texture.
-        for (let i = 0; i < parsedFile.frames.length; i++) {
-            let frame = parsedFile.frames[i];
+        for (let i = 0; i < this.asepriteDocument.frames.length; i++) {
+            let frame = this.asepriteDocument.frames[i];
             for (let cel of frame.cels) {
                 if (cel.celData.type === 'linked') {
-                    console.log('Linked cels not supportedin Aseprite files. Ignoring.', parsedFile);
+                    console.log('Linked cels not supportedin Aseprite files. Ignoring.', this.asepriteDocument);
                 }
                 if (cel.celData.type !== 'image') continue;
                 if (cel.zIndex !== 0) {
-                    console.log('Z-index not supported for Aseprite cels. Ignoring.', parsedFile);
+                    console.log('Z-index not supported for Aseprite cels. Ignoring.', this.asepriteDocument);
                 }
                 loaders.push(new AsepriteLoader.TextureFromImageDataLoader(this.getCelKey(i, cel), { anchor: Anchor.TOP_LEFT },
                     cel.celData.imageData, cel.celData.width, cel.celData.height));
@@ -62,7 +60,7 @@ class AsepriteLoader implements Loader {
         }
 
         // Load textures for each tileset.
-        for (let tileset of parsedFile.tilesets) {
+        for (let tileset of this.asepriteDocument.tilesets) {
             for (let i = 0; i < tileset.tiles.length; i++) {
                 loaders.push(new AsepriteLoader.TextureFromImageDataLoader(this.getTileKey(tileset, i), { anchor: Anchor.CENTER },
                     tileset.tiles[i].imageData, tileset.tileWidth, tileset.tileHeight));
@@ -71,26 +69,28 @@ class AsepriteLoader implements Loader {
 
         new LoaderSystem(loaders).load(
             progress => this._completionPercent = progress,
-            () => this.onLoadTextures(parsedFile, callback),
+            () => this.onLoadTextures(callback),
         );
     }
 
-    private onLoadTextures(parsedFile: AsepriteFile, callback?: () => void) {
+    private onLoadTextures(callback?: () => void) {
+        if (!this.asepriteDocument) return;
+
         // Load each frame with all layers as a texture.
         let sprite = new PIXI.Sprite();
-        for (let i = 0; i < parsedFile.frames.length; i++) {
-            let frame = parsedFile.frames[i];
+        for (let i = 0; i < this.asepriteDocument.frames.length; i++) {
+            let frame = this.asepriteDocument.frames[i];
 
-            let frameTexture = newPixiRenderTexture(parsedFile.width, parsedFile.height, 'AsepriteLoader.load');
-            if (this.texture.anchor) {
-                frameTexture.defaultAnchor.set(this.texture.anchor.x, this.texture.anchor.y);
+            let frameTexture = newPixiRenderTexture(this.asepriteDocument.width, this.asepriteDocument.height, 'AsepriteLoader.load');
+            if (this.asepriteFile.anchor) {
+                frameTexture.defaultAnchor.set(this.asepriteFile.anchor.x, this.asepriteFile.anchor.y);
             } else {
                 frameTexture.defaultAnchor.set(0.5, 0.5);
             }
 
             for (let cel of frame.cels) {
                 if (cel.celData.type !== 'image') continue;
-                let layer = parsedFile.layers[cel.layerIndex];
+                let layer = this.asepriteDocument.layers[cel.layerIndex];
                 if (!layer.visible) continue;
 
                 let celTexture = AssetCache.textures[this.getCelKey(i, cel)];
@@ -115,8 +115,13 @@ class AsepriteLoader implements Loader {
             AssetCache.textures[this.getFrameKey(i)] = frameTexture;
         }
 
+        // For single-frame images, load to the root key as well.
+        if (this.asepriteDocument.frames.length === 1) {
+            AssetCache.textures[this.key] = AssetCache.textures[this.getFrameKey(0)];
+        }
+
         // Load each tileset.
-        for (let tileset of parsedFile.tilesets) {
+        for (let tileset of this.asepriteDocument.tilesets) {
             let tiles = tileset.tiles.map((_, i) => this.getTileKey(tileset, i));
             AssetCache.tilesets[this.getTilesetKey(tileset)] = {
                 tileWidth: tileset.tileWidth,
@@ -127,11 +132,11 @@ class AsepriteLoader implements Loader {
         }
 
         // Load each tilemap.
-        let firstFrame = parsedFile.frames[0];
+        let firstFrame = this.asepriteDocument.frames[0];
         let tilemapLayers: Tilemap.TilemapLayer[] = [];
         for (let cel of firstFrame.cels) {
             if (cel.celData.type !== 'tilemap') continue;
-            let layer = parsedFile.layers[cel.layerIndex];
+            let layer = this.asepriteDocument.layers[cel.layerIndex];
             tilemapLayers.push({
                 name: layer.name,
                 tiles: A.map2D(A.batch(cel.celData.tiles, cel.celData.widthTiles), tile => this.asepriteTileToTilemapTile(tile)),
@@ -139,8 +144,8 @@ class AsepriteLoader implements Loader {
         }
 
         if (tilemapLayers.length > 0) {
-            if (parsedFile.frames.length > 1) {
-                console.error('Multiple frames not supported for Aseprite tilemaps. Using just the first frame.', parsedFile)
+            if (this.asepriteDocument.frames.length > 1) {
+                console.error('Multiple frames not supported for Aseprite tilemaps. Using just the first frame.', this.asepriteDocument)
             }
             AssetCache.tilemaps[this.getTilemapKey()] = {
                 layers: tilemapLayers,

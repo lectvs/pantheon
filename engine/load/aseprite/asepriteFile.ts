@@ -8,7 +8,6 @@ type AsepriteFile = {
     tilesets: AsepriteFile.Tileset[];
     layers: AsepriteFile.Layer[];
     frames: AsepriteFile.Frame[];
-    slices: AsepriteFile.Slice[];
     tags: AsepriteFile.Tag[];
 }
 
@@ -77,6 +76,7 @@ namespace AsepriteFile {
 
     export type Frame = {
         cels: Cel[];
+        slices: Slice[];
     }
 
     export type Cel = {
@@ -163,22 +163,18 @@ namespace AsepriteFile {
             palette: getPalette(raw),
             tilesets: [],
             layers: [],
-            frames: [],
-            slices: [],
+            frames: raw.frames.map(f => ({
+                cels: [],
+                slices: [],
+            })),
             tags: [],
         };
 
-        for (let frame of raw.frames) {
-            let resultFrame: Frame = {
-                cels: [],
-            };
-
+        for (let frame = 0; frame < raw.frames.length; frame++) {
             let i = 0;
-            while (i < frame.chunks.length) {
-                i = readChunk(result, resultFrame, frame.chunks, i);
+            while (i < raw.frames[frame].chunks.length) {
+                i = readChunk(result, result.frames[frame], raw.frames[frame].chunks, i);
             }
-
-            result.frames.push(resultFrame);
         }
 
         return result;
@@ -419,26 +415,28 @@ namespace AsepriteFile {
             console.error(`No slice keys at chunk ${index}, this was previously unseen! Skipping chunk.`, chunks);
             return index + 1;
         }
-        if (chunk.sliceKeys.length > 1) {
-            console.error(`Animated slices are not currently supported at chunk ${index}. Using only the first.`, chunks);
-        }
-        let sliceKey = chunk.sliceKeys[0];
-        if (sliceKey.frameNumber !== 0) {
-            console.error(`Unexpected slice key frame number at chunk ${index}, this was previously unseen! Ignoring.`, chunks);
-        }
 
         let userData = getAttachedUserData(chunks, index);
 
-        result.slices.push({
-            name: chunk.sliceName,
-            x: sliceKey.x,
-            y: sliceKey.y,
-            width: sliceKey.width,
-            height: sliceKey.height,
-            ninePatch: O.clone(sliceKey.ninePatch),
-            pivot: O.clone(sliceKey.pivot),
-            userData,
-        });
+        let sliceKeys = A.sorted(chunk.sliceKeys, Utils.IDENTITY);
+
+        for (let i = 0; i < sliceKeys.length; i++) {
+            let sliceKey = sliceKeys[i];
+            let startFrame = sliceKey.frameNumber;
+            let endFrameExcl = (i === sliceKeys.length - 1) ? result.frames.length : sliceKeys[i+1].frameNumber;
+            for (let j = startFrame; j < endFrameExcl; j++) {
+                result.frames[j].slices.push({
+                    name: chunk.sliceName,
+                    x: sliceKey.x,
+                    y: sliceKey.y,
+                    width: sliceKey.width,
+                    height: sliceKey.height,
+                    ninePatch: O.clone(sliceKey.ninePatch),
+                    pivot: O.clone(sliceKey.pivot),
+                    userData,
+                });
+            }
+        }
         
         return userData ? index + 2 : index + 1;
     }

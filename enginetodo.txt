@@ -1,10 +1,7 @@
 TODO NOW
-- load directly from pyxel file (it's just a zip??)
-- load directly from aseprite
-    - file spec: https://github.com/aseprite/aseprite/blob/main/docs/ase-file-specs.md
-    - example: https://github.com/kennedy0/aseprite-reader/blob/main/src/aseprite_reader/aseprite_file.py
 
 TODO IN SEPARATE BRANCH
+- load directly from pyxel file (it's just a zip??)
 - text centered by default
 - better particle system (e.g. start at 0 alpha, then go to 1, then back to 0)
 - add format functionality to spritetext

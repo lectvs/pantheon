@@ -3,35 +3,35 @@ class LciLoader implements Loader {
     get completionPercent() { return this._completionPercent; }
 
     private key: string;
-    private texture: Preload.Texture;
+    private lciFile: Preload.LciFile;
     private pixiLoader: PIXI.Loader;
 
-    private lci: Lci.Document | undefined;
+    private lciDocument: Lci.Document | undefined;
 
-    constructor(key: string, texture: Preload.Texture) {
+    constructor(key: string, lciFile: Preload.LciFile) {
         this.key = key;
-        this.texture = texture;
+        this.lciFile = lciFile;
         this._completionPercent = 0;
         this.pixiLoader = new PIXI.Loader();
     }
 
     load(callback?: () => void) {
-        let url = Preload.getAssetUrl(this.key, this.texture.url, 'lci');
+        let url = Preload.getAssetUrl(this.key, this.lciFile.url, 'lci');
         this.pixiLoader.add(this.key, url);
         this.pixiLoader.load(() => this.onLoadLci(callback));
     }
 
     private onLoadLci(callback?: () => void) {
-        this.lci = Lci.parseDocument(this.pixiLoader.resources[this.key].data);
-        if (!this.lci) {
+        this.lciDocument = Lci.parseDocument(this.pixiLoader.resources[this.key].data);
+        if (!this.lciDocument) {
             console.error('Failed to parse LCI document:', this.key);
             return;
         }
-        AssetCache.lciDocuments[this.key] = this.lci;
-        new LoaderSystem(this.lci.layers
+        AssetCache.lciDocuments[this.key] = this.lciDocument;
+        new LoaderSystem(this.lciDocument.layers
             .filter(layer => !layer.isDataLayer)
             .map(layer => new TextureLoader(Lci.getLayerTextureKey(this.key, layer.name), {
-                ...this.texture,
+                ...this.lciFile,
                 anchor: layer.properties.anchor ? vec2(layer.properties.anchor) : Anchor.TOP_LEFT,
                 url: layer.image
             }))
@@ -43,15 +43,15 @@ class LciLoader implements Loader {
     }
 
     private onLoadTextures() {
-        if (!this.lci) return;
-        let fullTexture = newPixiRenderTexture(this.lci.width, this.lci.height, 'LciLoader.load');
-        if (this.texture.anchor) {
-            fullTexture.defaultAnchor.set(this.texture.anchor.x, this.texture.anchor.y);
+        if (!this.lciDocument) return;
+        let fullTexture = newPixiRenderTexture(this.lciDocument.width, this.lciDocument.height, 'LciLoader.load');
+        if (this.lciFile.anchor) {
+            fullTexture.defaultAnchor.set(this.lciFile.anchor.x, this.lciFile.anchor.y);
         }
 
         let sprite = new PIXI.Sprite();
 
-        for (let layer of this.lci.layers) {
+        for (let layer of this.lciDocument.layers) {
             if (layer.isDataLayer) continue;
             if (!layer.visible) continue;
 
