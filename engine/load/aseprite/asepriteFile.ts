@@ -1,4 +1,6 @@
 type AsepriteFile = {
+    width: number;
+    height: number;
     colorDepth: AsepriteFile.ColorDepth;
     colorProfile: AsepriteFile.ColorProfile;
     userData?: AsepriteFile.UserData;
@@ -38,13 +40,13 @@ namespace AsepriteFile {
         tileHeight: number;
         emptyTileId: number;
         tiles: {
-            pixels: Rgba[];
+            imageData: Uint8Array;
             userData?: UserData;
         }[];
         userData?: UserData;
     }
 
-    export type Layer = {
+    export type LayerBase = {
         name: string;
         /**
          * Child level in relation to previous layer. Base child level is 0.
@@ -56,12 +58,22 @@ namespace AsepriteFile {
         opacity: number;
         visible: boolean;
         userData?: UserData;
-    } & ({
-        type: 'image' | 'group';
-    } | {
+    }
+
+    export type ImageLayer = LayerBase & {
+        type: 'image';
+    }
+
+    export type GroupLayer = LayerBase & {
+        type: 'group';
+    }
+
+    export type TilemapLayer = LayerBase & {
         type: 'tilemap';
         tilesetIndex: number;
-    })
+    }
+
+    export type Layer = ImageLayer | GroupLayer | TilemapLayer;
 
     export type Frame = {
         cels: Cel[];
@@ -81,7 +93,7 @@ namespace AsepriteFile {
         type: 'image';
         width: number;
         height: number;
-        pixels: Rgba[];
+        imageData: Uint8Array;
     } | {
         type: 'linked';
         linkedFrame: number;
@@ -144,6 +156,8 @@ namespace AsepriteFile {
 
     export function fromRaw(raw: AsepriteFileRaw): AsepriteFile {
         let result: AsepriteFile = {
+            width: raw.header.width,
+            height: raw.header.height,
             colorDepth: raw.header.colorDepth,
             colorProfile: getColorProfile(raw),
             palette: getPalette(raw),
@@ -274,11 +288,15 @@ namespace AsepriteFile {
         
         let celData: CelData;
         if (chunk.cel.celType === 0) {
+            let imageData = new Uint8Array(chunk.cel.pixels.length * 4);
+            for (let p = 0; p < chunk.cel.pixels.length; p++) {
+                writePixelToRGBA(chunk.cel.pixels[p], result, imageData, p);
+            }
             celData = {
                 type: 'image',
                 width: chunk.cel.width,
                 height: chunk.cel.height,
-                pixels: chunk.cel.pixels.map(pixel => translatePixelToRGBA(pixel, result)),
+                imageData,
             };
         } else if (chunk.cel.celType === 1) {
             celData = {
@@ -291,33 +309,34 @@ namespace AsepriteFile {
             if (decompressedImage.byteLength !== totalNumberOfPixels * (result.colorDepth / 8)) {
                 console.error(`Decompressed image is not the correct size at chunk ${index}`, chunks);
             }
-            let pixels: Rgba[] = [];
+            let imageData = new Uint8Array(totalNumberOfPixels * 4);
             for (let p = 0; p < totalNumberOfPixels; p++) {
                 if (result.colorDepth === 32) {
-                    pixels.push({
+                    writePixelToRGBA({
+                        colorDepth: 32,
                         r: decompressedImage[p*4],
                         g: decompressedImage[p*4 + 1],
                         b: decompressedImage[p*4 + 2],
                         a: decompressedImage[p*4 + 3],
-                    });
+                    }, result, imageData, p);
                 } else if (result.colorDepth === 16) {
-                    pixels.push(translatePixelToRGBA({
+                    writePixelToRGBA({
                         colorDepth: 16,
                         v: decompressedImage[p*2],
                         a: decompressedImage[p*2 + 1],
-                    }, result));
+                    }, result, imageData, p);
                 } else {
-                    pixels.push(translatePixelToRGBA({
+                    writePixelToRGBA({
                         colorDepth: 8,
                         i: decompressedImage[p],
-                    }, result));
+                    }, result, imageData, p);
                 }
             }
             celData = {
                 type: 'image',
                 width: chunk.cel.width,
                 height: chunk.cel.height,
-                pixels,
+                imageData,
             }
         } else {
             let decompressedTiles = decompress(chunk.cel.compressedTiles);
@@ -401,7 +420,7 @@ namespace AsepriteFile {
             return index + 1;
         }
         if (chunk.sliceKeys.length > 1) {
-            console.error(`Unexpected number of slice keys at chunk ${index}, this was previously unseen! Using only the first.`, chunks);
+            console.error(`Animated slices are not currently supported at chunk ${index}. Using only the first.`, chunks);
         }
         let sliceKey = chunk.sliceKeys[0];
         if (sliceKey.frameNumber !== 0) {
@@ -452,33 +471,34 @@ namespace AsepriteFile {
         let tiles: Tileset['tiles'] = [];
 
         for (let i = 0; i < chunk.numberOfTiles; i++) {
-            let pixels: Rgba[] = [];
+            let imageData = new Uint8Array(pixelsPerTile * 4);
             for (let p = 0; p < pixelsPerTile; p++) {
                 if (result.colorDepth === 32) {
-                    pixels.push({
+                    writePixelToRGBA({
+                        colorDepth: 32,
                         r: decompressedTilesetImage[i*pixelsPerTile*4 + p*4],
                         g: decompressedTilesetImage[i*pixelsPerTile*4 + p*4 + 1],
                         b: decompressedTilesetImage[i*pixelsPerTile*4 + p*4 + 2],
                         a: decompressedTilesetImage[i*pixelsPerTile*4 + p*4 + 3],
-                    });
+                    }, result, imageData, p);
                 } else if (result.colorDepth === 16) {
-                    pixels.push(translatePixelToRGBA({
+                    writePixelToRGBA({
                         colorDepth: 16,
                         v: decompressedTilesetImage[i*pixelsPerTile*2 + p*2],
                         a: decompressedTilesetImage[i*pixelsPerTile*2 + p*2 + 1],
-                    }, result));
+                    }, result, imageData, p);
                 } else {
-                    pixels.push(translatePixelToRGBA({
+                    writePixelToRGBA({
                         colorDepth: 8,
                         i: decompressedTilesetImage[i*pixelsPerTile + p],
-                    }, result));
+                    }, result,  imageData, p);
                 }
             }
             let tileUserData = tilesetUserData
                 ? getAttachedUserData(chunks, index + 1 + i)
                 : undefined;
             tiles.push({
-                pixels,
+                imageData,
                 userData: tileUserData,
             });
         }
@@ -584,17 +604,22 @@ namespace AsepriteFile {
         let colorProfileChunk = colorProfileChunks[0];
 
         if (colorProfileChunk.colorProfileType === 0) {
+            console.error('Only sRGB color profile is currently supported, your image may look wrong!', raw);
             return {
                 type: 'none',
             };
         }
         if (colorProfileChunk.colorProfileType === 1) {
+            if (colorProfileChunk.flags & 0x1) {
+                console.error('sRGB special fixed gamma is currently supported, your image may look wrong!', raw);
+            }
             return {
                 type: 'sRGB',
                 specialFixedGamma: (colorProfileChunk.flags & 0x1) ? colorProfileChunk.fixedGamma : undefined,
             };
         }
         if (colorProfileChunk.colorProfileType === 2) {
+            console.error('Only sRGB color profile is currently supported, your image may look wrong!', raw);
             return {
                 type: 'icc',
                 profile: colorProfileChunk.iccProfile,
@@ -637,20 +662,14 @@ namespace AsepriteFile {
         return PIXI.BLEND_MODES.NORMAL;
     }
 
-    function translatePixelToRGBA(pixel: AsepriteFileRaw.Pixel, file: AsepriteFile) {
+    function writePixelToRGBA(pixel: AsepriteFileRaw.Pixel, file: AsepriteFile, toArray: Uint8Array, toPixelIndex: number) {
         if (pixel.colorDepth === 32) {
-            return pixel;
+            toArray.set([pixel.r, pixel.g, pixel.b, pixel.a], toPixelIndex * 4);
+        } else if (pixel.colorDepth === 16) {
+            toArray.set([pixel.v, pixel.v, pixel.v, pixel.a], toPixelIndex * 4);
+        } else {
+            let color = file.palette.colors[pixel.i];
+            toArray.set([color.r, color.g, color.b, color.a], toPixelIndex * 4);
         }
-
-        if (pixel.colorDepth === 16) {
-            return {
-                r: pixel.v,
-                g: pixel.v,
-                b: pixel.v,
-                a: pixel.a,
-            };
-        }
-
-        return O.clone(file.palette.colors[pixel.i]);
     }
 }
