@@ -1,8 +1,6 @@
 /**
- * File spec: https://github.com/aseprite/aseprite/blob/main/docs/ase-file-specs.md
- * Example: https://github.com/kennedy0/aseprite-reader/blob/main/src/aseprite_reader/aseprite_file.py
+ * Raw Aseprite file data in roughly the same structure as stored in the file.
  */
-
 type AsepriteFileRaw = {
     header: AsepriteFileRaw.Header;
     frames: AsepriteFileRaw.Frame[];
@@ -211,6 +209,12 @@ namespace AsepriteFileRaw {
         };
     }
 
+    /**
+     * Reads the raw chunk data for an Aseprite file.
+     * 
+     * Aseprite file spec: https://github.com/aseprite/aseprite/blob/main/docs/ase-file-specs.md
+     * Reference implementation: https://github.com/kennedy0/aseprite-reader/blob/main/src/aseprite_reader/aseprite_file.py
+     */
     export function readAsepriteFileRaw(reader: BytesReader) {
         try {
             let header = readHeader(reader);

@@ -1,3 +1,6 @@
+/**
+ * Document format representing data in an Aseprite file.
+ */
 type AsepriteFile = {
     width: number;
     height: number;
@@ -154,6 +157,9 @@ namespace AsepriteFile {
         a: number;
     }
 
+    /**
+     * Convert raw Aseprite data into a more useble document format.
+     */
     export function fromRaw(raw: AsepriteFileRaw): AsepriteFile {
         let result: AsepriteFile = {
             width: raw.header.width,
@@ -180,6 +186,9 @@ namespace AsepriteFile {
         return result;
     }
 
+    /**
+     * Returns the index of the next chunk to read.
+     */
     function readChunk(result: AsepriteFile, resultFrame: Frame, chunks: AsepriteFileRaw.Chunk[], index: number) {
         let chunk = chunks[index];
         if (chunk.chunkType === 0x4 || chunk.chunkType === 0x11) {
