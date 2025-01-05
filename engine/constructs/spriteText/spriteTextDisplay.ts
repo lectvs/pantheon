@@ -42,8 +42,6 @@ class SpriteTextDisplay extends WorldObject {
             let startEntered = config.startEntered ?? false;
 
             return new SpriteText({
-                justify: 'center',
-                anchor: Anchor.CENTER,
                 ...spriteTextConfig,
                 x: M.equidistantLine(0, spacingDx * scaleX, line.length, i) - (anchor.x - 0.5) * spacingDx * scaleX,
                 y: M.equidistantLine(0, spacingDy * scaleY, styledChars.length, j) - (anchor.y - 0.5) * spacingDy * scaleY,

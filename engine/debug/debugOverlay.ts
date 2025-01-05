@@ -18,6 +18,8 @@ class DebugOverlay extends World {
             ignoreCamera: true,
             font: Debug.FONT,
             style: Debug.FONT_STYLE,
+            anchor: Anchor.TOP_LEFT,
+            justify: 'left',
             effects: { outline: { color: 0x000000 } },
             hooks: {
                 onUpdate: function() {

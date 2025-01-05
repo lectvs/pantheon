@@ -69,6 +69,8 @@ class DialogBox extends Sprite {
 
         this.spriteText = this.addChild(new SpriteText({
             font: this.defaultTextFont,
+            anchor: Anchor.TOP_LEFT,
+            justify: 'left',
         }));
         this.spriteTextOffset = 0;
 
@@ -83,7 +85,6 @@ class DialogBox extends Sprite {
         this.nameText = this.nameSprite.addChild(new SpriteText({
             p: config.namePlate?.textOffset,
             font: config.namePlate?.font ?? this.defaultTextFont,
-            anchor: Anchor.CENTER,
         }));
 
         this.advanceIndicator = this.addChild(new Sprite({

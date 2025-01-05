@@ -28,7 +28,7 @@ class SoundManager {
     constructor(config: SoundManager.Config) {
         this.sounds = [];
         this.volume = config.volume ?? 1;
-        this.humanizeByDefault = config.humanizeByDefault ?? true;
+        this.humanizeByDefault = config.humanizeByDefault ?? false;
         this.humanizeFactor = config.humanizeFactor ?? 0.1;
     }
 

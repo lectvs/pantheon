@@ -1,10 +1,6 @@
 TODO NOW
-
-TODO IN SEPARATE BRANCH
 - load directly from pyxel file (it's just a zip??)
-- text centered by default
 - better particle system (e.g. start at 0 alpha, then go to 1, then back to 0)
-- add format functionality to spritetext
 - worldobject._layer = undefined -> should mean inherit from parent (currently is set on add)
 - world/global "effects" e.g. timescale, camera position, music volume, etc. that only happen while a worldobject is in the world
 - modify individual characters on a spritetext
@@ -14,7 +10,6 @@ TODO IN SEPARATE BRANCH
 - common gamedata system
 - change state by returning string in statemachine's update method
 - fix worldSprite and layer.sprite (currently does not factor in upscale)
-- experiment with humanize off by default?
 - world-specific music and music priority?
 - perf improvement opportunity from eliminating getters for delta, physicsGroup, etc.
 - custom images in text should not affect line height (option?)

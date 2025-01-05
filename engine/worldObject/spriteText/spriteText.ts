@@ -5,6 +5,7 @@ namespace SpriteText {
     export type Config<WO extends SpriteText> = WorldObject.Config<WO> & {
         font?: string;
         text?: string;
+        format?: string;
         justify?: Justify;
         anchor?: Vector2;
         flipX?: boolean;
@@ -60,6 +61,7 @@ class SpriteText extends WorldObject {
 
     // This does not need to dirty the SpriteText when modified.
     style: Required<SpriteText.Style>;
+    private format: string | undefined;
 
     private _maxWidth: number;
     get maxWidth() { return this._maxWidth; }
@@ -163,6 +165,7 @@ class SpriteText extends WorldObject {
             filters: [],
         });
 
+        this.format = config.format;
         this._visibleCharStart = 0;
         this._visibleCharEnd = Infinity;
         this._maxWidth = config.maxWidth ?? Infinity;
@@ -170,9 +173,9 @@ class SpriteText extends WorldObject {
         this._blankLineHeight = config.blankLineHeight;
         this._wordWrap = config.wordWrap ?? true;
         this._fixedCharSize = config.fixedCharSize ?? false;
-        this._justify = config.justify ?? 'left';
+        this._justify = config.justify ?? 'center';
 
-        this.anchor = new SpriteText.DirtyAnchor(config.anchor ?? Anchor.TOP_LEFT, () => this.freeRenderSystem());
+        this.anchor = new SpriteText.DirtyAnchor(config.anchor ?? Anchor.CENTER, () => this.freeRenderSystem());
 
         this.flipX = config.flipX ?? false;
         this.flipY = config.flipY ?? false;
@@ -238,6 +241,10 @@ class SpriteText extends WorldObject {
         return this.chars.flat();
     }
 
+    getFormat() {
+        return this.format;
+    }
+
     getVisibleCharList(visibleCharStart: number = this.visibleCharStart, visibleCharEnd: number = this.visibleCharEnd) {
         let chars = this.chars.flat();
         return chars.slice(visibleCharStart, Math.min(visibleCharEnd, chars.length));
@@ -245,6 +252,11 @@ class SpriteText extends WorldObject {
 
     getCurrentText() {
         return this.currentText;
+    }
+
+    getCurrentTextFormatted() {
+        if (!this.format) return this.getCurrentText();
+        return this.format.replaceAll('%s', this.getCurrentText());
     }
 
     getStyleFromTags$(tagData: SpriteText.TagData[], defaults: Required<SpriteText.Style>) {
@@ -300,8 +312,13 @@ class SpriteText extends WorldObject {
         this.freeRenderSystem();
     }
 
-    setText(text: string) {
-        if (text === this.currentText) return;
+    setFormat(format: string | undefined) {
+        this.format = format;
+        this.setText(this.getCurrentText(), 'force');
+    }
+
+    setText(text: string, force?: 'force') {
+        if (text === this.currentText && !force) return;
         this.currentText = text;
         this.setCharsFromCurrentText();
         this.freeRenderSystem();
@@ -384,7 +401,7 @@ class SpriteText extends WorldObject {
 
     private setCharsFromCurrentText() {
         this.chars = SpriteText.textToCharList({
-            text: this.currentText,
+            text: this.getCurrentTextFormatted(),
             font: this.font,
             maxWidth: this.maxWidth,
             spaceBetweenLines: this.spaceBetweenLines,
