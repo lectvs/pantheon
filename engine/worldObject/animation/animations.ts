@@ -42,6 +42,7 @@ namespace Animations {
         textureRoot?: string;
         textures?: (string | PIXI.Texture | number)[];
         frameRate?: number;
+        humanize?: number | boolean;
         count?: number;
         overrides?: {[frame: number]: AnimationInstance.TextureAnimationFrame};
     }
@@ -49,8 +50,11 @@ namespace Animations {
     export function fromTextureList(config: FromTextureListConfig): AnimationInstance.TextureAnimation {
         let texturePrefix = !config.textureRoot ? "" : `${config.textureRoot}/`;
         let frameRate = config.frameRate ?? 1;
-        let duration = 1 / frameRate;
         let textures = config.textures ?? [];
+
+        let humanize = config.humanize === true ? 0.05 : (config.humanize || 0);
+        frameRate *= Random.float(1 - humanize, 1 + humanize);
+        let duration = 1 / frameRate;
 
         let frames: AnimationInstance.TextureAnimationFrame[] = textures.map(texture => ({
             texture: (St.isString(texture) || M.isNumber(texture)) ? `${texturePrefix}${texture}` : texture,

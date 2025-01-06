@@ -13,7 +13,6 @@ TODO NOW
 - world-specific music and music priority?
 - perf improvement opportunity from eliminating getters for delta, physicsGroup, etc.
 - custom images in text should not affect line height (option?)
-- humanize animation speeds?
 - allow escaping spriteText special characters like >> or [[ or ]] etc.
 - garbage collector type thing for worlds? (to fix problem of entities updating/rendering after world has been unloaded)
 - GCCTextures - garbage-collected, cached - be able to create custom textures without worrying about cleanup
