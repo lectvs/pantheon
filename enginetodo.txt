@@ -1,27 +1,33 @@
 TODO NOW
-- load directly from pyxel file (it's just a zip??)
-- better particle system (e.g. start at 0 alpha, then go to 1, then back to 0)
-- worldobject._layer = undefined -> should mean inherit from parent (currently is set on add)
-- world/global "effects" e.g. timescale, camera position, music volume, etc. that only happen while a worldobject is in the world
-- modify individual characters on a spritetext
-- option to keep children ordered relative to their parent + consistent keep children/parent close in render order
-- optimize World.selector.typeAll (quadratic runtime-ish)
-- make uislider (engine construct) a UIElement and make it compatible with UIKeyboardSystem
-- common gamedata system
-- change state by returning string in statemachine's update method
-- fix worldSprite and layer.sprite (currently does not factor in upscale)
-- world-specific music and music priority?
-- perf improvement opportunity from eliminating getters for delta, physicsGroup, etc.
-- custom images in text should not affect line height (option?)
-- allow escaping spriteText special characters like >> or [[ or ]] etc.
-- garbage collector type thing for worlds? (to fix problem of entities updating/rendering after world has been unloaded)
-- GCCTextures - garbage-collected, cached - be able to create custom textures without worrying about cleanup
-- get spriteText bounds without re-rendering it? (see spritetext TODO)
-- investigate webgl context lost when rapidly pausing and unpausing
-- refactor upscaling/mobile scaling modes (+ new mode for true 1:1 when fullscreened)
+- core improvements
+    - common gamedata system
+    - load directly from pyxel file (it's just a zip??)
+- world improvements
+    - world/global "effects" e.g. timescale, camera position, music volume, etc. that only happen while a worldobject is in the world
+    - fix worldSprite and layer.sprite (currently does not factor in upscale)
+    - world-specific music and music priority?
+    - optimize World.selector.typeAll (quadratic runtime-ish)
+    - garbage collector type thing for worlds? (to fix problem of entities updating/rendering after world has been unloaded)
+- worldobject improvements
+    - worldobject._layer = undefined -> should mean inherit from parent (currently is set on add) (likely won't work)
+    - GCCTextures - garbage-collected, cached - be able to create custom textures without worrying about cleanup
+    - option to keep children ordered relative to their parent
+    - option to consistently keep children/parent close in render order
+    - perf improvement opportunity from eliminating getters for delta, physicsGroup, etc.
+- spritetext improvements
+    - allow escaping spriteText special characters like >> or [[ or ]] etc.
+    - modify individual characters on a spritetext
+    - custom images in text should not affect line height (option?)
+    - get spriteText bounds without re-rendering it? (see spritetext TODO)
+- constructs improvements
+    - better particle system (e.g. start at 0 alpha, then go to 1, then back to 0)
+    - make uislider (engine construct) a UIElement and make it compatible with UIKeyboardSystem
+- issues
+    - investigate webgl context lost when rapidly pausing and unpausing
+
+TODO AFTER ABOVE
 - update pantheon template
-    - update with new engine version
-    - default/template menus for pause, options, debug, intro, main
+- default/template menus for pause, options, debug, intro, main
 
 
 backlog
@@ -64,4 +70,5 @@ backlog
 - enhanced glitch effect
 
 bugs
+- firefox doesn't support fullscreening, and as a result, it can't change game to landscape mode either
 - xephia zoom bug on app (pinch and zoom on black area outside canvas)

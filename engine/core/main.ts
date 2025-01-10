@@ -4,8 +4,11 @@ namespace Main {
     export type Config = {
         gameWidth: OrFactory<number>;
         gameHeight: OrFactory<number>;
-        canvasScale: number;
-        upscale: number;
+        scaling: {
+            scaleMode: ScaleManager.ScaleMode;
+            expandDirection: ScaleManager.ExpandDirection;
+            windowedScale: number;
+        };
         backgroundColor: number;
         fullscreenPageBackgroundColor?: string;
         fpsLimit: number;
@@ -26,8 +29,6 @@ namespace Main {
 
         controls: Input.KeyCodesByName;
 
-        mobileScalePrimaryDirection?: MobileScaleManager.PrimaryDirection;
-        mobileScaleMode?: MobileScaleManager.ScaleMode;
         simulateMouseWithTouches: boolean;
         defaultOptions: Options.Options;
 
@@ -102,7 +103,7 @@ class Main {
         global.gameWidth = OrFactory.resolve(this.config.gameWidth);
         global.gameHeight = OrFactory.resolve(this.config.gameHeight);
         global.backgroundColor = this.config.backgroundColor;
-        global.upscale = this.config.upscale;
+        global.upscale = ScaleManager.getWindowedUpscaleFor(this.config.scaling);
         if (!O.isEmpty(this.config.spriteTextTags)) SpriteText.addTags(this.config.spriteTextTags);
         if (this.config.defaultSpriteTextFont) SpriteText.DEFAULT_FONT = this.config.defaultSpriteTextFont;
         if (!O.isEmpty(this.config.dialogProfiles)) DialogProfiles.initProfiles(this.config.dialogProfiles);
@@ -110,22 +111,21 @@ class Main {
         Main.renderer = PIXI.autoDetectRenderer({
             width: global.gameWidth * global.upscale,
             height: global.gameHeight * global.upscale,
-            resolution: this.config.canvasScale,
             backgroundColor: global.backgroundColor,
         });
         document.body.appendChild(Main.renderer.view);
+        Main.renderer.view.style.setProperty('transform', `scale(${ScaleManager.getWindowedCanvasScaleFor(this.config.scaling)})`);
         Main.renderer.view.style.setProperty('image-rendering', 'pixelated');  // Chrome
         Main.renderer.view.style.setProperty('image-rendering', 'crisp-edges');  // Firefox
 
         if (MobileUtils.isMobileBrowser()) {
-            document.body.style.backgroundColor = "black";
-            if (this.config.mobileScaleMode === 'upscale' && (window.innerWidth < 540 || window.innerHeight < 540)) {
-                console.log('Overriding mobileScaleMode due to low-res screen');
-                this.config.upscale = 5;
-                this.config.mobileScaleMode = 'canvas';
+            document.body.style.backgroundColor = 'black';
+            if (this.config.scaling.scaleMode === 'upscale' && (window.innerWidth < 540 || window.innerHeight < 540)) {
+                console.log('Overriding scale mode due to low-res screen');
+                this.config.scaling.scaleMode = 'mobilesmallscreen';
             }
-            MobileScaleManager.init(this.config.mobileScalePrimaryDirection ?? 'none', this.config.mobileScaleMode ?? 'canvas');
         }
+        ScaleManager.init(this.config);
 
         // AccessibilityManager causes game to crash when Tab is pressed.
         // Deleting it as per https://github.com/pixijs/pixi.js/issues/5111#issuecomment-420047824
@@ -200,9 +200,8 @@ class Main {
                 Input.postUpdate();
             }
             Persist.update(frameDelta/60);
-            if (MobileUtils.isMobileBrowser()) {
-                MobileScaleManager.update();
-            }
+            ScaleManager.update();
+            Main.updateFullscreenBackgroundColor();
 
             Render.diff(Main.stage, Main.game.render());
 
@@ -322,6 +321,15 @@ class Main {
         }, false);
     }
 
+    private static updateFullscreenBackgroundColor() {
+        let isFullscreen = Fullscreen.enabled || MobileUtils.isMobileBrowser();
+        if (isFullscreen && Main.config.fullscreenPageBackgroundColor !== undefined) {
+            document.body.style.backgroundColor = Main.config.fullscreenPageBackgroundColor;
+        } else {
+            document.body.style.backgroundColor = Main.nonFullscreenPageBackgroundColor;
+        }
+    }
+
     private static checkForWebGlAcceleration() {
         const contextOptions = {
             stencil: true,
@@ -357,14 +365,6 @@ class Main {
         return Main.getRemotePath();
     }
 
-    static getScaledWidth() {
-        return global.gameWidth * Main.config.canvasScale;
-    }
-
-    static getScaledHeight() {
-        return global.gameHeight * Main.config.canvasScale;
-    }
-
     static takeScreenshot(scale: number, output: 'clipboard' | 'newtab') {
         Main.forceRender();
 
@@ -373,9 +373,10 @@ class Main {
         hcanvas.height = global.gameHeight*scale;
     
         let hctx = hcanvas.getContext('2d');
+        hctx!.imageSmoothingEnabled = false;
         hctx!.drawImage(
             Main.renderer.view,
-            0, 0, Main.getScaledWidth() * global.upscale, Main.getScaledHeight() * global.upscale,
+            0, 0, Main.rendererView.width, Main.rendererView.height,
             0, 0, global.gameWidth*scale, global.gameHeight*scale,
         );
 
