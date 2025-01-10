@@ -118,11 +118,11 @@ class ScaleManager {
     }
 
     private static getTargetWidth() {
-        return this.isFullscreen() ? window.innerWidth : global.gameWidth * this.windowedScale;
+        return this.isFullscreen() ? window.innerWidth : OrFactory.resolve(Main.config.gameWidth) * this.windowedScale;
     }
 
     private static getTargetHeight() {
-        return this.isFullscreen() ? window.innerHeight : global.gameHeight * this.windowedScale;
+        return this.isFullscreen() ? window.innerHeight : OrFactory.resolve(Main.config.gameHeight) * this.windowedScale;
     }
 
     static getWindowedCanvasScaleFor(scaling: Main.Config['scaling']) {
