@@ -1,19 +1,21 @@
 namespace SpriteTextParser {
-    export function parse(props: {
+    type Props = {
         lexemes: SpriteTextLexer.Lexeme[],
         font: SpriteText.Font,
         maxWidth: number,
         spaceBetweenLines: number | undefined,
         blankLineHeight: number | undefined,
         fixedCharSize: boolean,
-    }) {
+        charProperties: SpriteText.CharProperties,
+    }
+
+    export function parse(props: Props) {
         let {
             lexemes,
             font,
             maxWidth,
             spaceBetweenLines,
             blankLineHeight,
-            fixedCharSize,
         } = props;
 
         spaceBetweenLines = spaceBetweenLines ?? font.spaceBetweenLines;
@@ -40,7 +42,7 @@ namespace SpriteTextParser {
             }
 
             if (lexeme.type === 'word') {
-                let word = createWord(lexeme.chars, font, fixedCharSize);
+                let word = createWord(lexeme.chars, props);
                 if (currentRight() + (word.right - word.left) > maxWidth) {
                     pushLine(result, currentLine, spaceBetweenLines);
                     currentLine = []
@@ -80,13 +82,13 @@ namespace SpriteTextParser {
         result.push(line);
     }
 
-    function createWord(chars: SpriteTextLexer.Char[], font: SpriteText.Font, fixedCharSize: boolean) {
+    function createWord(chars: SpriteTextLexer.Char[], props: Props) {
         let characters: Character[] = [];
 
         for (let char of chars) {
-            let character = createCharacter(char, font, fixedCharSize);
+            let character = createCharacter(char, props);
             let lastCharacterRight = A.isEmpty(characters) ? 0 : characters.last()!.right;
-            character.x = lastCharacterRight - (character.left - character.x);
+            character.x += lastCharacterRight - character.left;
 
             characters.push(character);
         }
@@ -94,24 +96,49 @@ namespace SpriteTextParser {
         return new Word(characters);
     }
 
-    function createCharacter(char: SpriteTextLexer.Char, font: SpriteText.Font, fixedCharSize: boolean) {
-        let textureKey = char.isCustom ? char.name : font.charTextures[char.name];
+    function createCharacter(char: SpriteTextLexer.Char, props: Props) {
+        let textureKey = char.isCustom ? char.name : props.font.charTextures[char.name];
         let texture = AssetCache.getTexture(textureKey);
         if (!texture) {
-            textureKey = font.charTextures['missing'];
+            textureKey = props.font.charTextures['missing'];
             texture = AssetCache.getTexture(textureKey);
         }
 
-        let localBounds = fixedCharSize
-            ? new Rectangle(0, 0, font.charWidth, font.charHeight)
+        let anchor = SpriteText.getCharProperty(props.charProperties, 'anchor', char.name, char.position)
+            ?? texture.defaultAnchor;
+
+        // Align the character with the font char's bounds according to its anchor.
+        let x = Math.ceil(props.font.charWidth * anchor.x + texture.width * (texture.defaultAnchor.x - anchor.x));
+        let y = Math.ceil(props.font.charHeight * anchor.y + texture.height * (texture.defaultAnchor.y - anchor.y));
+
+        let localBounds = props.fixedCharSize
+            ? new Rectangle(-x, -y, props.font.charWidth, props.font.charHeight)
             : TextureUtils.getTextureLocalBounds$(texture, 0, 0, 1, 1, 0, undefined).clone();
 
+        let tagData = A.clone(char.tagData);
+        let part = char.part;
+
+        let colorOverride = SpriteText.getCharProperty(props.charProperties, 'color', char.name, char.position);
+        if (colorOverride !== undefined && colorOverride >= 0) {
+            tagData.push({ tag: 'color', params: [`${colorOverride}`] });
+        }
+
+        let offsetXOverride = SpriteText.getCharProperty(props.charProperties, 'offsetX', char.name, char.position);
+        let offsetYOverride = SpriteText.getCharProperty(props.charProperties, 'offsetY', char.name, char.position);
+        if (offsetXOverride !== undefined || offsetYOverride !== undefined) {
+            let offsetx = offsetXOverride ?? 0;
+            let offsety = offsetYOverride ?? 0;
+            tagData.push({ tag: 'offset', params: [`${offsetx}`, `${offsety}`] });
+        }
+
         return new Character({
+            x, y,
             name: char.name,
+            position: char.position,
             texture: texture,
             localBounds: localBounds,
-            tagData: A.clone(char.tagData),
-            part: char.part,
+            tagData: tagData,
+            part: part,
         });
     }
 
@@ -119,15 +146,26 @@ namespace SpriteTextParser {
         x: number;
         y: number;
         name: string;
+        position: number | undefined;
         texture: PIXI.Texture | undefined;
         localBounds: Rectangle;
         tagData: SpriteText.TagData[];
         part: number;
 
-        constructor(props: { name: string, texture: PIXI.Texture | undefined, localBounds: Rectangle, tagData: SpriteText.TagData[], part: number }) {
-            this.x = 0;
-            this.y = 0;
+        constructor(props: {
+            x: number,
+            y: number,
+            name: string,
+            position: number | undefined,
+            texture: PIXI.Texture | undefined,
+            localBounds: Rectangle, 
+            tagData: SpriteText.TagData[],
+            part: number,
+        }) {
+            this.x = props.x;
+            this.y = props.y;
             this.name = props.name;
+            this.position = props.position;
             this.texture = props.texture;
             this.localBounds = props.localBounds;
             this.tagData = props.tagData;
@@ -159,7 +197,9 @@ namespace SpriteTextParser {
 
         static SPACE(width: number, height: number) {
             return new Character({
+                x: 0, y: 0,
                 name: ' ',
+                position: undefined,
                 texture: undefined,
                 localBounds: new Rectangle(0, 0, width, height),
                 tagData: [],

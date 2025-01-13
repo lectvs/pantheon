@@ -22,12 +22,38 @@ namespace SpriteTextTokenizer {
         let i = 0;
         while (i < text.length) {
 
-            /* First are escapable characters. */
+            let nextChar = i+1 < text.length ? text[i+1] : undefined;
+
+            /* Double chars like [[ or << are escaped. */
+
+            if (text[i] === '[' && nextChar === '[') {
+                tokens.push({ type: 'char', name: '[' });
+                i += 2;
+                continue;
+            }
+            if (text[i] === ']' && nextChar === ']') {
+                tokens.push({ type: 'char', name: ']' });
+                i += 2;
+                continue;
+            }
+            if (text[i] === '<' && nextChar === '<') {
+                tokens.push({ type: 'char', name: '<' });
+                i += 2;
+                continue;
+            }
+            if (text[i] === '>' && nextChar === '>') {
+                tokens.push({ type: 'char', name: '>' });
+                i += 2;
+                continue;
+            }
+
+            /* Single versions are not escaped. */
 
             if (text[i] === '[') {
                 let closingBracketIndex = text.indexOf(']', i);
                 if (closingBracketIndex < i+1) {
                     console.error(`Text '${text}' has an unclosed tag bracket at position ${i}`);
+                    i++;
                     continue;
                 }
 
@@ -52,6 +78,7 @@ namespace SpriteTextTokenizer {
                 let closingBracketIndex = text.indexOf('>', i); 
                 if (closingBracketIndex < i+1) {
                     console.error(`Text '${text}' has an unclosed custom character bracket at position ${i}`);
+                    i++;
                     continue;
                 }
 

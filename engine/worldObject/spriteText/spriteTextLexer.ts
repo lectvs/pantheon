@@ -13,12 +13,16 @@ namespace SpriteTextLexer {
     export type Char = {
         name: string;
         isCustom: boolean;
+        /**
+         * From outermost tag -> innermost tag.
+         */
         tagData: SpriteText.TagData[];
         part: number;
+        position: number;
     }
 
-    export function lex(tokens: SpriteTextTokenizer.Token[], wordWrap: boolean) {
-        return combineWords(hydrateTagData(tokens), wordWrap);
+    export function lex(tokens: SpriteTextTokenizer.Token[], wordWrap: boolean, charProperties: SpriteText.CharProperties) {
+        return combineWords(hydrateTagData(tokens, charProperties), wordWrap);
     }
 
     function combineWords(inputLexemes: Lexeme[], wordWrap: boolean) {
@@ -68,10 +72,11 @@ namespace SpriteTextLexer {
         return lexemes;
     }
 
-    function hydrateTagData(tokens: SpriteTextTokenizer.Token[]) {
+    function hydrateTagData(tokens: SpriteTextTokenizer.Token[], charProperties: SpriteText.CharProperties) {
         let lexemes: Lexeme[] = [];
         let tagData: SpriteText.TagData[] = [];
         let currentPart = 0;
+        let currentLexemePosition = 0;
 
         for (let token of tokens) {
             if (token.type === 'starttag') {
@@ -92,6 +97,7 @@ namespace SpriteTextLexer {
 
             if (token.type === 'space') {
                 lexemes.push({ type: 'space', count: 1 });
+                currentLexemePosition++;
                 continue;
             }
 
@@ -102,12 +108,20 @@ namespace SpriteTextLexer {
             }
 
             if (token.type === 'char' || token.type === 'customchar') {
-                lexemes.push({ type: 'word', chars: [{
+                let char: Char = {
                     name: token.name,
                     isCustom: token.type === 'customchar',
                     tagData: A.clone(tagData),
                     part: currentPart,
-                }]});
+                    position: currentLexemePosition,
+                };
+                if (SpriteText.doesCharHaveTargetedProperty(charProperties, token.name, currentLexemePosition)) {
+                    // Each targeted property character should be in its own part.
+                    char.part++;
+                    currentPart += 2;
+                }
+                lexemes.push({ type: 'word', chars: [char] });
+                currentLexemePosition++;
                 continue;
             }
 

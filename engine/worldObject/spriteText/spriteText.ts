@@ -25,6 +25,7 @@ namespace SpriteText {
         effects?: Effects.Config;
         typeAnimationRate?: number;
         typeAnimationSound?: string;
+        charProperties?: CharProperties,
     }
 
     export type Font = {
@@ -51,6 +52,27 @@ namespace SpriteText {
         params: string[];
     }
     export type TagFunction = (params: string[]) => SpriteText.Style;
+
+    export type CharProperties = CharPropertiesSingle & {
+        byName?: Dict<CharPropertiesSingle>;
+        /**
+         * Position includes spaces but does not include newlines or tags.
+         */
+        byPosition?: DictNumber<CharPropertiesSingle>;
+    }
+    export type CharPropertiesSingle = {
+        /**
+         * Default: The char's texture anchor.
+         */
+        anchor?: Vector2;
+        /**
+         * Default: If the char is the same size as the font, uses tag data. Else, white.
+         * If negative: Uses tag data.
+         */
+        color?: number;
+        offsetX?: number;
+        offsetY?: number;
+    }
 }
 
 class SpriteText extends WorldObject {
@@ -148,6 +170,8 @@ class SpriteText extends WorldObject {
     typeAnimationRate: number;
     typeAnimationSound: string | undefined;
 
+    private charProperties: SpriteText.CharProperties;
+
     private renderSystem?: SpriteTextRenderSystem;
     private currentText!: string;
 
@@ -172,7 +196,7 @@ class SpriteText extends WorldObject {
         this._spaceBetweenLines = config.spaceBetweenLines;
         this._blankLineHeight = config.blankLineHeight;
         this._wordWrap = config.wordWrap ?? true;
-        this._fixedCharSize = config.fixedCharSize ?? false;
+        this._fixedCharSize = config.fixedCharSize ?? true;
         this._justify = config.justify ?? 'center';
 
         this.anchor = new SpriteText.DirtyAnchor(config.anchor ?? Anchor.CENTER, () => this.freeRenderSystem());
@@ -191,6 +215,8 @@ class SpriteText extends WorldObject {
         this.typeAnimationRate = config.typeAnimationRate ?? 10;
         this.typeAnimationSound = config.typeAnimationSound;
         this.addTypeAnimations();
+
+        this.charProperties = config.charProperties ?? {};
 
         this.setText(config.text ?? "");
     }
@@ -300,6 +326,49 @@ class SpriteText extends WorldObject {
         return FrameCache.rectangle(0, 0, 0, 0).copyBoundaries(bounds);
     }
 
+    setCharPropertyDefault<K extends keyof SpriteText.CharPropertiesSingle>(property: K, value: SpriteText.CharPropertiesSingle[K]) {
+        if (this.charProperties[property] === value) return;
+        this.charProperties[property] = value;
+        this.freeRenderSystem();
+    }
+
+    setCharPropertyByName<K extends keyof SpriteText.CharPropertiesSingle>(charName: string, property: K, value: SpriteText.CharPropertiesSingle[K]) {
+        if (!this.charProperties.byName) this.charProperties.byName = {};
+        if (!this.charProperties.byName[charName]) this.charProperties.byName[charName] = {};
+        if (this.charProperties.byName[charName][property] === value) return;
+        this.charProperties.byName[charName][property] = value;
+        this.freeRenderSystem();
+    }
+
+    setCharPropertyByPosition<K extends keyof SpriteText.CharPropertiesSingle>(charPosition: number, property: K, value: SpriteText.CharPropertiesSingle[K]) {
+        if (!this.charProperties.byPosition) this.charProperties.byPosition = {};
+        if (!this.charProperties.byPosition[charPosition]) this.charProperties.byPosition[charPosition] = {};
+        if (this.charProperties.byPosition[charPosition][property] === value) return;
+        this.charProperties.byPosition[charPosition][property] = value;
+        this.freeRenderSystem();
+    }
+
+    setCharPropertyByPositionFn<K extends keyof SpriteText.CharPropertiesSingle>(property: K, valueFn: (charPosition: number, charName: string) => SpriteText.CharPropertiesSingle[K]) {
+        if (!this.charProperties.byPosition) this.charProperties.byPosition = {};
+        let modifiedAnyValue = false;
+        for (let i = 0; i < this.chars.length; i++) {
+            for (let j = 0; j < this.chars[i].length; j++) {
+                let charName = this.chars[i][j].name;
+                let charPosition = this.chars[i][j].position;
+                if (charPosition === undefined) continue;
+                let value = valueFn(charPosition, charName);
+                if (!this.charProperties.byPosition[charPosition]) this.charProperties.byPosition[charPosition] = {};
+                if (this.charProperties.byPosition[charPosition][property] === value) continue;
+                this.charProperties.byPosition[charPosition][property] = value;
+                modifiedAnyValue = true;
+            }
+        }
+        if (modifiedAnyValue) {
+            this.freeRenderSystem();
+        }
+    }
+
+
     setFont(fontKey: string) {
         if (fontKey === this.fontKey) return;
         let font = AssetCache.getFont(fontKey);
@@ -408,6 +477,7 @@ class SpriteText extends WorldObject {
             blankLineHeight: this.blankLineHeight,
             wordWrap: this.wordWrap,
             fixedCharSize: this.fixedCharSize,
+            charProperties: this.charProperties,
         });
     }
 
@@ -490,6 +560,7 @@ namespace SpriteText {
         blankLineHeight: number | undefined,
         wordWrap: boolean,
         fixedCharSize: boolean,
+        charProperties: SpriteText.CharProperties,
     }) {
         let {
             text,
@@ -498,13 +569,14 @@ namespace SpriteText {
             spaceBetweenLines,
             blankLineHeight,
             wordWrap,
-            fixedCharSize
+            fixedCharSize,
+            charProperties,
         } = props;
 
         if (!text) return [];
 
         let tokens = SpriteTextTokenizer.tokenize(text);
-        let lexemes = SpriteTextLexer.lex(tokens, wordWrap);
+        let lexemes = SpriteTextLexer.lex(tokens, wordWrap, charProperties);
         let result = SpriteTextParser.parse({
             lexemes,
             font,
@@ -512,9 +584,37 @@ namespace SpriteText {
             spaceBetweenLines,
             blankLineHeight,
             fixedCharSize,
+            charProperties,
         });
 
         return result;
+    }
+
+    export function getCharProperty<K extends keyof CharPropertiesSingle>(charProperties: CharProperties, property: K, charName: string, charPosition: number): CharPropertiesSingle[K] {
+        if (charProperties.byPosition && charProperties.byPosition[charPosition] && charProperties.byPosition[charPosition][property] !== undefined) {
+            return charProperties.byPosition[charPosition][property];
+        }
+
+        if (charProperties.byName && charProperties.byName[charName] && charProperties.byName[charName][property] !== undefined) {
+            return charProperties.byName[charName][property];
+        }
+        
+        return charProperties[property];
+    }
+
+    /**
+     * True iff there is a name- or positional- property for the character.
+     */
+    export function doesCharHaveTargetedProperty<K extends keyof CharPropertiesSingle>(charProperties: CharProperties, charName: string, charPosition: number) {
+        if (charProperties.byPosition && charProperties.byPosition[charPosition]) {
+            return true;
+        }
+
+        if (charProperties.byName && charProperties.byName[charName]) {
+            return true;
+        }
+        
+        return false;
     }
 
     export class DirtyAnchor {

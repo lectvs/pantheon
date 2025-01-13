@@ -1,6 +1,7 @@
 TODO NOW
 - core improvements
     - common gamedata system
+    - warnings whenever certain texture caches/pools go over a threshold
     - load directly from pyxel file (it's just a zip??)
 - world improvements
     - world/global "effects" e.g. timescale, camera position, music volume, etc. that only happen while a worldobject is in the world
@@ -15,9 +16,6 @@ TODO NOW
     - option to consistently keep children/parent close in render order
     - perf improvement opportunity from eliminating getters for delta, physicsGroup, etc.
 - spritetext improvements
-    - allow escaping spriteText special characters like >> or [[ or ]] etc.
-    - modify individual characters on a spritetext
-    - custom images in text should not affect line height (option?)
     - get spriteText bounds without re-rendering it? (see spritetext TODO)
 - constructs improvements
     - better particle system (e.g. start at 0 alpha, then go to 1, then back to 0)

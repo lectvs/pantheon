@@ -7,7 +7,7 @@ class VisualizeBounds extends Sprite {
 
     constructor(private getBounds: () => Rect | Bndries) {
         super({
-            texture: Textures.filledRect(1, 1, 0xFFFFFF),
+            texture: Textures.filledRect(1, 1, 0x00FF00),
         });
     }
 
