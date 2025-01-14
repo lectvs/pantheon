@@ -35,7 +35,7 @@ namespace SpriteTextParser {
             }
 
             if (lexeme.type === 'newline') {
-                pushLine(result, currentLine, spaceBetweenLines);
+                pushLine(result, currentLine, currentExtraNewlineCount, spaceBetweenLines, blankLineHeight);
                 currentLine = [];
                 currentExtraNewlineCount = lexeme.count-1;
                 continue;
@@ -44,12 +44,12 @@ namespace SpriteTextParser {
             if (lexeme.type === 'word') {
                 let word = createWord(lexeme.chars, props);
                 if (currentRight() + (word.right - word.left) > maxWidth) {
-                    pushLine(result, currentLine, spaceBetweenLines);
+                    pushLine(result, currentLine, currentExtraNewlineCount, spaceBetweenLines, blankLineHeight);
                     currentLine = []
                     currentExtraNewlineCount = 0;
                 }
                 word.x = currentRight() - word.left;
-                word.y = currentExtraNewlineCount * blankLineHeight;
+                word.y = 0;
 
                 for (let character of word.characters) {
                     character.x += word.x;
@@ -63,18 +63,19 @@ namespace SpriteTextParser {
             assertUnreachable(lexeme);
         }
 
-        pushLine(result, currentLine, spaceBetweenLines);
+        pushLine(result, currentLine, currentExtraNewlineCount, spaceBetweenLines, blankLineHeight);
 
         return result;
     }
 
-    function pushLine(result: Character[][], line: Character[], spaceBetweenLines: number) {
+    function pushLine(result: Character[][], line: Character[], extraNewlineCount: number, spaceBetweenLines: number, blankLineHeight: number) {
         if (A.isEmpty(line)) return;
         let resultBottom = A.isEmpty(result) ? 0 : M.max(result.last()!, char => char.bottom);
         let lineTop = M.min(line, char => char.top);
 
         let dy = resultBottom - lineTop;
         if (!A.isEmpty(result)) dy += spaceBetweenLines;
+        dy += extraNewlineCount * blankLineHeight;
         for (let char of line) {
             char.y += dy;
         }
@@ -116,7 +117,6 @@ namespace SpriteTextParser {
             : TextureUtils.getTextureLocalBounds$(texture, 0, 0, 1, 1, 0, undefined).clone();
 
         let tagData = A.clone(char.tagData);
-        let part = char.part;
 
         let colorOverride = SpriteText.getCharProperty(props.charProperties, 'color', char.name, char.position);
         if (colorOverride !== undefined && colorOverride >= 0) {
@@ -138,7 +138,6 @@ namespace SpriteTextParser {
             texture: texture,
             localBounds: localBounds,
             tagData: tagData,
-            part: part,
         });
     }
 
@@ -146,21 +145,19 @@ namespace SpriteTextParser {
         x: number;
         y: number;
         name: string;
-        position: number | undefined;
+        position: number;
         texture: PIXI.Texture | undefined;
         localBounds: Rectangle;
         tagData: SpriteText.TagData[];
-        part: number;
 
         constructor(props: {
             x: number,
             y: number,
             name: string,
-            position: number | undefined,
+            position: number,
             texture: PIXI.Texture | undefined,
             localBounds: Rectangle, 
             tagData: SpriteText.TagData[],
-            part: number,
         }) {
             this.x = props.x;
             this.y = props.y;
@@ -169,7 +166,6 @@ namespace SpriteTextParser {
             this.texture = props.texture;
             this.localBounds = props.localBounds;
             this.tagData = props.tagData;
-            this.part = props.part;
         }
 
         get left() {
@@ -199,11 +195,10 @@ namespace SpriteTextParser {
             return new Character({
                 x: 0, y: 0,
                 name: ' ',
-                position: undefined,
+                position: -1,
                 texture: undefined,
                 localBounds: new Rectangle(0, 0, width, height),
                 tagData: [],
-                part: -1,
             });
         }
     }

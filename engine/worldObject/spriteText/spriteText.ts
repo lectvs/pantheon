@@ -252,7 +252,7 @@ class SpriteText extends WorldObject {
 
     override render() {
         let result: Render.Result = FrameCache.array();
-        result.pushAll(this.getRenderSystem().render(this));
+        result.pushAll(this.getRenderSystem().render());
         result.pushAll(super.render());
         return result;
     }
@@ -285,6 +285,26 @@ class SpriteText extends WorldObject {
     getVisibleCharList(visibleCharStart: number = this.visibleCharStart, visibleCharEnd: number = this.visibleCharEnd) {
         let chars = this.chars.flat();
         return chars.slice(visibleCharStart, Math.min(visibleCharEnd, chars.length));
+
+    }
+
+    private getVisibleCharListByLineBreak(visibleCharStart: number = this.visibleCharStart, visibleCharEnd: number = this.visibleCharEnd) {
+        let result: SpriteTextParser.Character[][] = [];
+
+        let currentCharStart = visibleCharStart;
+        let currentCharEnd = visibleCharEnd;
+
+        for (let line of this.chars) {
+            let slicedLine = line.slice(currentCharStart, Math.min(currentCharEnd, line.length));
+            if (slicedLine.length > 0) result.push(slicedLine);
+
+            currentCharStart = Math.max(currentCharStart - line.length, 0);
+            currentCharEnd = Math.max(currentCharEnd - line.length, 0);
+
+            if (currentCharEnd === 0) break;
+        }
+
+        return result;
     }
 
     getCurrentText() {
@@ -366,7 +386,7 @@ class SpriteText extends WorldObject {
             for (let j = 0; j < this.chars[i].length; j++) {
                 let charName = this.chars[i][j].name;
                 let charPosition = this.chars[i][j].position;
-                if (charPosition === undefined) continue;
+                if (charPosition < 0) continue;
                 let value = valueFn(charPosition, charName);
                 if (!this.charProperties.byPosition[charPosition]) this.charProperties.byPosition[charPosition] = {};
                 if (this.charProperties.byPosition[charPosition][property] === value) continue;
@@ -446,18 +466,9 @@ class SpriteText extends WorldObject {
         if (!this.renderSystem) {
             this.setCharsFromCurrentText();
             SpriteText.justify(this.chars, this.justify);
-            let characters = this.getVisibleCharList();
-            let partToCharacters: DictNumber<SpriteTextParser.Character[]> = {};
-            for (let character of characters) {
-                if (!character.texture) continue;
-                if (!(character.part in partToCharacters)) {
-                    partToCharacters[character.part] = [];
-                }
-                partToCharacters[character.part].push(character);
-            }
-    
+            let characters = this.getVisibleCharListByLineBreak();
             let textureCreationSource = this.getCurrentText();
-            this.renderSystem = new SpriteTextRenderSystem(partToCharacters, textureCreationSource);
+            this.renderSystem = new SpriteTextRenderSystem(this, characters, textureCreationSource);
         }
         return this.renderSystem;
     }
@@ -481,7 +492,6 @@ class SpriteText extends WorldObject {
 
     private setCharsFromCurrentText() {
         this.chars = SpriteText.textToCharList({
-            spriteText: this,
             text: this.getCurrentTextFormatted(),
             font: this.font,
             maxWidth: this.maxWidth,
@@ -572,8 +582,16 @@ namespace SpriteText {
         return 1;
     }
 
+    export function tagsEqual(tagData1: TagData[], tagData2: TagData[]) {
+        if (tagData1.length !== tagData2.length) return false;
+        for (let i = 0; i < tagData1.length; i++) {
+            if (tagData1[i].tag !== tagData2[i].tag) return false;
+            if (!A.equals(tagData1[i].params, tagData2[i].params)) return false;
+        }
+        return true;
+    }
+
     export function textToCharList(props: {
-        spriteText: SpriteText,
         text: string,
         font: SpriteText.Font,
         maxWidth: number,
@@ -584,7 +602,6 @@ namespace SpriteText {
         charProperties: SpriteText.CharProperties,
     }) {
         let {
-            spriteText,
             text,
             font,
             maxWidth,
@@ -598,7 +615,7 @@ namespace SpriteText {
         if (!text) return [];
 
         let tokens = SpriteTextTokenizer.tokenize(text);
-        let lexemes = SpriteTextLexer.lex(tokens, spriteText, wordWrap, charProperties);
+        let lexemes = SpriteTextLexer.lex(tokens, wordWrap);
         let result = SpriteTextParser.parse({
             lexemes,
             font,

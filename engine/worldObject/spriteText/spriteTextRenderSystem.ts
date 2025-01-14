@@ -19,44 +19,48 @@ namespace SpriteTextRenderSystem {
 }
 
 class SpriteTextRenderSystem {
+    private spriteText: SpriteText;
     parts: Dict<SpriteTextRenderSystem.Part>;
 
-    constructor(partToCharacters: Dict<SpriteTextParser.Character[]>, textureCreationSource: string) {
+    constructor(spriteText: SpriteText, characters: SpriteTextParser.Character[][], textureCreationSource: string) {
+        this.spriteText = spriteText;
+
+        let partToCharacters = SpriteTextRenderSystem.sortCharactersByPart(characters, spriteText);
         this.parts = SpriteTextRenderSystem.buildParts(partToCharacters, textureCreationSource);
     }
 
-    render(spriteText: SpriteText) {
-        let textBounds = SpriteText.getBoundsOfCharList$(spriteText.getCharList());
+    render() {
+        let textBounds = SpriteText.getBoundsOfCharList$(this.spriteText.getCharList());
         let result: Render.Result = FrameCache.array();
 
         for (let part in this.parts) {
             let data = this.parts[part];
-            let style = spriteText.getStyleFromTags$(data.tagData, spriteText.style);
-            let styleColor = this.resolveStyleAttribute(style, 'color', spriteText, data.characters[0]);
-            let styleAlpha = this.resolveStyleAttribute(style, 'alpha', spriteText, data.characters[0]);
+            let style = this.spriteText.getStyleFromTags$(data.tagData, this.spriteText.style);
+            let styleColor = this.resolveStyleAttribute(style, 'color', this.spriteText, data.characters[0]);
+            let styleAlpha = this.resolveStyleAttribute(style, 'alpha', this.spriteText, data.characters[0]);
 
-            data.sprite.x = this.getX(spriteText, data, style, textBounds);
-            data.sprite.y = this.getY(spriteText, data, style, textBounds);
-            data.sprite.scale.x = this.getScaleX(spriteText);
-            data.sprite.scale.y = this.getScaleY(spriteText);
-            data.sprite.angle = this.getAngle(spriteText);
-            data.sprite.tint = Color.combineTints(styleColor, spriteText.getTotalTint());
-            data.sprite.alpha = styleAlpha * spriteText.getTotalAlpha();
+            data.sprite.x = this.getX(this.spriteText, data, style, textBounds);
+            data.sprite.y = this.getY(this.spriteText, data, style, textBounds);
+            data.sprite.scale.x = this.getScaleX(this.spriteText);
+            data.sprite.scale.y = this.getScaleY(this.spriteText);
+            data.sprite.angle = this.getAngle(this.spriteText);
+            data.sprite.tint = Color.combineTints(styleColor, this.spriteText.getTotalTint());
+            data.sprite.alpha = styleAlpha * this.spriteText.getTotalAlpha();
 
-            spriteText.effects.pre.pushAll(style.filters);
-            data.sprite.updateAndSetEffects(spriteText.effects);
-            spriteText.effects.pre.length -= style.filters.length;  // Remove the style filters
+            this.spriteText.effects.pre.pushAll(style.filters);
+            data.sprite.updateAndSetEffects(this.spriteText.effects);
+            this.spriteText.effects.pre.length -= style.filters.length;  // Remove the style filters
 
             let textureLocalBounds = TextureUtils.getTextureLocalBounds$(data.texture,
-                spriteText.getRenderScreenX() + data.sprite.x,
-                spriteText.getRenderScreenY() + data.sprite.y,
+                this.spriteText.getRenderScreenX() + data.sprite.x,
+                this.spriteText.getRenderScreenY() + data.sprite.y,
                 data.sprite.scale.x,
                 data.sprite.scale.y,
                 data.sprite.angle,
                 undefined,
             );
 
-            let screenBounds = tmp.rectangle_2(0, 0, spriteText.worldd.camera.width, spriteText.worldd.camera.height);
+            let screenBounds = tmp.rectangle_2(0, 0, this.spriteText.worldd.camera.width, this.spriteText.worldd.camera.height);
             if (!G.areRectanglesOverlapping(textureLocalBounds, screenBounds)) continue;
 
             if (!data.rendered) {
@@ -138,7 +142,7 @@ class SpriteTextRenderSystem {
         if (O.isFunction(value)) {
             let data: SpriteText.StyleDynamicData = FrameCache.object();
             data.charName = character.name;
-            data.position = character.position ?? -1;
+            data.position = character.position;
             data.t = spriteText.life.time;
             return value(data) as Exclude<Required<SpriteText.Style>[K], Function>;
         }
@@ -147,6 +151,32 @@ class SpriteTextRenderSystem {
 }
 
 namespace SpriteTextRenderSystem {
+    export function sortCharactersByPart(characters: SpriteTextParser.Character[][], spriteText: SpriteText) {
+        let currentPart = 0;
+        let currentTagData: SpriteText.TagData[] = [];
+        let partsToCharacters: Dict<SpriteTextParser.Character[]> = {};
+
+        for (let line of characters) {
+            for (let char of line) {
+                if (!char.texture) continue;
+                if (!SpriteText.tagsEqual(char.tagData, currentTagData)
+                        || SpriteText.isTagDataDynamic(char.tagData, spriteText)) {
+                    currentPart++;
+                }
+
+                if (!(currentPart in partsToCharacters)) {
+                    partsToCharacters[currentPart] = [];
+                }
+
+                partsToCharacters[currentPart].push(char);
+                currentTagData = char.tagData;
+            }
+            currentPart++;
+        }
+
+        return partsToCharacters;
+    }
+
     export function buildParts(partToCharacters: Dict<SpriteTextParser.Character[]>, textureCreationSource: string) {
         let result: Dict<SpriteTextRenderSystem.Part> = {};
 
