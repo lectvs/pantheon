@@ -119,7 +119,16 @@ namespace SpriteTextParser {
         let tagData = A.clone(char.tagData);
 
         let colorOverride = SpriteText.getCharProperty(props.charProperties, 'color', char.name, char.position);
-        if (colorOverride !== undefined && colorOverride >= 0) {
+        if (colorOverride === undefined) {
+            // If color is undefined, ignore tag data only if the character is the same size as the font.
+            if (texture.width === props.font.charWidth && texture.height === props.font.charHeight) {
+                // Pass, use existing tag data.
+            } else {
+                tagData.push({ tag: 'color', params: [`0xFFFFFF`] });
+            }
+        } else if (colorOverride < 0) {
+            // Pass, if color is negative do not override.
+        } else {
             tagData.push({ tag: 'color', params: [`${colorOverride}`] });
         }
 
