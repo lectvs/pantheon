@@ -41,11 +41,17 @@ namespace SpriteText {
     export type Justify = 'left' | 'center' | 'right';
 
     export type Style = {
-        color?: number;
-        alpha?: number;
-        offsetX?: number;
-        offsetY?: number;
+        color?: number | ((data: StyleDynamicData) => number);
+        alpha?: number | ((data: StyleDynamicData) => number);
+        offsetX?: number | ((data: StyleDynamicData) => number);
+        offsetY?: number | ((data: StyleDynamicData) => number);
         filters?: TextureFilter[];
+    }
+
+    export type StyleDynamicData = {
+        charName: string;
+        position: number;
+        t: number;
     }
 
     export type TagData = {
@@ -475,6 +481,7 @@ class SpriteText extends WorldObject {
 
     private setCharsFromCurrentText() {
         this.chars = SpriteText.textToCharList({
+            spriteText: this,
             text: this.getCurrentTextFormatted(),
             font: this.font,
             maxWidth: this.maxWidth,
@@ -537,6 +544,14 @@ namespace SpriteText {
         return result;
     }
 
+    export function isTagDataDynamic(tagData: SpriteText.TagData[], spriteText: SpriteText) {
+        let style = spriteText.getStyleFromTags$(tagData, spriteText.style);
+        for (let key in style) {
+            if (O.isFunction(style[key as keyof Style])) return true;
+        }
+        return false;
+    }
+
     export function justify(lines: SpriteTextParser.Character[][], justify: SpriteText.Justify) {
         let maxWidth = SpriteText.getBoundsOfCharList$(lines.flat()).width;
         for (let line of lines) {
@@ -558,6 +573,7 @@ namespace SpriteText {
     }
 
     export function textToCharList(props: {
+        spriteText: SpriteText,
         text: string,
         font: SpriteText.Font,
         maxWidth: number,
@@ -568,6 +584,7 @@ namespace SpriteText {
         charProperties: SpriteText.CharProperties,
     }) {
         let {
+            spriteText,
             text,
             font,
             maxWidth,
@@ -581,7 +598,7 @@ namespace SpriteText {
         if (!text) return [];
 
         let tokens = SpriteTextTokenizer.tokenize(text);
-        let lexemes = SpriteTextLexer.lex(tokens, wordWrap, charProperties);
+        let lexemes = SpriteTextLexer.lex(tokens, spriteText, wordWrap, charProperties);
         let result = SpriteTextParser.parse({
             lexemes,
             font,

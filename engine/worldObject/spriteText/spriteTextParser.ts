@@ -131,7 +131,6 @@ namespace SpriteTextParser {
             tagData.push({ tag: 'offset', params: [`${offsetx}`, `${offsety}`] });
         }
 
-        Random.seed(char.name);
         return new Character({
             x, y,
             name: char.name,
@@ -140,7 +139,6 @@ namespace SpriteTextParser {
             localBounds: localBounds,
             tagData: tagData,
             part: part,
-            isDynamic: Random.boolean(),
         });
     }
 
@@ -153,7 +151,6 @@ namespace SpriteTextParser {
         localBounds: Rectangle;
         tagData: SpriteText.TagData[];
         part: number;
-        isDynamic: boolean;
 
         constructor(props: {
             x: number,
@@ -164,7 +161,6 @@ namespace SpriteTextParser {
             localBounds: Rectangle, 
             tagData: SpriteText.TagData[],
             part: number,
-            isDynamic: boolean,
         }) {
             this.x = props.x;
             this.y = props.y;
@@ -174,7 +170,6 @@ namespace SpriteTextParser {
             this.localBounds = props.localBounds;
             this.tagData = props.tagData;
             this.part = props.part;
-            this.isDynamic = props.isDynamic;
         }
 
         get left() {
@@ -209,7 +204,6 @@ namespace SpriteTextParser {
                 localBounds: new Rectangle(0, 0, width, height),
                 tagData: [],
                 part: -1,
-                isDynamic: false,
             });
         }
     }

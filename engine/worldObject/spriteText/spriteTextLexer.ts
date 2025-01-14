@@ -21,8 +21,8 @@ namespace SpriteTextLexer {
         position: number;
     }
 
-    export function lex(tokens: SpriteTextTokenizer.Token[], wordWrap: boolean, charProperties: SpriteText.CharProperties) {
-        return combineWords(hydrateTagData(tokens, charProperties), wordWrap);
+    export function lex(tokens: SpriteTextTokenizer.Token[], spriteText: SpriteText, wordWrap: boolean, charProperties: SpriteText.CharProperties) {
+        return combineWords(hydrateTagData(tokens, spriteText, charProperties), wordWrap);
     }
 
     function combineWords(inputLexemes: Lexeme[], wordWrap: boolean) {
@@ -72,7 +72,7 @@ namespace SpriteTextLexer {
         return lexemes;
     }
 
-    function hydrateTagData(tokens: SpriteTextTokenizer.Token[], charProperties: SpriteText.CharProperties) {
+    function hydrateTagData(tokens: SpriteTextTokenizer.Token[], spriteText: SpriteText, charProperties: SpriteText.CharProperties) {
         let lexemes: Lexeme[] = [];
         let tagData: SpriteText.TagData[] = [];
         let currentPart = 0;
@@ -115,8 +115,9 @@ namespace SpriteTextLexer {
                     part: currentPart,
                     position: currentLexemePosition,
                 };
-                if (SpriteText.doesCharHaveTargetedProperty(charProperties, token.name, currentLexemePosition)) {
-                    // Each targeted property character should be in its own part.
+                if (SpriteText.doesCharHaveTargetedProperty(charProperties, token.name, currentLexemePosition)
+                        || SpriteText.isTagDataDynamic(char.tagData, spriteText)) {
+                    // Each dynamic or targeted property character should be in its own part.
                     char.part++;
                     currentPart += 2;
                 }

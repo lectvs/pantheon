@@ -17,6 +17,7 @@ TODO NOW
     - perf improvement opportunity from eliminating getters for delta, physicsGroup, etc.
 - spritetext improvements
     - make shaking dialog text possible
+    - compute part later in process? (currently in lexer)
     - get spriteText bounds without re-rendering it? (see spritetext TODO)
 - constructs improvements
     - better particle system (e.g. start at 0 alpha, then go to 1, then back to 0)
