@@ -13,6 +13,7 @@ namespace SpriteText {
         offsetX?: number;
         offsetY?: number;
         angle?: number;
+        vangle?: number;
         scale?: number;
         scaleX?: number;
         scaleY?: number;
@@ -153,6 +154,7 @@ class SpriteText extends WorldObject {
     offsetX: number;
     offsetY: number;
     angle: number;
+    vangle: number;
 
     scaleX: number;
     scaleY: number;
@@ -206,6 +208,7 @@ class SpriteText extends WorldObject {
         this.offsetX = config.offsetX ?? 0;
         this.offsetY = config.offsetY ?? 0;
         this.angle = config.angle ?? 0;
+        this.vangle = config.vangle ?? 0;
         this.scaleX = config.scaleX ?? (config.scale ?? 1);
         this.scaleY = config.scaleY ?? (config.scale ?? 1);
 
@@ -237,6 +240,8 @@ class SpriteText extends WorldObject {
                 filter.updateTime(this.delta);
             }
         }
+
+        this.angle += this.vangle * this.delta;
     }
 
     override render() {

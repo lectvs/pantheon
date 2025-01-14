@@ -47,6 +47,15 @@ namespace tmp {
         return _rectangle;
     }
 
+    const _rectangle_2 = new Rectangle(0, 0, 0, 0);
+    export function rectangle_2(x: number, y: number, width: number, height: number) {
+        _rectangle_2.x = x;
+        _rectangle_2.y = y;
+        _rectangle_2.width = width;
+        _rectangle_2.height = height;
+        return _rectangle_2;
+    }
+
     // For use with `Function.apply()`
     const _argArray: any[] = [];
     export function argArray<T>(e1: T): [T] {

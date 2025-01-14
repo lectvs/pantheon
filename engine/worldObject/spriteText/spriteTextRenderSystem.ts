@@ -6,10 +6,16 @@ namespace SpriteTextRenderSystem {
         tagData: SpriteText.TagData[];
         texture: PIXI.RenderTexture;
         sprite: PIXI.Sprite;
+        dynamicCharacters: DynamicCharacter[];
         rendered: boolean;
         staticTextureCacheKeyWidth: number;
         staticTextureCacheKeyHeight: number;
         textureCreationSource: string;
+    }
+
+    export type DynamicCharacter = {
+        character: SpriteTextParser.Character;
+        sprite: PIXI.Sprite;
     }
 }
 
@@ -38,6 +44,21 @@ class SpriteTextRenderSystem {
 
             spriteText.effects.pre.pushAll(style.filters);
             data.sprite.updateAndSetEffects(spriteText.effects);
+
+            for (let dynamicChar of data.dynamicCharacters) {
+                let v = tmp.vec2(dynamicChar.character.x - data.x, dynamicChar.character.y - data.y);
+                v.rotate(data.sprite.angle);
+                dynamicChar.sprite.x = data.sprite.x + v.x * data.sprite.scale.x;
+                dynamicChar.sprite.y = data.sprite.y + v.y * data.sprite.scale.y;
+                dynamicChar.sprite.scale.x = data.sprite.scale.x;
+                dynamicChar.sprite.scale.y = data.sprite.scale.y;
+                dynamicChar.sprite.angle = data.sprite.angle;
+                dynamicChar.sprite.tint = 0xFF0000;
+                dynamicChar.sprite.alpha = data.sprite.alpha;
+
+                dynamicChar.sprite.updateAndSetEffects(spriteText.effects);
+            }
+
             spriteText.effects.pre.length -= style.filters.length;  // Remove the style filters
 
             let textureLocalBounds = TextureUtils.getTextureLocalBounds$(data.texture,
@@ -49,14 +70,31 @@ class SpriteTextRenderSystem {
                 undefined,
             );
 
-            let screenBounds = tmp.rectangle(0, 0, screen.width, screen.height);
-            if (!G.areRectanglesOverlapping(textureLocalBounds, screenBounds)) continue;
+            let allLocalBounds: Rectangle[] = FrameCache.array(textureLocalBounds);
+            for (let dynamicChar of data.dynamicCharacters) {
+                allLocalBounds.push(TextureUtils.getTextureLocalBounds$(dynamicChar.sprite.texture,
+                    spriteText.getRenderScreenX() + dynamicChar.sprite.x,
+                    spriteText.getRenderScreenY() + dynamicChar.sprite.y,
+                    dynamicChar.sprite.scale.x,
+                    dynamicChar.sprite.scale.y,
+                    dynamicChar.sprite.angle,
+                    undefined,
+                ))
+            }
+
+            let partLocalBounds = tmp.rectangle(0, 0, 0, 0).copyBoundaries(G.getEncompassingBoundaries$(allLocalBounds));
+
+            let screenBounds = tmp.rectangle_2(0, 0, spriteText.worldd.camera.width, spriteText.worldd.camera.height);
+            if (!G.areRectanglesOverlapping(partLocalBounds, screenBounds)) continue;
 
             if (!data.rendered) {
                 SpriteTextRenderSystem.renderPart(data);
             }
 
             result.push(data.sprite);
+            for (let dynamicChar of data.dynamicCharacters) {
+                result.push(dynamicChar.sprite);
+            }
         }
 
         return result;
@@ -93,10 +131,22 @@ class SpriteTextRenderSystem {
     }
 
     private getX(spriteText: SpriteText, data: SpriteTextRenderSystem.Part, style: Required<SpriteText.Style>, textBounds: Rectangle) {
-        return (data.x + style.offsetX - spriteText.anchor.x * textBounds.width) * this.getScaleX(spriteText) + spriteText.offsetX;
+        let v = tmp.vec2(this.getUnrotatedX(spriteText, data, style, textBounds), this.getUnrotatedY(spriteText, data, style, textBounds));
+        v.rotate(spriteText.angle);
+        return v.x;
     }
 
     private getY(spriteText: SpriteText, data: SpriteTextRenderSystem.Part, style: Required<SpriteText.Style>, textBounds: Rectangle) {
+        let v = tmp.vec2(this.getUnrotatedX(spriteText, data, style, textBounds), this.getUnrotatedY(spriteText, data, style, textBounds));
+        v.rotate(spriteText.angle);
+        return v.y;
+    }
+
+    private getUnrotatedX(spriteText: SpriteText, data: SpriteTextRenderSystem.Part, style: Required<SpriteText.Style>, textBounds: Rectangle) {
+        return (data.x + style.offsetX - spriteText.anchor.x * textBounds.width) * this.getScaleX(spriteText) + spriteText.offsetX;
+    }
+
+    private getUnrotatedY(spriteText: SpriteText, data: SpriteTextRenderSystem.Part, style: Required<SpriteText.Style>, textBounds: Rectangle) {
         return (data.y + style.offsetY - spriteText.anchor.y * textBounds.height) * this.getScaleY(spriteText) + spriteText.offsetY;
     }
 
@@ -129,6 +179,15 @@ namespace SpriteTextRenderSystem {
             let texture = cache_staticTextures.borrow(staticTextureCacheKeyWidth, staticTextureCacheKeyHeight);
             PerformanceTracking.logBorrowSpriteTextStaticTexture(texture, textureCreationSource);
 
+            let dynamicCharacters: DynamicCharacter[] = [];
+            for (let character of partToCharacters[part]) {
+                if (!character.isDynamic) continue;
+                dynamicCharacters.push({
+                    character,
+                    sprite: new PIXI.Sprite(character.texture),
+                });
+            }
+
             result[part] = {
                 x: Math.floor(boundary.left),
                 y: Math.floor(boundary.top),
@@ -136,6 +195,7 @@ namespace SpriteTextRenderSystem {
                 tagData: A.clone(partToCharacters[part][0].tagData),
                 texture: texture,
                 sprite: new PIXI.Sprite(texture),
+                dynamicCharacters,
                 rendered: false,
                 staticTextureCacheKeyWidth,
                 staticTextureCacheKeyHeight,
@@ -153,6 +213,7 @@ namespace SpriteTextRenderSystem {
 
         for (let character of part.characters) {
             if (!character.texture) continue;
+            if (character.isDynamic) continue;
             sprite.texture = character.texture;
             sprite.anchor = sprite.texture.defaultAnchor;
             sprite.x = Math.floor(character.x - part.x);
