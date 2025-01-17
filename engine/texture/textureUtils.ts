@@ -28,6 +28,12 @@ namespace TextureUtils {
         filters?: TextureFilter[];
     }
 
+    export type TextureLike = {
+        width: number;
+        height: number;
+        defaultAnchor: Pt;
+    }
+
     /**
      * Returns a NEW texture which is a cropped version of the original.
      */
@@ -122,7 +128,7 @@ namespace TextureUtils {
         return O.getMetadata<string>(renderTexture, 'textureCreationSource') ?? undefined;
     }
 
-    export function getTextureLocalBounds$(texture: PIXI.Texture, x: number, y: number, scaleX: number, scaleY: number, angle: number, overrideAnchor: Pt | undefined) {
+    export function getTextureLocalBounds$(texture: TextureLike, x: number, y: number, scaleX: number, scaleY: number, angle: number, overrideAnchor: Pt | undefined) {
         let width = texture.width * scaleX;
         let height = texture.height * scaleY;
 

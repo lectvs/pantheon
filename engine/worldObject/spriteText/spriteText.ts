@@ -347,13 +347,7 @@ class SpriteText extends WorldObject {
     }
 
     override getVisibleLocalBounds$(): Rectangle | undefined {
-        // TODO: remove this when we can get the text bounds without rendering.
-        if (!this.renderSystem) {
-            let w = this.getVisibleTextWidth();
-            let h = this.getVisibleTextHeight();
-            return FrameCache.rectangle(-w * this.anchor.x, -h * this.anchor.y, w, h);
-        }
-        let bounds = this.getRenderSystem().getSpriteTextLocalBounds$(this);
+        let bounds = this.getRenderSystem().getSpriteTextLocalBounds$();
         return FrameCache.rectangle(0, 0, 0, 0).copyBoundaries(bounds);
     }
 
