@@ -13,8 +13,6 @@ TODO NOW
     - option to keep children ordered relative to their parent
     - option to consistently keep children/parent close in render order
     - perf improvement opportunity from eliminating getters for delta, physicsGroup, etc.
-- constructs improvements
-    - make uislider (engine construct) a UIElement and make it compatible with UIKeyboardSystem
 - issues
     - investigate webgl context lost when rapidly pausing and unpausing
 

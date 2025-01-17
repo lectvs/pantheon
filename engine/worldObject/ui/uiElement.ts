@@ -9,6 +9,11 @@ namespace UIElement {
         tinting?: Tinting;
 
         disabled?: boolean;
+
+        onKeyboardLeft?: Callback;
+        onKeyboardRight?: Callback;
+        onKeyboardUp?: Callback;
+        onKeyboardDown?: Callback;
     }
 
     export type State = {
@@ -43,6 +48,11 @@ class UIElement extends Module<WorldObject> {
 
     canInteract: () => boolean;
 
+    onKeyboardLeft: UIElement.Callback | undefined;
+    onKeyboardRight: UIElement.Callback | undefined;
+    onKeyboardUp: UIElement.Callback | undefined;
+    onKeyboardDown: UIElement.Callback | undefined;
+
     tintingEnabled: boolean;
     baseTint?: number;
     hoverTint?: number;
@@ -61,6 +71,11 @@ class UIElement extends Module<WorldObject> {
         this.onStateChange = config.onStateChange ?? Utils.NOOP;
 
         this.canInteract = config.canInteract ?? (() => true);
+
+        this.onKeyboardLeft = config.onKeyboardLeft;
+        this.onKeyboardRight = config.onKeyboardRight;
+        this.onKeyboardUp = config.onKeyboardUp;
+        this.onKeyboardDown = config.onKeyboardDown;
 
         this.tintingEnabled = !!config.tinting;
         if (config.tinting) {
@@ -224,6 +239,22 @@ class UIElement extends Module<WorldObject> {
             this.localBounds.height = 0;
         }
         return this.localBounds;
+    }
+
+    pressLeft() {
+        if (this.onKeyboardLeft) this.onKeyboardLeft(this.state);
+    }
+
+    pressRight() {
+        if (this.onKeyboardRight) this.onKeyboardRight(this.state);
+    }
+
+    pressUp() {
+        if (this.onKeyboardUp) this.onKeyboardUp(this.state);
+    }
+
+    pressDown() {
+        if (this.onKeyboardDown) this.onKeyboardDown(this.state);
     }
 
     setHovered(hovered: boolean) {

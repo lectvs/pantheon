@@ -102,24 +102,36 @@ class UIKeyboardSystem extends WorldObject {
         }
 
         if (this.controller.left) {
-            this.elements[this.selectedIndex].setSelected(false);
-            this.selectToDirection('left');
-            this.elements[this.selectedIndex].setSelected(true);
+            this.elements[this.selectedIndex].pressLeft();
+            if (!this.elements[this.selectedIndex].onKeyboardLeft) {
+                this.elements[this.selectedIndex].setSelected(false);
+                this.selectToDirection('left');
+                this.elements[this.selectedIndex].setSelected(true);
+            }
         }
         if (this.controller.right) {
-            this.elements[this.selectedIndex].setSelected(false);
-            this.selectToDirection('right');
-            this.elements[this.selectedIndex].setSelected(true);
+            this.elements[this.selectedIndex].pressRight();
+            if (!this.elements[this.selectedIndex].onKeyboardRight) {
+                this.elements[this.selectedIndex].setSelected(false);
+                this.selectToDirection('right');
+                this.elements[this.selectedIndex].setSelected(true);
+            }
         }
         if (this.controller.up) {
-            this.elements[this.selectedIndex].setSelected(false);
-            this.selectToDirection('up');
-            this.elements[this.selectedIndex].setSelected(true);
+            this.elements[this.selectedIndex].pressUp();
+            if (!this.elements[this.selectedIndex].onKeyboardUp) {
+                this.elements[this.selectedIndex].setSelected(false);
+                this.selectToDirection('up');
+                this.elements[this.selectedIndex].setSelected(true);
+            }
         }
         if (this.controller.down) {
-            this.elements[this.selectedIndex].setSelected(false);
-            this.selectToDirection('down');
-            this.elements[this.selectedIndex].setSelected(true);
+            this.elements[this.selectedIndex].pressDown();
+            if (!this.elements[this.selectedIndex].onKeyboardDown) {
+                this.elements[this.selectedIndex].setSelected(false);
+                this.selectToDirection('down');
+                this.elements[this.selectedIndex].setSelected(true);
+            }
         }
 
         if (currentMode === 'manual') {

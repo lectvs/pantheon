@@ -7,6 +7,7 @@ namespace UISlider {
         sliderConfig?: Sprite.Config<Sprite>;
         minValue: number;
         maxValue: number;
+        keyboardGranularity: number;
         getValue: Getter<number>;
         setValue: Setter<number>;
         tinting: UIElement.Tinting;
@@ -17,8 +18,9 @@ class UISlider extends WorldObject {
     barLength: number;
     minValue: number;
     maxValue: number;
-    getValue: Getter<number>;
-    setValue: Setter<number>;
+    keyboardGranularity: number;
+    private getValue: Getter<number>;
+    private setValue: Setter<number>;
 
     baseTint: number;
     hoverTint: number;
@@ -39,6 +41,7 @@ class UISlider extends WorldObject {
         this.barLength = config.barLength;
         this.minValue = config.minValue;
         this.maxValue = config.maxValue;
+        this.keyboardGranularity = config.keyboardGranularity;
         this.getValue = config.getValue;
         this.setValue = config.setValue;
 
@@ -57,6 +60,29 @@ class UISlider extends WorldObject {
             x: this.valueToWorldX(this.getValue()) - this.x,
             texture: config.sliderTexture,
             ...(config.sliderConfig ?? {}),
+        }));
+
+        this.addModule(new UIElement({
+            onKeyboardLeft: () => {
+                this.set(this.get() - this.keyboardGranularity);
+            },
+            onKeyboardRight: () => {
+                this.set(this.get() + this.keyboardGranularity);
+            },
+            onStateChange: (state, lastState) => {
+                this.bar.tint = this.baseTint;
+                this.slider.tint = this.baseTint;
+
+                if (state.hovered || state.selected) {
+                    this.bar.tint = this.hoverTint;
+                    this.slider.tint = this.hoverTint;
+                }
+
+                if (state.clickedDown) {
+                    this.bar.tint = this.clickedTint;
+                    this.slider.tint = this.clickedTint;
+                }
+            },
         }));
     }
 
@@ -77,23 +103,33 @@ class UISlider extends WorldObject {
         }
 
         if (this.grabbing) {
-            this.bar.tint = this.clickedTint;
-            this.slider.tint = this.clickedTint;
+            // this.bar.tint = this.clickedTint;
+            // this.slider.tint = this.clickedTint;
             this.slider.x = M.clamp(mousePos.x, this.x - this.barLength/2, this.x + this.barLength/2);
             this.setValue(this.worldXToValue(this.slider.x));
         } else if (hovered) {
-            this.bar.tint = this.hoverTint;
-            this.slider.tint = this.hoverTint;
+            // this.bar.tint = this.hoverTint;
+            // this.slider.tint = this.hoverTint;
             if (!this.lastHovered) {
                 // juiceObject(this, 0.5);
                 // juiceObject(this.slider, 3);
             }
         } else {
-            this.bar.tint = this.baseTint;
-            this.slider.tint = this.baseTint;
+            // this.bar.tint = this.baseTint;
+            // this.slider.tint = this.baseTint;
         }
 
         this.lastHovered = hovered;
+    }
+
+    get() {
+        return this.worldXToValue(this.slider.x);
+    }
+
+    set(value: number) {
+        value = M.clamp(value, this.minValue, this.maxValue);
+        this.setValue(value);
+        this.slider.x = this.valueToWorldX(value);
     }
 
     private worldXToValue(x: number) {
