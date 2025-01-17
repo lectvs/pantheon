@@ -8,7 +8,6 @@ TODO NOW
     - optimize World.selector.typeAll (quadratic runtime-ish)
     - garbage collector type thing for worlds? (to fix problem of entities updating/rendering after world has been unloaded)
 - worldobject improvements
-    - worldobject._layer = undefined -> should mean inherit from parent (currently is set on add) (likely won't work)
     - GCCTextures - garbage-collected, cached - be able to create custom textures without worrying about cleanup
     - option to keep children ordered relative to their parent
     - option to consistently keep children/parent close in render order

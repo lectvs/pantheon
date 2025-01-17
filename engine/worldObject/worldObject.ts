@@ -1043,8 +1043,12 @@ class WorldObject {
     }
 
     private resolveLayer() {
-        let shouldCopyLayerFromParent = this.copyFromParent.includes('layer') || !this._layer;
+        let isCopyingLayerFromParent = this.copyFromParent.includes('layer');
+        let shouldCopyLayerFromParent = isCopyingLayerFromParent || !this._layer;
         if (shouldCopyLayerFromParent && this.parent && this._layer !== this.parent.layer) {
+            if (!isCopyingLayerFromParent && !this._layer) {
+                this.copyFromParent.push('layer');
+            }
             this.layer = this.parent.layer;
         }
     }
