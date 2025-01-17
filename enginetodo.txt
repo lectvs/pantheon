@@ -14,7 +14,6 @@ TODO NOW
     - option to consistently keep children/parent close in render order
     - perf improvement opportunity from eliminating getters for delta, physicsGroup, etc.
 - constructs improvements
-    - better particle system (e.g. start at 0 alpha, then go to 1, then back to 0)
     - make uislider (engine construct) a UIElement and make it compatible with UIKeyboardSystem
 - issues
     - investigate webgl context lost when rapidly pausing and unpausing
