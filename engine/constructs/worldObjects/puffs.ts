@@ -1,10 +1,10 @@
-namespace Puffs {
+namespace Particles {
     export function smallBurst(x: number, y: number, layer: string, color: number) {
-        return new BurstPuffSystem({
+        return new BurstParticleSystem({
             x, y,
             layer,
-            puffCount: 5,
-            puffConfigFactory: () => ({
+            particleCount: 5,
+            particleConfigFactory: () => ({
                 maxLife: 0.5,
                 radius: 2,
                 finalRadius: 0,
@@ -15,11 +15,11 @@ namespace Puffs {
     }
 
     export function mediumBurst(x: number, y: number, layer: string, color: number) {
-        return new BurstPuffSystem({
+        return new BurstParticleSystem({
             x, y,
             layer,
-            puffCount: 12,
-            puffConfigFactory: () => ({
+            particleCount: 12,
+            particleConfigFactory: () => ({
                 maxLife: 0.5,
                 radius: 2,
                 finalRadius: 0,

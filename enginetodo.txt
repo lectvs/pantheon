@@ -29,8 +29,6 @@ backlog
     - custom file watcher
     - can we make our own language using babel?
     - hot reload?
-- performance
-    - use shaders for puff system
 - general solution to prevent sprites from jittering relative to camera movement
 - asset "repositories" (local, remote?, zip)
     - make game files group-downloadable with https://stuk.github.io/jszip/

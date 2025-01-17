@@ -1,5 +1,5 @@
-namespace PuffSystem {
-    export type PuffConfig = {
+namespace ParticleSystem {
+    export type ParticleConfig = {
         p?: Pt;
         v: Pt;
         maxLife: number;
@@ -15,7 +15,7 @@ namespace PuffSystem {
         easingFn?: Tween.Easing.Function;
     }
 
-    export type Puff = {
+    export type Particle = {
         x: number;
         y: number;
         vx: number;
@@ -34,11 +34,11 @@ namespace PuffSystem {
     }
 }
 
-class PuffSystem extends WorldObject {
-    protected puffs: PuffSystem.Puff[] = [];
+class ParticleSystem extends WorldObject {
+    protected particles: ParticleSystem.Particle[] = [];
     private sprites: PIXI.Sprite[] = [];
 
-    constructor(config: WorldObject.Config<PuffSystem>) {
+    constructor(config: WorldObject.Config<ParticleSystem>) {
         super(config);
     }
 
@@ -49,34 +49,34 @@ class PuffSystem extends WorldObject {
     }
 
     protected updateParticles(delta: number) {
-        this.puffs.filterInPlace(puff => {
-            let progress = puff.t / puff.maxLife;
+        this.particles.filterInPlace(particle => {
+            let progress = particle.t / particle.maxLife;
 
-            let vx = M.lerp(progress, puff.vx, puff.finalVx, puff.easingFn);
-            let vy = M.lerp(progress, puff.vy, puff.finalVy, puff.easingFn);
+            let vx = M.lerp(progress, particle.vx, particle.finalVx, particle.easingFn);
+            let vy = M.lerp(progress, particle.vy, particle.finalVy, particle.easingFn);
 
-            puff.x += vx * delta;
-            puff.y += vy * delta;
+            particle.x += vx * delta;
+            particle.y += vy * delta;
             
-            puff.t += delta;
-            return puff.t < puff.maxLife;
+            particle.t += delta;
+            return particle.t < particle.maxLife;
         });
     }
 
     override render() {
         let result: Render.Result = FrameCache.array();
         
-        for (let i = 0; i < this.puffs.length; i++) {
-            let puff = this.puffs[i];
-            let progress = puff.t / puff.maxLife;
+        for (let i = 0; i < this.particles.length; i++) {
+            let particle = this.particles[i];
+            let progress = particle.t / particle.maxLife;
 
-            let radius = M.lerp(progress, puff.initialRadius, puff.finalRadius, puff.easingFn);
-            let particleColor = Color.lerpColorByLch(progress, puff.initialColor, puff.finalColor, puff.easingFn);
-            let alpha = M.lerp(progress, puff.initialAlpha, puff.finalAlpha, puff.easingFn);
+            let radius = M.lerp(progress, particle.initialRadius, particle.finalRadius, particle.easingFn);
+            let particleColor = Color.lerpColorByLch(progress, particle.initialColor, particle.finalColor, particle.easingFn);
+            let alpha = M.lerp(progress, particle.initialAlpha, particle.finalAlpha, particle.easingFn);
 
-            // Puff position includes this.x/y so the system can move around without affecting existing puffs.
-            this.sprites[i].x = puff.x - this.x;
-            this.sprites[i].y = puff.y - this.y;
+            // Particle position includes this.x/y so the system can move around without affecting existing particles.
+            this.sprites[i].x = particle.x - this.x;
+            this.sprites[i].y = particle.y - this.y;
             this.sprites[i].scale.set(radius/16);
             this.sprites[i].tint = Color.combineTints(particleColor, this.getTotalTint());
             this.sprites[i].alpha = alpha * this.getTotalAlpha();
@@ -89,9 +89,9 @@ class PuffSystem extends WorldObject {
         return result;
     }
 
-    protected addPuff(config: PuffSystem.PuffConfig) {
-        this.puffs.push({
-            // Puff position includes this.x/y so the system can move around without affecting existing puffs.
+    protected addParticle(config: ParticleSystem.ParticleConfig) {
+        this.particles.push({
+            // Particle position includes this.x/y so the system can move around without affecting existing particles.
             x: this.x + (config.p?.x ?? 0),
             y: this.y + (config.p?.y ?? 0),
             vx: config.v.x,
@@ -109,7 +109,7 @@ class PuffSystem extends WorldObject {
             easingFn: config.easingFn ?? Tween.Easing.Linear,
         });
 
-        if (this.sprites.length < this.puffs.length) {
+        if (this.sprites.length < this.particles.length) {
             this.sprites.push(new PIXI.Sprite(Textures.filledCircle(16, 0xFFFFFF)));
         }
     }
