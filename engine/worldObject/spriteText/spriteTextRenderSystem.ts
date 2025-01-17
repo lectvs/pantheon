@@ -217,7 +217,6 @@ namespace SpriteTextRenderSystem {
     }
 
     export function renderPart(part: Part) {
-        console.log('rendered!')
         let staticTextureCacheKeyWidth = Math.ceil(part.texturePlaceholder.width);
         let staticTextureCacheKeyHeight = Math.ceil(part.texturePlaceholder.height);
         let texture = cache_staticTextures.borrow(staticTextureCacheKeyWidth, staticTextureCacheKeyHeight);

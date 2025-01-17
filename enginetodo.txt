@@ -1,6 +1,5 @@
 TODO NOW
 - core improvements
-    - warnings whenever certain texture caches/pools go over a threshold
     - load directly from pyxel file (it's just a zip??)
 - world improvements
     - world/global "effects" e.g. timescale, camera position, music volume, etc. that only happen while a worldobject is in the world

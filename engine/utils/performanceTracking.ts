@@ -2,6 +2,9 @@ namespace PerformanceTracking {
     export const TEXTURES_CREATED_AND_NOT_FREED: Dict<number> = {};
     export const SPRITE_TEXT_STATIC_TEXTURES_BORROWED_AND_NOT_RETURNED: Dict<number> = {};
 
+    const TEXTURE_WARN_LIMIT = 2500;
+    const SPRITE_TEXT_STATIC_TEXTURES_WARN_LIMIT = 1000;
+
     export var MANUAL_RENDERS: number[] = [];
 
     export function logBeginFrame() {
@@ -13,6 +16,9 @@ namespace PerformanceTracking {
 
     export function logCreateTexture(texture: PIXI.RenderTexture, source: string) {
         TEXTURES_CREATED_AND_NOT_FREED[source] = (TEXTURES_CREATED_AND_NOT_FREED[source] || 0) + 1;
+        if (getTotalTexturesCreatedAndNotFreed() > TEXTURE_WARN_LIMIT) {
+            console.warn('Too many textures created and not freed! Is there a memory leak? Textures created and not freed:', getTotalTexturesCreatedAndNotFreed(), O.clone(TEXTURES_CREATED_AND_NOT_FREED));
+        }
     }
 
     export function logFreeTexture(texture: PIXI.RenderTexture, source: string | undefined) {
@@ -28,6 +34,9 @@ namespace PerformanceTracking {
 
     export function logBorrowSpriteTextStaticTexture(texture: PIXI.RenderTexture, source: string) {
         SPRITE_TEXT_STATIC_TEXTURES_BORROWED_AND_NOT_RETURNED[source] = (SPRITE_TEXT_STATIC_TEXTURES_BORROWED_AND_NOT_RETURNED[source] || 0) + 1;
+        if (getTotalSpriteTextStaticTexturesBorrowedAndNotReturned() > SPRITE_TEXT_STATIC_TEXTURES_WARN_LIMIT) {
+            console.warn('Too many SpriteText textures borrowed and not returned! Is there a memory leak? Textures borrowed and not returned:', getTotalSpriteTextStaticTexturesBorrowedAndNotReturned(), O.clone(SPRITE_TEXT_STATIC_TEXTURES_BORROWED_AND_NOT_RETURNED));
+        }
     }
 
     export function logReturnSpriteTextStaticTexture(texture: PIXI.RenderTexture, source: string) {
