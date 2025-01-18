@@ -164,6 +164,7 @@ class Game {
     }
 
     startGame(stageToLoad: () => World, transition: Transition = new Transitions.Instant()) {
+        this.gameTheater.unload();
         this.gameTheater = this.gameTheaterFactory();
         this.stageManager.loadImmediate(stageToLoad, transition, false);
     }

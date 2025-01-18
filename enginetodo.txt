@@ -6,7 +6,6 @@ TODO NOW
     - fix worldSprite and layer.sprite (currently does not factor in upscale)
     - world-specific music and music priority?
     - optimize World.selector.typeAll (quadratic runtime-ish)
-    - garbage collector type thing for worlds? (to fix problem of entities updating/rendering after world has been unloaded)
 - worldobject improvements
     - option to keep children ordered relative to their parent
     - option to consistently keep children/parent close in render order

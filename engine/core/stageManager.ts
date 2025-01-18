@@ -1,3 +1,6 @@
+/**
+ * When removing a stage from the stageStack, make sure to add it to the wastebin!
+ */
 class StageManager {
     private stageStack: {
         world: World;
@@ -48,7 +51,7 @@ class StageManager {
         if (this.stageStack.length === 0) return;
 
         let oldWorld = this.getCurrentWorld();
-        this.stageStack.pop();
+        this.addToWastebin(this.stageStack.pop()!.world);
         let newWorld = this.getCurrentWorld();
         this.transitionTo(oldWorld, newWorld, transition);
     }
@@ -57,9 +60,7 @@ class StageManager {
         let oldWorld = this.getCurrentWorld();
         this.stageStack.filterInPlace(stage => {
             if (stage.world instanceof Menu) {
-                if (stage.world !== oldWorld) {
-                    stage.world.unload();
-                }
+                this.addToWastebin(stage.world);
                 return false;
             }
             return true;
@@ -103,8 +104,8 @@ class StageManager {
         if (stackPrevious === undefined) {
             stackPrevious = oldWorld instanceof Menu || newWorld instanceof Menu;
         }
-        if (!stackPrevious) {
-            this.stageStack.pop();
+        if (!stackPrevious && this.stageStack.length > 0) {
+            this.addToWastebin(this.stageStack.pop()!.world);
         }
         this.stageStack.push({
             world: newWorld,
@@ -128,7 +129,7 @@ class StageManager {
     }
 
     reset() {
-        this.stageStack.forEach(stage => stage.world.unload());
+        this.stageStack.forEach(stage => this.addToWastebin(stage.world));
         this.stageStack.clear();
         this.transition = undefined;
     }
@@ -139,10 +140,6 @@ class StageManager {
         newWorld?.onBeginTransition();
         if (this.transition.done) {
             this.finishTransition();
-        }
-        if (oldWorld && !this.isWorldOnStageStack(oldWorld)) {
-            oldWorld.unload();
-            this.addToWastebin(oldWorld);
         }
         this.garbageCollect();
     }

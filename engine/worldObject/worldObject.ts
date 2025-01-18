@@ -121,7 +121,7 @@ class WorldObject {
     get worldd() {
         if (!this._world) {
             console.error('Access to WorldObject worldd with no world:', this);
-            return new World();
+            return new World({ name: 'WorldObject.worldd' });
         }
         return this._world;
     };

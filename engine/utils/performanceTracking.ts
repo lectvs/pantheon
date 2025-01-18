@@ -1,9 +1,11 @@
 namespace PerformanceTracking {
     export const TEXTURES_CREATED_AND_NOT_FREED: Dict<number> = {};
     export const SPRITE_TEXT_STATIC_TEXTURES_BORROWED_AND_NOT_RETURNED: Dict<number> = {};
+    export const WORLDS_CREATED_AND_NOT_UNLOADED: World[] = [];
 
     const TEXTURE_WARN_LIMIT = 2500;
     const SPRITE_TEXT_STATIC_TEXTURES_WARN_LIMIT = 1000;
+    const WORLDS_WARN_LIMIT = 20;
 
     export var MANUAL_RENDERS: number[] = [];
 
@@ -50,6 +52,17 @@ namespace PerformanceTracking {
         }
     }
 
+    export function logCreateWorld(world: World) {
+        WORLDS_CREATED_AND_NOT_UNLOADED.push(world);
+        if (getTotalWorldsCreatedAndNotUnloaded() > WORLDS_WARN_LIMIT) {
+            console.warn('Too many worlds created and not unloaded! Is there a memory leak? Worlds created and not returned:', getTotalWorldsCreatedAndNotUnloaded(), O.clone(WORLDS_CREATED_AND_NOT_UNLOADED));
+        }
+    }
+
+    export function logUnloadWorld(world: World) {
+        A.removeAll(WORLDS_CREATED_AND_NOT_UNLOADED, world);
+    }
+
     export function logManualRender() {
         MANUAL_RENDERS[0]++;
     }
@@ -68,5 +81,9 @@ namespace PerformanceTracking {
             total += SPRITE_TEXT_STATIC_TEXTURES_BORROWED_AND_NOT_RETURNED[key];
         }
         return total;
+    }
+
+    export function getTotalWorldsCreatedAndNotUnloaded() {
+        return WORLDS_CREATED_AND_NOT_UNLOADED.length;
     }
 }

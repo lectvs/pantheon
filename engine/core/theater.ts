@@ -27,6 +27,7 @@ class Theater {
         this.cutsceneManager = new CutsceneManager(this, config.cutsceneManager ?? {});
 
         this.dialogBoxWorld = new World({
+            name: 'dialogBoxWorld',
             backgroundAlpha: 0,
         });
         if (config.dialogBoxFactory) {
@@ -117,6 +118,10 @@ class Theater {
                 console.error('Cutscene skip exceeded max frames!');
             }
         }
+    }
+
+    unload() {
+        this.dialogBoxWorld.unload();
     }
 
     private addDialogBox(factory: Factory<DialogBox>) {

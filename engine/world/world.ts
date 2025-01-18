@@ -224,6 +224,8 @@ class World {
         this.maxInputLevelThisFrame = 0;
 
         this.endOfFrameQueue = [];
+
+        PerformanceTracking.logCreateWorld(this);
     }
 
     onBeginTransition() {
@@ -626,6 +628,7 @@ class World {
             freePixiRenderTexture(this.worldSprite.texture as PIXI.RenderTexture);
             this.isWorldSpriteDestroyed = true;
         }
+        PerformanceTracking.logUnloadWorld(this);
     }
 
     worldXToScreenX(worldX: number) {
