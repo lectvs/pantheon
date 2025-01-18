@@ -7,9 +7,15 @@ class StageManager {
 
     private endOfFrameQueue: (() => any)[];
 
+    private wastebin: {
+        worldToUnload: World;
+        garbageCollectionCyclesLeft: number;
+    }[];
+
     constructor() {
         this.stageStack = [];
         this.endOfFrameQueue = [];
+        this.wastebin = [];
     }
 
     update() {
@@ -134,7 +140,11 @@ class StageManager {
         if (this.transition.done) {
             this.finishTransition();
         }
-        oldWorld?.unload();
+        if (oldWorld && !this.isWorldOnStageStack(oldWorld)) {
+            oldWorld.unload();
+            this.addToWastebin(oldWorld);
+        }
+        this.garbageCollect();
     }
 
     private finishTransition() {
@@ -144,5 +154,34 @@ class StageManager {
         }
 
         this.getCurrentWorld()?.onTransitioned();
+    }
+
+    private isWorldOnStageStack(world: World) {
+        return this.stageStack.some(stage => stage.world === world);
+    }
+
+    private addToWastebin(world: World) {
+        let existingEntry = this.wastebin.find(entry => entry.worldToUnload === world);
+        if (existingEntry) {
+            existingEntry.garbageCollectionCyclesLeft = 4;
+            return;
+        }
+        this.wastebin.push({
+            worldToUnload: world,
+            garbageCollectionCyclesLeft: 4,
+        });
+    }
+
+    private garbageCollect() {
+        this.wastebin.filterInPlace(entry => {
+            entry.garbageCollectionCyclesLeft--;
+            if (entry.garbageCollectionCyclesLeft <= 0) {
+                if (!this.isWorldOnStageStack(entry.worldToUnload)) {
+                    entry.worldToUnload.unload();
+                }
+                return false;
+            }
+            return true;
+        });
     }
 }
