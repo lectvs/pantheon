@@ -324,9 +324,13 @@ class World {
             }
 
             if (layer.shouldRenderToOwnLayer) {
+                let layerContainer = layer.getContainer();
                 let layerSprite = layer.getSprite();
                 let layerTexture = layerSprite.texture as PIXI.RenderTexture;
-                renderToRenderTexture(this.renderLayer(layer), layerTexture, 'clearTextureFirst');
+                Render.diff(layerContainer, this.renderLayer(layer));
+                Render.upscalePixiObjectProperties(layerContainer, 'upscale');
+                renderToRenderTexture(layerContainer, layerTexture, 'clearTextureFirst');
+                Render.upscalePixiObjectProperties(layerContainer, 'downscale');
                 layerSprite.updateAndSetEffects(layer.effects);
                 result.push(layerSprite);
             } else {
@@ -338,8 +342,9 @@ class World {
 
         if (this.shouldRenderToTexture) {
             let worldTexture = this.worldSprite.texture as PIXI.RenderTexture;
+            Render.upscalePixiObjectProperties(this.container, 'upscale');
             renderToRenderTexture(this.container, worldTexture, 'clearTextureFirst');
-            this.worldSprite.scale.set(this.scaleX, this.scaleY);
+            Render.upscalePixiObjectProperties(this.container, 'downscale');
             this.worldSprite.updateAndSetEffects(this.effects);
             return FrameCache.array(this.worldSprite);
         } else {
@@ -671,16 +676,27 @@ class World {
     }
 
     private handleResize() {
-        this.bgFill.scale.set(this.getTargetScreenWidth(), this.getTargetScreenHeight());
-        this.fadeFill.scale.set(this.getTargetScreenWidth(), this.getTargetScreenHeight());
+        let targetScreenWidth = this.getTargetScreenWidth();
+        let targetScreenHeight = this.getTargetScreenHeight();
+        let targetWorldLayerTextureWidth = this.getTargetWorldLayerTextureWidth();
+        let targetWorldLayerTextureHeight = this.getTargetWorldLayerTextureHeight();
+
+        this.bgFill.scale.set(targetScreenWidth, targetScreenHeight);
+        this.fadeFill.scale.set(targetScreenWidth, targetScreenHeight);
 
         if (this.shouldRenderToTexture) {
-            this.resizeTexture(this.worldSprite.texture, this.getTargetScreenWidth(), this.getTargetScreenHeight());
+            this.resizeTexture(this.worldSprite.texture, targetWorldLayerTextureWidth, targetWorldLayerTextureHeight);
+            this.worldSprite.scale.set(targetScreenWidth / targetWorldLayerTextureWidth * this.scaleX, targetScreenHeight / targetWorldLayerTextureHeight * this.scaleY);
+            this.container.scale.set(global.upscale);
+        } else {
+            this.container.scale.set(1);
         }
 
         for (let layer of this.layers) {
             if (layer.shouldRenderToOwnLayer) {
-                this.resizeTexture(layer.getSprite().texture, this.getTargetScreenWidth(), this.getTargetScreenHeight());
+                this.resizeTexture(layer.getSprite().texture, targetWorldLayerTextureWidth, targetWorldLayerTextureHeight);
+                layer.getSprite().scale.set(targetScreenWidth / targetWorldLayerTextureWidth, targetScreenHeight / targetWorldLayerTextureHeight);
+                layer.getContainer().scale.set(global.upscale);
             }
         }
     }
@@ -688,6 +704,14 @@ class World {
     private resizeTexture(texture: PIXI.Texture, width: number, height: number) {
         if (texture.width === width && texture.height === height) return;
         (texture as PIXI.RenderTexture).resize(width, height);
+    }
+
+    private getTargetWorldLayerTextureWidth() {
+        return Math.ceil(this.getTargetScreenWidth() * global.upscale);
+    }
+
+    private getTargetWorldLayerTextureHeight() {
+        return Math.ceil(this.getTargetScreenHeight() * global.upscale);
     }
 
     private removeFromAllLayers(obj: WorldObject) {
@@ -773,6 +797,7 @@ namespace World {
         reverseSort: boolean;
 
         effects: Effects;
+        private container: PIXI.Container;
         private sprite: PIXI.Sprite;
         private isSpriteDestroyed: boolean;
 
@@ -788,8 +813,13 @@ namespace World {
             this.reverseSort = config.reverseSort ?? false;
 
             this.effects = new Effects(config.effects);
+            this.container = new PIXI.Container();
             this.sprite = new PIXI.Sprite();
             this.isSpriteDestroyed = true;
+        }
+
+        getContainer() {
+            return this.container;
         }
 
         getSprite() {

@@ -3,7 +3,6 @@ TODO NOW
     - load directly from pyxel file (it's just a zip??)
 - world improvements
     - world/global "effects" e.g. timescale, camera position, music volume, etc. that only happen while a worldobject is in the world
-    - fix worldSprite and layer.sprite (currently does not factor in upscale)
     - world-specific music and music priority?
     - optimize World.selector.typeAll (quadratic runtime-ish)
 - worldobject improvements
