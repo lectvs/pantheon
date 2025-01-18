@@ -155,4 +155,8 @@ namespace Textures {
         }
         return cache_ninepatchScaled[key];
     }
+
+    export function gcc(key: string, textureFactory: () => PIXI.RenderTexture) {
+        return GCCTextures.getOrCacheTexture(key, textureFactory);
+    }
 }

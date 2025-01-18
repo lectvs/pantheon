@@ -94,6 +94,7 @@ class Sprite extends PhysicsWorldObject {
     }
 
     override render(): [PIXI.Sprite, ...Render.Result] {
+        this.ensureGCCTextureLoaded();
         this.renderObject.texture = this.texture;
         this.renderObject.anchor.x = this.textureAnchor ? this.textureAnchor.x : this.texture.defaultAnchor.x;
         this.renderObject.anchor.y = this.textureAnchor ? this.textureAnchor.y : this.texture.defaultAnchor.y;
@@ -128,6 +129,9 @@ class Sprite extends PhysicsWorldObject {
         if (this.texture === Textures.NOOP) {
             return undefined;
         }
+        
+        this.ensureGCCTextureLoaded();
+
         return TextureUtils.getTextureLocalBounds$(this.texture,
             this.offsetX,
             this.offsetY,
@@ -139,6 +143,11 @@ class Sprite extends PhysicsWorldObject {
     }
 
     setTexture(key: string | PIXI.Texture | undefined) {
+        let oldTexture = this.texture;
+        if (GCCTextures.isGCCTexture(oldTexture)) {
+            GCCTextures.unregisterWorldObjectTexture(oldTexture, this);
+        }
+
         if (!key) {
             this.texture = Textures.NONE;
             this.textureKey = undefined;
@@ -155,5 +164,16 @@ class Sprite extends PhysicsWorldObject {
 
         this.textureKey = textureKey;
         this.texture = texture;
+
+        if (GCCTextures.isGCCTexture(texture)) {
+            GCCTextures.registerWorldObjectTexture(texture, this);
+        }
+    }
+
+    private ensureGCCTextureLoaded() {
+        if (GCCTextures.isGCCTextureDestroyed(this.texture)) {
+            console.log('recreating')
+            this.setTexture(GCCTextures.getNewGCCTexture(this.texture));
+        }
     }
 }

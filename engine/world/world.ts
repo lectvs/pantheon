@@ -500,6 +500,10 @@ class World {
         return G.areRectanglesOverlapping(rect, screenBounds);
     }
 
+    isUnloaded() {
+        return this.isWorldSpriteDestroyed;
+    }
+
     playSound(key: string, config?: SoundUtils.PlaySoundConfig) {
         return SoundUtils.playSound(this.soundManager, this.scriptManager, this.allowSounds, key, config);
     }

@@ -206,6 +206,7 @@ class Main {
             Render.diff(Main.stage, Main.game.render());
 
             Main.renderScreenToCanvas();
+            GCCTextures.garbageCollect();
         });
     }
 
