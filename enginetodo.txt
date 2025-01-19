@@ -1,19 +1,14 @@
 TODO NOW
 - core improvements
     - load directly from pyxel file (it's just a zip??)
+    - default/template menus for pause, options, debug, intro, main
 - world improvements
     - world/global "effects" e.g. timescale, camera position, music volume, etc. that only happen while a worldobject is in the world
     - world-specific music and music priority?
 - worldobject improvements
-    - option to keep children ordered relative to their parent
     - option to consistently keep children/parent close in render order
-    - perf improvement opportunity from eliminating getters for delta, physicsGroup, etc.
 - issues
     - investigate webgl context lost when rapidly pausing and unpausing
-
-TODO AFTER ABOVE
-- update pantheon template
-- default/template menus for pause, options, debug, intro, main
 
 TODO AT NEXT GAME'S RELEASE
 - remove validations from World.Selecter cache's and start caching!

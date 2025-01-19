@@ -25,6 +25,7 @@ namespace WorldObject {
         timers?: Timer[];
         ignoreCamera?: boolean;
         copyFromParent?: string[];
+        orderByParent?: OrderByParent;
         zBehavior?: ZBehavior;
         sound?: SoundManager.Config;
         timeScale?: number;
@@ -37,6 +38,7 @@ namespace WorldObject {
         debugFollowMouse?: boolean;
     };
 
+    export type OrderByParent = 'before' | 'after' | undefined;
     export type ZBehavior = 'noop' | 'threequarters';
 
     // To add a new hook, simply add an entry here and call WorldObject.hookManager.executeHooks() at the appropriate location(s).
@@ -66,6 +68,7 @@ class WorldObject {
 
     ignoreCamera: boolean;
     copyFromParent: string[];
+    orderByParent: WorldObject.OrderByParent;
 
     get x() { return this.localx + (this.parent ? this.parent.x : 0); }
     get y() { return this.localy + (this.parent ? this.parent.y : 0); }
@@ -201,6 +204,7 @@ class WorldObject {
 
         this.ignoreCamera = config.ignoreCamera ?? false;
         this.copyFromParent = config.copyFromParent ? A.clone(config.copyFromParent) : [];
+        this.orderByParent = config.orderByParent;
 
         this.name = config.name;
         this.tags = config.tags ? A.clone(config.tags) : [];
@@ -325,6 +329,14 @@ class WorldObject {
         }
 
         this.resolveCopyFromParent();
+        if (this.parent) {
+            if (this.orderByParent === 'before') {
+                this.orderBefore(this.parent);
+            } else if (this.orderByParent === 'after') {
+                this.orderAfter(this.parent);
+            }
+        }
+
 
         if (!isFinite(this.v.x) || !isFinite(this.v.y)) {
             console.error(`Non-finite velocity ${this.v} on object`, this);
