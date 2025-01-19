@@ -39,12 +39,19 @@ class TextureLoader implements Loader {
         mainTexture.defaultAnchor = new Point(anchor.x, anchor.y);
         AssetCache.textures[this.key] = mainTexture;
 
-        let frames = TextureLoader.getAllFrames(this.key, this.texture);
+        TextureLoader.splitTextureInAssetCache(this.key, this.texture);
+    }
+
+    static splitTextureInAssetCache(key: string, texture: Preload.Texture) {
+        let mainTexture = AssetCache.getTexture(key);
+        if (!mainTexture) return;
+
+        let frames = TextureLoader.getAllFrames(key, texture);
 
         for (let frame in frames) {
-            let frameTexture: PIXI.Texture = new PIXI.Texture(baseTexture);
-            let rect = frames[frame].rect || this.texture.rect;
-            let anchor = frames[frame].anchor || this.texture.anchor || Anchor.CENTER;
+            let frameTexture: PIXI.Texture = new PIXI.Texture(mainTexture.baseTexture);
+            let rect = frames[frame].rect || texture.rect;
+            let anchor = frames[frame].anchor || texture.anchor || Anchor.CENTER;
             if (rect) {
                 frameTexture.frame = new PIXI.Rectangle(rect.x, rect.y, rect.width, rect.height);
             }

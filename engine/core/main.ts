@@ -23,6 +23,7 @@ namespace Main {
         ldtkTilemaps?: Dict<Preload.LdtkWorld>;
         lciFiles?: Dict<Preload.LciFile>;
         asepriteFiles?: Dict<Preload.AsepriteFile>;
+        pyxelFiles?: Dict<Preload.PyxelFile>;
         textFiles?: Dict<Preload.TextFile>;
         fonts?: Dict<Preload.Font>;
         customResources?: Dict<Preload.CustomResource>;
@@ -53,6 +54,7 @@ class Main {
     static config: Main.Config;
 
     static nonFullscreenPageBackgroundColor: string;
+    static currentPageBackgroundColor: string;
 
     static game: Game;
     static soundManager: GlobalSoundManager;
@@ -78,6 +80,7 @@ class Main {
 
     private static preload() {
         this.nonFullscreenPageBackgroundColor = document.body.style.backgroundColor;
+        this.currentPageBackgroundColor = document.body.style.backgroundColor;
         Debug.init(this.config.debug);
 
         if (MobileUtils.isMobileBrowser()) {
@@ -149,6 +152,7 @@ class Main {
             ldtkWorlds: this.config.ldtkTilemaps ?? {},
             lciFiles: this.config.lciFiles ?? {},
             asepriteFiles: this.config.asepriteFiles ?? {},
+            pyxelFiles: this.config.pyxelFiles ?? {},
             textFiles: this.config.textFiles ?? {},
             fonts: this.config.fonts ?? {},
             custom: this.config.customResources ?? {},
@@ -324,10 +328,13 @@ class Main {
 
     private static updateFullscreenBackgroundColor() {
         let isFullscreen = Fullscreen.enabled || MobileUtils.isMobileBrowser();
-        if (isFullscreen && Main.config.fullscreenPageBackgroundColor !== undefined) {
-            document.body.style.backgroundColor = Main.config.fullscreenPageBackgroundColor;
-        } else {
-            document.body.style.backgroundColor = Main.nonFullscreenPageBackgroundColor;
+        let targetPageBackgroundColor = isFullscreen && Main.config.fullscreenPageBackgroundColor !== undefined
+            ? Main.config.fullscreenPageBackgroundColor
+            : Main.nonFullscreenPageBackgroundColor;
+        
+        if (this.currentPageBackgroundColor !== targetPageBackgroundColor) {
+            document.body.style.backgroundColor = targetPageBackgroundColor;
+            this.currentPageBackgroundColor = targetPageBackgroundColor;
         }
     }
 

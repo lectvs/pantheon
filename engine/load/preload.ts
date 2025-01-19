@@ -7,6 +7,7 @@ namespace Preload {
         ldtkWorlds: Dict<Preload.LdtkWorld>;
         lciFiles: Dict<Preload.LciFile>;
         asepriteFiles: Dict<Preload.AsepriteFile>;
+        pyxelFiles: Dict<Preload.PyxelFile>;
         textFiles: Dict<Preload.TextFile>;
         fonts: Dict<Preload.Font>;
         custom: Dict<Preload.CustomResource>;
@@ -46,6 +47,11 @@ namespace Preload {
     } & TextureFrame;
 
     export type AsepriteFile = {
+        url?: string;
+        anchor?: Vector2;
+    }
+
+    export type PyxelFile = {
         url?: string;
         anchor?: Vector2;
     }
@@ -124,6 +130,10 @@ class Preload {
 
         for (let key in options.asepriteFiles) {
             loaders.push(new AsepriteLoader(key, options.asepriteFiles[key]));
+        }
+
+        for (let key in options.pyxelFiles) {
+            loaders.push(new PyxelLoader(key, options.pyxelFiles[key]));
         }
 
         for (let key in options.textFiles) {

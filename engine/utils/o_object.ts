@@ -61,6 +61,20 @@ namespace O {
         return obj as T & K;
     }
 
+    export function everyKey<T extends Dict<any> | DictNumber<any>>(obj: T, predicate: (key: keyof T) => any) {
+        for (let key in obj) {
+            if (!predicate(key)) return false;
+        }
+        return true;
+    }
+
+    export function everyValue<T>(obj: Dict<T> | DictNumber<T>, predicate: (key: T) => any) {
+        for (let key in obj) {
+            if (!predicate((obj as any)[key] as T)) return false;
+        }
+        return true;
+    }
+
     export function getClass(obj: Object) {
         return obj.constructor;
     }
@@ -136,6 +150,20 @@ namespace O {
         }
         // @ts-ignore
         obj[METADATA_KEY][key] = value;
+    }
+
+    export function someKey<T extends Dict<any> | DictNumber<any>>(obj: T, predicate: (key: keyof T) => any) {
+        for (let key in obj) {
+            if (predicate(key)) return true;
+        }
+        return false;
+    }
+
+    export function someValue<T>(obj: Dict<T> | DictNumber<T>, predicate: (key: T) => any) {
+        for (let key in obj) {
+            if (predicate((obj as any)[key] as T)) return true;
+        }
+        return false;
     }
 
     export function setPath(obj: Object, path: string, value: any) {

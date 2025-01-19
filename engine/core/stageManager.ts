@@ -142,6 +142,7 @@ class StageManager {
             this.finishTransition();
         }
         this.garbageCollect();
+        FrameCache.clear();
     }
 
     private finishTransition() {

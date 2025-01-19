@@ -22,6 +22,11 @@ namespace FrameCache {
         reset() {
             this.index = 0;
         }
+
+        clear() {
+            this.cache.length = 0;
+            this.index = 0;
+        }
     }
 
     /**
@@ -130,6 +135,17 @@ namespace FrameCache {
         _boundariesCache.reset();
         _displacementCollisionCache.reset();
         _raycastCollisionCache.reset();
+    }
+
+    export function clear() {
+        _arrayCache.clear();
+        _objectCache.clear();
+        _setCache.clear();
+        _vec2Cache.clear();
+        _rectangleCache.clear();
+        _boundariesCache.clear();
+        _displacementCollisionCache.clear();
+        _raycastCollisionCache.clear();
     }
 
     export function _getAllCaches() {

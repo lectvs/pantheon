@@ -76,6 +76,8 @@ class AsepriteLoader implements Loader {
     private onLoadTextures(callback?: () => void) {
         if (!this.asepriteDocument) return;
 
+        AssetCache.asepriteFiles[this.key] = this.asepriteDocument;
+
         // Load each frame with all layers as a texture.
         let sprite = new PIXI.Sprite();
         for (let i = 0; i < this.asepriteDocument.frames.length; i++) {

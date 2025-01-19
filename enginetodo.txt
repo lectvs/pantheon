@@ -1,12 +1,10 @@
 TODO NOW
 - core improvements
-    - load directly from pyxel file (it's just a zip??)
     - default/template menus for pause, options, debug, intro, main
+    - print asset loading errors to the screen
 - world improvements
     - world/global "effects" e.g. timescale, camera position, music volume, etc. that only happen while a worldobject is in the world
     - world-specific music and music priority?
-- worldobject improvements
-    - option to consistently keep children/parent close in render order
 - issues
     - investigate webgl context lost when rapidly pausing and unpausing
 

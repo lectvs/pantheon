@@ -7,6 +7,8 @@ class AssetCache {
     static ldtkWorlds: Dict<LdtkWorld.LdtkWorld> = {};
     static fonts: Dict<SpriteText.Font> = {};
     static lciDocuments: Dict<Lci.Document> = {};
+    static asepriteFiles: Dict<AsepriteFile> = {};
+    static pyxelFiles: Dict<PyxelFile> = {};
     static textFiles: Dict<string> = {};
 
     static getTexture(key: string): PIXI.Texture {
@@ -69,6 +71,20 @@ class AssetCache {
             console.error(`LCI document '${key}' does not exist.`);
         }
         return this.lciDocuments[key];
+    }
+
+    static getAsepriteFile(key: string): AsepriteFile | undefined {
+        if (!this.asepriteFiles[key]) {
+            console.error(`Aseprite file '${key}' does not exist.`);
+        }
+        return this.asepriteFiles[key];
+    }
+
+    static getPyxelFile(key: string): PyxelFile | undefined {
+        if (!this.pyxelFiles[key]) {
+            console.error(`Pyxel file '${key}' does not exist.`);
+        }
+        return this.pyxelFiles[key];
     }
 
     /* HELPERS */
