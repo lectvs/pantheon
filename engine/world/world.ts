@@ -729,6 +729,9 @@ class World {
     // For use with World.Actions.addWorldObjectToWorld
     zinternal_addWorldObjectToWorldWorld(obj: WorldObject) {
         this.worldObjects.push(obj);
+        this.select.zinternal_addWorldObject(obj);
+
+        World.Actions.setName(obj, obj.name);
 
         if (obj.layer) {
             World.Actions.setLayer(obj, obj.layer);
@@ -750,6 +753,12 @@ class World {
         this.removeFromAllLayers(obj);
         this.removeFromAllPhysicsGroups(obj);
         A.removeAll(this.worldObjects, obj);
+        this.select.zinternal_removeWorldObject(obj);
+    }
+
+    // For use with World.Actions.setName
+    zinternal_setNameWorld(obj: WorldObject, oldName: string | undefined, newName: string | undefined) {
+        this.select.zinternal_setName(obj, oldName, newName);
     }
 
     // For use with World.Actions.setLayer
@@ -940,6 +949,23 @@ namespace World {
                 obj.x = anchor.x + (obj.x - anchor.x) * scaleRatioX;
                 obj.y = anchor.y + (obj.y - anchor.y) * scaleRatioY;
             }
+        }
+
+        /**
+         * Sets the name of a WorldObject. Returns the new name of the object.
+         */
+        export function setName(obj: WorldObject, name: string | undefined): string | undefined {
+            if (!obj) return undefined;
+
+            let oldName = obj.name;
+
+            obj.zinternal_setNameWorldObject(name);
+
+            if (obj.world) {
+                obj.world.zinternal_setNameWorld(obj, oldName, name);
+            }
+
+            return obj.layer;
         }
 
         /**

@@ -89,13 +89,13 @@ class WorldObject {
     private _visible: boolean;
     private _active: boolean;
 
-    name?: string;
     tags: string[];
     tint: number;
     alpha: number;
 
     // World data
     private _world?: World;
+    private _name?: string;
     private _layer?: string;
     private _physicsGroup?: string;
     private _children: WorldObject[];
@@ -104,6 +104,7 @@ class WorldObject {
     protected animationManager: AnimationManager;
 
     get world() { return this._world; }
+    get name() { return this._name; }
     get layer() {
         this.resolveLayer();
         return this._layer;
@@ -114,6 +115,7 @@ class WorldObject {
     }
     get children() { return this._children; }
 
+    set name(value: string | undefined) { World.Actions.setName(this, value); }
     set layer(value: string | undefined) { World.Actions.setLayer(this, value); }
     set physicsGroup(value: string | undefined) { World.Actions.setPhysicsGroup(this, value); }
     //
@@ -1097,6 +1099,11 @@ class WorldObject {
     // For use with World.Actions.removeWorldObjectFromWorld
     zinternal_removeWorldObjectFromWorldWorldObject(world: World) {
         this._world = undefined;
+    }
+
+    // For use with World.Actions.setName
+    zinternal_setNameWorldObject(name: string | undefined) {
+        this._name = name;
     }
 
     // For use with World.Actions.setLayer

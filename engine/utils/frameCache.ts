@@ -44,6 +44,12 @@ namespace FrameCache {
         return result;
     }
 
+    export function copyOfArray<T>(source: T[]): T[] {
+        let result: T[] = array();
+        result.pushAll(source);
+        return result;
+    }
+
     const _objectCache = new Cache<any>(() => ({}));
     export function object() {
         let result = _objectCache.get();
