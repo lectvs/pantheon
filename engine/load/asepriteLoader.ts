@@ -19,21 +19,25 @@ class AsepriteLoader implements Loader {
         this.pixiLoader = new PIXI.Loader();
     }
 
-    load(callback?: () => void) {
+    getKey(): string {
+        return this.key;
+    }
+
+    load(callback: () => void, onError: (message: string) => void) {
         let url = Preload.getAssetUrl(this.key, this.asepriteFile.url, 'aseprite');
         this.pixiLoader.add(this.key, url, { xhrType: PIXI.LoaderResource.XHR_RESPONSE_TYPE.BUFFER });
+        this.pixiLoader.onError.add(() => onError('Failed to load Aseprite file'));
         this.pixiLoader.load(() => {
-            this.onLoadAsepriteFile(callback);
             this._completionPercent = 0.5;
-            if (callback) callback();
+            this.onLoadAsepriteFile(callback, onError);
         });
     }
 
-    private onLoadAsepriteFile(callback?: () => void) {
+    private onLoadAsepriteFile(callback: () => void, onError: (message: string) => void) {
         let dataBuffer = this.pixiLoader.resources[this.key].data as ArrayBuffer;
 
         if (!dataBuffer) {
-            console.error('Failed to load aseprite file:', this.key);
+            onError('Failed to load aseprite file');
             return;
         }
 
@@ -69,11 +73,12 @@ class AsepriteLoader implements Loader {
 
         new LoaderSystem(loaders).load(
             progress => this._completionPercent = progress,
-            () => this.onLoadTextures(callback),
+            () => this.onLoadTextures(callback, onError),
+            onError,
         );
     }
 
-    private onLoadTextures(callback?: () => void) {
+    private onLoadTextures(callback: () => void, onError: (message: string) => void) {
         if (!this.asepriteDocument) return;
 
         AssetCache.asepriteFiles[this.key] = this.asepriteDocument;
@@ -97,8 +102,8 @@ class AsepriteLoader implements Loader {
 
                 let celTexture = AssetCache.textures[this.getCelKey(i, cel)];
                 if (!celTexture) {
-                    console.error(`Failed to load Aseprite cel texture: ${this.getCelKey(i, cel)}`);
-                    continue;
+                    onError(`Failed to load Aseprite cel texture: ${this.getCelKey(i, cel)}`);
+                    return;
                 }
 
                 sprite.texture = celTexture;
@@ -155,7 +160,7 @@ class AsepriteLoader implements Loader {
         }
 
         this._completionPercent = 1;
-        if (callback) callback();
+        callback();
     }
 
     private getTilesetKey(tileset: AsepriteFile.Tileset) {
@@ -233,13 +238,17 @@ namespace AsepriteLoader {
             this._completionPercent = 0;
         }
 
-        load(callback?: () => void) {
+        getKey(): string {
+            return this.key;
+        }
+
+        load(callback: () => void, onError: (message: string) => void) {
             this.loadImageDataAsDataUrl(this.imageData, this.width, this.height, (dataUrl) => {
                 this._completionPercent = 0.5;
                 new TextureLoader(this.key, { ...this.texture, url: dataUrl }).load(() => {
                     this._completionPercent = 1;
-                    if (callback) callback();
-                });
+                    callback();
+                }, onError);
             });
         }
 

@@ -11,26 +11,28 @@ class FontLoader implements Loader {
         this._completionPercent = 0;
     }
 
-    load(callback?: () => void) {
+    getKey(): string {
+        return this.key;
+    }
+
+    load(callback: () => void, onError: (message: string) => void) {
         new TextureLoader(this.key, {
             url: this.getUrl(),
             anchor: Anchor.TOP_LEFT,
             spritesheet: { width: this.font.charWidth, height: this.font.charHeight },
         }).load(() => {
-            this.onLoad();
-            this._completionPercent = 1;
-            if (callback) callback();
-        });
+            this.onLoad(callback, onError);
+        }, onError);
     }
 
     private getUrl() {
         return this.font.url ?? `${this.key}.png`;
     }
 
-    private onLoad() {
+    private onLoad(callback: () => void, onError: (message: string) => void) {
         let mainTexture = AssetCache.textures[this.key];
         if (!mainTexture) {
-            console.error(`Failed to load tileset texture ${this.key}`);
+            onError('Failed to load tileset texture');
             return;
         }
 
@@ -38,7 +40,7 @@ class FontLoader implements Loader {
         let numCharsY = Math.floor(mainTexture.height / this.font.charHeight);
 
         if (numCharsX !== FontLoader.FONT_CHARACTERS[0].length || numCharsY !== FontLoader.FONT_CHARACTERS.length) {
-            console.error(`Font '${this.key}' does not have the proper number of characters in each dimension: ${numCharsX},${numCharsY} (should be ${FontLoader.FONT_CHARACTERS[0].length},${FontLoader.FONT_CHARACTERS.length})`);
+            onError(`Font does not have the proper number of characters in each dimension: ${numCharsX},${numCharsY} (should be ${FontLoader.FONT_CHARACTERS[0].length},${FontLoader.FONT_CHARACTERS.length})`);
             return;
         }
 
@@ -62,6 +64,9 @@ class FontLoader implements Loader {
             spaceBetweenLines: this.font.spaceBetweenLines ?? 0,
             blankLineHeight: this.font.blankLineHeight ?? this.font.charHeight,
         };
+
+        this._completionPercent = 1;
+        callback();
     }
 
     private static FONT_CHARACTERS = [

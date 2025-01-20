@@ -64,18 +64,23 @@ class LdtkWorldLoader implements Loader {
         this.pixiLoader = new PIXI.Loader();
     }
 
-    load(callback?: () => void) {
+    getKey(): string {
+        return this.key;
+    }
+
+    load(callback: () => void, onError: (message: string) => void) {
         let url = Preload.getAssetUrl(this.key, this.tilemap.url, 'ldtk');
         this.pixiLoader.add(this.key, url);
+        this.pixiLoader.onError.add(() => onError('Failed to load Ldtk file'));
         this.pixiLoader.load(() => {
-            this.onLoadLdtk(callback);
+            this.onLoadLdtk(callback, onError);
         });
     }
 
-    private onLoadLdtk(callback?: () => void) {
+    private onLoadLdtk(callback: () => void, onError: (message: string) => void) {
         this.ldtk = JSON.parse(this.pixiLoader.resources[this.key].data);
         if (!this.ldtk) {
-            console.error('Failed to parse Ldtk file:', this.key);
+            onError('Failed to parse Ldtk file:');
             return;
         }
         new LoaderSystem(this.ldtk.defs.tilesets
@@ -87,13 +92,11 @@ class LdtkWorldLoader implements Loader {
                 collisionIndices: this.getTilesetCollisionIndices(tileset),
             }))
         ).load(t => null, () => {
-            this.onLoadTilesets();
-            this._completionPercent = 1;
-            if (callback) callback();
-        });
+            this.onLoadTilesets(callback, onError);
+        }, onError);
     }
 
-    private onLoadTilesets() {
+    private onLoadTilesets(callback: () => void, onError: (message: string) => void) {
         if (!this.ldtk) return;
 
         let ldtkWorld: LdtkWorld.LdtkWorld = {
@@ -110,7 +113,7 @@ class LdtkWorldLoader implements Loader {
 
             for (let layerInstance of level.layerInstances) {
                 if (layerInstance.__type === 'Tiles' || layerInstance.__type === 'IntGrid') {
-                    let tileset = this.getTilesetByUid(layerInstance.__tilesetDefUid);
+                    let tileset = this.getTilesetByUid(layerInstance.__tilesetDefUid, onError);
                     let tiles: Tilemap.Tile[][] = A.sequence2D(layerInstance.__cHei, layerInstance.__cWid, _ => ({
                         index: -1,
                         angle: 0,
@@ -151,7 +154,8 @@ class LdtkWorldLoader implements Loader {
 
                     for (let entity of ldtkLevel.entities) {
                         if (!entity.placeholder) {
-                            console.error(`No placeholder found for Ldtk entity '${entity.identifier}', level: '${level.identifier}'`);
+                            onError(`No placeholder found for Ldtk entity '${entity.identifier}', level: '${level.identifier}'`);
+                            return;
                         }
                     }
                 }
@@ -162,6 +166,9 @@ class LdtkWorldLoader implements Loader {
         }
 
         AssetCache.ldtkWorlds[this.key] = ldtkWorld;
+
+        this._completionPercent = 1;
+        callback();
     }
 
     private getTilesetKey(identifier: string) {
@@ -182,11 +189,12 @@ class LdtkWorldLoader implements Loader {
         return collisionIndices;
     }
 
-    private getTilesetByUid(uid: number): Tilemap.Tileset {
+    private getTilesetByUid(uid: number, onError: (message: string) => void): Tilemap.Tileset {
         let ldtkTileset = this.ldtk?.defs.tilesets.find(tileset => tileset.uid === uid);
         let tileset = ldtkTileset ? AssetCache.getTileset(this.getTilesetKey(ldtkTileset.identifier)) : undefined;
         if (!tileset) {
-            throw new Error(`Tileset in Ldtk file '${this.key}' with uid '${uid}' not found`);
+            onError(`Tileset with uid '${uid}' not found`);
+            return { tileWidth: 1, tileHeight: 1, tiles: [] };
         }
         return tileset;
     }

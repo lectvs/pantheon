@@ -35,20 +35,23 @@ class PyxelTilemapLoader implements Loader {
         this.pixiLoader = new PIXI.Loader();
     }
 
-    load(callback?: () => void) {
+    getKey(): string {
+        return this.key;
+    }
+
+    load(callback: () => void, onError: (message: string) => void) {
         let url = Preload.getAssetUrl(this.key, this.tilemap.url, 'json');
         this.pixiLoader.add(this.key, url);
+        this.pixiLoader.onError.add(() => onError('Failed to load Pyxel tilemap'));
         this.pixiLoader.load(() => {
-            this.onLoad();
-            this._completionPercent = 1;
-            if (callback) callback();
+            this.onLoad(callback, onError);
         });
     }
 
-    private onLoad() {
+    private onLoad(callback: () => void, onError: (message: string) => void) {
         let tilemapResource = this.pixiLoader.resources[this.key];
         if (!tilemapResource || !tilemapResource.data) {
-            console.error(`Failed to load PyxelTilemap ${this.key}`);
+            onError('Failed to load Pyxel tilemap');
             return;
         }
 
@@ -78,5 +81,8 @@ class PyxelTilemapLoader implements Loader {
             });
         }
         AssetCache.tilemaps[this.key] = tilemapForCache;
+
+        this._completionPercent = 1;
+        callback();
     }
 }

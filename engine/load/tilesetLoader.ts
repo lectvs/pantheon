@@ -11,26 +11,28 @@ class TilesetLoader implements Loader {
         this._completionPercent = 0;
     }
 
-    load(callback?: () => void) {
+    getKey(): string {
+        return this.key;
+    }
+
+    load(callback: () => void, onError: (message: string) => void) {
         new TextureLoader(this.key, {
             url: this.getUrl(),
             anchor: Anchor.CENTER,
             spritesheet: { width: this.tileset.tileWidth, height: this.tileset.tileHeight },
         }).load(() => {
-            this.onLoad();
-            this._completionPercent = 1;
-            if (callback) callback();
-        });
+            this.onLoad(callback, onError);
+        }, onError);
     }
 
     private getUrl() {
         return this.tileset.url ?? `${this.key}.png`;
     }
 
-    private onLoad() {
+    private onLoad(callback: () => void, onError: (message: string) => void) {
         let mainTexture = AssetCache.textures[this.key];
         if (!mainTexture) {
-            console.error(`Failed to load tileset texture ${this.key}`);
+            onError('Failed to load tileset texture');
             return;
         }
 
@@ -46,5 +48,8 @@ class TilesetLoader implements Loader {
             tiles: tiles,
             collisionIndices: this.tileset.collisionIndices,
         };
+
+        this._completionPercent = 1;
+        callback();
     }
 }

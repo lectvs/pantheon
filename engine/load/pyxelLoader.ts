@@ -15,21 +15,25 @@ class PyxelLoader implements Loader {
         this.pixiLoader = new PIXI.Loader();
     }
 
-    load(callback?: () => void) {
+    getKey(): string {
+        return this.key;
+    }
+
+    load(callback: () => void, onError: (message: string) => void) {
         let url = Preload.getAssetUrl(this.key, this.pyxelFile.url, 'pyxel');
         this.pixiLoader.add(this.key, url, { xhrType: PIXI.LoaderResource.XHR_RESPONSE_TYPE.BUFFER });
+        this.pixiLoader.onError.add(() => onError('Failed to load Pyxel file'));
         this.pixiLoader.load(() => {
-            this.onLoadPyxelFile(callback);
             this._completionPercent = 0.5;
-            if (callback) callback();
+            this.onLoadPyxelFile(callback, onError);
         });
     }
 
-    private onLoadPyxelFile(callback?: () => void) {
+    private onLoadPyxelFile(callback: () => void, onError: (message: string) => void) {
         let dataBuffer = this.pixiLoader.resources[this.key].data as ArrayBuffer;
 
         if (!dataBuffer) {
-            console.error('Failed to load pyxel file:', this.key);
+            onError('Failed to load pyxel file');
             return;
         }
 
@@ -38,27 +42,30 @@ class PyxelLoader implements Loader {
             .then(_ => {
                 let docDataFile = zip.file('docData.json');
                 if (!docDataFile) {
-                    throw new Error('Missing docData.json');
+                    onError('Missing docData.json');
+                    return;
                 }
                 return docDataFile.async('text');
             })
             .then(text => {
                 if (!text) {
-                    throw new Error('Empty docData.json');
+                    onError('Empty docData.json');
+                    return;
                 }
                 this.pyxelDocument = JSON.parse(text);
                 if (!this.pyxelDocument) {
-                    throw new Error('Failed to parse docData.json');
+                    onError('Failed to parse docData.json');
+                    return;
                 }
                 
-                this.onLoadPyxelDocument(zip, callback);
+                this.onLoadPyxelDocument(zip, callback, onError);
             })
             .catch(error => {
                 console.error('Failed to load pyxel file:', this.key, error);
             });
     }
 
-    private onLoadPyxelDocument(zip: JSZip, callback?: () => void) {
+    private onLoadPyxelDocument(zip: JSZip, callback: () => void, onError: (message: string) => void) {
         if (!this.pyxelDocument) return;
         AssetCache.pyxelFiles[this.key] = this.pyxelDocument;
 
@@ -80,11 +87,12 @@ class PyxelLoader implements Loader {
 
         new LoaderSystem(loaders).load(
             progress => this._completionPercent = progress,
-            () => this.onLoadTextures(callback),
+            () => this.onLoadTextures(callback, onError),
+            onError,
         );
     }
 
-    private onLoadTextures(callback?: () => void) {
+    private onLoadTextures(callback: () => void, onError: (message: string) => void) {
         if (!this.pyxelDocument) return;
 
         // Render all layers as a texture.
@@ -105,9 +113,8 @@ class PyxelLoader implements Loader {
 
             let layerTexture = AssetCache.textures[this.getLayerKey(layerIndex)];
             if (!layerTexture) {
-                console.error(`Failed to load Pyxel layer texture: ${this.getLayerKey(layerIndex)}`);
-                layerIndex++;
-                continue;
+                onError(`Failed to load Pyxel layer texture: ${this.getLayerKey(layerIndex)}`);
+                return;
             }
 
             sprite.texture = layerTexture;
@@ -115,7 +122,7 @@ class PyxelLoader implements Loader {
             sprite.x = 0;
             sprite.y = 0;
             sprite.alpha = this.getLayerAlpha(layer);
-            sprite.blendMode = PyxelLoader.pyxelBlendModeToPixiBlendMode(layer.blendMode);
+            sprite.blendMode = PyxelLoader.pyxelBlendModeToPixiBlendMode(layer.blendMode, onError);
             renderToRenderTexture(sprite, fullTexture);
             layerIndex++;
         }
@@ -188,7 +195,7 @@ class PyxelLoader implements Loader {
         }
 
         this._completionPercent = 1;
-        if (callback) callback();
+        callback();
     }
 
     private getLayerKey(layer: number) {
@@ -240,28 +247,37 @@ namespace PyxelLoader {
             this._completionPercent = 0;
         }
 
-        load(callback?: () => void) {
+        getKey(): string {
+            return this.key;
+        }
+
+        load(callback: () => void, onError: (message: string) => void) {
             this.loadImageDataAsDataUrl((dataUrl) => {
                 this._completionPercent = 0.5;
                 new TextureLoader(this.key, { ...this.texture, url: dataUrl }).load(() => {
                     this._completionPercent = 1;
-                    if (callback) callback();
-                });
-            });
+                    callback();
+                }, onError);
+            }, onError);
         }
 
-        private loadImageDataAsDataUrl(callback: (dataUrl: string) => void) {
+        private loadImageDataAsDataUrl(callback: (dataUrl: string) => void, onError: (message: string) => void) {
             let file = this.zip.file(this.fileName);
             if (!file) {
-                throw new Error(`Failed to load inner pyxel file: ${this.key} ${this.fileName}`);
+                onError(`Failed to load inner pyxel file: ${this.fileName}`);
+                return;
             }
-            file.async('base64').then((b64) => {
-                callback(`data:image/png;base64,${b64}`);
-            });
+            file.async('base64')
+                .then((b64) => {
+                    callback(`data:image/png;base64,${b64}`);
+                })
+                .catch(() => {
+                    onError(`Failed to extract inner pyxel file as base64: ${this.fileName}`);
+                });
         }
     }
 
-    export function pyxelBlendModeToPixiBlendMode(blendMode: string): PIXI.BLEND_MODES {
+    export function pyxelBlendModeToPixiBlendMode(blendMode: string, onError: (message: string) => void): PIXI.BLEND_MODES {
         if (blendMode === 'normal') return PIXI.BLEND_MODES.NORMAL;
         if (blendMode === 'multiply') return PIXI.BLEND_MODES.MULTIPLY;
         if (blendMode === 'add') return PIXI.BLEND_MODES.ADD;
@@ -273,10 +289,10 @@ namespace PyxelLoader {
         if (blendMode === 'screen') return PIXI.BLEND_MODES.SCREEN;
         if (blendMode === 'subtract') return PIXI.BLEND_MODES.SUBTRACT;
         if (blendMode === 'invert') {
-            console.error(`Unsupported blend mode: invert. Using Normal.`);
+            onError('Unsupported blend mode: invert');
             return PIXI.BLEND_MODES.NORMAL;
         };
-        console.error(`Invalid blend mode: ${blendMode}. Using Normal.`);
+        onError(`Invalid blend mode: ${blendMode}`);
         return PIXI.BLEND_MODES.NORMAL;
     }
 }

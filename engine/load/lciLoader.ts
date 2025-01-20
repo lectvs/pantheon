@@ -15,16 +15,21 @@ class LciLoader implements Loader {
         this.pixiLoader = new PIXI.Loader();
     }
 
-    load(callback?: () => void) {
-        let url = Preload.getAssetUrl(this.key, this.lciFile.url, 'lci');
-        this.pixiLoader.add(this.key, url);
-        this.pixiLoader.load(() => this.onLoadLci(callback));
+    getKey(): string {
+        return this.key;
     }
 
-    private onLoadLci(callback?: () => void) {
+    load(callback: () => void, onError: (message: string) => void) {
+        let url = Preload.getAssetUrl(this.key, this.lciFile.url, 'lci');
+        this.pixiLoader.add(this.key, url);
+        this.pixiLoader.onError.add(() => onError('Failed to load LCI document'));
+        this.pixiLoader.load(() => this.onLoadLci(callback, onError));
+    }
+
+    private onLoadLci(callback: () => void, onError: (message: string) => void) {
         this.lciDocument = Lci.parseDocument(this.pixiLoader.resources[this.key].data);
         if (!this.lciDocument) {
-            console.error('Failed to parse LCI document:', this.key);
+            onError('Failed to parse LCI document');
             return;
         }
         AssetCache.lciDocuments[this.key] = this.lciDocument;
@@ -36,14 +41,13 @@ class LciLoader implements Loader {
                 url: layer.image
             }))
         ).load(t => null, () => {
-            this.onLoadTextures();
-            this._completionPercent = 1;
-            if (callback) callback();
-        });
+            this.onLoadTextures(callback, onError);
+        }, onError);
     }
 
-    private onLoadTextures() {
+    private onLoadTextures(callback: () => void, onError: (message: string) => void) {
         if (!this.lciDocument) return;
+
         let fullTexture = newPixiRenderTexture(this.lciDocument.width, this.lciDocument.height, 'LciLoader.load');
         if (this.lciFile.anchor) {
             fullTexture.defaultAnchor.set(this.lciFile.anchor.x, this.lciFile.anchor.y);
@@ -57,8 +61,8 @@ class LciLoader implements Loader {
 
             let layerTexture = AssetCache.textures[Lci.getLayerTextureKey(this.key, layer.name)];
             if (!layerTexture) {
-                console.error(`Failed to load LCI layer texture: ${Lci.getLayerTextureKey(this.key, layer.name)}`);
-                continue;
+                onError(`Failed to load LCI layer texture: ${Lci.getLayerTextureKey(this.key, layer.name)}`);
+                return;
             }
             sprite.texture = layerTexture;
             sprite.anchor = layerTexture.defaultAnchor;
@@ -71,5 +75,8 @@ class LciLoader implements Loader {
 
         TextureUtils.setImmutable(fullTexture);
         AssetCache.textures[this.key] = fullTexture;
+
+        this._completionPercent = 1;
+        callback();
     }
 }

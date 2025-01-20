@@ -13,6 +13,7 @@ namespace Preload {
         custom: Dict<Preload.CustomResource>;
         progressCallback: (progress: number) => any;
         onLoad: () => void;
+        onError: (message: string) => void;
     }
 
     export type Texture = {
@@ -149,11 +150,11 @@ class Preload {
         }
 
         for (let key in options.custom) {
-            loaders.push(new CustomResourceLoader(options.custom[key].load));
+            loaders.push(new CustomResourceLoader(key, options.custom[key].load));
         }
 
         this.loaderSystem = new LoaderSystem(loaders);
-        this.loaderSystem.load(options.progressCallback, options.onLoad);
+        this.loaderSystem.load(options.progressCallback, options.onLoad, options.onError);
     }
 
     static getAssetUrl(key: string, url: string | undefined, defaultExtension: string) {

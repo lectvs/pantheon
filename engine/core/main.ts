@@ -160,7 +160,10 @@ class Main {
             onLoad: () => {
                 Main.load();
                 Main.play();
-            }
+            },
+            onError: (message: string) => {
+                Main.breakGameWithMessage(message);
+            },
         });
     }
 

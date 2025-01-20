@@ -13,20 +13,23 @@ class TextureLoader implements Loader {
         this.pixiLoader = new PIXI.Loader();
     }
 
-    load(callback?: () => void) {
+    getKey(): string {
+        return this.key;
+    }
+
+    load(callback: () => void, onError: (message: string) => void) {
         let url = Preload.getAssetUrl(this.key, this.texture.url, 'png');
         this.pixiLoader.add(this.key, url);
+        this.pixiLoader.onError.add(() => onError('Failed to load texture'));
         this.pixiLoader.load(() => {
-            this.onLoad();
-            this._completionPercent = 1;
-            if (callback) callback();
+            this.onLoad(callback, onError);
         });
     }
 
-    private onLoad() {
+    private onLoad(callback: () => void, onError: (message: string) => void) {
         let baseTexture: PIXI.BaseTexture = this.pixiLoader.resources[this.key].texture.baseTexture;
         if (!baseTexture) {
-            console.error(`Failed to load texture ${this.key}`);
+            onError('Failed to load texture');
             return;
         }
 
@@ -40,6 +43,9 @@ class TextureLoader implements Loader {
         AssetCache.textures[this.key] = mainTexture;
 
         TextureLoader.splitTextureInAssetCache(this.key, this.texture);
+
+        this._completionPercent = 1;
+        callback();
     }
 
     static splitTextureInAssetCache(key: string, texture: Preload.Texture) {
