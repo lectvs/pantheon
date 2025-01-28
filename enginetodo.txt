@@ -1,6 +1,4 @@
 TODO NOW
-- core improvements
-    - default/template menus for pause, options, debug, intro, main
 - world improvements
     - world/global "effects" e.g. timescale, camera position, music volume, etc. that only happen while a worldobject is in the world
     - world-specific music and music priority?
@@ -8,7 +6,7 @@ TODO NOW
     - investigate webgl context lost when rapidly pausing and unpausing
 
 TODO AT NEXT GAME'S RELEASE
-- remove validations from World.Selecter cache's and start caching!
+- remove validations from World.Selecter caches and start caching!
 
 backlog
 - repo improvements
@@ -27,7 +25,6 @@ backlog
 - animation/visual layers
 - easier window event integration (onbeforeunload, etc.)
 - better WorldAsWorldObject (containers?)
-- better world and object management (freeing)
 - controller revamp
 - full nodejs setup
 - camera zoom/rotate?
