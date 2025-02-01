@@ -76,6 +76,14 @@ namespace World {
     } | {
         action: 'volumescale';
         volumeScale: number;
+    } | {
+        action: 'playontransitionbegin';
+        music: string | Sound;
+        fadeTime?: number;
+    } | {
+        action: 'playontransitionend';
+        music: string | Sound;
+        fadeTime?: number;
     }
 
     // To add a new hook, simply add an entry here and call World.hookManager.executeHooks() at the appropriate location(s).

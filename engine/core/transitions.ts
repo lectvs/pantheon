@@ -168,8 +168,8 @@ namespace Transitions {
             ));
         }
 
-        override setData(oldWorld: World | undefined, newWorld: World | undefined): void {
-            super.setData(oldWorld, newWorld);
+        override setData(props: Transition.SetDataProps): void {
+            super.setData(props);
 
             if (this.newScreenshot) {
                 this.newScreenshot.sprite.filters = [this.dissolveFilter];

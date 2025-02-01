@@ -57,7 +57,10 @@ class Game {
 
     start() {
         this.stageManager.reset();
-        this.stageManager.loadImmediate(this.entryPointMenu, new Transitions.Instant(), false);
+        this.stageManager.loadImmediate(this.entryPointMenu, {
+            transition: new Transitions.Instant(),
+            stackPrevious: false,
+        });
         if (Debug.SKIP_MAIN_MENU_STAGE) {
             if (this.entryPointMenu.toString() !== this.mainMenu.toString()) {
                 this.loadMainMenu();
@@ -86,8 +89,10 @@ class Game {
 
         if (!currentWorld) {
             this.musicManager.update(Main.delta);
-        } else if (currentWorld.music.action !== 'block') {
+        } else if (currentWorld.music.action === 'volumescale') {
             this.musicManager.volume *= currentWorld.music.volumeScale;
+            this.musicManager.update(Main.delta);
+        } else if (currentWorld.music.action !== 'block') {
             this.musicManager.update(Main.delta);
         }
 
@@ -146,12 +151,18 @@ class Game {
 
     loadMainMenu() {
         this.stageManager.reset();
-        this.stageManager.loadImmediate(this.mainMenu, new Transitions.Instant(), false);
+        this.stageManager.loadImmediate(this.mainMenu, {
+            transition: new Transitions.Instant(),
+            stackPrevious: false,
+        });
         Persist.persist();
     }
 
     pauseGame(transition: Transition = new Transitions.Instant()) {
-        this.stageManager.loadImmediate(this.pauseMenu, transition, true);
+        this.stageManager.loadImmediate(this.pauseMenu, {
+            transition,
+            stackPrevious: true,
+        });
     }
 
     playSound(key: string) {
@@ -166,7 +177,10 @@ class Game {
     startGame(stageToLoad: () => World, transition: Transition = new Transitions.Instant()) {
         this.gameTheater.unload();
         this.gameTheater = this.gameTheaterFactory();
-        this.stageManager.loadImmediate(stageToLoad, transition, false);
+        this.stageManager.loadImmediate(stageToLoad, {
+            transition,
+            stackPrevious: false,
+        });
     }
 
     takeScreenshot(): World.Screenshot {

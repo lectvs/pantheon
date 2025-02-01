@@ -1,6 +1,17 @@
 /**
  * When removing a stage from the stageStack, make sure to add it to the wastebin!
  */
+namespace StageManager {
+    export type StageTransitionProps = {
+        transition?: Transition;
+        /**
+         * @default - true iff either the old or the new stage is a Menu.
+         */
+        stackPrevious?: boolean;
+        doNotPlayWorldMusic?: boolean;
+    }
+}
+
 class StageManager {
     private stageStack: {
         world: World;
@@ -47,16 +58,16 @@ class StageManager {
         return FrameCache.array();
     }
     
-    back(transition: Transition) {
+    back(transition: Transition = new Transitions.Instant()) {
         if (this.stageStack.length === 0) return;
 
         let oldWorld = this.getCurrentWorld();
         this.addToWastebin(this.stageStack.pop()!.world);
         let newWorld = this.getCurrentWorld();
-        this.transitionTo(oldWorld, newWorld, transition);
+        this.transitionTo(oldWorld, newWorld, transition, false);
     }
 
-    clearMenus(transition: Transition) {
+    clearMenus(transition: Transition = new Transitions.Instant()) {
         let oldWorld = this.getCurrentWorld();
         this.stageStack.filterInPlace(stage => {
             if (stage.world instanceof Menu) {
@@ -68,7 +79,7 @@ class StageManager {
         let newWorld = this.getCurrentWorld();
 
         if (oldWorld !== newWorld) {
-            this.transitionTo(oldWorld, newWorld, transition);
+            this.transitionTo(oldWorld, newWorld, transition, false);
         }
     }
 
@@ -88,22 +99,14 @@ class StageManager {
         return this.getCurrentWorld() instanceof Menu;
     }
 
-    /**
-     * If stackPrevious is undefined, will be true iff either old or new stage is a Menu.
-     */
-    load(stage: () => World, transition: Transition = new Transitions.Instant(), stackPrevious?: boolean) {
-        this.endOfFrameQueue.push(() => this.loadImmediate(stage, transition, stackPrevious));
+    load(stage: () => World, props: StageManager.StageTransitionProps = {}) {
+        this.endOfFrameQueue.push(() => this.loadImmediate(stage, props));
     }
 
-    /**
-     * If stackPrevious is undefined, will be true iff either old or new stage is a Menu.
-     */
-    loadImmediate(stage: () => World, transition: Transition = new Transitions.Instant(), stackPrevious?: boolean) {
+    loadImmediate(stage: () => World, props: StageManager.StageTransitionProps = {}) {
         let oldWorld = this.getCurrentWorld();
         let newWorld = stage();
-        if (stackPrevious === undefined) {
-            stackPrevious = oldWorld instanceof Menu || newWorld instanceof Menu;
-        }
+        let stackPrevious = props.stackPrevious ?? (oldWorld instanceof Menu || newWorld instanceof Menu);
         if (!stackPrevious && this.stageStack.length > 0) {
             this.addToWastebin(this.stageStack.pop()!.world);
         }
@@ -112,20 +115,24 @@ class StageManager {
             worldFactory: stage,
         });
         newWorld.update();
-        this.transitionTo(oldWorld, newWorld, transition);
+        this.transitionTo(oldWorld, newWorld, props.transition ?? new Transitions.Instant(), props.doNotPlayWorldMusic);
         return newWorld;
     }
 
-    reload(transition: Transition = new Transitions.Instant()) {
-        this.endOfFrameQueue.push(() => this.reloadImmediate(transition));
+    reload(props: StageManager.StageTransitionProps = {}) {
+        this.endOfFrameQueue.push(() => this.reloadImmediate(props));
     }
 
-    reloadImmediate(transition: Transition = new Transitions.Instant()) {
+    reloadImmediate(props: StageManager.StageTransitionProps = {}) {
         if (this.stageStack.length === 0) {
             console.error('Cannot reload current stage because there are no stages loaded');
             return;
         }
-        this.loadImmediate(this.stageStack.last()!.worldFactory, transition, false);
+        if (props.stackPrevious !== undefined) {
+            console.error('stackPrevious prop is not supported in reload/reloadImmediate');
+        }
+        props.stackPrevious = false;
+        this.loadImmediate(this.stageStack.last()!.worldFactory, props);
     }
 
     reset() {
@@ -134,10 +141,13 @@ class StageManager {
         this.transition = undefined;
     }
 
-    transitionTo(oldWorld: World | undefined, newWorld: World | undefined, transition: Transition) {
+    private transitionTo(oldWorld: World | undefined, newWorld: World | undefined, transition: Transition, doNotPlayWorldMusic: boolean | undefined) {
         this.transition = transition;
-        this.transition.setData(oldWorld, newWorld);
+        this.transition.setData({ oldWorld, newWorld, doNotPlayWorldMusic });
         newWorld?.onBeginTransition();
+        if (newWorld?.music.action === 'playontransitionbegin' && !doNotPlayWorldMusic) {
+            global.game.musicManager.play(newWorld.music.music, newWorld.music.fadeTime);
+        }
         if (this.transition.done) {
             this.finishTransition();
         }
@@ -146,12 +156,15 @@ class StageManager {
     }
 
     private finishTransition() {
+        let world = this.getCurrentWorld();
+        if (world?.music.action === 'playontransitionend' && !this.transition?.doNotPlayWorldMusic) {
+            global.game.musicManager.play(world.music.music, world.music.fadeTime);
+        }
         if (this.transition) {
             this.transition.free();
             this.transition = undefined;
         }
-
-        this.getCurrentWorld()?.onTransitioned();
+        world?.onTransitioned();
     }
 
     private isWorldOnStageStack(world: World) {

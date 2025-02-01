@@ -1,9 +1,5 @@
 TODO NOW
-- world improvements
-    - world/global "effects" e.g. timescale, camera position, music volume, etc. that only happen while a worldobject is in the world
-    - world-specific music and music priority?
-- issues
-    - investigate webgl context lost when rapidly pausing and unpausing
+- investigate webgl context lost when rapidly pausing and unpausing
 
 TODO AT NEXT GAME'S RELEASE
 - remove validations from World.Selecter caches and start caching!

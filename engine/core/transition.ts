@@ -10,11 +10,19 @@ namespace Transition {
         texture: PIXI.RenderTexture;
         sprite: PIXI.Sprite;
     }
+
+    export type SetDataProps = {
+        oldWorld: World | undefined;
+        newWorld: World | undefined;
+        doNotPlayWorldMusic: boolean | undefined;
+    }
 }
 
 abstract class Transition {
     protected oldWorld?: World;
     protected newWorld?: World;
+    doNotPlayWorldMusic?: boolean;
+
     protected oldScreenshot?: Transition.Snapshot;
     protected newScreenshot?: Transition.Snapshot;
 
@@ -37,9 +45,10 @@ abstract class Transition {
 
     abstract render(): Render.Result;
 
-    setData(oldWorld: World | undefined, newWorld: World | undefined) {
-        this.oldWorld = oldWorld;
-        this.newWorld = newWorld;
+    setData(props: Transition.SetDataProps) {
+        this.oldWorld = props.oldWorld;
+        this.newWorld = props.newWorld;
+        this.doNotPlayWorldMusic = props.doNotPlayWorldMusic;
 
         if (this.oldWorld) {
             let oldWorldScreenshot = this.oldWorld.takeScreenshot();

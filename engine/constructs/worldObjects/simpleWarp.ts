@@ -4,7 +4,7 @@ namespace SimpleWarp {
         height: number;
         target: OrFactory<WorldObject | string>;
         toStage: Factory<World>;
-        transition?: OrFactory<Transition | undefined>;
+        transitionProps?: OrFactory<StageManager.StageTransitionProps | undefined>;
         isEnabled?: () => boolean;
     }
 }
@@ -13,7 +13,7 @@ class SimpleWarp extends WorldObject {
     private bounds: Bounds;
     private target: OrFactory<WorldObject | string>;
     private toStage: Factory<World>;
-    private transition: OrFactory<Transition | undefined>;
+    private transitionProps: OrFactory<StageManager.StageTransitionProps | undefined>;
     private isEnabled: () => boolean;
 
     constructor(config: SimpleWarp.Config) {
@@ -22,7 +22,7 @@ class SimpleWarp extends WorldObject {
         this.bounds = new RectBounds(0, 0, config.width, config.height, this);
         this.target = config.target;
         this.toStage = config.toStage;
-        this.transition = config.transition;
+        this.transitionProps = config.transitionProps;
         this.isEnabled = config.isEnabled ?? (() => true);
     }
 
@@ -38,6 +38,6 @@ class SimpleWarp extends WorldObject {
         let isInBounds = this.bounds.containsPoint(target) || (target instanceof PhysicsWorldObject && target.isOverlapping(this.bounds));
         if (!isInBounds) return;
         
-        global.game.stageManager.load(this.toStage, OrFactory.resolve(this.transition));
+        global.game.stageManager.load(this.toStage, OrFactory.resolve(this.transitionProps));
     }
 }
