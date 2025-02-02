@@ -2,7 +2,7 @@ namespace Utils {
     export const NOOP = () => null;
     export const IDENTITY = (e: any) => e;
     export const NOOP_DISPLAYOBJECT: PIXI.DisplayObject = new PIXI.DisplayObject();
-    export const UID = new UIDGenerator();
+    export const UID = new UIDGenerator(10_000);
 
     export function openTwitter() {
         window.open('https://twitter.com/lectvs', '_blank');

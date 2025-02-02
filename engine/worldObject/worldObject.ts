@@ -1152,7 +1152,7 @@ class WorldObject {
 }
 
 namespace WorldObject {
-    export const UID = new UIDGenerator();
+    export const UID = new UIDGenerator(10_000);
 
     export class LifeTimer extends Timer {
         frames: number;

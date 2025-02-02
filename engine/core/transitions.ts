@@ -1,7 +1,9 @@
 namespace Transitions {
     export class Instant extends Transition {
         constructor() {
-            super({});
+            super({
+                takeScreenshots: false,
+            });
         }
 
         override render() {

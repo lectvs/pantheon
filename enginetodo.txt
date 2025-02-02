@@ -1,8 +1,7 @@
-TODO NOW
-- investigate webgl context lost when rapidly pausing and unpausing
-
 TODO AT NEXT GAME'S RELEASE
 - remove validations from World.Selecter caches and start caching!
+
+TODO
 
 backlog
 - repo improvements

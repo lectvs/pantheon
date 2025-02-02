@@ -1,4 +1,5 @@
 namespace PerformanceTracking {
+    export const TEXTURES_CREATED: Dict<number> = {};
     export const TEXTURES_CREATED_AND_NOT_FREED: Dict<number> = {};
     export const SPRITE_TEXT_STATIC_TEXTURES_BORROWED_AND_NOT_RETURNED: Dict<number> = {};
     export const WORLDS_CREATED_AND_NOT_UNLOADED: World[] = [];
@@ -17,6 +18,7 @@ namespace PerformanceTracking {
     }
 
     export function logCreateTexture(texture: PIXI.RenderTexture, source: string) {
+        TEXTURES_CREATED[source] = (TEXTURES_CREATED[source] || 0) + 1;
         TEXTURES_CREATED_AND_NOT_FREED[source] = (TEXTURES_CREATED_AND_NOT_FREED[source] || 0) + 1;
         if (getTotalTexturesCreatedAndNotFreed() > TEXTURE_WARN_LIMIT) {
             console.warn('Too many textures created and not freed! Is there a memory leak? Textures created and not freed:', getTotalTexturesCreatedAndNotFreed(), O.clone(TEXTURES_CREATED_AND_NOT_FREED));
@@ -65,6 +67,14 @@ namespace PerformanceTracking {
 
     export function logManualRender() {
         MANUAL_RENDERS[0]++;
+    }
+
+    export function getTotalTexturesCreated() {
+        let total = 0;
+        for (let key in TEXTURES_CREATED) {
+            total += TEXTURES_CREATED[key];
+        }
+        return total;
     }
 
     export function getTotalTexturesCreatedAndNotFreed() {

@@ -2,19 +2,25 @@
 
 class UIDGenerator {
     private rng: RandomNumberGenerator;
-    private pastUIDs: Set<string>;
+    private pastUIDs: string[];
 
-    constructor() {
+    private pastUIDLimit: number;
+
+    constructor(pastUIDLimit: number) {
         this.rng = new RandomNumberGenerator();
-        this.pastUIDs = new Set();
+        this.pastUIDs = [];
+        this.pastUIDLimit = pastUIDLimit;
     }
 
     generate() {
         let uid: string;
         do {
             uid = this.generateUid();
-        } while (this.pastUIDs.has(uid));
-        this.pastUIDs.add(uid);
+        } while (this.pastUIDs.includes(uid));
+        this.pastUIDs.push(uid);
+        while (this.pastUIDs.length > this.pastUIDLimit) {
+            this.pastUIDs.shift();
+        }
         return uid;
     }
 
