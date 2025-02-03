@@ -757,6 +757,7 @@ class World {
         this.removeFromAllLayers(obj);
         this.removeFromAllPhysicsGroups(obj);
         A.removeAll(this.worldObjects, obj);
+        this.eventManager.pruneListeners();
         this.select.zinternal_removeWorldObject(obj);
     }
 

@@ -89,6 +89,12 @@ class WorldEventManager {
         });
     }
 
+    pruneListeners() {
+        this.listeners.filterInPlace(listener => {
+            return !listener.shouldPrune();
+        });
+    }
+
     registerListener(listener: WorldEvent.Listener) {
         this.listeners.push(listener);
         return listener;
