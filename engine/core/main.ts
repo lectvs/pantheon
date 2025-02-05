@@ -307,6 +307,11 @@ class Main {
         window.addEventListener("touchcancel", event => {
             Input.handleTouchCancelEvent(event);
         });
+        window.addEventListener("gamepadconnected", event => {
+            if (event.gamepad.mapping !== 'standard') {
+                console.warn('Warning: non-standard gamepad connected!');
+            }
+        });
         window.addEventListener("contextmenu", event => {
             WebAudio.start();
             event.preventDefault();

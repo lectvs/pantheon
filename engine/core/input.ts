@@ -59,6 +59,10 @@ class Input {
     static gestures: Input.Gestures;
     static keyboardString: string;
 
+    private static gamepadStickAxesThreshold = 0.5;
+    static gamepadLeftStickAxes: Pt;
+    static gamepadRightStickAxes: Pt;
+
     static init(keyCodesByName: Input.KeyCodesByName) {
         this.keyCodesByName = O.deepClone(keyCodesByName);
         this.isDownByKeyCode = {};
@@ -73,6 +77,8 @@ class Input {
         }
 
         this.gestures = new Input.Gestures();
+        this.gamepadLeftStickAxes = vec2(0, 0);
+        this.gamepadRightStickAxes = vec2(0, 0);
         this.keyboardString = '';
     }
 
@@ -80,6 +86,7 @@ class Input {
         if (Debug.PROGRAMMATIC_INPUT) {
             this.clearKeys();
         }
+        this.updateGamepad();
         this.updateKeys();
         this.updateMousePosition();
     }
@@ -227,6 +234,54 @@ class Input {
                 // Pass, mouse already up.
             }
         }
+    }
+
+    private static updateGamepad() {
+        let gamepads = navigator.getGamepads()?.filterInPlace(g => g) as Gamepad[] | undefined;
+        if (A.isEmpty(gamepads)) return;
+        let buttons: boolean[] = FrameCache.array();
+        for (let i = 0; i <= 16; i++) {
+            buttons[i] = gamepads.some(gamepad => gamepad.buttons.length > i && gamepad.buttons[i].pressed);
+        }
+
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadButtonBottom] = buttons[0];
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadButtonRight] = buttons[1];
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadButtonLeft] = buttons[2];
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadButtonTop] = buttons[3];
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadBumperLeft] = buttons[4];
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadBumperRight] = buttons[5];
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadTriggerLeft] = buttons[6];
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadTriggerRight] = buttons[7];
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadSelect] = buttons[8];
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadStart] = buttons[9];
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadLeftStickClicked] = buttons[10];
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadRightStickClicked] = buttons[11];
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadDpadUp] = buttons[12];
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadDpadDown] = buttons[13];
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadDpadLeft] = buttons[14];
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadDpadRight] = buttons[15];
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadHome] = buttons[16];
+
+        let gamepadWithAxisInput = gamepads.argmax(gamepad => A.sum(gamepad.axes, a => a));
+        if (gamepadWithAxisInput && gamepadWithAxisInput.axes.length < 4) gamepadWithAxisInput = undefined;
+        let leftAxisH = gamepadWithAxisInput ? gamepadWithAxisInput.axes[0] : 0;
+        let leftAxisV = gamepadWithAxisInput ? gamepadWithAxisInput.axes[1] : 0;
+        let rightAxisH = gamepadWithAxisInput ? gamepadWithAxisInput.axes[2] : 0;
+        let rightAxisV = gamepadWithAxisInput ? gamepadWithAxisInput.axes[3] : 0;
+
+        this.gamepadLeftStickAxes.x = clamp(leftAxisH, -1, 1);
+        this.gamepadLeftStickAxes.y = clamp(leftAxisV, -1, 1);
+        this.gamepadRightStickAxes.x = clamp(rightAxisH, -1, 1);
+        this.gamepadRightStickAxes.y = clamp(rightAxisV, -1, 1);
+
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadLeftStickLeft] = this.gamepadLeftStickAxes.x < -this.gamepadStickAxesThreshold;
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadLeftStickRight] = this.gamepadLeftStickAxes.x > this.gamepadStickAxesThreshold;
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadLeftStickUp] = this.gamepadLeftStickAxes.y < -this.gamepadStickAxesThreshold;
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadLeftStickDown] = this.gamepadLeftStickAxes.y > this.gamepadStickAxesThreshold;
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadRightStickLeft] = this.gamepadRightStickAxes.x < -this.gamepadStickAxesThreshold;
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadRightStickRight] = this.gamepadRightStickAxes.x > this.gamepadStickAxesThreshold;
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadRightStickUp] = this.gamepadRightStickAxes.y < -this.gamepadStickAxesThreshold;
+        this.isDownByKeyCode[this.GAMEPAD_KEYCODES.GamepadRightStickDown] = this.gamepadRightStickAxes.y > this.gamepadStickAxesThreshold;
     }
 
     private static setupKeyCode(keyCode: string) {
@@ -554,7 +609,41 @@ class Input {
         Tab: 'Tab',
     } as const;
 
-    static MOUSE_KEYCODES: string[] = ["MouseLeft", "MouseMiddle", "MouseRight", "MouseBack", "MouseForward"];
+    static GAMEPAD_KEYCODES = {
+        GamepadButtonBottom: 'GamepadButtonBottom',
+        GamepadButtonRight: 'GamepadButtonRight',
+        GamepadButtonLeft: 'GamepadButtonLeft',
+        GamepadButtonTop: 'GamepadButtonTop',
+        GamepadBumperLeft: 'GamepadBumperLeft',
+        GamepadBumperRight: 'GamepadBumperRight',
+        GamepadTriggerLeft: 'GamepadTriggerLeft',
+        GamepadTriggerRight: 'GamepadTriggerRight',
+        GamepadSelect: 'GamepadSelect',
+        GamepadStart: 'GamepadStart',
+        GamepadLeftStickClicked: 'GamepadLeftStickClicked',
+        GamepadRightStickClicked: 'GamepadRightStickClicked',
+        GamepadDpadUp: 'GamepadDpadUp',
+        GamepadDpadDown: 'GamepadDpadDown',
+        GamepadDpadLeft: 'GamepadDpadLeft',
+        GamepadDpadRight: 'GamepadDpadRight',
+        GamepadHome: 'GamepadHome',
+        GamepadLeftStickLeft: 'GamepadLeftStickLeft',
+        GamepadLeftStickRight: 'GamepadLeftStickRight',
+        GamepadLeftStickUp: 'GamepadLeftStickUp',
+        GamepadLeftStickDown: 'GamepadLeftStickDown',
+        GamepadRightStickLeft: 'GamepadRightStickLeft',
+        GamepadRightStickRight: 'GamepadRightStickRight',
+        GamepadRightStickUp: 'GamepadRightStickUp',
+        GamepadRightStickDown: 'GamepadRightStickDown',
+    } as const;
+
+    static MOUSE_KEYCODES: string[] = [
+        "MouseLeft",
+        "MouseMiddle",
+        "MouseRight",
+        "MouseBack",
+        "MouseForward",
+    ];
     static MOUSE_TOUCH_ID: number = Infinity;
     static DEBUG_PREFIX: string = "debug::";
     static PREVENT_DEFAULT_KEYS: string[] = ['Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];

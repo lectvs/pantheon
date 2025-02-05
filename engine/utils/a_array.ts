@@ -320,7 +320,7 @@ namespace A {
         return A.sort(A.clone(array), key, reverse);
     }
 
-    export function sum<T>(array: T[], key: (e: T) => number = (e => <any>e)) {
+    export function sum<T>(array: ReadonlyArray<T>, key: (e: T) => number = (e => <any>e)) {
         if (isEmpty(array)) return 0;
         let result = 0;
         for (let i = 0; i < array.length; i++) {
