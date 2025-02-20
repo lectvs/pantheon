@@ -36,6 +36,11 @@ namespace Render {
                 r.filterArea.x += dx;
                 r.filterArea.y += dy;
             }
+
+            // if (r instanceof PIXI.Sprite && r.mask) {
+            //     r.mask.x += dx;
+            //     r.mask.y += dy;
+            // }
         }
         return result;
     }
@@ -49,6 +54,11 @@ namespace Render {
                 r.filterArea.x += dx;
                 r.filterArea.y += dy;
             }
+
+            // if (r instanceof PIXI.Sprite && r.mask) {
+            //     r.mask.x += dx;
+            //     r.mask.y += dy;
+            // }
         }
         return result;
     }

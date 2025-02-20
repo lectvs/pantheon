@@ -157,6 +157,6 @@ namespace Textures {
     }
 
     export function gcc(key: string, textureFactory: () => PIXI.RenderTexture) {
-        return GCCTextures.getOrCacheTexture(key, textureFactory);
+        return GCCTextures.getTextureForSprite(key, textureFactory);
     }
 }

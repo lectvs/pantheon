@@ -238,18 +238,31 @@ namespace Effects {
                     },
                     visualPadding: 1,
                     code: `
-                        float maxAlpha = max(max(getColor(x-upscale, y).a, getColor(x, y-upscale).a), max(getColor(x+upscale, y).a, getColor(x, y+upscale).a));
-                        if (fillCorners == 1) {
-                            float maxAlphaCorners = max(max(getColor(x-upscale, y-upscale).a, getColor(x+upscale, y-upscale).a), max(getColor(x-upscale, y+upscale).a, getColor(x+upscale, y+upscale).a));
-                            maxAlpha = max(maxAlpha, maxAlphaCorners);
-                        }
-                        if (inp.a == 0.0 && maxAlpha > 0.0) {
-                            if (matchAlpha == 0) {
-                                outp = vec4(color, alpha);
-                            } else {
-                                outp = vec4(color, alpha * maxAlpha);
-                            }
-                        }
+                        float maxAlpha = max(
+                            max(
+                                getColor(x-upscale, y).a,
+                                getColor(x, y-upscale).a
+                            ),
+                            max(
+                                getColor(x+upscale, y).a,
+                                getColor(x, y+upscale).a
+                            )
+                        );
+
+                        float maxAlphaCorners = max(
+                            max(
+                                getColor(x-upscale, y-upscale).a,
+                                getColor(x+upscale, y-upscale).a
+                            ),
+                            max(
+                                getColor(x-upscale, y+upscale).a,
+                                getColor(x+upscale, y+upscale).a
+                            )
+                        );
+                        maxAlpha = max(maxAlpha, maxAlphaCorners * float(fillCorners));
+
+                        float matchedAlpha = alpha * map(float(matchAlpha), 0.0, 1.0, 1.0, maxAlpha);
+                        outp = lerp(outp, vec4(color, matchedAlpha), float(inp.a == 0.0 && maxAlpha > 0.0));
                     `
                 });
 

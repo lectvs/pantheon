@@ -1,7 +1,7 @@
 class FilterSprite extends Sprite {
     constructor(filters: TextureFilter[], config: Sprite.Config<FilterSprite> = {}) {
         super({
-            texture: Textures.filledRect(global.gameWidth, global.gameHeight, 0xFFFFFF, 0),
+            texture: Textures.filledRect(global.gameWidth, global.gameHeight, 0xFFFFFF),
             ignoreCamera: true,
             effects: { post: filters },
             ...config,

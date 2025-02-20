@@ -449,9 +449,13 @@ class WorldObject {
         }
     }
 
+    addTimer(duration: number, callback?: () => any, count?: number): Timer;
+    addTimer<T extends Timer>(timer: T, callback?: () => any, count?: number): T;
     addTimer(durationOrTimer: number | Timer, callback?: () => any, count: number = 1) {
         if (M.isNumber(durationOrTimer)) {
-            durationOrTimer = new Timer(durationOrTimer, callback, count);
+            let timer = new Timer(durationOrTimer, callback, count);
+            this.timers.push(timer);
+            return timer;
         }
         this.timers.push(durationOrTimer);
         return durationOrTimer;

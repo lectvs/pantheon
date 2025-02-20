@@ -1,10 +1,10 @@
 /**
  * After initializing, you should call GameData.load() inside Main.beforeStart().
  */
-class GameData<T> {
+class GameDataBase<T> {
     _memGameData!: T;
 
-    constructor(private getExistingGameDataWithDefaults: (gameData: Partial<T>) => T) {}
+    constructor(private fillGameDataWithDefaults: (gameData: Partial<T>) => T) {}
 
     getData<K extends keyof T>(key: K): T[K] {
         if (!this.checkGameDataLoaded()) return undefined!;
@@ -19,7 +19,7 @@ class GameData<T> {
 
     load() {
         let localGameData = LocalStorage.getJson<T>(this.getGameDataLocalStorageKey());
-        this._memGameData = this.getExistingGameDataWithDefaults(localGameData ?? {});
+        this._memGameData = this.fillGameDataWithDefaults(localGameData ?? {});
     }
 
     save() {

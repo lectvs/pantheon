@@ -52,9 +52,11 @@ function newPixiRenderTexture(width: number, height: number, source: string) {
 
 function renderToRenderTexture(object: PIXI.DisplayObject | PIXI.DisplayObject[], renderTexture: PIXI.RenderTexture, clearTextureFirst?: 'clearTextureFirst') {
     if (A.isArray(object)) {
+        let container = new PIXI.Container();
         for (let i = 0; i < object.length; i++) {
-            renderToRenderTexture(object[i], renderTexture, i === 0 ? clearTextureFirst : undefined);
+            container.addChild(object[i]);
         }
+        renderToRenderTexture(container, renderTexture, clearTextureFirst);
         return;
     }
     

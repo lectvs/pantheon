@@ -269,7 +269,7 @@ namespace TextureUtils {
         sprite.scale.set(scaleX, scaleY);
         sprite.tint = properties.tint ?? 0xFFFFFF;
         sprite.alpha = properties.alpha ?? 1;
-        if (properties.filters) sprite.filters = properties.filters;
+        sprite.updateAndSetEffects(new Effects({ post: properties.filters }));
 
         let result = newPixiRenderTexture(texture.width * Math.abs(scaleX), texture.height * Math.abs(scaleY), source);
         renderToRenderTexture(sprite, result);

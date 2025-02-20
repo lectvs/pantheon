@@ -12,7 +12,7 @@ namespace GCCTextures {
 
     export const CACHE: Dict<CacheEntry> = {};
 
-    export function getOrCacheTexture(key: string, textureFactory: () => PIXI.RenderTexture) {
+    export function getTextureForSprite(key: string, textureFactory: () => PIXI.RenderTexture) {
         if (!CACHE[key]) {
             CACHE[key] = {
                 texture: createTexture(key, textureFactory),
@@ -74,7 +74,7 @@ namespace GCCTextures {
     export function getNewGCCTexture(texture: PIXI.RenderTexture): PIXI.RenderTexture {
         let key = O.getMetadata(texture, GCC_TEXTURE_KEY) as string;
         let textureFactory = O.getMetadata(texture, GCC_TEXTURE_FACTORY) as () => PIXI.RenderTexture;
-        return getOrCacheTexture(key, textureFactory);
+        return getTextureForSprite(key, textureFactory);
     }
 
     function createTexture(key: string, textureFactory: () => PIXI.RenderTexture) {

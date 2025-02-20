@@ -27,6 +27,7 @@ namespace TextureFilter {
      *              float distance(vecN A, vecN B) - distance between two vectors
      *              float length(vecN A) - magnitude of a vector
      *              float step(float threshold, float value) - returns 0 if value < threshold, 1 otherwise
+     *              float smoothStep(float threshold, float value, float sharpness) - returns ~0 if value < threshold, up to ~1 otherwise, smoothed
      */
     export type Config = {
         uniforms?: Dict<any>;
@@ -89,7 +90,7 @@ class TextureFilter extends PIXI.Filter {
         this.setUniform('height', height * global.upscale);
     }
 
-    setTextureValuesFromSprite(sprite: PIXI.Sprite) {
+    setTextureValuesFromSprite(sprite: PIXI.Sprite | PIXI.Graphics) {
         this.setTextureValues(sprite.width, sprite.height);
     }
 
@@ -211,6 +212,13 @@ namespace TextureFilter {
 
         vec4 round(vec4 x) {
             return vec4(round(x.x), round(x.y), round(x.z), round(x.w));
+        }
+
+        float smoothStep(float edge, float x, float sharpness) {
+            float a = sharpness;
+            float e = exp(a*(x - edge));
+            float v = e / (1.0 + e);
+            return v;
         }
 
         ${Perlin.SHADER_SOURCE}
