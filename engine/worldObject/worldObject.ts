@@ -832,18 +832,22 @@ class WorldObject {
 
     moveToBack() {
         World.Actions.moveWorldObjectToBack(this);
+        return this;
     }
 
     moveToFront() {
         World.Actions.moveWorldObjectToFront(this);
+        return this;
     }
 
     orderAfter(other: WorldObject) {
         World.Actions.orderWorldObjectAfter(this, other);
+        return this;
     }
 
     orderBefore(other: WorldObject) {
         World.Actions.orderWorldObjectBefore(this, other);
+        return this;
     }
 
     oscillateNFrames(n: number) {

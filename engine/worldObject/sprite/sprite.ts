@@ -170,6 +170,21 @@ class Sprite extends PhysicsWorldObject {
         }
     }
 
+    withTexture(texture: string | PIXI.Texture | undefined) {
+        this.setTexture(texture);
+        return this;
+    }
+
+    withAngle(angle: number) {
+        this.angle = angle;
+        return this;
+    }
+
+    withVangle(vangle: number) {
+        this.vangle = vangle;
+        return this;
+    }
+
     private ensureGCCTextureLoaded() {
         if (GCCTextures.isGCCTextureDestroyed(this.texture)) {
             console.log('recreating')
