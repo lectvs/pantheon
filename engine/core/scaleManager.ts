@@ -33,7 +33,7 @@ class ScaleManager {
     }
 
     private static scaleFullscreen() {
-        let newScale = this.getScale();
+        let newScale = this.getFullscreenScale();
         let upscale: number;
 
         if (this.scaleMode === 'canvas') {
@@ -91,16 +91,9 @@ class ScaleManager {
         Main.forceResize(width, height, upscale);
     }
 
-    private static getScale() {
-        let canvasScale = this.getWindowedCanvasScaleFor({
-            scaleMode: this.scaleMode,
-            expandDirection: this.expandDirection,
-            windowedScale: this.windowedScale,
-        });
-        let scaledGameWidth = global.gameWidth * canvasScale;
-        let scaledGameHeight = global.gameHeight * canvasScale;
-        let hscale = window.innerWidth / scaledGameWidth;
-        let vscale = window.innerHeight / scaledGameHeight;
+    private static getFullscreenScale() {
+        let hscale = window.innerWidth / global.gameWidth;
+        let vscale = window.innerHeight / global.gameHeight;
 
         if (this.expandDirection === 'horizontal') {
             return vscale;
