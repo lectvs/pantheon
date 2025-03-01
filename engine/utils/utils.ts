@@ -4,6 +4,10 @@ namespace Utils {
     export const NOOP_DISPLAYOBJECT: PIXI.DisplayObject = new PIXI.DisplayObject();
     export const UID = new UIDGenerator(10_000);
 
+    export function createGlobalGetterSetter<T>(name: string, get: Getter<T>, set: Setter<T>) {
+        Object.defineProperty(window, name, { get, set });
+    }
+
     export function openTwitter() {
         window.open('https://twitter.com/lectvs', '_blank');
     }

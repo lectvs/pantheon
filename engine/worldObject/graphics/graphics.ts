@@ -123,3 +123,61 @@ class Graphics extends WorldObject {
         this.graphics = graphics;
     }
 }
+
+namespace Graphics {
+    abstract class GraphicsPreset extends Graphics {
+        protected dirty = false;
+
+        override render(): Render.Result {
+            if (this.dirty) {
+                this.updateGraphics();
+                this.dirty = false;
+            }
+            return super.render();
+        }
+
+        protected abstract updateGraphics(): void;
+    }
+
+    export namespace Annulus {
+        export type Config = Graphics.Config<Annulus> & {
+            outerRadius: number;
+            innerRadius: number;
+        }
+    }
+
+    export class Annulus extends GraphicsPreset {
+        private _outerRadius: number;
+        get outerRadius() { return this._outerRadius; }
+        set outerRadius(v) {
+            this._outerRadius = v;
+            this.dirty = true;
+        }
+
+        private _innerRadius: number;
+        get innerRadius() { return this._innerRadius; }
+        set innerRadius(v) {
+            this._innerRadius = v;
+            this.dirty = true;
+        }
+
+        constructor(config: Annulus.Config) {
+            super(config);
+            this._outerRadius = config.outerRadius;
+            this._innerRadius = config.innerRadius;
+            this.updateGraphics();
+        }
+
+        protected override updateGraphics(): void {
+            let graphics = this.getGraphics();
+            graphics.clear();
+            graphics.lineStyle(0, 0, 0);
+            graphics.beginFill(0xFFFFFF, 1);
+            graphics.drawCircle(0, 0, this.outerRadius);
+            graphics.endFill();
+            graphics.beginHole();
+            graphics.drawCircle(0, 0, this.innerRadius);
+            graphics.endHole();
+        }
+    }
+}
