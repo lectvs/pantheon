@@ -49,3 +49,7 @@ https://www.youtube.com/watch?v=u2fwxuHZXIA
 # Random Tech
 - Instead of hover tint dark -> highlight, add a two-part hover tint dark -> intermediary -> highlight (citizen sleeper scroll bar)
 - Rotate everything (fools room)
+
+# Refs
+- Deluxe16 font: https://www.dafont.com/deluxe16.font
+- VHS Gothic font: https://www.dafont.com/vhs-gothic.charmap
