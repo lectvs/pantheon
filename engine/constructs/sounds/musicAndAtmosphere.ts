@@ -9,6 +9,7 @@ namespace MusicAndAtmosphere {
         musicTime: number;
         atmosphereToMusicFadeTime: number;
         musicToAtmosphereFadeTime: number;
+        selectRandomNextTrack?: boolean;
     }
 }
 
@@ -20,9 +21,11 @@ class MusicAndAtmosphere extends Sound {
     private musicTime: number;
     private atmosphereToMusicFadeTime: number;
     private musicToAtmosphereFadeTime: number;
+    private shuffle: boolean;
     
     private currentPlaying: 'atmosphere' | 'music';
     private currentMusicI: number;
+    private nextMusicI: number;
     private timeUntilSwitch: number;
 
     get duration() { return Infinity; }
@@ -40,6 +43,7 @@ class MusicAndAtmosphere extends Sound {
         this.musicTime = config.musicTime;
         this.atmosphereToMusicFadeTime = config.atmosphereToMusicFadeTime;
         this.musicToAtmosphereFadeTime = config.musicToAtmosphereFadeTime;
+        this.shuffle = config.selectRandomNextTrack ?? false;
 
         this.musicSounds = this.musicKeys.map(key => {
             let sound = new BasicSound(key);
@@ -49,6 +53,7 @@ class MusicAndAtmosphere extends Sound {
 
         this.currentPlaying = 'atmosphere';
         this.currentMusicI = Random.index(this.musicSounds);
+        this.nextMusicI = Random.index(this.musicSounds);
         this.timeUntilSwitch = config.initialAtmosphereTime + this.atmosphereToMusicFadeTime;
     }
 
@@ -87,7 +92,12 @@ class MusicAndAtmosphere extends Sound {
                 this.musicSounds[this.currentMusicI].seek(0);
             } else {
                 this.timeUntilSwitch = this.musicTime + musicTransitionTime;
-                this.currentMusicI = mod(this.currentMusicI + 1, this.musicKeys.length);
+                this.currentMusicI = this.nextMusicI;
+                if (this.shuffle) {
+                    this.nextMusicI = Random.index(this.musicKeys);
+                } else {
+                    this.nextMusicI = mod(this.currentMusicI + 1, this.musicKeys.length);
+                }
             }
         }
     }
@@ -140,7 +150,6 @@ class MusicAndAtmosphere extends Sound {
 
     private getCurrentlyNotPlayingSound() {
         if (this.currentPlaying === 'music') return this.atmosphereSound;
-        let nextMusicI = mod(this.currentMusicI + 1, this.musicSounds.length);
-        return this.musicSounds[nextMusicI];
+        return this.musicSounds[this.nextMusicI];
     }
 }
