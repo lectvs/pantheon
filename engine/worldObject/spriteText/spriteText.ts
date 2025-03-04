@@ -77,6 +77,7 @@ namespace SpriteText {
          * If negative: Uses tag data.
          */
         color?: number;
+        alpha?: number;
         offsetX?: number;
         offsetY?: number;
     }
@@ -701,6 +702,9 @@ namespace SpriteText {
         },
         'color': (params) => {
             return { color: getInt(params[0], undefined) };
+        },
+        'alpha': (params) => {
+            return { alpha: getFloat(params[0], undefined) };
         },
         'offset': (params) => {
             return { offsetX: getFloat(params[0], undefined), offsetY: getFloat(params[1], undefined) };

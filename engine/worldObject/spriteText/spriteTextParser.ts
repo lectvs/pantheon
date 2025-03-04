@@ -132,6 +132,11 @@ namespace SpriteTextParser {
             tagData.push({ tag: 'color', params: [`${colorOverride}`] });
         }
 
+        let alphaOverride = SpriteText.getCharProperty(props.charProperties, 'alpha', char.name, char.position);
+        if (alphaOverride !== undefined) {
+            tagData.push({ tag: 'alpha', params: [`${alphaOverride}`] });
+        }
+
         let offsetXOverride = SpriteText.getCharProperty(props.charProperties, 'offsetX', char.name, char.position);
         let offsetYOverride = SpriteText.getCharProperty(props.charProperties, 'offsetY', char.name, char.position);
         if (offsetXOverride !== undefined || offsetYOverride !== undefined) {
