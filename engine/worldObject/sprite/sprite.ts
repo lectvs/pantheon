@@ -108,6 +108,7 @@ class Sprite extends PhysicsWorldObject {
         this.renderObject.tint = Color.combineTints(this.getTotalTint(), this.textureTint);
         this.renderObject.alpha = this.getTotalAlpha() * this.textureAlpha;
         this.renderObject.blendMode = this.blendMode ?? PIXI.BLEND_MODES.NORMAL;
+        this.renderObject.mask = this.getMaskSprite()!; // undefined maskSprite => no mask
         this.renderObject.updateAndSetEffects(this.effects);
         O.putMetadata(this.renderObject, 'renderedFrom', this);
 

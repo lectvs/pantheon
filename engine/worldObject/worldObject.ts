@@ -30,6 +30,7 @@ namespace WorldObject {
         sound?: SoundManager.Config;
         timeScale?: number;
         useGlobalTime?: boolean;
+        mask?: Mask.Config;
         inputLevel?: number;
         tags?: string[];
         hooks?: HooksConfig<Hooks<WO>>;
@@ -155,6 +156,9 @@ class WorldObject {
 
     _isInsideWorldBoundsBufferThisFrame: boolean;
 
+    mask: Mask.Config | undefined;
+    private maskSprite: PIXI.Sprite | undefined;
+
     controller: Controller;
     behavior: Behavior;
 
@@ -219,6 +223,8 @@ class WorldObject {
         this.startOfLastFrameZ = this.z;
 
         this._isInsideWorldBoundsBufferThisFrame = false;
+
+        this.mask = O.clone(config.mask);
 
         this.controller = new Controller();
         this.behavior = new NullBehavior();
@@ -396,6 +402,8 @@ class WorldObject {
     }
 
     render(): Render.Result {
+        this.setMaskSpriteProperties();
+
         let result: Render.Result = FrameCache.array();
 
         for (let module of this.modules) {
@@ -405,6 +413,11 @@ class WorldObject {
         let renderedHooks = this.hookManager.executeHooksWithReturnValue$('onRender');
         for (let renderedHook of renderedHooks) {
             result.pushAll(renderedHook);
+        }
+
+        let maskSprite = this.getMaskSprite();
+        if (maskSprite) {
+            result.push(maskSprite);
         }
 
         return result;
@@ -1056,6 +1069,19 @@ class WorldObject {
         this.localz += this.vz * this.delta;
     }
 
+    protected getMaskSprite() {
+        if (!this.mask) {
+            this.maskSprite = undefined;
+            return undefined;
+        }
+
+        if (!this.maskSprite) {
+            this.maskSprite = new PIXI.Sprite();
+        }
+            
+        return this.maskSprite;
+    }
+
     private lifeExpired() {
         if (this.hookManager.hasHooks('onLifeExpire')) {
             this.hookManager.executeHooks('onLifeExpire');
@@ -1102,6 +1128,29 @@ class WorldObject {
             if (thisValue === parentValue) continue;
             O.setPath(this, path, parentValue);
         }
+    }
+
+    private setMaskSpriteProperties() {
+        let maskSprite = this.getMaskSprite();
+        if (!this.mask || !maskSprite) return;
+        if (!this.mask.relativeTo || this.mask.relativeTo === 'worldobject') {
+            maskSprite.x = this.mask.x ?? 0;
+            maskSprite.y = this.mask.y ?? 0;
+        } else if (this.mask.relativeTo === 'world') {
+            maskSprite.x = (this.mask.x ?? 0) - this.x;
+            maskSprite.y = (this.mask.y ?? 0) - this.y;
+        } else {
+            assertUnreachable(this.mask.relativeTo);
+        }
+        maskSprite.texture = this.mask.texture;
+        if (this.mask.textureAnchor) {
+            maskSprite.anchor.set(this.mask.textureAnchor.x, this.mask.textureAnchor.y);
+        } else {
+            maskSprite.anchor.set(this.mask.texture.defaultAnchor.x, this.mask.texture.defaultAnchor.y);
+        }
+        maskSprite.scale.x = this.mask.scaleX ?? 1;
+        maskSprite.scale.y = this.mask.scaleY ?? 1;
+        maskSprite.angle = this.mask.angle ?? 0;
     }
 
     private updateController() {

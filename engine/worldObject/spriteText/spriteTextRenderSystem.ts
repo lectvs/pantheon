@@ -35,6 +35,8 @@ class SpriteTextRenderSystem {
         let textBounds = SpriteText.getBoundsOfCharList$(this.spriteText.getCharList());
         let result: Render.Result = FrameCache.array();
 
+        let maskSprite = this.spriteText.zinternal_getMaskSprite();
+
         for (let part in this.parts) {
             let data = this.parts[part];
             let style = this.spriteText.getStyleFromTags$(data.tagData, this.spriteText.style);
@@ -74,6 +76,7 @@ class SpriteTextRenderSystem {
             sprite.angle = spriteAngle;
             sprite.tint = Color.combineTints(styleColor, this.spriteText.getTotalTint());
             sprite.alpha = styleAlpha * this.spriteText.getTotalAlpha();
+            sprite.mask = maskSprite!; // undefined maskSprite => no mask
 
             this.spriteText.effects.pre.pushAll(style.filters);
             sprite.updateAndSetEffects(this.spriteText.effects);

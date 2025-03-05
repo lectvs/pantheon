@@ -96,6 +96,7 @@ class Graphics extends WorldObject {
         this.graphics.tint = Color.combineTints(this.getTotalTint(), this.graphicsTint);
         this.renderObject.alpha = this.getTotalAlpha() * this.graphicsAlpha;
         this.graphics.blendMode = this.blendMode ?? PIXI.BLEND_MODES.NORMAL;
+        this.renderObject.mask = this.getMaskSprite()!; // undefined maskSprite => no mask
         O.putMetadata(this.renderObject, 'renderedFrom', this);
 
         let result: Render.Result = FrameCache.array(this.renderObject);

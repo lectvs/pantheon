@@ -255,6 +255,13 @@ class SpriteText extends WorldObject {
         let result: Render.Result = FrameCache.array();
         result.pushAll(this.getRenderSystem().render());
         result.pushAll(super.render());
+
+        // Sometimes SpriteText has no render objects (e.g. if offscreen)
+        let maskSprite = this.getMaskSprite();
+        if (maskSprite && result.every(r => r.mask !== maskSprite)) {
+            A.removeAll(result, maskSprite);
+        }
+
         return result;
     }
 
@@ -496,6 +503,10 @@ class SpriteText extends WorldObject {
             fixedCharSize: this.fixedCharSize,
             charProperties: this.charProperties,
         });
+    }
+
+    zinternal_getMaskSprite() {
+        return this.getMaskSprite();
     }
 
     private readonly tagCache: Dict<SpriteText.Style> = {};
