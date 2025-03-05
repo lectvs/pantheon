@@ -51,6 +51,10 @@ class Rectangle {
         return isFinite(this.x) && isFinite(this.y) && isFinite(this.width) && isFinite(this.height);
     }
 
+    overlaps(other: Rect) {
+        return G.areRectanglesOverlapping(this, other);
+    }
+
     scale(scale: number, dimensionsOnly?: 'dimensionsOnly') {
         if (!dimensionsOnly) {
             this.x *= scale;

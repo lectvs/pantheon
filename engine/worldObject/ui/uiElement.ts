@@ -178,8 +178,15 @@ class UIElement extends Module<WorldObject> {
         if (!this.worldObject.world) return false;
 
         let mouseBounds = this.worldObject.world.getWorldMouseBounds$();
-
         if (!this.isOverlapping(mouseBounds)) return false;
+
+        let maskBounds = this.worldObject.getMaskWorldBounds$();
+        if (maskBounds) {
+            let overlap = G.getRectangleOverlap$(maskBounds, this.getInteractBounds$().getBoundingBox$());
+            if (!overlap || !this.isRectOverlapping$(overlap, mouseBounds)) {
+                return false;
+            }
+        }
 
         return UIElement.getClosestUIElement(mouseBounds, this.worldObject.world) === this;
     }
@@ -194,6 +201,23 @@ class UIElement extends Module<WorldObject> {
         }
 
         let result = this.getInteractBounds$().overlaps(bounds);
+
+        bounds.x = boundsX;
+        bounds.y = boundsY;
+
+        return result;
+    }
+
+    isRectOverlapping$(rect: Rect, bounds: Bounds) {
+        let boundsX = bounds.x;
+        let boundsY = bounds.y;
+
+        if (this.worldObject.shouldIgnoreCamera() && this.worldObject.world) {
+            bounds.x -= this.worldObject.world.camera.worldOffsetX;
+            bounds.y -= this.worldObject.world.camera.worldOffsetY;
+        }
+
+        let result = G.areRectanglesOverlapping(rect, bounds.getBoundingBox$());
 
         bounds.x = boundsX;
         bounds.y = boundsY;

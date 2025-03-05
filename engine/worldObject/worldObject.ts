@@ -621,6 +621,32 @@ class WorldObject {
         return FrameCache.vec2(this.localx, this.localy);
     }
 
+    getMaskWorldBounds$(): Rectangle | undefined {
+        if (!this.mask) return undefined;
+
+        let maskX = 0;
+        let maskY = 0;
+
+        if (!this.mask.relativeTo || this.mask.relativeTo === 'worldobject') {
+            maskX = this.x + (this.mask.x ?? 0);
+            maskY = this.y + (this.mask.y ?? 0);
+        } else if (this.mask.relativeTo === 'world') {
+            maskX = this.mask.x ?? 0;
+            maskY = this.mask.y ?? 0;
+        } else {
+            assertUnreachable(this.mask.relativeTo);
+        }
+
+        return TextureUtils.getTextureLocalBounds$(this.mask.texture,
+            maskX,
+            maskY,
+            this.mask.scaleX ?? 1,
+            this.mask.scaleY ?? 1,
+            this.mask.angle ?? 0,
+            this.mask.textureAnchor,
+        );
+    }
+
     getModule<T extends Module<WorldObject>>(type: new (...args: any[]) => T): T | undefined {
         for (let module of this.modules) {
             if (module instanceof type) return module;
@@ -1048,6 +1074,11 @@ class WorldObject {
         return this;
     }
 
+    withIgnoreCamera(ignoreCamera: boolean) {
+        this.ignoreCamera = ignoreCamera;
+        return this;
+    }
+
     withTint(tint: number) {
         this.tint = tint;
         return this;
@@ -1060,6 +1091,11 @@ class WorldObject {
 
     withLife(life: number) {
         this.setLife(life);
+        return this;
+    }
+
+    withMask(mask: Mask.Config | undefined) {
+        this.mask = O.clone(mask);
         return this;
     }
 

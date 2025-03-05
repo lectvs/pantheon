@@ -56,6 +56,16 @@ namespace tmp {
         return _rectangle_2;
     }
 
+    const _rectBounds = new RectBounds(0, 0, 0, 0);
+    export function rectBounds(x: number, y: number, width: number, height: number, parent?: Bounds.Parent) {
+        _rectBounds.x = x;
+        _rectBounds.y = y;
+        _rectBounds.width = width;
+        _rectBounds.height = height;
+        _rectBounds.parent = parent;
+        return _rectBounds;
+    }
+
     // For use with `Function.apply()`
     const _argArray: any[] = [];
     export function argArray<T>(e1: T): [T] {
