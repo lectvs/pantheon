@@ -384,6 +384,13 @@ class World {
         return World.Actions.addWorldObjectsToWorld(objs, this);
     }
 
+    doAfterTime(time: number, callback: Function) {
+        this.runScript(function*() {
+            yield S.wait(time);
+            callback();
+        });
+    }
+
     emitEventWorld(event: string, data: any = {}) {
         this.eventManager.emitEvent({
             source: {

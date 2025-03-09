@@ -2,6 +2,7 @@
 
 namespace MusicAndAtmosphere {
     export type Config = {
+        idempotencyKey: string;
         musicKeys: string[];
         atmosphereKey: string;
         initialAtmosphereTime: number;
@@ -34,7 +35,7 @@ class MusicAndAtmosphere extends Sound {
     set onDone(_) {}
 
     constructor(config: MusicAndAtmosphere.Config) {
-        super('none');
+        super(`maa(${config.idempotencyKey})`);
 
         this.musicKeys = config.musicKeys;
         this.atmosphereSound = new BasicSound(config.atmosphereKey);

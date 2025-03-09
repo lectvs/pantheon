@@ -74,9 +74,7 @@ class MusicManager {
     }
 
     play(music: string | Sound, fadeTime: number = 0) {
-        let musicAlreadyPlaying =  (St.isString(music) && this.state.state !== 'stopped' && this.state.currentMusic.key === music)
-                                || (!St.isString(music) && this.state.state !== 'stopped' && this.state.currentMusic === music);
-        if (musicAlreadyPlaying) {
+        if (this.isMusicAlreadyPlaying(music)) {
             if (this.state.state === 'playing') {
                 if (this.state.fadeVolume < 1) {
                     this.unfade(fadeTime);
@@ -130,6 +128,12 @@ class MusicManager {
             currentMusic: music,
             fadeVolume: this.state.fadeVolume,
         };
+    }
+
+    private isMusicAlreadyPlaying(music: string | Sound) {
+        if (this.state.state === 'stopped') return false;
+        if (St.isString(music)) return this.state.currentMusic.key === music;
+        return this.state.currentMusic === music || this.state.currentMusic.key === music.key;
     }
 
     static TRANSITION_SCRIPT = 'transition';
