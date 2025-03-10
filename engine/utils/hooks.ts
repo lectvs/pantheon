@@ -85,4 +85,8 @@ class HookManager<Hooks extends HookSet> {
         }
         this.hooks[hook.name].filterInPlace(h => h.hookFn !== hook.fn)
     }
+
+    removeHooks<T extends string & keyof Hooks>(name: T) {
+        this.hooks[name]?.clear();
+    }
 }

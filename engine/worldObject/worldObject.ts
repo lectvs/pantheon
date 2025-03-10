@@ -914,6 +914,10 @@ class WorldObject {
         this.hookManager.removeHook(hook);
     }
 
+    removeHooks<T extends keyof WorldObject.Hooks<this>>(name: T) {
+        this.hookManager.removeHooks(name);
+    }
+
     removeTag(tag: string) {
         A.removeAll(this.tags, tag);
     }
