@@ -1,6 +1,8 @@
 namespace SoundUtils {
     export type PlaySoundConfig = SoundManager.PlaySoundConfig & {
         fadeIn?: number;
+        echoDelay?: number;
+        echoDecay?: number;
     }
 
     export function playSound(soundManager: SoundManager, scriptManager: ScriptManager, allowSounds: boolean, key: string, config?: PlaySoundConfig) {
@@ -10,6 +12,19 @@ namespace SoundUtils {
 
         if (config?.fadeIn) {
             scriptManager.runScript(S.tween(config.fadeIn, sound, 'volume', 0, sound.volume));
+        }
+
+        if (config?.echoDelay) {
+            let decay = config.echoDecay ?? 0.5;
+            scriptManager.runScript(function*() {
+                for (let i = 1; i < 5; i++) {
+                    yield config.echoDelay;
+                    soundManager.playSound(key, {
+                        ...config,
+                        volume: (config.volume ?? 1) * (decay**i),
+                    });
+                }
+            });
         }
 
         return sound;
