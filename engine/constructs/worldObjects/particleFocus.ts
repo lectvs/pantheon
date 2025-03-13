@@ -49,7 +49,7 @@ class ParticleFocus extends WorldObject {
             useGlobalTime: this.useGlobalTime,
             hooks: {
                 onAdd() {
-                    this.angle = tmp.vec2(parent).subtract(this).angle;
+                    this.angle = Vector2.subtract(parent, this).angle;
                 },
             },
         }));

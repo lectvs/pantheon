@@ -171,5 +171,30 @@ class Perlin {
         float pnoise01(float x, float y, float z) {
             return map(pnoise(x, y, z), -1.0, 1.0, 0.0, 1.0);
         }
+
+        // Normalized to (-1, 1)
+        // x - input value
+        // min/max - wrapping bounds of x
+        // circleRadius - radius of circle in p-space
+        float pnoiseCircle(float x, float min, float max, float circleRadius) {
+            float angle = map(x, min, max, 0.0, TWOPI);
+            return pnoise(circleRadius * cos(angle), circleRadius * sin(angle));
+        }
+
+        // Normalized to (-1, 1)
+        float pnoiseCircle(float x, float min, float max, float circleRadius, float z) {
+            float angle = map(x, min, max, 0.0, TWOPI);
+            return pnoise(circleRadius * cos(angle), circleRadius * sin(angle), z);
+        }
+
+        // Normalized to (0, 1)
+        float pnoiseCircle01(float x, float min, float max, float circleRadius) {
+            return map(pnoiseCircle(x, min, max, circleRadius), -1.0, 1.0, 0.0, 1.0);
+        }
+
+        // Normalized to (0, 1)
+        float pnoiseCircle01(float x, float min, float max, float circleRadius, float z) {
+            return map(pnoiseCircle(x, min, max, circleRadius, z), -1.0, 1.0, 0.0, 1.0);
+        }
     `;
 }

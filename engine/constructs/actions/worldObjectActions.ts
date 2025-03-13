@@ -9,7 +9,7 @@ namespace Actions {
     }
 
     export function enter(worldObject: WorldObject | undefined, duration: number, initialValues: EnterInitialValues, easingFn?: Tween.Easing.Function, delay?: number): Script {
-        if (!worldObject) return new Script(S.noop());
+        if (!worldObject || !worldObject.world) return Script.noop();
 
         worldObject.setVisible(true);
 
@@ -70,7 +70,7 @@ namespace Actions {
     }
 
     export function exit(worldObject: WorldObject | undefined, duration: number, finalValues: ExitFinalValues, easingFn?: Tween.Easing.Function, delay?: number): Script {
-        if (!worldObject || worldObject.data.exiting) return new Script(S.noop());
+        if (!worldObject || !worldObject.world || worldObject.data.exiting) return Script.noop();
 
         worldObject.data.exiting = true;
 

@@ -28,6 +28,18 @@ namespace S {
         }
     }
 
+    export function enter(obj: WorldObject, duration: number, initialValues: Actions.EnterInitialValues, easingFn?: Tween.Easing.Function, delay?: number) {
+        return function*() {
+            yield obj.enter(duration, initialValues, easingFn, delay);
+        }
+    }
+
+    export function exit(obj: WorldObject, duration: number, finalValues: Actions.ExitFinalValues, easingFn?: Tween.Easing.Function, delay?: number) {
+        return function*() {
+            yield obj.exit(duration, finalValues, easingFn, delay);
+        }
+    }
+
     export function fade(duration: number, color: number = 0x000000): Script.Function {
         let fadeScript = global.theater.fade(duration, color);
         return S.waitUntil(() => fadeScript.isDone);

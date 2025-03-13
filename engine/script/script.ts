@@ -21,6 +21,10 @@ class Script {
         this.isDone = false;
         this.delta = 0;
         this.data = {};
+
+        if (scriptFunctionLike instanceof Script && scriptFunctionLike.isDone) {
+            this.isDone = true;
+        }
     }
 
     get running() {
@@ -50,6 +54,8 @@ class Script {
             console.error('Warning: script finishImmediately exceeded max iters!', this);
             this.isDone = true;
         }
+        
+        return this;
     }
 
     stop() {
@@ -60,8 +66,12 @@ class Script {
 }
 
 namespace Script {
+    export function noop() {
+        return instant(function*() {});
+    }
+
     export function instant(scriptFunction: Script.Function, maxIters?: number) {
-        new Script(scriptFunction).finishImmediately(maxIters);
+        return new Script(scriptFunction).finishImmediately(maxIters);
     }
 
     export function toScriptFunction(functionLike: FunctionLike): Script.Function {

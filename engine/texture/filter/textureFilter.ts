@@ -11,13 +11,16 @@ namespace TextureFilter {
      *              vec4 inp - the input color
      *              float width/height - the width and height of the source texture
      *              float x/y - the x/y coordinates in pixels
+     *              float px/py - coordinates as percentage of texture dimensions
      *              float t - time in seconds
      *              float upscale - upscale ratio
      *              vec4 getColor(float x, float y) - get the color at x/y
-     *              float pnoise(vec3 p) - perlin noise at a point, normalized to [-1, 1]
-     *              float pnoise(float x, float y, float z) - perlin noise at a point, normalized to [-1, 1]
-     *              float pnoise01(vec3 p) - perlin noise at a point, normalized to [0, 1]
-     *              float pnoise01(float x, float y, float z) - perlin noise at a point, normalized to [0, 1]
+     *              float pnoise(vec2|vec3 p) - perlin noise at a point, normalized to [-1, 1]
+     *              float pnoise(float x, float y, [float z]) - perlin noise at a point, normalized to [-1, 1]
+     *              float pnoiseCircle(float x, float min, float max, float radius, [float z]) - perlin noise on a circle, normalized to [-1, 1]
+     *              float pnoise01(vec2|vec3 p) - perlin noise at a point, normalized to [0, 1]
+     *              float pnoise01(float x, float y, [float z]) - perlin noise at a point, normalized to [0, 1]
+     *              float pnoiseCircle01(float x, float min, float max, float radius, [float z]) - perlin noise on a circle, normalized to [0, 1]
      *              vec3 rgb2hsv(vec3 rgb) - converts RGB to HSV. all values are in the range [0, 1]
      *              vec3 hsv2rgb(vec3 hsv) - converts HSV to RGB. all values are in the range [0, 1]
      *              T lerp(T a, T b, float t) - linear lerp from a to b
@@ -112,6 +115,7 @@ class TextureFilter extends PIXI.Filter {
 namespace TextureFilter {
     export function constructFragCode(uniformCode: string, helperMethods: string, code: string) {
         return fragPrecision
+            + fragConstants
             + fragCoreUniforms
             + uniformCode
             + fragCoreHelperMethods
@@ -123,6 +127,11 @@ namespace TextureFilter {
 
     const fragPrecision = `
         precision highp float;
+    `;
+
+    const fragConstants = `
+        #define PI 3.14159265358979
+        #define TWOPI 6.28318530717958
     `;
 
     const fragCoreUniforms = `
@@ -226,11 +235,10 @@ namespace TextureFilter {
 
     const fragStartMain = `
         void main(void) {
-            #define PI 3.14159265358979
-            #define TWOPI 6.28318530717958
-
             float x = vTextureCoord.x * inputSize.x + offsetx * upscale;
             float y = vTextureCoord.y * inputSize.y + offsety * upscale;
+            float px = vTextureCoord.x * inputSize.x / width;
+            float py = vTextureCoord.y * inputSize.y / height;
             vec4 inp = texture2D(uSampler, vTextureCoord);
             // Un-premultiply alpha before applying the color matrix. See PIXI issue #3539.
             if (inp.a > 0.0) {

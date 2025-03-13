@@ -1098,6 +1098,11 @@ class WorldObject {
         return this;
     }
 
+    withOrderByParent(orderByParent: WorldObject.OrderByParent) {
+        this.orderByParent = orderByParent;
+        return this;
+    }
+
     withMask(mask: Mask.Config | undefined) {
         this.mask = O.clone(mask);
         return this;

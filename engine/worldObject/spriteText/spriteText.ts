@@ -729,6 +729,16 @@ namespace SpriteText {
         'outline': (params) => {
             return { filters: [new Effects.Filters.Outline(getInt(params[0], 0x000000), getFloat(params[1], 1))] };
         },
+        'wave': (params) => {
+            let amp = getFloat(params[0], 1);
+            let speed = getFloat(params[1], 1);
+            return {
+                offsetY: data => {
+                    let t = data.t + data.position/8/speed;
+                    return lerp(t, -amp, amp, Tween.Easing.OscillateSine(speed));
+                },
+            };
+        },
     }
 
     function getInt<D extends number | undefined>(text: string, def: D): number | D {
