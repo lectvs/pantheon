@@ -39,6 +39,7 @@ namespace World {
         from: string;
         callback?: Physics.CollisionCallback;
         collisionMode?: Physics.CollisionMode;
+        disabled?: boolean;
     }
 
     export type LayerConfig = {
@@ -421,6 +422,10 @@ class World {
     fadeOut(duration: number, color: number = 0x000000, amount: number = 1) {
         this.fadeColor = color;
         return this.runScript(S.tween(duration, this, 'fadeAmount', 0, amount), 'World.fade', 'stopPrevious');
+    }
+
+    getCollisionConfig(move: string, from: string) {
+        return this.collisions.find(c => c.move === move && c.from === from);
     }
 
     getLayerByName(name: string | undefined) {

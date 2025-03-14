@@ -180,6 +180,7 @@ namespace Physics {
                 console.error(`PhysicsGroup '${collision.from}' does not exist on world`);
                 return false;
             }
+            if (collision.disabled) return false;
             return true;
         });
 
