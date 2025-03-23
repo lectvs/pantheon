@@ -82,7 +82,7 @@ class InvertedCircleBounds implements Bounds {
         return undefined;
     }
 
-    overlaps(other: Bounds) {
+    isOverlapping(other: Bounds) {
         if (other instanceof RectBounds) return Bounds.Collision.isOverlappingRectInvertedCircle(other, this);
         if (other instanceof CircleBounds) return Bounds.Collision.isOverlappingCircleInvertedCircle(other, this);
         if (other instanceof NullBounds) return false;

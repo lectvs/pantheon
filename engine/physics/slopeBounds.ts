@@ -103,7 +103,7 @@ class SlopeBounds implements Bounds {
         return undefined;
     }
 
-    overlaps(other: Bounds) {
+    isOverlapping(other: Bounds) {
         if (other instanceof RectBounds) return Bounds.Collision.isOverlappingRectSlope(other, this);
         if (other instanceof CircleBounds) return Bounds.Collision.isOverlappingCircleSlope(other, this);
         if (other instanceof NullBounds) return false;

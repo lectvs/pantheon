@@ -156,6 +156,10 @@ namespace Textures {
         return cache_ninepatchScaled[key];
     }
 
+    export function pixel(color: number = 0xFFFFFF, alpha: number = 1) {
+        return filledRect(1, 1, color, alpha);
+    }
+
     export function gcc(key: string, textureFactory: () => PIXI.RenderTexture) {
         return GCCTextures.getTextureForSprite(key, textureFactory);
     }

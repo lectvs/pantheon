@@ -40,7 +40,7 @@ class NullBounds implements Bounds {
         return undefined;
     }
 
-    overlaps(other: Bounds) {
+    isOverlapping(other: Bounds) {
         return false;
     }
 

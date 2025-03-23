@@ -2,7 +2,7 @@ namespace Bounds.Collision {
     const OVERLAP_EPSILON: number = 0.000001;
 
     export function getDisplacementCollisionCircleCircle$(move: CircleBounds, from: CircleBounds) {
-        if (!move.overlaps(from)) return undefined;
+        if (!move.isOverlapping(from)) return undefined;
 
         let movePos = move.getCenter();
         let fromPos = from.getCenter();
@@ -22,7 +22,7 @@ namespace Bounds.Collision {
     }
 
     export function getDisplacementCollisionCircleRect$(move: CircleBounds, from: RectBounds) {
-        if (!move.overlaps(from)) return undefined;
+        if (!move.isOverlapping(from)) return undefined;
 
         let movePos = move.getCenter();
         let fromBox = from.getBoundingBox$();
@@ -119,7 +119,7 @@ namespace Bounds.Collision {
     }
 
     export function getDisplacementCollisionCircleSlope$(move: CircleBounds, from: SlopeBounds) {
-        if (!move.overlaps(from)) return undefined;
+        if (!move.isOverlapping(from)) return undefined;
 
         let movePos = move.getCenter();
         let fromBox = from.getBoundingBox$();
@@ -240,7 +240,7 @@ namespace Bounds.Collision {
     }
 
     export function getDisplacementCollisionCircleInvertedRect$(move: CircleBounds, from: InvertedRectBounds) {
-        if (!move.overlaps(from)) return undefined;
+        if (!move.isOverlapping(from)) return undefined;
 
         let movePos = move.getCenter();
         let fromBox = from.getInnerBox();
@@ -257,7 +257,7 @@ namespace Bounds.Collision {
     }
 
     export function getDisplacementCollisionCircleInvertedCircle$(move: CircleBounds, from: InvertedCircleBounds) {
-        if (!move.overlaps(from)) return undefined;
+        if (!move.isOverlapping(from)) return undefined;
 
         let movePos = move.getCenter();
         let fromPos = from.getCenter();
@@ -277,7 +277,7 @@ namespace Bounds.Collision {
     }
 
     export function getDisplacementCollisionRectRect$(move: RectBounds, from: RectBounds) {
-        if (!move.overlaps(from)) return undefined;
+        if (!move.isOverlapping(from)) return undefined;
 
         let currentBox = move.getBoundingBox$();
         let currentOtherBox = from.getBoundingBox$();
@@ -295,7 +295,7 @@ namespace Bounds.Collision {
     }
 
     export function getDisplacementCollisionRectSlope$(move: RectBounds, from: SlopeBounds) {
-        if (!move.overlaps(from)) return undefined;
+        if (!move.isOverlapping(from)) return undefined;
 
         let moveBox = move.getBoundingBox$();
         let fromBox = from.getBoundingBox$();
@@ -382,7 +382,7 @@ namespace Bounds.Collision {
     }
 
     export function getDisplacementCollisionRectInvertedRect$(move: RectBounds, from: InvertedRectBounds) {
-        if (!move.overlaps(from)) return undefined;
+        if (!move.isOverlapping(from)) return undefined;
 
         let moveBox = move.getBoundingBox$();
         let fromBox = from.getInnerBox();
@@ -399,7 +399,7 @@ namespace Bounds.Collision {
     }
 
     export function getDisplacementCollisionRectInvertedCircle$(move: RectBounds, from: InvertedCircleBounds) {
-        if (!move.overlaps(from)) return undefined;
+        if (!move.isOverlapping(from)) return undefined;
 
         let moveBox = move.getBoundingBox$();
         let fromPos = from.getCenter();
@@ -436,7 +436,7 @@ namespace Bounds.Collision {
     }
 
     export function getRaycastCollisionCircleCircle$(move: CircleBounds, movedx: number, movedy: number, from: CircleBounds, fromdx: number, fromdy: number) {
-        if (!move.overlaps(from)) return undefined;
+        if (!move.isOverlapping(from)) return undefined;
 
         let movePos = move.getCenter();
         movePos.x -= movedx;
@@ -459,7 +459,7 @@ namespace Bounds.Collision {
     }
 
     export function getRaycastCollisionCircleRect$(move: CircleBounds, movedx: number, movedy: number, from: RectBounds, fromdx: number, fromdy: number) {
-        if (!move.overlaps(from)) return undefined;
+        if (!move.isOverlapping(from)) return undefined;
 
         let movePos = move.getCenter();
         movePos.x -= movedx;
@@ -492,7 +492,7 @@ namespace Bounds.Collision {
     }
 
     export function getRaycastCollisionCircleSlope$(move: CircleBounds, movedx: number, movedy: number, from: SlopeBounds, fromdx: number, fromdy: number) {
-        if (!move.overlaps(from)) return undefined;
+        if (!move.isOverlapping(from)) return undefined;
 
         let movePos = move.getCenter();
         movePos.x -= movedx;
@@ -541,7 +541,7 @@ namespace Bounds.Collision {
     }
 
     export function getRaycastCollisionCircleInvertedRect$(move: CircleBounds, movedx: number, movedy: number, from: InvertedRectBounds, fromdx: number, fromdy: number) {
-        if (!move.overlaps(from)) return undefined;
+        if (!move.isOverlapping(from)) return undefined;
 
         let movePos = move.getCenter();
         movePos.x -= movedx;
@@ -573,7 +573,7 @@ namespace Bounds.Collision {
     }
 
     export function getRaycastCollisionCircleInvertedCircle$(move: CircleBounds, movedx: number, movedy: number, from: InvertedCircleBounds, fromdx: number, fromdy: number) {
-        if (!move.overlaps(from)) return undefined;
+        if (!move.isOverlapping(from)) return undefined;
 
         let movePos = move.getCenter();
         movePos.x -= movedx;
@@ -596,7 +596,7 @@ namespace Bounds.Collision {
     }
 
     export function getRaycastCollisionRectRect$(move: RectBounds, movedx: number, movedy: number, from: RectBounds, fromdx: number, fromdy: number) {
-        if (!move.overlaps(from)) return undefined;
+        if (!move.isOverlapping(from)) return undefined;
     
         let box = move.getBoundingBox$();
         box.x -= movedx;
@@ -664,7 +664,7 @@ namespace Bounds.Collision {
     }
 
     export function getRaycastCollisionRectSlope$(move: RectBounds, movedx: number, movedy: number, from: SlopeBounds, fromdx: number, fromdy: number) {
-        if (!move.overlaps(from)) return undefined;
+        if (!move.isOverlapping(from)) return undefined;
 
         let moveBox = move.getBoundingBox$();
         moveBox.x -= movedx;
@@ -759,7 +759,7 @@ namespace Bounds.Collision {
     }
 
     export function getRaycastCollisionRectInvertedRect$(move: RectBounds, movedx: number, movedy: number, from: InvertedRectBounds, fromdx: number, fromdy: number) {
-        if (!move.overlaps(from)) return undefined;
+        if (!move.isOverlapping(from)) return undefined;
 
         let moveBox = move.getBoundingBox$();
         moveBox.x -= movedx;
@@ -795,7 +795,7 @@ namespace Bounds.Collision {
     }
 
     export function getRaycastCollisionRectInvertedCircle$(move: RectBounds, movedx: number, movedy: number, from: InvertedCircleBounds, fromdx: number, fromdy: number) {
-        if (!move.overlaps(from)) return undefined;
+        if (!move.isOverlapping(from)) return undefined;
 
         let moveBox = move.getBoundingBox$();
         moveBox.x -= movedx;

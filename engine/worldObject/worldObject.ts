@@ -566,6 +566,15 @@ class WorldObject {
         return undefined;
     }
 
+    forceUpdateSelfAndChildren(times: number = 1) {
+        for (let i = 0; i < times; i++) {
+            this.fullUpdate();
+            for (let child of this.children) {
+                child.forceUpdateSelfAndChildren();
+            }
+        }
+    }
+
     getCurrentAnimationName() {
         return this.animationManager.getCurrentAnimationName();
     }

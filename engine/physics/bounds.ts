@@ -35,7 +35,7 @@ interface Bounds {
     getBoundingBox$(): Rectangle;
     getRaycastCollision$(dx: number, dy: number, other: Bounds, otherdx: number, otherdy: number): Bounds.RaycastCollision | undefined;
     getDisplacementCollision$(other: Bounds): Bounds.DisplacementCollision | undefined;
-    overlaps(other: Bounds): boolean;
+    isOverlapping(other: Bounds): boolean;
     /** FOR USE WITH PHYSICS RESOLVECOLLISIONS ONLY. REQUIRES BOUNDS TO BE FROZEN TO BE USEFUL. */
     move(dx: number, dy: number): void;
     raycast(x: number, y: number, dx: number, dy: number): number;

@@ -200,7 +200,7 @@ class UIElement extends Module<WorldObject> {
             bounds.y -= this.worldObject.world.camera.worldOffsetY;
         }
 
-        let result = this.getInteractBounds$().overlaps(bounds);
+        let result = this.getInteractBounds$().isOverlapping(bounds);
 
         bounds.x = boundsX;
         bounds.y = boundsY;
@@ -246,7 +246,7 @@ class UIElement extends Module<WorldObject> {
 
     private localBounds = new RectBounds(0, 0, 0, 0);
     getInteractBounds$() {
-        if ('bounds' in this.worldObject && (this.worldObject.bounds as Bounds).overlaps && !(this.worldObject.bounds instanceof NullBounds)) {
+        if ('bounds' in this.worldObject && (this.worldObject.bounds as Bounds).isOverlapping && !(this.worldObject.bounds instanceof NullBounds)) {
             return this.worldObject.bounds as Bounds;
         }
         let objLocalBounds = this.worldObject.getVisibleLocalBounds$();

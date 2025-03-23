@@ -81,7 +81,7 @@ class RectBounds implements Bounds {
         return undefined;
     }
 
-    overlaps(other: Bounds) {
+    isOverlapping(other: Bounds) {
         if (other instanceof RectBounds) return Bounds.Collision.isOverlappingRectRect(this, other);
         if (other instanceof CircleBounds) return Bounds.Collision.isOverlappingCircleRect(other, this);
         if (other instanceof SlopeBounds) return Bounds.Collision.isOverlappingRectSlope(this, other);
