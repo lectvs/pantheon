@@ -751,6 +751,17 @@ class WorldObject {
         return !this.world || this.getInputLevel() < this.world.getMaxInputLevel();
     }
 
+    isObscuredBy(other: WorldObject) {
+        let thisBounds = this.getVisibleWorldBounds$();
+        let otherBounds = other.getVisibleWorldBounds$();
+        if (thisBounds && otherBounds && G.rectContainsRect(otherBounds, thisBounds)) return true;
+        return false;
+    }
+
+    isObscuring(other: WorldObject) {
+        return other.isObscuredBy(this);
+    }
+
     isOnScreen(buffer: number = 0) {
         if (!this.world) return false;
         let bounds = this.getVisibleScreenBounds$();
