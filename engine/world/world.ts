@@ -458,6 +458,25 @@ class World {
         return A.removeDuplicates(result);
     }
 
+    /**
+     * Returns a negative number if obj1 is rendered first, or a positive number if obj2 is rendered first, or 0 otherwise.
+     */
+    getRenderOrder(obj1: WorldObject, obj2: WorldObject) {
+        if (obj1.world !== this) {
+            console.error('Object does not belong to ordering world:', obj1, this);
+            return 0;
+        }
+        if (obj2.world !== this) {
+            console.error('Object does not belong to ordering world:', obj2, this);
+            return 0;
+        }
+        if (obj1.layer === obj2.layer) {
+            let layerObjs = this.getLayerByName(obj1.layer)!.worldObjects;
+            return layerObjs.indexOf(obj1) - layerObjs.indexOf(obj2);
+        }
+        return this.layers.findIndex(l => l.name === obj1.layer) - this.layers.findIndex(l => l.name === obj2.layer);
+    }
+
     getScreenWidth() {
         return this.bgFill.width;
     }

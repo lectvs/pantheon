@@ -752,6 +752,8 @@ class WorldObject {
     }
 
     isObscuredBy(other: WorldObject) {
+        if (!this.world) return false;
+        if (this.world.getRenderOrder(this, other) >= 0) return false;
         let thisBounds = this.getVisibleWorldBounds$();
         let otherBounds = other.getVisibleWorldBounds$();
         if (thisBounds && otherBounds && G.rectContainsRect(otherBounds, thisBounds)) return true;
@@ -759,7 +761,12 @@ class WorldObject {
     }
 
     isObscuring(other: WorldObject) {
-        return other.isObscuredBy(this);
+        if (!this.world) return false;
+        if (this.world.getRenderOrder(this, other) <= 0) return false;
+        let thisBounds = this.getVisibleWorldBounds$();
+        let otherBounds = other.getVisibleWorldBounds$();
+        if (thisBounds && otherBounds && G.rectContainsRect(thisBounds, otherBounds)) return true;
+        return false;
     }
 
     isOnScreen(buffer: number = 0) {
