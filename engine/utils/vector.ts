@@ -73,6 +73,10 @@ class Vector2 {
         return this;
     }
 
+    equals(other: Vector2) {
+        return this.x === other.x && this.y === other.y;
+    }
+
     isZero() {
         return this.x === 0 && this.y === 0;
     }
