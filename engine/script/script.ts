@@ -58,6 +58,11 @@ class Script {
         return this;
     }
 
+    runManually() {
+        this.stop();
+        return () => this.iterator;
+    }
+
     stop() {
         this.isDone = true;
     }

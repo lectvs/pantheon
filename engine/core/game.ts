@@ -24,6 +24,7 @@ class Game {
     stageManager: StageManager;
     soundManager: SoundManager;
     musicManager: MusicManager;
+    scriptManager: ScriptManager;
     get volume(): number { return Options.volume * (Debug.SKIP_RATE >= 100 ? 0.2 : 1); };
 
     endOfFrameQueue: (() => any)[];
@@ -43,6 +44,7 @@ class Game {
             humanizeByDefault: false,
         });
         this.musicManager = new MusicManager();
+        this.scriptManager = new ScriptManager();
 
         this.menuTheater = this.menuTheaterFactory();
         this.gameTheater = this.gameTheaterFactory();
@@ -70,6 +72,7 @@ class Game {
     }
 
     update() {
+        this.scriptManager.update(Main.delta);
         this.stageManager.update();
 
         this.updatePause();
@@ -165,9 +168,8 @@ class Game {
         });
     }
 
-    playSound(key: string) {
-        if (global.theater?.isSkippingCutscene) return new BasicSound(key);
-        return this.soundManager.playSound(key);
+    playSound(key: string, config?: SoundUtils.PlaySoundConfig) {
+        return SoundUtils.playSound(this.soundManager, this.scriptManager, true, key, config);
     }
 
     runAtEndOfFrame(fn: () => any) {
