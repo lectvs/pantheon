@@ -23,7 +23,10 @@ namespace Tilemap {
 
     export type TilemapLayer = {
         name: string;
-        tiles: Tile[][];  // [y][x]-oriented array
+        /**
+         * [y][x]-oriented array
+         */
+        tiles: Tile[][];
     }
 
     export type Tileset = {
@@ -60,7 +63,8 @@ class Tilemap extends WorldObject {
     protected tilemapLayer: number;
     protected dirty: boolean;
     protected zMap: Tilemap.ZMap;
-    protected zTextures: Sprite[];
+    protected zTextures: Tilemap.ZTextureMap;
+    protected zTextureSprites: Sprite[];
 
     protected debugDrawBounds: boolean;
 
@@ -70,7 +74,8 @@ class Tilemap extends WorldObject {
         super(config);
 
         this.collisionBoxes = [];
-        this.zTextures = [];
+        this.zTextures = {};
+        this.zTextureSprites = [];
 
         this.tilemap = Tilemap.cloneTilemap(Tilemap.getTilemapAsset(config.tilemap));
         this.scrubTilemapEntities(config.entities);
@@ -89,7 +94,20 @@ class Tilemap extends WorldObject {
         this.debugDrawBounds = false;
     }
 
+    override onRemove(): void {
+        super.onRemove();
+        this.clearZTextures();
+        this.dirty = true;
+    }
+
+    override unload(): void {
+        super.unload();
+        this.clearZTextures();
+        this.dirty = true;
+    }
+
     override update() {
+        super.update();
         if (this.dirty) {
             this.createTilemap();
             this.dirty = false;
@@ -150,13 +168,13 @@ class Tilemap extends WorldObject {
 
         let zTileIndices = Tilemap.createZTileIndicies(this.currentTilemapLayer, this.zMap);
         
-        let zTextures = this.createZTextures(zTileIndices);
+        this.zTextures = this.createZTextures(zTileIndices);
 
         for (let y = 0; y < this.currentTilemapLayer.tiles.length; y++) {
             for (let x = 0; x < this.currentTilemapLayer.tiles[y].length; x++) {
                 let zValue = Tilemap.getZValue(zTileIndices, y, x);
-                if (!zTextures[zValue]) continue;
-                this.drawTile(this.currentTilemapLayer.tiles[y][x], x - zTextures[zValue].tileBounds.left, y - zTextures[zValue].tileBounds.top, zTextures[zValue].frames);
+                if (!this.zTextures[zValue]) continue;
+                this.drawTile(this.currentTilemapLayer.tiles[y][x], x - this.zTextures[zValue].tileBounds.left, y - this.zTextures[zValue].tileBounds.top, this.zTextures[zValue].frames);
             }
         }
     }
@@ -239,15 +257,22 @@ class Tilemap extends WorldObject {
                 zTexture.playAnimation('play');
             }
 
-            this.zTextures.push(zTexture);
+            this.zTextureSprites.push(zTexture);
         }
 
         return texturesByZ;
     }
 
     private clearZTextures() {
-        World.Actions.removeWorldObjectsFromWorld(this.zTextures);
-        this.zTextures = [];
+        World.Actions.removeWorldObjectsFromWorld(this.zTextureSprites);
+        this.zTextureSprites = [];
+
+        for (let k in this.zTextures) {
+            for (let frame of this.zTextures[k].frames) {
+                freePixiRenderTexture(frame);
+            }
+        }
+        this.zTextures = {};
     }
 
     private scrubTilemapEntities(entities: Dict<any> | undefined) {

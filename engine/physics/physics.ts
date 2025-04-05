@@ -222,6 +222,8 @@ namespace Physics {
         if (moveImmovable) {
             collision.from.x -= collision.collision.displacementX;
             collision.from.y -= collision.collision.displacementY;
+            collision.from.x = M.snapToIntRemoveFloatError(collision.from.x);
+            collision.from.y = M.snapToIntRemoveFloatError(collision.from.y);
             collision.from.bounds.move(-collision.collision.displacementX, -collision.collision.displacementY);
             return;
         }
@@ -229,6 +231,8 @@ namespace Physics {
         if (fromImmovable) {
             collision.move.x += collision.collision.displacementX;
             collision.move.y += collision.collision.displacementY;
+            collision.move.x = M.snapToIntRemoveFloatError(collision.move.x);
+            collision.move.y = M.snapToIntRemoveFloatError(collision.move.y);
             collision.move.bounds.move(collision.collision.displacementX, collision.collision.displacementY);
             return;
         }

@@ -1261,6 +1261,7 @@ class WorldObject {
     zinternal_addChildToParentWorldObjectChild(parent: WorldObject) {
         // @ts-expect-error
         this.parent = parent;
+        this.teleport(this.x, this.y);
     }
 
     // For use with World.Actions.addChildToParent
@@ -1272,6 +1273,7 @@ class WorldObject {
     zinternal_removeChildFromParentWorldObjectChild() {
         // @ts-expect-error
         this.parent = undefined;
+        this.teleport(this.x, this.y);
     }
 
     // For use with World.Actions.removeChildFromParent

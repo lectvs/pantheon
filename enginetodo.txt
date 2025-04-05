@@ -5,6 +5,7 @@ TODO
 - after() method on assets to run code after asset is loaded
 - sprite rotation pivot
 - fix M.moveToAngleClamp
+- tile collision for aseprite
 
 backlog
 - repo improvements

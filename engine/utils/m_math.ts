@@ -216,6 +216,12 @@ namespace M {
         return Math.round(n / unit) * unit;
     }
 
+    export function snapToIntRemoveFloatError(x: number) {
+        let closestInt = Math.round(x);
+        if (Math.abs(x - closestInt) < 1e-10) return closestInt;
+        return x;
+    }
+
 
     // Degree-based Trig
     export function cos(angle: number) {
