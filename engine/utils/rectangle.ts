@@ -47,6 +47,10 @@ class Rectangle {
         return this;
     }
 
+    getCenter$() {
+        return FrameCache.vec2(this.centerX, this.centerY);
+    }
+
     isFinite() {
         return isFinite(this.x) && isFinite(this.y) && isFinite(this.width) && isFinite(this.height);
     }

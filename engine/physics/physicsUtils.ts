@@ -1,5 +1,18 @@
 class PhysicsUtils {
 
+    static applyADF1d(v: number, axis: number, acceleration: number, deceleration: number, friction: number, delta: number) {
+        if (axis === 0) {
+            return this.applyFriction1d(v, friction, delta);
+        }
+
+        let d = Math.sign(axis);
+        if (d === Math.sign(v)) {
+            return v + d * acceleration * delta;
+        }
+
+        return v + d * deceleration * delta;
+    }
+
     static applyFriction(v: Vector2, fx: number, fy: number, delta: number) {
         if (v.x > 0) v.x = Math.max(v.x - fx * delta, 0);
         if (v.x < 0) v.x = Math.min(v.x + fx * delta, 0);
@@ -25,6 +38,10 @@ class PhysicsUtils {
         if (magSq === 0) return v;
         v.setMagnitude(G / magSq);
         return v;
+    }
+
+    static jumpVelocityForHeight(height: number, gravity: number) {
+        return Math.sqrt(2*height*Math.abs(gravity));
     }
 
     static smartAccelerate(v: Vector2, ax: number, ay: number, delta: number, maxSpeed: number) {

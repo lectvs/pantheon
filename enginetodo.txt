@@ -2,6 +2,9 @@ TODO AT NEXT GAME'S RELEASE
 - remove validations from World.Selecter caches and start caching!
 
 TODO
+- after() method on assets to run code after asset is loaded
+- sprite rotation pivot
+- fix M.moveToAngleClamp
 
 backlog
 - repo improvements

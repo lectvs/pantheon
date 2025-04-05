@@ -127,10 +127,6 @@ namespace M {
         return a*t*t + b*t + startHeight;
     }
 
-    export function jumpVelocityForHeight(height: number, gravity: number) {
-        return Math.sqrt(2*height*Math.abs(gravity));
-    }
-
     export function lerp(t: number, a: number, b: number, fn?: Tween.Easing.Function) {
         if (fn) t = fn(t);
         return a*(1-t) + b*t;

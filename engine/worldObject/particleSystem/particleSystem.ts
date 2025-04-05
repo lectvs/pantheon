@@ -88,6 +88,10 @@ class ParticleSystem extends WorldObject {
         return result;
     }
 
+    clearParticles() {
+        this.particles.clear();
+    }
+
     protected addParticle(config: ParticleSystem.ParticleConfig) {
         let totalStageWeights = A.sum(config.stages.slice(1, config.stages.length), stage => stage.weightTo ?? 1);
         let particle: ParticleSystem.Particle = {
