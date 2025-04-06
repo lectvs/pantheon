@@ -129,12 +129,13 @@ class Box {
         return this;
     }
 
-    addBackground(params: Box.BackgroundParams) {
+    addBackground(params: Box.BackgroundParams, transform?: (obj: Box.Background) => void) {
         if (this.background) {
             console.error('Box already has a background', this);
             return this;
         }
         this.background = new Box.Background(this, params);
+        if (transform) transform(this.background);
         return this.addWorldObject(this.background);
     }
 

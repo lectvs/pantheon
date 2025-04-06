@@ -74,9 +74,9 @@ class WorldObject {
     get x() { return this.localx + (this.parent ? this.parent.x : 0); }
     get y() { return this.localy + (this.parent ? this.parent.y : 0); }
     get z() { return this.localz + (this.parent ? this.parent.z : 0); }
-    set x(value: number) { this.localx = value - (this.parent ? this.parent.x : 0); }
-    set y(value: number) { this.localy = value - (this.parent ? this.parent.y : 0); }
-    set z(value: number) { this.localz = value - (this.parent ? this.parent.z : 0); }
+    set x(value: number) { this.localx = M.snapToIntRemoveFloatError(value - (this.parent ? this.parent.x : 0)); }
+    set y(value: number) { this.localy = M.snapToIntRemoveFloatError(value - (this.parent ? this.parent.y : 0)); }
+    set z(value: number) { this.localz = M.snapToIntRemoveFloatError(value - (this.parent ? this.parent.z : 0)); }
 
     startX: number;
     startY: number;

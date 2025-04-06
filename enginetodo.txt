@@ -6,6 +6,8 @@ TODO
 - sprite rotation pivot
 - fix M.moveToAngleClamp
 - tile collision for aseprite
+- build box from inside out
+- propagate box changes outward (use case: box resize to fit text)
 
 backlog
 - repo improvements
