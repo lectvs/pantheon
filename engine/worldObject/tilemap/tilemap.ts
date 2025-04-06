@@ -115,6 +115,8 @@ class Tilemap extends WorldObject {
     }
 
     getTile(x: number, y: number) {
+        if (y < 0 || y >= this.currentTilemapLayer.tiles.length) return undefined;
+        if (x < 0 || x >= this.currentTilemapLayer.tiles[y].length) return undefined;
         return this.currentTilemapLayer.tiles[y][x];
     }
 
