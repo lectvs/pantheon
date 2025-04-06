@@ -37,7 +37,7 @@ class Timer {
                 if (this.callback) this.callback();
                 this.currentIter++;
 
-                if (this.currentIter < this.count) {
+                if (this.currentIter < this.count && this.duration !== 0) {
                     this.time -= this.duration
                     while (this.time >= this.duration && this.currentIter < this.count) {
                         this.time -= this.duration;

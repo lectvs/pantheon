@@ -14,6 +14,10 @@ class CooldownTimer extends Timer {
         }
     }
 
+    canUse() {
+        return this.currentUses > 0;
+    }
+
     consumeUse() {
         if (this.currentUses <= 0) return false;
         this.currentUses--;

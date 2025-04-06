@@ -8,6 +8,7 @@ TODO
 - tile collision for aseprite
 - build box from inside out
 - propagate box changes outward (use case: box resize to fit text)
+- aseprite render tilemaps on texture
 
 backlog
 - repo improvements

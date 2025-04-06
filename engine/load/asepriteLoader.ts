@@ -95,6 +95,7 @@ class AsepriteLoader implements Loader {
                 frameTexture.defaultAnchor.set(0.5, 0.5);
             }
 
+            let renderedImageCel = false;
             for (let cel of frame.cels) {
                 if (cel.celData.type !== 'image') continue;
                 let layer = this.asepriteDocument.layers[cel.layerIndex];
@@ -116,6 +117,11 @@ class AsepriteLoader implements Loader {
 
                 celTexture.destroy();
                 delete AssetCache.textures[this.getCelKey(i, cel)];
+                renderedImageCel = true;
+            }
+
+            if (!renderedImageCel) {
+                debug('Warning: did not render any image cels for Aseprite texture:', this.key);
             }
 
             TextureUtils.setImmutable(frameTexture);
