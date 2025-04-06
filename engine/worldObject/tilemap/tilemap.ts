@@ -149,7 +149,8 @@ class Tilemap extends WorldObject {
         Tilemap.optimizeCollisionRects(collisionRects, Tilemap.OPTIMIZE_ALL);
         for (let rect of collisionRects) {
             let box = this.addChild(new PhysicsWorldObject({
-                bounds: new RectBounds(rect.x, rect.y, rect.width, rect.height),
+                x: rect.x, y: rect.y,
+                bounds: new RectBounds(0, 0, rect.width, rect.height),
                 copyFromParent: ['layer', 'physicsGroup'],
                 immovable: true,
             }));
