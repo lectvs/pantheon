@@ -132,12 +132,15 @@ class Debug {
     static EXPERIMENTS: Dict<Experiment>;
 }
 
-function get(nameOrType: string | (new (...args: any[]) => WorldObject)) {
+function get(nameOrType: string | (new (...args: any[]) => any)) {
     if (!global.world) return undefined;
     let worldObjects = St.isString(nameOrType)
                         ? global.world.select.nameAll$(nameOrType)
                         : global.world.select.typeAll$(nameOrType);
-    if (A.isEmpty(worldObjects)) return undefined;
     if (worldObjects.length === 1) return worldObjects[0];
-    return A.clone(worldObjects);
+    if (!A.isEmpty(worldObjects)) return A.clone(worldObjects);
+    let modules = St.isString(nameOrType)
+        ? undefined
+        : global.world.select.modules$(nameOrType);
+    return modules ? A.clone(modules) : undefined;
 }
