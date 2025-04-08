@@ -1,7 +1,5 @@
-TODO AT NEXT GAME'S RELEASE
-- remove validations from World.Selecter caches and start caching!
-
 TODO
+- remove validations from World.Selecter caches and start caching!
 - after() method on assets to run code after asset is loaded
 - sprite rotation pivot
 - fix M.moveToAngleClamp
@@ -9,6 +7,7 @@ TODO
 - build box from inside out
 - propagate box changes outward (use case: box resize to fit text)
 - aseprite render tilemaps on texture
+- template: fullscreen button in settings
 
 backlog
 - repo improvements
