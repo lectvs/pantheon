@@ -6,6 +6,7 @@ namespace Sprite {
         textureAnchor?: Pt;
         textureTint?: number;
         textureAlpha?: number;
+        textureRotationPivot?: Pt;
         flipX?: boolean;
         flipY?: boolean;
         offsetX?: number;
@@ -30,6 +31,7 @@ class Sprite extends PhysicsWorldObject {
     textureAnchor?: Vector2;
     textureTint: number;
     textureAlpha: number;
+    textureRotationPivot?: Vector2;
     flipX: boolean;
     flipY: boolean;
     offsetX: number;
@@ -65,6 +67,7 @@ class Sprite extends PhysicsWorldObject {
         if (config.textureAnchor) this.textureAnchor = vec2(config.textureAnchor);
         this.textureTint = config.textureTint ?? 0xFFFFFF;
         this.textureAlpha = config.textureAlpha ?? 1;
+        if (config.textureRotationPivot) this.textureRotationPivot = vec2(config.textureRotationPivot);
         this.flipX = config.flipX ?? false;
         this.flipY = config.flipY ?? false;
 
@@ -105,6 +108,12 @@ class Sprite extends PhysicsWorldObject {
         this.renderObject.skew.x = this.skewX;
         this.renderObject.skew.y = this.skewY;
         this.renderObject.angle = this.angle + this.angleOffset;
+        if (this.textureRotationPivot) {
+            let rot = FrameCache.vec2(this.textureRotationPivot.x, this.textureRotationPivot.y);
+            G.rotateAround(rot, this.renderObject.anchor, this.renderObject.angle);
+            this.renderObject.x += this.textureRotationPivot.x - rot.x;
+            this.renderObject.y += this.textureRotationPivot.y - rot.y;
+        }
         this.renderObject.tint = Color.combineTints(this.getTotalTint(), this.textureTint);
         this.renderObject.alpha = this.getTotalAlpha() * this.textureAlpha;
         this.renderObject.blendMode = this.blendMode ?? PIXI.BLEND_MODES.NORMAL;

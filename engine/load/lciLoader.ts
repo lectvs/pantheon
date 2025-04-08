@@ -38,7 +38,7 @@ class LciLoader implements Loader {
             .map(layer => new TextureLoader(Lci.getLayerTextureKey(this.key, layer.name), {
                 ...this.lciFile,
                 anchor: layer.properties.anchor ? vec2(layer.properties.anchor) : Anchor.TOP_LEFT,
-                url: layer.image
+                url: layer.image,
             }))
         ).load(t => null, () => {
             this.onLoadTextures(callback, onError);

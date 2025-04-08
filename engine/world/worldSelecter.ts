@@ -184,9 +184,6 @@ class WorldSelecter {
     private removeFromNameCache(worldObject: WorldObject, name: string) {
         if (!this.nameCache[name]) return;
         A.removeAll(this.nameCache[name], worldObject);
-        if (this.nameCache[name].length === 0) {
-            delete this.nameCache[name];
-        }
     }
 
     private addToTypeCache(worldObject: WorldObject) {
@@ -199,12 +196,10 @@ class WorldSelecter {
     }
 
     private removeFromTypeCache(worldObject: WorldObject) {
-        this.typeCache.filterInPlace(entry => {
+        this.typeCache.forEach(entry => {
             if (worldObject instanceof entry.type) {
                 A.removeAll(entry.worldObjects, worldObject);
-                return entry.worldObjects.length > 0;
             }
-            return true;
         });
     }
 

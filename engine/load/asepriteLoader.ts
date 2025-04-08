@@ -165,6 +165,8 @@ class AsepriteLoader implements Loader {
             };
         }
 
+        this.asepriteFile.after?.();
+
         this._completionPercent = 1;
         callback();
     }

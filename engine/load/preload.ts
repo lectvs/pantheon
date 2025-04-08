@@ -50,6 +50,7 @@ namespace Preload {
     export type AsepriteFile = {
         url?: string;
         anchor?: Vector2;
+        after?: () => void;
     }
 
     export type PyxelFile = {

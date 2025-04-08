@@ -181,13 +181,30 @@ namespace M {
         return num - Math.floor(num/mod) * mod;
     }
 
-    export function moveToAngleClamp(current: number, to: number, speed: number, delta: number) {
-        let diff = angleDiff(current, to);
-        let d = speed * delta;
+    /**
+     * Mods num to ensure that num and target are in the same interval [n*mod, (n+1)*mod)
+     */
+    export function modToSameInterval(num: number, target: number, mod: number) {
+        let base = floorToNearest(target, mod);
+        return M.mod(num, mod) + base;
+    }
 
-        if (diff > Math.abs(d)) return Math.min(current + d, to);
-        if (diff < Math.abs(d)) return Math.max(current - d, to);
-        return current + diff;
+    export function moveToAngleClamp(current: number, to: number, speed: number, delta: number, biasFor180?: -1 | 1) {
+        current = modToSameInterval(current, to, 360);
+        let diff = angleDiff(current, to);
+        let moveMagnitude = speed * delta;
+
+        if (moveMagnitude > Math.abs(diff)) {
+            return to;
+        }
+
+        let moveDirection = Math.sign(diff);
+
+        if (Math.abs(diff) === 180 && biasFor180 !== undefined) {
+            moveDirection = biasFor180;
+        }
+
+        return current + moveMagnitude * moveDirection;
     }
 
     export function moveToClamp(current: number, to: number, speed: number, delta: number) {
