@@ -149,6 +149,54 @@ class Box {
         return this;
     }
 
+    appendLeft(sizePixels: number) {
+        if (this.parent) {
+            console.error('Cannot append to a non-root box', this);
+            return this;
+        }
+        let newBox = new Box(this.outerX - sizePixels, this.outerY, this.outerWidth + sizePixels, this.outerHeight);
+        this.parent = newBox;
+        let subdivision = new Box.Subdivision.AppendLeft(newBox, this, sizePixels);
+        newBox.subdivision = subdivision;
+        return subdivision.left();
+    }
+
+    appendRight(sizePixels: number) {
+        if (this.parent) {
+            console.error('Cannot append to a non-root box', this);
+            return this;
+        }
+        let newBox = new Box(this.outerX, this.outerY, this.outerWidth + sizePixels, this.outerHeight);
+        this.parent = newBox;
+        let subdivision = new Box.Subdivision.AppendRight(newBox, this, sizePixels);
+        newBox.subdivision = subdivision;
+        return subdivision.right();
+    }
+
+    appendTop(sizePixels: number) {
+        if (this.parent) {
+            console.error('Cannot append to a non-root box', this);
+            return this;
+        }
+        let newBox = new Box(this.outerX, this.outerY - sizePixels, this.outerWidth, this.outerHeight + sizePixels);
+        this.parent = newBox;
+        let subdivision = new Box.Subdivision.AppendTop(newBox, this, sizePixels);
+        newBox.subdivision = subdivision;
+        return subdivision.top();
+    }
+
+    appendBottom(sizePixels: number) {
+        if (this.parent) {
+            console.error('Cannot append to a non-root box', this);
+            return this;
+        }
+        let newBox = new Box(this.outerX, this.outerY, this.outerWidth, this.outerHeight + sizePixels);
+        this.parent = newBox;
+        let subdivision = new Box.Subdivision.AppendBottom(newBox, this, sizePixels);
+        newBox.subdivision = subdivision;
+        return subdivision.bottom();
+    }
+
     build() {
         this._contentX = this.outerX + Box.valueUnitToPixels(this.margins.left, this.outerWidth);
         this._contentY = this.outerY + Box.valueUnitToPixels(this.margins.top, this.outerHeight);
@@ -270,6 +318,11 @@ class Box {
                 let yi = firstPart.split(',')[1];
                 return this.subdivision.index(parseInt(xi), parseInt(yi));
             }
+        }
+
+        let subBoxByName = this.getSubBoxByName(firstPart);
+        if (subBoxByName) {
+            return subBoxByName;
         }
 
         console.error(`Invalid subBox path: '${firstPart}'`, path, this);
@@ -626,7 +679,7 @@ namespace Box {
                 super(parent);
                 this._left = new LeftRightBox(parent, this);
                 this._right = new LeftRightBox(parent, this);
-                this._setSubBoxes([[this._left, this._right]])
+                this._setSubBoxes([[this._left, this._right]]);
             }
     
             left() {
@@ -661,7 +714,7 @@ namespace Box {
                 super(parent);
                 this._top = new TopBottomBox(parent, this);
                 this._bottom = new TopBottomBox(parent, this);
-                this._setSubBoxes([[this._top], [this._bottom]])
+                this._setSubBoxes([[this._top], [this._bottom]]);
             }
     
             top() {
@@ -724,7 +777,7 @@ namespace Box {
             constructor(parent: Box, n: number) {
                 super(parent);
                 this._boxes = A.sequence(n, i => new YBox(parent, this, i));
-                this._setSubBoxes([...this._boxes.map(box => [box])])
+                this._setSubBoxes([...this._boxes.map(box => [box])]);
             }
 
             index(i: number) {
@@ -776,6 +829,118 @@ namespace Box {
                         box.outerHeight = this.parent.innerHeight / this._boxes.length;
                     }
                 }
+                return super.build();
+            }
+        }
+
+        export class AppendLeft extends Subdivision {
+            private _left: Box;
+            private _old: Box;
+
+            constructor(parent: Box, oldBox: Box, private leftWidthPixels: number) {
+                super(parent);
+                this._left = new Box(0, 0, 0, 0, parent);
+                this._old = oldBox;
+                this._setSubBoxes([[this._left, this._old]]);
+            }
+    
+            left() {
+                return this._left;
+            }
+    
+            old() {
+                return this._old;
+            }
+
+            override build(): Box {
+                this._left.outerWidth = this.leftWidthPixels
+                this._left.outerHeight = this.parent.innerHeight;
+                this._old.outerWidth = this.parent.innerWidth - this._left.outerWidth;
+                this._old.outerHeight = this.parent.innerHeight;
+                return super.build();
+            }
+        }
+
+        export class AppendRight extends Subdivision {
+            private _old: Box;
+            private _right: Box;
+
+            constructor(parent: Box, oldBox: Box, private rightWidthPixels: number) {
+                super(parent);
+                this._old = oldBox;
+                this._right = new Box(0, 0, 0, 0, parent);
+                this._setSubBoxes([[this._old, this._right]]);
+            }
+    
+            old() {
+                return this._old;
+            }
+                
+            right() {
+                return this._right;
+            }
+
+            override build(): Box {
+                this._right.outerWidth = this.rightWidthPixels
+                this._right.outerHeight = this.parent.innerHeight;
+                this._old.outerWidth = this.parent.innerWidth - this._right.outerWidth;
+                this._old.outerHeight = this.parent.innerHeight;
+                return super.build();
+            }
+        }
+
+        export class AppendTop extends Subdivision {
+            private _top: Box;
+            private _old: Box;
+
+            constructor(parent: Box, oldBox: Box, private topHeightPixels: number) {
+                super(parent);
+                this._top = new Box(0, 0, 0, 0, parent);
+                this._old = oldBox;
+                this._setSubBoxes([[this._top], [this._old]]);
+            }
+    
+            top() {
+                return this._top;
+            }
+    
+            old() {
+                return this._old;
+            }
+
+            override build(): Box {
+                this._top.outerWidth = this.parent.innerWidth;
+                this._top.outerHeight = this.topHeightPixels;
+                this._old.outerWidth = this.parent.innerWidth;
+                this._old.outerHeight = this.parent.innerHeight - this._top.outerHeight;
+                return super.build();
+            }
+        }
+
+        export class AppendBottom extends Subdivision {
+            private _old: Box;
+            private _bottom: Box;
+
+            constructor(parent: Box, oldBox: Box, private bottomHeightPixels: number) {
+                super(parent);
+                this._old = oldBox;
+                this._bottom = new Box(0, 0, 0, 0, parent);
+                this._setSubBoxes([[this._old], [this._bottom]]);
+            }
+    
+            old() {
+                return this._old;
+            }
+
+            bottom() {
+                return this._bottom;
+            }
+
+            override build(): Box {
+                this._bottom.outerWidth = this.parent.innerWidth;
+                this._bottom.outerHeight = this.bottomHeightPixels;
+                this._old.outerWidth = this.parent.innerWidth;
+                this._old.outerHeight = this.parent.innerHeight - this._bottom.outerHeight;
                 return super.build();
             }
         }
