@@ -58,7 +58,7 @@ class AsepriteLoader implements Loader {
                 if (cel.zIndex !== 0) {
                     console.log('Z-index not supported for Aseprite cels. Ignoring.', this.asepriteDocument);
                 }
-                loaders.push(new AsepriteLoader.TextureFromImageDataLoader(this.getCelKey(i, cel), { anchor: Anchor.TOP_LEFT },
+                loaders.push(new AsepriteLoader.TextureFromImageDataLoader(this.getFrameLayerIndexKey(i, cel.layerIndex), { anchor: Anchor.TOP_LEFT },
                     cel.celData.imageData, cel.celData.width, cel.celData.height));
             }
         }
@@ -83,6 +83,8 @@ class AsepriteLoader implements Loader {
 
         AssetCache.asepriteFiles[this.key] = this.asepriteDocument;
 
+        let renderSeparateLayers = this.asepriteFile.renderSeparateLayers ?? false;
+
         // Load each frame with all layers as a texture.
         let sprite = new PIXI.Sprite();
         for (let i = 0; i < this.asepriteDocument.frames.length; i++) {
@@ -100,9 +102,9 @@ class AsepriteLoader implements Loader {
                 let layer = this.asepriteDocument.layers[cel.layerIndex];
                 if (!layer.visible) continue;
                 if (cel.celData.type === 'image') {
-                    let celTexture = AssetCache.textures[this.getCelKey(i, cel)];
+                    let celTexture = AssetCache.textures[this.getFrameLayerIndexKey(i, cel.layerIndex)];
                     if (!celTexture) {
-                        onError(`Failed to load Aseprite cel texture: ${this.getCelKey(i, cel)}`);
+                        onError(`Failed to load Aseprite cel texture: ${this.getFrameLayerIndexKey(i, cel.layerIndex)}`);
                         return;
                     }
 
@@ -114,8 +116,11 @@ class AsepriteLoader implements Loader {
                     sprite.blendMode = layer.blendMode ?? 0;
                     renderToRenderTexture(sprite, frameTexture);
 
-                    celTexture.destroy();
-                    delete AssetCache.textures[this.getCelKey(i, cel)];
+                    if (!renderSeparateLayers) {
+                        celTexture.destroy();
+                        delete AssetCache.textures[this.getFrameLayerIndexKey(i, cel.layerIndex)];
+                    }
+
                     renderedCel = true;
                     continue;
                 }
@@ -125,6 +130,8 @@ class AsepriteLoader implements Loader {
                         continue;
                     }
                     let tileset = this.asepriteDocument.tilesets[layer.tilesetIndex];
+                    let tilemapCelTexture = newPixiRenderTexture(this.asepriteDocument.width, this.asepriteDocument.height, 'AsepriteLoader.load');
+                    tilemapCelTexture.defaultAnchor.set(0, 0);
                     for (let i = 0; i < cel.celData.tiles.length; i++) {
                         let tile = cel.celData.tiles[i];
                         let tileX = i % cel.celData.widthTiles;
@@ -141,8 +148,24 @@ class AsepriteLoader implements Loader {
                         sprite.y = tileY * tileset.tileHeight;
                         sprite.alpha = layer.opacity;
                         sprite.blendMode = layer.blendMode ?? 0;
-                        renderToRenderTexture(sprite, frameTexture);
+                        renderToRenderTexture(sprite, tilemapCelTexture);
                     }
+
+                    sprite.texture = tilemapCelTexture;
+                    sprite.anchor.set(tilemapCelTexture.defaultAnchor.x, tilemapCelTexture.defaultAnchor.y);
+                    sprite.x = cel.xPosition;
+                    sprite.y = cel.yPosition;
+                    sprite.alpha = layer.opacity;
+                    sprite.blendMode = layer.blendMode ?? 0;
+                    renderToRenderTexture(sprite, frameTexture);
+
+                    if (renderSeparateLayers) {
+                        TextureUtils.setImmutable(tilemapCelTexture);
+                        AssetCache.textures[this.getFrameLayerIndexKey(i, cel.layerIndex)] = tilemapCelTexture;
+                    } else {
+                        tilemapCelTexture.destroy();
+                    }
+
                     renderedCel = true;
                     continue;
                 }
@@ -156,9 +179,24 @@ class AsepriteLoader implements Loader {
             AssetCache.textures[this.getFrameKey(i)] = frameTexture;
         }
 
+        // Layer name aliases
+        if (renderSeparateLayers) {
+            for (let i = 0; i < this.asepriteDocument.layers.length; i++) {
+                let layer = this.asepriteDocument.layers[i];
+                AssetCache.textures[this.getFrameLayerNameKey(0, layer.name)] = AssetCache.textures[this.getFrameLayerIndexKey(0, i)];
+            }
+        }
+
         // For single-frame images, load to the root key as well.
         if (this.asepriteDocument.frames.length === 1) {
-            AssetCache.textures[this.key] = AssetCache.textures[this.getFrameKey(0)];
+            AssetCache.textures[this.getRootKey()] = AssetCache.textures[this.getFrameKey(0)];
+            if (renderSeparateLayers) {
+                for (let i = 0; i < this.asepriteDocument.layers.length; i++) {
+                    let layer = this.asepriteDocument.layers[i];
+                    AssetCache.textures[this.getRootLayerIndexKey(i)] = AssetCache.textures[this.getFrameLayerIndexKey(0, i)];
+                    AssetCache.textures[this.getRootLayerNameKey(layer.name)] = AssetCache.textures[this.getFrameLayerNameKey(0, layer.name)];
+                }
+            }
         }
 
         // Load each tileset.
@@ -215,8 +253,24 @@ class AsepriteLoader implements Loader {
         return `${this.key}/${frame}`;
     }
 
-    private getCelKey(frame: number, cel: AsepriteFile.Cel) {
-        return `${this.getFrameKey(frame)}/cel/${cel.layerIndex}`;
+    private getFrameLayerIndexKey(frame: number, layerIndex: number) {
+        return `${this.getFrameKey(frame)}/layer/${layerIndex}`;
+    }
+
+    private getFrameLayerNameKey(frame: number, layerName: string) {
+        return `${this.getFrameKey(frame)}/layer/${layerName}`;
+    }
+
+    private getRootKey() {
+        return this.key;
+    }
+
+    private getRootLayerIndexKey(layerIndex: number) {
+        return `${this.key}/layer/${layerIndex}`;
+    }
+
+    private getRootLayerNameKey(layerName: string) {
+        return `${this.key}/layer/${layerName}`;
     }
 
     private getCollisionIndices(tileset: AsepriteFile.Tileset) {

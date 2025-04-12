@@ -1,6 +1,4 @@
 TODO
-- remove validations from World.Selecter caches and start caching!
-- aseprite modes: render full, render layers, render frames
 
 backlog
 - repo improvements

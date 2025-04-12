@@ -52,8 +52,7 @@ class WorldSelecter {
 
     nameAll$<T extends WorldObject>(name: string): T[] {
         if (this.nameCache[name]) {
-            // TODO: after a while of natural testing, start returning cached values.
-            //return FrameCache.copyOfArray(this.nameCache[name]) as T[];
+            return FrameCache.copyOfArray(this.nameCache[name]) as T[];
         }
         let result: T[] = FrameCache.array();
         for (let worldObject of this.world.worldObjects) {
@@ -61,12 +60,7 @@ class WorldSelecter {
                 result.push(worldObject as T);
             }
         }
-        // TODO: after a while of natural testing, remove this validation.
-        if (this.nameCache[name]) {
-            this.validateNameCache(name, result);
-        } else {
-            if (result.length > 0) this.nameCache[name] = A.clone(result);
-        }
+        this.nameCache[name] = A.clone(result);
         this.checkNameCacheLimit();
         return result;
     }
@@ -137,8 +131,7 @@ class WorldSelecter {
     typeAll$<T extends WorldObject>(type: new (...args: any[]) => T) {
         let existingCacheEntry = this.typeCache.find(entry => entry.type === type);
         if (existingCacheEntry) {
-            // TODO: after a while of natural testing, start returning cached values.
-            //return FrameCache.copyOfArray(existingCacheEntry.worldObjects) as T[];
+            return FrameCache.copyOfArray(existingCacheEntry.worldObjects) as T[];
         }
         let result: T[] = FrameCache.array();
         for (let worldObject of this.world.worldObjects) {
@@ -146,12 +139,7 @@ class WorldSelecter {
                 result.push(worldObject);
             }
         }
-        // TODO: after a while of natural testing, remove this validation.
-        if (existingCacheEntry) {
-            this.validateTypeCache(type, result);
-        } else {
-            if (result.length > 0) this.typeCache.push({ typeName: type.name, type, worldObjects: A.clone(result) });
-        }
+        this.typeCache.push({ typeName: type.name, type, worldObjects: A.clone(result) });
         this.checkTypeCacheLimit();
         return result;
     }
@@ -212,37 +200,6 @@ class WorldSelecter {
     private checkTypeCacheLimit() {
         if (this.typeCache.length > WorldSelecter.CACHE_SIZE_WARN_LIMIT) {
             console.warn('Too many entries in World.Selecter.typeCache! The limit is arbitrary and may need to be lifted:', this.typeCache.length, A.clone(this.typeCache), this.world);
-        }
-    }
-
-    private validateNameCache(name: string, expected: WorldObject[]) {
-        if (!this.nameCache[name]) return;
-        let actual = this.nameCache[name];
-        if (actual.length !== expected.length) {
-            console.error('World.Selecter.nameCache is not correct! Name:', name, 'Expected:', A.clone(expected), 'Actual:', A.clone(actual));
-            return;
-        }
-        for (let obj of expected) {
-            if (!actual.includes(obj)) {
-                console.error('World.Selecter.nameCache is not correct! Object is missing from cache:', obj, 'Name:', name, 'Expected:', A.clone(expected), 'Actual:', A.clone(actual));
-                return;
-            }
-        }
-    }
-
-    private validateTypeCache(type: new (...params: any[]) => WorldObject, expected: WorldObject[]) {
-        let cacheEntry = this.typeCache.find(entry => entry.type === type);
-        if (!cacheEntry) return;
-        let actual = cacheEntry?.worldObjects;
-        if (actual.length !== expected.length) {
-            console.error('World.Selecter.typeCache is not correct! Type:', type.name, 'Expected:', A.clone(expected), 'Actual:', A.clone(actual));
-            return;
-        }
-        for (let obj of expected) {
-            if (!actual.includes(obj)) {
-                console.error('World.Selecter.typeCache is not correct! Object is missing from cache:', obj, 'Type:', type.name, 'Expected:', A.clone(expected), 'Actual:', A.clone(actual));
-                return;
-            }
         }
     }
 
