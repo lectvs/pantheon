@@ -19,6 +19,7 @@
 - High Risk, High Reward
 - Wall of Death: Ultimate Risk, Ultimate Reward
 - Stress and Release
+- Sync game elements with the music (BPM)
 
 # Platformer Tips
 https://twitter.com/maddythorson/status/1238338574220546049

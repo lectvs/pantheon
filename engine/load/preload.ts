@@ -50,6 +50,8 @@ namespace Preload {
     export type AsepriteFile = {
         url?: string;
         anchor?: Vector2;
+        // Array applies to all tilesets in the file, Dict applies per tileset ID.
+        collisionIndices?: number[] | DictNumber<number[]>;
         after?: () => void;
     }
 

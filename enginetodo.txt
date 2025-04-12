@@ -1,8 +1,6 @@
 TODO
 - remove validations from World.Selecter caches and start caching!
-- tile collision for aseprite
-- aseprite render tilemaps on texture
-- aseprite two modes: render each frame vs render each layer
+- aseprite modes: render full, render layers, render frames
 
 backlog
 - repo improvements

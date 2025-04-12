@@ -37,7 +37,7 @@ class AsepriteLoader implements Loader {
         let dataBuffer = this.pixiLoader.resources[this.key].data as ArrayBuffer;
 
         if (!dataBuffer) {
-            onError('Failed to load aseprite file');
+            onError('Failed to load Aseprite file');
             return;
         }
 
@@ -52,7 +52,7 @@ class AsepriteLoader implements Loader {
             let frame = this.asepriteDocument.frames[i];
             for (let cel of frame.cels) {
                 if (cel.celData.type === 'linked') {
-                    console.log('Linked cels not supportedin Aseprite files. Ignoring.', this.asepriteDocument);
+                    console.log('Linked cels not supported in Aseprite files. Ignoring.', this.asepriteDocument);
                 }
                 if (cel.celData.type !== 'image') continue;
                 if (cel.zIndex !== 0) {
@@ -95,33 +95,61 @@ class AsepriteLoader implements Loader {
                 frameTexture.defaultAnchor.set(0.5, 0.5);
             }
 
-            let renderedImageCel = false;
+            let renderedCel = false;
             for (let cel of frame.cels) {
-                if (cel.celData.type !== 'image') continue;
                 let layer = this.asepriteDocument.layers[cel.layerIndex];
                 if (!layer.visible) continue;
+                if (cel.celData.type === 'image') {
+                    let celTexture = AssetCache.textures[this.getCelKey(i, cel)];
+                    if (!celTexture) {
+                        onError(`Failed to load Aseprite cel texture: ${this.getCelKey(i, cel)}`);
+                        return;
+                    }
 
-                let celTexture = AssetCache.textures[this.getCelKey(i, cel)];
-                if (!celTexture) {
-                    onError(`Failed to load Aseprite cel texture: ${this.getCelKey(i, cel)}`);
-                    return;
+                    sprite.texture = celTexture;
+                    sprite.anchor.set(celTexture.defaultAnchor.x, celTexture.defaultAnchor.y);
+                    sprite.x = cel.xPosition;
+                    sprite.y = cel.yPosition;
+                    sprite.alpha = layer.opacity;
+                    sprite.blendMode = layer.blendMode ?? 0;
+                    renderToRenderTexture(sprite, frameTexture);
+
+                    celTexture.destroy();
+                    delete AssetCache.textures[this.getCelKey(i, cel)];
+                    renderedCel = true;
+                    continue;
                 }
+                if (cel.celData.type === 'tilemap') {
+                    if (layer.type !== 'tilemap') {
+                        console.error("Tilemap cel found on non-tilemap layer. This shouldn't ever happen.", cel, layer, this.asepriteDocument);
+                        continue;
+                    }
+                    let tileset = this.asepriteDocument.tilesets[layer.tilesetIndex];
+                    for (let i = 0; i < cel.celData.tiles.length; i++) {
+                        let tile = cel.celData.tiles[i];
+                        let tileX = i % cel.celData.widthTiles;
+                        let tileY = Math.floor(i / cel.celData.widthTiles);
+                        let tileTexture = AssetCache.textures[this.getTileKey(tileset, tile.id)];
+                        if (!tileTexture) {
+                            onError(`Failed to load Aseprite tile texture: ${this.getTileKey(tileset, tile.id)}`);
+                            return;
+                        }
 
-                sprite.texture = celTexture;
-                sprite.anchor = celTexture.defaultAnchor;
-                sprite.x = cel.xPosition;
-                sprite.y = cel.yPosition;
-                sprite.alpha = layer.opacity;
-                sprite.blendMode = layer.blendMode ?? 0;
-                renderToRenderTexture(sprite, frameTexture);
-
-                celTexture.destroy();
-                delete AssetCache.textures[this.getCelKey(i, cel)];
-                renderedImageCel = true;
+                        sprite.texture = tileTexture;
+                        sprite.anchor.set(0, 0);
+                        sprite.x = tileX * tileset.tileWidth;
+                        sprite.y = tileY * tileset.tileHeight;
+                        sprite.alpha = layer.opacity;
+                        sprite.blendMode = layer.blendMode ?? 0;
+                        renderToRenderTexture(sprite, frameTexture);
+                    }
+                    renderedCel = true;
+                    continue;
+                }
             }
 
-            if (!renderedImageCel) {
-                debug('Warning: did not render any image cels for Aseprite texture:', this.key);
+            if (!renderedCel) {
+                debug('Warning: did not render any image or tilemap cels for Aseprite texture:', this.key);
             }
 
             TextureUtils.setImmutable(frameTexture);
@@ -140,7 +168,7 @@ class AsepriteLoader implements Loader {
                 tileWidth: tileset.tileWidth,
                 tileHeight: tileset.tileHeight,
                 tiles: tiles,
-                collisionIndices: [],
+                collisionIndices: this.getCollisionIndices(tileset),
             };
         }
 
@@ -189,6 +217,14 @@ class AsepriteLoader implements Loader {
 
     private getCelKey(frame: number, cel: AsepriteFile.Cel) {
         return `${this.getFrameKey(frame)}/cel/${cel.layerIndex}`;
+    }
+
+    private getCollisionIndices(tileset: AsepriteFile.Tileset) {
+        let collisionIndices = this.asepriteFile.collisionIndices;
+        if (!collisionIndices) return [];
+        if (A.isArray(collisionIndices)) return A.clone(collisionIndices);
+        if (!(tileset.id in collisionIndices)) return [];
+        return A.clone(collisionIndices[tileset.id]);
     }
 
     private asepriteTileToTilemapTile(tile: AsepriteFile.CelTile): Tilemap.Tile {
