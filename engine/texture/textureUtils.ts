@@ -168,7 +168,7 @@ namespace TextureUtils {
     /**
      * Renders a texture to another texture.
      */
-    export function render(texture: PIXI.Texture, toTexture: PIXI.RenderTexture, properties: RenderProperties) {
+    export function render(texture: PIXI.Texture, toTexture: PIXI.RenderTexture, properties: RenderProperties = {}) {
         if (isImmutable(toTexture)) {
             console.error('Cannot render to immutable texture:', toTexture);
             return;

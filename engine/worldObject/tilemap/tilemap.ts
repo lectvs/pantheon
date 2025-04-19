@@ -15,6 +15,7 @@ namespace Tilemap {
         angle: number;
         flipX: boolean;
         flipY: boolean;
+        data?: Object;
     }
 
     export type Tilemap = {

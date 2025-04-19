@@ -58,7 +58,7 @@ class AsepriteLoader implements Loader {
                 if (cel.zIndex !== 0) {
                     console.log('Z-index not supported for Aseprite cels. Ignoring.', this.asepriteDocument);
                 }
-                loaders.push(new AsepriteLoader.TextureFromImageDataLoader(this.getFrameLayerIndexKey(i, cel.layerIndex), { anchor: Anchor.TOP_LEFT },
+                loaders.push(new AsepriteLoader.TextureFromImageDataLoader(this.getFrameCelKey(i, cel), { anchor: Anchor.TOP_LEFT },
                     cel.celData.imageData, cel.celData.width, cel.celData.height));
             }
         }
@@ -102,24 +102,39 @@ class AsepriteLoader implements Loader {
                 let layer = this.asepriteDocument.layers[cel.layerIndex];
                 if (!layer.visible) continue;
                 if (cel.celData.type === 'image') {
-                    let celTexture = AssetCache.textures[this.getFrameLayerIndexKey(i, cel.layerIndex)];
+                    let celTexture = AssetCache.textures[this.getFrameCelKey(i, cel)];
                     if (!celTexture) {
-                        onError(`Failed to load Aseprite cel texture: ${this.getFrameLayerIndexKey(i, cel.layerIndex)}`);
+                        onError(`Failed to load Aseprite cel texture: ${this.getFrameCelKey(i, cel)}`);
                         return;
                     }
+
+                    let layerTexture = newPixiRenderTexture(this.asepriteDocument.width, this.asepriteDocument.height, 'AsepriteLoader.load');
 
                     sprite.texture = celTexture;
                     sprite.anchor.set(celTexture.defaultAnchor.x, celTexture.defaultAnchor.y);
                     sprite.x = cel.xPosition;
                     sprite.y = cel.yPosition;
+                    sprite.alpha = 1;
+                    sprite.blendMode = 0;
+                    renderToRenderTexture(sprite, layerTexture);
+
+                    sprite.texture = layerTexture;
+                    sprite.anchor.set(layerTexture.defaultAnchor.x, layerTexture.defaultAnchor.y);
+                    sprite.x = 0;
+                    sprite.y = 0;
                     sprite.alpha = layer.opacity;
                     sprite.blendMode = layer.blendMode ?? 0;
                     renderToRenderTexture(sprite, frameTexture);
 
-                    if (!renderSeparateLayers) {
-                        celTexture.destroy();
-                        delete AssetCache.textures[this.getFrameLayerIndexKey(i, cel.layerIndex)];
+                    if (renderSeparateLayers) {
+                        TextureUtils.setImmutable(layerTexture);
+                        AssetCache.textures[this.getFrameLayerIndexKey(i, cel.layerIndex)] = layerTexture;
+                    } else {
+                        freePixiRenderTexture(layerTexture);
                     }
+
+                    celTexture.destroy();
+                    delete AssetCache.textures[this.getFrameCelKey(i, cel)];
 
                     renderedCel = true;
                     continue;
@@ -130,8 +145,7 @@ class AsepriteLoader implements Loader {
                         continue;
                     }
                     let tileset = this.asepriteDocument.tilesets[layer.tilesetIndex];
-                    let tilemapCelTexture = newPixiRenderTexture(this.asepriteDocument.width, this.asepriteDocument.height, 'AsepriteLoader.load');
-                    tilemapCelTexture.defaultAnchor.set(0, 0);
+                    let tilemapTexture = newPixiRenderTexture(this.asepriteDocument.width, this.asepriteDocument.height, 'AsepriteLoader.load');
                     for (let i = 0; i < cel.celData.tiles.length; i++) {
                         let tile = cel.celData.tiles[i];
                         let tileX = i % cel.celData.widthTiles;
@@ -148,11 +162,11 @@ class AsepriteLoader implements Loader {
                         sprite.y = tileY * tileset.tileHeight;
                         sprite.alpha = layer.opacity;
                         sprite.blendMode = layer.blendMode ?? 0;
-                        renderToRenderTexture(sprite, tilemapCelTexture);
+                        renderToRenderTexture(sprite, tilemapTexture);
                     }
 
-                    sprite.texture = tilemapCelTexture;
-                    sprite.anchor.set(tilemapCelTexture.defaultAnchor.x, tilemapCelTexture.defaultAnchor.y);
+                    sprite.texture = tilemapTexture;
+                    sprite.anchor.set(tilemapTexture.defaultAnchor.x, tilemapTexture.defaultAnchor.y);
                     sprite.x = cel.xPosition;
                     sprite.y = cel.yPosition;
                     sprite.alpha = layer.opacity;
@@ -160,10 +174,10 @@ class AsepriteLoader implements Loader {
                     renderToRenderTexture(sprite, frameTexture);
 
                     if (renderSeparateLayers) {
-                        TextureUtils.setImmutable(tilemapCelTexture);
-                        AssetCache.textures[this.getFrameLayerIndexKey(i, cel.layerIndex)] = tilemapCelTexture;
+                        TextureUtils.setImmutable(tilemapTexture);
+                        AssetCache.textures[this.getFrameLayerIndexKey(i, cel.layerIndex)] = tilemapTexture;
                     } else {
-                        tilemapCelTexture.destroy();
+                        freePixiRenderTexture(tilemapTexture);
                     }
 
                     renderedCel = true;
@@ -259,6 +273,10 @@ class AsepriteLoader implements Loader {
 
     private getFrameLayerNameKey(frame: number, layerName: string) {
         return `${this.getFrameKey(frame)}/layer/${layerName}`;
+    }
+
+    private getFrameCelKey(frame: number, cel: AsepriteFile.Cel) {
+        return `${this.getFrameKey(frame)}/cel/${cel.layerIndex}`;
     }
 
     private getRootKey() {
