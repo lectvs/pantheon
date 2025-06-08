@@ -10,6 +10,8 @@ namespace UIElement {
 
         disabled?: boolean;
 
+        maxDistanceMouseCanMoveWhileClicking?: number;
+
         onKeyboardLeft?: Callback;
         onKeyboardRight?: Callback;
         onKeyboardUp?: Callback;
@@ -58,6 +60,9 @@ class UIElement extends Module<WorldObject> {
     hoverTint?: number;
     clickTint?: number;
 
+    private clickedDownDistance: number | undefined;
+    maxDistanceMouseCanMoveWhileClicking: number | undefined;
+
     selectionMode: UIElement.SelectionMode;
 
     state: UIElement.State;
@@ -83,6 +88,8 @@ class UIElement extends Module<WorldObject> {
             this.hoverTint = config.tinting.hover;
             this.clickTint = config.tinting.clicked;
         }
+
+        this.maxDistanceMouseCanMoveWhileClicking = config.maxDistanceMouseCanMoveWhileClicking;
 
         this.selectionMode = 'mouse';
 
@@ -149,9 +156,13 @@ class UIElement extends Module<WorldObject> {
 
     private updateModeMouse(mouseOverlapping: boolean) {
         if (Input.justUp(Input.GAME_SELECT)) {
-            if (mouseOverlapping && this.state.clickedDown) {
+            if (mouseOverlapping && this.state.clickedDown && !this.hasMovedMouseTooFarToClick()) {
                 this.click();
             }
+        }
+
+        if (this.clickedDownDistance !== undefined) {
+            this.clickedDownDistance += Input.mouseD$.magnitude;
         }
         
         if (mouseOverlapping) {
@@ -162,8 +173,10 @@ class UIElement extends Module<WorldObject> {
 
         if (mouseOverlapping && Input.isDown(Input.GAME_SELECT)) {
             this.setClickedDown(true);
+            if (this.clickedDownDistance === undefined) this.clickedDownDistance = 0;
         } else {
             this.setClickedDown(false);
+            this.clickedDownDistance = undefined;
         }
     }
 
@@ -303,6 +316,12 @@ class UIElement extends Module<WorldObject> {
         if (this.state.disabled === disabled) return;
         this.state.disabled = disabled;
         this.handleStateChange();
+    }
+
+    private hasMovedMouseTooFarToClick() {
+        if (this.clickedDownDistance === undefined) return false;
+        if (this.maxDistanceMouseCanMoveWhileClicking === undefined) return false;
+        return this.clickedDownDistance > this.maxDistanceMouseCanMoveWhileClicking;
     }
 }
 
