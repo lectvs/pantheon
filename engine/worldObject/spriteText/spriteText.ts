@@ -689,6 +689,15 @@ namespace SpriteText {
     }
 
     export const NOOP_TAG = 'noop';
+    export const RAINBOW_COLORS = [
+        0xFF0000,
+        0xFF6600,
+        0xFFFF00,
+        0x00FF00,
+        0x00D1FF,
+        0x0000FF,
+        0xDD00B2,
+    ];
     export const TAGS: Dict<TagFunction> = {
         [NOOP_TAG]: (params) => {
             return {};
@@ -736,6 +745,16 @@ namespace SpriteText {
                 offsetY: data => {
                     let t = data.t + data.position/8/speed;
                     return lerp(t, -amp, amp, Tween.Easing.OscillateSine(speed));
+                },
+            };
+        },
+        'rainbow': (params) => {
+            let speed = getFloat(params[0], 0);
+            return {
+                color: data => {
+                    let t = data.t * speed + data.position/7;
+                    let colorI = Math.floor(t*7) % 7;
+                    return RAINBOW_COLORS[colorI];
                 },
             };
         },
