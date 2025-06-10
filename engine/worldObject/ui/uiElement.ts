@@ -171,12 +171,16 @@ class UIElement extends Module<WorldObject> {
             this.setHovered(false);
         }
 
-        if (mouseOverlapping && Input.isDown(Input.GAME_SELECT)) {
-            this.setClickedDown(true);
-            if (this.clickedDownDistance === undefined) this.clickedDownDistance = 0;
+        if (this.state.clickedDown) {
+            if (!mouseOverlapping || Input.isUp(Input.GAME_SELECT)) {
+                this.setClickedDown(false);
+                this.clickedDownDistance = undefined;
+            }
         } else {
-            this.setClickedDown(false);
-            this.clickedDownDistance = undefined;
+            if (mouseOverlapping && Input.justDown(Input.GAME_SELECT)) {
+                this.setClickedDown(true);
+                if (this.clickedDownDistance === undefined) this.clickedDownDistance = 0;
+            }
         }
     }
 
