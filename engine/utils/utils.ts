@@ -39,7 +39,9 @@ function clearRenderTexture(renderTexture: PIXI.RenderTexture) {
 function freePixiRenderTexture(texture: PIXI.RenderTexture) {
     let textureCreationSource = TextureUtils.getTextureCreationSource(texture);
     PerformanceTracking.logFreeTexture(texture, textureCreationSource);
-    texture.destroy();
+    Main._internalUnbindTexture(texture);
+    Main._internalUnbindTexture(texture.baseTexture);
+    texture.destroy(true);
 }
 
 function newPixiRenderTexture(width: number, height: number, source: string) {

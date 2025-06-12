@@ -7,8 +7,11 @@ class GlobalSoundManager {
         this.paused = false;
     }
 
-    getSoundCount(sound: string | Sound) {
-        return A.count(this.activeSounds, s => s === sound || s.key === sound);
+    getSoundCount(sound: string | Sound, limitWithPlayTime?: number) {
+        return A.count(this.activeSounds, s => {
+            if (limitWithPlayTime !== undefined && s.position > limitWithPlayTime) return false;
+            return s === sound || s.key === sound;
+        });
     }
 
     pause() {

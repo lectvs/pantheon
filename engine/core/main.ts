@@ -252,6 +252,11 @@ class Main {
         Main.renderer.render(Utils.NOOP_DISPLAYOBJECT, renderTexture, true);
     }
 
+    static _internalUnbindTexture(texture: PIXI.Texture | PIXI.BaseTexture) {
+        Main.renderer.texture.unbind(texture);
+        Main.renderer.geometry.disposeAll()
+    }
+
     private static renderPreloadProgress(progress: number) {
         let barw = global.gameWidth/2;
         let barh = 16;

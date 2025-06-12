@@ -19,8 +19,16 @@ namespace FrameCache {
             return result;
         }
 
+        getSize() {
+            return this.cache.length;
+        }
+
         reset() {
             this.index = 0;
+            if (this.cache.length > MAX_FRAME_CACHE_SIZE) {
+                console.error('Frame cache size limit exceeded:', this.cache.length);
+                this.cache.length = MAX_FRAME_CACHE_SIZE;
+            }
         }
 
         clear() {
@@ -28,6 +36,8 @@ namespace FrameCache {
             this.index = 0;
         }
     }
+
+    const MAX_FRAME_CACHE_SIZE = 15_000;
 
     /**
      * To add a new cache, add the function below and add the cache to the reset() function below.

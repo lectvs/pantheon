@@ -198,6 +198,7 @@ namespace TextureUtils {
 
     export function setTextureCreationSource(texture: PIXI.RenderTexture, source: string) {
         O.putMetadata(texture, 'textureCreationSource', source);
+        O.putMetadata(texture.baseTexture, 'textureCreationSource', source);
     }
 
     /**

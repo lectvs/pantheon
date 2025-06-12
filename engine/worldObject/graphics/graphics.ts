@@ -75,6 +75,25 @@ class Graphics extends WorldObject {
         this.renderObject = new PIXI.Sprite();
     }
 
+    override onAdd(): void {
+        super.onAdd();
+
+        if (!this.graphics.geometry || !this.graphics.transform) {
+            console.error('Attempted to use new Graphics after removing from world:', this);
+            this.graphics = new PIXI.Graphics();
+        }
+    }
+
+    override onRemove(): void {
+        super.onRemove();
+        this.graphics.destroy();
+    }
+
+    override unload(): void {
+        super.unload();
+        this.graphics.destroy();
+    }
+
     override update() {
         super.update();
 
