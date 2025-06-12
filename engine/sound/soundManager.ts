@@ -23,7 +23,6 @@ namespace SoundManager {
 
 class SoundManager {
     private sounds: Sound[];
-    private soundKeysPlayedThisFrame: Set<string>;
 
     volume: number;
 
@@ -32,7 +31,6 @@ class SoundManager {
 
     constructor(config: SoundManager.Config) {
         this.sounds = [];
-        this.soundKeysPlayedThisFrame = new Set();
         this.volume = config.volume ?? 1;
         this.humanizeByDefault = config.humanizeByDefault ?? false;
         this.humanizeFactor = config.humanizeFactor ?? 0.1;
@@ -47,8 +45,6 @@ class SoundManager {
                 this.sounds.splice(i, 1);
             }
         }
-
-        this.soundKeysPlayedThisFrame.clear();
     }
 
     getSoundCount(sound: string | Sound, limitWithPlayTime?: number) {
@@ -62,26 +58,12 @@ class SoundManager {
         return this.sounds.filter(sound => sound.key === key);
     }
 
-    hasSoundPlayedThisFrame(sound: string | Sound) {
-        if (St.isString(sound)) {
-            return this.soundKeysPlayedThisFrame.has(sound);
-        }
-        
-        if (!sound.key) return false;
-        return this.soundKeysPlayedThisFrame.has(sound.key);
-    }
-
     playSound(sound: string | Sound, config?: SoundManager.PlaySoundConfig) {
         if (config?.limit !== undefined
                 && (global.soundManager.getSoundCount(sound, config.limitWithPlayTime) >= config.limit
                                 || this.getSoundCount(sound, config.limitWithPlayTime) >= config.limit)) {
             return St.isString(sound) ? new BasicSound(sound) : sound;
         }
-
-        // if (config?.limitOnePlayPerFrame === true && this.hasSoundPlayedThisFrame(sound)) {
-        //     console.log('l')
-        //     return St.isString(sound) ? new BasicSound(sound) : sound;
-        // }
 
         if (St.isString(sound)) {
             sound = new BasicSound(sound, this);
@@ -98,10 +80,6 @@ class SoundManager {
         let humanized = (config?.humanized ?? this.humanizeByDefault) && sound.duration < 1;
         if (humanized && this.humanizeFactor > 0) {
             sound.humanize(this.humanizeFactor);
-        }
-
-        if (sound.key) {
-            this.soundKeysPlayedThisFrame.add(sound.key);
         }
 
         this.sounds.push(sound);
