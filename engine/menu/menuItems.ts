@@ -21,7 +21,10 @@ class MenuTextButton extends SpriteText {
             hover: 0x808080,
             clicked: config.tinting?.hover ?? 0x808080,
         })
-        : undefined;
+        : {
+            hover: 0x808080,
+            clicked: 0x808080,
+        };
 
         let button = this.addModule(new UIElement({
             tinting: tinting,
