@@ -144,7 +144,7 @@ class World {
     private bgFill: PIXI.Sprite;
     private fadeFill: PIXI.Sprite;
 
-    protected scriptManager: ScriptManager;
+    scriptManager: ScriptManager;
     soundManager: SoundManager;
 
     select: WorldSelecter;
