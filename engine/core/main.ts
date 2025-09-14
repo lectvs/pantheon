@@ -55,6 +55,7 @@ class Main {
 
     static nonFullscreenPageBackgroundColor: string;
     static currentPageBackgroundColor: string;
+    static isScreenRotated: boolean;
 
     static game: Game;
     static soundManager: GlobalSoundManager;
@@ -81,6 +82,7 @@ class Main {
     private static preload() {
         this.nonFullscreenPageBackgroundColor = document.body.style.backgroundColor;
         this.currentPageBackgroundColor = document.body.style.backgroundColor;
+        this.isScreenRotated = false;
         Debug.init(this.config.debug);
 
         if (MobileUtils.isMobileBrowser()) {
@@ -221,6 +223,11 @@ class Main {
         Render.upscalePixiObjectProperties(Main.stage, 'upscale');
         Main.renderer.render(Main.stage);
         Render.upscalePixiObjectProperties(Main.stage, 'downscale');
+    }
+
+    static rotateScreen() {
+        this.renderer.view.style.rotate = '90deg';
+        this.isScreenRotated = true;
     }
 
     static forceRender() {

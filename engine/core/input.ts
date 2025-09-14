@@ -200,8 +200,8 @@ class Input {
         this._lastMouseY = this._mouseY;
 
         //if (this.isMouseOnCanvas) {
-            this._mouseX = Math.floor(this._canvasMouseX);
-            this._mouseY = Math.floor(this._canvasMouseY);
+            this._mouseX = Math.floor(this.canvasMouseX);
+            this._mouseY = Math.floor(this.canvasMouseY);
         //}
 
         if (this.touchWentDown) {
@@ -213,11 +213,11 @@ class Input {
 
     private static updateMouseTouch() {
         let currentMouseTouch = this.touches.find(touch => touch.id === Input.MOUSE_TOUCH_ID);
-
+        
         let touchData: Input.TouchData = {
             id: Input.MOUSE_TOUCH_ID,
-            x: this._canvasMouseX,
-            y: this._canvasMouseY,
+            x: this.canvasMouseX,
+            y: this.canvasMouseY,
             radius: this._mouseRadius,
         };
 
@@ -404,10 +404,16 @@ class Input {
     }
 
     static get canvasMouseX() {
+        if (Main.isScreenRotated) {
+            return this._canvasMouseY * global.gameWidth/global.gameHeight;
+        }
         return this._canvasMouseX;
     }
 
     static get canvasMouseY() {
+        if (Main.isScreenRotated) {
+            return H - this._canvasMouseX * global.gameHeight/global.gameWidth;
+        }
         return this._canvasMouseY;
     }
 
@@ -416,6 +422,9 @@ class Input {
     }
 
     static get isMouseOnCanvas() {
+        if (Main.isScreenRotated) {
+            return true;
+        }
         return 0 <= this.canvasMouseX && this.canvasMouseX < global.gameWidth && 0 <= this.canvasMouseY && this.canvasMouseY < global.gameHeight;
     }
 
