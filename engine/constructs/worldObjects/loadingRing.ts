@@ -6,6 +6,7 @@ namespace LoadingRing {
         outerRadius: number;
         thickness: number;
         startAngle?: number;
+        progress?: number;
         /**
          * If absent, no background.
          */
@@ -19,13 +20,14 @@ class LoadingRing extends Sprite {
     private startAngle: number;
     private backgroundRgba: number | undefined;
 
-    progress = 0;
+    progress: number;
 
     constructor(config: LoadingRing.Config) {
         super(config);
         this.outerRadius = config.outerRadius;
         this.thickness = config.thickness;
         this.startAngle = config.startAngle ?? 0;
+        this.progress = config.progress ?? 0;
         this.backgroundRgba = config.backgroundRgba;
         this.updateTexture();
     }
@@ -45,12 +47,14 @@ class LoadingRing extends Sprite {
         let roundedRadius = Math.ceil(outerRadius);
         return lazy(`LoadingRing(${outerRadius}, ${thickness},${roundedProgress},${startAngle})`, () => {
             let texture = newPixiRenderTexture(roundedRadius*2, roundedRadius*2, 'LoadingRing');
-            let sprite = new PIXI.Sprite(Textures.NOOP);
-            sprite.x = outerRadius;
-            sprite.y = outerRadius;
-            sprite.filters = [new LoadingRing.Filter(outerRadius, thickness, roundedProgress, startAngle, backgroundRgba)];
-            sprite.filterArea = new PIXI.Rectangle(0, 0, roundedRadius*2, roundedRadius*2);
-            renderToRenderTexture(sprite, texture, 'clearTextureFirst');
+            if (roundedProgress !== 0) {
+                let sprite = new PIXI.Sprite(Textures.NOOP);
+                sprite.x = outerRadius;
+                sprite.y = outerRadius;
+                sprite.filters = [new LoadingRing.Filter(outerRadius, thickness, roundedProgress, startAngle, backgroundRgba)];
+                sprite.filterArea = new PIXI.Rectangle(0, 0, roundedRadius*2, roundedRadius*2);
+                renderToRenderTexture(sprite, texture, 'clearTextureFirst');
+            }
             TextureUtils.setImmutable(texture);
             texture.defaultAnchor.set(0.5, 0.5);
             return texture;
