@@ -75,7 +75,7 @@ class Debug {
     }
 
     static isSkipping() {
-        return Input.isDown(Input.DEBUG_SKIP_RATE);
+        return Debug.DEBUG && Input.isDown(Input.DEBUG_SKIP_RATE);
     }
 
     private static _DEBUG: boolean;
