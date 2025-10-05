@@ -176,6 +176,7 @@ class WorldObject {
     get state() { return this.stateMachine.getCurrentStateName(); }
 
     protected soundManager: SoundManager;
+    volume: number;
     protected hookManager: HookManager<WorldObject.Hooks<this>>;
 
     debugFollowMouse: boolean;
@@ -247,6 +248,7 @@ class WorldObject {
         this.stateMachine = new SimpleStateMachine();
 
         this.soundManager = new SoundManager(config.sound ?? {});
+        this.volume = 1;
         this.hookManager = new HookManager({
             binder: fn => fn.bind(this),
             hooks: config.hooks,
@@ -317,7 +319,7 @@ class WorldObject {
         this.life.update(this.delta);
         this.animationManager.update(this.delta);
 
-        this.soundManager.volume = (this.world?.volume ?? 1) * global.game.volume * Options.sfxVolume;
+        this.soundManager.volume = this.volume * (this.world?.volume ?? 1) * global.game.volume * Options.sfxVolume;
         this.soundManager.update(this.delta);
     }
 
