@@ -1024,6 +1024,16 @@ class WorldObject {
         // Overridable by children.
     }
 
+    visitSelfAndDescendents(fn: (descendent: WorldObject) => void, order: 'self_first' | 'children_first' = 'self_first') {
+        if (order === 'self_first') fn(this);
+
+        for (let child of this.children) {
+            child.visitSelfAndDescendents(fn, order);
+        }
+
+        if (order === 'children_first') fn(this);
+    }
+
     withName(name: string | undefined) {
         this.name = name;
         return this;

@@ -24,8 +24,11 @@ class StateMachine<StateData extends StateMachine.StateData> {
     
     private script: Script | undefined;
 
+    timeInState: number;
+
     constructor() {
         this.states = {};
+        this.timeInState = 0;
     }
 
     addState<S extends StateData['state']>(name: S, state: StateMachine.State<StateData, S> = {}) {
@@ -73,10 +76,14 @@ class StateMachine<StateData extends StateMachine.StateData> {
         });
 
         this.script.update(0);
+        this.timeInState = 0;
     }
 
     update(delta: number) {
-        if (this.script) this.script.update(delta);
+        if (this.script) {
+            this.timeInState += delta;
+            this.script.update(delta);
+        }
 
         let updateCallback = !this.currentStateData || !this.currentStateData.state || !this.states[this.currentStateData.state]
             ? undefined

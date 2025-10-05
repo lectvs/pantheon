@@ -17,6 +17,8 @@ namespace SimpleStateMachine {
 class SimpleStateMachine {
     private stateMachine: StateMachine<{ state: string }>;
 
+    get timeInState() { return this.stateMachine.timeInState; }
+
     constructor() {
         this.stateMachine = new StateMachine();
     }

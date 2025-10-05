@@ -63,6 +63,17 @@ class Script {
         return () => this.iterator;
     }
 
+    skipTime(time: number) {
+        while (time >= 0.1) {
+            this.update(0.1);
+            time -= 0.1;
+        }
+        if (time > 0){
+            this.update(time);
+        }
+        return this;
+    }
+
     stop() {
         this.isDone = true;
     }

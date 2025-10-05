@@ -63,7 +63,7 @@ class Debug {
                 Main.takeScreenshot(1, 'clipboard');
             }
 
-            Debug._SKIP_RATE_KEY_MODIFIER = Input.isDown(Input.DEBUG_SKIP_RATE) ? Debug.SKIP_RATE_KEY_MODIFIER_MAX : 1;
+            Debug._SKIP_RATE_KEY_MODIFIER = Debug.isSkipping() ? Debug.SKIP_RATE_KEY_MODIFIER_MAX : 1;
         }
     }
 
@@ -72,6 +72,10 @@ class Debug {
             return global.world.allowDebugInput;
         }
         return true;
+    }
+
+    static isSkipping() {
+        return Input.isDown(Input.DEBUG_SKIP_RATE);
     }
 
     private static _DEBUG: boolean;

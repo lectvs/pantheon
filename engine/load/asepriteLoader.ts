@@ -101,6 +101,7 @@ class AsepriteLoader implements Loader {
             for (let cel of frame.cels) {
                 let layer = this.asepriteDocument.layers[cel.layerIndex];
                 if (!layer.visible) continue;
+                if (layer.name.startsWith('//')) continue;
                 if (cel.celData.type === 'image') {
                     let celTexture = AssetCache.textures[this.getFrameCelKey(i, cel)];
                     if (!celTexture) {

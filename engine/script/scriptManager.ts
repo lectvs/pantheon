@@ -22,8 +22,12 @@ class ScriptManager {
         }
     }
 
+    getScriptByName(name: string) {
+        return this.activeScripts.find(script => script.name === name);
+    }
+
     hasScriptRunning(name: string) {
-        return this.activeScripts.some(script => script.name === name);
+        return this.activeScripts.some(script => script.name === name && !script.isDone);
     }
     
     reset() {
