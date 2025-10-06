@@ -40,7 +40,9 @@ namespace Main {
         persistIntervalSeconds?: number;
         persist?: () => void;
 
+        loadingScreenBackgroundColor?: number;
         addToLoadingScreen?: () => PIXI.DisplayObject[];
+
         beforePreload?: () => void;
         beforeStart?: () => void;
         beforeFrame?: () => void;
@@ -264,7 +266,9 @@ class Main {
         let barx = global.gameWidth/2 - barw/2;
         let bary = global.gameHeight/2 - barh/2;
 
-        let bg = lazy('Main.renderPreloadProgress.bg', () => new PIXI.Sprite(Textures.filledRect(W, H, 0x000000)));
+        let bgColor = Main.config.loadingScreenBackgroundColor ?? 0x000000;
+
+        let bg = lazy('Main.renderPreloadProgress.bg', () => new PIXI.Sprite(Textures.filledRect(W, H, bgColor)));
         let barFill = lazy('Main.renderPreloadProgress.barFill', () => new PIXI.Sprite(Textures.filledRect(1, barh, 0xFFFFFF)));
         let barOutline = lazy('Main.renderPreloadProgress.barOutline', () => new PIXI.Sprite(Textures.outlineRect(barw, barh, 0xFFFFFF)));
 
