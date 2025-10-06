@@ -40,6 +40,7 @@ namespace Main {
         persistIntervalSeconds?: number;
         persist?: () => void;
 
+        addToLoadingScreen?: () => PIXI.DisplayObject[];
         beforePreload?: () => void;
         beforeStart?: () => void;
         beforeFrame?: () => void;
@@ -271,7 +272,12 @@ class Main {
         barFill.scale.x = barw * progress;
         barOutline.position.set(barx, bary);
 
-        Render.diff(Main.stage, FrameCache.array(bg, barFill, barOutline));
+        let renderObjects: PIXI.DisplayObject[] = FrameCache.array(bg, barFill, barOutline);
+        if (Main.config.addToLoadingScreen) {
+            renderObjects.pushAll(Main.config.addToLoadingScreen());
+        }
+
+        Render.diff(Main.stage, renderObjects);
 
         Main.renderScreenToCanvas();
     }
