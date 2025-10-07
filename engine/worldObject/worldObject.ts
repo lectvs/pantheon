@@ -32,6 +32,10 @@ namespace WorldObject {
         useGlobalTime?: boolean;
         mask?: Mask.Config;
         inputLevel?: number;
+        /**
+         * If set, control will not be revoked unless the world's input level is greater than this.
+         */
+        ignoreInputLevelsUpTo?: number;
         tags?: string[];
         hooks?: HooksConfig<Hooks<WO>>;
         data?: any;
@@ -163,6 +167,7 @@ class WorldObject {
     behavior: Behavior;
 
     private _inputLevel: number;
+    ignoreInputLevelsUpTo: number;
 
     modules: Module<WorldObject>[];
 
@@ -230,6 +235,7 @@ class WorldObject {
         this.controller = new Controller();
         this.behavior = new NullBehavior();
         this._inputLevel = config.inputLevel ?? 0;
+        this.ignoreInputLevelsUpTo = config.ignoreInputLevelsUpTo ?? -Infinity;
 
         this.modules = [];
 
@@ -750,7 +756,9 @@ class WorldObject {
     }
 
     isControlRevoked() {
-        return !this.world || this.getInputLevel() < this.world.getMaxInputLevel();
+        if (!this.world) return true;
+        let worldInputLevel = this.world.getMaxInputLevel();
+        return this.getInputLevel() < worldInputLevel && this.ignoreInputLevelsUpTo < worldInputLevel;
     }
 
     isObscuredBy(other: WorldObject) {
