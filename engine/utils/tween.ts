@@ -6,6 +6,10 @@ namespace Tween {
             return t => 1 - inFn(1-t);
         }
 
+        export function inFromOut(outFn: Function): Function {
+            return t => 1 - outFn(1-t);
+        }
+
         export function inOutFromIn(inFn: Function): Function {
             return t => t <= 0.5 ? inFn(2*t)/2 : 1 - inFn(2*(1-t))/2;
         }
@@ -33,9 +37,25 @@ namespace Tween {
         export const OutExp = OutExpPow(1);
         export const InOutExp = InOutExpPow(1);
 
-        export const InBounce: (bounceScale: number) => Function = bounceScale => t => (bounceScale+1)*t**3 - bounceScale*t**2;
-        export const OutBounce: (bounceScale: number) => Function = bounceScale => outFromIn(InBounce(bounceScale));
-        export const InOutBounce: (bounceScale: number) => Function = bounceScale => inOutFromIn(InBounce(bounceScale));
+        export const OutBounce: Function = t => {
+            const n1 = 7.5625;
+            const d1 = 2.75;
+
+            if (t === 1) return 1;
+            
+            if (t < 1 / d1) {
+                return n1 * t * t;
+            }
+            if (t < 2 / d1) {
+                return n1 * (t -= 1.5 / d1) * t + 0.75;
+            }
+            if (t < 2.5 / d1) {
+                return n1 * (t -= 2.25 / d1) * t + 0.9375;
+            }
+            return n1 * (t -= 2.625 / d1) * t + 0.984375;
+        }
+        export const InBounce = inFromOut(OutBounce);
+        export const InOutBounce = inOutFromIn(InBounce);
 
         export const InElastic: (elasticity: number) => Function = elasticity => t => {
             if (elasticity === 0) return t;

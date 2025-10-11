@@ -39,20 +39,36 @@ namespace tmp {
     }
 
     const _rectangle = new Rectangle(0, 0, 0, 0);
-    export function rectangle(x: number, y: number, width: number, height: number) {
+    export function rectangle(x: Rect): Rectangle;
+    export function rectangle(x: number, y: number, width: number, height: number): Rectangle;
+    export function rectangle(x: number | Rect, y?: number, width?: number, height?: number) {
+        if (typeof x !== 'number') {
+            y = x.y;
+            width = x.width;
+            height = x.height;
+            x = x.x;
+        }
         _rectangle.x = x;
-        _rectangle.y = y;
-        _rectangle.width = width;
-        _rectangle.height = height;
+        _rectangle.y = y ?? 0;
+        _rectangle.width = width ?? 0;
+        _rectangle.height = height ?? 0;
         return _rectangle;
     }
 
     const _rectangle_2 = new Rectangle(0, 0, 0, 0);
-    export function rectangle_2(x: number, y: number, width: number, height: number) {
+    export function rectangle_2(x: Rect): Rectangle;
+    export function rectangle_2(x: number, y: number, width: number, height: number): Rectangle;
+    export function rectangle_2(x: number | Rect, y?: number, width?: number, height?: number) {
+        if (typeof x !== 'number') {
+            y = x.y;
+            width = x.width;
+            height = x.height;
+            x = x.x;
+        }
         _rectangle_2.x = x;
-        _rectangle_2.y = y;
-        _rectangle_2.width = width;
-        _rectangle_2.height = height;
+        _rectangle_2.y = y ?? 0;
+        _rectangle_2.width = width ?? 0;
+        _rectangle_2.height = height ?? 0;
         return _rectangle_2;
     }
 
