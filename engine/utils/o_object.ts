@@ -75,6 +75,18 @@ namespace O {
         return true;
     }
 
+    export function fromArray<T, S>(array: T[], keys: (e: T) => string, values: (e: T) => S) {
+        let result: Dict<S> = {};
+        for (let e of array) {
+            let key = keys(e);
+            if (key in result) {
+                console.error("Found duplicate key in array for O.fromArray. Overwriting.", array);
+            }
+            result[key] = values(e);
+        }
+        return result;
+    }
+
     export function getClass(obj: Object) {
         return obj.constructor;
     }
@@ -123,6 +135,14 @@ namespace O {
     export function isObject(obj: any): obj is Object {
         var type = typeof obj;
         return type === 'function' || (type === 'object' && !!obj);
+    }
+
+    export function map<T, S>(obj: Dict<T>, valueFn: (key: string, value: T) => S) {
+        let result: Dict<S> = {};
+        for (let key in obj) {
+            result[key] = valueFn(key, obj[key]);
+        }
+        return result;
     }
 
     export function mergeObject<T>(obj: T, into: T, combine: (e: any, into: any) => any = ((e, into) => e)) {
