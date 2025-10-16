@@ -76,6 +76,26 @@ class AnimationManager {
         this.animations[aliasName] = this.animations[animationName];
     }
 
+    getAnimationByName<T extends AnimationInstance>(name: string, type?: new (...params: any[]) => T) {
+        if (!this.hasAnimation(name)) {
+            console.error("No animation found with name", name, this);
+            return undefined;
+        }
+
+        let animation = this.animations[name];
+
+        if (type) {
+            if (animation instanceof type) {
+                return animation;
+            } else {
+                console.error(`Animation named '${name}' is not of type '${type}'`, this);
+                return undefined;
+            }
+        }
+
+        return this.animations[name] as T;
+    }
+
     getCurrentAnimationName() {
         return this.currentAnimationName;
     }

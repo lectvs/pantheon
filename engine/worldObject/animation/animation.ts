@@ -105,8 +105,8 @@ namespace AnimationInstance {
 
     export class TextureAnimation extends AnimationInstance {
         private sprite: Sprite | undefined;
-        private frames: TextureAnimationFrame[];
         private count: number;
+        frames: TextureAnimationFrame[];
 
         private get currentFrame() { return this.currentIteration < this.count ? this.frames[this.currentFrameIndex] : undefined; }
         private currentFrameIndex: number;
@@ -176,7 +176,7 @@ namespace AnimationInstance {
             this.currentFrameTime = 0;
             this.currentIteration = 0;
         }
-    
+
         private applyCurrentFrameVisual() {
             if (!this.sprite) return;
             if (!this.currentFrame) return;
