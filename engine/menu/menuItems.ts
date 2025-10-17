@@ -3,7 +3,7 @@
 namespace MenuTextButton {
     export type Config = SpriteText.Config<MenuTextButton> & {
         onClick?: (this: MenuTextButton) => void;
-        onStateChange?: (this: MenuTextButton, state: UIElement.State) => void;
+        onStateChange?: (this: MenuTextButton, state: UIElement.State, lastState: UIElement.State) => void;
         tinting?: UIElement.Tinting;
     }
 }
@@ -28,8 +28,8 @@ class MenuTextButton extends SpriteText {
 
         let button = this.addModule(new UIElement({
             tinting: tinting,
-            onStateChange: (state) => {
-                if (config.onStateChange) config.onStateChange.apply(this, tmp.argArray(state));
+            onStateChange: (state, lastState) => {
+                if (config.onStateChange) config.onStateChange.apply(this, tmp.argArray2(state, lastState));
             },
             onClick: () => {
                 if (config.onClick) config.onClick.apply(this);

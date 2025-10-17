@@ -21,7 +21,7 @@ namespace Utils {
     }
 }
 
-type KeyOfType<T, U> = {[P in keyof T]: T[P] extends U ? P: never}[keyof T]
+type KeyOfType<T, U> = {[P in keyof Required<T>]: Required<T>[P] extends U ? P : never}[keyof Required<T>]
 
 function assertUnreachable(c: never) {
     console.error('Unreachable code reached for value:', c);

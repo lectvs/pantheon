@@ -65,6 +65,9 @@ class Main {
     static stage: PIXI.Container;
     static delta: number;
 
+    static forceFixedDelta: number | undefined;
+    private static fixedDeltaBucket: number = 0;
+
     static get rendererPlugins() { return Main.renderer.plugins; }
     static get rendererView() { return Main.renderer.view; }
 
@@ -191,6 +194,17 @@ class Main {
     private static play() {
         PIXI.Ticker.shared.add(frameDelta => {
             Main.delta = M.clamp(frameDelta/60, 0, 1/this.config.fpsLimit);
+
+            if (Main.forceFixedDelta !== undefined) {
+                Main.fixedDeltaBucket += Main.delta;
+                Main.delta = Main.forceFixedDelta;
+                if (Main.fixedDeltaBucket < Main.forceFixedDelta) {
+                    return;
+                }
+                while (Main.fixedDeltaBucket >= Main.forceFixedDelta) {
+                    Main.fixedDeltaBucket -= Main.forceFixedDelta;
+                }
+            }
 
             PerformanceTracking.logBeginFrame();
 

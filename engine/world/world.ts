@@ -92,6 +92,7 @@ namespace World {
         onBeginTransition: { params: (this: W) => void };
         onTransitioned: { params: (this: W) => void };
         onUpdate: { params: (this: W) => void };
+        onNonUpdate: { params: (this: W) => void };
         onWorldObjectAdded: { params: (this: W, worldObject: WorldObject) => void };
         onWorldObjectRemoved: { params: (this: W, worldObject: WorldObject) => void };
     }
@@ -169,6 +170,9 @@ class World {
 
     private mouseBounds: CircleBounds;
 
+    multiExecutionTimeScale: number;
+    private multiExecutionPool: number;
+
     constructor(config: World.Config<World> = {}) {      
         this.name = config.name;
           
@@ -232,6 +236,9 @@ class World {
         this.eventManager = new WorldEventManager();
         this.maxInputLevelThisFrame = 0;
 
+        this.multiExecutionTimeScale = 1;
+        this.multiExecutionPool = 0;
+
         this.endOfFrameQueue = [];
 
         PerformanceTracking.logCreateWorld(this);
@@ -246,6 +253,21 @@ class World {
     }
 
     update() {
+        this.multiExecutionPool += this.multiExecutionTimeScale;
+
+        let isNonUpdate = true;
+        while (this.multiExecutionPool >= 1) {
+            this._update();
+            this.multiExecutionPool -= 1;
+            isNonUpdate = false;
+        }
+
+        if (isNonUpdate) {
+            this.nonUpdate();
+        }
+    }
+
+    protected _update() {
         this.updateMaxInputLevelThisFrame();
         this.updateScriptManager();
 
@@ -295,6 +317,20 @@ class World {
         while (!A.isEmpty(this.endOfFrameQueue)) {
             this.endOfFrameQueue.shift()!();
         }
+    }
+
+    protected nonUpdate() {
+        for (let worldObject of this.worldObjects) {
+            if (!worldObject.updateOnNonUpdate) continue;
+            worldObject.setIsInsideWorldBoundsBufferThisFrame();
+            if (worldObject.isActive() && worldObject._isInsideWorldBoundsBufferThisFrame) {
+                worldObject.preUpdate();
+                worldObject.update();
+                worldObject.postUpdate();
+            }
+        }
+
+        this.hookManager.executeHooks('onNonUpdate');
     }
 
     protected updateMaxInputLevelThisFrame() {

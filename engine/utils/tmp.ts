@@ -89,4 +89,11 @@ namespace tmp {
         _argArray.push(e1);
         return _argArray as [T];
     }
+    const _argArray2: any[] = [];
+    export function argArray2<T,S>(e1: T, e2: S): [T,S] {
+        _argArray2.length = 0;
+        _argArray2.push(e1);
+        _argArray2.push(e2);
+        return _argArray2 as [T,S];
+    }
 }

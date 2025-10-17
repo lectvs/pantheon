@@ -30,6 +30,7 @@ namespace WorldObject {
         sound?: SoundManager.Config;
         timeScale?: number;
         useGlobalTime?: boolean;
+        updateOnNonUpdate?: boolean;
         mask?: Mask.Config;
         inputLevel?: number;
         /**
@@ -69,6 +70,7 @@ class WorldObject {
     zBehavior?: WorldObject.ZBehavior;
     timeScale: number;
     useGlobalTime: boolean;
+    updateOnNonUpdate: boolean;
     data: any;
 
     ignoreCamera: boolean;
@@ -203,6 +205,7 @@ class WorldObject {
         this.zBehavior = config.zBehavior;
         this.timeScale = config.timeScale ?? 1;
         this.useGlobalTime = config.useGlobalTime ?? false;
+        this.updateOnNonUpdate = config.updateOnNonUpdate ?? false;
         this.data = config.data ? O.deepClone(config.data) : {};
         this.delta = 0.01;
         this.lastFrameDelta = 0.01;

@@ -145,7 +145,7 @@ class Graphics extends WorldObject {
 }
 
 namespace Graphics {
-    abstract class GraphicsPreset extends Graphics {
+    export abstract class GraphicsPreset extends Graphics {
         protected dirty = false;
 
         override render(): Render.Result {
@@ -157,13 +157,6 @@ namespace Graphics {
         }
 
         protected abstract updateGraphics(): void;
-    }
-
-    export namespace Annulus {
-        export type Config = Graphics.Config<Annulus> & {
-            outerRadius: number;
-            innerRadius: number;
-        }
     }
 
     export class Annulus extends GraphicsPreset {
@@ -181,7 +174,7 @@ namespace Graphics {
             this.dirty = true;
         }
 
-        constructor(config: Annulus.Config) {
+        constructor(config: Graphics.Config<Annulus> & { innerRadius: number, outerRadius: number }) {
             super(config);
             this._outerRadius = config.outerRadius;
             this._innerRadius = config.innerRadius;
@@ -198,6 +191,30 @@ namespace Graphics {
             graphics.beginHole();
             graphics.drawCircle(0, 0, this.innerRadius);
             graphics.endHole();
+        }
+    }
+
+    export class Circle extends GraphicsPreset {
+        private _radius: number;
+        get radius() { return this._radius; }
+        set radius(v) {
+            this._radius = v;
+            this.dirty = true;
+        }
+
+        constructor(config: Graphics.Config<Annulus> & { radius: number }) {
+            super(config);
+            this._radius = config.radius;
+            this.updateGraphics();
+        }
+
+        protected override updateGraphics(): void {
+            let graphics = this.getGraphics();
+            graphics.clear();
+            graphics.lineStyle(0, 0, 0);
+            graphics.beginFill(0xFFFFFF, 1);
+            graphics.drawCircle(0, 0, this.radius);
+            graphics.endFill();
         }
     }
 }
