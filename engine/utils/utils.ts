@@ -19,6 +19,10 @@ namespace Utils {
     export function openDiscord() {
         window.open('https://discord.gg/qyG4xx45JD', '_blank');
     }
+
+    export function openUrl(url: string) {
+        window.open(url, '_blank');
+    }
 }
 
 type KeyOfType<T, U> = {[P in keyof Required<T>]: Required<T>[P] extends U ? P : never}[keyof Required<T>]

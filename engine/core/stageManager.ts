@@ -9,6 +9,8 @@ namespace StageManager {
          */
         stackPrevious?: boolean;
         doNotPlayWorldMusic?: boolean;
+        onBeginTransition?: (world: World) => void;
+        onTransitioned?: (world: World) => void;
     }
 }
 
@@ -106,6 +108,8 @@ class StageManager {
     loadImmediate(stage: () => World, props: StageManager.StageTransitionProps = {}) {
         let oldWorld = this.getCurrentWorld();
         let newWorld = stage();
+        if (props.onBeginTransition) { newWorld.addHook('onBeginTransition', function() { props.onBeginTransition!(this); }); }
+        if (props.onTransitioned) { newWorld.addHook('onTransitioned', function() { props.onTransitioned!(this); }); }
         let stackPrevious = props.stackPrevious ?? (oldWorld instanceof Menu || newWorld instanceof Menu);
         if (!stackPrevious && this.stageStack.length > 0) {
             this.addToWastebin(this.stageStack.pop()!.world);

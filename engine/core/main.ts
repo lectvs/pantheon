@@ -46,6 +46,7 @@ namespace Main {
         beforePreload?: () => void;
         beforeStart?: () => void;
         beforeFrame?: () => void;
+        afterFrame?: () => void;
 
         dialogProfiles?: Dict<DialogProfile.Config>;
         spriteTextTags?: Dict<SpriteText.TagFunction>;
@@ -223,6 +224,9 @@ class Main {
                 Main.soundManager.postGameUpdate();
                 Input.postUpdate();
             }
+
+            if (this.config.afterFrame) this.config.afterFrame();
+
             Persist.update(frameDelta/60);
             ScaleManager.update();
             Main.updateFullscreenBackgroundColor();

@@ -128,6 +128,16 @@ namespace O {
         return true;
     }
 
+    export function isShallowEqual(obj1: any, obj2: any) {
+        for (let key in obj1) {
+            if (obj1[key] !== obj2[key]) return false;
+        }
+        for (let key in obj2) {
+            if (obj1[key] !== obj2[key]) return false;
+        }
+        return true;
+    }
+
     export function isFunction(obj: any): obj is Function {
         return typeof obj === 'function';
     }

@@ -686,6 +686,18 @@ namespace SpriteText {
             this._y = anchor.y;
             this.markDirty = markDirty;
         }
+
+        set(pt: Pt): void;
+        set(x: number, y: number): void;
+        set(x: number | Pt, y?: number) {
+            if (typeof x !== 'number') {
+                y = x.y;
+                x = x.x;
+            }
+            this._x = x;
+            this._y = y ?? x;
+            this.markDirty();
+        }
     }
 
     export const NOOP_TAG = 'noop';
