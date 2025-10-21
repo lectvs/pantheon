@@ -38,6 +38,11 @@ class AnimationManager {
         this.started = true;
     }
 
+    stop() {
+        this.currentAnimationName = undefined;
+        this.started = false;
+    }
+
     update(delta: number) {
         if (this.currentAnimation) {
             this.currentAnimation.update(delta * this.speed);

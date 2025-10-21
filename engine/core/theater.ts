@@ -13,6 +13,7 @@ class Theater {
     scriptManager: ScriptManager;
     cutsceneManager: CutsceneManager;
 
+    overlayWorld: World;
     private dialogBoxWorld: World;
     dialogBox: DialogBox | undefined;
 
@@ -26,6 +27,10 @@ class Theater {
         this.scriptManager = new ScriptManager();
         this.cutsceneManager = new CutsceneManager(this, config.cutsceneManager ?? {});
 
+        this.overlayWorld = new World({
+            name: 'overlayWorld',
+            backgroundAlpha: 0,
+        });
         this.dialogBoxWorld = new World({
             name: 'dialogBoxWorld',
             backgroundAlpha: 0,
@@ -49,6 +54,8 @@ class Theater {
         this.scriptManager.update(Main.delta);
         this.cutsceneManager.update();
 
+        this.overlayWorld.update();
+
         if (this.dialogBox) {
             this.dialogBoxWorld.update();
         }
@@ -56,6 +63,8 @@ class Theater {
 
     render(): Render.Result {
         let result: Render.Result = FrameCache.array();
+
+        result.pushAll(this.overlayWorld.render());
 
         if (this.dialogBox) {
             result.pushAll(this.dialogBoxWorld.render());
@@ -121,6 +130,7 @@ class Theater {
     }
 
     unload() {
+        this.overlayWorld.unload();
         this.dialogBoxWorld.unload();
     }
 

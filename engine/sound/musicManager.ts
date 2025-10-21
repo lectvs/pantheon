@@ -58,6 +58,11 @@ class MusicManager {
         return this.state.currentMusic.key;
     }
 
+    hang() {
+        if (this.state.state === 'stopped') return;
+        this.state.currentMusic.hang();
+    }
+
     pause(fadeTime: number = 0) {
         if (this.state.state === 'stopped') return;
         let music = this.state.currentMusic;
