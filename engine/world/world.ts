@@ -57,7 +57,19 @@ namespace World {
         };
         reverseSort?: boolean;
         effects?: Effects.Config;
+        mask?: Factory<LayerMaskConfig>;
     }
+
+    export type LayerMaskConfig = {
+            texture: PIXI.Texture;
+            x?: number;
+            y?: number;
+            relativeTo?: 'screen' | 'world';
+            textureAnchor?: Vector2;
+            scaleX?: number;
+            scaleY?: number;
+            angle?: number;
+        }
 
     export type PhysicsGroupConfig = {
         immovable?: boolean;
@@ -369,10 +381,10 @@ class World {
             }
 
             if (layer.shouldRenderToOwnLayer) {
+                layer.renderToContainer(this.renderLayer(layer), this.camera);
                 let layerContainer = layer.getContainer();
                 let layerSprite = layer.getSprite();
                 let layerTexture = layerSprite.texture as PIXI.RenderTexture;
-                Render.diff(layerContainer, this.renderLayer(layer));
                 Render.upscalePixiObjectProperties(layerContainer, 'upscale');
                 renderToRenderTexture(layerContainer, layerTexture, 'clearTextureFirst');
                 Render.upscalePixiObjectProperties(layerContainer, 'downscale');
@@ -878,12 +890,15 @@ namespace World {
         reverseSort: boolean;
 
         effects: Effects;
+        mask: LayerMaskConfig | undefined;
+        private preContainer: PIXI.Container;
         private container: PIXI.Container;
         private sprite: PIXI.Sprite;
+        private maskSprite: PIXI.Sprite | undefined;
         private isSpriteDestroyed: boolean;
 
         get shouldRenderToOwnLayer() {
-            return this.effects.hasEffects();
+            return this.effects.hasEffects() || this.mask;
         }
         
         constructor(world: World, name: string, config: World.LayerConfig) {
@@ -894,6 +909,8 @@ namespace World {
             this.reverseSort = config.reverseSort ?? false;
 
             this.effects = new Effects(config.effects);
+            this.mask = config.mask ? config.mask() : undefined;
+            this.preContainer = new PIXI.Container();
             this.container = new PIXI.Container();
             this.sprite = new PIXI.Sprite();
             this.isSpriteDestroyed = true;
@@ -909,6 +926,21 @@ namespace World {
                 this.isSpriteDestroyed = false;
             }
             return this.sprite;
+        }
+
+        renderToContainer(layerRenderResult: Render.Result, camera: Camera) {
+            this.setMaskSpriteProperties(camera);
+
+            Render.diff(this.preContainer, layerRenderResult);
+            let containerResult: Render.Result = FrameCache.array(this.preContainer);
+
+            let maskSprite = this.getMaskSprite();
+            if (maskSprite) {
+                this.preContainer.mask = maskSprite;
+                containerResult.push(maskSprite);
+            }
+
+            Render.diff(this.container, containerResult);
         }
 
         sort() {
@@ -928,6 +960,42 @@ namespace World {
             if (!sort) return undefined;
             if ('comparator' in sort) return sort.comparator;
             return (worldObject1: WorldObject, worldObject2: WorldObject) => sort.key(worldObject1) - sort.key(worldObject2);
+        }
+
+        private setMaskSpriteProperties(camera: Camera) {
+            let maskSprite = this.getMaskSprite();
+            if (!this.mask || !maskSprite) return;
+            if (!this.mask.relativeTo || this.mask.relativeTo === 'screen') {
+                maskSprite.x = this.mask.x ?? 0;
+                maskSprite.y = this.mask.y ?? 0;
+            } else if (this.mask.relativeTo === 'world') {
+                maskSprite.x = (this.mask.x ?? 0) - camera.worldOffsetX;
+                maskSprite.y = (this.mask.y ?? 0) - camera.worldOffsetY;
+            } else {
+                assertUnreachable(this.mask.relativeTo);
+            }
+            maskSprite.texture = this.mask.texture;
+            if (this.mask.textureAnchor) {
+                maskSprite.anchor.set(this.mask.textureAnchor.x, this.mask.textureAnchor.y);
+            } else {
+                maskSprite.anchor.set(this.mask.texture.defaultAnchor.x, this.mask.texture.defaultAnchor.y);
+            }
+            maskSprite.scale.x = this.mask.scaleX ?? 1;
+            maskSprite.scale.y = this.mask.scaleY ?? 1;
+            maskSprite.angle = this.mask.angle ?? 0;
+        }
+
+        private getMaskSprite() {
+            if (!this.mask) {
+                this.maskSprite = undefined;
+                return undefined;
+            }
+
+            if (!this.maskSprite) {
+                this.maskSprite = new PIXI.Sprite();
+            }
+
+            return this.maskSprite;
         }
     }
 
