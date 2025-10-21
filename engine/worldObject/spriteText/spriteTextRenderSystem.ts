@@ -58,8 +58,10 @@ class SpriteTextRenderSystem {
                 undefined,
             );
 
-            let screenBounds = tmp.rectangle_2(0, 0, this.spriteText.worldd.camera.width, this.spriteText.worldd.camera.height);
-            if (!G.areRectanglesOverlapping(textureLocalBounds, screenBounds)) continue;
+            if (this.spriteText.world) {
+                let screenBounds = tmp.rectangle_2(0, 0, this.spriteText.world.camera.width, this.spriteText.world.camera.height);
+                if (!G.areRectanglesOverlapping(textureLocalBounds, screenBounds)) continue;
+            }
 
             if (!data.rendered) {
                 SpriteTextRenderSystem.renderPart(data);

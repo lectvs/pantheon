@@ -15,6 +15,7 @@ namespace TextureUtils {
         y?: number;
         scaleX?: number;
         scaleY?: number;
+        angle?: number;
         tint?: number;
         alpha?: number;
         filters?: TextureFilter[];
@@ -179,6 +180,7 @@ namespace TextureUtils {
         renderSprite.y = properties.y ?? 0;
         renderSprite.scale.x = properties.scaleX ?? 1;
         renderSprite.scale.y = properties.scaleY ?? 1;
+        renderSprite.angle = properties.angle ?? 0;
         renderSprite.tint = properties.tint ?? 0xFFFFFF;
         renderSprite.alpha = properties.alpha ?? 1;
 

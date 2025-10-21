@@ -163,6 +163,7 @@ namespace Graphics {
         private _outerRadius: number;
         get outerRadius() { return this._outerRadius; }
         set outerRadius(v) {
+            if (v === this._outerRadius) return;
             this._outerRadius = v;
             this.dirty = true;
         }
@@ -170,6 +171,7 @@ namespace Graphics {
         private _innerRadius: number;
         get innerRadius() { return this._innerRadius; }
         set innerRadius(v) {
+            if (v === this._innerRadius) return;
             this._innerRadius = v;
             this.dirty = true;
         }
@@ -198,11 +200,12 @@ namespace Graphics {
         private _radius: number;
         get radius() { return this._radius; }
         set radius(v) {
+            if (v === this._radius) return;
             this._radius = v;
             this.dirty = true;
         }
 
-        constructor(config: Graphics.Config<Annulus> & { radius: number }) {
+        constructor(config: Graphics.Config<Circle> & { radius: number }) {
             super(config);
             this._radius = config.radius;
             this.updateGraphics();
@@ -215,6 +218,66 @@ namespace Graphics {
             graphics.beginFill(0xFFFFFF, 1);
             graphics.drawCircle(0, 0, this.radius);
             graphics.endFill();
+        }
+    }
+
+    export class Line extends GraphicsPreset {
+        private _x1: number;
+        get x1() { return this._x1; }
+        set x1(v) {
+            if (v === this._x1) return;
+            this._x1 = v;
+            this.dirty = true;
+        }
+
+        private _y1: number;
+        get y1() { return this._y1; }
+        set y1(v) {
+            if (v === this._y1) return;
+            this._y1 = v;
+            this.dirty = true;
+        }
+
+        private _x2: number;
+        get x2() { return this._x2; }
+        set x2(v) {
+            if (v === this._x2) return;
+            this._x2 = v;
+            this.dirty = true;
+        }
+
+        private _y2: number;
+        get y2() { return this._y2; }
+        set y2(v) {
+            if (v === this._y2) return;
+            this._y2 = v;
+            this.dirty = true;
+        }
+
+        private _thickness: number;
+        get thickness() { return this._thickness; }
+        set thickness(v) {
+            if (v === this._thickness) return;
+            this._thickness = v;
+            this.dirty = true;
+        }
+
+        constructor(config: Graphics.Config<Line> & { x1: number, y1: number, x2: number, y2: number, thickness: number }) {
+            super(config);
+            this._x1 = config.x1;
+            this._y1 = config.y1;
+            this._x2 = config.x2;
+            this._y2 = config.y2;
+            this._thickness = config.thickness;
+            this.updateGraphics();
+        }
+
+        protected override updateGraphics(): void {
+            let graphics = this.getGraphics();
+            graphics.clear();
+            graphics.lineStyle(this.thickness, 0xFFFFFF, 1, 0.5);
+            graphics.position.set(this.x1, this.y1);
+            graphics.lineTo(this.x2, this.y2);
         }
     }
 }

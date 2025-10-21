@@ -4,7 +4,7 @@ namespace PerformanceTracking {
     export const SPRITE_TEXT_STATIC_TEXTURES_BORROWED_AND_NOT_RETURNED: Dict<number> = {};
     export const WORLDS_CREATED_AND_NOT_UNLOADED: World[] = [];
 
-    const TEXTURE_WARN_LIMIT = 2500;
+    const TEXTURE_WARN_LIMIT = 5000;
     const SPRITE_TEXT_STATIC_TEXTURES_WARN_LIMIT = 1000;
     const WORLDS_WARN_LIMIT = 20;
 
