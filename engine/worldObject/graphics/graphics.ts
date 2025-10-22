@@ -186,10 +186,16 @@ namespace Graphics {
         protected override updateGraphics(): void {
             let graphics = this.getGraphics();
             graphics.clear();
+
+            if (this.outerRadius <= 0) return;
+
             graphics.lineStyle(0, 0, 0);
             graphics.beginFill(0xFFFFFF, 1);
             graphics.drawCircle(0, 0, this.outerRadius);
             graphics.endFill();
+
+            if (this.innerRadius <= 0) return;
+
             graphics.beginHole();
             graphics.drawCircle(0, 0, this.innerRadius);
             graphics.endHole();
@@ -214,6 +220,9 @@ namespace Graphics {
         protected override updateGraphics(): void {
             let graphics = this.getGraphics();
             graphics.clear();
+
+            if (this.radius <= 0) return;
+
             graphics.lineStyle(0, 0, 0);
             graphics.beginFill(0xFFFFFF, 1);
             graphics.drawCircle(0, 0, this.radius);
@@ -275,6 +284,9 @@ namespace Graphics {
         protected override updateGraphics(): void {
             let graphics = this.getGraphics();
             graphics.clear();
+
+            if (this.x1 === this.x2 && this.y1 === this.y2) return;
+
             graphics.lineStyle(this.thickness, 0xFFFFFF, 1, 0.5);
             graphics.position.set(this.x1, this.y1);
             graphics.lineTo(this.x2, this.y2);

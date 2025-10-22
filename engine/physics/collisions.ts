@@ -452,8 +452,8 @@ namespace Bounds.Collision {
         fromPos.x += fromdx;
         fromPos.y += fromdy;
 
-        let result = getDisplacementCollisionCircleCircle$(move, from) as Bounds.RaycastCollision;
-        result.t = t;
+        let result = getDisplacementCollisionCircleCircle$(move, from) as Bounds.RaycastCollision | undefined;
+        if (result) result.t = t;
 
         return result;
     }
@@ -485,8 +485,8 @@ namespace Bounds.Collision {
         fromBox.x += fromdx;
         fromBox.y += fromdy;
 
-        let result = getDisplacementCollisionCircleRect$(move, from) as Bounds.RaycastCollision;
-        result.t = t;
+        let result = getDisplacementCollisionCircleRect$(move, from) as Bounds.RaycastCollision | undefined;
+        if (result) result.t = t;
 
         return result;
     }
@@ -534,8 +534,8 @@ namespace Bounds.Collision {
         fromBox.x += fromdx;
         fromBox.y += fromdy;
 
-        let result = getDisplacementCollisionCircleSlope$(move, from) as Bounds.RaycastCollision;
-        result.t = t;
+        let result = getDisplacementCollisionCircleSlope$(move, from) as Bounds.RaycastCollision | undefined;
+        if (result) result.t = t;
 
         return result;
     }
@@ -566,8 +566,8 @@ namespace Bounds.Collision {
             console.error(`Failed to detect time of collision between circle and inverted rect:`, move.parent, { x: movePos.x, y: movePos.y, radius: move.radius }, movedx, movedy, from.parent, fromBox, fromdx, fromdy);
         }
 
-        let result = getDisplacementCollisionCircleInvertedRect$(move, from) as Bounds.RaycastCollision;
-        result.t = t;
+        let result = getDisplacementCollisionCircleInvertedRect$(move, from) as Bounds.RaycastCollision | undefined;
+        if (result) result.t = t;
 
         return result;
     }
@@ -589,8 +589,8 @@ namespace Bounds.Collision {
         fromPos.x += fromdx;
         fromPos.y += fromdy;
 
-        let result = getDisplacementCollisionCircleInvertedCircle$(move, from) as Bounds.RaycastCollision;
-        result.t = t;
+        let result = getDisplacementCollisionCircleInvertedCircle$(move, from) as Bounds.RaycastCollision | undefined;
+        if (result) result.t = t;
 
         return result;
     }
@@ -788,8 +788,8 @@ namespace Bounds.Collision {
             console.error(`Failed to detect time of collision between rect and inverted rect:`, move.parent, moveBox, movedx, movedy, from.parent, fromBox, fromdx, fromdy);
         }
 
-        let result = getDisplacementCollisionRectInvertedRect$(move, from) as Bounds.RaycastCollision;
-        result.t = t;
+        let result = getDisplacementCollisionRectInvertedRect$(move, from) as Bounds.RaycastCollision | undefined;
+        if (result) result.t = t;
 
         return result;
     }
@@ -817,8 +817,8 @@ namespace Bounds.Collision {
         fromPos.x += fromdx;
         fromPos.y += fromdy;
 
-        let result = getDisplacementCollisionRectInvertedCircle$(move, from) as Bounds.RaycastCollision;
-        result.t = t;
+        let result = getDisplacementCollisionRectInvertedCircle$(move, from) as Bounds.RaycastCollision | undefined;
+        if (result) result.t = t;
 
         return result;
     }

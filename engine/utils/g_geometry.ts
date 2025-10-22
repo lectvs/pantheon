@@ -178,7 +178,7 @@ namespace G {
         return FrameCache.rectangle(x, y, w, h);
     }
 
-    export function lerpPt(pt1: Pt, pt2: Pt, t: number) {
+    export function lerpPt(t: number, pt1: Pt, pt2: Pt) {
         return vec2(M.lerp(t, pt1.x, pt2.x), M.lerp(t, pt1.y, pt2.y));
     }
 
