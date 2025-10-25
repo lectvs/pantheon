@@ -288,7 +288,7 @@ namespace Graphics {
             if (this.x1 === this.x2 && this.y1 === this.y2) return;
 
             graphics.lineStyle(this.thickness, 0xFFFFFF, 1, 0.5);
-            graphics.position.set(this.x1, this.y1);
+            graphics.moveTo(this.x1, this.y1);
             graphics.lineTo(this.x2, this.y2);
         }
     }

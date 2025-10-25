@@ -5,7 +5,7 @@ namespace PerformanceTracking {
     export const WORLDS_CREATED_AND_NOT_UNLOADED: World[] = [];
 
     const TEXTURE_WARN_LIMIT = 5000;
-    const SPRITE_TEXT_STATIC_TEXTURES_WARN_LIMIT = 1000;
+    const SPRITE_TEXT_STATIC_TEXTURES_WARN_LIMIT = 1500;
     const WORLDS_WARN_LIMIT = 20;
 
     export var MANUAL_RENDERS: number[] = [];

@@ -3,7 +3,7 @@
  */
 namespace StageManager {
     export type StageTransitionProps = {
-        transition?: Transition;
+        transition: Transition | undefined;
         /**
          * @default - true iff either the old or the new stage is a Menu.
          */
@@ -101,11 +101,11 @@ class StageManager {
         return this.getCurrentWorld() instanceof Menu;
     }
 
-    load(stage: () => World, props: StageManager.StageTransitionProps = {}) {
+    load(stage: () => World, props: StageManager.StageTransitionProps = { transition: undefined }) {
         this.endOfFrameQueue.push(() => this.loadImmediate(stage, props));
     }
 
-    loadImmediate(stage: () => World, props: StageManager.StageTransitionProps = {}) {
+    loadImmediate(stage: () => World, props: StageManager.StageTransitionProps = { transition: undefined }) {
         let oldWorld = this.getCurrentWorld();
         let newWorld = stage();
         if (props.onBeginTransition) { newWorld.addHook('onBeginTransition', function() { props.onBeginTransition!(this); }); }
@@ -123,11 +123,11 @@ class StageManager {
         return newWorld;
     }
 
-    reload(props: StageManager.StageTransitionProps = {}) {
+    reload(props: StageManager.StageTransitionProps = { transition: undefined }) {
         this.endOfFrameQueue.push(() => this.reloadImmediate(props));
     }
 
-    reloadImmediate(props: StageManager.StageTransitionProps = {}) {
+    reloadImmediate(props: StageManager.StageTransitionProps = { transition: undefined }) {
         if (this.stageStack.length === 0) {
             console.error('Cannot reload current stage because there are no stages loaded');
             return;
@@ -143,6 +143,7 @@ class StageManager {
         this.stageStack.forEach(stage => this.addToWastebin(stage.world));
         this.stageStack.clear();
         this.transition = undefined;
+        this.endOfFrameQueue.clear();
     }
 
     private transitionTo(oldWorld: World | undefined, newWorld: World | undefined, transition: Transition, doNotPlayWorldMusic: boolean | undefined) {

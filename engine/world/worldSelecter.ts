@@ -37,8 +37,8 @@ class WorldSelecter {
         return result;
     }
 
-    name<T extends WorldObject>(name: string, checked: 'checked' | 'unchecked' | boolean = true): T | undefined {
-        let results = this.nameAll$<T>(name);
+    name<T extends WorldObject>(name: string, checked: 'checked' | 'unchecked' | boolean = true, cached: boolean = true): T | undefined {
+        let results = this.nameAll$<T>(name, cached);
         let isUnchecked = !checked || checked === 'unchecked';
         if (A.isEmpty(results)) {
             if (!isUnchecked) console.error(`No object with name ${name} exists in world:`, this.world);
@@ -50,7 +50,7 @@ class WorldSelecter {
         return results[0];
     }
 
-    nameAll$<T extends WorldObject>(name: string): T[] {
+    nameAll$<T extends WorldObject>(name: string, cached: boolean = true): T[] {
         if (this.nameCache[name]) {
             return FrameCache.copyOfArray(this.nameCache[name]) as T[];
         }
@@ -60,8 +60,10 @@ class WorldSelecter {
                 result.push(worldObject as T);
             }
         }
-        this.nameCache[name] = A.clone(result);
-        this.checkNameCacheLimit();
+        if (cached) {
+            this.nameCache[name] = A.clone(result);
+            this.checkNameCacheLimit();
+        }
         return result;
     }
 
@@ -69,7 +71,8 @@ class WorldSelecter {
         let result: Dict<T | undefined> = FrameCache.object();
 
         for (let name of names) {
-            result[name] = this.name(name as string);
+            // Checked and uncached by default
+            result[name] = this.name(name as string, 'checked', false);
         }
 
         return result as O;
@@ -115,8 +118,8 @@ class WorldSelecter {
         return result;
     }
 
-    type<T extends WorldObject>(type: new (...args: any[]) => T, checked: 'checked' | 'unchecked' | boolean = true) {
-        let results = this.typeAll$(type);
+    type<T extends WorldObject>(type: new (...args: any[]) => T, checked: 'checked' | 'unchecked' | boolean = true, cached: boolean = true) {
+        let results = this.typeAll$(type, cached);
         let isUnchecked = !checked || checked === 'unchecked';
         if (A.isEmpty(results)) {
             if (!isUnchecked) console.error(`No object of type ${type.name} exists in world:`, this.world);
@@ -128,7 +131,7 @@ class WorldSelecter {
         return results[0];
     }
 
-    typeAll$<T extends WorldObject>(type: new (...args: any[]) => T) {
+    typeAll$<T extends WorldObject>(type: new (...args: any[]) => T, cached: boolean = true) {
         let existingCacheEntry = this.typeCache.find(entry => entry.type === type);
         if (existingCacheEntry) {
             return FrameCache.copyOfArray(existingCacheEntry.worldObjects) as T[];
@@ -139,8 +142,10 @@ class WorldSelecter {
                 result.push(worldObject);
             }
         }
-        this.typeCache.push({ typeName: type.name, type, worldObjects: A.clone(result) });
-        this.checkTypeCacheLimit();
+        if (cached) {
+            this.typeCache.push({ typeName: type.name, type, worldObjects: A.clone(result) });
+            this.checkTypeCacheLimit();
+        }
         return result;
     }
 
@@ -203,5 +208,5 @@ class WorldSelecter {
         }
     }
 
-    static CACHE_SIZE_WARN_LIMIT = 25;
+    static CACHE_SIZE_WARN_LIMIT = 50;
 }
