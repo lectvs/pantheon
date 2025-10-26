@@ -78,7 +78,7 @@ class Graphics extends WorldObject {
     override onAdd(): void {
         super.onAdd();
 
-        if (!this.graphics.geometry || !this.graphics.transform) {
+        if (this.isGraphicsDestroyed()) {
             console.error('Attempted to use new Graphics after removing from world:', this);
             this.graphics = new PIXI.Graphics();
         }
@@ -86,12 +86,12 @@ class Graphics extends WorldObject {
 
     override onRemove(): void {
         super.onRemove();
-        this.graphics.destroy();
+        if (!this.isGraphicsDestroyed()) this.graphics.destroy();
     }
 
     override unload(): void {
         super.unload();
-        this.graphics.destroy();
+        if (!this.isGraphicsDestroyed()) this.graphics.destroy();
     }
 
     override update() {
@@ -141,6 +141,10 @@ class Graphics extends WorldObject {
         }
 
         this.graphics = graphics;
+    }
+
+    private isGraphicsDestroyed() {
+        return !this.graphics.geometry || !this.graphics.transform;
     }
 }
 

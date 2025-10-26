@@ -365,6 +365,7 @@ class World {
         
         this.handleResize();
 
+        this.bgFill.position.set(0, 0);
         this.bgFill.tint = this.backgroundColor;
         this.bgFill.alpha = this.backgroundAlpha;
 
@@ -373,6 +374,7 @@ class World {
         for (let layer of this.layers) {
             // Push fade right before afterfade layer.
             if (layer.name === World.AFTER_FADE_LAYER) {
+                this.fadeFill.position.set(0, 0);
                 this.fadeFill.tint = this.fadeColor;
                 this.fadeFill.alpha = this.fadeAmount;
                 if (this.fadeAmount > 0) {
@@ -389,6 +391,7 @@ class World {
                 renderToRenderTexture(layerContainer, layerTexture, 'clearTextureFirst');
                 Render.upscalePixiObjectProperties(layerContainer, 'downscale');
                 layerSprite.updateAndSetEffects(layer.effects);
+                layerSprite.position.set(0, 0);
                 result.push(layerSprite);
             } else {
                 result.pushAll(this.renderLayer(layer));
@@ -403,8 +406,10 @@ class World {
             renderToRenderTexture(this.container, worldTexture, 'clearTextureFirst');
             Render.upscalePixiObjectProperties(this.container, 'downscale');
             this.worldSprite.updateAndSetEffects(this.effects);
+            this.worldSprite.position.set(0, 0);
             return FrameCache.array(this.worldSprite);
         } else {
+            this.container.position.set(0, 0);
             return FrameCache.array(this.container);
         }
     }

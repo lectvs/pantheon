@@ -172,7 +172,13 @@ namespace Theater {
         }
 
         override render(): Render.Result {
-            return this.containedWorld.render();
+            let result = this.containedWorld.render();
+            return result;
+        }
+
+        override unload(): void {
+            super.unload();
+            this.containedWorld.unload();
         }
     }
 }
