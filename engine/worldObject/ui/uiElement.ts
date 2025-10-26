@@ -100,6 +100,10 @@ class UIElement extends Module<WorldObject> {
             disabled: config.disabled ?? false,
         };
         this.lastState = O.clone(this.state);
+    }
+
+    override onAdd(): void {
+        super.onAdd()
         this.onStateChange(this.state, this.lastState);
     }
 

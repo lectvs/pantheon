@@ -6,8 +6,8 @@ class UIDGenerator {
 
     private pastUIDLimit: number;
 
-    constructor(pastUIDLimit: number) {
-        this.rng = new RandomNumberGenerator();
+    constructor(pastUIDLimit: number, seed?: number | string) {
+        this.rng = new RandomNumberGenerator(seed);
         this.pastUIDs = [];
         this.pastUIDLimit = pastUIDLimit;
     }
@@ -30,6 +30,10 @@ class UIDGenerator {
             result += this.rng.element(UIDGenerator.VALID_CHARS);
         }
         return result;
+    }
+
+    seed(seed: any) {
+        this.rng.seed(seed);
     }
 
     private static readonly UID_LENGTH = 8;

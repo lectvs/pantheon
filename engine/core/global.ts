@@ -42,7 +42,14 @@ Object.defineProperty(window, 'GAME', {
 });
 
 Object.defineProperty(window, 'WORLD', {
-    get: () => global.world,
+    get: () => {
+        let world = global.world;
+        if (!world) {
+            console.error('Attempted to access WORLD while undefined. Returning dummy world');
+            return new World();
+        }
+        return world;
+    },
 });
 
 Object.defineProperty(window, 'MUSIC', {
