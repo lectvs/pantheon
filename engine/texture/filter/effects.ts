@@ -1,4 +1,5 @@
 /// <reference path="./textureFilter.ts" />
+/// <reference path="./outline.ts" />
 
 namespace Effects {
     export type Config = {
@@ -12,7 +13,7 @@ namespace Effects {
     }
 
     export type SilhouetteConfig = { color?: number, alpha?: number, amount?: number,  enabled?: boolean };
-    export type OutlineConfig = { color?: number, alpha?: number, matchAlpha?: boolean, fillCorners?: boolean, enabled?: boolean };
+    export type OutlineConfig = { color?: number, alpha?: number, thickness?: 1 | 2, matchAlpha?: boolean, fillCorners?: boolean, enabled?: boolean };
     export type InvertColorsConfig = { enabled?: boolean };
     export type GlitchConfig = { strength?: number, speed?: number, spread?: number, enabled?: boolean };
     export type DropShadowConfig = { distance?: number, color?: number, alpha?: number, enabled?: boolean };
@@ -21,7 +22,7 @@ namespace Effects {
 
 class Effects {
     private _silhouetteLazy = new LazyValue(() => new Effects.Filters.Silhouette(0x000000, 1).disable());
-    private _outlineLazy = new LazyValue(() => new Effects.Filters.Outline(0x000000, 1).disable());
+    private _outlineLazy = new LazyValue(() => new Effects.Filters.Outline(0x000000, 1, this._outlineThickness).disable());
     private _invertColorsLazy = new LazyValue(() => new Effects.Filters.InvertColors().disable());
     private _glitchLazy = new LazyValue(() => new Effects.Filters.Glitch(2, 1, 2).disable());
     private _dropShadowLazy = new LazyValue(() => new Effects.Filters.DropShadow(1, 0x000000, 0.5).disable());
@@ -34,6 +35,8 @@ class Effects {
 
     pre: TextureFilter[];
     post: TextureFilter[];
+
+    private _outlineThickness: 1 | 2 = 1;
 
     constructor(config: Effects.Config = {}) {
         this.pre = [];
@@ -89,6 +92,12 @@ class Effects {
         }
 
         if (config.outline) {
+            let configThickness = config.outline.thickness ?? 1;
+            if (this._outlineLazy.has() && configThickness !== this._outlineThickness) {
+                console.error("Cannot change outline thickness after creation");
+            } else {
+                this._outlineThickness = configThickness;
+            }
             this.outline.color = config.outline.color ?? 0x000000;
             this.outline.alpha = config.outline.alpha ?? 1;
             this.outline.matchAlpha = config.outline.matchAlpha ?? true;
@@ -195,96 +204,7 @@ namespace Effects {
             }
         }
 
-        export class Outline extends TextureFilter {
-            private _color: number;
-            get color() { return this._color; }
-            set color(value: number) {
-                if (value === this._color) return;
-                this.setUniform('color', Color.colorToVec3(value));
-                this._color = value;
-            }
-
-            private _alpha: number;
-            get alpha() { return this._alpha; }
-            set alpha(value: number) {
-                if (value === this._alpha) return;
-                this.setUniform('alpha', value);
-                this._alpha = value;
-            }
-
-            private _matchAlpha: boolean;
-            get matchAlpha() { return this._matchAlpha; }
-            set matchAlpha(value: boolean) {
-                if (value === this._matchAlpha) return;
-                this.setUniform('matchAlpha', value ? 1 : 0);
-                this._matchAlpha = value;
-            }
-
-            private _fillCorners: boolean;
-            get fillCorners() { return this._fillCorners; }
-            set fillCorners(value: boolean) {
-                if (value === this._fillCorners) return;
-                this.setUniform('fillCorners', value ? 1 : 0);
-                this._fillCorners = value;
-            }
-
-            constructor(color: number, alpha: number, matchAlpha: boolean = true, fillCorners: boolean = false) {
-                super({
-                    uniforms: {
-                        'vec3 color': Color.colorToVec3(color),
-                        'float alpha': alpha,
-                        'int matchAlpha': matchAlpha ? 1 : 0,
-                        'int fillCorners': fillCorners ? 1 : 0,
-                    },
-                    visualPadding: 1,
-                    code: `
-                        float maxAlpha = max(
-                            max(
-                                getColor(x-upscale, y).a,
-                                getColor(x, y-upscale).a
-                            ),
-                            max(
-                                getColor(x+upscale, y).a,
-                                getColor(x, y+upscale).a
-                            )
-                        );
-
-                        float maxAlphaCorners = max(
-                            max(
-                                getColor(x-upscale, y-upscale).a,
-                                getColor(x+upscale, y-upscale).a
-                            ),
-                            max(
-                                getColor(x-upscale, y+upscale).a,
-                                getColor(x+upscale, y+upscale).a
-                            )
-                        );
-                        maxAlpha = max(maxAlpha, maxAlphaCorners * float(fillCorners));
-
-                        float matchedAlpha = alpha * map(float(matchAlpha), 0.0, 1.0, 1.0, maxAlpha);
-                        outp = lerp(outp, vec4(color, matchedAlpha), float(inp.a == 0.0 && maxAlpha > 0.0));
-                    `
-                });
-
-                this._color = color;
-                this._alpha = alpha;
-                this._matchAlpha = matchAlpha;
-                this._fillCorners = fillCorners;
-            }
-
-            override doesAffectRender(): boolean {
-                if (this.alpha <= 0) return false;
-                return super.doesAffectRender();
-            }
-
-            enable(color: number = this.color, alpha: number = this.alpha, matchAlpha: boolean = this.matchAlpha) {
-                this.color = color;
-                this.alpha = alpha;
-                this.matchAlpha = matchAlpha;
-                this.enabled = true;
-                return this;
-            }
-        }
+        export const Outline = TextureFilters.Outline2;
 
         export class InvertColors extends TextureFilter {
             constructor() {
