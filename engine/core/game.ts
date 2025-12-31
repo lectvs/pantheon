@@ -1,5 +1,6 @@
 namespace Game {
     export type Config = {
+        factory?: (config: Game.Config) => Game;
         entryPointMenu: Factory<World>;
         mainMenu: Factory<World>;
         pauseMenu: Factory<World>;
@@ -12,7 +13,8 @@ class Game {
     menuTheater: Theater;
     gameTheater: Theater;
 
-    private overlay: DebugOverlay;
+    overlayWorld: World;
+    private debugOverlay: DebugOverlay;
     private debugTouchSprite: PIXI.Sprite;
 
     private entryPointMenu: Factory<World>;
@@ -49,7 +51,12 @@ class Game {
         this.menuTheater = this.menuTheaterFactory();
         this.gameTheater = this.gameTheaterFactory();
 
-        this.overlay = new DebugOverlay();
+        this.overlayWorld = new World({
+            name: 'Game.overlayWorld',
+            backgroundAlpha: 0,
+        });
+        this.debugOverlay = new DebugOverlay();
+        this.debugOverlay.name = 'Game.debugOverlay';
         this.debugTouchSprite = new PIXI.Sprite(Textures.outlineCircle(10, 0xFF0000));
 
         this.endOfFrameQueue = [];
@@ -83,7 +90,8 @@ class Game {
 
         let currentWorld = this.stageManager.getCurrentWorld();
 
-        this.updateOverlay();
+        this.overlayWorld.update();
+        this.updateDebugOverlay();
 
         this.soundManager.volume = this.volume * Options.sfxVolume;
         this.soundManager.update(Main.delta);
@@ -111,10 +119,10 @@ class Game {
         }
     }
 
-    private updateOverlay() {
+    private updateDebugOverlay() {
         if (Debug.SHOW_OVERLAY) {
-            this.overlay.setCurrentWorldToDebug(this.stageManager.getCurrentWorld());
-            this.overlay.update();
+            this.debugOverlay.setCurrentWorldToDebug(this.stageManager.getCurrentWorld());
+            this.debugOverlay.update();
         }
     }
 
@@ -124,8 +132,10 @@ class Game {
 
         result.pushAll(this.getCurrentTheater().render());
 
+        result.pushAll(this.overlayWorld.render());
+
         if (Debug.SHOW_OVERLAY) {
-            result.pushAll(this.overlay.render());
+            result.pushAll(this.debugOverlay.render());
         }
 
         if (Debug.SHOW_TOUCHES) {

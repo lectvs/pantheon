@@ -184,7 +184,11 @@ class Main {
         this.initEvents();
 
         this.delta = 0;
-        this.game = new Game(this.config.game);
+        if (this.config.game.factory) {
+            this.game = this.config.game.factory(this.config.game);
+        } else {
+            this.game = new Game(this.config.game);
+        }
 
         if (this.config.beforeStart) this.config.beforeStart();
 

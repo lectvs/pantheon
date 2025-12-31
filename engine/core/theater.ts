@@ -22,17 +22,17 @@ class Theater {
     private fades: Theater.Fade[];
 
     private container: PIXI.Container;
-    
+
     constructor(config: Theater.Config = {}) {
         this.scriptManager = new ScriptManager();
         this.cutsceneManager = new CutsceneManager(this, config.cutsceneManager ?? {});
 
         this.overlayWorld = new World({
-            name: 'overlayWorld',
+            name: 'Theater.overlayWorld',
             backgroundAlpha: 0,
         });
         this.dialogBoxWorld = new World({
-            name: 'dialogBoxWorld',
+            name: 'Theater.dialogBoxWorld',
             backgroundAlpha: 0,
         });
         if (config.dialogBoxFactory) {
