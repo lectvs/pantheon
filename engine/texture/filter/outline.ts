@@ -1,5 +1,5 @@
 namespace TextureFilters {
-    const CODE_THICKNESS_1  =`
+    const CODE_THICKNESS_1 = `
         float maxAlpha = max(
             max(
                 getColor(x-upscale, y).a,
@@ -101,7 +101,7 @@ namespace TextureFilters {
         outp = lerp(outp, vec4(color, matchedAlpha), float(inp.a == 0.0 && maxAlpha > 0.0));
     `;
 
-    export class Outline2 extends TextureFilter {
+    export class Outline extends TextureFilter {
         private _color: number;
         get color() { return this._color; }
         set color(value: number) {

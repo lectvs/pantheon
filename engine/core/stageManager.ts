@@ -3,7 +3,7 @@
  */
 namespace StageManager {
     export type StageTransitionProps = {
-        transition: Transition | undefined;
+        transition?: Transition;
         /**
          * @default - true iff either the old or the new stage is a Menu.
          */

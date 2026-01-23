@@ -204,7 +204,7 @@ namespace Effects {
             }
         }
 
-        export const Outline = TextureFilters.Outline2;
+        export const Outline = TextureFilters.Outline;
 
         export class InvertColors extends TextureFilter {
             constructor() {

@@ -108,6 +108,7 @@ class PhysicsWorldObject extends WorldObject {
     }
 
     private applyGravity() {
+        if (!this.affectedByGravity) return;
         this.v.x += this.gravity.x * this.delta;
         this.v.y += this.gravity.y * this.delta;
         this.vz += this.gravityz * this.delta;

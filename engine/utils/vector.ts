@@ -212,6 +212,10 @@ class Vector2 {
         return G.dot(v1, v2);
     }
 
+    static dotNormalized(v1: Vector2, v2: Vector2) {
+        return G.dotNormalized(v1, v2);
+    }
+
     static fromPolar(radius: number, angle: number) {
         return new Vector2(radius * M.cos(angle), radius * M.sin(angle));
     }

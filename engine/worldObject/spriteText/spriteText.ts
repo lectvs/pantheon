@@ -751,7 +751,7 @@ namespace SpriteText {
             return { offsetY: getFloat(params[0], undefined) };
         },
         'outline': (params) => {
-            return { filters: [new TextureFilters.Outline2(getInt(params[0], 0x000000), getFloat(params[1], 1))] };
+            return { filters: [new TextureFilters.Outline(getInt(params[0], 0x000000), getFloat(params[1], 1))] };
         },
         'wave': (params) => {
             let amp = getFloat(params[0], 1);
