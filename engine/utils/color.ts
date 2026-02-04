@@ -26,6 +26,11 @@ namespace Color {
         return [r/255, g/255, b/255];
     }
 
+    export function floatToGrayscale(brightness: number) {
+        let b = Math.round(brightness * 255);
+        return (b << 16) + (b << 8) + b;
+    }
+
     export function lerpColorByLch(t: number, color1: number, color2: number, easingFn: Tween.Easing.Function = Tween.Easing.Linear): number {
         if (color1 === color2) return color1;
 

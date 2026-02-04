@@ -38,6 +38,7 @@ namespace World {
         move: string;
         from: string;
         callback?: Physics.CollisionCallback;
+        /** @default "zero_velocity_global" */
         collisionMode?: Physics.CollisionMode;
         disabled?: boolean;
     }

@@ -13,11 +13,15 @@ class PhysicsUtils {
         return v + d * deceleration * delta;
     }
 
-    static applyFriction(v: Vector2, fx: number, fy: number, delta: number) {
+    static applyFrictionXY(v: Vector2, fx: number, fy: number, delta: number) {
         if (v.x > 0) v.x = Math.max(v.x - fx * delta, 0);
         if (v.x < 0) v.x = Math.min(v.x + fx * delta, 0);
         if (v.y > 0) v.y = Math.max(v.y - fy * delta, 0);
         if (v.y < 0) v.y = Math.min(v.y + fy * delta, 0);
+    }
+
+    static applyFrictionV(v: Vector2, f: number, delta: number) {
+        v.setMagnitude(Math.max(v.magnitude - f * delta, 0));
     }
 
     static applyFriction1d(v: number, f: number, delta: number) {
@@ -51,6 +55,7 @@ class PhysicsUtils {
         v.y += ay * delta;
 
         if (v.magnitude > maxSpeed) {
+            // Clamp to oldMagnitude instead of maxSpeed to preserve going faster than the max speed
             v.clampMagnitude(oldMagnitude);
         }
     }

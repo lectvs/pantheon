@@ -23,6 +23,14 @@ class Vector2 {
         return this.x*this.x + this.y*this.y;
     }
 
+    get normalizedX() {
+        return this.x / Math.sqrt(this.x*this.x + this.y*this.y);
+    }
+
+    get normalizedY() {
+        return this.x / Math.sqrt(this.x*this.x + this.y*this.y);
+    }
+
     add(x: Pt | number, y?: number) {
         if (typeof(x) === 'number') {
             this.x += x;
