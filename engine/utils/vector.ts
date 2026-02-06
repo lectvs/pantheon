@@ -28,7 +28,7 @@ class Vector2 {
     }
 
     get normalizedY() {
-        return this.x / Math.sqrt(this.x*this.x + this.y*this.y);
+        return this.y / Math.sqrt(this.x*this.x + this.y*this.y);
     }
 
     add(x: Pt | number, y?: number) {
