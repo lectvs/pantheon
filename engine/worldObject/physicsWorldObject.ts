@@ -74,7 +74,7 @@ class PhysicsWorldObject extends WorldObject {
         return result;
     }
 
-    getWorldBounds() {
+    getPhysicsWorldBounds$() {
         return this.bounds.getBoundingBox$();
     }
 
