@@ -13,11 +13,11 @@ class FlipbookFilter extends TextureFilter {
         this.setUniform('speed', value);
     }
 
-    private _granularity: number;
-    get granularity() { return this._granularity; }
-    set granularity(value: number) {
-        this._granularity = value;
-        this.setUniform('granularity', value);
+    private _timeGranularity: number;
+    get timeGranularity() { return this._timeGranularity; }
+    set timeGranularity(value: number) {
+        this._timeGranularity = value;
+        this.setUniform('timeGranularity', value);
     }
 
     private _offset: number;
@@ -30,21 +30,22 @@ class FlipbookFilter extends TextureFilter {
     /**
      * @param strength - the amplitude of the offset
      * @param speed - the speed at which the offset cycles
-     * @param granularity - how big is the time rubberbanding
+     * @param timeGranularity - how big is the time rubberbanding
+     * @param spread - the physical spread of the effect
      * @param offset - time offset
      */
-    constructor(strength: number, speed: number, granularity: number, spread: number, offset: number = 0) {
+    constructor(strength: number, speed: number, timeGranularity: number, spread: number, offset: number = 0) {
         super({
             uniforms: {
                 'float strength': strength,
                 'float speed': speed,
-                'float granularity': granularity,
+                'float timeGranularity': timeGranularity,
                 'float offset': offset,
                 'float spread': spread,
             },
             code: `
                 float zoom = 11.0 * spread;
-                float tt = floor((t + offset) * speed / granularity) * granularity;
+                float tt = floor((t + offset) * speed / timeGranularity) * timeGranularity;
                 float offsety = pnoise(x/zoom, 0.0, tt*5.1) * strength;
                 float offsetx = pnoise(0.0, y/zoom, tt*5.1) * strength;
                 outp = getColor(x + offsetx * upscale, y + offsety * upscale);
@@ -53,7 +54,7 @@ class FlipbookFilter extends TextureFilter {
 
         this._strength = strength;
         this._speed = speed;
-        this._granularity = granularity;
+        this._timeGranularity = timeGranularity;
         this._offset = offset;
     }
 }
