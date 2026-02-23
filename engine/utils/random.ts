@@ -50,7 +50,7 @@ class RandomNumberGenerator {
     /**
      * Random element from array, uniformly.
      */
-    element<T>(array: T[]) {
+    element<T>(array: ReadonlyArray<T>) {
         if (A.isEmpty(array)) return undefined;
         return array[this.index(array)];
     }
@@ -103,7 +103,7 @@ class RandomNumberGenerator {
     /**
      * Random int from {0} to {array.length - 1}.
      */
-    index(array: any[]) {
+    index(array: ReadonlyArray<any>) {
         return this.int(0, array.length-1);
     }
 
