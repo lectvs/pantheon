@@ -300,7 +300,7 @@ namespace A {
         return sequence(rows, i => sequence(cols, j => f(i, j)));
     }
 
-    export function size(array: any[] | undefined) {
+    export function size(array: ReadonlyArray<any> | undefined) {
         if (isEmpty(array)) return 0;
         return array.length;
     }

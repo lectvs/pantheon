@@ -140,7 +140,7 @@ class RandomNumberGenerator {
     /**
      * Random sample of {count} elements from an array.
      */
-    sample<T>(array: T[], count: number) {
+    sample<T>(array: ReadonlyArray<T>, count: number) {
         if (count > A.size(array)) {
             console.error('Trying to sample an array for more elements than it contains', array, count);
             count = A.size(array);
