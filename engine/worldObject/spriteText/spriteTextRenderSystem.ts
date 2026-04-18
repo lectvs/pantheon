@@ -122,13 +122,13 @@ class SpriteTextRenderSystem {
 
     private getX(spriteText: SpriteText, data: SpriteTextRenderSystem.Part, style: Required<SpriteText.Style>, textBounds: Rectangle) {
         let v = tmp.vec2(this.getUnrotatedX(spriteText, data, style, textBounds), this.getUnrotatedY(spriteText, data, style, textBounds));
-        v.rotate(this.getAngle(spriteText));
+        G.rotateAround(v, this.getRotationPivot(spriteText), this.getAngle(spriteText));
         return v.x;
     }
 
     private getY(spriteText: SpriteText, data: SpriteTextRenderSystem.Part, style: Required<SpriteText.Style>, textBounds: Rectangle) {
         let v = tmp.vec2(this.getUnrotatedX(spriteText, data, style, textBounds), this.getUnrotatedY(spriteText, data, style, textBounds));
-        v.rotate(this.getAngle(spriteText));
+        G.rotateAround(v, this.getRotationPivot(spriteText), this.getAngle(spriteText));
         return v.y;
     }
 
@@ -152,6 +152,10 @@ class SpriteTextRenderSystem {
 
     private getAngle(spriteText: SpriteText) {
         return spriteText.angle;
+    }
+
+    private getRotationPivot(spriteText: SpriteText) {
+        return spriteText.rotationPivot;
     }
 
     private resolveStyleAttribute<K extends keyof SpriteText.Style>(style: Required<SpriteText.Style>, attr: K, spriteText: SpriteText, character: SpriteTextParser.Character): Exclude<Required<SpriteText.Style>[K], Function> {

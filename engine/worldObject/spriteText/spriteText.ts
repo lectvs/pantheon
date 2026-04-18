@@ -7,13 +7,14 @@ namespace SpriteText {
         text?: string;
         format?: string;
         justify?: Justify;
-        anchor?: Vector2;
+        anchor?: Pt;
         flipX?: boolean;
         flipY?: boolean;
         offsetX?: number;
         offsetY?: number;
         angle?: number;
         vangle?: number;
+        rotationPivot?: Pt;
         scale?: number;
         scaleX?: number;
         scaleY?: number;
@@ -162,6 +163,7 @@ class SpriteText extends WorldObject {
     offsetY: number;
     angle: number;
     vangle: number;
+    rotationPivot: Vector2;
 
     scaleX: number;
     scaleY: number;
@@ -216,6 +218,7 @@ class SpriteText extends WorldObject {
         this.offsetY = config.offsetY ?? 0;
         this.angle = config.angle ?? 0;
         this.vangle = config.vangle ?? 0;
+        this.rotationPivot = config.rotationPivot ? vec2(config.rotationPivot) : Vector2.ZERO;
         this.scaleX = config.scaleX ?? (config.scale ?? 1);
         this.scaleY = config.scaleY ?? (config.scale ?? 1);
 

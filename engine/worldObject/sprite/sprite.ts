@@ -110,7 +110,7 @@ class Sprite extends PhysicsWorldObject {
         this.renderObject.angle = this.angle + this.angleOffset;
         if (this.textureRotationPivot) {
             let rot = FrameCache.vec2(this.textureRotationPivot.x, this.textureRotationPivot.y);
-            G.rotateAround(rot, this.renderObject.anchor, this.renderObject.angle);
+            rot.rotate(this.renderObject.angle);
             this.renderObject.x += this.textureRotationPivot.x - rot.x;
             this.renderObject.y += this.textureRotationPivot.y - rot.y;
         }
