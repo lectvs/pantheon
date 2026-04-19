@@ -29,10 +29,16 @@ namespace Box {
     }
 
     export type SubdivideLeftRightParams = XOR<{ leftWidth: number }, { rightWidth: number}> & {
+        /**
+         * @default pixels
+         */
         unit?: Unit;
     }
 
     export type SubdivideTopBottomParams = XOR<{ topHeight: number }, { bottomHeight: number}> & {
+        /**
+         * @default pixels
+         */
         unit?: Unit;
     }
 
@@ -241,6 +247,9 @@ class Box {
         return result;
     }
 
+    /**
+     * Returns the self box and ALL subboxes in the descendent chain
+     */
     getSelfAndSubBoxes$(): Box[] {
         if (this.subdivision) {
             let result = this.subdivision._getAllSubBoxes$();

@@ -202,6 +202,14 @@ namespace Effects {
                 this.enabled = true;
                 return this;
             }
+
+            copyFrom(other: Silhouette) {
+                this.color = other.color;
+                this.alpha = other.alpha;
+                this.amount = other.amount;
+                this.enabled = other.enabled;
+                return this;
+            }
         }
 
         export const Outline = TextureFilters.Outline;
@@ -219,6 +227,11 @@ namespace Effects {
 
             enable() {
                 this.enabled = true;
+                return this;
+            }
+
+            copyFrom(other: Silhouette) {
+                this.enabled = other.enabled;
                 return this;
             }
         }
@@ -278,6 +291,14 @@ namespace Effects {
                 return this;
             }
 
+            copyFrom(other: Glitch) {
+                this.strength = other.strength;
+                this.speed = other.speed;
+                this.spread = other.spread;
+                this.enabled = other.enabled;
+                return this;
+            }
+
             override getVisualPadding(): number {
                 return this._strength;
             }
@@ -324,6 +345,22 @@ namespace Effects {
                 this._distance = distance;
                 this._color = color;
                 this._alpha = alpha;
+            }
+
+            enable(distance: number = this.distance, color: number = this.color, alpha: number = this.alpha) {
+                this.distance = distance;
+                this.color = color;
+                this.alpha = alpha;
+                this.enabled = true;
+                return this;
+            }
+
+            copyFrom(other: DropShadow) {
+                this.distance = other.distance;
+                this.color = other.color;
+                this.alpha = other.alpha;
+                this.enabled = other.enabled;
+                return this;
             }
 
             override getVisualPadding(): number {

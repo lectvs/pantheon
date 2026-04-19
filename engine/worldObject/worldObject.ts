@@ -1029,6 +1029,17 @@ class WorldObject {
         this.startOfThisFrameY = y ?? x;
     }
 
+    teleportLocal(localx: Pt | number, localy?: number) {
+        if (!M.isNumber(localx)) {
+            localy = localx.y;
+            localx = localx.x;
+        }
+        this.localx = localx;
+        this.localy = localy ?? localx;
+        this.startOfThisFrameX = this.x;
+        this.startOfThisFrameY = this.y;
+    }
+
     /**
      * Runs whenever the containing world is unloaded.
      * Note: it IS possible for the world to be re-loaded, so don't do anything permanent.

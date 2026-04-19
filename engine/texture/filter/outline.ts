@@ -164,5 +164,13 @@ namespace TextureFilters {
             this.enabled = true;
             return this;
         }
+
+        copyFrom(other: Outline) {
+            this.color = other.color;
+            this.alpha = other.alpha;
+            this.matchAlpha = other.matchAlpha;
+            this.enabled = other.enabled;
+            return this;
+        }
     }
 }
