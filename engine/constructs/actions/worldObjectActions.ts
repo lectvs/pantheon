@@ -128,7 +128,7 @@ namespace Actions {
         let previousAlpha = worldObject.effects.silhouette.alpha;
         let previousAmount = worldObject.effects.silhouette.amount;
         let previousEnabled = worldObject.effects.silhouette.enabled;
-        worldObject.runScript(function*() {
+        return worldObject.runScript(function*() {
             worldObject.effects.silhouette.enable(color, 1, 0);
             if (config.type === 'smooth') {
                 yield S.tween(duration/2, worldObject.effects.silhouette, 'amount', 0, amount);
@@ -140,6 +140,21 @@ namespace Actions {
             }
             worldObject.effects.silhouette.enable(previousColor, previousAlpha, previousAmount);
             if (!previousEnabled || !config.keepPreviousEnabled) worldObject.effects.silhouette.disable();
+        },
+        'Actions.flash', 'stopPrevious');
+    }
+
+    export function silhouetteFade(worldObject: WorldObject & { effects: Effects }, duration: number, color: number) {
+        return worldObject.runScript(function*() {
+            worldObject.effects.silhouette.enable(color, 1, 0);
+            yield S.tween(duration, worldObject.effects.silhouette, 'amount', 0, 1);
+        });
+    }
+
+    export function silhouetteUnfade(worldObject: WorldObject & { effects: Effects }, duration: number) {
+        return worldObject.runScript(function*() {
+            yield S.tween(duration, worldObject.effects.silhouette, 'amount', worldObject.effects.silhouette.amount, 0);
+            worldObject.effects.silhouette.disable();
         });
     }
 }

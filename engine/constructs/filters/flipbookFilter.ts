@@ -57,4 +57,8 @@ class FlipbookFilter extends TextureFilter {
         this._timeGranularity = timeGranularity;
         this._offset = offset;
     }
+
+    override getVisualPadding(): number {
+        return this._strength;
+    }
 }

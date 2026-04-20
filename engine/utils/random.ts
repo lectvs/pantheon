@@ -17,6 +17,23 @@ class RandomNumberGenerator {
     }
 
     /**
+     * Random character from [A-Za-z0-9], unless specified in the config.
+     * Config flags are false by default.
+     */
+    alphanumericCharacter(config?: { lowercase?: boolean, uppercase?: boolean, numbers?: boolean }) {
+        let lowercaseLetters = 'abcdefghijklmnopqrstuvwxyz';
+        let uppercaseLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        let numbers = '0123456789';
+
+        let validCharacters = ''
+            + (!config || config.lowercase ? lowercaseLetters : '')
+            + (!config || config.uppercase ? uppercaseLetters : '')
+            + (!config || config.numbers ? numbers : '');
+        
+        return validCharacters[Random.int(0, validCharacters.length-1)];
+    }
+
+    /**
      * Random angle from 0 to 360.
      */
     angle() {
