@@ -101,6 +101,7 @@ function exclude(list, exclusions) {
 }
 
 function getFileListRecursive(directory) {
+    if (!fs.existsSync(directory)) return [];
     let result = [];
     for (let entry of fs.readdirSync(directory, { withFileTypes: true })) {
         let fullPath = path.join(directory, entry.name);
