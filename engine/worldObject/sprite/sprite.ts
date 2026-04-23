@@ -6,13 +6,13 @@ namespace Sprite {
         textureAnchor?: Pt;
         textureTint?: number;
         textureAlpha?: number;
-        textureRotationPivot?: Pt;
         flipX?: boolean;
         flipY?: boolean;
         offsetX?: number;
         offsetY?: number;
         angle?: number;
         angleOffset?: number;
+        rotationPivot?: Pt;
         vangle?: number;
         scale?: number;
         scaleX?: number;
@@ -21,6 +21,7 @@ namespace Sprite {
         skewY?: number;
         effects?: Effects.Config;
         blendMode?: PIXI.BLEND_MODES;
+        rotateWithParent?: boolean;
     }
 }
 
@@ -31,13 +32,13 @@ class Sprite extends PhysicsWorldObject {
     textureAnchor?: Vector2;
     textureTint: number;
     textureAlpha: number;
-    textureRotationPivot?: Vector2;
     flipX: boolean;
     flipY: boolean;
     offsetX: number;
     offsetY: number;
     angle: number;
     angleOffset: number;
+    rotationPivot: Vector2;
     vangle: number;
 
     scaleX: number;
@@ -57,17 +58,22 @@ class Sprite extends PhysicsWorldObject {
     effects: Effects;
     blendMode?: PIXI.BLEND_MODES;
 
+    /**
+     * true during instantiation when the texture has never been set before
+     */
+    private isFirstTextureSet: boolean;
     private renderObject: PIXI.Sprite;
 
     constructor(config: Sprite.Config<Sprite> = {}) {
         super(config);
 
+        this.isFirstTextureSet = true;
         if (config.texture || !this.texture) this.setTexture(config.texture);
+        this.isFirstTextureSet = false;
 
         if (config.textureAnchor) this.textureAnchor = vec2(config.textureAnchor);
         this.textureTint = config.textureTint ?? 0xFFFFFF;
         this.textureAlpha = config.textureAlpha ?? 1;
-        if (config.textureRotationPivot) this.textureRotationPivot = vec2(config.textureRotationPivot);
         this.flipX = config.flipX ?? false;
         this.flipY = config.flipY ?? false;
 
@@ -75,6 +81,7 @@ class Sprite extends PhysicsWorldObject {
         this.offsetY = config.offsetY ?? 0;
         this.angle = config.angle ?? 0;
         this.angleOffset = config.angleOffset ?? 0;
+        this.rotationPivot = config.rotationPivot ? vec2(config.rotationPivot) : Vector2.ZERO;
         this.vangle = config.vangle ?? 0;
         this.scaleX = config.scaleX ?? (config.scale ?? 1);
         this.scaleY = config.scaleY ?? (config.scale ?? 1);
@@ -85,6 +92,15 @@ class Sprite extends PhysicsWorldObject {
         this.effects.updateFromConfig(config.effects);
 
         this.blendMode = config.blendMode;
+
+        if (config.rotateWithParent) {
+            if (config.rotationPivot || config.copyFromParent?.includes('angle')) {
+                console.error('Cannot use rotateWithParent with rotationPivot or alpha copied from parent');
+            } else {
+                this.rotationPivot.set(-this.localx, -this.localy);
+                this.copyFromParent.push('angle');
+            }
+        }
 
         this.renderObject = new PIXI.Sprite();
     }
@@ -108,11 +124,11 @@ class Sprite extends PhysicsWorldObject {
         this.renderObject.skew.x = this.skewX;
         this.renderObject.skew.y = this.skewY;
         this.renderObject.angle = this.angle + this.angleOffset;
-        if (this.textureRotationPivot) {
-            let rot = FrameCache.vec2(this.textureRotationPivot.x, this.textureRotationPivot.y);
+        if (this.rotationPivot) {
+            let rot = FrameCache.vec2(this.rotationPivot.x, this.rotationPivot.y);
             rot.rotate(this.renderObject.angle);
-            this.renderObject.x += this.textureRotationPivot.x - rot.x;
-            this.renderObject.y += this.textureRotationPivot.y - rot.y;
+            this.renderObject.x += this.rotationPivot.x - rot.x;
+            this.renderObject.y += this.rotationPivot.y - rot.y;
         }
         this.renderObject.tint = Color.combineTints(this.getTotalTint(), this.textureTint);
         this.renderObject.alpha = this.getTotalAlpha() * this.textureAlpha;
@@ -154,6 +170,8 @@ class Sprite extends PhysicsWorldObject {
 
     setTexture(key: string | PIXI.Texture | undefined) {
         let oldTexture = this.texture;
+        let oldTextureKey = this.textureKey;
+
         if (GCCTextures.isGCCTexture(oldTexture)) {
             GCCTextures.unregisterWorldObjectTexture(oldTexture, this);
         }
@@ -161,6 +179,9 @@ class Sprite extends PhysicsWorldObject {
         if (!key) {
             this.texture = Textures.NONE;
             this.textureKey = undefined;
+            if (!this.isFirstTextureSet && (oldTexture !== this.texture || oldTextureKey !== this.textureKey)) {
+                this.hookManager.executeHooks('onContentChange');
+            }
             return;
         }
 
@@ -177,6 +198,10 @@ class Sprite extends PhysicsWorldObject {
 
         if (GCCTextures.isGCCTexture(texture)) {
             GCCTextures.registerWorldObjectTexture(texture, this);
+        }
+
+        if (!this.isFirstTextureSet && (oldTexture !== this.texture || oldTextureKey !== this.textureKey)) {
+            this.hookManager.executeHooks('onContentChange');
         }
     }
 

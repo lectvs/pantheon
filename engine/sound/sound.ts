@@ -67,6 +67,26 @@ abstract class Sound {
     }
 
     abstract setFilter(filter: WebAudioFilter): void;
+
+    withPaused(paused: boolean) {
+        this.paused = paused;
+        return this;
+    }
+
+    withVolume(volume: number) {
+        this.volume = volume;
+        return this;
+    }
+
+    withSpeed(speed: number) {
+        this.speed = speed;
+        return this;
+    }
+
+    withLoopsLeft(loopsLeft: number) {
+        this.loopsLeft = loopsLeft;
+        return this;
+    }
 }
 
 namespace Sound {

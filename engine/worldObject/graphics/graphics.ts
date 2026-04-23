@@ -9,6 +9,7 @@ namespace Graphics {
         offsetY?: number;
         angle?: number;
         angleOffset?: number;
+        rotationPivot?: Pt;
         vangle?: number;
         scale?: number;
         scaleX?: number;
@@ -16,6 +17,7 @@ namespace Graphics {
         skewX?: number;
         skewY?: number;
         blendMode?: PIXI.BLEND_MODES;
+        rotateWithParent?: boolean;
     }
 }
 
@@ -30,6 +32,7 @@ class Graphics extends WorldObject {
     offsetY: number;
     angle: number;
     angleOffset: number;
+    rotationPivot: Vector2;
     vangle: number;
 
     scaleX: number;
@@ -64,6 +67,7 @@ class Graphics extends WorldObject {
         this.offsetY = config.offsetY ?? 0;
         this.angle = config.angle ?? 0;
         this.angleOffset = config.angleOffset ?? 0;
+        this.rotationPivot = config.rotationPivot ? vec2(config.rotationPivot) : Vector2.ZERO;
         this.vangle = config.vangle ?? 0;
         this.scaleX = config.scaleX ?? (config.scale ?? 1);
         this.scaleY = config.scaleY ?? (config.scale ?? 1);
@@ -71,6 +75,15 @@ class Graphics extends WorldObject {
         this.skewY = config.skewY ?? 0;
 
         this.blendMode = config.blendMode;
+
+        if (config.rotateWithParent) {
+            if (config.rotationPivot || config.copyFromParent?.includes('angle')) {
+                console.error('Cannot use rotateWithParent with rotationPivot or alpha copied from parent');
+            } else {
+                this.rotationPivot.set(-this.localx, -this.localy);
+                this.copyFromParent.push('angle');
+            }
+        }
 
         this.renderObject = new PIXI.Sprite();
     }
@@ -112,6 +125,12 @@ class Graphics extends WorldObject {
         this.renderObject.skew.x = this.skewX;
         this.renderObject.skew.y = this.skewY;
         this.renderObject.angle = this.angle + this.angleOffset;
+        if (this.rotationPivot) {
+            let rot = FrameCache.vec2(this.rotationPivot.x, this.rotationPivot.y);
+            rot.rotate(this.renderObject.angle);
+            this.renderObject.x += this.rotationPivot.x - rot.x;
+            this.renderObject.y += this.rotationPivot.y - rot.y;
+        }
         this.graphics.tint = Color.combineTints(this.getTotalTint(), this.graphicsTint);
         this.renderObject.alpha = this.getTotalAlpha() * this.graphicsAlpha;
         this.graphics.blendMode = this.blendMode ?? PIXI.BLEND_MODES.NORMAL;

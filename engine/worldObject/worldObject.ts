@@ -56,6 +56,11 @@ namespace WorldObject {
         onVisualUpdate: { params: (this: WO) => void };
         onPostUpdate: { params: (this: WO) => void };
         onRender: { params: (this: WO) => Render.Result };
+        /**
+         * For Sprites, this is when the texture changes.
+         * For SpriteTexts, this is when the text changes.
+         */
+        onContentChange: { params: (this: WO) => void };
         onLifeExpire: { params: (this: WO) => void };
         onKill: { params: (this: WO) => void };
     }
@@ -1056,6 +1061,11 @@ class WorldObject {
         }
 
         if (order === 'children_first') fn(this);
+    }
+
+    with(fn: (obj: WorldObject) => void) {
+        fn(this);
+        return this;
     }
 
     withName(name: string | undefined) {

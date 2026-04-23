@@ -28,6 +28,7 @@ namespace SpriteText {
         typeAnimationRate?: number;
         typeAnimationSound?: string;
         charProperties?: CharProperties,
+        rotateWithParent?: boolean;
     }
 
     export type Font = {
@@ -183,6 +184,10 @@ class SpriteText extends WorldObject {
 
     private charProperties: SpriteText.CharProperties;
 
+    /**
+     * true during instantiation when the text has never been set before
+     */
+    private isFirstTextSet: boolean;
     private renderSystem?: SpriteTextRenderSystem;
     private currentText!: string;
 
@@ -222,6 +227,15 @@ class SpriteText extends WorldObject {
         this.scaleX = config.scaleX ?? (config.scale ?? 1);
         this.scaleY = config.scaleY ?? (config.scale ?? 1);
 
+        if (config.rotateWithParent) {
+            if (config.rotationPivot || config.copyFromParent?.includes('angle')) {
+                console.error('Cannot use rotateWithParent with rotationPivot or alpha copied from parent');
+            } else {
+                this.rotationPivot.set(-this.localx, -this.localy);
+                this.copyFromParent.push('angle');
+            }
+        }
+
         this.effects = new Effects();
         this.effects.updateFromConfig(config.effects);
 
@@ -231,7 +245,9 @@ class SpriteText extends WorldObject {
 
         this.charProperties = config.charProperties ?? {};
 
+        this.isFirstTextSet = true;
         this.setText(config.text ?? "");
+        this.isFirstTextSet = false;
     }
 
     override onRemove(): void {
@@ -427,6 +443,7 @@ class SpriteText extends WorldObject {
         this.currentText = text;
         this.setCharsFromCurrentText();
         this.freeRenderSystem();
+        if (!this.isFirstTextSet) this.hookManager.executeHooks('onContentChange');
     }
 
     // May still need work
