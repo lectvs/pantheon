@@ -42,14 +42,21 @@ https://www.youtube.com/watch?v=u2fwxuHZXIA
 - Mario actually "decelerates toward" his max speed if over it instead of clamping, resulting in his speed oscillating over time
 
 # Art Tips
+- Choose the right font for the game
 - Create independent "scenes" centered at the player even in a large world
 - Block basic shapes/colors first
 - Use a 50% grey canvas instead of white for better judgement of brightness
 - Make better palettes by choosing a "base" color => put other color swatches on top => reduce opacity slightly to blend in some of the base color
 
-# Random Tech
+# Juice List
+- Squetch
+- Drop shadow
+- Sparkles
+- Sheens
 - Instead of hover tint dark -> highlight, add a two-part hover tint dark -> intermediary -> highlight (citizen sleeper scroll bar)
 - Rotate everything (fools room)
+
+# Random Tech
 - Soft limits (e.g. you can briefly go over your max mana) (orb of creation)
 
 # Refs
