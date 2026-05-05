@@ -52,6 +52,7 @@ class Graphics extends WorldObject {
     blendMode?: PIXI.BLEND_MODES;
 
     private renderObject: PIXI.Container;
+    protected dirty: boolean;
 
     constructor(config: Graphics.Config<Graphics> = {}) {
         super(config);
@@ -86,6 +87,7 @@ class Graphics extends WorldObject {
         }
 
         this.renderObject = new PIXI.Sprite();
+        this.dirty = true;
     }
 
     override onAdd(): void {
@@ -114,10 +116,16 @@ class Graphics extends WorldObject {
     }
 
     override render(): Render.Result {
+        if (this.dirty) {
+            this.updateGraphics();
+            this.dirty = false;
+        }
+
         if (this.renderObject.children[0] !== this.graphics) {
             this.renderObject.removeChildren();
             this.renderObject.addChild(this.graphics);
         }
+
         this.renderObject.x = this.offsetX;
         this.renderObject.y = this.offsetY;
         this.renderObject.scale.x = (this.flipX ? -1 : 1) * this.scaleX;
@@ -162,27 +170,17 @@ class Graphics extends WorldObject {
         this.graphics = graphics;
     }
 
+    protected updateGraphics() {
+        // Pass
+    }
+
     private isGraphicsDestroyed() {
         return !this.graphics.geometry || !this.graphics.transform;
     }
 }
 
 namespace Graphics {
-    export abstract class GraphicsPreset extends Graphics {
-        protected dirty = false;
-
-        override render(): Render.Result {
-            if (this.dirty) {
-                this.updateGraphics();
-                this.dirty = false;
-            }
-            return super.render();
-        }
-
-        protected abstract updateGraphics(): void;
-    }
-
-    export class Annulus extends GraphicsPreset {
+    export class Annulus extends Graphics {
         private _outerRadius: number;
         get outerRadius() { return this._outerRadius; }
         set outerRadius(v) {
@@ -225,7 +223,7 @@ namespace Graphics {
         }
     }
 
-    export class Circle extends GraphicsPreset {
+    export class Circle extends Graphics {
         private _radius: number;
         get radius() { return this._radius; }
         set radius(v) {
@@ -253,7 +251,7 @@ namespace Graphics {
         }
     }
 
-    export class Line extends GraphicsPreset {
+    export class Line extends Graphics {
         private _x1: number;
         get x1() { return this._x1; }
         set x1(v) {

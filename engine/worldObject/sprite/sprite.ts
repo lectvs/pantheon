@@ -6,6 +6,7 @@ namespace Sprite {
         textureAnchor?: Pt;
         textureTint?: number;
         textureAlpha?: number;
+        textureScale?: number;
         flipX?: boolean;
         flipY?: boolean;
         offsetX?: number;
@@ -32,6 +33,7 @@ class Sprite extends PhysicsWorldObject {
     textureAnchor?: Vector2;
     textureTint: number;
     textureAlpha: number;
+    textureScale: number;
     flipX: boolean;
     flipY: boolean;
     offsetX: number;
@@ -74,6 +76,7 @@ class Sprite extends PhysicsWorldObject {
         if (config.textureAnchor) this.textureAnchor = vec2(config.textureAnchor);
         this.textureTint = config.textureTint ?? 0xFFFFFF;
         this.textureAlpha = config.textureAlpha ?? 1;
+        this.textureScale = config.textureScale ?? 1;
         this.flipX = config.flipX ?? false;
         this.flipY = config.flipY ?? false;
 
@@ -119,8 +122,8 @@ class Sprite extends PhysicsWorldObject {
         this.renderObject.anchor.y = this.textureAnchor ? this.textureAnchor.y : this.texture.defaultAnchor.y;
         this.renderObject.x = this.offsetX;
         this.renderObject.y = this.offsetY;
-        this.renderObject.scale.x = (this.flipX ? -1 : 1) * this.scaleX;
-        this.renderObject.scale.y = (this.flipY ? -1 : 1) * this.scaleY;
+        this.renderObject.scale.x = (this.flipX ? -1 : 1) * this.scaleX * this.textureScale;
+        this.renderObject.scale.y = (this.flipY ? -1 : 1) * this.scaleY * this.textureScale;
         this.renderObject.skew.x = this.skewX;
         this.renderObject.skew.y = this.skewY;
         this.renderObject.angle = this.angle + this.angleOffset;
@@ -161,8 +164,8 @@ class Sprite extends PhysicsWorldObject {
         return TextureUtils.getTextureLocalBounds$(this.texture,
             this.offsetX,
             this.offsetY,
-            this.scaleX,
-            this.scaleY,
+            this.scaleX * this.textureScale,
+            this.scaleY * this.textureScale,
             this.angle,
             this.textureAnchor,
         );
