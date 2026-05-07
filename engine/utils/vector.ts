@@ -228,6 +228,10 @@ class Vector2 {
         return new Vector2(radius * M.cos(angle), radius * M.sin(angle));
     }
 
+    static lerp(t: number, v1: Pt, v2: Pt) {
+        return vec2(lerp(t, v1.x, v2.x), lerp(t, v1.y, v2.y));
+    }
+
     static subtract(v1: Pt, v2: Pt) {
         return vec2(v1.x - v2.x, v1.y - v2.y);
     }
