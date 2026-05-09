@@ -1,5 +1,5 @@
 namespace ScriptManager {
-    export type SpecialMode = 'stopPrevious' | 'dontRunTwice';
+    export type SpecialMode = 'stopPrevious' | 'finishPrevious' | 'dontRunTwice';
 }
 
 class ScriptManager {
@@ -39,6 +39,11 @@ class ScriptManager {
 
         if (specialMode === 'stopPrevious' && name) {
             this.stopScriptByName(name);
+        }
+
+        if (specialMode === 'finishPrevious' && name) {
+            let script = this.getScriptByName(name);
+            script?.finishImmediately();
         }
 
         if (specialMode === 'dontRunTwice' && name && this.hasScriptRunning(name)) {
