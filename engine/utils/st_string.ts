@@ -45,11 +45,11 @@ namespace St {
         return 4294967296 * (2097151 & h2) + (h1 >>> 0);
     };
 
-    export function isBlank(text: string | undefined | null): text is undefined {
+    export function isBlank(text: string | undefined | null): text is undefined | null {
         return isEmpty(text) || isEmpty(text!.trim());
     }
 
-    export function isEmpty(text: string | undefined | null): text is undefined {
+    export function isEmpty(text: string | undefined | null): text is undefined | null {
         return !text || text.length === 0;
     }
 

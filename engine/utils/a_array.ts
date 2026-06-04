@@ -122,7 +122,7 @@ namespace A {
         return Array.isArray(obj);
     }
 
-    export function isEmpty(array: ReadonlyArray<any> | undefined): array is undefined {
+    export function isEmpty(array: ReadonlyArray<any> | undefined | null): array is undefined | null {
         return !array || array.length === 0;
     }
 

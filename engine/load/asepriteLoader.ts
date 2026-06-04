@@ -84,6 +84,7 @@ class AsepriteLoader implements Loader {
         AssetCache.asepriteFiles[this.key] = this.asepriteDocument;
 
         let renderSeparateLayers = this.asepriteFile.renderSeparateLayers ?? false;
+        let renderInvisibleLayers = this.asepriteFile.renderInvisibleLayers ?? false;
 
         // Load each frame with all layers as a texture.
         let sprite = new PIXI.Sprite();
@@ -100,8 +101,8 @@ class AsepriteLoader implements Loader {
             let renderedCel = false;
             for (let cel of frame.cels) {
                 let layer = this.asepriteDocument.layers[cel.layerIndex];
-                if (!layer.visible) continue;
-                if (layer.name.startsWith('//')) continue;
+                if (!layer.visible && !renderInvisibleLayers) continue;
+                if (layer.name.startsWith('//') && !renderInvisibleLayers) continue;
                 if (cel.celData.type === 'image') {
                     let celTexture = AssetCache.textures[this.getFrameCelKey(i, cel)];
                     if (!celTexture) {

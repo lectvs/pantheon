@@ -17,13 +17,14 @@ namespace Lci {
     }
 
     export type LayerProperties = {
-        layer: string;
+        layer: string | null;
         anchor: Pt;
-        offset: Pt;
-        physicsGroup: string;
-        bounds: Rect | string;
-        placeholder: string;
-        multiBounds: Rect[];
+        offset: Pt | null;
+        physicsGroup: string | null;
+        bounds: Rect | string | null;
+        placeholder: string | null;
+        restrict: boolean;
+        multiBounds: Rect[] | null;
         data: Dict<string>;
     }
 
