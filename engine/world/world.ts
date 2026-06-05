@@ -668,11 +668,15 @@ class World {
         return SoundUtils.stopSound(this.soundManager, this.scriptManager, sound, fadeOut);
     }
 
-    takeScreenshot(): World.Screenshot {
-        let screen = newPixiRenderTexture(
-            this.getScreenWidth() * this.scaleX * global.upscale,
-            this.getScreenHeight() * this.scaleY * global.upscale,
-            'World.takeSnapshot');
+    takeScreenshot(screen?: PIXI.RenderTexture): World.Screenshot {
+        if (screen) {
+            clearRenderTexture(screen);
+        } else {
+            screen = newPixiRenderTexture(
+                this.getScreenWidth() * this.scaleX * global.upscale,
+                this.getScreenHeight() * this.scaleY * global.upscale,
+                'World.takeSnapshot');
+        }
         let container = new PIXI.Container();
         container.scale.set(global.upscale);
         Render.diff(container, this.render());

@@ -2,7 +2,7 @@ namespace Transitions {
     export class Instant extends Transition {
         constructor() {
             super({
-                takeScreenshots: false,
+                isInstant: true,
             });
         }
 
@@ -46,12 +46,14 @@ namespace Transitions {
             let result: Render.Result = FrameCache.array();
 
             if (this.transitioned) {
-                if (this.newScreenshot) {
-                    result.push(this.newScreenshot.sprite);
+                let newScreenshot = this.getNewWorldScreenshot();
+                if (newScreenshot) {
+                    result.push(newScreenshot.sprite);
                 }
             } else {
-                if (this.oldScreenshot) {
-                    result.push(this.oldScreenshot.sprite);
+                let oldScreenshot = this.getNewWorldScreenshot();
+                if (oldScreenshot) {
+                    result.push(oldScreenshot.sprite);
                 }
             }
 
@@ -82,12 +84,14 @@ namespace Transitions {
 
         override render() {
             let result: Render.Result = FrameCache.array();
-            if (this.oldScreenshot) {
-                result.push(this.oldScreenshot.sprite);
+            let oldScreenshot = this.getOldWorldScreenshot();
+            if (oldScreenshot) {
+                result.push(oldScreenshot.sprite);
             }
-            if (this.newScreenshot) {
-                this.newScreenshot.sprite.alpha = this.newAlpha;
-                result.push(this.newScreenshot.sprite);
+            let newScreenshot = this.getNewWorldScreenshot();
+            if (newScreenshot) {
+                newScreenshot.sprite.alpha = this.newAlpha;
+                result.push(newScreenshot.sprite);
             }
             return result;
         }
@@ -129,12 +133,14 @@ namespace Transitions {
             let result: Render.Result = FrameCache.array();
 
             if (this.transitioned) {
-                if (this.newScreenshot) {
-                    result.push(this.newScreenshot.sprite);
+                let newScreenshot = this.getNewWorldScreenshot();
+                if (newScreenshot) {
+                    result.push(newScreenshot.sprite);
                 }
             } else {
-                if (this.oldScreenshot) {
-                    result.push(this.oldScreenshot.sprite);
+                let oldScreenshot = this.getOldWorldScreenshot()
+                if (oldScreenshot) {
+                    result.push(oldScreenshot.sprite);
                 }
             }
 
@@ -173,18 +179,20 @@ namespace Transitions {
         override setData(props: Transition.SetDataProps): void {
             super.setData(props);
 
-            if (this.newScreenshot) {
-                this.newScreenshot.sprite.filters = [this.dissolveFilter];
+            if (this._newScreenshot) {
+                this._newScreenshot.sprite.filters = [this.dissolveFilter];
             }
         }
 
         override render() {
             let result: Render.Result = FrameCache.array();
-            if (this.oldScreenshot) {
-                result.push(this.oldScreenshot.sprite);
+            let oldScreenshot = this.getOldWorldScreenshot();
+            if (oldScreenshot) {
+                result.push(oldScreenshot.sprite);
             }
-            if (this.newScreenshot) {
-                result.push(this.newScreenshot.sprite);
+            let newScreenshot = this.getNewWorldScreenshot();
+            if (newScreenshot) {
+                result.push(newScreenshot.sprite);
             }
             return result;
         }

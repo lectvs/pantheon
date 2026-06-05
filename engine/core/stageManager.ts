@@ -9,6 +9,7 @@ namespace StageManager {
          */
         stackPrevious?: boolean;
         doNotPlayWorldMusic?: boolean;
+        transitionType?: 'static' | 'dynamic';
         onBeginTransition?: (world: World) => void;
         onTransitioned?: (world: World) => void;
     }
@@ -60,16 +61,16 @@ class StageManager {
         return FrameCache.array();
     }
     
-    back(transition: Transition = new Transitions.Instant()) {
+    back(transition: Transition = new Transitions.Instant(), transitionType?: 'static' | 'dynamic') {
         if (this.stageStack.length === 0) return;
 
         let oldWorld = this.getCurrentWorld();
         this.addToWastebin(this.stageStack.pop()!.world);
         let newWorld = this.getCurrentWorld();
-        this.transitionTo(oldWorld, newWorld, transition, false);
+        this.transitionTo(oldWorld, newWorld, transition, false, transitionType);
     }
 
-    clearMenus(transition: Transition = new Transitions.Instant()) {
+    clearMenus(transition: Transition = new Transitions.Instant(), transitionType?: 'static' | 'dynamic') {
         let oldWorld = this.getCurrentWorld();
         this.stageStack.filterInPlace(stage => {
             if (stage.world instanceof Menu) {
@@ -81,7 +82,7 @@ class StageManager {
         let newWorld = this.getCurrentWorld();
 
         if (oldWorld !== newWorld) {
-            this.transitionTo(oldWorld, newWorld, transition, false);
+            this.transitionTo(oldWorld, newWorld, transition, false, transitionType);
         }
     }
 
@@ -127,7 +128,7 @@ class StageManager {
             worldFactory: stage,
         });
         newWorld.update();
-        this.transitionTo(oldWorld, newWorld, props.transition ?? new Transitions.Instant(), props.doNotPlayWorldMusic);
+        this.transitionTo(oldWorld, newWorld, props.transition ?? new Transitions.Instant(), props.doNotPlayWorldMusic, props.transitionType);
         return newWorld;
     }
 
@@ -154,9 +155,9 @@ class StageManager {
         this.endOfFrameQueue.clear();
     }
 
-    private transitionTo(oldWorld: World | undefined, newWorld: World | undefined, transition: Transition, doNotPlayWorldMusic: boolean | undefined) {
+    private transitionTo(oldWorld: World | undefined, newWorld: World | undefined, transition: Transition, doNotPlayWorldMusic: boolean | undefined, type: 'static' | 'dynamic' | undefined) {
         this.transition = transition;
-        this.transition.setData({ oldWorld, newWorld, doNotPlayWorldMusic });
+        this.transition.setData({ oldWorld, newWorld, doNotPlayWorldMusic, type });
         newWorld?.onBeginTransition();
         if (newWorld?.music.action === 'playontransitionbegin' && !doNotPlayWorldMusic) {
             global.game.musicManager.play(newWorld.music.music, newWorld.music.fadeTime);
