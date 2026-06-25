@@ -14,7 +14,7 @@ namespace Lci {
             let layerProperties = extractLayerProperties(asepriteLayer.name, layerTextureKey, defaultLayerProperties);
 
             let contentBounds = layerProperties.restrict && layerTextureKey && textureRestrictBounds[layerTextureKey]
-                ? textureRestrictBounds[layerTextureKey]
+                ? textureRestrictBounds[layerTextureKey]!
                 : new Rectangle(0, 0, asepriteFile.width, asepriteFile.height);
 
             let layerOffsetX = contentBounds.x;
