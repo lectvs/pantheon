@@ -77,3 +77,47 @@ function renderToRenderTexture(object: PIXI.DisplayObject | PIXI.DisplayObject[]
 function requireType<T>(param: T) {
     return param;
 }
+
+function copyText(text: string, settings: SpriteText.Config<SpriteText> = {}) {
+    let spriteText = new SpriteText({
+        text,
+        anchor: Anchor.TOP_LEFT,
+        justify: 'left',
+        ...settings,
+    });
+
+    let renderer = Main.getRendererForTemporaryUse();
+    let rendererWidth = renderer.width;
+    let rendererHeight = renderer.height;
+    renderer.resize(spriteText.getTextWidth(), spriteText.getTextHeight());
+    renderer.render(new PIXI.Sprite(Textures.NONE));  // Clear the renderer
+
+    let renderResult = spriteText.render();
+    for (let res of renderResult) {
+        renderer.render(res, undefined, false);
+    }
+
+    renderer.view.toBlob(blob => {
+        if (!blob) {
+            console.error('Blank blob');
+            return;
+        }
+
+        renderer.resize(rendererWidth, rendererHeight);
+
+        console.log('Text copy is ready. Click on webpage to copy');
+
+        Main.rendererView.addEventListener('click', () => {
+            navigator.clipboard.write([
+                new ClipboardItem({
+                    [blob.type]: blob
+                })
+            ]).then(() => {
+                console.log('Copied text!');
+            });
+        }, {
+            once: true,
+        });
+    });
+
+}

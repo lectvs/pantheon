@@ -122,6 +122,7 @@ class Main {
             width: global.gameWidth * global.upscale,
             height: global.gameHeight * global.upscale,
             backgroundColor: global.backgroundColor,
+            transparent: Debug.DEBUG,
         });
         document.body.appendChild(Main.renderer.view);
         Main.renderer.view.style.setProperty('transform', `scale(${ScaleManager.getWindowedCanvasScaleFor(this.config.scaling)})`);
@@ -416,6 +417,10 @@ class Main {
             return '';
         }
         return Main.getRemotePath();
+    }
+
+    static getRendererForTemporaryUse() {
+        return this.renderer;
     }
 
     static takeScreenshot(scale: number, output: 'clipboard' | 'newtab') {
