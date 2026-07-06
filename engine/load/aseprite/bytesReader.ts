@@ -11,6 +11,10 @@ class BytesReader {
         return this.pos;
     }
 
+    setPosition(pos: number) {
+        this.pos = pos;
+    }
+
     isAtEnd() {
         return this.pos === this.view.byteLength;
     }

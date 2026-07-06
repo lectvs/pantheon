@@ -343,7 +343,7 @@ namespace AsepriteFileRaw {
         } else if (chunkType === 0x2023) {
             return readTilesetChunk(reader);
         } else {
-            throw new Error('Invalid chunk type: ' + chunkType);
+            throw new Error('Invalid chunk type: ' + chunkType + '. Did you save this using an old version of Aseprite?');
         }
     }
 
