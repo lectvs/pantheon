@@ -141,6 +141,35 @@ PIXI.Sprite.prototype.updateAndSetEffects = function(effects: Effects) {
     }
 }
 
+PIXI.Graphics.prototype.updateAndSetEffects = function(effects: Effects) {
+    let filters = effects.getFilterList$();
+    for (let filter of filters) {
+        filter.setTextureValuesFromSprite(this);
+    }
+    if (!A.equals(this.filters, filters)) {
+        this.filters = filters.slice();
+    }
+
+    let filterArea = GraphicsUtils.getFilterArea$(this, filters,
+        this.x,
+        this.y,
+        this.scale.x,
+        this.scale.y,
+        this.angle,
+    );
+
+    if (filterArea) {
+        if (this.filterArea) {
+            this.filterArea.copyFrom(filterArea);
+        } else {
+            this.filterArea = new PIXI.Rectangle().copyFrom(filterArea);
+        }
+    } else {
+        // @ts-expect-error
+        this.filterArea = null;
+    }
+}
+
 PIXI.Filter.prototype.setUpscale = function(scale: number) {
     // Pass, implement per-filter
 }

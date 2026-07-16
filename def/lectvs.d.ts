@@ -122,6 +122,13 @@ declare namespace PIXI {
         updateAndSetEffects(effects: Effects): void;
     }
 
+    export interface Graphics {
+        /**
+         * Updates and sets Effects on a graphics instance. Should be called after setting the graphics' transforms.
+         */
+        updateAndSetEffects(effects: Effects): void;
+    }
+
     export interface Filter {
         /**
          * Sets a value for upscale.

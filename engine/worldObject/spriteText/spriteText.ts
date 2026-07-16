@@ -59,6 +59,7 @@ namespace SpriteText {
     export type TagData = {
         tag: string;
         params: string[];
+        comment?: string;
     }
     export type TagFunction = (params: string[]) => SpriteText.Style;
 
@@ -794,6 +795,10 @@ namespace SpriteText {
             };
         },
     }
+
+    // Tag aliases
+    TAGS['ox'] = TAGS['offsetx'];
+    TAGS['oy'] = TAGS['offsety'];
 
     function getInt<D extends number | undefined>(text: string, def: D): number | D {
         let result = parseInt(text);

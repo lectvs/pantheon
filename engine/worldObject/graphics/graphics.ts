@@ -156,9 +156,13 @@ class Graphics extends WorldObject {
     }
 
     override getVisibleLocalBounds$(): Rectangle | undefined {
-        let result = FrameCache.rectangle(0, 0, 0, 0);
-        this.graphics.getLocalBounds(result as any);
-        return result;
+        return GraphicsUtils.getGraphicsLocalBounds$(this.graphics,
+            this.offsetX,
+            this.offsetY,
+            this.scaleX,
+            this.scaleY,
+            this.angle,
+        );
     }
 
     setGraphics(graphics: PIXI.Graphics | undefined) {

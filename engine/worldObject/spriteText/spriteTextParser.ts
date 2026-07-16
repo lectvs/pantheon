@@ -124,7 +124,7 @@ namespace SpriteTextParser {
             if (texture.width === props.font.charWidth && texture.height === props.font.charHeight) {
                 // Pass, use existing tag data.
             } else {
-                tagData.push({ tag: 'color', params: [`0xFFFFFF`] });
+                tagData.push({ tag: 'color', params: [`0xFFFFFF`], comment: 'Texture is not the same size as the font' });
             }
         } else if (colorOverride < 0) {
             // Pass, if color is negative do not override.
