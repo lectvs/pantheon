@@ -141,7 +141,7 @@ PIXI.Sprite.prototype.updateAndSetEffects = function(effects: Effects) {
     }
 }
 
-PIXI.Graphics.prototype.updateAndSetEffects = function(effects: Effects) {
+PIXI.Graphics.prototype.updateAndSetEffects = function(effects: Effects, x: number, y: number, scaleX: number, scaleY: number, angle: number) {
     let filters = effects.getFilterList$();
     for (let filter of filters) {
         filter.setTextureValuesFromSprite(this);
@@ -151,11 +151,11 @@ PIXI.Graphics.prototype.updateAndSetEffects = function(effects: Effects) {
     }
 
     let filterArea = GraphicsUtils.getFilterArea$(this, filters,
-        this.x,
-        this.y,
-        this.scale.x,
-        this.scale.y,
-        this.angle,
+        x + this.x,
+        y + this.y,
+        scaleX * this.scale.x,
+        scaleY * this.scale.y,
+        angle + this.angle,
     );
 
     if (filterArea) {

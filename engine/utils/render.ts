@@ -32,10 +32,7 @@ namespace Render {
             r.x += dx;
             r.y += dy;
 
-            if (r instanceof PIXI.Sprite && r.filterArea) {
-                r.filterArea.x += dx;
-                r.filterArea.y += dy;
-            }
+            shiftFilterArea(r, dx, dy);
 
             // if (r instanceof PIXI.Sprite && r.mask) {
             //     r.mask.x += dx;
@@ -50,10 +47,7 @@ namespace Render {
             r.x += dx;
             r.y += dy;
 
-            if (r instanceof PIXI.Sprite && r.filterArea) {
-                r.filterArea.x += dx;
-                r.filterArea.y += dy;
-            }
+            shiftFilterArea(r, dx, dy);
 
             // if (r instanceof PIXI.Sprite && r.mask) {
             //     r.mask.x += dx;
@@ -76,6 +70,18 @@ namespace Render {
             for (let child of object.children) {
                 upscalePixiObjectProperties(child, scale);
             }
+        }
+    }
+
+    function shiftFilterArea(r: PIXI.DisplayObject, dx: number, dy: number) {
+        if (r instanceof PIXI.Sprite && r.filterArea) {
+            r.filterArea.x += dx;
+            r.filterArea.y += dy;
+        }
+
+        if (r instanceof PIXI.Container && r.children.length === 1 && r.children[0] instanceof PIXI.Graphics && r.children[0].filterArea) {
+            r.children[0].filterArea.x += dx;
+            r.children[0].filterArea.y += dy;
         }
     }
 }

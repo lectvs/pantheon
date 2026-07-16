@@ -126,7 +126,7 @@ declare namespace PIXI {
         /**
          * Updates and sets Effects on a graphics instance. Should be called after setting the graphics' transforms.
          */
-        updateAndSetEffects(effects: Effects): void;
+        updateAndSetEffects(effects: Effects, x: number, y: number, scaleX: number, scaleY: number, angle: number): void;
     }
 
     export interface Filter {

@@ -16,6 +16,7 @@ namespace Graphics {
         scaleY?: number;
         skewX?: number;
         skewY?: number;
+        effects?: Effects.Config;
         blendMode?: PIXI.BLEND_MODES;
         rotateWithParent?: boolean;
     }
@@ -49,6 +50,7 @@ class Graphics extends WorldObject {
     skewX: number;
     skewY: number;
 
+    effects: Effects;
     blendMode?: PIXI.BLEND_MODES;
 
     private renderObject: PIXI.Container;
@@ -74,6 +76,9 @@ class Graphics extends WorldObject {
         this.scaleY = config.scaleY ?? (config.scale ?? 1);
         this.skewX = config.skewX ?? 0;
         this.skewY = config.skewY ?? 0;
+
+        this.effects = new Effects();
+        this.effects.updateFromConfig(config.effects);
 
         this.blendMode = config.blendMode;
 
@@ -111,6 +116,7 @@ class Graphics extends WorldObject {
 
     override update() {
         super.update();
+        this.effects.updateEffects(this.delta);
 
         this.angle += this.vangle * this.delta;
     }
@@ -143,6 +149,7 @@ class Graphics extends WorldObject {
         this.renderObject.alpha = this.getTotalAlpha() * this.graphicsAlpha;
         this.graphics.blendMode = this.blendMode ?? PIXI.BLEND_MODES.NORMAL;
         this.renderObject.mask = this.getMaskSprite()!; // undefined maskSprite => no mask
+        this.graphics.updateAndSetEffects(this.effects, this.renderObject.x, this.renderObject.y, this.renderObject.scale.x, this.renderObject.scale.y, this.renderObject.angle);
         O.putMetadata(this.renderObject, 'renderedFrom', this);
 
         let result: Render.Result = FrameCache.array(this.renderObject);

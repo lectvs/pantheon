@@ -69,6 +69,22 @@ class Rectangle {
         return this;
     }
 
+    scaleX(scaleX: number, dimensionsOnly?: 'dimensionsOnly') {
+        if (!dimensionsOnly) {
+            this.x *= scaleX;
+        }
+        this.width *= scaleX;
+        return this;
+    }
+
+    scaleY(scaleY: number, dimensionsOnly?: 'dimensionsOnly') {
+        if (!dimensionsOnly) {
+            this.y *= scaleY;
+        }
+        this.height *= scaleY;
+        return this;
+    }
+
     set(x: number, y: number, width: number, height: number) {
         this.x = x;
         this.y = y;
