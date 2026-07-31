@@ -32,9 +32,11 @@ namespace UIElement {
     }
 
     export type Tinting = {
+        scope?: 'texture' | 'worldobject';
         base?: number;
         hover?: number;
         clicked?: number;
+        disabled?: number;
     }
 
     export type SelectionMode = 'mouse' | 'manual';
@@ -56,9 +58,11 @@ class UIElement extends Module<WorldObject> {
     onKeyboardDown: UIElement.Callback | undefined;
 
     tintingEnabled: boolean;
+    tintingScope?: 'texture' | 'worldobject';
     baseTint?: number;
     hoverTint?: number;
     clickTint?: number;
+    disabledTint?: number;
 
     private clickedDownDistance: number | undefined;
     maxDistanceMouseCanMoveWhileClicking: number | undefined;
@@ -84,9 +88,11 @@ class UIElement extends Module<WorldObject> {
 
         this.tintingEnabled = !!config.tinting;
         if (config.tinting) {
+            this.tintingScope = config.tinting.scope;
             this.baseTint = config.tinting.base;
             this.hoverTint = config.tinting.hover;
             this.clickTint = config.tinting.clicked;
+            this.disabledTint = config.tinting.disabled;
         }
 
         this.maxDistanceMouseCanMoveWhileClicking = config.maxDistanceMouseCanMoveWhileClicking;
@@ -129,14 +135,25 @@ class UIElement extends Module<WorldObject> {
         }
 
         if (this.tintingEnabled) {
-            if (this.state.hovered || this.state.selected) {
-                if (this.state.clickedDown) {
-                    if (this.clickTint !== undefined) this.worldObject.tint = this.clickTint;
+            let tintKey = 'tint';
+            if (this.tintingScope === 'texture') {
+                if (this.worldObject instanceof Sprite) {
+                    tintKey = 'textureTint';
                 } else {
-                    if (this.hoverTint !== undefined) this.worldObject.tint = this.hoverTint;
+                    console.error("Tinting scope is 'texture' but WorldObject is not a Sprite!", this, this.worldObject);
+                }
+            }
+
+            if (this.state.disabled) {
+                if (this.disabledTint !== undefined) (this.worldObject as any)[tintKey] = this.disabledTint;
+            } else if (this.state.hovered || this.state.selected) {
+                if (this.state.clickedDown) {
+                    if (this.clickTint !== undefined) (this.worldObject as any)[tintKey] = this.clickTint;
+                } else {
+                    if (this.hoverTint !== undefined) (this.worldObject as any)[tintKey] = this.hoverTint;
                 }
             } else {
-                if (this.baseTint !== undefined) this.worldObject.tint = this.baseTint;
+                if (this.baseTint !== undefined) (this.worldObject as any)[tintKey] = this.baseTint;
             }
         }
 
