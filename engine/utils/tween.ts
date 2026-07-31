@@ -67,7 +67,7 @@ namespace Tween {
         export const InOutElastic: (elasticity: number) => Function = elasticity => inOutFromIn(InElastic(elasticity));
 
         export const InElasticSimple: (elasticity: number) => Function = elasticity => zeroToOneClampedIn(t => {
-            let e = elasticity/2;
+            let e = map(elasticity, 0, 1, 0.5, 1)/2;
             return 1 - (M.sin(90 - 180*t) + e*M.cos(180 - 360*t)+1+e)/2;
         });
         export const OutElasticSimple: (elasticity: number) => Function = elasticity => outFromIn(InElasticSimple(elasticity));
