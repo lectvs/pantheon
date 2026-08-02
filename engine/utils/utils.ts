@@ -40,6 +40,12 @@ function clearRenderTexture(renderTexture: PIXI.RenderTexture) {
     PerformanceTracking.logManualRender();
 }
 
+function count(name: string, incr: number = 1) {
+    let counter = lazy(`Utils.count(${name})`, () => ({ val: 0 }));
+    counter.val += incr;
+    return counter.val;
+}
+
 function freePixiRenderTexture(texture: PIXI.RenderTexture) {
     let textureCreationSource = TextureUtils.getTextureCreationSource(texture);
     PerformanceTracking.logFreeTexture(texture, textureCreationSource);
