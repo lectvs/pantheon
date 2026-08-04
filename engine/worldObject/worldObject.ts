@@ -462,6 +462,20 @@ class WorldObject {
         return World.Actions.addChildrenToParent(children, this);
     }
 
+    addChildrenKeepWorldPosition<T extends WorldObject>(children: T[]): T[] {
+        let oldPositions: number[] = [];
+        for (let child of children) {
+            oldPositions.push(child.x, child.y, child.z);
+        }
+        let result = this.addChildren(children);
+        for (let i = 0; i < children.length; i++) {
+            children[i].x = oldPositions[3*i];
+            children[i].y = oldPositions[3*i+1];
+            children[i].z = oldPositions[3*i+2];
+        }
+        return result;
+    }
+
     addHook<T extends keyof WorldObject.Hooks<this>>(name: T, fn: WorldObject.Hooks<this>[T]['params'], config: Hook.Config = {}) {
         return this.hookManager.addHook(name, fn, config);
     }
