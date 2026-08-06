@@ -105,6 +105,7 @@ class SlopeBounds implements Bounds {
     isOverlapping(other: Bounds) {
         if (other instanceof RectBounds) return Bounds.Collision.isOverlappingRectSlope(other, this);
         if (other instanceof CircleBounds) return Bounds.Collision.isOverlappingCircleSlope(other, this);
+        if (other instanceof CompositeBounds) return other.isOverlapping(this);
         if (other instanceof NullBounds) return false;
         console.error("No overlap supported between these bounds", this, other);
         return false;

@@ -87,6 +87,7 @@ class RectBounds implements Bounds {
         if (other instanceof SlopeBounds) return Bounds.Collision.isOverlappingRectSlope(this, other);
         if (other instanceof InvertedRectBounds) return Bounds.Collision.isOverlappingRectInvertedRect(this, other);
         if (other instanceof InvertedCircleBounds) return Bounds.Collision.isOverlappingRectInvertedCircle(this, other);
+        if (other instanceof CompositeBounds) return other.isOverlapping(this);
         if (other instanceof NullBounds) return false;
         console.error("No overlap supported between these bounds", this, other);
         return false;

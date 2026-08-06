@@ -94,6 +94,18 @@ namespace G {
         return rect;
     }
 
+    export function expandRectangleToContain<T extends Rect>(rect: T, toContain: Rect): T {
+        let left = Math.min(rect.x, toContain.x);
+        let right = Math.max(rect.x + rect.width, toContain.x + toContain.width);
+        let top = Math.min(rect.y, toContain.y);
+        let bottom = Math.max(rect.y + rect.height, toContain.y + toContain.height);
+        rect.x = left;
+        rect.y = top;
+        rect.width = right - left;
+        rect.height = bottom - top;
+        return rect;
+    }
+
     export function generatePolygonVertices(cx: number, cy: number, r: number, n: number, angle: number = 0) {
         return A.range(n).map(i => vec2(cx + r*M.cos(angle + 360/n*(i+0.5)), cy + r*M.sin(angle + 360/n*(i+0.5))));
     }

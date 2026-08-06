@@ -99,6 +99,7 @@ class CircleBounds implements Bounds {
         if (other instanceof SlopeBounds) return Bounds.Collision.isOverlappingCircleSlope(this, other);
         if (other instanceof InvertedRectBounds) return Bounds.Collision.isOverlappingCircleInvertedRect(this, other);
         if (other instanceof InvertedCircleBounds) return Bounds.Collision.isOverlappingCircleInvertedCircle(this, other);
+        if (other instanceof CompositeBounds) return other.isOverlapping(this);
         if (other instanceof NullBounds) return false;
         console.error("No overlap supported between these bounds", this, other);
         return false;

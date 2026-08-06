@@ -85,11 +85,19 @@ class Rectangle {
         return this;
     }
 
-    set(x: number, y: number, width: number, height: number) {
+    set(rect: Rect): this;
+    set(x: number, y: number, width: number, height: number): this;
+    set(x: number | Rect, y?: number, width?: number, height?: number) {
+        if (!M.isNumber(x)) {
+            y = x.y;
+            width = x.width;
+            height = x.height;
+            x = x.x;
+        }
         this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
+        this.y = y ?? x;
+        this.width = width ?? 0;
+        this.height = height ?? 0;
         return this;
     }
 
