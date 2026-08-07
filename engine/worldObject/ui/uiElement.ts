@@ -7,6 +7,7 @@ namespace UIElement {
         canInteract?: () => boolean;
 
         tinting?: Tinting;
+        outlining?: Outlining;
 
         disabled?: boolean;
 
@@ -31,13 +32,18 @@ namespace UIElement {
         disabled: boolean;
     }
 
-    export type Tinting = {
-        scope?: 'texture' | 'worldobject';
+    export type StateColoring = {
         base?: number;
         hover?: number;
         clicked?: number;
         disabled?: number;
     }
+
+    export type Tinting = StateColoring & {
+        scope?: 'texture' | 'worldobject';
+    }
+
+    export type Outlining = StateColoring;
 
     export type SelectionMode = 'mouse' | 'manual';
 
@@ -57,12 +63,8 @@ class UIElement extends Module<WorldObject> {
     onKeyboardUp: UIElement.Callback | undefined;
     onKeyboardDown: UIElement.Callback | undefined;
 
-    tintingEnabled: boolean;
-    tintingScope?: 'texture' | 'worldobject';
-    baseTint?: number;
-    hoverTint?: number;
-    clickTint?: number;
-    disabledTint?: number;
+    tinting?: UIElement.Tinting;
+    outlining?: UIElement.Outlining;
 
     private clickedDownDistance: number | undefined;
     maxDistanceMouseCanMoveWhileClicking: number | undefined;
@@ -86,14 +88,8 @@ class UIElement extends Module<WorldObject> {
         this.onKeyboardUp = config.onKeyboardUp;
         this.onKeyboardDown = config.onKeyboardDown;
 
-        this.tintingEnabled = !!config.tinting;
-        if (config.tinting) {
-            this.tintingScope = config.tinting.scope;
-            this.baseTint = config.tinting.base;
-            this.hoverTint = config.tinting.hover;
-            this.clickTint = config.tinting.clicked;
-            this.disabledTint = config.tinting.disabled;
-        }
+        this.tinting = O.clone(config.tinting);
+        this.outlining = O.clone(config.outlining);
 
         this.maxDistanceMouseCanMoveWhileClicking = config.maxDistanceMouseCanMoveWhileClicking;
 
@@ -116,8 +112,15 @@ class UIElement extends Module<WorldObject> {
     override init(worldObject: WorldObject): void {
         super.init(worldObject);
 
-        if (this.baseTint === undefined && 'tint' in this.worldObject && M.isNumber(this.worldObject.tint)) {
-            this.baseTint = this.worldObject.tint;
+        if (this.tinting && this.tinting.base === undefined) {
+            this.tinting.base = this.worldObject.tint;
+        }
+
+        if (this.outlining && this.outlining.base === undefined) {
+            let effects = (this.worldObject as any).effects;
+            if (effects instanceof Effects) {
+                this.outlining.base = effects.outline.enabled ? effects.outline.color : -1;
+            }
         }
     }
 
@@ -134,27 +137,12 @@ class UIElement extends Module<WorldObject> {
             this.updateModeMouse(mouseOverlapping);
         }
 
-        if (this.tintingEnabled) {
-            let tintKey = 'tint';
-            if (this.tintingScope === 'texture') {
-                if (this.worldObject instanceof Sprite) {
-                    tintKey = 'textureTint';
-                } else {
-                    console.error("Tinting scope is 'texture' but WorldObject is not a Sprite!", this, this.worldObject);
-                }
-            }
+        if (this.tinting) {
+            UIElement.applyTinting(this, this.state, this.tinting);
+        }
 
-            if (this.state.disabled) {
-                if (this.disabledTint !== undefined) (this.worldObject as any)[tintKey] = this.disabledTint;
-            } else if (this.state.hovered || this.state.selected) {
-                if (this.state.clickedDown) {
-                    if (this.clickTint !== undefined) (this.worldObject as any)[tintKey] = this.clickTint;
-                } else {
-                    if (this.hoverTint !== undefined) (this.worldObject as any)[tintKey] = this.hoverTint;
-                }
-            } else {
-                if (this.baseTint !== undefined) (this.worldObject as any)[tintKey] = this.baseTint;
-            }
+        if (this.outlining) {
+            UIElement.applyOutlining(this, this.state, this.outlining);
         }
 
         this.handleStateChange();
@@ -391,5 +379,49 @@ namespace UIElement {
             M.distance(x, y, rect.x, rect.y + rect.height),
             M.distance(x, y, rect.x + rect.width, rect.y + rect.height),
         );
+    }
+
+    export function applyTinting(uiElement: UIElement, state: UIElement.State, tinting: UIElement.Tinting) {
+        let tintKey = 'tint';
+        if (tinting.scope === 'texture') {
+            if (uiElement.worldObject instanceof Sprite) {
+                tintKey = 'textureTint';
+            } else {
+                console.error("Tinting scope is 'texture' but WorldObject is not a Sprite!", uiElement, uiElement.worldObject);
+            }
+        }
+
+        let color = getStateColor(state, tinting);
+
+        if (color !== undefined) {
+            (uiElement.worldObject as any)[tintKey] = color;
+        }
+    }
+
+    export function applyOutlining(uiElement: UIElement, state: UIElement.State, tinting: UIElement.Tinting) {
+        if (!('effects' in uiElement.worldObject) || !(uiElement.worldObject.effects instanceof Effects)) {
+            console.error("Outlining applied but WorldObject does not have effects!", uiElement, uiElement.worldObject);
+        }
+
+        let color = getStateColor(state, tinting);
+
+        if (color !== undefined) {
+            if (color < 0) {
+                ((uiElement.worldObject as any).effects as Effects).outline.disable();
+            } else {
+                ((uiElement.worldObject as any).effects as Effects).outline.enable(color);
+            }
+        }
+    }
+
+    function getStateColor(state: UIElement.State, coloring: UIElement.StateColoring) {
+        if (state.disabled) {
+            return coloring.disabled;
+        }
+        if (state.hovered || state.selected) {
+            if (state.clickedDown && coloring.clicked !== undefined) return coloring.clicked;
+            return coloring.hover;
+        }
+        return coloring.base;
     }
 }

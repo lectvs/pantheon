@@ -68,7 +68,7 @@ namespace SpriteText {
         /**
          * Position includes spaces but does not include newlines or tags.
          */
-        byPosition?: DictNumber<CharPropertiesSingle>;
+        byPosition?: CharPropertiesSingle[] | DictNumber<CharPropertiesSingle>;
     }
     export type CharPropertiesSingle = {
         /**

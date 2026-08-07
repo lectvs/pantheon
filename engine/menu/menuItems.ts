@@ -35,7 +35,7 @@ class MenuTextButton extends SpriteText {
                 if (config.onClick) config.onClick.apply(this);
             }
         }));
-        button.baseTint = this.tint;
+        button.tinting!.base = this.tint;
     }
 
     override update() {

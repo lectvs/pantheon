@@ -160,10 +160,14 @@ namespace Theater {
     }
     export class WorldAsWorldObject extends WorldObject {
         containedWorld: World;
+        scale: number;
+        anchor: Vector2;
 
         constructor(containedWorld: World) {
             super();
             this.containedWorld = containedWorld;
+            this.scale = 1;
+            this.anchor = Anchor.TOP_LEFT;
         }
 
         override update() {
@@ -173,6 +177,12 @@ namespace Theater {
 
         override render(): Render.Result {
             let result = this.containedWorld.render();
+            result[0].scale.x *= this.scale;
+            result[0].scale.y *= this.scale;
+            result[0].x -= this.anchor.x * this.containedWorld.getScreenWidth() * this.containedWorld.scaleX * this.scale;
+            result[0].y -= this.anchor.y * this.containedWorld.getScreenHeight() * this.containedWorld.scaleY * this.scale;
+            result[0].x = M.roundToNearest(result[0].x, 1/global.upscale);
+            result[0].y = M.roundToNearest(result[0].y, 1/global.upscale);
             return result;
         }
 
