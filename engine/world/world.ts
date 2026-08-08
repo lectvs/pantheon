@@ -98,6 +98,12 @@ namespace World {
         action: 'playontransitionend';
         music: string | Sound;
         fadeTime?: number;
+    } | {
+        action: 'stopontransitionbegin';
+        fadeTime?: number;
+    } | {
+        action: 'stopontransitionend';
+        fadeTime?: number;
     }
 
     // To add a new hook, simply add an entry here and call World.hookManager.executeHooks() at the appropriate location(s).

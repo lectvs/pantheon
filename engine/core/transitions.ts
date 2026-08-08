@@ -51,7 +51,7 @@ namespace Transitions {
                     result.push(newScreenshot.sprite);
                 }
             } else {
-                let oldScreenshot = this.getNewWorldScreenshot();
+                let oldScreenshot = this.getOldWorldScreenshot();
                 if (oldScreenshot) {
                     result.push(oldScreenshot.sprite);
                 }

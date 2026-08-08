@@ -102,11 +102,14 @@ class StageManager {
         return this.getCurrentWorld() instanceof Menu;
     }
 
-    load(stage: () => World, props: StageManager.StageTransitionProps = { transition: undefined }) {
+    load(stage: () => World, props: StageManager.StageTransitionProps = {}) {
         this.endOfFrameQueue.push(() => this.loadImmediate(stage, props));
     }
 
-    loadImmediate(stage: () => World, props: StageManager.StageTransitionProps = { transition: undefined }) {
+    loadImmediate(stage: () => World, props: StageManager.StageTransitionProps = {}) {
+        if (props instanceof Transition) {
+            console.error('Accidentally passed in Transition for TransitionProps when loading stage!');
+        }
         let oldWorld = this.getCurrentWorld();
         let newWorld = stage();
         if (props.onBeginTransition) {
@@ -132,11 +135,11 @@ class StageManager {
         return newWorld;
     }
 
-    reload(props: StageManager.StageTransitionProps = { transition: undefined }) {
+    reload(props: StageManager.StageTransitionProps = {}) {
         this.endOfFrameQueue.push(() => this.reloadImmediate(props));
     }
 
-    reloadImmediate(props: StageManager.StageTransitionProps = { transition: undefined }) {
+    reloadImmediate(props: StageManager.StageTransitionProps = {}) {
         if (this.stageStack.length === 0) {
             console.error('Cannot reload current stage because there are no stages loaded');
             return;
@@ -161,6 +164,8 @@ class StageManager {
         newWorld?.onBeginTransition();
         if (newWorld?.music.action === 'playontransitionbegin' && !doNotPlayWorldMusic) {
             global.game.musicManager.play(newWorld.music.music, newWorld.music.fadeTime);
+        } else if (newWorld?.music.action === 'stopontransitionbegin') {
+            global.game.musicManager.stop(newWorld.music.fadeTime);
         }
         if (this.transition.done) {
             this.finishTransition();
@@ -173,6 +178,8 @@ class StageManager {
         let world = this.getCurrentWorld();
         if (world?.music.action === 'playontransitionend' && !this.transition?.doNotPlayWorldMusic) {
             global.game.musicManager.play(world.music.music, world.music.fadeTime);
+        } else if (world?.music.action === 'stopontransitionend') {
+            global.game.musicManager.stop(world.music.fadeTime);
         }
         if (this.transition) {
             this.transition.free();
