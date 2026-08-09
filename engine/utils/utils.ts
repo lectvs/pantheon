@@ -88,7 +88,6 @@ function copyText(text: string, settings: SpriteText.Config<SpriteText> = {}) {
     let spriteText = new SpriteText({
         text,
         anchor: Anchor.TOP_LEFT,
-        justify: 'left',
         ...settings,
     });
 
