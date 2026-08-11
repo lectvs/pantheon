@@ -1034,6 +1034,10 @@ namespace World {
         export function addWorldObjectToWorld<T extends WorldObject | undefined>(obj: T, world: World): T {
             if (!obj || !world) return obj;
 
+            if (obj.world === world) {
+                return obj;
+            }
+
             if (obj.world) {
                 console.error(`Cannot add object ${obj.name} to world because it aleady exists in another world! You must remove object from previous world first. World:`, world, 'Previous world:', obj.world);
                 return obj;
