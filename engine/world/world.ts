@@ -353,11 +353,14 @@ class World {
     }
 
     protected updateMaxInputLevelThisFrame() {
-        if (this.worldObjects.length === 0) {
-            this.maxInputLevelThisFrame = 0;
-            return;
+        let maxInputLevel = -Infinity;
+        let hasValidWorldObjects = false;
+        for (let worldObject of this.worldObjects) {
+            if (!worldObject.isActive()) continue;
+            maxInputLevel = Math.max(maxInputLevel, worldObject.getInputLevel());
+            hasValidWorldObjects = true;
         }
-        this.maxInputLevelThisFrame = M.max(this.worldObjects, obj => obj.getInputLevel());
+        this.maxInputLevelThisFrame = hasValidWorldObjects ? maxInputLevel : 0;
     }
 
     protected updateScriptManager() {
