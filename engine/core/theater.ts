@@ -183,6 +183,7 @@ namespace Theater {
             result[0].y -= this.anchor.y * this.containedWorld.getScreenHeight() * this.containedWorld.scaleY * this.scale;
             result[0].x = M.roundToNearest(result[0].x, 1/global.upscale);
             result[0].y = M.roundToNearest(result[0].y, 1/global.upscale);
+            result[0].alpha = this.getTotalAlpha();
             return result;
         }
 
