@@ -162,13 +162,14 @@ class Game {
         return this.gameTheater;
     }
 
-    loadMainMenu() {
-        this.stageManager.reset();
-        this.stageManager.loadImmediate(this.mainMenu, {
-            transition: new Transitions.Instant(),
-            stackPrevious: false,
+    loadMainMenu(transition: Transition = new Transitions.Instant()) {
+        this.stageManager.load(this.mainMenu, {
+            transition,
+            clearStack: true,
+            onTransitioned: () => {
+                Persist.persist();
+            },
         });
-        Persist.persist();
     }
 
     pauseGame(transition: Transition = new Transitions.Instant()) {

@@ -7,9 +7,9 @@ namespace StageManager {
         /**
          * @default - true iff either the old or the new stage is a Menu.
          */
+        clearStack?: boolean;
         stackPrevious?: boolean;
         doNotPlayWorldMusic?: boolean;
-        transitionType?: 'static' | 'dynamic';
         onBeginTransition?: (world: World) => void;
         onTransitioned?: (world: World) => void;
     }
@@ -67,10 +67,10 @@ class StageManager {
         let oldWorld = this.getCurrentWorld();
         this.addToWastebin(this.stageStack.pop()!.world);
         let newWorld = this.getCurrentWorld();
-        this.transitionTo(oldWorld, newWorld, transition, false, transitionType);
+        this.transitionTo(oldWorld, newWorld, transition, false);
     }
 
-    clearMenus(transition: Transition = new Transitions.Instant(), transitionType?: 'static' | 'dynamic') {
+    clearMenus(transition: Transition = new Transitions.Instant()) {
         let oldWorld = this.getCurrentWorld();
         this.stageStack.filterInPlace(stage => {
             if (stage.world instanceof Menu) {
@@ -82,7 +82,7 @@ class StageManager {
         let newWorld = this.getCurrentWorld();
 
         if (oldWorld !== newWorld) {
-            this.transitionTo(oldWorld, newWorld, transition, false, transitionType);
+            this.transitionTo(oldWorld, newWorld, transition, false);
         }
     }
 
@@ -122,8 +122,19 @@ class StageManager {
                 props.onTransitioned!(this);
             }, { runOnce: true });
         }
+        let clearStack = props.clearStack ?? false;
         let stackPrevious = props.stackPrevious ?? (oldWorld instanceof Menu || newWorld instanceof Menu);
-        if (!stackPrevious && this.stageStack.length > 0) {
+        if (clearStack) {
+            if (props.stackPrevious === true && this.stageStack.length > 0) {
+                let oldStage = this.stageStack.pop()!;
+                this.stageStack.forEach(stage => this.addToWastebin(stage.world));
+                this.stageStack.clear();
+                this.stageStack.push(oldStage);
+            } else {
+                this.stageStack.forEach(stage => this.addToWastebin(stage.world));
+                this.stageStack.clear();
+            }
+        } else if (!stackPrevious && this.stageStack.length > 0) {
             this.addToWastebin(this.stageStack.pop()!.world);
         }
         this.stageStack.push({
@@ -131,7 +142,7 @@ class StageManager {
             worldFactory: stage,
         });
         newWorld.update();
-        this.transitionTo(oldWorld, newWorld, props.transition ?? new Transitions.Instant(), props.doNotPlayWorldMusic, props.transitionType);
+        this.transitionTo(oldWorld, newWorld, props.transition ?? new Transitions.Instant(), props.doNotPlayWorldMusic);
         return newWorld;
     }
 
@@ -144,6 +155,10 @@ class StageManager {
             console.error('Cannot reload current stage because there are no stages loaded');
             return;
         }
+        if (props.clearStack !== undefined) {
+            console.error('clearStack prop is not supported in reload/reloadImmediate');
+        }
+        props.clearStack = false;
         if (props.stackPrevious !== undefined) {
             console.error('stackPrevious prop is not supported in reload/reloadImmediate');
         }
@@ -158,9 +173,9 @@ class StageManager {
         this.endOfFrameQueue.clear();
     }
 
-    private transitionTo(oldWorld: World | undefined, newWorld: World | undefined, transition: Transition, doNotPlayWorldMusic: boolean | undefined, type: 'static' | 'dynamic' | undefined) {
+    private transitionTo(oldWorld: World | undefined, newWorld: World | undefined, transition: Transition, doNotPlayWorldMusic: boolean | undefined) {
         this.transition = transition;
-        this.transition.setData({ oldWorld, newWorld, doNotPlayWorldMusic, type });
+        this.transition.setData({ oldWorld, newWorld, doNotPlayWorldMusic });
         newWorld?.onBeginTransition();
         if (newWorld?.music.action === 'playontransitionbegin' && !doNotPlayWorldMusic) {
             global.game.musicManager.play(newWorld.music.music, newWorld.music.fadeTime);

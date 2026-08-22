@@ -16,7 +16,6 @@ namespace Transition {
         oldWorld: World | undefined;
         newWorld: World | undefined;
         doNotPlayWorldMusic: boolean | undefined;
-        type: 'static' | 'dynamic' | undefined;
     }
 }
 
@@ -30,8 +29,6 @@ abstract class Transition {
 
     protected preTime: number;
     protected postTime: number;
-    protected type: 'static' | 'dynamic';
-    protected isInstant: boolean;
 
     protected script: Script | undefined;
 
@@ -40,8 +37,6 @@ abstract class Transition {
     constructor(config: Transition.BaseConfig) {
         this.preTime = config.preTime ?? 0;
         this.postTime = config.postTime ?? 0;
-        this.type = 'static';
-        this.isInstant = config.isInstant ?? false;
         this.script = undefined;
     }
 
@@ -52,52 +47,35 @@ abstract class Transition {
     abstract render(): Render.Result;
 
     getOldWorldScreenshot() {
-        if (this.isInstant) return undefined;
-        if (this.type === 'static') return this._oldScreenshot;
-        if (this.oldWorld && this._oldScreenshot) {
-            this.oldWorld.update();
-            this.oldWorld.takeScreenshot(this._oldScreenshot.texture);
-            return this._oldScreenshot;
-        }
-        return undefined;
+        return this._oldScreenshot;
     }
 
     getNewWorldScreenshot() {
-        if (this.isInstant) return undefined;
-        if (this.type === 'static') return this._newScreenshot;
-        if (this.newWorld && this._newScreenshot) {
-            this.newWorld.update();
-            this.newWorld.takeScreenshot(this._newScreenshot.texture);
-            return this._newScreenshot;
-        }
-        return undefined;
+        return this._newScreenshot;
     }
 
     setData(props: Transition.SetDataProps) {
         this.oldWorld = props.oldWorld;
         this.newWorld = props.newWorld;
         this.doNotPlayWorldMusic = props.doNotPlayWorldMusic;
-        if (props.type) this.type = props.type;
 
-        if (!this.isInstant) {
-            if (this.oldWorld) {
-                let oldWorldScreenshot = this.oldWorld.takeScreenshot();
-                let oldWorldSprite = new PIXI.Sprite(oldWorldScreenshot.texture);
-                oldWorldSprite.scale.set(1 / oldWorldScreenshot.upscale);
-                this._oldScreenshot = {
-                    texture: oldWorldScreenshot.texture,
-                    sprite: oldWorldSprite,
-                };
-            }
-            if (this.newWorld) {
-                let newWorldScreenshot = this.newWorld.takeScreenshot();
-                let newWorldSprite = new PIXI.Sprite(newWorldScreenshot.texture);
-                newWorldSprite.scale.set(1 / newWorldScreenshot.upscale);
-                this._newScreenshot = {
-                    texture: newWorldScreenshot.texture,
-                    sprite: newWorldSprite,
-                };
-            }
+        if (this.oldWorld) {
+            let oldWorldScreenshot = this.oldWorld.takeScreenshot();
+            let oldWorldSprite = new PIXI.Sprite(oldWorldScreenshot.texture);
+            oldWorldSprite.scale.set(1 / oldWorldScreenshot.upscale);
+            this._oldScreenshot = {
+                texture: oldWorldScreenshot.texture,
+                sprite: oldWorldSprite,
+            };
+        }
+        if (this.newWorld) {
+            let newWorldScreenshot = this.newWorld.takeScreenshot();
+            let newWorldSprite = new PIXI.Sprite(newWorldScreenshot.texture);
+            newWorldSprite.scale.set(1 / newWorldScreenshot.upscale);
+            this._newScreenshot = {
+                texture: newWorldScreenshot.texture,
+                sprite: newWorldSprite,
+            };
         }
     }
 
