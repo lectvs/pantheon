@@ -225,7 +225,6 @@ class Sprite extends PhysicsWorldObject {
 
     private ensureGCCTextureLoaded() {
         if (GCCTextures.isGCCTextureDestroyed(this.texture)) {
-            console.log('recreating')
             this.setTexture(GCCTextures.getNewGCCTexture(this.texture));
         }
     }

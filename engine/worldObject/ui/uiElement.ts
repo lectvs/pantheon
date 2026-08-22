@@ -113,7 +113,9 @@ class UIElement extends Module<WorldObject> {
         super.init(worldObject);
 
         if (this.tinting && this.tinting.base === undefined) {
-            this.tinting.base = this.worldObject.tint;
+            this.tinting.base = this.tinting.scope === 'texture' && this.worldObject instanceof Sprite
+                ? this.worldObject.textureTint
+                : this.worldObject.tint;
         }
 
         if (this.outlining && this.outlining.base === undefined) {

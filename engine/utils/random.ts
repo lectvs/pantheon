@@ -148,7 +148,7 @@ class RandomNumberGenerator {
     }
 
     /**
-     * Same as perlin(), with a pre-defined offset.
+     * Perlin value, normalized to [-1, 1], with a pre-defined offset.
      */
     perlin2(x: number, y?: number, z?: number) {
         return this.perlinRng.get(x + 11037.11037, y, z);
