@@ -31,6 +31,7 @@ namespace TextureFilter {
      *              float length(vecN A) - magnitude of a vector
      *              float step(float threshold, float value) - returns 0 if value < threshold, 1 otherwise
      *              float smoothStep(float threshold, float value, float sharpness) - returns ~0 if value < threshold, up to ~1 otherwise, smoothed
+     *              float atan(float y, float x) - atan/atan2
      */
     export type Config = {
         uniforms?: Dict<any>;
