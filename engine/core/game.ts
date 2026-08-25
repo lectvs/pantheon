@@ -163,7 +163,7 @@ class Game {
     }
 
     loadMainMenu(transition: Transition = new Transitions.Instant()) {
-        this.stageManager.load(this.mainMenu, {
+        this.stageManager.loadImmediate(this.mainMenu, {
             transition,
             clearStack: true,
             onTransitioned: () => {

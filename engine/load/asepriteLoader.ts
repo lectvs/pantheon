@@ -111,11 +111,6 @@ class AsepriteLoader implements Loader {
                     }
 
                     let layerTexture = newPixiRenderTexture(this.asepriteDocument.width, this.asepriteDocument.height, 'AsepriteLoader.load');
-                    if (this.asepriteFile.anchor) {
-                        layerTexture.defaultAnchor.set(this.asepriteFile.anchor.x, this.asepriteFile.anchor.y);
-                    } else {
-                        layerTexture.defaultAnchor.set(0.5, 0.5);
-                    }
 
                     sprite.texture = celTexture;
                     sprite.anchor.set(celTexture.defaultAnchor.x, celTexture.defaultAnchor.y);
@@ -134,6 +129,11 @@ class AsepriteLoader implements Loader {
                     renderToRenderTexture(sprite, frameTexture);
 
                     if (renderSeparateLayers) {
+                        if (this.asepriteFile.anchor) {
+                            layerTexture.defaultAnchor.set(this.asepriteFile.anchor.x, this.asepriteFile.anchor.y);
+                        } else {
+                            layerTexture.defaultAnchor.set(0.5, 0.5);
+                        }
                         TextureUtils.setImmutable(layerTexture);
                         AssetCache.textures[this.getFrameLayerIndexKey(i, cel.layerIndex)] = layerTexture;
                     } else {
