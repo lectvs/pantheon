@@ -401,6 +401,7 @@ class World {
                 renderToRenderTexture(layerContainer, layerTexture, 'clearTextureFirst');
                 Render.upscalePixiObjectProperties(layerContainer, 'downscale');
                 layerSprite.updateAndSetEffects(layer.effects);
+                layerSprite.alpha = layer.alpha;
                 layerSprite.position.set(0, 0);
                 result.push(layerSprite);
             } else {
@@ -909,6 +910,7 @@ namespace World {
         reverseSort: boolean;
 
         effects: Effects;
+        alpha: number;
         mask: LayerMaskConfig | undefined;
         private preContainer: PIXI.Container;
         private container: PIXI.Container;
@@ -917,7 +919,7 @@ namespace World {
         private isSpriteDestroyed: boolean;
 
         get shouldRenderToOwnLayer() {
-            return this.effects.hasEffects() || this.mask;
+            return this.effects.hasEffects() || this.alpha < 1 || this.mask;
         }
         
         constructor(world: World, name: string, config: World.LayerConfig) {
@@ -928,6 +930,7 @@ namespace World {
             this.reverseSort = config.reverseSort ?? false;
 
             this.effects = new Effects(config.effects);
+            this.alpha = 1;
             this.mask = config.mask ? config.mask() : undefined;
             this.preContainer = new PIXI.Container();
             this.container = new PIXI.Container();
