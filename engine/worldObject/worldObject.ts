@@ -1168,6 +1168,11 @@ class WorldObject {
         return this;
     }
 
+    withIgnoreInputLevelsUpTo(ignoreInputLevelsUpTo: number) {
+        this.ignoreInputLevelsUpTo = ignoreInputLevelsUpTo;
+        return this;
+    }
+
     withTint(tint: number) {
         this.tint = tint;
         return this;
