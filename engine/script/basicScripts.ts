@@ -137,6 +137,10 @@ namespace S {
         }
     }
 
+    export function timeout(timeoutSeconds: number, ...scriptFunctions: Script.FunctionLike[]): Script.Function {
+        return S.either(timeoutSeconds, ...scriptFunctions);
+    }
+
     export function tween<T extends Partial<Record<K, number>>, K extends keyof T>(duration: OrFactory<number>, obj: T, prop: K, start: number, end: number, easingFunction: Tween.Easing.Function = Tween.Easing.Linear): Script.Function {
         return S.doOverTime(duration, t => {
             obj[prop] = M.lerp(t, start, end, easingFunction) as any;
