@@ -40,11 +40,6 @@ namespace S {
         }
     }
 
-    export function fade(duration: number, color: number = 0x000000): Script.Function {
-        let fadeScript = global.theater.fade(duration, color);
-        return S.waitUntil(() => fadeScript.isDone);
-    }
-
     export function jumpZ(duration: number, sprite: Sprite, peakDelta: number, landOnGround: boolean = false): Script.Function {
         return function*() {
             let start = sprite.z;

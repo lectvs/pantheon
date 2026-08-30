@@ -79,6 +79,9 @@ class Theater {
         return FrameCache.array(this.container);
     }
 
+    /**
+     * @deprecated Try to use World.fadeIn instead. This can persist across worlds!
+     */
     clearFades(duration: number) {
         let lastOpaque = this.fades.findIndexLast(fade => fade.alpha >= 1);
         this.fades.splice(0, lastOpaque);
@@ -88,6 +91,9 @@ class Theater {
         ))));
     }
 
+    /**
+     * @deprecated Try to use World.fadeOut instead. This can persist across worlds!
+     */
     fade(duration: number, color: number) {
         let fade = new Theater.Fade(color, 0);
         this.fades.push(fade);
