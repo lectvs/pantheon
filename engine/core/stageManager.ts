@@ -197,6 +197,7 @@ class StageManager {
             global.game.musicManager.stop(world.music.fadeTime);
         }
         if (this.transition) {
+            this.transition.onTransitionEnd(world);
             this.transition.free();
             this.transition = undefined;
         }

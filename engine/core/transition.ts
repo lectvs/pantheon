@@ -83,4 +83,8 @@ abstract class Transition {
         if (this._oldScreenshot) freePixiRenderTexture(this._oldScreenshot.texture);
         if (this._newScreenshot) freePixiRenderTexture(this._newScreenshot.texture);
     }
+
+    onTransitionEnd(newWorld: World | undefined) {
+        // Pass, override by children
+    }
 }
