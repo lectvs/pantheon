@@ -7,7 +7,7 @@ namespace GraphicsUtils {
         }
 
         // Add padding because the local bounds method is not super accurate
-        localBounds.scale(1.5);
+        localBounds.scaleCentered(1.5);
 
         if (!A.isEmpty(filters)) {
             for (let filter of filters) {
@@ -48,8 +48,8 @@ namespace GraphicsUtils {
         let maxy = Math.max(v1y, v2y, v3y, v4y);
 
         // Anchor adjustment
-        let anchorX = -baseBounds.x / baseBounds.width;
-        let anchorY = -baseBounds.y / baseBounds.height;
+        let anchorX = baseBounds.width === 0 ? 0.5 : -baseBounds.x / baseBounds.width;
+        let anchorY = baseBounds.height === 0 ? 0.5 : -baseBounds.y / baseBounds.height;
         let ax = Math.floor(anchorX * baseBounds.width);
         let ay = Math.floor(anchorY * baseBounds.height);
         let rotatedAndScaled_ax = (-ax) * M.cos(angle) - (-ay) * M.sin(angle);

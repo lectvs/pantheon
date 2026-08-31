@@ -85,6 +85,32 @@ class Rectangle {
         return this;
     }
 
+    scaleCentered(scale: number, dimensionsOnly?: 'dimensionsOnly') {
+        if (!dimensionsOnly) {
+            this.x = this.centerX + (this.x - this.centerX) * scale;
+            this.y = this.centerY + (this.y - this.centerY) * scale;
+        }
+        this.width *= scale;
+        this.height *= scale;
+        return this;
+    }
+
+    scaleXCentered(scale: number, dimensionsOnly?: 'dimensionsOnly') {
+        if (!dimensionsOnly) {
+            this.x = this.centerX + (this.x - this.centerX) * scale;
+        }
+        this.width *= scale;
+        return this;
+    }
+
+    scaleYCentered(scale: number, dimensionsOnly?: 'dimensionsOnly') {
+        if (!dimensionsOnly) {
+            this.y = this.centerY + (this.y - this.centerY) * scale;
+        }
+        this.height *= scale;
+        return this;
+    }
+
     set(rect: Rect): this;
     set(x: number, y: number, width: number, height: number): this;
     set(x: number | Rect, y?: number, width?: number, height?: number) {
