@@ -148,3 +148,8 @@ function get(nameOrType: string | (new (...args: any[]) => any)) {
         : global.world.select.modules$(nameOrType);
     return modules ? A.clone(modules) : undefined;
 }
+
+function getByText(text: string) {
+    if (!global.world) return undefined;
+    return global.world.select.typeAll$(SpriteText).find(st => st.getCurrentText() === text);
+}

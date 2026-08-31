@@ -582,6 +582,10 @@ class WorldObject {
     }
 
     exit(duration: number, finalValues: Actions.ExitFinalValues, easingFn?: Tween.Easing.Function, delay?: number) {
+        if (!this.isActive()) {
+            this.kill();
+            return S.noop();
+        }
         return Actions.exit(this, duration, finalValues, easingFn, delay);
     }
 

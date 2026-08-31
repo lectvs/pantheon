@@ -19,6 +19,14 @@ namespace S {
         }
     }
 
+    export function debug(name: string, ...scriptFunctions: Script.FunctionLike[]) {
+        return function*() {
+            console.log('start:', name);
+            yield S.chain(...scriptFunctions);
+            console.log('end:', name);
+        };
+    }
+
     export function doOverTime(time: OrFactory<number>, func: (t: number, time: number) => any): Script.Function {
         return function*() {
             let duration = OrFactory.resolve(time);
