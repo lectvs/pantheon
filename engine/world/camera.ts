@@ -7,6 +7,9 @@ namespace Camera {
         limits?: Bndries;
         mode?: Mode;
         movement?: Movement;
+        /**
+         * @default true
+         */
         screenShakePhysicallyMovesCamera?: boolean;
     }
 
