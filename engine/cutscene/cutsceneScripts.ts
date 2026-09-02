@@ -1,9 +1,4 @@
 namespace S {
-    export function clearFades(duration: number) {
-        let fadeScript = global.theater.clearFades(duration);
-        return S.waitUntil(() => fadeScript.isDone);
-    }
-
     export function dialog(profileKey: string, text: string): Script.Function {
         return function*() {
             if (!global.theater.dialogBox) return;
