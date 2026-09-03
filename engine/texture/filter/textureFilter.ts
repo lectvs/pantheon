@@ -37,6 +37,11 @@ namespace TextureFilter {
         uniforms?: Dict<any>;
         helperMethods?: string;
         visualPadding?: number;
+        /**
+         * Disable this if your filter exhibits bad behavior when the texture goes off-screen.
+         * @default true
+         */
+        autoFit?: boolean;
         code?: string;
     }
 }
@@ -55,6 +60,7 @@ class TextureFilter extends PIXI.Filter {
         );
         this.uniformCache = TextureFilter.constructUniformsMap(config.uniforms);  // Purposefully duplicated
         this.visualPadding = config.visualPadding ?? 0;
+        this.autoFit = config.autoFit ?? true;
         this.timeScale = 1;
     }
 
@@ -280,6 +286,8 @@ namespace TextureFilter {
         uniforms['height'] = 0;
         uniforms['t'] = 0;
         uniforms['upscale'] = 1;
+        uniforms['offsetx'] = 0;
+        uniforms['offsety'] = 0;
 
         return uniforms;
     }
