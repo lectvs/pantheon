@@ -2,6 +2,9 @@ namespace ParticleSystem {
     export type ParticleConfig = {
         p?: Pt;
         maxLife: number;
+        textureRoot?: string;
+        textures?: (string | number | PIXI.Texture)[];
+        frameRate?: number;
         stages: [ParticleInitialStageConfig, ...ParticleStageConfig[]];
     }
 
@@ -28,6 +31,9 @@ namespace ParticleSystem {
         radius: number;
         color: number;
         alpha: number;
+        textures: PIXI.Texture[];
+        frameRate: number;
+        usesDefaultTexture: boolean;
         t: number;
         maxLife: number;
         stages: ParticleStage[];
@@ -73,12 +79,17 @@ class ParticleSystem extends WorldObject {
         for (let i = 0; i < this.particles.length; i++) {
             let particle = this.particles[i];
 
+            let scale = particle.usesDefaultTexture ? particle.radius/16 : particle.radius;
+            let textureI = Math.floor(particle.t * particle.frameRate) % particle.textures.length;
+
             // Particle position includes this.x/y so the system can move around without affecting existing particles.
             this.sprites[i].x = particle.x - this.x;
             this.sprites[i].y = particle.y - this.y;
-            this.sprites[i].scale.set(particle.radius/16);
+            this.sprites[i].scale.set(scale);
             this.sprites[i].tint = Color.combineTints(particle.color, this.getTotalTint());
             this.sprites[i].alpha = particle.alpha * this.getTotalAlpha();
+
+            this.sprites[i].texture = particle.textures[textureI];
 
             result.push(this.sprites[i]);
         }
@@ -103,6 +114,13 @@ class ParticleSystem extends WorldObject {
             radius: config.stages[0].radius,
             color: config.stages[0].color ?? 0xFFFFFF,
             alpha: config.stages[0].alpha ?? 1,
+            textures: config.textures
+                ? config.textures.map(texture => texture instanceof PIXI.Texture
+                    ? texture
+                    : AssetCache.getTexture(config.textureRoot ? `${config.textureRoot}/${texture}` : `${texture}`))
+                : [Textures.filledCircle(16, 0xFFFFFF)],
+            frameRate: config.frameRate ?? 1,
+            usesDefaultTexture: !config.textures,
             t: 0,
             maxLife: config.maxLife,
             stages: config.stages.map(stageConfig => ({
@@ -119,7 +137,7 @@ class ParticleSystem extends WorldObject {
         this.particles.push(particle);
 
         if (this.sprites.length < this.particles.length) {
-            this.sprites.push(new PIXI.Sprite(Textures.filledCircle(16, 0xFFFFFF)));
+            this.sprites.push(new PIXI.Sprite());
         }
 
         this.runScript(this.tweenProperty(particle, 'vx'));
