@@ -1,4 +1,8 @@
 namespace ParticleSystem {
+    export type Config<T extends ParticleSystem> = WorldObject.Config<T> & {
+        moveParticlesWithSystem?: boolean;
+    }
+
     export type ParticleConfig = {
         p?: Pt;
         maxLife: number;
@@ -51,11 +55,15 @@ namespace ParticleSystem {
 }
 
 class ParticleSystem extends WorldObject {
+    private moveParticlesWithSystem: boolean;
+
     protected particles: ParticleSystem.Particle[] = [];
     private sprites: PIXI.Sprite[] = [];
 
-    constructor(config: WorldObject.Config<ParticleSystem>) {
+    constructor(config: ParticleSystem.Config<ParticleSystem>) {
         super(config);
+
+        this.moveParticlesWithSystem = config.moveParticlesWithSystem ?? false;
     }
 
     override update() {
@@ -81,15 +89,18 @@ class ParticleSystem extends WorldObject {
 
             let scale = particle.usesDefaultTexture ? particle.radius/16 : particle.radius;
             let textureI = Math.floor(particle.t * particle.frameRate) % particle.textures.length;
+            let texture = particle.textures[textureI];
 
-            // Particle position includes this.x/y so the system can move around without affecting existing particles.
-            this.sprites[i].x = particle.x - this.x;
-            this.sprites[i].y = particle.y - this.y;
+            // If moveParticlesWithSystem is set, particle position includes this.x/y so the system can
+            // move around without affecting existing particles.
+            this.sprites[i].x = this.moveParticlesWithSystem ? particle.x : particle.x - this.x;
+            this.sprites[i].y = this.moveParticlesWithSystem ? particle.y : particle.y - this.y;
             this.sprites[i].scale.set(scale);
             this.sprites[i].tint = Color.combineTints(particle.color, this.getTotalTint());
             this.sprites[i].alpha = particle.alpha * this.getTotalAlpha();
 
-            this.sprites[i].texture = particle.textures[textureI];
+            this.sprites[i].texture = texture;
+            this.sprites[i].anchor.set(texture.defaultAnchor.x, texture.defaultAnchor.y);
 
             result.push(this.sprites[i]);
         }
@@ -106,9 +117,10 @@ class ParticleSystem extends WorldObject {
     protected addParticle(config: ParticleSystem.ParticleConfig) {
         let totalStageWeights = A.sum(config.stages.slice(1, config.stages.length), stage => stage.weightTo ?? 1);
         let particle: ParticleSystem.Particle = {
-            // Particle position includes this.x/y so the system can move around without affecting existing particles.
-            x: this.x + (config.p?.x ?? 0),
-            y: this.y + (config.p?.y ?? 0),
+            // If moveParticlesWithSystem is set, particle position includes this.x/y so the system can
+            // move around without affecting existing particles.
+            x: this.moveParticlesWithSystem ? (config.p?.x ?? 0) : this.x + (config.p?.x ?? 0),
+            y: this.moveParticlesWithSystem ? (config.p?.y ?? 0) : this.y + (config.p?.y ?? 0),
             vx: config.stages[0].v.x,
             vy: config.stages[0].v.y,
             radius: config.stages[0].radius,

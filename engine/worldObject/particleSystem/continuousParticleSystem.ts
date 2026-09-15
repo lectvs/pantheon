@@ -2,7 +2,7 @@
 
 
 namespace ContinuousParticleSystem {
-    export type Config = WorldObject.Config<ContinuousParticleSystem> & {
+    export type Config = ParticleSystem.Config<ContinuousParticleSystem> & {
         startEnabled?: boolean;
         startDelay?: number;
         particleRate: number;

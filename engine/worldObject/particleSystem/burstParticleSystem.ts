@@ -1,7 +1,7 @@
 /// <reference path="./particleSystem.ts" />
 
 namespace BurstParticleSystem {
-    export type Config = WorldObject.Config<BurstParticleSystem> & {
+    export type Config = ParticleSystem.Config<BurstParticleSystem> & {
         deleteOnComplete?: boolean;
         particleCount: number;
         particleConfigFactory: Factory<ParticleSystem.ParticleConfig>;
