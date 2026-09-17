@@ -39,6 +39,7 @@ namespace WorldObject {
         ignoreInputLevelsUpTo?: number;
         tags?: string[];
         hooks?: HooksConfig<Hooks<WO>>;
+        scriptOnAdd?: (obj: WO) => Script.FunctionLike;
         data?: any;
 
         debugFollowMouse?: boolean;
@@ -267,6 +268,10 @@ class WorldObject {
             binder: fn => fn.bind(this),
             hooks: config.hooks,
         });
+
+        if (config.scriptOnAdd) {
+            this.addHook('onAdd', () => this.runScript(config.scriptOnAdd!(this)));
+        }
 
         this.debugFollowMouse = config.debugFollowMouse ?? false;
     }
