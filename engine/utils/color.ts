@@ -33,6 +33,8 @@ namespace Color {
 
     export function lerpColorByLch(t: number, color1: number, color2: number, easingFn: Tween.Easing.Function = Tween.Easing.Linear): number {
         if (color1 === color2) return color1;
+        if (t === 0) return color1;
+        if (t === 1) return color2;
 
         let vec3color1 = colorToVec3(color1);
         let vec3color2 = colorToVec3(color2);
@@ -48,6 +50,8 @@ namespace Color {
 
     export function lerpColorByRgb(t: number, color1: number, color2: number, easingFn: Tween.Easing.Function = Tween.Easing.Linear): number {
         if (color1 === color2) return color1;
+        if (t === 0) return color1;
+        if (t === 1) return color2;
 
         let vec3color1 = colorToVec3(color1);
         let vec3color2 = colorToVec3(color2);

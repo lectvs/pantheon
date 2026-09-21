@@ -6,7 +6,7 @@ namespace ContinuousParticleSystem {
         startEnabled?: boolean;
         startDelay?: number;
         particleRate: number;
-        particleConfigFactory: Factory<ParticleSystem.ParticleConfig>;
+        particleConfigFactory: (i: number) => ParticleSystem.ParticleConfig;
     }
 }
 
@@ -14,7 +14,7 @@ class ContinuousParticleSystem extends ParticleSystem {
     enabled: boolean;
 
     private particleRate: number;
-    private particleConfigFactory: Factory<ParticleSystem.ParticleConfig>;
+    private particleConfigFactory: (i: number) => ParticleSystem.ParticleConfig;
 
     constructor(config: ContinuousParticleSystem.Config) {
         super(config);
@@ -25,7 +25,7 @@ class ContinuousParticleSystem extends ParticleSystem {
 
         let particleTimer = new Timer(1/this.particleRate, () => {
             if (this.enabled) {
-                this.addParticle(this.particleConfigFactory());
+                this.addParticle(this.particleConfigFactory(this.particleI));
             }
         }, Infinity);
 
@@ -37,7 +37,7 @@ class ContinuousParticleSystem extends ParticleSystem {
         let delta = time / iters;
 
         let warmupTimer = new Timer(1/this.particleRate, () => {
-            this.addParticle(this.particleConfigFactory());
+            this.addParticle(this.particleConfigFactory(this.particleI));
         }, Infinity);
 
         for (let i = 0; i < iters; i++) {

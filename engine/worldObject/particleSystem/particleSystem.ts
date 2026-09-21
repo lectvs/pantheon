@@ -1,6 +1,8 @@
 namespace ParticleSystem {
     export type Config<T extends ParticleSystem> = WorldObject.Config<T> & {
+        particleTextureSize?: number;
         moveParticlesWithSystem?: boolean;
+        colorLerpMethod?: 'lch' | 'rgb';
     }
 
     export type ParticleConfig = {
@@ -9,7 +11,7 @@ namespace ParticleSystem {
         textureRoot?: string;
         textures?: (string | number | PIXI.Texture)[];
         frameRate?: number;
-        stages: [ParticleInitialStageConfig, ...ParticleStageConfig[]];
+        stages: ParticleStageConfig[];
     }
 
     export type ParticleStageConfig = {
@@ -20,18 +22,21 @@ namespace ParticleSystem {
         radius?: number;
         color?: number;
         alpha?: number;
-    }
-
-    export type ParticleInitialStageConfig = ParticleStageConfig & {
-        v: Pt;
-        radius: number;
+        gravity?: Pt;
+        gravityContribution?: number;
     }
 
     export type Particle = {
+        i: number;
         x: number;
         y: number;
-        vx: number;
-        vy: number;
+        baseVx: number;
+        baseVy: number;
+        gravityVx: number;
+        gravityVy: number;
+        gravityX: number;
+        gravityY: number;
+        gravityContribution: number;
         radius: number;
         color: number;
         alpha: number;
@@ -46,8 +51,11 @@ namespace ParticleSystem {
     export type ParticleStage = {
         timeTo: number;
         easingFnTo: Tween.Easing.Function;
-        vx?: number;
-        vy?: number;
+        baseVx?: number;
+        baseVy?: number;
+        gravityX?: number;
+        gravityY?: number;
+        gravityContribution?: number;
         radius?: number;
         color?: number;
         alpha?: number;
@@ -55,15 +63,20 @@ namespace ParticleSystem {
 }
 
 class ParticleSystem extends WorldObject {
+    private particleTextureSize: number;
     private moveParticlesWithSystem: boolean;
+    private colorLerpMethod: 'lch' | 'rgb';
 
-    protected particles: ParticleSystem.Particle[] = [];
+    particles: ParticleSystem.Particle[] = [];
+    particleI: number = 0;
     private sprites: PIXI.Sprite[] = [];
 
     constructor(config: ParticleSystem.Config<ParticleSystem>) {
         super(config);
 
+        this.particleTextureSize = config.particleTextureSize ?? 16;
         this.moveParticlesWithSystem = config.moveParticlesWithSystem ?? false;
+        this.colorLerpMethod = config.colorLerpMethod ?? 'lch';
     }
 
     override update() {
@@ -74,8 +87,10 @@ class ParticleSystem extends WorldObject {
 
     protected updateParticles(delta: number) {
         this.particles.filterInPlace(particle => {
-            particle.x += particle.vx * this.delta;
-            particle.y += particle.vy * this.delta;
+            particle.gravityVx += particle.gravityX * this.delta;
+            particle.gravityVy += particle.gravityY * this.delta;
+            particle.x += (particle.baseVx + particle.gravityVx * particle.gravityContribution) * this.delta;
+            particle.y += (particle.baseVy + particle.gravityVy * particle.gravityContribution) * this.delta;
             particle.t += delta;
             return particle.t < particle.maxLife;
         });
@@ -87,7 +102,7 @@ class ParticleSystem extends WorldObject {
         for (let i = 0; i < this.particles.length; i++) {
             let particle = this.particles[i];
 
-            let scale = particle.usesDefaultTexture ? particle.radius/16 : particle.radius;
+            let scale = particle.usesDefaultTexture ? particle.radius/this.particleTextureSize : particle.radius;
             let textureI = Math.floor(particle.t * particle.frameRate) % particle.textures.length;
             let texture = particle.textures[textureI];
 
@@ -117,20 +132,26 @@ class ParticleSystem extends WorldObject {
     protected addParticle(config: ParticleSystem.ParticleConfig) {
         let totalStageWeights = A.sum(config.stages.slice(1, config.stages.length), stage => stage.weightTo ?? 1);
         let particle: ParticleSystem.Particle = {
+            i: this.particleI,
             // If moveParticlesWithSystem is set, particle position includes this.x/y so the system can
             // move around without affecting existing particles.
             x: this.moveParticlesWithSystem ? (config.p?.x ?? 0) : this.x + (config.p?.x ?? 0),
             y: this.moveParticlesWithSystem ? (config.p?.y ?? 0) : this.y + (config.p?.y ?? 0),
-            vx: config.stages[0].v.x,
-            vy: config.stages[0].v.y,
-            radius: config.stages[0].radius,
+            baseVx: config.stages[0].v?.x ?? 0,
+            baseVy: config.stages[0].v?.y ?? 0,
+            gravityVx: 0,
+            gravityVy: 0,
+            gravityX: config.stages[0].gravity?.x ?? 0,
+            gravityY: config.stages[0].gravity?.y ?? 0,
+            gravityContribution: config.stages[0].gravityContribution ?? 1,
+            radius: config.stages[0].radius ?? 1,
             color: config.stages[0].color ?? 0xFFFFFF,
             alpha: config.stages[0].alpha ?? 1,
             textures: config.textures
                 ? config.textures.map(texture => texture instanceof PIXI.Texture
                     ? texture
                     : AssetCache.getTexture(config.textureRoot ? `${config.textureRoot}/${texture}` : `${texture}`))
-                : [Textures.filledCircle(16, 0xFFFFFF)],
+                : [Textures.filledCircle(this.particleTextureSize, 0xFFFFFF)],
             frameRate: config.frameRate ?? 1,
             usesDefaultTexture: !config.textures,
             t: 0,
@@ -138,12 +159,15 @@ class ParticleSystem extends WorldObject {
             stages: config.stages.map(stageConfig => ({
                 timeTo: totalStageWeights <= 0 ? config.maxLife : config.maxLife * (stageConfig.weightTo ?? 1) / totalStageWeights,
                 easingFnTo: stageConfig.easingFnTo ?? Tween.Easing.Linear,
-                vx: stageConfig.v?.x,
-                vy: stageConfig.v?.y,
+                baseVx: stageConfig.v?.x,
+                baseVy: stageConfig.v?.y,
+                gravityX: stageConfig.gravity?.x,
+                gravityY: stageConfig.gravity?.y,
+                gravityContribution: stageConfig.gravityContribution,
                 radius: stageConfig.radius,
                 color: stageConfig.color,
                 alpha: stageConfig.alpha
-            })),
+            } satisfies ParticleSystem.ParticleStage)),
         };
 
         this.particles.push(particle);
@@ -152,14 +176,21 @@ class ParticleSystem extends WorldObject {
             this.sprites.push(new PIXI.Sprite());
         }
 
-        this.runScript(this.tweenProperty(particle, 'vx'));
-        this.runScript(this.tweenProperty(particle, 'vy'));
+        this.runScript(this.tweenProperty(particle, 'baseVx'));
+        this.runScript(this.tweenProperty(particle, 'baseVy'));
+        this.runScript(this.tweenProperty(particle, 'gravityX'));
+        this.runScript(this.tweenProperty(particle, 'gravityY'));
+        this.runScript(this.tweenProperty(particle, 'gravityContribution'));
         this.runScript(this.tweenProperty(particle, 'radius'));
         this.runScript(this.tweenProperty(particle, 'color'));
         this.runScript(this.tweenProperty(particle, 'alpha'));
+
+        this.particleI++;
     }
 
-    private tweenProperty(particle: ParticleSystem.Particle, property: 'vx' | 'vy' | 'radius' | 'color' | 'alpha'): Script.Function {
+    private tweenProperty(particle: ParticleSystem.Particle,
+            property: 'baseVx' | 'baseVy' | 'gravityX' | 'gravityY' | 'gravityContribution' | 'radius' | 'color' | 'alpha'): Script.Function {
+        let ps = this;
         return function*() {
             let currentStageI = 0;
             let nextStageI = particle.stages.findIndex((stage, i) => i > currentStageI && stage[property] !== undefined);
@@ -173,7 +204,9 @@ class ParticleSystem extends WorldObject {
                     time += particle.stages[i].timeTo;
                 }
 
-                let tween = property === 'color' ? S.tweenColorLch : S.tween;
+                let tween = property === 'color'
+                    ? (ps.colorLerpMethod === 'lch' ? S.tweenColorLch : S.tweenColorRgb)
+                    : S.tween;
 
                 yield tween(time, particle, property, currentStage[property] ?? particle[property], nextStage[property] ?? 0, nextStage.easingFnTo);
 

@@ -4,14 +4,14 @@ namespace BurstParticleSystem {
     export type Config = ParticleSystem.Config<BurstParticleSystem> & {
         deleteOnComplete?: boolean;
         particleCount: number;
-        particleConfigFactory: Factory<ParticleSystem.ParticleConfig>;
+        particleConfigFactory: (i: number) => ParticleSystem.ParticleConfig;
     }
 }
 
 class BurstParticleSystem extends ParticleSystem {
     private deleteOnComplete: boolean;
     private particleCount: number;
-    private particleConfigFactory: Factory<ParticleSystem.ParticleConfig>;
+    private particleConfigFactory: (i: number) => ParticleSystem.ParticleConfig;
 
     constructor(config: BurstParticleSystem.Config) {
         super(config);
@@ -25,7 +25,7 @@ class BurstParticleSystem extends ParticleSystem {
         super.onAdd();
 
         for (let i = 0; i < this.particleCount; i++) {
-            this.addParticle(this.particleConfigFactory());
+            this.addParticle(this.particleConfigFactory(this.particleI));
         }
     }
 

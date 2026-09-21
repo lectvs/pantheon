@@ -161,6 +161,12 @@ namespace S {
         });
     }
 
+    export function tweenColorRgb<T extends Partial<Record<K, number>>, K extends keyof T>(duration: OrFactory<number>, obj: T, colorProp: K, start: number, end: number, easingFunction: Tween.Easing.Function = Tween.Easing.Linear): Script.Function {
+        return S.doOverTime(duration, t => {
+            obj[colorProp] = Color.lerpColorByRgb(easingFunction(t), start, end) as any;
+        });
+    }
+
     export function tweenLocalPos(duration: OrFactory<number>, obj: WorldObject, start: Pt, end: Pt, easingFunctionX: Tween.Easing.Function = Tween.Easing.Linear, easingFunctionY: Tween.Easing.Function = easingFunctionX): Script.Function {
         let startx = start.x;
         let starty = start.y;
