@@ -77,8 +77,7 @@ class Graphics extends WorldObject {
         this.skewX = config.skewX ?? 0;
         this.skewY = config.skewY ?? 0;
 
-        this.effects = new Effects();
-        this.effects.updateFromConfig(config.effects);
+        this.effects = new Effects(config.effects);
 
         this.blendMode = config.blendMode;
 

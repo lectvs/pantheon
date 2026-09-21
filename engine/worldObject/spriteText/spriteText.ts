@@ -237,8 +237,7 @@ class SpriteText extends WorldObject {
             }
         }
 
-        this.effects = new Effects();
-        this.effects.updateFromConfig(config.effects);
+        this.effects = new Effects(config.effects);
 
         this.typeAnimationRate = config.typeAnimationRate ?? 10;
         this.typeAnimationSound = config.typeAnimationSound;

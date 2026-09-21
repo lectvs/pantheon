@@ -3,6 +3,7 @@ namespace ParticleSystem {
         particleTextureSize?: number;
         moveParticlesWithSystem?: boolean;
         colorLerpMethod?: 'lch' | 'rgb';
+        effects?: Effects.Config;
     }
 
     export type ParticleConfig = {
@@ -71,16 +72,20 @@ class ParticleSystem extends WorldObject {
     particleI: number = 0;
     private sprites: PIXI.Sprite[] = [];
 
+    effects: Effects;
+
     constructor(config: ParticleSystem.Config<ParticleSystem>) {
         super(config);
 
         this.particleTextureSize = config.particleTextureSize ?? 16;
         this.moveParticlesWithSystem = config.moveParticlesWithSystem ?? false;
         this.colorLerpMethod = config.colorLerpMethod ?? 'lch';
+        this.effects = new Effects(config.effects);
     }
 
     override update() {
         super.update();
+        this.effects.updateEffects(this.delta);
 
         this.updateParticles(this.delta);
     }
@@ -116,6 +121,8 @@ class ParticleSystem extends WorldObject {
 
             this.sprites[i].texture = texture;
             this.sprites[i].anchor.set(texture.defaultAnchor.x, texture.defaultAnchor.y);
+
+            this.sprites[i].updateAndSetEffects(this.effects);
 
             result.push(this.sprites[i]);
         }
