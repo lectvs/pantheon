@@ -25,6 +25,8 @@ namespace SpriteText {
         fixedCharSize?: boolean;
         style?: Style;
         effects?: Effects.Config;
+        visibleCharStart?: number;
+        visibleCharEnd?: number;
         typeAnimationRate?: number;
         typeAnimationSound?: string;
         charProperties?: CharProperties,
@@ -207,8 +209,8 @@ class SpriteText extends WorldObject {
         });
 
         this.format = config.format;
-        this._visibleCharStart = 0;
-        this._visibleCharEnd = Infinity;
+        this._visibleCharStart = config.visibleCharStart ?? 0;
+        this._visibleCharEnd = config.visibleCharEnd ?? Infinity;
         this._maxWidth = config.maxWidth ?? Infinity;
         this._spaceBetweenLines = config.spaceBetweenLines;
         this._blankLineHeight = config.blankLineHeight;
