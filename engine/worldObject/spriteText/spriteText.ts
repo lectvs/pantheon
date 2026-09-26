@@ -778,10 +778,11 @@ namespace SpriteText {
         'wave': (params) => {
             let amp = getFloat(params[0], 1);
             let speed = getFloat(params[1], 1);
+            let offset = getFloat(params[2], 0);
             return {
                 offsetY: data => {
                     let t = data.t + data.position/8/speed;
-                    return lerp(t, -amp, amp, Tween.Easing.OscillateSine(speed));
+                    return lerp(t, -amp, amp, Tween.Easing.OscillateSine(speed, offset));
                 },
             };
         },
