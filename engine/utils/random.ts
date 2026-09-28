@@ -35,9 +35,14 @@ class RandomNumberGenerator {
 
     /**
      * Random angle from 0 to 360.
+     * @param snap Snap to angle (e.g. if snap = 90, possible values are 0, 90, 180, and 270)
      */
-    angle() {
-        return this.float(0, 360);
+    angle(snap?: number) {
+        if (snap !== undefined) {
+            let parts = Math.ceil(360 / snap);
+            return this.int(0, parts-1) * snap;
+        }
+        return this.float(0, 360);;
     }
 
     /**
