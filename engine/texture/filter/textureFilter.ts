@@ -291,4 +291,15 @@ namespace TextureFilter {
 
         return uniforms;
     }
+
+    export function cascadeAutoFit(filters: PIXI.Filter[]) {
+        let cascadedAutoFit = true;
+        for (let filter of filters) {
+            if (cascadedAutoFit === false) {
+                filter.autoFit = false;
+            } else if (!filter.autoFit) {
+                cascadedAutoFit = false;
+            }
+        }
+    }
 }

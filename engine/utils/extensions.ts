@@ -118,6 +118,7 @@ PIXI.Sprite.prototype.updateAndSetEffects = function(effects: Effects) {
     }
     if (!A.equals(this.filters, filters)) {
         this.filters = filters.slice();
+        TextureFilter.cascadeAutoFit(this.filters);
     }
 
     let filterArea = TextureUtils.getFilterArea$(this.texture, filters,
@@ -148,6 +149,7 @@ PIXI.Graphics.prototype.updateAndSetEffects = function(effects: Effects, x: numb
     }
     if (!A.equals(this.filters, filters)) {
         this.filters = filters.slice();
+        TextureFilter.cascadeAutoFit(this.filters);
     }
 
     let filterArea = GraphicsUtils.getFilterArea$(this, filters,
