@@ -380,6 +380,12 @@ class SpriteText extends WorldObject {
         return FrameCache.rectangle(0, 0, 0, 0).copyBoundaries(bounds);
     }
 
+    setAnchorKeepPosition(anchor: Pt) {
+        this.x += (anchor.x - this.anchor.x) * this.getTextWidth();
+        this.y += (anchor.y - this.anchor.y) * this.getTextHeight();
+        this.anchor.set(anchor);
+    }
+
     setCharPropertyDefault<K extends keyof SpriteText.CharPropertiesSingle>(property: K, value: SpriteText.CharPropertiesSingle[K]) {
         if (this.charProperties[property] === value) return;
         this.charProperties[property] = value;
