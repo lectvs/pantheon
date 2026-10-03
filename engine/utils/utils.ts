@@ -3,6 +3,7 @@ namespace Utils {
     export const IDENTITY = (e: any) => e;
     export const NOOP_DISPLAYOBJECT: PIXI.DisplayObject = new PIXI.DisplayObject();
     export const UID = new UIDGenerator(10_000);
+    export const EMPTY_QUERY_PARAMS = new URLSearchParams();
 
     export function createGlobalGetterSetter<T>(name: string, get: Getter<T>, set: Setter<T>) {
         Object.defineProperty(window, name, { get, set });
@@ -22,6 +23,10 @@ namespace Utils {
 
     export function openUrl(url: string) {
         window.open(url, '_blank');
+    }
+
+    export function getQueryParams() {
+        return new URLSearchParams(window.location.search);
     }
 }
 

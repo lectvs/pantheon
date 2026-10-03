@@ -8,6 +8,7 @@ namespace Input {
         [Input.GAME_PAUSE]: string[],
         [Input.GAME_CLOSE_MENU]: string[],
         [Input.GAME_SELECT]: string[],
+        [Input.GAME_SELECT_ALT]: string[],
 
         // Debug
         [Input.DEBUG_MOVE_CAMERA_UP]: string[],
@@ -656,6 +657,7 @@ namespace Input {
     export const GAME_PAUSE = 'game_pause';
     export const GAME_CLOSE_MENU = 'game_closeMenu';
     export const GAME_SELECT = 'game_select';
+    export const GAME_SELECT_ALT = 'game_select_alt';
 
     export const DEBUG_MOVE_CAMERA_UP = 'debug_moveCameraUp';
     export const DEBUG_MOVE_CAMERA_DOWN = 'debug_moveCameraDown';

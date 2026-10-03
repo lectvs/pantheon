@@ -1,6 +1,7 @@
 namespace UIElement {
     export type Config = {
         onClick?: Callback;
+        onAltClick?: Callback;
         onUpdate?: Callback;
         onStateChange?: OnStateChangeCallback;
 
@@ -53,6 +54,7 @@ namespace UIElement {
 
 class UIElement extends Module<WorldObject> {
     onClick: UIElement.Callback;
+    onAltClick: UIElement.Callback;
     onUpdate: UIElement.Callback;
     onStateChange: UIElement.OnStateChangeCallback;
 
@@ -78,6 +80,7 @@ class UIElement extends Module<WorldObject> {
         super(WorldObject);
 
         this.onClick = config.onClick ?? Utils.NOOP;
+        this.onAltClick = config.onAltClick ?? Utils.NOOP;
         this.onUpdate = config.onUpdate ?? Utils.NOOP;
         this.onStateChange = config.onStateChange ?? Utils.NOOP;
 
@@ -166,9 +169,21 @@ class UIElement extends Module<WorldObject> {
     }
 
     private updateModeMouse(mouseOverlapping: boolean) {
-        if (Input.justUp(Input.GAME_SELECT)) {
+        let isSelectDown = Input.isDown(Input.GAME_SELECT);
+        let isSelectJustUp = Input.justUp(Input.GAME_SELECT);
+        let isSelectJustDown = Input.justDown(Input.GAME_SELECT);
+
+        let isAltSelectDown = this.isAltClickEnabled() && Input.isDown(Input.GAME_SELECT_ALT);
+        let isAltSelectJustUp = this.isAltClickEnabled() && Input.justUp(Input.GAME_SELECT_ALT);
+        let isAltSelectJustDown = this.isAltClickEnabled() && Input.justDown(Input.GAME_SELECT_ALT);
+
+        if (isSelectJustUp || isAltSelectJustUp) {
             if (mouseOverlapping && this.state.clickedDown && !this.hasMovedMouseTooFarToClick()) {
-                this.click();
+                if (isSelectJustUp) {
+                    this.click();
+                } else {
+                    this.altClick();
+                }
             }
         }
 
@@ -183,12 +198,12 @@ class UIElement extends Module<WorldObject> {
         }
 
         if (this.state.clickedDown) {
-            if (!mouseOverlapping || Input.isUp(Input.GAME_SELECT)) {
+            if (!mouseOverlapping || (!isSelectDown && !isAltSelectDown)) {
                 this.setClickedDown(false);
                 this.clickedDownDistance = undefined;
             }
         } else {
-            if (mouseOverlapping && Input.justDown(Input.GAME_SELECT)) {
+            if (mouseOverlapping && (isSelectJustDown || isAltSelectJustDown)) {
                 this.setClickedDown(true);
                 if (this.clickedDownDistance === undefined) this.clickedDownDistance = 0;
             }
@@ -197,6 +212,14 @@ class UIElement extends Module<WorldObject> {
 
     click() {
         this.onClick(this.state);
+    }
+
+    altClick() {
+        this.onAltClick(this.state);
+    }
+
+    isAltClickEnabled() {
+        return this.onAltClick !== Utils.NOOP;
     }
 
     isMouseOverlapping() {

@@ -23,6 +23,7 @@ namespace Debug {
 class Debug {
     static init(config: Debug.Config) {
         Debug.DEBUG = config.debug ?? false;
+        Debug._QUERY_PARAMS = Utils.getQueryParams();
         Debug.FONT = config.font ?? SpriteText.DEFAULT_FONT;
         Debug.FONT_STYLE = config.fontStyle ?? { color: 0xFFFFFF };
         Debug.SHOW_ALL_PHYSICS_BOUNDS = config.showAllPhysicsBounds ?? false;
@@ -81,6 +82,9 @@ class Debug {
     private static _DEBUG: boolean;
     static get DEBUG() { return this._DEBUG; }
     static set DEBUG(value: boolean) { this._DEBUG = value; }
+
+    private static _QUERY_PARAMS: URLSearchParams;
+    static get QUERY_PARAMS() { return this.DEBUG ? this._QUERY_PARAMS : Utils.EMPTY_QUERY_PARAMS };
     
     static FONT: string;
     static FONT_STYLE: SpriteText.Style;
