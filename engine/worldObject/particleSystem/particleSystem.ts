@@ -2,6 +2,7 @@ namespace ParticleSystem {
     export type Config<T extends ParticleSystem> = WorldObject.Config<T> & {
         particleTextureSize?: number;
         moveParticlesWithSystem?: boolean;
+        killOnZeroParticles?: boolean;
         colorLerpMethod?: 'lch' | 'rgb';
         effects?: Effects.Config;
     }
@@ -81,7 +82,7 @@ class ParticleSystem extends WorldObject {
         this.particleTextureSize = config.particleTextureSize ?? 16;
         this.moveParticlesWithSystem = config.moveParticlesWithSystem ?? false;
         this.colorLerpMethod = config.colorLerpMethod ?? 'lch';
-        this.killOnZeroParticles = false;
+        this.killOnZeroParticles = config.killOnZeroParticles ?? false;
         this.effects = new Effects(config.effects);
     }
 
