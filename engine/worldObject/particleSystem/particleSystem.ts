@@ -72,6 +72,7 @@ class ParticleSystem extends WorldObject {
     particleI: number = 0;
     private sprites: PIXI.Sprite[] = [];
 
+    killOnZeroParticles: boolean;
     effects: Effects;
 
     constructor(config: ParticleSystem.Config<ParticleSystem>) {
@@ -80,6 +81,7 @@ class ParticleSystem extends WorldObject {
         this.particleTextureSize = config.particleTextureSize ?? 16;
         this.moveParticlesWithSystem = config.moveParticlesWithSystem ?? false;
         this.colorLerpMethod = config.colorLerpMethod ?? 'lch';
+        this.killOnZeroParticles = false;
         this.effects = new Effects(config.effects);
     }
 
@@ -88,6 +90,10 @@ class ParticleSystem extends WorldObject {
         this.effects.updateEffects(this.delta);
 
         this.updateParticles(this.delta);
+
+        if (this.killOnZeroParticles && this.particles.length === 0) {
+            this.kill();
+        }
     }
 
     protected updateParticles(delta: number) {

@@ -16,6 +16,8 @@ class ContinuousParticleSystem extends ParticleSystem {
     private particleRate: number;
     private particleConfigFactory: (i: number) => ParticleSystem.ParticleConfig;
 
+    private particleTimer: Timer;
+
     constructor(config: ContinuousParticleSystem.Config) {
         super(config);
 
@@ -23,13 +25,13 @@ class ContinuousParticleSystem extends ParticleSystem {
         this.particleRate = config.particleRate;
         this.particleConfigFactory = config.particleConfigFactory;
 
-        let particleTimer = new Timer(1/this.particleRate, () => {
+        this.particleTimer = new Timer(1/this.particleRate, () => {
             if (this.enabled) {
                 this.addParticle(this.particleConfigFactory(this.particleI));
             }
         }, Infinity);
 
-        this.addTimer(new Timer(config.startDelay ?? 0, () => this.addTimer(particleTimer)));
+        this.addTimer(new Timer(config.startDelay ?? 0, () => this.addTimer(this.particleTimer)));
     }
 
     warmUp(time: number) {
@@ -44,5 +46,11 @@ class ContinuousParticleSystem extends ParticleSystem {
             warmupTimer.update(delta);
             this.updateParticles(delta);
         }
+    }
+
+    setParticleRate(particleRate: number) {
+        this.particleRate = particleRate;
+        this.particleTimer.duration = this.particleRate === 0 ? Infinity : 1/this.particleRate;
+        this.particleTimer.time = Math.min(this.particleTimer.time, this.particleTimer.duration);
     }
 }
