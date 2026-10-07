@@ -482,11 +482,13 @@ class SpriteText extends WorldObject {
                 script: () => function*() {
                     spriteText.visibleCharEnd = 0;
                     let chars = spriteText.getCharList();
-                    for (let i = 0; i < chars.length; i++) {
-                        yield 1/spriteText.typeAnimationRate;
-                        spriteText.visibleCharEnd++;
-                        if (spriteText.typeAnimationSound) spriteText.world?.playSound(spriteText.typeAnimationSound);
-                    }
+                    yield S.doOverTime(chars.length/spriteText.typeAnimationRate, t => {
+                        let oldVisibleCharEnd = spriteText.visibleCharEnd;
+                        spriteText.visibleCharEnd = Math.floor(t*chars.length);
+                        if (spriteText.typeAnimationSound && spriteText.visibleCharEnd > oldVisibleCharEnd) {
+                            spriteText.world?.playSound(spriteText.typeAnimationSound);
+                        }
+                    });
                 },
             }));
         }
