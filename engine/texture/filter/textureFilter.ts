@@ -96,8 +96,8 @@ class TextureFilter extends PIXI.Filter {
     }
 
     setTextureValues(width: number, height: number) {
-        this.setUniform('width', width * global.upscale);
-        this.setUniform('height', height * global.upscale);
+        this.setUniform('widthNoUpscale', width);
+        this.setUniform('heightNoUpscale', height);
     }
 
     setTextureValuesFromSprite(sprite: PIXI.Sprite | PIXI.Graphics) {
@@ -146,8 +146,8 @@ namespace TextureFilter {
         uniform vec4 inputSize;
         uniform sampler2D uSampler;
 
-        uniform float width;
-        uniform float height;
+        uniform float widthNoUpscale;
+        uniform float heightNoUpscale;
         uniform float t;
         uniform float upscale;
         uniform float offsetx;
@@ -244,6 +244,8 @@ namespace TextureFilter {
         void main(void) {
             float x = vTextureCoord.x * inputSize.x + offsetx * upscale;
             float y = vTextureCoord.y * inputSize.y + offsety * upscale;
+            float width = widthNoUpscale * upscale;
+            float height = heightNoUpscale * upscale;
             float px = vTextureCoord.x * inputSize.x / width;
             float py = vTextureCoord.y * inputSize.y / height;
             vec4 inp = texture2D(uSampler, vTextureCoord);
@@ -282,8 +284,8 @@ namespace TextureFilter {
             }
         }
 
-        uniforms['width'] = 0;
-        uniforms['height'] = 0;
+        uniforms['widthNoUpscale'] = 0;
+        uniforms['heightNoUpscale'] = 0;
         uniforms['t'] = 0;
         uniforms['upscale'] = 1;
         uniforms['offsetx'] = 0;

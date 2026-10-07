@@ -73,6 +73,15 @@ namespace Render {
         }
     }
 
+    export function upscalePixiObjectPropertiesNoArea(object: PIXI.DisplayObject, scale: 'upscale' | 'downscale') {
+        object.filters?.forEach(filter => filter.setUpscale(scale === 'upscale' ? global.upscale : 1));
+        if (object instanceof PIXI.Container) {
+            for (let child of object.children) {
+                upscalePixiObjectProperties(child, scale);
+            }
+        }
+    }
+
     function shiftFilterArea(r: PIXI.DisplayObject, dx: number, dy: number) {
         if (r instanceof PIXI.Sprite && r.filterArea) {
             r.filterArea.x += dx;
