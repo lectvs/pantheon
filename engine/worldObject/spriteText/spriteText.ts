@@ -30,6 +30,7 @@ namespace SpriteText {
         typeAnimationRate?: number;
         typeAnimationSound?: string;
         charProperties?: CharProperties,
+        charReplacement?: CharReplacement;
         rotateWithParent?: boolean;
     }
 
@@ -86,6 +87,8 @@ namespace SpriteText {
         offsetX?: number;
         offsetY?: number;
     }
+
+    export type CharReplacement = (char: string, i: number, length: number) => string;
 }
 
 class SpriteText extends WorldObject {
@@ -186,6 +189,7 @@ class SpriteText extends WorldObject {
     typeAnimationSound: string | undefined;
 
     private charProperties: SpriteText.CharProperties;
+    private charReplacement: SpriteText.CharReplacement | undefined;
 
     /**
      * true during instantiation when the text has never been set before
@@ -246,6 +250,7 @@ class SpriteText extends WorldObject {
         this.addTypeAnimations();
 
         this.charProperties = config.charProperties ?? {};
+        this.charReplacement = config.charReplacement;
 
         this.isFirstTextSet = true;
         this.setText(config.text ?? "");
@@ -428,6 +433,12 @@ class SpriteText extends WorldObject {
         }
     }
 
+    setCharReplacement(charReplacement: SpriteText.CharReplacement | undefined) {
+        if (charReplacement === this.charReplacement) return;
+        this.charReplacement = charReplacement;
+        this.setText(this.getCurrentText(), 'force');
+    }
+
 
     setFont(fontKey: string) {
         if (fontKey === this.fontKey) return;
@@ -442,6 +453,7 @@ class SpriteText extends WorldObject {
     }
 
     setFormat(format: string | undefined) {
+        if (format === this.format) return;
         this.format = format;
         this.setText(this.getCurrentText(), 'force');
     }
@@ -533,6 +545,7 @@ class SpriteText extends WorldObject {
             wordWrap: this.wordWrap,
             fixedCharSize: this.fixedCharSize,
             charProperties: this.charProperties,
+            charReplacement: this.charReplacement,
         });
     }
 
@@ -638,6 +651,7 @@ namespace SpriteText {
         wordWrap: boolean,
         fixedCharSize: boolean,
         charProperties: SpriteText.CharProperties,
+        charReplacement: SpriteText.CharReplacement | undefined,
     }) {
         let {
             text,
@@ -654,6 +668,9 @@ namespace SpriteText {
         if (!text) return [];
 
         let tokens = SpriteTextTokenizer.tokenize(text);
+        if (props.charReplacement) {
+            SpriteTextTokenizer.replaceCharacters(tokens, props.charReplacement);
+        }
         let lexemes = SpriteTextLexer.lex(tokens, wordWrap);
         let result = SpriteTextParser.parse({
             lexemes,

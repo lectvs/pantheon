@@ -117,6 +117,11 @@ class TextureFilter extends PIXI.Filter {
     updateTime(delta: number) {
         this.setUniform('t', this.getUniform('t') + delta * this.timeScale);
     }
+
+    withTime(t: number) {
+        this.setTime(t);
+        return this;
+    }
 }
 
 namespace TextureFilter {

@@ -117,4 +117,24 @@ namespace SpriteTextTokenizer {
 
         return tokens;
     }
+
+    export function replaceCharacters(tokens: Token[], charReplacement: SpriteText.CharReplacement) {
+        let length = A.count(tokens, token => token.type === 'char' || token.type === 'customchar');
+        let i = 0;
+        for (let token of tokens) {
+            if (token.type === 'char' || token.type === 'customchar') {
+                let newChar = charReplacement(token.name, i, length);
+                if (newChar === token.name) {
+                    // Pass
+                } else if (newChar[0] === '<') {
+                    token.type = 'customchar';
+                    token.name = newChar.substring(1, newChar.length-1);
+                } else {
+                    token.type = 'char';
+                    token.name = newChar;
+                }
+                i++;
+            }
+        }
+    }
 }

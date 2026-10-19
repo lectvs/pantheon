@@ -24,7 +24,7 @@ class Effects {
     private _silhouetteLazy = new LazyValue(() => new Effects.Filters.Silhouette(0x000000, 1).disable());
     private _outlineLazy = new LazyValue(() => new Effects.Filters.Outline(0x000000, 1, this._outlineThickness).disable());
     private _invertColorsLazy = new LazyValue(() => new Effects.Filters.InvertColors().disable());
-    private _glitchLazy = new LazyValue(() => new Effects.Filters.Glitch(2, 1, 2).disable());
+    private _glitchLazy = new LazyValue(() => new Effects.Filters.Glitch(2, 1, 2, 0).disable());
     private _dropShadowLazy = new LazyValue(() => new Effects.Filters.DropShadow(1, 0x000000, 0.5).disable());
 
     get silhouette() { return this._silhouetteLazy.get(); }
@@ -258,20 +258,29 @@ namespace Effects {
                 this.setUniform('spread', value);
             }
 
+            private _toffset: number;
+            get toffset() { return this._toffset; }
+            set toffset(value: number) {
+                this._toffset = value;
+                this.setUniform('offset', value);
+            }
+
             /**
              * @param strength - the amplitude of the offset
              * @param speed - the speed at which the offset cycles
              * @param spread - the average length of the bands
+             * @param toffset - starting time
              */
-            constructor(strength: number, speed: number, spread: number) {
+            constructor(strength: number, speed: number, spread: number, toffset: number = 0) {
                 super({
                     uniforms: {
                         'float strength': strength,
                         'float speed': speed,
                         'float spread': spread,
+                        'float toffset': toffset,
                     },
                     code: `
-                        float tt = floor(5.4 + t * speed);
+                        float tt = floor(5.4 + toffset + t * speed);
                         float yy = floor(y / spread / upscale) * spread * upscale;
                         float offset = pnoise(0.0, yy*1.1, tt*5.1) * strength * upscale;
                         outp = getColor(x + offset, y);
@@ -281,6 +290,7 @@ namespace Effects {
                 this._strength = strength;
                 this._speed = speed;
                 this._spread = spread;
+                this._toffset = toffset;
             }
 
             enable(strength: number = this.strength, speed: number = this.speed, spread: number = this.spread) {
